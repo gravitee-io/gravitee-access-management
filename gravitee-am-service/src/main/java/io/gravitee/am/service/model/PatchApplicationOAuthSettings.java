@@ -83,6 +83,7 @@ public class PatchApplicationOAuthSettings {
     private Optional<String> authorizationEncryptedResponseAlg;
     private Optional<String> authorizationEncryptedResponseEnc;
     private Optional<Boolean> forcePKCE;
+    private Optional<Boolean> forceS256CodeChallengeMethod;
     private Optional<List<String>> postLogoutRedirectUris;
     private Optional<Boolean> singleSignOut;
     private Optional<Boolean> silentReAuthentication;
@@ -504,6 +505,14 @@ public class PatchApplicationOAuthSettings {
         this.forcePKCE = forcePKCE;
     }
 
+    public Optional<Boolean> getForceS256CodeChallengeMethod() {
+        return forceS256CodeChallengeMethod;
+    }
+
+    public void setForceS256CodeChallengeMethod(Optional<Boolean> forceS256CodeChallengeMethod) {
+        this.forceS256CodeChallengeMethod = forceS256CodeChallengeMethod;
+    }
+
     public Optional<List<String>> getPostLogoutRedirectUris() {
         return postLogoutRedirectUris;
     }
@@ -594,6 +603,7 @@ public class PatchApplicationOAuthSettings {
         SetterUtils.safeSet(toPatch::setAuthorizationEncryptedResponseAlg, this.getAuthorizationEncryptedResponseAlg());
         SetterUtils.safeSet(toPatch::setAuthorizationEncryptedResponseEnc, this.getAuthorizationEncryptedResponseEnc());
         SetterUtils.safeSet(toPatch::setForcePKCE, this.getForcePKCE());
+        SetterUtils.safeSet(toPatch::setForceS256CodeChallengeMethod, this.getForceS256CodeChallengeMethod());
         SetterUtils.safeSet(toPatch::setPostLogoutRedirectUris, this.getPostLogoutRedirectUris());
         SetterUtils.safeSet(toPatch::setSingleSignOut, this.getSingleSignOut());
         SetterUtils.safeSet(toPatch::setSilentReAuthentication, this.getSilentReAuthentication());

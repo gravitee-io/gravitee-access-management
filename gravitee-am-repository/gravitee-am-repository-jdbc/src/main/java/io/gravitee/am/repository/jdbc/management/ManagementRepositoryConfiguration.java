@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.jdbc.management;
 
+import io.gravitee.am.repository.Scope;
 import io.gravitee.am.repository.jdbc.common.AbstractRepositoryConfiguration;
 import io.gravitee.am.repository.jdbc.common.dialect.DatabaseDialectHelper;
 import io.gravitee.am.repository.jdbc.exceptions.RepositoryInitializationException;
@@ -90,7 +91,7 @@ public class ManagementRepositoryConfiguration extends AbstractRepositoryConfigu
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        initializeDatabaseSchema(getManagementPool(), environment);
+        initializeDatabaseSchema(getManagementPool(), environment, Scope.MANAGEMENT.getName() + ".jdbc.");
     }
 
 }

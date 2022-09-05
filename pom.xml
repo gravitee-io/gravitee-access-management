@@ -130,6 +130,8 @@
         <gravitee-risk-assessment-api.version>1.0.1</gravitee-risk-assessment-api.version>
         <jdk.version>11</jdk.version>
 
+        <ongres.scram.version>2.1</ongres.scram.version>
+
         <!-- Sonar - Jacoco -->
         <jacoco-maven-plugin.version>0.8.7</jacoco-maven-plugin.version>
     </properties>

@@ -120,5 +120,21 @@
             <artifactId>reactor-netty-core</artifactId>
             <version>${reactor-netty.version}</version>
         </dependency>
+
+        <!--
+        https://mvnrepository.com/artifact/com.ongres.scram/
+        used by R2DBC postgres
+         -->
+        <dependency>
+            <groupId>com.ongres.scram</groupId>
+            <artifactId>common</artifactId>
+            <version>${ongres.scram.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.ongres.scram</groupId>
+            <artifactId>client</artifactId>
+            <version>${ongres.scram.version}</version>
+        </dependency>
+
     </dependencies>
 </project>

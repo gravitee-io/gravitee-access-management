@@ -29,6 +29,7 @@ public class Email {
     private String referenceId;
     private String client;
     private String template;
+    private boolean defaultTemplate;
     private String from;
     private String fromName;
     private String subject;
@@ -163,5 +164,13 @@ public class Email {
 
     public void setUpdatedAt(Date updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public boolean isDefaultTemplate() {
+        return defaultTemplate;
+    }
+
+    public void setDefaultTemplate(boolean defaultTemplate) {
+        this.defaultTemplate = defaultTemplate;
     }
 }

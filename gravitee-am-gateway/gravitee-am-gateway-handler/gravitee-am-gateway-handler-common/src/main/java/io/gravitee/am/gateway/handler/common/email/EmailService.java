@@ -41,6 +41,7 @@ public interface EmailService {
     final class EmailWrapper {
         final io.gravitee.am.common.email.Email email;
         long expireAt;
+        boolean fromDefaultTemplate;
 
         public EmailWrapper(Email email) {
             this.email = email;
@@ -56,6 +57,14 @@ public interface EmailService {
 
         public void setExpireAt(long expireAt) {
             this.expireAt = expireAt;
+        }
+
+        public boolean isFromDefaultTemplate() {
+            return fromDefaultTemplate;
+        }
+
+        public void setFromDefaultTemplate(boolean fromDefaultTemplate) {
+            this.fromDefaultTemplate = fromDefaultTemplate;
         }
     }
 }

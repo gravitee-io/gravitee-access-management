@@ -1,0 +1,26 @@
+databaseChangeLog:
+  - changeSet:
+      id: 3.15.11-user-scime
+      author: GraviteeSource Team
+      changes:
+
+        - sql:
+            dbms: mysql
+            sql: ALTER TABLE users ADD additional_information_custom VARCHAR(320) AS (JSON_UNQUOTE(additional_information->"$.custom"));
+       
+        - sql:
+            dbms: mariadb
+            sql: ALTER TABLE users ADD additional_information_custom VARCHAR(320) AS (JSON_VALUE(additional_information, "$.custom"));
+       
+        - sql:
+            dbms: mysql, mariadb
+            sql: CREATE INDEX idx_users_additional_information_custom ON users(reference_id, reference_type, additional_information_custom);
+       
+        - sql:
+            dbms: mssql
+            sql: ALTER TABLE users ADD additional_information_custom AS JSON_VALUE(additional_information, '$.custom');
+       
+        - sql:
+            dbms: mssql
+            sql: CREATE INDEX idx_users_additional_information_custom ON users(reference_id, reference_type, additional_information_custom);
+       

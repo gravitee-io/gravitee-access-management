@@ -16,11 +16,9 @@
 package io.gravitee.am.gateway.node;
 
 import io.gravitee.am.model.Organization;
-import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.EnvironmentRepository;
 import io.gravitee.am.repository.management.api.InstallationRepository;
 import io.gravitee.am.repository.management.api.OrganizationRepository;
-import io.gravitee.am.service.InstallationService;
 import io.gravitee.node.api.NodeMetadataResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,10 +26,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-import static io.gravitee.node.api.Node.*;
+import static io.gravitee.node.api.Node.META_ENVIRONMENTS;
+import static io.gravitee.node.api.Node.META_INSTALLATION;
+import static io.gravitee.node.api.Node.META_ORGANIZATIONS;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -76,13 +82,18 @@ public class GatewayNodeMetadataResolver implements NodeMetadataResolver {
     }
 
     private String getInstallationId() {
+        String installationId = null;
         try {
-            return installationRepository.find().blockingGet().getId();
+            final var installation = installationRepository.find().blockingGet();
+            if (installation != null) {
+                installationId = installation.getId();
+            } else {
+                logger.debug("No installation found");
+            }
         } catch (Exception e) {
             logger.warn("Unable to load installation id", e);
         }
-
-        return null;
+        return installationId;
     }
 
     private List<io.gravitee.am.model.Environment> loadEnvironments() {

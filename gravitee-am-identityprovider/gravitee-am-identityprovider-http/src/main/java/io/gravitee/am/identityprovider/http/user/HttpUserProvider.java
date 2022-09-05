@@ -15,7 +15,12 @@
  */
 package io.gravitee.am.identityprovider.http.user;
 
-import io.gravitee.am.identityprovider.api.*;
+import io.gravitee.am.identityprovider.api.AuthenticationContext;
+import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
+import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
+import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.identityprovider.http.HttpIdentityProviderResponse;
 import io.gravitee.am.identityprovider.http.configuration.HttpIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.http.configuration.HttpResourceConfiguration;
@@ -49,7 +54,12 @@ import org.springframework.context.annotation.Import;
 import org.springframework.util.StringUtils;
 
 import java.lang.reflect.Constructor;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 import static java.util.Optional.ofNullable;
 

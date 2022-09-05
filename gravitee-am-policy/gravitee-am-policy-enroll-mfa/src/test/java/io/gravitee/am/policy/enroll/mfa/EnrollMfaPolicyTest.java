@@ -35,6 +35,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.util.Collections;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -80,7 +81,7 @@ public class EnrollMfaPolicyTest {
     public void shouldContinue_noFactor() throws Exception {
         when(configuration.getFactorId()).thenReturn("factor-id");
         FactorManager factorManager = mock(FactorManager.class);
-        when(factorManager.getFactor("factor-id")).thenReturn(null);
+        when(factorManager.getClientFactor(any(), eq("factor-id"))).thenReturn(Optional.empty());
         when(executionContext.getComponent(FactorManager.class)).thenReturn(factorManager);
 
         executePolicy(configuration, request, response, executionContext, policyChain);
@@ -103,7 +104,7 @@ public class EnrollMfaPolicyTest {
     public void shouldContinue_alreadyEnrolled() throws Exception {
         when(configuration.getFactorId()).thenReturn("factor-id");
         FactorManager factorManager = mock(FactorManager.class);
-        when(factorManager.getFactor("factor-id")).thenReturn(new Factor());
+        when(factorManager.getClientFactor(any(), eq("factor-id"))).thenReturn(Optional.of(new Factor()));
         when(executionContext.getComponent(FactorManager.class)).thenReturn(factorManager);
         User user = mock(User.class);
         EnrolledFactor enrolledFactor = mock(EnrolledFactor.class);
@@ -122,7 +123,7 @@ public class EnrollMfaPolicyTest {
         FactorManager factorManager = mock(FactorManager.class);
         Factor factor = mock(Factor.class);
         when(factor.getFactorType()).thenReturn(FactorType.SMS);
-        when(factorManager.getFactor("factor-id")).thenReturn(factor);
+        when(factorManager.getClientFactor(any(), eq("factor-id"))).thenReturn(Optional.of(factor));
         when(executionContext.getComponent(FactorManager.class)).thenReturn(factorManager);
         User user = mock(User.class);
         when(user.getFactors()).thenReturn(Collections.emptyList());
@@ -141,7 +142,7 @@ public class EnrollMfaPolicyTest {
         FactorManager factorManager = mock(FactorManager.class);
         Factor factor = mock(Factor.class);
         when(factor.getFactorType()).thenReturn(FactorType.SMS);
-        when(factorManager.getFactor("factor-id")).thenReturn(factor);
+        when(factorManager.getClientFactor(any(), eq("factor-id"))).thenReturn(Optional.of(factor));
 
         when(executionContext.getComponent(FactorManager.class)).thenReturn(factorManager);
 

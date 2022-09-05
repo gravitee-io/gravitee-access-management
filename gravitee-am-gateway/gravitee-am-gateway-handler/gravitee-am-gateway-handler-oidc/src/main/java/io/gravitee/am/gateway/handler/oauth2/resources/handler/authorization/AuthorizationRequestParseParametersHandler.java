@@ -39,7 +39,11 @@ import io.vertx.core.json.Json;
 import io.vertx.reactivex.ext.auth.User;
 import io.vertx.reactivex.ext.web.RoutingContext;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
 
 import static io.gravitee.am.common.utils.ConstantKeys.PROVIDER_METADATA_CONTEXT_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.REQUEST_OBJECT_FROM_URI;
@@ -143,12 +147,20 @@ public class AuthorizationRequestParseParametersHandler extends AbstractAuthoriz
                 // It must be plain or S256
                 // For FAPI, only S256 is allowed for PKCE
                 // https://openid.net/specs/openid-financial-api-part-2-1_0.html#authorization-server (point 18)
-                if ((this.domain.usePlainFapiProfile() && !CodeChallengeMethod.S256.equalsIgnoreCase(codeChallengeMethod)) ||
+                if (((this.domain.usePlainFapiProfile() || client.isForceS256CodeChallengeMethod()) && !CodeChallengeMethod.S256.equalsIgnoreCase(codeChallengeMethod)) ||
                         (!CodeChallengeMethod.S256.equalsIgnoreCase(codeChallengeMethod) &&
                         !CodeChallengeMethod.PLAIN.equalsIgnoreCase(codeChallengeMethod))) {
                     throw new InvalidRequestException("Invalid parameter: code_challenge_method");
                 }
+
             } else {
+                // For FAPI, only S256 is allowed for PKCE
+                // https://openid.net/specs/openid-financial-api-part-2-1_0.html#authorization-server (point 18)
+                // A setting is also available on AM to require the S256 method
+                if (this.domain.usePlainFapiProfile() || client.isForceS256CodeChallengeMethod()) {
+                    throw new InvalidRequestException("Invalid parameter: code_challenge_method");
+                }
+
                 // https://tools.ietf.org/html/rfc7636#section-4.3
                 // Default code challenge is plain
                 context.request().params().set(io.gravitee.am.common.oauth2.Parameters.CODE_CHALLENGE_METHOD, CodeChallengeMethod.PLAIN);

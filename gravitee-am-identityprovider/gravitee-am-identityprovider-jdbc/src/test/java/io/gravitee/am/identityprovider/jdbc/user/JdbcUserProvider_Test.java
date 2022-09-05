@@ -131,4 +131,5 @@ public abstract class JdbcUserProvider_Test {
         testObserver.assertError(UserNotFoundException.class);
         testObserver.assertNoValues();
     }
+
 }

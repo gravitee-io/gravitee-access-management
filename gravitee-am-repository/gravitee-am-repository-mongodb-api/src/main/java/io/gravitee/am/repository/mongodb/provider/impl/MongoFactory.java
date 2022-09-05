@@ -38,14 +38,18 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.core.env.Environment;
 
+import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
 import java.io.FileInputStream;
+import java.security.KeyManagementException;
 import java.security.KeyStore;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import static java.util.List.of;
@@ -119,6 +123,9 @@ public class MongoFactory implements FactoryBean<MongoClient> {
         final MeterRegistry amRegistry = Metrics.getDefaultRegistry();
         final MongoMetricsConnectionPoolListener connectionPoolListener = new MongoMetricsConnectionPoolListener(amRegistry, "common-pool");
 
+        final SslSettings sslSettings = buildSslSettings();
+        final ServerSettings serverSettings = buildServerSettings();
+
         // Trying to get the MongoClientURI if uri property is defined
         String uri = readPropertyValue(propertyPrefix + "uri");
         if (uri != null && !uri.isEmpty()) {
@@ -126,6 +133,8 @@ public class MongoFactory implements FactoryBean<MongoClient> {
             // the URI string.
             MongoClientSettings settings = builder
                     .applyToConnectionPoolSettings(builder1 -> builder1.addConnectionPoolListener(connectionPoolListener))
+                    .applyToServerSettings(builder1 -> builder1.applySettings(serverSettings))
+                    .applyToSslSettings(builder1 -> builder1.applySettings(sslSettings))
                     .applyConnectionString(new ConnectionString(uri))
                     .build();
 
@@ -136,8 +145,7 @@ public class MongoFactory implements FactoryBean<MongoClient> {
             ClusterSettings.Builder clusterBuilder = ClusterSettings.builder();
 
             ConnectionPoolSettings.Builder connectionPoolBuilder = ConnectionPoolSettings.builder().addConnectionPoolListener(connectionPoolListener);
-            ServerSettings.Builder serverBuilder = ServerSettings.builder();
-            SslSettings.Builder sslBuilder = SslSettings.builder();
+
 
             Integer connectTimeout = readPropertyValue(propertyPrefix + "connectTimeout", Integer.class, 1000);
             Integer maxWaitTime = readPropertyValue(propertyPrefix + "maxWaitTime", Integer.class);
@@ -149,14 +157,7 @@ public class MongoFactory implements FactoryBean<MongoClient> {
 
             // We do not want to wait for a server
             Integer serverSelectionTimeout = readPropertyValue(propertyPrefix + "serverSelectionTimeout", Integer.class, 1000);
-            Integer minHeartbeatFrequency = readPropertyValue(propertyPrefix + "minHeartbeatFrequency", Integer.class);
             String description = readPropertyValue(propertyPrefix + "description", String.class, "gravitee.io");
-            Integer heartbeatFrequency = readPropertyValue(propertyPrefix + "heartbeatFrequency", Integer.class);
-            Boolean sslEnabled = readPropertyValue(propertyPrefix + "sslEnabled", Boolean.class);
-            String keystore = readPropertyValue(propertyPrefix + "keystore", String.class);
-            String keystorePassword = readPropertyValue(propertyPrefix + "keystorePassword", String.class);
-            String keyPassword = readPropertyValue(propertyPrefix + "keyPassword", String.class);
-            String tlsProtocol = readPropertyValue(propertyPrefix + "tlsProtocol", String.class, DEFAULT_TLS_PROTOCOL);
             if (maxSize != null) {
                 connectionPoolBuilder.maxSize(maxSize);
             }
@@ -173,27 +174,8 @@ public class MongoFactory implements FactoryBean<MongoClient> {
                 connectionPoolBuilder.maxConnectionLifeTime(maxConnectionLifeTime, TimeUnit.MILLISECONDS);
             if (maxConnectionIdleTime != null)
                 connectionPoolBuilder.maxConnectionIdleTime(maxConnectionIdleTime, TimeUnit.MILLISECONDS);
-            if (minHeartbeatFrequency != null)
-                serverBuilder.minHeartbeatFrequency(minHeartbeatFrequency, TimeUnit.MILLISECONDS);
-            if (description != null)
+            if (description != null) {
                 builder.applicationName(description);
-            if (heartbeatFrequency != null)
-                serverBuilder.heartbeatFrequency(heartbeatFrequency, TimeUnit.MILLISECONDS);
-            if (sslEnabled != null)
-                sslBuilder.enabled(sslEnabled);
-            if (keystore != null) {
-                try {
-                    SSLContext ctx = SSLContext.getInstance(tlsProtocol);
-                    KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-                    KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
-                    ks.load(new FileInputStream(keystore), keystorePassword.toCharArray());
-                    keyManagerFactory.init(ks, keyPassword.toCharArray());
-                    ctx.init(keyManagerFactory.getKeyManagers(), null, null);
-                    sslBuilder.context(ctx);
-                } catch (Exception e) {
-                    logger.error(e.getCause().toString());
-                    throw new IllegalStateException("Error creating the keystore for mongodb", e);
-                }
             }
             if (serverSelectionTimeout != null)
                 clusterBuilder.serverSelectionTimeout(serverSelectionTimeout, TimeUnit.MILLISECONDS);
@@ -226,8 +208,7 @@ public class MongoFactory implements FactoryBean<MongoClient> {
             SocketSettings socketSettings = socketBuilder.build();
             ClusterSettings clusterSettings = clusterBuilder.build();
             ConnectionPoolSettings connectionPoolSettings = connectionPoolBuilder.build();
-            ServerSettings serverSettings = serverBuilder.build();
-            SslSettings sslSettings = sslBuilder.build();
+
             MongoClientSettings settings = builder
                     .applyToClusterSettings(builder1 -> builder1.applySettings(clusterSettings))
                     .applyToSocketSettings(builder1 -> builder1.applySettings(socketSettings))
@@ -238,6 +219,37 @@ public class MongoFactory implements FactoryBean<MongoClient> {
 
             return MongoClients.create(settings);
         }
+    }
+
+    private SslSettings buildSslSettings() {
+        final SslSettings.Builder sslBuilder = SslSettings.builder();
+        final boolean sslEnabled = readPropertyValue(propertyPrefix + "sslEnabled", Boolean.class, false);
+        sslBuilder.enabled(sslEnabled);
+        if (sslEnabled) {
+            try {
+                String tlsProtocol = readPropertyValue(propertyPrefix + "tlsProtocol", String.class, DEFAULT_TLS_PROTOCOL);
+                SSLContext sslContext = SSLContext.getInstance(tlsProtocol);
+                sslContext.init(getKeyManagers(), getTrustManagers(), null);
+                sslBuilder.context(sslContext);
+            } catch (NoSuchAlgorithmException | KeyManagementException e) {
+                throw new IllegalStateException("Error creating the SSLContext for mongodb", e);
+            }
+        }
+        final SslSettings sslSettings = sslBuilder.build();
+        return sslSettings;
+    }
+
+    private ServerSettings buildServerSettings() {
+        ServerSettings.Builder serverBuilder = ServerSettings.builder();
+        Integer minHeartbeatFrequency = readPropertyValue(propertyPrefix + "minHeartbeatFrequency", Integer.class);
+        Integer heartbeatFrequency = readPropertyValue(propertyPrefix + "heartbeatFrequency", Integer.class);
+        if (minHeartbeatFrequency != null)
+            serverBuilder.minHeartbeatFrequency(minHeartbeatFrequency, TimeUnit.MILLISECONDS);
+        if (heartbeatFrequency != null) {
+            serverBuilder.heartbeatFrequency(heartbeatFrequency, TimeUnit.MILLISECONDS);
+        }
+        ServerSettings serverSettings = serverBuilder.build();
+        return serverSettings;
     }
 
     private int getServersCount() {
@@ -283,5 +295,62 @@ public class MongoFactory implements FactoryBean<MongoClient> {
     @Override
     public boolean isSingleton() {
         return true;
+    }
+
+    private KeyManager[] getKeyManagers() {
+        String keystorePropertyPrefix = propertyPrefix + "keystore.";
+        // TODO: Old properties are kept for backwards compatibility, new ones were added in 3.18.1.
+        // So remove `keystore`, `keystorePassword` and `keyPassword` properties in 3.19.0+
+        String keystore = readPropertyValue(
+                keystorePropertyPrefix + "path",
+                String.class,
+                readPropertyValue(propertyPrefix + "keystore", String.class)
+        );
+        String keystorePassword = readPropertyValue(
+                keystorePropertyPrefix + "password",
+                String.class,
+                readPropertyValue(propertyPrefix + "keystorePassword", String.class, "")
+        );
+        String keyPassword = readPropertyValue(
+                keystorePropertyPrefix + "keyPassword",
+                String.class,
+                readPropertyValue(propertyPrefix + "keyPassword", String.class, "")
+        );
+        String keystoreType = readPropertyValue(keystorePropertyPrefix + "type", String.class);
+
+        if (keystore == null) {
+            return null;
+        }
+
+        try {
+            KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+            KeyStore keyStore = KeyStore.getInstance(keystoreType != null ? keystoreType : KeyStore.getDefaultType());
+            keyStore.load(new FileInputStream(keystore), keystorePassword.toCharArray());
+            keyManagerFactory.init(keyStore, keyPassword.toCharArray());
+            return keyManagerFactory.getKeyManagers();
+        } catch (Exception e) {
+            throw new IllegalStateException("Error creating the keystore for mongodb", e);
+        }
+    }
+
+    private TrustManager[] getTrustManagers() {
+        String truststorePropertyPrefix = propertyPrefix + "truststore.";
+        String truststorePath = readPropertyValue(truststorePropertyPrefix + "path", String.class);
+        String truststoreType = readPropertyValue(truststorePropertyPrefix + "type", String.class);
+        String truststorePassword = readPropertyValue(truststorePropertyPrefix + "password", String.class, "");
+
+        if (truststorePath == null) {
+            return null;
+        }
+
+        try {
+            TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            KeyStore keyStore = KeyStore.getInstance(truststoreType != null ? truststoreType : KeyStore.getDefaultType());
+            keyStore.load(new FileInputStream(truststorePath), truststorePassword.toCharArray());
+            trustManagerFactory.init(keyStore);
+            return trustManagerFactory.getTrustManagers();
+        } catch (Exception e) {
+            throw new IllegalStateException("Error creating the truststore for mongodb", e);
+        }
     }
 }

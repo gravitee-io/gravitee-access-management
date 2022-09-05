@@ -26,7 +26,10 @@ import io.vertx.core.http.HttpHeaders;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
 
+import java.net.URLDecoder;
 import java.util.Base64;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * Client Authentication method : client_secret_basic
@@ -67,8 +70,8 @@ public class ClientBasicAuthProvider implements ClientAuthProvider {
             if (colonIdx == -1) {
                 throw new IllegalArgumentException();
             }
-            String clientId = decoded.substring(0, colonIdx);
-            String clientSecret = decoded.substring(colonIdx + 1);
+            String clientId = URLDecoder.decode(decoded.substring(0, colonIdx),  UTF_8);
+            String clientSecret = URLDecoder.decode(decoded.substring(colonIdx + 1),  UTF_8);
             if (!client.getClientId().equals(clientId) || !client.getClientSecret().equals(clientSecret)) {
                 handler.handle(Future.failedFuture(new InvalidClientException(ClientAuthHandler.GENERIC_ERROR_MESSAGE, authenticationHeader())));
                 return;
