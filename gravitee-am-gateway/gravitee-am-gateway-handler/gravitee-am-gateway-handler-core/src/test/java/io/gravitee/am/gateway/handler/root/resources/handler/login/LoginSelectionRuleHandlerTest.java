@@ -25,10 +25,14 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import static io.gravitee.am.gateway.handler.root.resources.handler.login.LoginSocialAuthenticationHandler.SOCIAL_AUTHORIZE_URL_CONTEXT_KEY;
-import static io.gravitee.am.gateway.handler.root.resources.handler.login.LoginSocialAuthenticationHandler.SOCIAL_PROVIDER_CONTEXT_KEY;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -75,7 +79,7 @@ public class LoginSelectionRuleHandlerTest extends RxWebTestBase {
                     Map<String, String> urls = Map.of("idp-1", "https://mail.com", "idp-2", "https://another-mail.com");
 
                     rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-                    rc.put(SOCIAL_PROVIDER_CONTEXT_KEY, socialProviders);
+//                    rc.put(SOCIAL_PROVIDER_CONTEXT_KEY, socialProviders);
                     rc.put(SOCIAL_AUTHORIZE_URL_CONTEXT_KEY, urls);
                     rc.next();
                 });

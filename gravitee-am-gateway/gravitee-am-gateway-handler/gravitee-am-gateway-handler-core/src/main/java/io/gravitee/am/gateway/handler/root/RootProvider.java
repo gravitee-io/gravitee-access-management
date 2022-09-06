@@ -102,8 +102,6 @@ import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnLo
 import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnRegisterHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnResponseHandler;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
-import io.gravitee.am.gateway.handler.vertx.view.thymeleaf.GraviteeMessageResolver;
-import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.service.AuthenticationFlowContextService;
