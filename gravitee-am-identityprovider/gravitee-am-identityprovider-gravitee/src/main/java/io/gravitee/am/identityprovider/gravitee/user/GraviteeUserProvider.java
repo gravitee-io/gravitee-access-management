@@ -45,6 +45,12 @@ public class GraviteeUserProvider implements UserProvider {
     }
 
     @Override
+    public Single<User> updatePassword(User user, String password) {
+        // update will be performed by the repository layer called by the OrganizationUserService
+        return Single.just(user);
+    }
+
+    @Override
     public Completable delete(String id) {
         // delete will be performed by the repository layer called by the OrganizationUserService
         return Completable.complete();

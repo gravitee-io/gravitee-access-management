@@ -18,19 +18,17 @@ package io.gravitee.am.gateway.handler.ciba.service.request;
 import io.gravitee.am.common.ciba.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.common.utils.SecureRandomString;
+import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpHeaders;
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpMethod;
 import io.gravitee.common.http.HttpVersion;
 import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.MultiValueMap;
-import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
 
 import java.util.List;
-import java.util.Map;
 
 import static io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.ParamUtils.*;
 
@@ -123,7 +121,7 @@ public class CibaAuthenticationRequest extends OAuth2Request {
         cibaRequest.setUri(request.uri());
         cibaRequest.setContextPath(request.path() != null ? request.path().split("/")[0] : null);
         cibaRequest.setPath(request.path());
-        cibaRequest.setHeaders(extractHeaders(request));
+        cibaRequest.setHeaders(new VertxHttpHeaders(request.getDelegate().headers()));
         cibaRequest.setParameters(extractRequestParameters(request));
         cibaRequest.setSslSession(request.sslSession());
         cibaRequest.setMethod(request.method() != null ? HttpMethod.valueOf(request.method().name()) : null);
@@ -131,6 +129,7 @@ public class CibaAuthenticationRequest extends OAuth2Request {
         cibaRequest.setVersion(request.version() != null ? HttpVersion.valueOf(request.version().name()) : null);
         cibaRequest.setRemoteAddress(request.remoteAddress() != null ? request.remoteAddress().host() : null);
         cibaRequest.setLocalAddress(request.localAddress() != null ? request.localAddress().host() : null);
+        cibaRequest.setHost(request.host());
 
         final Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         cibaRequest.setClientId(client.getClientId());
@@ -155,17 +154,5 @@ public class CibaAuthenticationRequest extends OAuth2Request {
         MultiValueMap<String, String> requestParameters = new LinkedMultiValueMap<>(request.params().size());
         request.params().entries().forEach(entry -> requestParameters.add(entry.getKey(), entry.getValue()));
         return requestParameters;
-    }
-
-    private static HttpHeaders extractHeaders(HttpServerRequest request) {
-        MultiMap vertxHeaders = request.headers();
-        if (vertxHeaders != null) {
-            HttpHeaders headers = new HttpHeaders(vertxHeaders.size());
-            for (Map.Entry<String, String> header : vertxHeaders.entries()) {
-                headers.add(header.getKey(), header.getValue());
-            }
-            return headers;
-        }
-        return null;
     }
 }

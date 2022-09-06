@@ -75,6 +75,54 @@ public class ClientBasicAuthProviderTest {
     }
 
     @Test
+    public void shouldAuthenticateClient_urlEncodedCharacters() throws Exception {
+        Client client = mock(Client.class);
+        when(client.getClientId()).thenReturn("my\"client-id");
+        when(client.getClientSecret()).thenReturn("my\"client-secret");
+
+        HttpServerRequest httpServerRequest = mock(HttpServerRequest.class);
+        HeadersMultiMap vertxHttpHeaders = new HeadersMultiMap();
+        vertxHttpHeaders.add(HttpHeaders.AUTHORIZATION, "Basic bXklMjJjbGllbnQtaWQ6bXklMjJjbGllbnQtc2VjcmV0");
+        when(httpServerRequest.headers()).thenReturn(MultiMap.newInstance(vertxHttpHeaders));
+
+        RoutingContext context = mock(RoutingContext.class);
+        when(context.request()).thenReturn(httpServerRequest);
+
+        CountDownLatch latch = new CountDownLatch(1);
+        authProvider.handle(client, context, clientAsyncResult -> {
+            latch.countDown();
+            Assert.assertNotNull(clientAsyncResult);
+            Assert.assertNotNull(clientAsyncResult.result());
+        });
+
+        assertTrue(latch.await(10, TimeUnit.SECONDS));
+    }
+
+    @Test
+    public void shouldAuthenticateClient_SpecialCharacters_NotUrlEncoded() throws Exception {
+        Client client = mock(Client.class);
+        when(client.getClientId()).thenReturn("my\"client-id");
+        when(client.getClientSecret()).thenReturn("my\"client-secret");
+
+        HttpServerRequest httpServerRequest = mock(HttpServerRequest.class);
+        HeadersMultiMap vertxHttpHeaders = new HeadersMultiMap();
+        vertxHttpHeaders.add(HttpHeaders.AUTHORIZATION, "Basic bXkiY2xpZW50LWlkOm15ImNsaWVudC1zZWNyZXQ=");
+        when(httpServerRequest.headers()).thenReturn(MultiMap.newInstance(vertxHttpHeaders));
+
+        RoutingContext context = mock(RoutingContext.class);
+        when(context.request()).thenReturn(httpServerRequest);
+
+        CountDownLatch latch = new CountDownLatch(1);
+        authProvider.handle(client, context, clientAsyncResult -> {
+            latch.countDown();
+            Assert.assertNotNull(clientAsyncResult);
+            Assert.assertNotNull(clientAsyncResult.result());
+        });
+
+        assertTrue(latch.await(10, TimeUnit.SECONDS));
+    }
+
+    @Test
     public void shouldNotAuthenticateClient_badClientSecret() throws Exception {
         Client client = mock(Client.class);
         when(client.getClientId()).thenReturn("my-client-id");
@@ -98,4 +146,5 @@ public class ClientBasicAuthProviderTest {
 
         assertTrue(latch.await(10, TimeUnit.SECONDS));
     }
+
 }

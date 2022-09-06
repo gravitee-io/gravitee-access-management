@@ -47,7 +47,7 @@
                              [value]="domainWhitelistPattern || ''" (input)='domainWhitelistPattern = $event.target.value'
                       />
                     </mat-chip-list>
-                    <mat-hint>Enables Identifier-first login automatic redirection to the provider when the user email domain matches the list</mat-hint>
+                    <mat-hint>Filters the user based on their email domain matching the list, post authentication of the provider. The user will be logged out otherwise</mat-hint>
                   </mat-form-field>
             </div>
           </div>

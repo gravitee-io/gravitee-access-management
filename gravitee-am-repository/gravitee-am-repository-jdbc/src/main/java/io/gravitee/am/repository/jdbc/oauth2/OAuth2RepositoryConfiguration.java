@@ -92,7 +92,7 @@ public class OAuth2RepositoryConfiguration extends AbstractRepositoryConfigurati
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        initializeDatabaseSchema(getOauth2Pool(), environment);
+        initializeDatabaseSchema(getOauth2Pool(), environment, Scope.OAUTH2.getName()+ ".jdbc.");
     }
 
 }

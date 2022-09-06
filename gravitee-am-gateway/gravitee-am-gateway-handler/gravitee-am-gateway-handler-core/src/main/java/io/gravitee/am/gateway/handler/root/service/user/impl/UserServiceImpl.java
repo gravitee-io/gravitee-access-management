@@ -42,18 +42,28 @@ import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.TokenService;
-import io.gravitee.am.service.exception.*;
+import io.gravitee.am.service.exception.ClientNotFoundException;
+import io.gravitee.am.service.exception.EmailFormatInvalidException;
+import io.gravitee.am.service.exception.EnforceUserIdentityException;
+import io.gravitee.am.service.exception.UserAlreadyExistsException;
+import io.gravitee.am.service.exception.UserInvalidException;
+import io.gravitee.am.service.exception.UserNotFoundException;
+import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
 import io.gravitee.am.service.validators.email.EmailValidator;
 import io.gravitee.am.service.validators.user.UserValidator;
+import io.reactivex.Completable;
+import io.reactivex.Maybe;
+import io.reactivex.MaybeSource;
 import io.reactivex.Observable;
-import io.reactivex.*;
+import io.reactivex.Single;
 import io.reactivex.functions.Predicate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.*;
@@ -65,6 +75,13 @@ import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -255,7 +272,7 @@ public class UserServiceImpl implements UserService {
         final AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
 
         // if user registration is not completed and force registration option is disabled throw invalid account exception
-        if (user.isInactive() && !forceUserRegistration(domain, client)) {
+        if (user.isInactive() && !forceUserRegistration(accountSettings)) {
             return Single.error(new AccountInactiveException("User needs to complete the activation process"));
         }
 
@@ -263,20 +280,29 @@ public class UserServiceImpl implements UserService {
         return identityProviderManager.getUserProvider(user.getSource())
                 .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(user.getSource())))
                 // update the idp user
-                .flatMapSingle(userProvider -> userProvider.findByUsername(user.getUsername())
-                        .switchIfEmpty(Maybe.error(new UserNotFoundException(user.getUsername())))
-                        .flatMapSingle(idpUser -> {
-                            // set password
-                            ((DefaultUser) idpUser).setCredentials(user.getPassword());
-                            return userProvider.update(idpUser.getId(), idpUser);
-                        })
-                        .onErrorResumeNext(ex -> {
-                            if (ex instanceof UserNotFoundException) {
-                                // idp user not found, create its account
-                                return userProvider.create(convert(user));
-                            }
-                            return Single.error(ex);
-                        }))
+                .flatMapSingle(userProvider -> {
+                    // if user has already signed in at least once, update its password based on its technical id
+                    if (!ObjectUtils.isEmpty(user.getExternalId())) {
+                        DefaultUser idpUser = (DefaultUser) convert(user);
+                        idpUser.setId(user.getExternalId());
+                        idpUser.setCredentials(null);
+                        return userProvider.updatePassword(idpUser, user.getPassword());
+                    }
+
+                    // else retrieve its technical from the idp and then update the password
+                    return userProvider.findByUsername(user.getUsername())
+                            .switchIfEmpty(Maybe.error(new UserNotFoundException(user.getUsername())))
+                            .flatMapSingle(idpUser -> userProvider.updatePassword(idpUser, user.getPassword()))
+                            .onErrorResumeNext(ex -> {
+                                if (ex instanceof UserNotFoundException) {
+                                    // idp user not found, create its account, only if force registration is enabled
+                                    if (forceUserRegistration(accountSettings)) {
+                                        return userProvider.create(convert(user));
+                                    }
+                                }
+                                return Single.error(ex);
+                            });
+                })
                 // update the user in the AM repository
                 .flatMap(idpUser -> {
                     // update 'users' collection for management and audit purpose
@@ -336,11 +362,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Single<User> forgotPassword(ForgotPasswordParameters params, Client client, io.gravitee.am.identityprovider.api.User principal) {
+    public Completable forgotPassword(ForgotPasswordParameters params, Client client, io.gravitee.am.identityprovider.api.User principal) {
 
         final String email = params.getEmail();
         if (email != null && !emailValidator.validate(email)) {
-            return Single.error(new EmailFormatInvalidException(email));
+            return Completable  .error(new EmailFormatInvalidException(email));
         }
 
         return userService.findByDomainAndCriteria(domain.getId(), params.buildCriteria())
@@ -380,7 +406,8 @@ public class UserServiceImpl implements UserService {
                                 .switchIfEmpty(Single.error(new UserInvalidException("User [ " + user.getUsername() + " ] cannot be updated because its identity provider does not support user provisioning")))
                                 .flatMap(userProvider -> {
                                     // if user registration is not completed and force registration option is disabled throw invalid account exception
-                                    if (user.isInactive() && !forceUserRegistration(domain, client)) {
+                                    AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
+                                    if (user.isInactive() && !forceUserRegistration(accountSettings)) {
                                         return Single.error(new AccountInactiveException("User [ " + user.getUsername() + " ] needs to complete the activation process"));
                                     }
                                     // fetch latest information from the identity provider and return the user
@@ -397,7 +424,7 @@ public class UserServiceImpl implements UserService {
                     }
 
                     if (foundUsers.size() > 1) {
-                        throw new EnforceUserIdentityException();
+                        return Single.error(new EnforceUserIdentityException());
                     }
 
                     // if user has no email or email is unknown
@@ -452,7 +479,8 @@ public class UserServiceImpl implements UserService {
                     io.gravitee.am.identityprovider.api.User principal1 = reloadPrincipal(principal, user1);
                     auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(client).principal(principal1).type(EventType.FORGOT_PASSWORD_REQUESTED));
                 })
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(client).principal(principal).type(EventType.FORGOT_PASSWORD_REQUESTED).throwable(throwable)));
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(client).principal(principal).type(EventType.FORGOT_PASSWORD_REQUESTED).throwable(throwable)))
+                .ignoreElement();
     }
 
     @Override
@@ -516,8 +544,7 @@ public class UserServiceImpl implements UserService {
                 .defaultIfEmpty(Optional.empty());
     }
 
-    private boolean forceUserRegistration(Domain domain, Client client) {
-        AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
+    private boolean forceUserRegistration(AccountSettings accountSettings) {
         return accountSettings != null && accountSettings.isCompleteRegistrationWhenResetPassword();
     }
 

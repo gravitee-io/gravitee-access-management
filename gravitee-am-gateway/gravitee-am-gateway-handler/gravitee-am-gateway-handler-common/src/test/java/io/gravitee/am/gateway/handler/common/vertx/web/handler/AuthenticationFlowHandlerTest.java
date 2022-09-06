@@ -100,7 +100,12 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
 
         Factor factor = new Factor();
         factor.setFactorType(FactorType.SMS);
+
+        Factor recoveryCodeFactor = new Factor();
+        recoveryCodeFactor.setFactorType(FactorType.RECOVERY_CODE);
+
         when(factorManager.getFactor(anyString())).thenReturn(factor);
+        when(factorManager.getFactor("factor-recovery-code")).thenReturn(recoveryCodeFactor);
 
         router.route("/login")
                 .order(Integer.MIN_VALUE)
@@ -199,6 +204,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             MFASettings mfaSettings = new MFASettings();
             mfaSettings.setAdaptiveAuthenticationRule("{context.attributes['geoip']['country_iso_code'] == 'FR'");
+            client.setMfaSettings(mfaSettings);
             rc.put(ConstantKeys.GEOIP_KEY, new JsonObject().put("country_iso_code", "FR").getMap());
 
             // set user
@@ -329,7 +335,6 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
                 HttpStatusCode.OK_200, "OK");
     }
 
-
     @Test
     public void shouldContinue_user_device_known() throws Exception {
         router.route().order(-1).handler(rc -> {
@@ -355,10 +360,91 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             rc.next();
         });
 
+
         testRequest(
                 HttpMethod.GET,
                 "/login",
                 HttpStatusCode.OK_200, "OK");
+    }
+
+
+    @Test
+    public void shouldRedirectToMFAChallengePage_device_remembered_but_no_matching_active_factor() throws Exception {
+        router.route().order(-1).handler(rc -> {
+            // set client
+            Client client = new Client();
+            client.setFactors(Collections.singleton("factor-1"));
+            rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+            // set user
+            MFASettings mfaSettings = new MFASettings();
+            final RememberDeviceSettings rememberDevice = new RememberDeviceSettings();
+            rememberDevice.setActive(true);
+            mfaSettings.setRememberDevice(rememberDevice);
+            rc.session().put(DEVICE_ALREADY_EXISTS_KEY, true);
+            client.setMfaSettings(mfaSettings);
+            // set user
+            EnrolledFactor enrolledFactor = new EnrolledFactor();
+            enrolledFactor.setFactorId("factor-1");
+            enrolledFactor.setStatus(PENDING_ACTIVATION);
+            io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
+            endUser.setFactors(Collections.singletonList(enrolledFactor));
+            rc.getDelegate().setUser(new User(endUser));
+            rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
+            rc.next();
+        });
+
+        testRequest(
+                HttpMethod.GET, "/login",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.endsWith("/mfa/challenge"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldRedirectToMFAChallengePage_device_remembered_but_active_factor_is_recovery_code() throws Exception {
+        router.route().order(-1).handler(rc -> {
+            // set client
+            Client client = new Client();
+            client.setFactors(Set.of("factor-recovery-code", "factor-id"));
+            rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+            // set user
+            MFASettings mfaSettings = new MFASettings();
+            final RememberDeviceSettings rememberDevice = new RememberDeviceSettings();
+            rememberDevice.setActive(true);
+            mfaSettings.setRememberDevice(rememberDevice);
+            rc.session().put(DEVICE_ALREADY_EXISTS_KEY, true);
+            client.setMfaSettings(mfaSettings);
+
+            // set user
+            EnrolledFactor enrolledRecovery = new EnrolledFactor();
+            enrolledRecovery.setFactorId("factor-recovery-code");
+            enrolledRecovery.setStatus(ACTIVATED);
+
+            // set user
+            EnrolledFactor enrolledFactor = new EnrolledFactor();
+            enrolledFactor.setFactorId("factor-id");
+            enrolledFactor.setStatus(PENDING_ACTIVATION);
+
+            io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
+            endUser.setFactors(List.of(enrolledRecovery, enrolledFactor));
+            rc.getDelegate().setUser(new User(endUser));
+            rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, false);
+            rc.next();
+        });
+
+        testRequest(
+                HttpMethod.GET, "/login",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.endsWith("/mfa/challenge"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
     }
 
     @Test

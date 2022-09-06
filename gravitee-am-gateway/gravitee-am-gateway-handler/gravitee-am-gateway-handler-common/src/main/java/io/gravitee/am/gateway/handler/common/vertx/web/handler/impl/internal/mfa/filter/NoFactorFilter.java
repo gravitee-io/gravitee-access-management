@@ -44,8 +44,8 @@ public class NoFactorFilter implements Supplier<Boolean> {
         return isNull(factors) || factors.isEmpty() || onlyRecoveryCodeFactor();
     }
 
-    private boolean onlyRecoveryCodeFactor(){
-        if(factors.size() == 1){
+    private boolean onlyRecoveryCodeFactor() {
+        if (factors.size() == 1) {
             final String factorId = factors.stream().findFirst().get();
             final Factor factor = factorManager.getFactor(factorId);
             return factor.getFactorType().equals(FactorType.RECOVERY_CODE);

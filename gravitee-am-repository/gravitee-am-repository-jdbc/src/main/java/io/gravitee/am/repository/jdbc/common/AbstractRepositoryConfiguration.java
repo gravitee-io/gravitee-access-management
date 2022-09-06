@@ -18,6 +18,7 @@ package io.gravitee.am.repository.jdbc.common;
 import io.gravitee.am.repository.jdbc.common.dialect.DatabaseDialectHelper;
 import io.gravitee.am.repository.jdbc.exceptions.RepositoryInitializationException;
 import io.gravitee.am.repository.jdbc.provider.impl.R2DBCPoolWrapper;
+import io.gravitee.am.repository.jdbc.provider.utils.TlsOptionsHelper;
 import io.r2dbc.spi.ConnectionFactory;
 import liquibase.Contexts;
 import liquibase.Liquibase;
@@ -36,6 +37,7 @@ import org.springframework.data.r2dbc.dialect.DialectResolver;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
 import org.springframework.transaction.ReactiveTransactionManager;
 
+import javax.net.ssl.SSLSocketFactory;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -103,7 +105,7 @@ public abstract class AbstractRepositoryConfiguration extends AbstractR2dbcConfi
         return new R2dbcTransactionManager(connectionFactory);
     }
 
-    protected final void initializeDatabaseSchema(R2DBCPoolWrapper poolWrapper, Environment environment) throws SQLException {
+    protected final void initializeDatabaseSchema(R2DBCPoolWrapper poolWrapper, Environment environment, String prefix) throws SQLException {
         Boolean enabled = environment.getProperty("liquibase.enabled", Boolean.class, true);
         if (enabled) {
             StringBuilder builder = new StringBuilder("jdbc:");
@@ -116,7 +118,7 @@ public abstract class AbstractRepositoryConfiguration extends AbstractR2dbcConfi
 
             final String jdbcUrl = builder.append(SQLSERVER_DRIVER.equals(getDriver()) ? ";databaseName=" : "/").append(poolWrapper.getJdbcDatabase()).toString();
 
-            try (Connection connection = DriverManager.getConnection(jdbcUrl,
+            try (Connection connection = DriverManager.getConnection(TlsOptionsHelper.setSSLOptions(jdbcUrl, environment, prefix, poolWrapper.getJdbcDriver()),
                     poolWrapper.getJdbcUsername(),
                     poolWrapper.getJdbcPassword())) {
                 LOGGER.debug("Running Liquibase on {}", jdbcUrl);

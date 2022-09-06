@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.common.email.impl;
 
+import com.google.common.base.Strings;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
@@ -264,6 +265,7 @@ public class EmailServiceImpl implements EmailService {
 
         EmailWrapper wrapper = new EmailWrapper(email);
         wrapper.setExpireAt(expiresAt);
+        wrapper.setFromDefaultTemplate(emailTpl.isDefaultTemplate());
         return wrapper;
     }
 

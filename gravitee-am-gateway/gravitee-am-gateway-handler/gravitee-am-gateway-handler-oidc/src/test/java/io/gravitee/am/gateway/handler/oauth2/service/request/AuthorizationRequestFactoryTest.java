@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.oauth2.service.request;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.oauth2.resources.request.AuthorizationRequestFactory;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.http.HttpServerResponse;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
@@ -57,12 +58,15 @@ public class AuthorizationRequestFactoryTest {
         io.vertx.core.http.HttpServerRequest httpServerRequest = mock(io.vertx.core.http.HttpServerRequest.class);
         when(httpServerRequest.method()).thenReturn(HttpMethod.POST);
 
+        HttpServerResponse httpServerResponse = mock(HttpServerResponse.class);
+
         HttpServerRequest rxHttpServerRequest = mock(HttpServerRequest.class);
         when(rxHttpServerRequest.params()).thenReturn(rxMultiMap);
         when(rxHttpServerRequest.params().get(Parameters.CLIENT_ID)).thenReturn("client-id");
         when(rxHttpServerRequest.params().get(Parameters.SCOPE)).thenReturn("scope");
         when(rxHttpServerRequest.params().entries()).thenReturn(entries);
         when(rxHttpServerRequest.getDelegate()).thenReturn(httpServerRequest);
+        when(rxHttpServerRequest.getDelegate().response()).thenReturn(httpServerResponse);
 
         RoutingContext routingContext = mock(RoutingContext.class);
         when(routingContext.request()).thenReturn(rxHttpServerRequest);

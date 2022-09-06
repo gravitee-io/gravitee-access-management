@@ -95,9 +95,12 @@ public class SmtpResourceProvider implements EmailSenderProvider {
     }
 
     @Override
-    public Completable sendMessage(Email message) {
+    public Completable sendMessage(Email message, boolean overrideFrom) {
         executorService.execute(() -> {
             try {
+                if (overrideFrom) {
+                    message.setFrom(this.configuration.getFrom());
+                }
                 this.mailSender.send(message);
             } catch (Exception e) {
                 LOGGER.error("Message emission fails", e);

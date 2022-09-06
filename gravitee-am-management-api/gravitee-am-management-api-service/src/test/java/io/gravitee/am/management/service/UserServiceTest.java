@@ -456,7 +456,7 @@ public class UserServiceTest {
 
         UserProvider userProvider = mock(UserProvider.class);
         when(userProvider.findByUsername(user.getUsername())).thenReturn(Maybe.just(idpUser));
-        when(userProvider.update(anyString(), any())).thenReturn(Single.just(idpUser));
+        when(userProvider.updatePassword(any(), any())).thenReturn(Single.just(idpUser));
 
         doReturn(true).when(passwordService).isValid(eq(password), eq(null), any());
         when(commonUserService.findById(eq(ReferenceType.DOMAIN), eq(domain.getId()), eq("user-id"))).thenReturn(Single.just(user));

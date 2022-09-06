@@ -108,7 +108,7 @@ slack-pass-fail-post-step: &slack-pass-fail-post-step
               }
             ]
           }
-        event: pass        
+        event: pass
 
 orbs:
   gravitee: gravitee-io/gravitee@1.0
@@ -289,8 +289,8 @@ jobs:
             curl https://repo.maven.apache.org/maven2/io/gravitee/am/resource/gravitee-am-resource-mfa-mock/3.12.1/gravitee-am-resource-mfa-mock-3.12.1.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-am-resource-mfa-mock-3.12.1.zip
             cp gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-am-resource-mfa-mock-3.12.1.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
             # copy r2dbc & jdbc drivers
-            curl https://jdbc.postgresql.org/download/postgresql-42.3.3.jar -o postgresql-42.3.3.jar 
-            curl https://repo1.maven.org/maven2/io/r2dbc/r2dbc-postgresql/0.8.9.RELEASE/r2dbc-postgresql-0.8.9.RELEASE.jar -o r2dbc-postgresql-0.8.9.RELEASE.jar 
+            curl https://jdbc.postgresql.org/download/postgresql-42.3.3.jar -o postgresql-42.3.3.jar
+            curl https://repo1.maven.org/maven2/io/r2dbc/r2dbc-postgresql/0.8.9.RELEASE/r2dbc-postgresql-0.8.9.RELEASE.jar -o r2dbc-postgresql-0.8.9.RELEASE.jar
 
             mkdir -p gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc
             mkdir -p gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc
@@ -410,8 +410,8 @@ jobs:
             curl https://repo.maven.apache.org/maven2/io/gravitee/am/resource/gravitee-am-resource-mfa-mock/3.12.1/gravitee-am-resource-mfa-mock-3.12.1.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-am-resource-mfa-mock-3.12.1.zip
             cp gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-am-resource-mfa-mock-3.12.1.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
             # copy r2dbc & jdbc drivers
-            curl https://jdbc.postgresql.org/download/postgresql-42.3.3.jar -o postgresql-42.3.3.jar 
-            curl https://repo1.maven.org/maven2/io/r2dbc/r2dbc-postgresql/0.8.9.RELEASE/r2dbc-postgresql-0.8.9.RELEASE.jar -o r2dbc-postgresql-0.8.9.RELEASE.jar 
+            curl https://jdbc.postgresql.org/download/postgresql-42.3.3.jar -o postgresql-42.3.3.jar
+            curl https://repo1.maven.org/maven2/io/r2dbc/r2dbc-postgresql/0.8.9.RELEASE/r2dbc-postgresql-0.8.9.RELEASE.jar -o r2dbc-postgresql-0.8.9.RELEASE.jar
 
             mkdir -p gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc
             mkdir -p gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc
@@ -531,8 +531,8 @@ jobs:
             echo "export TAG=$TAG" >> $BASH_ENV
             echo "Docker images will be tagged with: ${TAG}"
             echo $TAG > /tmp/docker-tag.txt
-            SLACK_MESSAGE="AM Docker Images Snyk Scan Job has not been executed"      
-            echo "export SLACK_MESSAGE='${SLACK_MESSAGE}'" >> $BASH_ENV            
+            SLACK_MESSAGE="AM Docker Images Snyk Scan Job has not been executed"
+            echo "export SLACK_MESSAGE='${SLACK_MESSAGE}'" >> $BASH_ENV
       - run:
           name: Build Management API Docker Image to Azure Registry
           when: always
@@ -543,7 +543,7 @@ jobs:
             echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
             docker build -f docker/management-api/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} /tmp
             IMAGE1=${IMAGE_TAG}
-            echo "export IMAGE1='${IMAGE1}'" >> $BASH_ENV   
+            echo "export IMAGE1='${IMAGE1}'" >> $BASH_ENV
       - docker-scan
       - run:
           name: Push API Docker image
@@ -557,7 +557,7 @@ jobs:
           command: |
             export AM_VERSION=$(mvn -s /tmp/.circleci.settings.xml -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
             export IMAGE_TAG=graviteeio.azurecr.io/am-gateway:${TAG}
-            echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV            
+            echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
             docker build -f docker/gateway/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} /tmp
             IMAGE2=${IMAGE_TAG}
             echo "export IMAGE2='${IMAGE2}'" >> $BASH_ENV
@@ -576,13 +576,13 @@ jobs:
             cp -fr docker/management-ui/run.sh /tmp/
             export AM_VERSION=$(mvn -s /tmp/.circleci.settings.xml -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
             export IMAGE_TAG=graviteeio.azurecr.io/am-management-ui:${TAG}
-            echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV            
+            echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
             docker build -f docker/management-ui/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} /tmp
             docker tag ${IMAGE_TAG} ${IMAGE_TAG}-ee
             IMAGE3=${IMAGE_TAG}
             SLACK_MESSAGE1="-----AM Docker Images Snyk Scan-----"
             SLACK_MESSAGE2="Following images are scanned for application vulnerabilities"
-            SLACK_MESSAGE="${SLACK_MESSAGE1}\n${SLACK_MESSAGE2}\n\n${IMAGE1}\n${IMAGE2}\n${IMAGE3}"      
+            SLACK_MESSAGE="${SLACK_MESSAGE1}\n${SLACK_MESSAGE2}\n\n${IMAGE1}\n${IMAGE2}\n${IMAGE3}"
             echo "export SLACK_MESSAGE='${SLACK_MESSAGE}'" >> $BASH_ENV
       - docker-scan
       - notify-snyk-result
@@ -667,7 +667,7 @@ jobs:
             else
             # create namespace if not exist (dry-run will generate YAML manifest and apply will create or update the ns using the manifest)
             kubectl create namespace am-${CIRCLE_BRANCH//./-}-dev --dry-run=client -o yaml | kubectl apply -f -
-            # replace verison Pattern into generic maint configuration 
+            # replace verison Pattern into generic maint configuration
             sed -i 's#__BRANCH_NAME_SANITIZED__#'${CIRCLE_BRANCH//./-}'#g' ./cloud-am/devs-preprod/values-maint.yaml
             helm upgrade --repo https://helm.gravitee.io \
                                     --install am-${CIRCLE_BRANCH//./-} \

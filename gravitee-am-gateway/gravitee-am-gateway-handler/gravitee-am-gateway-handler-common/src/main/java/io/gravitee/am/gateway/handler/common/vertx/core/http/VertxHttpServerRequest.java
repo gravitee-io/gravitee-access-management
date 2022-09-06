@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx.core.http;
 
-import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpMethod;
 import io.gravitee.common.http.HttpVersion;
 import io.gravitee.common.util.LinkedMultiValueMap;
@@ -24,6 +23,7 @@ import io.gravitee.common.utils.UUID;
 import io.gravitee.gateway.api.Request;
 import io.gravitee.gateway.api.buffer.Buffer;
 import io.gravitee.gateway.api.handler.Handler;
+import io.gravitee.gateway.api.http.HttpHeaders;
 import io.gravitee.gateway.api.http2.HttpFrame;
 import io.gravitee.gateway.api.ws.WebSocket;
 import io.gravitee.reporter.api.http.Metrics;
@@ -51,11 +51,13 @@ public class VertxHttpServerRequest implements Request {
     private final long timestamp;
     private final HttpServerRequest httpServerRequest;
     private MultiValueMap<String, String> queryParameters = null;
-    private HttpHeaders headers = null;
+    private HttpHeaders headers;
     protected final Metrics metrics;
     private Handler<Long> timeoutHandler;
     private boolean decoded;
     private MultiValueMap<String, String> pathParameters = null;
+
+    private io.vertx.reactivex.core.MultiMap originalParams;
 
     public VertxHttpServerRequest(HttpServerRequest httpServerRequest) {
         this.httpServerRequest = httpServerRequest;
@@ -63,7 +65,7 @@ public class VertxHttpServerRequest implements Request {
         this.id = UUID.toString(UUID.random());
         this.transactionId = UUID.toString(UUID.random());
         this.contextPath = httpServerRequest.path() != null ? httpServerRequest.path().split("/")[0] : null;
-
+        this.headers = new VertxHttpHeaders(httpServerRequest.headers());
         this.metrics = Metrics.on(timestamp).build();
         this.metrics.setRequestId(id());
         this.metrics.setHttpMethod(method());
@@ -71,7 +73,19 @@ public class VertxHttpServerRequest implements Request {
         this.metrics.setRemoteAddress(remoteAddress());
         this.metrics.setHost(httpServerRequest.host());
         this.metrics.setUri(uri());
-        this.metrics.setUserAgent(httpServerRequest.getHeader(HttpHeaders.USER_AGENT));
+        this.metrics.setUserAgent(httpServerRequest.getHeader(io.vertx.core.http.HttpHeaders.USER_AGENT));
+    }
+
+    /**
+     * Introduced for https://github.com/gravitee-io/issues/issues/7958
+     * This constructor allows to add parameters to the query parameters known by the httpServerRequest param.
+     * This should be used only for some specific cases where a previous state has to be restored in order to perform some check.
+     * @param httpServerRequest
+     * @param originalParams
+     */
+    public VertxHttpServerRequest(HttpServerRequest httpServerRequest, io.vertx.reactivex.core.MultiMap originalParams) {
+        this(httpServerRequest);
+        this.originalParams = originalParams;
     }
 
     public VertxHttpServerRequest(HttpServerRequest httpServerRequest, boolean decoded) {
@@ -136,6 +150,10 @@ public class VertxHttpServerRequest implements Request {
             }
         }
 
+        if (this.originalParams != null) {
+            originalParams.forEach((k,v) -> queryParameters.set(k, v));
+        }
+
         return queryParameters;
     }
 
@@ -150,14 +168,6 @@ public class VertxHttpServerRequest implements Request {
 
     @Override
     public HttpHeaders headers() {
-        if (headers == null) {
-            MultiMap vertxHeaders = httpServerRequest.headers();
-            headers = new HttpHeaders(vertxHeaders.size());
-            for(Map.Entry<String, String> header : vertxHeaders) {
-                headers.add(header.getKey(), header.getValue());
-            }
-        }
-
         return headers;
     }
 
@@ -260,6 +270,17 @@ public class VertxHttpServerRequest implements Request {
 
     public Request customFrameHandler(Handler<HttpFrame> frameHandler) {
         return this;
+    }
+
+    @Override
+    public Request closeHandler(Handler<Void> handler) {
+        httpServerRequest.connection().closeHandler(handler::handle);
+        return this;
+    }
+
+    @Override
+    public String host() {
+        return this.httpServerRequest.host();
     }
 
 }

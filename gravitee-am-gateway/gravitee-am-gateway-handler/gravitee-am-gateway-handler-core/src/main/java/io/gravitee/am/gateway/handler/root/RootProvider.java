@@ -102,8 +102,10 @@ import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnLo
 import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnRegisterHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnResponseHandler;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
+import io.gravitee.am.gateway.handler.vertx.view.thymeleaf.GraviteeMessageResolver;
 import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.DeviceService;
@@ -257,8 +259,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
     private FactorService factorService;
 
     @Autowired
-    @Qualifier("managementJwtBuilder")
-    private JWTBuilder jwtBuilder;
+    private GatewayMetricProvider gatewayMetricProvider;
 
     @Autowired
     @Qualifier("gwMessageResolver")
@@ -364,7 +365,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(new LogoutCallbackEndpoint(domain, clientSyncService, jwtService, userService, authenticationFlowContextService, certificateManager));
 
         // SSO/Social login route
-        Handler<RoutingContext> socialAuthHandler = SocialAuthHandler.create(new SocialAuthenticationProvider(userAuthenticationManager, eventManager, identityProviderManager, domain));
+        Handler<RoutingContext> socialAuthHandler = SocialAuthHandler.create(new SocialAuthenticationProvider(userAuthenticationManager, eventManager, identityProviderManager, domain, gatewayMetricProvider));
         Handler<RoutingContext> loginCallbackParseHandler = new LoginCallbackParseHandler(clientSyncService, identityProviderManager, jwtService, certificateManager);
         Handler<RoutingContext> loginCallbackOpenIDConnectFlowHandler = new LoginCallbackOpenIDConnectFlowHandler(thymeleafTemplateEngine);
         Handler<RoutingContext> loginCallbackFailureHandler = new LoginCallbackFailureHandler(domain, authenticationFlowContextService, identityProviderManager);
@@ -492,13 +493,13 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(clientRequestParseHandler)
                 .handler(forgotPasswordAccessHandler)
                 .handler(localeHandler)
-                .handler(new ForgotPasswordEndpoint(thymeleafTemplateEngine, domain, botDetectionManager, userService));
+                .handler(new ForgotPasswordEndpoint(thymeleafTemplateEngine, domain, botDetectionManager));
         rootRouter.route(HttpMethod.POST, PATH_FORGOT_PASSWORD)
                 .handler(new ForgotPasswordSubmissionRequestParseHandler(domain))
                 .handler(clientRequestParseHandler)
                 .handler(botDetectionHandler)
                 .handler(forgotPasswordAccessHandler)
-                .handler(new ForgotPasswordSubmissionEndpoint(userService, domain, jwtBuilder));
+                .handler(new ForgotPasswordSubmissionEndpoint(userService, domain));
         rootRouter.route(HttpMethod.GET, PATH_RESET_PASSWORD)
                 .handler(new ResetPasswordRequestParseHandler(userService))
                 .handler(clientRequestParseHandlerOptional)

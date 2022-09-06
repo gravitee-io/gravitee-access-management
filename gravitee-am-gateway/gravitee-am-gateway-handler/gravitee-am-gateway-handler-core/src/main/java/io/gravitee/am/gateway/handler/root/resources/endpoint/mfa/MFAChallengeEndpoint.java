@@ -75,6 +75,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
@@ -177,7 +178,7 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
             if (deviceId != null) {
                 routingContext.put(ConstantKeys.DEVICE_ID, deviceId);
             }
-            if (endUser.getFactors() != null && endUser.getFactors().size() > 1) {
+            if (enableAlternateMFAOptions(client, endUser)) {
                 routingContext.put(MFA_ALTERNATIVES_ENABLE_KEY, true);
                 routingContext.put(MFA_ALTERNATIVES_ACTION_KEY, resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/mfa/challenge/alternatives", queryParams, true));
             }
@@ -579,5 +580,24 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
         enrolledFactor.setSecurity(new EnrolledFactorSecurity(WEBAUTHN_CREDENTIAL, credentialId));
 
         return enrolledFactor;
+    }
+
+    private boolean enableAlternateMFAOptions(Client client, io.gravitee.am.model.User endUser ){
+        if(endUser.getFactors() == null || endUser.getFactors().size() <= 1) {
+            return false;
+        }
+        else if(client.getFactors() == null || client.getFactors().size() <= 1){
+            return false;
+        }
+        else {
+            final Set<String> clientFactorIds = client.getFactors();
+            final List<EnrolledFactor> activeEnrolledFactors = endUser.getFactors()
+                    .stream()
+                    .filter(enrolledFactor -> factorManager.get(enrolledFactor.getFactorId()) != null)
+                    .filter(enrolledFactor -> clientFactorIds.contains(enrolledFactor.getFactorId()))
+                    .collect(Collectors.toList());
+
+            return activeEnrolledFactors.size() > 1;
+        }
     }
 }

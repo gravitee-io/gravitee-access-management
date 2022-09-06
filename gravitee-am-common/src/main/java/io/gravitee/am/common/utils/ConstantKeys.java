@@ -26,6 +26,7 @@ public interface ConstantKeys {
     String USER_CONTEXT_KEY = "user";
     String DOMAIN_CONTEXT_KEY = "domain";
     String PROVIDER_CONTEXT_KEY = "provider";
+    String IDENTITY_PROVIDER_CONTEXT_KEY = "identityProvider";
     String PARAM_CONTEXT_KEY = "param";
     String SCOPES_CONTEXT_KEY = "scopes";
     String AUTHORIZATION_REQUEST_CONTEXT_KEY = "authorization_request";

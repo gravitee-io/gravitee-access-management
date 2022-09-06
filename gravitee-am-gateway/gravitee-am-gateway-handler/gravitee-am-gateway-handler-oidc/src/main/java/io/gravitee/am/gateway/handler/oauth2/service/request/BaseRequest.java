@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.request;
 
-import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpMethod;
 import io.gravitee.common.http.HttpVersion;
 import io.gravitee.common.util.LinkedMultiValueMap;
@@ -24,6 +23,7 @@ import io.gravitee.gateway.api.Request;
 import io.gravitee.gateway.api.Response;
 import io.gravitee.gateway.api.buffer.Buffer;
 import io.gravitee.gateway.api.handler.Handler;
+import io.gravitee.gateway.api.http.HttpHeaders;
 import io.gravitee.gateway.api.stream.ReadStream;
 import io.gravitee.gateway.api.ws.WebSocket;
 import io.gravitee.reporter.api.http.Metrics;
@@ -54,6 +54,7 @@ public abstract class BaseRequest implements Request {
     private HttpVersion version;
     private SSLSession sslSession;
     private Response httpResponse;
+    private String host;
 
     @Override
     public String id() {
@@ -216,6 +217,15 @@ public abstract class BaseRequest implements Request {
         this.additionalParameters = additionalParameters;
     }
 
+    @Override
+    public String host() {
+        return host;
+    }
+
+    public void setHost(String host) {
+        this.host = host;
+    }
+
     /**
      * ---------------------------------------------
      * ---------------------------------------------
@@ -340,6 +350,11 @@ public abstract class BaseRequest implements Request {
 
     @Override
     public ReadStream<Buffer> endHandler(Handler<Void> endHandler) {
+        return null;
+    }
+
+    @Override
+    public Request closeHandler(Handler<Void> handler) {
         return null;
     }
 }

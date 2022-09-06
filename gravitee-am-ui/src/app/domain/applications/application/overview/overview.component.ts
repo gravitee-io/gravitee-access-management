@@ -65,7 +65,7 @@ export class ApplicationOverviewComponent implements OnInit {
       this.clientSecret = applicationOAuthSettings.clientSecret;
       this.redirectUri = applicationOAuthSettings.redirectUris && applicationOAuthSettings.redirectUris[0] !== undefined ? applicationOAuthSettings.redirectUris[0] : 'Not defined';
       this.encodedRedirectUri = encodeURIComponent(this.redirectUri);
-      this.authorizationHeader = btoa(this.clientId + ':' + this.clientSecret);
+      this.authorizationHeader = btoa(encodeURIComponent(this.clientId) + ':' + encodeURIComponent(this.clientSecret));
       this.tokenEndpointAuthMethod = applicationOAuthSettings.tokenEndpointAuthMethod;
       this.forcePKCE = applicationOAuthSettings.forcePKCE;
     } else {
