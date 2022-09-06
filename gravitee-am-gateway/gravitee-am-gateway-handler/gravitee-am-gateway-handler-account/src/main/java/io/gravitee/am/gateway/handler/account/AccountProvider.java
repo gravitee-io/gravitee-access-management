@@ -141,6 +141,9 @@ public class AccountProvider extends AbstractService<ProtocolProvider> implement
             accountRouter.get(AccountRoutes.WEBAUTHN_CREDENTIALS_BY_ID.getRoute())
                     .handler(accountHandler::getUser)
                     .handler(accountWebAuthnCredentialsEndpointHandler::getEnrolledWebAuthnCredential);
+            accountRouter.delete(AccountRoutes.WEBAUTHN_CREDENTIALS_BY_ID.getRoute())
+                    .handler(accountHandler::getUser)
+                    .handler(accountWebAuthnCredentialsEndpointHandler::removeEnrolledWebAuthnCredential);
 
             // Consent routes
             AccountConsentEndpointHandler accountConsentEndpointHandler = new AccountConsentEndpointHandler(accountService);
