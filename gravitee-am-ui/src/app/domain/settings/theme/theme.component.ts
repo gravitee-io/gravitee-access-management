@@ -351,7 +351,7 @@ export class DomainSettingsThemeComponent implements OnInit {
     if (this.previewedTemplateContent && this.preview) {
       const doc = this.preview.nativeElement.contentDocument || this.preview.nativeElement.contentWindow;
       if (doc) {
-        doc.documentElement.innerHTML = this.selectedTemplateContent;
+        doc.documentElement.innerHTML = this.previewedTemplateContent;
         this.fixAssetUrl(doc, "link", "href");
         this.fixAssetUrl(doc, "img", "src");
         this.fixAssetUrl(doc, "script", "src");
@@ -361,7 +361,8 @@ export class DomainSettingsThemeComponent implements OnInit {
 
   private resizeIframe() {
     if (this.previewedTemplateContent && this.preview) {
-      this.preview.nativeElement.style.height = this.preview.nativeElement.contentWindow.document.body.scrollHeight + 20 + 'px';
+      const height = window.innerHeight * 0.80;
+      this.preview.nativeElement.style.height = height + 'px';
     }
   }
 
