@@ -346,10 +346,12 @@ div.short-section > input + input {
     color: var(--error-text-color);
     flex-grow: 1;
     padding: 0;
+    height: auto;
 }
 
 .error-text > span {
     padding-top: 7px;
+    padding-bottom: 7px;
 }
 
 .large-font {
