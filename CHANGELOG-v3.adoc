@@ -1,6 +1,28 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/594?closed=1[AM - 3.18.5 (2022-09-08)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- Missing authorizeUrls variable in the webauthn login page https://github.com/gravitee-io/issues/issues/8404[#8404]
+- Self account management - missing delete method for the webauthn credentials https://github.com/gravitee-io/issues/issues/8415[#8415]
+
+*_Idp_*
+
+- [MongoDB] cannot reset password if the AM external_id is not the same as the IdP _id field https://github.com/gravitee-io/issues/issues/8407[#8407]
+
+=== Improvements
+
+*_Gateway_*
+
+- Self account management - missing delete method for the webauthn credentials https://github.com/gravitee-io/issues/issues/8415[#8415]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/587?closed=1[AM - 3.18.4 (2022-09-01)]
 
 === Bug fixes
