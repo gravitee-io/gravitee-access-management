@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.account.resources;
 
 import io.gravitee.am.gateway.handler.account.services.AccountService;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.User;
 import io.vertx.reactivex.ext.web.RoutingContext;
 
@@ -57,6 +58,22 @@ public class AccountWebAuthnCredentialsEndpointHandler {
         accountService.getWebAuthnCredential(credentialId)
                 .subscribe(
                         credential -> AccountResponseHandler.handleDefaultResponse(routingContext, credential),
+                        error -> routingContext.fail(error)
+                );
+    }
+
+    /**
+     * Remove enrolled WebAuthn credential for the current user
+     *
+     * @param routingContext the routingContext holding the current user
+     */
+    public void removeEnrolledWebAuthnCredential(RoutingContext routingContext) {
+        final User user = routingContext.get(ConstantKeys.USER_CONTEXT_KEY);
+        final String credentialId = routingContext.request().getParam("credentialId");
+
+        accountService.removeWebAuthnCredential(user.getId(), credentialId, new DefaultUser(user))
+                .subscribe(
+                        () -> AccountResponseHandler.handleNoBodyResponse(routingContext),
                         error -> routingContext.fail(error)
                 );
     }

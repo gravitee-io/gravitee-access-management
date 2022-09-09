@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.account.services.impl;
 
+import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.gateway.handler.account.services.AccountService;
@@ -32,6 +33,8 @@ import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.service.*;
 import io.gravitee.am.service.exception.*;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import io.gravitee.am.service.reporter.builder.management.CredentialAuditBuilder;
 import io.gravitee.am.service.validators.user.UserValidator;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
@@ -83,6 +86,9 @@ public class AccountServiceImpl implements AccountService {
 
     @Autowired
     private ScopeApprovalService scopeApprovalService;
+
+    @Autowired
+    private AuditService auditService;
 
     @Override
     public Maybe<User> get(String userId) {
@@ -180,6 +186,20 @@ public class AccountServiceImpl implements AccountService {
                 .map(credential -> {
                     removeSensitiveData(credential);
                     return credential;
+                });
+    }
+
+    @Override
+    public Completable removeWebAuthnCredential(String userId, String id, io.gravitee.am.identityprovider.api.User principal) {
+        return credentialService.findById(id)
+                .flatMapCompletable(credential -> {
+                    if (!userId.equals(credential.getUserId())) {
+                        LOGGER.debug("Webauthn credential ID {} does not belong to the user ID {}, skip delete action", id, userId);
+                        return Completable.complete();
+                    }
+                    return credentialService.delete(id)
+                            .doOnComplete(() -> auditService.report(AuditBuilder.builder(CredentialAuditBuilder.class).principal(principal).type(EventType.CREDENTIAL_DELETED).credential(credential)))
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(CredentialAuditBuilder.class).principal(principal).type(EventType.CREDENTIAL_DELETED).throwable(throwable)));
                 });
     }
 

@@ -430,6 +430,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         rootRouter.get(PATH_WEBAUTHN_LOGIN)
                 .handler(clientRequestParseHandler)
                 .handler(webAuthnAccessHandler)
+                .handler(new LoginSocialAuthenticationHandler(identityProviderManager, jwtService, certificateManager))
                 .handler(localeHandler)
                 .handler(new WebAuthnLoginEndpoint(thymeleafTemplateEngine, domain, deviceIdentifierManager, userActivityService));
         rootRouter.post(PATH_WEBAUTHN_LOGIN)
