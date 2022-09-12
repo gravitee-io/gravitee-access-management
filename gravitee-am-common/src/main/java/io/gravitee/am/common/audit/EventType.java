@@ -298,6 +298,15 @@ public interface EventType {
 
     /**
      * ----------
+     * WebAuthn Credential audit log actions
+     * ----------
+     */
+    String CREDENTIAL_CREATED = "CREDENTIAL_CREATED";
+    String CREDENTIAL_UPDATED = "CREDENTIAL_UPDATED";
+    String CREDENTIAL_DELETED = "CREDENTIAL_DELETED";
+
+    /**
+     * ----------
      * i18n dictionary audit log actions
      * ----------
      */
@@ -336,6 +345,7 @@ public interface EventType {
                 FLOW_CREATED, FLOW_UPDATED, FLOW_DELETED,
                 ALERT_TRIGGER_CREATED, ALERT_TRIGGER_UPDATED, ALERT_TRIGGER_DELETED,
                 AUTH_DEVICE_NOTIFIER_UPDATED, AUTH_DEVICE_NOTIFIER_CREATED, AUTH_DEVICE_NOTIFIER_DELETED,
+                CREDENTIAL_CREATED, CREDENTIAL_UPDATED, CREDENTIAL_DELETED,
                 I18N_DICTIONARY_CREATED, I18N_DICTIONARY_UPDATED, I18N_DICTIONARY_DELETED,
                 THEME_UPDATED, THEME_DELETED, THEME_CREATED
         ));
