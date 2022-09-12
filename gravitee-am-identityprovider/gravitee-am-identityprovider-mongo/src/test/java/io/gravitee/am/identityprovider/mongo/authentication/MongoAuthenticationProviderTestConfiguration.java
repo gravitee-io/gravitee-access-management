@@ -29,6 +29,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.List;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -42,10 +44,13 @@ public class MongoAuthenticationProviderTestConfiguration implements Initializin
     @Override
     public void afterPropertiesSet() throws Exception {
         MongoCollection<Document> collection = mongoDatabase.getCollection("users");
-        Document doc = new Document("username", "bob").append("password", "bobspassword");
-        Observable.fromPublisher(collection.insertOne(doc)).blockingFirst();
-        Document doc2 = new Document("username", "user01").append("email", "user01@acme.com").append("password", "user01");
-        Observable.fromPublisher(collection.insertOne(doc2)).blockingFirst();
+        List<Document> users = List.of(
+                new Document("username", "bob").append("password", "bobspassword"),
+                new Document("username", "user01").append("email", "user01@acme.com").append("password", "user01"),
+                new Document("username", "user02").append("email", "common@acme.com").append("password", "user02"),
+                new Document("username", "user03").append("email", "common@acme.com").append("password", "user03")
+        );
+        users.stream().forEach(doc -> Observable.fromPublisher(collection.insertOne(doc)).blockingFirst());
     }
 
     @Bean
