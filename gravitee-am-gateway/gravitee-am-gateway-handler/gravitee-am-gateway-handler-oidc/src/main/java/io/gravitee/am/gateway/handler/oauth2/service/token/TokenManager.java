@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.service.token;
 
 import io.gravitee.common.service.Service;
+import io.reactivex.Completable;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -23,7 +24,7 @@ import io.gravitee.common.service.Service;
  */
 public interface TokenManager extends Service {
 
-    void storeAccessToken(io.gravitee.am.repository.oauth2.model.AccessToken accessToken);
+    Completable storeAccessToken(io.gravitee.am.repository.oauth2.model.AccessToken accessToken);
 
-    void storeRefreshToken(io.gravitee.am.repository.oauth2.model.RefreshToken refreshToken);
+    Completable storeRefreshToken(io.gravitee.am.repository.oauth2.model.RefreshToken refreshToken);
 }
