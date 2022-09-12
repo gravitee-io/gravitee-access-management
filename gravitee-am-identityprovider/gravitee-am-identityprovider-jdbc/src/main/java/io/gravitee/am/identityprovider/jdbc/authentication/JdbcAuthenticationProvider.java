@@ -19,7 +19,15 @@ import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.common.exception.authentication.InternalAuthenticationServiceException;
 import io.gravitee.am.common.exception.authentication.UsernameNotFoundException;
 import io.gravitee.am.common.oidc.StandardClaims;
-import io.gravitee.am.identityprovider.api.*;
+import io.gravitee.am.identityprovider.api.Authentication;
+import io.gravitee.am.identityprovider.api.AuthenticationContext;
+import io.gravitee.am.identityprovider.api.AuthenticationProvider;
+import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
+import io.gravitee.am.identityprovider.api.IdentityProviderRoleMapper;
+import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
+import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.identityprovider.api.UserCredentialEvaluation;
 import io.gravitee.am.identityprovider.jdbc.JdbcAbstractProvider;
 import io.gravitee.am.identityprovider.jdbc.authentication.spring.JdbcAuthenticationProviderConfiguration;
 import io.gravitee.am.identityprovider.jdbc.utils.ColumnMapRowMapper;
@@ -28,13 +36,14 @@ import io.r2dbc.spi.Statement;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Import;
+import org.springframework.util.StringUtils;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Import;
-import org.springframework.util.StringUtils;
 
 import static java.util.Optional.ofNullable;
 
@@ -89,7 +98,7 @@ public class JdbcAuthenticationProvider extends JdbcAbstractProvider<Authenticat
                 })
                 .toList()
                 .flatMapMaybe(userEvaluations -> {
-                    if (userEvaluations.size() > 1) {
+                    if (userEvaluations.stream().filter(UserCredentialEvaluation::isPasswordValid).count() > 1) {
                         LOGGER.debug("Authentication failed: multiple accounts with same credentials");
                         return Maybe.error(new BadCredentialsException("Bad credentials"));
                     }
