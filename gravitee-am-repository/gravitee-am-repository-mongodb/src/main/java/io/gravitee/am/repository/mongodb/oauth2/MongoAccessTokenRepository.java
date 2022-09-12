@@ -88,11 +88,6 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
     }
 
     @Override
-    public Completable bulkWrite(List<AccessToken> accessTokens) {
-        return Completable.fromPublisher(accessTokenCollection.bulkWrite(convert(accessTokens)));
-    }
-
-    @Override
     public Completable delete(String token) {
         return Completable.fromPublisher(accessTokenCollection.findOneAndDelete(eq(FIELD_TOKEN, token)));
     }

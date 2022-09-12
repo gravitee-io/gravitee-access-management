@@ -24,7 +24,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Arrays;
 import java.util.Date;
 
 import static org.junit.Assert.assertNotNull;
@@ -58,8 +57,8 @@ public class AccessTokenRepositoryPurgeTest extends AbstractOAuthTest {
         token2.setSubject("user-id2");
         token2.setExpireAt(new Date(now.minus(1, ChronoUnit.MINUTES).toEpochMilli()));
 
-        TestObserver<Void> test = accessTokenRepository
-                .bulkWrite(Arrays.asList(token1, token2))
+        TestObserver<Void> test = accessTokenRepository.create(token1).ignoreElement()
+                .andThen(accessTokenRepository.create(token2).ignoreElement())
                 .test();
         test.awaitTerminalEvent();
         test.assertNoErrors();
