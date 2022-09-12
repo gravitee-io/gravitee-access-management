@@ -180,7 +180,7 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
             return;
         }
         FactorProvider factorProvider = factorManager.get(factorId);
-        EnrolledFactor enrolledFactor = getEnrolledFactor(routingContext, factor, endUser);
+        EnrolledFactor enrolledFactor = getEnrolledFactor(routingContext, factorProvider, factor, endUser);
         Map<String, Object> factorData = new HashMap<>();
         factorData.putAll(getEvaluableAttributes(routingContext));
         factorData.put(FactorContext.KEY_ENROLLED_FACTOR, enrolledFactor);
@@ -262,7 +262,7 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
             return;
         }
 
-        EnrolledFactor enrolledFactor = getEnrolledFactor(routingContext, factor, endUser);
+        EnrolledFactor enrolledFactor = getEnrolledFactor(routingContext, factorProvider, factor, endUser);
         Map<String, Object> factorData = new HashMap<>();
         factorData.putAll(getEvaluableAttributes(routingContext));
         factorData.put(FactorContext.KEY_CLIENT, routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY));
@@ -315,7 +315,7 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
                 .orElse(factorManager.getFactor(enrolledFactors.get(0).getFactorId()));
     }
 
-    private EnrolledFactor getEnrolledFactor(RoutingContext routingContext, Factor factor, User endUser) {
+    private EnrolledFactor getEnrolledFactor(RoutingContext routingContext, FactorProvider factorProvider, Factor factor, User endUser) {
         // enrolled factor can be either in session (if user come from mfa/enroll page)
         // or from the user enrolled factor list
         final String savedFactorId = routingContext.session().get(ConstantKeys.ENROLLED_FACTOR_ID_KEY);
@@ -337,21 +337,25 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
                             routingContext.session().get(ConstantKeys.ENROLLED_FACTOR_PHONE_NUMBER)));
                     break;
                 case EMAIL:
-                    Map<String, Object> additionalData = new Maps.MapBuilder(new HashMap())
-                            .put(FactorDataKeys.KEY_MOVING_FACTOR, generateInitialMovingFactor(endUser))
-                            .build();
-                    // For email even if the endUser will contains all relevant information, we extract only the Expiration Date of the code.
-                    // this is done only to enforce the other parameter (shared secret and initialMovingFactor)
-                    getEnrolledFactor(factor, endUser).ifPresent(ef -> {
-                        additionalData.put(FactorDataKeys.KEY_EXPIRE_AT, ef.getSecurity().getData(FactorDataKeys.KEY_EXPIRE_AT, Long.class));
-                    });
                     enrolledFactor.setSecurity(new EnrolledFactorSecurity(SHARED_SECRET,
-                            routingContext.session().get(ConstantKeys.ENROLLED_FACTOR_SECURITY_VALUE_KEY),
-                            additionalData));
+                            routingContext.session().get(ConstantKeys.ENROLLED_FACTOR_SECURITY_VALUE_KEY)));
                     enrolledFactor.setChannel(new EnrolledFactorChannel(Type.EMAIL,
                             routingContext.session().get(ConstantKeys.ENROLLED_FACTOR_EMAIL_ADDRESS)));
                     break;
             }
+
+            // if the factor provider uses a moving factor security mechanism,
+            // we ensure that every data has been shared with the user enrolled factor
+            if (factorProvider.useVariableFactorSecurity()) {
+                Map<String, Object> additionalData = new Maps.MapBuilder(new HashMap())
+                        .put(FactorDataKeys.KEY_MOVING_FACTOR, generateInitialMovingFactor(endUser))
+                        .build();
+                getEnrolledFactor(factor, endUser).ifPresent(ef -> {
+                    additionalData.put(FactorDataKeys.KEY_EXPIRE_AT, ef.getSecurity().getData(FactorDataKeys.KEY_EXPIRE_AT, Long.class));
+                });
+                enrolledFactor.getSecurity().getAdditionalData().putAll(additionalData);
+            }
+
             enrolledFactor.setCreatedAt(new Date());
             enrolledFactor.setUpdatedAt(enrolledFactor.getCreatedAt());
             return enrolledFactor;

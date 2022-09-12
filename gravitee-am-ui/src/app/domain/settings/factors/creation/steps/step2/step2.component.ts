@@ -44,39 +44,13 @@ export class FactorCreationStep2Component implements OnInit {
 
     this.organizationService.factorSchema(this.factor.type).subscribe(data => {
       this.factorSchema = data;
-      // set the grant_type value
       if (this.factorSchema.properties.factorType) {
         this.factor.factorType = this.factorSchema.properties.factorType.default;
       }
-
-      if (this.factorSchema.properties.graviteeResource) {
-        if (this.resources && this.resources.length > 0) {
-          console.log(this.resourcePlugins);
-          const resourcePluginTypeToCategories = this.resourcePlugins.reduce((accumulator, currentPlugin) => ({ ...accumulator, [currentPlugin.id]: currentPlugin.categories}), {});
-          const factorPluginTypeToCategories = this.factorPlugins.reduce((accumulator, currentPlugin) => ({ ...accumulator, [currentPlugin.id]: currentPlugin.category}), {});
-          const factorCategory = factorPluginTypeToCategories[this.factor.type];
-          // filter resources with category compatible with the Factor Plugin one
-          const filteredResources = this.resources.filter(r =>
-            resourcePluginTypeToCategories[r.type].filter(resourceCategory => resourceCategory === factorCategory).length > 0
-          );
-
-          this.factorSchema.properties.graviteeResource['x-schema-form'] = { 'type' : 'select' };
-          if (filteredResources.length > 0) {
-            this.factorSchema.properties.graviteeResource.enum = filteredResources.map(r => r.id);
-            this.factorSchema.properties.graviteeResource['x-schema-form'].titleMap = filteredResources.reduce(function(map, obj) {
-              map[obj.id] = obj.name;
-              return map;
-            }, {});
-          } else {
-            // if list of resources is empty, disable the field
-            this.factorSchema.properties.graviteeResource['readonly'] = true;
-          }
-        } else {
-          // if list of resources is empty, disable the field
-          this.factorSchema.properties.graviteeResource['readonly'] = true;
-        }
+      for (const key in this.factorSchema.properties) {
+        const property = this.factorSchema.properties[key];
+        this.applyResourceSelection(property);
       }
-
     });
   }
 
@@ -84,5 +58,43 @@ export class FactorCreationStep2Component implements OnInit {
     this.configurationIsValid = configurationWrapper.isValid;
     this.configurationIsValidChange.emit(this.configurationIsValid);
     this.factor.configuration = configurationWrapper.configuration;
+  }
+
+  private applyResourceSelection(property) {
+    if (property.type === 'array') {
+      if (property.items && property.items.properties) {
+        for (const key in property.items.properties) {
+          const child = property.items.properties[key];
+          this.applyResourceSelection(child);
+        }
+      }
+    }
+    if (property.graviteeSource || 'graviteeResource' === property.widget) {
+      if (this.resources && this.resources.length > 0) {
+        const resourcePluginTypeToCategories = this.resourcePlugins.reduce((accumulator, currentPlugin) => ({ ...accumulator, [currentPlugin.id]: currentPlugin.categories}), {});
+        const factorPluginTypeToCategories = this.factorPlugins.reduce((accumulator, currentPlugin) => ({ ...accumulator, [currentPlugin.id]: currentPlugin.category}), {});
+        const factorCategory = factorPluginTypeToCategories[this.factor.type];
+        // filter resources with category compatible with the Factor Plugin one
+        const filteredResources = this.resources.filter(r =>
+          factorCategory === 'any' ||
+          resourcePluginTypeToCategories[r.type].filter(resourceCategory => resourceCategory === factorCategory).length > 0
+        );
+
+        property['x-schema-form'] = { 'type' : 'select' };
+        if (filteredResources.length > 0) {
+          property.enum = filteredResources.map(r => r.id);
+          property['x-schema-form'].titleMap = filteredResources.reduce(function(map, obj) {
+            map[obj.id] = obj.name;
+            return map;
+          }, {});
+        } else {
+          // if list of resources is empty, disable the field
+          property['readonly'] = true;
+        }
+      } else {
+        // if list of resources is empty, disable the field
+        property['readonly'] = true;
+      }
+    }
   }
 }

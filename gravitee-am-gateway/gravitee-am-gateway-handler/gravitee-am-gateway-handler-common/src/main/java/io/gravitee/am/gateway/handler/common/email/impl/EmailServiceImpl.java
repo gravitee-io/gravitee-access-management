@@ -179,9 +179,9 @@ public class EmailServiceImpl implements EmailService {
     @Override
     public EmailWrapper createEmail(io.gravitee.am.model.Template template, Client client, List<String> recipients, Map<String, Object> params) throws IOException, TemplateException {
         io.gravitee.am.model.Email emailTpl = getEmailTemplate(template, client);
-        params.put("expireAfterSeconds", emailTpl.getExpiresAfter());
+        params.putIfAbsent("expireAfterSeconds", emailTpl.getExpiresAfter());
         final long expiresAt = Instant.now().plus(emailTpl.getExpiresAfter(), ChronoUnit.SECONDS).toEpochMilli();
-        params.put("expireAt", expiresAt);
+        params.putIfAbsent("expireAt", expiresAt);
 
         io.gravitee.am.common.email.Email email = new EmailBuilder()
                 .from(emailTpl.getFrom())
