@@ -16,28 +16,20 @@
 package io.gravitee.am.gateway.handler.oauth2.service.token.impl;
 
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenManager;
-import io.gravitee.am.gateway.handler.oauth2.service.token.indexer.AccessTokenBulkProcessor;
-import io.gravitee.am.gateway.handler.oauth2.service.token.indexer.RefreshTokenBulkProcessor;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
 import io.gravitee.am.repository.oauth2.model.AccessToken;
 import io.gravitee.am.repository.oauth2.model.RefreshToken;
 import io.gravitee.common.service.AbstractService;
-import io.reactivex.processors.PublishProcessor;
-import io.reactivex.schedulers.Schedulers;
+import io.reactivex.Completable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
-
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class TokenManagerImpl extends AbstractService implements TokenManager {
-
-    private static final Integer bulkActions = 1000;
-    private static final Long flushInterval = 1l;
 
     @Lazy
     @Autowired
@@ -47,48 +39,18 @@ public class TokenManagerImpl extends AbstractService implements TokenManager {
     @Autowired
     private RefreshTokenRepository refreshTokenRepository;
 
-    private final PublishProcessor<AccessToken> bulkProcessorAccessToken = PublishProcessor.create();
-
-    private final PublishProcessor<RefreshToken> bulkProcessorRefreshToken = PublishProcessor.create();
-
     @Override
     protected void doStart() throws Exception {
         super.doStart();
-
-        // init bulk processors
-        bulkProcessorAccessToken
-                .onBackpressureBuffer()
-                .observeOn(Schedulers.io())
-                .buffer(
-                        flushInterval,
-                        TimeUnit.SECONDS,
-                        bulkActions
-                )
-                .filter(accessTokens -> accessTokens != null && !accessTokens.isEmpty())
-                .subscribe(new AccessTokenBulkProcessor(accessTokenRepository));
-
-        // init bulk processors
-        bulkProcessorRefreshToken
-                .onBackpressureBuffer()
-                .observeOn(Schedulers.io())
-                .buffer(
-                        flushInterval,
-                        TimeUnit.SECONDS,
-                        bulkActions
-                )
-                .filter(refreshTokens -> refreshTokens != null && !refreshTokens.isEmpty())
-                .subscribe(new RefreshTokenBulkProcessor(refreshTokenRepository));
     }
 
     @Override
-    public void storeAccessToken(AccessToken accessToken) {
-        bulkProcessorAccessToken
-                .onNext(accessToken);
+    public Completable storeAccessToken(AccessToken accessToken) {
+        return accessTokenRepository.create(accessToken).ignoreElement();
     }
 
     @Override
-    public void storeRefreshToken(RefreshToken refreshToken) {
-        bulkProcessorRefreshToken
-                .onNext(refreshToken);
+    public Completable storeRefreshToken(RefreshToken refreshToken) {
+        return refreshTokenRepository.create(refreshToken).ignoreElement();
     }
 }

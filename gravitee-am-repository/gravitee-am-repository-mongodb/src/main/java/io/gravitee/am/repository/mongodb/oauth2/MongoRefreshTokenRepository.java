@@ -89,11 +89,6 @@ public class MongoRefreshTokenRepository extends AbstractOAuth2MongoRepository i
     }
 
     @Override
-    public Completable bulkWrite(List<RefreshToken> refreshTokens) {
-        return Completable.fromPublisher(refreshTokenCollection.bulkWrite(convert(refreshTokens)));
-    }
-
-    @Override
     public Completable delete(String token) {
         return Completable.fromPublisher(refreshTokenCollection.deleteOne(eq(FIELD_TOKEN, token)));
     }
