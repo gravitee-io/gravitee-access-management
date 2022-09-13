@@ -33,13 +33,13 @@
                         <div class="input-textfield">
                             <label for="username">Username</label>
                             <input type="text" id="username" name="username"
-                                   th:value="${param.username}" autofocus="autofocus" required
+                                   th:value="${param.username}" th:autofocus="${param.username == null}" required
                                    th:readonly="${param.username != null}"
                             />
                         </div>
                         <div class="input-textfield">
                             <label for="password">Password</label>
-                            <input type="password" id="password" name="password" required />
+                            <input type="password" id="password" name="password" th:autofocus="${param.username != null}" required />
                         </div>
                         <div th:if="${error}" class="login-error-info">
                             <span>
