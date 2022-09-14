@@ -89,9 +89,9 @@ public class MongoFactory implements FactoryBean<MongoClient> {
 
             Integer connectTimeout = readPropertyValue(propertyPrefix + "connectTimeout", Integer.class, 1000);
             Integer maxWaitTime = readPropertyValue(propertyPrefix + "maxWaitTime", Integer.class);
-            Integer socketTimeout = readPropertyValue(propertyPrefix + "socketTimeout", Integer.class, 1000);
+            Integer socketTimeout = readPropertyValue(propertyPrefix + "socketTimeout", Integer.class, 30000);
             Integer maxConnectionLifeTime = readPropertyValue(propertyPrefix + "maxConnectionLifeTime", Integer.class);
-            Integer maxConnectionIdleTime = readPropertyValue(propertyPrefix + "maxConnectionIdleTime", Integer.class);
+            Integer maxConnectionIdleTime = readPropertyValue(propertyPrefix + "maxConnectionIdleTime", Integer.class, 30000);
 
             // We do not want to wait for a server
             Integer serverSelectionTimeout = readPropertyValue(propertyPrefix + "serverSelectionTimeout", Integer.class, 1000);

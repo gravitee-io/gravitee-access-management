@@ -50,6 +50,9 @@ public abstract class AbstractManagementMongoRepository extends AbstractMongoRep
     @Value("${management.mongodb.ensureIndexOnStart:true}")
     private boolean ensureIndexOnStart;
 
+    @Value("${management.mongodb.maxSearchResults:1000}")
+    protected int maxSearchResults;
+
     protected void createIndex(MongoCollection<?> collection, Document document) {
         super.createIndex(collection, document, new IndexOptions(), ensureIndexOnStart);
     }
