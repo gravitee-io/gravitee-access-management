@@ -21,40 +21,40 @@
     <div class="header">
         <img class="logo" th:src="${theme.logoUrl} ?: @{../assets/images/gravitee-logo.svg}">
         <div class="title">
-            <span th:text="#{login.page.title} + ' ' + ${client.name}"></span>
+            <span th:text="#{login.title} + ' ' + ${client.name}"></span>
         </div>
         <div class="header-description">
-            <span>Using fingerprint, device or security key</span>
+            <span th:text="#{webauthn.login.description}"/>
         </div>
     </div>
     <div class="section">
         <form class="form" role="form" id="login" method="post" th:action="${action}">
             <div>
                 <input class="input-field" type="text" id="username" name="username"
-                       th:placeholder="#{login.page.label.username}"
+                       th:placeholder="#{login.label.username}"
                        th:value="${param.username}" autofocus="autofocus" required
                        th:readonly="${param.username != null}"
                 />
             </div>
 
             <div class="disclaimer">
-                <span>Follow the instruction in the security window popup</span>
+                <span th:text="#{webauthn.login.tips}"/>
             </div>
 
             <div id="webauthn-error" class="item error-text hide">
                 <span>
-                    <span class="error">login_failed</span>
-                    <small class="error_description">Invalid user</small>
+                    <span class="error" th:text="#{webauthn.login.error}"/>
+                    <small class="error_description" th:text="#{webauthn.login.error.description}"/>
                 </span>
             </div>
 
             <div>
-                <button class="button primary">Next</button>
+                <button class="button primary" th:text="#{webauthn.login.button.next}"></button>
             </div>
         </form>
     </div>
     <div class="section">
-        <a th:href="${loginAction}"><span class="icons">arrow_back</span><span>Back to sign in</span></a>
+        <a th:href="${loginAction}"><span class="icons">arrow_back</span><span th:text="#{common.back.to.sign.in}"/></a>
     </div>
 </div>
 

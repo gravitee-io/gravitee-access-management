@@ -21,10 +21,10 @@
     <div class="header">
         <img class="logo" th:src="${theme.logoUrl} ?: @{../assets/images/gravitee-logo.svg}">
         <div class="title">
-            <span id="enrollment-title">Select a method</span>
+            <span id="enrollment-title" th:text="#{mfa_enroll.title}"/>
         </div>
         <div class="header-description">
-            <span id="enrollment-description">Select the authentication method you want to pair with your account</span>
+            <span id="enrollment-description" th:text="#{mfa_enroll.description}"/>
         </div>
     </div>
     <div id="enrollments" class="section card-section">
@@ -35,8 +35,8 @@
                         <input type="radio" name="otp" value="otp">
                     </div>
                     <div class="radio-detail">
-                        <span class="enroll-name">One-Time Password</span>
-                        <span class="enroll-description">Use and authenticator app to authenticate</span>
+                        <span class="enroll-name" th:text="#{mfa.otp}"/>
+                        <span class="enroll-description" th:text="#{mfa_enroll.otp.description}"/>
                     </div>
                 </div>
             </div>
@@ -47,8 +47,8 @@
                         <input type="radio" name="sms" value="sms">
                     </div>
                     <div class="radio-detail">
-                        <span class="enroll-name">SMS</span>
-                        <span class="enroll-description">Receive a verification code to your phone to authenticate</span>
+                        <span class="enroll-name" th:text="#{mfa.sms}"/>
+                        <span class="enroll-description" th:text="#{mfa_enroll.sms.description}"/>
                     </div>
                 </div>
             </div>
@@ -59,8 +59,8 @@
                         <input type="radio" name="email" value="email">
                     </div>
                     <div class="radio-detail">
-                        <span class="enroll-name">Email</span>
-                        <span class="enroll-description">Send an email to your email address</span>
+                        <span class="enroll-name" th:text="#{mfa.email}"/>
+                        <span class="enroll-description" th:text="#{mfa_enroll.email.description}"/>
                     </div>
                 </div>
             </div>
@@ -71,8 +71,8 @@
                         <input type="radio" name="http" value="http">
                     </div>
                     <div class="radio-detail">
-                        <span class="enroll-name">HTTP</span>
-                        <span class="enroll-description">Enter the code provided by the HTTP in next step</span>
+                        <span class="enroll-name" th:text="#{mfa.http}"/>
+                        <span class="enroll-description" th:text="#{mfa_enroll.http.description}"/>
                     </div>
                 </div>
             </div>
@@ -83,28 +83,28 @@
                         <input type="radio" name="fido2" value="fido2">
                     </div>
                     <div class="radio-detail">
-                        <span class="enroll-name">FIDO2</span>
-                        <span class="enroll-description">Select 'Next' button to trigger the registration process</span>
+                        <span class="enroll-name" th:text="#{mfa.fido}"></span>
+                        <span class="enroll-description" th:text="#{mfa_enroll.fido.description}"></span>
                     </div>
                 </div>
             </div>
         </div>
         <div>
-            <button id="next" class="button primary">Next</button>
+            <button id="next" class="button primary" th:text="#{mfa_enroll.button.submit}"></button>
         </div>
 
         <form role="form" th:action="${action}" method="post" class="form">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
             <div>
-                <button type="submit" name="user_mfa_enrollment" value="false" class="button secondary">Skip for now</button>
+                <button type="submit" name="user_mfa_enrollment" value="false" class="button secondary" th:text="#{mfa_enroll.button.skip}"></button>
             </div>
         </form>
     </div>
     <div th:id="'fact' + ${factIter.index}" th:each="factor,factIter : ${factors}" class="hide-enrollment-item">
         <div th:if="${factor.factorType == 'TOTP'}" id="otp" class="section">
             <form role="form" th:id="${factor.id}" th:action="${action}" method="post" class="enrollment-card">
-                <span class="enrollment-card-label">One-time Password</span>
-                <span class="enrollment-card-description otp-card-description">Scan the QR code with your authentication app (Google Authenticator or FreeOTP) and enter the code displayed in the next step</span>
+                <span class="enrollment-card-label" th:text="#{mfa.otp}"/>
+                <span class="enrollment-card-description otp-card-description" th:text="#{mfa_enroll.otp}"/>
 
                 <div class="otp-container">
                     <img th:src="${factor.enrollment.barCode}"/>
@@ -115,27 +115,27 @@
                 <input type="hidden" th:name="factorId" th:value="${factor.id}"/>
                 <input type="hidden" id="sharedSecret" name="sharedSecret" value=""/>
                 <div>
-                    <button th:id="'submit' + ${factor.id}" type="submit" name="user_mfa_enrollment" value="true" class="button primary">Next</button>
+                    <button th:id="'submit' + ${factor.id}" type="submit" name="user_mfa_enrollment" value="true" class="button primary" th:text="#{mfa_enroll.button.submit}"></button>
                 </div>
                 <div>
-                    <button type="submit" name="user_mfa_enrollment" value="false" class="button secondary">Skip for now</button>
+                    <button type="submit" name="user_mfa_enrollment" value="false" class="button secondary" th:text="#{mfa_enroll.button.skip}"></button>
                 </div>
             </form>
 
             <div class="section">
-                <a class="left-arrow" href="#"><span class="icons">arrow_back</span><span>Back to methods</span></a>
+                <a class="left-arrow" href="#"><span class="icons">arrow_back</span><span th:text="#{mfa_enroll.button.back}"></span></a>
             </div>
         </div>
         <div th:if="${factor.factorType == 'SMS' || factor.factorType == 'CALL'}" id="sms" class="section">
             <form role="form" th:id="${factor.id}" th:action="${action}" method="post" class="enrollment-card">
-                <span class="enrollment-card-label">SMS</span>
-                <span class="enrollment-card-description">We will send verification code to your phone number</span>
+                <span class="enrollment-card-label" th:text="#{mfa.sms}"/>
+                <span class="enrollment-card-description" th:text="#{mfa_enroll.sms}"/>
                 <input class="input-field" th:id="'phoneFact' + ${factIter.index}" type="tel" th:name="'phoneFact' + ${factIter.index}" th:value="${phoneNumber}">
 
                 <div th:id="'invalidphoneFact' + ${factIter.index}" class="button error-text">
                     <span class="description">
                         <span class="error" th:text="${error}"></span>
-                        <small>Invalid phone number</small>
+                        <small th:text="#{mfa_enroll.call}"></small>
                     </span>
                 </div>
 
@@ -143,22 +143,22 @@
                 <input type="hidden" th:name="factorId" th:value="${factor.id}"/>
                 <input type="hidden" id="phone" name="phone" value=""/>
                 <div>
-                    <button th:id="'submit' + ${factor.id}" type="submit" name="user_mfa_enrollment" value="true" class="button primary">Next</button>
+                    <button th:id="'submit' + ${factor.id}" type="submit" name="user_mfa_enrollment" value="true" class="button primary" th:text="#{mfa_enroll.button.submit}"></button>
                 </div>
                 <div>
-                    <button type="submit" name="user_mfa_enrollment" value="false" class="button secondary">Skip for now</button>
+                    <button type="submit" name="user_mfa_enrollment" value="false" class="button secondary" th:text="#{mfa_enroll.button.skip}"></button>
                 </div>
             </form>
 
             <div class="section">
-                <a class="left-arrow" href="#"><span class="icons">arrow_back</span><span>Back to methods</span></a>
+                <a class="left-arrow" href="#"><span class="icons">arrow_back</span><span th:text="#{mfa_enroll.button.back}"/></a>
             </div>
 
         </div>
         <div th:if="${factor.factorType == 'EMAIL'}" id="email" class="section">
             <form role="form" th:id="${factor.id}" th:action="${action}" method="post" class="enrollment-card">
-                <span class="enrollment-card-label">Email</span>
-                <span class="enrollment-card-description">We will send verification code to your email address</span>
+                <span class="enrollment-card-label" th:text="#{mfa.email}"/>
+                <span class="enrollment-card-description" th:text="#{mfa_enroll.email}"/>
 
                 <input class="input-field" th:id="'emailFact' + ${factIter.index}" type="email" th:name="'emailFact' + ${factIter.index}" th:value="${emailAddress}"
                        placeholder="Email">
@@ -166,7 +166,7 @@
                 <div th:id="'invalidemailFact' + ${factIter.index}" class="button error-text">
                     <span class="description">
                         <span class="error" th:text="${error}"></span>
-                        <small>Invalid email address</small>
+                        <small th:text="#{mfa_enroll.email.invalid}"/>
                     </span>
                 </div>
 
@@ -177,54 +177,54 @@
                 <input type="hidden" id="sharedSecret" name="sharedSecret" value=""/>
 
                 <div>
-                    <button th:id="'submit' + ${factor.id}" type="submit" name="user_mfa_enrollment" value="true" class="button primary">Next</button>
+                    <button th:id="'submit' + ${factor.id}" type="submit" name="user_mfa_enrollment" value="true" class="button primary" th:text="#{mfa_enroll.button.submit}"></button>
                 </div>
                 <div>
-                    <button type="submit" name="user_mfa_enrollment" value="false" class="button secondary">Skip for now</button>
+                    <button type="submit" name="user_mfa_enrollment" value="false" class="button secondary" th:text="#{mfa_enroll.button.skip}"></button>
                 </div>
             </form>
 
             <div class="section">
-                <a class="left-arrow" href="#"><span class="icons">arrow_back</span><span>Back to methods</span></a>
+                <a class="left-arrow" href="#"><span class="icons">arrow_back</span><span th:text="#{mfa_enroll.button.back}"/></a>
             </div>
         </div>
         <div th:if="${factor.factorType == 'HTTP'}" id="http" class="section">
             <form role="form" th:id="${factor.id}" th:action="${action}" method="post" class="enrollment-card">
-                <span class="enrollment-card-label">HTTP</span>
-                <span class="enrollment-card-description">Go to the next step and enter the code provided by HTTP</span>
+                <span class="enrollment-card-label" th:text="#{mfa.http}"/>
+                <span class="enrollment-card-description" th:text="#{mfa_enroll.http}"></span>
 
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                 <input type="hidden" th:name="factorId" th:value="${factor.id}"/>
                 <div>
-                    <button type="submit" name="user_mfa_enrollment" value="true" class="button primary">Next</button>
+                    <button type="submit" name="user_mfa_enrollment" value="true" class="button primary" th:text="#{mfa_enroll.button.submit}"></button>
                 </div>
                 <div>
-                    <button type="submit" name="user_mfa_enrollment" value="false" class="button secondary">Skip for now</button>
+                    <button type="submit" name="user_mfa_enrollment" value="false" class="button secondary" th:text="#{mfa_enroll.button.skip}"></button>
                 </div>
             </form>
 
             <div class="section">
-                <a class="left-arrow" href="#"><span class="icons">arrow_back</span><span>Back to methods</span></a>
+                <a class="left-arrow" href="#"><span class="icons">arrow_back</span><span th:text="#{mfa_enroll.button.back}"/></a>
             </div>
 
         </div>
         <div th:if="${factor.factorType == 'FIDO2'}" id="fido2" class="section">
             <form role="form" th:id="${factor.id}" th:action="${action}" method="post" class="enrollment-card">
-                <span class="enrollment-card-label">FIDO2</span>
-                <span class="enrollment-card-description">Select 'Next' button to trigger registration process</span>
+                <span class="enrollment-card-label" th:text="#{mfa.fido}"/>
+                <span class="enrollment-card-description" th:text="#{mfa_enroll.fido}"/>
 
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                 <input type="hidden" th:name="factorId" th:value="${factor.id}"/>
                 <div>
-                    <button th:id="'submit' + ${factor.id}" type="submit" name="user_mfa_enrollment" value="true" class="button primary">Next</button>
+                    <button th:id="'submit' + ${factor.id}" type="submit" name="user_mfa_enrollment" value="true" class="button primary" th:text="mfa_enroll.button.submit"></button>
                 </div>
                 <div>
-                    <button type="submit" name="user_mfa_enrollment" value="false" class="button secondary">Skip for now</button>
+                    <button type="submit" name="user_mfa_enrollment" value="false" class="button secondary" th:text="#{mfa_enroll.button.skip}"></button>
                 </div>
             </form>
 
             <div class="section">
-                <a class="left-arrow" href="#"><span class="icons">arrow_back</span><span>Back to methods</span></a>
+                <a class="left-arrow" href="#"><span class="icons">arrow_back</span><span th:text="#{mfa_enroll.button.back}"/></a>
             </div>
 
         </div>
@@ -355,15 +355,19 @@
             nextBtn.removeClass("button-disabled")
         });
 
+        /*<![CDATA[*/
+        const title=/*[[#{mfa_enroll.on.select.title}]]*/ '';
+        const description=/*[[#{mfa_enroll.on.select.description}]]*/ '';
         nextBtn.on("click", function () {
             $("#enrollments").hide();
             $(".hide-enrollment-item").hide();
 
-            $("#enrollment-title").text("Multi-factor Authentication");
-            $("#enrollment-description").text("Configure multi-factor authentication by choosing the method to validate your identity")
+            $("#enrollment-title").text(title);
+            $("#enrollment-description").text(description);
 
             $("#" + selectedItem).parent().show();
         });
+        /*]]>*/
 
         $('.left-arrow').on('click', function (){
             $(".hide-enrollment-item").hide();

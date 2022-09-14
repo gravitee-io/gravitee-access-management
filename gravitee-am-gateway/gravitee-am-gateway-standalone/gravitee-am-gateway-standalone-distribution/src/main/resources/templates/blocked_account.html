@@ -19,7 +19,7 @@
 				line-height: 32px;
 				color: #25213A;
 				">
-			${msg('blocked_account.email.header.title', user.firstName)}
+			${msg('email.blocked_account.header.title', user.firstName)}
 			</td>
 		</tr>
 	
@@ -34,7 +34,7 @@
 			line-height: 24px;
 			color: #A5A5A9;
 			">
-				${msg('blocked_account.email.header.description')}
+				${msg('email.blocked_account.header.description')}
 			</td>
 		</tr>
 
@@ -55,7 +55,7 @@
 						line-height: 16px;
 						/*remove underline*/
 						text-decoration: none;">
-					${msg('blocked_account.email.button')}
+					${msg('email.blocked_account.button')}
 				</a>
 			</td>
 		</tr>
@@ -70,7 +70,7 @@
 			line-height: 24px;
 			color: #A5A5A9;
 			">
-		<#if expireAfterSeconds gte 3600> ${msg('blocked_account.email.description', expireAfterSeconds / 3600 , msg('common.email.unit.hours'))}  <#else> ${msg('blocked_account.email.description', expireAfterSeconds / 60 , msg('common.email.unit.minutes'))} </#if>
+		<#if expireAfterSeconds gte 3600> ${msg('email.blocked_account.description', expireAfterSeconds / 3600 , msg('email.common.unit.hours'))}  <#else> ${msg('email.blocked_account.description', expireAfterSeconds / 60 , msg('email.common.unit.minutes'))} </#if>
 			</td>
 		</tr>
 		</table>

@@ -26,11 +26,11 @@
     <div class="header">
         <img class="logo" th:src="${theme.logoUrl} ?: @{assets/images/gravitee-logo.svg}">
         <div class="title">
-            <span th:text="#{login.page.title} + ' ' + ${client.name}"></span>
+            <span th:text="#{login.title} + ' ' + ${client.name}"></span>
         </div>
         <div th:if="${allowRegister && !identifierFirstLoginEnabled}" class="header-description">
-            <label>Don't have an account yet? </label>
-            <a th:href="${registerAction}">Sign up!</a>
+            <label th:text="#{login.description} + ' '" />
+            <a th:href="${registerAction}" th:text="#{login.signup}" />
         </div>
     </div>
 
@@ -38,7 +38,7 @@
         <form class="form" id="form" role="form" th:action="${action}" th:if="${!hideLoginForm}" method="post">
             <div class="form-field">
                 <input class="input-field" type="text" id="username" name="username"
-                       th:placeholder="#{login.page.label.username}"
+                       th:placeholder="#{login.label.username}"
                        th:value="${param.username}"
                        autofocus="autofocus"
                        required
@@ -47,7 +47,7 @@
 
             <div class="form-field">
                 <input class="input-field" type="password" id="password" name="password"
-                       th:placeholder="#{login.page.label.password}"
+                       th:placeholder="#{login.label.password}"
                        required />
                 <button type="button" class="icon-button icon-input-field toggle-password">
                     <span class="icons primary">visibility_off</span>
@@ -55,13 +55,13 @@
             </div>
 
             <div class="section" th:if="${allowForgotPassword}">
-                <a th:href="${forgotPasswordAction}">Forgot Password ?</a>
+                <a th:href="${forgotPasswordAction}" th:text="#{login.forgot.password}" />
             </div>
 
             <div th:if="${error}" class="button error-text">
                 <span class="description">
                     <span class="error" th:text="${error}"></span>
-                    <small th:text="*{error_description}?: #{login.page.error.default.message}"></small>
+                    <small th:text="*{error_description}?: #{login.error.default.message}"></small>
                 </span>
             </div>
 
@@ -72,7 +72,7 @@
                    th:name="${bot_detection_configuration.get('tokenParameterName')}"/>
 
             <div>
-                <button id="btnSubmit" class="button primary" th:text="#{login.page.button.submit}"></button>
+                <button id="btnSubmit" class="button primary" th:text="#{login.button.submit}"></button>
             </div>
         </form>
     </div>
@@ -81,13 +81,13 @@
         <a th:if="${identifierFirstLoginEnabled}"
            th:href="${backToLoginIdentifierAction}"
            class="button social">
-            <span class="description">Switch account</span>
+            <span class="description" th:text="#{login.switch.account}"/>
         </a>
 
         <a th:if="${allowPasswordless && !identifierFirstLoginEnabled}"
            th:href="${passwordlessAction}"
            class="button social">
-            <span class="description">Sign in with fingerprint, device or security key</span>
+            <span class="description" th:text="#{login.passwordless}"/>
         </a>
 
         <a th:href="${authorizeUrls.get(socialProvider.getId())}"
@@ -95,14 +95,14 @@
            th:each="socialProvider : ${socialProviders}">
             <img th:if="${socialProvider.getType()} == 'franceconnect'" th:src="@{assets/images/FCboutons-10.svg}" height="70">
             <span class="description" th:if="${socialProvider.getType()} != 'franceconnect'">
-                <span th:text="'Sign in with ' + ${socialProvider.getName()}"></span>
+                <span th:text="#{login.social.before} + ' ' + ${socialProvider.getName()}"></span>
             </span>
         </a>
 
         <a th:if="${allowPasswordless && hideLoginForm}"
            th:href="${passwordlessAction}"
            class="button social">
-            <span class="description">Sign in with fingerprint, device or security key</span>
+            <span class="description" th:text="#{login.passwordless}"/>
         </a>
     </div>
 </div>

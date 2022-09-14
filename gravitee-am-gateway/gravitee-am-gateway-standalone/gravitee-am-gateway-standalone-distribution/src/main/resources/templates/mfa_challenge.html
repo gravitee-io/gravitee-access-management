@@ -19,7 +19,7 @@
 			line-height: 32px;
 			color: #25213A;
 			">
-			${msg('mfa_challenge.email.header.title', user.firstName)}
+			${msg('email.mfa_challenge.header.title', user.firstName)}
 		</td>
 	</tr>
 
@@ -34,7 +34,7 @@
 			line-height: 24px;
 			color: #A5A5A9;
 			">
-			${msg('mfa_challenge.email.header.description', client.clientName)}
+			${msg('email.mfa_challenge.header.description', client.clientName)}
 		</td>
 	</tr>
 
@@ -79,7 +79,7 @@
 			line-height: 24px;
 			color: #A5A5A9;
 			">
-			<#if expireAfterSeconds gte 3600> ${msg('mfa_challenge.email.description', expireAfterSeconds / 3600 , msg('common.email.unit.hours'))}  <#else> ${msg('mfa_challenge.email.description', expireAfterSeconds / 60 , msg('common.email.unit.minutes'))} </#if>
+			<#if expireAfterSeconds gte 3600> ${msg('email.mfa_challenge.description', expireAfterSeconds / 3600 , msg('email.common.unit.hours'))}  <#else> ${msg('email.mfa_challenge.description', expireAfterSeconds / 60 , msg('email.common.unit.minutes'))} </#if>
 		</td>
 	</tr>
 </table>

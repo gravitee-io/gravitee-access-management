@@ -24,10 +24,10 @@
     <div class="header">
         <img class="logo" th:src="${theme.logoUrl} ?: @{assets/images/gravitee-logo.svg}">
         <div class="title">
-            <label>Permissions requested</label>
+            <span th:text="#{oauth.consent.title}"/>
         </div>
         <div class="header-description">
-            <span><span class="deep-blue" th:text="${client.clientName}"></span> would like to</span>
+            <span class="deep-blue" th:text="${client.clientName}"/> <span th:text="#{oauth.consent.description}"/>
         </div>
     </div>
     <div class="section">
@@ -44,14 +44,14 @@
                 <input type="hidden" th:name="'scope.'+${scope.key}" value="true"/>
             </div>
 
-            <span class="disclaimer" th:text="${client.clientName} + ' will be able to use your data in accordance to their terms of service and privacy policies.'"></span>
+            <span class="disclaimer" th:text="${client.clientName} + ' ' + #{oauth.disclaimer}"/>
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
 
             <div>
-                <button type="submit" name="user_oauth_approval" value="true" class="button primary">Accept</button>
+                <button type="submit" name="user_oauth_approval" value="true" class="button primary" th:text="#{oauth.button.accept}"></button>
             </div>
             <div>
-                <button type="submit" name="user_oauth_approval" value="false" class="button secondary" >Cancel</button>
+                <button type="submit" name="user_oauth_approval" value="false" class="button secondary" th:text="#{oauth.button.cancel}"></button>
             </div>
         </form>
     </div>

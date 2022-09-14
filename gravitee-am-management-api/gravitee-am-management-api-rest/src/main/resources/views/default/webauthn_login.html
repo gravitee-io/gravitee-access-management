@@ -21,17 +21,17 @@
     <div class="header">
         <img class="logo" th:src="${theme.logoUrl} ?: @{../assets/images/gravitee-logo.svg}">
         <div class="title">
-            <span th:text="#{login.page.title} + ' ' + ${client.name}"></span>
+            <span th:text="#{login.title} + ' ' + ${client.name}"></span>
         </div>
         <div class="header-description">
-            <span>Using fingerprint, device or security key</span>
+            <span th:text="#{webauthn.login.description}"/>
         </div>
     </div>
     <div class="section">
         <form class="form" role="form" id="login" method="post" th:action="${action}">
             <div>
                 <input class="input-field" type="text" id="username" name="username"
-                       th:placeholder="#{login.page.label.username}"
+                       th:placeholder="#{login.label.username}"
                        th:value="${param.username}" autofocus="autofocus" required
                        th:readonly="${param.username != null}"
                 />

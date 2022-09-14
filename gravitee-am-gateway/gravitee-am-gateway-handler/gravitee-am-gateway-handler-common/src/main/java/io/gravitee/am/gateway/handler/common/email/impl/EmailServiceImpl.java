@@ -69,19 +69,19 @@ public class EmailServiceImpl implements EmailService {
     @Value("${gateway.url:http://localhost:8092}")
     private String gatewayUrl;
 
-    @Value("${user.resetPassword.email.subject:${msg('reset_password.email.subject')}}")
+    @Value("${user.resetPassword.email.subject:${msg('email.reset_password.subject')}}")
     private String resetPasswordSubject;
 
     @Value("${user.resetPassword.token.expire-after:300}")
     private Integer resetPasswordExpireAfter;
 
-    @Value("${user.blockedAccount.email.subject:${msg('blocked_account.email.subject')}}")
+    @Value("${user.blockedAccount.email.subject:${msg('email.blocked_account.subject')}}")
     private String blockedAccountSubject;
 
     @Value("${user.blockedAccount.token.expire-after:86400}")
     private Integer blockedAccountExpireAfter;
 
-    @Value("${user.mfaChallenge.email.subject:${msg('mfa_challenge.email.subject')}}")
+    @Value("${user.mfaChallenge.email.subject:${msg('email.mfa_challenge.subject')}}")
     private String mfaChallengeSubject;
 
     @Value("${user.mfaChallenge.token.expire-after:300}")
