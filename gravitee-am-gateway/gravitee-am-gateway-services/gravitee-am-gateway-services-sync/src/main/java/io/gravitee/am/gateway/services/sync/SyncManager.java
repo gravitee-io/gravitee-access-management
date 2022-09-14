@@ -18,14 +18,18 @@ package io.gravitee.am.gateway.services.sync;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.gateway.reactor.SecurityDomainManager;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.Organization;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.repository.management.api.DomainRepository;
-import io.gravitee.am.repository.management.api.EnvironmentRepository;
 import io.gravitee.am.repository.management.api.EventRepository;
-import io.gravitee.am.repository.management.api.OrganizationRepository;
 import io.gravitee.common.event.EventManager;
 import io.gravitee.node.api.Node;
+import io.reactivex.Flowable;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
+import io.reactivex.processors.PublishProcessor;
+import io.reactivex.schedulers.Schedulers;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -34,7 +38,14 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
 
 import java.text.Collator;
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.BinaryOperator;
 import java.util.stream.Collectors;
 
@@ -46,8 +57,11 @@ import static java.util.stream.Collectors.toMap;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class SyncManager implements InitializingBean {
+public class SyncManager implements InitializingBean, Subscriber<SyncContext> {
 
+    public static final boolean NO_DELAY_ERRORS = false;
+    public static final int NO_CONCURRENCY = 1;
+    public static final int ONE_MINUTE = 60_000;
     private final Logger logger = LoggerFactory.getLogger(SyncManager.class);
     private static final String SHARDING_TAGS_SYSTEM_PROPERTY = "tags";
     private static final String ENVIRONMENTS_SYSTEM_PROPERTY = "environments";
@@ -82,11 +96,13 @@ public class SyncManager implements InitializingBean {
 
     private List<String> environmentIds;
 
-    private long lastRefreshAt = -1;
-
-    private long lastDelay = 0;
-
     private boolean allSecurityDomainsSync = false;
+
+    private final PublishProcessor<SyncContext> offsetUpdater = PublishProcessor.create();
+    private final PublishProcessor<Long> synchronizer = PublishProcessor.create();
+    private Subscription syncSubscription;
+
+    private SyncContext lastSyncContext = new SyncContext();
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -98,83 +114,145 @@ public class SyncManager implements InitializingBean {
         logger.info("\t\t - Organizations : " + (organizations.isPresent() ? organizations.get() : "[]"));
         logger.info("\t\t - Environments : " + (environments.isPresent() ? environments.get() : "[]"));
         logger.info("\t\t - Environments loaded : " + (environmentIds != null ? environmentIds : "[]"));
+
+        initializeSyncFlow();
+    }
+
+    private void initializeSyncFlow() {
+        // listen to the synchronization events
+        // this synchronizer listen event received by refresh call
+        // and merge this event with the last execution state
+        synchronizer
+                .observeOn(Schedulers.io())
+                .onBackpressureBuffer()
+                .zipWith(offsetUpdater, (time, context) -> {
+                    context.setNextLastRefreshAt(time);
+                    return context;
+                })
+                .flatMap(context -> {
+                    try {
+                        if (context.getLastRefreshAt() == -1) {
+                            logger.debug("Initial synchronization");
+                            return deployDomains()
+                                    .toList()
+                                    .map(domains -> {
+                                        allSecurityDomainsSync = true;
+                                        return context.toNextOffset();
+                                    }).toFlowable()
+                                    .doOnError(error -> logger.error("An error has occurred during initiale synchronization", error))
+                                    .onErrorResumeNext(Flowable.just(new SyncContext()));
+                        } else {
+                            logger.trace("eventRepository.findByTimeFrame({}, {})", context.computeStartOffset(), context.getNextLastRefreshAt());
+                            return eventRepository.findByTimeFrame(context.computeStartOffset(), context.getNextLastRefreshAt())
+                                    .toList()
+                                    .flatMap(events -> {
+                                        if (events != null && !events.isEmpty()) {
+                                            // Extract only the latest events by type and id
+                                            Map<AbstractMap.SimpleEntry, Event> sortedEvents = events
+                                                    .stream()
+                                                    .collect(
+                                                            toMap(
+                                                                    event -> new AbstractMap.SimpleEntry<>(event.getType(), event.getPayload().getId()),
+                                                                    event -> event, BinaryOperator.maxBy(comparing(Event::getCreatedAt)), LinkedHashMap::new));
+
+                                            return Flowable.fromIterable(sortedEvents.values())
+                                                    .flatMapMaybe(this::computeEvent, NO_DELAY_ERRORS, NO_CONCURRENCY).toList();
+                                        }
+                                        return Single.just(events);
+                                    })
+                                    .map(e -> context.toNextOffset())
+                                    .toFlowable()
+                                    .doOnError(error -> logger.error("An error has occurred during initiale synchronization", error))
+                                    .onErrorResumeNext(Flowable.just(context));
+                        }
+                    } catch (Exception ex) {
+                        logger.error("An error has occurred during synchronization", ex);
+                        return Flowable.just(context);
+                    }
+                })
+                .onErrorResumeNext(Flowable.just(this.lastSyncContext))
+                .subscribe(this);
+
+        // provide initial value for the domain synchronization
+        offsetUpdater.onNext(this.lastSyncContext);
+    }
+
+    @Override
+    public void onSubscribe(Subscription subscription) {
+        this.syncSubscription = subscription;
+        this.syncSubscription.request(1);
+    }
+
+    @Override
+    public void onNext(SyncContext context) {
+        logger.debug("Events synchronization successful");
+        offsetUpdater.onNext(context);
+        this.lastSyncContext = context;
+        this.syncSubscription.request(1);
+    }
+
+    @Override
+    public void onError(Throwable error) {
+        logger.error("[FATAL] An error has occurred during synchronization, gateway synchronization is stopped!", error);
+        this.syncSubscription.request(1);
+    }
+
+    @Override
+    public void onComplete() {
+        logger.info("Events synchronization finalized");
     }
 
     public void refresh() {
         logger.debug("Refreshing sync state...");
         long nextLastRefreshAt = System.currentTimeMillis();
-
-        try {
-            if (lastRefreshAt == -1) {
-                logger.debug("Initial synchronization");
-                deployDomains();
-                allSecurityDomainsSync = true;
-            } else {
-                // search for events and compute them
-                logger.debug("Events synchronization");
-
-                List<Event> events = eventRepository.findByTimeFrame(lastRefreshAt - lastDelay, nextLastRefreshAt).toList().blockingGet();
-
-                if (events != null && !events.isEmpty()) {
-                    // Extract only the latest events by type and id
-                    Map<AbstractMap.SimpleEntry, Event> sortedEvents = events
-                            .stream()
-                            .collect(
-                                    toMap(
-                                            event -> new AbstractMap.SimpleEntry<>(event.getType(), event.getPayload().getId()),
-                                            event -> event, BinaryOperator.maxBy(comparing(Event::getCreatedAt)), LinkedHashMap::new));
-                    computeEvents(sortedEvents.values());
-                }
-
+        if (this.lastSyncContext.getLastRefreshAt() > 0 && nextLastRefreshAt - this.lastSyncContext.getLastRefreshAt() > ONE_MINUTE) {
+            logger.warn("SyncContext not updated since 60s, restart the sync flow");
+            if (this.syncSubscription != null) {
+                this.syncSubscription.cancel();
             }
-            lastRefreshAt = nextLastRefreshAt;
-            lastDelay = System.currentTimeMillis() - nextLastRefreshAt;
-        } catch (Exception ex) {
-            logger.error("An error has occurred during synchronization", ex);
+            this.initializeSyncFlow();
         }
+        this.synchronizer.onNext(nextLastRefreshAt);
     }
 
     public boolean isAllSecurityDomainsSync() {
         return allSecurityDomainsSync;
     }
 
-    private void deployDomains() {
+    private Flowable<Domain> deployDomains() {
         logger.info("Starting security domains initialization ...");
-        List<Domain> domains = domainRepository.findAll()
+        return domainRepository.findAll()
                 // remove disabled domains
                 .filter(Domain::isEnabled)
                 // Can the security domain be deployed ?
                 .filter(this::canHandle)
-                .toList()
-                .blockingGet();
-
-        // deploy security domains
-        domains.stream().forEach(domain -> securityDomainManager.deploy(domain));
-        logger.info("Security domains initialization done");
+                .map(domain -> {
+                    securityDomainManager.deploy(domain);
+                    return domain;
+                }).doOnComplete(() -> logger.info("Security domains initialization done"));
     }
 
-    private void computeEvents(Collection<Event> events) {
-        events.forEach(event -> {
-            logger.debug("Compute event id : {}, with type : {} and timestamp : {} and payload : {}", event.getId(), event.getType(), event.getCreatedAt(), event.getPayload());
-            switch (event.getType()) {
-                case DOMAIN:
-                    synchronizeDomain(event);
-                    break;
-                default:
+    private Maybe<Event> computeEvent(Event event) {
+        logger.debug("Compute event id : {}, with type : {} and timestamp : {} and payload : {}", event.getId(), event.getType(), event.getCreatedAt(), event.getPayload());
+        switch (event.getType()) {
+            case DOMAIN:
+                return synchronizeDomain(event);
+            default:
+                return Maybe.fromCallable(() -> {
                     eventManager.publishEvent(io.gravitee.am.common.event.Event.valueOf(event.getType(), event.getPayload().getAction()), event.getPayload());
-            }
-        });
+                    return event;
+                });
+        }
     }
 
-    private void synchronizeDomain(Event event) {
+    private Maybe<Event> synchronizeDomain(Event event) {
         final String domainId = event.getPayload().getId();
         final Action action = event.getPayload().getAction();
         switch (action) {
             case CREATE:
             case UPDATE:
-                Domain domain = domainRepository.findById(domainId).blockingGet();
-                if (domain != null) {
-                    // Get deployed domain
+                return domainRepository.findById(domainId).map(domain ->
+                {   // Get deployed domain
                     Domain deployedDomain = securityDomainManager.get(domain.getId());
                     // Can the security domain be deployed ?
                     if (canHandle(domain)) {
@@ -191,12 +269,15 @@ public class SyncManager implements InitializingBean {
                             securityDomainManager.undeploy(domainId);
                         }
                     }
-                }
-                break;
+                    return event;
+                });
             case DELETE:
-                securityDomainManager.undeploy(domainId);
-                break;
+                return Maybe.fromCallable(() -> {
+                    securityDomainManager.undeploy(domainId);
+                    return event;
+                });
         }
+        return Maybe.just(event);
     }
 
     private boolean canHandle(Domain domain) {

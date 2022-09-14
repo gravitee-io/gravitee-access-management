@@ -24,14 +24,11 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.repository.management.api.DomainRepository;
-import io.gravitee.am.repository.management.api.EnvironmentRepository;
 import io.gravitee.am.repository.management.api.EventRepository;
-import io.gravitee.am.repository.management.api.OrganizationRepository;
 import io.gravitee.common.event.EventManager;
 import io.gravitee.node.api.Node;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
-import io.reactivex.Single;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -40,13 +37,20 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.core.env.Environment;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Map;
 
 import static io.gravitee.node.api.Node.META_ENVIRONMENTS;
 import static io.gravitee.node.api.Node.META_ORGANIZATIONS;
 import static java.util.Arrays.asList;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -81,16 +85,17 @@ public class SyncManagerTest {
     private Node node;
 
     @Before
-    public void before() throws Exception {
+    public void before() {
         lenient().when(node.metadata()).thenReturn(Map.of(META_ORGANIZATIONS, new HashSet<>(), META_ENVIRONMENTS, new HashSet<>()));
-        syncManager.afterPropertiesSet();
     }
 
     @Test
-    public void init_test_empty_domains() {
+    public void init_test_empty_domains() throws Exception {
         when(domainRepository.findAll()).thenReturn(Flowable.empty());
 
+        syncManager.afterPropertiesSet();
         syncManager.refresh();
+        Thread.sleep(2000);
 
         verify(securityDomainManager, never()).deploy(any(Domain.class));
         verify(securityDomainManager, never()).update(any(Domain.class));
@@ -98,14 +103,16 @@ public class SyncManagerTest {
     }
 
     @Test
-    public void init_test_one_domain() {
+    public void init_test_one_domain() throws Exception {
         final Domain domain = new Domain();
         domain.setId("domain-1");
         domain.setReferenceId("env-1");
         domain.setEnabled(true);
         when(domainRepository.findAll()).thenReturn(Flowable.just(domain));
 
+        syncManager.afterPropertiesSet();
         syncManager.refresh();
+        Thread.sleep(2000);
 
         verify(securityDomainManager, times(1)).deploy(any(Domain.class));
         verify(securityDomainManager, never()).update(any(Domain.class));
@@ -113,7 +120,7 @@ public class SyncManagerTest {
     }
 
     @Test
-    public void init_test_two_domains() {
+    public void init_test_two_domains() throws Exception {
         final Domain domain = new Domain();
         domain.setId("domain-1");
         domain.setReferenceId("env-1");
@@ -124,7 +131,9 @@ public class SyncManagerTest {
         domain2.setEnabled(true);
         when(domainRepository.findAll()).thenReturn(Flowable.just(domain, domain2));
 
+        syncManager.afterPropertiesSet();
         syncManager.refresh();
+        Thread.sleep(2000);
 
         verify(securityDomainManager, times(2)).deploy(any(Domain.class));
         verify(securityDomainManager, never()).update(any(Domain.class));
@@ -132,7 +141,7 @@ public class SyncManagerTest {
     }
 
     @Test
-    public void init_test_multiple_domains_oneDisabled() {
+    public void init_test_multiple_domains_oneDisabled() throws Exception{
         final Domain domain = new Domain();
         domain.setId("domain-1");
         domain.setReferenceId("env-1");
@@ -147,7 +156,9 @@ public class SyncManagerTest {
         domain3.setEnabled(false);
         when(domainRepository.findAll()).thenReturn(Flowable.just(domain, domain2, domain3));
 
+        syncManager.afterPropertiesSet();
         syncManager.refresh();
+        Thread.sleep(2000);
 
         verify(securityDomainManager, times(2)).deploy(any(Domain.class));
         verify(securityDomainManager, never()).update(any(Domain.class));
@@ -162,15 +173,19 @@ public class SyncManagerTest {
         domain.setEnabled(true);
         when(domainRepository.findAll()).thenReturn(Flowable.just(domain));
 
+        syncManager.afterPropertiesSet();
         syncManager.refresh();
+        Thread.sleep(2000);
 
         Event event = new Event();
+        event.setCreatedAt(new Date());
         event.setType(Type.DOMAIN);
         event.setPayload(new Payload("domain-1", ReferenceType.DOMAIN, "domain-1", Action.DELETE));
 
         when(eventRepository.findByTimeFrame(any(Long.class), any(Long.class))).thenReturn(Flowable.just(event));
 
         syncManager.refresh();
+        Thread.sleep(2000);
 
         verify(securityDomainManager, times(1)).deploy(any());
         verify(securityDomainManager, never()).update(any());
@@ -186,7 +201,9 @@ public class SyncManagerTest {
         domain.setUpdatedAt(new Date(System.currentTimeMillis() - 60 * 1000));
         when(domainRepository.findAll()).thenReturn(Flowable.just(domain));
 
+        syncManager.afterPropertiesSet();
         syncManager.refresh();
+        Thread.sleep(2000);
 
         Event event = new Event();
         event.setType(Type.DOMAIN);
@@ -203,6 +220,7 @@ public class SyncManagerTest {
         when(securityDomainManager.get(domainToUpdate.getId())).thenReturn(domain);
 
         syncManager.refresh();
+        Thread.sleep(2000);
 
         verify(securityDomainManager, times(1)).deploy(any());
         verify(securityDomainManager, times(1)).update(any());
@@ -210,9 +228,11 @@ public class SyncManagerTest {
     }
 
     @Test
-    public void shouldPropagateEvents() {
+    public void shouldPropagateEvents() throws Exception {
         when(domainRepository.findAll()).thenReturn(Flowable.empty());
+        syncManager.afterPropertiesSet();
         syncManager.refresh();
+        Thread.sleep(2000);
 
         Event event = new Event();
         event.setType(Type.IDENTITY_PROVIDER);
@@ -221,6 +241,7 @@ public class SyncManagerTest {
         when(eventRepository.findByTimeFrame(any(Long.class), any(Long.class))).thenReturn(Flowable.just(event));
 
         syncManager.refresh();
+        Thread.sleep(2000);
 
         verify(eventManager, times(1)).publishEvent(any(), any());
         verify(securityDomainManager, never()).deploy(any(Domain.class));
@@ -284,6 +305,7 @@ public class SyncManagerTest {
 
         syncManager.afterPropertiesSet();
         syncManager.refresh();
+        Thread.sleep(2000);
 
         verify(securityDomainManager).deploy(any());
         verify(securityDomainManager, never()).update(any());
@@ -311,6 +333,7 @@ public class SyncManagerTest {
 
         syncManager.afterPropertiesSet();
         syncManager.refresh();
+        Thread.sleep(2000);
 
         verify(securityDomainManager).deploy(any());
         verify(securityDomainManager, never()).update(any());
@@ -340,6 +363,7 @@ public class SyncManagerTest {
 
         syncManager.afterPropertiesSet();
         syncManager.refresh();
+        Thread.sleep(2000);
 
         verify(securityDomainManager, times(2)).deploy(any());
         verify(securityDomainManager, never()).update(any());
@@ -369,6 +393,7 @@ public class SyncManagerTest {
 
         syncManager.afterPropertiesSet();
         syncManager.refresh();
+        Thread.sleep(2000);
 
         verify(securityDomainManager).deploy(any());
         verify(securityDomainManager, never()).update(any());
@@ -405,6 +430,7 @@ public class SyncManagerTest {
 
         syncManager.afterPropertiesSet();
         syncManager.refresh();
+        Thread.sleep(2000);
 
         verify(securityDomainManager, times(2)).deploy(any());
         verify(securityDomainManager, never()).update(any());
@@ -462,6 +488,7 @@ public class SyncManagerTest {
 
         syncManager.afterPropertiesSet();
         syncManager.refresh();
+        Thread.sleep(2000);
 
         verify(securityDomainManager, times(4)).deploy(any());
         verify(securityDomainManager, never()).update(any());
@@ -520,6 +547,7 @@ public class SyncManagerTest {
 
         syncManager.afterPropertiesSet();
         syncManager.refresh();
+        Thread.sleep(2000);
 
         verify(securityDomainManager, times(2)).deploy(any());
         verify(securityDomainManager, never()).update(any());
@@ -580,6 +608,7 @@ public class SyncManagerTest {
 
         syncManager.afterPropertiesSet();
         syncManager.refresh();
+        Thread.sleep(2000);
 
         verify(securityDomainManager, times(1)).deploy(any());
         verify(securityDomainManager, never()).update(any());
@@ -599,6 +628,7 @@ public class SyncManagerTest {
         when(domainRepository.findAll()).thenReturn(Flowable.just(domain));
 
         syncManager.refresh();
+        Thread.sleep(2000);
 
         verify(securityDomainManager).deploy(any());
         verify(securityDomainManager, never()).update(any());
