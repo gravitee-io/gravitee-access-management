@@ -19,22 +19,24 @@ package io.gravitee.am.gateway.handler.root.resources.handler.consent;
 import io.gravitee.am.gateway.handler.root.resources.handler.dummies.SpyRoutingContext;
 import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.core.buffer.Buffer;
-import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.core.env.Environment;
 
+import java.util.Map;
+
 import static io.gravitee.am.common.utils.ConstantKeys.USER_CONSENT_IP_LOCATION;
 import static io.gravitee.am.common.utils.ConstantKeys.USER_CONSENT_USER_AGENT;
 import static io.gravitee.common.http.MediaType.APPLICATION_JSON;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class DataHandlerConsentTest {
+public class DataHandlerConsentImplicitTest {
 
     private SpyRoutingContext routingContext;
     private DataConsentHandler handler;
@@ -50,30 +52,30 @@ public class DataHandlerConsentTest {
 
     private void setNoImplicitConsent() {
         mockEnv = Mockito.mock(Environment.class);
-        Mockito.when(mockEnv.getProperty(DataConsentHandler.CONFIG_KEY_IMPLICIT_CONSENT_IP, boolean.class, false)).thenReturn(false);
-        Mockito.when(mockEnv.getProperty(DataConsentHandler.CONFIG_KEY_IMPLICIT_CONSENT_USER_AGENT, boolean.class, false)).thenReturn(false);
+        Mockito.when(mockEnv.getProperty(DataConsentHandler.CONFIG_KEY_IMPLICIT_CONSENT_IP, boolean.class, false)).thenReturn(true);
+        Mockito.when(mockEnv.getProperty(DataConsentHandler.CONFIG_KEY_IMPLICIT_CONSENT_USER_AGENT, boolean.class, false)).thenReturn(true);
     }
 
     @Test
-    public void must_do_nothing_when_no_request_param() {
+    public void default_implicit_value_when_no_request_param() {
         handler.handle(routingContext);
-        assertFalse(routingContext.session().get(USER_CONSENT_IP_LOCATION));
-        assertFalse(routingContext.session().get(USER_CONSENT_USER_AGENT));
+        assertTrue(routingContext.session().get(USER_CONSENT_IP_LOCATION));
+        assertTrue(routingContext.session().get(USER_CONSENT_USER_AGENT));
     }
 
     @Test
-    public void must_have_user_ip_location_when_no_request_param() {
+    public void must_have_user_ip_location_with_default_implicit_value_when_no_request_param() {
         routingContext.putParam(USER_CONSENT_IP_LOCATION, "on");
         handler.handle(routingContext);
         assertTrue(routingContext.session().get(USER_CONSENT_IP_LOCATION));
-        assertFalse(routingContext.session().get(USER_CONSENT_USER_AGENT));
+        assertTrue(routingContext.session().get(USER_CONSENT_USER_AGENT));
     }
 
     @Test
-    public void must_have_user_agent_when_no_request_param() {
+    public void must_have_user_agent_with_default_implicit_value_when_no_request_param() {
         routingContext.putParam(USER_CONSENT_USER_AGENT, "on");
         handler.handle(routingContext);
-        assertFalse(routingContext.session().get(USER_CONSENT_IP_LOCATION));
+        assertTrue(routingContext.session().get(USER_CONSENT_IP_LOCATION));
         assertTrue(routingContext.session().get(USER_CONSENT_USER_AGENT));
     }
 
@@ -114,20 +116,20 @@ public class DataHandlerConsentTest {
     }
 
     @Test
-    public void must_have_user_ip_location_when_no_request_param_body() {
+    public void must_have_user_ip_location_with_default_implicit_value_when_no_request_param_body() {
         routingContext.request().headers().set("Content-type", APPLICATION_JSON);
         routingContext.setBody(new Buffer(new JsonObject(Map.of(USER_CONSENT_IP_LOCATION, "on")).toBuffer()));
         handler.handle(routingContext);
         assertTrue(routingContext.session().get(USER_CONSENT_IP_LOCATION));
-        assertFalse(routingContext.session().get(USER_CONSENT_USER_AGENT));
+        assertTrue(routingContext.session().get(USER_CONSENT_USER_AGENT));
     }
 
     @Test
-    public void must_have_user_agent_when_no_request_param_body() {
+    public void must_have_user_agent_with_default_implicit_value_when_no_request_param_body() {
         routingContext.request().headers().set("Content-type", APPLICATION_JSON);
         routingContext.setBody(new Buffer(new JsonObject(Map.of(USER_CONSENT_USER_AGENT, "on")).toBuffer()));
         handler.handle(routingContext);
-        assertFalse(routingContext.session().get(USER_CONSENT_IP_LOCATION));
+        assertTrue(routingContext.session().get(USER_CONSENT_IP_LOCATION));
         assertTrue(routingContext.session().get(USER_CONSENT_USER_AGENT));
     }
 

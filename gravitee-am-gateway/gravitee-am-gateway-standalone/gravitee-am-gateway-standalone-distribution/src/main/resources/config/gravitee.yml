@@ -402,3 +402,13 @@ liquibase:
 #          LOW: 0.2777778
 ##          MEDIUM: 6.9444445 # (25km/h)
 ##          HIGH: 69.444445 # (250km/h)
+
+
+## This section allows implicit user consent to store remote IP and userAgent
+## into the user profile and audit logs. This consent is disabled by default
+## and should be enabled only if the end users of your applications
+## have given their consent.
+#
+#consent:
+#  ip: false
+#  user-agent: false
