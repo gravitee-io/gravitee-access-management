@@ -16,6 +16,7 @@ const specialChar = document.getElementById("includeSpecialChar");
 const mixedCase = document.getElementById("mixedCase");
 const maxConsecutiveLetters = document.getElementById("maxConsecutiveLetters");
 const excludeUserProfileInfoInPassword = document.getElementById("excludeUserProfileInfoInPassword");
+const matchPasswords = document.getElementById("matchPasswords");
 
 function validatePassword() {
     if (passwordSettings == null) {
@@ -137,10 +138,13 @@ function enableSubmitButton(){
 
 function toggleSubmit(element) {
     if(confirmPasswordInput){
-        if(confirmPasswordInput.value.length == 0 || passwordInput.value !== confirmPasswordInput.value) {
+        if(confirmPasswordInput.value.length === 0 || passwordInput.value !== confirmPasswordInput.value) {
+            validatePassword();
+            validateMessageElement(matchPasswords, false);
             disableSubmitButton();
             return;
         }
+        validateMessageElement(matchPasswords, true);
     }
 
     if (element === passwordInput && !validatePassword()) {
