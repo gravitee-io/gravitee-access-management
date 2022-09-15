@@ -38,23 +38,23 @@
             </div>
 
             <div class="disclaimer">
-                <span>Follow the instruction in the security window popup</span>
+                <span th:text="#{webauthn.login.tips}"/>
             </div>
 
             <div id="webauthn-error" class="item error-text hide">
                 <span>
-                    <span class="error">login_failed</span>
-                    <small class="error_description">Invalid user</small>
+                    <span class="error" th:text="#{webauthn.login.error}"/>
+                    <small class="error_description" th:text="#{webauthn.login.error.description}"/>
                 </span>
             </div>
 
             <div>
-                <button class="button primary">Next</button>
+                <button class="button primary" th:text="#{webauthn.login.button.next}"></button>
             </div>
         </form>
     </div>
     <div class="section">
-        <a th:href="${loginAction}"><span class="icons">arrow_back</span><span>Back to sign in</span></a>
+        <a th:href="${loginAction}"><span class="icons">arrow_back</span><span th:text="#{common.back.to.sign.in}"/></a>
     </div>
 </div>
 

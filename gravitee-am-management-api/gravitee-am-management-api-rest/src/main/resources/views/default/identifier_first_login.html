@@ -28,8 +28,8 @@
             <span th:text="#{login.title} + ' ' + ${client.name}"></span>
         </div>
         <div th:if="${allowRegister}" class="header-description">
-            <label>Don't have an account yet? </label>
-            <a th:href="${registerAction}">Sign up!</a>
+            <label th:text="#{identifier_first.description}"> </label>
+            <a th:href="${registerAction}" th:text="#{identifier_first.signup}"/>
         </div>
     </div>
     <div class="section">
@@ -41,7 +41,7 @@
             <div th:if="${error}" class="button error-text">
                 <span class="description">
                     <span class="error" th:text="${error}"></span>
-                    <small th:text="*{error_description}?: 'Invalid user'"></small>
+                    <small th:text="*{error_description}?: #{identifier_first.error}"></small>
                 </span>
             </div>
 
@@ -53,7 +53,7 @@
                    th:name="${bot_detection_configuration.get('tokenParameterName')}" />
 
             <div>
-                <button id="submitBtn" class="button primary">Sign in</button>
+                <button id="submitBtn" class="button primary" th:text="#{identifier_first.button.submit}"></button>
             </div>
         </form>
     </div>
@@ -61,7 +61,7 @@
         <a th:if="${allowPasswordless}"
            th:href="${passwordlessAction}"
            class="button social">
-            <span class="description">Sign in with fingerprint, device or security key</span>
+            <span class="description" th:text="#{identifier_first.passwordless}"></span>
         </a>
     </div>
 </div>
