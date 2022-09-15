@@ -79,10 +79,10 @@
                    th:name="${bot_detection_configuration.get('tokenParameterName')}" />
 
             <div class="button error-text" th:switch="${warning}" th:if="${warning}">
-                <span th:case="invalid_password_value">Invalid password value. It does not comply with the password policy.</span>
-                <span th:case="invalid_user_information">Invalid first name, last name or username.</span>
-                <span th:case="invalid_email">Invalid email address.</span>
-                <span th:case="*">Some information are missing or invalid.</span>
+                <span th:case="invalid_password_value" th:text="#{registration.error.invalid.password}"/>
+                <span th:case="invalid_user_information" th:text="#{registration.error.invalid.user}"/>
+                <span th:case="invalid_email" th:text="#{registration.error.invalid.email}"/>
+                <span th:case="*" th:text="#{registration.error.information.missing}"/>
             </div>
 
             <button type="submit" id="submitBtn" class="button primary" th:text="#{registration.button.submit}"></button>

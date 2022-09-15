@@ -20,10 +20,10 @@
     <div class="header">
         <img class="logo" th:src="${theme.logoUrl} ?: @{../../assets/images/gravitee-logo.svg}">
         <div class="title">
-            <span id="enrollment-title">Select a method</span>
+            <span id="enrollment-title" th:text="#{mfa_alternative.title}"/>
         </div>
         <div class="header-description">
-            <span id="enrollment-description">Try to sign in using other options</span>
+            <span id="enrollment-description" th:text="#{mfa_alternative.description}"/>
         </div>
     </div>
     <div class="section">
@@ -35,8 +35,8 @@
                             <input type="radio" th:id="'list-factor-' + ${factor.id}" th:name="factorId" th:value="${factor.id}" class="otp"/>
                         </div>
                         <div class="radio-detail">
-                            <span class="enroll-name">One-Time Password</span>
-                            <span class="enroll-description">Use a verification code displayed on your multi-factor authenticator app from your device</span>
+                            <span class="enroll-name" th:text="#{mfa.otp}"/>
+                            <span class="enroll-description" th:text="#{mfa_alternative.otp}"/>
                         </div>
                     </div>
                 </div>
@@ -47,8 +47,8 @@
                             <input type="radio" th:id="'list-factor-' + ${factor.id}" th:name="factorId" th:value="${factor.id}" class="sms"/>
                         </div>
                         <div class="radio-detail">
-                            <span class="enroll-name">SMS</span>
-                            <span class="enroll-description">Receive a verification code to your phone to authenticate</span>
+                            <span class="enroll-name" th:text="#{mfa.sms}"/>
+                            <span class="enroll-description" th:text="#{mfa_alternative.sms}"/>
                         </div>
                     </div>
                 </div>
@@ -59,8 +59,8 @@
                             <input type="radio" th:id="'list-factor-' + ${factor.id}" th:name="factorId" th:value="${factor.id}" class="email"/>
                         </div>
                         <div class="radio-detail">
-                            <span class="enroll-name">Email</span>
-                            <span class="enroll-description">Send an email to your email address</span>
+                            <span class="enroll-name" th:text="#{mfa.email}"/>
+                            <span class="enroll-description" th:text="#{mfa_alternative.email}"/>
                         </div>
                     </div>
                 </div>
@@ -71,8 +71,8 @@
                             <input type="radio" th:id="'list-factor-' + ${factor.id}" th:name="factorId" th:value="${factor.id}" class="http"/>
                         </div>
                         <div class="radio-detail">
-                            <span class="enroll-name">HTTP</span>
-                            <span class="enroll-description">Enter the code provided by the HTTP in next step</span>
+                            <span class="enroll-name" th:text="#{mfa.http}"/>
+                            <span class="enroll-description" th:text="#{mfa_alternative.http}"/>
                         </div>
                     </div>
                 </div>
@@ -83,8 +83,8 @@
                             <input type="radio" th:id="'list-factor-' + ${factor.id}" th:name="factorId" th:value="${factor.id}" class="fido2"/>
                         </div>
                         <div class="radio-detail">
-                            <span class="enroll-name">FIDO2</span>
-                            <span class="enroll-description">Select 'Next' button to trigger the registration process</span>
+                            <span class="enroll-name" th:text="#{mfa.fido}"/>
+                            <span class="enroll-description" th:text="#{mfa_alternative.fido}"/>
                         </div>
                     </div>
                 </div>
@@ -96,8 +96,8 @@
                             <input type="radio" th:id="'list-factor-' + ${factor.id}" th:name="factorId" th:value="${factor.id}" class="recovery-code"/>
                         </div>
                         <div class="radio-detail">
-                            <span class="enroll-name">Recover Code</span>
-                            <span class="enroll-description">Use a recovery code previously generated <b th:text="${factor.target}"></b>.</span>
+                            <span class="enroll-name" th:text="#{mfa.recovery.code}"/>
+                            <span class="enroll-description" th:text="#{mfa_alternative.recovery.code}"/>
                         </div>
                     </div>
                 </div>
@@ -106,7 +106,7 @@
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
 
             <div>
-                <button type="submit" class="button primary" id="next">Next</button>
+                <button type="submit" class="button primary" id="next" th:text="#{mfa_alternative.submit.button}"></button>
             </div>
 
         </form>
