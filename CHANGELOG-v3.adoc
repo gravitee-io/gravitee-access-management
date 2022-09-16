@@ -1,6 +1,24 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/597?closed=1[AM - 3.18.6 (2022-09-16)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- Authent issue when multiple results match the query https://github.com/gravitee-io/issues/issues/8443[#8443]
+- Token not retrieved in database https://github.com/gravitee-io/issues/issues/8431[#8431]
+
+=== Features
+
+*_Gateway_*
+
+- Implicit consent for audit logs https://github.com/gravitee-io/issues/issues/8448[#8448]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/594?closed=1[AM - 3.18.5 (2022-09-08)]
 
 === Bug fixes
