@@ -11,7 +11,8 @@
     "graviteeResource": {
       "title": "Resource",
       "description": "Resource to send Email and to verify user code",
-      "type" : "string"
+      "type" : "string",
+      "widget": "graviteeResource"
     },
     "returnDigits": {
       "title": "Number of digits",

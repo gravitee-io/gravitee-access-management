@@ -49,7 +49,7 @@ export class FactorCreationStep2Component implements OnInit {
       }
       for (const key in this.factorSchema.properties) {
         const property = this.factorSchema.properties[key];
-        this.applyResourceSelection(property);
+        this.applyResourceSelection(property, key);
       }
     });
   }
@@ -60,7 +60,7 @@ export class FactorCreationStep2Component implements OnInit {
     this.factor.configuration = configurationWrapper.configuration;
   }
 
-  private applyResourceSelection(property) {
+  private applyResourceSelection(property, propertyName?) {
     if (property.type === 'array') {
       if (property.items && property.items.properties) {
         for (const key in property.items.properties) {
@@ -69,7 +69,8 @@ export class FactorCreationStep2Component implements OnInit {
         }
       }
     }
-    if (property.graviteeSource || 'graviteeResource' === property.widget) {
+
+    if ('graviteeResource' === property.widget || 'graviteeResource' === propertyName) {
       if (this.resources && this.resources.length > 0) {
         const resourcePluginTypeToCategories = this.resourcePlugins.reduce((accumulator, currentPlugin) => ({ ...accumulator, [currentPlugin.id]: currentPlugin.categories}), {});
         const factorPluginTypeToCategories = this.factorPlugins.reduce((accumulator, currentPlugin) => ({ ...accumulator, [currentPlugin.id]: currentPlugin.category}), {});
@@ -77,7 +78,7 @@ export class FactorCreationStep2Component implements OnInit {
         // filter resources with category compatible with the Factor Plugin one
         const filteredResources = this.resources.filter(r =>
           factorCategory === 'any' ||
-          resourcePluginTypeToCategories[r.type].filter(resourceCategory => resourceCategory === factorCategory).length > 0
+          (resourcePluginTypeToCategories[r.type] && resourcePluginTypeToCategories[r.type].filter(resourceCategory => resourceCategory === factorCategory).length > 0)
         );
 
         property['x-schema-form'] = { 'type' : 'select' };
