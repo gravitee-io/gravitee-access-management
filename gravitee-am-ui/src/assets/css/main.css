@@ -314,7 +314,7 @@ div.short-section > input + input {
     align-items: flex-start;
     padding: 8px;
     width: 440px;
-    height: 40px;
+    min-height: 40px;
     background: var(--button-background-color);
     border-radius: var(--button-border-radius);
     flex: none;
@@ -343,6 +343,8 @@ div.short-section > input + input {
     background: var(--button-social-background-color);
     padding: 0;
     align-self: auto;
+    height: auto;
+    text-align: center;
 }
 
 .button.button-disabled {
@@ -361,10 +363,12 @@ div.short-section > input + input {
     color: var(--error-text-color);
     flex-grow: 1;
     padding: 0;
+    height: auto;
 }
 
 .error-text > span {
     padding-top: 7px;
+    padding-bottom: 7px;
 }
 
 .large-font {
@@ -402,6 +406,7 @@ div.short-section > input + input {
 
 .description {
     padding-top: 8px;
+    padding-bottom: 8px;
 }
 
 a {
