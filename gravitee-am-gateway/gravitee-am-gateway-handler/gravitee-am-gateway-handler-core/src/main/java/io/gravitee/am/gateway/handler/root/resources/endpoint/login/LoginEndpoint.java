@@ -124,6 +124,11 @@ public class LoginEndpoint extends AbstractEndpoint implements Handler<RoutingCo
         routingContext.put(REGISTER_ACTION_KEY, resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/register", queryParams, true));
         routingContext.put(WEBAUTHN_ACTION_KEY, resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/webauthn/login", queryParams, true));
         if (isIdentifierFirstLoginEnabled) {
+            // we remove the login_hint in the backToIdFirst login action to avoid
+            // * infinite loop (if the idFirst login page submit the form if these parameter is provided)
+            // * prevent the user from changing the username in the idFirst login page
+            // https://github.com/gravitee-io/issues/issues/8236
+            queryParams.remove(Parameters.LOGIN_HINT);
             routingContext.put(LOGIN_IDENTIFIER_ACTION_KEY, resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/login/identifier", queryParams, true));
         }
     }
