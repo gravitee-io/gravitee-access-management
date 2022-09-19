@@ -142,16 +142,6 @@
             nextBtn.prop('disabled', false);
             nextBtn.removeClass("button-disabled")
         });
-
-        nextBtn.on("click", function (){
-            $("#enrollments").hide();
-            $(".hide-enrollment-item").hide();
-
-            $("#enrollment-title").text("Multi-factor Authentication");
-            $("#enrollment-description").text("Configure multi-factor authentication by choosing the method to validate your identity")
-
-            $("#" + selectedItem).show();
-        });
     });
 </script>
 </body>
