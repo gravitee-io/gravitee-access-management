@@ -360,7 +360,7 @@ public class UserServiceImpl implements UserService {
 
         final String email = params.getEmail();
         if (email != null && !emailValidator.validate(email)) {
-            return Completable  .error(new EmailFormatInvalidException(email));
+            return Completable.error(new EmailFormatInvalidException(email));
         }
 
         return userService.findByDomainAndCriteria(domain.getId(), params.buildCriteria())

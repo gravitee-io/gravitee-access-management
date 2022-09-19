@@ -40,6 +40,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.cache.StandardCacheManager;
 
+import java.util.Locale;
 import java.util.Set;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -77,8 +78,10 @@ public class PreviewServiceTest {
         templateEngine.setTemplateResolvers(Set.of(templateResolver));
         when(themeService.validate(any())).thenReturn(Completable.complete());
         when(themeService.sanitize(any())).thenAnswer(args -> args.getArguments()[0]);
+        ReflectionTestUtils.setField(previewService, "templatesDirectory", "src/test/resources");
         ReflectionTestUtils.setField(previewService, "templateEngine", templateEngine);
         ReflectionTestUtils.setField(previewService, "templateResolver", templateResolver);
+        previewService.afterPropertiesSet();
     }
 
     @Test
@@ -90,7 +93,7 @@ public class PreviewServiceTest {
         final PreviewRequest previewRequest = new PreviewRequest();
         previewRequest.setContent("<html lang=\"en\" xmlns:th=\"http://www.thymeleaf.org\"><head><style th:if=\"${theme.css}\" th:text=\"${theme.css}\"></style></head><body><span th:text=\"${client.name}\"></span></body></html>");
         previewRequest.setTemplate(Template.LOGIN.template());
-        final TestObserver<PreviewResponse> observer = previewService.previewDomainForm(DOMAIN_ID, previewRequest).test();
+        final TestObserver<PreviewResponse> observer = previewService.previewDomainForm(DOMAIN_ID, previewRequest, Locale.ENGLISH).test();
 
         observer.awaitTerminalEvent();
         observer.assertNoErrors();
@@ -112,7 +115,7 @@ public class PreviewServiceTest {
         final PreviewRequest previewRequest = new PreviewRequest();
         previewRequest.setContent("<html lang=\"en\" xmlns:th=\"http://www.thymeleaf.org\"><head><style th:if=\"${theme.css}\" th:text=\"${theme.css}\"></style></head><body><span th:text=\"${client.name}\"></span></body></html>");
         previewRequest.setTemplate(Template.LOGIN.template());
-        final TestObserver<PreviewResponse> observer = previewService.previewDomainForm(DOMAIN_ID, previewRequest).test();
+        final TestObserver<PreviewResponse> observer = previewService.previewDomainForm(DOMAIN_ID, previewRequest, Locale.ENGLISH).test();
 
         observer.awaitTerminalEvent();
         observer.assertNoErrors();
@@ -144,7 +147,7 @@ public class PreviewServiceTest {
         previewRequest.setContent("<html lang=\"en\" xmlns:th=\"http://www.thymeleaf.org\"><head><style th:if=\"${theme.css}\" th:text=\"${theme.css}\"></style></head><body><span th:text=\"${client.name}\"></span></body></html>");
         previewRequest.setTemplate(Template.LOGIN.template());
         previewRequest.setTheme(overrideTheme);
-        final TestObserver<PreviewResponse> observer = previewService.previewDomainForm(DOMAIN_ID, previewRequest).test();
+        final TestObserver<PreviewResponse> observer = previewService.previewDomainForm(DOMAIN_ID, previewRequest, Locale.ENGLISH).test();
 
         observer.awaitTerminalEvent();
         observer.assertNoErrors();
@@ -164,7 +167,7 @@ public class PreviewServiceTest {
         final PreviewRequest previewRequest = new PreviewRequest();
         previewRequest.setContent("<html lang=\"en\" xmlns:th=\"http://www.thymeleaf.org\"><body><span th:text=\"${client.unknown}\"></span></body></html>");
         previewRequest.setTemplate(Template.LOGIN.template());
-        final TestObserver<PreviewResponse> observer = previewService.previewDomainForm(DOMAIN_ID, previewRequest).test();
+        final TestObserver<PreviewResponse> observer = previewService.previewDomainForm(DOMAIN_ID, previewRequest, Locale.ENGLISH).test();
 
         observer.awaitTerminalEvent();
         observer.assertError(PreviewException.class);
