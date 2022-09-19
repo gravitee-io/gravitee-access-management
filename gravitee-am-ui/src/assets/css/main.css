@@ -137,6 +137,11 @@
     --checkbox-input-border-width: 1px;
     --checkbox-input-border-color: #B8B8BC;
     --checkbox-input-border-radius: 2px;
+    --body-background-color: var(--white);
+}
+
+body {
+    background: var(--body-background-color);
 }
 
 body, body * {
