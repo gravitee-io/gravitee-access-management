@@ -34,8 +34,12 @@ import io.gravitee.am.model.safe.ClientProperties;
 import io.gravitee.am.model.safe.DomainProperties;
 import io.gravitee.am.model.safe.UserProperties;
 import io.gravitee.am.service.theme.ThemeResolution;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.exceptions.TemplateEngineException;
+import org.thymeleaf.exceptions.TemplateInputException;
+import org.thymeleaf.exceptions.TemplateProcessingException;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -62,6 +66,7 @@ import static io.gravitee.am.common.utils.ConstantKeys.USER_CONTEXT_KEY;
  * @author GraviteeSource Team
  */
 public class PreviewBuilder {
+    private final Logger logger = LoggerFactory.getLogger(PreviewBuilder.class);
     public static final String EMPTY_STRING = "";
     public static final String SITE_KEY = "siteKey";
     public static final String PARAMETER_NAME = "parameterName";
@@ -137,8 +142,16 @@ public class PreviewBuilder {
         try {
             final String processedTemplate = templateEngine.process(this.templateResolver.getTemplateKey(previewForm), context);
             previewForm.setContent(processedTemplate);
+        } catch (TemplateInputException e) {
+            logger.debug("Preview error on domain {}", this.domain.getId(), e);
+            throw new PreviewException("Preview error, document structure maybe invalid." +
+                    " (error at line: " + e.getLine() + ", col: " + e.getCol() + " )");
+        } catch (TemplateProcessingException e) {
+            logger.debug("Preview error on domain {}", this.domain.getId(), e);
+            throw new PreviewException("Preview error, expression or variable maybe invalid (error at line: " + e.getLine() + ", col: " + e.getCol() + ")");
         } catch (TemplateEngineException e) {
-            throw new PreviewException("Unable to render the preview : \n" + e.getMessage());
+            logger.info("Unexpected preview error on domain {}", this.domain.getId(), e);
+            throw new PreviewException("Unexpected preview error");
         } finally {
             this.templateResolver.removeForm(previewForm);
         }
