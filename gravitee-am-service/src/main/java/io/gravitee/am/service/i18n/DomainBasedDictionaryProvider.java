@@ -44,7 +44,7 @@ public class DomainBasedDictionaryProvider implements DynamicDictionaryProvider 
 
     @Override
     public boolean hasDictionaryFor(Locale locale) {
-        return this.propertiesMap.containsKey(locale.toString());
+        return this.propertiesMap.containsKey(locale.toString()) || this.propertiesMap.containsKey(locale.getLanguage());
     }
 
     @Override

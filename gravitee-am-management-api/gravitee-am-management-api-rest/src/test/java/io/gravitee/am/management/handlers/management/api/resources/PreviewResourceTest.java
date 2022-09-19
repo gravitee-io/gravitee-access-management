@@ -31,9 +31,7 @@ import javax.ws.rs.core.Response;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
 
 /**
@@ -58,7 +56,7 @@ public class PreviewResourceTest extends JerseySpringTest {
         final PreviewResponse previewResponse = new PreviewResponse();
         previewResponse.setContent("OK");
         previewResponse.setTemplate(Template.LOGIN.template());
-        doReturn(Maybe.just(previewResponse)).when(previewService).previewDomainForm(any(), any());
+        doReturn(Maybe.just(previewResponse)).when(previewService).previewDomainForm(any(), any(), any());
 
         final Response response = target("domains")
                 .path(domainId)

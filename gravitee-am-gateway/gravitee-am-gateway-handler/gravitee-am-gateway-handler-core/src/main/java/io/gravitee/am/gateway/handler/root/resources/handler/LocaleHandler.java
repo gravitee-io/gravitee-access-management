@@ -53,6 +53,8 @@ public class LocaleHandler implements Handler<RoutingContext> {
             }
         }
 
+        // set english as default value
+        routingContext.put("lang", Locale.ENGLISH.getLanguage());
         routingContext.next();
     }
 }
