@@ -220,7 +220,7 @@ jobs:
     docker:
       - image: cimg/openjdk:17.0.1-node
       - image: mongo:4.2
-    resource_class: medium
+    resource_class: medium+
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -267,7 +267,7 @@ jobs:
       - image: postgres:14-alpine
         environment:
           POSTGRES_PASSWORD: T0pS3cr3t
-    resource_class: small
+    resource_class: medium+
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -341,7 +341,7 @@ jobs:
     docker:
       - image: cimg/openjdk:17.0.1-node
       - image: mongo:4.2
-    resource_class: medium
+    resource_class: medium+
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -388,7 +388,7 @@ jobs:
       - image: postgres:14-alpine
         environment:
           POSTGRES_PASSWORD: T0pS3cr3t
-    resource_class: medium
+    resource_class: medium+
     steps:
       - attach_workspace:
           at: /tmp/workspace
