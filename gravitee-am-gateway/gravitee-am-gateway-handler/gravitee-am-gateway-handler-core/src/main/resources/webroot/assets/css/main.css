@@ -96,6 +96,7 @@
     --input-border-width: 1px;
     --input-padding: 8px;
     --input-height: 48px;
+    --container-width: 600px;
     --container-background-color: var(--white);
     --container-border-color: rgba(0, 0, 0, 0.12);
     --container-border-radius: 4px;
@@ -199,7 +200,7 @@ body, body * {
     padding: 64px 80px;
     gap: 24px;
     margin: auto;
-    width: 600px;
+    width: var(--container-width);
     top: 100px;
     background: var(--container-background-color);
     border: var(--container-border-width) solid var(--container-border-color);
