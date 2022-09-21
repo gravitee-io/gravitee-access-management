@@ -216,7 +216,7 @@
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                 <input type="hidden" th:name="factorId" th:value="${factor.id}"/>
                 <div>
-                    <button th:id="'submit' + ${factor.id}" type="submit" name="user_mfa_enrollment" value="true" class="button primary" th:text="mfa_enroll.button.submit"></button>
+                    <button th:id="'submit' + ${factor.id}" type="submit" name="user_mfa_enrollment" value="true" class="button primary" th:text="#{mfa_enroll.button.submit}"></button>
                 </div>
                 <div>
                     <button type="submit" name="user_mfa_enrollment" value="false" class="button secondary" th:text="#{mfa_enroll.button.skip}"></button>
