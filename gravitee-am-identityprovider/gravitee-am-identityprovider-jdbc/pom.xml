@@ -40,6 +40,7 @@
         <r2dbc-mariadb.version>1.0.0</r2dbc-mariadb.version>
         <r2dbc-spi.version>0.8.4.RELEASE</r2dbc-spi.version>
         <testcontainers.version>1.15.1</testcontainers.version>
+        <spring-data-r2dbc.version>1.4.1</spring-data-r2dbc.version>
     </properties>
 
     <dependencies>
@@ -77,6 +78,13 @@
             </exclusions>
         </dependency>
 
+        <dependency>
+            <artifactId>spring-data-r2dbc</artifactId>
+            <groupId>org.springframework.data</groupId>
+            <version>${spring-data-r2dbc.version}</version>
+            <scope>test</scope>
+        </dependency>
+
         <!-- R2DBC -->
         <dependency>
             <groupId>io.r2dbc</groupId>
@@ -86,6 +94,10 @@
                 <exclusion>
                     <artifactId>r2dbc-spi</artifactId>
                     <groupId>io.r2dbc</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>reactor-core</artifactId>
+                    <groupId>io.projectreactor</groupId>
                 </exclusion>
             </exclusions>
         </dependency>
@@ -98,6 +110,10 @@
                     <artifactId>r2dbc-spi</artifactId>
                     <groupId>io.r2dbc</groupId>
                 </exclusion>
+                <exclusion>
+                    <artifactId>reactor-core</artifactId>
+                    <groupId>io.projectreactor</groupId>
+                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
@@ -109,6 +125,10 @@
                     <artifactId>r2dbc-spi</artifactId>
                     <groupId>io.r2dbc</groupId>
                 </exclusion>
+                <exclusion>
+                    <artifactId>reactor-core</artifactId>
+                    <groupId>io.projectreactor</groupId>
+                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
@@ -119,6 +139,10 @@
                 <exclusion>
                     <artifactId>r2dbc-spi</artifactId>
                     <groupId>io.r2dbc</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>reactor-core</artifactId>
+                    <groupId>io.projectreactor</groupId>
                 </exclusion>
             </exclusions>
         </dependency>

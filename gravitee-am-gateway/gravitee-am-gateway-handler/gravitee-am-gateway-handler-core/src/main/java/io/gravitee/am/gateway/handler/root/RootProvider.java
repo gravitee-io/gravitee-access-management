@@ -296,7 +296,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         Handler<RoutingContext> clientRequestParseHandlerOptional = new ClientRequestParseHandler(clientSyncService);
         Handler<RoutingContext> passwordPolicyRequestParseHandler = new PasswordPolicyRequestParseHandler(passwordService, domain);
         Handler<RoutingContext> botDetectionHandler = new BotDetectionHandler(domain, botDetectionManager);
-        Handler<RoutingContext> dataConsentHandler = new DataConsentHandler();
+        Handler<RoutingContext> dataConsentHandler = new DataConsentHandler(environment);
         Handler<RoutingContext> geoIpHandler = new GeoIpHandler(userActivityService, vertx.eventBus());
         Handler<RoutingContext> loginAttemptHandler = new LoginAttemptHandler(domain, identityProviderManager, loginAttemptService, userActivityService);
         Handler<RoutingContext> rememberDeviceSettingsHandler = new RememberDeviceSettingsHandler();
@@ -311,6 +311,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 // for instance, the OAuthProvider will not execute the /oauth/authorize and there will have 500 ERROR instead of "missing client_id" OAuth 2.0 error
                 // See https://github.com/gravitee-io/issues/issues/5035
                 .handler(new ClientRequestParseHandler(clientSyncService).setContinueOnError(true))
+                .handler(dataConsentHandler)
                 .handler(geoIpHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.ROOT));
 
@@ -326,7 +327,6 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         rootRouter.post(PATH_IDENTIFIER_FIRST_LOGIN)
                 .handler(clientRequestParseHandler)
                 .handler(botDetectionHandler)
-                .handler(dataConsentHandler)
                 .handler(new LoginSocialAuthenticationHandler(identityProviderManager, jwtService, certificateManager))
                 .handler(policyChainHandler.create(ExtensionPoint.POST_LOGIN_IDENTIFIER))
                 .handler(new LoginSelectionRuleHandler(true))
@@ -345,7 +345,6 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         rootRouter.post(PATH_LOGIN)
                 .handler(clientRequestParseHandler)
                 .handler(botDetectionHandler)
-                .handler(dataConsentHandler)
                 .handler(loginAttemptHandler)
                 .handler(new LoginFormHandler(userAuthProvider))
                 .handler(deviceIdentifierHandler)

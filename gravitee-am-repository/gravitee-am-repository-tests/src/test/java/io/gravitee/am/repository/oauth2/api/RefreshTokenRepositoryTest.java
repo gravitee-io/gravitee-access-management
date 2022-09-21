@@ -22,8 +22,6 @@ import io.reactivex.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.Arrays;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
@@ -97,8 +95,8 @@ public class RefreshTokenRepositoryTest extends AbstractOAuthTest {
         token2.setDomain("domain-id2");
         token2.setSubject("user-id2");
 
-        TestObserver<RefreshToken> testObserver = refreshTokenRepository
-                .bulkWrite(Arrays.asList(token1, token2))
+        TestObserver<RefreshToken> testObserver = refreshTokenRepository.create(token1).ignoreElement()
+                .andThen(refreshTokenRepository.create(token2).ignoreElement())
                 .andThen(refreshTokenRepository.deleteByDomainIdClientIdAndUserId("domain-id", "client-id", "user-id"))
                 .andThen(refreshTokenRepository.findByToken("my-token"))
                 .test();
@@ -125,8 +123,8 @@ public class RefreshTokenRepositoryTest extends AbstractOAuthTest {
         token2.setDomain("domain-id2");
         token2.setSubject("user-id2");
 
-        TestObserver<RefreshToken> testObserver = refreshTokenRepository
-                .bulkWrite(Arrays.asList(token1, token2))
+        TestObserver<RefreshToken> testObserver = refreshTokenRepository.create(token1).ignoreElement()
+                .andThen(refreshTokenRepository.create(token2).ignoreElement())
                 .andThen(refreshTokenRepository.deleteByDomainIdAndUserId("domain-id", "user-id"))
                 .andThen(refreshTokenRepository.findByToken("my-token"))
                 .test();

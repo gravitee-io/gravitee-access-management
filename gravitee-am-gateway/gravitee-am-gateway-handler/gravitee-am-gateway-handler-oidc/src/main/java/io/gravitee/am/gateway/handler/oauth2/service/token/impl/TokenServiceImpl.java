@@ -136,8 +136,7 @@ public class TokenServiceImpl implements TokenService {
                             (refreshToken != null ? jwtService.encode(refreshToken, client).map(Optional::of) : Single.just(Optional.<String>empty())),
                             (encodedAccessToken, optionalEncodedRefreshToken) -> convert(accessToken, encodedAccessToken, optionalEncodedRefreshToken.orElse(null), oAuth2Request))
                             .flatMap(accessToken1 -> tokenEnhancer.enhance(accessToken1, oAuth2Request, client, endUser, executionContext))
-                            // on success store tokens in the repository
-                            .doOnSuccess(token -> storeTokens(accessToken, refreshToken, oAuth2Request));
+                            .flatMap(enhancedToken -> storeTokens(accessToken, refreshToken, oAuth2Request).toSingle(() -> enhancedToken));
 
                 });
     }
@@ -176,13 +175,14 @@ public class TokenServiceImpl implements TokenService {
         return refreshTokenRepository.delete(refreshToken);
     }
 
-    private void storeTokens(JWT accessToken, JWT refreshToken, OAuth2Request oAuth2Request) {
+    private Completable storeTokens(JWT accessToken, JWT refreshToken, OAuth2Request oAuth2Request) {
         // store access token
-        tokenManager.storeAccessToken(convert(accessToken, refreshToken,  oAuth2Request));
+        final Completable persistAccessToken = tokenManager.storeAccessToken(convert(accessToken, refreshToken,  oAuth2Request));
         // store refresh token (if exists)
         if (refreshToken != null) {
-            tokenManager.storeRefreshToken(convert(refreshToken));
+            return persistAccessToken.andThen(tokenManager.storeRefreshToken(convert(refreshToken)));
         }
+        return persistAccessToken;
     }
 
     private io.gravitee.am.repository.oauth2.model.AccessToken convert(JWT token, JWT refreshToken, OAuth2Request oAuth2Request) {
