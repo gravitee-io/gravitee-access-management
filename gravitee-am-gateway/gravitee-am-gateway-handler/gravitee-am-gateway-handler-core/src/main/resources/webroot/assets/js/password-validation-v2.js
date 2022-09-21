@@ -2,10 +2,12 @@
 
 //Form elements
 const passwordInput = document.getElementById("password");
+const confirmPasswordInput = document.getElementById("confirm-password");
 const firstNameInput = document.getElementById("firstName");
 const lastNameInput = document.getElementById("lastName");
-const emailInput = document.getElementById("username");
+const emailInput = document.getElementById("email");
 const submitBtn = document.getElementById("submitBtn");
+const usernameInput = document.getElementById("username");
 
 //Validation elements
 const length = document.getElementById("minLength");
@@ -14,15 +16,11 @@ const specialChar = document.getElementById("includeSpecialChar");
 const mixedCase = document.getElementById("mixedCase");
 const maxConsecutiveLetters = document.getElementById("maxConsecutiveLetters");
 const excludeUserProfileInfoInPassword = document.getElementById("excludeUserProfileInfoInPassword");
+const matchPasswords = document.getElementById("matchPasswords");
 
-
-
-/**
- * When the user starts to type something inside the password field
- */
-passwordInput.addEventListener('input', function () {
+function validatePassword() {
     if (passwordSettings == null) {
-        return;
+        return true;
     }
     //validate min length
     let isMinLengthOk = true;
@@ -75,8 +73,9 @@ passwordInput.addEventListener('input', function () {
         )
         validateMessageElement(excludeUserProfileInfoInPassword, isExcludeUserProfileInfoInPasswordOk);
     }
-    submitBtn.disabled = !(isMinLengthOk && isIncludeNumbersOk && isIncludeSpecialCharactersOk && isLettersInMixedCaseOk && isMaxConsecutiveLettersOk && isExcludeUserProfileInfoInPasswordOk);
-});
+    return isMinLengthOk && isIncludeNumbersOk && isIncludeSpecialCharactersOk && isLettersInMixedCaseOk && isMaxConsecutiveLettersOk && isExcludeUserProfileInfoInPasswordOk;
+}
+
 
 /**
  *
@@ -117,4 +116,81 @@ function isOverMaxConsecutiveLetters(str, max) {
         }
     }
     return false;
+}
+
+function isInputEmpty() {
+    return firstNameInput && firstNameInput.value === ''
+        || lastNameInput && lastNameInput.value === ''
+        || emailInput && emailInput.value === ''
+        || passwordInput && passwordInput.value === ''
+        || usernameInput && usernameInput.value === '';
+}
+
+function disableSubmitButton(){
+    submitBtn.disabled = true;
+    submitBtn.classList.add("button-disabled");
+}
+
+function enableSubmitButton(){
+    submitBtn.disabled = false;
+    submitBtn.classList.remove("button-disabled");
+}
+
+function toggleSubmit(element) {
+    if(confirmPasswordInput){
+        if(confirmPasswordInput.value.length === 0 || passwordInput.value !== confirmPasswordInput.value) {
+            validatePassword();
+            validateMessageElement(matchPasswords, false);
+            disableSubmitButton();
+            return;
+        }
+        validateMessageElement(matchPasswords, true);
+    }
+
+    if (element === passwordInput && !validatePassword()) {
+        disableSubmitButton();
+    } else if (element === passwordInput && validatePassword()) {
+        isInputEmpty() ? disableSubmitButton() : enableSubmitButton();
+    } else {
+        if (isInputEmpty()) {
+            disableSubmitButton();
+        } else {
+            validatePassword() ? enableSubmitButton() : disableSubmitButton();
+        }
+    }
+}
+
+if (firstNameInput) {
+    firstNameInput.addEventListener("input", function () {
+        toggleSubmit(this);
+    });
+}
+if (lastNameInput) {
+    lastNameInput.addEventListener("input", function () {
+        toggleSubmit(this);
+    });
+}
+
+if (emailInput) {
+    emailInput.addEventListener("input", function () {
+        toggleSubmit(this);
+    });
+}
+
+if (passwordInput) {
+    passwordInput.addEventListener('input', function () {
+        toggleSubmit(this);
+    });
+}
+
+if (usernameInput) {
+    usernameInput.addEventListener('input', function () {
+        toggleSubmit(this);
+    });
+}
+
+if (confirmPasswordInput) {
+    confirmPasswordInput.addEventListener('input', function () {
+        toggleSubmit(this);
+    });
 }
