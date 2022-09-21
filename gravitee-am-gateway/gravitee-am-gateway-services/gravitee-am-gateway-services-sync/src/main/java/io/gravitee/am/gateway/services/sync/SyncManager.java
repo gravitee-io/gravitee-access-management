@@ -18,23 +18,31 @@ package io.gravitee.am.gateway.services.sync;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.gateway.reactor.SecurityDomainManager;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.Organization;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.repository.management.api.DomainRepository;
-import io.gravitee.am.repository.management.api.EnvironmentRepository;
 import io.gravitee.am.repository.management.api.EventRepository;
-import io.gravitee.am.repository.management.api.OrganizationRepository;
 import io.gravitee.common.event.EventManager;
 import io.gravitee.node.api.Node;
+import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
 
 import java.text.Collator;
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BinaryOperator;
 import java.util.stream.Collectors;
 
@@ -88,6 +96,12 @@ public class SyncManager implements InitializingBean {
 
     private boolean allSecurityDomainsSync = false;
 
+    @Value("${services.sync.initTimeOutMillis:-1}")
+    private int initDomainTimeOut = -1;
+
+    @Value("${services.sync.eventsTimeOutMillis:30000}")
+    private int eventsTimeOut = 30000;
+
     @Override
     public void afterPropertiesSet() throws Exception {
         logger.info("Starting gateway tags initialization ...");
@@ -112,19 +126,25 @@ public class SyncManager implements InitializingBean {
             } else {
                 // search for events and compute them
                 logger.debug("Events synchronization");
+                Completable eventProcessing = eventRepository.findByTimeFrame(lastRefreshAt - lastDelay, nextLastRefreshAt)
+                        .toList()
+                        .filter(events -> !events.isEmpty())
+                        .flatMapCompletable(events -> {
+                            // Extract only the latest events by type and id
+                            Map<AbstractMap.SimpleEntry, Event> sortedEvents = events
+                                    .stream()
+                                    .collect(
+                                            toMap(
+                                                    event -> new AbstractMap.SimpleEntry<>(event.getType(), event.getPayload().getId()),
+                                                    event -> event, BinaryOperator.maxBy(comparing(Event::getCreatedAt)), LinkedHashMap::new));
 
-                List<Event> events = eventRepository.findByTimeFrame(lastRefreshAt - lastDelay, nextLastRefreshAt).toList().blockingGet();
-
-                if (events != null && !events.isEmpty()) {
-                    // Extract only the latest events by type and id
-                    Map<AbstractMap.SimpleEntry, Event> sortedEvents = events
-                            .stream()
-                            .collect(
-                                    toMap(
-                                            event -> new AbstractMap.SimpleEntry<>(event.getType(), event.getPayload().getId()),
-                                            event -> event, BinaryOperator.maxBy(comparing(Event::getCreatedAt)), LinkedHashMap::new));
-                    computeEvents(sortedEvents.values());
+                            return Flowable.fromIterable(sortedEvents.values())
+                                    .flatMapCompletable(this::computeEvent, false, 1);
+                        });
+                if (eventsTimeOut > 0) {
+                    eventProcessing = eventProcessing.timeout(eventsTimeOut, TimeUnit.MILLISECONDS);
                 }
+                eventProcessing.blockingGet();
 
             }
             lastRefreshAt = nextLastRefreshAt;
@@ -140,40 +160,40 @@ public class SyncManager implements InitializingBean {
 
     private void deployDomains() {
         logger.info("Starting security domains initialization ...");
-        List<Domain> domains = domainRepository.findAll()
+        Flowable<Domain> domainFlowable = domainRepository.findAll()
                 // remove disabled domains
                 .filter(Domain::isEnabled)
                 // Can the security domain be deployed ?
                 .filter(this::canHandle)
-                .toList()
-                .blockingGet();
+                // deploy security domain
+                .doOnNext(securityDomainManager::deploy);
 
-        // deploy security domains
-        domains.stream().forEach(domain -> securityDomainManager.deploy(domain));
-        logger.info("Security domains initialization done");
+        if (initDomainTimeOut > 0) {
+            domainFlowable = domainFlowable.timeout(initDomainTimeOut, TimeUnit.MILLISECONDS);
+        }
+
+        final long syncDomains = domainFlowable.count().blockingGet();
+        logger.info("{} security domains initialized", syncDomains);
     }
 
-    private void computeEvents(Collection<Event> events) {
-        events.forEach(event -> {
-            logger.debug("Compute event id : {}, with type : {} and timestamp : {} and payload : {}", event.getId(), event.getType(), event.getCreatedAt(), event.getPayload());
-            switch (event.getType()) {
-                case DOMAIN:
-                    synchronizeDomain(event);
-                    break;
-                default:
-                    eventManager.publishEvent(io.gravitee.am.common.event.Event.valueOf(event.getType(), event.getPayload().getAction()), event.getPayload());
-            }
-        });
+    private Completable computeEvent(Event event) {
+        logger.debug("Compute event id : {}, with type : {} and timestamp : {} and payload : {}", event.getId(), event.getType(), event.getCreatedAt(), event.getPayload());
+        switch (event.getType()) {
+            case DOMAIN:
+                return synchronizeDomain(event);
+            default:
+                return Completable.fromAction(() -> eventManager.publishEvent(io.gravitee.am.common.event.Event.valueOf(event.getType(), event.getPayload().getAction()), event.getPayload()));
+        }
     }
 
-    private void synchronizeDomain(Event event) {
+    private Completable synchronizeDomain(Event event) {
         final String domainId = event.getPayload().getId();
         final Action action = event.getPayload().getAction();
+        Completable result = Completable.complete();
         switch (action) {
             case CREATE:
             case UPDATE:
-                Domain domain = domainRepository.findById(domainId).blockingGet();
-                if (domain != null) {
+                result = domainRepository.findById(domainId).map(domain -> {
                     // Get deployed domain
                     Domain deployedDomain = securityDomainManager.get(domain.getId());
                     // Can the security domain be deployed ?
@@ -191,12 +211,14 @@ public class SyncManager implements InitializingBean {
                             securityDomainManager.undeploy(domainId);
                         }
                     }
-                }
+                    return domain;
+                }).ignoreElement();
                 break;
             case DELETE:
-                securityDomainManager.undeploy(domainId);
+                result = Completable.fromAction(() -> securityDomainManager.undeploy(domainId));
                 break;
         }
+        return result;
     }
 
     private boolean canHandle(Domain domain) {
