@@ -35,7 +35,7 @@
     <div class="section">
         <form id="form" class="form" role="form" th:action="${action}" method="post">
             <div>
-                <input type="text" id="username" name="username" autofocus="autofocus" class="input-field" required />
+                <input type="text" id="username" name="username" autofocus="autofocus" th:placeholder="#{identifier_first.username.placeholder}" class="input-field" required />
             </div>
 
             <div th:if="${error}" class="button error-text">
