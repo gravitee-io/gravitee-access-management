@@ -197,9 +197,11 @@ body, body * {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    padding: 64px 80px;
+    padding: 60px 60px;
     gap: 24px;
     margin: auto;
+    max-width: 600px;
+    min-width: 350px;
     width: var(--container-width);
     top: 100px;
     background: var(--container-background-color);
@@ -215,10 +217,13 @@ body, body * {
     align-items: center;
     padding: 0;
     gap: 32px;
-    height: 231px;
     flex: none;
     align-self: stretch;
     flex-grow: 0;
+}
+
+form div {
+    width: 100%;
 }
 
 .section, .form {
@@ -252,7 +257,8 @@ body, body * {
 .title {
     font-weight: 900;
     font-size: 32px;
-    line-height: 16px;
+    line-height: 36px;
+    word-break: break-word;
     text-align: center;
     color: var(--title-text-color);
     flex: none;
@@ -266,7 +272,7 @@ body, body * {
     color: var(--header-description-text-color);
     flex: none;
     flex-grow: 0;
-    width: 440px;
+    width: 100%;
     text-align: center;
 }
 
@@ -276,7 +282,7 @@ body, body * {
     flex-direction: row;
     align-items: center;
     padding: var(--input-padding);
-    width: 440px;
+    width: 100%;
     height: var(--input-height);
     color: var(--input-text-color);
     background: var(--input-background-color);
@@ -285,15 +291,19 @@ body, body * {
 }
 
 .short {
-    width: 215px;
+    width: 50%;
 }
 
 .regular {
-    width: 440px;
+    width: 100%;
 }
 
 div.short-section > input + input {
     margin-left: 10px;
+}
+
+div.section > form {
+  width: 100%;
 }
 
 .item {
@@ -302,8 +312,7 @@ div.short-section > input + input {
     align-items: center;
     padding: 8px 0 8px 0;
     gap: 8px;
-    width: 440px;
-    height: 60px;
+    width: 100%;
     background: var(--item-background-color);
     border-radius: var(--item-border-radius);
     flex: none;
@@ -319,7 +328,7 @@ div.short-section > input + input {
     justify-content: center;
     align-items: flex-start;
     padding: 8px;
-    width: 440px;
+    width: 100%;
     min-height: 40px;
     background: var(--button-background-color);
     border-radius: var(--button-border-radius);
@@ -443,6 +452,10 @@ div#passwordSettings > p {
     color: var(--font-light-color);
 }
 
+.radio-card-wrapper {
+    width: 100%
+}
+
 .radio-card {
     box-sizing: border-box;
     display: flex;
@@ -451,8 +464,7 @@ div#passwordSettings > p {
     align-items: flex-start;
     padding: 16px;
     gap: 8px;
-    width: 440px;
-    height: 100px;
+    width: 100%;
     background: var(--radio-card-background-color);
     border: var(--radio-card-border-width) solid var(--radio-card-border-color);
     border-radius: var(--radio-card-border-radius);
@@ -475,8 +487,8 @@ div#passwordSettings > p {
     align-items: center;
     padding: 0;
     gap: 12px;
-    width: 408px;
-    height: 68px;
+    width: 100%;
+    height: fit-content;
     flex: none;
     align-self: stretch;
     flex-grow: 0;
@@ -495,10 +507,10 @@ div#passwordSettings > p {
     align-items: flex-start;
     padding: 2px 0;
     gap: 4px;
-    width: 372px;
-    height: 48px;
+    width: 100%;
     flex: none;
-    flex-grow: 1;
+    flex-grow: 0;
+    flex-shrink: initial;
 }
 
 .enroll-name {
@@ -542,8 +554,8 @@ div#passwordSettings > p {
 }
 
 .enrollment-card-description {
-    height: 24px;
-    width: 440px;
+    height: 36px;
+    width: 100%;
     text-align: left;
     padding-left: 8px;
     font-weight: 500;
@@ -556,6 +568,10 @@ div#passwordSettings > p {
 
 .hide-enrollment-item, .hide {
     display: none;
+}
+
+.enrollment-item {
+    width: 100%;
 }
 
 .otp-container {
