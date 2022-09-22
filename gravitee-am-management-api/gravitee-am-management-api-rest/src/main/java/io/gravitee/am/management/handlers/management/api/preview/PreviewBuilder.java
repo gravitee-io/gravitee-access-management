@@ -72,6 +72,7 @@ public class PreviewBuilder {
     public static final String PARAMETER_NAME = "parameterName";
     public static final String FACTOR_TYPE = "factorType";
     public static final String ENROLLMENT = "enrollment";
+    public static final String TARGET = "target";
     public static final String ID = "id";
 
     private final TemplateEngine templateEngine;
@@ -209,11 +210,11 @@ public class PreviewBuilder {
 
                 final Enrollment smsEnrollment = new Enrollment();
                 smsEnrollment.setCountries(List.of("us", "en", "fr"));
-                final Map<String, Object> factorSms = Map.of(ID, "idsms" , FACTOR_TYPE, FactorType.SMS.getType(), ENROLLMENT, smsEnrollment);
+                final Map<String, Object> factorSms = Map.of(ID, "idsms" , FACTOR_TYPE, FactorType.SMS.getType(), ENROLLMENT, smsEnrollment, TARGET, "123456");
 
                 final Enrollment emailEnrollment = new Enrollment();
                 emailEnrollment.setKey(EMPTY_STRING);
-                final Map<String, Object> factorEmail = Map.of(ID, "idemail", FACTOR_TYPE, FactorType.EMAIL.getType(), ENROLLMENT, emailEnrollment);
+                final Map<String, Object> factorEmail = Map.of(ID, "idemail", FACTOR_TYPE, FactorType.EMAIL.getType(), ENROLLMENT, emailEnrollment, TARGET, "john@doe.com");
 
                 variables.put(ConstantKeys.FACTORS_KEY, List.of(factorOTP, factorSms, factorEmail));
                 break;
