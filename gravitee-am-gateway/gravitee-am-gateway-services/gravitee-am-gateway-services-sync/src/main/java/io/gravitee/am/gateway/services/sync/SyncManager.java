@@ -23,8 +23,8 @@ import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.repository.management.api.EventRepository;
 import io.gravitee.common.event.EventManager;
 import io.gravitee.node.api.Node;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -37,6 +37,7 @@ import java.text.Collator;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -126,25 +127,23 @@ public class SyncManager implements InitializingBean {
             } else {
                 // search for events and compute them
                 logger.debug("Events synchronization");
-                Completable eventProcessing = eventRepository.findByTimeFrame(lastRefreshAt - lastDelay, nextLastRefreshAt)
-                        .toList()
-                        .filter(events -> !events.isEmpty())
-                        .flatMapCompletable(events -> {
-                            // Extract only the latest events by type and id
-                            Map<AbstractMap.SimpleEntry, Event> sortedEvents = events
-                                    .stream()
-                                    .collect(
-                                            toMap(
-                                                    event -> new AbstractMap.SimpleEntry<>(event.getType(), event.getPayload().getId()),
-                                                    event -> event, BinaryOperator.maxBy(comparing(Event::getCreatedAt)), LinkedHashMap::new));
 
-                            return Flowable.fromIterable(sortedEvents.values())
-                                    .flatMapCompletable(this::computeEvent, false, 1);
-                        });
-                if (eventsTimeOut > 0) {
-                    eventProcessing = eventProcessing.timeout(eventsTimeOut, TimeUnit.MILLISECONDS);
+                Single<List<Event>> findEvents = eventRepository.findByTimeFrame(lastRefreshAt - lastDelay, nextLastRefreshAt).toList();
+                if (this.eventsTimeOut > 0) {
+                    findEvents = findEvents.timeout(this.eventsTimeOut, TimeUnit.MILLISECONDS);
                 }
-                eventProcessing.blockingGet();
+                List<Event> events = findEvents.blockingGet();
+
+                if (events != null && !events.isEmpty()) {
+                    // Extract only the latest events by type and id
+                    Map<AbstractMap.SimpleEntry, Event> sortedEvents = events
+                            .stream()
+                            .collect(
+                                    toMap(
+                                            event -> new AbstractMap.SimpleEntry<>(event.getType(), event.getPayload().getId()),
+                                            event -> event, BinaryOperator.maxBy(comparing(Event::getCreatedAt)), LinkedHashMap::new));
+                    computeEvents(sortedEvents.values());
+                }
 
             }
             lastRefreshAt = nextLastRefreshAt;
@@ -160,40 +159,47 @@ public class SyncManager implements InitializingBean {
 
     private void deployDomains() {
         logger.info("Starting security domains initialization ...");
-        Flowable<Domain> domainFlowable = domainRepository.findAll()
+        Single<List<Domain>> findDomains = domainRepository.findAll()
                 // remove disabled domains
                 .filter(Domain::isEnabled)
                 // Can the security domain be deployed ?
                 .filter(this::canHandle)
-                // deploy security domain
-                .doOnNext(securityDomainManager::deploy);
-
-        if (initDomainTimeOut > 0) {
-            domainFlowable = domainFlowable.timeout(initDomainTimeOut, TimeUnit.MILLISECONDS);
+                .toList();
+        if (this.initDomainTimeOut > 0) {
+            findDomains = findDomains.timeout(this.initDomainTimeOut, TimeUnit.MILLISECONDS);
         }
+        List<Domain> domains = findDomains.blockingGet();
 
-        final long syncDomains = domainFlowable.count().blockingGet();
-        logger.info("{} security domains initialized", syncDomains);
+        // deploy security domains
+        domains.stream().forEach(domain -> securityDomainManager.deploy(domain));
+        logger.info("Security domains initialization done");
     }
 
-    private Completable computeEvent(Event event) {
-        logger.debug("Compute event id : {}, with type : {} and timestamp : {} and payload : {}", event.getId(), event.getType(), event.getCreatedAt(), event.getPayload());
-        switch (event.getType()) {
-            case DOMAIN:
-                return synchronizeDomain(event);
-            default:
-                return Completable.fromAction(() -> eventManager.publishEvent(io.gravitee.am.common.event.Event.valueOf(event.getType(), event.getPayload().getAction()), event.getPayload()));
-        }
+    private void computeEvents(Collection<Event> events) {
+        events.forEach(event -> {
+            logger.debug("Compute event id : {}, with type : {} and timestamp : {} and payload : {}", event.getId(), event.getType(), event.getCreatedAt(), event.getPayload());
+            switch (event.getType()) {
+                case DOMAIN:
+                    synchronizeDomain(event);
+                    break;
+                default:
+                    eventManager.publishEvent(io.gravitee.am.common.event.Event.valueOf(event.getType(), event.getPayload().getAction()), event.getPayload());
+            }
+        });
     }
 
-    private Completable synchronizeDomain(Event event) {
+    private void synchronizeDomain(Event event) {
         final String domainId = event.getPayload().getId();
         final Action action = event.getPayload().getAction();
-        Completable result = Completable.complete();
         switch (action) {
             case CREATE:
             case UPDATE:
-                result = domainRepository.findById(domainId).map(domain -> {
+                Maybe<Domain> maybeDomain = domainRepository.findById(domainId);
+                if (this.eventsTimeOut > 0) {
+                    maybeDomain = maybeDomain.timeout(this.eventsTimeOut, TimeUnit.MILLISECONDS);
+                }
+                Domain domain = maybeDomain.blockingGet();
+                if (domain != null) {
                     // Get deployed domain
                     Domain deployedDomain = securityDomainManager.get(domain.getId());
                     // Can the security domain be deployed ?
@@ -211,14 +217,12 @@ public class SyncManager implements InitializingBean {
                             securityDomainManager.undeploy(domainId);
                         }
                     }
-                    return domain;
-                }).ignoreElement();
+                }
                 break;
             case DELETE:
-                result = Completable.fromAction(() -> securityDomainManager.undeploy(domainId));
+                securityDomainManager.undeploy(domainId);
                 break;
         }
-        return result;
     }
 
     private boolean canHandle(Domain domain) {
