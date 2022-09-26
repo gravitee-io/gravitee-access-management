@@ -32,8 +32,31 @@ global.fetch = fetch;
 let accessToken;
 let domain;
 let dictionary;
-
+let i18nLanguages;
 beforeAll(async () => {
+    i18nLanguages = [
+        {"locale": "aa", "country": "Afar"},
+        {"locale":"ab", "country": "Abkhazian"},
+        {"locale":"ae", "country": "Avestan"},
+        {"locale":"af", "country": "Afrikaans"},
+        {"locale":"ak", "country": "Akan"},
+        {"locale":"am", "country": "Amharic"},
+        {"locale":"an", "country": "Aragonese"},
+        {"locale":"ar", "country": "Arabic"},
+        {"locale":"as", "country": "Assamese"},
+        {"locale":"av", "country": "Avaric"},
+        {"locale":"ay", "country": "Aymara"},
+        {"locale":"az", "country": "Azerbaijani"},
+        {"locale":"ba", "country": "Bashkir"},
+        {"locale":"be", "country": "Belarusian"},
+        {"locale":"bg", "country": "Bulgarian"},
+        {"locale":"bh", "country": "Bihari i18nLanguages"},
+        {"locale":"bi", "country": "Bislama"},
+        {"locale":"bm", "country": "Bambara"},
+        {"locale":"bn", "country": "Bengali"},
+        {"locale":"bo", "country": "Tibetan"}
+    ];
+
     const adminTokenResponse = await requestAdminAccessToken();
     accessToken = adminTokenResponse.body.access_token;
     expect(accessToken).toBeDefined()
@@ -50,8 +73,9 @@ beforeAll(async () => {
 });
 
 async function testCreate() {
-    let name = faker.address.country();
-    let locale = faker.address.countryCode();
+    const i18Language = i18nLanguages.pop();
+    const name = i18Language.country;
+    const locale = i18Language.locale;
     const created = await createDictionary(domain.id, accessToken, {name: name, "locale": locale})
     expect(created).toBeDefined();
     expect(created.id).toBeDefined();
