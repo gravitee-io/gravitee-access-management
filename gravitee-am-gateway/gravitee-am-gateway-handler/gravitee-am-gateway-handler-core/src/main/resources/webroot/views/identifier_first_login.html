@@ -32,7 +32,7 @@
                 <div class="login-form-content">
                     <div class="input-textfield">
                         <label for="username">Username</label>
-                        <input type="text" id="username" name="username" autofocus="autofocus" required />
+                        <input type="text" id="username" name="username" th:value="${param.username}" autofocus="autofocus" required />
                     </div>
                     <div th:if="${error}" class="login-error-info">
                             <span>
