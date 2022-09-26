@@ -274,7 +274,14 @@ export class DomainSettingsThemeComponent implements OnInit {
               this.themes = [];
               this.theme = {};
               this.selectedColorPalette = null;
+              this.renderPreview();
             });
+          } else {
+            // if theme is missing, reseting the theme should also reset the unpublished fields
+            this.themes = [];
+            this.theme = {};
+            this.selectedColorPalette = null;
+            this.renderPreview();
           }
         }
       });
