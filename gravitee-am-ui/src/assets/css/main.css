@@ -566,12 +566,8 @@ div#passwordSettings > p {
     flex-grow: 0;
 }
 
-.hide-enrollment-item, .hide {
+.hide {
     display: none;
-}
-
-.enrollment-item {
-    width: 100%;
 }
 
 .otp-container {
@@ -582,7 +578,6 @@ div#passwordSettings > p {
     align-items: center;
     padding: 16px 8px;
     gap: 8px;
-    width: 440px;
     height: 182px;
     border: var(--otp-container-border-width) solid var(--otp-container-border-color);
     border-radius: var(--otp-container-border-radius);
