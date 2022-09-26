@@ -26,10 +26,9 @@ import io.vertx.core.http.HttpHeaders;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
 
-import java.net.URLDecoder;
 import java.util.Base64;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
+import static io.gravitee.am.gateway.handler.oauth2.resources.auth.provider.ClientUtils.urlDecode;
 
 /**
  * Client Authentication method : client_secret_basic
@@ -80,23 +79,6 @@ public class ClientBasicAuthProvider implements ClientAuthProvider {
         } catch (RuntimeException e) {
             handler.handle(Future.failedFuture(new InvalidClientException("Invalid client: missing or unsupported authentication method", e, authenticationHeader())));
             return;
-        }
-    }
-
-    /**
-     * @param value
-     * @return the URL value version of value or the input value if the URLDecode fails
-     */
-    private static String urlDecode(String value) {
-        try {
-            return URLDecoder.decode(value, UTF_8);
-        } catch (IllegalArgumentException e) {
-            // Introduced to fix https://github.com/gravitee-io/issues/issues/8501.
-            // https://github.com/gravitee-io/issues/issues/7803 introduced a URL decoding
-            // action on the clientSecret/clientId to be compliant to the RFC. To avoid breaking the
-            // behaviour for customer that are using some special characters like '%', we fall back to the
-            // raw value if the URL decode process fails.
-            return value;
         }
     }
 

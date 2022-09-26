@@ -16,8 +16,8 @@
 package io.gravitee.am.gateway.handler.oauth2.resources.auth.handler.impl;
 
 import io.gravitee.am.common.oauth2.Parameters;
-import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.gateway.handler.oauth2.resources.auth.handler.ClientAuthHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.auth.provider.ClientAuthProvider;
@@ -41,6 +41,7 @@ import java.util.Optional;
 import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
 import static io.gravitee.am.gateway.handler.oauth2.resources.auth.provider.CertificateUtils.extractPeerCertificate;
 import static io.gravitee.am.gateway.handler.oauth2.resources.auth.provider.CertificateUtils.getThumbprint;
+import static io.gravitee.am.gateway.handler.oauth2.resources.auth.provider.ClientUtils.urlDecode;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -138,8 +139,7 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
                 return;
             }
             // get client
-            clientSyncService
-                    .findByClientId(clientId)
+            clientSyncService.findByClientId(urlDecode(clientId))
                     .subscribe(
                             client -> handler.handle(Future.succeededFuture(client)),
                             error -> handler.handle(Future.failedFuture(error)),
