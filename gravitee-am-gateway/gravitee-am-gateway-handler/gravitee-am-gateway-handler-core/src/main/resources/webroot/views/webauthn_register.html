@@ -30,7 +30,7 @@
     <div class="section">
         <form class="form" role="form" id="register" method="post" th:action="${action}">
             <input type="hidden" id="username" name="username" th:value="${user.username}"/>
-            <div id="webauthn-error" style="display: none;">
+            <div id="webauthn-error" style="display: none;" class="button error-text">
                 <span class="description">
                     <span class="error">webauthn-register_failed</span>
                      <small class="error_description" th:text="#{webauthn.error}"></small>
