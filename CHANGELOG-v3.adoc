@@ -1,6 +1,45 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/589?closed=1[AM - 3.15.13 (2022-09-27)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- Improve "switch account" behaviour https://github.com/gravitee-io/issues/issues/8236[#8236]
+- Set focus on password field when login already known https://github.com/gravitee-io/issues/issues/8219[#8219]
+- SyncManager hang after connection issue https://github.com/gravitee-io/issues/issues/8377[#8377]
+- Token not retrieved in database (backport GH#8431) https://github.com/gravitee-io/issues/issues/8441[#8441]
+- [oauth2] basic client authentification failed for some special characters https://github.com/gravitee-io/issues/issues/8501[#8501]
+
+*_General_*
+
+- Fill the username field in idFirstLogin https://github.com/gravitee-io/issues/issues/8511[#8511]
+
+*_Idp_*
+
+- [MongoDB] queries are not well parsed for the user management features (Backport #8379) https://github.com/gravitee-io/issues/issues/8383[#8383]
+
+*_Management-ui_*
+
+- Upgrade nginx base image (backport #8183) https://github.com/gravitee-io/issues/issues/8285[#8285]
+
+=== Features
+
+*_Management_*
+
+- [mfa] send same OTP code to multiple devices https://github.com/gravitee-io/issues/issues/8444[#8444]
+
+=== Improvements
+
+*_General_*
+
+- Fill the username field in idFirstLogin https://github.com/gravitee-io/issues/issues/8511[#8511]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/597?closed=1[AM - 3.18.6 (2022-09-16)]
 
 === Bug fixes
