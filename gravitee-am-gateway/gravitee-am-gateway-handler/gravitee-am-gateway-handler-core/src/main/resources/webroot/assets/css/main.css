@@ -199,7 +199,7 @@ body, body * {
     align-items: flex-start;
     padding: 60px 60px;
     gap: 24px;
-    margin: auto;
+    margin: 60px auto;
     max-width: 600px;
     min-width: 350px;
     width: var(--container-width);
@@ -216,7 +216,7 @@ body, body * {
     justify-content: center;
     align-items: center;
     padding: 0;
-    gap: 32px;
+    gap: 22px;
     flex: none;
     align-self: stretch;
     flex-grow: 0;
@@ -236,6 +236,11 @@ form div {
     flex: none;
     align-self: stretch;
     flex-grow: 0;
+}
+
+.forgot-password {
+    font-size: 14px;
+    text-decoration: underline
 }
 
 .card-section {
@@ -265,8 +270,14 @@ form div {
     flex-grow: 0;
 }
 
+.title span {
+    font-weight: 700;
+    font-size: 28px;
+    line-height: 36px;
+}
+
 .header-description {
-    font-weight: 500;
+    font-weight: 400;
     font-size: 16px;
     line-height: 24px;
     color: var(--header-description-text-color);
@@ -274,6 +285,10 @@ form div {
     flex-grow: 0;
     width: 100%;
     text-align: center;
+}
+
+.header-description a {
+    text-decoration: underline;
 }
 
 .input-field {
@@ -336,7 +351,7 @@ div.section > form {
     align-self: stretch;
     flex-grow: 0;
     font-weight: 700;
-    font-size: 16px;
+    font-size: 14px;
     line-height: 22px;
     color: var(--button-text-color);
     border-width: 0;

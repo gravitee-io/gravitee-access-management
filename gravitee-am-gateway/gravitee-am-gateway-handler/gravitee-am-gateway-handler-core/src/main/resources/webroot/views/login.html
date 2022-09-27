@@ -55,7 +55,7 @@
             </div>
 
             <div class="section" th:if="${allowForgotPassword}">
-                <a th:href="${forgotPasswordAction}" th:text="#{login.forgot.password}" />
+                <a th:href="${forgotPasswordAction}" class="forgot-password" th:text="#{login.forgot.password}" />
             </div>
 
             <div th:if="${error}" class="button error-text">
