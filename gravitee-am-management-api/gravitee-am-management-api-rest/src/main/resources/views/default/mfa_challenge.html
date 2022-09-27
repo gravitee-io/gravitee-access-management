@@ -37,7 +37,7 @@
     <div class="section">
         <form id="form" role="form" th:action="${action}" method="post" class="form">
             <div th:if="${factor.factorType.type != 'FIDO2'}">
-                <input class="input-field challenge-input" type="text" id="code" name="code" required autocomplete="off"/>
+                <input class="input-field challenge-input" type="text" id="code" autofocus="true" placeholder="______" name="code" required autocomplete="off"/>
             </div>
 
             <div th:if="${error}" class="button error-text">
