@@ -31,6 +31,7 @@
             <span th:if="${factor.factorType.type == 'CALL'}" th:text="#{mfa_challenge.call}"/>
             <span th:if="${factor.factorType.type == 'EMAIL'}" th:text="#{mfa_challenge.email}"/>
             <span th:if="${factor.factorType.type == 'FIDO2'}" th:text="#{mfa_challenge.fido}"/>
+            <span th:if="${factor.factorType.type == 'RECOVERY CODE'}" th:text="#{mfa_challenge.recovery.code}"/>
         </div>
     </div>
 
