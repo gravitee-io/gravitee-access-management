@@ -38,7 +38,7 @@
                 <input type="text" id="username" name="username" autofocus="autofocus" th:placeholder="#{identifier_first.username.placeholder}" class="input-field" required />
             </div>
 
-            <div th:if="${error}" class="button error-text">
+            <div th:if="${error}" class="item error-text">
                 <span class="description">
                     <span class="error" th:text="${error}"></span>
                     <small th:text="*{error_description}?: #{identifier_first.error}"></small>

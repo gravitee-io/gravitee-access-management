@@ -78,7 +78,7 @@
                    th:id="${bot_detection_configuration.get('tokenParameterName')}"
                    th:name="${bot_detection_configuration.get('tokenParameterName')}" />
 
-            <div class="button error-text" th:switch="${warning}" th:if="${warning}">
+            <div class="item error-text" th:switch="${warning}" th:if="${warning}">
                 <span th:case="invalid_password_value" th:text="#{registration.error.invalid.password}"/>
                 <span th:case="invalid_user_information" th:text="#{registration.error.invalid.user}"/>
                 <span th:case="invalid_email" th:text="#{registration.error.invalid.email}"/>
