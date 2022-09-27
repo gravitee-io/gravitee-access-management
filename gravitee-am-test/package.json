@@ -5,8 +5,9 @@
   "description": "Gravitee.io AM - Tests",
   "scripts": {
     "update:sdk:mapi": "bash scripts/update-management-api-sdk.sh $*",
-    "test": "jest --runInBand --no-cache --config=api/config/dev.config.js",
-    "ci": "jest --runInBand --no-cache --config=api/config/ci.config.js",
+    "test": "jest --runInBand --no-cache --config=api/config/dev.config.js specs",
+    "test-dataset": "jest --runInBand --no-cache --config=api/config/dev.config.js migration/dataset ",
+    "ci": "jest --runInBand --no-cache --config=api/config/ci.config.js specs",
     "ui-test": "cypress open",
     "lint": "echo 'Lint to be configured'",
     "lint:fix": "npm run prettier:fix && npm run lint:license:fix",
