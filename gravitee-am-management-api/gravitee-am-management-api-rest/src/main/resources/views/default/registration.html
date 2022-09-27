@@ -78,7 +78,7 @@
                    th:id="${bot_detection_configuration.get('tokenParameterName')}"
                    th:name="${bot_detection_configuration.get('tokenParameterName')}" />
 
-            <div class="button error-text" th:switch="${warning}" th:if="${warning}">
+            <div class="item error-text" th:switch="${warning}" th:if="${warning}">
                 <span th:case="invalid_password_value" th:text="#{registration.error.invalid.password}"/>
                 <span th:case="invalid_user_information" th:text="#{registration.error.invalid.user}"/>
                 <span th:case="invalid_email" th:text="#{registration.error.invalid.email}"/>
@@ -130,13 +130,13 @@
     $(document).ready(function (){
         $("#submitBtn").on('click', function (event){
             /*[# th:if="${bot_detection_plugin == 'google-recaptcha-v3-am-bot-detection'}"]*/
-            event.preventDefault();
-            grecaptcha.ready(function() {
-                grecaptcha.execute(/*[[${bot_detection_configuration.siteKey}]]*/, {action: 'submit'}).then(function(token) {
+                event.preventDefault();
+                grecaptcha.ready(function() {
+                  grecaptcha.execute(/*[[${bot_detection_configuration.siteKey}]]*/, {action: 'submit'}).then(function(token) {
                     $("#"+ /*[[${bot_detection_configuration.get('tokenParameterName')}]]*/ "no-name").val(token);
                     $("#form").unbind('submit').submit();
+                  });
                 });
-            });
             /*[/]*/
 
         });
