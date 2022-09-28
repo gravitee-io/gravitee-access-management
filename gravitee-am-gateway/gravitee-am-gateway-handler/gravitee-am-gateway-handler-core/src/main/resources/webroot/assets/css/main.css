@@ -238,11 +238,6 @@ form div {
     flex-grow: 0;
 }
 
-.forgot-password {
-    font-size: 14px;
-    text-decoration: underline
-}
-
 .card-section {
     gap: 12px;
 }
@@ -285,10 +280,6 @@ form div {
     flex-grow: 0;
     width: 100%;
     text-align: center;
-}
-
-.header-description a {
-    text-decoration: underline;
 }
 
 .input-field {
@@ -440,6 +431,7 @@ div.section > form {
 }
 
 a {
+    font-size: 14px;
     font-weight: 500;
     text-decoration: none;
     color: var(--link-text-color);
