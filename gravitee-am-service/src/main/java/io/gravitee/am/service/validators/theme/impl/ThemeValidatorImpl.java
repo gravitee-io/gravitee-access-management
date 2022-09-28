@@ -36,13 +36,13 @@ public class ThemeValidatorImpl implements ThemeValidator {
     public Completable validate(Theme theme) {
         Completable result = Completable.complete();
         if (theme != null) {
-            result = result.andThen(evalateUrl(theme.getLogoUrl(), theme, "logoUrl"))
-                    .andThen(evalateUrl(theme.getFaviconUrl(), theme, "faviconUrl"));
+            result = result.andThen(evaluateUrl(theme.getLogoUrl(), theme, "logoUrl"))
+                    .andThen(evaluateUrl(theme.getFaviconUrl(), theme, "faviconUrl"));
         }
         return result;
     }
 
-    private static Completable evalateUrl(String url, Theme theme, String attr) {
+    private static Completable evaluateUrl(String url, Theme theme, String attr) {
         Completable result = Completable.complete();
         if (!Strings.isNullOrEmpty(url)) {
             try {

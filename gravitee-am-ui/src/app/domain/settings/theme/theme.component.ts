@@ -332,7 +332,7 @@ export class DomainSettingsThemeComponent implements OnInit {
 
   renderPreview() {
     const payload = {
-      content: this.selectedTemplateContent,
+      content: this.selectedForm.enabled ? this.selectedTemplateContent : null,
       theme: this.createThemeToPublish(),
       type: "FORM",
       template: this.selectedForm.template

@@ -19,10 +19,12 @@ import io.gravitee.am.management.handlers.management.api.authentication.view.Tem
 import io.gravitee.am.management.handlers.management.api.model.PreviewRequest;
 import io.gravitee.am.management.handlers.management.api.model.PreviewResponse;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Form;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.Theme;
 import io.gravitee.am.service.DomainService;
+import io.gravitee.am.service.FormService;
 import io.gravitee.am.service.ThemeService;
 import io.gravitee.am.service.i18n.DynamicDictionaryProvider;
 import io.gravitee.am.service.i18n.FileSystemDictionaryProvider;
@@ -39,13 +41,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Component;
 import org.thymeleaf.TemplateEngine;
-import org.thymeleaf.expression.Sets;
 import org.thymeleaf.spring5.SpringTemplateEngine;
-import org.thymeleaf.spring5.dialect.SpringStandardDialect;
-import org.thymeleaf.standard.StandardDialect;
 
 import java.util.Locale;
-import java.util.Set;
+import java.util.Optional;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 
@@ -61,6 +60,9 @@ public class PreviewService implements InitializingBean {
 
     @Autowired
     private ThemeService themeService;
+
+    @Autowired
+    private FormService formService;
 
     @Autowired
     private I18nDictionaryService i18nDictionaryService;
@@ -99,11 +101,22 @@ public class PreviewService implements InitializingBean {
             }
         }
 
+        // evaluate the request content. If null, load the default template
+        var contentLookUp = Maybe.just(Optional.ofNullable(previewRequest.getContent()))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .switchIfEmpty(Maybe.defer(() -> formService.getDefaultByDomainAndTemplate(domainId, previewRequest.getTemplate()).map(Form::getContent).toMaybe()));
+
         return this.themeService.validate(previewRequest.getTheme())
                 .andThen(domainService.findById(domainId)
-                        .map(domain -> new PreviewBuilder(templateEngine, templateResolver)
-                                .withDomain(domain)
-                                .withRequest(previewRequest))
+                        .flatMap(domain ->
+                                contentLookUp.map(content -> {
+                                    previewRequest.setContent(content);
+                                    return new PreviewBuilder(templateEngine, templateResolver)
+                                            .withDomain(domain)
+                                            .withRequest(previewRequest);
+                                })
+                        )
                         .flatMap(builder -> loadTheme(domainId, previewRequest.getTheme()).map(builder::withTheme))
                         .flatMap(builder -> loadDictionaries(builder.getDomain())
                                 .toSingleDefault(locale)

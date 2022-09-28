@@ -24,7 +24,7 @@ import javax.validation.constraints.NotNull;
  * @author GraviteeSource Team
  */
 public class PreviewRequest {
-    @NotNull
+
     private String content;
     private Theme theme;
     @NotNull
