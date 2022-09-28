@@ -102,8 +102,11 @@
             <span class="medium-font grey regular" th:text="#{registration_confirmation.error.description}"></span>
         </div>
     </div>
-    <div class="section">
-        <div class="medium-font red"><span th:text="#{registration_confirmation.error.description.label}"/> <span th:text="*{error_description}?: ${error}"></span></div>
+    <div class="item error-text">
+        <span class="description">
+            <span class="error" th:text="#{registration_confirmation.error.description.label}"></span>
+            <small th:text="*{error_description}?: ${error}"></small>
+        </span>
     </div>
 </div>
 
