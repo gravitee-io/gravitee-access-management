@@ -44,7 +44,7 @@
                 <input type="hidden" th:name="'scope.'+${scope.key}" value="true"/>
             </div>
 
-            <span class="disclaimer" th:text="${client.clientName} + ' ' + #{oauth.disclaimer}"/>
+            <span class="header-description start" th:text="${client.clientName} + ' ' + #{oauth.disclaimer}"></span>
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
 
             <div>

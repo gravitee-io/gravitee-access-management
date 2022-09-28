@@ -420,9 +420,8 @@ div.section > form {
     color: var(--black);
 }
 
-.regular {
-    width: 440px;
-    display: inline-block;
+.start {
+    text-align: start;
 }
 
 .description {
@@ -447,15 +446,6 @@ div#passwordSettings > p {
     font-weight: 500;
     font-size: 12px;
     line-height: 18px;
-    color: var(--font-light-color);
-}
-
-.disclaimer {
-    display: inline-block;
-    width: 440px;
-    font-weight: 500;
-    font-size: 16px;
-    line-height: 24px;
     color: var(--font-light-color);
 }
 
@@ -651,18 +641,7 @@ div#passwordSettings > p {
     justify-content: center;
     align-items: center;
     padding: 0;
-    gap: 10px 60px;
-    width: 435px;
-}
-
-.recovery-codes > li {
-    width: 100px;
-    height: 20px;
-    font-weight: 500;
-    font-size: 16px;
-    line-height: 20px;
-    letter-spacing: 0.4px;
-    color: var(--font-light-color);
+    gap: 10px 10px;
 }
 
 .recovery-code {
