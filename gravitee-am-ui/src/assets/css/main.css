@@ -329,18 +329,13 @@ div.section > form {
 }
 
 .button {
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: flex-start;
+    box-sizing: border-box;
+    text-align: center;
     padding: 8px;
     width: 100%;
     min-height: 40px;
     background: var(--button-background-color);
     border-radius: var(--button-border-radius);
-    flex: none;
-    align-self: stretch;
-    flex-grow: 0;
     font-weight: 700;
     font-size: 14px;
     line-height: 22px;
@@ -362,10 +357,6 @@ div.section > form {
 .button.social {
     color: var(--button-social-text-color);
     background: var(--button-social-background-color);
-    padding: 0;
-    align-self: auto;
-    height: auto;
-    text-align: center;
 }
 
 .button.button-disabled {
@@ -423,11 +414,6 @@ div.section > form {
 .regular {
     width: 440px;
     display: inline-block;
-}
-
-.description {
-    padding-top: 8px;
-    padding-bottom: 8px;
 }
 
 a {
