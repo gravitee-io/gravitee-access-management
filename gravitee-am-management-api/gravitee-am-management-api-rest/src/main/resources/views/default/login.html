@@ -59,7 +59,7 @@
             </div>
 
             <div th:if="${error}" class="item error-text">
-                <span class="description">
+                <span>
                     <span class="error" th:text="${error}"></span>
                     <small th:text="*{error_description}?: #{login.error.default.message}"></small>
                 </span>
@@ -81,28 +81,26 @@
         <a th:if="${identifierFirstLoginEnabled}"
            th:href="${backToLoginIdentifierAction}"
            class="button social">
-            <span class="description" th:text="#{login.switch.account}"/>
+            <span th:text="#{login.switch.account}"/>
         </a>
 
         <a th:if="${allowPasswordless && !identifierFirstLoginEnabled}"
            th:href="${passwordlessAction}"
            class="button social">
-            <span class="description" th:text="#{login.passwordless}"/>
+            <span th:text="#{login.passwordless}"/>
         </a>
 
         <a th:href="${authorizeUrls.get(socialProvider.getId())}"
            th:class="'button social btn-' + ${socialProvider.getType()}"
            th:each="socialProvider : ${socialProviders}">
             <img th:if="${socialProvider.getType()} == 'franceconnect'" th:src="@{assets/images/FCboutons-10.svg}" height="70">
-            <span class="description" th:if="${socialProvider.getType()} != 'franceconnect'">
-                <span th:text="#{login.social.before} + ' ' + ${socialProvider.getName()}"></span>
-            </span>
+            <span th:if="${socialProvider.getType()} != 'franceconnect'" th:text="#{login.social.before} + ' ' + ${socialProvider.getName()}"></span>
         </a>
 
         <a th:if="${allowPasswordless && hideLoginForm}"
            th:href="${passwordlessAction}"
            class="button social">
-            <span class="description" th:text="#{login.passwordless}"/>
+            <span th:text="#{login.passwordless}"></span>
         </a>
     </div>
 </div>

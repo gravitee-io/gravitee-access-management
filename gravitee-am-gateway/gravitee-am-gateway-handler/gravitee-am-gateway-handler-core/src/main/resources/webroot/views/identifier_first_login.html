@@ -39,7 +39,7 @@
             </div>
 
             <div th:if="${error}" class="item error-text">
-                <span class="description">
+                <span>
                     <span class="error" th:text="${error}"></span>
                     <small th:text="*{error_description}?: #{identifier_first.error}"></small>
                 </span>
@@ -61,7 +61,7 @@
         <a th:if="${allowPasswordless}"
            th:href="${passwordlessAction}"
            class="button social">
-            <span class="description" th:text="#{identifier_first.passwordless}"></span>
+            <span th:text="#{identifier_first.passwordless}"></span>
         </a>
     </div>
 </div>
