@@ -238,11 +238,6 @@ form div {
     flex-grow: 0;
 }
 
-.forgot-password {
-    font-size: 14px;
-    text-decoration: underline
-}
-
 .card-section {
     gap: 12px;
 }
@@ -287,10 +282,6 @@ form div {
     text-align: center;
 }
 
-.header-description a {
-    text-decoration: underline;
-}
-
 .input-field {
     box-sizing: border-box;
     display: flex;
@@ -318,7 +309,7 @@ div.short-section > input + input {
 }
 
 div.section > form {
-  width: 100%;
+    width: 100%;
 }
 
 .item {
@@ -440,6 +431,7 @@ div.section > form {
 }
 
 a {
+    font-size: 14px;
     font-weight: 500;
     text-decoration: none;
     color: var(--link-text-color);
