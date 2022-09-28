@@ -71,8 +71,9 @@ public class PreviewBuilder {
     public static final String SITE_KEY = "siteKey";
     public static final String PARAMETER_NAME = "parameterName";
     public static final String FACTOR_TYPE = "factorType";
+    public static final String FACTOR_NAME = "name";
+    public static final String FACTOR_TARGET = "target";
     public static final String ENROLLMENT = "enrollment";
-    public static final String TARGET = "target";
     public static final String ID = "id";
 
     private final TemplateEngine templateEngine;
@@ -206,15 +207,27 @@ public class PreviewBuilder {
             case MFA_CHALLENGE_ALTERNATIVES:
                 final Enrollment otpEnrollment = new Enrollment();
                 otpEnrollment.setBarCode("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAADIAQAAAACFI5MzAAABuElEQVR4Xu2WWWoEMQwFDb6WwVc36FqGTpXCLAzJn5X8tGiGtmtA27Pc7frN2ufG025yE+0vyWqtr75GXzP2mC5LSPCsvtme1+65rCGrR6y528A17zxlZI1htpNMS8l17abvaxcSntgN749y1hAlES/70M45opEgAkGKoXftPFkzK3nFtpSI/hXbWdJtGwk2TtXgZ8wSEh7f5vkFjGxgCUHtnt6lRnCfMikh6d2WpeSbBa4gTgl6Rr7T0rouISxpGnvB4HPQPit6lviG4q0s7sU1xFKaXeSfmOmEUkIQIJ1ja3SS5vUZwVGCWwafVxOnC8W3WUSmOSJ6JyBlHYnOE66+ruCppH9x3NaQHgoju+eYWK8IjpLIGLYtW770SztPnOK2zVpmE58RHCare6xUh8G8TaSzhEKSLRE0QnBkvGnnJGGbSjqV8rJ1p4gs76O58iC7fijxLKGgXOYL5+EXkaGUEI1LI2cFT1a4giw/sUI9ZjBegyUkrKmKN4TUyqwhWVL2bVzk/V5GLpsH8ihT2zqS5yny20v/JYQnch7x6UVpvyVynqgQ9Q70gLF+ZHqW/Gw3uYn2/+QLiTKJ//OwuCgAAAAASUVORK5CYII=");
-                final Map<String, Object> factorOTP = Map.of(ID, "idotp" , FACTOR_TYPE, FactorType.OTP.getType(), ENROLLMENT, otpEnrollment);
+                final Map<String, Object> factorOTP = Map.of(ID, "idotp" ,
+                        FACTOR_TYPE, FactorType.OTP.getType(),
+                        FACTOR_NAME, "OTP Factor name",
+                        ENROLLMENT, otpEnrollment);
 
                 final Enrollment smsEnrollment = new Enrollment();
                 smsEnrollment.setCountries(List.of("us", "en", "fr"));
-                final Map<String, Object> factorSms = Map.of(ID, "idsms" , FACTOR_TYPE, FactorType.SMS.getType(), ENROLLMENT, smsEnrollment, TARGET, "123456");
+                final Map<String, Object> factorSms = Map.of(
+                        ID, "idsms" ,
+                        FACTOR_TYPE, FactorType.SMS.getType(),
+                        FACTOR_TARGET, "123456",
+                        FACTOR_NAME, "SMS Factor name",
+                        ENROLLMENT, smsEnrollment);
 
                 final Enrollment emailEnrollment = new Enrollment();
                 emailEnrollment.setKey(EMPTY_STRING);
-                final Map<String, Object> factorEmail = Map.of(ID, "idemail", FACTOR_TYPE, FactorType.EMAIL.getType(), ENROLLMENT, emailEnrollment, TARGET, "john@doe.com");
+                final Map<String, Object> factorEmail = Map.of(ID, "idemail",
+                        FACTOR_TYPE, FactorType.EMAIL.getType(),
+                        FACTOR_TARGET, "john@doe.com",
+                        FACTOR_NAME, "EMAIL Factor name",
+                        ENROLLMENT, emailEnrollment);
 
                 variables.put(ConstantKeys.FACTORS_KEY, List.of(factorOTP, factorSms, factorEmail));
                 break;

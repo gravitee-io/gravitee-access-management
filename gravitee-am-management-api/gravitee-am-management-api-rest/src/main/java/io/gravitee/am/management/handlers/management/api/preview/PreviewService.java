@@ -39,9 +39,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Component;
 import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.expression.Sets;
 import org.thymeleaf.spring5.SpringTemplateEngine;
+import org.thymeleaf.spring5.dialect.SpringStandardDialect;
+import org.thymeleaf.standard.StandardDialect;
 
 import java.util.Locale;
+import java.util.Set;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 

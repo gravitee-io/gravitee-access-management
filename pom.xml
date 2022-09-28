@@ -113,8 +113,8 @@
         <reactor-netty.version>1.0.15</reactor-netty.version>
         <commons-io.version>2.11.0</commons-io.version>
         <common-text.version>1.9</common-text.version>
+        <ognl.version>3.1.12</ognl.version>
         <!-- External plugins versions -->
-
         <gravitee-policy-callout-http.version>1.15.1</gravitee-policy-callout-http.version>
         <gravitee-policy-groovy.version>2.0.0</gravitee-policy-groovy.version>
         <gravitee-policy-ipfiltering.version>1.8.0</gravitee-policy-ipfiltering.version>
@@ -128,6 +128,7 @@
         <gravitee-alert-api.version>1.8.0</gravitee-alert-api.version>
         <gravitee-notifier-api.version>1.4.1</gravitee-notifier-api.version>
         <gravitee-risk-assessment-api.version>1.0.1</gravitee-risk-assessment-api.version>
+
         <jdk.version>11</jdk.version>
 
         <ongres.scram.version>2.1</ongres.scram.version>
