@@ -226,6 +226,10 @@ form div {
     width: 100%;
 }
 
+.iti__flag-container {
+    width: auto;
+}
+
 .section, .form {
     display: flex;
     flex-direction: column;
