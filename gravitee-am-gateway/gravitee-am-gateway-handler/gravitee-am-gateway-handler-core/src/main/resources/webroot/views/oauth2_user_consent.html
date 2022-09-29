@@ -32,7 +32,7 @@
     </div>
     <div class="section">
         <form class="form" role="form" th:id="confirmationForm" th:action="${action}" method="post">
-            <div class="item" th:each="scope : ${scopes}">
+            <div class="box center" th:each="scope : ${scopes}">
                 <div>
                     <span th:text="(${scope.name})
                     ? ${scope.name} + ' (' + ${scope.key} + ')'

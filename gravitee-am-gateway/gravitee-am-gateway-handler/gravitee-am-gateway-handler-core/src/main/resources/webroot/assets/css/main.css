@@ -139,6 +139,8 @@
     --checkbox-input-border-color: #B8B8BC;
     --checkbox-input-border-radius: 2px;
     --body-background-color: var(--white);
+    --box-background-color: #F1F1F1;
+    --box-border-radius: 8px;
 }
 
 body {
@@ -332,6 +334,16 @@ div.section > form {
     line-height: 24px;
 }
 
+.box {
+    background: var(--box-background-color);
+    border-radius: var(--box-border-radius);
+    box-sizing: border-box;
+    padding: 8px;
+    font-weight: 500;
+    font-size: 16px;
+    line-height: 24px;
+}
+
 .button {
     box-sizing: border-box;
     text-align: center;
@@ -417,6 +429,10 @@ div.section > form {
 
 .start {
     text-align: start;
+}
+
+.center {
+    text-align: center;
 }
 
 a {
@@ -638,10 +654,6 @@ div#passwordSettings > p {
     flex: 1 0 40%;
     display: flex;
     justify-content: center;
-}
-
-.recovery-code-msg {
-    padding: 5px 12px 0 12px;
 }
 
 .code-item {
