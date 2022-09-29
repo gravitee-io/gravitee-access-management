@@ -29,12 +29,12 @@
   <parent>
     <groupId>io.gravitee.am</groupId>
     <artifactId>gravitee-am-parent</artifactId>
-    <version>3.18.7</version>
+    <version>3.18.8-SNAPSHOT</version>
   </parent>
 
   <groupId>io.gravitee.am</groupId>
   <artifactId>gravitee-am-webui</artifactId>
-  <version>3.18.7</version>
+  <version>3.18.8-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Gravitee.io AM - Portal</name>
 
