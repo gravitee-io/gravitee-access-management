@@ -82,24 +82,19 @@
             <span class="icons">arrow_back</span>
             <span th:text="#{login.switch.account}"/>
         </a>
-
-        <a th:if="${allowPasswordless && !identifierFirstLoginEnabled}"
+        <a th:if="${allowPasswordless && (!identifierFirstLoginEnabled || hideLoginForm)}"
            th:href="${passwordlessAction}"
            class="button social">
             <span th:text="#{login.passwordless}"/>
         </a>
+    </div>
 
+    <div th:if="${socialProviders and !socialProviders.empty}" class="section">
         <a th:href="${authorizeUrls.get(socialProvider.getId())}"
-           th:class="'button social btn-' + ${socialProvider.getType()}"
+           th:class="${socialProvider.getType()} != 'franceconnect' ? 'button social btn-' + ${socialProvider.getType()} : ''"
            th:each="socialProvider : ${socialProviders}">
             <img th:if="${socialProvider.getType()} == 'franceconnect'" th:src="@{assets/images/FCboutons-10.svg}" height="70">
             <span th:if="${socialProvider.getType()} != 'franceconnect'" th:text="#{login.social.before} + ' ' + ${socialProvider.getName()}"></span>
-        </a>
-
-        <a th:if="${allowPasswordless && hideLoginForm}"
-           th:href="${passwordlessAction}"
-           class="button social">
-            <span th:text="#{login.passwordless}"></span>
         </a>
     </div>
 </div>
