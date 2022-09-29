@@ -88,6 +88,15 @@ export class LoginSettingsComponent implements OnInit, OnChanges {
     return this.loginSettings && this.loginSettings.passwordlessEnabled;
   }
 
+  enablePasswordlessRememberDevice(event) {
+    this.loginSettings.passwordlessRememberDeviceEnabled = event.checked;
+    this.formChanged = true;
+  }
+
+  isPasswordlessRememberDeviceEnabled() {
+    return this.loginSettings && this.loginSettings.passwordlessRememberDeviceEnabled;
+  }
+
   enableHideForm(event) {
     this.loginSettings.hideForm = event.checked;
     this.formChanged = true;
