@@ -93,7 +93,7 @@
                         </div>
                     </div>
                 </div>
-                <button id="next" class="button primary" th:text="#{mfa_enroll.button.submit}"></button>
+                <button id="next" type="button" class="button primary" th:text="#{mfa_enroll.button.submit}"></button>
             </div>
             <!-- END OF STEP 1 -->
 
@@ -168,12 +168,10 @@
         });
     }
 
+(function() {
+
     // next button function
-    const nextBtn = document.getElementById('next');
-    nextBtn.disabled = true;
-    nextBtn.classList.add('button-disabled');
-    nextBtn.addEventListener('click', function ($event) {
-        $event.preventDefault();
+    const nextBtnHandler = function () {
         const title=/*[[#{mfa_enroll.on.select.title}]]*/ '';
         const description=/*[[#{mfa_enroll.on.select.description}]]*/ '';
         const factors = /*[[${factors}]]*/ [];
@@ -181,6 +179,7 @@
         const emailAddress = /*[[${emailAddress}]]*/ '';
         const factorId = document.querySelector('input[name="factorId"]:checked').value;
         const selectedFactor = factors.find(factor => factor.id === factorId);
+        let inputElement;
 
         if (selectedFactor.factorType === 'TOTP') {
             document.getElementById('sharedSecret').value = selectedFactor.enrollment.key;
@@ -191,14 +190,21 @@
         if (selectedFactor.factorType === 'SMS' || selectedFactor.factorType === 'CALL') {
             document.getElementById('phone').value = phoneNumber;
             initializeIntlTelInput(document.getElementById('phone'), selectedFactor.enrollment.countries);
-            document.getElementById('sms-factor').classList.remove('hide');
+            const smsFactorDiv = document.getElementById('sms-factor');
+            smsFactorDiv.classList.remove('hide');
+            inputElement = smsFactorDiv.getElementsByTagName('INPUT')[0];
+            // Hide the phoneNumber validation error just after the click on next button
+            // to avoid a remaining error if the user go a first time on SMS factor
+            document.getElementById('invalidPhoneNumber').classList.add('hide');
         }
 
         if (selectedFactor.factorType === 'EMAIL') {
             document.getElementById('sharedSecret').value = selectedFactor.enrollment.key;
             document.getElementById('email').value = emailAddress;
             document.getElementById('email').setAttribute('required', '');
-            document.getElementById('email-factor').classList.remove('hide');
+            const emailFactorDiv = document.getElementById('email-factor');
+            emailFactorDiv.classList.remove('hide');
+            inputElement = emailFactorDiv.getElementsByTagName('INPUT')[0];
         }
 
         if (selectedFactor.factorType === 'HTTP') {
@@ -214,7 +220,15 @@
         document.getElementById('mfa-enroll-step1').classList.add('hide');
         document.getElementById('mfa-enroll-step2').classList.remove('hide');
         document.getElementById('previous').classList.remove('hide');
-    });
+        if(inputElement){
+            inputElement.focus();
+        }
+    }
+
+    const nextBtn = document.getElementById('next');
+    nextBtn.disabled = true;
+    nextBtn.classList.add('button-disabled');
+    nextBtn.addEventListener('click', nextBtnHandler);
 
     // previous button function
     const previousBtn = document.getElementById('previous');
@@ -245,6 +259,14 @@
     // submit form function
     const submitBtn = document.getElementById('submit');
     submitBtn.addEventListener('click', function($event) {
+        //do not submit the form on 'enter' key press if the following condition satisfied
+        //rather call the next button handler functionality
+        if(document.getElementById('mfa-enroll-step2').classList.contains("hide")){
+            $event.preventDefault();
+            nextBtnHandler();
+            return;
+        }
+
         // check phone number value if any
         const factors = /*[[${factors}]]*/ [];
         const factorId = document.querySelector('input[name="factorId"]:checked').value;
@@ -265,9 +287,10 @@
 
     // phone input function
     const phoneInput = document.getElementById('phone');
-    phoneInput.addEventListener('keyup', function() {
+    phoneInput.addEventListener('keydown', function() {
         document.getElementById('invalidPhoneNumber').classList.add('hide');
     });
+})();
     /*]]>*/
 </script>
 </body>
