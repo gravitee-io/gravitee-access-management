@@ -28,6 +28,7 @@ public class LoginSettingsMongo {
     private boolean registerEnabled;
     private boolean rememberMeEnabled;
     private boolean passwordlessEnabled;
+    private boolean passwordlessRememberDeviceEnabled;
     private boolean hideForm;
     private boolean identifierFirstLoginEnabled;
 
@@ -71,6 +72,14 @@ public class LoginSettingsMongo {
         this.passwordlessEnabled = passwordlessEnabled;
     }
 
+    public boolean isPasswordlessRememberDeviceEnabled() {
+        return passwordlessRememberDeviceEnabled;
+    }
+
+    public void setPasswordlessRememberDeviceEnabled(boolean passwordlessRememberDeviceEnabled) {
+        this.passwordlessRememberDeviceEnabled = passwordlessRememberDeviceEnabled;
+    }
+
     public boolean isHideForm() {
         return hideForm;
     }
@@ -94,6 +103,7 @@ public class LoginSettingsMongo {
         loginSettings.setRegisterEnabled(isRegisterEnabled());
         loginSettings.setRememberMeEnabled(isRememberMeEnabled());
         loginSettings.setPasswordlessEnabled(isPasswordlessEnabled());
+        loginSettings.setPasswordlessRememberDeviceEnabled(isPasswordlessRememberDeviceEnabled());
         loginSettings.setHideForm(!isIdentifierFirstLoginEnabled() && isHideForm());
         loginSettings.setIdentifierFirstEnabled(isIdentifierFirstLoginEnabled());
 
@@ -111,6 +121,7 @@ public class LoginSettingsMongo {
         loginSettingsMongo.setRegisterEnabled(loginSettings.isRegisterEnabled());
         loginSettingsMongo.setRememberMeEnabled(loginSettings.isRememberMeEnabled());
         loginSettingsMongo.setPasswordlessEnabled(loginSettings.isPasswordlessEnabled());
+        loginSettingsMongo.setPasswordlessRememberDeviceEnabled(loginSettings.isPasswordlessRememberDeviceEnabled());
         loginSettingsMongo.setHideForm(!loginSettings.isIdentifierFirstEnabled() && loginSettings.isHideForm());
         loginSettingsMongo.setIdentifierFirstLoginEnabled(loginSettings.isIdentifierFirstEnabled());
 

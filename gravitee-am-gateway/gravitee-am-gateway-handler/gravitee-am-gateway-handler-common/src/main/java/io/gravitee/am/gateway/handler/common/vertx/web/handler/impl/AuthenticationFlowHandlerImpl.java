@@ -24,6 +24,7 @@ import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.*;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.MFAChallengeStep;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.MFAEnrollStep;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.MFARecoveryCodeStep;
+import io.gravitee.am.gateway.handler.common.webauthn.WebAuthnCookieService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.CredentialService;
 import io.vertx.core.Handler;
@@ -54,11 +55,15 @@ public class AuthenticationFlowHandlerImpl implements AuthenticationFlowHandler 
     @Autowired
     private CredentialService credentialService;
 
+    @Autowired
+    private WebAuthnCookieService webAuthnCookieService;
+
     @Override
     public Handler<RoutingContext> create() {
         List<AuthenticationFlowStep> steps = new LinkedList<>();
         steps.add(new SPNEGOStep(RedirectHandler.create("/login/SSO/SPNEGO"), identityProviderManager));
         steps.add(new FormIdentifierFirstLoginStep(RedirectHandler.create("/login/identifier"), domain));
+        steps.add(new WebAuthnLoginStep(RedirectHandler.create("/webauthn/login"), domain, webAuthnCookieService));
         steps.add(new FormLoginStep(RedirectHandler.create("/login")));
         steps.add(new WebAuthnRegisterStep(domain, RedirectHandler.create("/webauthn/register"), factorManager, credentialService));
         steps.add(new MFAEnrollStep(RedirectHandler.create("/mfa/enroll"), ruleEngine, factorManager));
