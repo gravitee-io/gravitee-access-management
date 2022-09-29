@@ -20,12 +20,12 @@ import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.model.PatchDomain;
 import io.gravitee.am.service.model.openid.PatchClientRegistrationSettings;
 import io.gravitee.am.service.model.openid.PatchOIDCSettings;
+import io.gravitee.node.api.upgrader.Upgrader;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
@@ -37,7 +37,7 @@ import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.DOMA
  * @author GraviteeSource Team
  */
 @Component
-public class DomainUpgrader implements Upgrader, Ordered {
+public class DomainUpgrader implements Upgrader {
 
     /**
      * Logger.

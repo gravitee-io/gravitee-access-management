@@ -25,6 +25,7 @@ import io.gravitee.am.management.service.tasks.TasksLoader;
 import io.gravitee.common.component.LifecycleComponent;
 import io.gravitee.node.api.NodeMetadataResolver;
 import io.gravitee.node.jetty.node.JettyNode;
+import io.gravitee.node.services.upgrader.spring.UpgraderConfiguration;
 import io.gravitee.plugin.alert.AlertEventProducerManager;
 import io.gravitee.plugin.alert.AlertTriggerProviderManager;
 import io.gravitee.plugin.core.internal.PluginEventListener;
@@ -72,11 +73,13 @@ public class ManagementNode extends JettyNode {
         components.add(IdentityProviderManager.class);
         components.add(CertificateManager.class);
         components.add(EmailManager.class);
-        components.add(InitializerService.class);
         components.add(AlertTriggerManager.class);
         components.add(AlertTriggerProviderManager.class);
         components.add(AlertEventProducerManager.class);
         components.add(TasksLoader.class);
+
+        // Keep it at the end
+        components.addAll(UpgraderConfiguration.getComponents());
 
         return components;
     }

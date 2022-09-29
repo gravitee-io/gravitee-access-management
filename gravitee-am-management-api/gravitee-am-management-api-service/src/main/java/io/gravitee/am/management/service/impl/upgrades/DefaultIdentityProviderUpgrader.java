@@ -19,11 +19,11 @@ import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.model.UpdateIdentityProvider;
+import io.gravitee.node.api.upgrader.Upgrader;
 import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
 
 /**
@@ -31,7 +31,7 @@ import org.springframework.stereotype.Component;
  * @author GraviteeSource Team
  */
 @Component
-public class DefaultIdentityProviderUpgrader implements Upgrader, Ordered {
+public class DefaultIdentityProviderUpgrader implements Upgrader {
 
     private static final Logger logger = LoggerFactory.getLogger(DefaultIdentityProviderUpgrader.class);
 

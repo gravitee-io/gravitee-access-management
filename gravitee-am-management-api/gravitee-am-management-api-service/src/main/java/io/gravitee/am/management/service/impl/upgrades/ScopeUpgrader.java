@@ -17,14 +17,17 @@ package io.gravitee.am.management.service.impl.upgrades;
 
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oauth2.Scope;
-import io.gravitee.am.service.*;
+import io.gravitee.am.service.ApplicationService;
+import io.gravitee.am.service.DomainService;
+import io.gravitee.am.service.RoleService;
+import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.model.NewScope;
+import io.gravitee.node.api.upgrader.Upgrader;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -39,7 +42,7 @@ import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.SCOP
  * @author GraviteeSource Team
  */
 @Component
-public class ScopeUpgrader implements Upgrader, Ordered {
+public class ScopeUpgrader implements Upgrader {
 
     /**
      * Logger.

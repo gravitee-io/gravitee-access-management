@@ -20,6 +20,7 @@ import io.gravitee.am.model.SystemTask;
 import io.gravitee.am.model.SystemTaskStatus;
 import io.gravitee.am.model.SystemTaskTypes;
 import io.gravitee.am.repository.management.api.SystemTaskRepository;
+import io.gravitee.node.api.upgrader.Upgrader;
 import io.reactivex.Flowable;
 import io.reactivex.Single;
 import io.reactivex.annotations.NonNull;
@@ -29,7 +30,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.core.Ordered;
 
 import java.util.Date;
 import java.util.UUID;
@@ -40,7 +40,7 @@ import java.util.concurrent.TimeUnit;
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public abstract class SystemTaskUpgrader implements Upgrader, Ordered {
+public abstract class SystemTaskUpgrader implements Upgrader {
 
     private final Logger logger = LoggerFactory.getLogger(SystemTaskUpgrader.class);
 

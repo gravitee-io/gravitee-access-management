@@ -16,9 +16,9 @@
 package io.gravitee.am.management.service.impl.upgrades;
 
 import io.gravitee.am.service.RoleService;
+import io.gravitee.node.api.upgrader.Upgrader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
 
 /**
@@ -26,7 +26,7 @@ import org.springframework.stereotype.Component;
  * @author GraviteeSource Team
  */
 @Component
-public class DefaultRoleUpgrader implements Upgrader, Ordered {
+public class DefaultRoleUpgrader implements Upgrader {
 
     private static final Logger logger = LoggerFactory.getLogger(DefaultRoleUpgrader.class);
 

@@ -18,11 +18,11 @@ package io.gravitee.am.management.service.impl.upgrades;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.service.ReporterService;
 import io.gravitee.am.service.model.UpdateReporter;
+import io.gravitee.node.api.upgrader.Upgrader;
 import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
 
 /**
@@ -30,7 +30,7 @@ import org.springframework.stereotype.Component;
  * @author GraviteeSource Team
  */
 @Component
-public class DefaultReporterUpgrader implements Upgrader, Ordered {
+public class DefaultReporterUpgrader implements Upgrader {
 
     private static final Logger logger = LoggerFactory.getLogger(DefaultReporterUpgrader.class);
 

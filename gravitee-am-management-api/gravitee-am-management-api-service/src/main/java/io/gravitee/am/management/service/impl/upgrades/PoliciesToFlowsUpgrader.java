@@ -25,13 +25,13 @@ import io.gravitee.am.model.flow.Type;
 import io.gravitee.am.repository.management.api.PolicyRepository;
 import io.gravitee.am.service.FlowService;
 import io.gravitee.am.service.model.plugin.PolicyPlugin;
+import io.gravitee.node.api.upgrader.Upgrader;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -46,7 +46,7 @@ import static java.util.function.Function.identity;
  * @author GraviteeSource Team
  */
 @Component
-public class PoliciesToFlowsUpgrader implements Upgrader, Ordered {
+public class PoliciesToFlowsUpgrader implements Upgrader {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PoliciesToFlowsUpgrader.class);
 
