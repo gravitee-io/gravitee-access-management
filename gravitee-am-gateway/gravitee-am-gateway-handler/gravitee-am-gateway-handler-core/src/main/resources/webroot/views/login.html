@@ -78,9 +78,8 @@
     </div>
 
     <div class="section">
-        <a th:if="${identifierFirstLoginEnabled}"
-           th:href="${backToLoginIdentifierAction}"
-           class="button social">
+        <a th:if="${identifierFirstLoginEnabled}" th:href="${backToLoginIdentifierAction}">
+            <span class="icons">arrow_back</span>
             <span th:text="#{login.switch.account}"/>
         </a>
 
