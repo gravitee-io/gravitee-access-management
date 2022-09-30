@@ -164,4 +164,9 @@ public interface ConstantKeys {
     String USER_ACTIVITY_RETENTION_TIME = "user_activity_retention_time";
     String RISK_ASSESSMENT_KEY = "risk_assessment";
     String USER_ACTIVITY_ENABLED = "userActivityEnabled";
+
+
+    // entry into the io.gravitee.am.model.AuthenticationFlowContext to get access to the
+    // content of the OAuth2 parameters retrieved using PAR
+    String REQUEST_PARAMETERS_KEY = "requestParameters";
 }
