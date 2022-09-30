@@ -23,11 +23,15 @@ import io.gravitee.am.common.exception.oauth2.InvalidRequestUriException;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oidc.Parameters;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.oauth2.service.par.PushedAuthorizationRequestService;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDProviderMetadata;
 import io.gravitee.am.gateway.handler.oidc.service.request.RequestObjectService;
+import io.gravitee.am.model.AuthenticationFlowContext;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.AuthenticationFlowContextService;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.vertx.core.Handler;
@@ -36,10 +40,19 @@ import org.springframework.util.StringUtils;
 
 import java.net.URI;
 import java.text.ParseException;
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import static io.gravitee.am.common.utils.ConstantKeys.*;
-import static io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.ParamUtils.splitScopes;
+import static io.gravitee.am.common.utils.ConstantKeys.AUTH_FLOW_CONTEXT_ATTRIBUTES_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.AUTH_FLOW_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.PROVIDER_METADATA_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.REQUEST_OBJECT_FROM_URI;
+import static io.gravitee.am.common.utils.ConstantKeys.REQUEST_OBJECT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.REQUEST_PARAMETERS_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.REQUEST_URI_ID_KEY;
 
 /**
  * The request Authorization Request parameter enables OpenID Connect requests to be passed in a single,
@@ -58,13 +71,14 @@ public class AuthorizationRequestParseRequestObjectHandler extends AbstractAutho
 
     private final RequestObjectService requestObjectService;
     private final PushedAuthorizationRequestService parService;
-
+    private final AuthenticationFlowContextService authFlowContextService;
     private final Domain domain;
 
-    public AuthorizationRequestParseRequestObjectHandler(RequestObjectService requestObjectService, Domain domain, PushedAuthorizationRequestService parService) {
+    public AuthorizationRequestParseRequestObjectHandler(RequestObjectService requestObjectService, Domain domain, PushedAuthorizationRequestService parService, AuthenticationFlowContextService authFlowContextService) {
         this.requestObjectService = requestObjectService;
         this.domain = domain;
         this.parService = parService;
+        this.authFlowContextService = authFlowContextService;
     }
 
     @Override
@@ -105,18 +119,26 @@ public class AuthorizationRequestParseRequestObjectHandler extends AbstractAutho
         }
 
         requestObject
-                .subscribe(
-                        jwt -> {
-                            try {
-                                // Check OAuth2 parameters
-                                checkOAuthParameters(context, jwt);
-                                context.next();
-                            } catch (Exception ex) {
-                                context.fail(ex);
-                            }
-                        },
-                        context::fail,
-                        context::next);
+                .flatMapCompletable(jwt -> {
+                        // Check OAuth2 parameters
+                        checkOAuthParameters(context, jwt);
+                        AuthenticationFlowContext authFlowContext = context.get(AUTH_FLOW_CONTEXT_KEY);
+                        if (authFlowContext != null) {
+                            authFlowContext.getData().put(REQUEST_PARAMETERS_KEY, new HashMap<>(jwt.getJWTClaimsSet().getClaims()));
+                            return authFlowContextService.updateContext(authFlowContext).map(persistedAuthContext -> {
+                                context.put(AUTH_FLOW_CONTEXT_KEY, authFlowContext);
+                                // store only the AuthenticationFlowContext.data attributes in order to simplify EL templating
+                                // and provide an up to date set of data if the enrichAuthFlow Policy is used multiple time in a step
+                                // {#context.attributes['authFlow']['entry']}
+                                context.put(AUTH_FLOW_CONTEXT_ATTRIBUTES_KEY, authFlowContext.getData());
+                                // update authentication flow context version into the session
+                                context.session().put(ConstantKeys.AUTH_FLOW_CONTEXT_VERSION_KEY, authFlowContext.getVersion());
+                                return persistedAuthContext;
+                            }).ignoreElement();
+                        }
+                    return Completable.complete();
+                })
+                .subscribe(context::next,context::fail);
     }
 
     private void checkRequestObjectParameters(String request, String requestUri) {

@@ -22,6 +22,7 @@ import io.gravitee.am.service.exception.AuthenticationFlowConsistencyException;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
+import io.reactivex.Single;
 import io.reactivex.annotations.NonNull;
 import io.reactivex.functions.Function;
 import org.reactivestreams.Publisher;
@@ -32,6 +33,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
@@ -52,6 +55,9 @@ public class AuthenticationFlowContextServiceImpl implements AuthenticationFlowC
 
     @Value("${authenticationFlow.retryInterval:1000}")
     private int retryDelay;
+
+    @Value("${authenticationFlow.expirationTimeOut:300}")
+    private int contextExpiration;
 
     @Override
     public Completable clearContext(final String transactionId) {
@@ -83,12 +89,22 @@ public class AuthenticationFlowContextServiceImpl implements AuthenticationFlowC
         return this.loadContext(transactionId, expectedVersion)
                 .doFinally(() -> {
                     // fire and forget the deletion, in case of error the AuthenticationFLowContext TTL will finally delete the entry
-                    // we doesn't want to stop the request processing due to deletion error if context is successfully loaded
+                    // we don't want to stop the request processing due to deletion error if context is successfully loaded
                     clearContext(transactionId)
                             .subscribe(
                                     () -> LOGGER.debug("Deletion of Authentication Flow context '{}' succeeded after loading it", transactionId),
                                     (error) -> LOGGER.warn("Deletion of Authentication Flow context '{}' failed after loading it", transactionId, error));
                 } );
+    }
+
+    @Override
+    public Single<AuthenticationFlowContext> updateContext(AuthenticationFlowContext authContext) {
+        final var now = Instant.now();
+        authContext.setVersion(authContext.getVersion() + 1);
+        authContext.setCreatedAt(new Date(now.toEpochMilli()));
+        authContext.setExpireAt(new Date(now.plus(this.contextExpiration, ChronoUnit.SECONDS).toEpochMilli()));
+
+        return authContextRepository.create(authContext);
     }
 
     /**

@@ -18,6 +18,7 @@ package io.gravitee.am.service;
 import io.gravitee.am.model.AuthenticationFlowContext;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
+import io.reactivex.Single;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -28,6 +29,14 @@ public interface AuthenticationFlowContextService {
     Maybe<AuthenticationFlowContext> loadContext(final String transactionId, final int expectedVersion);
 
     Maybe<AuthenticationFlowContext> removeContext(final String transactionId, final int expectedVersion);
+
+    /**
+     * Update the AuthFlowContext in the database. This method will manage the increment of the context version.
+     *
+     * @param context
+     * @return
+     */
+    Single<AuthenticationFlowContext> updateContext(final AuthenticationFlowContext context);
 
     Completable clearContext(final String transactionId);
 }
