@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.root.resources.endpoint.identifierfirst;
 
 import io.gravitee.am.common.oidc.Parameters;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
@@ -117,6 +118,10 @@ public class IdentifierFirstLoginEndpoint extends AbstractEndpoint implements Ha
         Map<String, String> params = new HashMap<>(evaluableRequest.getParams().toSingleValueMap());
         params.put(ERROR_PARAM_KEY, error);
         params.put(ERROR_DESCRIPTION_PARAM_KEY, errorDescription);
+        final String loginHint = routingContext.request().getParam(Parameters.LOGIN_HINT);
+        if (loginHint != null) {
+            params.put(ConstantKeys.USERNAME_PARAM_KEY, loginHint);
+        }
         routingContext.put(PARAM_CONTEXT_KEY, params);
 
         // put actions in context

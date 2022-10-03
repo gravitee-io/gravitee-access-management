@@ -42,12 +42,14 @@
                        th:value="${param.username}"
                        autofocus="autofocus"
                        required
+                       th:autofocus="${param.username == null}"
                        th:readonly="${param.username != null}" />
             </div>
 
             <div class="form-field">
                 <input class="input-field" type="password" id="password" name="password"
                        th:placeholder="#{login.label.password}"
+                       th:autofocus="${param.username != null}"
                        required />
                 <button type="button" class="icon-button icon-input-field toggle-password">
                     <span class="icons primary">visibility_off</span>
