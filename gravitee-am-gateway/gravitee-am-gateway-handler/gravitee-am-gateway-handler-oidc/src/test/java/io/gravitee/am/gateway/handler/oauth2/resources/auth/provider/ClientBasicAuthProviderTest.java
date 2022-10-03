@@ -75,6 +75,30 @@ public class ClientBasicAuthProviderTest {
     }
 
     @Test
+    public void shouldAuthenticateClient_Secret_NoUrlEncoded_withPercent() throws Exception {
+        Client client = mock(Client.class);
+        when(client.getClientId()).thenReturn("my|%-~totsdf$*!§0");
+        when(client.getClientSecret()).thenReturn("my|%-~totsdf$*!§0");
+
+        HttpServerRequest httpServerRequest = mock(HttpServerRequest.class);
+        HeadersMultiMap vertxHttpHeaders = new HeadersMultiMap();
+        vertxHttpHeaders.add(HttpHeaders.AUTHORIZATION, "Basic bXl8JS1+dG90c2RmJCohwqcwOm15fCUtfnRvdHNkZiQqIcKnMA==");
+        when(httpServerRequest.headers()).thenReturn(MultiMap.newInstance(vertxHttpHeaders));
+
+        RoutingContext context = mock(RoutingContext.class);
+        when(context.request()).thenReturn(httpServerRequest);
+
+        CountDownLatch latch = new CountDownLatch(1);
+        authProvider.handle(client, context, clientAsyncResult -> {
+            latch.countDown();
+            Assert.assertNotNull(clientAsyncResult);
+            Assert.assertNotNull(clientAsyncResult.result());
+        });
+
+        assertTrue(latch.await(10, TimeUnit.SECONDS));
+    }
+
+    @Test
     public void shouldAuthenticateClient_urlEncodedCharacters() throws Exception {
         Client client = mock(Client.class);
         when(client.getClientId()).thenReturn("my\"client-id");
