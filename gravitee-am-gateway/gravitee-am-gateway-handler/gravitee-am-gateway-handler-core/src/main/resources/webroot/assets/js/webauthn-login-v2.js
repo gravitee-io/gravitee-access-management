@@ -6,7 +6,7 @@ const errorElement = document.getElementById('webauthn-error');
 const endpoint = loginForm.action.replace('/webauthn/login', '/webauthn/login/credentials');
 
 const displayMessage = message => {
-    errorElement.getElementsByClassName('error_description')[0].innerHTML = message;
+    errorElement.getElementsByClassName('error_description')[0].textContent = message;
     errorElement.style.display = 'block';
 };
 
