@@ -22,6 +22,7 @@ import io.gravitee.am.management.service.impl.UserServiceImpl;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Email;
+import io.gravitee.am.model.PasswordHistory;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.Template;
@@ -38,9 +39,11 @@ import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.TokenService;
 import io.gravitee.am.service.exception.ClientNotFoundException;
 import io.gravitee.am.service.exception.InvalidPasswordException;
+import io.gravitee.am.service.exception.PasswordHistoryException;
 import io.gravitee.am.service.exception.RoleNotFoundException;
 import io.gravitee.am.service.exception.UserAlreadyExistsException;
 import io.gravitee.am.service.exception.UserProviderNotFoundException;
+import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.am.service.validators.email.EmailValidatorImpl;
@@ -66,28 +69,22 @@ import java.util.List;
 import java.util.Set;
 
 import static io.gravitee.am.service.validators.email.EmailValidatorImpl.EMAIL_PATTERN;
-import static io.gravitee.am.service.validators.user.UserValidatorImpl.NAME_LAX_PATTERN;
-import static io.gravitee.am.service.validators.user.UserValidatorImpl.NAME_STRICT_PATTERN;
-import static io.gravitee.am.service.validators.user.UserValidatorImpl.USERNAME_PATTERN;
+import static io.gravitee.am.service.validators.user.UserValidatorImpl.*;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@SuppressWarnings("ReactiveStreamsUnusedPublisher")
 @RunWith(MockitoJUnitRunner.class)
 public class UserServiceTest {
 
     public static final String DOMAIN_ID = "domain#1";
+    public static final String PASSWORD = "password";
 
     @InjectMocks
     private final UserService userService = new UserServiceImpl();
@@ -131,6 +128,9 @@ public class UserServiceTest {
     @Mock
     private TokenService tokenService;
 
+    @Mock
+    private PasswordHistoryService passwordHistoryService;
+
     @Spy
     private UserValidator userValidator = new UserValidatorImpl(
             NAME_STRICT_PATTERN,
@@ -142,6 +142,7 @@ public class UserServiceTest {
     @Before
     public void setUp() {
         ((UserServiceImpl) userService).setExpireAfter(24 * 3600);
+        when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any() , any(), any())).thenReturn(Maybe.never());
     }
 
     @Test
@@ -442,10 +443,8 @@ public class UserServiceTest {
 
     @Test
     public void shouldResetPassword_externalIdEmpty() {
-
         Domain domain = new Domain();
         domain.setId("domain");
-        String password = "password";
 
         User user = new User();
         user.setId("user-id");
@@ -458,14 +457,16 @@ public class UserServiceTest {
         when(userProvider.findByUsername(user.getUsername())).thenReturn(Maybe.just(idpUser));
         when(userProvider.updatePassword(any(), any())).thenReturn(Single.just(idpUser));
 
-        doReturn(true).when(passwordService).isValid(eq(password), eq(null), any());
+        doReturn(true).when(passwordService).isValid(eq(PASSWORD), eq(null), any());
         when(commonUserService.findById(eq(ReferenceType.DOMAIN), eq(domain.getId()), eq("user-id"))).thenReturn(Single.just(user));
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
         when(commonUserService.update(any())).thenReturn(Single.just(user));
         when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
         when(tokenService.deleteByUserId(any())).thenReturn(Completable.complete());
+        when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any() , any(), any())).thenReturn(Maybe.just(new PasswordHistory()));
 
-        userService.resetPassword(domain, user.getId(), password, null)
+
+        userService.resetPassword(domain, user.getId(), PASSWORD, null)
                 .test()
                 .assertComplete()
                 .assertNoErrors();
@@ -477,7 +478,6 @@ public class UserServiceTest {
     public void shouldResetPassword_idpUserNotFound() {
         Domain domain = new Domain();
         domain.setId("domain");
-        String password = "password";
 
         User user = new User();
         user.setId("user-id");
@@ -490,14 +490,15 @@ public class UserServiceTest {
         when(userProvider.findByUsername(user.getUsername())).thenReturn(Maybe.empty());
         when(userProvider.create(any())).thenReturn(Single.just(idpUser));
 
-        when(passwordService.isValid(eq(password), eq(null), any())).thenReturn(true);
+        when(passwordService.isValid(eq(PASSWORD), eq(null), any())).thenReturn(true);
         when(commonUserService.findById(eq(ReferenceType.DOMAIN), eq(domain.getId()), eq("user-id"))).thenReturn(Single.just(user));
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
         when(commonUserService.update(any())).thenReturn(Single.just(user));
         when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
         when(tokenService.deleteByUserId(any())).thenReturn(Completable.complete());
+        when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any() , any(), any())).thenReturn(Maybe.just(new PasswordHistory()));
 
-        userService.resetPassword(domain, user.getId(), password, null)
+        userService.resetPassword(domain, user.getId(), PASSWORD, null)
                 .test()
                 .assertComplete()
                 .assertNoErrors();
@@ -617,7 +618,6 @@ public class UserServiceTest {
     public void shouldNotResetPassword_invalid_password() {
         Domain domain = new Domain();
         domain.setId("domain");
-        String password = "password";
 
         User user = new User();
         user.setId("user-id");
@@ -625,10 +625,29 @@ public class UserServiceTest {
 
         when(commonUserService.findById(eq(ReferenceType.DOMAIN), eq(domain.getId()), eq("user-id"))).thenReturn(Single.just(user));
 
-        userService.resetPassword(domain, user.getId(), password, null)
+        userService.resetPassword(domain, user.getId(), PASSWORD, null)
                 .test()
                 .assertNotComplete()
                 .assertError(InvalidPasswordException.class);
-        verify(passwordService, times(1)).isValid(eq(password), eq(null), any());
+        verify(passwordService, times(1)).isValid(eq(PASSWORD), eq(null), any());
+    }
+
+    @Test
+    public void resetShouldReturnErrorWhenPasswordAlreadyInHistory() {
+        Domain domain = new Domain();
+        domain.setId("domain");
+
+        User user = new User();
+        user.setId("user-id");
+        user.setSource("idp-id");
+
+        when(passwordService.isValid(eq(PASSWORD), eq(null), any())).thenReturn(true);
+        when(commonUserService.findById(ReferenceType.DOMAIN, domain.getId(), "user-id")).thenReturn(Single.just(user));
+        when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any() , any(), any())).thenReturn(Maybe.error(PasswordHistoryException::passwordAlreadyInHistory));
+
+        var observer = userService.resetPassword(domain, user.getId(), PASSWORD, null)
+                   .test();
+        observer.awaitTerminalEvent();
+        observer.assertError(PasswordHistoryException.class);
     }
 }
