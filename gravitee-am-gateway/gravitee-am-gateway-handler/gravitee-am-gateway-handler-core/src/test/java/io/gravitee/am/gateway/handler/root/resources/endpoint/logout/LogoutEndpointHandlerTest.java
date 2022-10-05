@@ -163,6 +163,110 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
     }
 
     @Test
+    public void shouldInvokeLogoutEndpoint_targetUrl_client_with_param_wildcard_restriction() throws Exception {
+        Client client = new Client();
+        client.setPostLogoutRedirectUris(Arrays.asList("https://test/*"));
+        when(clientSyncService.findById("client-id")).thenReturn(Maybe.just(client));
+        when(userService.logout(any(), eq(false), any())).thenReturn(Completable.complete());
+
+        router.route().order(-1).handler(routingContext -> {
+            User endUser = new User();
+            endUser.setClient("client-id");
+            routingContext.getDelegate().setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
+            routingContext.next();
+        });
+
+        testRequest(
+                HttpMethod.GET, "/logout?target_url=https%3A%2F%2Ftest?u=200",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.equals("https://test?u=200"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldInvokeLogoutEndpoint_targetUrl_with_param_client_wildcard_not_allowed() throws Exception {
+        Client client = new Client();
+        client.setPostLogoutRedirectUris(Arrays.asList("https://test.com"));
+        when(clientSyncService.findById("client-id")).thenReturn(Maybe.just(client));
+        when(userService.logout(any(), eq(false), any())).thenReturn(Completable.complete());
+
+        router.route().order(-1).handler(routingContext -> {
+            User endUser = new User();
+            endUser.setClient("client-id");
+            routingContext.getDelegate().setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
+            routingContext.next();
+        });
+
+        testRequest(
+                HttpMethod.GET, "/logout?target_url=https%3A%2F%2Ftest.com?u=200",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.equals("https://test.com?u=200"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldInvokeLogoutEndpoint_targetUrl_with_param_client_strict_match_true() throws Exception {
+        Client client = new Client();
+        client.setClientId("123");
+        client.setPostLogoutRedirectUris(Arrays.asList("https://test.com"));
+        when(clientSyncService.findById("client-id")).thenReturn(Maybe.just(client));
+        when(userService.logout(any(), eq(false), any())).thenReturn(Completable.complete());
+        when(domain.isRedirectUriStrictMatching()).thenReturn(true);
+
+        router.route().order(-1).handler(routingContext -> {
+            User endUser = new User();
+            endUser.setClient("client-id");
+            routingContext.getDelegate().setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
+            routingContext.next();
+        });
+
+        testRequest(
+                HttpMethod.GET, "/logout?target_url=https%3A%2F%2Ftest.com?u=200",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.endsWith("invalid_request&error_description=The+post_logout_redirect_uri+MUST+match+the+registered+callback+URLs"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldInvokeLogoutEndpoint_targetUrl_with_param_client_strict_match_false() throws Exception {
+        Client client = new Client();
+        client.setClientId("123");
+        client.setPostLogoutRedirectUris(Arrays.asList("https://test.com"));
+        when(clientSyncService.findById("client-id")).thenReturn(Maybe.just(client));
+        when(userService.logout(any(), eq(false), any())).thenReturn(Completable.complete());
+        when(domain.isRedirectUriStrictMatching()).thenReturn(false);
+
+        router.route().order(-1).handler(routingContext -> {
+            User endUser = new User();
+            endUser.setClient("client-id");
+            routingContext.getDelegate().setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
+            routingContext.next();
+        });
+
+        testRequest(
+                HttpMethod.GET, "/logout?target_url=https%3A%2F%2Ftest.com?u=200",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.endsWith("https://test.com?u=200"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
     public void shouldInvokeLogoutEndpoint_targetUrl_client_restriction_2() throws Exception {
         Client client = new Client();
         client.setPostLogoutRedirectUris(Arrays.asList("https://test", "https://dev"));
