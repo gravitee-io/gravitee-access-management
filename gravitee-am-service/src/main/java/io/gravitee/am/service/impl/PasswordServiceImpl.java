@@ -31,6 +31,7 @@ import java.util.Calendar;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import static java.lang.Boolean.FALSE;
 import static java.util.function.Predicate.not;
 
 /**
@@ -56,7 +57,7 @@ public class PasswordServiceImpl implements PasswordService {
     public void validate(String password, PasswordSettings passwordSettings, User user) {
         // fallback to default regex
         if (passwordSettings == null) {
-            if (!defaultPasswordValidator.validate(password)) {
+            if (FALSE.equals(defaultPasswordValidator.validate(password))) {
                 throw defaultPasswordValidator.getCause();
             }
         } else {

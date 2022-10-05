@@ -33,7 +33,9 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.Map;
 
+import static io.gravitee.am.common.utils.ConstantKeys.PASSWORD_HISTORY;
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
+import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -76,6 +78,7 @@ public class ResetPasswordEndpoint extends AbstractEndpoint implements Handler<R
 
         final Map<String, String> actionParams = (client != null) ? Map.of(Parameters.CLIENT_ID, client.getClientId()) : Map.of();
         routingContext.put(ConstantKeys.ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), actionParams));
+        routingContext.put(PASSWORD_HISTORY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/passwordHistory", actionParams, true));
 
         // render the reset password page
         this.renderPage(routingContext, generateData(routingContext, domain, client), client, logger, "Unable to render reset password page");

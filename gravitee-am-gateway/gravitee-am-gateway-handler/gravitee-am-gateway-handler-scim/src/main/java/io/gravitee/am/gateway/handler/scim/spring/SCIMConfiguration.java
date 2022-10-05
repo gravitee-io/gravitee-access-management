@@ -22,6 +22,9 @@ import io.gravitee.am.gateway.handler.scim.service.UserService;
 import io.gravitee.am.gateway.handler.scim.service.impl.GroupServiceImpl;
 import io.gravitee.am.gateway.handler.scim.service.impl.ServiceProviderConfigServiceImpl;
 import io.gravitee.am.gateway.handler.scim.service.impl.UserServiceImpl;
+import io.gravitee.am.service.authentication.crypto.password.Argon2IdPasswordEncoder;
+import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
+import io.gravitee.am.service.authentication.crypto.password.bcrypt.BCryptPasswordEncoder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -47,4 +50,8 @@ public class SCIMConfiguration implements ProtocolConfiguration {
         return new ServiceProviderConfigServiceImpl();
     }
 
+    @Bean
+    public PasswordEncoder argon2IdEncoder(){
+        return new Argon2IdPasswordEncoder();
+    }
 }
