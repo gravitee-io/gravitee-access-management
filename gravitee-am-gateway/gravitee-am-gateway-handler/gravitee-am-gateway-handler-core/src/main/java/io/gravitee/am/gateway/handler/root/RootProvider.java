@@ -32,6 +32,7 @@ import io.gravitee.am.gateway.handler.common.vertx.web.handler.CSPHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.PolicyChainHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.SSOSessionHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.XFrameHandler;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.XSSHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieSessionHandler;
 import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
@@ -202,6 +203,9 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
     private XFrameHandler xframeHandler;
 
     @Autowired
+    private XSSHandler xssHandler;
+
+    @Autowired
     @Qualifier("managementUserService")
     private UserService userService;
 
@@ -289,6 +293,8 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         cspHandler(rootRouter);
 
         xFrameHandler(rootRouter);
+
+        xssHandler(rootRouter);
 
         // common handler
         Handler<RoutingContext> userTokenRequestParseHandler = new UserTokenRequestParseHandler(userService);
@@ -696,6 +702,27 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         router.route(PATH_FORGOT_PASSWORD).handler(xframeHandler);
         router.route(PATH_IDENTIFIER_FIRST_LOGIN).handler(xframeHandler);
         router.route(PATH_ERROR).handler(xframeHandler);
+    }
+
+    private void xssHandler(Router router) {
+        router.route(PATH_LOGIN).handler(xssHandler);
+        router.route(PATH_LOGIN_CALLBACK).handler(xssHandler);
+        router.route(PATH_LOGIN_SSO_POST).handler(xssHandler);
+        router.route(PATH_LOGIN_SSO_SPNEGO).handler(xssHandler);
+        router.route(PATH_MFA_ENROLL).handler(xssHandler);
+        router.route(PATH_MFA_CHALLENGE).handler(xssHandler);
+        router.route(PATH_MFA_CHALLENGE_ALTERNATIVES).handler(xssHandler);
+        router.route(PATH_LOGOUT).handler(xssHandler);
+        router.route(PATH_LOGOUT_CALLBACK).handler(xssHandler);
+        router.route(PATH_REGISTER).handler(xssHandler);
+        router.route(PATH_CONFIRM_REGISTRATION).handler(xssHandler);
+        router.route(PATH_RESET_PASSWORD).handler(xssHandler);
+        router.route(PATH_WEBAUTHN_REGISTER).handler(xssHandler);
+        router.route(PATH_WEBAUTHN_RESPONSE).handler(xssHandler);
+        router.route(PATH_WEBAUTHN_LOGIN).handler(xssHandler);
+        router.route(PATH_FORGOT_PASSWORD).handler(xssHandler);
+        router.route(PATH_IDENTIFIER_FIRST_LOGIN).handler(xssHandler);
+        router.route(PATH_ERROR).handler(xssHandler);
     }
 
     private void staticHandler(Router router) {

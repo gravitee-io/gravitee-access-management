@@ -28,6 +28,7 @@ import io.gravitee.am.gateway.handler.common.vertx.web.handler.CSPHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.PolicyChainHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.SSOSessionHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.XFrameHandler;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.XSSHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieSessionHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.auth.handler.ClientAuthHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.AuthorizationEndpoint;
@@ -154,6 +155,9 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
     private XFrameHandler xframeHandler;
 
     @Autowired
+    private XSSHandler xssHandler;
+
+    @Autowired
     private PolicyChainHandler policyChainHandler;
 
     @Autowired
@@ -245,6 +249,8 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
         cspHandler(oauth2Router);
 
         xFrameHandler(oauth2Router);
+
+        xssHandler(oauth2Router);
 
         AuthenticationFlowContextHandler authenticationFlowContextHandler = new AuthenticationFlowContextHandler(authenticationFlowContextService, environment);
         Handler<RoutingContext> localeHandler = new LocaleHandler(messageResolver);
@@ -369,6 +375,9 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
 
     private void xFrameHandler(Router router) {
         router.route("/consent").handler(xframeHandler);
+    }
+    private void xssHandler(Router router) {
+        router.route("/consent").handler(xssHandler);
     }
 
     private void errorHandler(Router router) {

@@ -31,6 +31,7 @@ import static java.util.Objects.isNull;
  */
 public class CSPHandlerFactory implements FactoryBean<CSPHandler> {
 
+    private static final String HTTP_CSP_ENABLED = "http.csp.enabled";
     private static final String HTTP_CSP_REPORT_ONLY = "http.csp.reportOnly";
     private static final String HTTP_CSP_DIRECTIVES = "http.csp.directives[%d]";
     private static final String HTTP_CSP_SCRIPT_INLINE_NONCE = "http.csp.script-inline-nonce";
@@ -49,7 +50,8 @@ public class CSPHandlerFactory implements FactoryBean<CSPHandler> {
             var reportOnly = environment.getProperty(HTTP_CSP_REPORT_ONLY, Boolean.class);
             var directives = getDirectives();
             var scriptInlineNonce = environment.getProperty(HTTP_CSP_SCRIPT_INLINE_NONCE, Boolean.class, false);
-            if (isNull(reportOnly) && isNull(directives) && !scriptInlineNonce) {
+            final boolean notEnabled = !environment.getProperty(HTTP_CSP_ENABLED, Boolean.class, false);
+            if ((isNull(reportOnly) && isNull(directives) && !scriptInlineNonce) || notEnabled) {
                 INSTANCE = new NoOpCspHandler();
             } else {
                 INSTANCE = new CspHandlerImpl(reportOnly, directives, scriptInlineNonce);
