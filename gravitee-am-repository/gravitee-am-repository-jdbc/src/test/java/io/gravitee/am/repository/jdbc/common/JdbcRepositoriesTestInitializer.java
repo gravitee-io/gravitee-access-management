@@ -124,6 +124,7 @@ public class JdbcRepositoriesTestInitializer implements RepositoriesTestInitiali
         tables.add("i18n_dictionary_entries");
 
         tables.add("themes");
+        tables.add("password_histories");
 
         io.r2dbc.spi.Connection connection = Flowable.fromPublisher(connectionFactory.create()).blockingFirst();
         connection.beginTransaction();
