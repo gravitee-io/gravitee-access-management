@@ -632,7 +632,8 @@ public class ApplicationServiceImpl implements ApplicationService {
                 .flatMap(this::validateRedirectUris)
                 .flatMap(this::validateScopes)
                 .flatMap(this::validateTokenEndpointAuthMethod)
-                .flatMap(this::validateTlsClientAuth);
+                .flatMap(this::validateTlsClientAuth)
+                .flatMap(this::validatePostLogoutRedirectUris);
     }
 
     private Single<Application> validateRedirectUris(Application application) {
@@ -774,5 +775,48 @@ public class ApplicationServiceImpl implements ApplicationService {
         }
 
         return Single.just(application);
+    }
+
+    private Single<Application> validatePostLogoutRedirectUris(Application application) {
+        ApplicationOAuthSettings oAuthSettings = application.getSettings().getOauth();
+
+        return domainService.findById(application.getDomain())
+                .switchIfEmpty(Maybe.error(new DomainNotFoundException(application.getDomain())))
+                .flatMapSingle(domain -> {
+                    if (oAuthSettings.getPostLogoutRedirectUris() != null) {
+                        for (String logoutRedirectUri : oAuthSettings.getPostLogoutRedirectUris()) {
+                            try {
+                                final URI uri = logoutRedirectUri.contains("*") ? new URI(logoutRedirectUri) : UriBuilder.fromURIString(logoutRedirectUri).build();
+
+                                if (uri.getScheme() == null) {
+                                    return Single.error(new InvalidTargetUrlException("target_url : " + logoutRedirectUri + " is malformed"));
+                                }
+
+                                final String host = isHttp(uri.getScheme()) ? uri.toURL().getHost() : uri.getHost();
+
+                                //check localhost allowed
+                                if (!domain.isRedirectUriLocalhostAllowed() && isHttp(uri.getScheme()) && UriBuilder.isLocalhost(host)) {
+                                    return Single.error(new InvalidTargetUrlException("localhost is forbidden"));
+                                }
+                                //check http scheme
+                                if (!domain.isRedirectUriUnsecuredHttpSchemeAllowed() && uri.getScheme().equalsIgnoreCase("http")) {
+                                    return Single.error(new InvalidTargetUrlException("Unsecured http scheme is forbidden"));
+                                }
+                                //check wildcard
+                                if (!domain.isRedirectUriWildcardAllowed() &&
+                                        (nonNull(uri.getPath()) && uri.getPath().contains("*") || nonNull(host) && host.contains("*"))) {
+                                    return Single.error(new InvalidTargetUrlException("Wildcard are forbidden"));
+                                }
+                                // check fragment
+                                if (uri.getFragment() != null) {
+                                    return Single.error(new InvalidTargetUrlException("target_url with fragment is forbidden"));
+                                }
+                            } catch (IllegalArgumentException | URISyntaxException ex) {
+                                return Single.error(new InvalidTargetUrlException("target_url : " + logoutRedirectUri + " is malformed"));
+                            }
+                        }
+                    }
+                    return Single.just(application);
+                });
     }
 }

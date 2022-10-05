@@ -23,6 +23,7 @@ import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
+import io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Domain;
@@ -124,7 +125,7 @@ public abstract class AbstractLogoutEndpoint implements Handler<RoutingContext> 
         // if client is null, check security domain options
         List<String> registeredUris = client != null ? client.getPostLogoutRedirectUris() :
                 (domain.getOidc() != null ? domain.getOidc().getPostLogoutRedirectUris() : null);
-        if (!isMatchingRedirectUri(logoutRedirectUrl, registeredUris)) {
+        if (!isMatchingRedirectUri(logoutRedirectUrl, registeredUris, domain.isRedirectUriStrictMatching() || domain.usePlainFapiProfile())) {
             routingContext.fail(new InvalidRequestException("The post_logout_redirect_uri MUST match the registered callback URLs"));
             return;
         }
@@ -221,7 +222,7 @@ public abstract class AbstractLogoutEndpoint implements Handler<RoutingContext> 
         }
     }
 
-    private boolean isMatchingRedirectUri(String requestedRedirectUri, List<String> registeredRedirectUris) {
+    private boolean isMatchingRedirectUri(String requestedRedirectUri, List<String> registeredRedirectUris, boolean uriStrictMatch) {
         // no registered uris to check, continue
         if (registeredRedirectUris == null) {
             return true;
@@ -237,7 +238,8 @@ public abstract class AbstractLogoutEndpoint implements Handler<RoutingContext> 
         // compare values
         return registeredRedirectUris
                 .stream()
-                .anyMatch(registeredUri -> requestedRedirectUri.equals(registeredUri));
+                .anyMatch(registeredUri -> ParamUtils.redirectMatches(requestedRedirectUri, registeredUri, uriStrictMatch));
+
     }
 
     private io.gravitee.am.identityprovider.api.User getAuthenticatedUser(User endUser, RoutingContext routingContext) {
