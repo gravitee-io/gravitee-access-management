@@ -27,14 +27,17 @@ import io.gravitee.am.gateway.handler.scim.service.impl.UserServiceImpl;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.PasswordHistory;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.UserActivityService;
+import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.gravitee.am.service.validators.email.EmailValidatorImpl;
 import io.gravitee.am.service.validators.user.UserValidator;
 import io.gravitee.am.service.validators.user.UserValidatorImpl;
@@ -48,6 +51,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -113,6 +117,14 @@ public class UserServiceTest {
     @Mock
     private RateLimiterService rateLimiterService;
 
+    @Mock
+    private PasswordHistoryService passwordHistoryService;
+
+    @Before
+    public void setUp() {
+        when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any() , any(), any())).thenReturn(Maybe.just(new PasswordHistory()));
+    }
+
     @Test
     public void shouldCreateUser_no_user_provider() {
         final String domainId = "domain";
@@ -128,7 +140,7 @@ public class UserServiceTest {
         ArgumentCaptor<io.gravitee.am.model.User> newUserDefinition = ArgumentCaptor.forClass(io.gravitee.am.model.User.class);
         when(userRepository.create(newUserDefinition.capture())).thenReturn(Single.just(new io.gravitee.am.model.User()));
 
-        TestObserver<User> testObserver = userService.create(newUser, null, "/", null).test();
+        TestObserver<User> testObserver = userService.create(newUser, null, "/", null, new Client()).test();
         testObserver.assertNoErrors();
         testObserver.assertComplete();
 
@@ -148,7 +160,7 @@ public class UserServiceTest {
         when(userRepository.findByUsernameAndSource(eq(ReferenceType.DOMAIN), anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
         when(roleService.findByIdIn(newUser.getRoles())).thenReturn(Single.just(Collections.emptySet()));
 
-        TestObserver<User> testObserver = userService.create(newUser, null, "/", null).test();
+        TestObserver<User> testObserver = userService.create(newUser, null, "/", null, new Client()).test();
         testObserver.assertNotComplete();
         testObserver.assertError(InvalidValueException.class);
     }
@@ -186,7 +198,7 @@ public class UserServiceTest {
         ArgumentCaptor<io.gravitee.am.model.User> newUserDefinition = ArgumentCaptor.forClass(io.gravitee.am.model.User.class);
         when(userRepository.create(newUserDefinition.capture())).thenReturn(Single.just(createdUser));
 
-        TestObserver<User> testObserver = userService.create(newUser, null, "/", null).test();
+        TestObserver<User> testObserver = userService.create(newUser, null, "/", null, new Client()).test();
         testObserver.assertNoErrors();
         testObserver.assertComplete();
 
@@ -225,7 +237,7 @@ public class UserServiceTest {
         when(groupService.findByMember(existingUser.getId())).thenReturn(Flowable.empty());
         when(passwordService.isValid(eq(PASSWORD), any(), any())).thenReturn(true);
 
-        TestObserver<User> testObserver = userService.update(existingUser.getId(), scimUser, null, "/", null).test();
+        TestObserver<User> testObserver = userService.update(existingUser.getId(), scimUser, null, "/", null, null).test();
         testObserver.assertNoErrors();
         testObserver.assertComplete();
 
@@ -270,7 +282,7 @@ public class UserServiceTest {
         when(groupService.findByMember(existingUser.getId())).thenReturn(Flowable.empty());
         when(passwordService.isValid(eq(PASSWORD), any(), any())).thenReturn(true);
 
-        TestObserver<User> testObserver = userService.update(existingUser.getId(), scimUser, null, "/", null).test();
+        TestObserver<User> testObserver = userService.update(existingUser.getId(), scimUser, null, "/", null, null).test();
         testObserver.assertNoErrors();
         testObserver.assertComplete();
 
@@ -312,7 +324,7 @@ public class UserServiceTest {
         when(userRepository.update(any())).thenReturn(Single.just(existingUser));
         when(groupService.findByMember(existingUser.getId())).thenReturn(Flowable.empty());
 
-        TestObserver<User> testObserver = userService.update(existingUser.getId(), scimUser, null, "/", null).test();
+        TestObserver<User> testObserver = userService.update(existingUser.getId(), scimUser, null, "/", null, null).test();
         testObserver.assertNoErrors();
         testObserver.assertComplete();
 
@@ -336,7 +348,7 @@ public class UserServiceTest {
         when(userRepository.findById(existingUser.getId())).thenReturn(Maybe.just(existingUser));
         ArgumentCaptor<io.gravitee.am.model.User> userCaptor = ArgumentCaptor.forClass(io.gravitee.am.model.User.class);
 
-        TestObserver<User> testObserver = userService.update(existingUser.getId(), scimUser, null, "/", null).test();
+        TestObserver<User> testObserver = userService.update(existingUser.getId(), scimUser, null, "/", null, null).test();
         testObserver.assertError(InvalidValueException.class);
 
         verify(userRepository, never()).update(userCaptor.capture());
@@ -388,7 +400,7 @@ public class UserServiceTest {
             return Single.just(userToUpdate);
         }).when(userRepository).update(any());
 
-        TestObserver<User> testObserver = userService.patch(userId, patchOp, null, "/", null).test();
+        TestObserver<User> testObserver = userService.patch(userId, patchOp, null, "/", null, null).test();
         testObserver.assertNoErrors();
         testObserver.assertComplete();
         testObserver.assertValue(g -> "my user 2".equals(g.getDisplayName()));

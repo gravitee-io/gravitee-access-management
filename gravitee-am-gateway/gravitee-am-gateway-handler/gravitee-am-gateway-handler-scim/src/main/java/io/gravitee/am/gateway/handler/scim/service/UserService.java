@@ -19,11 +19,10 @@ import io.gravitee.am.gateway.handler.scim.model.ListResponse;
 import io.gravitee.am.gateway.handler.scim.model.PatchOp;
 import io.gravitee.am.gateway.handler.scim.model.User;
 import io.gravitee.am.common.scim.filter.Filter;
+import io.gravitee.am.model.oidc.Client;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-
-import java.security.Principal;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -35,11 +34,11 @@ public interface UserService {
 
     Maybe<User> get(String userId, String baseUrl);
 
-    Single<User> create(User user, String idp, String baseUrl, io.gravitee.am.identityprovider.api.User principal);
+    Single<User> create(User user, String idp, String baseUrl, io.gravitee.am.identityprovider.api.User principal, Client client);
 
-    Single<User> update(String userId, User user, String idp, String baseUrl, io.gravitee.am.identityprovider.api.User principal);
+    Single<User> update(String userId, User user, String idp, String baseUrl, io.gravitee.am.identityprovider.api.User principal, Client client);
 
-    Single<User> patch(String userId, PatchOp patchOp, String idp, String baseUrl, io.gravitee.am.identityprovider.api.User principal);
+    Single<User> patch(String userId, PatchOp patchOp, String idp, String baseUrl, io.gravitee.am.identityprovider.api.User principal, Client client);
 
     Completable delete(String userId, io.gravitee.am.identityprovider.api.User principal);
 }

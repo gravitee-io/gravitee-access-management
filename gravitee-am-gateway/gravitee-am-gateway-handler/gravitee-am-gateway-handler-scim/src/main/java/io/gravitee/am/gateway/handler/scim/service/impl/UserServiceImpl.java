@@ -33,9 +33,12 @@ import io.gravitee.am.gateway.handler.scim.service.GroupService;
 import io.gravitee.am.gateway.handler.scim.service.UserService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.PasswordHistory;
+import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.service.AuditService;
@@ -52,6 +55,7 @@ import io.gravitee.am.service.exception.UserAlreadyExistsException;
 import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.exception.UserProviderNotFoundException;
+import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
 import io.gravitee.am.service.utils.UserFactorUpdater;
@@ -60,15 +64,18 @@ import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import static com.google.common.base.Strings.isNullOrEmpty;
+import static io.gravitee.am.model.ReferenceType.DOMAIN;
+import static java.lang.Boolean.FALSE;
 import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
 
@@ -80,6 +87,7 @@ public class UserServiceImpl implements UserService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UserServiceImpl.class);
     private static final String DEFAULT_IDP_PREFIX = "default-idp-";
+    public static final String FIELD_PASSWORD_IS_INVALID = "Field [password] is invalid";
 
     @Autowired
     private UserRepository userRepository;
@@ -113,6 +121,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private RateLimiterService rateLimiterService;
+
+    @Autowired
+    private PasswordHistoryService passwordHistoryService;
 
     @Override
     public Single<ListResponse<User>> list(Filter filter, int page, int size, String baseUrl) {
@@ -157,7 +168,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Single<User> create(User user, String idp, String baseUrl, io.gravitee.am.identityprovider.api.User principal) {
+    public Single<User> create(User user, String idp, String baseUrl, io.gravitee.am.identityprovider.api.User principal, Client client) {
         LOGGER.debug("Create a new user {} for domain {}", user.getUserName(), domain.getName());
 
         // set user idp source
@@ -177,14 +188,16 @@ public class UserServiceImpl implements UserService {
 
         // check password
         if (isInvalidUserPassword(user.getPassword(), userModel)) {
-            return Single.error(new InvalidValueException("Field [password] is invalid"));
+            return Single.error(new InvalidValueException(FIELD_PASSWORD_IS_INVALID));
         }
+
+        final var rawPassword = user.getPassword();
 
         // check if user is unique
         return userRepository.findByUsernameAndSource(ReferenceType.DOMAIN, domain.getId(), user.getUserName(), source)
                 .isEmpty()
                 .map(isEmpty -> {
-                    if (!isEmpty) {
+                    if (FALSE.equals(isEmpty)) {
                         throw new UniquenessException("User with username [" + user.getUserName() + "] already exists");
                     }
                     return true;
@@ -230,7 +243,11 @@ public class UserServiceImpl implements UserService {
                             .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).user(user1)));
                 }))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).user(userModel).domain(domain.getId()).throwable(throwable)))
-                .map(user1 -> UserMapper.convert(user1, baseUrl, true))
+                .map(user1 -> {
+                    //noinspection ReactiveStreamsUnusedPublisher
+                    createPasswordHistory(domain, user1, rawPassword, principal, client);
+                    return UserMapper.convert(user1, baseUrl, true);
+                })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractNotFoundException) {
                         return Single.error(new InvalidValueException(ex.getMessage()));
@@ -246,10 +263,10 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Single<User> update(String userId, User user, String idp, String baseUrl, io.gravitee.am.identityprovider.api.User principal) {
+    public Single<User> update(String userId, User user, String idp, String baseUrl, io.gravitee.am.identityprovider.api.User principal, Client client) {
         LOGGER.debug("Update a user {} for domain {}", user.getUserName(), domain.getName());
 
-
+        final var rawPassword = user.getPassword();
         return userRepository.findById(userId)
                 .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
                 .flatMapSingle(existingUser -> {
@@ -296,7 +313,7 @@ public class UserServiceImpl implements UserService {
 
                                 // check password
                                 if (isInvalidUserPassword(userToUpdate.getPassword(), userToUpdate)) {
-                                    return Single.error(new InvalidValueException("Field [password] is invalid"));
+                                    return Single.error(new InvalidValueException(FIELD_PASSWORD_IS_INVALID));
                                 }
 
                                 // set source
@@ -316,12 +333,16 @@ public class UserServiceImpl implements UserService {
                                                                 if (userToUpdate.getExternalId() == null) {
                                                                     return userProvider.create(UserMapper.convert(userToUpdate));
                                                                 } else {
-                                                                    if (isNullOrEmpty(userToUpdate.getPassword())) {
-                                                                        return userProvider.update(userToUpdate.getExternalId(), UserMapper.convert(userToUpdate));
-                                                                    } else {
-                                                                        return userProvider.update(userToUpdate.getExternalId(), UserMapper.convert(userToUpdate))
-                                                                                .flatMap(updatedUser -> userProvider.updatePassword(updatedUser, user.getPassword()));
-                                                                    }
+                                                                    return createPasswordHistory(domain, userToUpdate, rawPassword, principal, client)
+                                                                            .switchIfEmpty(Maybe.just(new PasswordHistory()))
+                                                                            .flatMapSingle(ph -> userProvider.update(userToUpdate.getExternalId(), UserMapper.convert(userToUpdate)))
+                                                                            .flatMap(updatedUser -> {
+                                                                                         if (!isNullOrEmpty(user.getPassword())) {
+                                                                                             return userProvider.updatePassword(updatedUser, user.getPassword());
+                                                                                         }
+                                                                                         return Single.just(updatedUser);
+                                                                                     }
+                                                                            );
                                                                 }
                                                             });
                                                 })
@@ -354,7 +375,7 @@ public class UserServiceImpl implements UserService {
                 })
                 .map(user1 -> UserMapper.convert(user1, baseUrl, false))
                 // set groups
-                .flatMap(user1 -> setGroups(user1))
+                .flatMap(this::setGroups)
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof SCIMException || ex instanceof UserNotFoundException) {
                         return Single.error(ex);
@@ -374,7 +395,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Single<User> patch(String userId, PatchOp patchOp, String idp, String baseUrl, io.gravitee.am.identityprovider.api.User principal) {
+    public Single<User> patch(String userId, PatchOp patchOp, String idp, String baseUrl, io.gravitee.am.identityprovider.api.User principal, Client client) {
         LOGGER.debug("Patch user {}", userId);
         return get(userId, baseUrl)
                 .switchIfEmpty(Single.error(new UserNotFoundException(userId)))
@@ -385,10 +406,10 @@ public class UserServiceImpl implements UserService {
 
                     // check password
                     if (isInvalidUserPassword(userToPatch.getPassword(), UserMapper.convert(userToPatch))) {
-                        return Single.error(new InvalidValueException("Field [password] is invalid"));
+                        return Single.error(new InvalidValueException(FIELD_PASSWORD_IS_INVALID));
                     }
 
-                    return update(userId, userToPatch, idp, baseUrl, principal);
+                    return update(userId, userToPatch, idp, baseUrl, principal, client);
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -472,4 +493,9 @@ public class UserServiceImpl implements UserService {
                 }).ignoreElement();
     }
 
+    @SuppressWarnings("ResultOfMethodCallIgnored")
+    private Maybe<PasswordHistory> createPasswordHistory(Domain domain, io.gravitee.am.model.User user, String rawPassword, io.gravitee.am.identityprovider.api.User principal, Client client) {
+        return passwordHistoryService
+                .addPasswordToHistory(DOMAIN, domain.getId(), user, rawPassword , principal, PasswordSettings.getInstance(client, domain).orElse(null));
+    }
 }
