@@ -1,6 +1,17 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/602?closed=1[AM - 3.18.8 (2022-10-05)]
+
+=== Features
+
+*_Management_*
+
+- [gateway] add new option for the passwordless login flow https://github.com/gravitee-io/issues/issues/8506[#8506]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/601?closed=1[AM - 3.18.7 (2022-09-29)]
 
 === Bug fixes
