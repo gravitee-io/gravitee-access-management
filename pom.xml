@@ -24,7 +24,7 @@
         <groupId>io.gravitee</groupId>
         <artifactId>gravitee-parent</artifactId>
         <version>20.0</version>
-        <relativePath></relativePath>
+        <relativePath/>
     </parent>
 
     <groupId>io.gravitee.am</groupId>
@@ -87,7 +87,7 @@
         <nimbus.version>8.17</nimbus.version>
         <tink.version>1.6.1</tink.version>
         <freemarker.version>2.3.31</freemarker.version>
-        <jsoup.version>1.14.2</jsoup.version>
+        <jsoup.version>1.15.3</jsoup.version>
         <snakeyaml.version>1.26</snakeyaml.version>
         <mail.version>1.4.7</mail.version>
         <mongodb-driver-reactivestreams.version>4.3.0</mongodb-driver-reactivestreams.version>
