@@ -25,6 +25,7 @@ import io.gravitee.am.gateway.handler.common.vertx.web.handler.CorsHandlerFactor
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.PolicyChainHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.SSOSessionHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.XFrameHandlerFactory;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.XSSHandlerFactory;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.AuthenticationFlowHandlerImpl;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieSessionHandler;
@@ -57,6 +58,11 @@ public class WebConfiguration {
     @Bean
     public XFrameHandlerFactory xframeHandlerFactory(Environment environment) {
         return new XFrameHandlerFactory(environment);
+    }
+
+    @Bean
+    public XSSHandlerFactory xssHandlerFactory(Environment environment) {
+        return new XSSHandlerFactory(environment);
     }
 
     @Bean
