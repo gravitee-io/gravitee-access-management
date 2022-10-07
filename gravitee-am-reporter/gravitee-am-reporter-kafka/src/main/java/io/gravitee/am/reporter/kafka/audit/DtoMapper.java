@@ -74,7 +74,7 @@ public class DtoMapper {
   }
 
   public String map(ReferenceType referenceType) {
-    return referenceType.toString().toUpperCase();
+    return referenceType != null ? referenceType.toString().toUpperCase() : null;
   }
 
   public AuditEntityDto map(AuditEntity auditEntity) {
