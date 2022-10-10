@@ -1,5 +1,53 @@
 version: 2.1
 
+orbs:
+  slack: circleci/slack@4.10.1
+  keeper: gravitee-io/keeper@0.6.2
+  aws-s3: circleci/aws-s3@3.0
+
+executors:
+    ubuntu:
+      parameters:
+        class:
+          description: The resource class. Default is medium.
+          type: enum
+          enum: ["medium", "large", "xlarge", "2xlarge"]
+          default: "medium"
+        version:
+          description: the version of the machine. Default is 2204
+          type: string
+          default: "2204"
+        tag:
+          description: the tag of the machine. Default is current
+          type: string
+          default: "current"
+        with_docker_layer_caching:
+          description: should we use Docker Layer Caching mechanism. Default is false
+          type: boolean
+          default: false
+      machine:
+        image: 'ubuntu-<< parameters.version >>:<< parameters.tag >>'
+        docker_layer_caching: << parameters.with_docker_layer_caching >>
+      resource_class: '<< parameters.class >>'
+    openjdk:
+      parameters:
+        class:
+          description: The resource class. Default is medium.
+          type: enum
+          enum: ["small", "medium", "medium+", "large", "xlarge"]
+          default: "medium"
+        version:
+          description: the version of the JDK. Default is 17.0
+          type: string
+          default: "17.0"
+        with_node:
+          description: should we use the "node" version of the image
+          type: boolean
+          default: false
+      docker:
+        - image: cimg/openjdk:<< parameters.version >><<# parameters.with_node >>-node<</ parameters.with_node >>
+      resource_class: << parameters.class >>
+
 parameters:
   gio_action:
     type: enum
@@ -17,18 +65,6 @@ parameters:
     type: boolean
     default: false
     description: "Do we have to release a RC"
-  maven_profile_id:
-    type: string
-    default: "gravitee-dry-run"
-    description: "Maven ID of the Maven profile to use for a dry run ?"
-  secrethub_org:
-    type: string
-    default: "gravitee-lab"
-    description: "SecretHub Org to use to fetch secrets ?"
-  secrethub_repo:
-    type: string
-    default: "cicd"
-    description: "SecretHub Repo to use to fetch secrets ?"
   graviteeio_version:
     type: string
     default: "cicd"
@@ -36,10 +72,6 @@ parameters:
   run-container-test:
     type: boolean
     default: false
-  prune:
-    type: boolean
-    default: false
-    description: "Do you want to [docker system prune -f --all] ? (clean up all cached docker images)"
   tag_latest:
     type: boolean
     default: false
@@ -48,85 +80,110 @@ parameters:
     type: boolean
     default: true
     description: "Is this a latest support version of the Product ? (if so minor version tagging docker images). True by default."
-
-slack-pass-fail-post-step: &slack-pass-fail-post-step
-  post-steps:
-    - slack/notify:
-        channel: 'am-ci-notifications'
-        custom: |
-          {
-            "text": "",
-            "blocks": [
-              {
-                "type": "section",
-                "text": {
-                  "type": "mrkdwn",
-                  "text": "❌ *Failure Notification* Job #${CIRCLE_JOB} `${CIRCLE_PROJECT_REPONAME}` on `${CIRCLE_BRANCH}`"
-                }
-              },
-              {
-                "type": "actions",
-                "elements": [
-                  {
-                    "type": "button",
-                    "text": {
-                      "type": "plain_text",
-                      "text": "View Job"
-                    },
-                    "url": "${CIRCLE_BUILD_URL}"
-                  }
-                ]
-              }
-            ]
-          }
-        event: fail
-    - slack/notify:
-        channel: 'am-ci-notifications'
-        custom: |
-          {
-            "text": "",
-            "blocks": [
-              {
-                "type": "section",
-                "text": {
-                  "type": "mrkdwn",
-                  "text": "✅ *Success Notification* Job #${CIRCLE_JOB} `${CIRCLE_PROJECT_REPONAME}` on `${CIRCLE_BRANCH}`"
-                }
-              },
-              {
-                "type": "actions",
-                "elements": [
-                  {
-                    "type": "button",
-                    "text": {
-                      "type": "plain_text",
-                      "text": "View Job"
-                    },
-                    "url": "${CIRCLE_BUILD_URL}"
-                  }
-                ]
-              }
-            ]
-          }
-        event: pass
-
-orbs:
-  gravitee: gravitee-io/gravitee@1.0
-  keeper: gravitee-io/keeper@0.6.2
-  slack: circleci/slack@4.8.1
-  am: gravitee-io/gravitee-am@1.0.9
-  snyk: snyk/snyk@1.1.2
+  gio_release_version:
+    type: string
+    default: "1.0.9"
+    description: "Release Version Number? Edit the default value, to set the 'next' version."
 
 commands:
-  docker-scan:
+  publish_bundle:
+    parameters:
+      dry_run:
+        type: boolean
     steps:
-      - snyk/scan:
-          organization: gravitee.io
-          monitor-on-build: false
-          severity-threshold: critical
-          docker-image-name: ${IMAGE_TAG}
-          fail-on-issues: false
-          additional-arguments: --app-vulns
+      - keeper/env-export:
+          secret-url: keeper://Mqmplmfu17bDR5XRLmO1mQ/field/password
+          var-name: AWS_ACCESS_KEY_ID
+      - keeper/env-export:
+          secret-url: keeper://3-pU56sIqcyWWw7HxhxjaQ/field/password
+          var-name: AWS_SECRET_ACCESS_KEY
+      - when:
+          condition: << parameters.dry_run>>
+          steps:
+            - aws-s3/sync:
+                arguments: |
+                  --endpoint-url https://cellar-c2.services.clever-cloud.com \
+                  --acl public-read
+                from: ~/release/
+                to: "s3://gravitee-dry-releases-downloads/"
+      - when:
+          condition:
+            not: << pipeline.parameters.dry_run>>
+          steps:
+            - aws-s3/sync:
+                arguments: |
+                  --endpoint-url https://cellar-c2.services.clever-cloud.com \
+                  --acl public-read
+                from: ~/release/
+                to: "s3://gravitee-releases-downloads/" 
+  restore-maven-job-cache:
+    description: Restore Maven cache for a dedicated job
+    parameters:
+      jobName:
+        description: The job name
+        type: string
+        default: ""
+    steps:
+      - restore_cache:
+          keys:
+            - gravitee-access-management-v1-<< parameters.jobName >>-{{ .Branch }}-{{ checksum "pom.xml" }}
+            - gravitee-access-management-v1-<< parameters.jobName >>-{{ .Branch }}-
+            - gravitee-access-management-v1-<< parameters.jobName >>-
+  save-maven-job-cache:
+    description: Restore Maven cache for a dedicated job
+    parameters:
+      jobName:
+        description: The job name
+        type: string
+        default: ""
+    steps:
+      - run:
+          name: "Exclude all AM artefacts from cache."
+          command: rm -rf ~/.m2/repository/io/gravitee/am
+      - save_cache:
+          paths:
+            - ~/.m2
+          key: gravitee-access-management-v1-<< parameters.jobName >>-{{ .Branch }}-{{ checksum "pom.xml" }}
+          when: always
+  notify-on-failure:
+    steps:
+      - keeper/env-export:
+          secret-url: keeper://ZOz4db245GNaETVwmPBk8w/field/password
+          var-name: SLACK_ACCESS_TOKEN
+      - slack/notify:
+          channel: C0336B2E96K
+          event: fail
+          template: basic_fail_1
+  notify-on-success:
+    steps:
+      - keeper/env-export:
+          secret-url: keeper://ZOz4db245GNaETVwmPBk8w/field/password
+          var-name: SLACK_ACCESS_TOKEN
+      - slack/notify:
+          channel: C0336B2E96K
+          event: pass
+          template: basic_success_1
+  add-docker-image-in-snyk:
+    parameters:
+      docker-image-name:
+        type: string
+      version:
+        type: string
+    steps:
+      - run:
+          name: Add << parameters.docker-image-name >> << parameters.version >> to Snyk
+          command: |
+              curl --fail \
+                   --include \
+                   --request POST \
+                   --header "Content-Type: application/json; charset=utf-8" \
+                   --header "Authorization: token ${SNYK_API_KEY}" \
+                   --data-binary "{
+                \"target\": {
+                  \"name\": \"graviteeio/<< parameters.docker-image-name >>:<< parameters.version >>\"
+                }
+              }" \
+              "https://api.snyk.io/api/v1/org/${SNYK_ORG_ID}/integrations/${SNYK_INTEGRATION_ID}/import"
   notify-snyk-result:
     steps:
       - slack/notify:
@@ -155,41 +212,154 @@ commands:
               ]
             }
           event: always
+  mvn_git_commit_id:
+    steps:
+      - run:
+          name: "Used by maven maven package"
+          command: |
+                    echo "export BUILD_ID=${CIRCLE_BUILD_NUM}" >> $BASH_ENV
+                    echo "export BUILD_NUMBER=${CIRCLE_BUILD_NUM}" >> $BASH_ENV
+                    export GIT_COMMIT_ID=$(git rev-parse --short HEAD)
+                    echo "export GIT_COMMIT=${GIT_COMMIT_ID}" >> $BASH_ENV
+                    exit 0                         
+  prepare-gpg:
+    description: Prepare GPG command
+    steps:
+      - keeper/install
+      - run:
+          command: |
+                    ksm secret notation keeper://riW92t8X4tk4ZmQc8-FZ4Q/custom_field/armor_format_pub_key > pub.key
+                    gpg --import pub.key
+                    
+                    ksm secret notation keeper://riW92t8X4tk4ZmQc8-FZ4Q/custom_field/armor_format_private_key > private.key
+                    gpg --import --batch private.key
+  package_bundle:
+    description: Package Bundle for Gravtiee AM Community Edition
+    parameters:
+      dry_run:
+        type: boolean
+        default: true
+        description: "Run in dry run mode?"
+    steps:
+      - restore-maven-job-cache:
+          jobName: package_bundle
+      - run:
+          environment:
+            DRY_RUN: << parameters.dry_run >>
+          name: "Gravitee AM Community Edition Package Bundle"
+          command: |
+                    export MVN_PRJ_VERSION=$(mvn -Dexec.executable='echo' -Dexec.args='${project.version}' --non-recursive exec:exec -q | tee -a /tmp/maven.logs; echo "$?" > /tmp/maven.exit.code)
+                    export RELEASE_VERSION_NUMBER=$(echo "${MVN_PRJ_VERSION}" | awk -F '-SNAPSHOT' '{print $1}')            
 
+                    mkdir -p ~/release/graviteeio-am/components/gravitee-am-management-api/
+                    cp -R ~/project/gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-management-api-standalone-distribution/gravitee-am-management-api-standalone-distribution-zip/target/gravitee-am-management-api-standalone-${RELEASE_VERSION_NUMBER}.zip ~/release/graviteeio-am/components/gravitee-am-management-api/
+                    cd ~/release/graviteeio-am/components/gravitee-am-management-api/
+                    md5sum gravitee-am-management-api-standalone-${RELEASE_VERSION_NUMBER}.zip > gravitee-am-management-api-standalone-${RELEASE_VERSION_NUMBER}.zip.md5
+                    sha512sum gravitee-am-management-api-standalone-${RELEASE_VERSION_NUMBER}.zip > gravitee-am-management-api-standalone-${RELEASE_VERSION_NUMBER}.zip.sha512sum
+                    sha1sum gravitee-am-management-api-standalone-${RELEASE_VERSION_NUMBER}.zip > gravitee-am-management-api-standalone-${RELEASE_VERSION_NUMBER}.zip.sha1
+                    mkdir -p ~/release/graviteeio-am/distributions/graviteeio-am-full-${RELEASE_VERSION_NUMBER}/gravitee-am-management-api-${RELEASE_VERSION_NUMBER}/
+                    cp -R ~/project/gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-management-api-standalone-distribution/target/distribution/* ~/release/graviteeio-am/distributions/graviteeio-am-full-${RELEASE_VERSION_NUMBER}/gravitee-am-management-api-${RELEASE_VERSION_NUMBER}/
+                    
+                    mkdir -p ~/release/graviteeio-am/components/gravitee-am-gateway/
+                    cp -R ~/project/gravitee-am-gateway/gravitee-am-gateway-standalone/gravitee-am-gateway-standalone-distribution/gravitee-am-gateway-standalone-distribution-zip/target/gravitee-am-gateway-standalone-${RELEASE_VERSION_NUMBER}.zip ~/release/graviteeio-am/components/gravitee-am-gateway/
+                    cd ~/release/graviteeio-am/components/gravitee-am-gateway/
+                    md5sum gravitee-am-gateway-standalone-${RELEASE_VERSION_NUMBER}.zip > gravitee-am-gateway-standalone-${RELEASE_VERSION_NUMBER}.zip.md5
+                    sha512sum gravitee-am-gateway-standalone-${RELEASE_VERSION_NUMBER}.zip > gravitee-am-gateway-standalone-${RELEASE_VERSION_NUMBER}.zip.sha512sum
+                    sha1sum gravitee-am-gateway-standalone-${RELEASE_VERSION_NUMBER}.zip > gravitee-am-gateway-standalone-${RELEASE_VERSION_NUMBER}.zip.sha1
+                    mkdir -p ~/release/graviteeio-am/distributions/graviteeio-am-full-${RELEASE_VERSION_NUMBER}/gravitee-am-gateway-${RELEASE_VERSION_NUMBER}/
+                    cp -R ~/project/gravitee-am-gateway/gravitee-am-gateway-standalone/gravitee-am-gateway-standalone-distribution/target/distribution/* ~/release/graviteeio-am/distributions/graviteeio-am-full-${RELEASE_VERSION_NUMBER}/gravitee-am-gateway-${RELEASE_VERSION_NUMBER}/
+
+                    mkdir -p ~/release/graviteeio-am/components/gravitee-am-webui/
+                    cp -R ~/project/gravitee-am-ui/target/gravitee-am-webui-${RELEASE_VERSION_NUMBER}.zip ~/release/graviteeio-am/components/gravitee-am-webui/
+                    cd ~/release/graviteeio-am/components/gravitee-am-webui/
+                    md5sum gravitee-am-webui-${RELEASE_VERSION_NUMBER}.zip > gravitee-am-webui-${RELEASE_VERSION_NUMBER}.zip.md5
+                    sha512sum gravitee-am-webui-${RELEASE_VERSION_NUMBER}.zip > gravitee-am-webui-${RELEASE_VERSION_NUMBER}.zip.sha512sum
+                    sha1sum gravitee-am-webui-${RELEASE_VERSION_NUMBER}.zip > gravitee-am-webui-${RELEASE_VERSION_NUMBER}.zip.sha1
+                    mkdir -p ~/release/graviteeio-am/distributions/graviteeio-am-full-${RELEASE_VERSION_NUMBER}/gravitee-am-management-ui-${RELEASE_VERSION_NUMBER}/
+                    cp -R ~/project/gravitee-am-ui/dist/* ~/release/graviteeio-am/distributions/graviteeio-am-full-${RELEASE_VERSION_NUMBER}/gravitee-am-management-ui-${RELEASE_VERSION_NUMBER}/
+                    
+                    cd ~/release/graviteeio-am/distributions/
+                    zip -rm graviteeio-am-full-${RELEASE_VERSION_NUMBER}.zip graviteeio-am-full-${RELEASE_VERSION_NUMBER}
+                    md5sum graviteeio-am-full-${RELEASE_VERSION_NUMBER}.zip > graviteeio-am-full-${RELEASE_VERSION_NUMBER}.zip.md5
+                    sha512sum graviteeio-am-full-${RELEASE_VERSION_NUMBER}.zip > graviteeio-am-full-${RELEASE_VERSION_NUMBER}.zip.sha512sum
+                    sha1sum graviteeio-am-full-${RELEASE_VERSION_NUMBER}.zip > graviteeio-am-full-${RELEASE_VERSION_NUMBER}.zip.sha1           
+      - save-maven-job-cache:
+          jobName: package_bundle
+      - publish_bundle:
+          dry_run: << parameters.dry_run>>
+  git_config:
+    description: This command runs the git config in your pipeline, for the bot user cofnigured in your secret manager. It requires [bash]
+    steps:
+      - keeper/env-export:
+          secret-url: keeper://IZd-yvsMopfQEa_0j1SDvg/field/login
+          var-name: GIT_USER_NAME
+      - keeper/env-export:
+          secret-url: keeper://IZd-yvsMopfQEa_0j1SDvg/custom_field/email
+          var-name: GIT_USER_EMAIL
+      - keeper/env-export:
+          secret-url: keeper://TIlcGPFq4rN5GvgnZb9hng/field/password
+          var-name: GITHUB_TOKEN
+      - add_ssh_keys:
+          fingerprints:
+            - "ac:88:23:8f:c6:0f:7d:f0:fc:df:73:20:34:56:02:6c"
+      - run:
+          name: Git Config
+          command: |
+                    git config --global user.name "${GIT_USER_NAME}"
+                    git config --global user.email "${GIT_USER_EMAIL}"                       
+  publish_rpms:
+    description: Runs the commands to build n publish RPM Packages for Gravitee.io AM
+    parameters:
+      gio_release_version:
+        type: string
+        default: ""
+        description: "The Gravitee.io release version number of Gravitee.io APIM, for which to build and publish all zip bundles"
+    steps:
+      - keeper/env-export:
+          secret-url: keeper://8CG6HxY5gYsl-85eJKuIoA/field/password
+          var-name: GIO_PACKAGECLOUD_TOKEN
+      - run:
+          environment:
+            GIO_RELEASE_VERSION: << parameters.gio_release_version >>
+          name: "Gravitee AM : Build and Publish RPMs"
+          command: |
+                    export MAJOR_VERSION_NUMBER=$(echo ${GIO_RELEASE_VERSION} | awk -F '.' '{print $1}')
+                    export GIT_GRAVITEE_PACKAGES_REPO=$(mktemp -d -t "git_gravitee_packages_repo-XXXXXXXXXX")
+                    
+                    git clone git@github.com:gravitee-io/packages.git ${GIT_GRAVITEE_PACKAGES_REPO}
+                    
+                    cd ${GIT_GRAVITEE_PACKAGES_REPO}/am/${MAJOR_VERSION_NUMBER}.x
+                    ./build.sh -v << parameters.gio_release_version >>
+                    
+                    docker run --rm -v "${GIT_GRAVITEE_PACKAGES_REPO}/am/${MAJOR_VERSION_NUMBER}.x:/packages" -e PACKAGECLOUD_TOKEN=${GIO_PACKAGECLOUD_TOKEN} digitalocean/packagecloud push --yes --skip-errors --verbose graviteeio/rpms/el/7 /packages/*.rpm
+                    
+    
 jobs:
-  keeper:
+  setup:
     docker:
       - image: 'cimg/base:stable'
-    environment:
-      DEV_MAVEN_SETTINGS: keeper://nqy-K-htPBh88tqMCzKJEQ/custom_field/xml
-      RELEASE_MAVEN_SETTINGS: keeper://R4pzRhcCQgKAGZ9L3YuxDQ/custom_field/xml
-      DRY_RELEASE_MAVEN_SETTINGS: keeper://SBYuGgef6eCouVZWDI-7GQ/custom_field/xml
-      GIO_GPG_PUB_KEY: keeper://riW92t8X4tk4ZmQc8-FZ4Q/custom_field/armor_format_pub_key
-      GIO_GPG_PRV_KEY: keeper://riW92t8X4tk4ZmQc8-FZ4Q/custom_field/armor_format_private_key
-      GIT_USER_NAME: keeper://IZd-yvsMopfQEa_0j1SDvg/field/login
-      GIT_USER_EMAIL: keeper://IZd-yvsMopfQEa_0j1SDvg/custom_field/email
-      DOCKERHUB_USER_NAME: keeper://cooU9UoXIk8Kj0hsP2rkBw/field/login
-      DOCKERHUB_USER_TOKEN: keeper://cooU9UoXIk8Kj0hsP2rkBw/field/password
+    resource_class: small 
     steps:
-      - keeper/exec:
-          command: |
-            echo $DEV_MAVEN_SETTINGS > /tmp/.circleci.settings.xml
-            mkdir -p /tmp/gravit33bot/.secrets/.gungpg
-            echo $RELEASE_MAVEN_SETTINGS > /tmp/gravit33bot/.secrets/release.settings.xml
-            echo $DRY_RELEASE_MAVEN_SETTINGS > /tmp/gravit33bot/.secrets/dry.release.settings.xml
-            echo $GIO_GPG_PUB_KEY > /tmp/gravit33bot/.secrets/.gungpg/graviteebot.gpg.pub.key
-            echo $GIO_GPG_PRV_KEY > /tmp/gravit33bot/.secrets/.gungpg/graviteebot.gpg.priv.key
-            echo $GIT_USER_NAME > /tmp/gravit33bot/git_user_name
-            echo $GIT_USER_EMAIL > /tmp/gravit33bot/git_user_email
-            mkdir -p /tmp/gravit33bot/.secrets/dockerhub
-            echo $DOCKERHUB_USER_NAME > /tmp/gravit33bot/.secrets/dockerhub/user_name
-            echo $DOCKERHUB_USER_TOKEN > /tmp/gravit33bot/.secrets/dockerhub/user_token
-
+      - keeper/env-export:
+          secret-url: keeper://7CgijuGiFDSLynRJt1Dm9w/custom_field/xml
+          var-name: MAVEN_SETTINGS
+      - run:
+          command: echo $MAVEN_SETTINGS > .gravitee.settings.xml
       - persist_to_workspace:
-          root: /tmp
+          root: .
           paths:
-            - .circleci.settings.xml
-            - gravit33bot
+            - .gravitee.settings.xml
+  send_slack_notification:
+    docker:
+      - image: cimg/base:stable
+    resource_class: small
+    environment:
+      SLACK_PARAM_DEBUG: 1
+    steps:
+      - run:
+          name: exit 1
+          command: exit 1
+      - notify-on-failure
   build:
     docker:
       - image: cimg/openjdk:17.0.1
@@ -198,24 +368,23 @@ jobs:
       - attach_workspace:
           at: /tmp
       - checkout
-      - restore_cache:
-          keys:
-            - gio-gravitee-pull-requests-dependencies-{{ .Branch }}-{{ checksum "pom.xml" }}
-            - gio-gravitee-pull-requests-dependencies
+      - restore-maven-job-cache:
+          jobName: build_branch
       - run:
           name: Maven Package
           command: |
-            mvn -s /tmp/.circleci.settings.xml install -DaltDeploymentRepository=${NEXUS_SNAPSHOTS_SERVER_ID}::default::${NEXUS_SNAPSHOTS_URL}
+            mvn -s /tmp/.gravitee.settings.xml install
             cp ./gravitee-am-gateway/gravitee-am-gateway-standalone/gravitee-am-gateway-standalone-distribution/gravitee-am-gateway-standalone-distribution-zip/target/*.zip ~/
             cp ./gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-management-api-standalone-distribution/gravitee-am-management-api-standalone-distribution-zip/target/*.zip ~/
             cp ./gravitee-am-ui/target/*.zip ~/
+      - save-maven-job-cache:
+          jobName: build_branch
       - persist_to_workspace:
           root: ~/
           paths:
             - ./gravitee-am-gateway-standalone-*.zip
             - ./gravitee-am-management-api-standalone-*.zip
             - ./gravitee-am-webui-*.zip
-
   run_jest_tests_mongo:
     machine:
       image: ubuntu-2204:2022.07.1
@@ -279,7 +448,6 @@ jobs:
           event: fail
           mentions: "@am_team"
           template: basic_fail_1
-
   run_jest_tests_psql:
     machine:
       image: ubuntu-2204:2022.07.1
@@ -373,7 +541,6 @@ jobs:
           event: fail
           mentions: "@am_team"
           template: basic_fail_1
-
   run_postman_tests_mongo:
     docker:
       - image: cimg/openjdk:17.0.1-node
@@ -418,7 +585,6 @@ jobs:
           event: fail
           mentions: "@am_team"
           template: basic_fail_1
-
   run_postman_tests_psql:
     docker:
       - image: cimg/openjdk:17.0.1-node
@@ -494,62 +660,22 @@ jobs:
           event: fail
           mentions: "@am_team"
           template: basic_fail_1
-
   run_testcontainer_tests:
     executor:
-      name: gravitee/cicdmachine
-      os_name: "ubuntu"
-      os_version: "2004"
-      os_patch: "202101-01"
-      machine_size: "xlarge"
+      name: ubuntu
+      class: "xlarge"
     steps:
       - attach_workspace:
           at: /tmp
       - checkout
-      - restore_cache:
-          keys:
-            - gio-gravitee-pull-requests-dependencies-{{ .Branch }}-{{ checksum "pom.xml" }}
-            - gio-gravitee-pull-requests-dependencies
+      - restore-maven-job-cache:
+          jobName: run_testcontainer_tests
       - run:
           name: Build
           command: |
-            echo "Run only repositories and reporters tests, other JUnit tests have been run by the 'pull_request' job"
-            mvn install -pl \!gravitee-am-ui -Pcicd -DskipTests -Dmaven.javadoc.skip=true -s /tmp/.circleci.settings.xml
-  publish-fapi-resource-images-azure-registry:
-    docker:
-      - image: cimg/openjdk:17.0.1
-    resource_class: small
-    steps:
-      - checkout
-      - attach_workspace:
-          at: /tmp
-      - setup_remote_docker
-      - run:
-          name: Build & Publish FAPI Resource API Docker Image to Azure Registry
-          command: |
-            export TAG=$(echo "${CIRCLE_BRANCH:0:15}-${CIRCLE_SHA1:0:7}-$(date +%s)" | sed -E 's/[~^]+//g' | sed -E 's/[^a-zA-Z0-9]+/-/g' | sed -E 's/^-+|-+$//g' | tr A-Z a-z)
-            export IMAGE_TAG=graviteeio.azurecr.io/am-fapi-resource-api:${TAG}
-            mvn -pl gravitee-am-fapi-resource-api package com.google.cloud.tools:jib-maven-plugin:3.1.4:dockerBuild  -Dimage=${IMAGE_TAG}
-            echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
-            docker push ${IMAGE_TAG}
-  publish-ciba-resource-images-azure-registry:
-    docker:
-      - image: circleci/openjdk:11.0.3-jdk-stretch
-    resource_class: small
-    steps:
-      - checkout
-      - attach_workspace:
-          at: /tmp
-      - setup_remote_docker
-      - run:
-          name: Build & Publish CIBA Delegated Service Docker Image to Azure Registry
-          command: |
-            export TAG=$(echo "${CIRCLE_BRANCH:0:15}-${CIRCLE_SHA1:0:7}-$(date +%s)" | sed -E 's/[~^]+//g' | sed -E 's/[^a-zA-Z0-9]+/-/g' | sed -E 's/^-+|-+$//g' | tr A-Z a-z)
-            export IMAGE_TAG=graviteeio.azurecr.io/am-ciba-resource-api:${TAG}
-            mvn -f gravitee-am-ciba-delegated-service/pom.xml package com.google.cloud.tools:jib-maven-plugin:3.1.4:dockerBuild  -Dimage=${IMAGE_TAG}
-            echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
-            docker push ${IMAGE_TAG}
-
+            mvn install -pl \!gravitee-am-ui -Pcicd -DskipTests -Dmaven.javadoc.skip=true -s /tmp/.gravitee.settings.xml -T2C
+      - save-maven-job-cache:
+          jobName: run_testcontainer_tests
   publish-images-azure-registry:
     docker:
       - image: cimg/openjdk:17.0.1
@@ -559,14 +685,18 @@ jobs:
       - attach_workspace:
           at: /tmp
       - setup_remote_docker
+      - keeper/env-export:
+          secret-url: keeper://Q721P2LSOPJ9qiXLuf5AHQ/field/login
+          var-name: AZURE_DOCKER_REGISTRY_USERNAME
+      - keeper/env-export:
+          secret-url: keeper://Q721P2LSOPJ9qiXLuf5AHQ/field/password
+          var-name: AZURE_DOCKER_REGISTRY_PASSWORD
       - run:
           name: Compute Tag for Docker images
           command: |
             # Compute tag with branch name, commmit SHA and timestamp. Then slugify it to be sure it can be handled by Docker
             export TAG=$(echo "${CIRCLE_BRANCH:0:15}-${CIRCLE_SHA1:0:7}-$(date +%s)" | sed -E 's/[~^]+//g' | sed -E 's/[^a-zA-Z0-9]+/-/g' | sed -E 's/^-+|-+$//g' | tr A-Z a-z)
-            # Workaround for sharing this variable to the next steps
             echo "export TAG=$TAG" >> $BASH_ENV
-            echo "Docker images will be tagged with: ${TAG}"
             echo $TAG > /tmp/docker-tag.txt
             SLACK_MESSAGE="AM Docker Images Snyk Scan Job has not been executed"
             echo "export SLACK_MESSAGE='${SLACK_MESSAGE}'" >> $BASH_ENV
@@ -574,14 +704,12 @@ jobs:
           name: Build Management API Docker Image to Azure Registry
           when: always
           command: |
-            export AM_VERSION=$(mvn -s /tmp/.circleci.settings.xml -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
-            echo "Gravitee AM version: ${AM_VERSION}"
+            export AM_VERSION=$(mvn -s /tmp/.gravitee.settings.xml -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
             export IMAGE_TAG=graviteeio.azurecr.io/am-management-api:${TAG}
             echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
             docker build -f docker/management-api/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} /tmp
             IMAGE1=${IMAGE_TAG}
             echo "export IMAGE1='${IMAGE1}'" >> $BASH_ENV
-      - docker-scan
       - run:
           name: Push API Docker image
           when: always
@@ -592,13 +720,12 @@ jobs:
           name: Build Gateway Docker Image to Azure Registry
           when: always
           command: |
-            export AM_VERSION=$(mvn -s /tmp/.circleci.settings.xml -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
+            export AM_VERSION=$(mvn -s /tmp/.gravitee.settings.xml -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
             export IMAGE_TAG=graviteeio.azurecr.io/am-gateway:${TAG}
             echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
             docker build -f docker/gateway/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} /tmp
             IMAGE2=${IMAGE_TAG}
             echo "export IMAGE2='${IMAGE2}'" >> $BASH_ENV
-      - docker-scan
       - run:
           name: Push Gateway Docker image
           when: always
@@ -611,7 +738,7 @@ jobs:
           command: |
             cp -fr docker/management-ui/config /tmp/
             cp -fr docker/management-ui/run.sh /tmp/
-            export AM_VERSION=$(mvn -s /tmp/.circleci.settings.xml -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
+            export AM_VERSION=$(mvn -s /tmp/.gravitee.settings.xml -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
             export IMAGE_TAG=graviteeio.azurecr.io/am-management-ui:${TAG}
             echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
             docker build -f docker/management-ui/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} /tmp
@@ -621,7 +748,7 @@ jobs:
             SLACK_MESSAGE2="Following images are scanned for application vulnerabilities"
             SLACK_MESSAGE="${SLACK_MESSAGE1}\n${SLACK_MESSAGE2}\n\n${IMAGE1}\n${IMAGE2}\n${IMAGE3}"
             echo "export SLACK_MESSAGE='${SLACK_MESSAGE}'" >> $BASH_ENV
-      - docker-scan
+
       - notify-snyk-result
       - run:
           name: Push Web UI Docker image
@@ -634,21 +761,36 @@ jobs:
           root: /tmp
           paths:
             - ./docker-tag.txt
-
+  add-docker-images-in-snyk:
+    docker:
+      - image: cimg/base:stable
+    resource_class: small
+    steps:
+      - keeper/env-export:
+          secret-url: keeper://s83JmReKpBZWjHdud6ZAlg/field/password
+          var-name: SNYK_API_KEY
+      - keeper/env-export:
+          secret-url: keeper://s83JmReKpBZWjHdud6ZAlg/custom_field/gravitee_am_org_id
+          var-name: SNYK_ORG_ID
+      - keeper/env-export:
+          secret-url: keeper://s83JmReKpBZWjHdud6ZAlg/custom_field/gravitee_am_dockerhub_integration_id
+          var-name: SNYK_INTEGRATION_ID
+      - add-docker-image-in-snyk:
+          docker-image-name: am-gateway
+          version: << pipeline.parameters.graviteeio_version >>
+      - add-docker-image-in-snyk:
+          docker-image-name: am-management-api
+          version: << pipeline.parameters.graviteeio_version >>
+      - add-docker-image-in-snyk:
+          docker-image-name: am-management-ui
+          version: << pipeline.parameters.graviteeio_version >>
   deploy-on-aks:
     docker:
-      - image: mcr.microsoft.com/azure-cli:latest
+      - image: mcr.microsoft.com/azure-cli:2.34.1
     resource_class: small
     steps:
       - attach_workspace:
           at: /tmp
-      - run:
-          name: Read tag of Docker images to deploy
-          command: |
-            export TAG=$(cat /tmp/docker-tag.txt)
-            # Workaround for sharing this variable to the next steps
-            echo "export TAG=$TAG" >> $BASH_ENV
-            echo "Will deploy Docker images with tag: ${TAG}"
       - run:
           name: Install Helm
           command: |
@@ -677,6 +819,8 @@ jobs:
       - run:
           name: Helm upgrade and 🚀 Mongo and JDBC instances
           command: |
+            export TAG=$(cat /tmp/docker-tag.txt)
+            
             az login --service-principal -u $AZURE_APPLICATION_ID --tenant $AZURE_TENANT -p $AZURE_APPLICATION_SECRET
             az aks get-credentials --admin --resource-group Devs-Preprod-Hosted --name gravitee-devs-preprod-aks-cluster
             if [ "${CIRCLE_BRANCH}" == "master" ]
@@ -747,20 +891,20 @@ jobs:
       - attach_workspace:
           at: /tmp
       - checkout
-      - restore_cache:
-          keys:
-            - gio-gravitee-pull-requests-dependencies-{{ .Branch }}-{{ checksum "pom.xml" }}
-            - gio-gravitee-pull-requests-dependencies
+      - restore-maven-job-cache:
+          jobName: coverage_build
       - run:
           name: Maven Package
           command: |
             export AM_VERSION=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
             echo $AM_VERSION > am.version
-            mvn -s /tmp/.circleci.settings.xml verify -pl \!gravitee-am-ui
+            mvn -s /tmp/.gravitee.settings.xml verify -pl \!gravitee-am-ui
       - persist_to_workspace:
           root: .
           paths:
             - ./*
+      - save-maven-job-cache:
+          jobName: coverage_build
   frontend_version_build:
     docker:
       - image: cimg/openjdk:17.0.1
@@ -782,7 +926,6 @@ jobs:
           root: .
           paths:
             - ./*
-
   run_sonarcloud_analysis:
     description: A job that run Sonarcloud analysis
     parameters:
@@ -794,12 +937,17 @@ jobs:
       - image: sonarsource/sonar-scanner-cli
     resource_class: xlarge
     steps:
-      - run:
-          name: Add SSH tool
-          command: apk add --no-cache openssh
+#      - run:
+#          name: Add SSH tool
+#          command: apk add --no-cache openssh
       - checkout
       - attach_workspace:
           at: .
+      - restore_cache:
+          keys:
+            - gravitee-access-management-v1-sonarcloud-analysis-{{ .Branch }}-{{ checksum "pom.xml" }}
+            - gravitee-access-management-v1-sonarcloud-analysis-{{ .Branch }}-
+            - gravitee-access-management-v1-sonarcloud-analysis-
       - keeper/env-export:
           secret-url: keeper://9x9YgyU6DWzux4DPoHAzDQ/field/password
           var-name: SONAR_TOKEN
@@ -809,6 +957,368 @@ jobs:
           command: |
             export AM_VERSION=$(cat ./am.version)
             sonar-scanner -Dsonar.projectVersion=${AM_VERSION}
+      - save_cache:
+          paths:
+              - /opt/sonar-scanner/.sonar/cache
+          key: gravitee-access-management-v1-sonarcloud-analysis-{{ .Branch }}-{{ checksum "pom.xml" }}
+          when: always
+  pull_requests_ce:  
+    executor:
+      name: openjdk
+      class: large
+      # flapdoodle.embed.mongo doesn't work with 11.0.17
+      version: "11.0.16"
+    steps:
+      - attach_workspace:
+          at: /tmp
+      - checkout
+      - restore-maven-job-cache:
+          jobName: pull_requests
+      - mvn_git_commit_id
+      - run:
+          name: "Maven Package and deploy to Artifactory [gravitee-snapshots] repository"
+          command: |
+                    mvn -s /tmp/.gravitee.settings.xml -P gio-artifactory-snapshot clean deploy
+      - save-maven-job-cache:
+          jobName: pull_requests
+      - run:
+          name: "Maven Package and deploy to Nexus Snapshots"
+          command: |
+                    mvn -s /tmp/.gravitee.settings.xml deploy -DskipTests -T2C           
+      - run:
+          name: Save test results
+          command: |
+            mkdir -p ~/test-results/junit/
+            find . -type f -regex ".*/target/surefire-reports/.*xml" -exec cp {} ~/test-results/junit/ \;
+          when: always
+      - store_test_results:
+          path: ~/test-results
+      - run:
+          name: copying zip files 
+          command: |
+            cp ./gravitee-am-gateway/gravitee-am-gateway-standalone/gravitee-am-gateway-standalone-distribution/gravitee-am-gateway-standalone-distribution-zip/target/*.zip ~/
+            cp ./gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-management-api-standalone-distribution/gravitee-am-management-api-standalone-distribution-zip/target/*.zip ~/
+            cp ./gravitee-am-ui/target/*.zip ~/
+      - persist_to_workspace:
+            root: ~/
+            paths:
+              - ./gravitee-am-gateway-standalone-*.zip
+              - ./gravitee-am-management-api-standalone-*.zip
+              - ./gravitee-am-webui-*.zip
+  release:
+    parameters:
+      dry_run:
+        type: boolean
+        default: true
+        description: "Run in dry run mode?"
+      rc_requested:
+        type: boolean
+        default: false
+        description: "Do we have to release a RC"
+    executor:
+      name: openjdk
+      class: xlarge
+      version: "11.0.16"
+    environment:
+      DRY_RUN: << parameters.dry_run >>
+      RC_REQUESTED: << parameters.rc_requested >>
+    steps:
+      - checkout
+      - restore-maven-job-cache:
+          jobName: release
+      - attach_workspace:
+          at: /tmp
+      - prepare-gpg
+      - run:
+          name: Maven Prepare Release
+          command: |
+            # 1./  Update maven dependencies versions from properties
+            mvn -s /tmp/.gravitee.settings.xml -B -U versions:update-properties -Dmaven.version.rules.serverId=artifactory-gravitee-releases -Dincludes=io.gravitee.*:* -DallowMajorUpdates=false -DallowMinorUpdates=false -DallowIncrementalUpdates=false -DgenerateBackupPoms=false
+            # 2./ Now  calculate the maven project verison with the maven exec plugin
+            export MVN_PRJ_VERSION=$(mvn -s /tmp/.gravitee.settings.xml -Dexec.executable='echo' -Dexec.args='${project.version}' --non-recursive exec:exec -q | tee -a /tmp/maven.logs; echo "$?" > /tmp/maven.exit.code)
+    
+            export MVN_PRJ_VERSION=$(echo "${MVN_PRJ_VERSION}" | awk -F '-SNAPSHOT' '{print $1}')
+            echo "${MVN_PRJ_VERSION}" > /tmp/gio.maven.project.release.version
+    
+            export MVN_PRJ_VERSION_MAJOR=$(cat /tmp/gio.maven.project.release.version | awk -F '.' '{print $1}')
+            export MVN_PRJ_VERSION_MINOR=$(cat /tmp/gio.maven.project.release.version | awk -F '.' '{print $2}')
+            export MVN_PRJ_VERSION_PATCH=$(cat /tmp/gio.maven.project.release.version | awk -F '.' '{print $3}' | awk -F '-' '{print $1}')
+            export MVN_PRJ_VERSION_QUALIFIER=$(cat /tmp/gio.maven.project.release.version | awk -F '-' '{print $2}' | awk -F 'RC' '{print $2}')
+    
+            if [ "${RC_REQUESTED}" == "true" ]; then
+              if [ "${MVN_PRJ_VERSION_QUALIFIER}x" == "x" ]; then
+                export MVN_PRJ_VERSION_QUALIFIER="1"
+              fi;
+    
+              export MVN_PRJ_VERSION="${MVN_PRJ_VERSION_MAJOR}.${MVN_PRJ_VERSION_MINOR}.${MVN_PRJ_VERSION_PATCH}-RC${MVN_PRJ_VERSION_QUALIFIER}"
+              echo "${MVN_PRJ_VERSION}" > /tmp/gio.maven.project.release.version
+            else
+    
+              export MVN_PRJ_VERSION="${MVN_PRJ_VERSION_MAJOR}.${MVN_PRJ_VERSION_MINOR}.${MVN_PRJ_VERSION_PATCH}"
+              echo "${MVN_PRJ_VERSION}" > /tmp/gio.maven.project.release.version
+            fi;
+
+            # 2./ and then we can run the [mvn -s /tmp/.gravitee.settings.xml -B versions:set -DnewVersion=1.3.1 -DgenerateBackupPoms=false]
+            mvn -s /tmp/.gravitee.settings.xml -B versions:set -DnewVersion=${MVN_PRJ_VERSION} -DgenerateBackupPoms=false
+    
+      - mvn_git_commit_id
+      - when:
+          condition: 
+            not: << parameters.dry_run>>
+          steps:
+            - run:
+                name: "Maven Test, Package, and Deploy to Gravitee's private Artifactory"
+                command: |
+                  mvn -s /tmp/.gravitee.settings.xml -B -U -P gio-artifactory-release,gio-release clean deploy -DskipTests=true -T4
+      - when:
+          condition: << parameters.dry_run>>
+          steps:
+            - run:
+                name: "Maven Test, Package and install"
+                command: |
+                  mvn -s /tmp/.gravitee.settings.xml -B -U -P gio-artifactory-release,gio-release clean install -DskipTests=true -T4
+      - save-maven-job-cache:
+          jobName: release
+    
+      # ---
+      # Package Bundle Must succeed, before nexus staging is done : Package bundle is idempotnent and non immutable, whereas NExus staging and Git release are immutable
+      - package_bundle:
+          dry_run: << parameters.dry_run >>
+      - run:
+          name: Maven Test, Package, and Deploy to Nexus Staging
+          command: |
+            if [ "${DRY_RUN}" == "false" ]; then
+              echo "# --->>> NO IT IS NOT A DRY RUN : so we maven deploy to nexus staging"
+              # TODO UNCOMMENT WHEN READY TO PROD
+              #mvn -s /tmp/.gravitee.settings.xml -B -U -P gravitee-release deploy -DskipTests=false
+            else
+              echo "# --->>> THIS IS A DRY RUN: no deployment to nexus staging"
+              exit 0
+            fi;
+      - git_config
+      - run:
+          name: Git release
+          command: |
+
+            export MVN_PRJ_VERSION=$(cat /tmp/gio.maven.project.release.version)
+            export MVN_PRJ_VERSION_MAJOR=$(cat /tmp/gio.maven.project.release.version | awk -F '.' '{print $1}')
+            export MVN_PRJ_VERSION_MINOR=$(cat /tmp/gio.maven.project.release.version | awk -F '.' '{print $2}')
+            export MVN_PRJ_VERSION_PATCH=$(cat /tmp/gio.maven.project.release.version | awk -F '.' '{print $3}' | awk -F '-' '{print $1}')
+            export MVN_PRJ_VERSION_QUALIFIER=$(cat /tmp/gio.maven.project.release.version | awk -F '-' '{print $2}' | awk -F 'RC' '{print $2}')
+
+            export CURRENT_GIT_BRANCH=$(git status | grep 'On branch' | awk '{print $3}')
+
+            git add --update
+            git commit -m "${MVN_PRJ_VERSION}"
+            git tag ${MVN_PRJ_VERSION}
+
+            export MAINTENANCE_GIT_BRANCH="${MVN_PRJ_VERSION_MAJOR}.${MVN_PRJ_VERSION_MINOR}.x"
+    
+            if [ "${RC_REQUESTED}" == "true" ]; then
+              export NEXT_QUALIFIER=$((${MVN_PRJ_VERSION_QUALIFIER}+1))
+              export NEXT_PATCH_SNAPSHOT_VERSION="${MVN_PRJ_VERSION_MAJOR}.${MVN_PRJ_VERSION_MINOR}.${MVN_PRJ_VERSION_PATCH}-RC${NEXT_QUALIFIER}-SNAPSHOT"
+            else
+              export NEXT_PATCH_VERSION=$((${MVN_PRJ_VERSION_PATCH}+1))
+              export NEXT_PATCH_SNAPSHOT_VERSION="${MVN_PRJ_VERSION_MAJOR}.${MVN_PRJ_VERSION_MINOR}.${NEXT_PATCH_VERSION}-SNAPSHOT"
+            fi;
+    
+            export GIT_BRANCH_FILTER=$(git branch -a | grep "${MAINTENANCE_GIT_BRANCH}")
+
+            if [ "x${GIT_BRANCH_FILTER}" == "x" ]; then
+              echo "# ---- git Maintenance branch [${MAINTENANCE_GIT_BRANCH}] does not exist, creating it"
+              git checkout -b ${MAINTENANCE_GIT_BRANCH}
+              mvn -s /tmp/.gravitee.settings.xml -B versions:set -DnewVersion=${NEXT_PATCH_SNAPSHOT_VERSION} -DgenerateBackupPoms=false
+              git add --update
+              git commit -m 'chore: prepare next version'
+
+              if [ "${DRY_RUN}" == "false" ]; then
+                # --->>> NO IT IS NOT A DRY RUN
+                echo "# --->>> NO IT IS NOT A DRY RUN : GIT PUSH"
+                git push -u origin ${MAINTENANCE_GIT_BRANCH}
+                git push --tags origin ${MAINTENANCE_GIT_BRANCH}
+              else
+                # --->>> IT IS A DRY RUN
+                echo "# --->>> THIS IS A DRY RUN : SKIPPPING GIT PUSH"
+              fi;
+
+              git checkout ${CURRENT_GIT_BRANCH}
+            else
+              echo "git Maintenance branch [${MAINTENANCE_GIT_BRANCH}] does exist, no need to create it, also CURRENT_GIT_BRANCH=[${CURRENT_GIT_BRANCH}] and MAINTENANCE_GIT_BRANCH=[${MAINTENANCE_GIT_BRANCH}] are supposed to be equal."
+            fi;
+           
+            export NEXT_MINOR_VERSION=$((${MVN_PRJ_VERSION_MINOR}+1))
+            export NEXT_QUALIFIER_VERSION=$((${MVN_PRJ_VERSION_QUALIFIER}+1))
+            export NEXT_PATCH_VERSION=$((${MVN_PRJ_VERSION_PATCH}+1))
+    
+            export NEXT_SNAPSHOT_VERSION="${MVN_PRJ_VERSION_MAJOR}.${NEXT_MINOR_VERSION}.${MVN_PRJ_VERSION_PATCH}-SNAPSHOT"
+            export NEXT_SNAPSHOT_MAINT_VERSION="${MVN_PRJ_VERSION_MAJOR}.${MVN_PRJ_VERSION_MINOR}.${NEXT_PATCH_VERSION}-SNAPSHOT"
+            export NEXT_SNAPSHOT_RC_VERSION="${MVN_PRJ_VERSION_MAJOR}.${MVN_PRJ_VERSION_MINOR}.${MVN_PRJ_VERSION_PATCH}-RC${NEXT_QUALIFIER_VERSION}-SNAPSHOT"
+    
+            if [ "${RC_REQUESTED}" == "true" -a "${MVN_PRJ_VERSION_PATCH}" == "0" -a "${MVN_PRJ_VERSION_QUALIFIER}" == "1" ]; then
+              
+              echo "# ---- [${MVN_PRJ_VERSION}] is not a maintenance release, so we increment MINOR VERSION from [${MVN_PRJ_VERSION_MINOR}] to [${NEXT_MINOR_VERSION}], and prepared next version will be [${NEXT_SNAPSHOT_VERSION}] "
+              mvn -s /tmp/.gravitee.settings.xml -B versions:set -DnewVersion=${NEXT_SNAPSHOT_VERSION} -DgenerateBackupPoms=false
+    
+            elif [ "${RC_REQUESTED}" == "true" -a "${MVN_PRJ_VERSION_QUALIFIER}x" != "x" ]; then
+              
+              echo "# ---- [${MVN_PRJ_VERSION}] is a RC maintenance release, so we increment QUALIFIER VERSION from [${MVN_PRJ_VERSION_QUALIFIER}] to [${NEXT_QUALIFIER_VERSION}], and prepared next version will be [${NEXT_PATCH_SNAPSHOT_VERSION}] "
+              echo "resetting version in [pom.xml] to [${NEXT_SNAPSHOT_RC_VERSION}]"
+              mvn -s /tmp/.gravitee.settings.xml -B versions:set -DnewVersion=${NEXT_SNAPSHOT_RC_VERSION} -DgenerateBackupPoms=false
+    
+            else
+    
+              if [ "${MVN_PRJ_VERSION_QUALIFIER}x" != "x" ]; then
+                echo "# ---- [${MVN_PRJ_VERSION}] is a GA release, so we do not increment MINOR VERSION to bump next maintenance release [${NEXT_SNAPSHOT_MAINT_VERSION}] "
+                mvn -s /tmp/.gravitee.settings.xml -B versions:set -DnewVersion=${NEXT_SNAPSHOT_MAINT_VERSION} -DgenerateBackupPoms=false
+              elif [ "${MVN_PRJ_VERSION_PATCH}" == "0" && "${MAINTENANCE_GIT_BRANCH}" != "${CURRENT_GIT_BRANCH}" ]; then
+                echo "# ---- [${MVN_PRJ_VERSION}] is not a maintenance release, so we increment MINOR VERSION from [${MVN_PRJ_VERSION_MINOR}] to [${NEXT_MINOR_VERSION}], and prepared next version will be [${NEXT_SNAPSHOT_VERSION}] "
+                mvn -s /tmp/.gravitee.settings.xml -B versions:set -DnewVersion=${NEXT_SNAPSHOT_VERSION} -DgenerateBackupPoms=false
+              else
+                echo "# ---- [${MVN_PRJ_VERSION}] is a maintenance release, so we increment PATCH VERSION from [${MVN_PRJ_VERSION_PATCH}] to [${NEXT_PATCH_VERSION}], and prepared next version will be [${NEXT_PATCH_SNAPSHOT_VERSION}] "
+                echo "resetting version in [pom.xml] to [${NEXT_PATCH_SNAPSHOT_VERSION}]"
+                mvn -s /tmp/.gravitee.settings.xml -B versions:set -DnewVersion=${NEXT_PATCH_SNAPSHOT_VERSION} -DgenerateBackupPoms=false
+              fi;
+            fi;
+    
+            git add --update
+            git commit -m 'chore: prepare next version'
+
+            if [ "${DRY_RUN}" == "false" ]; then
+              echo "# --->>> NO IT IS NOT A DRY RUN"
+              git push -u origin ${CURRENT_GIT_BRANCH}
+              git push --tags origin ${CURRENT_GIT_BRANCH}
+            else
+              echo "# --->>> THIS IS A DRY RUN"
+            fi;
+
+      - notify-on-failure
+      - notify-on-success
+  build_n_push_am_ce_job:
+    description: This Orb Job performs the docker build and publish for the am_ce dockerfile
+    parameters:
+      gio_product:
+        type: enum
+        enum: [am_v3, none]
+        default: am_v3
+      dry_run:
+        type: boolean
+        default: true
+        description: "Running in dry run mode means no docker push (Defaults to true)"
+      tag_latest:
+        type: boolean
+        default: false
+        description: "Is this latest version of the Product ?"
+      tag_latest_support:
+        type: boolean
+        default: true
+        description: "Is this a latest support version of the Product ? (if so minor version tagging docker images). True by default."
+      graviteeio_version:
+        type: string
+        default: ''
+        description: "Gravitee.io Release version number (semver) ?"
+    
+    executor:
+        name: ubuntu
+        class: large
+        with_docker_layer_caching: true
+    environment:
+        DRY_RUN: << parameters.dry_run >>
+        TAG_LATEST: << parameters.tag_latest >>
+        TAG_LATEST_SUPPORT: << parameters.tag_latest_support >>
+        GRAVITEEIO_VERSION: << parameters.graviteeio_version >>
+        GIO_PRODUCT: << parameters.gio_product >>
+    steps:
+          - checkout
+          - git_config
+          - keeper/env-export:
+              secret-url: keeper://cooU9UoXIk8Kj0hsP2rkBw/field/login
+              var-name: DOCKERHUB_BOT_USER_NAME
+          - keeper/env-export:
+              secret-url: keeper://cooU9UoXIk8Kj0hsP2rkBw/field/password
+              var-name: DOCKERHUB_BOT_USER_TOKEN
+          - run:
+              name: "Build Docker Images: Gravitee AM Community Edition"
+              command: |
+                export RELEASE_VERSION=$GRAVITEEIO_VERSION
+                export RELEASE_VERSION_MAJOR=$(echo "$GRAVITEEIO_VERSION" | awk -F '.' '{print $1}')
+                export RELEASE_VERSION_MINOR=$(echo "$GRAVITEEIO_VERSION" | awk -F '.' '{print $2}')
+                export RELEASE_VERSION_PATCH=$(echo "$GRAVITEEIO_VERSION" | awk -F '.' '{print $3}')
+                
+                git checkout "${GRAVITEEIO_VERSION}"
+                
+                docker build -f docker/gateway/Dockerfile --build-arg GRAVITEEAM_VERSION=${RELEASE_VERSION} -t graviteeio/am-gateway:${RELEASE_VERSION} docker/gateway/
+                docker tag graviteeio/am-gateway:${RELEASE_VERSION} graviteeio/am-gateway:latest
+                docker tag graviteeio/am-gateway:${RELEASE_VERSION} graviteeio/am-gateway:"${RELEASE_VERSION}-ee"
+                docker tag graviteeio/am-gateway:${RELEASE_VERSION} graviteeio/am-gateway:"${RELEASE_VERSION_MAJOR}"
+                docker tag graviteeio/am-gateway:${RELEASE_VERSION} graviteeio/am-gateway:"${RELEASE_VERSION_MAJOR}-ee"
+                docker tag graviteeio/am-gateway:${RELEASE_VERSION} graviteeio/am-gateway:"${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}"
+                docker tag graviteeio/am-gateway:${RELEASE_VERSION} graviteeio/am-gateway:"${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}-ee"
+                
+                docker build -f docker/management-api/Dockerfile --build-arg GRAVITEEAM_VERSION=${RELEASE_VERSION} -t graviteeio/am-management-api:${RELEASE_VERSION} docker/management-api/
+                docker tag graviteeio/am-management-api:${RELEASE_VERSION} graviteeio/am-management-api:latest
+                docker tag graviteeio/am-management-api:${RELEASE_VERSION} graviteeio/am-management-api:"${RELEASE_VERSION}-ee"
+                docker tag graviteeio/am-management-api:${RELEASE_VERSION} graviteeio/am-management-api:"${RELEASE_VERSION_MAJOR}"
+                docker tag graviteeio/am-management-api:${RELEASE_VERSION} graviteeio/am-management-api:"${RELEASE_VERSION_MAJOR}-ee"
+                docker tag graviteeio/am-management-api:${RELEASE_VERSION} graviteeio/am-management-api:"${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}"
+                docker tag graviteeio/am-management-api:${RELEASE_VERSION} graviteeio/am-management-api:"${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}-ee"
+                
+                docker build -f docker/management-ui/Dockerfile --build-arg GRAVITEEAM_VERSION=${RELEASE_VERSION} -t graviteeio/am-management-ui:${RELEASE_VERSION} docker/management-ui/
+                docker tag graviteeio/am-management-ui:${RELEASE_VERSION} graviteeio/am-management-ui:latest
+                docker tag graviteeio/am-management-ui:${RELEASE_VERSION} graviteeio/am-management-ui:"${RELEASE_VERSION}-ee"
+                docker tag graviteeio/am-management-ui:${RELEASE_VERSION} graviteeio/am-management-ui:"${RELEASE_VERSION_MAJOR}"
+                docker tag graviteeio/am-management-ui:${RELEASE_VERSION} graviteeio/am-management-ui:"${RELEASE_VERSION_MAJOR}-ee"
+                docker tag graviteeio/am-management-ui:${RELEASE_VERSION} graviteeio/am-management-ui:"${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}"
+                docker tag graviteeio/am-management-ui:${RELEASE_VERSION} graviteeio/am-management-ui:"${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}-ee"
+
+                if [ "${DRY_RUN}" == "true" ]; then
+                  echo "# --->>> THIS IS A DRY RUN : SKIPPING DOCKER PUSH"
+                  exit 0
+                fi
+
+                docker login --username="${DOCKERHUB_BOT_USER_NAME}" -p="${DOCKERHUB_BOT_USER_TOKEN}"
+
+                if [ "${TAG_LATEST}" == "true" ]; then
+                  docker push --all-tags graviteeio/am-gateway
+                  docker push --all-tags graviteeio/am-management-api
+                  docker push --all-tags graviteeio/am-management-ui
+                else
+                  docker push graviteeio/am-gateway:"${RELEASE_VERSION}"
+                  docker push graviteeio/am-gateway:"${RELEASE_VERSION}-ee"
+                  docker push graviteeio/am-management-api:"${RELEASE_VERSION}"
+                  docker push graviteeio/am-management-api:"${RELEASE_VERSION}-ee"
+                  docker push graviteeio/am-management-ui:"${RELEASE_VERSION}"
+                  docker push graviteeio/am-management-ui:"${RELEASE_VERSION}-ee"
+                  if [ "$TAG_LATEST_SUPPORT" == "true" ]; then
+                      echo "Gravitee Containers :  Docker tags, Releasing Docker images as latest support"
+                      docker push graviteeio/am-gateway:"${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}"
+                      docker push graviteeio/am-gateway:"${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}-ee"
+                      docker push graviteeio/am-management-api:"${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}"
+                      docker push graviteeio/am-management-api:"${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}-ee"
+                      docker push graviteeio/am-management-ui:"${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}"
+                      docker push graviteeio/am-management-ui:"${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}-ee"
+                  else
+                      echo "Gravitee Containers :  Docker tags, Releasing Docker images as NON-latest"
+                  fi
+                fi;
+  publish_am_rpms:
+    description: Runs the commands to build n publish RPM Packages for Gravitee.io AM
+    executor: ubuntu
+    parameters:
+      dry_run:
+        type: boolean
+        default: true
+        description: "Run in dry run mode?"
+      gio_release_version:
+        type: string
+        default: $GIO_RELEASE_VERSION
+        description: "The Gravitee.io release version number of Gravitee.io APIM, for which to build and publish all zip bundles"
+    
+    steps:
+      - checkout
+      - publish_rpms:
+          gio_release_version: << parameters.gio_release_version >>
+
+
 workflows:
   version: 2.1
   # -- typically this workflow is executed on pull requests events for Community Edition Gravitee Repositories
@@ -817,21 +1327,12 @@ workflows:
       and:
         - equal: [ pull_requests, << pipeline.parameters.gio_action >> ]
     jobs:
-      - am/d_pull_requests_secrets:
+      - setup:
           context: cicd-orchestrator
-          name: pr_secrets_resolution
-      - am/d_pull_requests_ce:
+      - pull_requests_ce:
           name: process_pull_request
           requires:
-            - pr_secrets_resolution
-          # "What is the maven ID of the maven profile to use to build and deploy SNAPSHOTS to Prviate Artifactory ?"
-          maven_profile_id: 'gio-dev'
-          # nexus_snapshots_url: 'https://oss.sonatype.org/content/repositories/snapshots'
-          # nexus_snapshots_server_id: 'sonatype-nexus-snapshots'
-          # container_gun_image_org: 'cimg'
-          # container_gun_image_name: 'openjdk'
-          # container_gun_image_tag: '17.0.1'
-          container_size: 'large'
+            - setup
           filters:
             branches:
               ignore:
@@ -857,7 +1358,7 @@ workflows:
   testcontainer_tests:
     when: << pipeline.parameters.run-container-test >>
     jobs:
-      - keeper:
+      - setup:
           context:
             - cicd-orchestrator
           filters:
@@ -868,7 +1369,7 @@ workflows:
       - run_testcontainer_tests:
           context: cicd-orchestrator
           requires:
-            - keeper
+            - setup
           filters:
             branches:
               ignore:
@@ -877,7 +1378,7 @@ workflows:
 
   build_branch:
     jobs:
-      - keeper:
+      - setup:
           context:
             - cicd-orchestrator
           filters:
@@ -887,7 +1388,7 @@ workflows:
                 - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
       - build:
           requires:
-            - keeper
+            - setup
           filters:
             branches:
               only:
@@ -896,13 +1397,6 @@ workflows:
 
       - publish-images-azure-registry:
           context: cicd-orchestrator
-          pre-steps:
-            - keeper/env-export:
-                secret-url: keeper://Q721P2LSOPJ9qiXLuf5AHQ/field/login
-                var-name: AZURE_DOCKER_REGISTRY_USERNAME
-            - keeper/env-export:
-                secret-url: keeper://Q721P2LSOPJ9qiXLuf5AHQ/field/password
-                var-name: AZURE_DOCKER_REGISTRY_PASSWORD
           requires:
             - build
           filters:
@@ -910,9 +1404,20 @@ workflows:
               only:
                 - master
                 - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+
+      - add-docker-images-in-snyk:
+          context: cicd-orchestrator
+          requires:
+            - publish-images-azure-registry
+          filters:
+            branches:
+              only:
+                - master
+                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+
       - deploy-on-aks:
           context: cicd-orchestrator
-          pre-steps:
+          pre-steps: 
             - keeper/env-export:
                 secret-url: keeper://UryantA7MvZe8fkWwcUt8g/field/login
                 var-name: AZURE_APPLICATION_ID
@@ -934,53 +1439,30 @@ workflows:
     when:
       and:
         - equal: [ release, << pipeline.parameters.gio_action >> ]
-        - not: << pipeline.parameters.dry_run >>
     jobs:
-      - am/d_am_release_secrets:
+      - setup:
           context: cicd-orchestrator
-          name: 'am_release_secrets'
-      - am/d_am_release:
-          name: 'am_release_dist'
+      - release:
+          context: cicd-orchestrator
+          name: release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
           requires:
-            - am_release_secrets
+            - setup
           dry_run: << pipeline.parameters.dry_run >>
           rc_requested: << pipeline.parameters.rc_requested >>
-          maven_profile_id: 'gio-release'
-          <<: *slack-pass-fail-post-step
-
-  release_dry_run:
-    when:
-      and:
-        - equal: [ release, << pipeline.parameters.gio_action >> ]
-        - << pipeline.parameters.dry_run >>
-    jobs:
-      - am/d_am_release_secrets:
-          context: cicd-orchestrator
-          name: 'am_release_secrets'
-      - am/d_am_release:
-          name: 'am_release_dist'
-          requires:
-            - am_release_secrets
-          dry_run: << pipeline.parameters.dry_run >>
-          rc_requested: << pipeline.parameters.rc_requested >>
-          maven_profile_id: 'gravitee-dry-run'
-          <<: *slack-pass-fail-post-step
 
   publish_rpms:
     when:
       equal: [ publish_rpms, << pipeline.parameters.gio_action >> ]
     jobs:
-      - gravitee/publish_am_rpms:
+      - publish_am_rpms:
           context: cicd-orchestrator
-          secrethub_org: graviteeio
-          secrethub_repo: cicd
           gio_release_version: << pipeline.parameters.graviteeio_version >>
 
   publish_docker_images:
     when:
       equal: [ publish_docker_images, << pipeline.parameters.gio_action >> ]
     jobs:
-      - am/build_n_push_am_ce_job:
+      - build_n_push_am_ce_job:
           context: cicd-orchestrator
           graviteeio_version: << pipeline.parameters.graviteeio_version >>
           dry_run: << pipeline.parameters.dry_run >>
@@ -1010,12 +1492,12 @@ workflows:
 
   sonarcloud_analysis_back:
     jobs:
-      - keeper:
+      - setup:
           context:
             - cicd-orchestrator
       - coverage_build:
           requires:
-            - keeper
+            - setup
       - run_sonarcloud_analysis:
           context:
             - cicd-orchestrator
@@ -1024,12 +1506,12 @@ workflows:
 
   sonarcloud_analysis_front:
     jobs:
-      - keeper:
+      - setup:
           context:
             - cicd-orchestrator
       - frontend_version_build:
           requires:
-            - keeper
+            - setup
       - run_sonarcloud_analysis:
           name: Sonar - << matrix.working_directory >>
           matrix:
@@ -1040,17 +1522,3 @@ workflows:
             - cicd-orchestrator
           requires:
             - frontend_version_build
-
-  docker_build_and_push_am_v3:
-    when:
-      equal: [ am_v3, << pipeline.parameters.gio_product >> ]
-    jobs:
-      # ---
-      # Builds and push AM Community Edition Images
-      - am/build_n_push_am_ce_job:
-          name: 'building ce dockerfile'
-          context: cicd-orchestrator
-          dry_run: << pipeline.parameters.dry_run >>
-          tag_latest: << pipeline.parameters.tag_latest >>
-          graviteeio_version: << pipeline.parameters.graviteeio_version >>
-          gio_product: << pipeline.parameters.gio_product >>
