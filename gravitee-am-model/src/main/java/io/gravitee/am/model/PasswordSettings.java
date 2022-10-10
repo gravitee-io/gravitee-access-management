@@ -79,6 +79,16 @@ public class PasswordSettings {
      */
     private Integer expiryDuration;
 
+    /**
+     * Does the password history is enabled to prevent the usage of old password
+     */
+    private boolean passwordHistoryEnabled;
+
+    /**
+     * How many passwords are preserved into the history
+     */
+    private Short oldPasswords;
+
     public PasswordSettings() {
 
     }
@@ -94,6 +104,8 @@ public class PasswordSettings {
         this.excludePasswordsInDictionary = other.excludePasswordsInDictionary;
         this.excludeUserProfileInfoInPassword = other.excludeUserProfileInfoInPassword;
         this.expiryDuration = other.expiryDuration;
+        this.passwordHistoryEnabled = other.passwordHistoryEnabled;
+        this.oldPasswords = other.oldPasswords;
     }
 
     public Integer getMinLength() {
@@ -174,6 +186,22 @@ public class PasswordSettings {
 
     public void setExpiryDuration(Integer expiryDuration) {
         this.expiryDuration = expiryDuration;
+    }
+
+    public boolean isPasswordHistoryEnabled() {
+        return passwordHistoryEnabled;
+    }
+
+    public void setPasswordHistoryEnabled(boolean passwordHistoryEnabled) {
+        this.passwordHistoryEnabled = passwordHistoryEnabled;
+    }
+
+    public Short getOldPasswords() {
+        return oldPasswords;
+    }
+
+    public void setOldPasswords(Short oldPasswords) {
+        this.oldPasswords = oldPasswords;
     }
 
     public static Optional<PasswordSettings> getInstance(PasswordSettingsAware passwordSettingsAware, Domain domain) {

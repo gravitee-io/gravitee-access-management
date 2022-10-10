@@ -15,13 +15,23 @@
  */
 package io.gravitee.am.service.model;
 
+import io.gravitee.am.model.Application;
+import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.account.AccountSettings;
+import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.permissions.Permission;
+import io.gravitee.am.service.exception.InvalidParameterException;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -96,4 +106,95 @@ public class PatchApplicationTest {
         assertEquals(new HashSet<>(Arrays.asList(Permission.APPLICATION_SETTINGS, Permission.APPLICATION_OPENID, Permission.APPLICATION_IDENTITY_PROVIDER,
                 Permission.APPLICATION_CERTIFICATE, Permission.APPLICATION_FACTOR)), patchApplication.getRequiredPermissions());
     }
+
+
+    @Test
+    public void testPatchWithPasswordPolicy() {
+        //Build patcher
+        PatchPasswordSettings pwdPolicyPatcher = new PatchPasswordSettings();
+        pwdPolicyPatcher.setOldPasswords(Optional.of((short) 24));
+        pwdPolicyPatcher.setPasswordHistoryEnabled(Optional.of(true));
+
+        PatchApplication patch = new PatchApplication();
+        final PatchApplicationSettings patchAppSettings = new PatchApplicationSettings();
+        patch.setSettings(Optional.of(patchAppSettings));
+        patchAppSettings.setPasswordSettings(Optional.of(pwdPolicyPatcher));
+
+        Application toPatch = new Application();
+        final ApplicationSettings appSettings = new ApplicationSettings();
+        appSettings.setPasswordSettings(new PasswordSettings());
+        toPatch.setSettings(appSettings);
+
+        //apply patch
+        Application result = patch.patch(toPatch);
+
+        //check.
+        assertNotNull("was expecting a domain", result);
+        assertNotNull(result.getPasswordSettings());
+        assertTrue(result.getPasswordSettings().isPasswordHistoryEnabled());
+        assertEquals(24, result.getPasswordSettings().getOldPasswords().shortValue());
+    }
+
+    @Test(expected = InvalidParameterException.class)
+    public void testPatchWithPasswordPolicy_missingOldPassword() {
+        //Build patcher
+        PatchPasswordSettings pwdPolicyPatcher = new PatchPasswordSettings();
+        pwdPolicyPatcher.setPasswordHistoryEnabled(Optional.of(true));
+
+        PatchApplication patch = new PatchApplication();
+        final PatchApplicationSettings patchAppSettings = new PatchApplicationSettings();
+        patch.setSettings(Optional.of(patchAppSettings));
+        patchAppSettings.setPasswordSettings(Optional.of(pwdPolicyPatcher));
+
+        Application toPatch = new Application();
+        final ApplicationSettings appSettings = new ApplicationSettings();
+        appSettings.setPasswordSettings(new PasswordSettings());
+        toPatch.setSettings(appSettings);
+
+        //apply patch
+        patch.patch(toPatch);
+    }
+
+    @Test(expected = InvalidParameterException.class)
+    public void testPatchWithPasswordPolicy_outOfRange_min_OldPassword() {
+        //Build patcher
+        PatchPasswordSettings pwdPolicyPatcher = new PatchPasswordSettings();
+        pwdPolicyPatcher.setOldPasswords(Optional.of((short) 0));
+        pwdPolicyPatcher.setPasswordHistoryEnabled(Optional.of(true));
+
+        PatchApplication patch = new PatchApplication();
+        final PatchApplicationSettings patchAppSettings = new PatchApplicationSettings();
+        patch.setSettings(Optional.of(patchAppSettings));
+        patchAppSettings.setPasswordSettings(Optional.of(pwdPolicyPatcher));
+
+        Application toPatch = new Application();
+        final ApplicationSettings appSettings = new ApplicationSettings();
+        appSettings.setPasswordSettings(new PasswordSettings());
+        toPatch.setSettings(appSettings);
+
+        //apply patch
+        patch.patch(toPatch);
+    }
+
+    @Test(expected = InvalidParameterException.class)
+    public void testPatchWithPasswordPolicy_outOfRange_max_OldPassword() {
+        //Build patcher
+        PatchPasswordSettings pwdPolicyPatcher = new PatchPasswordSettings();
+        pwdPolicyPatcher.setOldPasswords(Optional.of((short) 25));
+        pwdPolicyPatcher.setPasswordHistoryEnabled(Optional.of(true));
+
+        PatchApplication patch = new PatchApplication();
+        final PatchApplicationSettings patchAppSettings = new PatchApplicationSettings();
+        patch.setSettings(Optional.of(patchAppSettings));
+        patchAppSettings.setPasswordSettings(Optional.of(pwdPolicyPatcher));
+
+        Application toPatch = new Application();
+        final ApplicationSettings appSettings = new ApplicationSettings();
+        appSettings.setPasswordSettings(new PasswordSettings());
+        toPatch.setSettings(appSettings);
+
+        //apply patch
+        patch.patch(toPatch);
+    }
+
 }

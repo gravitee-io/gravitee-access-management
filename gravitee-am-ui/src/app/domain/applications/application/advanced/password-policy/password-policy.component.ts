@@ -44,6 +44,9 @@ export class PasswordPolicyComponent implements OnInit {
   excludeUserProfileInfoInPassword: boolean;
   expiryDuration: number;
 
+  passwordHistoryEnabled: number;
+  oldPasswords: number;
+
   constructor(private route: ActivatedRoute,
               private router: Router,
               private snackbarService: SnackbarService,
@@ -69,6 +72,8 @@ export class PasswordPolicyComponent implements OnInit {
       this.excludePasswordsInDictionary = this.passwordSettings.excludePasswordsInDictionary;
       this.excludeUserProfileInfoInPassword = this.passwordSettings.excludeUserProfileInfoInPassword;
       this.expiryDuration = this.passwordSettings.expiryDuration;
+      this.passwordHistoryEnabled = this.passwordSettings.passwordHistoryEnabled;
+      this.oldPasswords = this.passwordSettings.oldPasswords;
     }
     this.editMode = this.authService.hasPermissions(['application_settings_update']);
   }
@@ -102,6 +107,10 @@ export class PasswordPolicyComponent implements OnInit {
     this.excludeUserProfileInfoInPassword = e.checked;
   }
 
+  setPasswordHistoryEnabled(e) {
+    this.passwordHistoryEnabled = e.checked;
+  }
+
   update() {
     const data: any = {};
     data.settings = {};
@@ -115,7 +124,9 @@ export class PasswordPolicyComponent implements OnInit {
       'maxConsecutiveLetters': this.maxConsecutiveLetters,
       'excludePasswordsInDictionary': this.excludePasswordsInDictionary,
       'excludeUserProfileInfoInPassword': this.excludeUserProfileInfoInPassword,
-      'expiryDuration': this.expiryDuration
+      'expiryDuration': this.expiryDuration,
+      'passwordHistoryEnabled': this.passwordHistoryEnabled,
+      'oldPasswords': this.oldPasswords
     };
     this.applicationService.patch(this.domainId, this.application.id, data).subscribe(response => {
       this.formChanged = false;
