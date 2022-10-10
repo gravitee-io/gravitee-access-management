@@ -84,7 +84,16 @@
 #      Allows to configure the allowed callback urls during logout process (default value: *)
 #      '*' is a valid value but is considered as a security risk as it will be opened to open redirection issues.
 #    allow-redirect-urls: https://am-console.mycompany.com/logout/callback
-
+#  csp:
+#    enabled: false
+#    directives:
+#      - "default-src * data: blob: filesystem: about: ws: wss: 'unsafe-inline' 'unsafe-eval' 'unsafe-dynamic';"
+#      - "script-src * 'unsafe-inline' 'unsafe-eval';"
+#      - "connect-src * 'unsafe-inline';"
+#      - "img-src * data: blob: 'unsafe-inline';"
+#      - "frame-src *;"
+#      - "style-src * data: blob: 'unsafe-inline';"
+#      - "font-src * data: blob: 'unsafe-inline';"
 # Path to plugins repository
 #plugins:
 #  path: ${gravitee.home}/plugins
