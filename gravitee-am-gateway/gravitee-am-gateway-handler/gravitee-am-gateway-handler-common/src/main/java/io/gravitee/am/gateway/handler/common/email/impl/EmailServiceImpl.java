@@ -43,7 +43,6 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -149,8 +148,9 @@ public class EmailServiceImpl implements EmailService {
     private Map<String, Object> prepareEmailParams(User user, Client client, Integer expiresAfter, String redirectUri) {
         // generate a JWT to store user's information and for security purpose
         final Map<String, Object> claims = new HashMap<>();
-        claims.put(Claims.iat, new Date().getTime() / 1000);
-        claims.put(Claims.exp, new Date(System.currentTimeMillis() + (expiresAfter * 1000)).getTime() / 1000);
+        Instant now = Instant.now();
+        claims.put(Claims.iat, now.getEpochSecond());
+        claims.put(Claims.exp, now.plusSeconds(expiresAfter).getEpochSecond());
         claims.put(Claims.sub, user.getId());
         if (client != null) {
             claims.put(Claims.aud, client.getId());
