@@ -1,6 +1,63 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/557?closed=1[AM - 3.19.0 (2022-10-11)]
+
+=== Bug fixes
+
+*_General_*
+
+- Merge 3.18.6 into master https://github.com/gravitee-io/issues/issues/8476[#8476]
+- Merge 3.18.7 into 3.19 https://github.com/gravitee-io/issues/issues/8546[#8546]
+- Merge AM 3.18.1 into 3.19.x https://github.com/gravitee-io/issues/issues/8395[#8395]
+- Merge AM 3.18.2 into 3.19.x https://github.com/gravitee-io/issues/issues/8396[#8396]
+- Merge AM 3.18.3 into 3.19.x https://github.com/gravitee-io/issues/issues/8397[#8397]
+- Merge AM 3.18.4 into 3.19.x https://github.com/gravitee-io/issues/issues/8398[#8398]
+- Merge AM 3.18.5 into master https://github.com/gravitee-io/issues/issues/8426[#8426]
+- User locale claims isn't taking into account https://github.com/gravitee-io/issues/issues/8268[#8268]
+- Upgrade dependencies https://github.com/gravitee-io/issues/issues/8557[#8557]
+
+=== Features
+
+*_Gateway_*
+
+- Implement X-XSS-Protection https://github.com/gravitee-io/issues/issues/8558[#8558]
+- Provide default languages https://github.com/gravitee-io/issues/issues/8054[#8054]
+- [emails] internationalization support https://github.com/gravitee-io/issues/issues/8039[#8039]
+- [emails] use the new default theme https://github.com/gravitee-io/issues/issues/8043[#8043]
+- [forms] internationalization support https://github.com/gravitee-io/issues/issues/8038[#8038]
+- [forms] use the new default theme https://github.com/gravitee-io/issues/issues/8042[#8042]
+- [management] Redesign end user forms and emails https://github.com/gravitee-io/issues/issues/7566[#7566]
+- [multi-languages] manage languages at domain level https://github.com/gravitee-io/issues/issues/8040[#8040]
+- [override theme] [forms] theme integration https://github.com/gravitee-io/issues/issues/8125[#8125]
+
+*_Management_*
+
+- [emails] override default theme https://github.com/gravitee-io/issues/issues/8045[#8045]
+- [forms] override default theme https://github.com/gravitee-io/issues/issues/8044[#8044]
+- [multi-languages] UI languages https://github.com/gravitee-io/issues/issues/8289[#8289]
+- [multi-languages] data structure / API definition https://github.com/gravitee-io/issues/issues/8067[#8067]
+- [multi-languages] storage at domain level https://github.com/gravitee-io/issues/issues/8071[#8071]
+- [override theme] CRUD implementation at domain level https://github.com/gravitee-io/issues/issues/8121[#8121]
+- [override theme] Data model / API Definition https://github.com/gravitee-io/issues/issues/8120[#8120]
+- [override theme] HTML mode integration https://github.com/gravitee-io/issues/issues/8124[#8124]
+- [override theme] UI/UX integration at domain level https://github.com/gravitee-io/issues/issues/8122[#8122]
+- [override theme] [view mode] display default gateway forms if there is no custom ones https://github.com/gravitee-io/issues/issues/8315[#8315]
+- [override theme] [view mode] forms preview mode https://github.com/gravitee-io/issues/issues/8369[#8369]
+- [override theme] [view mode] load gateway assets https://github.com/gravitee-io/issues/issues/8316[#8316]
+- [override theme] view mode integration https://github.com/gravitee-io/issues/issues/8123[#8123]
+
+*_Management-api_*
+
+- Implement CSP headers https://github.com/gravitee-io/issues/issues/8559[#8559]
+
+*_Management-ui_*
+
+- [emails] improve Help and Tips section https://github.com/gravitee-io/issues/issues/8051[#8051]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/602?closed=1[AM - 3.18.8 (2022-10-05)]
 
 === Features
