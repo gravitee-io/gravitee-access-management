@@ -32,7 +32,6 @@ function setHeaders(request, headers: object) {
     }
 }
 
-
 export const performPost = (baseUrl, uri = '', body = null, headers = null) => {
     const request = supertest(baseUrl).post(uri);
     setHeaders(request, headers);
@@ -66,6 +65,15 @@ export const extractXsrfTokenAndActionResponse = async (response) => {
     expect(action).toBeDefined();
 
     return {'headers': result.headers, 'token': xsrfToken, 'action': action};
+}
+
+export const extractXsrfToken = async (url, parameters) => {
+    const result = await performGet(url, parameters).expect(200);
+    const dom = cheerio.load(result.text);
+    const xsrfToken = dom("[name=X-XSRF-TOKEN]").val();
+
+    expect(xsrfToken).toBeDefined();
+    return {'headers': result.headers, 'token': xsrfToken};
 }
 
 export const logoutUser = async (uri, postLogin: any) =>
