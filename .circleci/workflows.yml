@@ -217,10 +217,10 @@ jobs:
             - ./gravitee-am-webui-*.zip
 
   run_jest_tests_mongo:
-    docker:
-      - image: cimg/openjdk:17.0.1-node
-      - image: mongo:4.2
-    resource_class: medium+
+    machine:
+      image: ubuntu-2204:2022.07.1
+      docker_layer_caching: true
+    resource_class: medium
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -229,8 +229,21 @@ jobs:
           name: install test module dependencies
           command: npm --prefix gravitee-am-test i
       - run:
-          name: Wait for Mongo to be up and running
-          command: timeout 15s bash -c 'until nc -vz localhost 27017; do sleep 2; done'
+          name: Start Mongo
+          command: |
+            docker pull mongo:5.0
+            docker run -d --name mongo_tmp --rm -p 27017:27017 mongo:5.0
+      - run:
+          name: Start FakeSMTP
+          command: |
+            docker pull gessnerfl/fake-smtp-server
+            docker run -d --rm -p 5080:5080 -p 5025:5025 gessnerfl/fake-smtp-server
+      - run:
+          name: Wait services bootstrap
+          command: |
+            # Wait for Mongo & FakeSMTP to be up and running
+            timeout 30s bash -c 'until nc -vz localhost 27017; do sleep 2; done'
+            timeout 30s bash -c 'until nc -vz localhost 5025; do sleep 2; done'
       - run:
           name: Run Jest tests
           command: |
@@ -241,6 +254,12 @@ jobs:
             curl https://download.gravitee.io/plugins/services/gravitee-service-geoip-1.2.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-1.2.0.zip
             curl https://repo.maven.apache.org/maven2/io/gravitee/am/resource/gravitee-am-resource-mfa-mock/3.12.1/gravitee-am-resource-mfa-mock-3.12.1.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-am-resource-mfa-mock-3.12.1.zip
             cp gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-am-resource-mfa-mock-3.12.1.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
+            
+            # EXPORT env vart to start AM using SMTP Server
+            export GRAVITEE_EMAIL_ENABLED=true
+            export GRAVITEE_EMAIL_HOST=localhost
+            export GRAVITEE_EMAIL_PORT=5025
+            
             # Start AM Management
             gravitee-am-management-api-standalone-${AM_VERSION}/bin/gravitee &
             # Start AM Gateway
@@ -262,12 +281,10 @@ jobs:
           template: basic_fail_1
 
   run_jest_tests_psql:
-    docker:
-      - image: cimg/openjdk:17.0.1-node
-      - image: postgres:14-alpine
-        environment:
-          POSTGRES_PASSWORD: T0pS3cr3t
-    resource_class: medium+
+    machine:
+      image: ubuntu-2204:2022.07.1
+      docker_layer_caching: true
+    resource_class: medium
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -276,8 +293,21 @@ jobs:
           name: install test module dependencies
           command: npm --prefix gravitee-am-test i
       - run:
-          name: Wait for PSQL to be up and running
-          command: timeout 15s bash -c 'until nc -vz localhost 5432; do sleep 2; done'
+          name: Start PostgreSQL
+          command: |
+            docker pull postgres:14-alpine
+            docker run -d --name postgresql_tmp --rm -p 5432:5432 -e POSTGRES_PASSWORD=T0pS3cr3t postgres:14-alpine
+      - run:
+          name: Start FakeSMTP
+          command: |
+            docker pull gessnerfl/fake-smtp-server
+            docker run -d --rm -p 5080:5080 -p 5025:5025 gessnerfl/fake-smtp-server
+      - run:
+          name: Wait services bootstrap
+          command: |
+            # Wait for PSQL & FakeSMTP to be up and running
+            timeout 30s bash -c 'until nc -vz localhost 5432; do sleep 2; done'
+            timeout 30s bash -c 'until nc -vz localhost 5025; do sleep 2; done'
       - run:
           name: Run Jest tests
           command: |
@@ -302,6 +332,12 @@ jobs:
             cp postgresql-42.3.3.jar gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc/
             cp r2dbc-postgresql-0.8.9.RELEASE.jar gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc/
             cp r2dbc-postgresql-0.8.9.RELEASE.jar gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc/
+            
+            # EXPORT env vart to start AM using SMTP Server
+            export GRAVITEE_EMAIL_ENABLED=true
+            export GRAVITEE_EMAIL_HOST=localhost
+            export GRAVITEE_EMAIL_PORT=5025
+            
             # EXPORT env vart to start AM using PSQL
             export GRAVITEE_MANAGEMENT_TYPE=jdbc
             export GRAVITEE_MANAGEMENT_JDBC_DRIVER=postgresql
@@ -317,6 +353,7 @@ jobs:
             export GRAVITEE_OAUTH2_JDBC_DATABASE=postgres
             export GRAVITEE_OAUTH2_JDBC_USERNAME=postgres
             export GRAVITEE_OAUTH2_JDBC_PASSWORD=T0pS3cr3t
+            
             # Start AM Management
             gravitee-am-management-api-standalone-${AM_VERSION}/bin/gravitee &
             # Start AM Gateway

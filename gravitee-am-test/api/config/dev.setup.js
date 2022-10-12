@@ -22,3 +22,4 @@ process.env.AM_DEF_ORG_ID = "DEFAULT";
 process.env.AM_DEF_ENV_ID = "DEFAULT";
 process.env.AM_ADMIN_USERNAME = "admin";
 process.env.AM_ADMIN_PASSWORD = "adminadmin";
+process.env.FAKE_SMTP = "http://localhost:5080";
