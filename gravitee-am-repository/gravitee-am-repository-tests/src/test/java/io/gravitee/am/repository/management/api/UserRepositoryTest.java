@@ -136,8 +136,29 @@ public class UserRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(u -> u.getPhotos().size() == 1);
         testObserver.assertValue(u -> u.getIms().size() == 1);
         testObserver.assertValue(u -> u.getX509Certificates().size() == 1);
-        testObserver.assertValue(u -> u.getAdditionalInformation().size() == 2);
+        testObserver.assertValue(u -> u.getAdditionalInformation().size() == 3);
         testObserver.assertValue(u -> u.getFactors().size() == 1);
+        testObserver.assertValue(u -> u.getAdditionalInformation().get(StandardClaims.LOCALE).equals(userCreated.getAdditionalInformation().get(StandardClaims.LOCALE)));
+        testObserver.assertValue(u -> u.getPreferredLanguage() == null);
+    }
+
+    @Test
+    public void testGetPreferredLanguage() throws TechnicalException {
+        // create user
+        User user = buildUser();
+        user.setPreferredLanguage("fr");
+        User userCreated = userRepository.create(user).blockingGet();
+
+        // fetch user
+        TestObserver<User> testObserver = userRepository.findById(userCreated.getId()).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(u -> u.getUsername().equals(user.getUsername()));
+        testObserver.assertValue(u -> u.getAdditionalInformation().size() == 3);
+        testObserver.assertValue(u -> u.getPreferredLanguage().equals(userCreated.getPreferredLanguage()));
+        testObserver.assertValue(u -> u.getAdditionalInformation().get(StandardClaims.LOCALE).equals(userCreated.getAdditionalInformation().get(StandardClaims.LOCALE)));
     }
 
     @Test
@@ -181,7 +202,7 @@ public class UserRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(u -> u.getPhotos().size() == 1);
         testObserver.assertValue(u -> u.getIms().size() == 1);
         testObserver.assertValue(u -> u.getX509Certificates().size() == 1);
-        testObserver.assertValue(u -> u.getAdditionalInformation().size() == 2);
+        testObserver.assertValue(u -> u.getAdditionalInformation().size() == 3);
         testObserver.assertValue(u -> u.getFactors().size() == 1);
         testObserver.assertValue(u -> u.getLastPasswordReset() != null);
         testObserver.assertValue(u -> u.getFactors().get(0).getChannel() != null);
@@ -261,6 +282,7 @@ public class UserRepositoryTest extends AbstractManagementTest {
 
         Map<String, Object> info = new HashMap<>();
         info.put(StandardClaims.EMAIL, random+"@info.acme.fr");
+        info.put(StandardClaims.LOCALE, "en");
         info.put(CUSTOM_ADDITIONAL_FIELD, "custom-value");
         user.setAdditionalInformation(info);
         return user;

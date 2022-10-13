@@ -42,7 +42,7 @@ public class GraviteeMessageResolver extends AbstractMessageResolver {
     }
 
     public boolean isSupported(Locale locale) {
-        return this.dictionaryProvider.hasDictionaryFor(locale);
+        return this.dictionaryProvider.hasDictionaryFor(locale) || this.domainBasedDictionaryProvider.hasDictionaryFor(locale);
     }
 
     @Override

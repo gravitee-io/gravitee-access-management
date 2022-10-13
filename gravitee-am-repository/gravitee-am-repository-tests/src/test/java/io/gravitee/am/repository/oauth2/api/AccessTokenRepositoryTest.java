@@ -22,8 +22,6 @@ import io.reactivex.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.Arrays;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
@@ -180,7 +178,7 @@ public class AccessTokenRepositoryTest extends AbstractOAuthTest {
         observer.awaitTerminalEvent();
         observer.assertComplete();
         observer.assertNoErrors();
-        observer.assertValue(new Long(1));
+        observer.assertValue(Long.valueOf(1));
     }
 
     @Test
@@ -199,8 +197,8 @@ public class AccessTokenRepositoryTest extends AbstractOAuthTest {
         token2.setDomain("domain-id2");
         token2.setSubject("user-id2");
 
-        TestObserver<AccessToken> testObserver = accessTokenRepository
-                .bulkWrite(Arrays.asList(token1, token2))
+        TestObserver<AccessToken> testObserver = accessTokenRepository.create(token1).ignoreElement()
+                .andThen(accessTokenRepository.create(token2).ignoreElement())
                 .andThen(accessTokenRepository.deleteByDomainIdClientIdAndUserId("domain-id", "client-id", "user-id"))
                 .andThen(accessTokenRepository.findByToken("my-token"))
                 .test();
@@ -226,8 +224,8 @@ public class AccessTokenRepositoryTest extends AbstractOAuthTest {
         token2.setDomain("domain-id2");
         token2.setSubject("user-id2");
 
-        TestObserver<AccessToken> testObservable = accessTokenRepository
-                .bulkWrite(Arrays.asList(token1, token2))
+        TestObserver<AccessToken> testObservable = accessTokenRepository.create(token1).ignoreElement()
+                .andThen(accessTokenRepository.create(token2).ignoreElement())
                 .andThen(accessTokenRepository.deleteByDomainIdAndUserId("domain-id", "user-id"))
                 .andThen(accessTokenRepository.findByToken("my-token"))
                 .test();

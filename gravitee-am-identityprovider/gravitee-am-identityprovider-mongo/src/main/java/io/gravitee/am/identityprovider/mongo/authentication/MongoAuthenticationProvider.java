@@ -112,7 +112,7 @@ public class MongoAuthenticationProvider extends MongoAbstractProvider implement
                 })
                 .toList()
                 .flatMapMaybe(userEvaluations -> {
-                    if (userEvaluations.size() > 1) {
+                    if (userEvaluations.stream().filter(UserCredentialEvaluation::isPasswordValid).count() > 1) {
                         LOGGER.debug("Authentication failed: multiple accounts with same credentials");
                         return Maybe.error(new BadCredentialsException("Bad credentials"));
                     }

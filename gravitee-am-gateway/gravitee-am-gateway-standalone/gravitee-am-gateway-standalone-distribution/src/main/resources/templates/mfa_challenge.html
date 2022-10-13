@@ -1,87 +1,102 @@
+<!doctype html>
 <html>
-<body style="overflow: auto;">
-
-<!-- Content -->
-<table width="440px">
-
-	<#include "header.html" />
-
-	<!-- header / title -->
-	<tr>
-		<td align="justify" style="
-			padding: 0px;
-			gap: 16px;
-			height: 96px;
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<title>MFA Challenge Email</title>
+	<style>
+		body {
+			background-color: #E5E5E5;
 			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
 			font-style: normal;
+		}
+		.body {
+			background-color: #E5E5E5;
+			width: 100%;
+		}
+		.container {
+			display: block;
+			margin: 0 auto !important;
+			max-width: 600px;
+			padding: 10px;
+			width: 600px;
+		}
+		.content {
+			box-sizing: border-box;
+			display: block;
+			margin: 0 auto;
+			max-width: 600px;
+			padding: 10px;
+		}
+		.main {
+			background: #FFFFFF;
+			border-radius: 8px;
+			width: 100%;
+			padding: 54px;
+		}
+		h1 {
 			font-weight: 800;
 			font-size: 24px;
 			line-height: 32px;
 			color: #25213A;
-			">
-			${msg('email.mfa_challenge.header.title', user.firstName)}
-		</td>
-	</tr>
-
-	<!-- header / description -->
-	<tr>
-		<td align="justify" style="
-			height: 96px;
-			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
-			font-style: normal;
-			font-weight: 500;
+		}
+		p {
+			font-weight: normal;
 			font-size: 16px;
 			line-height: 24px;
 			color: #A5A5A9;
-			">
-			${msg('email.mfa_challenge.header.description', client.clientName)}
-		</td>
-	</tr>
-
-	<tr>
-		<!-- form -->
-		<td align="center" style="
-			width: 440px;
-			height: 72px;
+		}
+		td.otp-code {
+			text-align: center;
 			box-sizing: border-box;
 			background: #FAFAFA;
 			border: 1px solid #CCCCCC;
 			border-radius: 8px;
-			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
-			font-style: normal;
-			font-weight: 700;
-			font-size: 24px;
-			line-height: 16px;
-			" >
-
-			<!-- button -->
-			<p style="
-			color: #25213A; !important;  /*var(--theme-foreground-color);*/
-			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
-			font-style: normal;
+			padding: 24px 8px;
+		}
+		td.otp-code span {
+			color: #25213A;
 			font-weight: 700;
 			font-size: 16px;
 			line-height: 16px;
-			/*remove underline*/
-			text-decoration: none;">
-				${code}
-			</p>
-		</td>
-	</tr>
-
-	<tr>
-		<td align="justify" style="
-			height: 96px;
-			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
-			font-style: normal;
-			font-weight: 500;
-			font-size: 16px;
-			line-height: 24px;
-			color: #A5A5A9;
-			">
-			<#if expireAfterSeconds gte 3600> ${msg('email.mfa_challenge.description', expireAfterSeconds / 3600 , msg('email.common.unit.hours'))}  <#else> ${msg('email.mfa_challenge.description', expireAfterSeconds / 60 , msg('email.common.unit.minutes'))} </#if>
-		</td>
-	</tr>
-</table>
+		}
+	</style>
+</head>
+<body style="background-color: #E5E5E5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; font-style: normal;">
+	<table role="presentation" class="body" style="background-color: #E5E5E5; width: 100%;" width="100%" bgcolor="#E5E5E5">
+		<tr>
+			<td class="container" cellspacing="0" cellpadding="0" border="0" style="display: block; max-width: 600px; padding: 10px; width: 600px; margin: 0 auto;" width="600">
+				<div class="content" style="box-sizing: border-box; display: block; margin: 0 auto; max-width: 600px; padding: 10px;">
+					<table role="presentation" cellspacing="0" cellpadding="0" border="0" class="main" style="background: #FFFFFF; border-radius: 8px; width: 100%; padding: 54px;" width="100%">
+						<#include "header.html" />
+						<tr>
+							<td>
+								<h1 style="font-weight: 800; font-size: 24px; line-height: 32px; color: #25213A;">${msg('email.mfa_challenge.header.title', user.firstName)}</h1>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<p style="font-weight: normal; font-size: 16px; line-height: 24px; color: #A5A5A9;">${msg('email.mfa_challenge.header.description', client.clientName)}</p>
+							</td>
+						</tr>
+						<tr>
+							<td class="otp-code" style="text-align: center; box-sizing: border-box; background: #FAFAFA; border: 1px solid #CCCCCC; border-radius: 8px; padding: 24px 8px;" align="center">
+								<span style="color: #25213A; font-weight: 700; font-size: 16px; line-height: 16px;">
+									${code}
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<p style="font-weight: normal; font-size: 16px; line-height: 24px; color: #A5A5A9;">
+									<#if expireAfterSeconds gte 3600> ${msg('email.mfa_challenge.description', expireAfterSeconds / 3600 , msg('email.common.unit.hours'))}  <#else> ${msg('email.mfa_challenge.description', expireAfterSeconds / 60 , msg('email.common.unit.minutes'))} </#if>
+								</p>
+							</td>
+						</tr>
+					</table>
+				</div>
+			</td>
+		</tr>
+	</table>
 </body>
 </html>

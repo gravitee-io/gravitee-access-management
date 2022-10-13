@@ -20,10 +20,10 @@ import {DialogService} from '../../../services/dialog.service';
 import {SnackbarService} from '../../../services/snackbar.service';
 import {AuthService} from '../../../services/auth.service';
 import {NavbarService} from '../../../components/navbar/navbar.service';
-import {DictionaryDialog} from "../../../components/dialog/dictionary/dictionary-dialog.component";
-import {MatDialog} from "@angular/material/dialog";
-import {I18nDictionaryService} from "../../../services/dictionary.service";
-import {i18nLanguages} from "./i18nLanguages";
+import {DictionaryDialog} from '../../../components/dialog/dictionary/dictionary-dialog.component';
+import {MatDialog} from '@angular/material/dialog';
+import {I18nDictionaryService} from '../../../services/dictionary.service';
+import {i18nLanguages} from './i18nLanguages';
 
 interface Dictionary {
   id?: string;
@@ -42,16 +42,15 @@ export class DomainSettingsDictionariesComponent implements OnInit {
   readonly = false;
   dictionaries: Dictionary[] = [];
   translations: any[] = [];
-  selectedDictionary: Dictionary = {locale: "", name: ""};
+  selectedDictionary: Dictionary = {locale: '', name: ''};
   languageCodes: any[];
   dictsToSave: Dictionary[] = [];
   dictsToDelete: any[] = [];
   codeMirrorConfig: any = {lineNumbers: true, readOnly: false};
-  formContent: string = '';
+  formContent = '';
   displayCodeMirror: boolean;
-  formChanged: boolean;
   formChangedTranslations: boolean;
-  private selectedTab: number = 0;
+  private selectedTab = 0;
   private originalFormContent: string;
 
   constructor(private domainService: DomainService,
@@ -71,21 +70,21 @@ export class DomainSettingsDictionariesComponent implements OnInit {
     this.dictionaries = this.route.snapshot.data['dictionaries'] || [];
     const dictionaryCodes = this.dictionaries.map(dict => dict.locale);
     this.languageCodes = Object.entries(i18nLanguages).filter(language => !dictionaryCodes.includes(language[0]));
-    this.formContent = JSON.stringify(this.entriesToObject(), null, '\t');
-    this.originalFormContent = (' ' + this.formContent).slice(1);
     this.selectedDictionary = this.dictionaries[0];
     if (this.selectedDictionary) {
       this.changeTranslation();
     }
+    this.formContent = JSON.stringify(this.entriesToObject(), null, '\t');
+    this.originalFormContent = (' ' + this.formContent).slice(1);
   }
 
   addLanguage() {
     const dialogRef = this.dialog.open(DictionaryDialog,
       {
         data: {
-          title: "Add a new language",
-          prop1Label: "Language code",
-          prop2Label: "Display name",
+          title: 'Add a new language',
+          prop1Label: 'Language code',
+          prop2Label: 'Display name',
           languageCodes: this.languageCodes
         }
       });
@@ -94,13 +93,13 @@ export class DomainSettingsDictionariesComponent implements OnInit {
       if (result) {
         const locale = result.prop1;
         const name = result.prop2;
-        let tempDicts = [...this.dictionaries];
-        let newDict = {locale: locale, name: name, entries: {}};
+        const tempDicts = [...this.dictionaries];
+        const newDict = {locale: locale, name: name, entries: {}};
         tempDicts.push(newDict);
         this.dictionaries = tempDicts;
         this.dictsToSave.push(newDict);
-        this.languageCodes = this.languageCodes.filter(code => code[0] != locale);
-        this.formChanged = true;
+        this.languageCodes = this.languageCodes.filter(code => code[0] !== locale);
+        this.saveLanguages();
       }
     });
   }
@@ -108,19 +107,21 @@ export class DomainSettingsDictionariesComponent implements OnInit {
   deleteLanguage(row, event) {
     event.preventDefault();
     this.dialogService
-      .confirm('Delete Language', 'Are you sure you want to delete this language?')
+      .confirm('Delete Language', 'Deleting the language will delete all the saved translations. Are you sure you want to delete this language?')
       .subscribe(res => {
         if (res) {
           if (row.id) {
             this.dictsToDelete.push(row.id);
           } else {
-            this.dictsToSave = this.dictsToSave.filter(dict => dict.locale != row.locale)
+            this.dictsToSave = this.dictsToSave.filter(dict => dict.locale !== row.locale)
           }
-          this.dictionaries = this.dictionaries.filter(dict => dict.locale != row.locale);
+          this.dictionaries = this.dictionaries.filter(dict => dict.locale !== row.locale);
           if (this.selectedDictionary.locale === row.locale) {
             this.translations = [];
           }
-          this.formChanged = true;
+          this.languageCodes.push([row.locale, row.name]);
+          this.languageCodes.sort((a, b) => a[0].localeCompare(b[0]));
+          this.saveLanguages();
         }
       });
   }
@@ -133,7 +134,8 @@ export class DomainSettingsDictionariesComponent implements OnInit {
         const deleteCount = 1;
         if (res) {
           this.translations.splice(rowIndex, deleteCount);
-          this.formChangedTranslations = true;
+          this.translations = [...this.translations];
+          this.saveTranslations();
         }
       });
   }
@@ -145,20 +147,20 @@ export class DomainSettingsDictionariesComponent implements OnInit {
       this.translations.push({key: k, message: v});
     });
 
-    if (this.selectedTab == 1) {
+    if (this.selectedTab === 1) {
       this.onTabSelectedChanged({index: 1})
     }
   }
 
   addTranslation() {
-    let tempEntries = [...this.translations];
+    const tempEntries = [...this.translations];
     if (this.selectedDictionary) {
       const dialogRef = this.dialog.open(DictionaryDialog,
         {
           data: {
-            title: "Add a new translation",
-            prop1Label: "Key",
-            prop2Label: "Value"
+            title: 'Add a new translation',
+            prop1Label: 'Key',
+            prop2Label: 'Value'
           }
         });
 
@@ -167,10 +169,10 @@ export class DomainSettingsDictionariesComponent implements OnInit {
         const value = result.prop2;
         tempEntries.push({key: entryKey, message: value});
         this.translations = tempEntries;
-        this.formChangedTranslations = true;
+        this.saveTranslations();
       });
     } else {
-      this.snackbarService.open("Please select a language");
+      this.snackbarService.open('Please select a language');
     }
   }
 
@@ -186,7 +188,7 @@ export class DomainSettingsDictionariesComponent implements OnInit {
     } else if (this.selectedDictionary) {
       this.update();
     } else {
-      this.snackbarService.open("Please select a language");
+      this.snackbarService.open('Please select a language');
     }
   }
 
@@ -203,11 +205,12 @@ export class DomainSettingsDictionariesComponent implements OnInit {
     this.dictionaryService.update(this.domain.id, this.selectedDictionary.id,
       {entries: updateEntries}).subscribe(result => {
       if (result) {
-        this.snackbarService.open("Translations saved");
+        this.snackbarService.open('Translations saved');
         this.formChangedTranslations = false;
         for (const dictionary of this.dictionaries) {
           if (dictionary.id === this.selectedDictionary.id) {
             dictionary.entries = updateEntries;
+            this.originalFormContent = JSON.stringify(updateEntries, null, '\t');
             break;
           }
         }
@@ -231,18 +234,16 @@ export class DomainSettingsDictionariesComponent implements OnInit {
         this.updateId(created);
         this.dictsToSave = [];
         this.snackbarService.open('Languages saved');
-        this.formChanged = false;
       });
     });
     dictsToDelete.forEach(id => {
       this.dictionaryService.delete(this.domain.id, id).subscribe(() => {
-        this.dictionaries = this.dictionaries.filter(dict => dict.id != id);
+        this.dictionaries = this.dictionaries.filter(dict => dict.id !== id);
         this.dictsToDelete = [];
         if (this.selectedDictionary.id === id) {
           this.translations = [];
         }
         this.snackbarService.open('Languages saved');
-        this.formChanged = false;
       });
     })
   }
@@ -254,13 +255,13 @@ export class DomainSettingsDictionariesComponent implements OnInit {
       file.text().then(content => {
         this.formContent = content;
         try {
-          let parse = JSON.parse(content);
-          let entries = [];
+          const parse = JSON.parse(content);
+          const entries = [];
           Object.entries(parse).forEach(mapEntry => {
             entries.push(mapEntry);
           });
         } catch (e) {
-          this.snackbarService.open("JSON file was invalid");
+          this.snackbarService.open('JSON file was invalid');
         }
       });
     }
@@ -273,7 +274,7 @@ export class DomainSettingsDictionariesComponent implements OnInit {
       this.displayCodeMirror = true;
     } else {
       this.displayCodeMirror = false;
-      let parse = JSON.parse(this.formContent);
+      const parse = JSON.parse(this.formContent);
       this.translations = [];
       Object.entries(parse).forEach(([k, v]) => {
         this.translations.push({key: k, message: v});
@@ -282,7 +283,13 @@ export class DomainSettingsDictionariesComponent implements OnInit {
   }
 
   onContentChanges(e) {
-    if (e !== this.originalFormContent) {
+    if (e !== this.originalFormContent && !this.formChangedTranslations) {
+      this.formChangedTranslations = true;
+    }
+  }
+
+  enableSaveChangeButton() {
+    if (!this.formChangedTranslations) {
       this.formChangedTranslations = true;
     }
   }

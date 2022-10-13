@@ -1,7 +1,17 @@
-::ng-deepul.checkbox-list {
-  display: flex;
-  flex-direction: column;
-  li:after {
-    content: '';
+:host {
+  ::ng-deep {
+    ul.checkbox-list {
+      display: flex;
+      flex-direction: column;
+      li:after {
+        content: '';
+      }
+    }
+    flex-layout-root-widget {
+      flex-flow: column nowrap !important;
+      box-sizing: border-box !important;
+      display: initial !important;
+      max-height: 100% !important;
+    }
   }
 }

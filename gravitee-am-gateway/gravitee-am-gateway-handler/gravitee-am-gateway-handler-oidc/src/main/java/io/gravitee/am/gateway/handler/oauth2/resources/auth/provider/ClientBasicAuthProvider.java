@@ -70,8 +70,8 @@ public class ClientBasicAuthProvider implements ClientAuthProvider {
             if (colonIdx == -1) {
                 throw new IllegalArgumentException();
             }
-            String clientId = URLDecoder.decode(decoded.substring(0, colonIdx),  UTF_8);
-            String clientSecret = URLDecoder.decode(decoded.substring(colonIdx + 1),  UTF_8);
+            String clientId = urlDecode(decoded.substring(0, colonIdx));
+            String clientSecret = urlDecode(decoded.substring(colonIdx + 1));
             if (!client.getClientId().equals(clientId) || !client.getClientSecret().equals(clientSecret)) {
                 handler.handle(Future.failedFuture(new InvalidClientException(ClientAuthHandler.GENERIC_ERROR_MESSAGE, authenticationHeader())));
                 return;
@@ -80,6 +80,23 @@ public class ClientBasicAuthProvider implements ClientAuthProvider {
         } catch (RuntimeException e) {
             handler.handle(Future.failedFuture(new InvalidClientException("Invalid client: missing or unsupported authentication method", e, authenticationHeader())));
             return;
+        }
+    }
+
+    /**
+     * @param value
+     * @return the URL value version of value or the input value if the URLDecode fails
+     */
+    private static String urlDecode(String value) {
+        try {
+            return URLDecoder.decode(value, UTF_8);
+        } catch (IllegalArgumentException e) {
+            // Introduced to fix https://github.com/gravitee-io/issues/issues/8501.
+            // https://github.com/gravitee-io/issues/issues/7803 introduced a URL decoding
+            // action on the clientSecret/clientId to be compliant to the RFC. To avoid breaking the
+            // behaviour for customer that are using some special characters like '%', we fall back to the
+            // raw value if the URL decode process fails.
+            return value;
         }
     }
 

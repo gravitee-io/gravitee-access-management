@@ -88,6 +88,7 @@
 #      default is `false`
 #    allow-credentials: true
 #  csp:
+#    enabled: true
 #    reportOnly: false
 #    # set true if you want to include the directive 'script-src' with the nonce value generated for inline script.
 #    # to by marked by the nonce value, your inline script has to contain th:attr="nonce=${script_inline_nonce}"
@@ -105,6 +106,9 @@
 #  # if not action (DENY or SAMEORIGIN) is specified, the X-Frame-Options header will no be set into the response
 #  xframe:
 #    action: DENY
+#  xss:
+#    enabled: false
+#    action: 1; mode=block
 
 # Path to plugins repository
 #plugins:
@@ -402,3 +406,13 @@ liquibase:
 #          LOW: 0.2777778
 ##          MEDIUM: 6.9444445 # (25km/h)
 ##          HIGH: 69.444445 # (250km/h)
+
+
+## This section allows implicit user consent to store remote IP and userAgent
+## into the user profile and audit logs. This consent is disabled by default
+## and should be enabled only if the end users of your applications
+## have given their consent.
+#
+#consent:
+#  ip: false
+#  user-agent: false

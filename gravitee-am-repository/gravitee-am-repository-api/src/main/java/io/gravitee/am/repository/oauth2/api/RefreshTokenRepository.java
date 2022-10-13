@@ -32,8 +32,6 @@ public interface RefreshTokenRepository {
 
     Single<RefreshToken> create(RefreshToken refreshToken);
 
-    Completable bulkWrite(List<RefreshToken> refreshTokens);
-
     Completable delete(String token);
 
     Completable deleteByUserId(String userId);

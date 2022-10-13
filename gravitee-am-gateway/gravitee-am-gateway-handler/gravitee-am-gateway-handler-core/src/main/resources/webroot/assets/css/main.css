@@ -1,3 +1,18 @@
+/**
+ * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 @font-face {
     font-family: 'Roboto';
     font-style: normal;
@@ -81,6 +96,7 @@
     --input-border-width: 1px;
     --input-padding: 8px;
     --input-height: 48px;
+    --container-width: 600px;
     --container-background-color: var(--white);
     --container-border-color: rgba(0, 0, 0, 0.12);
     --container-border-radius: 4px;
@@ -122,6 +138,13 @@
     --checkbox-input-border-width: 1px;
     --checkbox-input-border-color: #B8B8BC;
     --checkbox-input-border-radius: 2px;
+    --body-background-color: var(--white);
+    --box-background-color: #F1F1F1;
+    --box-border-radius: 8px;
+}
+
+body {
+    background: var(--body-background-color);
 }
 
 body, body * {
@@ -176,10 +199,12 @@ body, body * {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    padding: 64px 80px;
+    padding: 60px 60px;
     gap: 24px;
-    margin: auto;
-    width: 600px;
+    margin: 60px auto;
+    max-width: 600px;
+    min-width: 350px;
+    width: var(--container-width);
     top: 100px;
     background: var(--container-background-color);
     border: var(--container-border-width) solid var(--container-border-color);
@@ -193,11 +218,18 @@ body, body * {
     justify-content: center;
     align-items: center;
     padding: 0;
-    gap: 32px;
-    height: 231px;
+    gap: 22px;
     flex: none;
     align-self: stretch;
     flex-grow: 0;
+}
+
+form div {
+    width: 100%;
+}
+
+.iti__flag-container {
+    width: auto;
 }
 
 .section, .form {
@@ -231,21 +263,28 @@ body, body * {
 .title {
     font-weight: 900;
     font-size: 32px;
-    line-height: 16px;
+    line-height: 36px;
+    word-break: break-word;
     text-align: center;
     color: var(--title-text-color);
     flex: none;
     flex-grow: 0;
 }
 
+.title span {
+    font-weight: 700;
+    font-size: 28px;
+    line-height: 36px;
+}
+
 .header-description {
-    font-weight: 500;
+    font-weight: 400;
     font-size: 16px;
     line-height: 24px;
     color: var(--header-description-text-color);
     flex: none;
     flex-grow: 0;
-    width: 440px;
+    width: 100%;
     text-align: center;
 }
 
@@ -255,7 +294,7 @@ body, body * {
     flex-direction: row;
     align-items: center;
     padding: var(--input-padding);
-    width: 440px;
+    width: 100%;
     height: var(--input-height);
     color: var(--input-text-color);
     background: var(--input-background-color);
@@ -264,15 +303,19 @@ body, body * {
 }
 
 .short {
-    width: 215px;
+    width: 50%;
 }
 
 .regular {
-    width: 440px;
+    width: 100%;
 }
 
 div.short-section > input + input {
     margin-left: 10px;
+}
+
+div.section > form {
+  width: 100%;
 }
 
 .item {
@@ -281,8 +324,7 @@ div.short-section > input + input {
     align-items: center;
     padding: 8px 0 8px 0;
     gap: 8px;
-    width: 440px;
-    height: 60px;
+    width: 100%;
     background: var(--item-background-color);
     border-radius: var(--item-border-radius);
     flex: none;
@@ -292,21 +334,26 @@ div.short-section > input + input {
     line-height: 24px;
 }
 
-.button {
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: flex-start;
+.box {
+    background: var(--box-background-color);
+    border-radius: var(--box-border-radius);
+    box-sizing: border-box;
     padding: 8px;
-    width: 440px;
+    font-weight: 500;
+    font-size: 16px;
+    line-height: 24px;
+}
+
+.button {
+    box-sizing: border-box;
+    text-align: center;
+    padding: 8px;
+    width: 100%;
     min-height: 40px;
     background: var(--button-background-color);
     border-radius: var(--button-border-radius);
-    flex: none;
-    align-self: stretch;
-    flex-grow: 0;
     font-weight: 700;
-    font-size: 16px;
+    font-size: 14px;
     line-height: 22px;
     color: var(--button-text-color);
     border-width: 0;
@@ -326,8 +373,6 @@ div.short-section > input + input {
 .button.social {
     color: var(--button-social-text-color);
     background: var(--button-social-background-color);
-    padding: 0;
-    align-self: auto;
 }
 
 .button.button-disabled {
@@ -382,16 +427,16 @@ div.short-section > input + input {
     color: var(--black);
 }
 
-.regular {
-    width: 440px;
-    display: inline-block;
+.start {
+    text-align: start;
 }
 
-.description {
-    padding-top: 8px;
+.center {
+    text-align: center;
 }
 
 a {
+    font-size: 14px;
     font-weight: 500;
     text-decoration: none;
     color: var(--link-text-color);
@@ -410,13 +455,8 @@ div#passwordSettings > p {
     color: var(--font-light-color);
 }
 
-.disclaimer {
-    display: inline-block;
-    width: 440px;
-    font-weight: 500;
-    font-size: 16px;
-    line-height: 24px;
-    color: var(--font-light-color);
+.radio-card-wrapper {
+    width: 100%
 }
 
 .radio-card {
@@ -427,8 +467,7 @@ div#passwordSettings > p {
     align-items: flex-start;
     padding: 16px;
     gap: 8px;
-    width: 440px;
-    height: 100px;
+    width: 100%;
     background: var(--radio-card-background-color);
     border: var(--radio-card-border-width) solid var(--radio-card-border-color);
     border-radius: var(--radio-card-border-radius);
@@ -451,8 +490,8 @@ div#passwordSettings > p {
     align-items: center;
     padding: 0;
     gap: 12px;
-    width: 408px;
-    height: 68px;
+    width: 100%;
+    height: fit-content;
     flex: none;
     align-self: stretch;
     flex-grow: 0;
@@ -471,10 +510,10 @@ div#passwordSettings > p {
     align-items: flex-start;
     padding: 2px 0;
     gap: 4px;
-    width: 372px;
-    height: 48px;
+    width: 100%;
     flex: none;
-    flex-grow: 1;
+    flex-grow: 0;
+    flex-shrink: initial;
 }
 
 .enroll-name {
@@ -518,8 +557,8 @@ div#passwordSettings > p {
 }
 
 .enrollment-card-description {
-    height: 24px;
-    width: 440px;
+    height: 36px;
+    width: 100%;
     text-align: left;
     padding-left: 8px;
     font-weight: 500;
@@ -530,7 +569,7 @@ div#passwordSettings > p {
     flex-grow: 0;
 }
 
-.hide-enrollment-item, .hide {
+.hide {
     display: none;
 }
 
@@ -542,7 +581,6 @@ div#passwordSettings > p {
     align-items: center;
     padding: 16px 8px;
     gap: 8px;
-    width: 440px;
     height: 182px;
     border: var(--otp-container-border-width) solid var(--otp-container-border-color);
     border-radius: var(--otp-container-border-radius);
@@ -609,28 +647,13 @@ div#passwordSettings > p {
     justify-content: center;
     align-items: center;
     padding: 0;
-    gap: 10px 60px;
-    width: 435px;
-}
-
-.recovery-codes > li {
-    width: 100px;
-    height: 20px;
-    font-weight: 500;
-    font-size: 16px;
-    line-height: 20px;
-    letter-spacing: 0.4px;
-    color: var(--font-light-color);
+    gap: 10px 10px;
 }
 
 .recovery-code {
     flex: 1 0 40%;
     display: flex;
     justify-content: center;
-}
-
-.recovery-code-msg {
-    padding: 5px 12px 0 12px;
 }
 
 .code-item {

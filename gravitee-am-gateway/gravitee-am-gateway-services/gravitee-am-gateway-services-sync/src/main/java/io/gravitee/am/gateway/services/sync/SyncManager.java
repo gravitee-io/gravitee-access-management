@@ -24,10 +24,13 @@ import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.repository.management.api.EventRepository;
 import io.gravitee.common.event.EventManager;
 import io.gravitee.node.api.Node;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
 
@@ -41,6 +44,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BinaryOperator;
 import java.util.stream.Collectors;
 
@@ -97,6 +101,12 @@ public class SyncManager implements InitializingBean {
 
     private boolean allSecurityDomainsSync = false;
 
+    @Value("${services.sync.initTimeOutMillis:-1}")
+    private int initDomainTimeOut = -1;
+
+    @Value("${services.sync.eventsTimeOutMillis:30000}")
+    private int eventsTimeOut = 30000;
+
     @Override
     public void afterPropertiesSet() throws Exception {
         logger.info("Starting gateway tags initialization ...");
@@ -122,7 +132,11 @@ public class SyncManager implements InitializingBean {
                 // search for events and compute them
                 logger.debug("Events synchronization");
 
-                List<Event> events = eventRepository.findByTimeFrame(lastRefreshAt - lastDelay, nextLastRefreshAt).toList().blockingGet();
+                Single<List<Event>> findEvents = eventRepository.findByTimeFrame(lastRefreshAt - lastDelay, nextLastRefreshAt).toList();
+                if (this.eventsTimeOut > 0) {
+                    findEvents = findEvents.timeout(this.eventsTimeOut, TimeUnit.MILLISECONDS);
+                }
+                List<Event> events = findEvents.blockingGet();
 
                 if (events != null && !events.isEmpty()) {
                     gatewayMetricProvider.updateSyncEvents(events.size());
@@ -153,13 +167,16 @@ public class SyncManager implements InitializingBean {
 
     private void deployDomains() {
         logger.info("Starting security domains initialization ...");
-        List<Domain> domains = domainRepository.findAll()
+        Single<List<Domain>> findDomains = domainRepository.findAll()
                 // remove disabled domains
                 .filter(Domain::isEnabled)
                 // Can the security domain be deployed ?
                 .filter(this::canHandle)
-                .toList()
-                .blockingGet();
+                .toList();
+        if (this.initDomainTimeOut > 0) {
+            findDomains = findDomains.timeout(this.initDomainTimeOut, TimeUnit.MILLISECONDS);
+        }
+        List<Domain> domains = findDomains.blockingGet();
 
         // deploy security domains
         domains.stream().forEach(domain -> securityDomainManager.deploy(domain));
@@ -185,7 +202,11 @@ public class SyncManager implements InitializingBean {
         switch (action) {
             case CREATE:
             case UPDATE:
-                Domain domain = domainRepository.findById(domainId).blockingGet();
+                Maybe<Domain> maybeDomain = domainRepository.findById(domainId);
+                if (this.eventsTimeOut > 0) {
+                    maybeDomain = maybeDomain.timeout(this.eventsTimeOut, TimeUnit.MILLISECONDS);
+                }
+                Domain domain = maybeDomain.blockingGet();
                 if (domain != null) {
                     // Get deployed domain
                     Domain deployedDomain = securityDomainManager.get(domain.getId());

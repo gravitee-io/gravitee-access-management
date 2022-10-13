@@ -19,11 +19,12 @@ import io.gravitee.am.management.handlers.management.api.authentication.view.Tem
 import io.gravitee.am.management.handlers.management.api.model.PreviewRequest;
 import io.gravitee.am.management.handlers.management.api.model.PreviewResponse;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.I18nDictionary;
+import io.gravitee.am.model.Form;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.Theme;
 import io.gravitee.am.service.DomainService;
+import io.gravitee.am.service.FormService;
 import io.gravitee.am.service.ThemeService;
 import io.gravitee.am.service.i18n.DynamicDictionaryProvider;
 import io.gravitee.am.service.i18n.FileSystemDictionaryProvider;
@@ -32,6 +33,7 @@ import io.gravitee.am.service.i18n.SpringGraviteeMessageSource;
 import io.gravitee.am.service.i18n.ThreadLocalDomainDictionaryProvider;
 import io.gravitee.am.service.impl.I18nDictionaryService;
 import io.gravitee.am.service.theme.ThemeResolution;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,6 +60,9 @@ public class PreviewService implements InitializingBean {
 
     @Autowired
     private ThemeService themeService;
+
+    @Autowired
+    private FormService formService;
 
     @Autowired
     private I18nDictionaryService i18nDictionaryService;
@@ -87,7 +92,7 @@ public class PreviewService implements InitializingBean {
         }
     }
 
-    public Maybe<PreviewResponse> previewDomainForm(String domainId, PreviewRequest previewRequest) {
+    public Maybe<PreviewResponse> previewDomainForm(String domainId, PreviewRequest previewRequest, Locale locale) {
         if (!isNullOrEmpty(previewRequest.getTemplate())) {
             try {
                 Template.parse(previewRequest.getTemplate());
@@ -96,13 +101,30 @@ public class PreviewService implements InitializingBean {
             }
         }
 
+        // evaluate the request content. If null, load the default template
+        var contentLookUp = Maybe.just(Optional.ofNullable(previewRequest.getContent()))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .switchIfEmpty(Maybe.defer(() -> formService.getDefaultByDomainAndTemplate(domainId, previewRequest.getTemplate()).map(Form::getContent).toMaybe()));
+
         return this.themeService.validate(previewRequest.getTheme())
                 .andThen(domainService.findById(domainId)
-                        .map(domain -> new PreviewBuilder(templateEngine, templateResolver)
-                                .withDomain(domain)
-                                .withRequest(previewRequest))
+                        .flatMap(domain ->
+                                contentLookUp.map(content -> {
+                                    previewRequest.setContent(content);
+                                    return new PreviewBuilder(templateEngine, templateResolver)
+                                            .withDomain(domain)
+                                            .withRequest(previewRequest);
+                                })
+                        )
                         .flatMap(builder -> loadTheme(domainId, previewRequest.getTheme()).map(builder::withTheme))
-                        .flatMap(builder -> loadDefaultDictionary(builder.getDomain()).map(builder::withLocale))
+                        .flatMap(builder -> loadDictionaries(builder.getDomain())
+                                .toSingleDefault(locale)
+                                .toMaybe()
+                                .filter(this.graviteeMessageResolver::isSupported)
+                                // TODO fallback to default domain language when implemented (GH#8067)
+                                .switchIfEmpty(Maybe.just(Locale.ENGLISH))
+                                .map(builder::withLocale))
                         .map(PreviewBuilder::buildPreview));
     }
 
@@ -151,20 +173,11 @@ public class PreviewService implements InitializingBean {
         return theme;
     }
 
-    private Maybe<Locale> loadDefaultDictionary(Domain domain) {
-        // TODO load default locale using domain settings when available (GH#8067)
+    private Completable loadDictionaries(Domain domain) {
         return this.i18nDictionaryService.findAll(ReferenceType.DOMAIN, domain.getId())
-                .firstElement()
-                .map(Optional::ofNullable)
-                .switchIfEmpty(Maybe.just(Optional.empty()))
-                .map(optDictionary ->
-                        optDictionary
-                            .map(dict -> {
-                                this.graviteeMessageResolver.updateDictionary(dict);
-                                return dict;
-                            })
-                            .map(I18nDictionary::getLocale)
-                            .map(Locale::new)
-                            .orElse(Locale.ENGLISH));
+                .map(dict -> {
+                    this.graviteeMessageResolver.updateDictionary(dict);
+                    return dict;
+                }).ignoreElements();
     }
 }

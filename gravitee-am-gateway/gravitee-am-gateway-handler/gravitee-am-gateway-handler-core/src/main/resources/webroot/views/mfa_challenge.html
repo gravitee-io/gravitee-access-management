@@ -31,17 +31,18 @@
             <span th:if="${factor.factorType.type == 'CALL'}" th:text="#{mfa_challenge.call}"/>
             <span th:if="${factor.factorType.type == 'EMAIL'}" th:text="#{mfa_challenge.email}"/>
             <span th:if="${factor.factorType.type == 'FIDO2'}" th:text="#{mfa_challenge.fido}"/>
+            <span th:if="${factor.factorType.type == 'RECOVERY CODE'}" th:text="#{mfa_challenge.recovery.code}"/>
         </div>
     </div>
 
     <div class="section">
         <form id="form" role="form" th:action="${action}" method="post" class="form">
             <div th:if="${factor.factorType.type != 'FIDO2'}">
-                <input class="input-field challenge-input" type="text" id="code" name="code" required autocomplete="off"/>
+                <input class="input-field challenge-input" type="text" id="code" autofocus="true" placeholder="______" name="code" required autocomplete="off"/>
             </div>
 
-            <div th:if="${error}" class="button error-text">
-                <span class="description">
+            <div th:if="${error}" class="item error-text">
+                <span>
                     <span class="error" th:text="${error}"></span>
                     <small th:text="*{error_description}?: #{mfa_challenge.error}"></small>
                 </span>
@@ -68,10 +69,6 @@
     </div>
 </div>
 
-<!--[if lt IE 10]>
-<script th:src="@{assets/js/placeholder.js}"></script>
-<![endif]-->
-<script th:src="@{../assets/material/material.min.js}"></script>
 <script th:src="@{../assets/js/jquery-3.5.1.min.js}"></script>
 <script th:if="${factor.factorType.type == 'FIDO2'}" th:src="@{../assets/js/webauthn.auth-v2.js}"></script>
 <script th:if="${factor.factorType.type == 'FIDO2'}" th:src="@{../assets/js/webauthn-fido2-login.js}"></script>

@@ -9,7 +9,7 @@ const w = new WebAuthn({
 });
 
 const displayMessage = message => {
-    errorElement.getElementsByClassName('error_description')[0].innerHTML = message;
+    errorElement.getElementsByClassName('error_description')[0].textContent = message;
     errorElement.style.display = 'block';
 };
 

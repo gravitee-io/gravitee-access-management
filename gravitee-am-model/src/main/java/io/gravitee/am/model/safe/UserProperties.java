@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.model.safe;
 
+import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.oidc.idtoken.Claims;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.model.Role;
@@ -78,7 +79,17 @@ public class UserProperties {
 
         this.additionalInformation = claims; // use same ref as claims for additionalInfo to avoid regression on templates that used the User object before
         this.source = user.getSource();
-        this.preferredLanguage = user.getPreferredLanguage();
+        this.preferredLanguage = evaluatePreferredLanguage(user);
+    }
+
+    private String evaluatePreferredLanguage(User user) {
+        if (user.getPreferredLanguage() == null) {
+            // fall back to OIDC standard claims
+            if (user.getAdditionalInformation() != null && user.getAdditionalInformation().get(StandardClaims.LOCALE) != null) {
+                return (String) user.getAdditionalInformation().get(StandardClaims.LOCALE);
+            }
+        }
+        return user.getPreferredLanguage();
     }
 
     public String getId() {

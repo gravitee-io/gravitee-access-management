@@ -61,10 +61,14 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import javax.servlet.Filter;
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static io.gravitee.am.management.handlers.management.api.authentication.csrf.CookieCsrfSignedTokenRepository.DEFAULT_CSRF_HEADER_NAME;
 import static java.util.Arrays.asList;
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -75,6 +79,9 @@ import static java.util.Arrays.asList;
 @ComponentScan("io.gravitee.am.management.handlers.management.api.authentication")
 public class SecurityConfiguration {
 
+    public static final String HTTP_CSP_ENABLED = "http.csp.enabled";
+    public static final String DEFAULT_CSP_DIRECTIVE = "default-src self;";
+    public static final String HTTP_CSP_DIRECTIVES = "http.csp.directives[%d]";
     @Autowired
     private Environment environment;
 
@@ -207,11 +214,41 @@ public class SecurityConfiguration {
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 
             csrf(http);
+            csp(http);
         }
 
         @Override
         public void configure(WebSecurity web) {
             web.ignoring().antMatchers("/swagger.json");
+        }
+
+        private void csp(HttpSecurity security) throws Exception {
+            if(environment.getProperty(HTTP_CSP_ENABLED, Boolean.class, false)) {
+                final List<String> directives = getDirectives();
+                if (directives.isEmpty()) {
+                    directives.add(DEFAULT_CSP_DIRECTIVE);
+                }
+                security.headers()
+                        .contentSecurityPolicy(directives.stream()
+                                .map(directive -> directive.trim().endsWith(";") ? directive : directive + ";")
+                                .collect(Collectors.joining(" ")));
+            }
+        }
+
+        private List<String> getDirectives() {
+            final List<String> directives = new ArrayList<>();
+            String value = null;
+            int i = 0;
+            do {
+                String propertyKey = String.format(HTTP_CSP_DIRECTIVES, i);
+                value = environment.getProperty(propertyKey, String.class);
+                if (nonNull(value)) {
+                    directives.add(value);
+                    i++;
+                }
+            } while (nonNull(value));
+
+            return directives;
         }
     }
 
@@ -227,6 +264,7 @@ public class SecurityConfiguration {
             return security.csrf().disable();
         }
     }
+
 
     @Bean
     public ManagementAuthenticationProvider userAuthenticationProvider() {

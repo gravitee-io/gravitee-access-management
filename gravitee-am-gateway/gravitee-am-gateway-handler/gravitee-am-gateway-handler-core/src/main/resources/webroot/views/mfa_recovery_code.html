@@ -35,8 +35,8 @@
             </div>
         </div>
 
-        <div class="item">
-            <span class="deep-blue recovery-code-msg" th:text="#{mfa_recovery.info}"/>
+        <div class="box center">
+            <span class="deep-blue" th:text="#{mfa_recovery.info}"/>
         </div>
 
         <div class="section">
@@ -50,10 +50,7 @@
         </form>
     </div>
 </div>
-<!--[if lt IE 10]>
-<script th:src="@{assets/js/placeholder.js}"></script>
-<![endif]-->
-<script th:src="@{../assets/material/material.min.js}"></script>
+
 <script th:src="@{../assets/js/jquery-3.5.1.min.js}"></script>
 <script th:src="@{../assets/js/jspdf.umd.min.js}"></script>
 <script th:inline="javascript" th:attr="nonce=${script_inline_nonce}">
