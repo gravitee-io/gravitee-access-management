@@ -45,6 +45,10 @@ public class LoginSettings {
      */
     private boolean passwordlessEnabled;
     /**
+     * Enable/Disable passwordless (WebAuthn) remember device feature
+     */
+    private boolean passwordlessRememberDeviceEnabled;
+    /**
      * Enable/Disable hide login form
      */
     private boolean hideForm;
@@ -62,6 +66,7 @@ public class LoginSettings {
         this.registerEnabled = other.registerEnabled;
         this.rememberMeEnabled = other.rememberMeEnabled;
         this.passwordlessEnabled = other.passwordlessEnabled;
+        this.passwordlessRememberDeviceEnabled = other.passwordlessRememberDeviceEnabled;
         this.hideForm = !other.identifierFirstEnabled && other.hideForm;
         this.identifierFirstEnabled = other.identifierFirstEnabled;
     }
@@ -104,6 +109,14 @@ public class LoginSettings {
 
     public void setPasswordlessEnabled(boolean passwordlessEnabled) {
         this.passwordlessEnabled = passwordlessEnabled;
+    }
+
+    public boolean isPasswordlessRememberDeviceEnabled() {
+        return passwordlessRememberDeviceEnabled;
+    }
+
+    public void setPasswordlessRememberDeviceEnabled(boolean passwordlessRememberDeviceEnabled) {
+        this.passwordlessRememberDeviceEnabled = passwordlessRememberDeviceEnabled;
     }
 
     public boolean isHideForm() {
