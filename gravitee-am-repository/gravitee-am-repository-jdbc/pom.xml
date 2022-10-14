@@ -35,7 +35,7 @@
 
         <jdbc-postgresql.version>42.2.25</jdbc-postgresql.version>
         <jdbc-mssql.version>7.4.1.jre8</jdbc-mssql.version>
-        <jdbc-mysql.version>8.0.29</jdbc-mysql.version>
+        <jdbc-mysql.version>8.0.31</jdbc-mysql.version>
         <jdbc-mariadb.version>2.4.0</jdbc-mariadb.version>
 
         <dozer.version>6.5.2</dozer.version>
