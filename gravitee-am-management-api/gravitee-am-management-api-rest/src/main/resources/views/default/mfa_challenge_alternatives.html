@@ -31,75 +31,74 @@
             <div th:each="factor,factIter : ${factors}">
                 <div th:if="${factor.factorType == 'TOTP'}" class="radio-card">
                     <div class="card-content">
-                        <div class="radio">
+                        <span class="radio">
                             <input type="radio" th:id="'list-factor-' + ${factor.id}" th:name="factorId" th:value="${factor.id}" class="otp"/>
-                        </div>
-                        <div class="radio-detail">
+                        </span>
+                        <span class="radio-detail">
                             <span class="enroll-name" th:text="#{mfa.otp}"/>
                             <span class="enroll-description" th:text="#{mfa_alternative.otp}"/>
-                        </div>
+                        </span>
                     </div>
                 </div>
 
                 <div th:if="${factor.factorType == 'SMS' || factor.factorType == 'CALL'}" class="radio-card">
                     <div class="card-content">
-                        <div class="radio">
+                        <span class="radio">
                             <input type="radio" th:id="'list-factor-' + ${factor.id}" th:name="factorId" th:value="${factor.id}" class="sms"/>
-                        </div>
-                        <div class="radio-detail">
+                        </span>
+                        <span class="radio-detail">
                             <span class="enroll-name" th:text="#{mfa.sms}"/>
                             <span class="enroll-description" th:text="#{mfa_alternative.sms}"/>
-                        </div>
+                        </span>
                     </div>
                 </div>
 
                 <div th:if="${factor.factorType == 'EMAIL'}" class="radio-card">
                     <div class="card-content">
-                        <div class="radio">
+                        <span class="radio">
                             <input type="radio" th:id="'list-factor-' + ${factor.id}" th:name="factorId" th:value="${factor.id}" class="email"/>
-                        </div>
-                        <div class="radio-detail">
+                        </span>
+                        <span class="radio-detail">
                             <span class="enroll-name" th:text="#{mfa.email}"/>
                             <span class="enroll-description" th:text="#{mfa_alternative.email}"/>
-                        </div>
+                        </span>
                     </div>
                 </div>
 
                 <div th:if="${factor.factorType == 'HTTP'}" class="radio-card">
                     <div class="card-content">
-                        <div class="radio">
+                        <span class="radio">
                             <input type="radio" th:id="'list-factor-' + ${factor.id}" th:name="factorId" th:value="${factor.id}" class="http"/>
-                        </div>
-                        <div class="radio-detail">
+                        </span>
+                        <span class="radio-detail">
                             <span class="enroll-name" th:text="#{mfa.http}"/>
                             <span class="enroll-description" th:text="#{mfa_alternative.http}"/>
-                        </div>
+                        </span>
                     </div>
                 </div>
 
                 <div th:if="${factor.factorType == 'FIDO2'}" class="radio-card">
                     <div class="card-content">
-                        <div class="radio">
+                        <span class="radio">
                             <input type="radio" th:id="'list-factor-' + ${factor.id}" th:name="factorId" th:value="${factor.id}" class="fido2"/>
-                        </div>
-                        <div class="radio-detail">
+                        </span>
+                        <span class="radio-detail">
                             <span class="enroll-name" th:text="#{mfa.fido}"/>
                             <span class="enroll-description" th:text="#{mfa_alternative.fido}"/>
-                        </div>
+                        </span>
                     </div>
                 </div>
 
                 <div th:if="${factor.factorType == 'RECOVERY CODE'}" class="radio-card">
-                    <div class="card-content">
-                        <div class="radio">
-                            <!--<input type="radio" name="fido2" value="fido2">-->
+                    <span class="card-content">
+                        <span class="radio">
                             <input type="radio" th:id="'list-factor-' + ${factor.id}" th:name="factorId" th:value="${factor.id}" class="recovery-code"/>
-                        </div>
-                        <div class="radio-detail">
+                        </span>
+                        <span class="radio-detail">
                             <span class="enroll-name" th:text="#{mfa.recovery.code}"/>
                             <span class="enroll-description" th:text="#{mfa_alternative.recovery.code}"/>
-                        </div>
-                    </div>
+                        </span>
+                    </span>
                 </div>
             </div>
 
@@ -112,47 +111,24 @@
         </form>
     </div>
 </div>
-<!--[if lt IE 10]>
-<script th:src="@{assets/js/placeholder.js}"></script>
-<![endif]-->
-<script th:src="@{../../assets/material/material.min.js}"></script>
 <script th:src="@{../../assets/js/jquery-3.5.1.min.js}"></script>
 <script th:inline="javascript" th:attr="nonce=${script_inline_nonce}">
-    $(function() {
-        const nextBtn = $("#next");
-        nextBtn.prop('disabled', true);
-        nextBtn.addClass("button-disabled")
+    // init next button
+    const nextBtn = document.getElementById('next');
+    nextBtn.disabled = true;
+    nextBtn.classList.add('button-disabled');
 
-        const $radioButtons = $("input:radio");
-        let selectedItem;
-        $radioButtons.on("click", function () {
-            const $selected = $(this);
-            selectedItem= $selected.attr('id');
-            $radioButtons.each(function () {
-                if ($(this).attr('id') !== selectedItem) {
-                    $(this).prop('checked', false);
-                } else {
-                    $('.radio-card').removeClass('active');
-
-                    const selectedCard = $selected.closest('.radio-card');
-                    selectedCard.addClass('active');
-                }
-            });
-
-            nextBtn.prop('disabled', false);
-            nextBtn.removeClass("button-disabled")
-        });
-
-        nextBtn.on("click", function (){
-            $("#enrollments").hide();
-            $(".hide-enrollment-item").hide();
-
-            $("#enrollment-title").text("Multi-factor Authentication");
-            $("#enrollment-description").text("Configure multi-factor authentication by choosing the method to validate your identity")
-
-            $("#" + selectedItem).show();
-        });
-    });
+    // radio buttons function
+    const inputRadios = document.querySelectorAll('input[type="radio"]');
+    inputRadios.forEach(el => el.addEventListener('click', function () {
+        // remove active class for every radio cards
+        [...document.querySelectorAll('.radio-card')].forEach(el1 => el1.classList.remove('active'));
+        // add active class for the selected radio card
+        el.closest('.radio-card').classList.add('active');
+        // enable next button if at least one factor option is enabled
+        nextBtn.disabled = false;
+        nextBtn.classList.remove('button-disabled');
+    }));
 </script>
 </body>
 </html>

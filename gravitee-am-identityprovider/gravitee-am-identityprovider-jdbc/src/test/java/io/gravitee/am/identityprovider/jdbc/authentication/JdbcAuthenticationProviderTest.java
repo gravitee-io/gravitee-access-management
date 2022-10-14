@@ -131,6 +131,64 @@ public abstract class JdbcAuthenticationProviderTest {
     }
 
     @Test
+    public void shouldLoadUserByUsername_authentication_multipleMatch_validPassword() {
+        TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
+            private final AuthenticationContext authenticationContext = mock(AuthenticationContext.class);
+
+            @Override
+            public Object getCredentials() {
+                return "user02";
+            }
+
+            @Override
+            public Object getPrincipal() {
+                return "common@acme.com";
+            }
+
+            @Override
+            public AuthenticationContext getContext() {
+                doReturn(authenticationContext).when(authenticationContext).set(anyString(), anyString());
+                doReturn(getPrincipal().toString()).when(authenticationContext).get(getPrincipal().toString());
+                return authenticationContext;
+            }
+        }).test();
+
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(u -> "user02".equals(u.getUsername()));
+    }
+
+    @Test
+    public void shouldLoadUserByUsername_authentication_multipleMatch_invalidPassword() {
+        TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
+            private final AuthenticationContext authenticationContext = mock(AuthenticationContext.class);
+
+            @Override
+            public Object getCredentials() {
+                return "invalidpwd";
+            }
+
+            @Override
+            public Object getPrincipal() {
+                return "common@acme.com";
+            }
+
+            @Override
+            public AuthenticationContext getContext() {
+                doReturn(authenticationContext).when(authenticationContext).set(anyString(), anyString());
+                doReturn(getPrincipal().toString()).when(authenticationContext).get(getPrincipal().toString());
+                return authenticationContext;
+            }
+        }).test();
+
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertError(BadCredentialsException.class);
+    }
+
+    @Test
     public void shouldLoadUserByUsername_authentication_badCredentials() {
         TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
 

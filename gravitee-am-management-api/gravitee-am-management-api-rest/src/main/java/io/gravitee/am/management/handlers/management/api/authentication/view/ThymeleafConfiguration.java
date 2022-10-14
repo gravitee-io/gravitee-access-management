@@ -15,13 +15,12 @@
  */
 package io.gravitee.am.management.handlers.management.api.authentication.view;
 
-import io.gravitee.am.model.Organization;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.ViewResolver;
 import org.thymeleaf.spring5.SpringTemplateEngine;
 import org.thymeleaf.spring5.view.ThymeleafViewResolver;
-import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
+import org.thymeleaf.standard.StandardDialect;
 import org.thymeleaf.templateresolver.ITemplateResolver;
 
 /**
@@ -35,6 +34,7 @@ public class ThymeleafConfiguration {
     public SpringTemplateEngine getTemplateEngine() {
         SpringTemplateEngine templateEngine = new SpringTemplateEngine();
         templateEngine.setEnableSpringELCompiler(true);
+        templateEngine.setDialect(new StandardDialect());
 
         // set template resolvers
         TemplateResolver overrideTemplateResolver = (TemplateResolver) overrideTemplateResolver();

@@ -20,15 +20,18 @@ import io.gravitee.am.monitoring.metrics.Constants;
 import io.gravitee.am.monitoring.metrics.GaugeHelper;
 import io.gravitee.am.service.EventService;
 import io.gravitee.common.event.EventManager;
+import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.util.AbstractMap;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BinaryOperator;
 
 import static java.util.Comparator.comparing;
@@ -54,6 +57,9 @@ public class SyncManager {
 
     private GaugeHelper eventsGauge = new GaugeHelper(Constants.METRICS_EVENTS_SYNC);
 
+    @Value("${services.sync.eventsTimeOutMillis:30000}")
+    private int eventsTimeOut = 30000;
+
     public void refresh() {
         logger.debug("Refreshing sync state...");
 
@@ -70,7 +76,12 @@ public class SyncManager {
 
         // search for events and compute them
         logger.debug("Events synchronization");
-        List<Event> events = eventService.findByTimeFrame(lastRefreshAt - lastDelay, nextLastRefreshAt).blockingGet();
+
+        Single<List<Event>> eventsProcessing = eventService.findByTimeFrame(lastRefreshAt - lastDelay, nextLastRefreshAt);
+        if (eventsTimeOut > 0) {
+            eventsProcessing = eventsProcessing.timeout(eventsTimeOut, TimeUnit.MILLISECONDS);
+        }
+        List<Event> events = eventsProcessing.blockingGet();
 
         if (events != null && !events.isEmpty()) {
             eventsGauge.updateValue(events.size());

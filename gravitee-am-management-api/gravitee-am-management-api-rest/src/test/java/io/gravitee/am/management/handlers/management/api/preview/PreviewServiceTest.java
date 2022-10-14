@@ -19,16 +19,19 @@ import io.gravitee.am.management.handlers.management.api.authentication.view.Tem
 import io.gravitee.am.management.handlers.management.api.model.PreviewRequest;
 import io.gravitee.am.management.handlers.management.api.model.PreviewResponse;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Form;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.Theme;
 import io.gravitee.am.service.DomainService;
+import io.gravitee.am.service.FormService;
 import io.gravitee.am.service.ThemeService;
 import io.gravitee.am.service.impl.I18nDictionaryService;
 import io.gravitee.am.service.impl.ThemeServiceImpl;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
+import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
 import org.junit.Before;
 import org.junit.Test;
@@ -40,6 +43,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.cache.StandardCacheManager;
 
+import java.util.Locale;
 import java.util.Set;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -70,6 +74,9 @@ public class PreviewServiceTest {
     @Mock
     private I18nDictionaryService i18nDictionaryService;
 
+    @Mock
+    private FormService formService;
+
     @Before
     public void init() throws Exception {
         templateEngine.setCacheManager(new StandardCacheManager());
@@ -77,8 +84,10 @@ public class PreviewServiceTest {
         templateEngine.setTemplateResolvers(Set.of(templateResolver));
         when(themeService.validate(any())).thenReturn(Completable.complete());
         when(themeService.sanitize(any())).thenAnswer(args -> args.getArguments()[0]);
+        ReflectionTestUtils.setField(previewService, "templatesDirectory", "src/test/resources");
         ReflectionTestUtils.setField(previewService, "templateEngine", templateEngine);
         ReflectionTestUtils.setField(previewService, "templateResolver", templateResolver);
+        previewService.afterPropertiesSet();
     }
 
     @Test
@@ -90,7 +99,7 @@ public class PreviewServiceTest {
         final PreviewRequest previewRequest = new PreviewRequest();
         previewRequest.setContent("<html lang=\"en\" xmlns:th=\"http://www.thymeleaf.org\"><head><style th:if=\"${theme.css}\" th:text=\"${theme.css}\"></style></head><body><span th:text=\"${client.name}\"></span></body></html>");
         previewRequest.setTemplate(Template.LOGIN.template());
-        final TestObserver<PreviewResponse> observer = previewService.previewDomainForm(DOMAIN_ID, previewRequest).test();
+        final TestObserver<PreviewResponse> observer = previewService.previewDomainForm(DOMAIN_ID, previewRequest, Locale.ENGLISH).test();
 
         observer.awaitTerminalEvent();
         observer.assertNoErrors();
@@ -112,7 +121,7 @@ public class PreviewServiceTest {
         final PreviewRequest previewRequest = new PreviewRequest();
         previewRequest.setContent("<html lang=\"en\" xmlns:th=\"http://www.thymeleaf.org\"><head><style th:if=\"${theme.css}\" th:text=\"${theme.css}\"></style></head><body><span th:text=\"${client.name}\"></span></body></html>");
         previewRequest.setTemplate(Template.LOGIN.template());
-        final TestObserver<PreviewResponse> observer = previewService.previewDomainForm(DOMAIN_ID, previewRequest).test();
+        final TestObserver<PreviewResponse> observer = previewService.previewDomainForm(DOMAIN_ID, previewRequest, Locale.ENGLISH).test();
 
         observer.awaitTerminalEvent();
         observer.assertNoErrors();
@@ -144,7 +153,7 @@ public class PreviewServiceTest {
         previewRequest.setContent("<html lang=\"en\" xmlns:th=\"http://www.thymeleaf.org\"><head><style th:if=\"${theme.css}\" th:text=\"${theme.css}\"></style></head><body><span th:text=\"${client.name}\"></span></body></html>");
         previewRequest.setTemplate(Template.LOGIN.template());
         previewRequest.setTheme(overrideTheme);
-        final TestObserver<PreviewResponse> observer = previewService.previewDomainForm(DOMAIN_ID, previewRequest).test();
+        final TestObserver<PreviewResponse> observer = previewService.previewDomainForm(DOMAIN_ID, previewRequest, Locale.ENGLISH).test();
 
         observer.awaitTerminalEvent();
         observer.assertNoErrors();
@@ -164,9 +173,38 @@ public class PreviewServiceTest {
         final PreviewRequest previewRequest = new PreviewRequest();
         previewRequest.setContent("<html lang=\"en\" xmlns:th=\"http://www.thymeleaf.org\"><body><span th:text=\"${client.unknown}\"></span></body></html>");
         previewRequest.setTemplate(Template.LOGIN.template());
-        final TestObserver<PreviewResponse> observer = previewService.previewDomainForm(DOMAIN_ID, previewRequest).test();
+        final TestObserver<PreviewResponse> observer = previewService.previewDomainForm(DOMAIN_ID, previewRequest, Locale.ENGLISH).test();
 
         observer.awaitTerminalEvent();
         observer.assertError(PreviewException.class);
+    }
+
+
+    @Test
+    public void shouldRenderDefaultDomainForm() {
+        when(domainService.findById(DOMAIN_ID)).thenReturn(Maybe.just(new Domain()));
+        final Theme theme = new Theme();
+        theme.setPrimaryTextColorHex("#FFFFFF");
+        theme.setPrimaryButtonColorHex("#FFFFFF");
+        theme.setSecondaryTextColorHex("#FFFFFF");
+        theme.setSecondaryButtonColorHex("#FFFFFF");
+        when(themeService.findByReference(ReferenceType.DOMAIN, DOMAIN_ID)).thenReturn(Maybe.just(theme));
+        final Form defaultForm = new Form();
+        defaultForm.setContent("<html lang=\"en\" xmlns:th=\"http://www.thymeleaf.org\"><head><style th:if=\"${theme.css}\" th:text=\"${theme.css}\"></style></head><body><span th:text=\"${client.name}\"></span><span>default</span></body></html>");
+        when(formService.getDefaultByDomainAndTemplate(DOMAIN_ID, Template.LOGIN.template())).thenReturn(Single.just(defaultForm));
+        when(i18nDictionaryService.findAll(any(), any())).thenReturn(Flowable.empty());
+
+        final PreviewRequest previewRequest = new PreviewRequest();
+        previewRequest.setContent(null); // content is null, can happen when the custom form is disabled at UI level
+        previewRequest.setTemplate(Template.LOGIN.template());
+        final TestObserver<PreviewResponse> observer = previewService.previewDomainForm(DOMAIN_ID, previewRequest, Locale.ENGLISH).test();
+
+        observer.awaitTerminalEvent();
+        observer.assertNoErrors();
+        observer.assertValue(response -> response.getContent() != null &&
+                ("<html lang=\"en\"><head><style>:root {--primary-background-color:#FFFFFF;--primary-foreground-color:#FFFFFF;" +
+                        "--secondary-background-color:#FFFFFF;--secondary-foreground-color:#FFFFFF;}" +
+                        "</style></head><body><span>PreviewApp</span><span>default</span></body></html>")
+                        .equals(response.getContent()));
     }
 }

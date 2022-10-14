@@ -32,7 +32,7 @@
     </div>
     <div class="section">
         <form class="form" role="form" th:id="confirmationForm" th:action="${action}" method="post">
-            <div class="item" th:each="scope : ${scopes}">
+            <div class="box center" th:each="scope : ${scopes}">
                 <div>
                     <span th:text="(${scope.name})
                     ? ${scope.name} + ' (' + ${scope.key} + ')'
@@ -44,7 +44,7 @@
                 <input type="hidden" th:name="'scope.'+${scope.key}" value="true"/>
             </div>
 
-            <span class="disclaimer" th:text="${client.clientName} + ' ' + #{oauth.disclaimer}"/>
+            <span class="header-description start" th:text="${client.clientName} + ' ' + #{oauth.disclaimer}"></span>
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
 
             <div>
@@ -57,12 +57,5 @@
     </div>
 
 </div>
-
-<!-- Javascript -->
-
-<!--[if lt IE 10]>
-<script th:src="@{assets/js/placeholder.js}"></script>
-<![endif]-->
-<script th:src="@{assets/material/material.min.js}"></script>
 </body>
 </html>

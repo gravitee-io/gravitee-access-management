@@ -22,7 +22,6 @@ import io.gravitee.am.repository.jdbc.oauth2.api.spring.SpringRefreshTokenReposi
 import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
 import io.gravitee.am.repository.oauth2.model.RefreshToken;
 import io.reactivex.Completable;
-import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +29,6 @@ import org.springframework.data.relational.core.query.Query;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 import static java.time.ZoneOffset.UTC;
 import static org.springframework.data.relational.core.query.Criteria.where;
@@ -69,14 +67,6 @@ public class JdbcRefreshTokenRepository extends AbstractJdbcRepository implement
         LOGGER.debug("Create refreshToken with id {}", refreshToken.getId());
         return monoToSingle(template.insert(toJdbcEntity(refreshToken))).map(this::toEntity)
                 .doOnError((error) -> LOGGER.error("Unable to create refreshToken with id {}", refreshToken.getId(), error));
-    }
-
-    @Override
-    public Completable bulkWrite(List<RefreshToken> refreshTokens) {
-        return Flowable.fromIterable(refreshTokens)
-                .flatMap(refreshToken -> create(refreshToken).toFlowable())
-                .ignoreElements()
-                .doOnError(error -> LOGGER.error("Unable to bulk load refresh tokens", error));
     }
 
     @Override

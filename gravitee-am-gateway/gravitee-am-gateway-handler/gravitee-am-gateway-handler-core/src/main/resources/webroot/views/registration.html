@@ -78,7 +78,7 @@
                    th:id="${bot_detection_configuration.get('tokenParameterName')}"
                    th:name="${bot_detection_configuration.get('tokenParameterName')}" />
 
-            <div class="button error-text" th:switch="${warning}" th:if="${warning}">
+            <div class="item error-text" th:switch="${warning}" th:if="${warning}">
                 <span th:case="invalid_password_value" th:text="#{registration.error.invalid.password}"/>
                 <span th:case="invalid_user_information" th:text="#{registration.error.invalid.user}"/>
                 <span th:case="invalid_email" th:text="#{registration.error.invalid.email}"/>
@@ -115,15 +115,14 @@
             <span class="medium-font grey regular" th:text="#{registration.error.description}"/>
         </div>
     </div>
-    <div class="section">
-        <div class="medium-font red"><span th:text="#{registration.error.description.label}"/> <span th:text="*{error_description}?: ${error}"/></div>
+    <div class="item error-text">
+        <span>
+            <span class="error" th:text="#{registration.error.description.label}"></span>
+            <small th:text="*{error_description}?: ${error}"></small>
+        </span>
     </div>
 </div>
 
-<!--[if lt IE 10]>
-<script th:src="@{assets/js/placeholder.js}"></script>
-<![endif]-->
-<script th:src="@{assets/material/material.min.js}"></script>
 <script th:src="@{assets/js/jquery-3.5.1.min.js}"></script>
 <script th:inline="javascript" th:attr="nonce=${script_inline_nonce}">
 
@@ -157,6 +156,6 @@
 
     const passwordSettings = /*[[${passwordSettings}]]*/ null;
 </script>
-<script th:if="${error == null && success == null}" th:src="@{assets/js/password-validation.js}"></script>
+<script th:if="${error == null && success == null}" th:src="@{assets/js/password-validation-v2.js}"></script>
 </body>
 </html>

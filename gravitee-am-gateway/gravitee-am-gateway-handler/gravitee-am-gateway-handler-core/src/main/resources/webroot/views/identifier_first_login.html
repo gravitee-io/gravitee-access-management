@@ -35,11 +35,11 @@
     <div class="section">
         <form id="form" class="form" role="form" th:action="${action}" method="post">
             <div>
-                <input type="text" id="username" name="username" autofocus="autofocus" class="input-field" required />
+                <input type="text" id="username" name="username" th:value="${param.username}" autofocus="autofocus" th:placeholder="#{identifier_first.username.placeholder}" class="input-field" required />
             </div>
 
-            <div th:if="${error}" class="button error-text">
-                <span class="description">
+            <div th:if="${error}" class="item error-text">
+                <span>
                     <span class="error" th:text="${error}"></span>
                     <small th:text="*{error_description}?: #{identifier_first.error}"></small>
                 </span>
@@ -61,15 +61,11 @@
         <a th:if="${allowPasswordless}"
            th:href="${passwordlessAction}"
            class="button social">
-            <span class="description" th:text="#{identifier_first.passwordless}"></span>
+            <span th:text="#{identifier_first.passwordless}"></span>
         </a>
     </div>
 </div>
 
-<!--[if lt IE 10]>
-<script th:src="@{../assets/js/placeholder.js}"></script>
-<![endif]-->
-<script th:src="@{../assets/material/material.min.js}"></script>
 <script th:src="@{../assets/js/jquery-3.5.1.min.js}"></script>
 <script th:inline="javascript" th:attr="nonce=${script_inline_nonce}">
     $(function() {

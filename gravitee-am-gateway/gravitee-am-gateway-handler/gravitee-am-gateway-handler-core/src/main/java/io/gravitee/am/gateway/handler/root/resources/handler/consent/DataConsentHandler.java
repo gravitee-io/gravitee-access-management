@@ -20,6 +20,8 @@ import io.vertx.core.Handler;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
+import org.springframework.core.env.Environment;
+
 import java.util.List;
 
 import static io.gravitee.am.common.utils.ConstantKeys.USER_CONSENT_IP_LOCATION;
@@ -35,6 +37,11 @@ import static java.util.Optional.ofNullable;
  */
 public class DataConsentHandler implements Handler<RoutingContext> {
 
+    public static final String CONFIG_KEY_IMPLICIT_CONSENT_IP = "consent.ip";
+    public static final String CONFIG_KEY_IMPLICIT_CONSENT_USER_AGENT = "consent.user-agent";
+    private final boolean IMPLICIT_IP_CONSENT;
+    private final boolean IMPLICIT_USER_AGENT_CONSENT;
+
     public static final List<String> CONSENT_KEYS = List.of(
             USER_CONSENT_IP_LOCATION,
             USER_CONSENT_USER_AGENT
@@ -42,16 +49,26 @@ public class DataConsentHandler implements Handler<RoutingContext> {
 
     private static final String DATA_CONSENT_ON = "on";
 
+    public DataConsentHandler(Environment environment) {
+        IMPLICIT_IP_CONSENT = environment.getProperty(CONFIG_KEY_IMPLICIT_CONSENT_IP, boolean.class, false);
+        IMPLICIT_USER_AGENT_CONSENT = environment.getProperty(CONFIG_KEY_IMPLICIT_CONSENT_USER_AGENT, boolean.class, false);
+    }
+
     @Override
     public void handle(RoutingContext context) {
         final HttpServerRequest request = context.request();
-        CONSENT_KEYS.forEach(key -> ofNullable(request.params())
-                .filter(params -> params.contains(key))
-                .ifPresentOrElse(
-                        params -> context.session().put(key, DATA_CONSENT_ON.equalsIgnoreCase(request.params().get(key))),
-                        () -> handleBody(context, key)
-                )
-        );
+        if (context.session() != null) {
+            context.session().put(USER_CONSENT_IP_LOCATION, IMPLICIT_IP_CONSENT);
+            context.session().put(USER_CONSENT_USER_AGENT, IMPLICIT_USER_AGENT_CONSENT);
+
+            CONSENT_KEYS.forEach(key -> ofNullable(request.params())
+                    .filter(params -> params.contains(key))
+                    .ifPresentOrElse(
+                            params -> context.session().put(key, DATA_CONSENT_ON.equalsIgnoreCase(request.params().get(key))),
+                            () -> handleBody(context, key)
+                    )
+            );
+        }
         context.next();
     }
 

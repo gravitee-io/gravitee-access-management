@@ -50,6 +50,19 @@
             <groupId>com.infobip</groupId>
             <artifactId>infobip-api-java-client</artifactId>
             <version>3.0.1</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>gson</artifactId>
+                    <groupId>com.google.code.gson</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <!-- import GSON to fix vuln in gson dep -->
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>${gson-version}</version>
         </dependency>
 
         <!-- rxjava -->

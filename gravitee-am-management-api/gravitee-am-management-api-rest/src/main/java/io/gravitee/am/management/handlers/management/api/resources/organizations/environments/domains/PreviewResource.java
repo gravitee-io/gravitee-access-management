@@ -39,7 +39,10 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
+import java.util.Locale;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -70,12 +73,19 @@ public class PreviewResource extends AbstractResource {
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domainId,
             @Valid @NotNull final PreviewRequest request,
+            @Context HttpHeaders headers,
             @Suspended final AsyncResponse response) {
+
+        final var locale = headers
+                .getAcceptableLanguages()
+                .stream()
+                .filter(l -> !"*".equalsIgnoreCase(l.getLanguage()))
+                .findFirst().orElse(Locale.ENGLISH);
 
         checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_THEME, Acl.READ)
                 .andThen(domainService.findById(domainId)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
-                        .flatMap(domain -> this.previewService.previewDomainForm(domainId, request))
+                        .flatMap(domain -> this.previewService.previewDomainForm(domainId, request, locale))
                         .map(preview -> Response.ok(preview).build()))
                 .subscribe(response::resume, response::resume);
     }

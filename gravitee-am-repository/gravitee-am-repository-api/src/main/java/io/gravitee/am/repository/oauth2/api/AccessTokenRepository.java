@@ -18,8 +18,6 @@ package io.gravitee.am.repository.oauth2.api;
 import io.gravitee.am.repository.oauth2.model.AccessToken;
 import io.reactivex.*;
 
-import java.util.List;
-
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -46,13 +44,6 @@ public interface AccessTokenRepository {
      * @return acknowledge of the operation
      */
     Completable delete(String token);
-
-    /**
-     * Bulk insert of access tokens
-     * @param accessTokens access token to store
-     * @return acknowledge of the operation
-     */
-    Completable bulkWrite(List<AccessToken> accessTokens);
 
     /**
      * Retrieve access tokens stored against the provided client id.

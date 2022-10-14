@@ -38,6 +38,7 @@ public class FileSystemDictionaryProviderTest {
     public static Collection<Object[]> params() {
         return Arrays.asList(
                 new Object[] { "src/test/resources/i18n_default"},
+                new Object[] { "src/test/resources/i18n_default_no_en"},
                 new Object[] { "src/test/resources/i18n_no_default"}
         );
     }
@@ -57,13 +58,14 @@ public class FileSystemDictionaryProviderTest {
 
     @Test
     public void should_Fallback_ToDefault() {
-        Assume.assumeTrue(this.directory.endsWith("i18n_default"));
+        Assume.assumeTrue(this.directory.endsWith("i18n_default_no_en"));
         Properties prop = this.directoryProvider.getDictionaryFor(new Locale("it"));
         Assert.assertEquals("Should contains the default message", "value-default", prop.getProperty("key"));
     }
 
     @Test
     public void should_Match_Most_Specific_Locale_enGB() {
+        Assume.assumeFalse(this.directory.endsWith("i18n_default_no_en"));
         Properties prop = this.directoryProvider.getDictionaryFor(new Locale("en", "GB"));
         Assert.assertEquals("Should contains the en-GB message", "value-en-GB", prop.getProperty("key"));
         Assert.assertTrue("Should contains the en-GB multiline message", prop.getProperty("key.multi.lines").contains("lines")

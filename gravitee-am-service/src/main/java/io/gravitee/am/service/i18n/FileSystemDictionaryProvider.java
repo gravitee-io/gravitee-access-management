@@ -87,6 +87,7 @@ public class FileSystemDictionaryProvider implements DictionaryProvider {
         if (locale != null) {
             return ofNullable(this.propertiesMap.get(locale.toString()))
                     .or(() -> ofNullable(this.propertiesMap.get(locale.getLanguage())))
+                    .or(() -> ofNullable(this.propertiesMap.get(Locale.ENGLISH.getLanguage())))
                     .orElse(this.propertiesMap.get(DEFAULT_LOCALE));
         }
         return this.propertiesMap.get(DEFAULT_LOCALE);
@@ -94,6 +95,6 @@ public class FileSystemDictionaryProvider implements DictionaryProvider {
 
     @Override
     public boolean hasDictionaryFor(Locale locale) {
-        return this.propertiesMap.containsKey(locale.toString());
+        return this.propertiesMap.containsKey(locale.toString()) || this.propertiesMap.containsKey(locale.getLanguage());
     }
 }

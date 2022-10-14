@@ -42,12 +42,14 @@
                        th:value="${param.username}"
                        autofocus="autofocus"
                        required
+                       th:autofocus="${param.username == null}"
                        th:readonly="${param.username != null}" />
             </div>
 
             <div class="form-field">
                 <input class="input-field" type="password" id="password" name="password"
                        th:placeholder="#{login.label.password}"
+                       th:autofocus="${param.username != null}"
                        required />
                 <button type="button" class="icon-button icon-input-field toggle-password">
                     <span class="icons primary">visibility_off</span>
@@ -58,8 +60,8 @@
                 <a th:href="${forgotPasswordAction}" th:text="#{login.forgot.password}" />
             </div>
 
-            <div th:if="${error}" class="button error-text">
-                <span class="description">
+            <div th:if="${error}" class="item error-text">
+                <span>
                     <span class="error" th:text="${error}"></span>
                     <small th:text="*{error_description}?: #{login.error.default.message}"></small>
                 </span>
@@ -78,39 +80,27 @@
     </div>
 
     <div class="section">
-        <a th:if="${identifierFirstLoginEnabled}"
-           th:href="${backToLoginIdentifierAction}"
-           class="button social">
-            <span class="description" th:text="#{login.switch.account}"/>
+        <a th:if="${identifierFirstLoginEnabled}" th:href="${backToLoginIdentifierAction}">
+            <span class="icons">arrow_back</span>
+            <span th:text="#{login.switch.account}"/>
         </a>
-
-        <a th:if="${allowPasswordless && !identifierFirstLoginEnabled}"
+        <a th:if="${allowPasswordless && (!identifierFirstLoginEnabled || hideLoginForm)}"
            th:href="${passwordlessAction}"
            class="button social">
-            <span class="description" th:text="#{login.passwordless}"/>
+            <span th:text="#{login.passwordless}"/>
         </a>
+    </div>
 
+    <div th:if="${socialProviders and !socialProviders.empty}" class="section">
         <a th:href="${authorizeUrls.get(socialProvider.getId())}"
-           th:class="'button social btn-' + ${socialProvider.getType()}"
+           th:class="${socialProvider.getType()} != 'franceconnect' ? 'button social btn-' + ${socialProvider.getType()} : ''"
            th:each="socialProvider : ${socialProviders}">
             <img th:if="${socialProvider.getType()} == 'franceconnect'" th:src="@{assets/images/FCboutons-10.svg}" height="70">
-            <span class="description" th:if="${socialProvider.getType()} != 'franceconnect'">
-                <span th:text="#{login.social.before} + ' ' + ${socialProvider.getName()}"></span>
-            </span>
-        </a>
-
-        <a th:if="${allowPasswordless && hideLoginForm}"
-           th:href="${passwordlessAction}"
-           class="button social">
-            <span class="description" th:text="#{login.passwordless}"/>
+            <span th:if="${socialProvider.getType()} != 'franceconnect'" th:text="#{login.social.before} + ' ' + ${socialProvider.getName()}"></span>
         </a>
     </div>
 </div>
 
-<!--[if lt IE 10]>
-<script th:src="@{assets/js/placeholder.js}"></script>
-<![endif]-->
-<script th:src="@{assets/material/material.min.js}"></script>
 <script th:src="@{assets/js/jquery-3.5.1.min.js}"></script>
 <script th:inline="javascript" th:attr="nonce=${script_inline_nonce}">
     $(document).ready(function () {

@@ -53,7 +53,6 @@
           </ngx-datatable>
         </div>
         <div *hasPermission="['domain_i18n_dictionary_create']" fxLayoutGap="10px">
-          <button mat-raised-button color="primary" type="submit" (click)="saveLanguages()" [disabled]="!formChanged" data-testid="textSaveLanguagesBtn">SAVE CHANGES</button>
           <button mat-stroked-button type="submit" (click)="addLanguage()" data-testid="textAddLanguageButton">ADD A NEW LANGUAGE</button>
         </div>
       </div>
@@ -81,14 +80,14 @@
                              [rowHeight]="50"
                              [messages]="{emptyMessage:'There are no translations'}"
                              [rows]="translations">
-                <ngx-datatable-column name="Key" [flexGrow]="4" minWidth="300">
+                <ngx-datatable-column name="Key" [flexGrow]="4">
                   <ng-template let-row="row" ngx-datatable-cell-template>
-                    <input matInput type="text" [(ngModel)]="row.key">
+                    <input matInput type="text" [(ngModel)]="row.key" (input)="enableSaveChangeButton()">
                   </ng-template>
                 </ngx-datatable-column>
-                <ngx-datatable-column name="Value" [flexGrow]="6" minWidth="600" prop="message">
+                <ngx-datatable-column name="Value" [flexGrow]="6"  prop="message">
                   <ng-template let-row="row" ngx-datatable-cell-template>
-                    <input matInput type="text" [(ngModel)]="row.message">
+                    <input matInput type="text" [(ngModel)]="row.message" (input)="enableSaveChangeButton()">
                   </ng-template>
                 </ngx-datatable-column>
                 <ngx-datatable-column name="" [flexGrow]="1" *hasPermission="['domain_i18n_dictionary_update']" maxWidth="50">
