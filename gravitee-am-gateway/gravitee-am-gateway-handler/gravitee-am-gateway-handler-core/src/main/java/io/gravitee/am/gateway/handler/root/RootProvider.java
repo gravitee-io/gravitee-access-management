@@ -35,6 +35,7 @@ import io.gravitee.am.gateway.handler.common.vertx.web.handler.XFrameHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.XSSHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieSessionHandler;
+import io.gravitee.am.gateway.handler.common.webauthn.WebAuthnCookieService;
 import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
 import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifierManager;
 import io.gravitee.am.gateway.handler.root.resources.auth.handler.SocialAuthHandler;
@@ -72,15 +73,7 @@ import io.gravitee.am.gateway.handler.root.resources.handler.client.ClientReques
 import io.gravitee.am.gateway.handler.root.resources.handler.consent.DataConsentHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.error.ErrorHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.geoip.GeoIpHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginCallbackFailureHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginCallbackOpenIDConnectFlowHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginCallbackParseHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginFailureHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginFormHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginHideFormHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginNegotiateAuthenticationHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginSelectionRuleHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginSocialAuthenticationHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.login.*;
 import io.gravitee.am.gateway.handler.root.resources.handler.loginattempt.LoginAttemptHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.rememberdevice.DeviceIdentifierHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.rememberdevice.RememberDeviceSettingsHandler;
@@ -98,10 +91,7 @@ import io.gravitee.am.gateway.handler.root.resources.handler.user.register.Regis
 import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterFailureHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterProcessHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterSubmissionRequestParseHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnAccessHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnLoginHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnRegisterHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnResponseHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.*;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
@@ -267,6 +257,9 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
     @Qualifier("gwMessageResolver")
     private GraviteeMessageResolver messageResolver;
 
+    @Autowired
+    private WebAuthnCookieService webAuthnCookieService;
+
     @Override
     protected void doStart() throws Exception {
         super.doStart();
@@ -309,6 +302,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         Handler<RoutingContext> deviceIdentifierHandler = new DeviceIdentifierHandler(deviceService);
         Handler<RoutingContext> userActivityHandler = new UserActivityHandler(userActivityService);
         Handler<RoutingContext> localeHandler = new LocaleHandler(messageResolver);
+        Handler<RoutingContext> loginPostWebAuthnHandler = new LoginPostWebAuthnHandler(webAuthnCookieService);
 
         // Root policy chain handler
         rootRouter.route()
@@ -356,6 +350,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(deviceIdentifierHandler)
                 .handler(userActivityHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.POST_LOGIN))
+                .handler(loginPostWebAuthnHandler)
                 .handler(new LoginPostEndpoint());
 
         rootRouter.route(PATH_LOGIN)
@@ -379,6 +374,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(loginCallbackParseHandler)
                 .handler(socialAuthHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.POST_LOGIN))
+                .handler(loginPostWebAuthnHandler)
                 .handler(loginCallbackEndpoint)
                 .failureHandler(loginCallbackFailureHandler);
         rootRouter.post(PATH_LOGIN_CALLBACK)
@@ -386,6 +382,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(loginCallbackParseHandler)
                 .handler(socialAuthHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.POST_LOGIN))
+                .handler(loginPostWebAuthnHandler)
                 .handler(loginCallbackEndpoint)
                 .failureHandler(loginCallbackFailureHandler);
         rootRouter.get(PATH_LOGIN_SSO_POST)
@@ -418,6 +415,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
 
         // WebAuthn route
         Handler<RoutingContext> webAuthnAccessHandler = new WebAuthnAccessHandler(domain, factorManager);
+        Handler<RoutingContext> webAuthnRememberDeviceHandler = new WebAuthnRememberDeviceHandler(webAuthnCookieService, domain);
         rootRouter.get(PATH_WEBAUTHN_REGISTER)
                 .handler(clientRequestParseHandler)
                 .handler(webAuthnAccessHandler)
@@ -427,6 +425,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(clientRequestParseHandler)
                 .handler(webAuthnAccessHandler)
                 .handler(new WebAuthnRegisterHandler(factorService, factorManager, domain, webAuthn, credentialService))
+                .handler(webAuthnRememberDeviceHandler)
                 .handler(new WebAuthnRegisterPostEndpoint());
         rootRouter.route(PATH_WEBAUTHN_REGISTER_CREDENTIALS)
                 .handler(clientRequestParseHandler)
@@ -444,6 +443,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(new WebAuthnLoginHandler(factorService, factorManager, domain, webAuthn, credentialService, userAuthenticationManager))
                 .handler(deviceIdentifierHandler)
                 .handler(userActivityHandler)
+                .handler(webAuthnRememberDeviceHandler)
                 .handler(new WebAuthnLoginPostEndpoint());
         rootRouter.route(PATH_WEBAUTHN_LOGIN_CREDENTIALS)
                 .handler(clientRequestParseHandler)
