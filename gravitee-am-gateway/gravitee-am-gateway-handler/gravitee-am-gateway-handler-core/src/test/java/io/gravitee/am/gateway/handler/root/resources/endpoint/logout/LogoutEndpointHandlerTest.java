@@ -47,7 +47,9 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.mock;
@@ -111,6 +113,104 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
+
+
+    @Test
+    public void shouldInvokeLogoutEndpoint_targetUrl_alloaw_atDomainLevel_appUrls_not_defined() throws Exception {
+        Client client = new Client();
+        client.setClientId("123");
+        // no redirectUris registered for logout at App Level
+        client.setPostLogoutRedirectUris(null);
+        when(clientSyncService.findById("client-id")).thenReturn(Maybe.just(client));
+        when(userService.logout(any(), eq(false), any())).thenReturn(Completable.complete());
+
+        final OIDCSettings oidcSettings = new OIDCSettings();
+        // redirect logout URI defined at domain level
+        oidcSettings.setPostLogoutRedirectUris(List.of("https://test"));
+        when(domain.getOidc()).thenReturn(oidcSettings);
+
+        router.route().order(-1).handler(routingContext -> {
+            User endUser = new User();
+            endUser.setClient("client-id");
+            routingContext.getDelegate().setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
+            routingContext.next();
+        });
+
+        testRequest(
+                HttpMethod.GET, "/logout?target_url=https%3A%2F%2Ftest",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.equals("https://test"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldInvokeLogoutEndpoint_targetUrl_alloaw_atDomainLevel_appUrls_not_defined_emptyList() throws Exception {
+        Client client = new Client();
+        client.setClientId("123");
+        // no redirectUris registered for logout at App Level
+        client.setPostLogoutRedirectUris(Collections.emptyList());
+        when(clientSyncService.findById("client-id")).thenReturn(Maybe.just(client));
+        when(userService.logout(any(), eq(false), any())).thenReturn(Completable.complete());
+
+        final OIDCSettings oidcSettings = new OIDCSettings();
+        // redirect logout URI defined at domain level
+        oidcSettings.setPostLogoutRedirectUris(List.of("https://test"));
+        when(domain.getOidc()).thenReturn(oidcSettings);
+
+        router.route().order(-1).handler(routingContext -> {
+            User endUser = new User();
+            endUser.setClient("client-id");
+            routingContext.getDelegate().setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
+            routingContext.next();
+        });
+
+        testRequest(
+                HttpMethod.GET, "/logout?target_url=https%3A%2F%2Ftest",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.equals("https://test"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldInvokeLogoutEndpoint_targetUrl_not_allowed_atDomainLevel_appUrls_not_defined() throws Exception {
+        Client client = new Client();
+        client.setClientId("123");
+        // no redirectUris registered for logout at App Level
+        client.setPostLogoutRedirectUris(null);
+        when(clientSyncService.findById("client-id")).thenReturn(Maybe.just(client));
+        when(userService.logout(any(), eq(false), any())).thenReturn(Completable.complete());
+
+        final OIDCSettings oidcSettings = new OIDCSettings();
+        // redirect logout URI defined at domain level
+        oidcSettings.setPostLogoutRedirectUris(List.of("https://test"));
+        when(domain.getOidc()).thenReturn(oidcSettings);
+
+        router.route().order(-1).handler(routingContext -> {
+            User endUser = new User();
+            endUser.setClient("client-id");
+            routingContext.getDelegate().setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
+            routingContext.next();
+        });
+
+        testRequest(
+                HttpMethod.GET, "/logout?target_url=https%3A%2F%2Fnot-allowed",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.endsWith("invalid_request&error_description=The+post_logout_redirect_uri+MUST+match+the+registered+callback+URLs"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
 
     @Test
     public void shouldInvokeLogoutEndpoint_targetUrl_client_noRestriction() throws Exception {
