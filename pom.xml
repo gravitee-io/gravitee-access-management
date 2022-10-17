@@ -113,7 +113,7 @@
         <jackson-bom.version>2.10.5.20201202</jackson-bom.version>
         <reactor-netty.version>1.0.15</reactor-netty.version>
         <commons-io.version>2.11.0</commons-io.version>
-        <common-text.version>1.9</common-text.version>
+        <common-text.version>1.10.0</common-text.version>
         <ognl.version>3.1.12</ognl.version>
         <!-- External plugins versions -->
         <gravitee-policy-callout-http.version>1.15.1</gravitee-policy-callout-http.version>
