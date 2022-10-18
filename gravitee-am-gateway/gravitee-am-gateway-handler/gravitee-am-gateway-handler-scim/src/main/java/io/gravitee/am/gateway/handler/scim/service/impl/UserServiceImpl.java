@@ -40,6 +40,7 @@ import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.PasswordService;
+import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.UserActivityService;
 import io.gravitee.am.service.exception.AbstractManagementException;
@@ -109,6 +110,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private UserActivityService userActivityService;
+
+    @Autowired
+    private RateLimiterService rateLimiterService;
 
     @Override
     public Single<ListResponse<User>> list(Filter filter, int page, int size, String baseUrl) {
@@ -419,6 +423,7 @@ public class UserServiceImpl implements UserService {
                                 }
                             })
                             .andThen(userActivityService.deleteByDomainAndUser(domain.getId(), userId))
+                            .andThen(rateLimiterService.deleteByUser(user))
                             .andThen(userRepository.delete(userId))
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).domain(domain.getId()).type(EventType.USER_DELETED).user(user)))
                             .doOnError((error) -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).domain(domain.getId()).type(EventType.USER_DELETED).throwable(error)));

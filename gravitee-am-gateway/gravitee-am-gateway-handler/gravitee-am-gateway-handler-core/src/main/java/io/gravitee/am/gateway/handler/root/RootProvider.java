@@ -92,6 +92,7 @@ import io.gravitee.am.gateway.handler.root.resources.handler.user.register.Regis
 import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterProcessHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterSubmissionRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.*;
+import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
@@ -260,6 +261,9 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
     @Autowired
     private WebAuthnCookieService webAuthnCookieService;
 
+    @Autowired
+    private RateLimiterService rateLimiterService;
+
     @Override
     protected void doStart() throws Exception {
         super.doStart();
@@ -402,7 +406,8 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(clientRequestParseHandler)
                 .handler(rememberDeviceSettingsHandler)
                 .handler(localeHandler)
-                .handler(new MFAChallengeEndpoint(factorManager, userService, thymeleafTemplateEngine, deviceService, applicationContext, domain, credentialService, factorService))
+                .handler(new MFAChallengeEndpoint(factorManager, userService, thymeleafTemplateEngine, deviceService, applicationContext,
+                        domain, credentialService, factorService, rateLimiterService))
                 .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService));
         rootRouter.route(PATH_MFA_CHALLENGE_ALTERNATIVES)
                 .handler(clientRequestParseHandler)

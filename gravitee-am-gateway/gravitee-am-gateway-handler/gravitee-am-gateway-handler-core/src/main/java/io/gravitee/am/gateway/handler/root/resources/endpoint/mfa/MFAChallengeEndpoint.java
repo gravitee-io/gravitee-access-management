@@ -24,6 +24,7 @@ import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequ
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
+import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Credential;
@@ -87,10 +88,12 @@ import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ALREADY_EXISTS_KEY
 import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ID;
 import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_TYPE;
 import static io.gravitee.am.common.utils.ConstantKeys.ENROLLED_FACTOR_ID_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.ERROR_PARAM_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.MFA_ALTERNATIVES_ACTION_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.MFA_ALTERNATIVES_ENABLE_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.PASSWORDLESS_CHALLENGE_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.RATE_LIMIT_ERROR_PARAM_KEY;
 import static io.gravitee.am.factor.api.FactorContext.KEY_USER;
 import static io.gravitee.am.gateway.handler.common.utils.RoutingContextHelper.getEvaluableAttributes;
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
@@ -118,9 +121,11 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
     private final Domain domain;
     private final CredentialService credentialService;
     private final FactorService factorService;
+    private final RateLimiterService rateLimiterService;
 
     public MFAChallengeEndpoint(FactorManager factorManager, UserService userService, TemplateEngine engine, DeviceService deviceService,
-                                ApplicationContext applicationContext, Domain domain, CredentialService credentialService, FactorService factorService) {
+                                ApplicationContext applicationContext, Domain domain, CredentialService credentialService,
+                                FactorService factorService, RateLimiterService rateLimiterService) {
         super(engine);
         this.applicationContext = applicationContext;
         this.factorManager = factorManager;
@@ -129,6 +134,7 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
         this.domain = domain;
         this.credentialService = credentialService;
         this.factorService = factorService;
+        this.rateLimiterService = rateLimiterService;
     }
 
     @Override
@@ -157,6 +163,7 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
             final io.gravitee.am.model.User endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
             final Factor factor = getFactor(routingContext, client, endUser);
             final String error = routingContext.request().getParam(ConstantKeys.ERROR_PARAM_KEY);
+            final String rateLimitError = routingContext.request().getParam(RATE_LIMIT_ERROR_PARAM_KEY);
 
             // prepare context
             final MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
@@ -173,6 +180,7 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
 
             routingContext.put(ConstantKeys.ACTION_KEY, action);
             routingContext.put(ConstantKeys.ERROR_PARAM_KEY, error);
+            routingContext.put(RATE_LIMIT_ERROR_PARAM_KEY, rateLimitError);
             //Include deviceId, so we can show/hide the "save my device" checkbox
             var deviceId = routingContext.session().get(ConstantKeys.DEVICE_ID);
             if (deviceId != null) {
@@ -241,7 +249,7 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
 
         verify(factorProvider, factorCtx, h -> {
             if (h.failed()) {
-                handleException(routingContext);
+                handleException(routingContext, ERROR_PARAM_KEY, "mfa_challenge_failed");
                 return;
             }
 
@@ -288,7 +296,7 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
                 saveFactor(endUser, factorProvider.changeVariableFactorSecurity(enrolledFactor), fh -> {
                     if (fh.failed()) {
                         logger.error("An error occurs while saving enrolled factor for the current user", fh.cause());
-                        handleException(routingContext);
+                        handleException(routingContext, ERROR_PARAM_KEY, "mfa_challenge_failed");
                         return;
                     }
 
@@ -333,7 +341,7 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
     }
 
     private void sendChallenge(FactorProvider factorProvider, RoutingContext routingContext, Factor factor, User endUser, Handler<AsyncResult<Void>> handler) {
-        if (!factorProvider.needChallengeSending() || routingContext.get(ConstantKeys.ERROR_PARAM_KEY) != null) {
+        if (!factorProvider.needChallengeSending() || routingContext.get(ConstantKeys.ERROR_PARAM_KEY) != null || routingContext.get(RATE_LIMIT_ERROR_PARAM_KEY) != null) {
             // do not send challenge in case of error param to avoid useless code generation
             handler.handle(Future.succeededFuture());
             return;
@@ -342,12 +350,31 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
         EnrolledFactor enrolledFactor = getEnrolledFactor(routingContext, factorProvider, factor, endUser);
         Map<String, Object> factorData = new HashMap<>();
         factorData.putAll(getEvaluableAttributes(routingContext));
-        factorData.put(FactorContext.KEY_CLIENT, routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY));
+        final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
+        factorData.put(FactorContext.KEY_CLIENT, client);
         factorData.put(KEY_USER, endUser);
         factorData.put(FactorContext.KEY_REQUEST, new EvaluableRequest(new VertxHttpServerRequest(routingContext.request().getDelegate())));
         factorData.put(FactorContext.KEY_ENROLLED_FACTOR, enrolledFactor);
         FactorContext factorContext = new FactorContext(applicationContext, factorData);
 
+        if(rateLimiterService.isRateLimitEnabled()) {
+            rateLimiterService.tryConsume(endUser.getId(), factor.getId(), endUser.getClient(), client.getDomain())
+                    .subscribe(allowRequest -> {
+                                if (allowRequest) {
+                                    sendChallenge(factorProvider, factorContext, handler);
+                                } else {
+                                    handleException(routingContext, RATE_LIMIT_ERROR_PARAM_KEY, "mfa_request_limit_exceed");
+                                    return;
+                                }
+                            },
+                            error -> handler.handle(Future.failedFuture(error))
+                    );
+        } else {
+            sendChallenge(factorProvider, factorContext, handler);
+        }
+    }
+
+    private void sendChallenge(FactorProvider factorProvider, FactorContext factorContext, Handler<AsyncResult<Void>> handler){
         factorProvider.sendChallenge(factorContext)
                 .subscribeOn(Schedulers.io())
                 .subscribe(
@@ -483,7 +510,7 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
         response.putHeader(HttpHeaders.LOCATION, url).setStatusCode(302).end();
     }
 
-    private void handleException(RoutingContext context) {
+    private void handleException(RoutingContext context, String errorKey, String errorValue) {
         final HttpServerRequest req = context.request();
         final HttpServerResponse resp = context.response();
 
@@ -491,7 +518,7 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
         QueryStringDecoder queryStringDecoder = new QueryStringDecoder(req.uri());
         Map<String, String> parameters = new LinkedHashMap<>();
         parameters.putAll(queryStringDecoder.parameters().entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().get(0))));
-        parameters.put("error", "mfa_challenge_failed");
+        parameters.put(errorKey, errorValue);
         String uri = UriBuilderRequest.resolveProxyRequest(req, req.path(), parameters, true);
         doRedirect(resp, uri);
     }
