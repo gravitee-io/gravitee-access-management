@@ -26,6 +26,7 @@ import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.ErrorHandler;
+import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.common.service.AbstractService;
 import io.vertx.reactivex.core.Vertx;
@@ -65,6 +66,9 @@ public class AccountProvider extends AbstractService<ProtocolProvider> implement
     @Autowired
     private CorsHandler corsHandler;
 
+    @Autowired
+    private RateLimiterService rateLimiterService;
+
     @Override
     protected void doStart() throws Exception {
         super.doStart();
@@ -94,7 +98,7 @@ public class AccountProvider extends AbstractService<ProtocolProvider> implement
 
             // Account factors routes
             AccountFactorsEndpointHandler accountFactorsEndpointHandler =
-                    new AccountFactorsEndpointHandler(accountService, factorManager, applicationContext);
+                    new AccountFactorsEndpointHandler(accountService, factorManager, applicationContext, rateLimiterService);
 
             accountRouter.get(AccountRoutes.FACTORS.getRoute())
                     .handler(accountHandler::getUser)

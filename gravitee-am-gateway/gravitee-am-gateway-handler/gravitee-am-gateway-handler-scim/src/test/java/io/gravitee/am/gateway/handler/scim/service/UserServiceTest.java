@@ -32,6 +32,7 @@ import io.gravitee.am.model.Role;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.PasswordService;
+import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.UserActivityService;
 import io.gravitee.am.service.validators.email.EmailValidatorImpl;
@@ -108,6 +109,9 @@ public class UserServiceTest {
 
     @Mock
     private AuditService auditService;
+
+    @Mock
+    private RateLimiterService rateLimiterService;
 
     @Test
     public void shouldCreateUser_no_user_provider() {
@@ -406,6 +410,7 @@ public class UserServiceTest {
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
         when(userRepository.delete(userId)).thenReturn(Completable.complete());
         when(userActivityService.deleteByDomainAndUser(domain.getId(), userId)).thenReturn(Completable.complete());
+        when(rateLimiterService.deleteByUser(any())).thenReturn(Completable.complete());
 
         TestObserver testObserver = userService.delete(userId, null).test();
         testObserver.assertNoErrors();
@@ -429,6 +434,7 @@ public class UserServiceTest {
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.empty());
         when(userRepository.delete(userId)).thenReturn(Completable.complete());
         when(userActivityService.deleteByDomainAndUser(domain.getId(), userId)).thenReturn(Completable.complete());
+        when(rateLimiterService.deleteByUser(any())).thenReturn(Completable.complete());
 
         TestObserver testObserver = userService.delete(userId, null).test();
         testObserver.assertNoErrors();

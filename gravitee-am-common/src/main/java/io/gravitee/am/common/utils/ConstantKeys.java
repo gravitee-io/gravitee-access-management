@@ -40,6 +40,7 @@ public interface ConstantKeys {
     String ID_TOKEN_HINT_KEY = "id_token_hint";
     String EMAIL_PARAM_KEY = "email";
     String ERROR_PARAM_KEY = "error";
+    String RATE_LIMIT_ERROR_PARAM_KEY = "request_limit_error";
     String ERROR_CODE_PARAM_KEY = "error_code";
     String ERROR_DESCRIPTION_PARAM_KEY = "error_description";
     String SUCCESS_PARAM_KEY = "success";

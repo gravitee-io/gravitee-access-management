@@ -228,6 +228,9 @@ public class DomainServiceTest {
     @Mock
     private ThemeService themeService;
 
+    @Mock
+    private RateLimiterService rateLimiterService;
+
     @Test
     public void shouldFindById() {
         when(domainRepository.findById("my-domain")).thenReturn(Maybe.just(new Domain()));
@@ -658,6 +661,7 @@ public class DomainServiceTest {
 
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(themeService.findByReference(any(), any())).thenReturn(Maybe.empty());
+        when(rateLimiterService.deleteByDomain(any(), any())).thenReturn(Completable.complete());
 
         TestObserver testObserver = domainService.delete(DOMAIN_ID).test();
         testObserver.awaitTerminalEvent();
@@ -709,6 +713,7 @@ public class DomainServiceTest {
         when(i18nDictionaryService.findAll(DOMAIN, DOMAIN_ID)).thenReturn(Flowable.empty());
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(themeService.findByReference(any(), any())).thenReturn(Maybe.empty());
+        when(rateLimiterService.deleteByDomain(any(), any())).thenReturn(Completable.complete());
 
         TestObserver testObserver = domainService.delete(DOMAIN_ID).test();
         testObserver.awaitTerminalEvent();

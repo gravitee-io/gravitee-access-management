@@ -29,6 +29,7 @@ import io.gravitee.am.gateway.handler.account.model.UpdateEnrolledFactor;
 import io.gravitee.am.gateway.handler.account.services.AccountService;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
+import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.User;
@@ -39,6 +40,7 @@ import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.factor.FactorStatus;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.exception.FactorNotFoundException;
+import io.gravitee.am.service.exception.RateLimitException;
 import io.gravitee.common.util.Maps;
 import io.gravitee.gateway.api.el.EvaluableRequest;
 import io.reactivex.Completable;
@@ -75,13 +77,16 @@ public class AccountFactorsEndpointHandler {
     private AccountService accountService;
     private FactorManager factorManager;
     private ApplicationContext applicationContext;
+    private RateLimiterService rateLimiterService;
 
     public AccountFactorsEndpointHandler(AccountService accountService,
                                          FactorManager factorManager,
-                                         ApplicationContext applicationContext) {
+                                         ApplicationContext applicationContext,
+                                         RateLimiterService rateLimiterService) {
         this.accountService = accountService;
         this.factorManager = factorManager;
         this.applicationContext = applicationContext;
+        this.rateLimiterService = rateLimiterService;
     }
 
     /**
@@ -581,12 +586,32 @@ public class AccountFactorsEndpointHandler {
 
         Map<String, Object> factorData = new HashMap<>();
         factorData.putAll(getEvaluableAttributes(routingContext));
-        factorData.put(FactorContext.KEY_CLIENT, routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY));
+        final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
+        factorData.put(FactorContext.KEY_CLIENT, client);
         factorData.put(FactorContext.KEY_USER, endUser);
         factorData.put(FactorContext.KEY_REQUEST, new EvaluableRequest(new VertxHttpServerRequest(routingContext.request().getDelegate())));
         factorData.put(FactorContext.KEY_ENROLLED_FACTOR, enrolledFactor);
         FactorContext factorContext = new FactorContext(applicationContext, factorData);
+        final Factor factor = factorManager.getFactor(enrolledFactor.getFactorId());
 
+        if(rateLimiterService.isRateLimitEnabled()){
+            rateLimiterService.tryConsume(endUser.getId(), factor.getId(), endUser.getClient(), client.getDomain())
+                    .subscribe(allowRequest -> {
+                                if (allowRequest) {
+                                    sendChallenge(factorProvider, factorContext, handler);
+                                } else {
+                                    RateLimitException exception = new RateLimitException("Please try again later.");
+                                    handler.handle(Future.failedFuture(exception));
+                                }
+                            },
+                            error -> handler.handle(Future.failedFuture(error))
+                    );
+        }else {
+            sendChallenge(factorProvider, factorContext, handler);
+        }
+    }
+
+    private void sendChallenge(FactorProvider factorProvider, FactorContext factorContext, Handler<AsyncResult<Void>> handler){
         factorProvider.sendChallenge(factorContext)
                 .subscribeOn(Schedulers.io())
                 .subscribe(
