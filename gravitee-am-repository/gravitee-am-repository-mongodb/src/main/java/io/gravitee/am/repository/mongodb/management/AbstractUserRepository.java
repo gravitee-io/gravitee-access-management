@@ -32,7 +32,11 @@ import io.gravitee.am.repository.mongodb.management.internal.model.UserMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.scim.AddressMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.scim.AttributeMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.scim.CertificateMongo;
-import io.reactivex.*;
+import io.reactivex.Completable;
+import io.reactivex.Flowable;
+import io.reactivex.Maybe;
+import io.reactivex.Observable;
+import io.reactivex.Single;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.slf4j.Logger;
@@ -44,8 +48,10 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static com.mongodb.client.model.Filters.*;
+import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.in;
+import static com.mongodb.client.model.Filters.or;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -147,6 +153,27 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
             }
             logger.error("An error has occurred while searching users with criteria {}", criteria, ex);
             return Single.error(new TechnicalException("An error has occurred while searching users with filter criteria", ex));
+        }
+
+    }
+
+    @Override
+    public Flowable<User> search(ReferenceType referenceType, String referenceId, FilterCriteria criteria) {
+        try {
+            BasicDBObject searchQuery = BasicDBObject.parse(FilterCriteriaParser.parse(criteria));
+
+            Bson mongoQuery = and(
+                    eq(FIELD_REFERENCE_TYPE, referenceType.name()),
+                    eq(FIELD_REFERENCE_ID, referenceId),
+                    searchQuery);
+
+            return Flowable.fromPublisher(usersCollection.find(mongoQuery).sort(new BasicDBObject(FIELD_USERNAME, 1))).map(this::convert);
+        } catch (Exception ex) {
+            if (ex instanceof IllegalArgumentException) {
+                return Flowable.error(ex);
+            }
+            logger.error("An error has occurred while searching users with criteria {}", criteria, ex);
+            return Flowable.error(new TechnicalException("An error has occurred while searching users with filter criteria", ex));
         }
 
     }
