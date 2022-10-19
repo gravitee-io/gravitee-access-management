@@ -1,6 +1,29 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/605?closed=1[AM - 3.18.9 (2022-10-19)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- Better support OTP factors for the enroll MFA policy https://github.com/gravitee-io/issues/issues/8579[#8579]
+- Make PAR values accessible https://github.com/gravitee-io/issues/issues/8422[#8422]
+- [forgot password] filter users search with selected Identity Providers https://github.com/gravitee-io/issues/issues/8577[#8577]
+
+*_Management_*
+
+- Resources not visible for OTP sender factor https://github.com/gravitee-io/issues/issues/8578[#8578]
+
+=== Improvements
+
+*_Gateway_*
+
+- Make PAR values accessible https://github.com/gravitee-io/issues/issues/8422[#8422]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/557?closed=1[AM - 3.19.0 (2022-10-11)]
 
 === Bug fixes
