@@ -15,8 +15,8 @@
  */
 package io.gravitee.am.management.service.spring;
 
+import io.gravitee.am.service.authentication.crypto.password.Argon2IdPasswordEncoder;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
-import io.gravitee.am.service.authentication.crypto.password.bcrypt.BCryptPasswordEncoder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -25,6 +25,6 @@ public class PasswordHistoryConfiguration {
 
     @Bean
     public PasswordEncoder passwordEncoder(){
-        return new BCryptPasswordEncoder();
+        return new Argon2IdPasswordEncoder();
     }
 }

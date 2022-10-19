@@ -108,6 +108,12 @@
             <artifactId>spring-context</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-crypto</artifactId>
+            <version>${spring-security.version}</version>
+        </dependency>
+
         <!-- Validation API-->
         <dependency>
             <groupId>javax.validation</groupId>
