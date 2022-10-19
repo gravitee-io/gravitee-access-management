@@ -22,7 +22,10 @@ import io.gravitee.am.common.exception.authentication.InternalAuthenticationServ
 import io.gravitee.am.common.jwt.SignatureAlgorithm;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
-import io.gravitee.am.common.oidc.*;
+import io.gravitee.am.common.oidc.AuthenticationFlow;
+import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
+import io.gravitee.am.common.oidc.ResponseType;
+import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.identityprovider.api.Authentication;
@@ -54,9 +57,12 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static io.gravitee.am.common.oidc.Scope.SCOPE_DELIMITER;
 import static io.gravitee.am.common.web.UriBuilder.encodeURIComponent;
@@ -80,8 +86,9 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
 
     @Override
     protected Map<String, Object> defaultClaims(Map attributes) {
-        return Stream.concat(StandardClaims.claims().stream(), CustomClaims.claims().stream())
-                .filter(claimName -> attributes.containsKey(claimName))
+        // we can safely cast in <String, Object> as the super class signature declare it.
+        Map<String, Object> typedAttributes = attributes;
+        return typedAttributes.keySet().stream()
                 .filter(claimName -> attributes.get(claimName) != null) // sometimes values is null that throws a NPE during the collect phase
                 .collect(Collectors.toMap(claimName -> claimName, claimName -> attributes.get(claimName)));
     }
