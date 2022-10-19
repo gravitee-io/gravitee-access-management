@@ -26,8 +26,16 @@ import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.repository.management.api.CommonUserRepository;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
-import io.gravitee.am.service.*;
-import io.gravitee.am.service.exception.*;
+import io.gravitee.am.service.CommonUserService;
+import io.gravitee.am.service.CredentialService;
+import io.gravitee.am.service.EventService;
+import io.gravitee.am.service.GroupService;
+import io.gravitee.am.service.RoleService;
+import io.gravitee.am.service.exception.AbstractManagementException;
+import io.gravitee.am.service.exception.InvalidParameterException;
+import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.exception.UserAlreadyExistsException;
+import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.am.service.utils.UserFactorUpdater;
@@ -41,7 +49,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -110,6 +122,19 @@ public abstract class AbstractUserService<T extends CommonUserRepository> implem
                     }
                     LOGGER.error("An error occurs while trying to search users for {} {} and filter {}", referenceType, referenceId, filterCriteria, ex);
                     return Single.error(new TechnicalManagementException(String.format("An error occurs while trying to find users for %s %s and filter %s", referenceType, referenceId, filterCriteria), ex));
+                });
+    }
+
+    @Override
+    public Flowable<User> search(ReferenceType referenceType, String referenceId, FilterCriteria filterCriteria) {
+        LOGGER.debug("Search users for {} {} with filter {}", referenceType, referenceId, filterCriteria);
+        return getUserRepository().search(referenceType, referenceId, filterCriteria)
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof IllegalArgumentException) {
+                        return Flowable.error(new InvalidParameterException(ex.getMessage()));
+                    }
+                    LOGGER.error("An error occurs while trying to search users for {} {} and filter {}", referenceType, referenceId, filterCriteria, ex);
+                    return Flowable.error(new TechnicalManagementException(String.format("An error occurs while trying to find users for %s %s and filter %s", referenceType, referenceId, filterCriteria), ex));
                 });
     }
 
