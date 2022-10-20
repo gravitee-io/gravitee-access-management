@@ -19,14 +19,19 @@ import io.gravitee.am.model.AuthenticationFlowContext;
 import io.gravitee.am.repository.management.api.AuthenticationFlowContextRepository;
 import io.gravitee.am.service.exception.AuthenticationFlowConsistencyException;
 import io.gravitee.am.service.impl.AuthenticationFlowContextServiceImpl;
+import io.gravitee.am.service.utils.SetterUtilsTest;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
+import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import java.util.Date;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -104,5 +109,22 @@ public class AuthenticationFlowContextServiceTest {
         testObserver.awaitTerminalEvent();
         testObserver.assertNoErrors();
         verify(authFlowContextRepository, never()).delete(any());
+    }
+
+    @Test
+    public void testUpdateContext() {
+        ReflectionTestUtils.setField(this.service, "contextExpiration", 300);
+        when(this.authFlowContextRepository.create(any())).thenReturn(Single.just(new AuthenticationFlowContext()));
+        final AuthenticationFlowContext authContext = new AuthenticationFlowContext();
+        authContext.setVersion(1);
+        final Date now = new Date();
+        authContext.setExpireAt(now);
+        final TestObserver<AuthenticationFlowContext> testObserver = service.updateContext(authContext).test();
+
+        testObserver.awaitTerminalEvent();
+        testObserver.assertValueCount(1);
+
+        verify(this.authFlowContextRepository).create(argThat(ctx -> ctx.getVersion() == 2
+                && ctx.getExpireAt().after(now) ));
     }
 }

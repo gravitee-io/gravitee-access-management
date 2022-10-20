@@ -15,7 +15,14 @@
  */
 package io.gravitee.am.gateway.handler.oidc.resources.handler.authorization;
 
-import com.nimbusds.jose.*;
+import com.nimbusds.jose.EncryptionMethod;
+import com.nimbusds.jose.JWEAlgorithm;
+import com.nimbusds.jose.JWEHeader;
+import com.nimbusds.jose.JWEObject;
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.JWSHeader;
+import com.nimbusds.jose.JWSSigner;
+import com.nimbusds.jose.Payload;
 import com.nimbusds.jose.crypto.RSAEncrypter;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.jwk.JWK;
@@ -30,10 +37,16 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestParseRequestObjectHandler;
 import io.gravitee.am.gateway.handler.oauth2.service.par.PushedAuthorizationRequestService;
 import io.gravitee.am.gateway.handler.oidc.service.request.RequestObjectService;
+import io.gravitee.am.model.AuthenticationFlowContext;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.AuthenticationFlowContextService;
+import io.reactivex.Single;
+import io.vertx.core.http.impl.headers.HeadersMultiMap;
+import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.reactivex.ext.web.Session;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -45,8 +58,19 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
-import static org.mockito.Mockito.*;
+import static io.gravitee.am.common.utils.ConstantKeys.AUTH_FLOW_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.REQUEST_PARAMETERS_KEY;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -62,13 +86,80 @@ public class AuthorizationRequestParseRequestObjectHandlerTest {
     private PushedAuthorizationRequestService parService;
 
     @Mock
+    private AuthenticationFlowContextService authFlowContextService;
+
+    @Mock
     private Domain domain;
 
     private AuthorizationRequestParseRequestObjectHandler handler;
 
     @Before
     public void setUp() throws Exception {
-        handler = new AuthorizationRequestParseRequestObjectHandler(roService, domain, parService);
+        handler = new AuthorizationRequestParseRequestObjectHandler(roService, domain, parService, authFlowContextService);
+    }
+
+    @Test
+    public void shouldNoPersistPARValues_AuthContextNotPresent() {
+        when(domain.usePlainFapiProfile()).thenReturn(false);
+
+        final RoutingContext context = mock(RoutingContext.class);
+        final Client client = new Client();
+        client.setRequireParRequest(false);
+        when(context.get(ConstantKeys.CLIENT_CONTEXT_KEY)).thenReturn(client);
+        final HttpServerRequest request = mock(HttpServerRequest.class);
+
+        when(request.getParam(Parameters.REQUEST)).thenReturn(null);
+        when(request.getParam(Parameters.REQUEST_URI)).thenReturn(PushedAuthorizationRequestService.PAR_URN_PREFIX+"somevalue");
+        when(request.params()).thenReturn(new MultiMap(HeadersMultiMap.httpHeaders()));
+        when(context.request()).thenReturn(request);
+
+        when(parService.readFromURI(any(), any(), any())).thenReturn(Single.just(new PlainJWT(new JWTClaimsSet.Builder().claim("parParam1", "parValue1").build())));
+
+        handler.handle(context);
+
+        verify(context).next();
+        verify(authFlowContextService, never()).updateContext(any());
+    }
+
+    @Test
+    public void shouldPersistPARValues_AuthContextPresent() {
+        when(domain.usePlainFapiProfile()).thenReturn(false);
+
+        final RoutingContext context = mock(RoutingContext.class);
+        final Client client = new Client();
+        client.setRequireParRequest(false);
+        when(context.get(ConstantKeys.CLIENT_CONTEXT_KEY)).thenReturn(client);
+        final HttpServerRequest request = mock(HttpServerRequest.class);
+
+        when(request.getParam(Parameters.REQUEST)).thenReturn(null);
+        when(request.getParam(Parameters.REQUEST_URI)).thenReturn(PushedAuthorizationRequestService.PAR_URN_PREFIX+"somevalue");
+        when(request.params()).thenReturn(new MultiMap(HeadersMultiMap.httpHeaders()));
+        when(context.request()).thenReturn(request);
+
+        final Session session = mock(Session.class);
+        when(context.session()).thenReturn(session);
+
+        when(parService.readFromURI(any(), any(), any())).thenReturn(Single.just(new PlainJWT(new JWTClaimsSet.Builder().claim("parParam1", "parValue1").build())));
+
+        final AuthenticationFlowContext authFlowCtx = new AuthenticationFlowContext();
+        authFlowCtx.setData(new HashMap<>());
+        authFlowCtx.setTransactionId("trxid");
+        authFlowCtx.setVersion(1);
+        when(context.get(AUTH_FLOW_CONTEXT_KEY)).thenReturn(authFlowCtx);
+
+        when(authFlowContextService.updateContext(any())).thenReturn(Single.just(authFlowCtx));
+
+        handler.handle(context);
+
+        verify(context).next();
+        verify(authFlowContextService).updateContext(argThat(ctx -> {
+            var hasParValues = ctx.getData().containsKey(REQUEST_PARAMETERS_KEY);
+            var parParams = (Map)ctx.getData().get(REQUEST_PARAMETERS_KEY);
+            return hasParValues && "parValue1".equals(parParams.get("parParam1"));
+        }));
+        verify(session).put(eq(ConstantKeys.AUTH_FLOW_CONTEXT_VERSION_KEY), anyInt());
+        verify(context).put(eq(ConstantKeys.AUTH_FLOW_CONTEXT_KEY), any());
+        verify(context).put(eq(ConstantKeys.AUTH_FLOW_CONTEXT_ATTRIBUTES_KEY), any());
     }
 
     @Test

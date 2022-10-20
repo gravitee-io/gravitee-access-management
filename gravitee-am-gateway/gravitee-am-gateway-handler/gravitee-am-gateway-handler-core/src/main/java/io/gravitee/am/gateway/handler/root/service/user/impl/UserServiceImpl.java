@@ -395,6 +395,19 @@ public class UserServiceImpl implements UserService {
                     // If multiple results, check if ConfirmIdentity isn't required before returning the first User.
                     if (foundUsers.size() == 1 || (foundUsers.size() > 1 && !params.isConfirmIdentityEnabled())) {
                         User user = foundUsers.get(0);
+
+                        //fixes https://graviteecommunity.atlassian.net/browse/AM-71
+                        if (client.getIdentityProviders() != null) {
+                            final IdentityProvider identityProvider = identityProviderManager.getIdentityProvider(user.getSource());
+                            final boolean isClientHasUserIdp = client.getIdentityProviders()
+                                    .stream()
+                                    .anyMatch(applicationIdentityProvider -> applicationIdentityProvider.getIdentity().equals(identityProvider.getId()));
+
+                            if (!isClientHasUserIdp) {
+                                return Single.error(new UserNotFoundException(email));
+                            }
+                        }
+
                         // check if user can update its password according to its identity provider type
                         return identityProviderManager.getUserProvider(user.getSource())
                                 .switchIfEmpty(Single.error(new UserInvalidException("User [ " + user.getUsername() + " ] cannot be updated because its identity provider does not support user provisioning")))
