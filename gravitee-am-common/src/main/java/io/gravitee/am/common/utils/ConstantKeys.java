@@ -15,10 +15,6 @@
  */
 package io.gravitee.am.common.utils;
 
-import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
@@ -194,4 +190,9 @@ public interface ConstantKeys {
     String TEMPLATE_KEY_RECOVERY_CODES_KEY = "recoveryCodes";
     String TEMPLATE_KEY_RECOVERY_CODES_URL_KEY = "recoveryCodeURL";
 
+
+
+    // entry into the io.gravitee.am.model.AuthenticationFlowContext to get access to the
+    // content of the OAuth2 parameters retrieved using PAR
+    String REQUEST_PARAMETERS_KEY = "requestParameters";
 }
