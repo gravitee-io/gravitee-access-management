@@ -38,6 +38,12 @@ public class OIDCSettings {
      */
     private List<String> postLogoutRedirectUris;
 
+    /**
+     * Array of URLs supplied by the RP to restrict the possible values of the request_uri parameter.
+     * https://openid.net/specs/openid-connect-core-1_0.html#RequestUriParameter
+     */
+    private List<String> requestUris;
+
     private CIBASettings cibaSettings;
 
     public ClientRegistrationSettings getClientRegistrationSettings() {
@@ -62,6 +68,14 @@ public class OIDCSettings {
 
     public void setPostLogoutRedirectUris(List<String> postLogoutRedirectUris) {
         this.postLogoutRedirectUris = postLogoutRedirectUris;
+    }
+
+    public List<String> getRequestUris() {
+        return requestUris;
+    }
+
+    public void setRequestUris(List<String> requestUris) {
+        this.requestUris = requestUris;
     }
 
     public SecurityProfileSettings getSecurityProfileSettings() {

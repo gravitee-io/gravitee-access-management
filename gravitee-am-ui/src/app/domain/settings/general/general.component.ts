@@ -45,6 +45,8 @@ export class DomainSettingsGeneralComponent implements OnInit {
   readonly = false;
   logoutRedirectUri: string;
   logoutRedirectUris: any[] = [];
+  requestUri: string;
+  requestUris: any[] = [];
 
   constructor(private domainService: DomainService,
               private dialogService: DialogService,
@@ -113,6 +115,20 @@ export class DomainSettingsGeneralComponent implements OnInit {
       }
     }
   }
+  
+  addRequestUris(event) {
+    event.preventDefault();
+    if (this.requestUri) {
+      if (!this.requestUris.some(el => el.value === this.requestUri)) {
+        this.requestUris.push({value: this.requestUri});
+        this.requestUris = [...this.requestUris];
+        this.requestUri = null;
+        this.formChanged = true;
+      } else {
+        this.snackbarService.open(`Error : request URI "${this.requestUri}" already exists`);
+      }
+    }
+  }
 
   deleteLogoutRedirectUris(logoutRedirectUri, event) {
     event.preventDefault();
@@ -127,8 +143,24 @@ export class DomainSettingsGeneralComponent implements OnInit {
       });
   }
 
+  deleteRequestUris(requestUri, event) {
+    event.preventDefault();
+    this.dialogService
+      .confirm('Remove request URI', 'Are you sure you want to remove this request URI ?')
+      .subscribe(res => {
+        if (res) {
+          _.remove(this.requestUris, { value: requestUri });
+          this.requestUris = [...this.requestUris];
+          this.formChanged = true;
+        }
+      });
+  }
+
   update() {
-    this.domain.oidc = { 'postLogoutRedirectUris' : _.map(this.logoutRedirectUris, 'value') };
+    this.domain.oidc = { 
+      'postLogoutRedirectUris' : _.map(this.logoutRedirectUris, 'value'),
+      'requestUris' : _.map(this.requestUris, 'value')
+    };
     this.domainService.patchGeneralSettings(this.domain.id, this.domain).subscribe(response => {
       this.domainService.notify(response);
       this.formChanged = false;
