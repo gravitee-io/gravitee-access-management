@@ -21,6 +21,7 @@ import io.gravitee.am.gateway.handler.manager.resource.ResourceManager;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.model.resource.ServiceResource;
 import io.gravitee.am.plugins.resource.core.ResourcePluginManager;
 import io.gravitee.am.resource.api.ResourceProvider;
 import io.gravitee.am.service.ServiceResourceService;
@@ -61,6 +62,7 @@ public class ResourceManagerImpl extends AbstractService implements ResourceMana
     private ServiceResourceService resourceService;
 
     private Map<String, ResourceProvider> resourceProviders = new ConcurrentHashMap<>();
+    private Map<String, ServiceResource> resources = new ConcurrentHashMap<>();
 
     @Override
     protected void doStart() throws Exception {
@@ -91,6 +93,7 @@ public class ResourceManagerImpl extends AbstractService implements ResourceMana
                             ResourceProvider provider = resourcePluginManager.create(res.getType(), res.getConfiguration());
                             provider.start();
                             resourceProviders.put(res.getId(), provider);
+                            resources.put(res.getId(), res);
                             logger.info("Resource {} loaded for domain {}", res.getName(), domain.getName());
                         },
                         error -> logger.error("Unable to initialize resources for domain {}", domain.getName(), error)
@@ -106,10 +109,8 @@ public class ResourceManagerImpl extends AbstractService implements ResourceMana
         if (event.content().getReferenceType() == ReferenceType.DOMAIN && domain.getId().equals(event.content().getReferenceId())) {
             switch (event.type()) {
                 case DEPLOY:
-                    loadResource(event.content().getId());
-                    break;
                 case UPDATE:
-                    refreshResource(event.content().getId());
+                    reloadResource(event.content().getId());
                     break;
                 case UNDEPLOY:
                     unloadResource(event.content().getId());
@@ -118,21 +119,24 @@ public class ResourceManagerImpl extends AbstractService implements ResourceMana
         }
     }
 
-    private void loadResource(String resourceId) {
+    private void reloadResource(String resourceId) {
         resourceService.findById(resourceId)
                 .switchIfEmpty(Maybe.error(new ResourceNotFoundException("Resource " + resourceId + " not found")))
-                .map(res -> resourcePluginManager.create(res.getType(), res.getConfiguration()))
+                .map(res -> {
+                    if (needDeployment(res)) {
+                        unloadResource(res.getId());
+                        var provider = resourcePluginManager.create(res.getType(), res.getConfiguration());
+                        provider.start();
+                        this.resources.put(res.getId(), res);
+                        this.resourceProviders.put(resourceId, provider);
+                    }
+                    return res;
+                })
                 .subscribe(
-                        provider -> {
-                            provider.start();
-                            this.resourceProviders.put(resourceId, provider);
-                        },
-                        error -> logger.error("Initialization of Resource provider '{}' failed", error));
-    }
-
-    private void refreshResource(String resourceId) {
-        unloadResource(resourceId);
-        loadResource(resourceId);
+                        provider -> logger.debug("Initialization of resource provider '{}' successful", resourceId),
+                        error -> logger.error("Initialization of resource provider '{}' failed", resourceId, error),
+                        ()-> logger.debug("Initialization of resource provider provider '{}' already done", resourceId)
+                );
     }
 
     private void unloadResource(String resourceId) {
@@ -140,10 +144,21 @@ public class ResourceManagerImpl extends AbstractService implements ResourceMana
             ResourceProvider resourceProvider = getResourceProvider(resourceId);
             if (resourceProvider != null) {
                 resourceProvider.stop();
+                this.resources.remove(resourceId);
                 this.resourceProviders.remove(resourceId);
             }
         } catch (Exception e) {
             logger.error("Resource '{}' stopped with error", e);
         }
+    }
+
+
+    /**
+     * @param resource
+     * @return true if the Resource has never been deployed or if the deployed version is not up to date
+     */
+    private boolean needDeployment(ServiceResource resource) {
+        final ServiceResource deployedResource = this.resources.get(resource.getId());
+        return (deployedResource == null || deployedResource.getUpdatedAt().before(resource.getUpdatedAt()));
     }
 }

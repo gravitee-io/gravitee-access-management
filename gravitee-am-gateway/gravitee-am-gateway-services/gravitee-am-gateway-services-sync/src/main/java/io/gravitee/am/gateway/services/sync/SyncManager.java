@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.services.sync;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.gateway.reactor.SecurityDomainManager;
 import io.gravitee.am.model.Domain;
@@ -41,6 +43,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -56,6 +59,12 @@ import static java.util.stream.Collectors.toMap;
  * @author GraviteeSource Team
  */
 public class SyncManager implements InitializingBean {
+
+    /**
+     * Add 30s delay before and after to avoid problem with out of sync clocks.
+     */
+    public static final int TIMEFRAME_BEFORE_DELAY = 30000;
+    public static final int TIMEFRAME_AFTER_DELAY = 30000;
 
     private final Logger logger = LoggerFactory.getLogger(SyncManager.class);
     private static final String SHARDING_TAGS_SYSTEM_PROPERTY = "tags";
@@ -103,6 +112,14 @@ public class SyncManager implements InitializingBean {
     @Value("${services.sync.eventsTimeOutMillis:30000}")
     private int eventsTimeOut = 30000;
 
+    @Value("${services.sync.timeframeBeforeDelay:"+TIMEFRAME_BEFORE_DELAY+"}")
+    private int timeframeBeforeDelay;
+
+    @Value("${services.sync.timeframeAfterDelay:"+TIMEFRAME_AFTER_DELAY+"}")
+    private int timeframeAfterDelay;
+
+    private Cache<String, String> processedEventIds;
+
     @Override
     public void afterPropertiesSet() throws Exception {
         logger.info("Starting gateway tags initialization ...");
@@ -113,6 +130,9 @@ public class SyncManager implements InitializingBean {
         logger.info("\t\t - Organizations : " + (organizations.isPresent() ? organizations.get() : "[]"));
         logger.info("\t\t - Environments : " + (environments.isPresent() ? environments.get() : "[]"));
         logger.info("\t\t - Environments loaded : " + (environmentIds != null ? environmentIds : "[]"));
+        this.processedEventIds = CacheBuilder.newBuilder()
+                .expireAfterWrite(timeframeBeforeDelay + timeframeAfterDelay, TimeUnit.MILLISECONDS)
+                .build();
     }
 
     public void refresh() {
@@ -128,7 +148,9 @@ public class SyncManager implements InitializingBean {
                 // search for events and compute them
                 logger.debug("Events synchronization");
 
-                Single<List<Event>> findEvents = eventRepository.findByTimeFrame(lastRefreshAt - lastDelay, nextLastRefreshAt).toList();
+                final long from = (lastRefreshAt - lastDelay) - timeframeBeforeDelay;
+                final long to = nextLastRefreshAt + timeframeAfterDelay;
+                Single<List<Event>> findEvents = eventRepository.findByTimeFrame(from, to).toList();
                 if (this.eventsTimeOut > 0) {
                     findEvents = findEvents.timeout(this.eventsTimeOut, TimeUnit.MILLISECONDS);
                 }
@@ -183,7 +205,12 @@ public class SyncManager implements InitializingBean {
                     synchronizeDomain(event);
                     break;
                 default:
-                    eventManager.publishEvent(io.gravitee.am.common.event.Event.valueOf(event.getType(), event.getPayload().getAction()), event.getPayload());
+                    if (Objects.isNull(processedEventIds.getIfPresent(event.getId()))) {
+                        eventManager.publishEvent(io.gravitee.am.common.event.Event.valueOf(event.getType(), event.getPayload().getAction()), event.getPayload());
+                        processedEventIds.put(event.getId(), event.getId());
+                    } else {
+                        logger.debug("Event id {} already processed", event.getId());
+                    }
             }
         });
     }

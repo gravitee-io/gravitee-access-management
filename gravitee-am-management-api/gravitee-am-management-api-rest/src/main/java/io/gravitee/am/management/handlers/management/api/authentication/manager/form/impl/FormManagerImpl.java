@@ -89,11 +89,13 @@ public class FormManagerImpl implements FormManager, InitializingBean, EventList
         formService.findById(formId)
                 .subscribe(
                         form -> {
-                            // check if form has been disabled
-                            if (forms.containsKey(formId) && !form.isEnabled()) {
-                                removeForm(formId);
-                            } else {
-                                updateForm(form);
+                            if (needDeployment(form)) {
+                                // check if form has been disabled
+                                if (forms.containsKey(formId) && !form.isEnabled()) {
+                                    removeForm(formId);
+                                } else {
+                                    updateForm(form);
+                                }
                             }
                             logger.info("Form {} {}d", formId, eventType);
                         },
@@ -115,5 +117,14 @@ public class FormManagerImpl implements FormManager, InitializingBean, EventList
             templateResolver.addForm(form);
             logger.info("Form {} loaded", form.getId());
         }
+    }
+
+    /**
+     * @param form
+     * @return true if the Form has never been deployed or if the deployed version is not up to date
+     */
+    private boolean needDeployment(Form form) {
+        final Form deployedForm = this.forms.get(form.getId());
+        return (deployedForm == null || deployedForm.getUpdatedAt().before(form.getUpdatedAt()));
     }
 }

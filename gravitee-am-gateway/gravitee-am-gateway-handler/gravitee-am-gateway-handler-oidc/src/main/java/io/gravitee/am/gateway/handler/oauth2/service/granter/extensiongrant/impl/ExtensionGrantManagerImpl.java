@@ -163,26 +163,39 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
 
     private void updateExtensionGrantProvider(ExtensionGrant extensionGrant) {
         try {
-            AuthenticationProvider authenticationProvider = null;
-            if (extensionGrant.getIdentityProvider() != null) {
-                logger.info("\tLooking for extension grant identity provider: {}", extensionGrant.getIdentityProvider());
-                authenticationProvider = identityProviderManager.get(extensionGrant.getIdentityProvider()).blockingGet();
-                if (authenticationProvider != null) {
-                    logger.info("\tExtension grant identity provider: {}, loaded", extensionGrant.getIdentityProvider());
+            if (needDeployment(extensionGrant)) {
+                AuthenticationProvider authenticationProvider = null;
+                if (extensionGrant.getIdentityProvider() != null) {
+                    logger.info("\tLooking for extension grant identity provider: {}", extensionGrant.getIdentityProvider());
+                    authenticationProvider = identityProviderManager.get(extensionGrant.getIdentityProvider()).blockingGet();
+                    if (authenticationProvider != null) {
+                        logger.info("\tExtension grant identity provider: {}, loaded", extensionGrant.getIdentityProvider());
+                    }
                 }
+                var extensionGrantProvider = extensionGrantPluginManager.create(extensionGrant.getType(), extensionGrant.getConfiguration(), authenticationProvider);
+                var extensionGrantGranter = new ExtensionGrantGranter(extensionGrantProvider, extensionGrant,
+                        userAuthenticationManager, tokenService, tokenRequestResolver, identityProviderManager, userService);
+                // backward compatibility, set min date to the extension grant granter to choose the good one for the old clients
+                extensionGrantGranter.setMinDate(minDate);
+                ((CompositeTokenGranter) tokenGranter).addTokenGranter(extensionGrant.getId(), extensionGrantGranter);
+                extensionGrants.put(extensionGrant.getId(), extensionGrant);
+                extensionGrantGranters.put(extensionGrant.getId(), extensionGrantGranter);
+            } else {
+                logger.info("Extension grant {} already loaded for domain {}", extensionGrant.getId(), domain.getName());
             }
-            ExtensionGrantProvider extensionGrantProvider = extensionGrantPluginManager.create(extensionGrant.getType(), extensionGrant.getConfiguration(), authenticationProvider);
-            ExtensionGrantGranter extensionGrantGranter = new ExtensionGrantGranter(extensionGrantProvider, extensionGrant,
-                    userAuthenticationManager, tokenService, tokenRequestResolver, identityProviderManager, userService);
-            // backward compatibility, set min date to the extension grant granter to choose the good one for the old clients
-            extensionGrantGranter.setMinDate(minDate);
-            ((CompositeTokenGranter) tokenGranter).addTokenGranter(extensionGrant.getId(), extensionGrantGranter);
-            extensionGrants.put(extensionGrant.getId(), extensionGrant);
-            extensionGrantGranters.put(extensionGrant.getId(), extensionGrantGranter);
         } catch (Exception ex) {
             // failed to load the plugin
             logger.error("An error occurs while initializing the extension grant : {}", extensionGrant.getName(), ex);
             removeExtensionGrant(extensionGrant.getId());
         }
+    }
+
+    /**
+     * @param extensionGrant
+     * @return true if the ExtensionGrant has never been deployed or if the deployed version is not up to date
+     */
+    private boolean needDeployment(ExtensionGrant extensionGrant) {
+        final ExtensionGrant deployedExtensionGrant = this.extensionGrants.get(extensionGrant.getId());
+        return (deployedExtensionGrant == null || deployedExtensionGrant.getUpdatedAt().before(extensionGrant.getUpdatedAt()));
     }
 }
