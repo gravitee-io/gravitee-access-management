@@ -1,6 +1,19 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/606?closed=1[AM - 3.19.1 (2022-10-21)]
+
+=== Bug fixes
+
+*_General_*
+
+- Merge 3.18.9 into 3.19.x https://github.com/gravitee-io/issues/issues/8587[#8587]
+- Merge AM 3.18.8 into 3.19.x https://github.com/gravitee-io/issues/issues/8586[#8586]
+- Upgrade apache commons-text https://github.com/gravitee-io/issues/issues/8588[#8588]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/605?closed=1[AM - 3.18.9 (2022-10-19)]
 
 === Bug fixes
