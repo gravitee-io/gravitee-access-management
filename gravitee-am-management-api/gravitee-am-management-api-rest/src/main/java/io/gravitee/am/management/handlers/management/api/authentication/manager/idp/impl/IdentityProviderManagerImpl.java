@@ -133,19 +133,23 @@ public class IdentityProviderManagerImpl implements IdentityProviderManager, Ini
     }
 
     private void updateAuthenticationProvider(IdentityProvider identityProvider) {
-        logger.info("\tInitializing identity provider: {} for organization {} [{}]", identityProvider.getName(), identityProvider.getReferenceId(), identityProvider.getType());
         try {
-            // stop existing provider, if any
-            clearProvider(identityProvider.getId());
-            // create and start the new provider
-            AuthenticationProvider authenticationProvider =
-                    identityProviderPluginManager.create(identityProvider.getType(), identityProvider.getConfiguration(),
-                            identityProvider.getMappers(), identityProvider.getRoleMapper());
-            if (authenticationProvider != null) {
-                // start the authentication provider
-                authenticationProvider.start();
-                providers.put(identityProvider.getId(), authenticationProvider);
-                identities.put(identityProvider.getId(), identityProvider);
+            if (needDeployment(identityProvider)) {
+                logger.info("\tInitializing identity provider: {} for organization {} [{}]", identityProvider.getName(), identityProvider.getReferenceId(), identityProvider.getType());
+                // stop existing provider, if any
+                clearProvider(identityProvider.getId());
+                // create and start the new provider
+                AuthenticationProvider authenticationProvider =
+                        identityProviderPluginManager.create(identityProvider.getType(), identityProvider.getConfiguration(),
+                                identityProvider.getMappers(), identityProvider.getRoleMapper());
+                if (authenticationProvider != null) {
+                    // start the authentication provider
+                    authenticationProvider.start();
+                    providers.put(identityProvider.getId(), authenticationProvider);
+                    identities.put(identityProvider.getId(), identityProvider);
+                }
+            } else {
+                logger.info("\tIdentity provider already initialized: {} for organization {} [{}]", identityProvider.getName(), identityProvider.getReferenceId(), identityProvider.getType());
             }
         } catch (Exception ex) {
             // failed to load the plugin
@@ -170,5 +174,14 @@ public class IdentityProviderManagerImpl implements IdentityProviderManager, Ini
             }
         }
         identities.remove(identityProviderId);
+    }
+
+    /**
+     * @param provider
+     * @return true if the IDP has never been deployed or if the deployed version is not up to date
+     */
+    private boolean needDeployment(IdentityProvider provider) {
+        final IdentityProvider deployedProvider = this.identities.get(provider.getId());
+        return (deployedProvider == null || deployedProvider.getUpdatedAt().before(provider.getUpdatedAt()));
     }
 }

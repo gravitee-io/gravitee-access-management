@@ -39,7 +39,15 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
@@ -179,7 +187,7 @@ public class FlowManagerImpl extends AbstractService implements FlowManager, Ini
         flowService.findAll(ReferenceType.DOMAIN, domain.getId())
                 .subscribe(
                         flow -> {
-                            if (flow != null && flow.getId() != null) {
+                            if (needDeployment(flow)) {
                                 loadFlow(flow);
                                 flows.put(flow.getId(), flow);
                                 logger.info("Flow {} loaded for domain {}", flow.getType(), domain.getName());
@@ -316,6 +324,19 @@ public class FlowManagerImpl extends AbstractService implements FlowManager, Ini
         @Override
         public int hashCode() {
             return Objects.hash(flowId);
+        }
+    }
+
+    /**
+     * @param flow
+     * @return true if the Flow has never been deployed or if the deployed version is not up to date
+     */
+    private boolean needDeployment(Flow flow) {
+        if (flow != null && flow.getId() != null) {
+            final Flow deployedFlow = this.flows.get(flow.getId());
+            return (deployedFlow == null || deployedFlow.getUpdatedAt().before(flow.getUpdatedAt()));
+        } else {
+            return false;
         }
     }
 }

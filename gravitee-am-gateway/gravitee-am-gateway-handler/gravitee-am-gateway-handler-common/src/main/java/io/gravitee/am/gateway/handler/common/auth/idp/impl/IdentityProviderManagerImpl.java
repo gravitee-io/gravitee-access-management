@@ -147,29 +147,33 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
     }
 
     private void updateAuthenticationProvider(IdentityProvider identityProvider) {
-        logger.info("\tInitializing identity provider: {} [{}]", identityProvider.getName(), identityProvider.getType());
         try {
-            // stop existing provider, if any
-            clearProvider(identityProvider.getId());
-            // create and start the new provider
-            AuthenticationProvider authenticationProvider =
-                    identityProviderPluginManager.create(identityProvider.getType(), identityProvider.getConfiguration(),
-                            identityProvider.getMappers(), identityProvider.getRoleMapper(), certificateManager);
-            if (authenticationProvider != null) {
-                // start the authentication provider
-                authenticationProvider.start();
-                // init the user provider
-                UserProvider userProvider =
-                        identityProviderPluginManager.create(identityProvider.getType(), identityProvider.getConfiguration());
-                providers.put(identityProvider.getId(), authenticationProvider);
-                identities.put(identityProvider.getId(), identityProvider);
-                if (userProvider != null) {
-                    // start the user provider
-                    userProvider.start();
-                    userProviders.put(identityProvider.getId(), userProvider);
-                } else {
-                    userProviders.remove(identityProvider.getId());
+            if (needDeployment(identityProvider)) {
+                logger.info("\tInitializing identity provider: {} [{}]", identityProvider.getName(), identityProvider.getType());
+                // stop existing provider, if any
+                clearProvider(identityProvider.getId());
+                // create and start the new provider
+                AuthenticationProvider authenticationProvider =
+                        identityProviderPluginManager.create(identityProvider.getType(), identityProvider.getConfiguration(),
+                                identityProvider.getMappers(), identityProvider.getRoleMapper(), certificateManager);
+                if (authenticationProvider != null) {
+                    // start the authentication provider
+                    authenticationProvider.start();
+                    // init the user provider
+                    UserProvider userProvider =
+                            identityProviderPluginManager.create(identityProvider.getType(), identityProvider.getConfiguration());
+                    providers.put(identityProvider.getId(), authenticationProvider);
+                    identities.put(identityProvider.getId(), identityProvider);
+                    if (userProvider != null) {
+                        // start the user provider
+                        userProvider.start();
+                        userProviders.put(identityProvider.getId(), userProvider);
+                    } else {
+                        userProviders.remove(identityProvider.getId());
+                    }
                 }
+            } else {
+                logger.debug("\tIdentity provider already initialized: {} [{}]", identityProvider.getName(), identityProvider.getType());
             }
         } catch (Exception ex) {
             // failed to load the plugin
@@ -202,5 +206,14 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
                 logger.error("An error has occurred while stopping the user provider : {}", identityProviderId, e);
             }
         }
+    }
+
+    /**
+     * @param provider
+     * @return true if the IDP has never been deployed or if the deployed version is not up to date
+     */
+    private boolean needDeployment(IdentityProvider provider) {
+        final IdentityProvider deployedProvider = this.identities.get(provider.getId());
+        return (deployedProvider == null || deployedProvider.getUpdatedAt().before(provider.getUpdatedAt()));
     }
 }

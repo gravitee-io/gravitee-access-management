@@ -71,7 +71,8 @@ public class AuditReporterManagerImpl extends AbstractService implements AuditRe
     @Autowired
     private EnvironmentService environmentService;
 
-    private ConcurrentMap<String, io.gravitee.am.reporter.api.provider.Reporter> reporters = new ConcurrentHashMap<>();
+    private ConcurrentMap<String, io.gravitee.am.reporter.api.provider.Reporter> reporterPlugins = new ConcurrentHashMap<>();
+    private ConcurrentMap<String, Reporter> reporters = new ConcurrentHashMap<>();
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -144,7 +145,7 @@ public class AuditReporterManagerImpl extends AbstractService implements AuditRe
 
         if (deploymentId != null) {
             vertx.undeploy(deploymentId, event -> {
-                for(io.gravitee.am.reporter.api.provider.Reporter reporter : reporters.values()) {
+                for(io.gravitee.am.reporter.api.provider.Reporter reporter : reporterPlugins.values()) {
                     try {
                         logger.info("Stopping reporter: {}", reporter);
                         reporter.stop();
@@ -186,7 +187,7 @@ public class AuditReporterManagerImpl extends AbstractService implements AuditRe
                 .subscribeOn(Schedulers.io())
                 .subscribe(
                         tupleReporterContext -> {
-                            if (reporters.containsKey(reporterId)) {
+                            if (reporterPlugins.containsKey(reporterId)) {
                                 updateReporterProvider(tupleReporterContext.getT1(), tupleReporterContext.getT2());
                             } else {
                                 startReporterProvider(tupleReporterContext.getT1(), tupleReporterContext.getT2());
@@ -198,25 +199,31 @@ public class AuditReporterManagerImpl extends AbstractService implements AuditRe
 
     private void removeReporter(String reporterId) {
         logger.info("Domain {} has received reporter event, delete reporter {}", domain.getName(), reporterId);
-        io.gravitee.am.reporter.api.provider.Reporter reporter = reporters.remove(reporterId);
+        reporters.remove(reporterId);
+        io.gravitee.am.reporter.api.provider.Reporter reporter = reporterPlugins.remove(reporterId);
         stopReporterProvider(reporterId, reporter);
     }
 
     private void startReporterProvider(Reporter reporter, GraviteeContext context) {
         if (reporter.isEnabled()) {
-            logger.info("\tInitializing reporter: {} [{}]", reporter.getName(), reporter.getType());
-            io.gravitee.am.reporter.api.provider.Reporter reporterProvider = reporterPluginManager.create(reporter.getType(), reporter.getConfiguration(), context);
+            if (needDeployment(reporter)) {
+                logger.info("\tInitializing reporter: {} [{}]", reporter.getName(), reporter.getType());
+                io.gravitee.am.reporter.api.provider.Reporter reporterProvider = reporterPluginManager.create(reporter.getType(), reporter.getConfiguration(), context);
 
-            if (reporterProvider != null) {
-                try {
-                    logger.info("Starting reporter: {}", reporter.getName());
-                    io.gravitee.am.reporter.api.provider.Reporter eventBusReporter = new EventBusReporterWrapper(vertx, domain.getId(), reporterProvider);
-                    eventBusReporter.start();
-                    reporters.put(reporter.getId(), eventBusReporter);
-                } catch (Exception ex) {
-                    logger.error("Unexpected error while starting reporter", ex);
+                if (reporterProvider != null) {
+                    try {
+                        logger.info("Starting reporter: {}", reporter.getName());
+                        io.gravitee.am.reporter.api.provider.Reporter eventBusReporter = new EventBusReporterWrapper(vertx, domain.getId(), reporterProvider);
+                        eventBusReporter.start();
+                        reporters.put(reporter.getId(), reporter);
+                        reporterPlugins.put(reporter.getId(), eventBusReporter);
+                    } catch (Exception ex) {
+                        logger.error("Unexpected error while starting reporter", ex);
+                    }
+
                 }
-
+            } else {
+                logger.info("Reporter {} already up to date for Domain {}", reporter.getId(), domain.getName());
             }
         } else {
             logger.info("\tReporter disabled: {} [{}]", reporter.getName(), reporter.getType());
@@ -234,17 +241,30 @@ public class AuditReporterManagerImpl extends AbstractService implements AuditRe
     }
 
     private void updateReporterProvider(Reporter reporter, GraviteeContext context) {
-        stopReporterProvider(reporter.getId(), reporters.get(reporter.getId()));
-        startReporterProvider(reporter, context);
+        if (needDeployment(reporter)) {
+            stopReporterProvider(reporter.getId(), reporterPlugins.get(reporter.getId()));
+            startReporterProvider(reporter, context);
+        } else {
+            logger.info("Reporter {} already up to date for Domain {}", reporter.getId(), domain.getName());
+        }
     }
 
     @Override
     public io.gravitee.am.reporter.api.provider.Reporter getReporter() {
-       return reporters.entrySet()
+       return reporterPlugins.entrySet()
                 .stream()
                 .map(entry -> entry.getValue())
                 .filter(reporter -> reporter.canSearch())
                 .findFirst()
                 .orElse(null);
+    }
+
+    /**
+     * @param reporter
+     * @return true if the Reporter has never been deployed or if the deployed version is not up to date
+     */
+    private boolean needDeployment(io.gravitee.am.model.Reporter reporter) {
+        final io.gravitee.am.model.Reporter deployedReporter = this.reporters.get(reporter.getId());
+        return (deployedReporter == null || deployedReporter.getUpdatedAt().before(reporter.getUpdatedAt()));
     }
 }
