@@ -18,6 +18,7 @@ package io.gravitee.am.service.impl;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
+import io.gravitee.am.common.exception.oauth2.InvalidRequestUriException;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oauth2.GrantType;
@@ -57,6 +58,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
@@ -633,7 +635,8 @@ public class ApplicationServiceImpl implements ApplicationService {
                 .flatMap(this::validateScopes)
                 .flatMap(this::validateTokenEndpointAuthMethod)
                 .flatMap(this::validateTlsClientAuth)
-                .flatMap(this::validatePostLogoutRedirectUris);
+                .flatMap(this::validatePostLogoutRedirectUris)
+                .flatMap(this::validateRequestUris);
     }
 
     private Single<Application> validateRedirectUris(Application application) {
@@ -789,7 +792,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                                 final URI uri = logoutRedirectUri.contains("*") ? new URI(logoutRedirectUri) : UriBuilder.fromURIString(logoutRedirectUri).build();
 
                                 if (uri.getScheme() == null) {
-                                    return Single.error(new InvalidTargetUrlException("target_url : " + logoutRedirectUri + " is malformed"));
+                                    return Single.error(new InvalidTargetUrlException("post_logout_redirect_uri : " + logoutRedirectUri + " is malformed"));
                                 }
 
                                 final String host = isHttp(uri.getScheme()) ? uri.toURL().getHost() : uri.getHost();
@@ -809,10 +812,53 @@ public class ApplicationServiceImpl implements ApplicationService {
                                 }
                                 // check fragment
                                 if (uri.getFragment() != null) {
-                                    return Single.error(new InvalidTargetUrlException("target_url with fragment is forbidden"));
+                                    return Single.error(new InvalidTargetUrlException("post_logout_redirect_uri with fragment is forbidden"));
                                 }
                             } catch (IllegalArgumentException | URISyntaxException ex) {
-                                return Single.error(new InvalidTargetUrlException("target_url : " + logoutRedirectUri + " is malformed"));
+                                return Single.error(new InvalidTargetUrlException("post_logout_redirect_uri : " + logoutRedirectUri + " is malformed"));
+                            }
+                        }
+                    }
+                    return Single.just(application);
+                });
+    }
+
+    private Single<Application> validateRequestUris(Application application) {
+        ApplicationOAuthSettings oAuthSettings = application.getSettings().getOauth();
+
+        return domainService.findById(application.getDomain())
+                .switchIfEmpty(Maybe.error(new DomainNotFoundException(application.getDomain())))
+                .flatMapSingle(domain -> {
+                    if (oAuthSettings.getRequestUris() != null) {
+                        for (String requestUri : oAuthSettings.getRequestUris()) {
+                            try {
+                                final URI uri = requestUri.contains("*") ? new URI(requestUri) : UriBuilder.fromURIString(requestUri).build();
+
+                                if (uri.getScheme() == null) {
+                                    return Single.error(new InvalidRequestUriException("request_uri : " + requestUri + " is malformed"));
+                                }
+
+                                final String host = isHttp(uri.getScheme()) ? uri.toURL().getHost() : uri.getHost();
+
+                                //check localhost allowed
+                                if (!domain.isRedirectUriLocalhostAllowed() && isHttp(uri.getScheme()) && UriBuilder.isLocalhost(host)) {
+                                    return Single.error(new InvalidRequestUriException("localhost is forbidden"));
+                                }
+                                //check http scheme
+                                if (!domain.isRedirectUriUnsecuredHttpSchemeAllowed() && uri.getScheme().equalsIgnoreCase("http")) {
+                                    return Single.error(new InvalidRequestUriException("Unsecured http scheme is forbidden"));
+                                }
+                                //check wildcard
+                                if (!domain.isRedirectUriWildcardAllowed() &&
+                                        (nonNull(uri.getPath()) && uri.getPath().contains("*") || nonNull(host) && host.contains("*"))) {
+                                    return Single.error(new InvalidRequestUriException("Wildcard are forbidden"));
+                                }
+                                // check fragment
+                                if (uri.getFragment() != null) {
+                                    return Single.error(new InvalidRequestUriException("request_uri with fragment is forbidden"));
+                                }
+                            } catch (IllegalArgumentException | URISyntaxException ex) {
+                                return Single.error(new InvalidRequestUriException("request_uri : " + requestUri + " is malformed"));
                             }
                         }
                     }

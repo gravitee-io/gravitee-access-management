@@ -101,6 +101,7 @@ public class DomainRepositoryTest extends AbstractManagementTest {
         notifier.setId(UUID.randomUUID().toString());
         cibaSettings.setDeviceNotifiers(Arrays.asList(notifier));
         oidc.setCibaSettings(cibaSettings);
+        oidc.setRequestUris(Arrays.asList("https://somewhere"));
         domain.setOidc(oidc);
         domain.setScim(new SCIMSettings());
         domain.setUma(new UMASettings());
@@ -185,6 +186,7 @@ public class DomainRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(d -> d.getOidc() != null);
         testObserver.assertValue(d -> d.getOidc().getCibaSettings() != null && d.getOidc().getCibaSettings().isEnabled());
         testObserver.assertValue(d -> d.getOidc().getCibaSettings().getDeviceNotifiers() != null && d.getOidc().getCibaSettings().getDeviceNotifiers().size() == 1);
+        testObserver.assertValue(d -> d.getOidc().getRequestUris() != null && d.getOidc().getRequestUris().size() == 1);
         testObserver.assertValue(d -> d.getScim() != null);
         testObserver.assertValue(d -> d.getWebAuthnSettings() != null);
         testObserver.assertValue(d -> d.getSelfServiceAccountManagementSettings() != null);
