@@ -18,7 +18,6 @@ import {ActivatedRoute, Router} from '@angular/router';
 import {ApplicationService} from "../../../../../services/application.service";
 import {SnackbarService} from "../../../../../services/snackbar.service";
 import {AuthService} from "../../../../../services/auth.service";
-import {CertificateService} from "../../../../../services/certificate.service";
 
 @Component({
   selector: 'app-application-saml2',
@@ -39,8 +38,7 @@ export class ApplicationSaml2Component implements OnInit {
               private route: ActivatedRoute,
               private applicationService: ApplicationService,
               private authService: AuthService,
-              private snackbarService: SnackbarService,
-              private certificateService: CertificateService) {
+              private snackbarService: SnackbarService) {
   }
 
   ngOnInit() {
