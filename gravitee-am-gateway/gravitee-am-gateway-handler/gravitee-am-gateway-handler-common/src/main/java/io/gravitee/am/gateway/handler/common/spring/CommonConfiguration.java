@@ -50,6 +50,7 @@ import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthP
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.UserAuthProvider;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.impl.OAuth2AuthProviderImpl;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.impl.UserAuthProviderImpl;
+import io.gravitee.am.gateway.handler.common.webauthn.WebAuthnCookieService;
 import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
 import io.gravitee.am.gateway.handler.context.TemplateVariableProviderFactory;
 import io.gravitee.am.gateway.handler.context.spring.ContextConfiguration;
@@ -194,5 +195,10 @@ public class CommonConfiguration {
     @Bean
     public EmailManager emailManager() {
         return new EmailManagerImpl();
+    }
+
+    @Bean
+    public WebAuthnCookieService webAuthnCookieService() {
+        return new WebAuthnCookieService();
     }
 }

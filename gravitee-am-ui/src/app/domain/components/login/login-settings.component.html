@@ -55,6 +55,14 @@
       </div>
       <div fxLayout="column" style="margin-top: 10px;">
         <mat-slide-toggle
+          (change)="enablePasswordlessRememberDevice($event)"
+          [checked]="isPasswordlessRememberDeviceEnabled()" [disabled]="readonly || !isPasswordlessEnabled()">
+          Passwordless Device Recognition
+        </mat-slide-toggle>
+        <mat-hint style="font-size: 75%;">Enable passwordless remember device to improve user experience. The login page is skipped to prompt directly the passwordless login page if the user has an enrolled device.</mat-hint>
+      </div>
+      <div fxLayout="column" style="margin-top: 10px;">
+        <mat-slide-toggle
           (change)="enableHideForm($event)"
           [checked]="isHideFormEnabled()" [disabled]="readonly || isIdentifierFirstLoginEnabled()">
           Hide login form

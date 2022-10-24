@@ -66,28 +66,10 @@ export class FactorComponent implements OnInit {
         this.factor.factorType = this.factorSchema.properties.factorType.default;
       }
 
-      if (this.factorSchema.properties.graviteeResource && this.resources && this.resources.length > 0) {
-        const resourcePluginTypeToCategories = this.resourcePlugins.reduce((accumulator, currentPlugin) => ({ ...accumulator, [currentPlugin.id]: currentPlugin.categories}), {});
-        const factorPluginTypeToCategories = this.factorPlugins.reduce((accumulator, currentPlugin) => ({ ...accumulator, [currentPlugin.id]: currentPlugin.category}), {});
-        const factorCategory = factorPluginTypeToCategories[this.factor.type];
-        // filter resources with category compatible with the Factor Plugin one
-        const filteredResources = this.resources.filter(r =>
-          resourcePluginTypeToCategories[r.type].filter(resourceCategory => resourceCategory === factorCategory).length > 0
-        );
-
-        this.factorSchema.properties.graviteeResource['x-schema-form'] = { 'type' : 'select' };
-        if (filteredResources.length > 0) {
-          this.factorSchema.properties.graviteeResource.enum = filteredResources.map(r => r.id);
-          this.factorSchema.properties.graviteeResource['x-schema-form'].titleMap = filteredResources.reduce(function(map, obj) {
-            map[obj.id] = obj.name;
-            return map;
-          }, {});
-        } else {
-          // if list of resources is empty, disable the field
-          this.factorSchema.properties.graviteeResource['readonly'] = true;
-        }
+      for (const key in this.factorSchema.properties) {
+        const property = this.factorSchema.properties[key];
+        this.applyResourceSelection(property, key);
       }
-
     });
   }
 
@@ -123,4 +105,44 @@ export class FactorComponent implements OnInit {
   isFido2Factor(){
     return this.factor.type.includes("fido2-am-factor");
   }
+
+  private applyResourceSelection(property, propertyName?) {
+    if (property.type === 'array') {
+      if (property.items && property.items.properties) {
+        for (const key in property.items.properties) {
+          const child = property.items.properties[key];
+          this.applyResourceSelection(child);
+        }
+      }
+    }
+
+    if ('graviteeResource' === property.widget || 'graviteeResource' === propertyName) {
+      if (this.resources && this.resources.length > 0) {
+        const resourcePluginTypeToCategories = this.resourcePlugins.reduce((accumulator, currentPlugin) => ({ ...accumulator, [currentPlugin.id]: currentPlugin.categories}), {});
+        const factorPluginTypeToCategories = this.factorPlugins.reduce((accumulator, currentPlugin) => ({ ...accumulator, [currentPlugin.id]: currentPlugin.category}), {});
+        const factorCategory = factorPluginTypeToCategories[this.factor.type];
+        // filter resources with category compatible with the Factor Plugin one
+        const filteredResources = this.resources.filter(r =>
+          factorCategory === 'any' ||
+          (resourcePluginTypeToCategories[r.type] && resourcePluginTypeToCategories[r.type].filter(resourceCategory => resourceCategory === factorCategory).length > 0)
+        );
+
+        property['x-schema-form'] = { 'type' : 'select' };
+        if (filteredResources.length > 0) {
+          property.enum = filteredResources.map(r => r.id);
+          property['x-schema-form'].titleMap = filteredResources.reduce(function(map, obj) {
+            map[obj.id] = obj.name;
+            return map;
+          }, {});
+        } else {
+          // if list of resources is empty, disable the field
+          property['readonly'] = true;
+        }
+      } else {
+        // if list of resources is empty, disable the field
+        property['readonly'] = true;
+      }
+    }
+  }
+
 }

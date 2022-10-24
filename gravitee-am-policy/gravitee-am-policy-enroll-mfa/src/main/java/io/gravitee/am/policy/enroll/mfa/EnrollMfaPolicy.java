@@ -18,6 +18,7 @@ package io.gravitee.am.policy.enroll.mfa;
 import io.gravitee.am.common.factor.FactorDataKeys;
 import io.gravitee.am.common.factor.FactorType;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.factor.api.FactorProvider;
 import io.gravitee.am.factor.utils.SharedSecret;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.user.UserService;
@@ -104,17 +105,20 @@ public class EnrollMfaPolicy {
                 return;
             }
 
-            // value is mandatory for every factor except the HTTP one
+            // value is mandatory for every factor except the HTTP and OTP factors
             final Factor factor = optFactor.get();
+            final FactorProvider factorProvider = factorManager.get(factorId);
+
             if (ObjectUtils.isEmpty(value) &&
-                    !FactorType.HTTP.getType().equals(factor.getFactorType().getType())) {
+                    !(FactorType.HTTP.getType().equals(factor.getFactorType().getType()) || FactorType.OTP.getType().equals(factor.getFactorType().getType()))
+            ) {
                 LOGGER.error("Value field is missing");
                 policyChain.failWith(PolicyResult.failure(GATEWAY_POLICY_ENROLL_MFA_ERROR_KEY, "Value field is missing"));
                 return;
             }
 
             // enroll the MFA factor
-            buildEnrolledFactor(factor, user, value, context)
+            buildEnrolledFactor(factor, factorProvider, user, value, context)
                     .flatMap(enrolledFactor -> userService.addFactor(user.getId(), enrolledFactor, new DefaultUser(user)))
                     .subscribe(
                             __ -> {
@@ -133,7 +137,7 @@ public class EnrollMfaPolicy {
         }
     }
 
-    private Single<EnrolledFactor> buildEnrolledFactor(Factor factor, User user, String value, ExecutionContext context) {
+    private Single<EnrolledFactor> buildEnrolledFactor(Factor factor, FactorProvider factorProvider, User user, String value, ExecutionContext context) {
         return Single.defer(() -> {
             try {
                 // compute value
@@ -148,7 +152,12 @@ public class EnrollMfaPolicy {
                 enrolledFactor.setPrimary(configuration.isPrimary());
                 switch (factor.getFactorType()) {
                     case OTP:
-                        enrolledFactor.setSecurity(new EnrolledFactorSecurity(SHARED_SECRET, enrollmentValue));
+                        final String otpEnrollmentValue = enrollmentValue != null ? enrollmentValue : SharedSecret.generate();
+                        Map<String, Object> otpAdditionalData = Collections.emptyMap();
+                        if (factorProvider.useVariableFactorSecurity()) {
+                            otpAdditionalData = Collections.singletonMap(FactorDataKeys.KEY_MOVING_FACTOR, generateInitialMovingFactor(user));
+                        }
+                        enrolledFactor.setSecurity(new EnrolledFactorSecurity(SHARED_SECRET, otpEnrollmentValue, otpAdditionalData));
                         break;
                     case SMS:
                         enrolledFactor.setChannel(new EnrolledFactorChannel(EnrolledFactorChannel.Type.SMS, enrollmentValue));
