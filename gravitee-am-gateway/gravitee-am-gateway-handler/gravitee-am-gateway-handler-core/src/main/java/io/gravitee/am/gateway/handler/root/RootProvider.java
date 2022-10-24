@@ -82,6 +82,7 @@ import io.gravitee.am.gateway.handler.root.resources.handler.user.UserTokenReque
 import io.gravitee.am.gateway.handler.root.resources.handler.user.activity.UserActivityHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.password.ForgotPasswordAccessHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.password.ForgotPasswordSubmissionRequestParseHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.user.password.PasswordHistoryHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.password.ResetPasswordOneTimeTokenHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.password.ResetPasswordRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.password.ResetPasswordSubmissionRequestParseHandler;
@@ -104,6 +105,7 @@ import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.UserActivityService;
 import io.gravitee.am.service.i18n.GraviteeMessageResolver;
+import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.gravitee.common.service.AbstractService;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
@@ -263,6 +265,9 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
 
     @Autowired
     private RateLimiterService rateLimiterService;
+
+    @Autowired
+    private PasswordHistoryService passwordHistoryService;
 
     @Override
     protected void doStart() throws Exception {
@@ -526,6 +531,10 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(new ResetPasswordSubmissionEndpoint(userService));
         rootRouter.route(PATH_RESET_PASSWORD)
                 .failureHandler(resetPasswordFailureHandler);
+
+        rootRouter.route(HttpMethod.POST, "/passwordHistory")
+                  .handler(clientRequestParseHandlerOptional)
+                  .handler(new PasswordHistoryHandler(passwordHistoryService, userService, domain));
 
         // error route
         rootRouter.route(HttpMethod.GET, PATH_ERROR)
