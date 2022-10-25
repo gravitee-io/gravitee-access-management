@@ -52,7 +52,7 @@ public abstract class JdbcAuthenticationProviderConfigurationTest implements Ini
     }
 
     protected void initData(Connection connection) {
-        Single.fromPublisher(connection.createStatement("create table users(id varchar(256), username varchar(256), password varchar(256), email varchar(256), metadata text)").execute()).subscribe();
+        Single.fromPublisher(connection.createStatement("create table users(id varchar(256), username varchar(256), password varchar(256), email varchar(256), metadata text)").execute()).blockingGet();
         Single.fromPublisher(connection.createStatement("insert into users values('1', 'bob', 'bobspassword', null, null)").execute()).subscribe();
         Single.fromPublisher(connection.createStatement("insert into users values('2', 'user01', 'user01', 'user01@acme.com', null)").execute()).subscribe();
     }

@@ -223,46 +223,55 @@ public class JdbcUserProvider extends JdbcAbstractProvider<UserProvider> impleme
 
         if (updateUser.getCredentials() != null) {
             if (configuration.isUseDedicatedSalt()) {
-                args = new Object[4];
-                sql = String.format("UPDATE %s SET %s = %s, %s = %s, %s = %s WHERE %s = %s",
+                args = new Object[5];
+                sql = String.format("UPDATE %s SET %s = %s, %s = %s, %s = %s , %s = %s WHERE %s = %s",
                         configuration.getUsersTable(),
                         configuration.getPasswordAttribute(),
                         getIndexParameter(1, configuration.getPasswordAttribute()),
                         configuration.getPasswordSaltAttribute(),
                         getIndexParameter(2, configuration.getPasswordSaltAttribute()),
+                        configuration.getEmailAttribute(),
+                        getIndexParameter(3, configuration.getEmailAttribute()),
                         configuration.getMetadataAttribute(),
-                        getIndexParameter(3, configuration.getMetadataAttribute()),
+                        getIndexParameter(4, configuration.getMetadataAttribute()),
                         configuration.getIdentifierAttribute(),
-                        getIndexParameter(4, configuration.getIdentifierAttribute()));
+                        getIndexParameter(5, configuration.getIdentifierAttribute()));
                 byte[] salt = createSalt();
                 args[0] = passwordEncoder.encode(updateUser.getCredentials(), salt);
                 args[1] = binaryToTextEncoder.encode(salt);
-                args[2] = metadata;
-                args[3] = id;
+                args[2] = updateUser.getEmail();
+                args[3] = metadata;
+                args[4] = id;
             } else {
-                args = new Object[3];
-                sql = String.format("UPDATE %s SET %s = %s, %s = %s WHERE %s = %s",
+                args = new Object[4];
+                sql = String.format("UPDATE %s SET %s = %s, %s = %s, %s = %s WHERE %s = %s",
                         configuration.getUsersTable(),
                         configuration.getPasswordAttribute(),
                         getIndexParameter(1, configuration.getPasswordAttribute()),
                         configuration.getMetadataAttribute(),
                         getIndexParameter(2, configuration.getMetadataAttribute()),
+                        configuration.getEmailAttribute(),
+                        getIndexParameter(3, configuration.getEmailAttribute()),
                         configuration.getIdentifierAttribute(),
-                        getIndexParameter(3, configuration.getIdentifierAttribute()));
+                        getIndexParameter(4, configuration.getIdentifierAttribute()));
                 args[0] = passwordEncoder.encode(updateUser.getCredentials());
                 args[1] = metadata;
-                args[2] = id;
+                args[2] = updateUser.getEmail();
+                args[3] = id;
             }
         } else {
-            args = new Object[2];
-            sql = String.format("UPDATE %s SET %s = %s WHERE %s = %s",
+            args = new Object[3];
+            sql = String.format("UPDATE %s SET %s = %s, %s = %s WHERE %s = %s",
                     configuration.getUsersTable(),
                     configuration.getMetadataAttribute(),
                     getIndexParameter(1, configuration.getMetadataAttribute()),
+                    configuration.getEmailAttribute(),
+                    getIndexParameter(2, configuration.getEmailAttribute()),
                     configuration.getIdentifierAttribute(),
-                    getIndexParameter(2, configuration.getIdentifierAttribute()));
+                    getIndexParameter(3, configuration.getIdentifierAttribute()));
             args[0] = metadata;
-            args[1] = id;
+            args[1] = updateUser.getEmail();
+            args[2] = id;
         }
 
         return query(sql, args)
