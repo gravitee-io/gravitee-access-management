@@ -692,10 +692,6 @@ public class DomainServiceImpl implements DomainService {
                             (nonNull(uri.getPath()) && uri.getPath().contains("*") || nonNull(host) && host.contains("*"))) {
                         throw new InvalidRequestUriException("Wildcard are forbidden");
                     }
-                    // check fragment
-                    if (uri.getFragment() != null) {
-                        throw new InvalidRequestUriException("request_uri with fragment is forbidden");
-                    }
                 } catch (IllegalArgumentException | URISyntaxException ex) {
                     throw new InvalidRequestUriException("request_uri : " + requestUri + " is malformed");
                 }

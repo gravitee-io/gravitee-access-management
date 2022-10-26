@@ -853,10 +853,6 @@ public class ApplicationServiceImpl implements ApplicationService {
                                         (nonNull(uri.getPath()) && uri.getPath().contains("*") || nonNull(host) && host.contains("*"))) {
                                     return Single.error(new InvalidRequestUriException("Wildcard are forbidden"));
                                 }
-                                // check fragment
-                                if (uri.getFragment() != null) {
-                                    return Single.error(new InvalidRequestUriException("request_uri with fragment is forbidden"));
-                                }
                             } catch (IllegalArgumentException | URISyntaxException ex) {
                                 return Single.error(new InvalidRequestUriException("request_uri : " + requestUri + " is malformed"));
                             }
