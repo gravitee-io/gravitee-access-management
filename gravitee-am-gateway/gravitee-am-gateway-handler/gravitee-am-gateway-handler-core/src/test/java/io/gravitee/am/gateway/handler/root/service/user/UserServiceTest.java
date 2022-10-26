@@ -23,6 +23,7 @@ import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.EnrollmentSettings;
+import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
@@ -234,6 +235,7 @@ public class UserServiceTest {
         when(domain.getId()).thenReturn("domain-id");
 
         Client client = mock(Client.class);
+        when(client.getIdentityProviders()).thenReturn(null);
 
         User user = mock(User.class);
         when(user.getEmail()).thenReturn("test@test.com");
@@ -258,6 +260,7 @@ public class UserServiceTest {
         when(domain.getId()).thenReturn("domain-id");
 
         Client client = mock(Client.class);
+        when(client.getIdentityProviders()).thenReturn(null);
 
         User user = mock(User.class);
         when(user.getEmail()).thenReturn("test@test.com");
@@ -274,6 +277,7 @@ public class UserServiceTest {
     @Test
     public void shouldForgotPassword_userInactive_forceRegistration() {
         Client client = mock(Client.class);
+        when(client.getIdentityProviders()).thenReturn(null);
 
         User user = mock(User.class);
         when(user.getUsername()).thenReturn("username");
@@ -305,6 +309,7 @@ public class UserServiceTest {
     @Test
     public void shouldForgotPassword_userActive() {
         Client client = mock(Client.class);
+        when(client.getIdentityProviders()).thenReturn(null);
 
         User user = mock(User.class);
         when(user.getUsername()).thenReturn("username");
@@ -329,6 +334,7 @@ public class UserServiceTest {
     @Test
     public void shouldForgotPassword_userActive_noUpdate() {
         Client client = mock(Client.class);
+        when(client.getIdentityProviders()).thenReturn(null);
 
         User user = mock(User.class);
         when(user.getUsername()).thenReturn("username");
@@ -355,7 +361,7 @@ public class UserServiceTest {
     public void shouldForgotPassword_MultipleMatch_NoMultiFieldForm() {
         Client client = mock(Client.class);
         when(client.getId()).thenReturn("client-id");
-
+        when(client.getIdentityProviders()).thenReturn(null);
         User user = mock(User.class);
         when(user.getUsername()).thenReturn("username");
         when(user.isInactive()).thenReturn(false);
@@ -663,6 +669,85 @@ public class UserServiceTest {
         userService.setMfaEnrollmentSkippedTime(client, user);
 
         verify(commonUserService, times(0)).update(any());
+    }
+
+    @Test
+    public void shouldNotForgotPassword_client_has_no_Idp() {
+        Client client = mock(Client.class);
+        User user = mock(User.class);
+
+        when(client.getIdentityProviders()).thenReturn(new TreeSet<>());
+        when(domain.getId()).thenReturn("domain-id");
+        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Collections.singletonList(user)));
+
+
+        TestObserver testObserver = userService.forgotPassword(user.getEmail(), client).test();
+        testObserver.assertNotComplete();
+        testObserver.assertError(UserNotFoundException.class);
+    }
+
+    @Test
+    public void shouldNotForgotPassword_client_Idp_not_match_user_Idp() {
+        when(domain.getId()).thenReturn("domain-id");
+
+        Client client = mock(Client.class);
+        when(client.getIdentityProviders()).thenReturn(new TreeSet<>());
+
+        User user = mock(User.class);
+        when(user.getEmail()).thenReturn("test@test.com");
+        when(user.getSource()).thenReturn("idp-id");
+
+        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Collections.singletonList(user)));
+
+        IdentityProvider identityProvider = mock(IdentityProvider.class);
+        when(identityProvider.getId()).thenReturn("id-that-does-not-match");
+        ApplicationIdentityProvider applicationIdentityProvider = mock(ApplicationIdentityProvider.class);
+        when(applicationIdentityProvider.getIdentity()).thenReturn("some-id");
+        when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(identityProvider);
+        TreeSet<ApplicationIdentityProvider> applicationIdentityProviders = new TreeSet<>();
+        applicationIdentityProviders.add(applicationIdentityProvider);
+        when(client.getIdentityProviders()).thenReturn(applicationIdentityProviders);
+
+
+        TestObserver testObserver = userService.forgotPassword(user.getEmail(), client).test();
+        testObserver.assertNotComplete();
+        testObserver.assertError(UserNotFoundException.class);
+    }
+
+    @Test
+    public void shouldForgotPassword_client_Idp_match_user_idp() {
+        Client client = mock(Client.class);
+        UserProvider userProvider = mock(UserProvider.class);
+        User user = mock(User.class);
+        AccountSettings accountSettings = mock(AccountSettings.class);
+        IdentityProvider identityProvider = mock(IdentityProvider.class);
+        ApplicationIdentityProvider applicationIdentityProvider = mock(ApplicationIdentityProvider.class);
+        TreeSet<ApplicationIdentityProvider> applicationIdentityProviders = new TreeSet<>();
+        applicationIdentityProviders.add(applicationIdentityProvider);
+
+        when(user.getUsername()).thenReturn("username");
+        when(user.getEmail()).thenReturn("test@test.com");
+        when(user.isInactive()).thenReturn(true);
+        when(user.getSource()).thenReturn("idp-id");
+        when(accountSettings.isCompleteRegistrationWhenResetPassword()).thenReturn(true);
+        when(domain.getId()).thenReturn("domain-id");
+        when(domain.getAccountSettings()).thenReturn(accountSettings);
+        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Collections.singletonList(user)));
+        when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
+        when(userProvider.findByUsername("username")).thenReturn(Maybe.just(new DefaultUser("username")));
+        when(commonUserService.update(any())).thenReturn(Single.just(user));
+        when(identityProvider.getId()).thenReturn("some-id");
+        when(applicationIdentityProvider.getIdentity()).thenReturn("some-id");
+        when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(identityProvider);
+        when(client.getIdentityProviders()).thenReturn(applicationIdentityProviders);
+
+
+        TestObserver testObserver = userService.forgotPassword(user.getEmail(), client).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(credentialService, never()).deleteByUserId(any(), any(), any());
+        verify(tokenService, never()).deleteByUserId(any());
     }
 
     private SortedSet<ApplicationIdentityProvider> getApplicationIdentityProviders(String... identities) {

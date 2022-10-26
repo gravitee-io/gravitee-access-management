@@ -15,13 +15,16 @@
  */
 package io.gravitee.am.policy.enroll.mfa;
 
+import io.gravitee.am.common.factor.FactorDataKeys;
 import io.gravitee.am.common.factor.FactorType;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.factor.api.FactorProvider;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
+import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.policy.enroll.mfa.configuration.EnrollMfaPolicyConfiguration;
 import io.gravitee.el.TemplateEngine;
 import io.gravitee.gateway.api.ExecutionContext;
@@ -39,7 +42,14 @@ import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -105,6 +115,9 @@ public class EnrollMfaPolicyTest {
         when(configuration.getFactorId()).thenReturn("factor-id");
         FactorManager factorManager = mock(FactorManager.class);
         when(factorManager.getClientFactor(any(), eq("factor-id"))).thenReturn(Optional.of(new Factor()));
+        FactorProvider factorProvider = mock(FactorProvider.class);
+        when(factorProvider.useVariableFactorSecurity()).thenReturn(false);
+        when(factorManager.get(eq("factor-id"))).thenReturn(factorProvider);
         when(executionContext.getComponent(FactorManager.class)).thenReturn(factorManager);
         User user = mock(User.class);
         EnrolledFactor enrolledFactor = mock(EnrolledFactor.class);
@@ -124,6 +137,9 @@ public class EnrollMfaPolicyTest {
         Factor factor = mock(Factor.class);
         when(factor.getFactorType()).thenReturn(FactorType.SMS);
         when(factorManager.getClientFactor(any(), eq("factor-id"))).thenReturn(Optional.of(factor));
+        FactorProvider factorProvider = mock(FactorProvider.class);
+        when(factorProvider.useVariableFactorSecurity()).thenReturn(false);
+        when(factorManager.get(eq("factor-id"))).thenReturn(factorProvider);
         when(executionContext.getComponent(FactorManager.class)).thenReturn(factorManager);
         User user = mock(User.class);
         when(user.getFactors()).thenReturn(Collections.emptyList());
@@ -135,6 +151,71 @@ public class EnrollMfaPolicyTest {
     }
 
     @Test
+    public void shouldContinue_missingValueForHTTP() throws Exception {
+        when(configuration.getFactorId()).thenReturn("factor-id");
+        when(configuration.getValue()).thenReturn(null);
+
+        FactorManager factorManager = mock(FactorManager.class);
+        Factor factor = mock(Factor.class);
+        when(factor.getFactorType()).thenReturn(FactorType.HTTP);
+        when(factorManager.getClientFactor(any(), eq("factor-id"))).thenReturn(Optional.of(factor));
+        FactorProvider factorProvider = mock(FactorProvider.class);
+        when(factorProvider.useVariableFactorSecurity()).thenReturn(false);
+        when(factorManager.get(eq("factor-id"))).thenReturn(factorProvider);
+
+        when(executionContext.getComponent(FactorManager.class)).thenReturn(factorManager);
+
+        User user = mock(User.class);
+        when(user.getId()).thenReturn("user-id");
+        when(user.getFactors()).thenReturn(Collections.emptyList());
+        when(executionContext.getAttribute(ConstantKeys.USER_CONTEXT_KEY)).thenReturn(user);
+        when(executionContext.getTemplateEngine()).thenReturn(templateEngine);
+        when(templateEngine.getValue(configuration.getValue(), String.class)).thenReturn(null);
+
+        UserService userService = mock(UserService.class);
+        when(userService.addFactor(anyString(), any(), any())).thenReturn(Single.just(new User()));
+        when(executionContext.getComponent(UserService.class)).thenReturn(userService);
+
+        executePolicy(configuration, request, response, executionContext, policyChain);
+        verify(policyChain, times(1)).doNext(request, response);
+    }
+
+    @Test
+    public void shouldContinue_missingValueForOTP() throws Exception {
+        when(configuration.getFactorId()).thenReturn("factor-id");
+        when(configuration.getValue()).thenReturn(null);
+
+        FactorManager factorManager = mock(FactorManager.class);
+        Factor factor = mock(Factor.class);
+        when(factor.getFactorType()).thenReturn(FactorType.OTP);
+        when(factorManager.getClientFactor(any(), eq("factor-id"))).thenReturn(Optional.of(factor));
+        FactorProvider factorProvider = mock(FactorProvider.class);
+        when(factorProvider.useVariableFactorSecurity()).thenReturn(true);
+        when(factorManager.get(eq("factor-id"))).thenReturn(factorProvider);
+
+        when(executionContext.getComponent(FactorManager.class)).thenReturn(factorManager);
+
+        User user = mock(User.class);
+        when(user.getId()).thenReturn("user-id");
+        when(user.getUsername()).thenReturn("username");
+        when(user.getFactors()).thenReturn(Collections.emptyList());
+        when(executionContext.getAttribute(ConstantKeys.USER_CONTEXT_KEY)).thenReturn(user);
+        when(executionContext.getTemplateEngine()).thenReturn(templateEngine);
+        when(templateEngine.getValue(configuration.getValue(), String.class)).thenReturn(null);
+
+        UserService userService = mock(UserService.class);
+        when(userService.addFactor(anyString(), any(), any())).thenReturn(Single.just(new User()));
+        when(executionContext.getComponent(UserService.class)).thenReturn(userService);
+
+        executePolicy(configuration, request, response, executionContext, policyChain);
+        verify(policyChain, times(1)).doNext(request, response);
+        verify(userService).addFactor(anyString(), argThat(enrolledFactor -> {
+            final EnrolledFactorSecurity security = enrolledFactor.getSecurity();
+            return security != null && security.getAdditionalData() != null && security.getAdditionalData().containsKey(FactorDataKeys.KEY_MOVING_FACTOR);
+        }), any());
+    }
+
+    @Test
     public void shouldContinue_nominalCase() throws Exception {
         when(configuration.getFactorId()).thenReturn("factor-id");
         when(configuration.getValue()).thenReturn("0102030405");
@@ -143,6 +224,9 @@ public class EnrollMfaPolicyTest {
         Factor factor = mock(Factor.class);
         when(factor.getFactorType()).thenReturn(FactorType.SMS);
         when(factorManager.getClientFactor(any(), eq("factor-id"))).thenReturn(Optional.of(factor));
+        FactorProvider factorProvider = mock(FactorProvider.class);
+        when(factorProvider.useVariableFactorSecurity()).thenReturn(false);
+        when(factorManager.get(eq("factor-id"))).thenReturn(factorProvider);
 
         when(executionContext.getComponent(FactorManager.class)).thenReturn(factorManager);
 
