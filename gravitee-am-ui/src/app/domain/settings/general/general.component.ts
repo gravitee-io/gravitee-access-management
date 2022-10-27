@@ -62,6 +62,7 @@ export class DomainSettingsGeneralComponent implements OnInit {
     this.domain = this.route.snapshot.data['domain'];
     this.domainOIDCSettings = this.domain.oidc || {};
     this.logoutRedirectUris = _.map(this.domainOIDCSettings.postLogoutRedirectUris, function (item) { return { value: item }; });
+    this.requestUris = _.map(this.domainOIDCSettings.requestUris, function (item) { return { value: item }; });
     if (this.domain.tags === undefined) {
       this.domain.tags = [];
     }
