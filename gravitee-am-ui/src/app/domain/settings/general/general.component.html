@@ -103,7 +103,7 @@
             <div fxLayout="row" fxLayoutGap="10px" *hasPermission="['domain_settings_update']">
               <div fxFlex="90">
                 <mat-form-field appearance="outline" floatLabel="always">
-                  <input matInput type="text" placeholder="Enter a request URI" name="requestUri" (keydown.enter)="addRequestUris($event)" [value]="logoutRedirectUri || ''" (input)='requestUri = $event.target.value'>
+                  <input matInput type="text" placeholder="Enter a request URI" name="requestUri" (keydown.enter)="addRequestUris($event)" [value]="requestUri || ''" (input)='requestUri = $event.target.value'>
                 </mat-form-field>
               </div>
               <div>
