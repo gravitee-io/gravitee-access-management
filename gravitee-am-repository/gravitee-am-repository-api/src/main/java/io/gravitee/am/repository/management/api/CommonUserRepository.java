@@ -40,6 +40,7 @@ public interface CommonUserRepository extends CrudRepository<User, String> {
     Single<Page<User>> search(ReferenceType referenceType, String referenceId, String query, int page, int size);
 
     Single<Page<User>> search(ReferenceType referenceType, String referenceId, FilterCriteria criteria, int page, int size);
+    Flowable<User> search(ReferenceType referenceType, String referenceId, FilterCriteria criteria);
 
     Maybe<User> findByUsernameAndSource(ReferenceType referenceType, String referenceId, String username, String source);
 

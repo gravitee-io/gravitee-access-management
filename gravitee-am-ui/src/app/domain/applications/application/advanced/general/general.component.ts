@@ -35,8 +35,10 @@ export class ApplicationGeneralComponent implements OnInit {
   application: any;
   applicationOAuthSettings: any = {};
   applicationAdvancedSettings: any = {};
+  requestUri: string;
   redirectUri: string;
   logoutRedirectUri: string;
+  requestUris: any[] = [];
   redirectUris: any[] = [];
   logoutRedirectUris: any[] = [];
   formChanged = false;
@@ -82,10 +84,12 @@ export class ApplicationGeneralComponent implements OnInit {
     this.applicationOAuthSettings = this.application.settings == null ? {} : this.application.settings.oauth || {};
     this.applicationAdvancedSettings = this.application.settings == null ? {} : this.application.settings.advanced || {};
     this.applicationOAuthSettings.redirectUris = this.applicationOAuthSettings.redirectUris || [];
+    this.applicationOAuthSettings.requestUris = this.applicationOAuthSettings.requestUris || [];
     this.applicationOAuthSettings.singleSignOut = this.applicationOAuthSettings.singleSignOut || false;
     this.applicationOAuthSettings.silentReAuthentication = this.applicationOAuthSettings.silentReAuthentication || false;
     this.application.factors = this.application.factors || [];
     this.redirectUris = _.map(this.applicationOAuthSettings.redirectUris, function (item) { return { value: item }; });
+    this.requestUris = _.map(this.applicationOAuthSettings.requestUris, function (item) { return { value: item }; });
     this.logoutRedirectUris = _.map(this.applicationOAuthSettings.postLogoutRedirectUris, function (item) { return { value: item }; });
     this.editMode = this.authService.hasPermissions(['application_settings_update']);
     this.deleteMode = this.authService.hasPermissions(['application_settings_delete']);
@@ -102,6 +106,7 @@ export class ApplicationGeneralComponent implements OnInit {
     data.settings = {};
     data.settings.oauth = {
       'redirectUris' : _.map(this.redirectUris, 'value'),
+      'requestUris' : _.map(this.requestUris, 'value'),
       'postLogoutRedirectUris' : _.map(this.logoutRedirectUris, 'value'),
       'singleSignOut' : this.applicationOAuthSettings.singleSignOut,
       'silentReAuthentication': this.applicationOAuthSettings.silentReAuthentication
@@ -174,6 +179,21 @@ export class ApplicationGeneralComponent implements OnInit {
     }
   }
 
+  addRequestUris(event) {
+    event.preventDefault();
+    if (this.requestUri) {
+      if (!this.requestUris.some(el => el.value === this.requestUri)) {
+        this.requestUris.push({value: this.requestUri});
+        this.requestUris = [...this.requestUris];
+        this.requestUri = null;
+        this.formChanged = true;
+      } else {
+        this.snackbarService.open(`Error : request URI "${this.requestUri}" already exists`);
+      }
+    }
+  }
+
+
   addLogoutRedirectUris(event) {
     event.preventDefault();
     if (this.logoutRedirectUri) {
@@ -196,6 +216,19 @@ export class ApplicationGeneralComponent implements OnInit {
         if (res) {
           _.remove(this.redirectUris, { value: redirectUri });
           this.redirectUris = [...this.redirectUris];
+          this.formChanged = true;
+        }
+      });
+  }
+
+  deleteRequestUris(requestUri, event) {
+    event.preventDefault();
+    this.dialogService
+      .confirm('Remove request URI', 'Are you sure you want to remove this request URI ?')
+      .subscribe(res => {
+        if (res) {
+          _.remove(this.requestUris, { value: requestUri });
+          this.requestUris = [...this.requestUris];
           this.formChanged = true;
         }
       });

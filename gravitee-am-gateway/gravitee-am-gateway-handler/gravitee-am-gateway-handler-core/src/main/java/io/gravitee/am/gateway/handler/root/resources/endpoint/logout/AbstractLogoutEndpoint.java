@@ -20,9 +20,10 @@ import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oidc.Parameters;
 import io.gravitee.am.common.oidc.StandardClaims;
-import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
+import io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Domain;
@@ -45,6 +46,8 @@ import org.springframework.util.StringUtils;
 
 import static io.gravitee.am.service.impl.user.activity.utils.ConsentUtils.canSaveIp;
 import static io.gravitee.am.service.impl.user.activity.utils.ConsentUtils.canSaveUserAgent;
+
+import static org.springframework.util.CollectionUtils.isEmpty;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -124,9 +127,8 @@ public abstract class AbstractLogoutEndpoint implements Handler<RoutingContext> 
         // The OP also MUST NOT perform post-logout redirection if the post_logout_redirect_uri value supplied
         // does not exactly match one of the previously registered post_logout_redirect_uris values.
         // if client is null, check security domain options
-        List<String> registeredUris = client != null ? client.getPostLogoutRedirectUris() :
-                (domain.getOidc() != null ? domain.getOidc().getPostLogoutRedirectUris() : null);
-        if (!isMatchingRedirectUri(logoutRedirectUrl, registeredUris)) {
+        List<String> registeredUris = client != null && !isEmpty(client.getPostLogoutRedirectUris()) ? client.getPostLogoutRedirectUris() : (domain.getOidc() != null ? domain.getOidc().getPostLogoutRedirectUris() : null);
+        if (!isMatchingRedirectUri(logoutRedirectUrl, registeredUris, domain.isRedirectUriStrictMatching() || domain.usePlainFapiProfile())) {
             routingContext.fail(new InvalidRequestException("The post_logout_redirect_uri MUST match the registered callback URLs"));
             return;
         }
@@ -223,7 +225,7 @@ public abstract class AbstractLogoutEndpoint implements Handler<RoutingContext> 
         }
     }
 
-    private boolean isMatchingRedirectUri(String requestedRedirectUri, List<String> registeredRedirectUris) {
+    private boolean isMatchingRedirectUri(String requestedRedirectUri, List<String> registeredRedirectUris, boolean uriStrictMatch) {
         // no registered uris to check, continue
         if (registeredRedirectUris == null) {
             return true;
@@ -239,7 +241,8 @@ public abstract class AbstractLogoutEndpoint implements Handler<RoutingContext> 
         // compare values
         return registeredRedirectUris
                 .stream()
-                .anyMatch(registeredUri -> requestedRedirectUri.equals(registeredUri));
+                .anyMatch(registeredUri -> ParamUtils.redirectMatches(requestedRedirectUri, registeredUri, uriStrictMatch));
+
     }
 
     private io.gravitee.am.identityprovider.api.User getAuthenticatedUser(User endUser, RoutingContext routingContext) {

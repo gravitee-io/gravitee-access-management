@@ -55,7 +55,7 @@ import java.util.Date;
 import java.util.List;
 
 import static io.gravitee.am.common.oidc.ClientAuthenticationMethod.JWT_BEARER;
-import static io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.ParamUtils.redirectMatches;
+import static io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils.redirectMatches;
 import static io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils.isSignAlgCompliantWithFapi;
 
 /**

@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Arrays;
 import java.util.List;
 
-import static io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.ParamUtils.getOAuthParameter;
+import static io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils.getOAuthParameter;
 
 /**
  * Silent Re-authentication of subject with ID Token.

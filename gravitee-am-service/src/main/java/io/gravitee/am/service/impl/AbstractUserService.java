@@ -131,6 +131,19 @@ public abstract class AbstractUserService<T extends CommonUserRepository> implem
     }
 
     @Override
+    public Flowable<User> search(ReferenceType referenceType, String referenceId, FilterCriteria filterCriteria) {
+        LOGGER.debug("Search users for {} {} with filter {}", referenceType, referenceId, filterCriteria);
+        return getUserRepository().search(referenceType, referenceId, filterCriteria)
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof IllegalArgumentException) {
+                        return Flowable.error(new InvalidParameterException(ex.getMessage()));
+                    }
+                    LOGGER.error("An error occurs while trying to search users for {} {} and filter {}", referenceType, referenceId, filterCriteria, ex);
+                    return Flowable.error(new TechnicalManagementException(String.format("An error occurs while trying to find users for %s %s and filter %s", referenceType, referenceId, filterCriteria), ex));
+                });
+    }
+
+    @Override
     public Single<User> findById(ReferenceType referenceType, String referenceId, String id) {
         LOGGER.debug("Find user by id : {}", id);
         return getUserRepository().findById(referenceType, referenceId, id)
