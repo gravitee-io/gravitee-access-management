@@ -1,6 +1,37 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/608?closed=1[AM - 3.15.14 (2022-10-28)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- Group role are lost after SCIM update https://github.com/gravitee-io/issues/issues/8584[#8584]
+- Search all matching user for forgot password https://github.com/gravitee-io/issues/issues/8576[#8576]
+
+*_General_*
+
+- AM sets alternate MFA factor as primary https://github.com/gravitee-io/issues/issues/8544[#8544]
+- Expiration time for Registration confirmation email https://github.com/gravitee-io/issues/issues/8560[#8560]
+- Fix Postman Tests https://github.com/gravitee-io/issues/issues/8603[#8603]
+- Group role are lost after SCIM update https://github.com/gravitee-io/issues/issues/8591[#8591]
+- JDBC UserProvider doesn't update the email field https://github.com/gravitee-io/issues/issues/8599[#8599]
+- Kafka reporternull pointer exception is thrown for unsuccessful user login in app https://github.com/gravitee-io/issues/issues/8609[#8609]
+- Post logout redirect URI list doesn't work at Domain level and can allow open redirection https://github.com/gravitee-io/issues/issues/8535[#8535]
+- Query parameter is not supported in the post_logout_redirect_uri https://github.com/gravitee-io/issues/issues/8610[#8610]
+- Upgrade dependencies https://github.com/gravitee-io/issues/issues/8594[#8594]
+- User profile initialization https://github.com/gravitee-io/issues/issues/8572[#8572]
+
+=== Improvements
+
+*_General_*
+
+- AM request_uri implementation is vulnerable to Server Side Request Forgery (SSRF) https://github.com/gravitee-io/issues/issues/8532[#8532]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/606?closed=1[AM - 3.19.1 (2022-10-21)]
 
 === Bug fixes
