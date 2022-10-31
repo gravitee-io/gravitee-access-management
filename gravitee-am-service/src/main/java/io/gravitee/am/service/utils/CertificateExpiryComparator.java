@@ -13,15 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.handlers.management.api.model;
+package io.gravitee.am.service.utils;
+
+import io.gravitee.am.model.Certificate;
+
+import java.util.Comparator;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public enum CertificateStatus {
-    VALID,
-    WILL_EXPIRE,
-    EXPIRED,
-    RENEWED;
+public class CertificateExpiryComparator implements Comparator<Certificate> {
+
+    @Override
+    public int compare(Certificate cert1, Certificate cert2) {
+        return cert1.getExpiresAt().getTime() < cert2.getExpiresAt().getTime() ? 1 : -1;
+    }
 }

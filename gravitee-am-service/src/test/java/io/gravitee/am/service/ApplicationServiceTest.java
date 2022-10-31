@@ -49,6 +49,8 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.*;
 
 import static org.junit.Assert.assertNotNull;
@@ -369,7 +371,142 @@ public class ApplicationServiceTest {
     }
 
     @Test
-    public void shouldCreate() {
+    public void shouldCreate_noCertificate() {
+        NewApplication newClient = prepareCreateApp();
+        when(certificateService.findByDomain(DOMAIN)).thenReturn(Flowable.empty());
+
+        DefaultUser user = new DefaultUser("username");
+        user.setAdditionalInformation(Collections.singletonMap(Claims.organization, ORGANIZATION_ID));
+
+        TestObserver<Application> testObserver = applicationService.create(DOMAIN, newClient, user).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(applicationRepository, times(1)).findByDomainAndClientId(DOMAIN, null);
+        verify(applicationRepository, times(1)).create(any(Application.class));
+        verify(membershipService).addOrUpdate(eq(ORGANIZATION_ID), any());
+    }
+
+    @Test
+    public void shouldCreate_withSystemCertificate() {
+        NewApplication newClient = prepareCreateApp();
+
+        final LocalDateTime now = LocalDateTime.now();
+
+        final Certificate firstDefaultCert = new Certificate();
+        firstDefaultCert.setId("first-cert");
+        firstDefaultCert.setSystem(true);
+        firstDefaultCert.setName("Default");
+        firstDefaultCert.setExpiresAt(new Date(now.plusDays(1).toInstant(ZoneOffset.UTC).toEpochMilli()));
+
+        final Certificate lastestDefaultCert = new Certificate();
+        lastestDefaultCert.setId("latest-cert");
+        lastestDefaultCert.setSystem(true);
+        lastestDefaultCert.setName("Default 123456");
+        lastestDefaultCert.setExpiresAt(new Date(now.plusDays(2).toInstant(ZoneOffset.UTC).toEpochMilli()));
+
+        final Certificate customCert = new Certificate();
+        customCert.setId("custom-cert");
+        customCert.setSystem(false);
+        customCert.setName("Custom");
+        customCert.setExpiresAt(new Date(now.plusDays(3).toInstant(ZoneOffset.UTC).toEpochMilli()));
+
+        when(certificateService.findByDomain(DOMAIN)).thenReturn(Flowable.just(lastestDefaultCert, firstDefaultCert, customCert));
+
+        DefaultUser user = new DefaultUser("username");
+        user.setAdditionalInformation(Collections.singletonMap(Claims.organization, ORGANIZATION_ID));
+
+        TestObserver<Application> testObserver = applicationService.create(DOMAIN, newClient, user).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(applicationRepository, times(1)).findByDomainAndClientId(DOMAIN, null);
+        verify(applicationRepository, times(1)).create(any(Application.class));
+        verify(applicationRepository, times(1)).create(argThat(app -> app.getCertificate().equalsIgnoreCase(lastestDefaultCert.getId())));
+        verify(membershipService).addOrUpdate(eq(ORGANIZATION_ID), any());
+    }
+
+    @Test
+    public void shouldCreate_withLegacyCertificate() {
+        NewApplication newClient = prepareCreateApp();
+
+        final LocalDateTime now = LocalDateTime.now();
+
+        final Certificate firstDefaultCert = new Certificate();
+        firstDefaultCert.setId("first-cert");
+        firstDefaultCert.setSystem(false);
+        firstDefaultCert.setName("Default");
+        firstDefaultCert.setExpiresAt(new Date(now.plusDays(1).toInstant(ZoneOffset.UTC).toEpochMilli()));
+
+        final Certificate lastestDefaultCert = new Certificate();
+        lastestDefaultCert.setId("latest-cert");
+        lastestDefaultCert.setSystem(false);
+        lastestDefaultCert.setName("Default 123456");
+        lastestDefaultCert.setExpiresAt(new Date(now.plusDays(2).toInstant(ZoneOffset.UTC).toEpochMilli()));
+
+        final Certificate customCert = new Certificate();
+        customCert.setId("custom-cert");
+        customCert.setSystem(false);
+        customCert.setName("Custom");
+        customCert.setExpiresAt(new Date(now.plusDays(3).toInstant(ZoneOffset.UTC).toEpochMilli()));
+
+        when(certificateService.findByDomain(DOMAIN)).thenReturn(Flowable.just(lastestDefaultCert, firstDefaultCert, customCert));
+
+        DefaultUser user = new DefaultUser("username");
+        user.setAdditionalInformation(Collections.singletonMap(Claims.organization, ORGANIZATION_ID));
+
+        TestObserver<Application> testObserver = applicationService.create(DOMAIN, newClient, user).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(applicationRepository, times(1)).findByDomainAndClientId(DOMAIN, null);
+        verify(applicationRepository, times(1)).create(any(Application.class));
+        verify(applicationRepository, times(1)).create(argThat(app -> app.getCertificate().equalsIgnoreCase(firstDefaultCert.getId())));
+        verify(membershipService).addOrUpdate(eq(ORGANIZATION_ID), any());
+    }
+
+    @Test
+    public void shouldCreate_withFirstCertificate() {
+        NewApplication newClient = prepareCreateApp();
+
+        final LocalDateTime now = LocalDateTime.now();
+
+        final Certificate firstDefaultCert = new Certificate();
+        firstDefaultCert.setId("first-cert");
+        firstDefaultCert.setSystem(false);
+        firstDefaultCert.setName("Custom name for default");
+        firstDefaultCert.setExpiresAt(new Date(now.plusDays(1).toInstant(ZoneOffset.UTC).toEpochMilli()));
+
+        final Certificate customCert = new Certificate();
+        customCert.setId("custom-cert");
+        customCert.setSystem(false);
+        customCert.setName("Custom");
+        customCert.setExpiresAt(new Date(now.plusDays(3).toInstant(ZoneOffset.UTC).toEpochMilli()));
+
+        when(certificateService.findByDomain(DOMAIN)).thenReturn(Flowable.just(customCert, firstDefaultCert));
+
+        DefaultUser user = new DefaultUser("username");
+        user.setAdditionalInformation(Collections.singletonMap(Claims.organization, ORGANIZATION_ID));
+
+        TestObserver<Application> testObserver = applicationService.create(DOMAIN, newClient, user).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(applicationRepository, times(1)).findByDomainAndClientId(DOMAIN, null);
+        verify(applicationRepository, times(1)).create(any(Application.class));
+        verify(applicationRepository, times(1)).create(argThat(app -> app.getCertificate().equalsIgnoreCase(customCert.getId())));
+        verify(membershipService).addOrUpdate(eq(ORGANIZATION_ID), any());
+    }
+
+    private NewApplication prepareCreateApp() {
         NewApplication newClient = Mockito.mock(NewApplication.class);
         Application createClient = Mockito.mock(Application.class);
         when(newClient.getName()).thenReturn("my-client");
@@ -386,20 +523,7 @@ public class ApplicationServiceTest {
         }).when(applicationTemplateManager).apply(any());
         when(membershipService.addOrUpdate(eq(ORGANIZATION_ID), any())).thenReturn(Single.just(new Membership()));
         when(roleService.findSystemRole(SystemRole.APPLICATION_PRIMARY_OWNER, ReferenceType.APPLICATION)).thenReturn(Maybe.just(new Role()));
-        when(certificateService.findByDomain(DOMAIN)).thenReturn(Flowable.empty());
-
-        DefaultUser user = new DefaultUser("username");
-        user.setAdditionalInformation(Collections.singletonMap(Claims.organization, ORGANIZATION_ID));
-
-        TestObserver<Application> testObserver = applicationService.create(DOMAIN, newClient, user).test();
-        testObserver.awaitTerminalEvent();
-
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
-
-        verify(applicationRepository, times(1)).findByDomainAndClientId(DOMAIN, null);
-        verify(applicationRepository, times(1)).create(any(Application.class));
-        verify(membershipService).addOrUpdate(eq(ORGANIZATION_ID), any());
+        return newClient;
     }
 
     @Test

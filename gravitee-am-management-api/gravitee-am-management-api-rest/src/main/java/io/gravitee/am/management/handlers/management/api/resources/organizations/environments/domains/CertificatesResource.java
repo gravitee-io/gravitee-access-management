@@ -159,6 +159,35 @@ public class CertificatesResource extends AbstractResource {
                 .subscribe(response::resume, response::resume);
     }
 
+    @Path("rotate")
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            nickname = "rotateCertificate",
+            value = "Generate a new System a certificate",
+            notes = "User must have the DOMAIN_CERTIFICATE[CREATE] permission on the specified domain " +
+                    "or DOMAIN_CERTIFICATE[CREATE] permission on the specified environment " +
+                    "or DOMAIN_CERTIFICATE[CREATE] permission on the specified organization")
+    @ApiResponses({
+            @ApiResponse(code = 201, message = "Certificate successfully created", response = CertificateEntity.class),
+            @ApiResponse(code = 500, message = "Internal server error")})
+    public void rotateCertificate(@PathParam("organizationId") String organizationId,
+                                @PathParam("environmentId") String environmentId,
+                                @PathParam("domain") String domain,
+                                @Suspended final AsyncResponse response) {
+        var principal = getAuthenticatedUser();
+
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_CERTIFICATE, Acl.CREATE)
+                .andThen(domainService.findById(domain)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                        .flatMapSingle(schema -> certificateService.rotate(domain, principal))
+                        .map(certificate -> Response
+                                .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain + "/certificates/" + certificate.getId()))
+                                .entity(new CertificateEntity(certificate))
+                                .build()))
+                .subscribe(response::resume, response::resume);
+    }
+
     @Path("{certificate}")
     public CertificateResource getCertificateResource() {
         return resourceContext.getResource(CertificateResource.class);
@@ -171,7 +200,11 @@ public class CertificatesResource extends AbstractResource {
         filteredCertificate.setType(certificate.getType());
         filteredCertificate.setExpiresAt(certificate.getExpiresAt());
         filteredCertificate.setStatus(CertificateStatus.VALID);
-        if (certificate.getExpiresAt() != null) {
+        filteredCertificate.setSystem(certificate.isSystem());
+        filteredCertificate.setDeprecated(certificate.isDeprecated());
+        if (filteredCertificate.isSystem() && filteredCertificate.isDeprecated()) {
+            filteredCertificate.setStatus(CertificateStatus.RENEWED);
+        } else if (certificate.getExpiresAt() != null) {
             final Instant now = Instant.now();
             if (certificate.getExpiresAt().getTime() <= now.toEpochMilli()) {
                 filteredCertificate.setStatus(CertificateStatus.EXPIRED);

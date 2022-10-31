@@ -61,11 +61,11 @@ export interface Get27Request {
     identity: string;
 }
 
-export interface Get33Request {
+export interface Get31Request {
     identity: string;
 }
 
-export interface GetSchema2Request {
+export interface GetSchemaRequest {
     identity: string;
 }
 
@@ -74,7 +74,7 @@ export interface List28Request {
     userProvider?: boolean;
 }
 
-export interface List33Request {
+export interface List31Request {
     external?: boolean;
     expand?: Array<string>;
 }
@@ -376,9 +376,9 @@ export class IdentityProviderApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get an identity provider
      */
-    async get33Raw(requestParameters: Get33Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async get31Raw(requestParameters: Get31Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.identity === null || requestParameters.identity === undefined) {
-            throw new runtime.RequiredError('identity','Required parameter requestParameters.identity was null or undefined when calling get33.');
+            throw new runtime.RequiredError('identity','Required parameter requestParameters.identity was null or undefined when calling get31.');
         }
 
         const queryParameters: any = {};
@@ -403,17 +403,17 @@ export class IdentityProviderApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get an identity provider
      */
-    async get33(requestParameters: Get33Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.get33Raw(requestParameters, initOverrides);
+    async get31(requestParameters: Get31Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.get31Raw(requestParameters, initOverrides);
     }
 
     /**
      * There is no particular permission needed. User must be authenticated.
      * Get an identity provider plugin\'s schema
      */
-    async getSchema2Raw(requestParameters: GetSchema2Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async getSchemaRaw(requestParameters: GetSchemaRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.identity === null || requestParameters.identity === undefined) {
-            throw new runtime.RequiredError('identity','Required parameter requestParameters.identity was null or undefined when calling getSchema2.');
+            throw new runtime.RequiredError('identity','Required parameter requestParameters.identity was null or undefined when calling getSchema.');
         }
 
         const queryParameters: any = {};
@@ -438,8 +438,8 @@ export class IdentityProviderApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get an identity provider plugin\'s schema
      */
-    async getSchema2(requestParameters: GetSchema2Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.getSchema2Raw(requestParameters, initOverrides);
+    async getSchema(requestParameters: GetSchemaRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.getSchemaRaw(requestParameters, initOverrides);
     }
 
     /**
@@ -486,7 +486,7 @@ export class IdentityProviderApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * List identity provider plugins
      */
-    async list33Raw(requestParameters: List33Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async list31Raw(requestParameters: List31Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         const queryParameters: any = {};
 
         if (requestParameters.external !== undefined) {
@@ -517,8 +517,8 @@ export class IdentityProviderApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * List identity provider plugins
      */
-    async list33(requestParameters: List33Request = {}, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.list33Raw(requestParameters, initOverrides);
+    async list31(requestParameters: List31Request = {}, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.list31Raw(requestParameters, initOverrides);
     }
 
     /**

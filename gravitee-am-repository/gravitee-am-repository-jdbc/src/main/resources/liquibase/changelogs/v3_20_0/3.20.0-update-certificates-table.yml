@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - changeSet:
+      id: 3.20.0-update-certificates-table
+      author: GraviteeSource Team
+      changes:
+        ## system column to
+        ## certificates table
+        #####################
+        - addColumn:
+            tableName: certificates
+            columns:
+              - column: { name: system, type: boolean, constraints: { nullable: true } }
+              - column: { name: deprecated, type: boolean, constraints: { nullable: true } }

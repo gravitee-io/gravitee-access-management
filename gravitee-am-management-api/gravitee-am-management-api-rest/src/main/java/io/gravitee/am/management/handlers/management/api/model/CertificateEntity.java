@@ -27,6 +27,10 @@ public class CertificateEntity extends Certificate {
 
     public CertificateEntity(Certificate certificate) {
         super(certificate);
+        if (isSystem()) {
+            // we do not want to expose configuration for system cert
+            this.setConfiguration("{}");
+        }
     }
 
     private CertificateStatus status;

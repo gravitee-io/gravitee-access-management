@@ -1,17 +1,40 @@
+.actions-row {
+  display: flex;
+  flex-direction: row-reverse;
+
+  button {
+    font-family: 'Roboto';
+    font-style: normal;
+    font-weight: 700;
+
+    letter-spacing: 1.25px;
+    text-transform: uppercase;
+
+    margin: 5px;
+  }
+
+  a {
+    font-family: 'Roboto';
+    font-style: normal;
+    font-weight: 700;
+    letter-spacing: 1.25px;
+    text-transform: uppercase;
+
+    margin: 5px;
+  }
+}
+
 .certificate-header {
-  margin: 5px;
+  margin: 10px;
   align-items: center;
   .certificate-icon {
-    margin: 0 12px 0 0;
+    margin: 5px 12px 0 0;
   }
   .certificate-information {
     h3 {
       font-size: 14px;
       font-weight: normal;
       margin: 0;
-    }
-    small {
-      color: rgba(0,0,0,.54);
     }
   }
 }
@@ -22,8 +45,18 @@
   }
 }
 
+.certificate-type {
+  align-items: center;
+  h3 {
+    font-size: 14px;
+    font-weight: normal;
+    margin: 0;
+  }
+}
+
 .certificate-expiry {
   margin: 5px;
+  align-items: center;
   h3 {
     font-size: 14px;
     font-weight: normal;
@@ -32,6 +65,10 @@
 }
 
 
+.renew {
+  font-size: 18px;
+  margin-left: 5px;
+}
 .warning {
   font-size: 18px;
   margin-left: 5px;

@@ -42,6 +42,9 @@ public class CertificateMongo extends Auditable {
 
     private Date expiresAt;
 
+    private boolean system;
+    private boolean deprecated;
+
     public String getId() {
         return id;
     }
@@ -96,6 +99,22 @@ public class CertificateMongo extends Auditable {
 
     public void setExpiresAt(Date expiresAt) {
         this.expiresAt = expiresAt;
+    }
+
+    public boolean isSystem() {
+        return system;
+    }
+
+    public void setSystem(boolean system) {
+        this.system = system;
+    }
+
+    public boolean isDeprecated() {
+        return deprecated;
+    }
+
+    public void setDeprecated(boolean deprecated) {
+        this.deprecated = deprecated;
     }
 
     @Override
