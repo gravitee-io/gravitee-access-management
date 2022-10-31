@@ -31,7 +31,7 @@
     <name>Gravitee IO - Access Management - Repository JDBC</name>
 
     <properties>
-        <r2dbc-releasetrain.version>Arabba-SR11</r2dbc-releasetrain.version>
+        <r2dbc-releasetrain.version>Arabba-SR13</r2dbc-releasetrain.version>
 
         <jdbc-postgresql.version>42.2.25</jdbc-postgresql.version>
         <jdbc-mssql.version>7.4.1.jre8</jdbc-mssql.version>
@@ -41,7 +41,7 @@
         <dozer.version>6.5.2</dozer.version>
 
         <testcontainers.version>1.15.1</testcontainers.version>
-        <liquibase.version>4.4.3</liquibase.version>
+        <liquibase.version>4.17.1</liquibase.version>
         <liquibase-slf4j.version>4.0.0</liquibase-slf4j.version>
 
         <skip-repositories-tests>true</skip-repositories-tests>

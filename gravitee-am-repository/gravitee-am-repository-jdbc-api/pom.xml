@@ -30,7 +30,7 @@
     <name>Gravitee IO - Access Management - Repository JDBC API</name>
 
     <properties>
-        <r2dbc-releasetrain.version>Arabba-SR11</r2dbc-releasetrain.version>
+        <r2dbc-releasetrain.version>Arabba-SR13</r2dbc-releasetrain.version>
         <reactor-adapter.version>3.4.6</reactor-adapter.version>
         <reactor-core.version>3.4.13</reactor-core.version>
         <spring-data-r2dbc.version>1.4.1</spring-data-r2dbc.version>
