@@ -32,15 +32,21 @@ import io.vertx.core.Handler;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.common.template.TemplateEngine;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+
 import static io.gravitee.am.common.utils.ConstantKeys.ACTION_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.USER_ACTIVITY_ENABLED;
+import static io.gravitee.am.common.utils.ConstantKeys.ALLOW_FORGOT_PASSWORD_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.ALLOW_PASSWORDLESS_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.ALLOW_REGISTER_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.FORGOT_ACTION_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.REGISTER_ACTION_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.WEBAUTHN_ACTION_KEY;
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils.getCleanedQueryParams;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
@@ -54,15 +60,9 @@ import static java.util.Optional.ofNullable;
 public class LoginEndpoint extends AbstractEndpoint implements Handler<RoutingContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(LoginEndpoint.class);
-    private static final String ALLOW_FORGOT_PASSWORD_CONTEXT_KEY = "allowForgotPassword";
-    private static final String ALLOW_REGISTER_CONTEXT_KEY = "allowRegister";
-    private static final String ALLOW_PASSWORDLESS_CONTEXT_KEY = "allowPasswordless";
     private static final String HIDE_FORM_CONTEXT_KEY = "hideLoginForm";
     private static final String IDENTIFIER_FIRST_LOGIN_CONTEXT_KEY = "identifierFirstLoginEnabled";
     private static final String REQUEST_CONTEXT_KEY = "request";
-    private static final String FORGOT_ACTION_KEY = "forgotPasswordAction";
-    private static final String REGISTER_ACTION_KEY = "registerAction";
-    private static final String WEBAUTHN_ACTION_KEY = "passwordlessAction";
     private static final String LOGIN_IDENTIFIER_ACTION_KEY = "backToLoginIdentifierAction";
 
     private final Domain domain;

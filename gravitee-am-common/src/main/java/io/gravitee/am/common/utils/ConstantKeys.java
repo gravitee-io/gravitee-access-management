@@ -169,4 +169,12 @@ public interface ConstantKeys {
     // entry into the io.gravitee.am.model.AuthenticationFlowContext to get access to the
     // content of the OAuth2 parameters retrieved using PAR
     String REQUEST_PARAMETERS_KEY = "requestParameters";
+
+
+    String ALLOW_REGISTER_CONTEXT_KEY = "allowRegister";
+    String ALLOW_PASSWORDLESS_CONTEXT_KEY = "allowPasswordless";
+    String ALLOW_FORGOT_PASSWORD_CONTEXT_KEY = "allowForgotPassword";
+    String REGISTER_ACTION_KEY = "registerAction";
+    String WEBAUTHN_ACTION_KEY = "passwordlessAction";
+    String FORGOT_ACTION_KEY = "forgotPasswordAction";
 }
