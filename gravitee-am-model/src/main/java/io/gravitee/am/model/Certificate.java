@@ -42,6 +42,10 @@ public class Certificate {
 
     private Date expiresAt;
 
+    private boolean system;
+
+    private boolean deprecated;
+
     public Certificate() {
     }
 
@@ -55,6 +59,8 @@ public class Certificate {
         this.createdAt = other.createdAt;
         this.updatedAt = other.updatedAt;
         this.expiresAt = other.expiresAt;
+        this.system = other.system;
+        this.deprecated = other.deprecated;
     }
 
     public String getId() {
@@ -127,5 +133,21 @@ public class Certificate {
 
     public void setExpiresAt(Date expiresAt) {
         this.expiresAt = expiresAt;
+    }
+
+    public boolean isSystem() {
+        return system;
+    }
+
+    public void setSystem(boolean system) {
+        this.system = system;
+    }
+
+    public boolean isDeprecated() {
+        return deprecated;
+    }
+
+    public void setDeprecated(boolean deprecated) {
+        this.deprecated = deprecated;
     }
 }

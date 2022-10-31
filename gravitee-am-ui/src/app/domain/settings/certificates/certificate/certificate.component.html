@@ -17,7 +17,10 @@
 -->
 <div class="gv-page-container">
   <a [routerLink]="['..']" class="gv-back-link"><small><< Back to certificates</small></a>
-  <h1>{{certificate.name}}</h1>
+  <div class="certificateTitle">
+    <h1>{{certificate.name}}</h1>
+    <mat-chip-list *ngIf="certificate.system"><mat-chip>system</mat-chip></mat-chip-list>
+  </div>
   <div fxLayout="row">
     <div fxLayout="column" fxFlex="70">
       <form #certificateForm="ngForm">
@@ -28,7 +31,7 @@
             <mat-hint>Certificate name</mat-hint>
           </mat-form-field>
         </div>
-        <div class="gv-form-section">
+        <div class="gv-form-section" *ngIf="!certificate.system">
           <div class="gv-form-section-title">
             <h5>Configuration</h5>
             <mat-divider></mat-divider>

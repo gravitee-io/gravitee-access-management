@@ -120,6 +120,8 @@ public class MongoCertificateRepository extends AbstractManagementMongoRepositor
         certificate.setCreatedAt(certificateMongo.getCreatedAt());
         certificate.setUpdatedAt(certificateMongo.getUpdatedAt());
         certificate.setExpiresAt(certificateMongo.getExpiresAt());
+        certificate.setSystem(certificateMongo.isSystem());
+        certificate.setDeprecated(certificateMongo.isDeprecated());
 
         return certificate;
     }
@@ -139,6 +141,8 @@ public class MongoCertificateRepository extends AbstractManagementMongoRepositor
         certificateMongo.setCreatedAt(certificate.getCreatedAt());
         certificateMongo.setUpdatedAt(certificate.getUpdatedAt());
         certificateMongo.setExpiresAt(certificate.getExpiresAt());
+        certificateMongo.setSystem(certificate.isSystem());
+        certificateMongo.setDeprecated(certificate.isDeprecated());
 
         return certificateMongo;
     }

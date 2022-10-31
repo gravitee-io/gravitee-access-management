@@ -531,7 +531,7 @@ public class DomainServiceImpl implements DomainService {
         String uri = null;
 
         if (domain.isVhostMode()) {
-            // Try generate uri using defined virtual hosts.
+            // Try to generate uri using defined virtual hosts.
             Matcher matcher = SCHEME_PATTERN.matcher(entryPoint);
             String scheme = "http";
             if (matcher.matches()) {

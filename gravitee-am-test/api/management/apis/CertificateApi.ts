@@ -49,7 +49,7 @@ export interface FindCertificateRequest {
     certificate: string;
 }
 
-export interface Get34Request {
+export interface Get32Request {
     certificate: string;
 }
 
@@ -67,7 +67,7 @@ export interface GetCertificatePublicKeysRequest {
     certificate: string;
 }
 
-export interface GetSchema3Request {
+export interface GetSchema1Request {
     certificate: string;
 }
 
@@ -76,6 +76,12 @@ export interface ListCertificatesRequest {
     environmentId: string;
     domain: string;
     use?: string;
+}
+
+export interface RotateCertificateRequest {
+    organizationId: string;
+    environmentId: string;
+    domain: string;
 }
 
 export interface UpdateCertificateRequest {
@@ -241,9 +247,9 @@ export class CertificateApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get an certificate plugin
      */
-    async get34Raw(requestParameters: Get34Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async get32Raw(requestParameters: Get32Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.certificate === null || requestParameters.certificate === undefined) {
-            throw new runtime.RequiredError('certificate','Required parameter requestParameters.certificate was null or undefined when calling get34.');
+            throw new runtime.RequiredError('certificate','Required parameter requestParameters.certificate was null or undefined when calling get32.');
         }
 
         const queryParameters: any = {};
@@ -268,8 +274,8 @@ export class CertificateApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get an certificate plugin
      */
-    async get34(requestParameters: Get34Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.get34Raw(requestParameters, initOverrides);
+    async get32(requestParameters: Get32Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.get32Raw(requestParameters, initOverrides);
     }
 
     /**
@@ -372,9 +378,9 @@ export class CertificateApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get an certificate\'s schema
      */
-    async getSchema3Raw(requestParameters: GetSchema3Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async getSchema1Raw(requestParameters: GetSchema1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.certificate === null || requestParameters.certificate === undefined) {
-            throw new runtime.RequiredError('certificate','Required parameter requestParameters.certificate was null or undefined when calling getSchema3.');
+            throw new runtime.RequiredError('certificate','Required parameter requestParameters.certificate was null or undefined when calling getSchema1.');
         }
 
         const queryParameters: any = {};
@@ -399,15 +405,15 @@ export class CertificateApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get an certificate\'s schema
      */
-    async getSchema3(requestParameters: GetSchema3Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.getSchema3Raw(requestParameters, initOverrides);
+    async getSchema1(requestParameters: GetSchema1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.getSchema1Raw(requestParameters, initOverrides);
     }
 
     /**
      * There is no particular permission needed. User must be authenticated.
      * List certificate plugins
      */
-    async list34Raw(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async list32Raw(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -430,8 +436,8 @@ export class CertificateApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * List certificate plugins
      */
-    async list34(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.list34Raw(initOverrides);
+    async list32(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.list32Raw(initOverrides);
     }
 
     /**
@@ -479,6 +485,50 @@ export class CertificateApi extends runtime.BaseAPI {
      */
     async listCertificates(requestParameters: ListCertificatesRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Set<CertificateEntity>> {
         const response = await this.listCertificatesRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * User must have the DOMAIN_CERTIFICATE[CREATE] permission on the specified domain or DOMAIN_CERTIFICATE[CREATE] permission on the specified environment or DOMAIN_CERTIFICATE[CREATE] permission on the specified organization
+     * Generate a new System a certificate
+     */
+    async rotateCertificateRaw(requestParameters: RotateCertificateRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<CertificateEntity>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling rotateCertificate.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling rotateCertificate.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling rotateCertificate.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/certificates/rotate`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => CertificateEntityFromJSON(jsonValue));
+    }
+
+    /**
+     * User must have the DOMAIN_CERTIFICATE[CREATE] permission on the specified domain or DOMAIN_CERTIFICATE[CREATE] permission on the specified environment or DOMAIN_CERTIFICATE[CREATE] permission on the specified organization
+     * Generate a new System a certificate
+     */
+    async rotateCertificate(requestParameters: RotateCertificateRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<CertificateEntity> {
+        const response = await this.rotateCertificateRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

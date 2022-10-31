@@ -31,24 +31,52 @@ import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.account.AccountSettings;
-import io.gravitee.am.model.application.*;
+import io.gravitee.am.model.application.ApplicationOAuthSettings;
+import io.gravitee.am.model.application.ApplicationSAMLSettings;
+import io.gravitee.am.model.application.ApplicationScopeSettings;
+import io.gravitee.am.model.application.ApplicationSettings;
+import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.repository.management.api.ApplicationRepository;
-import io.gravitee.am.service.*;
-import io.gravitee.am.service.exception.*;
+import io.gravitee.am.service.ApplicationService;
+import io.gravitee.am.service.ApplicationTemplateManager;
+import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.CertificateService;
+import io.gravitee.am.service.DomainService;
+import io.gravitee.am.service.EmailTemplateService;
+import io.gravitee.am.service.EventService;
+import io.gravitee.am.service.FormService;
+import io.gravitee.am.service.IdentityProviderService;
+import io.gravitee.am.service.MembershipService;
+import io.gravitee.am.service.RoleService;
+import io.gravitee.am.service.ScopeService;
+import io.gravitee.am.service.TokenService;
+import io.gravitee.am.service.exception.AbstractManagementException;
+import io.gravitee.am.service.exception.ApplicationAlreadyExistsException;
+import io.gravitee.am.service.exception.ApplicationNotFoundException;
+import io.gravitee.am.service.exception.DomainNotFoundException;
+import io.gravitee.am.service.exception.InvalidClientMetadataException;
+import io.gravitee.am.service.exception.InvalidParameterException;
+import io.gravitee.am.service.exception.InvalidRedirectUriException;
+import io.gravitee.am.service.exception.InvalidRoleException;
+import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewApplication;
 import io.gravitee.am.service.model.PatchApplication;
 import io.gravitee.am.service.model.TopApplication;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.ApplicationAuditBuilder;
+import io.gravitee.am.service.utils.CertificateExpiryComparator;
 import io.gravitee.am.service.utils.GrantTypeUtils;
 import io.gravitee.am.service.validators.accountsettings.AccountSettingsValidator;
+import io.reactivex.Completable;
+import io.reactivex.Flowable;
+import io.reactivex.Maybe;
 import io.reactivex.Observable;
-import io.reactivex.*;
+import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,7 +88,13 @@ import org.springframework.util.StringUtils;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import static io.gravitee.am.common.web.UriBuilder.isHttp;
@@ -582,9 +616,19 @@ public class ApplicationServiceImpl implements ApplicationService {
                     }
                     Certificate defaultCertificate = certificates
                             .stream()
-                            .filter(certificate -> "Default".equals(certificate.getName()))
+                            .filter(Certificate::isSystem)
+                            .sorted(new CertificateExpiryComparator())
                             .findFirst()
+                            .or(() ->
+                                    // legacy way to retrieve default certificate before we introduce the system flag
+                                    // keep it for backward compatibility in case of issue with the SystemCertificateUpgrader
+                                    certificates
+                                        .stream()
+                                        .filter(certificate -> "Default".equals(certificate.getName()))
+                                        .findFirst()
+                            )
                             .orElse(certificates.get(0));
+
                     application.setCertificate(defaultCertificate.getId());
                     return application;
                 });

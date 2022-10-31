@@ -78,6 +78,18 @@ export interface PatchPasswordSettings {
      * @memberof PatchPasswordSettings
      */
     expiryDuration?: number;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof PatchPasswordSettings
+     */
+    passwordHistoryEnabled?: boolean;
+    /**
+     * 
+     * @type {number}
+     * @memberof PatchPasswordSettings
+     */
+    oldPasswords?: number;
 }
 
 export function PatchPasswordSettingsFromJSON(json: any): PatchPasswordSettings {
@@ -100,6 +112,8 @@ export function PatchPasswordSettingsFromJSONTyped(json: any, ignoreDiscriminato
         'excludePasswordsInDictionary': !exists(json, 'excludePasswordsInDictionary') ? undefined : json['excludePasswordsInDictionary'],
         'excludeUserProfileInfoInPassword': !exists(json, 'excludeUserProfileInfoInPassword') ? undefined : json['excludeUserProfileInfoInPassword'],
         'expiryDuration': !exists(json, 'expiryDuration') ? undefined : json['expiryDuration'],
+        'passwordHistoryEnabled': !exists(json, 'passwordHistoryEnabled') ? undefined : json['passwordHistoryEnabled'],
+        'oldPasswords': !exists(json, 'oldPasswords') ? undefined : json['oldPasswords'],
     };
 }
 
@@ -122,6 +136,8 @@ export function PatchPasswordSettingsToJSON(value?: PatchPasswordSettings | null
         'excludePasswordsInDictionary': value.excludePasswordsInDictionary,
         'excludeUserProfileInfoInPassword': value.excludeUserProfileInfoInPassword,
         'expiryDuration': value.expiryDuration,
+        'passwordHistoryEnabled': value.passwordHistoryEnabled,
+        'oldPasswords': value.oldPasswords,
     };
 }
 

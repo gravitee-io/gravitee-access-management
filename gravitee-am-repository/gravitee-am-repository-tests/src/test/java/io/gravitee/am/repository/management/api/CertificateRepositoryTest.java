@@ -73,6 +73,9 @@ public class CertificateRepositoryTest extends AbstractManagementTest {
         certificate.setUpdatedAt(new Date());
         certificate.setExpiresAt(new Date());
         certificate.setMetadata(metadata);
+        certificate.setSystem(true);
+        certificate.setDeprecated(true);
+
         return certificate;
     }
 
@@ -98,6 +101,8 @@ public class CertificateRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(d -> certificate.getMetadata().keySet().containsAll(d.getMetadata().keySet()));
         testObserver.assertValue(d -> !certificate.getMetadata().containsKey("file") || certificate.getMetadata().get("file") instanceof byte[]);
         testObserver.assertValue(d -> d.getExpiresAt() != null);
+        testObserver.assertValue(d -> d.isSystem());
+        testObserver.assertValue(d -> d.isDeprecated());
     }
 
     @Test
