@@ -24,8 +24,11 @@ import io.gravitee.am.repository.management.api.PasswordHistoryRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
 import io.gravitee.am.service.exception.PasswordHistoryException;
+import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
+import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.slf4j.Logger;
@@ -104,7 +107,7 @@ public class PasswordHistoryService {
     }
 
     /**
-     * Checks if a password is already in the history
+     * Checks if a password is already in the history.
      *
      * @param referenceType    the reference type (DOMAIN, APPLICATION)
      * @param referenceId      id of the reference
@@ -121,6 +124,56 @@ public class PasswordHistoryService {
         return repository.findUserHistory(referenceType, referenceId, userId)
                          .toList()
                          .flatMap(passwordHistories -> Single.just(passwordAlreadyUsed(password, passwordHistories)));
+    }
+
+    /**
+     * Returns a user's password history.
+     *
+     * @param referenceType    the reference type (DOMAIN, APPLICATION)
+     * @param referenceId      id of the reference
+     * @param userId           id of user for this password
+     * @return Flowable containing the user's password history.
+     */
+    public Flowable<PasswordHistory> findUserHistory(ReferenceType referenceType, String referenceId, String userId) {
+        return repository.findUserHistory(referenceType, referenceId, userId);
+    }
+
+    /**
+     * Find all password history for an application or domain.
+     *
+     * @param referenceType type of reference (e.g. DOMAIN, APPLICATION)
+     * @param referenceId ID of the reference
+     * @return Flowable containing password histories, if any, for the referenced entity.
+     */
+    public Flowable<PasswordHistory> findByReference(ReferenceType referenceType, String referenceId) {
+        LOGGER.debug("Find password histories by reference id {} and reference type {}", referenceId, referenceType);
+        return repository.findByReference(referenceType, referenceId)
+                         .onErrorResumeNext(ex -> {
+                             LOGGER.error("Error finding password histories by reference id {} and reference type {}", referenceId, referenceType, ex);
+                             return Flowable.error(new TechnicalManagementException(
+                                     String.format("Error finding password histories by reference id %s and reference type %s", referenceId, referenceType), ex));
+                         });
+    }
+
+    /**
+     * Delete all password history for an application or domain.
+     *
+     * @param referenceType type of reference (e.g. DOMAIN, APPLICATION)
+     * @param referenceId ID of the reference
+     * @return Completable that indicates a successful delete operation.
+     */
+    public Completable deleteByReference(ReferenceType referenceType, String referenceId) {
+        return repository.deleteByReference(referenceType, referenceId);
+    }
+
+    /**
+     * Delete all password history for a user.
+     *
+     * @param userId unique ID of the user
+     * @return Completable that indicates a successful delete operation.
+     */
+    public Completable deleteByUser(String userId) {
+        return repository.deleteByUserId(userId);
     }
 
     private boolean passwordAlreadyUsed(String password, List<PasswordHistory> passwordHistories) {

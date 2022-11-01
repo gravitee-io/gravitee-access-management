@@ -19,7 +19,6 @@ import io.gravitee.am.model.PasswordHistory;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.reactivex.observers.TestObserver;
-import junit.framework.TestCase;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -81,6 +80,55 @@ public class PasswordHistoryRepositoryTest extends AbstractManagementTest {
         testObserver.assertNoErrors();
         testObserver.assertValue(passwordHistories -> passwordHistories.stream().allMatch(p -> p.getUserId()
                 .equals(userId)));
+    }
+
+    @Test
+    public void shouldFindPasswordHistoryForDomain() {
+        int expectedHistoriesForDomain = 3;
+        for (int i = 0; i < expectedHistoriesForDomain; i++) {
+            PasswordHistory history = buildPasswordHistory(randomUUID().toString(), "password");
+            repository.create(history).blockingGet();
+        }
+        var testSubscriber = repository.findByReference(ReferenceType.DOMAIN, REF_ID).test();
+        testSubscriber.awaitTerminalEvent();
+        testSubscriber.assertComplete();
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertValueCount(expectedHistoriesForDomain);
+    }
+
+    @Test
+    public void shouldDeletePasswordHistoryForDomain() {
+        for (int i = 0; i < 5; i++) {
+            PasswordHistory history = buildPasswordHistory(randomUUID().toString(), "password");
+            repository.create(history).blockingGet();
+        }
+        var testObserver = repository.deleteByReference(ReferenceType.DOMAIN, REF_ID).test();
+        testObserver.awaitTerminalEvent();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        var testSubscriber = repository.findByReference(ReferenceType.DOMAIN, REF_ID).test();
+        testSubscriber.awaitTerminalEvent();
+        testSubscriber.assertComplete();
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertValueCount(0);
+    }
+
+    @Test
+    public void shouldDeletePasswordHistoryForUser() {
+        var userId = randomUUID().toString();
+        for (int i = 0; i < 5; i++) {
+            PasswordHistory history = buildPasswordHistory(userId, "password");
+            repository.create(history).blockingGet();
+        }
+        var testObserver = repository.deleteByUserId(userId).test();
+        testObserver.awaitTerminalEvent();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        var testSubscriber = repository.findUserHistory(ReferenceType.DOMAIN, REF_ID, userId).test();
+        testSubscriber.awaitTerminalEvent();
+        testSubscriber.assertComplete();
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertValueCount(0);
     }
 
     @Test

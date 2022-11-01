@@ -41,15 +41,10 @@ import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.gravitee.am.service.validators.email.EmailValidatorImpl;
 import io.gravitee.am.service.validators.user.UserValidator;
 import io.gravitee.am.service.validators.user.UserValidatorImpl;
-import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -60,8 +55,14 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
 import static io.gravitee.am.service.validators.email.EmailValidatorImpl.EMAIL_PATTERN;
 import static io.gravitee.am.service.validators.user.UserValidatorImpl.*;
+import static io.reactivex.Completable.complete;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -407,7 +408,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldDeleteUser() throws Exception {
+    public void shouldDeleteUser() {
         final String userId = "userId";
 
         io.gravitee.am.model.User endUser = mock(io.gravitee.am.model.User.class);
@@ -416,15 +417,16 @@ public class UserServiceTest {
         when(endUser.getSource()).thenReturn("user-idp");
 
         UserProvider userProvider = mock(UserProvider.class);
-        when(userProvider.delete(any())).thenReturn(Completable.complete());
+        when(userProvider.delete(any())).thenReturn(complete());
 
         when(userRepository.findById(userId)).thenReturn(Maybe.just(endUser));
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
-        when(userRepository.delete(userId)).thenReturn(Completable.complete());
-        when(userActivityService.deleteByDomainAndUser(domain.getId(), userId)).thenReturn(Completable.complete());
-        when(rateLimiterService.deleteByUser(any())).thenReturn(Completable.complete());
+        when(userRepository.delete(userId)).thenReturn(complete());
+        when(userActivityService.deleteByDomainAndUser(domain.getId(), userId)).thenReturn(complete());
+        when(rateLimiterService.deleteByUser(any())).thenReturn(complete());
+        when(passwordHistoryService.deleteByUser(userId)).thenReturn(complete());
 
-        TestObserver testObserver = userService.delete(userId, null).test();
+        var testObserver = userService.delete(userId, null).test();
         testObserver.assertNoErrors();
         testObserver.assertComplete();
         verify(userRepository, times(1)).delete(userId);
@@ -433,7 +435,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldDeleteUser_noExternalProvider() throws Exception {
+    public void shouldDeleteUser_noExternalProvider() {
         final String userId = "userId";
 
         io.gravitee.am.model.User endUser = mock(io.gravitee.am.model.User.class);
@@ -444,11 +446,12 @@ public class UserServiceTest {
 
         when(userRepository.findById(userId)).thenReturn(Maybe.just(endUser));
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.empty());
-        when(userRepository.delete(userId)).thenReturn(Completable.complete());
-        when(userActivityService.deleteByDomainAndUser(domain.getId(), userId)).thenReturn(Completable.complete());
-        when(rateLimiterService.deleteByUser(any())).thenReturn(Completable.complete());
+        when(userRepository.delete(userId)).thenReturn(complete());
+        when(userActivityService.deleteByDomainAndUser(domain.getId(), userId)).thenReturn(complete());
+        when(rateLimiterService.deleteByUser(any())).thenReturn(complete());
+        when(passwordHistoryService.deleteByUser(any())).thenReturn(complete());
 
-        TestObserver testObserver = userService.delete(userId, null).test();
+        var testObserver = userService.delete(userId, null).test();
         testObserver.assertNoErrors();
         testObserver.assertComplete();
         verify(userRepository, times(1)).delete(userId);

@@ -24,9 +24,13 @@ import io.gravitee.am.repository.management.api.PasswordHistoryRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
 import io.gravitee.am.service.exception.PasswordHistoryException;
+import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
+import io.reactivex.Maybe;
 import io.reactivex.Single;
+import io.reactivex.observers.TestObserver;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -180,6 +184,16 @@ class PasswordHistoryServiceTest {
         assertEquals(REFERENCE_ID, captured.getReferenceId());
 
         verify(auditService).report(isA(UserAuditBuilder.class));
+    }
+
+    @Test
+    @DisplayName("Should throw Technical Management Exception when repo encounters error")
+    void findByReferenceError() {
+        given(repository.findByReference(any(), any())).willReturn(Flowable.error(IllegalArgumentException::new));
+
+        var testSubscriber = service.findByReference(ReferenceType.DOMAIN, REFERENCE_ID).test();
+        testSubscriber.awaitTerminalEvent();
+        testSubscriber.assertError(TechnicalManagementException.class);
     }
 
     @Test
