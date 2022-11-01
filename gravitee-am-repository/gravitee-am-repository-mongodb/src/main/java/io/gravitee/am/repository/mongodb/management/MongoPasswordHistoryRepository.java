@@ -20,7 +20,11 @@ import io.gravitee.am.model.PasswordHistory;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.management.api.PasswordHistoryRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.PasswordHistoryMongo;
-import io.reactivex.*;
+import io.reactivex.Completable;
+import io.reactivex.Flowable;
+import io.reactivex.Maybe;
+import io.reactivex.Observable;
+import io.reactivex.Single;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
@@ -76,12 +80,29 @@ public class MongoPasswordHistoryRepository extends AbstractManagementMongoRepos
     }
 
     @Override
+    public Flowable<PasswordHistory> findByReference(ReferenceType referenceType, String referenceId) {
+        return Flowable.fromPublisher(mongoCollection.find(and(
+                eq(FIELD_REFERENCE_TYPE, referenceType.toString()),
+                eq(FIELD_REFERENCE_ID, referenceId)))).map(this::convert);
+    }
+
+    @Override
     public Flowable<PasswordHistory> findUserHistory(ReferenceType referenceType, String referenceId, String userId) {
         return Flowable.fromPublisher(
                 mongoCollection.find(and(
-                                eq(FIELD_REFERENCE_TYPE, referenceType.toString()),
-                                eq(FIELD_REFERENCE_ID, referenceId),
-                                eq(FIELD_USER_ID, userId)))).map(this::convert);
+                        eq(FIELD_REFERENCE_TYPE, referenceType.toString()),
+                        eq(FIELD_REFERENCE_ID, referenceId),
+                        eq(FIELD_USER_ID, userId)))).map(this::convert);
+    }
+
+    @Override
+    public Completable deleteByUserId(String userId) {
+        return Completable.fromPublisher(mongoCollection.deleteMany(eq(FIELD_USER_ID, userId)));
+    }
+
+    @Override
+    public Completable deleteByReference(ReferenceType referenceType, String referenceId) {
+        return Completable.fromPublisher(mongoCollection.deleteMany(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId))));
     }
 
     private PasswordHistoryMongo convert(PasswordHistory passwordHistory) {

@@ -38,6 +38,7 @@ import java.util.List;
 
 import static io.gravitee.am.common.utils.RandomString.generate;
 import static org.springframework.data.relational.core.query.Criteria.where;
+import static org.springframework.data.relational.core.query.Query.query;
 import static reactor.adapter.rxjava.RxJava2Adapter.monoToCompletable;
 import static reactor.adapter.rxjava.RxJava2Adapter.monoToSingle;
 
@@ -136,8 +137,30 @@ public class JdbcPasswordHistoryRepository extends AbstractJdbcRepository implem
     }
 
     @Override
+    public Flowable<PasswordHistory> findByReference(ReferenceType referenceType, String referenceId) {
+        LOGGER.debug("findByReference({}, {})", referenceType, referenceId);
+        return repository.findByReference(referenceType.toString(), referenceId).map(this::toEntity);
+
+    }
+
+    @Override
     public Flowable<PasswordHistory> findUserHistory(ReferenceType referenceType, String referenceId, String userId) {
         LOGGER.debug("findByUserId({})", userId);
         return repository.findByUserId(referenceType.toString(), referenceId, userId).map(this::toEntity);
+    }
+
+    @Override
+    public Completable deleteByUserId(String userId) {
+        LOGGER.debug("deleteByUserId({})", userId);
+        return monoToCompletable(this.template.delete(JdbcPasswordHistory.class).matching(
+                query(where(USER_ID).is(userId))).all());
+    }
+
+    @Override
+    public Completable deleteByReference(ReferenceType referenceType, String referenceId) {
+        LOGGER.debug("deleteByReference({})", referenceId);
+        return monoToCompletable(this.template.delete(JdbcPasswordHistory.class).matching(
+                query(where(REFERENCE_TYPE).is(referenceType)
+                                           .and(where(REFERENCE_ID).is(referenceId)))).all());
     }
 }

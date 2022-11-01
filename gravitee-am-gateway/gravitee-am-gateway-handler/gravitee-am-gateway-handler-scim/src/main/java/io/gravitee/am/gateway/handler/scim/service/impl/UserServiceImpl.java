@@ -445,6 +445,7 @@ public class UserServiceImpl implements UserService {
                             })
                             .andThen(userActivityService.deleteByDomainAndUser(domain.getId(), userId))
                             .andThen(rateLimiterService.deleteByUser(user))
+                            .andThen(passwordHistoryService.deleteByUser(userId))
                             .andThen(userRepository.delete(userId))
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).domain(domain.getId()).type(EventType.USER_DELETED).user(user)))
                             .doOnError((error) -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).domain(domain.getId()).type(EventType.USER_DELETED).throwable(error)));

@@ -32,6 +32,7 @@ import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.service.UserActivityService;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.exception.UserProviderNotFoundException;
+import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -80,6 +81,9 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
 
     @Autowired
     protected RateLimiterService rateLimiterService;
+
+    @Autowired
+    protected PasswordHistoryService passwordHistoryService;
 
     protected abstract BiFunction<String, String, Maybe<Application>> checkClientFunction();
 
@@ -144,6 +148,7 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type((status ? EventType.USER_ENABLED : EventType.USER_DISABLED)).throwable(throwable)));
     }
 
+    @SuppressWarnings("ReactiveStreamsUnusedPublisher")
     @Override
     public Completable delete(ReferenceType referenceType, String referenceId, String userId, io.gravitee.am.identityprovider.api.User principal) {
         return getUserService().findById(referenceType, referenceId, userId)
@@ -176,6 +181,7 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
                         .andThen((ReferenceType.ORGANIZATION != referenceType) ? Completable.complete() :
                                 membershipService.findByMember(userId, MemberType.USER)
                                         .flatMapCompletable(membership -> membershipService.delete(membership.getId())))
+                        .andThen(passwordHistoryService.deleteByUser(userId))
                         .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_DELETED).user(user)))
                         .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_DELETED).throwable(throwable)))
                 );

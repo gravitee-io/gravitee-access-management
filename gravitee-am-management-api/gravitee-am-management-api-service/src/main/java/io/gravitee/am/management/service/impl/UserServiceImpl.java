@@ -115,8 +115,6 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
     @Autowired
     protected TokenService tokenService;
 
-    @Autowired
-    protected PasswordHistoryService passwordHistoryService;
 
     @Override
     protected io.gravitee.am.service.UserService getUserService() {

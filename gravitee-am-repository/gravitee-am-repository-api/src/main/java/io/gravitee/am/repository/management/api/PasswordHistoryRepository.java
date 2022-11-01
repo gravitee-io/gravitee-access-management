@@ -18,8 +18,16 @@ package io.gravitee.am.repository.management.api;
 import io.gravitee.am.model.PasswordHistory;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.common.CrudRepository;
+import io.reactivex.Completable;
 import io.reactivex.Flowable;
 
 public interface PasswordHistoryRepository extends CrudRepository<PasswordHistory, String> {
+
+    Flowable<PasswordHistory> findByReference(ReferenceType referenceType, String referenceId);
+
     Flowable<PasswordHistory> findUserHistory(ReferenceType referenceType, String referenceId, String userId);
+
+    Completable deleteByUserId(String userId);
+
+    Completable deleteByReference(ReferenceType referenceType, String referenceId);
 }
