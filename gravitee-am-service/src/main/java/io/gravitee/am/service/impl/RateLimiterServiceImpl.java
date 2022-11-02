@@ -21,8 +21,6 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.repository.management.api.RateLimitRepository;
 import io.gravitee.am.repository.management.api.search.RateLimitCriteria;
-import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
@@ -61,12 +59,6 @@ public class RateLimiterServiceImpl implements RateLimiterService {
     @Lazy
     @Autowired
     RateLimitRepository rateLimitRepository;
-
-    @Autowired
-    private EventService eventService;
-
-    @Autowired
-    private AuditService auditService;
 
     @Override
     public boolean isRateLimitEnabled() {

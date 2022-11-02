@@ -173,6 +173,10 @@ public class DomainServiceImpl implements DomainService {
     @Autowired
     private PasswordHistoryService passwordHistoryService;
 
+    @Autowired
+    private VerifyAttemptService verifyAttemptService;
+
+
     @Override
     public Maybe<Domain> findById(String id) {
         LOGGER.debug("Find domain by ID: {}", id);
@@ -493,6 +497,7 @@ public class DomainServiceImpl implements DomainService {
                             // delete rate limit
                             .andThen(rateLimiterService.deleteByDomain(domain, DOMAIN))
                             .andThen(passwordHistoryService.deleteByReference(ReferenceType.DOMAIN, domainId))
+                            .andThen(verifyAttemptService.deleteByDomain(domain, DOMAIN))
                             .andThen(domainRepository.delete(domainId))
                             .andThen(Completable.fromSingle(eventService.create(new Event(Type.DOMAIN, new Payload(domainId, DOMAIN, domainId, Action.DELETE)))))
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).type(EventType.DOMAIN_DELETED).domain(domain)))

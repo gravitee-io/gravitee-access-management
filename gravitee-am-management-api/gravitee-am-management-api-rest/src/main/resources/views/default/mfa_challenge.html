@@ -55,6 +55,13 @@
                 </span>
             </div>
 
+            <div th:if="${verify_attempt_error}" class="item error-text">
+                <span>
+                    <span class="error" th:text="${verify_attempt_error}"></span>
+                    <small th:text="*{error_description}?: #{mfa_challenge.verify.limit.error}"></small>
+                </span>
+            </div>
+
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
             <input id="factorId" type="hidden" th:name="factorId" th:value="${factor.id}"/>
             <input th:if="${factor.factorType.type == 'FIDO2'}" type="hidden" id="webAuthnLoginPath" th:value="${webAuthnLoginPath}"/>
