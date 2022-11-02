@@ -1277,4 +1277,112 @@ public class ApplicationServiceTest {
 
         verify(applicationRepository, never()).update(any());
     }
+
+    @Test
+    public void validateClientMetadata_invalidTargetUrlException_forbidWildcard() {
+        PatchApplication patchClient = Mockito.mock(PatchApplication.class);
+        Application client = createClientWithPostLogoutRedirectUris("https://gravitee.io/*");
+
+        when(patchClient.patch(any())).thenReturn(client);
+        when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(new Application()));
+        doReturn(true).when(accountSettingsValidator).validate(any());
+        when(scopeService.validateScope(anyString(), any())).thenReturn(Single.just(true));
+
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
+        testObserver.assertError(InvalidTargetUrlException.class);
+        testObserver.assertNotComplete();
+
+        verify(applicationRepository, times(1)).findById(anyString());
+        verify(applicationRepository, never()).update(any(Application.class));
+    }
+
+    @Test
+    public void validateClientMetadata_invalidTargetUrlException_noSchemeUri() {
+        PatchApplication patchClient = Mockito.mock(PatchApplication.class);
+        Application client = createClientWithPostLogoutRedirectUris("noscheme");
+
+        when(patchClient.patch(any())).thenReturn(client);
+        when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
+        doReturn(true).when(accountSettingsValidator).validate(any());
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(new Application()));
+        when(scopeService.validateScope(anyString(), any())).thenReturn(Single.just(true));
+
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
+        testObserver.assertError(InvalidTargetUrlException.class);
+        testObserver.assertNotComplete();
+
+        verify(applicationRepository, times(1)).findById(anyString());
+        verify(applicationRepository, never()).update(any(Application.class));
+    }
+
+    @Test
+    public void validateClientMetadata_invalidTargetUrlException_forbidHttp() {
+        PatchApplication patchClient = Mockito.mock(PatchApplication.class);
+        Application client = createClientWithPostLogoutRedirectUris("http://gravitee.io/callback");
+
+        when(patchClient.patch(any())).thenReturn(client);
+        when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(new Application()));
+        doReturn(true).when(accountSettingsValidator).validate(any());
+        when(scopeService.validateScope(anyString(), any())).thenReturn(Single.just(true));
+
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
+        testObserver.assertError(InvalidTargetUrlException.class);
+        testObserver.assertNotComplete();
+
+        verify(applicationRepository, times(1)).findById(anyString());
+        verify(applicationRepository, never()).update(any(Application.class));
+    }
+
+    @Test
+    public void validateClientMetadata_invalidTargetUrlException_forbidLocalhost() {
+        PatchApplication patchClient = Mockito.mock(PatchApplication.class);
+        Application client = createClientWithPostLogoutRedirectUris("http://localhost/callback");
+
+        when(patchClient.patch(any())).thenReturn(client);
+        when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(new Application()));
+        doReturn(true).when(accountSettingsValidator).validate(any());
+        when(scopeService.validateScope(anyString(), any())).thenReturn(Single.just(true));
+
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
+        testObserver.assertError(InvalidTargetUrlException.class);
+        testObserver.assertNotComplete();
+
+        verify(applicationRepository, times(1)).findById(anyString());
+        verify(applicationRepository, never()).update(any(Application.class));
+    }
+
+    @Test
+    public void validateClientMetadata_invalidTargetUrlException_malformedUri() {
+        PatchApplication patchClient = Mockito.mock(PatchApplication.class);
+        Application client =createClientWithPostLogoutRedirectUris("malformed:uri:exception");
+
+        when(patchClient.patch(any())).thenReturn(client);
+        when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(new Application()));
+        doReturn(true).when(accountSettingsValidator).validate(any());
+        when(scopeService.validateScope(anyString(), any())).thenReturn(Single.just(true));
+
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
+        testObserver.assertError(InvalidTargetUrlException.class);
+        testObserver.assertNotComplete();
+
+        verify(applicationRepository, times(1)).findById(anyString());
+        verify(applicationRepository, never()).update(any(Application.class));
+    }
+
+    private Application createClientWithPostLogoutRedirectUris(String uri){
+        Application client = new Application();
+        client.setDomain(DOMAIN);
+        ApplicationSettings settings = new ApplicationSettings();
+        ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
+        oAuthSettings.setPostLogoutRedirectUris(Arrays.asList(uri));
+        oAuthSettings.setGrantTypes(Collections.singletonList(GrantType.AUTHORIZATION_CODE));
+        settings.setOauth(oAuthSettings);
+        client.setSettings(settings);
+
+        return client;
+    }
 }

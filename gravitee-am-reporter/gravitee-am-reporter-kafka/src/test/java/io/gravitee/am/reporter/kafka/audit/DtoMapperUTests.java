@@ -65,17 +65,6 @@ public class DtoMapperUTests {
 
   }
 
-  private AuditEntity buildAuditEntity(final String prefix) {
-    AuditEntity actor = new AuditEntity();
-    actor.setId(prefix + " id");
-    actor.setType(prefix + " type");
-    actor.setDisplayName(prefix + " display name");
-    actor.setAlternativeId(prefix + " alternative id");
-    actor.setReferenceId(prefix + " reference id");
-    actor.setReferenceType(ReferenceType.APPLICATION);
-    return actor;
-  }
-
   @Test
   public void Should_MapReferenceTypeIntoString() {
     DtoMapper mapper = new DtoMapper();
@@ -122,6 +111,28 @@ public class DtoMapperUTests {
     Assert.assertEquals("alternative id", dto.getAlternativeId());
     Assert.assertEquals("Display Name", dto.getDisplayName());
 
+  }
+
+  @Test
+  public void Should_MapAuditEntryIntoAuditEntryDto_Null_ReferenceType() {
+    DtoMapper mapper = new DtoMapper();
+    AuditEntity auditEntity = new AuditEntity();
+    auditEntity.setId(null);
+    auditEntity.setType("type");
+    auditEntity.setAlternativeId("alternative id");
+    auditEntity.setReferenceId(null);
+    auditEntity.setReferenceType(null);
+    auditEntity.setDisplayName(null);
+    auditEntity.setAttributes(null);
+
+    AuditEntityDto dto = mapper.map(auditEntity);
+
+    Assert.assertEquals("type", dto.getType());
+    Assert.assertEquals("alternative id", dto.getAlternativeId());
+    Assert.assertNull("id is null", dto.getId());
+    Assert.assertNull("reference id is null", dto.getReferenceId());
+    Assert.assertNull("reference type is null", dto.getReferenceType());
+    Assert.assertNull("display name is null", dto.getDisplayName());
   }
 
   /**

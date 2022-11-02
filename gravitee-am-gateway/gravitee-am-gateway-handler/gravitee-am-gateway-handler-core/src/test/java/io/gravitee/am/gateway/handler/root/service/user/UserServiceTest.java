@@ -15,8 +15,12 @@
  */
 package io.gravitee.am.gateway.handler.root.service.user;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.common.exception.authentication.AccountInactiveException;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
+import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.gateway.handler.root.service.user.impl.UserServiceImpl;
 import io.gravitee.am.gateway.handler.root.service.user.model.ForgotPasswordParameters;
 import io.gravitee.am.identityprovider.api.DefaultUser;
@@ -29,6 +33,7 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.CredentialService;
@@ -49,11 +54,22 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -70,6 +86,9 @@ public class UserServiceTest {
 
     @Mock
     private EmailValidator emailValidator;
+
+    @Mock
+    private EmailService emailService;
 
     @Mock
     private IdentityProviderManager identityProviderManager;
@@ -404,6 +423,81 @@ public class UserServiceTest {
         testObserver.assertNotComplete();
         testObserver.assertError(EnforceUserIdentityException.class);
         verify(tokenService, never()).deleteByUserId(any());
+    }
+
+    @Test
+    public void shouldForgotPassword_MultipleMatch_onlyOne_filtered() throws Exception {
+        Client client = mock(Client.class);
+        when(client.getId()).thenReturn("client-id");
+        final String localClientId = "idp-client-id";
+        when(client.getIdentityProviders()).thenReturn(getApplicationIdentityProviders(localClientId));
+        final IdentityProvider provider = new IdentityProvider();
+        provider.setId(localClientId);
+        when(identityProviderManager.getIdentityProvider(localClientId)).thenReturn(provider);
+
+        User user = mock(User.class);
+        when(user.getEmail()).thenReturn("test@test.com");
+        when(user.getSource()).thenReturn(localClientId);
+        User user2 = mock(User.class);
+        when(user2.getSource()).thenReturn("other-idp-client-id");
+
+        when(domain.getId()).thenReturn("domain-id");
+        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()),any(FilterCriteria.class))).thenReturn(Single.just(Arrays.asList(user, user2)));
+
+        UserProvider userProvider = mock(UserProvider.class);
+        when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
+        when(userProvider.findByUsername(any())).thenReturn(Maybe.just(new DefaultUser("username")));
+        when(commonUserService.update(any())).thenReturn(Single.just(user));
+
+        TestObserver testObserver = userService.forgotPassword(
+                new ForgotPasswordParameters(user.getEmail(), true, true),
+                client,
+                mock(io.gravitee.am.identityprovider.api.User.class)).test();
+
+        // wait for the email service execution
+        Thread.sleep(1000);
+
+        testObserver.awaitTerminalEvent();
+        testObserver.assertNoErrors();
+        verify(tokenService, never()).deleteByUserId(any());
+        verify(emailService).send(any(), any(), any());
+        verify(auditService).report(argThat(builder -> {
+            final Audit audit = builder.build(new ObjectMapper());
+            return audit.getType().equals(EventType.FORGOT_PASSWORD_REQUESTED) && audit.getOutcome().getStatus().equals(Status.SUCCESS);
+        }));
+    }
+
+    @Test
+    public void shouldForgotPassword_MultipleMatch_OneToExclude_ConfirmIdentityForm() throws Exception {
+        Client client = mock(Client.class);
+        when(client.getId()).thenReturn("client-id");
+        when(client.getIdentityProviders()).thenReturn(getApplicationIdentityProviders("idp-client-id"));
+
+        User user = mock(User.class);
+        when(user.getEmail()).thenReturn("test@test.com");
+        when(user.getSource()).thenReturn("idp-client-id");
+        User user2 = mock(User.class);
+        when(user2.getSource()).thenReturn("other-idp-client-id");
+
+        when(domain.getId()).thenReturn("domain-id");
+        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()),any(FilterCriteria.class))).thenReturn(Single.just(Arrays.asList(user, user2, user)));
+
+        TestObserver testObserver = userService.forgotPassword(
+                new ForgotPasswordParameters(user.getEmail(), true, true),
+                client,
+                mock(io.gravitee.am.identityprovider.api.User.class)).test();
+
+        // wait for the email service execution
+        Thread.sleep(1000);
+
+        testObserver.awaitTerminalEvent();
+        testObserver.assertError(EnforceUserIdentityException.class);
+        verify(tokenService, never()).deleteByUserId(any());
+        verify(emailService, never()).send(any(), any(), any());
+        verify(auditService).report(argThat(builder -> {
+            final Audit audit = builder.build(new ObjectMapper());
+            return audit.getType().equals(EventType.FORGOT_PASSWORD_REQUESTED) && audit.getOutcome().getStatus().equals(Status.FAILURE);
+        }));
     }
 
     @Test

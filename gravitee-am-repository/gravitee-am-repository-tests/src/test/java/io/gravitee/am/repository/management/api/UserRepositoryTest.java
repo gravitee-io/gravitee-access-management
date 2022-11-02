@@ -588,6 +588,42 @@ public class UserRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
+    public void testScimSearch_byUsername_NotPaged() {
+        final String domain = "domain";
+        // create user
+        User user1 = new User();
+        user1.setReferenceType(ReferenceType.DOMAIN);
+        user1.setReferenceId(domain);
+        user1.setUsername("testUsername1");
+        userRepository.create(user1).blockingGet();
+
+        User user2 = new User();
+        user2.setReferenceType(ReferenceType.DOMAIN);
+        user2.setReferenceId(domain);
+        user2.setUsername("testUsername2");
+        userRepository.create(user2).blockingGet();
+
+        User user3 = new User();
+        user3.setReferenceType(ReferenceType.DOMAIN);
+        user3.setReferenceId(domain);
+        user3.setUsername("testUsername3");
+        userRepository.create(user3).blockingGet();
+
+        // fetch user (page 0)
+        FilterCriteria criteria = new FilterCriteria();
+        criteria.setFilterName("userName");
+        criteria.setFilterValue("testUsername");
+        criteria.setOperator("sw");
+        criteria.setQuoteFilterValue(true);
+        final TestSubscriber<User> testObserverP0 = userRepository.search(ReferenceType.DOMAIN, domain, criteria).test();
+        testObserverP0.awaitTerminalEvent();
+
+        testObserverP0.assertComplete();
+        testObserverP0.assertNoErrors();
+        testObserverP0.assertValueCount(3);
+    }
+
+    @Test
     public void testScimSearch_byGivenName_SW_paged() {
         final String domain = "domain";
         // create user

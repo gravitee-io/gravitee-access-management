@@ -44,6 +44,7 @@ public interface CommonUserService {
     Single<Page<User>> search(ReferenceType referenceType, String referenceId, String query, int page, int size);
 
     Single<Page<User>> search(ReferenceType referenceType, String referenceId, FilterCriteria filterCriteria, int page, int size);
+    Flowable<User> search(ReferenceType referenceType, String referenceId, FilterCriteria filterCriteria);
 
     Maybe<User> findByUsernameAndSource(ReferenceType referenceType, String referenceId, String username, String source);
 

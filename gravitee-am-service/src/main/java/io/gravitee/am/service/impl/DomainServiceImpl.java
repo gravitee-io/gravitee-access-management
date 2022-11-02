@@ -18,10 +18,17 @@ package io.gravitee.am.service.impl;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
+import io.gravitee.am.common.exception.oauth2.InvalidRequestUriException;
+import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.common.utils.PathUtils;
 import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.model.*;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Environment;
+import io.gravitee.am.model.Membership;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.VirtualHost;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
@@ -32,8 +39,38 @@ import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.repository.management.api.search.AlertNotifierCriteria;
 import io.gravitee.am.repository.management.api.search.AlertTriggerCriteria;
 import io.gravitee.am.repository.management.api.search.DomainCriteria;
-import io.gravitee.am.service.*;
-import io.gravitee.am.service.exception.*;
+import io.gravitee.am.service.AlertNotifierService;
+import io.gravitee.am.service.AlertTriggerService;
+import io.gravitee.am.service.ApplicationService;
+import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.AuthenticationDeviceNotifierService;
+import io.gravitee.am.service.CertificateService;
+import io.gravitee.am.service.DomainService;
+import io.gravitee.am.service.EmailTemplateService;
+import io.gravitee.am.service.EnvironmentService;
+import io.gravitee.am.service.EventService;
+import io.gravitee.am.service.ExtensionGrantService;
+import io.gravitee.am.service.FactorService;
+import io.gravitee.am.service.FlowService;
+import io.gravitee.am.service.FormService;
+import io.gravitee.am.service.GroupService;
+import io.gravitee.am.service.IdentityProviderService;
+import io.gravitee.am.service.MembershipService;
+import io.gravitee.am.service.ReporterService;
+import io.gravitee.am.service.ResourceService;
+import io.gravitee.am.service.RoleService;
+import io.gravitee.am.service.ScopeService;
+import io.gravitee.am.service.UserActivityService;
+import io.gravitee.am.service.UserService;
+import io.gravitee.am.service.exception.AbstractManagementException;
+import io.gravitee.am.service.exception.DomainAlreadyExistsException;
+import io.gravitee.am.service.exception.DomainNotFoundException;
+import io.gravitee.am.service.exception.InvalidDomainException;
+import io.gravitee.am.service.exception.InvalidParameterException;
+import io.gravitee.am.service.exception.InvalidRedirectUriException;
+import io.gravitee.am.service.exception.InvalidRoleException;
+import io.gravitee.am.service.exception.InvalidTargetUrlException;
+import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewDomain;
 import io.gravitee.am.service.model.NewSystemScope;
 import io.gravitee.am.service.model.PatchDomain;
@@ -43,14 +80,11 @@ import io.gravitee.am.service.validators.accountsettings.AccountSettingsValidato
 import io.gravitee.am.service.validators.domain.DomainValidator;
 import io.gravitee.am.service.validators.virtualhost.VirtualHostValidator;
 import io.gravitee.common.utils.IdGenerator;
-import io.reactivex.*;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
+import io.reactivex.Completable;
+import io.reactivex.Flowable;
+import io.reactivex.Maybe;
+import io.reactivex.Observable;
+import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,6 +92,19 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
+import static io.gravitee.am.common.web.UriBuilder.isHttp;
+import static java.util.Objects.nonNull;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -325,7 +372,7 @@ public class DomainServiceImpl implements DomainService {
                     return eventService.create(event).flatMap(__ -> Single.just(domain1));
                 })
                 .onErrorResumeNext(ex -> {
-                    if (ex instanceof AbstractManagementException) {
+                    if (ex instanceof AbstractManagementException || ex instanceof OAuth2Exception) {
                         return Single.error(ex);
                     }
                     LOGGER.error("An error occurred while trying to update a domain", ex);
@@ -358,7 +405,7 @@ public class DomainServiceImpl implements DomainService {
 
                 })
                 .onErrorResumeNext(ex -> {
-                    if (ex instanceof AbstractManagementException) {
+                    if (ex instanceof AbstractManagementException || ex instanceof OAuth2Exception) {
                         return Single.error(ex);
                     }
 
@@ -564,6 +611,17 @@ public class DomainServiceImpl implements DomainService {
             }
         }
 
+        if (domain.getOidc() != null) {
+            try {
+                validateRequestUris(domain);
+                validatePostLogoutRedirectUris(domain);
+            } catch (InvalidRedirectUriException e) {
+                return Completable.error(e);
+            } catch (Exception e) {
+                return Completable.error(new InvalidRedirectUriException(e.getMessage()));
+            }
+        }
+
         // check the uniqueness of the domain
         return domainRepository.findByHrid(domain.getReferenceType(), domain.getReferenceId(), domain.getHrid())
                 .map(Optional::of)
@@ -577,6 +635,75 @@ public class DomainServiceImpl implements DomainService {
                                 .flatMapCompletable(environment -> validateDomain(domain, environment));
                     }
                 });
+    }
+
+    private void validatePostLogoutRedirectUris(Domain domain) throws Exception {
+        if (domain.getOidc() != null && domain.getOidc().getPostLogoutRedirectUris() != null) {
+            for (String logoutRedirectUri : domain.getOidc().getPostLogoutRedirectUris()) {
+                try {
+                    final URI uri = logoutRedirectUri.contains("*") ? new URI(logoutRedirectUri) : UriBuilder.fromURIString(logoutRedirectUri).build();
+
+                    if (uri.getScheme() == null) {
+                        throw new InvalidTargetUrlException("post_logout_redirect_uri : " + logoutRedirectUri + " is malformed");
+                    }
+
+                    final String host = isHttp(uri.getScheme()) ? uri.toURL().getHost() : uri.getHost();
+
+                    //check localhost allowed
+                    if (!domain.isRedirectUriLocalhostAllowed() && isHttp(uri.getScheme()) && UriBuilder.isLocalhost(host)) {
+                        throw new InvalidTargetUrlException("localhost is forbidden");
+                    }
+                    //check http scheme
+                    if (!domain.isRedirectUriUnsecuredHttpSchemeAllowed() && uri.getScheme().equalsIgnoreCase("http")) {
+                        throw new InvalidTargetUrlException("Unsecured http scheme is forbidden");
+                    }
+                    //check wildcard
+                    if (!domain.isRedirectUriWildcardAllowed() &&
+                            (nonNull(uri.getPath()) && uri.getPath().contains("*") || nonNull(host) && host.contains("*"))) {
+                        throw new InvalidTargetUrlException("Wildcard are forbidden");
+                    }
+                    // check fragment
+                    if (uri.getFragment() != null) {
+                        throw new InvalidTargetUrlException("post_logout_redirect_uri with fragment is forbidden");
+                    }
+                } catch (IllegalArgumentException | URISyntaxException ex) {
+                    throw new InvalidTargetUrlException("post_logout_redirect_uri : " + logoutRedirectUri + " is malformed");
+                }
+            }
+        }
+    }
+
+
+    private void validateRequestUris(Domain domain) throws Exception {
+        if (domain.getOidc() != null && domain.getOidc().getRequestUris() != null) {
+            for (String requestUri : domain.getOidc().getRequestUris()) {
+                try {
+                    final URI uri = requestUri.contains("*") ? new URI(requestUri) : UriBuilder.fromURIString(requestUri).build();
+
+                    if (uri.getScheme() == null) {
+                        throw new InvalidRequestUriException("request_uri : " + requestUri + " is malformed");
+                    }
+
+                    final String host = isHttp(uri.getScheme()) ? uri.toURL().getHost() : uri.getHost();
+
+                    //check localhost allowed
+                    if (!domain.isRedirectUriLocalhostAllowed() && isHttp(uri.getScheme()) && UriBuilder.isLocalhost(host)) {
+                        throw new InvalidRequestUriException("localhost is forbidden");
+                    }
+                    //check http scheme
+                    if (!domain.isRedirectUriUnsecuredHttpSchemeAllowed() && uri.getScheme().equalsIgnoreCase("http")) {
+                        throw new InvalidRequestUriException("Unsecured http scheme is forbidden");
+                    }
+                    //check wildcard
+                    if (!domain.isRedirectUriWildcardAllowed() &&
+                            (nonNull(uri.getPath()) && uri.getPath().contains("*") || nonNull(host) && host.contains("*"))) {
+                        throw new InvalidRequestUriException("Wildcard are forbidden");
+                    }
+                } catch (IllegalArgumentException | URISyntaxException ex) {
+                    throw new InvalidRequestUriException("request_uri : " + requestUri + " is malformed");
+                }
+            }
+        }
     }
 
     private Completable validateDomain(Domain domain, Environment environment) {

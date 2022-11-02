@@ -159,7 +159,6 @@ public class EmailFactorProvider implements FactorProvider {
             return provider.sendMessage(emailWrapper.getEmail(), emailWrapper.isFromDefaultTemplate())
                     .andThen(Single.just(enrolledFactor)
                             .flatMap(ef -> {
-                                ef.setPrimary(true);
                                 ef.getSecurity().putData(FactorDataKeys.KEY_EXPIRE_AT, emailWrapper.getExpireAt());
                                 return userService.addFactor(context.getUser().getId(), ef, new DefaultUser(context.getUser()));
                             }).ignoreElement());
