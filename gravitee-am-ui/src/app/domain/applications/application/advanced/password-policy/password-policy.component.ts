@@ -112,6 +112,11 @@ export class PasswordPolicyComponent implements OnInit {
   }
 
   update() {
+    if (this.passwordHistoryEnabled && (!this.oldPasswords || (this.oldPasswords < 1 || this.oldPasswords > 24))) {
+      this.snackbarService.open("Number of old passwords must be within the range [1, 24]")
+      return;
+    }
+
     const data: any = {};
     data.settings = {};
     data.settings.passwordSettings = {
