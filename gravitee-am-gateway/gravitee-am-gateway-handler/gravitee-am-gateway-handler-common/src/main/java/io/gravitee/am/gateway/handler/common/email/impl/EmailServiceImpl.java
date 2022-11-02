@@ -87,6 +87,9 @@ public class EmailServiceImpl implements EmailService {
     @Value("${user.mfaChallenge.token.expire-after:300}")
     private Integer mfaChallengeExpireAfter;
 
+    @Value("${user.mfaVerifyAttempt.email.subject:${msg('email.verify_attempt.subject')}}")
+    private String mfaVerifyAttemptSubject;
+
     @Autowired
     private EmailManager emailManager;
 
@@ -293,6 +296,8 @@ public class EmailServiceImpl implements EmailService {
                 return blockedAccountSubject;
             case MFA_CHALLENGE:
                 return mfaChallengeSubject;
+            case VERIFY_ATTEMPT:
+                return mfaVerifyAttemptSubject;
             default:
                 throw new IllegalArgumentException(template.template() + " not found");
         }
@@ -306,6 +311,8 @@ public class EmailServiceImpl implements EmailService {
                 return blockedAccountExpireAfter;
             case MFA_CHALLENGE:
                 return mfaChallengeExpireAfter;
+            case VERIFY_ATTEMPT:
+                return 0;
             default:
                 throw new IllegalArgumentException(template.template() + " not found");
         }

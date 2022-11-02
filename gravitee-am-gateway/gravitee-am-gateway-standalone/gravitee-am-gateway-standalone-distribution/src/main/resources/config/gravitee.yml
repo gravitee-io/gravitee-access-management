@@ -301,6 +301,9 @@ user:
       #subject: Verification Code
       token:
       #expire-after: 300 # the end of validity of the token in seconds for MFA email (default 300 = 5 minutes)
+  mfaVerifyAttempt:
+    email:
+      #subject: Multiple verification attempt detected
 
 handlers:
   request:

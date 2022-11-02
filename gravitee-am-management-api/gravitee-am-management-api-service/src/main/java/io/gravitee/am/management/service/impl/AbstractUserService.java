@@ -30,6 +30,7 @@ import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.service.UserActivityService;
+import io.gravitee.am.service.VerifyAttemptService;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.impl.PasswordHistoryService;
@@ -84,6 +85,10 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
 
     @Autowired
     protected PasswordHistoryService passwordHistoryService;
+
+    @Autowired
+    protected VerifyAttemptService verifyAttemptService;
+
 
     protected abstract BiFunction<String, String, Maybe<Application>> checkClientFunction();
 
@@ -176,6 +181,7 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
                         .andThen((DOMAIN.equals(referenceType)) ? userActivityService.deleteByDomainAndUser(referenceId, userId) : Completable.complete())
                         // Delete rate limit
                         .andThen(rateLimiterService.deleteByUser(user))
+                        .andThen(verifyAttemptService.deleteByUser(user))
                         .andThen(getUserService().delete(userId))
                         // remove from memberships if user is an administrative user
                         .andThen((ReferenceType.ORGANIZATION != referenceType) ? Completable.complete() :

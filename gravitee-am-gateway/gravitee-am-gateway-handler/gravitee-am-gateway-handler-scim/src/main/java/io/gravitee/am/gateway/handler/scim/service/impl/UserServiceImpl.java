@@ -46,6 +46,7 @@ import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.UserActivityService;
+import io.gravitee.am.service.VerifyAttemptService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.AbstractNotFoundException;
 import io.gravitee.am.service.exception.IdentityProviderNotFoundException;
@@ -124,6 +125,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private PasswordHistoryService passwordHistoryService;
+
+    @Autowired
+    private VerifyAttemptService verifyAttemptService;
 
     @Override
     public Single<ListResponse<User>> list(Filter filter, int page, int size, String baseUrl) {
@@ -446,6 +450,7 @@ public class UserServiceImpl implements UserService {
                             .andThen(userActivityService.deleteByDomainAndUser(domain.getId(), userId))
                             .andThen(rateLimiterService.deleteByUser(user))
                             .andThen(passwordHistoryService.deleteByUser(userId))
+                            .andThen(verifyAttemptService.deleteByUser(user))
                             .andThen(userRepository.delete(userId))
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).domain(domain.getId()).type(EventType.USER_DELETED).user(user)))
                             .doOnError((error) -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).domain(domain.getId()).type(EventType.USER_DELETED).throwable(error)));

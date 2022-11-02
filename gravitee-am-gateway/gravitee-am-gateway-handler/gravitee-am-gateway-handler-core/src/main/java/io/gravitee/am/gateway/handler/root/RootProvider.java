@@ -23,6 +23,7 @@ import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.UserAuthProvider;
@@ -93,6 +94,7 @@ import io.gravitee.am.gateway.handler.root.resources.handler.user.register.Regis
 import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterProcessHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterSubmissionRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.*;
+import io.gravitee.am.service.VerifyAttemptService;
 import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.model.Domain;
@@ -269,6 +271,13 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
     @Autowired
     private PasswordHistoryService passwordHistoryService;
 
+    @Autowired
+    private VerifyAttemptService verifyAttemptService;
+
+    @Autowired
+    private EmailService emailService;
+
+
     @Override
     protected void doStart() throws Exception {
         super.doStart();
@@ -412,7 +421,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(rememberDeviceSettingsHandler)
                 .handler(localeHandler)
                 .handler(new MFAChallengeEndpoint(factorManager, userService, thymeleafTemplateEngine, deviceService, applicationContext,
-                        domain, credentialService, factorService, rateLimiterService))
+                        domain, credentialService, factorService, rateLimiterService, verifyAttemptService, emailService))
                 .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService));
         rootRouter.route(PATH_MFA_CHALLENGE_ALTERNATIVES)
                 .handler(clientRequestParseHandler)

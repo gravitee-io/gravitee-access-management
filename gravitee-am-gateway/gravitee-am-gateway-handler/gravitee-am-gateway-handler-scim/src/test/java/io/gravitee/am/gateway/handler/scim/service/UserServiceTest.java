@@ -38,6 +38,7 @@ import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.UserActivityService;
 import io.gravitee.am.service.impl.PasswordHistoryService;
+import io.gravitee.am.service.VerifyAttemptService;
 import io.gravitee.am.service.validators.email.EmailValidatorImpl;
 import io.gravitee.am.service.validators.user.UserValidator;
 import io.gravitee.am.service.validators.user.UserValidatorImpl;
@@ -120,6 +121,9 @@ public class UserServiceTest {
 
     @Mock
     private PasswordHistoryService passwordHistoryService;
+
+    @Mock
+    private VerifyAttemptService verifyAttemptService;
 
     @Before
     public void setUp() {
@@ -425,6 +429,8 @@ public class UserServiceTest {
         when(userActivityService.deleteByDomainAndUser(domain.getId(), userId)).thenReturn(complete());
         when(rateLimiterService.deleteByUser(any())).thenReturn(complete());
         when(passwordHistoryService.deleteByUser(userId)).thenReturn(complete());
+        when(verifyAttemptService.deleteByUser(any())).thenReturn(complete());
+
 
         var testObserver = userService.delete(userId, null).test();
         testObserver.assertNoErrors();
@@ -450,6 +456,7 @@ public class UserServiceTest {
         when(userActivityService.deleteByDomainAndUser(domain.getId(), userId)).thenReturn(complete());
         when(rateLimiterService.deleteByUser(any())).thenReturn(complete());
         when(passwordHistoryService.deleteByUser(any())).thenReturn(complete());
+        when(verifyAttemptService.deleteByUser(any())).thenReturn(complete());
 
         var testObserver = userService.delete(userId, null).test();
         testObserver.assertNoErrors();
