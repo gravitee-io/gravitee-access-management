@@ -10,7 +10,8 @@ const submitBtn = document.getElementById("submitBtn");
 const usernameInput = document.getElementById("username");
 
 //Validation elements
-const length = document.getElementById("minLength");
+const minLengthElt = document.getElementById("minLength");
+const maxLengthElt = document.getElementById("maxLength");
 const number = document.getElementById("includeNumbers");
 const specialChar = document.getElementById("includeSpecialChar");
 const mixedCase = document.getElementById("mixedCase");
@@ -27,7 +28,15 @@ function validatePassword() {
     const minLength = passwordSettings.minLength;
     if (minLength != null) {
         isMinLengthOk = passwordInput.value.length >= minLength;
-        validateMessageElement(length, isMinLengthOk);
+        validateMessageElement(minLengthElt, isMinLengthOk);
+    }
+
+    //validate max length
+    let isMaxLengthOk = true;
+    const maxLength = passwordSettings.maxLength;
+    if (maxLength != null) {
+        isMaxLengthOk = passwordInput.value.length <= maxLength;
+        validateMessageElement(maxLengthElt, isMaxLengthOk);
     }
 
     //validate include numbers
@@ -73,7 +82,7 @@ function validatePassword() {
         )
         validateMessageElement(excludeUserProfileInfoInPassword, isExcludeUserProfileInfoInPasswordOk);
     }
-    return isMinLengthOk && isIncludeNumbersOk && isIncludeSpecialCharactersOk && isLettersInMixedCaseOk && isMaxConsecutiveLettersOk && isExcludeUserProfileInfoInPasswordOk;
+    return isMinLengthOk && isMaxLengthOk && isIncludeNumbersOk && isIncludeSpecialCharactersOk && isLettersInMixedCaseOk && isMaxConsecutiveLettersOk && isExcludeUserProfileInfoInPasswordOk;
 }
 
 

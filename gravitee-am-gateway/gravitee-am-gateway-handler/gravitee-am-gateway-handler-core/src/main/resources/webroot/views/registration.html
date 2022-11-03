@@ -57,12 +57,13 @@
 
             <div th:if="${passwordSettings != null}" id="passwordSettings" class="password-policy">
                 <span
-                        th:if="${passwordSettings.minLength != null || passwordSettings.includeNumbers || passwordSettings.includeSpecialCharacters
+                        th:if="${passwordSettings.minLength != null || passwordSettings.maxLength != null || passwordSettings.includeNumbers || passwordSettings.includeSpecialCharacters
                         || passwordSettings.lettersInMixedCase || passwordSettings.maxConsecutiveLetters != null ||
                         passwordSettings.excludePasswordsInDictionary || passwordSettings.excludeUserProfileInfoInPassword}"
                         class="small-font grey" th:text="#{password.validation.label}"/>
 
                 <span th:if="${passwordSettings.minLength != null}" id="minLength" class="invalid"><span th:text="#{password.minLength.before}" /> <span th:text="${passwordSettings.minLength}"/> <span th:text="#{password.minLength.after}"/></span>
+                <span th:if="${passwordSettings.maxLength != null}" id="maxLength" class="invalid"><span th:text="#{password.maxLength.before}" /> <span th:text="${passwordSettings.maxLength}"/> <span th:text="#{password.maxLength.after}"/></span>
                 <span th:if="${passwordSettings.includeNumbers}" id="includeNumbers" class="invalid" th:text="#{password.include.numbers}" />
                 <span th:if="${passwordSettings.includeSpecialCharacters}" id="includeSpecialChar" class="invalid" th:text="#{password.include.special.characters}" />
                 <span th:if="${passwordSettings.lettersInMixedCase}" id="mixedCase" class="invalid" th:text="#{password.letters.mixed.cases}" />
