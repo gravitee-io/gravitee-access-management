@@ -13,20 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.management.api;
+package io.gravitee.am.service.tasks;
 
-import io.gravitee.am.model.SystemTask;
-import io.gravitee.am.repository.common.CrudRepository;
-import io.reactivex.Flowable;
-import io.reactivex.Single;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface SystemTaskRepository extends CrudRepository<SystemTask, String> {
-
-    Single<SystemTask> updateIf(SystemTask item, String operationId);
-
-    Flowable<SystemTask> findByType(String type);
+public interface TaskDefinition {
+    long getDelay();
+    TimeUnit getUnit();
 }

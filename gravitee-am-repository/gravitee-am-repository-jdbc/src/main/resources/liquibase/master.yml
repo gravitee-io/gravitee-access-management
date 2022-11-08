@@ -87,4 +87,6 @@ databaseChangeLog:
       - file: liquibase/changelogs/v3_20_0/3.20.0-update-certificates-table.yml
   - include:
       - file: liquibase/changelogs/v3_20_0/3.20.0-add-rate-limit-table.yml
+  - include:
+      - file: liquibase/changelogs/v3_20_0/3.20.0-update-system-tasks-table.yml
 

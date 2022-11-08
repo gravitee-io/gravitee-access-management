@@ -20,7 +20,6 @@ package io.gravitee.am.common.utils;
  * @author GraviteeSource Team
  */
 public interface ConstantKeys {
-
     // Common key.
     String CLIENT_CONTEXT_KEY = "client";
     String USER_CONTEXT_KEY = "user";

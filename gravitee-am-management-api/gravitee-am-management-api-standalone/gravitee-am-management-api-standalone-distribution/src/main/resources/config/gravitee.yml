@@ -231,6 +231,11 @@ domains:
       validity: 365             # Validity of the certificate
       algorithm: SHA256withRSA  # Algorithm used to sign certificate
       name: cn=Gravitee.io      # Certificate X.500 name
+## Refresh section is used to define the delay between a system certificate renewal
+## and the applications update to use this new certificate
+#      refresh:
+#        delay: 10
+#        timeUnit: MINUTES
 
 # JWT used to generate signed token for management security mechanism (Bearer Token) and to verify emails
 jwt:

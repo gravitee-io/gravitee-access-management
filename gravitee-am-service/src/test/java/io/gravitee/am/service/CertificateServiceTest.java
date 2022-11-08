@@ -27,12 +27,16 @@ import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.CertificateRepository;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.CertificateServiceImpl;
+import io.gravitee.am.service.tasks.AssignSystemCertificate;
+import io.gravitee.am.service.tasks.AssignSystemCertificateDefinition;
+import io.gravitee.am.service.tasks.TaskType;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
 import io.reactivex.subscribers.TestSubscriber;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -43,6 +47,7 @@ import org.mockito.Spy;
 import org.mockito.internal.util.io.IOUtil;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.core.env.Environment;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -50,6 +55,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static io.gravitee.am.service.impl.CertificateServiceImpl.DEFAULT_CERTIFICATE_PLUGIN;
@@ -99,6 +105,9 @@ public class CertificateServiceTest {
     @Mock
     private CertificatePluginService certificatePluginService;
 
+    @Mock
+    private TaskManager taskManager;
+
     private final static String DOMAIN = "domain1";
 
     @BeforeClass
@@ -106,6 +115,12 @@ public class CertificateServiceTest {
         certificateSchemaDefinition = loadResource("certificate-schema-definition.json");
         certificateConfiguration = loadResource("certificate-configuration.json");
         certificateConfigurationWithOptions = loadResource("certificate-configuration-with-options.json");
+    }
+
+    @Before
+    public void initCertificateServiceValues() {
+        ReflectionTestUtils.setField(certificateService, "delay", 1);
+        ReflectionTestUtils.setField(certificateService, "timeUnit", "Minutes");
     }
 
     private static String loadResource(String name) throws IOException {
@@ -310,6 +325,7 @@ public class CertificateServiceTest {
 
         final Certificate certLatest = new Certificate();
         certLatest.setSystem(true);
+        certLatest.setId("latest-cert-id");
         certLatest.setDomain(DOMAIN);
         certLatest.setName("Cert-3");
         certLatest.setConfiguration(certificateConfigurationWithOptions);
@@ -330,7 +346,10 @@ public class CertificateServiceTest {
 
         initializeCertificatSettings(2048, "SHA256withRSA");
 
-        when(certificateRepository.create(any())).thenReturn(Single.just(new Certificate()));
+        final Certificate renewedCert = new Certificate();
+        renewedCert.setId("renewed-cert-id");
+        when(certificateRepository.create(any())).thenReturn(Single.just(renewedCert));
+        when(certificateRepository.update(any())).thenReturn(Single.just(certLatest));
         when(eventService.create(any(Event.class))).thenReturn(Single.just(new Event()));
 
         CertificateSchema schema = new CertificateSchema();
@@ -347,6 +366,21 @@ public class CertificateServiceTest {
                 && cert.getConfiguration().contains("[\"sig\"]")
                 && cert.getConfiguration().contains("RS256")
         ));
+        verify(taskManager).schedule(argThat(task -> {
+            boolean result = task.kind().equals(AssignSystemCertificate.class.getSimpleName());
+            result &= task.type().equals(TaskType.SIMPLE);
+            var definition = task.getDefinition();
+            result &= definition.getDelay() == 1;
+            result &= definition.getUnit().equals(TimeUnit.MINUTES);
+            if (definition instanceof AssignSystemCertificateDefinition) {
+                result &= ((AssignSystemCertificateDefinition) definition).getDomainId().equals(DOMAIN);
+                result &= ((AssignSystemCertificateDefinition) definition).getDeprecatedCertificate().equals(certLatest.getId());
+                result &= ((AssignSystemCertificateDefinition) definition).getRenewedCertificate() != null;
+            } else {
+                result = false;
+            }
+            return result;
+        }));
     }
 
     @Test
@@ -383,5 +417,6 @@ public class CertificateServiceTest {
                 && !cert.getConfiguration().contains("[\"sig\"]")
                 && !cert.getConfiguration().contains("RS256")
         ));
+        verify(taskManager, never()).schedule(any());
     }
 }

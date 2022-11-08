@@ -38,6 +38,7 @@ public class JdbcSystemTask {
     @Column("updated_at")
     private LocalDateTime updatedAt;
 
+    private String configuration;
     public String getId() {
         return id;
     }
@@ -84,5 +85,13 @@ public class JdbcSystemTask {
 
     public void setOperationId(String operationId) {
         this.operationId = operationId;
+    }
+
+    public String getConfiguration() {
+        return configuration;
+    }
+
+    public void setConfiguration(String configuration) {
+        this.configuration = configuration;
     }
 }
