@@ -51,16 +51,10 @@ import {
 export interface ApplicationResource {
     /**
      * 
-     * @type {ApplicationMembersResource}
+     * @type {ApplicationResourcesResource}
      * @memberof ApplicationResource
      */
-    membersResource?: ApplicationMembersResource;
-    /**
-     * 
-     * @type {ApplicationFormsResource}
-     * @memberof ApplicationResource
-     */
-    formsResource?: ApplicationFormsResource;
+    resourcesResource?: ApplicationResourcesResource;
     /**
      * 
      * @type {ApplicationEmailsResource}
@@ -81,10 +75,16 @@ export interface ApplicationResource {
     flowsResource?: ApplicationFlowsResource;
     /**
      * 
-     * @type {ApplicationResourcesResource}
+     * @type {ApplicationMembersResource}
      * @memberof ApplicationResource
      */
-    resourcesResource?: ApplicationResourcesResource;
+    membersResource?: ApplicationMembersResource;
+    /**
+     * 
+     * @type {ApplicationFormsResource}
+     * @memberof ApplicationResource
+     */
+    formsResource?: ApplicationFormsResource;
 }
 
 export function ApplicationResourceFromJSON(json: any): ApplicationResource {
@@ -97,12 +97,12 @@ export function ApplicationResourceFromJSONTyped(json: any, ignoreDiscriminator:
     }
     return {
         
-        'membersResource': !exists(json, 'membersResource') ? undefined : ApplicationMembersResourceFromJSON(json['membersResource']),
-        'formsResource': !exists(json, 'formsResource') ? undefined : ApplicationFormsResourceFromJSON(json['formsResource']),
+        'resourcesResource': !exists(json, 'resourcesResource') ? undefined : ApplicationResourcesResourceFromJSON(json['resourcesResource']),
         'emailsResource': !exists(json, 'emailsResource') ? undefined : ApplicationEmailsResourceFromJSON(json['emailsResource']),
         'analyticsResource': !exists(json, 'analyticsResource') ? undefined : json['analyticsResource'],
         'flowsResource': !exists(json, 'flowsResource') ? undefined : ApplicationFlowsResourceFromJSON(json['flowsResource']),
-        'resourcesResource': !exists(json, 'resourcesResource') ? undefined : ApplicationResourcesResourceFromJSON(json['resourcesResource']),
+        'membersResource': !exists(json, 'membersResource') ? undefined : ApplicationMembersResourceFromJSON(json['membersResource']),
+        'formsResource': !exists(json, 'formsResource') ? undefined : ApplicationFormsResourceFromJSON(json['formsResource']),
     };
 }
 
@@ -115,12 +115,12 @@ export function ApplicationResourceToJSON(value?: ApplicationResource | null): a
     }
     return {
         
-        'membersResource': ApplicationMembersResourceToJSON(value.membersResource),
-        'formsResource': ApplicationFormsResourceToJSON(value.formsResource),
+        'resourcesResource': ApplicationResourcesResourceToJSON(value.resourcesResource),
         'emailsResource': ApplicationEmailsResourceToJSON(value.emailsResource),
         'analyticsResource': value.analyticsResource,
         'flowsResource': ApplicationFlowsResourceToJSON(value.flowsResource),
-        'resourcesResource': ApplicationResourcesResourceToJSON(value.resourcesResource),
+        'membersResource': ApplicationMembersResourceToJSON(value.membersResource),
+        'formsResource': ApplicationFormsResourceToJSON(value.formsResource),
     };
 }
 

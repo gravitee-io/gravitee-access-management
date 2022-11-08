@@ -264,13 +264,13 @@ export interface Domain {
      * @type {boolean}
      * @memberof Domain
      */
-    dynamicClientRegistrationTemplateEnabled?: boolean;
+    redirectUriStrictMatching?: boolean;
     /**
      * 
      * @type {boolean}
      * @memberof Domain
      */
-    redirectUriStrictMatching?: boolean;
+    dynamicClientRegistrationTemplateEnabled?: boolean;
 }
 
 
@@ -327,8 +327,8 @@ export function DomainFromJSONTyped(json: any, ignoreDiscriminator: boolean): Do
         'redirectUriWildcardAllowed': !exists(json, 'redirectUriWildcardAllowed') ? undefined : json['redirectUriWildcardAllowed'],
         'dynamicClientRegistrationEnabled': !exists(json, 'dynamicClientRegistrationEnabled') ? undefined : json['dynamicClientRegistrationEnabled'],
         'openDynamicClientRegistrationEnabled': !exists(json, 'openDynamicClientRegistrationEnabled') ? undefined : json['openDynamicClientRegistrationEnabled'],
-        'dynamicClientRegistrationTemplateEnabled': !exists(json, 'dynamicClientRegistrationTemplateEnabled') ? undefined : json['dynamicClientRegistrationTemplateEnabled'],
         'redirectUriStrictMatching': !exists(json, 'redirectUriStrictMatching') ? undefined : json['redirectUriStrictMatching'],
+        'dynamicClientRegistrationTemplateEnabled': !exists(json, 'dynamicClientRegistrationTemplateEnabled') ? undefined : json['dynamicClientRegistrationTemplateEnabled'],
     };
 }
 
@@ -371,8 +371,8 @@ export function DomainToJSON(value?: Domain | null): any {
         'redirectUriWildcardAllowed': value.redirectUriWildcardAllowed,
         'dynamicClientRegistrationEnabled': value.dynamicClientRegistrationEnabled,
         'openDynamicClientRegistrationEnabled': value.openDynamicClientRegistrationEnabled,
-        'dynamicClientRegistrationTemplateEnabled': value.dynamicClientRegistrationTemplateEnabled,
         'redirectUriStrictMatching': value.redirectUriStrictMatching,
+        'dynamicClientRegistrationTemplateEnabled': value.dynamicClientRegistrationTemplateEnabled,
     };
 }
 

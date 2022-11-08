@@ -25,21 +25,21 @@ import {
     UpdateBotDetectionToJSON,
 } from '../models';
 
-export interface Create8Request {
+export interface Create7Request {
     organizationId: string;
     environmentId: string;
     domain: string;
     detection: NewBotDetection;
 }
 
-export interface Delete11Request {
+export interface Delete7Request {
     organizationId: string;
     environmentId: string;
     domain: string;
     botDetection: string;
 }
 
-export interface Get19Request {
+export interface Get14Request {
     organizationId: string;
     environmentId: string;
     domain: string;
@@ -54,13 +54,13 @@ export interface GetSchema8Request {
     botDetection: string;
 }
 
-export interface List19Request {
+export interface List10Request {
     organizationId: string;
     environmentId: string;
     domain: string;
 }
 
-export interface Update12Request {
+export interface Update11Request {
     organizationId: string;
     environmentId: string;
     domain: string;
@@ -77,21 +77,21 @@ export class BotDetectionApi extends runtime.BaseAPI {
      * User must have the DOMAIN_BOT_DETECTION[CREATE] permission on the specified domain or DOMAIN_BOT_DETECTION[CREATE] permission on the specified environment or DOMAIN_BOT_DETECTION[CREATE] permission on the specified organization
      * Create a bot detection
      */
-    async create8Raw(requestParameters: Create8Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async create7Raw(requestParameters: Create7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling create8.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling create7.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling create8.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling create7.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling create8.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling create7.');
         }
 
         if (requestParameters.detection === null || requestParameters.detection === undefined) {
-            throw new runtime.RequiredError('detection','Required parameter requestParameters.detection was null or undefined when calling create8.');
+            throw new runtime.RequiredError('detection','Required parameter requestParameters.detection was null or undefined when calling create7.');
         }
 
         const queryParameters: any = {};
@@ -119,29 +119,29 @@ export class BotDetectionApi extends runtime.BaseAPI {
      * User must have the DOMAIN_BOT_DETECTION[CREATE] permission on the specified domain or DOMAIN_BOT_DETECTION[CREATE] permission on the specified environment or DOMAIN_BOT_DETECTION[CREATE] permission on the specified organization
      * Create a bot detection
      */
-    async create8(requestParameters: Create8Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.create8Raw(requestParameters, initOverrides);
+    async create7(requestParameters: Create7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.create7Raw(requestParameters, initOverrides);
     }
 
     /**
      * User must have the DOMAIN_BOT_DETECTION[DELETE] permission on the specified domain or DOMAIN_BOT_DETECTION[DELETE] permission on the specified environment or DOMAIN_BOT_DETECTION[DELETE] permission on the specified organization
      * Delete a bot detection
      */
-    async delete11Raw(requestParameters: Delete11Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async delete7Raw(requestParameters: Delete7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling delete11.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling delete7.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling delete11.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling delete7.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling delete11.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling delete7.');
         }
 
         if (requestParameters.botDetection === null || requestParameters.botDetection === undefined) {
-            throw new runtime.RequiredError('botDetection','Required parameter requestParameters.botDetection was null or undefined when calling delete11.');
+            throw new runtime.RequiredError('botDetection','Required parameter requestParameters.botDetection was null or undefined when calling delete7.');
         }
 
         const queryParameters: any = {};
@@ -166,29 +166,29 @@ export class BotDetectionApi extends runtime.BaseAPI {
      * User must have the DOMAIN_BOT_DETECTION[DELETE] permission on the specified domain or DOMAIN_BOT_DETECTION[DELETE] permission on the specified environment or DOMAIN_BOT_DETECTION[DELETE] permission on the specified organization
      * Delete a bot detection
      */
-    async delete11(requestParameters: Delete11Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.delete11Raw(requestParameters, initOverrides);
+    async delete7(requestParameters: Delete7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.delete7Raw(requestParameters, initOverrides);
     }
 
     /**
      * User must have the DOMAIN_BOT_DETECTION[READ] permission on the specified domain or DOMAIN_BOT_DETECTION[READ] permission on the specified environment or DOMAIN_BOT_DETECTION[READ] permission on the specified organization
      * Get a bot detection
      */
-    async get19Raw(requestParameters: Get19Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<BotDetection>> {
+    async get14Raw(requestParameters: Get14Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<BotDetection>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get19.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get14.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get19.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get14.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get19.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get14.');
         }
 
         if (requestParameters.botDetection === null || requestParameters.botDetection === undefined) {
-            throw new runtime.RequiredError('botDetection','Required parameter requestParameters.botDetection was null or undefined when calling get19.');
+            throw new runtime.RequiredError('botDetection','Required parameter requestParameters.botDetection was null or undefined when calling get14.');
         }
 
         const queryParameters: any = {};
@@ -213,8 +213,8 @@ export class BotDetectionApi extends runtime.BaseAPI {
      * User must have the DOMAIN_BOT_DETECTION[READ] permission on the specified domain or DOMAIN_BOT_DETECTION[READ] permission on the specified environment or DOMAIN_BOT_DETECTION[READ] permission on the specified organization
      * Get a bot detection
      */
-    async get19(requestParameters: Get19Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<BotDetection> {
-        const response = await this.get19Raw(requestParameters, initOverrides);
+    async get14(requestParameters: Get14Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<BotDetection> {
+        const response = await this.get14Raw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -292,17 +292,17 @@ export class BotDetectionApi extends runtime.BaseAPI {
      * User must have the DOMAIN_BOT_DETECTION[LIST] permission on the specified domain or DOMAIN_BOT_DETECTION[LIST] permission on the specified environment or DOMAIN_BOT_DETECTION[LIST] permission on the specified organization Each returned bot detections is filtered and contains only basic information such as id, name.
      * List registered bot detections for a security domain
      */
-    async list19Raw(requestParameters: List19Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<BotDetection>>> {
+    async list10Raw(requestParameters: List10Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<BotDetection>>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list19.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list10.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling list19.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling list10.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling list19.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling list10.');
         }
 
         const queryParameters: any = {};
@@ -327,8 +327,8 @@ export class BotDetectionApi extends runtime.BaseAPI {
      * User must have the DOMAIN_BOT_DETECTION[LIST] permission on the specified domain or DOMAIN_BOT_DETECTION[LIST] permission on the specified environment or DOMAIN_BOT_DETECTION[LIST] permission on the specified organization Each returned bot detections is filtered and contains only basic information such as id, name.
      * List registered bot detections for a security domain
      */
-    async list19(requestParameters: List19Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<BotDetection>> {
-        const response = await this.list19Raw(requestParameters, initOverrides);
+    async list10(requestParameters: List10Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<BotDetection>> {
+        const response = await this.list10Raw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -367,25 +367,25 @@ export class BotDetectionApi extends runtime.BaseAPI {
      * User must have the DOMAIN_BOT_DETECTION[UPDATE] permission on the specified domain or DOMAIN_BOT_DETECTION[UPDATE] permission on the specified environment or DOMAIN_BOT_DETECTION[UPDATE] permission on the specified organization
      * Update a bot detection
      */
-    async update12Raw(requestParameters: Update12Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<BotDetection>> {
+    async update11Raw(requestParameters: Update11Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<BotDetection>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling update12.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling update11.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling update12.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling update11.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling update12.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling update11.');
         }
 
         if (requestParameters.botDetection === null || requestParameters.botDetection === undefined) {
-            throw new runtime.RequiredError('botDetection','Required parameter requestParameters.botDetection was null or undefined when calling update12.');
+            throw new runtime.RequiredError('botDetection','Required parameter requestParameters.botDetection was null or undefined when calling update11.');
         }
 
         if (requestParameters.identity === null || requestParameters.identity === undefined) {
-            throw new runtime.RequiredError('identity','Required parameter requestParameters.identity was null or undefined when calling update12.');
+            throw new runtime.RequiredError('identity','Required parameter requestParameters.identity was null or undefined when calling update11.');
         }
 
         const queryParameters: any = {};
@@ -413,8 +413,8 @@ export class BotDetectionApi extends runtime.BaseAPI {
      * User must have the DOMAIN_BOT_DETECTION[UPDATE] permission on the specified domain or DOMAIN_BOT_DETECTION[UPDATE] permission on the specified environment or DOMAIN_BOT_DETECTION[UPDATE] permission on the specified organization
      * Update a bot detection
      */
-    async update12(requestParameters: Update12Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<BotDetection> {
-        const response = await this.update12Raw(requestParameters, initOverrides);
+    async update11(requestParameters: Update11Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<BotDetection> {
+        const response = await this.update11Raw(requestParameters, initOverrides);
         return await response.value();
     }
 

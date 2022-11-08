@@ -123,12 +123,6 @@ export interface OrganizationResource {
     groupsResource?: GroupsResource;
     /**
      * 
-     * @type {IdentityProvidersResource}
-     * @memberof OrganizationResource
-     */
-    identityProvidersResource?: IdentityProvidersResource;
-    /**
-     * 
      * @type {UsersResource}
      * @memberof OrganizationResource
      */
@@ -145,6 +139,12 @@ export interface OrganizationResource {
      * @memberof OrganizationResource
      */
     formsResource?: FormsResource;
+    /**
+     * 
+     * @type {IdentityProvidersResource}
+     * @memberof OrganizationResource
+     */
+    identityProvidersResource?: IdentityProvidersResource;
 }
 
 export function OrganizationResourceFromJSON(json: any): OrganizationResource {
@@ -164,10 +164,10 @@ export function OrganizationResourceFromJSONTyped(json: any, ignoreDiscriminator
         'entrypointsResource': !exists(json, 'entrypointsResource') ? undefined : EntrypointsResourceFromJSON(json['entrypointsResource']),
         'rolesResource': !exists(json, 'rolesResource') ? undefined : RolesResourceFromJSON(json['rolesResource']),
         'groupsResource': !exists(json, 'groupsResource') ? undefined : GroupsResourceFromJSON(json['groupsResource']),
-        'identityProvidersResource': !exists(json, 'identityProvidersResource') ? undefined : IdentityProvidersResourceFromJSON(json['identityProvidersResource']),
         'usersResource': !exists(json, 'usersResource') ? undefined : UsersResourceFromJSON(json['usersResource']),
         'settingsResource': !exists(json, 'settingsResource') ? undefined : json['settingsResource'],
         'formsResource': !exists(json, 'formsResource') ? undefined : FormsResourceFromJSON(json['formsResource']),
+        'identityProvidersResource': !exists(json, 'identityProvidersResource') ? undefined : IdentityProvidersResourceFromJSON(json['identityProvidersResource']),
     };
 }
 
@@ -187,10 +187,10 @@ export function OrganizationResourceToJSON(value?: OrganizationResource | null):
         'entrypointsResource': EntrypointsResourceToJSON(value.entrypointsResource),
         'rolesResource': RolesResourceToJSON(value.rolesResource),
         'groupsResource': GroupsResourceToJSON(value.groupsResource),
-        'identityProvidersResource': IdentityProvidersResourceToJSON(value.identityProvidersResource),
         'usersResource': UsersResourceToJSON(value.usersResource),
         'settingsResource': value.settingsResource,
         'formsResource': FormsResourceToJSON(value.formsResource),
+        'identityProvidersResource': IdentityProvidersResourceToJSON(value.identityProvidersResource),
     };
 }
 

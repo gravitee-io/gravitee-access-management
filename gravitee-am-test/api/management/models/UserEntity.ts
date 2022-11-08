@@ -387,6 +387,18 @@ export interface UserEntity {
     middleName?: string;
     /**
      * 
+     * @type {string}
+     * @memberof UserEntity
+     */
+    birthdate?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof UserEntity
+     */
+    phoneNumber?: string;
+    /**
+     * 
      * @type {boolean}
      * @memberof UserEntity
      */
@@ -403,18 +415,6 @@ export interface UserEntity {
      * @memberof UserEntity
      */
     website?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof UserEntity
-     */
-    birthdate?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof UserEntity
-     */
-    phoneNumber?: string;
 }
 
 
@@ -496,11 +496,11 @@ export function UserEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean)
         'locale': !exists(json, 'locale') ? undefined : json['locale'],
         'zoneInfo': !exists(json, 'zoneInfo') ? undefined : json['zoneInfo'],
         'middleName': !exists(json, 'middleName') ? undefined : json['middleName'],
+        'birthdate': !exists(json, 'birthdate') ? undefined : json['birthdate'],
+        'phoneNumber': !exists(json, 'phoneNumber') ? undefined : json['phoneNumber'],
         'inactive': !exists(json, 'inactive') ? undefined : json['inactive'],
         'profile': !exists(json, 'profile') ? undefined : json['profile'],
         'website': !exists(json, 'website') ? undefined : json['website'],
-        'birthdate': !exists(json, 'birthdate') ? undefined : json['birthdate'],
-        'phoneNumber': !exists(json, 'phoneNumber') ? undefined : json['phoneNumber'],
     };
 }
 
@@ -568,11 +568,11 @@ export function UserEntityToJSON(value?: UserEntity | null): any {
         'locale': value.locale,
         'zoneInfo': value.zoneInfo,
         'middleName': value.middleName,
+        'birthdate': value.birthdate,
+        'phoneNumber': value.phoneNumber,
         'inactive': value.inactive,
         'profile': value.profile,
         'website': value.website,
-        'birthdate': value.birthdate,
-        'phoneNumber': value.phoneNumber,
     };
 }
 
