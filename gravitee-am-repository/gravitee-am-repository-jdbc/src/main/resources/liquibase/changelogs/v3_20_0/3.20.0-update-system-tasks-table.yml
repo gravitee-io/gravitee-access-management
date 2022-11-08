@@ -1,0 +1,12 @@
+databaseChangeLog:
+  - changeSet:
+      id: 3.20.0-update-system-tasks-table
+      author: GraviteeSource Team
+      changes:
+        ## system task table
+        #####################
+        - addColumn:
+            tableName: system_tasks
+            columns:
+              - column: { name: configuration, type: clob, constraints: { nullable: true } }
+              - column: { name: kind, type: varchar(128), constraints: { nullable: true } }

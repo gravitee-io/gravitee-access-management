@@ -19,10 +19,12 @@ import io.gravitee.am.model.SystemTask;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.reactivex.observers.TestObserver;
+import io.reactivex.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Date;
+import java.util.Random;
 import java.util.UUID;
 
 /**
@@ -48,6 +50,24 @@ public class SystemTaskRepositoryTest extends AbstractManagementTest {
         assertEqualsTo(task, task.getOperationId(), testObserver);
     }
 
+    @Test
+    public void testFindById_WithConfig() {
+        // create task
+        SystemTask task = buildSystemTask();
+        task.setConfiguration("value for config");
+        SystemTask systemTaskCreated = taskRepository.create(task).blockingGet();
+
+        // fetch task
+        TestObserver<SystemTask> testObserver = taskRepository.findById(systemTaskCreated.getId()).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        assertEqualsTo(task, task.getOperationId(), testObserver);
+        testObserver.assertValue(s -> s.getConfiguration().equals(task.getConfiguration()));
+
+    }
+
     private void assertEqualsTo(SystemTask task, String expectedOpId, TestObserver<SystemTask> testObserver) {
         testObserver.assertValue(s -> s.getId().equals(task.getId()));
         testObserver.assertValue(s -> s.getStatus().equals(task.getStatus()));
@@ -56,10 +76,14 @@ public class SystemTaskRepositoryTest extends AbstractManagementTest {
     }
 
     private SystemTask buildSystemTask() {
+        return buildSystemTask(UUID.randomUUID().toString());
+    }
+
+    private SystemTask buildSystemTask(String type) {
         SystemTask task = new SystemTask();
         String rand = UUID.randomUUID().toString();
         task.setId(rand);
-        task.setType(rand);
+        task.setType(type);
         task.setStatus(rand);
         task.setOperationId(rand);
         task.setCreatedAt(new Date());
@@ -111,6 +135,37 @@ public class SystemTaskRepositoryTest extends AbstractManagementTest {
         testObserver.assertNoErrors();
         // task shouldn't change because operation id wasn't good
         assertEqualsTo(systemTaskCreated, systemTaskCreated.getOperationId(), testObserver);
+    }
+
+    @Test
+    public void testFindByType() {
+        final Random random = new Random();
+        final int nbOfType1 = random.nextInt(10) + 1;
+        final int nbOfType2 = random.nextInt(10) + 1;
+
+        for (int i =0; i < nbOfType1; ++i) {
+            SystemTask task = buildSystemTask("type1");
+            taskRepository.create(task).blockingGet();
+        }
+
+        for (int i =0; i < nbOfType2; ++i) {
+            SystemTask task2 = buildSystemTask("type2");
+            taskRepository.create(task2).blockingGet();
+        }
+
+        TestSubscriber<SystemTask> subscriber = taskRepository.findByType("type1").test();
+        subscriber.awaitTerminalEvent();
+
+        subscriber.assertComplete();
+        subscriber.assertNoErrors();
+        subscriber.assertValueCount(nbOfType1);
+
+        subscriber = taskRepository.findByType("type2").test();
+        subscriber.awaitTerminalEvent();
+
+        subscriber.assertComplete();
+        subscriber.assertNoErrors();
+        subscriber.assertValueCount(nbOfType2);
     }
 
     @Test

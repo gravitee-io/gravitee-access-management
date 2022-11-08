@@ -13,20 +13,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.management.api;
+package io.gravitee.am.service.tasks;
 
-import io.gravitee.am.model.SystemTask;
-import io.gravitee.am.repository.common.CrudRepository;
-import io.reactivex.Flowable;
-import io.reactivex.Single;
+import org.springframework.scheduling.TaskScheduler;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface SystemTaskRepository extends CrudRepository<SystemTask, String> {
+public interface Task<Def extends TaskDefinition> extends Runnable {
 
-    Single<SystemTask> updateIf(SystemTask item, String operationId);
+    String getId();
 
-    Flowable<SystemTask> findByType(String type);
+    TaskType type();
+
+    Def getDefinition();
+    default String kind() {
+        return this.getClass().getSimpleName();
+    }
+
+    /**
+     * @return true if the task have to be scheduled again on execution error
+     */
+    boolean rescheduledOnError();
+
+    /**
+     *
+     * @param scheduler scheduler on which the task will be scheduled
+     */
+    void registerScheduler(TaskScheduler scheduler);
+
+    /**
+     * schedule the task using the TaskDefinition
+     */
+    void schedule();
+
 }

@@ -36,6 +36,7 @@ import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.CertificatePluginService;
 import io.gravitee.am.service.CertificateService;
 import io.gravitee.am.service.EventService;
+import io.gravitee.am.service.TaskManager;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.CertificateNotFoundException;
 import io.gravitee.am.service.exception.CertificatePluginSchemaNotFoundException;
@@ -45,6 +46,8 @@ import io.gravitee.am.service.model.NewCertificate;
 import io.gravitee.am.service.model.UpdateCertificate;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.CertificateAuditBuilder;
+import io.gravitee.am.service.tasks.AssignSystemCertificate;
+import io.gravitee.am.service.tasks.AssignSystemCertificateDefinition;
 import io.gravitee.am.service.utils.CertificateTimeComparator;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
@@ -63,6 +66,7 @@ import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.env.Environment;
@@ -82,6 +86,7 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -90,6 +95,7 @@ import java.util.Optional;
 @Component
 @Primary
 public class CertificateServiceImpl implements CertificateService {
+    public static final String DEFAULT_CERTIFICATE_PLUGIN = "pkcs12-am-certificate";
 
     public static final String ECDSA = "ECDSA";
     public static final String DEFAULT_CERT_CN_NAME = "cn=Gravitee.io";
@@ -127,7 +133,14 @@ public class CertificateServiceImpl implements CertificateService {
     @Autowired
     private Environment environment;
 
-    public static final String DEFAULT_CERTIFICATE_PLUGIN = "pkcs12-am-certificate";
+    @Autowired
+    private TaskManager taskManager;
+
+    @Value("${domains.certificates.default.refresh.delay:10}")
+    private int delay;
+
+    @Value("${domains.certificates.default.refresh.timeUnit:MINUTES}")
+    private String timeUnit;
 
     @Override
     public Maybe<Certificate> findById(String id) {
@@ -462,7 +475,15 @@ public class CertificateServiceImpl implements CertificateService {
                         rotatedCertificate.setName("Default " + DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(now));
                         rotatedCertificate.setType(DEFAULT_CERTIFICATE_PLUGIN);
                         rotatedCertificate.setConfiguration(generateCertificateConfiguration(domain, deprecatedCert.getConfiguration(), now));
-                        return create(domain, rotatedCertificate, true);
+                        return create(domain, rotatedCertificate, true).map(newCertificate -> {
+                            final var task = new AssignSystemCertificate(applicationService, certificateRepository, taskManager);
+                            final var definition = new AssignSystemCertificateDefinition(domain, newCertificate.getId(), deprecatedCert.getId());
+                            definition.setDelay(delay);
+                            definition.setUnit(TimeUnit.valueOf(timeUnit.toUpperCase()));
+                            task.setDefinition(definition);
+                            taskManager.schedule(task);
+                            return newCertificate;
+                        });
                     } else {
                         // If no certificate has been found, we still create a default certificate
                         return create(domain);

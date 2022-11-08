@@ -16,9 +16,12 @@
 package io.gravitee.am.service.spring;
 
 import io.gravitee.am.service.spring.email.EmailConfiguration;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -28,4 +31,11 @@ import org.springframework.context.annotation.Import;
 @ComponentScan("io.gravitee.am.service")
 @Import({EmailConfiguration.class})
 public class ServiceConfiguration {
+
+    @Bean
+    public TaskScheduler taskScheduler() {
+        ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
+        scheduler.setThreadNamePrefix("task-mng-");
+        return scheduler;
+    }
 }

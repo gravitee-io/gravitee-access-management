@@ -21,6 +21,7 @@ import io.gravitee.am.model.SystemTask;
 import io.gravitee.am.repository.management.api.SystemTaskRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.SystemTaskMongo;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
@@ -38,6 +39,7 @@ import static com.mongodb.client.model.Filters.eq;
 @Component
 public class MongoSystemTaskRepository extends AbstractManagementMongoRepository implements SystemTaskRepository {
     protected static final String FIELD_OPERATION_ID = "operationId";
+    protected static final String FIELD_TYPE = "type";
     private MongoCollection<SystemTaskMongo> systemTaskCollection;
 
     @PostConstruct
@@ -76,5 +78,10 @@ public class MongoSystemTaskRepository extends AbstractManagementMongoRepository
     @Override
     public Completable delete(String id) {
         return Completable.fromPublisher(systemTaskCollection.deleteOne(eq(FIELD_ID, id)));
+    }
+
+    @Override
+    public Flowable<SystemTask> findByType(String type) {
+        return Flowable.fromPublisher(systemTaskCollection.find(eq(FIELD_TYPE, type))).map(SystemTaskMongo::convert);
     }
 }
