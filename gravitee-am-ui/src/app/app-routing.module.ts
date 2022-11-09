@@ -255,7 +255,7 @@ export const routes: Routes = [
           menu: {
             level: 'top',
             label: 'Settings',
-            icon: 'settings'
+            icon: 'gio:settings'
           },
           perms: {
             only: ['organization_settings_read']
@@ -700,7 +700,7 @@ export const routes: Routes = [
           menu: {
             level: 'top',
             label: 'Cockpit',
-            icon: 'explore',
+            icon: 'gio:compass',
             beta: true
           },
           perms: {
@@ -742,7 +742,7 @@ export const routes: Routes = [
               menu: {
                 label: 'Domains',
                 level: 'top',
-                icon: 'developer_board',
+                icon: 'gio:report-columns',
                 routerLinkActiveOptions: {exact: true},
                 displayOptions: {exact: true}
               },
@@ -805,7 +805,7 @@ export const routes: Routes = [
                     data: {
                       menu: {
                         label: 'Dashboard',
-                        icon: 'bar_chart',
+                        icon: 'gio:home',
                         level: 'top'
                       },
                       breadcrumb: {
@@ -821,7 +821,7 @@ export const routes: Routes = [
                     data: {
                       menu: {
                         label: 'Applications',
-                        icon: 'devices',
+                        icon: 'gio:multi-window',
                         level: 'top'
                       },
                       perms: {
@@ -1289,7 +1289,7 @@ export const routes: Routes = [
                     data: {
                       menu: {
                         label: 'Settings',
-                        icon: 'settings',
+                        icon: 'gio:settings',
                         level: 'top'
                       },
                       perms: {
@@ -2454,7 +2454,7 @@ export const routes: Routes = [
                     data: {
                       menu: {
                         label: 'Alerts',
-                        icon: 'alarm',
+                        icon: 'gio:megaphone',
                         level: 'top',
                         beta: true
                       },

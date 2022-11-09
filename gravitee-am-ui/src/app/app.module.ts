@@ -64,7 +64,7 @@ import 'codemirror/addon/selection/mark-selection';
 import {AppRoutingModule} from './app-routing.module';
 import {AppComponent} from './app.component';
 import {HomeComponent} from './home/home.component';
-import {SidenavComponent} from './components/sidenav/sidenav.component';
+import {DisplayableItemPipe, SidenavComponent} from './components/sidenav/sidenav.component';
 import {SidenavSettingsComponent} from './components/sidenav-settings/sidenav-settings.component';
 import {LoginComponent} from './login/login.component';
 import {LoginCallbackComponent} from './login/callback/callback.component';
@@ -428,6 +428,7 @@ import { DomainSettingsThemeComponent } from './domain/settings/theme/theme.comp
 import { ThemesResolver } from './resolvers/themes.resolver';
 import { ThemeService } from './services/theme.service';
 import {HelpTipsThemeComponent} from "./domain/settings/theme/help-tips/help-tips.component";
+import {GioMenuModule} from "@gravitee/ui-particles-angular";
 
 @NgModule({
   declarations: [
@@ -671,24 +672,26 @@ import {HelpTipsThemeComponent} from "./domain/settings/theme/help-tips/help-tip
     MfaConditionalComponent,
     MfaIntelligentComponent,
     AssessmentComponent,
-    HelpTipsThemeComponent
+    HelpTipsThemeComponent,
+    DisplayableItemPipe
   ],
-  imports: [
-    BrowserModule,
-    BrowserAnimationsModule,
-    FormsModule,
-    ReactiveFormsModule,
-    HttpClientModule,
-    AppRoutingModule,
-    MatAutocompleteModule, MatButtonModule, MatButtonToggleModule, MatCardModule, MatCheckboxModule, MatChipsModule, MatDatepickerModule, MatDialogModule, MatExpansionModule, MatGridListModule, MatIconModule, MatInputModule, MatListModule, MatMenuModule, MatNativeDateModule, MatPaginatorModule, MatProgressBarModule, MatProgressSpinnerModule, MatRadioModule, MatRippleModule, MatSelectModule, MatSidenavModule, MatSliderModule, MatSlideToggleModule, MatSnackBarModule, MatSortModule, MatTableModule, MatTabsModule, MatToolbarModule, MatTooltipModule, MatStepperModule, MatBadgeModule,
-    DragDropModule,
-    FlexLayoutModule,
-    NgxDatatableModule,
-    MaterialDesignFrameworkModule,
-    CodemirrorModule,
-    ClipboardModule,
-    HighchartsChartModule
-  ],
+    imports: [
+        BrowserModule,
+        BrowserAnimationsModule,
+        FormsModule,
+        ReactiveFormsModule,
+        HttpClientModule,
+        AppRoutingModule,
+        MatAutocompleteModule, MatButtonModule, MatButtonToggleModule, MatCardModule, MatCheckboxModule, MatChipsModule, MatDatepickerModule, MatDialogModule, MatExpansionModule, MatGridListModule, MatIconModule, MatInputModule, MatListModule, MatMenuModule, MatNativeDateModule, MatPaginatorModule, MatProgressBarModule, MatProgressSpinnerModule, MatRadioModule, MatRippleModule, MatSelectModule, MatSidenavModule, MatSliderModule, MatSlideToggleModule, MatSnackBarModule, MatSortModule, MatTableModule, MatTabsModule, MatToolbarModule, MatTooltipModule, MatStepperModule, MatBadgeModule,
+        DragDropModule,
+        FlexLayoutModule,
+        NgxDatatableModule,
+        MaterialDesignFrameworkModule,
+        CodemirrorModule,
+        ClipboardModule,
+        HighchartsChartModule,
+        GioMenuModule
+    ],
   providers: [
     DomainService,
     ProviderService,
