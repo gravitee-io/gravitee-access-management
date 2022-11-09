@@ -41,12 +41,18 @@ import java.util.Map;
 import java.util.Objects;
 
 import static io.gravitee.am.common.utils.ConstantKeys.ACTION_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.ALLOW_FORGOT_PASSWORD_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.ALLOW_PASSWORDLESS_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.ALLOW_REGISTER_CONTEXT_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.DOMAIN_CONTEXT_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.ERROR_PARAM_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.FORGOT_ACTION_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.PARAM_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.REGISTER_ACTION_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.USERNAME_PARAM_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.WEBAUTHN_ACTION_KEY;
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.resolveProxyRequest;
@@ -62,10 +68,7 @@ public class IdentifierFirstLoginEndpoint extends AbstractEndpoint implements Ha
 
     private static final Logger logger = LoggerFactory.getLogger(IdentifierFirstLoginEndpoint.class);
     private static final String REQUEST_CONTEXT_KEY = "request";
-    private static final String ALLOW_REGISTER_CONTEXT_KEY = "allowRegister";
-    private static final String ALLOW_PASSWORDLESS_CONTEXT_KEY = "allowPasswordless";
-    private static final String REGISTER_ACTION_KEY = "registerAction";
-    private static final String WEBAUTHN_ACTION_KEY = "passwordlessAction";
+
 
     private final Domain domain;
     private final BotDetectionManager botDetectionManager;
@@ -105,6 +108,7 @@ public class IdentifierFirstLoginEndpoint extends AbstractEndpoint implements Ha
         // put login settings in context
         LoginSettings loginSettings = LoginSettings.getInstance(domain, client);
         var optionalSettings = ofNullable(loginSettings).filter(Objects::nonNull);
+        routingContext.put(ALLOW_FORGOT_PASSWORD_CONTEXT_KEY, optionalSettings.map(LoginSettings::isForgotPasswordEnabled).orElse(false));
         routingContext.put(ALLOW_REGISTER_CONTEXT_KEY, optionalSettings.map(LoginSettings::isRegisterEnabled).orElse(false));
         routingContext.put(ALLOW_PASSWORDLESS_CONTEXT_KEY, optionalSettings.map(LoginSettings::isPasswordlessEnabled).orElse(false));
 
@@ -129,6 +133,7 @@ public class IdentifierFirstLoginEndpoint extends AbstractEndpoint implements Ha
         routingContext.put(ACTION_KEY, resolveProxyRequest(request, routingContext.get(CONTEXT_PATH) + "/login/identifier", queryParams, true));
         routingContext.put(REGISTER_ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/register", queryParams, true));
         routingContext.put(WEBAUTHN_ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/webauthn/login", queryParams, true));
+        routingContext.put(FORGOT_ACTION_KEY, resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/forgotPassword", queryParams, true));
 
         final Map<String, Object> data = generateData(routingContext, domain, client);
         data.putAll(botDetectionManager.getTemplateVariables(domain, client));

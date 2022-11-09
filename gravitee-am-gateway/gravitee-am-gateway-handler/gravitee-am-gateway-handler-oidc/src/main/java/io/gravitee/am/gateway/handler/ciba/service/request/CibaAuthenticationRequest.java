@@ -30,7 +30,7 @@ import io.vertx.reactivex.ext.web.RoutingContext;
 
 import java.util.List;
 
-import static io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.ParamUtils.*;
+import static io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils.*;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)

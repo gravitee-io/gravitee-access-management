@@ -82,7 +82,7 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
     public ScimUserSearch prepareScimSearchUserQuery(StringBuilder queryBuilder, FilterCriteria criteria, int page, int size) {
         ScimUserSearch search = new ScimUserSearch();
         processFilters(queryBuilder, criteria, search);
-        search.buildQueries(buildPagingClause(page, size));
+        search.buildQueries(size > 0 ? buildPagingClause(page, size): "");
         return search;
     }
 

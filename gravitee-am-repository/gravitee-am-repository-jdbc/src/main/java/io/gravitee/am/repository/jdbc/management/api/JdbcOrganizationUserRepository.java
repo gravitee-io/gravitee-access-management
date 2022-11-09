@@ -24,7 +24,12 @@ import io.gravitee.am.model.scim.Attribute;
 import io.gravitee.am.repository.jdbc.common.dialect.ScimUserSearch;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcOrganizationUser;
-import io.gravitee.am.repository.jdbc.management.api.spring.user.*;
+import io.gravitee.am.repository.jdbc.management.api.spring.user.SpringOrganizationUserAddressesRepository;
+import io.gravitee.am.repository.jdbc.management.api.spring.user.SpringOrganizationUserAttributesRepository;
+import io.gravitee.am.repository.jdbc.management.api.spring.user.SpringOrganizationUserDynamicRoleRepository;
+import io.gravitee.am.repository.jdbc.management.api.spring.user.SpringOrganizationUserEntitlementRepository;
+import io.gravitee.am.repository.jdbc.management.api.spring.user.SpringOrganizationUserRepository;
+import io.gravitee.am.repository.jdbc.management.api.spring.user.SpringOrganizationUserRoleRepository;
 import io.gravitee.am.repository.management.api.OrganizationUserRepository;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.reactivex.Completable;
@@ -51,7 +56,9 @@ import java.util.stream.Stream;
 
 import static java.util.stream.Stream.concat;
 import static org.springframework.data.relational.core.query.Criteria.where;
-import static reactor.adapter.rxjava.RxJava2Adapter.*;
+import static reactor.adapter.rxjava.RxJava2Adapter.fluxToFlowable;
+import static reactor.adapter.rxjava.RxJava2Adapter.monoToCompletable;
+import static reactor.adapter.rxjava.RxJava2Adapter.monoToSingle;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -298,6 +305,26 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
                 .flatMap(user -> completeUser(user).toFlowable())
                 .toList()
                 .flatMap(list -> monoToSingle(userCount).map(total -> new Page<User>(list, page, total)));
+    }
+
+    @Override
+    public Flowable<User> search(ReferenceType referenceType, String referenceId, FilterCriteria criteria) {
+        LOGGER.debug("search({}, {}, {})", referenceType, referenceId, criteria);
+
+        StringBuilder queryBuilder = new StringBuilder();
+        queryBuilder.append(" FROM organization_users WHERE reference_id = :refId AND reference_type = :refType AND ");
+        ScimUserSearch search = this.databaseDialectHelper.prepareScimSearchUserQuery(queryBuilder, criteria, -1, -1);
+
+        // execute query
+        org.springframework.r2dbc.core.DatabaseClient.GenericExecuteSpec executeSelect = template.getDatabaseClient().sql(search.getSelectQuery()).bind("refType", referenceType.name()).bind("refId", referenceId);
+        for (Map.Entry<String, Object> entry : search.getBinding().entrySet()) {
+            executeSelect = executeSelect.bind(entry.getKey(), entry.getValue());
+        }
+        Flux<JdbcOrganizationUser> userFlux = executeSelect.map(row -> rowMapper.read(JdbcOrganizationUser.class, row)).all();
+
+        return fluxToFlowable(userFlux)
+                .map(this::toEntity)
+                .flatMap(user -> completeUser(user).toFlowable());
     }
 
     @Override

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization;
+package io.gravitee.am.gateway.handler.root.resources.endpoint;
 
 import com.nimbusds.jwt.JWT;
 import io.gravitee.am.common.oidc.Parameters;
@@ -104,8 +104,13 @@ public class ParamUtils {
                 }
                 // else we use the enhanced wildcard feature
                 else if (nonNull(hostPattern) && requestHost.matches(hostPattern)) {
-                    String pathPattern = buildPattern(registeredUrl.getPath());
-                    return requestedUrl.getPath().matches(pathPattern);
+                    final String requestedUrlPath = requestedUrl.getPath();
+                    final String registeredUrlPath = registeredUrl.getPath();
+                    if(requestedUrlPath.isEmpty() && (registeredUrlPath.isEmpty() || registeredUrlPath.startsWith("*") || registeredUrlPath.startsWith("/*"))) {
+                        return true;
+                    }
+                    String pathPattern = buildPattern(registeredUrlPath);
+                    return requestedUrlPath.matches(pathPattern);
                 }
             }
         } catch (MalformedURLException e) {

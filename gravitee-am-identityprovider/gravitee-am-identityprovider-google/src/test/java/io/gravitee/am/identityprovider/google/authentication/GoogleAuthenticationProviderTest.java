@@ -87,10 +87,11 @@ public class GoogleAuthenticationProviderTest {
   "exp": 1594926981,
   "given_name": "John",
   "iat": 1594912581,
-  "family_name": "Doe"
+  "family_name": "Doe",
+  "non-standard-field": "value-non-std-field"
     }
      */
-    private final String jwt = "eyJraWQiOiJkZWZhdWx0LWdyYXZpdGVlLUFNLWtleSIsImFsZyI6IkhTMjU2In0.eyJzdWIiOiJzdWJqb2huZG9lIiwiYXVkIjoiYXVkc3Viam9obmRvZSIsImF1dGhfdGltZSI6MTU5NDkxMjU1MywiaXNzIjoiaHR0cDovL2dyYXZpdGVlLmlvL2RvbWFpbi10ZXN0L29pZGMiLCJuYW1lIjoiSm9obiBEb2UiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJqb2huLmRvZUBncmF2aXRlZXNvdXJjZS5jb20iLCJnaXZlbl9uYW1lIjoiSm9obiIsImlhdCI6MTU5NDkxMjU4MSwiZmFtaWx5X25hbWUiOiJEb2UifQ.V5uLnWoLpee-TvQJ_QB1051CzVOIuVs9h6a665ynvAY";
+    private final String jwt = "eyJraWQiOiJkZWZhdWx0LWdyYXZpdGVlLUFNLWtleSIsImFsZyI6IkhTMjU2In0.eyJzdWIiOiJzdWJqb2huZG9lIiwiYXVkIjoiYXVkc3Viam9obmRvZSIsImF1dGhfdGltZSI6MTU5NDkxMjU1MywiaXNzIjoiaHR0cDovL2dyYXZpdGVlLmlvL2RvbWFpbi10ZXN0L29pZGMiLCJuYW1lIjoiSm9obiBEb2UiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJqb2huLmRvZUBncmF2aXRlZXNvdXJjZS5jb20iLCJnaXZlbl9uYW1lIjoiSm9obiIsImlhdCI6MTU5NDkxMjU4MSwiZmFtaWx5X25hbWUiOiJEb2UiLCJub24tc3RhbmRhcmQtZmllbGQiOiJ2YWx1ZS1ub24tc3RkLWZpZWxkIn0.JcYHoWV6egfer1XwQSDmeq8Zb83fGbJSm-cvgHr25sc";
     private final String secretKey = "02e52785065a9ab489dfd3063a73d31efd5ca196a7a9a00ff070812b0e608fce";
 
     @Before
@@ -200,6 +201,7 @@ public class GoogleAuthenticationProviderTest {
             assertEquals("John Doe", user.getAdditionalInformation().get("name"));
             assertEquals("John", user.getAdditionalInformation().get("given_name"));
             assertEquals("Doe", user.getAdditionalInformation().get("family_name"));
+            assertEquals("value-non-std-field", user.getAdditionalInformation().get("non-standard-field"));
 
             assertTrue(user.getRoles().isEmpty());
             return true;
@@ -251,6 +253,7 @@ public class GoogleAuthenticationProviderTest {
             assertEquals("John Doe", user.getAdditionalInformation().get("name"));
             assertEquals("John", user.getAdditionalInformation().get("given_name"));
             assertEquals("Doe", user.getAdditionalInformation().get("family_name"));
+            assertEquals("value-non-std-field", user.getAdditionalInformation().get("non-standard-field"));
 
             assertTrue(user.getRoles().contains("admin"));
             return true;

@@ -49,6 +49,7 @@ public class PatchOIDCSettings {
     private Optional<Boolean> redirectUriStrictMatching;
 
     private Optional<List<String>> postLogoutRedirectUris;
+    private Optional<List<String>> requestUris;
 
     public Optional<PatchClientRegistrationSettings> getClientRegistrationSettings() {
         return clientRegistrationSettings;
@@ -82,6 +83,14 @@ public class PatchOIDCSettings {
         this.postLogoutRedirectUris = postLogoutRedirectUris;
     }
 
+    public Optional<List<String>> getRequestUris() {
+        return requestUris;
+    }
+
+    public void setRequestUris(Optional<List<String>> requestUris) {
+        this.requestUris = requestUris;
+    }
+
     public Optional<PatchCIBASettings> getCibaSettings() {
         return cibaSettings;
     }
@@ -98,6 +107,7 @@ public class PatchOIDCSettings {
         }
         SetterUtils.safeSet(toPatch::setRedirectUriStrictMatching, this.getRedirectUriStrictMatching(), boolean.class);
         SetterUtils.safeSet(toPatch::setPostLogoutRedirectUris, this.getPostLogoutRedirectUris());
+        SetterUtils.safeSet(toPatch::setRequestUris, this.getRequestUris());
 
         if(getClientRegistrationSettings()!=null) {
             //If present apply settings, else return default settings.
