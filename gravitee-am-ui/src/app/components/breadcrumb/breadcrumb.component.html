@@ -15,9 +15,11 @@
     limitations under the License.
 
 -->
-<ul>
-  <li *ngFor="let breadcrumbItem of breadcrumbItems; let last = last" [ngClass]="{'breadcrumb-item': true, 'active': last}"> <!-- disable link of last item -->
-    <a role="button" *ngIf="!last" [routerLink]="breadcrumbItem.path">{{breadcrumbItem.label}}</a>
-    <span *ngIf="last">{{breadcrumbItem.label}}</span>
-  </li>
-</ul>
+<div class="gv-breadcrumb">
+  <ul>
+    <li *ngFor="let breadcrumbItem of breadcrumbItems; let last = last" [ngClass]="{'breadcrumb-item': true, 'active': last}"> <!-- disable link of last item -->
+      <a role="button" *ngIf="!last" [routerLink]="breadcrumbItem.path">{{breadcrumbItem.label}}</a>
+      <span *ngIf="last">{{breadcrumbItem.label}}</span>
+    </li>
+  </ul>
+</div>

@@ -17,23 +17,28 @@
 -->
 <div *ngIf="user">
   <mat-toolbar>
-      <div class="gv-breadcrumb" [ngClass]="{'gv-breadcrumb-min': reducedMode}">
-        <gv-breadcrumb *ngIf="displayBreadcrumb()"></gv-breadcrumb>
-      </div>
-      <span class="fill-remaining-space"></span>
-      <div fxLayout="row" style="align-items: center;">
-        <span class="currentDomain">{{currentDomain?.name | lowercase}}</span>
-        <button mat-icon-button [matMenuTriggerFor]="userNotificationsMenu" [disabled]="!hasNotifications()" disableRipple>
-          <div class="notifications-menu">
-            <mat-icon style="opacity: 75%;">notifications</mat-icon>
-            <div class="notifications-menu-circle" *ngIf="hasNotifications()"></div>
-          </div>
-        </button>
-        <button class="userAccountMenu" mat-icon-button [matMenuTriggerFor]="userAccountMenu" disableRipple (click)="listDomains()" data-testid="user-notifications-button">
-          <app-user-avatar [user]="user" [width]="'30'"></app-user-avatar>
-          <mat-icon>keyboard_arrow_down</mat-icon>
-        </button>
-      </div>
+    <a mat-icon-button [routerLink]="['']">
+      <img style="width: 25px;" src="assets/logo_gravitee_min_white.png">
+    </a>
+    <button class="app-switcher" mat-raised-button disabled>
+      <mat-icon svgIcon="gio:historic-shield"></mat-icon>
+      <span style="margin-left: 5px;">Access Management</span>
+    </button>
+    <span class="fill-remaining-space"></span>
+    <div fxLayout="row" style="align-items: center;">
+      <button class="currentDomain" mat-raised-button disabled>
+        <span>{{currentDomain?.name | lowercase}}</span>
+      </button>
+      <button mat-icon-button [matMenuTriggerFor]="userNotificationsMenu" [disabled]="!hasNotifications()" disableRipple>
+        <div class="notifications-menu">
+          <mat-icon svgIcon="gio:bell"></mat-icon>
+          <div class="notifications-menu-circle" *ngIf="hasNotifications()"></div>
+        </div>
+      </button>
+      <button class="userAccountMenu" mat-icon-button [matMenuTriggerFor]="userAccountMenu" disableRipple (click)="listDomains()" data-testid="user-notifications-button">
+        <app-user-avatar [user]="user" [width]="'30'"></app-user-avatar>
+      </button>
+    </div>
   </mat-toolbar>
   <mat-menu #userAccountMenu="matMenu" [overlapTrigger]="false">
     <div class="userAccount" fxLayout="column">

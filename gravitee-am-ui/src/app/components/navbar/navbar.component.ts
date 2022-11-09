@@ -20,11 +20,9 @@ import {DomainService} from "../../services/domain.service";
 import {Subscription} from "rxjs";
 import {NavbarService} from "./navbar.service";
 import {SnackbarService} from "../../services/snackbar.service";
-import * as _ from 'lodash';
 import {SidenavService} from "../sidenav/sidenav.service";
 import {EnvironmentService} from "../../services/environment.service";
-import {MatSelectChange} from "@angular/material/select";
-import { UserNotificationsService } from 'app/services/user-notifications.service';
+import {UserNotificationsService} from 'app/services/user-notifications.service';
 
 @Component({
   selector: 'gv-navbar',
@@ -65,7 +63,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
       this.currentDomain = data;
     });
     this.sidenavSubscription = this.sidenavService.resizeSidenavObservable.subscribe(reducedMode => this.reducedMode = reducedMode);
-    
+
     // read notifications on component initialization and then trigger a refresh in regular period
     this.userNotificationsService.listNotifications().subscribe(data => {
       this.notifications = data;
@@ -94,13 +92,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
     } else {
       this.domains = [];
     }
-  }
-
-  displayBreadcrumb(): boolean {
-    return !this.router.url.startsWith('/domains/new') &&
-      !this.router.url.startsWith('/login') &&
-      !this.router.url.startsWith('/logout') &&
-      !this.router.url.startsWith('/404');
   }
 
   private initNavLinks() {

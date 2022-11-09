@@ -1,18 +1,27 @@
-:host ::ng-deep ul {
+div.gv-breadcrumb {
+  margin-bottom: 2px;
   display: flex;
-  list-style-type: none;
-  padding-left: 20px;
-  li {
-    &:not(:last-child):after {
-      content: '>';
-      margin-left: 5px;
-      margin-right: 5px;
-      font-weight: 500;
-    }
+  align-items: center;
+  height: 54px;
+  background: #fff;
+  box-shadow: 0px 1px 2px rgba(17, 24, 39, 0.06), 0px 1px 3px rgba(17, 24, 39, 0.1);
+  ul {
+    display: flex;
+    list-style-type: none;
+    padding-left: 20px;
+    li {
+      &:not(:last-child):after {
+        content: '>';
+        margin-left: 5px;
+        margin-right: 5px;
+        font-weight: 500;
+      }
 
-    a {
-      cursor: pointer;
-      text-decoration: none;
+      a {
+        font-size: 14px;
+        cursor: pointer;
+        text-decoration: none;
+      }
     }
   }
 }
