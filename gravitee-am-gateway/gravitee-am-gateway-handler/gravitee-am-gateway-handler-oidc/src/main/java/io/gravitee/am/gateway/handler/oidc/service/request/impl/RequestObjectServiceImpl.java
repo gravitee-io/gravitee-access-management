@@ -19,6 +19,7 @@ import com.nimbusds.jwt.JWT;
 import com.nimbusds.jwt.JWTParser;
 import com.nimbusds.jwt.SignedJWT;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestObjectException;
+import io.gravitee.am.common.exception.oauth2.InvalidRequestUriException;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
@@ -34,7 +35,11 @@ import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.repository.oidc.api.RequestObjectRepository;
 import io.gravitee.am.repository.oidc.model.RequestObject;
 import io.gravitee.common.utils.UUID;
-import io.reactivex.*;
+import io.reactivex.Completable;
+import io.reactivex.Maybe;
+import io.reactivex.MaybeSource;
+import io.reactivex.Single;
+import io.reactivex.SingleSource;
 import io.reactivex.functions.Function;
 import io.vertx.reactivex.ext.web.client.HttpResponse;
 import io.vertx.reactivex.ext.web.client.WebClient;
@@ -47,6 +52,8 @@ import java.time.Instant;
 import java.util.Date;
 
 import static io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils.isSignAlgCompliantWithFapi;
+import static io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils.redirectMatches;
+import static org.springframework.util.CollectionUtils.isEmpty;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -107,6 +114,15 @@ public class RequestObjectServiceImpl implements RequestObjectService {
                             return Single.error(new InvalidRequestObjectException());
                         });
             } else {
+
+                final var domainRequestUris = domain.getOidc() != null ? domain.getOidc().getRequestUris() : null;
+                final var registeredRequestUris = isEmpty(client.getRequestUris()) ? domainRequestUris : client.getRequestUris();
+                if (registeredRequestUris != null && registeredRequestUris
+                        .stream()
+                        .noneMatch(registeredClientUri -> redirectMatches(requestUri, registeredClientUri, this.domain.isRedirectUriStrictMatching()))) {
+                    return Single.error(new InvalidRequestUriException("The request_uri MUST match the registered URL for this application"));
+                }
+
                 return webClient.getAbs(UriBuilder.fromHttpUrl(requestUri).build().toString())
                         .rxSend()
                         .map(HttpResponse::bodyAsString)

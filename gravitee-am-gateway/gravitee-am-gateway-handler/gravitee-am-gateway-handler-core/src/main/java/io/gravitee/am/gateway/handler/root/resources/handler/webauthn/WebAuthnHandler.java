@@ -29,6 +29,7 @@ import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.model.*;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
+import io.gravitee.am.model.login.WebAuthnSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.FactorService;
@@ -61,7 +62,7 @@ import static io.gravitee.am.service.impl.user.activity.utils.ConsentUtils.canSa
  * @author GraviteeSource Team
  */
 public abstract class WebAuthnHandler extends AbstractEndpoint implements Handler<RoutingContext> {
-
+    private static final String DEFAULT_ORIGIN = "http://localhost:8092";
     private static final Logger logger = LoggerFactory.getLogger(WebAuthnHandler.class);
     private FactorManager factorManager;
     private FactorService factorService;
@@ -261,4 +262,10 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
                 );
     }
 
+    public static String getOrigin(WebAuthnSettings settings) {
+        return (settings!= null
+                && settings.getOrigin() != null) ?
+                settings.getOrigin() :
+                DEFAULT_ORIGIN;
+    }
 }

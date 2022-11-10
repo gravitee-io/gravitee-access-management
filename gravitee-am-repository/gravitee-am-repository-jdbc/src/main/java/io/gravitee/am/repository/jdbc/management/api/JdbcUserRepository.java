@@ -27,7 +27,12 @@ import io.gravitee.am.repository.jdbc.common.dialect.ScimUserSearch;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcUser;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcUser.AbstractRole;
-import io.gravitee.am.repository.jdbc.management.api.spring.user.*;
+import io.gravitee.am.repository.jdbc.management.api.spring.user.SpringDynamicUserRoleRepository;
+import io.gravitee.am.repository.jdbc.management.api.spring.user.SpringUserAddressesRepository;
+import io.gravitee.am.repository.jdbc.management.api.spring.user.SpringUserAttributesRepository;
+import io.gravitee.am.repository.jdbc.management.api.spring.user.SpringUserEntitlementRepository;
+import io.gravitee.am.repository.jdbc.management.api.spring.user.SpringUserRepository;
+import io.gravitee.am.repository.jdbc.management.api.spring.user.SpringUserRoleRepository;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.reactivex.Completable;
@@ -48,14 +53,20 @@ import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import static io.gravitee.am.model.ReferenceType.DOMAIN;
 import static java.time.ZoneOffset.UTC;
 import static java.util.stream.Stream.concat;
 import static org.springframework.data.relational.core.query.Criteria.where;
-import static reactor.adapter.rxjava.RxJava2Adapter.*;
+import static reactor.adapter.rxjava.RxJava2Adapter.fluxToFlowable;
+import static reactor.adapter.rxjava.RxJava2Adapter.monoToCompletable;
+import static reactor.adapter.rxjava.RxJava2Adapter.monoToSingle;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -305,6 +316,27 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
                 .flatMap(user -> completeUser(user).toFlowable())
                 .toList()
                 .flatMap(list -> monoToSingle(userCount).map(total -> new Page<User>(list, page, total)));
+    }
+
+    @Override
+    public Flowable<User> search(ReferenceType referenceType, String referenceId, FilterCriteria criteria) {
+        LOGGER.debug("search({}, {}, {})", referenceType, referenceId, criteria);
+
+        StringBuilder queryBuilder = new StringBuilder();
+        queryBuilder.append(" FROM users WHERE reference_id = :refId AND reference_type = :refType AND ");
+        ScimUserSearch search = this.databaseDialectHelper.prepareScimSearchUserQuery(queryBuilder, criteria, -1, -1);
+
+        // execute query
+        org.springframework.r2dbc.core.DatabaseClient.GenericExecuteSpec executeSelect = template.getDatabaseClient().sql(search.getSelectQuery());
+        executeSelect = executeSelect.bind("refType", referenceType.name()).bind("refId", referenceId);
+        for (Map.Entry<String, Object> entry : search.getBinding().entrySet()) {
+            executeSelect = executeSelect.bind(entry.getKey(), entry.getValue());
+        }
+        Flux<JdbcUser> userFlux = executeSelect.map(row -> rowMapper.read(JdbcUser.class, row)).all();
+
+        return fluxToFlowable(userFlux)
+                .map(this::toEntity)
+                .flatMap(user -> completeUser(user).toFlowable());
     }
 
     @Override
