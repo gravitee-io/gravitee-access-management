@@ -36,6 +36,7 @@ import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.CertificatePluginService;
 import io.gravitee.am.service.CertificateService;
 import io.gravitee.am.service.EventService;
+import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.CertificateNotFoundException;
 import io.gravitee.am.service.exception.CertificatePluginSchemaNotFoundException;
 import io.gravitee.am.service.exception.CertificateWithApplicationsException;
@@ -44,7 +45,7 @@ import io.gravitee.am.service.model.NewCertificate;
 import io.gravitee.am.service.model.UpdateCertificate;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.CertificateAuditBuilder;
-import io.gravitee.am.service.utils.CertificateExpiryComparator;
+import io.gravitee.am.service.utils.CertificateTimeComparator;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
@@ -67,7 +68,6 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
-import javax.swing.text.html.Option;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
@@ -76,7 +76,6 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.cert.X509Certificate;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Base64;
@@ -360,8 +359,12 @@ public class CertificateServiceImpl implements CertificateService {
                 })
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to delete certificate: {}", certificateId, ex);
-                    return Completable.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to delete certificate: %s", certificateId), ex));
+                    if (ex instanceof AbstractManagementException) {
+                        return Completable.error(ex);
+                    } else {
+                        return Completable.error(new TechnicalManagementException(
+                                String.format("An error occurs while trying to delete certificate: %s", certificateId), ex));
+                    }
                 });
     }
 
@@ -444,7 +447,7 @@ public class CertificateServiceImpl implements CertificateService {
     public Single<Certificate> rotate(String domain, User principal) {
         return this.innerFindByDomain(domain)// search using inner method to not go through the CertificateServiceProxy filtering
                 .filter(Certificate::isSystem)
-                .sorted(new CertificateExpiryComparator())
+                .sorted(new CertificateTimeComparator())
                 .firstElement()
                 .map(Optional::ofNullable)
                 .switchIfEmpty(Maybe.just(Optional.empty()))
@@ -459,10 +462,7 @@ public class CertificateServiceImpl implements CertificateService {
                         rotatedCertificate.setName("Default " + DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(now));
                         rotatedCertificate.setType(DEFAULT_CERTIFICATE_PLUGIN);
                         rotatedCertificate.setConfiguration(generateCertificateConfiguration(domain, deprecatedCert.getConfiguration(), now));
-                        return create(domain, rotatedCertificate, true).flatMap(newCertificate -> {
-                            deprecatedCert.setDeprecated(true);
-                            return certificateRepository.update(deprecatedCert).map(ignore -> newCertificate);
-                        });
+                        return create(domain, rotatedCertificate, true);
                     } else {
                         // If no certificate has been found, we still create a default certificate
                         return create(domain);

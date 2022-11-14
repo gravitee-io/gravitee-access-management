@@ -22,24 +22,37 @@ import io.gravitee.am.management.handlers.management.api.resources.AbstractResou
 import io.gravitee.am.management.service.CertificateServiceProxy;
 import io.gravitee.am.management.service.impl.DomainNotifierServiceImpl;
 import io.gravitee.am.model.Acl;
+import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.permissions.Permission;
+import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewCertificate;
+import io.gravitee.am.service.utils.CertificateTimeComparator;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
-import io.swagger.annotations.*;
+import io.reactivex.Single;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
-import java.util.stream.Stream;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.util.StringUtils;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.Suspended;
@@ -52,6 +65,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -60,11 +74,15 @@ import java.util.stream.Collectors;
 @Api(tags = {"certificate"})
 public class CertificatesResource extends AbstractResource {
 
+    public static final int LATEST_SYSTEM_CERT = 1;
     @Context
     private ResourceContext resourceContext;
 
     @Autowired
     private CertificateServiceProxy certificateService;
+
+    @Autowired
+    private ApplicationService applicationService;
 
     @Autowired
     private DomainService domainService;
@@ -110,10 +128,36 @@ public class CertificatesResource extends AbstractResource {
                             return true;
                         })
                         .map(cert -> this.filterCertificateInfos(cert, certificateExpiryThresholds.get(0)))
+                        .flatMapSingle(this::addApplications)
                         .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
                         .toList()
-                        .map(sortedCertificates -> Response.ok(sortedCertificates).build()))
+                        .map(sortedCertificates -> {
+
+                            // compute RENEWED status for System certificates
+                            sortedCertificates.stream()
+                                    .filter(Certificate::isSystem)
+                                    .sorted(new CertificateTimeComparator())
+                                    .skip(LATEST_SYSTEM_CERT)
+                                    .forEach(cert -> cert.setStatus(CertificateStatus.RENEWED));
+
+                            return Response.ok(sortedCertificates).build();
+                        }))
                 .subscribe(response::resume, response::resume);
+    }
+
+    private Single<CertificateEntity> addApplications(CertificateEntity cert) {
+        return applicationService.findByCertificate(cert.getId())
+                .map(app -> {
+                    final Application minimalAppDefinition = new Application();
+                    minimalAppDefinition.setId(app.getId());
+                    minimalAppDefinition.setName(app.getName());
+                    return minimalAppDefinition;
+                })
+                .toList()
+                .map(apps -> {
+                    cert.setApplications(apps);
+                    return cert;
+                });
     }
 
     private void processExpiryThresholds() {
@@ -193,18 +237,16 @@ public class CertificatesResource extends AbstractResource {
         return resourceContext.getResource(CertificateResource.class);
     }
 
-    private Certificate filterCertificateInfos(Certificate certificate, int certificateExpiryThreshold) {
+    private CertificateEntity filterCertificateInfos(Certificate certificate, int certificateExpiryThreshold) {
         CertificateEntity filteredCertificate = new CertificateEntity();
         filteredCertificate.setId(certificate.getId());
         filteredCertificate.setName(certificate.getName());
         filteredCertificate.setType(certificate.getType());
         filteredCertificate.setExpiresAt(certificate.getExpiresAt());
+        filteredCertificate.setCreatedAt(certificate.getCreatedAt());
         filteredCertificate.setStatus(CertificateStatus.VALID);
         filteredCertificate.setSystem(certificate.isSystem());
-        filteredCertificate.setDeprecated(certificate.isDeprecated());
-        if (filteredCertificate.isSystem() && filteredCertificate.isDeprecated()) {
-            filteredCertificate.setStatus(CertificateStatus.RENEWED);
-        } else if (certificate.getExpiresAt() != null) {
+        if (certificate.getExpiresAt() != null) {
             final Instant now = Instant.now();
             if (certificate.getExpiresAt().getTime() <= now.toEpochMilli()) {
                 filteredCertificate.setStatus(CertificateStatus.EXPIRED);

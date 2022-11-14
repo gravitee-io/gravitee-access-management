@@ -34,13 +34,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class CertificateExpiryComparatorTest {
+public class CertificateTimeComparatorTest {
 
     @ParameterizedTest
     @MethodSource
     @DisplayName("Sort Certificates based on expiration date order by desc")
     public void shouldSortCertificate_ByExpiration_orderBy_DESC(List<Certificate> certificates, Certificate expectedCertificate) {
-        final Optional<Certificate> first = certificates.stream().sorted(new CertificateExpiryComparator()).findFirst();
+        final Optional<Certificate> first = certificates.stream().sorted(new CertificateTimeComparator()).findFirst();
         assertTrue(first.isPresent());
         assertEquals(expectedCertificate.getId(), first.get().getId());
     }
@@ -49,21 +49,27 @@ public class CertificateExpiryComparatorTest {
         final var now = Instant.now();
         var cert1 = new Certificate();
         cert1.setId("cert1");
-        cert1.setExpiresAt(new Date(now.toEpochMilli()));
+        cert1.setCreatedAt(new Date(now.toEpochMilli()));
 
         var cert2 = new Certificate();
         cert2.setId("cert2");
-        cert2.setExpiresAt(new Date(now.plusSeconds(10).toEpochMilli()));
+        cert2.setCreatedAt(new Date(now.plusSeconds(10).toEpochMilli()));
+        cert2.setExpiresAt(new Date(now.plusSeconds(15).toEpochMilli()));
+        var cert2bis = new Certificate();
+        cert2bis.setId("cert2bis");
+        cert2bis.setCreatedAt(new Date(now.plusSeconds(10).toEpochMilli()));
+        cert2bis.setExpiresAt(new Date(now.plusSeconds(20).toEpochMilli()));
 
         var cert3 = new Certificate();
         cert3.setId("cert3");
-        cert3.setExpiresAt(new Date(now.minusSeconds(10).toEpochMilli()));
+        cert3.setCreatedAt(new Date(now.minusSeconds(10).toEpochMilli()));
 
         return Stream.of(
                 Arguments.arguments(List.of(cert2, cert1), cert2),
                 Arguments.arguments(List.of(cert1, cert2), cert2),
                 Arguments.arguments(List.of(cert1, cert3, cert2), cert2),
-                Arguments.arguments(List.of(cert1, cert3), cert1)
+                Arguments.arguments(List.of(cert1, cert3), cert1),
+                Arguments.arguments(List.of(cert2, cert2bis), cert2bis)
                 );
     }
 }

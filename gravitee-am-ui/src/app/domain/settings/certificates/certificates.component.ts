@@ -92,6 +92,17 @@ export class DomainSettingsCertificatesComponent implements OnInit {
     return cert.status === 'renewed';
   }
 
+  computeAppsLabel(cert) {
+    const apps = cert.applications ? cert.applications.map(app => app.name).length : 0;
+    return `${apps} app` + (apps > 1 ? "s" : "");
+  }
+
+  getAppNames(cert) {
+    const names = cert.applications ? cert.applications.map(app => app.name).join(' / ') : [];
+    const length = cert.applications ? cert.applications.map(app => app.name).length : 0;
+    return length > 4 ? names + " / ..." : names
+  }
+
   expireInDays(expiry) {
     return Math.ceil( (expiry - Date.now()) / (1000 * 3600 * 24));
   }

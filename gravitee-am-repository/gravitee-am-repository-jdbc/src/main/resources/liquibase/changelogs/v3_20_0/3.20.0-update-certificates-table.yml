@@ -10,4 +10,3 @@ databaseChangeLog:
             tableName: certificates
             columns:
               - column: { name: system, type: boolean, constraints: { nullable: true } }
-              - column: { name: deprecated, type: boolean, constraints: { nullable: true } }

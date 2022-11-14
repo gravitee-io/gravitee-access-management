@@ -20,13 +20,24 @@ import io.gravitee.am.model.Certificate;
 import java.util.Comparator;
 
 /**
+ * Always take the most recent certificate but if 2 certs have the same creation date
+ * we take the one with the highest expiration date
+ *
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class CertificateExpiryComparator implements Comparator<Certificate> {
+public class CertificateTimeComparator implements Comparator<Certificate> {
 
     @Override
     public int compare(Certificate cert1, Certificate cert2) {
-        return cert1.getExpiresAt().getTime() < cert2.getExpiresAt().getTime() ? 1 : -1;
+        if (cert1.getCreatedAt().getTime() == cert2.getCreatedAt().getTime()) {
+            if (cert1.getExpiresAt() != null && cert2.getExpiresAt() != null) {
+                return cert1.getExpiresAt().getTime() < cert2.getExpiresAt().getTime() ? 1 : -1;
+            } else {
+                return 0;
+            }
+        } else {
+            return cert1.getCreatedAt().getTime() < cert2.getCreatedAt().getTime() ? 1 : -1;
+        }
     }
 }
