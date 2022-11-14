@@ -1,6 +1,18 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/612?closed=1[AM - 3.19.2 (2022-11-14)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- MFA SkipEnrollment should be hidden https://github.com/gravitee-io/issues/issues/8602[#8602]
+
+*_General_*
+
+- Merge 3.18.10 into 3.19.2 https://github.com/gravitee-io/issues/issues/8597[#8597]
+
 == https://github.com/gravitee-io/issues/milestone/609?closed=1[AM - 3.18.10 (2022-11-04)]
 
 === Bug fixes
