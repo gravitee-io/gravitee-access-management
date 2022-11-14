@@ -44,7 +44,6 @@ public class JdbcCertificate {
     private LocalDateTime expiresAt;
 
     private boolean system;
-    private boolean deprecated;
 
     public String getId() {
         return id;
@@ -124,13 +123,5 @@ public class JdbcCertificate {
 
     public void setSystem(boolean system) {
         this.system = system;
-    }
-
-    public boolean isDeprecated() {
-        return deprecated;
-    }
-
-    public void setDeprecated(boolean deprecated) {
-        this.deprecated = deprecated;
     }
 }

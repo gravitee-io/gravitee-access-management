@@ -62,6 +62,7 @@ public class CertificatesResourceTest extends JerseySpringTest {
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Flowable.just(mockCertificate, mockCertificate2)).when(certificateService).findByDomain(domainId);
+        doReturn(Flowable.empty()).when(applicationService).findByCertificate(anyString());
 
         final Response response = target("domains").path(domainId).path("certificates").request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());

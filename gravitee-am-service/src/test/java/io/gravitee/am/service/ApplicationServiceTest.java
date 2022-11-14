@@ -399,19 +399,19 @@ public class ApplicationServiceTest {
         firstDefaultCert.setId("first-cert");
         firstDefaultCert.setSystem(true);
         firstDefaultCert.setName("Default");
-        firstDefaultCert.setExpiresAt(new Date(now.plusDays(1).toInstant(ZoneOffset.UTC).toEpochMilli()));
+        firstDefaultCert.setCreatedAt(new Date(now.plusDays(1).toInstant(ZoneOffset.UTC).toEpochMilli()));
 
         final Certificate lastestDefaultCert = new Certificate();
         lastestDefaultCert.setId("latest-cert");
         lastestDefaultCert.setSystem(true);
         lastestDefaultCert.setName("Default 123456");
-        lastestDefaultCert.setExpiresAt(new Date(now.plusDays(2).toInstant(ZoneOffset.UTC).toEpochMilli()));
+        lastestDefaultCert.setCreatedAt(new Date(now.plusDays(2).toInstant(ZoneOffset.UTC).toEpochMilli()));
 
         final Certificate customCert = new Certificate();
         customCert.setId("custom-cert");
         customCert.setSystem(false);
         customCert.setName("Custom");
-        customCert.setExpiresAt(new Date(now.plusDays(3).toInstant(ZoneOffset.UTC).toEpochMilli()));
+        customCert.setCreatedAt(new Date(now.plusDays(3).toInstant(ZoneOffset.UTC).toEpochMilli()));
 
         when(certificateService.findByDomain(DOMAIN)).thenReturn(Flowable.just(lastestDefaultCert, firstDefaultCert, customCert));
 

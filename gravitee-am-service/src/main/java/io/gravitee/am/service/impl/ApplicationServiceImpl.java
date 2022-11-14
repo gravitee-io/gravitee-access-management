@@ -69,7 +69,7 @@ import io.gravitee.am.service.model.PatchApplication;
 import io.gravitee.am.service.model.TopApplication;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.ApplicationAuditBuilder;
-import io.gravitee.am.service.utils.CertificateExpiryComparator;
+import io.gravitee.am.service.utils.CertificateTimeComparator;
 import io.gravitee.am.service.utils.GrantTypeUtils;
 import io.gravitee.am.service.validators.accountsettings.AccountSettingsValidator;
 import io.reactivex.Completable;
@@ -617,7 +617,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                     Certificate defaultCertificate = certificates
                             .stream()
                             .filter(Certificate::isSystem)
-                            .sorted(new CertificateExpiryComparator())
+                            .sorted(new CertificateTimeComparator())
                             .findFirst()
                             .or(() ->
                                     // legacy way to retrieve default certificate before we introduce the system flag

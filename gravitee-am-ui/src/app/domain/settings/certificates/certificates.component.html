@@ -34,21 +34,21 @@
                    [footerHeight]="50"
                    [rowHeight]="50"
                    [rows]='certificates'>
-      <ngx-datatable-column name="Certificates" prop="name" [flexGrow]="1" [cellClass]="'certificate-name-cell'">
+      <ngx-datatable-column name="Certificates" prop="name" [flexGrow]="2" [cellClass]="'certificate-name-cell'">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div class="certificate-header" fxLayout="row">
             <div class="certificate-icon">
               <mat-icon>{{getCertificateTypeIcon(row.type)}}</mat-icon>
             </div>
             <div class="certificate-information">
-              <h3>{{row.name}}</h3>
+              <h3 title="{{row.name}}">{{row.name}}</h3>
             </div>
           </div>
         </ng-template>
       </ngx-datatable-column>
       <ngx-datatable-column name="Type" prop="system" [flexGrow]="1">
         <ng-template let-row="row" ngx-datatable-cell-template>
-          <div class="certificate-type" fxLayout="row">
+          <div class="certificate-simple-text" fxLayout="row">
             <mat-chip-list *ngIf="row.system"><mat-chip>System certificate</mat-chip></mat-chip-list>
             <mat-chip-list *ngIf="!row.system"><mat-chip>Own certificate</mat-chip></mat-chip-list>
           </div>
@@ -77,7 +77,14 @@
           </div>
         </ng-template>
       </ngx-datatable-column>
-      <ngx-datatable-column name="" [flexGrow]="1">
+      <ngx-datatable-column name="Used" [sortable]="false" [flexGrow]="1">
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          <div class="certificate-simple-text" fxLayout="row">
+            <mat-chip-list><mat-chip matTooltip="{{getAppNames(row)}}">{{computeAppsLabel(row)}}</mat-chip></mat-chip-list>
+          </div>
+        </ng-template>
+      </ngx-datatable-column>
+      <ngx-datatable-column name="" [sortable]="false" [flexGrow]="1">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div fxLayout="row" class="gv-table-cell-actions">
             <button mat-icon-button (click)="publicKey(row.id, $event)"><mat-icon matTooltip="Get public key">vpn_key</mat-icon></button>
