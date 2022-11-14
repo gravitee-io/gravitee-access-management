@@ -280,14 +280,8 @@ public class AccountFactorsEndpointHandler {
                     return;
                 }
 
-                // if factor is already activated, continue
-                final EnrolledFactor enrolledFactor = optionalEnrolledFactor.get();
-                if (FactorStatus.ACTIVATED.equals(enrolledFactor.getStatus())) {
-                    AccountResponseHandler.handleDefaultResponse(routingContext, enrolledFactor);
-                    return;
-                }
-
                 // verify factor
+                final EnrolledFactor enrolledFactor = optionalEnrolledFactor.get();
                 verifyFactor(code, enrolledFactor, factorProvider, vh -> {
                     if (vh.failed()) {
                         routingContext.fail(vh.cause());
