@@ -92,22 +92,21 @@
 #    reportOnly: false
 #    # set true if you want to include the directive 'script-src' with the nonce value generated for inline script.
 #    # to by marked by the nonce value, your inline script has to contain th:attr="nonce=${script_inline_nonce}"
-#    script-inline-nonce: false
+#    script-inline-nonce: true
 #    directives:
-#      - "default-src * data: blob: filesystem: about: ws: wss: 'unsafe-inline' 'unsafe-eval' 'unsafe-dynamic';"
-#      - "script-src * 'unsafe-inline' 'unsafe-eval';"
-#      - "connect-src * 'unsafe-inline';"
-#      - "img-src * data: blob: 'unsafe-inline';"
-#      - "frame-src *;"
-#      - "style-src * data: blob: 'unsafe-inline';"
-#      - "font-src * data: blob: 'unsafe-inline';"
+#       - "default-src 'self';"
+#       - "script-src 'self' https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs-pro@3/dist/fp.min.js *.gstatic.com *.google.com;"
+#       - "img-src 'self' data: 'unsafe-inline';"
+#       - "style-src 'self' 'unsafe-inline';"
+#       - "frame-ancestors 'none';"
+#       - "frame-src 'self' https://www.google.com;"
 #  # xframe section allows to activate the X-Frame-Options header
 #  # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options
 #  # if not action (DENY or SAMEORIGIN) is specified, the X-Frame-Options header will no be set into the response
 #  xframe:
 #    action: DENY
 #  xss:
-#    enabled: false
+#    enabled: true
 #    action: 1; mode=block
 
 # Path to plugins repository
