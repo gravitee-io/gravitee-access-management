@@ -67,7 +67,6 @@ import java.util.stream.Collectors;
 
 import static io.gravitee.am.management.handlers.management.api.authentication.csrf.CookieCsrfSignedTokenRepository.DEFAULT_CSRF_HEADER_NAME;
 import static java.util.Arrays.asList;
-import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 
 /**
@@ -80,7 +79,8 @@ import static java.util.Objects.nonNull;
 public class SecurityConfiguration {
 
     public static final String HTTP_CSP_ENABLED = "http.csp.enabled";
-    public static final String DEFAULT_CSP_DIRECTIVE = "default-src self;";
+    public static final String DEFAULT_DEFAULT_SRC_CSP_DIRECTIVE = "default-src self;";
+    public static final String DEFAULT_FRAME_ANCESTOR_CSP_DIRECTIVE = "frame-ancestors 'none';";
     public static final String HTTP_CSP_DIRECTIVES = "http.csp.directives[%d]";
     @Autowired
     private Environment environment;
@@ -223,10 +223,11 @@ public class SecurityConfiguration {
         }
 
         private void csp(HttpSecurity security) throws Exception {
-            if(environment.getProperty(HTTP_CSP_ENABLED, Boolean.class, false)) {
+            if(environment.getProperty(HTTP_CSP_ENABLED, Boolean.class, true)) {
                 final List<String> directives = getDirectives();
                 if (directives.isEmpty()) {
-                    directives.add(DEFAULT_CSP_DIRECTIVE);
+                    directives.add(DEFAULT_DEFAULT_SRC_CSP_DIRECTIVE);
+                    directives.add(DEFAULT_FRAME_ANCESTOR_CSP_DIRECTIVE);
                 }
                 security.headers()
                         .contentSecurityPolicy(directives.stream()

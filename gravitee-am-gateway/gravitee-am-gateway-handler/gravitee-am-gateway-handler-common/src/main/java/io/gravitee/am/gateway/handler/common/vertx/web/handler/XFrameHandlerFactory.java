@@ -43,7 +43,7 @@ public class XFrameHandlerFactory implements FactoryBean<XFrameHandler> {
     @Override
     public XFrameHandler getObject() {
         if (isNull(INSTANCE)) {
-            var action = environment.getProperty(HTTP_XFRAME_ACTION, String.class);
+            var action = environment.getProperty(HTTP_XFRAME_ACTION, String.class, "DENY");
             if (isNullOrEmpty(action)) {
                 INSTANCE = new NoXFrameHandler();
             } else {
