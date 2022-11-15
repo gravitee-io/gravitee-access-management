@@ -502,6 +502,56 @@ public class AccountFactorsEndpointHandler {
                 );
     }
 
+    /**
+     * Issue a challenge for the selected factor (SMS, Email mainly)
+     *
+     * @param routingContext the routingContext holding the current user
+     */
+    public void sendChallenge(RoutingContext routingContext) {
+        final User user = routingContext.get(ConstantKeys.USER_CONTEXT_KEY);
+        final String factorId = routingContext.request().getParam("factorId");
+
+        // find factor
+        findFactor(factorId, h -> {
+            if (h.failed()) {
+                routingContext.fail(h.cause());
+                return;
+            }
+
+            final FactorProvider factorProvider = factorManager.get(factorId);
+            if (factorProvider == null) {
+                routingContext.fail(new FactorNotFoundException(factorId));
+                return;
+            }
+
+            if (!factorProvider.needChallengeSending()) {
+                routingContext.fail(new InvalidRequestException("Invalid factor"));
+                return;
+            }
+
+            // get enrolled factor for the current user
+            Optional<EnrolledFactor> optionalEnrolledFactor = user.getFactors()
+                    .stream()
+                    .filter(enrolledFactor -> factorId.equals(enrolledFactor.getFactorId()))
+                    .findFirst();
+
+            if (!optionalEnrolledFactor.isPresent()) {
+                routingContext.fail(new FactorNotFoundException(factorId));
+                return;
+            }
+
+            final EnrolledFactor enrolledFactor = optionalEnrolledFactor.get();
+            sendChallenge(factorProvider, enrolledFactor, user, routingContext, sh -> {
+                if (sh.failed()) {
+                    routingContext.fail(sh.cause());
+                    return;
+                }
+                // challenge has been sent, respond with OK status
+                AccountResponseHandler.handleDefaultResponse(routingContext, enrolledFactor);
+            });
+        });
+    }
+
     private List<String> getUserRecoveryCodes(User user){
         final Optional<Object> securityCodes = user.getFactors()
                 .stream()

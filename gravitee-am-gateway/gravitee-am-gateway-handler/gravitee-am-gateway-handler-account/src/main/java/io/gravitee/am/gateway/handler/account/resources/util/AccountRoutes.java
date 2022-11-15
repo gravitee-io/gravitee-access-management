@@ -30,6 +30,7 @@ public enum AccountRoutes {
     FACTORS_OTP_QR("/api/factors/:factorId/qr"),
     FACTORS_RECOVERY_CODE("/api/auth/recovery_code"),
     FACTORS_VERIFY("/api/factors/:factorId/verify"),
+    FACTORS_SEND_CHALLENGE("/api/factors/:factorId/sendChallenge"),
     WEBAUTHN_CREDENTIALS("/api/webauthn/credentials"),
     WEBAUTHN_CREDENTIALS_BY_ID("/api/webauthn/credentials/:credentialId"),
     CONSENT("/api/consent"),
