@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.account.resources;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.exception.mfa.InvalidCodeException;
+import io.gravitee.am.common.exception.mfa.SendChallengeException;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.factor.api.FactorProvider;
 import io.gravitee.am.gateway.handler.account.resources.util.AccountRoutes;
@@ -50,6 +51,7 @@ import java.util.Map;
 import static io.gravitee.am.common.factor.FactorSecurityType.RECOVERY_CODE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.times;
@@ -409,6 +411,184 @@ public class AccountFactorsEndpointHandlerTest extends RxWebTestBase {
                 "OK", null);
 
         verify(factorProvider, times(1)).changeVariableFactorSecurity(any());
+    }
+
+    @Test
+    public void shouldNotSendChallenge_unknownFactor() throws Exception {
+        router.post(AccountRoutes.FACTORS_SEND_CHALLENGE.getRoute())
+                .handler(accountFactorsEndpointHandler::sendChallenge)
+                .handler(rc -> rc.response().end());
+
+        when(accountService.getFactor("factor-id")).thenReturn(Maybe.empty());
+
+        testRequest(HttpMethod.POST, "/api/factors/factor-id/sendChallenge",
+                null,
+                res -> {
+                    res.bodyHandler(h -> {
+                        assertEquals("{\n" +
+                                "  \"message\" : \"Factor [factor-id] can not be found.\",\n" +
+                                "  \"http_status\" : 404\n" +
+                                "}", h.toString());
+                    });
+                },
+                404,
+                "Not Found", null);
+    }
+
+    @Test
+    public void shouldNotSendChallenge_invalidFactor() throws Exception {
+        router.post(AccountRoutes.FACTORS_SEND_CHALLENGE.getRoute())
+                .handler(accountFactorsEndpointHandler::sendChallenge)
+                .handler(rc -> rc.response().end());
+
+        when(accountService.getFactor("factor-id")).thenReturn(Maybe.just(new Factor()));
+        when(factorManager.get("factor-id")).thenReturn(null);
+
+        testRequest(HttpMethod.POST, "/api/factors/factor-id/sendChallenge",
+                null,
+                res -> {
+                    res.bodyHandler(h -> {
+                        assertEquals("{\n" +
+                                "  \"message\" : \"Factor [factor-id] can not be found.\",\n" +
+                                "  \"http_status\" : 404\n" +
+                                "}", h.toString());
+                    });
+                },
+                404,
+                "Not Found", null);
+    }
+
+    @Test
+    public void shouldNotSendChallenge_factorNotEnrolled() throws Exception {
+        Factor factor = mock(Factor.class);
+        FactorProvider factorProvider = mock(FactorProvider.class);
+        when(factorProvider.needChallengeSending()).thenReturn(true);
+        when(accountService.getFactor("factor-id")).thenReturn(Maybe.just(factor));
+        when(factorManager.get("factor-id")).thenReturn(factorProvider);
+
+        router.post(AccountRoutes.FACTORS_SEND_CHALLENGE.getRoute())
+                .handler(rc -> {
+                    User user = rc.get(ConstantKeys.USER_CONTEXT_KEY);
+                    user.setFactors(Collections.emptyList());
+                    rc.next();
+                })
+                .handler(accountFactorsEndpointHandler::sendChallenge)
+                .handler(rc -> rc.response().end());
+
+        testRequest(HttpMethod.POST, "/api/factors/factor-id/sendChallenge",
+                null,
+                res -> {
+                    res.bodyHandler(h -> {
+                        assertEquals("{\n" +
+                                "  \"message\" : \"Factor [factor-id] can not be found.\",\n" +
+                                "  \"http_status\" : 404\n" +
+                                "}", h.toString());
+                    });
+                },
+                404,
+                "Not Found", null);
+    }
+
+    @Test
+    public void shouldNotSendChallenge_sendChallengeException() throws Exception {
+        Factor factor = mock(Factor.class);
+        FactorProvider factorProvider = mock(FactorProvider.class);
+        when(factorProvider.needChallengeSending()).thenReturn(true);
+        when(factorProvider.sendChallenge(any())).thenReturn(Completable.error(new SendChallengeException("unable to send the challenge")));
+        when(accountService.getFactor("factor-id")).thenReturn(Maybe.just(factor));
+        when(factorManager.get("factor-id")).thenReturn(factorProvider);
+
+        router.post(AccountRoutes.FACTORS_SEND_CHALLENGE.getRoute())
+                .handler(rc -> {
+                    User user = rc.get(ConstantKeys.USER_CONTEXT_KEY);
+                    EnrolledFactor enrolledFactor = new EnrolledFactor();
+                    enrolledFactor.setFactorId("factor-id");
+                    user.setFactors(Collections.singletonList(enrolledFactor));
+                    rc.next();
+                })
+                .handler(accountFactorsEndpointHandler::sendChallenge)
+                .handler(rc -> rc.response().end());
+
+        testRequest(HttpMethod.POST, "/api/factors/factor-id/sendChallenge",
+                null,
+                null,
+                500,
+                "Internal Server Error", null);
+    }
+
+    @Test
+    public void shouldNotSendChallenge_noNeedChallenge() throws Exception {
+        Factor factor = mock(Factor.class);
+        FactorProvider factorProvider = mock(FactorProvider.class);
+        when(factorProvider.needChallengeSending()).thenReturn(false);
+        when(accountService.getFactor("factor-id")).thenReturn(Maybe.just(factor));
+        when(factorManager.get("factor-id")).thenReturn(factorProvider);
+
+        router.post(AccountRoutes.FACTORS_SEND_CHALLENGE.getRoute())
+                .handler(rc -> {
+                    User user = rc.get(ConstantKeys.USER_CONTEXT_KEY);
+                    EnrolledFactor enrolledFactor = new EnrolledFactor();
+                    enrolledFactor.setFactorId("factor-id");
+                    user.setFactors(Collections.singletonList(enrolledFactor));
+                    rc.next();
+                })
+                .handler(accountFactorsEndpointHandler::sendChallenge)
+                .handler(rc -> rc.response().end());
+
+        testRequest(HttpMethod.POST, "/api/factors/factor-id/sendChallenge",
+                null,
+                res -> {
+                    res.bodyHandler(h -> {
+                        assertEquals("{\n" +
+                                "  \"message\" : \"Invalid factor\",\n" +
+                                "  \"http_status\" : 400\n" +
+                                "}", h.toString());
+                    });
+                },
+                400,
+                "Bad Request", null);
+
+        verify(factorProvider, never()).sendChallenge(any());
+    }
+
+    @Test
+    public void shouldSendChallenge_nominalCase() throws Exception {
+        Factor factor = mock(Factor.class);
+        FactorProvider factorProvider = mock(FactorProvider.class);
+        when(factorProvider.needChallengeSending()).thenReturn(true);
+        when(factorProvider.sendChallenge(any())).thenReturn(Completable.complete());
+        when(accountService.getFactor("factor-id")).thenReturn(Maybe.just(factor));
+        when(factorManager.get("factor-id")).thenReturn(factorProvider);
+
+        router.post(AccountRoutes.FACTORS_SEND_CHALLENGE.getRoute())
+                .handler(rc -> {
+                    User user = rc.get(ConstantKeys.USER_CONTEXT_KEY);
+                    EnrolledFactor enrolledFactor = new EnrolledFactor();
+                    enrolledFactor.setFactorId("factor-id");
+                    user.setFactors(Collections.singletonList(enrolledFactor));
+                    rc.next();
+                })
+                .handler(accountFactorsEndpointHandler::sendChallenge)
+                .handler(rc -> rc.response().end());
+
+        testRequest(HttpMethod.POST, "/api/factors/factor-id/sendChallenge",
+                null,
+                res -> {
+                    res.bodyHandler(h -> {
+                        assertEquals("{\n" +
+                                "  \"factorId\" : \"factor-id\",\n" +
+                                "  \"appId\" : null,\n" +
+                                "  \"status\" : \"NULL\",\n" +
+                                "  \"security\" : null,\n" +
+                                "  \"channel\" : null,\n" +
+                                "  \"primary\" : null,\n" +
+                                "  \"createdAt\" : null,\n" +
+                                "  \"updatedAt\" : null\n" +
+                                "}", h.toString());
+                    });
+                },
+                200,
+                "OK", null);
     }
 
     private void addFactors(User user) {
