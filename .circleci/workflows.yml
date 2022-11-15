@@ -1377,6 +1377,10 @@ workflows:
                 - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
 
   build_branch:
+    when:
+      or:
+        - equal: [ pull_requests, << pipeline.parameters.gio_action >> ]
+        - equal: [ release, << pipeline.parameters.gio_action >> ]
     jobs:
       - setup:
           context:
@@ -1491,6 +1495,9 @@ workflows:
                 var-name: AZURE_APPLICATION_SECRET
 
   sonarcloud_analysis_back:
+    when:
+      and:
+        - equal: [ pull_requests, << pipeline.parameters.gio_action >> ]
     jobs:
       - setup:
           context:
@@ -1505,6 +1512,9 @@ workflows:
             - coverage_build
 
   sonarcloud_analysis_front:
+    when:
+      and:
+        - equal: [ pull_requests, << pipeline.parameters.gio_action >> ]
     jobs:
       - setup:
           context:
