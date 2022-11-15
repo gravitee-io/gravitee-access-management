@@ -34,7 +34,6 @@ import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.core.json.Json;
 import io.vertx.reactivex.core.buffer.Buffer;
 import io.vertx.reactivex.ext.web.handler.BodyHandler;
 import org.junit.Test;
@@ -52,6 +51,8 @@ import static io.gravitee.am.common.factor.FactorSecurityType.RECOVERY_CODE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.times;
 
 /**
  * @author Ashraful Hasan (ashraful.hasan at graviteesource.com)
@@ -365,7 +366,10 @@ public class AccountFactorsEndpointHandlerTest extends RxWebTestBase {
     public void shouldVerifyFactor_nominalCase() throws Exception {
         Factor factor = mock(Factor.class);
         FactorProvider factorProvider = mock(FactorProvider.class);
+        EnrolledFactor enrolledFactor = new EnrolledFactor();
+        enrolledFactor.setFactorId("factor-id");
         when(factorProvider.verify(any())).thenReturn(Completable.complete());
+        when(factorProvider.changeVariableFactorSecurity(any())).thenReturn(Single.just(enrolledFactor));
         when(accountService.getFactor("factor-id")).thenReturn(Maybe.just(factor));
         when(factorManager.get("factor-id")).thenReturn(factorProvider);
         when(accountService.upsertFactor(any(), any(), any())).thenReturn(Single.just(new User()));
@@ -373,8 +377,6 @@ public class AccountFactorsEndpointHandlerTest extends RxWebTestBase {
         router.post(AccountRoutes.FACTORS_VERIFY.getRoute())
                 .handler(rc -> {
                     User user = rc.get(ConstantKeys.USER_CONTEXT_KEY);
-                    EnrolledFactor enrolledFactor = new EnrolledFactor();
-                    enrolledFactor.setFactorId("factor-id");
                     user.setFactors(Collections.singletonList(enrolledFactor));
                     rc.next();
                 })
@@ -405,6 +407,8 @@ public class AccountFactorsEndpointHandlerTest extends RxWebTestBase {
                 },
                 200,
                 "OK", null);
+
+        verify(factorProvider, times(1)).changeVariableFactorSecurity(any());
     }
 
     private void addFactors(User user) {
