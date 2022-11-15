@@ -288,11 +288,12 @@ public class AccountFactorsEndpointHandler {
                         return;
                     }
 
-                    // verify successful, change the EnrolledFactor Status
+                    // verify successful, change the EnrolledFactor status and increment moving factor
                     enrolledFactor.setStatus(FactorStatus.ACTIVATED);
-                    accountService.upsertFactor(user.getId(), enrolledFactor, new DefaultUser(user))
+                    factorProvider.changeVariableFactorSecurity(enrolledFactor)
+                            .flatMap(eF -> accountService.upsertFactor(user.getId(), eF, new DefaultUser(user)).map(__ -> eF))
                             .subscribe(
-                                    __ -> AccountResponseHandler.handleDefaultResponse(routingContext, enrolledFactor),
+                                    eF -> AccountResponseHandler.handleDefaultResponse(routingContext, eF),
                                     error -> routingContext.fail(error)
                             );
                 });
