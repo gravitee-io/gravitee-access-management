@@ -1,6 +1,19 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/613?closed=1[AM - 3.18.11 (2022-11-18)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- [self service account] MFA verify method should work with activated factors https://github.com/gravitee-io/issues/issues/8647[#8647]
+- [self service account] add a MFA sendChallenge method https://github.com/gravitee-io/issues/issues/8648[#8648]
+- [self service account] factor with moving factor should be updated after the verify step https://github.com/gravitee-io/issues/issues/8650[#8650]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/612?closed=1[AM - 3.19.2 (2022-11-14)]
 
 === Bug fixes
