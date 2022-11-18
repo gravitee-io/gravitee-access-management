@@ -23,6 +23,7 @@ import {SnackbarService} from "../../services/snackbar.service";
 import {SidenavService} from "../sidenav/sidenav.service";
 import {EnvironmentService} from "../../services/environment.service";
 import {UserNotificationsService} from 'app/services/user-notifications.service';
+import {AppConfig} from '../../../config/app.config';
 
 @Component({
   selector: 'gv-navbar',
@@ -33,6 +34,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
   private domainSubscription: Subscription;
   private environmentSubscription: Subscription;
   private sidenavSubscription: Subscription;
+  title = AppConfig.settings.portalTitle;
+  version = AppConfig.settings.version;
   reducedMode = false;
   domains: any[];
   currentDomain: any = {};

@@ -22,8 +22,10 @@
   </p>
 
   <div fxLayout="row" fxFlex>
-    <mat-form-field class="identities-search__input">
-      <input matInput type="search" placeholder="Filter providers..." [(ngModel)]="filter" autocomplete="off">
+    <mat-form-field appearance="outline" floatLabel="always">
+      <mat-icon matPrefix>search</mat-icon>
+      <mat-label>Filter providers...</mat-label>
+      <input matInput type="search" [(ngModel)]="filter" autocomplete="off">
       <button mat-button mat-icon-button matSuffix (click)="clear()" *ngIf="filter">
         <mat-icon>close</mat-icon>
       </button>

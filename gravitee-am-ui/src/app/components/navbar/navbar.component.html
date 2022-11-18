@@ -17,11 +17,11 @@
 -->
 <div *ngIf="user">
   <mat-toolbar>
-    <a mat-icon-button [routerLink]="['']">
-      <img style="width: 25px;" src="assets/logo_gravitee_min_white.png">
+    <a mat-icon-button [routerLink]="['']" [matTooltip]="title + ' / ' + version">
+      <mat-icon svgIcon="gio:gravitee"></mat-icon>
     </a>
     <button class="app-switcher" mat-raised-button disabled>
-      <mat-icon svgIcon="gio:historic-shield"></mat-icon>
+      <mat-icon svgIcon="gio:product-am"></mat-icon>
       <span style="margin-left: 5px;">Access Management</span>
     </button>
     <span class="fill-remaining-space"></span>

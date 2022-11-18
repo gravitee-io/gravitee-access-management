@@ -20,8 +20,8 @@
   <div *ngIf="!isEmpty">
     <div *hasPermission="['domain_certificate_create']" class="actions-row">
       <a mat-raised-button color="primary" [routerLink]="['new']">
+        <mat-icon>add</mat-icon>
         Add new
-        <mat-icon>expand_more</mat-icon>
       </a>
       <button mat-raised-button disabled="false" (click)="rotateCertificate()" [disabled]="preventRotateCertificate()">
           Rotate system key
@@ -49,8 +49,8 @@
       <ngx-datatable-column name="Type" prop="system" [flexGrow]="1">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div class="certificate-simple-text" fxLayout="row">
-            <mat-chip-list *ngIf="row.system"><mat-chip>System certificate</mat-chip></mat-chip-list>
-            <mat-chip-list *ngIf="!row.system"><mat-chip>Own certificate</mat-chip></mat-chip-list>
+            <mat-chip-list *ngIf="row.system"><mat-chip>System</mat-chip></mat-chip-list>
+            <mat-chip-list *ngIf="!row.system"><mat-chip>Own</mat-chip></mat-chip-list>
           </div>
         </ng-template>
       </ngx-datatable-column>

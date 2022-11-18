@@ -18,7 +18,7 @@
 <div class="gv-page-container" fxLayout="column">
   <h1>Audit log</h1>
   <form (submit)="search()" #auditsSearchForm="ngForm" fxLayout="row" fxLayoutGap="10px" class="audits-search">
-    <mat-form-field fxFlex="10">
+    <mat-form-field fxFlex="10" appearance="fill">
       <mat-label>Event</mat-label>
       <mat-select name="eventType" [(ngModel)]="eventType" (selectionChange)="updateForm()">
         <mat-option></mat-option>
@@ -28,7 +28,7 @@
       </mat-select>
     </mat-form-field>
 
-    <mat-form-field fxFlex="10">
+    <mat-form-field fxFlex="10" appearance="fill">
       <mat-label>Status</mat-label>
       <mat-select name="eventStatus" [(ngModel)]="eventStatus" (selectionChange)="updateForm()">
         <mat-option></mat-option>
@@ -37,7 +37,7 @@
       </mat-select>
     </mat-form-field>
 
-    <mat-form-field fxFlex="10">
+    <mat-form-field fxFlex="10" appearance="fill">
       <input matInput placeholder="User" [matAutocomplete]="auto" [formControl]="userCtrl" (input)="updateForm()"/>
       <button mat-button *ngIf="selectedUser" matSuffix mat-icon-button aria-label="Clear" (click)="clearUserInput()">
         <mat-icon style="margin: 0px 0px 0px 3px;">close</mat-icon>
@@ -52,13 +52,13 @@
       <mat-hint align="end">By username</mat-hint>
     </mat-form-field>
 
-    <mat-form-field fxFlex="10">
+    <mat-form-field fxFlex="10" appearance="fill">
       <input (dateInput)="updateForm()" (dateChange)="startDateChange('input', $event)" matInput name="startDate" [max]="endDate" [matDatepicker]="pickerStartDate" placeholder="Start date" [(ngModel)]="startDate">
       <mat-datepicker-toggle matSuffix [for]="pickerStartDate"></mat-datepicker-toggle>
       <mat-datepicker #pickerStartDate></mat-datepicker>
     </mat-form-field>
 
-    <mat-form-field fxFlex="10">
+    <mat-form-field fxFlex="10" appearance="fill">
       <input (dateInput)="updateForm()" (dateChange)="endDateChange('input', $event)" matInput name="endDate" [min]="startDate" [matDatepicker]="pickerEndDate" placeholder="End date" [(ngModel)]="endDate">
       <mat-datepicker-toggle matSuffix [for]="pickerEndDate"></mat-datepicker-toggle>
       <mat-datepicker #pickerEndDate></mat-datepicker>
