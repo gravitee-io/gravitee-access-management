@@ -18,8 +18,9 @@
 <div class="gv-page-container">
   <h1 *ngIf="!isEmpty">Domains</h1>
   <div *ngIf="!isEmpty" class="domains-search">
-    <mat-form-field>
-      <mat-icon matPrefix="">search</mat-icon>
+    <mat-form-field appearance="fill" floatLabel="always">
+      <mat-icon matPrefix>search</mat-icon>
+      <mat-label>Search for security domains</mat-label>
       <input type="text" matInput placeholder="Search" (input)="onSearch($event)">
     </mat-form-field>
   </div>

@@ -29,7 +29,7 @@
     "@angular/platform-server": "^13.3.0",
     "@angular/router": "^13.3.0",
     "@gravitee/ui-components": "^3.34.0",
-    "@gravitee/ui-particles-angular": "^4.5.2",
+    "@gravitee/ui-particles-angular": "^4.7.0",
     "@swimlane/ngx-datatable": "^19.0.0",
     "@types/hammerjs": "^2.0.40",
     "asciidoctor": "^2.2.4",

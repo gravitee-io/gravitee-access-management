@@ -19,8 +19,9 @@
   <h1 *ngIf="!isEmpty">Roles</h1>
   <div *ngIf="!isEmpty">
     <div class="roles-search">
-      <mat-form-field>
-        <mat-icon matPrefix="">search</mat-icon>
+      <mat-form-field appearance="fill" floatLabel="always">
+        <mat-icon matPrefix>search</mat-icon>
+        <mat-label>Search for roles</mat-label>
         <input type="text" matInput placeholder="Search" (input)="onSearch($event)">
       </mat-form-field>
     </div>

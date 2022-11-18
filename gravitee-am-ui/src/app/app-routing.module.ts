@@ -2454,7 +2454,7 @@ export const routes: Routes = [
                     data: {
                       menu: {
                         label: 'Alerts',
-                        icon: 'gio:megaphone',
+                        icon: 'gio:alarm',
                         level: 'top',
                         beta: true
                       },

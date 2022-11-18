@@ -1,27 +1,7 @@
 .actions-row {
   display: flex;
   flex-direction: row-reverse;
-
-  button {
-    font-family: 'Roboto';
-    font-style: normal;
-    font-weight: 700;
-
-    letter-spacing: 1.25px;
-    text-transform: uppercase;
-
-    margin: 5px;
-  }
-
-  a {
-    font-family: 'Roboto';
-    font-style: normal;
-    font-weight: 700;
-    letter-spacing: 1.25px;
-    text-transform: uppercase;
-
-    margin: 5px;
-  }
+  gap: 10px;
 }
 
 .certificate-header {

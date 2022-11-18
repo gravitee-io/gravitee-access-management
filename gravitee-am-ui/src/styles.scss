@@ -206,11 +206,7 @@ mat-sidenav-container {
   padding: 0.2em 0;
 }
 
-.mat-form-field {
-  width: 100%;
-}
-
-mat-form-field {
+.mat-form-field, mat-form-field {
   width: 100%;
 }
 
@@ -226,6 +222,18 @@ mat-form-field {
 .mat-form-field-appearance-outline.mat-form-field-disabled .mat-form-field-outline {
   background: #F1F1F1;
   border-radius: 5px;
+}
+
+// override input underline from particles
+.mat-form-field-underline {
+  display: block !important;
+}
+
+// override input underline from particles
+.gio-side-nav {
+  .mat-form-field-underline {
+    display: none !important;
+  }
 }
 
 ngx-datatable {
