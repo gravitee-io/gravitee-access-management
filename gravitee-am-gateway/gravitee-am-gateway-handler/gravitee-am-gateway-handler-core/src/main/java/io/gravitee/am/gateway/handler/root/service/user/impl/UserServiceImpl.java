@@ -390,15 +390,22 @@ public class UserServiceImpl implements UserService {
                     // If multiple results, check if ConfirmIdentity isn't required before returning the first User.
                     if (foundUsers.size() == 1 || (foundUsers.size() > 1 && !params.isConfirmIdentityEnabled())) {
                         User user = foundUsers.get(0);
+
                         // check if user can update its password according to its identity provider type
                         return identityProviderManager.getUserProvider(user.getSource())
                                 .switchIfEmpty(Single.error(new UserInvalidException("User [ " + user.getUsername() + " ] cannot be updated because its identity provider does not support user provisioning")))
                                 .flatMap(userProvider -> {
                                     // if user registration is not completed and force registration option is disabled throw invalid account exception
                                     AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
+
                                     if (user.isInactive() && !forceUserRegistration(accountSettings)) {
                                         return Single.error(new AccountInactiveException("User [ " + user.getUsername() + " ] needs to complete the activation process"));
                                     }
+
+                                    if (!user.isEnabled() && !user.isInactive()) {
+                                        return Single.error(new AccountInactiveException("User [ " + user.getUsername() + " ] is disabled."));
+                                    }
+
                                     // fetch latest information from the identity provider and return the user
                                     return userProvider.findByUsername(user.getUsername())
                                             .map(Optional::ofNullable)
