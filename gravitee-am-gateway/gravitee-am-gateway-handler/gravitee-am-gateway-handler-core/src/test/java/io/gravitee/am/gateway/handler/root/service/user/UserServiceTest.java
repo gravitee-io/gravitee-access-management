@@ -260,6 +260,7 @@ public class UserServiceTest {
         when(user.getEmail()).thenReturn("test@test.com");
         when(user.isInactive()).thenReturn(true);
         when(user.getSource()).thenReturn("idp-id");
+        when(user.isEnabled()).thenReturn(true);
 
         UserProvider userProvider = mock(UserProvider.class);
 
@@ -284,6 +285,7 @@ public class UserServiceTest {
         User user = mock(User.class);
         when(user.getEmail()).thenReturn("test@test.com");
         when(user.getSource()).thenReturn("idp-id");
+        when(user.isEnabled()).thenReturn(true);
 
         when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Collections.singletonList(user)));
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.empty());
@@ -303,6 +305,7 @@ public class UserServiceTest {
         when(user.getEmail()).thenReturn("test@test.com");
         when(user.isInactive()).thenReturn(true);
         when(user.getSource()).thenReturn("idp-id");
+        when(user.isEnabled()).thenReturn(true);
 
         UserProvider userProvider = mock(UserProvider.class);
 
@@ -335,6 +338,7 @@ public class UserServiceTest {
         when(user.getEmail()).thenReturn("test@test.com");
         when(user.isInactive()).thenReturn(false);
         when(user.getSource()).thenReturn("idp-id");
+        when(user.isEnabled()).thenReturn(true);
 
         UserProvider userProvider = mock(UserProvider.class);
 
@@ -360,6 +364,7 @@ public class UserServiceTest {
         when(user.getEmail()).thenReturn("test@test.com");
         when(user.isInactive()).thenReturn(false);
         when(user.getSource()).thenReturn("idp-id");
+        when(user.isEnabled()).thenReturn(true);
 
         UserProvider userProvider = mock(UserProvider.class);
 
@@ -385,6 +390,7 @@ public class UserServiceTest {
         when(user.getUsername()).thenReturn("username");
         when(user.isInactive()).thenReturn(false);
         when(user.getEmail()).thenReturn("test@test.com");
+        when(user.isEnabled()).thenReturn(true);
 
         UserProvider userProvider = mock(UserProvider.class);
 
@@ -440,6 +446,7 @@ public class UserServiceTest {
         when(user.getSource()).thenReturn(localClientId);
         User user2 = mock(User.class);
         when(user2.getSource()).thenReturn("other-idp-client-id");
+        when(user.isEnabled()).thenReturn(true);
 
         when(domain.getId()).thenReturn("domain-id");
         when(commonUserService.findByDomainAndCriteria(eq(domain.getId()),any(FilterCriteria.class))).thenReturn(Single.just(Arrays.asList(user, user2)));
@@ -769,6 +776,7 @@ public class UserServiceTest {
     public void shouldNotForgotPassword_client_has_no_Idp() {
         Client client = mock(Client.class);
         User user = mock(User.class);
+        when(user.isEnabled()).thenReturn(true);
 
         when(client.getIdentityProviders()).thenReturn(new TreeSet<>());
         when(domain.getId()).thenReturn("domain-id");
@@ -790,6 +798,7 @@ public class UserServiceTest {
         User user = mock(User.class);
         when(user.getEmail()).thenReturn("test@test.com");
         when(user.getSource()).thenReturn("idp-id");
+        when(user.isEnabled()).thenReturn(true);
 
         when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Collections.singletonList(user)));
 
@@ -822,6 +831,7 @@ public class UserServiceTest {
         when(user.getUsername()).thenReturn("username");
         when(user.getEmail()).thenReturn("test@test.com");
         when(user.isInactive()).thenReturn(true);
+        when(user.isEnabled()).thenReturn(true);
         when(user.getSource()).thenReturn("idp-id");
         when(accountSettings.isCompleteRegistrationWhenResetPassword()).thenReturn(true);
         when(domain.getId()).thenReturn("domain-id");
@@ -842,6 +852,22 @@ public class UserServiceTest {
 
         verify(credentialService, never()).deleteByUserId(any(), any(), any());
         verify(tokenService, never()).deleteByUserId(any());
+    }
+
+    @Test
+    public void shouldNotForgotPassword_userDisabled() {
+        when(domain.getId()).thenReturn("domain-id");
+        Client client = mock(Client.class);
+        User user = mock(User.class);
+        when(user.getEmail()).thenReturn("test@test.com");
+        when(user.isEnabled()).thenReturn(false);
+        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Collections.singletonList(user)));
+
+        var testObserver = userService.forgotPassword(user.getEmail(), client).test();
+
+        testObserver.assertNotComplete();
+        testObserver.assertError(AccountInactiveException.class);
+        verify(identityProviderManager, never()).getUserProvider(any());
     }
 
     private SortedSet<ApplicationIdentityProvider> getApplicationIdentityProviders(String... identities) {

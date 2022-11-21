@@ -396,6 +396,10 @@ public class UserServiceImpl implements UserService {
                     if (foundUsers.size() == 1 || (foundUsers.size() > 1 && !params.isConfirmIdentityEnabled())) {
                         User user = foundUsers.get(0);
 
+                        if (!user.isEnabled()) {
+                            return Single.error(new AccountInactiveException("User [ " + user.getUsername() + " ] is disabled."));
+                        }
+
                         //fixes https://graviteecommunity.atlassian.net/browse/AM-71
                         if (client.getIdentityProviders() != null) {
                             final IdentityProvider identityProvider = identityProviderManager.getIdentityProvider(user.getSource());
