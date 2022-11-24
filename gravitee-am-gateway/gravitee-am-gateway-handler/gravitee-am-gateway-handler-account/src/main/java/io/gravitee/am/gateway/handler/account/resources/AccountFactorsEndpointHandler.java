@@ -280,25 +280,20 @@ public class AccountFactorsEndpointHandler {
                     return;
                 }
 
-                // if factor is already activated, continue
-                final EnrolledFactor enrolledFactor = optionalEnrolledFactor.get();
-                if (FactorStatus.ACTIVATED.equals(enrolledFactor.getStatus())) {
-                    AccountResponseHandler.handleDefaultResponse(routingContext, enrolledFactor);
-                    return;
-                }
-
                 // verify factor
+                final EnrolledFactor enrolledFactor = optionalEnrolledFactor.get();
                 verifyFactor(code, enrolledFactor, factorProvider, vh -> {
                     if (vh.failed()) {
                         routingContext.fail(vh.cause());
                         return;
                     }
 
-                    // verify successful, change the EnrolledFactor Status
+                    // verify successful, change the EnrolledFactor status and increment moving factor
                     enrolledFactor.setStatus(FactorStatus.ACTIVATED);
-                    accountService.upsertFactor(user.getId(), enrolledFactor, new DefaultUser(user))
+                    factorProvider.changeVariableFactorSecurity(enrolledFactor)
+                            .flatMap(eF -> accountService.upsertFactor(user.getId(), eF, new DefaultUser(user)).map(__ -> eF))
                             .subscribe(
-                                    __ -> AccountResponseHandler.handleDefaultResponse(routingContext, enrolledFactor),
+                                    eF -> AccountResponseHandler.handleDefaultResponse(routingContext, eF),
                                     error -> routingContext.fail(error)
                             );
                 });
@@ -505,6 +500,56 @@ public class AccountFactorsEndpointHandler {
                         () -> AccountResponseHandler.handleNoBodyResponse(routingContext),
                         routingContext::fail
                 );
+    }
+
+    /**
+     * Issue a challenge for the selected factor (SMS, Email mainly)
+     *
+     * @param routingContext the routingContext holding the current user
+     */
+    public void sendChallenge(RoutingContext routingContext) {
+        final User user = routingContext.get(ConstantKeys.USER_CONTEXT_KEY);
+        final String factorId = routingContext.request().getParam("factorId");
+
+        // find factor
+        findFactor(factorId, h -> {
+            if (h.failed()) {
+                routingContext.fail(h.cause());
+                return;
+            }
+
+            final FactorProvider factorProvider = factorManager.get(factorId);
+            if (factorProvider == null) {
+                routingContext.fail(new FactorNotFoundException(factorId));
+                return;
+            }
+
+            if (!factorProvider.needChallengeSending()) {
+                routingContext.fail(new InvalidRequestException("Invalid factor"));
+                return;
+            }
+
+            // get enrolled factor for the current user
+            Optional<EnrolledFactor> optionalEnrolledFactor = user.getFactors()
+                    .stream()
+                    .filter(enrolledFactor -> factorId.equals(enrolledFactor.getFactorId()))
+                    .findFirst();
+
+            if (!optionalEnrolledFactor.isPresent()) {
+                routingContext.fail(new FactorNotFoundException(factorId));
+                return;
+            }
+
+            final EnrolledFactor enrolledFactor = optionalEnrolledFactor.get();
+            sendChallenge(factorProvider, enrolledFactor, user, routingContext, sh -> {
+                if (sh.failed()) {
+                    routingContext.fail(sh.cause());
+                    return;
+                }
+                // challenge has been sent, respond with OK status
+                AccountResponseHandler.handleDefaultResponse(routingContext, enrolledFactor);
+            });
+        });
     }
 
     private List<String> getUserRecoveryCodes(User user){
