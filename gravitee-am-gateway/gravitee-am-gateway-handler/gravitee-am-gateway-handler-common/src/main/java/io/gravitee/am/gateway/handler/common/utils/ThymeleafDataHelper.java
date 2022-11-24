@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.common.utils;
 
+import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
+import io.gravitee.am.gateway.handler.context.EvaluableRequest;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
@@ -27,7 +29,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-import static io.gravitee.am.common.utils.ConstantKeys.*;
+import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.DOMAIN_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.PARAM_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.REQUEST_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.USER_CONTEXT_KEY;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -44,6 +50,18 @@ public class ThymeleafDataHelper {
             data.put(CLIENT_CONTEXT_KEY, new ClientProperties(client));
         }
         getUser(context).ifPresent(userProperties -> data.put(USER_CONTEXT_KEY, userProperties));
+
+        // Put evaluable request and param entry to get simple access to request object and query parameters
+        // we use putIfAbsent because the Endpoint may have initialized these
+        // entries before the call of this generateData method
+        EvaluableRequest evaluableRequest = new EvaluableRequest(new VertxHttpServerRequest(context.request().getDelegate(), true));
+        data.putIfAbsent(REQUEST_CONTEXT_KEY, evaluableRequest);
+        final Map<String, Object> parameters = Optional.ofNullable((Map<String, Object>)data.get(PARAM_CONTEXT_KEY)).orElse(new HashMap<>());
+        for (var entry : evaluableRequest.getParams().toSingleValueMap().entrySet()) {
+            parameters.putIfAbsent(entry.getKey(), entry.getValue());
+        }
+        data.put(PARAM_CONTEXT_KEY, parameters);
+
         return data;
     }
 
