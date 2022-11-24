@@ -22,6 +22,7 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
 import io.gravitee.am.gateway.handler.scim.exception.UniquenessException;
+import io.gravitee.am.gateway.handler.scim.model.GraviteeUser;
 import io.gravitee.am.gateway.handler.scim.model.Meta;
 import io.gravitee.am.gateway.handler.scim.model.User;
 import io.gravitee.am.gateway.handler.scim.resources.ErrorHandler;
@@ -37,14 +38,17 @@ import io.vertx.core.json.Json;
 import io.vertx.reactivex.ext.web.handler.BodyHandler;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.util.Collections;
+import java.util.Map;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -264,11 +268,50 @@ public class CreateUserEndpointHandlerTest extends RxWebTestBase {
                 "Created", null);
     }
 
+    @Test
+    public void shouldAcceptCustomGraviteeUser() throws Exception {
+        SCIMSettings scimSettings = mock(SCIMSettings.class);
+        when(domain.getScim()).thenReturn(scimSettings);
+        router.route("/Users").handler(usersEndpoint::create);
+        when(userService.create(any(), any(), any(), any())).thenReturn(Single.just(getUser()));
+
+        testRequest(
+                HttpMethod.POST,
+                "/Users",
+                req -> {
+                    req.setChunked(true);
+                    req.write(Json.encode(getGraviteeUser()));
+                },
+                201,
+                "Created", null);
+
+        ArgumentCaptor<User> userArgumentCaptor = ArgumentCaptor.forClass(User.class);
+        verify(userService).create(userArgumentCaptor.capture(),  any(), any(), any());
+        User scimUser = userArgumentCaptor.getValue();
+        assertTrue(scimUser instanceof GraviteeUser);
+        Map<String, Object> additionalInformation = ((GraviteeUser) scimUser).getAdditionalInformation();
+        assertTrue(additionalInformation != null && additionalInformation.get("customClaim").equals("customValue"));
+    }
+
     private User getUser() {
         User user = new User();
         user.setUserName("username");
         user.setSchemas(User.SCHEMAS);
         user.setPassword("toto");
+
+        Meta meta = new Meta();
+        meta.setLocation("http://test");
+        user.setMeta(meta);
+
+        return user;
+    }
+
+    private User getGraviteeUser() {
+        GraviteeUser user = new GraviteeUser();
+        user.setUserName("username");
+        user.setSchemas(GraviteeUser.SCHEMAS);
+        user.setPassword("toto");
+        user.setAdditionalInformation(Collections.singletonMap("customClaim", "customValue"));
 
         Meta meta = new Meta();
         meta.setLocation("http://test");
