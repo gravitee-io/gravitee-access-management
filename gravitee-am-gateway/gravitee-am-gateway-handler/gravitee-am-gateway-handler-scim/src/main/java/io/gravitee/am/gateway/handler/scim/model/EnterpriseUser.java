@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.scim.model;
 
+import io.gravitee.am.common.scim.Schema;
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -28,8 +30,7 @@ import java.util.List;
  */
 public class EnterpriseUser extends User {
 
-    public static final List<String> SCHEMAS = Arrays.asList("urn:ietf:params:scim:schemas:core:2.0:User",
-            "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User");
+    public static final List<String> SCHEMAS = Arrays.asList(Schema.SCHEMA_URI_USER, Schema.SCHEMA_URI_ENTERPRISE_USER);
 
     /**
      * A string identifier, typically numeric or alphanumeric, assigned

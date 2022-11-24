@@ -17,13 +17,14 @@ package io.gravitee.am.gateway.handler.scim.resources.users;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.common.scim.Schema;
 import io.gravitee.am.common.scim.filter.Filter;
 import io.gravitee.am.common.scim.parser.SCIMFilterParser;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidSyntaxException;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
 import io.gravitee.am.gateway.handler.scim.mapper.UserMapper;
-import io.gravitee.am.gateway.handler.scim.model.*;
+import io.gravitee.am.gateway.handler.scim.model.User;
 import io.gravitee.am.gateway.handler.scim.service.UserService;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Domain;
@@ -34,6 +35,9 @@ import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.Json;
 import io.vertx.reactivex.ext.web.RoutingContext;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -136,11 +140,17 @@ public class UsersEndpoint extends AbstractUserEndpoint {
      */
     public void create(RoutingContext context) {
         try {
-            if (context.getBodyAsString() == null) {
+            final String body = context.getBodyAsString();
+            if (body == null) {
                 context.fail(new InvalidSyntaxException("Unable to parse body message"));
                 return;
             }
-            final User user = Json.decodeValue(context.getBodyAsString(), User.class);
+
+            // determine the User resource type via the schemas value
+            final Map<String, Object> payload = Json.decodeValue(body, Map.class);
+            final List<String> schemas = (List<String>) Optional.ofNullable(payload.get("schemas")).orElse(Collections.emptyList());
+
+            final User user = evaluateUser(schemas, body);
 
             // username is required
             if (user.getUserName() == null || user.getUserName().isEmpty()) {
@@ -150,7 +160,7 @@ public class UsersEndpoint extends AbstractUserEndpoint {
 
             // schemas field is REQUIRED and MUST contain valid values and MUST not contain duplicate values
             try {
-                checkSchemas(user.getSchemas(), EnterpriseUser.SCHEMAS);
+                checkSchemas(user.getSchemas(), Schema.supportedSchemas());
             } catch (Exception ex) {
                 context.fail(ex);
                 return;
@@ -178,5 +188,4 @@ public class UsersEndpoint extends AbstractUserEndpoint {
             context.fail(new InvalidSyntaxException("Unable to parse body message", ex));
         }
     }
-
 }
