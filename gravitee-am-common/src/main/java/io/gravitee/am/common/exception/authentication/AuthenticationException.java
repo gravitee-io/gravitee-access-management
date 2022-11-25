@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.common.exception.authentication;
 
+import io.gravitee.common.http.HttpStatusCode;
+
 import java.util.Map;
 
 /**
@@ -51,6 +53,10 @@ public abstract class AuthenticationException extends RuntimeException {
     }
 
     public abstract String getErrorCode();
+
+    public int getHttpStatusCode() {
+        return HttpStatusCode.UNAUTHORIZED_401;
+    }
 
     public Map<String, String> getDetails() {
         return details;
