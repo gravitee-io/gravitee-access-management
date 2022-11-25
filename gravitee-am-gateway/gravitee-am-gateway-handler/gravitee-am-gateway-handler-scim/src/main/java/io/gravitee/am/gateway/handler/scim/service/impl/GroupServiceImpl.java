@@ -184,6 +184,8 @@ public class GroupServiceImpl implements GroupService {
                             groupToUpdate.setReferenceId(existingGroup.getReferenceId());
                             groupToUpdate.setCreatedAt(existingGroup.getCreatedAt());
                             groupToUpdate.setUpdatedAt(new Date());
+                            groupToUpdate.setRoles(existingGroup.getRoles());
+                            groupToUpdate.setDescription(existingGroup.getDescription());
                             return groupRepository.update(groupToUpdate);
                         })
                         .doOnSuccess(grp -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_UPDATED).oldValue(existingGroup).group(grp)))

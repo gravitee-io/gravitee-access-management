@@ -53,7 +53,7 @@
               [checked]="domain.oidc.clientRegistrationSettings.allowLocalhostRedirectUri" [disabled]="readonly">
               Allow localhost redirect uris.
             </mat-slide-toggle>
-            <mat-hint>Allow clients to be registered with redirect_uris using localhost as host.</mat-hint>
+            <mat-hint>Allow clients to be registered with redirect_uris/post_logout_redirect_uri using localhost as host.</mat-hint>
           </div>
           <div class="domain-client-registration-settings-state" fxLayout="column">
             <mat-slide-toggle
@@ -61,7 +61,7 @@
               [checked]="domain.oidc.clientRegistrationSettings.allowHttpSchemeRedirectUri" [disabled]="readonly">
               Allow unsecured (http) redirect uris.
             </mat-slide-toggle>
-            <mat-hint>Allow clients to be registered with redirect_uris using unsecured (http) scheme.</mat-hint>
+            <mat-hint>Allow clients to be registered with redirect_uris/post_logout_redirect_uri using unsecured (http) scheme.</mat-hint>
           </div>
           <div class="domain-client-registration-settings-state" fxLayout="column">
             <mat-slide-toggle
@@ -69,7 +69,7 @@
               [checked]="domain.oidc.clientRegistrationSettings.allowWildCardRedirectUri" [disabled]="readonly">
               Allow wildcards redirect uris.
             </mat-slide-toggle>
-            <mat-hint>Allow clients to be registered with redirect_uris containing wildcards.</mat-hint>
+            <mat-hint>Allow clients to be registered with redirect_uris/post_logout_redirect_uri containing wildcards.</mat-hint>
           </div>
           <div class="domain-client-registration-settings-state" fxLayout="column">
             <mat-slide-toggle
@@ -77,7 +77,7 @@
               [checked]="domain.oidc.redirectUriStrictMatching" [disabled]="readonly">
               Enable/Disable redirect uris strict matching.
             </mat-slide-toggle>
-            <mat-hint>Enable redirect_uris strict matching when calling OpenID Connect flow.</mat-hint>
+            <mat-hint>Enable redirect_uris/post_logout_redirect_uri strict matching when calling OpenID Connect flow.</mat-hint>
           </div>
         </div>
         <div *ngIf="!readonly">

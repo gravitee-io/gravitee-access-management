@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "ffe40f17-b901-4359-ac80-cd9bb7889d1e",
+		"_postman_id": "3358ed0c-3a3a-4552-bb0f-972d93d0e6ae",
 		"name": "Gravitee.io - AM - Openid Core - Request Object",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -1298,6 +1298,243 @@
 								{
 									"key": "scope",
 									"value": "openid"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Case - Invalid requests - forbidden request_uri",
+			"item": [
+				{
+					"name": "Generate token for DCR client",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Has an access_token\", function () {",
+									"    var body = pm.response.json();",
+									"    pm.expect(body).to.have.property('access_token');",
+									"    pm.expect(body.scope).to.eql('dcr_admin');",
+									"    ",
+									"    pm.environment.set('access_token', body.access_token);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{clientSecret}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{clientId}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "grant_type",
+									"value": "client_credentials",
+									"type": "text"
+								},
+								{
+									"key": "scope",
+									"value": "dcr_admin",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{tokenEndpoint}}",
+							"host": [
+								"{{tokenEndpoint}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Register new client",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Has default attributes\", function () {",
+									"    var body = pm.response.json();",
+									"    pm.expect(body.client_name).to.eql('client_request_uri');",
+									"",
+									"    pm.expect(body).to.have.property('client_id');",
+									"    pm.expect(body).to.have.property('client_secret');",
+									"    ",
+									"    pm.environment.set('ro_client_id', body.client_id);",
+									"    ",
+									"    pm.environment.set('registrationAccessToken', body.registration_access_token);",
+									"    pm.environment.set('registrationClientUri', body.registration_client_uri);",
+									"});",
+									"",
+									"// wait for sync process",
+									"setTimeout(function(){}, 6000);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"client_name\":\"client_request_uri\",\n    \"redirect_uris\": [\"https://op-test:60001/authz_cb\"],\n    \"application_type\": \"web\",\n    \"contacts\": [\"roland@example.com\"],\n    \"response_types\": [\"code\",\"token\",\"id_token\"],\n    \"grant_types\": [\"authorization_code\",\"implicit\",\"password\"],\n    \"scope\": \"openid\",\n    \"post_logout_redirect_uris\": [\"https://op-test:60001/logout\"],\n    \"request_uris\": [\"https://op-test:60001/request/uri\"],\n    \"token_endpoint_auth_method\": \"client_secret_basic\",\n    \"jwks\": {\n        \"keys\": [\n            {\n            \t\"use\": \"sig\",\n                \"kid\": \"rsa-signature\",\n                \"kty\": \"RSA\",\n                \"e\": \"AQAB\",\n                \"n\": \"4-iLfs52Ta-7s3W_X4-E-f8SwigNhOqigF0Mjoce8mWTQGjS9U1kOuSJKnS9c4gf5vZhBB8iGkufMDvl5nwB0JgcihG6QUiN1NT8WPasJLjRTYQmJNCIYBac0oSZfHIUq8C4kmbFbWqXdp3uB-0l9qalD_HlckBt6lJ4VEb-ntbDpWgQnSxtRDzPZgH_kqJ3sNGnXnd5uNcG1W9v0IC-Wz1-kZ1eFM9-HqfnhGLr4yOr1sSeRQTJUaT12ixSKwn7qBJvnSSUlevIao-Zje2wnvTGVAgsEIuGulw0KWH9hLnYecyTPf3YR7v9sv8ff1qpn0LOmOWOfXYvXqteEcdh9w\"\n            }\n        ]\n    }\n}"
+						},
+						"url": {
+							"raw": "{{registrationEndpoint}}",
+							"host": [
+								"{{registrationEndpoint}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "With forbidden request_uri parameters",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 302\", function () {",
+									"    pm.response.to.have.status(302);",
+									"});",
+									"",
+									"pm.test(\"Should be redirected\", function () {",
+									"    pm.response.to.be.redirection;",
+									"    pm.response.to.be.header('Content-Length', '0');",
+									"    pm.response.to.have.header('Location');",
+									"});",
+									"",
+									"pm.test(\"Should be a location error\", function() {",
+									"    var location = postman.getResponseHeader('Location');",
+									"    let domain = pm.environment.get(\"domain\");",
+									"    ",
+									"    tests['Redirect to redirect_uri'] = location.startsWith(\"https://op-test:60001/authz_cb?error\");",
+									"    tests['Contains an error query-parameter'] = location.includes('error=invalid_request_uri');",
+									"    tests['Contains an error description query-parameter'] = location.includes('error_description=The+request_uri+MUST+match+the+registered+URL+for+this+application');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{authorizationEndpoint}}?response_type=code&client_id={{ro_client_id}}&redirect_uri=https://op-test:60001/authz_cb&state=1234-5678-9876&scope=openid&request_uri=https://somewhere",
+							"host": [
+								"{{authorizationEndpoint}}"
+							],
+							"query": [
+								{
+									"key": "response_type",
+									"value": "code"
+								},
+								{
+									"key": "client_id",
+									"value": "{{ro_client_id}}"
+								},
+								{
+									"key": "redirect_uri",
+									"value": "https://op-test:60001/authz_cb"
+								},
+								{
+									"key": "state",
+									"value": "1234-5678-9876"
+								},
+								{
+									"key": "scope",
+									"value": "openid"
+								},
+								{
+									"key": "request_uri",
+									"value": "https://somewhere"
 								}
 							]
 						}

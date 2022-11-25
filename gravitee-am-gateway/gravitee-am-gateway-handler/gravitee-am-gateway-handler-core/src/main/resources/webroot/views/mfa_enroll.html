@@ -142,7 +142,7 @@
             <!-- END OF STEP 2 -->
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
             <div class="section">
-                <button type="submit" name="user_mfa_enrollment" value="false" class="button secondary" th:text="#{mfa_enroll.button.skip}"></button>
+                <button th:if="${mfa_force_enrollment == false}" type="submit" name="user_mfa_enrollment" value="false" class="button secondary" th:text="#{mfa_enroll.button.skip}"></button>
                 <a id="previous" class="hide" href="#"><span class="icons">arrow_back</span><span th:text="#{mfa_enroll.button.back}"/></a>
             </div>
         </form>

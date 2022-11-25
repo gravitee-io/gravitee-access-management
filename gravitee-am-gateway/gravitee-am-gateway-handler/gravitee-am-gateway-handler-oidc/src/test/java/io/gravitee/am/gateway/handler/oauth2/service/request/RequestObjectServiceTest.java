@@ -22,12 +22,18 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.PlainJWT;
 import com.nimbusds.jwt.SignedJWT;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestObjectException;
+import io.gravitee.am.common.exception.oauth2.InvalidRequestUriException;
 import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
 import io.gravitee.am.gateway.handler.oidc.service.request.RequestObjectService;
 import io.gravitee.am.gateway.handler.oidc.service.request.impl.RequestObjectServiceImpl;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.model.oidc.OIDCSettings;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
+import io.vertx.reactivex.ext.web.client.HttpRequest;
+import io.vertx.reactivex.ext.web.client.HttpResponse;
+import io.vertx.reactivex.ext.web.client.WebClient;
 import net.minidev.json.JSONObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -36,8 +42,15 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.text.ParseException;
+import java.util.List;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -52,6 +65,12 @@ public class RequestObjectServiceTest {
 
     @Mock
     private JWEService jweService;
+
+    @Mock
+    private Domain domain;
+
+    @Mock
+    private WebClient webClient;
 
     @Test
     public void shouldNotReadRequestObject_plainJwt() {
@@ -79,5 +98,104 @@ public class RequestObjectServiceTest {
         TestObserver<JWT> testObserver = requestObjectService.readRequestObject(request, client, false).test();
         testObserver.assertNotComplete();
         testObserver.assertError(InvalidRequestObjectException.class);
+    }
+
+    @Test
+    public void shouldReadRequestObjectFromURI_URL_notRestricted() throws ParseException {
+        Client client = new Client();
+        String request = "https://somewhere";
+
+        final OIDCSettings oidcDomainSettings = new OIDCSettings();
+        oidcDomainSettings.setRequestUris(null);
+        when(domain.getOidc()).thenReturn(oidcDomainSettings);
+
+        final HttpRequest httpRequest = mock(HttpRequest.class);
+        final HttpResponse httpResponse = mock(HttpResponse.class);
+        when(httpResponse.bodyAsString()).thenReturn("request_uri_payload");
+        when(httpRequest.rxSend()).thenReturn(Single.just(httpResponse));
+        when(webClient.getAbs(any())).thenReturn(httpRequest);
+
+        JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.parse("NONE"));
+        JSONObject jsonObject = new JSONObject();
+        SignedJWT signedJWT = new SignedJWT(jwsHeader,  JWTClaimsSet.parse(jsonObject));
+
+        when(jweService.decrypt(anyString(),anyBoolean())).thenReturn(Single.just(signedJWT));
+
+        TestObserver<JWT> testObserver = requestObjectService.readRequestObjectFromURI(request, client).test();
+        testObserver.awaitTerminalEvent();
+        // JSON return is invalid but the test is a success as we want to check
+        // the call to the Http service target by the request_uri
+        testObserver.assertError(InvalidRequestObjectException.class);
+
+        verify(webClient).getAbs(anyString());
+        verify(jweService).decrypt(argThat(json -> json.equals("request_uri_payload")),anyBoolean());
+    }
+
+
+    @Test
+    public void shouldReadRequestObjectFromURI_URL_restrictedAtDomainLevel() throws ParseException {
+        Client client = new Client();
+        String request = "https://somewhere";
+
+        final OIDCSettings oidcDomainSettings = new OIDCSettings();
+        oidcDomainSettings.setRequestUris(List.of("https://authorizedUrls"));
+        when(domain.getOidc()).thenReturn(oidcDomainSettings);
+
+        TestObserver<JWT> testObserver = requestObjectService.readRequestObjectFromURI(request, client).test();
+        testObserver.awaitTerminalEvent();
+        testObserver.assertError(InvalidRequestUriException.class);
+
+        verify(webClient, never()).getAbs(any());
+        verify(jweService, never()).decrypt(any(),anyBoolean());
+    }
+
+    @Test
+    public void shouldReadRequestObjectFromURI_URL_restrictedAtAppLevel() throws ParseException {
+        Client client = new Client();
+        client.setRequestUris(List.of("http://authUris"));
+        String request = "https://somewhere";
+
+        final OIDCSettings oidcDomainSettings = new OIDCSettings();
+        oidcDomainSettings.setRequestUris(List.of("https://somewhere"));
+        when(domain.getOidc()).thenReturn(oidcDomainSettings);
+
+        TestObserver<JWT> testObserver = requestObjectService.readRequestObjectFromURI(request, client).test();
+        testObserver.awaitTerminalEvent();
+        testObserver.assertError(InvalidRequestUriException.class);
+
+        verify(webClient, never()).getAbs(any());
+        verify(jweService, never()).decrypt(any(),anyBoolean());
+    }
+
+
+    @Test
+    public void shouldReadRequestObjectFromURI_URL_allowedUrl() throws ParseException {
+        Client client = new Client();
+        String request = "https://somewhere/uri?param=value";
+
+        final OIDCSettings oidcDomainSettings = new OIDCSettings();
+        oidcDomainSettings.setRequestUris(List.of("https://somewhere"));
+        when(domain.getOidc()).thenReturn(oidcDomainSettings);
+
+        final HttpRequest httpRequest = mock(HttpRequest.class);
+        final HttpResponse httpResponse = mock(HttpResponse.class);
+        when(httpResponse.bodyAsString()).thenReturn("request_uri_payload");
+        when(httpRequest.rxSend()).thenReturn(Single.just(httpResponse));
+        when(webClient.getAbs(any())).thenReturn(httpRequest);
+
+        JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.parse("NONE"));
+        JSONObject jsonObject = new JSONObject();
+        SignedJWT signedJWT = new SignedJWT(jwsHeader,  JWTClaimsSet.parse(jsonObject));
+
+        when(jweService.decrypt(anyString(),anyBoolean())).thenReturn(Single.just(signedJWT));
+
+        TestObserver<JWT> testObserver = requestObjectService.readRequestObjectFromURI(request, client).test();
+        testObserver.awaitTerminalEvent();
+        // JSON return is invalid but the test is a success as we want to check
+        // the call to the Http service target by the request_uri
+        testObserver.assertError(InvalidRequestObjectException.class);
+
+        verify(webClient).getAbs(anyString());
+        verify(jweService).decrypt(argThat(json -> json.equals("request_uri_payload")),anyBoolean());
     }
 }

@@ -36,7 +36,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.UUID;
 
 import static java.time.ZoneOffset.UTC;
 
@@ -543,6 +549,42 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
         testObserverP1.assertComplete();
         testObserverP1.assertNoErrors();
         testObserverP1.assertValue(users -> users.getData().size() == 1);
+    }
+
+    @Test
+    public void testScimSearch_byUsername_NotPaged() {
+        final String organization = "organization";
+        // create user
+        User user1 = new User();
+        user1.setReferenceType(ReferenceType.ORGANIZATION);
+        user1.setReferenceId(organization);
+        user1.setUsername("testUsername1");
+        organizationUserRepository.create(user1).blockingGet();
+
+        User user2 = new User();
+        user2.setReferenceType(ReferenceType.ORGANIZATION);
+        user2.setReferenceId(organization);
+        user2.setUsername("testUsername2");
+        organizationUserRepository.create(user2).blockingGet();
+
+        User user3 = new User();
+        user3.setReferenceType(ReferenceType.ORGANIZATION);
+        user3.setReferenceId(organization);
+        user3.setUsername("testUsername3");
+        organizationUserRepository.create(user3).blockingGet();
+
+        // fetch user (page 0)
+        FilterCriteria criteria = new FilterCriteria();
+        criteria.setFilterName("userName");
+        criteria.setFilterValue("testUsername");
+        criteria.setOperator("sw");
+        criteria.setQuoteFilterValue(true);
+        final TestSubscriber<User> testObserverP0 = organizationUserRepository.search(ReferenceType.ORGANIZATION, organization, criteria).test();
+        testObserverP0.awaitTerminalEvent();
+
+        testObserverP0.assertComplete();
+        testObserverP0.assertNoErrors();
+        testObserverP0.assertValueCount(3);
     }
 
     @Test
