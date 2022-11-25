@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.user.password;
 
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.ErrorHandler;
+import io.gravitee.am.gateway.handler.root.resources.endpoint.user.register.RegisterSubmissionEndpoint;
 import io.gravitee.am.gateway.handler.root.service.response.ResetPasswordResponse;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.model.User;
@@ -30,6 +31,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.core.env.Environment;
 
 import java.util.Collections;
 
@@ -48,12 +50,15 @@ public class ResetPasswordSubmissionEndpointTest extends RxWebTestBase {
 
     @Mock
     private UserService userService;
+    @Mock
+    private Environment environment;
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
+        when(environment.getProperty(eq(ResetPasswordSubmissionEndpoint.GATEWAY_ENDPOINT_RESET_PWD_KEEP_PARAMS), any(), eq(true))).thenReturn(true);
 
-        ResetPasswordSubmissionEndpoint resetPasswordSubmissionEndpoint = new ResetPasswordSubmissionEndpoint(userService);
+        ResetPasswordSubmissionEndpoint resetPasswordSubmissionEndpoint = new ResetPasswordSubmissionEndpoint(userService, environment);
         router.route(HttpMethod.POST, "/resetPassword")
                 .handler(BodyHandler.create())
                 .handler(resetPasswordSubmissionEndpoint)
@@ -117,7 +122,7 @@ public class ResetPasswordSubmissionEndpointTest extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertEquals("http://custom_uri", location);
+                    assertEquals("http://custom_uri?client_id=client-id", location);
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }

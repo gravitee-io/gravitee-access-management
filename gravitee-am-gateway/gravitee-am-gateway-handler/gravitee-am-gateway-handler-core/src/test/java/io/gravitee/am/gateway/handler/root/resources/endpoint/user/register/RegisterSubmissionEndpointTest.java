@@ -33,6 +33,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.core.env.Environment;
 
 import java.util.Collections;
 
@@ -53,14 +54,17 @@ public class RegisterSubmissionEndpointTest extends RxWebTestBase {
     @Mock
     private Domain domain;
 
+    @Mock
+    private Environment environment;
+
     @Override
     public void setUp() throws Exception {
         super.setUp();
-
+        when(environment.getProperty(eq(RegisterSubmissionEndpoint.GATEWAY_ENDPOINT_REGISTRATION_KEEP_PARAMS), any(), eq(true))).thenReturn(true);
         router.route(HttpMethod.POST, "/register")
                 .handler(BodyHandler.create())
                 .handler(new RegisterProcessHandler(userService, domain))
-                .handler(new RegisterSubmissionEndpoint())
+                .handler(new RegisterSubmissionEndpoint(environment))
                 .failureHandler(new RegisterFailureHandler());
     }
 
@@ -113,7 +117,7 @@ public class RegisterSubmissionEndpointTest extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertEquals("http://custom_uri", location);
+                    assertEquals("http://custom_uri?client_id=client-id", location);
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
