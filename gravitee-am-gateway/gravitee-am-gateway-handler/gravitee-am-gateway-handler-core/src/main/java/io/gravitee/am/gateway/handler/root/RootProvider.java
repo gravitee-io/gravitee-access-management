@@ -276,7 +276,11 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(policyChainHandler.create(ExtensionPoint.ROOT));
 
         // Identifier First Login route
-        rootRouter.route(PATH_IDENTIFIER_FIRST_LOGIN)
+        rootRouter.get(PATH_IDENTIFIER_FIRST_LOGIN)
+                .handler(clientRequestParseHandler)
+                .handler(new LoginSocialAuthenticationHandler(identityProviderManager, jwtService, certificateManager))
+                .handler(new IdentifierFirstLoginEndpoint(thymeleafTemplateEngine, domain, botDetectionManager));
+        rootRouter.post(PATH_IDENTIFIER_FIRST_LOGIN)
                 .handler(clientRequestParseHandler)
                 .handler(botDetectionHandler)
                 .handler(new LoginSocialAuthenticationHandler(identityProviderManager, jwtService, certificateManager))
