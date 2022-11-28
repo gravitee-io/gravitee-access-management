@@ -246,7 +246,6 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
         if (accountSettings != null && accountSettings.isLoginAttemptsDetectionEnabled()) {
             LoginAttemptCriteria criteria = new LoginAttemptCriteria.Builder()
                     .domain(domain.getId())
-                    .client(client.getId())
                     .identityProvider(source)
                     .username(username)
                     .build();
@@ -271,7 +270,6 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
         if (accountSettings != null && accountSettings.isLoginAttemptsDetectionEnabled()) {
             LoginAttemptCriteria criteria = new LoginAttemptCriteria.Builder()
                     .domain(domain.getId())
-                    .client(client.getId())
                     .identityProvider(source)
                     .username(username)
                     .build();
@@ -284,7 +282,7 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
                 // but we can't control custom IdP that's why we have to check user existence
                 return userService.findByDomainAndUsernameAndSource(criteria.domain(), criteria.username(), criteria.identityProvider())
                         .flatMapCompletable(user -> {
-                            return loginAttemptService.loginFailed(criteria, accountSettings)
+                            return loginAttemptService.loginFailed(criteria, accountSettings, client.getId())
                                     .flatMapCompletable(loginAttempt -> {
                                         if (loginAttempt.isAccountLocked(accountSettings.getMaxLoginAttempts())) {
                                             return userAuthenticationService.lockAccount(criteria, accountSettings, client, user);

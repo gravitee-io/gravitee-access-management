@@ -150,7 +150,7 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
                     }
                     return Single.just(user);
                 })
-                .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).type(EventType.USER_LOCKED).domain(criteria.domain()).client(criteria.client()).principal(null).user(user1)))
+                .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).type(EventType.USER_LOCKED).domain(criteria.domain()).client(client.getId()).principal(null).user(user1)))
                 .ignoreElement();
     }
 

@@ -50,6 +50,10 @@ public abstract class AbstractManagementMongoRepository extends AbstractMongoRep
     @Value("${management.mongodb.ensureIndexOnStart:true}")
     private boolean ensureIndexOnStart;
 
+    protected final boolean ensureIndexOnStart() {
+        return ensureIndexOnStart;
+    }
+
     protected void createIndex(MongoCollection<?> collection, Document document) {
         super.createIndex(collection, document, new IndexOptions(), ensureIndexOnStart);
     }

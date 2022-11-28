@@ -29,6 +29,8 @@ import io.reactivex.Observable;
 import io.reactivex.Single;
 import org.bson.Document;
 import org.bson.conversions.Bson;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -45,7 +47,8 @@ import static com.mongodb.client.model.Filters.eq;
  */
 @Component
 public class MongoLoginAttemptRepository extends AbstractManagementMongoRepository implements LoginAttemptRepository {
-
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private static final String OLD_INDEX_DOMAIN_CLIENT_USERNAME = "domain_1_clientId_1_username_1";
     private static final String FIELD_IDP = "identityProvider";
     private static final String FIELD_USERNAME = "username";
     private static final String FIELD_RESET_TIME = "expireAt";
@@ -55,6 +58,21 @@ public class MongoLoginAttemptRepository extends AbstractManagementMongoReposito
     public void init() {
         loginAttemptsCollection = mongoOperations.getCollection("login_attempts", LoginAttemptMongo.class);
         super.init(loginAttemptsCollection);
+
+        if (ensureIndexOnStart()) {
+            Observable.fromPublisher(loginAttemptsCollection.listIndexes())
+                    .map(document -> document.getString("name"))
+                    .flatMapCompletable(indexName -> {
+                        if (OLD_INDEX_DOMAIN_CLIENT_USERNAME.equals(indexName)) {
+                            return Completable.fromPublisher(loginAttemptsCollection.dropIndex(indexName));
+                        } else {
+                            return Completable.complete();
+                        }
+                    })
+                    .doOnError(error -> logger.warn("Index {} can't be removed from collection login_attempts", OLD_INDEX_DOMAIN_CLIENT_USERNAME, error))
+                    .subscribe();
+        }
+
         super.createIndex(loginAttemptsCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT, 1).append(FIELD_USERNAME, 1));
 
         // expire after index
@@ -99,10 +117,6 @@ public class MongoLoginAttemptRepository extends AbstractManagementMongoReposito
         // domain
         if (criteria.domain() != null && !criteria.domain().isEmpty()) {
             filters.add(eq(FIELD_DOMAIN, criteria.domain()));
-        }
-        // client
-        if (criteria.client() != null && !criteria.client().isEmpty()) {
-            filters.add(eq(FIELD_CLIENT, criteria.client()));
         }
         // idp
         if (criteria.identityProvider() != null && !criteria.identityProvider().isEmpty()) {

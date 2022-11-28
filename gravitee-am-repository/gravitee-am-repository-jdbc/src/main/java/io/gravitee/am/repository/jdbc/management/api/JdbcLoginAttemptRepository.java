@@ -77,10 +77,6 @@ public class JdbcLoginAttemptRepository extends AbstractJdbcRepository implement
         if (criteria.domain() != null && !criteria.domain().isEmpty()) {
             whereClause = whereClause.and(where("domain").is(criteria.domain()));
         }
-        // client
-        if (criteria.client() != null && !criteria.client().isEmpty()) {
-            whereClause = whereClause.and(where("client").is(criteria.client()));
-        }
         // idp
         if (criteria.identityProvider() != null && !criteria.identityProvider().isEmpty()) {
             whereClause = whereClause.and(where("identity_provider").is(criteria.identityProvider()));

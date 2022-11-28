@@ -50,7 +50,7 @@ public class LoginAttemptServiceImpl implements LoginAttemptService {
     private LoginAttemptRepository loginAttemptRepository;
 
     @Override
-    public Single<LoginAttempt> loginFailed(LoginAttemptCriteria criteria, AccountSettings accountSettings) {
+    public Single<LoginAttempt> loginFailed(LoginAttemptCriteria criteria, AccountSettings accountSettings, String client) {
         LOGGER.debug("Add login attempt for {}", criteria);
         return loginAttemptRepository.findByCriteria(criteria)
                 .map(Optional::of)
@@ -68,7 +68,7 @@ public class LoginAttemptServiceImpl implements LoginAttemptService {
                         LoginAttempt loginAttempt = new LoginAttempt();
                         loginAttempt.setId(RandomString.generate());
                         loginAttempt.setDomain(criteria.domain());
-                        loginAttempt.setClient(criteria.client());
+                        loginAttempt.setClient(client);
                         loginAttempt.setIdentityProvider(criteria.identityProvider());
                         loginAttempt.setUsername(criteria.username());
                         loginAttempt.setAttempts(1);

@@ -22,23 +22,17 @@ package io.gravitee.am.repository.management.api.search;
 public class LoginAttemptCriteria {
 
     private String domain;
-    private String client;
     private String identityProvider;
     private String username;
 
     public LoginAttemptCriteria(Builder builder) {
         domain = builder.domain;
-        client = builder.client;
         identityProvider = builder.identityProvider;
         username = builder.username;
     }
 
     public String domain() {
         return domain;
-    }
-
-    public String client() {
-        return client;
     }
 
     public String identityProvider() {
@@ -51,17 +45,11 @@ public class LoginAttemptCriteria {
 
     public static class Builder {
         private String domain;
-        private String client;
         private String identityProvider;
         private String username;
 
         public Builder domain(String domain) {
             this.domain = domain;
-            return this;
-        }
-
-        public Builder client(String client) {
-            this.client = client;
             return this;
         }
 
@@ -84,7 +72,6 @@ public class LoginAttemptCriteria {
     public String toString() {
         return "{\"_class\":\"LoginAttemptCriteria\", " +
                 "\"domain\":" + (domain == null ? "null" : "\"" + domain + "\"") + ", " +
-                "\"client\":" + (client == null ? "null" : "\"" + client + "\"") + ", " +
                 "\"identityProvider\":" + (identityProvider == null ? "null" : "\"" + identityProvider + "\"") + ", " +
                 "\"username\":" + (username == null ? "null" : "\"" + username + "\"") +
                 "}";

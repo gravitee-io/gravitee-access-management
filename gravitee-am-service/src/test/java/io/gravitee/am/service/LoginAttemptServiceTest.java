@@ -47,7 +47,6 @@ public class LoginAttemptServiceTest {
     @Test
     public void shouldCreateUser_accountLockFirstConnection() {
         final LoginAttemptCriteria loginAttemptCriteria = new LoginAttemptCriteria.Builder()
-                .client("client-1")
                 .domain("domain-1")
                 .username("user-1")
                 .identityProvider("idp-1")
@@ -64,7 +63,7 @@ public class LoginAttemptServiceTest {
         when(loginAttemptRepository.findByCriteria(loginAttemptCriteria)).thenReturn(Maybe.just(loginAttempt));
         when(loginAttemptRepository.update(loginAttempt)).thenReturn(Single.just(loginAttempt));
 
-        TestObserver testObserver = loginAttemptService.loginFailed(loginAttemptCriteria, accountSettings).test();
+        TestObserver testObserver = loginAttemptService.loginFailed(loginAttemptCriteria, accountSettings, "client-1").test();
         testObserver.awaitTerminalEvent();
         testObserver.assertNoErrors();
     }
@@ -72,7 +71,6 @@ public class LoginAttemptServiceTest {
     @Test
     public void shouldUpdateUser_accountLockAlreadyRegistered() {
         final LoginAttemptCriteria loginAttemptCriteria = new LoginAttemptCriteria.Builder()
-                .client("client-1")
                 .domain("domain-1")
                 .username("user-1")
                 .identityProvider("idp-1")
@@ -89,7 +87,7 @@ public class LoginAttemptServiceTest {
         when(loginAttemptRepository.findByCriteria(loginAttemptCriteria)).thenReturn(Maybe.just(loginAttempt));
         when(loginAttemptRepository.update(loginAttempt)).thenReturn(Single.just(loginAttempt));
 
-        TestObserver testObserver = loginAttemptService.loginFailed(loginAttemptCriteria, accountSettings).test();
+        TestObserver testObserver = loginAttemptService.loginFailed(loginAttemptCriteria, accountSettings, "client-1").test();
         testObserver.awaitTerminalEvent();
         testObserver.assertNoErrors();
     }

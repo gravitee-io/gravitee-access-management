@@ -92,7 +92,7 @@ public class LoginAttemptHandler implements Handler<RoutingContext> {
                 .map(identityProviderManager::getIdentityProvider)
                 .filter(Objects::nonNull).filter(not(IdentityProvider::isExternal))
                 .map(IdentityProvider::getId)
-                .map(idp -> new Builder().domain(domain.getId()).client(client.getId()).username(username).identityProvider(idp))
+                .map(idp -> new Builder().domain(domain.getId()).username(username).identityProvider(idp))
                 .map(Builder::build)
                 .map(criteria -> getLoginAttempt(accountSettings, criteria))
                 .findFirst().orElse(Maybe.empty());

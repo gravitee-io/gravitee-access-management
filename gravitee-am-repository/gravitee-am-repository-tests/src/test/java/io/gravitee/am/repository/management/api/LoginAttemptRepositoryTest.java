@@ -66,7 +66,6 @@ public class LoginAttemptRepositoryTest extends AbstractManagementTest {
         repository.create(unexpectedAttempt).blockingGet();
 
         TestObserver<LoginAttempt> testObserver = repository.findByCriteria(new LoginAttemptCriteria.Builder()
-                .client(attempt.getClient())
                 .domain(attempt.getDomain())
                 .username(attempt.getUsername())
                 .identityProvider(attempt.getIdentityProvider())
@@ -84,7 +83,6 @@ public class LoginAttemptRepositoryTest extends AbstractManagementTest {
         repository.create(attempt).blockingGet();
 
         TestObserver<LoginAttempt> testObserver = repository.findByCriteria(new LoginAttemptCriteria.Builder()
-                .client(attempt.getClient())
                 .domain("unknown")
                 .username(attempt.getUsername())
                 .identityProvider(attempt.getIdentityProvider())
@@ -117,7 +115,6 @@ public class LoginAttemptRepositoryTest extends AbstractManagementTest {
 
         // delete one of LoginAttempt
         TestObserver<Void> deleteObserver = repository.delete(new LoginAttemptCriteria.Builder()
-                .client(attempt.getClient())
                 .domain(attempt.getDomain())
                 .username(attempt.getUsername())
                 .identityProvider(attempt.getIdentityProvider())

@@ -1,0 +1,19 @@
+databaseChangeLog:
+  - changeSet:
+      id: 3.15.15-update-login-attempt-indexes
+      author: GraviteeSource Team
+      changes:
+        ## login_attempts
+        ###################
+        - createIndex:
+            columns:
+              - column:
+                  name: domain
+              - column:
+                  name: username
+            indexName:  idx_login_attempts_domain_username
+            tableName:  login_attempts
+            unique:  false
+        -  dropIndex:
+             indexName:  idx_login_attempts_domain_client_username
+             tableName:  login_attempts

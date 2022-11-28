@@ -311,7 +311,6 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
                     // reset login attempts in case of reset password action
                     LoginAttemptCriteria criteria = new LoginAttemptCriteria.Builder()
                             .domain(user.getReferenceId())
-                            .client(user.getClient())
                             .username(user.getUsername())
                             .build();
                     return loginAttemptService.reset(criteria);
@@ -357,7 +356,6 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
                                 // We also make sure to make it at lock not to interfere with LoginAttempt if active
                                 LoginAttemptCriteria criteria = new LoginAttemptCriteria.Builder()
                                         .domain(user.getReferenceId())
-                                        .client(user.getClient())
                                         .username(user.getUsername())
                                         .build();
                                 return loginAttemptService.reset(criteria).andThen(userService.update(user));
@@ -379,7 +377,6 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
                     // reset login attempts and update user
                     LoginAttemptCriteria criteria = new LoginAttemptCriteria.Builder()
                             .domain(user.getReferenceId())
-                            .client(user.getClient())
                             .username(user.getUsername())
                             .build();
                     return loginAttemptService.reset(criteria).andThen(userService.update(user));

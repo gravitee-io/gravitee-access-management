@@ -30,7 +30,7 @@ public interface LoginAttemptService {
 
     Completable loginSucceeded(LoginAttemptCriteria criteria);
 
-    Single<LoginAttempt> loginFailed(LoginAttemptCriteria criteria, AccountSettings accountSettings);
+    Single<LoginAttempt> loginFailed(LoginAttemptCriteria criteria, AccountSettings accountSettings, String client);
 
     Completable reset(LoginAttemptCriteria criteria);
 

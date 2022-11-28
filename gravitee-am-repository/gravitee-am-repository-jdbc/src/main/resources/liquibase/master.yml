@@ -61,3 +61,5 @@ databaseChangeLog:
       - file: liquibase/changelogs/v3_15_1/add-system-identity-provider.yml
   - include:
       - file: liquibase/changelogs/v3_15_1/add-system-reporter.yml
+  - include:
+      - file: liquibase/changelogs/v3_15_15/update-login-attempt-indexes.yml

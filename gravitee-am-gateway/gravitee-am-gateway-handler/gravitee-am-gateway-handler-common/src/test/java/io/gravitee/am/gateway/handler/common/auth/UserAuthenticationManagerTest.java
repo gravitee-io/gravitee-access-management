@@ -384,7 +384,7 @@ public class UserAuthenticationManagerTest {
 
         observer.assertError(BadCredentialsException.class);
         verify(userService, never()).findByDomainAndUsernameAndSource(anyString(), anyString(), anyString());
-        verify(loginAttemptService, never()).loginFailed(any(), any());
+        verify(loginAttemptService, never()).loginFailed(any(), any(), any());
         verify(userAuthenticationService, never()).lockAccount(any(), any(), any(), any());
         verify(eventManager, times(1)).publishEvent(eq(AuthenticationEvent.FAILURE), any());
     }
@@ -438,7 +438,7 @@ public class UserAuthenticationManagerTest {
 
         observer.assertError(BadCredentialsException.class);
         verify(userService, times(1)).findByDomainAndUsernameAndSource(anyString(), anyString(), anyString());
-        verify(loginAttemptService, never()).loginFailed(any(), any());
+        verify(loginAttemptService, never()).loginFailed(any(), any(), any());
         verify(userAuthenticationService, never()).lockAccount(any(), any(), any(), any());
         verify(eventManager, times(1)).publishEvent(eq(AuthenticationEvent.FAILURE), any());
     }

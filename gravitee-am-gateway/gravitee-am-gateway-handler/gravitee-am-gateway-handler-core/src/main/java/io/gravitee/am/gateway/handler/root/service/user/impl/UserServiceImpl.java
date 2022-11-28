@@ -323,7 +323,6 @@ public class UserServiceImpl implements UserService {
                 .flatMap(user1 -> {
                     LoginAttemptCriteria criteria = new LoginAttemptCriteria.Builder()
                             .domain(user1.getReferenceId())
-                            .client(user1.getClient())
                             .username(user1.getUsername())
                             .build();
                     return loginAttemptService.reset(criteria).andThen(Single.just(user1));
