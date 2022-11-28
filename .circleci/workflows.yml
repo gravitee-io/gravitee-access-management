@@ -160,55 +160,7 @@ commands:
           channel: C0336B2E96K
           event: pass
           template: basic_success_1
-  add-docker-image-in-snyk:
-    parameters:
-      docker-image-name:
-        type: string
-      version:
-        type: string
-    steps:
-      - run:
-          name: Add << parameters.docker-image-name >> << parameters.version >> to Snyk
-          command: |
-              curl --fail \
-                   --include \
-                   --request POST \
-                   --header "Content-Type: application/json; charset=utf-8" \
-                   --header "Authorization: token ${SNYK_API_KEY}" \
-                   --data-binary "{
-                \"target\": {
-                  \"name\": \"graviteeio/<< parameters.docker-image-name >>:<< parameters.version >>\"
-                }
-              }" \
-              "https://api.snyk.io/api/v1/org/${SNYK_ORG_ID}/integrations/${SNYK_INTEGRATION_ID}/import"
-  notify-snyk-result:
-    steps:
-      - slack/notify:
-          channel: 'am-ci-notifications'
-          custom: |
-            {
-              "blocks": [
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "```${SLACK_MESSAGE}```"
-                 },
-                 "accessory": {
-                   "type": "button",
-                   "text": {
-                     "type": "plain_text",
-                     "text": "Click here for job details",
-                     "emoji": true
-                   },
-                   "value": "click_me_123",
-                   "url": "${CIRCLE_BUILD_URL}",
-                   "action_id": "button-action"
-                  }
-                }
-              ]
-            }
-          event: always
+
   mvn_git_commit_id:
     steps:
       - run:
@@ -684,40 +636,44 @@ jobs:
             export TAG=$(echo "${CIRCLE_BRANCH:0:15}-${CIRCLE_SHA1:0:7}-$(date +%s)" | sed -E 's/[~^]+//g' | sed -E 's/[^a-zA-Z0-9]+/-/g' | sed -E 's/^-+|-+$//g' | tr A-Z a-z)
             echo "export TAG=$TAG" >> $BASH_ENV
             echo $TAG > /tmp/docker-tag.txt
-            SLACK_MESSAGE="AM Docker Images Snyk Scan Job has not been executed"
-            echo "export SLACK_MESSAGE='${SLACK_MESSAGE}'" >> $BASH_ENV
+
+            # create a latest tag for the given branch to avoid flooding SNYK project
+            export TAG_LATEST=$(echo "${CIRCLE_BRANCH:0:15}-latest")
+            echo "export TAG_LATEST=$TAG_LATEST" >> $BASH_ENV
       - run:
           name: Build Management API Docker Image to Azure Registry
           when: always
           command: |
             export AM_VERSION=$(mvn -s /tmp/.gravitee.settings.xml -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
             export IMAGE_TAG=graviteeio.azurecr.io/am-management-api:${TAG}
+            export IMAGE_TAG_LATEST=graviteeio.azurecr.io/am-management-api:${TAG_LATEST}
             echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
-            docker build -f docker/management-api/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} /tmp
-            IMAGE1=${IMAGE_TAG}
-            echo "export IMAGE1='${IMAGE1}'" >> $BASH_ENV
+            echo "export IMAGE_TAG_LATEST=$IMAGE_TAG_LATEST" >> $BASH_ENV
+            docker build -f docker/management-api/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} -t ${IMAGE_TAG_LATEST} /tmp
       - run:
           name: Push API Docker image
           when: always
           command: |
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
             docker push ${IMAGE_TAG}
+            docker push ${IMAGE_TAG_LATEST}
       - run:
           name: Build Gateway Docker Image to Azure Registry
           when: always
           command: |
             export AM_VERSION=$(mvn -s /tmp/.gravitee.settings.xml -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
             export IMAGE_TAG=graviteeio.azurecr.io/am-gateway:${TAG}
+            export IMAGE_TAG_LATEST=graviteeio.azurecr.io/am-gateway:${TAG_LATEST}
             echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
-            docker build -f docker/gateway/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} /tmp
-            IMAGE2=${IMAGE_TAG}
-            echo "export IMAGE2='${IMAGE2}'" >> $BASH_ENV
+            echo "export IMAGE_TAG_LATEST=$IMAGE_TAG_LATEST" >> $BASH_ENV
+            docker build -f docker/gateway/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} -t ${IMAGE_TAG_LATEST} /tmp
       - run:
           name: Push Gateway Docker image
           when: always
           command: |
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
             docker push ${IMAGE_TAG}
+            docker push ${IMAGE_TAG_LATEST}
       - run:
           name: Build Web UI Docker Image to Azure Registry
           when: always
@@ -726,50 +682,22 @@ jobs:
             cp -fr docker/management-ui/run.sh /tmp/
             export AM_VERSION=$(mvn -s /tmp/.gravitee.settings.xml -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
             export IMAGE_TAG=graviteeio.azurecr.io/am-management-ui:${TAG}
+            export IMAGE_TAG_LATEST=graviteeio.azurecr.io/am-management-ui:${TAG_LATEST}
             echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
-            docker build -f docker/management-ui/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} /tmp
-            docker tag ${IMAGE_TAG} ${IMAGE_TAG}-ee
-            IMAGE3=${IMAGE_TAG}
-            SLACK_MESSAGE1="-----AM Docker Images Snyk Scan-----"
-            SLACK_MESSAGE2="Following images are scanned for application vulnerabilities"
-            SLACK_MESSAGE="${SLACK_MESSAGE1}\n${SLACK_MESSAGE2}\n\n${IMAGE1}\n${IMAGE2}\n${IMAGE3}"
-            echo "export SLACK_MESSAGE='${SLACK_MESSAGE}'" >> $BASH_ENV
-
-      - notify-snyk-result
+            echo "export IMAGE_TAG_LATEST=$IMAGE_TAG_LATEST" >> $BASH_ENV
+            docker build -f docker/management-ui/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} -t ${IMAGE_TAG_LATEST} /tmp
       - run:
           name: Push Web UI Docker image
           when: always
           command: |
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
             docker push ${IMAGE_TAG}
-            docker push "${IMAGE_TAG}-ee"
+            docker push ${IMAGE_TAG_LATEST}
       - persist_to_workspace:
           root: /tmp
           paths:
             - ./docker-tag.txt
-  add-docker-images-in-snyk:
-    docker:
-      - image: cimg/base:stable
-    resource_class: small
-    steps:
-      - keeper/env-export:
-          secret-url: keeper://s83JmReKpBZWjHdud6ZAlg/field/password
-          var-name: SNYK_API_KEY
-      - keeper/env-export:
-          secret-url: keeper://s83JmReKpBZWjHdud6ZAlg/custom_field/gravitee_am_org_id
-          var-name: SNYK_ORG_ID
-      - keeper/env-export:
-          secret-url: keeper://s83JmReKpBZWjHdud6ZAlg/custom_field/gravitee_am_dockerhub_integration_id
-          var-name: SNYK_INTEGRATION_ID
-      - add-docker-image-in-snyk:
-          docker-image-name: am-gateway
-          version: << pipeline.parameters.graviteeio_version >>
-      - add-docker-image-in-snyk:
-          docker-image-name: am-management-api
-          version: << pipeline.parameters.graviteeio_version >>
-      - add-docker-image-in-snyk:
-          docker-image-name: am-management-ui
-          version: << pipeline.parameters.graviteeio_version >>
+
   deploy-on-aks:
     docker:
       - image: mcr.microsoft.com/azure-cli:2.34.1
@@ -1388,16 +1316,6 @@ workflows:
           context: cicd-orchestrator
           requires:
             - build
-          filters:
-            branches:
-              only:
-                - master
-                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
-
-      - add-docker-images-in-snyk:
-          context: cicd-orchestrator
-          requires:
-            - publish-images-azure-registry
           filters:
             branches:
               only:
