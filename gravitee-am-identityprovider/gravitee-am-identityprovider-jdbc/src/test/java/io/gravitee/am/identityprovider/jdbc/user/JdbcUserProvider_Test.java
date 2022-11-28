@@ -87,17 +87,41 @@ public abstract class JdbcUserProvider_Test {
     public void shouldUpdate() {
         DefaultUser user = new DefaultUser("userToUpdate");
         user.setCredentials("password");
+        user.setEmail("userToUpdate@acme.fr");
         User createdUser = userProvider.create(user).blockingGet();
 
         DefaultUser updateUser = new DefaultUser("userToUpdate");
         updateUser.setCredentials("password2");
+        updateUser.setEmail("userToUpdate-email@acme.fr");
         userProvider.update(createdUser.getId(), updateUser).blockingGet();
 
         TestObserver<User> testObserver = userProvider.findByUsername("userToUpdate").test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
-        testObserver.assertValue(u -> "password2".equals(updateUser.getCredentials()));
+        testObserver.assertValue(u -> u.getCredentials() == null);
+        testObserver.assertValue(u -> "userToUpdate-email@acme.fr".equals(u.getEmail()));
+    }
+
+    @Test
+    public void shouldUpdate_notPassword() {
+        final String username = "userToUpdateNoPwd";
+        DefaultUser user = new DefaultUser(username);
+        user.setCredentials("password");
+        user.setEmail(username+"@acme.fr");
+        User createdUser = userProvider.create(user).blockingGet();
+
+        DefaultUser updateUser = new DefaultUser(username);
+        final String emailToUpdate = username + "-email@acme.fr";
+        updateUser.setEmail(emailToUpdate);
+        userProvider.update(createdUser.getId(), updateUser).blockingGet();
+
+        TestObserver<User> testObserver = userProvider.findByUsername(username).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertValue(u -> u.getCredentials() == null);
+        testObserver.assertValue(u -> emailToUpdate.equals(u.getEmail()));
     }
 
     @Test

@@ -481,6 +481,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         rootRouter.route(HttpMethod.GET, PATH_REGISTER)
                 .handler(clientRequestParseHandler)
                 .handler(registerAccessHandler)
+                .handler(new LoginSocialAuthenticationHandler(identityProviderManager, jwtService, certificateManager))
                 .handler(policyChainHandler.create(ExtensionPoint.PRE_REGISTER))
                 .handler(localeHandler)
                 .handler(new RegisterEndpoint(thymeleafTemplateEngine, domain, botDetectionManager));

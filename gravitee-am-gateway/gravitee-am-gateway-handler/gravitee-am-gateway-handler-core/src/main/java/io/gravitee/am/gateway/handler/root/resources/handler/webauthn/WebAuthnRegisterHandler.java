@@ -58,10 +58,7 @@ public class WebAuthnRegisterHandler extends WebAuthnHandler {
         setCredentialService(credentialService);
         setDomain(domain);
         this.webAuthn = webAuthn;
-        this.origin = (domain.getWebAuthnSettings() != null
-                && domain.getWebAuthnSettings().getOrigin() != null) ?
-                domain.getWebAuthnSettings().getOrigin() :
-                DEFAULT_ORIGIN;
+        this.origin = getOrigin(domain.getWebAuthnSettings());
     }
 
     @Override

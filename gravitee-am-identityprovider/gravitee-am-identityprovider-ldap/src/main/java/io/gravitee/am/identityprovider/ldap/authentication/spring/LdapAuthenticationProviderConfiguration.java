@@ -114,7 +114,7 @@ public class LdapAuthenticationProviderConfiguration {
         ConnectionConfig connectionConfig = new ConnectionConfig();
         connectionConfig.setConnectTimeout(Duration.ofMillis(configuration.getConnectTimeout()));
         connectionConfig.setResponseTimeout(Duration.ofMillis(configuration.getResponseTimeout()));
-        connectionConfig.setLdapUrl(configuration.getContextSourceUrl());
+        configureConnection(configuration.getContextSourceUrl(), connectionConfig);
         connectionConfig.setUseStartTLS(configuration.isUseStartTLS());
         BindConnectionInitializer connectionInitializer =
                 new BindConnectionInitializer(configuration.getContextSourceUsername(), new Credential(configuration.getContextSourcePassword()));
@@ -220,5 +220,14 @@ public class LdapAuthenticationProviderConfiguration {
         }
 
         throw new IllegalArgumentException("Unknown password encoder algorithm");
+    }
+
+    static void configureConnection(String connectionUrl, ConnectionConfig connectionConfig) {
+        var ldapUrl = connectionUrl.replace(",", " ");
+        if (ldapUrl.split("\\s+").length > 1) {
+            connectionConfig.setConnectionStrategy(new ActivePassiveConnectionStrategy());
+            ldapUrl = String.join(" ", ldapUrl.split("\\s+"));
+        }
+        connectionConfig.setLdapUrl(ldapUrl);
     }
 }

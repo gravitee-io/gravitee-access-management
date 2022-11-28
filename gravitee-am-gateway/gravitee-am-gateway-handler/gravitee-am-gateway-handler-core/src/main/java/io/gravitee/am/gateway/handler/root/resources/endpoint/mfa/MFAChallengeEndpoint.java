@@ -104,6 +104,7 @@ import static io.gravitee.am.gateway.handler.common.utils.RoutingContextHelper.g
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.resolveProxyRequest;
+import static io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnHandler.getOrigin;
 import static io.gravitee.am.model.factor.FactorStatus.ACTIVATED;
 import static io.gravitee.am.model.factor.FactorStatus.PENDING_ACTIVATION;
 import static java.util.Optional.ofNullable;
@@ -254,7 +255,7 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
         if(factor.is(FIDO2)){
             factorData.put(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY, routingContext.session().get(PASSWORDLESS_CHALLENGE_KEY));
             factorData.put(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY, routingContext.session().get(PASSWORDLESS_CHALLENGE_USERNAME_KEY));
-            factorData.put(ConstantKeys.PASSWORDLESS_ORIGIN, domain.getWebAuthnSettings().getOrigin());
+            factorData.put(ConstantKeys.PASSWORDLESS_ORIGIN, getOrigin(domain.getWebAuthnSettings()));
         }
 
         final FactorContext factorCtx = new FactorContext(applicationContext, factorData);

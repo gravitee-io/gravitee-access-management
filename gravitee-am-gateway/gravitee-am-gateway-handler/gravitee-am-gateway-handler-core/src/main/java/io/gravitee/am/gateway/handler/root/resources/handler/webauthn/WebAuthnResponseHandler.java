@@ -62,10 +62,7 @@ public class WebAuthnResponseHandler extends WebAuthnHandler {
         setUserAuthenticationManager(userAuthenticationManager);
         setDomain(domain);
         this.webAuthn = webAuthn;
-        this.origin = (domain.getWebAuthnSettings() != null
-                && domain.getWebAuthnSettings().getOrigin() != null) ?
-                domain.getWebAuthnSettings().getOrigin() :
-                DEFAULT_ORIGIN;
+        this.origin = getOrigin(domain.getWebAuthnSettings());
     }
 
     @Override
