@@ -611,7 +611,7 @@ jobs:
       - run:
           name: Build
           command: |
-            mvn install -pl \!gravitee-am-ui -Pcicd -DskipTests -Dmaven.javadoc.skip=true -s /tmp/.gravitee.settings.xml -T2C
+            mvn install -pl \!gravitee-am-ui -Pcicd -DskipTests -Dmaven.javadoc.skip=true -s /tmp/.gravitee.settings.xml
       - save-maven-job-cache:
           jobName: run_testcontainer_tests
   publish-images-azure-registry:
@@ -898,7 +898,7 @@ jobs:
       - run:
           name: "Maven Package and deploy to Nexus Snapshots"
           command: |
-                    mvn -s /tmp/.gravitee.settings.xml deploy -DskipTests -T2C           
+                    mvn -s /tmp/.gravitee.settings.xml deploy -DskipTests
       - run:
           name: Save test results
           command: |
@@ -983,14 +983,14 @@ jobs:
             - run:
                 name: "Maven Test, Package, and Deploy to Gravitee's private Artifactory"
                 command: |
-                  mvn -s /tmp/.gravitee.settings.xml -B -U -P gio-artifactory-release,gio-release clean deploy -DskipTests=true -T4
+                  mvn -s /tmp/.gravitee.settings.xml -B -U -P gio-artifactory-release,gio-release clean deploy -DskipTests=true
       - when:
           condition: << parameters.dry_run>>
           steps:
             - run:
                 name: "Maven Test, Package and install"
                 command: |
-                  mvn -s /tmp/.gravitee.settings.xml -B -U -P gio-artifactory-release,gio-release clean install -DskipTests=true -T4
+                  mvn -s /tmp/.gravitee.settings.xml -B -U -P gio-artifactory-release,gio-release clean install -DskipTests=true
       - save-maven-job-cache:
           jobName: release
     
