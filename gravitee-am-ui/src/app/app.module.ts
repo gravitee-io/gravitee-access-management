@@ -428,7 +428,7 @@ import { DomainSettingsThemeComponent } from './domain/settings/theme/theme.comp
 import { ThemesResolver } from './resolvers/themes.resolver';
 import { ThemeService } from './services/theme.service';
 import {HelpTipsThemeComponent} from "./domain/settings/theme/help-tips/help-tips.component";
-import {GioMenuModule} from "@gravitee/ui-particles-angular";
+import {GioMenuModule, GioTopBarLinkModule, GioTopBarMenuModule, GioTopBarModule} from "@gravitee/ui-particles-angular";
 
 @NgModule({
   declarations: [
@@ -675,23 +675,23 @@ import {GioMenuModule} from "@gravitee/ui-particles-angular";
     HelpTipsThemeComponent,
     DisplayableItemPipe
   ],
-    imports: [
-        BrowserModule,
-        BrowserAnimationsModule,
-        FormsModule,
-        ReactiveFormsModule,
-        HttpClientModule,
-        AppRoutingModule,
-        MatAutocompleteModule, MatButtonModule, MatButtonToggleModule, MatCardModule, MatCheckboxModule, MatChipsModule, MatDatepickerModule, MatDialogModule, MatExpansionModule, MatGridListModule, MatIconModule, MatInputModule, MatListModule, MatMenuModule, MatNativeDateModule, MatPaginatorModule, MatProgressBarModule, MatProgressSpinnerModule, MatRadioModule, MatRippleModule, MatSelectModule, MatSidenavModule, MatSliderModule, MatSlideToggleModule, MatSnackBarModule, MatSortModule, MatTableModule, MatTabsModule, MatToolbarModule, MatTooltipModule, MatStepperModule, MatBadgeModule,
-        DragDropModule,
-        FlexLayoutModule,
-        NgxDatatableModule,
-        MaterialDesignFrameworkModule,
-        CodemirrorModule,
-        ClipboardModule,
-        HighchartsChartModule,
-        GioMenuModule
-    ],
+  imports: [
+    BrowserModule,
+    BrowserAnimationsModule,
+    FormsModule,
+    ReactiveFormsModule,
+    HttpClientModule,
+    AppRoutingModule,
+    MatAutocompleteModule, MatButtonModule, MatButtonToggleModule, MatCardModule, MatCheckboxModule, MatChipsModule, MatDatepickerModule, MatDialogModule, MatExpansionModule, MatGridListModule, MatIconModule, MatInputModule, MatListModule, MatMenuModule, MatNativeDateModule, MatPaginatorModule, MatProgressBarModule, MatProgressSpinnerModule, MatRadioModule, MatRippleModule, MatSelectModule, MatSidenavModule, MatSliderModule, MatSlideToggleModule, MatSnackBarModule, MatSortModule, MatTableModule, MatTabsModule, MatToolbarModule, MatTooltipModule, MatStepperModule, MatBadgeModule,
+    DragDropModule,
+    FlexLayoutModule,
+    NgxDatatableModule,
+    MaterialDesignFrameworkModule,
+    CodemirrorModule,
+    ClipboardModule,
+    HighchartsChartModule,
+    GioMenuModule, GioTopBarModule, GioTopBarLinkModule, GioTopBarMenuModule
+  ],
   providers: [
     DomainService,
     ProviderService,
