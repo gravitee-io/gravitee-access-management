@@ -189,7 +189,6 @@ mat-sidenav-container {
 
 .main-content {
   overflow: auto;
-  margin-top: 68px;
   height: calc(100vh - 68px);
   width: 100%;
   background-color: #ffffff !important;
@@ -227,6 +226,7 @@ mat-sidenav-container {
 // override input underline from particles
 .mat-form-field-underline {
   display: block !important;
+  position: initial !important;
 }
 
 // override input underline from particles

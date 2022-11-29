@@ -16,30 +16,28 @@
 
 -->
 <div *ngIf="user">
-  <mat-toolbar>
-    <a mat-icon-button [routerLink]="['']" [matTooltip]="title + ' / ' + version">
-      <mat-icon svgIcon="gio:gravitee"></mat-icon>
-    </a>
-    <button class="app-switcher" mat-raised-button disabled>
-      <mat-icon svgIcon="gio:product-am"></mat-icon>
-      <span style="margin-left: 5px;">Access Management</span>
-    </button>
-    <span class="fill-remaining-space"></span>
-    <div fxLayout="row" style="align-items: center;">
-      <button class="currentDomain" mat-raised-button disabled>
-        <span>{{currentDomain?.name | lowercase}}</span>
+  <div class="gio-top-nav">
+    <gio-top-bar>
+      <button mat-icon-button gioTopBarHome>
+        <mat-icon svgIcon="gio:gravitee" (click)="navigateToHome()"></mat-icon>
       </button>
-      <button mat-icon-button [matMenuTriggerFor]="userNotificationsMenu" [disabled]="!hasNotifications()" disableRipple>
-        <div class="notifications-menu">
-          <mat-icon svgIcon="gio:bell"></mat-icon>
-          <div class="notifications-menu-circle" *ngIf="hasNotifications()"></div>
-        </div>
-      </button>
-      <button class="userAccountMenu" mat-icon-button [matMenuTriggerFor]="userAccountMenu" disableRipple (click)="listDomains()" data-testid="user-notifications-button">
-        <app-user-avatar [user]="user" [width]="'30'"></app-user-avatar>
-      </button>
-    </div>
-  </mat-toolbar>
+      <gio-top-bar-content type="am" productName="Access Management"></gio-top-bar-content>
+      <gio-top-bar-menu>
+        <button class="currentDomain" mat-raised-button disabled>
+          <span>{{currentDomain?.name | lowercase}}</span>
+        </button>
+        <button mat-icon-button [matMenuTriggerFor]="userNotificationsMenu" [disabled]="!hasNotifications()" disableRipple>
+          <div class="notifications-menu">
+            <mat-icon svgIcon="gio:bell" style="color: #f7f8fd;"></mat-icon>
+            <div class="notifications-menu-circle" *ngIf="hasNotifications()"></div>
+          </div>
+        </button>
+        <button class="userAccountMenu" mat-icon-button [matMenuTriggerFor]="userAccountMenu" disableRipple (click)="listDomains()" data-testid="user-notifications-button">
+          <app-user-avatar [user]="user" [width]="'36'"></app-user-avatar>
+        </button>
+      </gio-top-bar-menu>
+    </gio-top-bar>
+  </div>
   <mat-menu #userAccountMenu="matMenu" [overlapTrigger]="false">
     <div class="userAccount" fxLayout="column">
       <div class="userAccountProfile" fxLayout="row">
@@ -54,9 +52,9 @@
           <h3 matSubheader>Domains</h3>
           <a [routerLink]="['/environments', currentEnvironment.hrids[0], 'domains', domain.hrid]" *ngFor="let domain of domains" mat-menu-item>
             <mat-list-item [ngClass]="{'domain-disabled':!domain.enabled}">
-                <mat-icon mat-list-icon>domain</mat-icon>
-                <h4 matLine >{{domain.name}}</h4>
-                <span *ngIf="!domain.enabled"><mat-icon class="domain-disabled-icon"><i class="material-icons">priority_high</i></mat-icon> domain disabled</span>
+              <mat-icon mat-list-icon>domain</mat-icon>
+              <h4 matLine >{{domain.name}}</h4>
+              <span *ngIf="!domain.enabled"><mat-icon class="domain-disabled-icon"><i class="material-icons">priority_high</i></mat-icon> domain disabled</span>
             </mat-list-item>
           </a>
         </mat-list>
@@ -72,17 +70,17 @@
 
   <mat-menu #userNotificationsMenu="matMenu" [overlapTrigger]="false">
     <div fxLayout="column">
-        <div class="notification" fxLayout="column" style="margin-left: 20px; margin-right: 20px;"  *ngFor="let notification of notifications;">
-            <div class="notification-title">
-              <h3>{{ notification.title }}</h3>
-              <button mat-icon-button (click)="markNotificationAsRead(notification.id, $event)">
-                <mat-icon>close</mat-icon>
-              </button>
-            </div>
-            <p>{{ notification.message }}</p>
-            <small><i>{{ notification.createdAt | date:'medium' }}</i></small>
-            <mat-divider></mat-divider>
+      <div class="notification" fxLayout="column" style="margin-left: 20px; margin-right: 20px;"  *ngFor="let notification of notifications;">
+        <div class="notification-title">
+          <h3>{{ notification.title }}</h3>
+          <button mat-icon-button (click)="markNotificationAsRead(notification.id, $event)">
+            <mat-icon>close</mat-icon>
+          </button>
         </div>
+        <p>{{ notification.message }}</p>
+        <small><i>{{ notification.createdAt | date:'medium' }}</i></small>
+        <mat-divider></mat-divider>
+      </div>
     </div>
   </mat-menu>
 </div>

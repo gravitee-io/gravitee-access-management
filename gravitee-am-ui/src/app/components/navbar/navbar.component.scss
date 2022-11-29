@@ -1,40 +1,26 @@
-mat-toolbar {
-  position: fixed;
-  color: #f7f8fd;
-  background-color: #1c1e39;
-  padding: 0 16px 0 24px;
-  height: 68px;
-  min-height: 68px;
-  max-height: 68px;
-  left: 0;
-  font-size: 16px;
-  font-weight: normal;
-  border-bottom: 1px solid #606274;
-  .app-switcher {
-    background-color: rgba(236, 72, 153, 0.4);
-    margin-left: 24px;
-    color: #ffffff;
+@use 'sass:map';
+@use '@gravitee/ui-particles-angular' as gio;
+
+:host {
+  ::ng-deep.gio-top-bar-content {
+    max-height: 20px;
   }
-  .fill-remaining-space {
-    flex: 1 1 auto;
-  }
-  .currentDomain {
-    color: #ffffff;
-    background: rgba(240, 241, 248, 0.3);
-    font-size: 14px;
-    margin-right: 8px;
-    font-weight: 500;
-  }
-  .userAccountMenu {
-    margin-top: 10px;
-    mat-icon {
-      color: grey;
-      font-size: 16px;
-      width: 16px;
-      height: 16px;
-      line-height: 0px;
-    }
-  }
+}
+
+::ng-deep.mat-menu-panel {
+  max-width: 380px !important;
+}
+::ng-deep.mat-menu-content {
+  padding-bottom: 2px !important;
+}
+
+.gio-top-nav {
+  border-bottom: 1px solid map.get(gio.$mat-space-palette, lighter40);
+}
+
+.currentDomain {
+  color: #fff !important;
+  background: rgba(240,241,248,.3) !important;
 }
 
 .userAccount {
@@ -68,31 +54,22 @@ mat-toolbar {
   }
 }
 
-::ng-deep.mat-toolbar-row {
-  height: 60px !important;
-}
-
-::ng-deep.mat-menu-panel {
-  max-width: 380px !important;
-}
-
-::ng-deep.mat-menu-content {
-  padding-bottom: 2px !important;
-}
-
 .notifications-menu {
   display: flex;
   margin-left: 5px;
 }
 
 .notifications-menu-circle {
-  background-color:red;
+  background-color: #e7e2fb;
+  color: #000;
   text-align:center;
   border-radius:50%;
-  height: 10px;
-  width: 10px;
+  height: 14px;
+  width: 14px;
   position: absolute;
   z-index: 2;
+  right: 0px;
+  top: -3px;
 }
 
 .notification > h3 {

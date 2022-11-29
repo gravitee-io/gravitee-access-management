@@ -133,4 +133,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
       this.notifications = this.notifications.filter(notif => notif.id !== notificationId);
     });
   }
+
+  navigateToHome() {
+    this.router.navigateByUrl('');
+  }
 }
