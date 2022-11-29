@@ -72,7 +72,7 @@
     <properties>
         <gravitee-bom.version>2.4</gravitee-bom.version>
         <gravitee-common.version>1.25.0</gravitee-common.version>
-        <gravitee-plugin.version>1.18.0</gravitee-plugin.version>
+        <gravitee-plugin.version>1.25.0</gravitee-plugin.version>
         <gravitee-node.version>1.21.1</gravitee-node.version>
         <gravitee-reporter.version>1.17.1</gravitee-reporter.version>
         <gravitee-gateway-api.version>1.27.2</gravitee-gateway-api.version>
