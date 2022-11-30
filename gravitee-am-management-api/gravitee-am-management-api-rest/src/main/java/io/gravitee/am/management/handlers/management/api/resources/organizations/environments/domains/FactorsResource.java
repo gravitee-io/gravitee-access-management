@@ -58,6 +58,7 @@ public class FactorsResource extends AbstractResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "List registered factors for a security domain",
+            nickname = "listFactors",
             notes = "User must have the DOMAIN_FACTOR[LIST] permission on the specified domain " +
                     "or DOMAIN_FACTOR[LIST] permission on the specified environment " +
                     "or DOMAIN_FACTOR[LIST] permission on the specified organization " +
@@ -84,11 +85,12 @@ public class FactorsResource extends AbstractResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Create a factor",
+            nickname = "createFactor",
             notes = "User must have the DOMAIN_FACTOR[CREATE] permission on the specified domain " +
                     "or DOMAIN_FACTOR[CREATE] permission on the specified environment " +
                     "or DOMAIN_FACTOR[CREATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 201, message = "Factor successfully created"),
+            @ApiResponse(code = 201, message = "Factor successfully created", response = Factor.class),
             @ApiResponse(code = 500, message = "Internal server error")})
     public void create(
             @PathParam("organizationId") String organizationId,

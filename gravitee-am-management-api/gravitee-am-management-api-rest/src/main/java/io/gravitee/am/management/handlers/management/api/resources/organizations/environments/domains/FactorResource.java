@@ -64,6 +64,7 @@ public class FactorResource extends AbstractResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Get a factor",
+            nickname = "getFactor",
             notes = "User must have the DOMAIN_FACTOR[READ] permission on the specified domain " +
                     "or DOMAIN_FACTOR[READ] permission on the specified environment " +
                     "or DOMAIN_FACTOR[READ] permission on the specified organization")
@@ -95,6 +96,7 @@ public class FactorResource extends AbstractResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Update a factor",
+            nickname = "updateFactor",
             notes = "User must have the DOMAIN_FACTOR[UPDATE] permission on the specified domain " +
                     "or DOMAIN_FACTOR[UPDATE] permission on the specified environment " +
                     "or DOMAIN_FACTOR[UPDATE] permission on the specified organization")
@@ -119,6 +121,7 @@ public class FactorResource extends AbstractResource {
 
     @DELETE
     @ApiOperation(value = "Delete a factor",
+            nickname = "deleteFactor",
             notes = "User must have the DOMAIN_FACTOR[DELETE] permission on the specified domain " +
                     "or DOMAIN_FACTOR[DELETE] permission on the specified environment " +
                     "or DOMAIN_FACTOR[DELETE] permission on the specified organization")

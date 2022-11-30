@@ -27,6 +27,8 @@ import {CertificateApi} from "@management-apis/CertificateApi";
 import {DictionaryApi} from "@management-apis/DictionaryApi";
 import {ThemeApi} from "@management-apis/ThemeApi";
 import { FormApi } from "@management-apis/FormApi";
+import {FactorApi} from "@management-apis/FactorApi";
+import {ResourceApi} from "@management-apis/ResourceApi";
 
 function createAccessTokenConfig(accessToken) {
     return new Configuration({...managementConf, apiKey: 'Bearer ' + accessToken});
@@ -81,4 +83,12 @@ export function getThemeApi(accessToken) {
 
 export function getFormApi(accessToken) {
     return new FormApi(createAccessTokenConfig(accessToken));
+}
+
+export function getFactorApi(accessToken) {
+    return new FactorApi(createAccessTokenConfig(accessToken));
+}
+
+export function getResourceApi(accessToke) {
+    return new ResourceApi(createAccessTokenConfig(accessToke));
 }

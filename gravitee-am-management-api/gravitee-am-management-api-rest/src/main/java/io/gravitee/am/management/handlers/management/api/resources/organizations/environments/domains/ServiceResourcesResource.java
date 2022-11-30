@@ -58,6 +58,7 @@ public class ServiceResourcesResource extends AbstractResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "List registered resources for a security domain",
+            nickname = "listResources",
             notes = "User must have the DOMAIN_RESOURCE[LIST] permission on the specified domain " +
                     "or DOMAIN_RESOURCE[LIST] permission on the specified environment " +
                     "or DOMAIN_RESOURCE[LIST] permission on the specified organization " +
@@ -84,11 +85,12 @@ public class ServiceResourcesResource extends AbstractResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Create a resource",
+            nickname = "createResource",
             notes = "User must have the DOMAIN_RESOURCE[CREATE] permission on the specified domain " +
                     "or DOMAIN_RESOURCE[CREATE] permission on the specified environment " +
                     "or DOMAIN_RESOURCE[CREATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 201, message = "Resource successfully created"),
+            @ApiResponse(code = 201, message = "Resource successfully created", response = ServiceResource.class),
             @ApiResponse(code = 500, message = "Internal server error")})
     public void create(
             @PathParam("organizationId") String organizationId,
