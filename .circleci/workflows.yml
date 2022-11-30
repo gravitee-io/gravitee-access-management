@@ -1291,9 +1291,8 @@ workflows:
 
   build_branch:
     when:
-      or:
+      and:
         - equal: [ pull_requests, << pipeline.parameters.gio_action >> ]
-        - equal: [ release, << pipeline.parameters.gio_action >> ]
     jobs:
       - setup:
           context:
