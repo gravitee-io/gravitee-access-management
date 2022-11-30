@@ -61,6 +61,7 @@ public class ServiceResourceResource extends AbstractResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Get a resource",
+            nickname = "getResource",
             notes = "User must have the DOMAIN_RESOURCE[READ] permission on the specified domain " +
                     "or DOMAIN_RESOURCE[READ] permission on the specified environment " +
                     "or DOMAIN_RESOURCE[READ] permission on the specified organization")
@@ -92,6 +93,7 @@ public class ServiceResourceResource extends AbstractResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Update a resource",
+            nickname = "updateResource",
             notes = "User must have the DOMAIN_RESOURCE[UPDATE] permission on the specified domain " +
                     "or DOMAIN_RESOURCE[UPDATE] permission on the specified environment " +
                     "or DOMAIN_RESOURCE[UPDATE] permission on the specified organization")
@@ -116,6 +118,7 @@ public class ServiceResourceResource extends AbstractResource {
 
     @DELETE
     @ApiOperation(value = "Delete a resource",
+            nickname = "deleteResource",
             notes = "User must have the DOMAIN_RESOURCE[DELETE] permission on the specified domain " +
                     "or DOMAIN_RESOURCE[DELETE] permission on the specified environment " +
                     "or DOMAIN_RESOURCE[DELETE] permission on the specified organization")

@@ -362,10 +362,16 @@ jobs:
             curl https://repo.maven.apache.org/maven2/io/gravitee/am/resource/gravitee-am-resource-mfa-mock/3.12.1/gravitee-am-resource-mfa-mock-3.12.1.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-am-resource-mfa-mock-3.12.1.zip
             cp gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-am-resource-mfa-mock-3.12.1.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
             
-            # EXPORT env vart to start AM using SMTP Server
+            # EXPORT env var to start AM using SMTP Server
             export GRAVITEE_EMAIL_ENABLED=true
             export GRAVITEE_EMAIL_HOST=localhost
             export GRAVITEE_EMAIL_PORT=5025
+            
+            # Export env var for MFA rate limit
+            export GRAVITEE_MFA_RATE_ENABLED=true
+            export GRAVITEE_MFA_RATE_LIMIT=2
+            export GRAVITEE_MFA_RATE_TIMEPERIOD=1
+            export GRAVITEE_MFA_RATE_TIMEUNIT=Minutes
             
             # Start AM Management
             gravitee-am-management-api-standalone-${AM_VERSION}/bin/gravitee &
@@ -439,10 +445,16 @@ jobs:
             cp r2dbc-postgresql-0.8.9.RELEASE.jar gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc/
             cp r2dbc-postgresql-0.8.9.RELEASE.jar gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc/
             
-            # EXPORT env vart to start AM using SMTP Server
+            # EXPORT env var to start AM using SMTP Server
             export GRAVITEE_EMAIL_ENABLED=true
             export GRAVITEE_EMAIL_HOST=localhost
             export GRAVITEE_EMAIL_PORT=5025
+            
+            # Export env var for MFA rate limit
+            export GRAVITEE_MFA_RATE_ENABLED=true
+            export GRAVITEE_MFA_RATE_LIMIT=2
+            export GRAVITEE_MFA_RATE_TIMEPERIOD=1
+            export GRAVITEE_MFA_RATE_TIMEUNIT=Minutes
             
             # EXPORT env vart to start AM using PSQL
             export GRAVITEE_MANAGEMENT_TYPE=jdbc

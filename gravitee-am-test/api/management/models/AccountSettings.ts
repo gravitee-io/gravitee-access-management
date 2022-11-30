@@ -145,6 +145,30 @@ export interface AccountSettings {
      * @memberof AccountSettings
      */
     resetPasswordInvalidateTokens?: boolean;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof AccountSettings
+     */
+    mfaChallengeAttemptsDetectionEnabled?: boolean;
+    /**
+     * 
+     * @type {number}
+     * @memberof AccountSettings
+     */
+    mfaChallengeMaxAttempts?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof AccountSettings
+     */
+    mfaChallengeAttemptsResetTime?: number;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof AccountSettings
+     */
+    mfaChallengeSendVerifyAlertEmail?: boolean;
 }
 
 export function AccountSettingsFromJSON(json: any): AccountSettings {
@@ -177,6 +201,10 @@ export function AccountSettingsFromJSONTyped(json: any, ignoreDiscriminator: boo
         'resetPasswordCustomFormFields': !exists(json, 'resetPasswordCustomFormFields') ? undefined : ((json['resetPasswordCustomFormFields'] as Array<any>).map(FormFieldFromJSON)),
         'resetPasswordConfirmIdentity': !exists(json, 'resetPasswordConfirmIdentity') ? undefined : json['resetPasswordConfirmIdentity'],
         'resetPasswordInvalidateTokens': !exists(json, 'resetPasswordInvalidateTokens') ? undefined : json['resetPasswordInvalidateTokens'],
+        'mfaChallengeAttemptsDetectionEnabled': !exists(json, 'mfaChallengeAttemptsDetectionEnabled') ? undefined : json['mfaChallengeAttemptsDetectionEnabled'],
+        'mfaChallengeMaxAttempts': !exists(json, 'mfaChallengeMaxAttempts') ? undefined : json['mfaChallengeMaxAttempts'],
+        'mfaChallengeAttemptsResetTime': !exists(json, 'mfaChallengeAttemptsResetTime') ? undefined : json['mfaChallengeAttemptsResetTime'],
+        'mfaChallengeSendVerifyAlertEmail': !exists(json, 'mfaChallengeSendVerifyAlertEmail') ? undefined : json['mfaChallengeSendVerifyAlertEmail'],
     };
 }
 
@@ -209,6 +237,10 @@ export function AccountSettingsToJSON(value?: AccountSettings | null): any {
         'resetPasswordCustomFormFields': value.resetPasswordCustomFormFields === undefined ? undefined : ((value.resetPasswordCustomFormFields as Array<any>).map(FormFieldToJSON)),
         'resetPasswordConfirmIdentity': value.resetPasswordConfirmIdentity,
         'resetPasswordInvalidateTokens': value.resetPasswordInvalidateTokens,
+        'mfaChallengeAttemptsDetectionEnabled': value.mfaChallengeAttemptsDetectionEnabled,
+        'mfaChallengeMaxAttempts': value.mfaChallengeMaxAttempts,
+        'mfaChallengeAttemptsResetTime': value.mfaChallengeAttemptsResetTime,
+        'mfaChallengeSendVerifyAlertEmail': value.mfaChallengeSendVerifyAlertEmail,
     };
 }
 
