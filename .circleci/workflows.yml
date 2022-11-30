@@ -957,7 +957,7 @@ jobs:
             export MVN_PRJ_VERSION_MAJOR=$(cat /tmp/gio.maven.project.release.version | awk -F '.' '{print $1}')
             export MVN_PRJ_VERSION_MINOR=$(cat /tmp/gio.maven.project.release.version | awk -F '.' '{print $2}')
             export MVN_PRJ_VERSION_PATCH=$(cat /tmp/gio.maven.project.release.version | awk -F '.' '{print $3}' | awk -F '-' '{print $1}')
-            export MVN_PRJ_VERSION_QUALIFIER=$(cat /tmp/gio.maven.project.release.version | awk -F '-' '{print $2}' | awk -F 'RC' '{print $2}')
+            export MVN_PRJ_VERSION_QUALIFIER=$(cat /tmp/gio.maven.project.release.version | awk -F '-' '{print $2}' | awk -F 'alpha.' '{print $2}')
     
             if [ "${RC_REQUESTED}" == "true" ]; then
               if [ "${MVN_PRJ_VERSION_QUALIFIER}x" == "x" ]; then
@@ -983,14 +983,14 @@ jobs:
             - run:
                 name: "Maven Test, Package, and Deploy to Gravitee's private Artifactory"
                 command: |
-                  mvn -s /tmp/.gravitee.settings.xml -B -U -P gio-artifactory-release,gio-release clean deploy -DskipTests=true
+                  mvn -s /tmp/.gravitee.settings.xml -B -U -P gio-artifactory-release,gio-release clean deploy
       - when:
           condition: << parameters.dry_run>>
           steps:
             - run:
                 name: "Maven Test, Package and install"
                 command: |
-                  mvn -s /tmp/.gravitee.settings.xml -B -U -P gio-artifactory-release,gio-release clean install -DskipTests=true
+                  mvn -s /tmp/.gravitee.settings.xml -B -U -P gio-artifactory-release,gio-release clean install
       - save-maven-job-cache:
           jobName: release
     
@@ -1003,7 +1003,8 @@ jobs:
           command: |
             if [ "${DRY_RUN}" == "false" ]; then
               echo "# --->>> NO IT IS NOT A DRY RUN : so we maven deploy to nexus staging"
-              mvn -s /tmp/.gravitee.settings.xml -B -U -P gravitee-release deploy -DskipTests=false
+              ### Ignore this temporary to be able to test the git config, uncomment once it will be OK
+              ### mvn -s /tmp/.gravitee.settings.xml -B -U -P gravitee-release deploy -DskipTests=true
             else
               echo "# --->>> THIS IS A DRY RUN: no deployment to nexus staging"
               exit 0
@@ -1017,7 +1018,7 @@ jobs:
             export MVN_PRJ_VERSION_MAJOR=$(cat /tmp/gio.maven.project.release.version | awk -F '.' '{print $1}')
             export MVN_PRJ_VERSION_MINOR=$(cat /tmp/gio.maven.project.release.version | awk -F '.' '{print $2}')
             export MVN_PRJ_VERSION_PATCH=$(cat /tmp/gio.maven.project.release.version | awk -F '.' '{print $3}' | awk -F '-' '{print $1}')
-            export MVN_PRJ_VERSION_QUALIFIER=$(cat /tmp/gio.maven.project.release.version | awk -F '-' '{print $2}' | awk -F 'RC' '{print $2}')
+            export MVN_PRJ_VERSION_QUALIFIER=$(cat /tmp/gio.maven.project.release.version | awk -F '-' '{print $2}' | awk -F 'alpha.' '{print $2}')
 
             export CURRENT_GIT_BRANCH=$(git status | grep 'On branch' | awk '{print $3}')
 
