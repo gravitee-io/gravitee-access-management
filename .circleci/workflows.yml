@@ -1003,8 +1003,7 @@ jobs:
           command: |
             if [ "${DRY_RUN}" == "false" ]; then
               echo "# --->>> NO IT IS NOT A DRY RUN : so we maven deploy to nexus staging"
-              ### Ignore this temporary to be able to test the git config, uncomment once it will be OK
-              ### mvn -s /tmp/.gravitee.settings.xml -B -U -P gravitee-release deploy -DskipTests=true
+              mvn -s /tmp/.gravitee.settings.xml -B -U -P gravitee-release deploy -DskipTests=true
             else
               echo "# --->>> THIS IS A DRY RUN: no deployment to nexus staging"
               exit 0
@@ -1374,6 +1373,7 @@ workflows:
           graviteeio_version: << pipeline.parameters.graviteeio_version >>
           dry_run: << pipeline.parameters.dry_run >>
           tag_latest: << pipeline.parameters.tag_latest >>
+          tag_latest_support: << pipeline.parameters.tag_latest_support >>
 
   daily-purge-azure-registry:
     triggers:
