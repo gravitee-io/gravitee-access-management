@@ -1,6 +1,22 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/617?closed=1[AM - 3.19.3 (2022-12-01)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- [custom-claims] some attributes are missing in the execution context for the current user https://github.com/gravitee-io/issues/issues/8693[#8693]
+- [scim] impossible to assign custom attributes to the users https://github.com/gravitee-io/issues/issues/8692[#8692]
+- Provide request parameters to all Thymeleaf templates https://github.com/gravitee-io/issues/issues/8674[#8674]
+- Propagate parameters after registration https://github.com/gravitee-io/issues/issues/8683[#8683]
+
+*_General_*
+
+- Merge 3.18.11 & 3.18.2 into 3.19.x  https://github.com/gravitee-io/issues/issues/8675[#8675]
+
+
 == https://github.com/gravitee-io/issues/milestone/616?closed=1[AM - 3.18.12 (2022-11-23)]
 
 === Bug fixes
