@@ -28,64 +28,88 @@ jest.setTimeout(200000)
 let accessToken;
 let domain;
 let user;
-const passwords = [
-    "SomeP@ssw0rd",
-    "SomeP@ssw0rd01",
-    "SomeP@ssw0rd02",
-    "SomeP@ssw0rd03",
-];
-
-beforeAll(async () => {
-    const adminTokenResponse = await requestAdminAccessToken();
-    accessToken = adminTokenResponse.body.access_token;
-    domain = await createDomain(accessToken, "domain-ph-users", faker.company.catchPhraseDescriptor()).then(async createdDomain => {
-        return await startDomain(createdDomain.id, accessToken);
-    });
-
-});
 
 describe("Testing password history...", () => {
-    describe("when password history is enabled", () => {
-        beforeAll(async () => {
-            domain = await patchDomain(domain.id, accessToken, {
-                "passwordSettings": {
-                    "passwordHistoryEnabled": true,
-                    "oldPasswords": 3
-                }
+    beforeAll(async () => {
+        const adminTokenResponse = await requestAdminAccessToken();
+        accessToken = adminTokenResponse.body.access_token;
+        domain = await createDomain(accessToken, "domain-ph-users", faker.company.catchPhraseDescriptor()).then(async createdDomain => {
+            return await startDomain(createdDomain.id, accessToken);
+        });
+        domain = await patchDomain(domain.id, accessToken, {
+            "passwordSettings": {
+                "passwordHistoryEnabled": true,
+                "oldPasswords": 3
+            }
+        });
+        user = await buildCreateAndTestUser(domain.id, accessToken, 0, false);
+        await new Promise((r) => setTimeout(r, 1000));
+    })
+
+    const desc = password => `when an admin resets a user's password with ${password}`;
+    const testPass = "succeeds as it is not in history";
+    const testFail = "fails as it is already in history";
+    const tests = [
+        {
+            password: "SomeP@ssw0rd",
+            description: desc,
+            test: testFail,
+            expectFunc: password => expectResetToThrow(password)
+        },
+        {
+            password: "SomeP@ssw0rd01",
+            description: desc,
+            test: testPass,
+            expectFunc: password => expectResetNotToThrow(password)
+        },
+        {
+            password: "SomeP@ssw0rd02",
+            description: desc,
+            test: testPass,
+            expectFunc: password => expectResetNotToThrow(password)
+        },
+        {
+            password: "SomeP@ssw0rd03",
+            description: desc,
+            test: testPass,
+            expectFunc: password => expectResetNotToThrow(password)
+        },
+        {
+            password: "SomeP@ssw0rd",
+            description: desc,
+            test: "succeeds as password is no longer in history",
+            expectFunc: password => expectResetNotToThrow(password)
+        },
+    ];
+
+    tests.forEach(({password, description, test, expectFunc}) => {
+        describe(description(password), () => {
+            it(test, () => {
+                expectFunc(password);
             });
-            user = await buildCreateAndTestUser(domain.id, accessToken, 0, false);
-            await new Promise((r) => setTimeout(r, 1000));
         });
-
-        it(`reset password fails with ${passwords[0]} as it is already in history `, async () => {
-            await expect(async () => {
-                await resetUserPassword(domain.id, accessToken, user.id, passwords[0]);
-            }).rejects.toThrow(ResponseError);
-        });
-        it(`reset password succeeds with ${passwords[0]}`, async () => {
-            expect(async () => {
-                await resetUserPassword(domain.id, accessToken, user.id, passwords[1]);
-            }).not.toThrow(ResponseError);
-        });
-        it(`reset password succeeds with ${passwords[1]}`, async () => {
-            expect(async () => {
-                await resetUserPassword(domain.id, accessToken, user.id, passwords[2]);
-            }).not.toThrow(ResponseError);
-        });
-        it(`reset password succeeds with ${passwords[2]}`, async () => {
-            expect(async () => {
-                await resetUserPassword(domain.id, accessToken, user.id, passwords[3]);
-            }).not.toThrow(ResponseError);
-        });
-
-        afterAll(async () => {
-            await new Promise((r) => setTimeout(r, 1000));//Delay to prevent domain being cleaned up before reset completes
-        })
     });
+
+    afterEach(async () => {
+        await new Promise((r) => setTimeout(r, 1000));//Need this delay, otherwise password history doesn't have time to update before subsequent reset requests.
+    });
+
+    afterAll(async () => {
+        await new Promise((r) => setTimeout(r, 1000));//Delay to prevent domain being cleaned up before reset completes
+        if (domain && domain.id) {
+            await deleteDomain(domain.id, accessToken);
+        }
+    })
 });
 
-afterAll(async () => {
-    if (domain && domain.id) {
-        await deleteDomain(domain.id, accessToken);
-    }
-});
+const expectResetToThrow = async password => {
+    await expect(async () => {
+        await resetUserPassword(domain.id, accessToken, user.id, password);
+    }).rejects.toThrow(ResponseError);
+};
+
+const expectResetNotToThrow = async password => {
+    await expect(async () => {
+        await resetUserPassword(domain.id, accessToken, user.id, password);
+    }).not.toThrow(ResponseError);
+};
