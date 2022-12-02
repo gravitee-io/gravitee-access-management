@@ -113,6 +113,12 @@
       "title": "User password salt length in bytes",
       "description": "Password salt length in bytes"
     },
+    "userProvider" : {
+      "type" : "boolean",
+      "default": true,
+      "title": "Allow CRUD operations",
+      "description": "When enable, the user profile provided by the identity provider can be managed (CRUD operations)"
+    },
     "options" : {
       "title": "Connection options",
       "type": "array",
