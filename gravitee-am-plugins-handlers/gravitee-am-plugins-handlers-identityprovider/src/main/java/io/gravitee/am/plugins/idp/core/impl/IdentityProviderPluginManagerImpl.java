@@ -16,8 +16,19 @@
 package io.gravitee.am.plugins.idp.core.impl;
 
 import io.gravitee.am.certificate.api.CertificateManager;
-import io.gravitee.am.identityprovider.api.*;
-import io.gravitee.am.plugins.idp.core.*;
+import io.gravitee.am.identityprovider.api.AuthenticationProvider;
+import io.gravitee.am.identityprovider.api.IdentityProvider;
+import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
+import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
+import io.gravitee.am.identityprovider.api.IdentityProviderRoleMapper;
+import io.gravitee.am.identityprovider.api.NoIdentityProviderMapper;
+import io.gravitee.am.identityprovider.api.NoIdentityProviderRoleMapper;
+import io.gravitee.am.identityprovider.api.UserProvider;
+import io.gravitee.am.plugins.idp.core.IdentityProviderConfigurationFactory;
+import io.gravitee.am.plugins.idp.core.IdentityProviderDefinition;
+import io.gravitee.am.plugins.idp.core.IdentityProviderMapperFactory;
+import io.gravitee.am.plugins.idp.core.IdentityProviderPluginManager;
+import io.gravitee.am.plugins.idp.core.IdentityProviderRoleMapperFactory;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginContextFactory;
 import io.gravitee.plugin.core.internal.AnnotationBasedPluginContextConfigurer;
@@ -37,7 +48,14 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -83,13 +101,6 @@ public class IdentityProviderPluginManagerImpl implements IdentityProviderPlugin
     @Override
     public Map<IdentityProvider, Plugin> getAll() {
         return identityProviderPlugins;
-    }
-
-    @Override
-    public boolean hasUserProvider(String pluginType) {
-        logger.debug("Looking for an user provider for [{}]", pluginType);
-        IdentityProvider identityProvider = identityProviders.get(pluginType);
-        return identityProvider != null && identityProvider.userProvider() != null;
     }
 
     @Override

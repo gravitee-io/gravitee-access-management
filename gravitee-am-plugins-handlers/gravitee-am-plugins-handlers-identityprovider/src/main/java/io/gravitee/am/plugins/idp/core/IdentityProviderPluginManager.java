@@ -41,8 +41,6 @@ public interface IdentityProviderPluginManager {
 
     UserProvider create(String type, String configuration);
 
-    boolean hasUserProvider(String pluginType);
-
     String getSchema(String identityProviderId) throws IOException;
 
     default AuthenticationProvider create(String type, String configuration, Map<String, String> mappers, Map<String, String[]> roleMapper) {

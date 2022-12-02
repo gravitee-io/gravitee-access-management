@@ -37,8 +37,6 @@ public interface IdentityProviderManager extends Service<IdentityProviderManager
 
     String createProviderConfiguration(String referenceId, NewIdentityProvider identityProvider);
 
-    boolean userProviderExists(String identityProviderId);
-
     void setListener(InMemoryIdentityProviderListener listener);
 
     void loadIdentityProviders();
