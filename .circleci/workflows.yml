@@ -259,28 +259,36 @@ commands:
   publish_rpms:
     description: Runs the commands to build n publish RPM Packages for Gravitee.io AM
     parameters:
+      dry_run:
+        type: boolean
+        default: true
+        description: "Run in dry run mode?"
       graviteeio_version:
         type: string
         default: ""
         description: "The Gravitee.io release version number of Gravitee.io AM, for which to build and publish all zip bundles"
     steps:
-      - keeper/env-export:
-          secret-url: keeper://8CG6HxY5gYsl-85eJKuIoA/field/password
-          var-name: GIO_PACKAGECLOUD_TOKEN
-      - run:
-          environment:
-            GRAVITEEIO_VERSION: << parameters.graviteeio_version >>
-          name: "Gravitee AM : Build and Publish RPMs"
-          command: |
-                    export MAJOR_VERSION_NUMBER=$(echo ${GRAVITEEIO_VERSION} | awk -F '.' '{print $1}')
-                    export GIT_GRAVITEE_PACKAGES_REPO=$(mktemp -d -t "git_gravitee_packages_repo-XXXXXXXXXX")
-                    
-                    git clone git@github.com:gravitee-io/packages.git ${GIT_GRAVITEE_PACKAGES_REPO}
-                    
-                    cd ${GIT_GRAVITEE_PACKAGES_REPO}/am/${MAJOR_VERSION_NUMBER}.x
-                    ./build.sh -v << parameters.graviteeio_version >>
-                    
-                    docker run --rm -v "${GIT_GRAVITEE_PACKAGES_REPO}/am/${MAJOR_VERSION_NUMBER}.x:/packages" -e PACKAGECLOUD_TOKEN=${GIO_PACKAGECLOUD_TOKEN} digitalocean/packagecloud push --yes --skip-errors --verbose graviteeio/rpms/el/7 /packages/*.rpm
+      - when:
+          condition: 
+            not: << parameters.dry_run>>
+          steps:
+            - keeper/env-export:
+                secret-url: keeper://8CG6HxY5gYsl-85eJKuIoA/field/password
+                var-name: GIO_PACKAGECLOUD_TOKEN
+            - run:
+                environment:
+                  GRAVITEEIO_VERSION: << parameters.graviteeio_version >>
+                name: "Gravitee AM : Build and Publish RPMs"
+                command: |
+                          export MAJOR_VERSION_NUMBER=$(echo ${GRAVITEEIO_VERSION} | awk -F '.' '{print $1}')
+                          export GIT_GRAVITEE_PACKAGES_REPO=$(mktemp -d -t "git_gravitee_packages_repo-XXXXXXXXXX")
+                          
+                          git clone git@github.com:gravitee-io/packages.git ${GIT_GRAVITEE_PACKAGES_REPO}
+                          
+                          cd ${GIT_GRAVITEE_PACKAGES_REPO}/am/${MAJOR_VERSION_NUMBER}.x
+                          ./build.sh -v << parameters.graviteeio_version >>
+                          
+                          docker run --rm -v "${GIT_GRAVITEE_PACKAGES_REPO}/am/${MAJOR_VERSION_NUMBER}.x:/packages" -e PACKAGECLOUD_TOKEN=${GIO_PACKAGECLOUD_TOKEN} digitalocean/packagecloud push --yes --skip-errors --verbose graviteeio/rpms/el/7 /packages/*.rpm
                     
     
 jobs:
@@ -1230,6 +1238,7 @@ jobs:
       - checkout
       - publish_rpms:
           graviteeio_version: << parameters.graviteeio_version >>
+          dry_run: << parameters.dry_run >>
 
 
 workflows:
@@ -1355,6 +1364,16 @@ workflows:
             - setup
           dry_run: << pipeline.parameters.dry_run >>
           rc_requested: << pipeline.parameters.rc_requested >>
+      - build_n_push_am_ce_job:
+          context: cicd-orchestrator
+          graviteeio_version: << pipeline.parameters.graviteeio_version >>
+          dry_run: << pipeline.parameters.dry_run >>
+          tag_latest: << pipeline.parameters.tag_latest >>
+          tag_latest_support: << pipeline.parameters.tag_latest_support >>
+      - publish_am_rpms:
+          context: cicd-orchestrator
+          dry_run: << pipeline.parameters.dry_run >>
+          graviteeio_version: << pipeline.parameters.graviteeio_version >>
 
   publish_rpms:
     when:
