@@ -80,7 +80,7 @@ function validatePassword() {
 const checkPasswordHistory = () => {
     let passwordPromise = Promise.resolve();
     const isResetForm = document.getElementById("token");
-    if (isResetForm && passwordSettings.passwordHistoryEnabled) {
+    if (isResetForm && passwordSettings && passwordSettings.passwordHistoryEnabled) {
         const token = document.getElementById("token").getAttribute("value");
         const csrfToken = document.getElementById("csrfToken").getAttribute("value");
         const formData = new FormData();
