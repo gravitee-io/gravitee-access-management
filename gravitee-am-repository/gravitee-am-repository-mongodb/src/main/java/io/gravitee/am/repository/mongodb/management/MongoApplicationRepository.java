@@ -350,6 +350,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationOAuthSettingsMongo.setBackchannelTokenDeliveryMode(other.getBackchannelTokenDeliveryMode());
         applicationOAuthSettingsMongo.setBackchannelUserCodeParameter(other.isBackchannelUserCodeParameter());
         applicationOAuthSettingsMongo.setBackchannelClientNotificationEndpoint(other.getBackchannelClientNotificationEndpoint());
+        applicationOAuthSettingsMongo.setDisableRefreshTokenRotation(other.isDisableRefreshTokenRotation());
 
         return applicationOAuthSettingsMongo;
     }
@@ -429,8 +430,9 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationOAuthSettings.setBackchannelTokenDeliveryMode(other.getBackchannelTokenDeliveryMode());
         applicationOAuthSettings.setBackchannelUserCodeParameter(other.isBackchannelUserCodeParameter());
         applicationOAuthSettings.setBackchannelClientNotificationEndpoint(other.getBackchannelClientNotificationEndpoint());
-
         applicationOAuthSettings.setRequireParRequest(other.isRequireParRequest());
+        applicationOAuthSettings.setDisableRefreshTokenRotation(other.isDisableRefreshTokenRotation());
+
         return applicationOAuthSettings;
     }
 

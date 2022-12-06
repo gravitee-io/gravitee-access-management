@@ -108,24 +108,7 @@ public class AbstractTokenGranter implements TokenGranter {
         this.supportRefreshToken = supportRefreshToken;
     }
 
-    private Single<Token> handleRequest(TokenRequest tokenRequest, Client client, User endUser) {
-        return resolveRequest(tokenRequest, client, endUser)
-                .flatMap(tokenRequest1 -> createOAuth2Request(tokenRequest1, client, endUser))
-                .flatMap(oAuth2Request -> createAccessToken(oAuth2Request, client, endUser));
-    }
-
-    private Single<OAuth2Request> createOAuth2Request(TokenRequest tokenRequest, Client client, User endUser) {
-        return Single.just(tokenRequest.createOAuth2Request())
-                .map(oAuth2Request -> {
-                    if (endUser != null) {
-                        oAuth2Request.setSubject(endUser.getId());
-                    }
-                    oAuth2Request.setSupportRefreshToken(isSupportRefreshToken(client));
-                    return oAuth2Request;
-                });
-    }
-
-    private Single<Token> createAccessToken(OAuth2Request oAuth2Request, Client client, User endUser) {
+    protected Single<Token> createAccessToken(OAuth2Request oAuth2Request, Client client, User endUser) {
         return tokenService.create(oAuth2Request, client, endUser);
     }
 
@@ -147,6 +130,23 @@ public class AbstractTokenGranter implements TokenGranter {
 
     public void setTokenService(TokenService tokenService) {
         this.tokenService = tokenService;
+    }
+
+    private Single<Token> handleRequest(TokenRequest tokenRequest, Client client, User endUser) {
+        return resolveRequest(tokenRequest, client, endUser)
+                .flatMap(tokenRequest1 -> createOAuth2Request(tokenRequest1, client, endUser))
+                .flatMap(oAuth2Request -> createAccessToken(oAuth2Request, client, endUser));
+    }
+
+    private Single<OAuth2Request> createOAuth2Request(TokenRequest tokenRequest, Client client, User endUser) {
+        return Single.just(tokenRequest.createOAuth2Request())
+                .map(oAuth2Request -> {
+                    if (endUser != null) {
+                        oAuth2Request.setSubject(endUser.getId());
+                    }
+                    oAuth2Request.setSupportRefreshToken(isSupportRefreshToken(client));
+                    return oAuth2Request;
+                });
     }
 
 }
