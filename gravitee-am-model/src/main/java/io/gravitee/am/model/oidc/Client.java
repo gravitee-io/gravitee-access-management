@@ -229,6 +229,9 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     private String samlCertificate;
 
+    // ----------- Refresh token Settings -----------
+    private boolean disableRefreshTokenRotation;
+
     public Client() {
     }
 
@@ -313,6 +316,7 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.attributeConsumeServiceUrl = other.attributeConsumeServiceUrl;
         this.singleLogoutServiceUrl = other.singleLogoutServiceUrl;
         this.samlCertificate = other.samlCertificate;
+        this.disableRefreshTokenRotation = other.disableRefreshTokenRotation;
     }
 
     public String getId() {
@@ -1010,6 +1014,14 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     public boolean isBackchannelUserCodeParameter() {
         return backchannelUserCodeParameter;
+    }
+
+    public boolean isDisableRefreshTokenRotation() {
+        return disableRefreshTokenRotation;
+    }
+
+    public void setDisableRefreshTokenRotation(boolean disableRefreshTokenRotation) {
+        this.disableRefreshTokenRotation = disableRefreshTokenRotation;
     }
 
     @Override

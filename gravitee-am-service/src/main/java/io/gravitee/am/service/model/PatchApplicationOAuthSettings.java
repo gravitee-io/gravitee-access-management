@@ -89,6 +89,8 @@ public class PatchApplicationOAuthSettings {
     private Optional<Boolean> silentReAuthentication;
     private Optional<List<ApplicationScopeSettings>> scopeSettings;
 
+    private Optional<Boolean> disableRefreshTokenRotation;
+
     public Optional<List<String>> getRedirectUris() {
         return redirectUris;
     }
@@ -545,6 +547,14 @@ public class PatchApplicationOAuthSettings {
         this.tlsClientCertificateBoundAccessTokens = tlsClientCertificateBoundAccessTokens;
     }
 
+    public Optional<Boolean> getDisableRefreshTokenRotation() {
+        return disableRefreshTokenRotation;
+    }
+
+    public void setDisableRefreshTokenRotation(Optional<Boolean> disableRefreshTokenRotation) {
+        this.disableRefreshTokenRotation = disableRefreshTokenRotation;
+    }
+
     public ApplicationOAuthSettings patch(ApplicationOAuthSettings _toPatch) {
         // create new object for audit purpose (patch json result)
         ApplicationOAuthSettings toPatch = _toPatch == null ? new ApplicationOAuthSettings() : new ApplicationOAuthSettings(_toPatch);
@@ -607,6 +617,7 @@ public class PatchApplicationOAuthSettings {
         SetterUtils.safeSet(toPatch::setPostLogoutRedirectUris, this.getPostLogoutRedirectUris());
         SetterUtils.safeSet(toPatch::setSingleSignOut, this.getSingleSignOut());
         SetterUtils.safeSet(toPatch::setSilentReAuthentication, this.getSilentReAuthentication());
+        SetterUtils.safeSet(toPatch::setDisableRefreshTokenRotation, this.getDisableRefreshTokenRotation());
         if (this.getScopeSettings() != null && this.getScopeSettings().isPresent()) {
             toPatch.setScopeSettings(this.getScopeSettings().get());
         }

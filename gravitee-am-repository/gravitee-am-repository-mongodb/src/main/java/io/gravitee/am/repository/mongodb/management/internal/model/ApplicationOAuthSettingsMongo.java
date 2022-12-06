@@ -95,6 +95,8 @@ public class ApplicationOAuthSettingsMongo {
     private String backchannelAuthRequestSignAlg;
     private boolean backchannelUserCodeParameter;
 
+    private boolean disableRefreshTokenRotation;
+
     public String getClientId() {
         return clientId;
     }
@@ -637,5 +639,13 @@ public class ApplicationOAuthSettingsMongo {
 
     public void setBackchannelUserCodeParameter(boolean backchannelUserCodeParameter) {
         this.backchannelUserCodeParameter = backchannelUserCodeParameter;
+    }
+
+    public boolean isDisableRefreshTokenRotation() {
+        return disableRefreshTokenRotation;
+    }
+
+    public void setDisableRefreshTokenRotation(boolean disableRefreshTokenRotation) {
+        this.disableRefreshTokenRotation = disableRefreshTokenRotation;
     }
 }

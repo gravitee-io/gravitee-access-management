@@ -45,6 +45,22 @@
 
       <div class="gv-form-section">
         <div class="gv-form-section-title">
+          <h5>Refresh Token</h5>
+          <small>Configure how your application will use refresh tokens.</small>
+          <mat-divider></mat-divider>
+        </div>
+        <div fxLayout="column">
+          <mat-slide-toggle
+            (change)="disableRefreshTokenRotation($event)"
+            [checked]="isRefreshTokenRotationDisabled()" [disabled]="readonly || !isRefreshTokenFlowSelected()">
+            Disable Refresh Token Rotation
+          </mat-slide-toggle>
+          <mat-hint style="font-size: 75%;">Reuse refresh tokens until expiration to issue new access tokens. Disabled by default to follow OAuth 2.0 best practices.</mat-hint>
+        </div>
+      </div>
+
+      <div class="gv-form-section">
+        <div class="gv-form-section-title">
           <h5>Proof Key for Code Exchange (PKCE)</h5>
           <small>PKCE is an extension to the Authorization Code flow to prevent interception attack for public clients.</small>
           <mat-divider></mat-divider>
