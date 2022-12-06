@@ -232,6 +232,7 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
     // ----------- Refresh token Settings -----------
     private boolean disableRefreshTokenRotation;
 
+    private boolean disableRefreshTokenRenewal;
     public Client() {
     }
 
@@ -317,6 +318,7 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.singleLogoutServiceUrl = other.singleLogoutServiceUrl;
         this.samlCertificate = other.samlCertificate;
         this.disableRefreshTokenRotation = other.disableRefreshTokenRotation;
+        this.disableRefreshTokenRenewal = other.disableRefreshTokenRenewal;
     }
 
     public String getId() {
@@ -1022,6 +1024,14 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     public void setDisableRefreshTokenRotation(boolean disableRefreshTokenRotation) {
         this.disableRefreshTokenRotation = disableRefreshTokenRotation;
+    }
+
+    public boolean isDisableRefreshTokenRenewal() {
+        return disableRefreshTokenRenewal;
+    }
+
+    public void setDisableRefreshTokenRenewal(boolean disableRefreshTokenRenewal) {
+        this.disableRefreshTokenRenewal = disableRefreshTokenRenewal;
     }
 
     @Override

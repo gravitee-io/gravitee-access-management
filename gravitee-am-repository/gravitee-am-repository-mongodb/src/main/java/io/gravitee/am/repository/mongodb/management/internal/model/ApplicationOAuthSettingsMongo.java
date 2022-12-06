@@ -97,6 +97,8 @@ public class ApplicationOAuthSettingsMongo {
 
     private boolean disableRefreshTokenRotation;
 
+    private boolean disableRefreshTokenRenewal;
+
     public String getClientId() {
         return clientId;
     }
@@ -647,5 +649,13 @@ public class ApplicationOAuthSettingsMongo {
 
     public void setDisableRefreshTokenRotation(boolean disableRefreshTokenRotation) {
         this.disableRefreshTokenRotation = disableRefreshTokenRotation;
+    }
+
+    public boolean isDisableRefreshTokenRenewal() {
+        return disableRefreshTokenRenewal;
+    }
+
+    public void setDisableRefreshTokenRenewal(boolean disableRefreshTokenRenewal) {
+        this.disableRefreshTokenRenewal = disableRefreshTokenRenewal;
     }
 }

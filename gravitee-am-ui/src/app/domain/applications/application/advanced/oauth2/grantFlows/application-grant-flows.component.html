@@ -57,6 +57,14 @@
           </mat-slide-toggle>
           <mat-hint style="font-size: 75%;">Reuse refresh tokens until expiration to issue new access tokens. Disabled by default to follow OAuth 2.0 best practices.</mat-hint>
         </div>
+        <div fxLayout="column">
+          <mat-slide-toggle
+            (change)="disableRefreshTokenRenewal($event)"
+            [checked]="isRefreshTokenRenewalDisabled()" [disabled]="readonly || !isRefreshTokenFlowSelected()">
+            Disable Refresh Token Renewal
+          </mat-slide-toggle>
+          <mat-hint style="font-size: 75%;">Do not issue new refresh token on refreshing access tokens.</mat-hint>
+        </div>
       </div>
 
       <div class="gv-form-section">

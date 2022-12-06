@@ -109,4 +109,10 @@ public class RefreshTokenGranter extends AbstractTokenGranter {
         // request has already been resolved during parse request step
         return Single.just(tokenRequest);
     }
+
+    @Override
+    protected boolean isSupportRefreshToken(Client client) {
+        // do not issue new refresh token if client has disabled this option
+        return !client.isDisableRefreshTokenRenewal() && super.isSupportRefreshToken(client);
+    }
 }

@@ -91,6 +91,8 @@ public class PatchApplicationOAuthSettings {
 
     private Optional<Boolean> disableRefreshTokenRotation;
 
+    private Optional<Boolean> disableRefreshTokenRenewal;
+
     public Optional<List<String>> getRedirectUris() {
         return redirectUris;
     }
@@ -555,6 +557,14 @@ public class PatchApplicationOAuthSettings {
         this.disableRefreshTokenRotation = disableRefreshTokenRotation;
     }
 
+    public Optional<Boolean> getDisableRefreshTokenRenewal() {
+        return disableRefreshTokenRenewal;
+    }
+
+    public void setDisableRefreshTokenRenewal(Optional<Boolean> disableRefreshTokenRenewal) {
+        this.disableRefreshTokenRenewal = disableRefreshTokenRenewal;
+    }
+
     public ApplicationOAuthSettings patch(ApplicationOAuthSettings _toPatch) {
         // create new object for audit purpose (patch json result)
         ApplicationOAuthSettings toPatch = _toPatch == null ? new ApplicationOAuthSettings() : new ApplicationOAuthSettings(_toPatch);
@@ -618,6 +628,7 @@ public class PatchApplicationOAuthSettings {
         SetterUtils.safeSet(toPatch::setSingleSignOut, this.getSingleSignOut());
         SetterUtils.safeSet(toPatch::setSilentReAuthentication, this.getSilentReAuthentication());
         SetterUtils.safeSet(toPatch::setDisableRefreshTokenRotation, this.getDisableRefreshTokenRotation());
+        SetterUtils.safeSet(toPatch::setDisableRefreshTokenRenewal, this.getDisableRefreshTokenRenewal());
         if (this.getScopeSettings() != null && this.getScopeSettings().isPresent()) {
             toPatch.setScopeSettings(this.getScopeSettings().get());
         }

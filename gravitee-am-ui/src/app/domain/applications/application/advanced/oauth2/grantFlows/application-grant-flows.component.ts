@@ -82,6 +82,7 @@ export class ApplicationGrantFlowsComponent implements OnInit {
     oauthSettings.tlsClientAuthSanIp = this.applicationOauthSettings.tlsClientAuthSanIp;
     oauthSettings.tlsClientAuthSanEmail = this.applicationOauthSettings.tlsClientAuthSanEmail;
     oauthSettings.disableRefreshTokenRotation = this.applicationOauthSettings.disableRefreshTokenRotation;
+    oauthSettings.disableRefreshTokenRenewal = this.applicationOauthSettings.disableRefreshTokenRenewal;
     this.applicationService.patch(this.domainId, this.application.id, {'settings' : { 'oauth' : oauthSettings}}).subscribe(data => {
       this.snackbarService.open('Application updated');
       this.router.navigate(['.'], { relativeTo: this.route, queryParams: { 'reload': true }});
@@ -136,6 +137,15 @@ export class ApplicationGrantFlowsComponent implements OnInit {
 
   isRefreshTokenRotationDisabled() {
     return this.applicationOauthSettings.disableRefreshTokenRotation;
+  }
+
+  disableRefreshTokenRenewal(event) {
+    this.applicationOauthSettings.disableRefreshTokenRenewal = event.checked;
+    this.formChanged = true;
+  }
+
+  isRefreshTokenRenewalDisabled() {
+    return this.applicationOauthSettings.disableRefreshTokenRenewal;
   }
 
   get selectedGrantTypes() {
