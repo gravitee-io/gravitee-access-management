@@ -21,8 +21,10 @@ import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.AbstractTokenGranter;
+import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequestResolver;
+import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.User;
@@ -108,5 +110,24 @@ public class RefreshTokenGranter extends AbstractTokenGranter {
     protected Single<TokenRequest> resolveRequest(TokenRequest tokenRequest, Client client, User endUser) {
         // request has already been resolved during parse request step
         return Single.just(tokenRequest);
+    }
+
+    @Override
+    protected boolean isSupportRefreshToken(Client client) {
+        // do not issue a new refresh token if token rotation is disabled
+        return !client.isDisableRefreshTokenRotation() && super.isSupportRefreshToken(client);
+    }
+
+    @Override
+    protected Single<Token> createAccessToken(OAuth2Request oAuth2Request, Client client, User endUser) {
+        return super.createAccessToken(oAuth2Request, client, endUser)
+                .map(token -> {
+                    if (!client.isDisableRefreshTokenRotation()) {
+                        return token;
+                    }
+                    // if token rotation is disabled, return the same original refresh_token
+                    token.setRefreshToken(oAuth2Request.getParameters().getFirst(Parameters.REFRESH_TOKEN));
+                    return token;
+                });
     }
 }

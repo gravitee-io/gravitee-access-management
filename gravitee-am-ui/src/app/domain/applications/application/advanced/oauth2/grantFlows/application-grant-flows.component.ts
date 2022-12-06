@@ -97,6 +97,7 @@ export class ApplicationGrantFlowsComponent implements OnInit {
     oauthSettings.tlsClientAuthSanEmail = this.applicationOauthSettings.tlsClientAuthSanEmail;
     oauthSettings.jwksUri = this.applicationOauthSettings.jwksUri;
     oauthSettings.jwks = (this.applicationOauthSettings.jwks) ? JSON.parse(this.applicationOauthSettings.jwks): null;
+    oauthSettings.disableRefreshTokenRotation = this.applicationOauthSettings.disableRefreshTokenRotation;
     this.applicationService.patch(this.domainId, this.application.id, {'settings' : { 'oauth' : oauthSettings}}).subscribe(data => {
       this.snackbarService.open('Application updated');
       this.router.navigate(['.'], { relativeTo: this.route, queryParams: { 'reload': true }});
@@ -138,6 +139,19 @@ export class ApplicationGrantFlowsComponent implements OnInit {
 
   isS256CodeChallengeMethodForced() {
     return this.applicationOauthSettings.forceS256CodeChallengeMethod;
+  }
+
+  isRefreshTokenFlowSelected() {
+    return this.selectedGrantTypes.includes('refresh_token');
+  }
+
+  disableRefreshTokenRotation(event) {
+    this.applicationOauthSettings.disableRefreshTokenRotation = event.checked;
+    this.formChanged = true;
+  }
+
+  isRefreshTokenRotationDisabled() {
+    return this.applicationOauthSettings.disableRefreshTokenRotation;
   }
 
   get selectedGrantTypes() {
