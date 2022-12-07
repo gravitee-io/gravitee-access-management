@@ -121,6 +121,30 @@
         </div>
       </div>
 
+      <div class="gv-form-section" *ngIf="applicationOauthSettings.tokenEndpointAuthMethod === 'private_key_jwt'">
+        <div class="gv-form-section-title">
+          <h5>Advanced Assertion Client authentication</h5>
+          <small>When using assertions for client authentication, clients have to register a public key (JWKS format) to interact with the token endpoint.</small>
+          <mat-divider></mat-divider>
+        </div>
+        <div fxLayout="column" fxLayoutGap="10px">
+          <div fxLayout="column">
+            <mat-form-field appearance="outline" floatLabel="always">
+              <mat-label>jwks_uri</mat-label>
+              <input matInput type="text" placeholder="Enter the jwks_uri value" name="jwksUri" (ngModelChange)="modelChanged($event)" [(ngModel)]="applicationOauthSettings.jwksUri" [disabled]="readonly" />
+              <mat-hint>URL for the Client's JSON Web Key Set (JWK) document</mat-hint>
+            </mat-form-field>
+          </div>
+          <div fxLayout="column">
+            <mat-form-field appearance="outline" floatLabel="always">
+              <mat-label>jwks</mat-label>
+              <textarea rows="10" matInput type="text" placeholder="Enter the jwks value" name="jwks" (ngModelChange)="modelChanged($event)" [(ngModel)]="applicationOauthSettings.jwks" [disabled]="readonly"></textarea>
+              <mat-hint>Client's JSON Web Key Set (JWK) document, passed by value. This parameter is intended only to be used by Clients that, for some reason, are unable to use the jwks_uri parameter.</mat-hint>
+            </mat-form-field>
+          </div>
+        </div>
+      </div>
+
       <div fxLayout="row" style="margin-bottom: 20px;">
         <button mat-raised-button color="primary" [disabled]="!formChanged" type="submit">SAVE</button>
       </div>
