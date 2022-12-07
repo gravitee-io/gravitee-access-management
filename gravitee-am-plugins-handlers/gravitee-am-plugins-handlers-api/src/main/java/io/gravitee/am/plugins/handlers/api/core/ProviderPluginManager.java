@@ -17,6 +17,7 @@
 package io.gravitee.am.plugins.handlers.api.core;
 
 import io.gravitee.am.plugins.handlers.api.provider.ProviderConfiguration;
+import io.gravitee.common.service.AbstractService;
 import io.gravitee.common.service.Service;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginContextFactory;
@@ -104,6 +105,10 @@ public abstract class ProviderPluginManager<INSTANCE, PROVIDER, CONFIG extends P
             });
 
             pluginApplicationContext.getAutowireCapableBeanFactory().autowireBean(provider);
+
+            if (provider instanceof AbstractService) {
+                ((AbstractService<?>) provider).setApplicationContext(pluginApplicationContext);
+            }
 
             if (provider instanceof InitializingBean) {
                 ((InitializingBean) provider).afterPropertiesSet();
