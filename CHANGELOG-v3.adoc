@@ -1,6 +1,33 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/619?closed=1[AM - 3.15.15 (2022-12-07)]
+
+=== Bug fixes
+
+*_AM-Groups_*
+
+- When a group in AM has more than 25 member those members do now show/exist https://github.com/gravitee-io/issues/issues/8708[#8708]
+- When a group in AM has more than 25 member those members do now show/exist. https://github.com/gravitee-io/issues/issues/8484[#8484]
+
+*_Gateway_*
+
+- IdentityFirst doesn't work if BotDetection is enabled https://github.com/gravitee-io/issues/issues/8704[#8704]
+- Manage time drift on syncManager https://github.com/gravitee-io/issues/issues/8701[#8701]
+
+*_General_*
+
+- Application name not updated on initial login page when changed within AM console https://github.com/gravitee-io/issues/issues/8706[#8706]
+
+=== Features
+
+*_General_*
+
+- Prevent CRUD operation on Mongo and JDBC IDPS https://github.com/gravitee-io/issues/issues/8695[#8695]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/617?closed=1[AM - 3.19.3 (2022-12-01)]
 
 === Bug fixes
