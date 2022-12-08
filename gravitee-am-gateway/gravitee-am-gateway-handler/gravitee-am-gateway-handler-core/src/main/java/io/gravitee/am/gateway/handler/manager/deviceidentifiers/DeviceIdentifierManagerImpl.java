@@ -136,11 +136,15 @@ public class DeviceIdentifierManagerImpl extends AbstractService implements Devi
 
     private void updateDeviceIdentifier(DeviceIdentifier detection) {
         try {
-            var providerConfig = new ProviderConfiguration(detection.getType(), detection.getConfiguration());
-            var provider = deviceIdentifierPluginManager.create(providerConfig);
-            this.deviceIdentifiers.put(detection.getId(), detection);
-            this.providers.put(detection.getId(), provider);
-            LOGGER.info("Device identifier {} loaded for domain {}", detection.getName(), domain.getName());
+            if (needDeployment(detection)) {
+                var providerConfig = new ProviderConfiguration(detection.getType(), detection.getConfiguration());
+                var provider = deviceIdentifierPluginManager.create(providerConfig);
+                this.deviceIdentifiers.put(detection.getId(), detection);
+                this.providers.put(detection.getId(), provider);
+                LOGGER.info("Device identifier {} loaded for domain {}", detection.getName(), domain.getName());
+            } else {
+                LOGGER.info("Device identifier {} already loaded for domain {}", detection.getName(), domain.getName());
+            }
         } catch (Exception ex) {
             this.providers.remove(detection.getId());
             LOGGER.error("Unable to create Device identifier provider for domain {}", domain.getName(), ex);
@@ -161,5 +165,14 @@ public class DeviceIdentifierManagerImpl extends AbstractService implements Devi
             }
         }
         return variables;
+    }
+
+    /**
+     * @param deviceIdentifier
+     * @return true if the BotDetection has never been deployed or if the deployed version is not up to date
+     */
+    private boolean needDeployment(DeviceIdentifier deviceIdentifier) {
+        final DeviceIdentifier deployedPlugin = this.deviceIdentifiers.get(deviceIdentifier.getId());
+        return (deployedPlugin == null || deployedPlugin.getUpdatedAt().before(deviceIdentifier.getUpdatedAt()));
     }
 }

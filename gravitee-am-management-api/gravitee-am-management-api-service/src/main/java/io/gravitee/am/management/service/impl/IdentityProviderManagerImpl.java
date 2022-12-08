@@ -373,11 +373,6 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
         return create(ReferenceType.DOMAIN, domain);
     }
 
-    @Override
-    public boolean userProviderExists(String identityProviderType) {
-        return identityProviderPluginManager.hasUserProvider(identityProviderType);
-    }
-
     private void removeUserProvider(String identityProviderId) {
         logger.info("Management API has received a undeploy identity provider event for {}", identityProviderId);
         UserProvider userProvider = userProviders.remove(identityProviderId);

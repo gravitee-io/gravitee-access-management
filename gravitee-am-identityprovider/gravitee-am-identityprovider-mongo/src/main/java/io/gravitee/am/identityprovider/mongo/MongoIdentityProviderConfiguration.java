@@ -47,9 +47,15 @@ public class MongoIdentityProviderConfiguration implements IdentityProviderConfi
     private String passwordSaltAttribute = "salt";
     private Integer passwordSaltLength = 32;
 
+    private boolean userProvider = true;
+
     @Override
     public boolean userProvider() {
-        return true;
+        return this.userProvider;
+    }
+
+    public void setUserProvider(boolean userProvider) {
+        this.userProvider = userProvider;
     }
 
     public String getUri() {

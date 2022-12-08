@@ -169,10 +169,16 @@ public class UserResource extends AbstractResource {
     private Single<UserEntity> enhanceIdentityProvider(UserEntity userEntity) {
         if (userEntity.getSource() != null) {
             return identityProviderService.findById(userEntity.getSource())
-                    .map(idP -> {
+                    .flatMap(idP -> {
                         userEntity.setSource(idP.getName());
-                        userEntity.setInternal(identityProviderManager.userProviderExists(idP.getType()));
-                        return userEntity;
+                        userEntity.setInternal(false);
+                        // try to load the UserProvider to mark the user as internal or not
+                        // Since Github issue #8695, the UserProvider maybe disabled for MongoDB & JDBC implementation
+                        return identityProviderManager.getUserProvider(userEntity.getSourceId())
+                                .map(up -> {
+                                    userEntity.setInternal(true);
+                                    return userEntity;
+                                }).defaultIfEmpty(userEntity);
                     })
                     .defaultIfEmpty(userEntity)
                     .toSingle();
