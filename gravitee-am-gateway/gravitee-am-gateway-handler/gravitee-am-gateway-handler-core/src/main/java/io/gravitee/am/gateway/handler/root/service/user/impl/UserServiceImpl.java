@@ -396,10 +396,6 @@ public class UserServiceImpl implements UserService {
                     if (foundUsers.size() == 1 || (foundUsers.size() > 1 && !params.isConfirmIdentityEnabled())) {
                         User user = foundUsers.get(0);
 
-                        if (!user.isEnabled()) {
-                            return Single.error(new AccountInactiveException("User [ " + user.getUsername() + " ] is disabled."));
-                        }
-
                         //fixes https://graviteecommunity.atlassian.net/browse/AM-71
                         if (client.getIdentityProviders() != null) {
                             final IdentityProvider identityProvider = identityProviderManager.getIdentityProvider(user.getSource());
@@ -418,9 +414,15 @@ public class UserServiceImpl implements UserService {
                                 .flatMap(userProvider -> {
                                     // if user registration is not completed and force registration option is disabled throw invalid account exception
                                     AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
+
                                     if (user.isInactive() && !forceUserRegistration(accountSettings)) {
                                         return Single.error(new AccountInactiveException("User [ " + user.getUsername() + " ] needs to complete the activation process"));
                                     }
+
+                                    if (!user.isEnabled() && user.isRegistrationCompleted()) {
+                                        return Single.error(new AccountInactiveException("User [ " + user.getUsername() + " ] is disabled."));
+                                    }
+
                                     // fetch latest information from the identity provider and return the user
                                     return userProvider.findByUsername(user.getUsername())
                                             .map(Optional::ofNullable)
