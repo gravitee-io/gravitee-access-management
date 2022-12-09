@@ -331,6 +331,9 @@ jobs:
             - ./gravitee-am-management-api-standalone-*.zip
             - ./gravitee-am-webui-*.zip
   run_jest_tests_mongo:
+    parameters:
+      mongo_version:
+        type: string
     machine:
       image: ubuntu-2204:2022.07.1
       docker_layer_caching: true
@@ -345,8 +348,8 @@ jobs:
       - run:
           name: Start Mongo
           command: |
-            docker pull mongo:5.0
-            docker run -d --name mongo_tmp --rm -p 27017:27017 mongo:5.0
+            docker pull mongo:<< parameters.mongo_version >>
+            docker run -d --name mongo_tmp --rm -p 27017:27017 mongo:<< parameters.mongo_version >>
       - run:
           name: Start FakeSMTP
           command: |
@@ -401,6 +404,9 @@ jobs:
           mentions: "@am_team"
           template: basic_fail_1
   run_jest_tests_psql:
+    parameters:
+      psql_version:
+        type: string
     machine:
       image: ubuntu-2204:2022.07.1
       docker_layer_caching: true
@@ -415,8 +421,8 @@ jobs:
       - run:
           name: Start PostgreSQL
           command: |
-            docker pull postgres:14-alpine
-            docker run -d --name postgresql_tmp --rm -p 5432:5432 -e POSTGRES_PASSWORD=T0pS3cr3t postgres:14-alpine
+            docker pull postgres:<< parameters.psql_version >>
+            docker run -d --name postgresql_tmp --rm -p 5432:5432 -e POSTGRES_PASSWORD=T0pS3cr3t postgres:<< parameters.psql_version >>
       - run:
           name: Start FakeSMTP
           command: |
@@ -500,9 +506,12 @@ jobs:
           mentions: "@am_team"
           template: basic_fail_1
   run_postman_tests_mongo:
+    parameters:
+      mongo_version:
+        type: string
     docker:
       - image: cimg/openjdk:17.0.1-node
-      - image: mongo:4.2
+      - image: mongo:<< parameters.mongo_version >>
     resource_class: medium+
     steps:
       - attach_workspace:
@@ -544,9 +553,12 @@ jobs:
           mentions: "@am_team"
           template: basic_fail_1
   run_postman_tests_psql:
+    parameters:
+      psql_version:
+        type: string
     docker:
       - image: cimg/openjdk:17.0.1-node
-      - image: postgres:14-alpine
+      - image: postgres:<< parameters.psql_version >>
         environment:
           POSTGRES_PASSWORD: T0pS3cr3t
     resource_class: medium+
@@ -1266,15 +1278,27 @@ workflows:
       - run_postman_tests_mongo:
           requires:
             - approve-tests-mongo-psql
+          matrix:
+            parameters:
+              mongo_version: ["4.4", "6.0"]
       - run_postman_tests_psql:
           requires:
             - approve-tests-mongo-psql
+          matrix:
+            parameters:
+              psql_version: ["11.18-bullseye", "15.1"]
       - run_jest_tests_mongo:
           requires:
             - approve-tests-mongo-psql
+          matrix:
+            parameters:
+              mongo_version: ["4.4", "6.0"]
       - run_jest_tests_psql:
           requires:
             - approve-tests-mongo-psql
+          matrix:
+            parameters:
+              psql_version: ["11.18-bullseye", "15.1"]
 
   testcontainer_tests:
     when: << pipeline.parameters.run-container-test >>

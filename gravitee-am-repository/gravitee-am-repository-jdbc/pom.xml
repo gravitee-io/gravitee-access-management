@@ -40,7 +40,6 @@
 
         <dozer.version>6.5.2</dozer.version>
 
-        <testcontainers.version>1.15.1</testcontainers.version>
         <liquibase.version>4.17.1</liquibase.version>
         <liquibase-slf4j.version>4.0.0</liquibase-slf4j.version>
 
@@ -276,13 +275,13 @@
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
-            <version>${testcontainers.version}</version>
+            <version>${test-container.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>r2dbc</artifactId>
-            <version>${testcontainers.version}</version>
+            <version>${test-container.version}</version>
             <scope>test</scope>
             <exclusions>
                 <exclusion>
@@ -294,27 +293,27 @@
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>postgresql</artifactId>
-            <version>${testcontainers.version}</version>
+            <version>${test-container.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>mysql</artifactId>
-            <version>${testcontainers.version}</version>
+            <version>${test-container.version}</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>mariadb</artifactId>
-            <version>${testcontainers.version}</version>
+            <version>${test-container.version}</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>mssqlserver</artifactId>
-            <version>${testcontainers.version}</version>
+            <version>${test-container.version}</version>
             <scope>test</scope>
         </dependency>
 
@@ -358,6 +357,9 @@
                         <configuration>
                             <argLine>-Xmx1024m</argLine>
                             <skipTests>false</skipTests>
+                            <systemPropertyVariables>
+                                <jdbcType>postgresql-tc~15.1</jdbcType>
+                            </systemPropertyVariables>
                         </configuration>
                         <executions>
                             <execution>
@@ -389,7 +391,7 @@
                                 </goals>
                                 <configuration>
                                     <systemPropertyVariables>
-                                        <jdbcType>mssql-tc~2019-CU14-ubuntu-18.04</jdbcType>
+                                        <jdbcType>mssql-tc~2019-latest</jdbcType>
                                     </systemPropertyVariables>
                                 </configuration>
                             </execution>

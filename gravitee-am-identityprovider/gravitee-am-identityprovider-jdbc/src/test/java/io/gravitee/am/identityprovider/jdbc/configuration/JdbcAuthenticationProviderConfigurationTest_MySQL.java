@@ -25,7 +25,7 @@ import org.springframework.context.annotation.Configuration;
 public class JdbcAuthenticationProviderConfigurationTest_MySQL extends JdbcAuthenticationProviderConfigurationTest {
 
     public String url() {
-        return "r2dbc:tc:mysql:///databasename?TC_IMAGE_TAG=5.6.23";
+        return "r2dbc:tc:mysql:///databasename?TC_IMAGE_TAG=8.0.27";
     }
 
     @Override

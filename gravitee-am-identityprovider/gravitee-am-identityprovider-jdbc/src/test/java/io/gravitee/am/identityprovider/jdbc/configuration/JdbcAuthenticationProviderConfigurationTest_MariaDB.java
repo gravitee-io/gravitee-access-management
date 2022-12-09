@@ -25,7 +25,7 @@ import org.springframework.context.annotation.Configuration;
 public class JdbcAuthenticationProviderConfigurationTest_MariaDB extends JdbcAuthenticationProviderConfigurationTest {
 
     public String url() {
-        return "r2dbc:tc:mariadb:///databasename?TC_IMAGE_TAG=10.3.6";
+        return "r2dbc:tc:mariadb:///databasename?TC_IMAGE_TAG=10.6.5";
     }
 
     @Override
