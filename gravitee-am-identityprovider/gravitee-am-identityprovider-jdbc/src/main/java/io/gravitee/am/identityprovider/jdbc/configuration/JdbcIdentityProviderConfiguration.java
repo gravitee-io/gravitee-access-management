@@ -55,9 +55,15 @@ public class JdbcIdentityProviderConfiguration implements IdentityProviderConfig
     private List<Map<String, String>> options;
     private boolean autoProvisioning = false;
 
+    private boolean userProvider = true;
+
     @Override
     public boolean userProvider() {
-        return true;
+        return this.userProvider;
+    }
+
+    public void setUserProvider(boolean userProvider) {
+        this.userProvider = userProvider;
     }
 
     public String getHost() {
@@ -231,4 +237,5 @@ public class JdbcIdentityProviderConfiguration implements IdentityProviderConfig
     public void setAutoProvisioning(boolean autoProvisioning) {
         this.autoProvisioning = autoProvisioning;
     }
+
 }
