@@ -64,6 +64,7 @@ object SimulationSettings {
   val OPERATOR = System.getProperty("operator", "")
   val VALUE = System.getProperty("value", "")
   val CONDITION = System.getProperty("condition", "")
+  val PWD_INTROSPECT_ENABLED = System.getProperty("pwd-introspect", "false")
 
 
   // ========================================

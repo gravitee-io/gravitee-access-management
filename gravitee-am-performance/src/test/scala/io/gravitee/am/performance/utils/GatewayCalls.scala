@@ -78,6 +78,19 @@ object GatewayCalls {
       .check(jsonPath("$.access_token").saveAs("access_token"))
   }
 
+  def requestAccessTokenWithUserCredentials = {
+    http("Ask Token")
+      .post(GATEWAY_BASE_URL + s"/${DOMAIN_NAME}/oauth/token")
+      .basicAuth(APP_NAME, APP_NAME)
+      .formParam("grant_type", "password")
+      .formParam("redirect_uri", s"https://callback-${APP_NAME}")
+      .formParam("client_id", APP_NAME)
+      .formParam("username", "${username}")
+      .formParam("password", "${password}")
+      .check(status.is(200))
+      .check(jsonPath("$.access_token").saveAs("access_token"))
+  }
+
   def logout = {
     http("logout")
       .get(GATEWAY_BASE_URL + s"/${DOMAIN_NAME}/logout")
