@@ -600,7 +600,7 @@ jobs:
 
   deploy-on-aks:
     docker:
-      - image: mcr.microsoft.com/azure-cli:latest
+      - image: mcr.microsoft.com/azure-cli:2.42.0
     resource_class: small
     steps:
       - attach_workspace:
