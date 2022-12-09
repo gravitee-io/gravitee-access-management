@@ -52,7 +52,7 @@ public class MongodbProvider implements InitializingBean, DisposableBean {
 
     @Override
     public void afterPropertiesSet() {
-        mongoDBContainer = new MongoDBContainer(DockerImageName.parse("mongo:4.0.10"));
+        mongoDBContainer = new MongoDBContainer(DockerImageName.parse("mongo:6.0"));
         mongoDBContainer.withEnv("MONGO_INITDB_DATABASE", databaseName);
         mongoDBContainer.start();
 

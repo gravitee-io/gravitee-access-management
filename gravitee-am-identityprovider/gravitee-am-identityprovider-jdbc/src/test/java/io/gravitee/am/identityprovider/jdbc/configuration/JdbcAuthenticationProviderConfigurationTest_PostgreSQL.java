@@ -25,7 +25,7 @@ import org.springframework.context.annotation.Configuration;
 public class JdbcAuthenticationProviderConfigurationTest_PostgreSQL extends JdbcAuthenticationProviderConfigurationTest {
 
     public String url() {
-        return "r2dbc:tc:postgresql:///databasename?TC_IMAGE_TAG=9.6.8";
+        return "r2dbc:tc:postgresql:///databasename?TC_IMAGE_TAG=15.1";
     }
 
     @Override

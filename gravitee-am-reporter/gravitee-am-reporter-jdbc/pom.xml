@@ -34,8 +34,6 @@
     <properties>
         <r2dbc-releasetrain.version>Arabba-SR11</r2dbc-releasetrain.version>
 
-        <testcontainers.version>1.15.1</testcontainers.version>
-
         <jdbc-mssql.version>7.4.1.jre8</jdbc-mssql.version>
         <jdbc-mysql.version>8.0.29</jdbc-mysql.version>
         <jdbc-mariadb.version>2.4.0</jdbc-mariadb.version>
@@ -149,13 +147,13 @@
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
-            <version>${testcontainers.version}</version>
+            <version>${test-container.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>r2dbc</artifactId>
-            <version>${testcontainers.version}</version>
+            <version>${test-container.version}</version>
             <scope>test</scope>
             <exclusions>
                 <exclusion>
@@ -167,27 +165,27 @@
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>postgresql</artifactId>
-            <version>${testcontainers.version}</version>
+            <version>${test-container.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>mysql</artifactId>
-            <version>${testcontainers.version}</version>
+            <version>${test-container.version}</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>mariadb</artifactId>
-            <version>${testcontainers.version}</version>
+            <version>${test-container.version}</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>mssqlserver</artifactId>
-            <version>${testcontainers.version}</version>
+            <version>${test-container.version}</version>
             <scope>test</scope>
         </dependency>
 
@@ -237,6 +235,9 @@
                         <configuration>
                             <argLine>-Xmx1024m</argLine>
                             <skipTests>false</skipTests>
+                            <systemPropertyVariables>
+                                <jdbcType>postgresql-tc~15.1</jdbcType>
+                            </systemPropertyVariables>
                         </configuration>
                         <executions>
                             <execution>
@@ -268,7 +269,7 @@
                                 </goals>
                                 <configuration>
                                     <systemPropertyVariables>
-                                        <jdbcType>mssql-tc~2019-CU14-ubuntu-18.04</jdbcType>
+                                        <jdbcType>mssql-tc~2019-latest</jdbcType>
                                     </systemPropertyVariables>
                                 </configuration>
                             </execution>
