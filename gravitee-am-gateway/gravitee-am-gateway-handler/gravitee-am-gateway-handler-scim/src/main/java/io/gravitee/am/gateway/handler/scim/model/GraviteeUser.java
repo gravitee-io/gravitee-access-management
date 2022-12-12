@@ -13,24 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.common.scim;
+package io.gravitee.am.gateway.handler.scim.model;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import io.gravitee.am.common.scim.Schema;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 /**
+ * SCIM Gravitee User Resource used to manage custom claims
+ *
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface Schema {
+public class GraviteeUser extends User {
 
-    String SCHEMA_URI_CORE = "urn:ietf:params:scim:schemas:core:2.0";
-    String SCHEMA_URI_USER = "urn:ietf:params:scim:schemas:core:2.0:User";
-    String SCHEMA_URI_ENTERPRISE_USER = "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User";
-    String SCHEMA_URI_CUSTOM_USER = "urn:ietf:params:scim:schemas:extension:custom:2.0:User";
-    String SCHEMA_URI_GROUP = "urn:ietf:params:scim:schemas:core:2.0:Group";
+    public static final List<String> SCHEMAS = Arrays.asList(Schema.SCHEMA_URI_USER, Schema.SCHEMA_URI_CUSTOM_USER);
 
-    static List<String> supportedSchemas() {
-        return Arrays.asList(SCHEMA_URI_USER, SCHEMA_URI_ENTERPRISE_USER, SCHEMA_URI_CUSTOM_USER);
+    @JsonProperty(Schema.SCHEMA_URI_CUSTOM_USER)
+    private Map<String, Object> additionalInformation;
+
+    public Map<String, Object> getAdditionalInformation() {
+        return additionalInformation;
+    }
+
+    public void setAdditionalInformation(Map<String, Object> additionalInformation) {
+        this.additionalInformation = additionalInformation;
     }
 }

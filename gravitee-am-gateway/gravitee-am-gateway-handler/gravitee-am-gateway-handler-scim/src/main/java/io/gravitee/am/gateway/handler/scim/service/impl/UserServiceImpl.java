@@ -25,10 +25,7 @@ import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
 import io.gravitee.am.gateway.handler.scim.exception.SCIMException;
 import io.gravitee.am.gateway.handler.scim.exception.UniquenessException;
 import io.gravitee.am.gateway.handler.scim.mapper.UserMapper;
-import io.gravitee.am.gateway.handler.scim.model.ListResponse;
-import io.gravitee.am.gateway.handler.scim.model.Member;
-import io.gravitee.am.gateway.handler.scim.model.PatchOp;
-import io.gravitee.am.gateway.handler.scim.model.User;
+import io.gravitee.am.gateway.handler.scim.model.*;
 import io.gravitee.am.gateway.handler.scim.service.GroupService;
 import io.gravitee.am.gateway.handler.scim.service.UserService;
 import io.gravitee.am.model.Domain;
@@ -46,16 +43,8 @@ import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.UserActivityService;
+import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.VerifyAttemptService;
-import io.gravitee.am.service.exception.AbstractManagementException;
-import io.gravitee.am.service.exception.AbstractNotFoundException;
-import io.gravitee.am.service.exception.IdentityProviderNotFoundException;
-import io.gravitee.am.service.exception.RoleNotFoundException;
-import io.gravitee.am.service.exception.TechnicalManagementException;
-import io.gravitee.am.service.exception.UserAlreadyExistsException;
-import io.gravitee.am.service.exception.UserInvalidException;
-import io.gravitee.am.service.exception.UserNotFoundException;
-import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
@@ -406,7 +395,10 @@ public class UserServiceImpl implements UserService {
                 .flatMap(user -> {
                     ObjectNode node = objectMapper.convertValue(user, ObjectNode.class);
                     patchOp.getOperations().forEach(operation -> operation.apply(node));
-                    User userToPatch = objectMapper.treeToValue(node, User.class);
+                    boolean isCustomGraviteeUser = GraviteeUser.SCHEMAS.stream().anyMatch(schema -> node.has(schema));
+                    User userToPatch = isCustomGraviteeUser ?
+                            objectMapper.treeToValue(node, GraviteeUser.class) :
+                            objectMapper.treeToValue(node, User.class);
 
                     // check password
                     if (isInvalidUserPassword(userToPatch.getPassword(), UserMapper.convert(userToPatch))) {

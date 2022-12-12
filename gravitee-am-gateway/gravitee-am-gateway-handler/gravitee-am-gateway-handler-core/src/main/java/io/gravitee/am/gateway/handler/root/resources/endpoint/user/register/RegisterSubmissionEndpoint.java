@@ -18,18 +18,31 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.user.register;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
+import io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils;
 import io.gravitee.am.gateway.handler.root.service.response.RegistrationResponse;
 import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerResponse;
 import io.vertx.reactivex.ext.web.RoutingContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.core.env.Environment;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class RegisterSubmissionEndpoint implements Handler<RoutingContext> {
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+    public static final String GATEWAY_ENDPOINT_REGISTRATION_KEEP_PARAMS = "legacy.registration.keepParams";
+
+    private final boolean keepParams;
+
+    public RegisterSubmissionEndpoint(Environment environment) {
+        this.keepParams = environment.getProperty(GATEWAY_ENDPOINT_REGISTRATION_KEEP_PARAMS, boolean.class, true);
+    }
 
     @Override
     public void handle(RoutingContext context) {
@@ -45,7 +58,8 @@ public class RegisterSubmissionEndpoint implements Handler<RoutingContext> {
             return;
         }
         // else, redirect to the custom redirect_uri
-        doRedirect(context.response(), registrationResponse.getRedirectUri());
+        var redirectTo = keepParams ? ParamUtils.appendQueryParameter(registrationResponse.getRedirectUri(), queryParams) : registrationResponse.getRedirectUri();
+        doRedirect(context.response(), redirectTo);
     }
 
     private void doRedirect(HttpServerResponse response, String url) {

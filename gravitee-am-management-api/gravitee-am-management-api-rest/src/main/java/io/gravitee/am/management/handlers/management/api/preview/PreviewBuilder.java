@@ -55,6 +55,8 @@ import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.DOMAIN_CONTEXT_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.ERROR_PARAM_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.PARAM_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.REQUEST_CONTEXT_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.TEMPLATE_KEY_RECOVERY_CODES_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.TEMPLATE_KEY_RECOVERY_CODES_URL_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.TOKEN_CONTEXT_KEY;
@@ -127,6 +129,8 @@ public class PreviewBuilder {
         variables.put(CLIENT_CONTEXT_KEY, new ClientProperties(this.client));
         variables.put(USER_CONTEXT_KEY, generateFakeUser());
         variables.put("theme", this.theme);
+
+        variables.put(PARAM_CONTEXT_KEY, Map.of());
 
         org.thymeleaf.context.Context context = new org.thymeleaf.context.Context();
         context.setLocale(this.locale);

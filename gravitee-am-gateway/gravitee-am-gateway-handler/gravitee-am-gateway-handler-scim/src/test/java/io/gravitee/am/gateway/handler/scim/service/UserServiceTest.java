@@ -16,10 +16,13 @@
 package io.gravitee.am.gateway.handler.scim.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
+import io.gravitee.am.common.scim.Schema;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
+import io.gravitee.am.gateway.handler.scim.model.GraviteeUser;
 import io.gravitee.am.gateway.handler.scim.model.Operation;
 import io.gravitee.am.gateway.handler.scim.model.PatchOp;
 import io.gravitee.am.gateway.handler.scim.model.User;
@@ -46,6 +49,9 @@ import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
+
+import java.util.*;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -362,7 +368,6 @@ public class UserServiceTest {
 
     @Test
     public void shouldPatchUser() throws Exception {
-        final String domainId = "domain";
         final String domainName = "domainName";
         final String userId = "userId";
 
@@ -409,6 +414,58 @@ public class UserServiceTest {
         testObserver.assertNoErrors();
         testObserver.assertComplete();
         testObserver.assertValue(g -> "my user 2".equals(g.getDisplayName()));
+    }
+
+    @Test
+    public void shouldPatchUser_customGraviteeUser() throws Exception {
+        final String domainName = "domainName";
+        final String userId = "userId";
+
+        ObjectNode userNode = mock(ObjectNode.class);
+        when(userNode.get(Schema.SCHEMA_URI_CUSTOM_USER)).thenReturn(new TextNode("test"));
+        when(userNode.has(Schema.SCHEMA_URI_CUSTOM_USER)).thenReturn(true);
+
+        Operation operation = mock(Operation.class);
+        doAnswer(invocation -> {
+            ObjectNode arg0 = invocation.getArgument(0);
+            Assert.assertTrue(arg0.get(Schema.SCHEMA_URI_CUSTOM_USER).asText().equals("test"));
+            return null;
+        }).when(operation).apply(any());
+
+        PatchOp patchOp = mock(PatchOp.class);
+        when(patchOp.getOperations()).thenReturn(Collections.singletonList(operation));
+
+        GraviteeUser patchUser = mock(GraviteeUser.class);
+        Map<String, Object> additionalInformation = Collections.singletonMap("customClaim", "customValue");
+        when(patchUser.getAdditionalInformation()).thenReturn(additionalInformation);
+
+        io.gravitee.am.model.User patchedUser = mock(io.gravitee.am.model.User.class);
+        when(patchedUser.getId()).thenReturn(userId);
+        when(patchedUser.getSource()).thenReturn("user-idp");
+        when(patchedUser.getUsername()).thenReturn("username");
+        when(patchedUser.getDisplayName()).thenReturn("my user 2");
+
+        io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.User.class);
+        UserProvider userProvider = mock(UserProvider.class);
+        when(userProvider.create(any())).thenReturn(Single.just(idpUser));
+
+        when(domain.getName()).thenReturn(domainName);
+        when(objectMapper.convertValue(any(), eq(ObjectNode.class))).thenReturn(userNode);
+        when(objectMapper.treeToValue(userNode, GraviteeUser.class)).thenReturn(patchUser);
+        when(groupService.findByMember(userId)).thenReturn(Flowable.empty());
+        when(userRepository.findById(userId)).thenReturn(Maybe.just(patchedUser));
+        when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(new IdentityProvider());
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
+        doAnswer(invocation -> {
+            io.gravitee.am.model.User userToUpdate = invocation.getArgument(0);
+            Assert.assertTrue(userToUpdate.getAdditionalInformation().containsKey("customClaim"));
+            return Single.just(userToUpdate);
+        }).when(userRepository).update(any());
+
+        TestObserver<User> testObserver = userService.patch(userId, patchOp, null, "/", null, null).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+        testObserver.assertValue(u -> ((GraviteeUser) u).getAdditionalInformation().containsKey("customClaim"));
     }
 
     @Test

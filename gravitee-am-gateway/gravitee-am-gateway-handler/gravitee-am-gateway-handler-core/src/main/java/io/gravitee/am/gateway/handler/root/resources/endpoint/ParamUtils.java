@@ -18,7 +18,9 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint;
 import com.nimbusds.jwt.JWT;
 import io.gravitee.am.common.oidc.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.common.web.UriBuilder;
 import io.vertx.core.json.Json;
+import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -141,5 +143,19 @@ public class ParamUtils {
             patternBuilder.append(patternPath);
         }
         return patternBuilder.toString();
+    }
+
+    public static String appendQueryParameter(String redirectTo, MultiMap queryParams) {
+        try {
+            final UriBuilder uriBuilder = UriBuilder.fromHttpUrl(redirectTo);
+            queryParams.forEach(entry -> {
+                // some parameters can be already URL encoded, decode first
+                uriBuilder.addParameter(entry.getKey(), UriBuilder.encodeURIComponent(UriBuilder.decodeURIComponent(entry.getValue())));
+            });
+            return uriBuilder.buildString();
+        } catch (Exception e) {
+            LOGGER.warn("Unable to append parameters to {} due to : {}", redirectTo, e.getMessage());
+        }
+        return redirectTo;
     }
 }

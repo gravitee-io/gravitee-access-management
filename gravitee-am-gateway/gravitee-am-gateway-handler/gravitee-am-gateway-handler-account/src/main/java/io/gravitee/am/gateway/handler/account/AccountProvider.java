@@ -126,6 +126,10 @@ public class AccountProvider extends AbstractService<ProtocolProvider> implement
                     .handler(BodyHandler.create())
                     .handler(accountHandler::getUser)
                     .handler(accountFactorsEndpointHandler::verifyFactor);
+            accountRouter.post(AccountRoutes.FACTORS_SEND_CHALLENGE.getRoute())
+                    .handler(BodyHandler.create())
+                    .handler(accountHandler::getUser)
+                    .handler(accountFactorsEndpointHandler::sendChallenge);
             accountRouter.get(AccountRoutes.FACTORS_RECOVERY_CODE.getRoute())
                     .handler(accountHandler::getUser)
                     .handler(accountFactorsEndpointHandler::listRecoveryCodes);
