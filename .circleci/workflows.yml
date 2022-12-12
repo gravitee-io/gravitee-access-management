@@ -259,6 +259,10 @@ commands:
   publish_rpms:
     description: Runs the commands to build n publish RPM Packages for Gravitee.io AM
     parameters:
+      rc_requested:
+        type: boolean
+        default: false
+        description: "Do we have to release a RC"
       dry_run:
         type: boolean
         default: true
@@ -278,8 +282,14 @@ commands:
             - run:
                 environment:
                   GRAVITEEIO_VERSION: << parameters.graviteeio_version >>
+                  RC_REQUESTED: << parameters.rc_requested >>
                 name: "Gravitee AM : Build and Publish RPMs"
                 command: |
+                          if [ "${RC_REQUESTED}" == "true" ]; then
+                            echo "# --->>> THIS IS AN RC_REQUESTED, skip publish_rpms"
+                            exit 0
+                          fi
+
                           export MAJOR_VERSION_NUMBER=$(echo ${GRAVITEEIO_VERSION} | awk -F '.' '{print $1}')
                           export GIT_GRAVITEE_PACKAGES_REPO=$(mktemp -d -t "git_gravitee_packages_repo-XXXXXXXXXX")
                           
@@ -1136,8 +1146,7 @@ jobs:
       graviteeio_version:
         type: string
         default: ''
-        description: "Gravitee.io Release version number (semver) ?"
-    
+        description: "Gravitee.io Release version number (semver) ?" 
     executor:
         name: ubuntu
         class: large
@@ -1229,16 +1238,20 @@ jobs:
         type: boolean
         default: true
         description: "Run in dry run mode?"
+      rc_requested:
+        type: boolean
+        default: false
+        description: "Do we have to release a RC"
       graviteeio_version:
         type: string
         default: ""
         description: "The Gravitee.io release version number of Gravitee.io APIM, for which to build and publish all zip bundles"
-    
     steps:
       - checkout
       - publish_rpms:
           graviteeio_version: << parameters.graviteeio_version >>
           dry_run: << parameters.dry_run >>
+          rc_requested: << pipeline.parameters.rc_requested >>
 
 
 workflows:
@@ -1374,6 +1387,7 @@ workflows:
           context: cicd-orchestrator
           dry_run: << pipeline.parameters.dry_run >>
           graviteeio_version: << pipeline.parameters.graviteeio_version >>
+          rc_requested: << pipeline.parameters.rc_requested >>
 
   publish_rpms:
     when:
