@@ -132,17 +132,22 @@ public abstract class JdbcAuthenticationProviderTest {
 
     @Test
     public void shouldLoadUserByUsername_authentication_multipleMatch_validPassword() {
+        connectUser("common@acme.com", "user02");
+        connectUser("common@acme.com", "user03");
+    }
+
+    private void connectUser(String principal, String credentials) {
         TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
             private final AuthenticationContext authenticationContext = mock(AuthenticationContext.class);
 
             @Override
             public Object getCredentials() {
-                return "user02";
+                return credentials;
             }
 
             @Override
             public Object getPrincipal() {
-                return "common@acme.com";
+                return principal;
             }
 
             @Override
@@ -157,7 +162,7 @@ public abstract class JdbcAuthenticationProviderTest {
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        testObserver.assertValue(u -> "user02".equals(u.getUsername()));
+        testObserver.assertValue(u -> credentials.equals(u.getUsername()));
     }
 
     @Test
