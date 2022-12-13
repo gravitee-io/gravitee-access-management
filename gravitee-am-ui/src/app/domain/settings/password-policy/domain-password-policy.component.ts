@@ -94,6 +94,17 @@ export class DomainPasswordPolicyComponent implements OnInit {
 
   update() {
     const data: any = {};
+
+    if (this.minLength && this.minLength <= 0)  {
+      this.snackbarService.open('Min length must be greater than zero');
+      return;
+    }
+
+    if (this.maxLength && this.maxLength <= 0)  {
+      this.snackbarService.open('Max length must be greater than zero');
+      return;
+    }
+
     data.passwordSettings = {
       'minLength': this.minLength,
       'maxLength': this.maxLength,
