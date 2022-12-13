@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "00b9e8e5-b4cd-4357-9fb0-b98119a78b01",
+		"_postman_id": "d0fdab08-fbf7-4671-8952-b41c118261cf",
 		"name": "Gravitee.io - AM - Self Account Management - app version",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -1129,6 +1129,63 @@
 										}
 									}
 								},
+								"url": {
+									"raw": "{{gateway_url}}/{{domainHrid}}/account/api/profile",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"{{domainHrid}}",
+										"account",
+										"api",
+										"profile"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Profile After Update",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Has proper response\", function () {",
+											"    var body = pm.response.json();",
+											"    pm.expect(body).to.have.property('username');",
+											"    pm.expect(body.username).to.eql('jensen.barbara');",
+											"",
+											"    pm.expect(body.additionalInformation['middle_name']).to.eql('Hope');",
+											"",
+											"    pm.expect(body).to.have.property('nickName');",
+											"    pm.expect(body.nickName).to.eql('Dj');",
+											"",
+											"    pm.expect(body).to.have.property('profile');",
+											"    pm.expect(body.additionalInformation.profile).to.eql('https://www.linkedin.com/in/donald-courtney-b98106190/');",
+											"",
+											"    pm.expect(body).to.have.property('picture');",
+											"    pm.expect(body.picture).to.eql('https://media-exp3.licdn.com/dms/image/C4E03AQFIFcQeELwSXg/profile-displayphoto-shrink_400_400/0/1604523349570?e=1631750400&v=beta&t=77yVpbv5xfu5pN-yaBqX0_B1NDdT1ovgtq9ZoKDXmEQ');",
+											"    pm.expect(body.additionalInformation.picture).to.eql('https://media-exp3.licdn.com/dms/image/C4E03AQFIFcQeELwSXg/profile-displayphoto-shrink_400_400/0/1604523349570?e=1631750400&v=beta&t=77yVpbv5xfu5pN-yaBqX0_B1NDdT1ovgtq9ZoKDXmEQ');",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{access_token}}",
+										"type": "text"
+									}
+								],
 								"url": {
 									"raw": "{{gateway_url}}/{{domainHrid}}/account/api/profile",
 									"host": [

@@ -237,6 +237,36 @@ public class AccountServiceImpl implements AccountService {
             idpUser.setEmail(user.getEmail());
             additionalInformation.put(StandardClaims.EMAIL, user.getEmail());
         }
+        if (user.getPicture() != null) {
+            additionalInformation.put(StandardClaims.PICTURE, user.getPicture());
+        }
+        if (user.getMiddleName() != null) {
+            additionalInformation.put(StandardClaims.MIDDLE_NAME, user.getMiddleName());
+        }
+        if (user.getNickName() != null) {
+            additionalInformation.put(StandardClaims.NICKNAME, user.getNickName());
+        }
+        if (user.getProfile() != null) {
+            additionalInformation.put(StandardClaims.PROFILE, user.getProfile());
+        }
+        if (user.getWebsite() != null) {
+            additionalInformation.put(StandardClaims.WEBSITE, user.getWebsite());
+        }
+        if (user.getBirthdate() != null) {
+            additionalInformation.put(StandardClaims.BIRTHDATE, user.getBirthdate());
+        }
+        if (user.getZoneInfo() != null) {
+            additionalInformation.put(StandardClaims.ZONEINFO, user.getZoneInfo());
+        }
+        if (user.getLocale() != null) {
+            additionalInformation.put(StandardClaims.LOCALE, user.getLocale());
+        }
+        if (user.getPhoneNumber() != null) {
+            additionalInformation.put(StandardClaims.PHONE_NUMBER, user.getPhoneNumber());
+        }
+        if (user.getAddress() != null) {
+            additionalInformation.put(StandardClaims.ADDRESS, user.getAddress());
+        }
         if (user.getAdditionalInformation() != null) {
             user.getAdditionalInformation().forEach(additionalInformation::putIfAbsent);
         }
