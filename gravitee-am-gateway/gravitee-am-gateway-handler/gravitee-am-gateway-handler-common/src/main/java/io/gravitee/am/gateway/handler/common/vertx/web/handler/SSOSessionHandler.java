@@ -118,7 +118,7 @@ public class SSOSessionHandler implements Handler<RoutingContext> {
 
     private void checkAccountStatus(RoutingContext context, io.gravitee.am.model.User user, Handler<AsyncResult<Void>> handler) {
         // if user is disabled, sign out the user
-        if (!user.isEnabled()) {
+        if (!user.isEnabled() && !context.request().path().endsWith("/register/validation")) {
             handler.handle(Future.failedFuture(new AccountDisabledException(user.getId())));
             return;
         }

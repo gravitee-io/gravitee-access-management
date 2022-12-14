@@ -23,6 +23,7 @@ import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.UserAuthProvider;
@@ -60,6 +61,8 @@ import io.gravitee.am.gateway.handler.root.resources.endpoint.user.register.Regi
 import io.gravitee.am.gateway.handler.root.resources.endpoint.user.register.RegisterConfirmationSubmissionEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.user.register.RegisterEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.user.register.RegisterSubmissionEndpoint;
+import io.gravitee.am.gateway.handler.root.resources.endpoint.user.register.RegisterValidationEndpoint;
+import io.gravitee.am.gateway.handler.root.resources.endpoint.user.register.RegisterValidationRedirectHandler;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnLoginCredentialsEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnLoginEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnLoginPostEndpoint;
@@ -91,6 +94,7 @@ import io.gravitee.am.gateway.handler.root.resources.handler.user.register.Regis
 import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterFailureHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterProcessHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterSubmissionRequestParseHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterValidationProcessHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.*;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.model.Domain;
@@ -136,6 +140,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
     public static final String PATH_LOGOUT = "/logout";
     public static final String PATH_LOGOUT_CALLBACK = "/logout/callback";
     public static final String PATH_REGISTER = "/register";
+    public static final String PATH_REGISTER_VALIDATION = "/register/validation";
     public static final String PATH_CONFIRM_REGISTRATION = "/confirmRegistration";
     public static final String PATH_RESET_PASSWORD = "/resetPassword";
     public static final String PATH_WEBAUTHN_REGISTER = "/webauthn/register";
@@ -200,6 +205,9 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
     private UserService userService;
 
     @Autowired
+    private io.gravitee.am.gateway.handler.common.user.UserService commonUserService;
+
+    @Autowired
     private PolicyChainHandler policyChainHandler;
 
     @Autowired
@@ -259,6 +267,9 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
 
     @Autowired
     private WebAuthnCookieService webAuthnCookieService;
+
+    @Autowired
+    private EmailService emailService;
 
     @Override
     protected void doStart() throws Exception {
@@ -474,8 +485,25 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(passwordPolicyRequestParseHandler)
                 .handler(new RegisterProcessHandler(userService, domain))
                 .handler(policyChainHandler.create(ExtensionPoint.POST_REGISTER))
+                .handler(new RegisterValidationRedirectHandler(commonUserService))
                 .handler(new RegisterSubmissionEndpoint(environment));
         rootRouter.route(PATH_REGISTER)
+                .failureHandler(new RegisterFailureHandler());
+
+        rootRouter.route(HttpMethod.GET, PATH_REGISTER_VALIDATION)
+                .handler(clientRequestParseHandler)
+                .handler(registerAccessHandler)
+                // TODO create a PRE_REGISTER_VALIDATION policyChain for this path ?
+                .handler(localeHandler)
+                .handler(new RegisterValidationEndpoint(thymeleafTemplateEngine, domain, botDetectionManager, emailService, commonUserService));
+        rootRouter.route(HttpMethod.POST, PATH_REGISTER_VALIDATION)
+                .handler(clientRequestParseHandlerOptional)
+                .handler(botDetectionHandler)
+                .handler(registerAccessHandler)
+                .handler(new RegisterValidationProcessHandler(commonUserService, domain))
+                // TODO create a POST_REGISTER_VALIDATION policyChain for this path ?
+                .handler(new RegisterSubmissionEndpoint(environment));// TODO do we have to manage a Specific SubmissionEndpoint ?
+        rootRouter.route(PATH_REGISTER_VALIDATION)
                 .failureHandler(new RegisterFailureHandler());
 
         rootRouter.route(HttpMethod.GET, PATH_CONFIRM_REGISTRATION)
@@ -584,6 +612,10 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .route(PATH_REGISTER)
                 .handler(sessionHandler);
         router
+                .route(PATH_REGISTER_VALIDATION)
+                .handler(sessionHandler)
+                .handler(ssoSessionHandler);
+        router
                 .route(PATH_CONFIRM_REGISTRATION)
                 .handler(sessionHandler);
 
@@ -656,6 +688,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         router.route(PATH_MFA_RECOVERY_CODE).handler(csrfHandler);
         router.route(PATH_MFA_ENROLL).handler(csrfHandler);
         router.route(PATH_REGISTER).handler(csrfHandler);
+        router.route(PATH_REGISTER_VALIDATION).handler(csrfHandler);
         router.route(PATH_CONFIRM_REGISTRATION).handler(csrfHandler);
         router.route(PATH_RESET_PASSWORD).handler(csrfHandler);
     }
@@ -674,6 +707,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         router.route(PATH_LOGOUT).handler(cspHandler);
         router.route(PATH_LOGOUT_CALLBACK).handler(cspHandler);
         router.route(PATH_REGISTER).handler(cspHandler);
+        router.route(PATH_REGISTER_VALIDATION).handler(cspHandler);
         router.route(PATH_CONFIRM_REGISTRATION).handler(cspHandler);
         router.route(PATH_RESET_PASSWORD).handler(cspHandler);
         router.route(PATH_WEBAUTHN_REGISTER).handler(cspHandler);
@@ -695,6 +729,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         router.route(PATH_LOGOUT).handler(xframeHandler);
         router.route(PATH_LOGOUT_CALLBACK).handler(xframeHandler);
         router.route(PATH_REGISTER).handler(xframeHandler);
+        router.route(PATH_REGISTER_VALIDATION).handler(xframeHandler);
         router.route(PATH_CONFIRM_REGISTRATION).handler(xframeHandler);
         router.route(PATH_RESET_PASSWORD).handler(xframeHandler);
         router.route(PATH_WEBAUTHN_REGISTER).handler(xframeHandler);
@@ -716,6 +751,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         router.route(PATH_LOGOUT).handler(xssHandler);
         router.route(PATH_LOGOUT_CALLBACK).handler(xssHandler);
         router.route(PATH_REGISTER).handler(xssHandler);
+        router.route(PATH_REGISTER_VALIDATION).handler(xssHandler);
         router.route(PATH_CONFIRM_REGISTRATION).handler(xssHandler);
         router.route(PATH_RESET_PASSWORD).handler(xssHandler);
         router.route(PATH_WEBAUTHN_REGISTER).handler(xssHandler);

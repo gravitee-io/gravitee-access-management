@@ -20,6 +20,7 @@ import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.scim.Address;
 import io.gravitee.am.model.scim.Attribute;
 import io.gravitee.am.model.scim.Certificate;
+import io.swagger.annotations.ApiModelProperty;
 
 import java.util.*;
 

@@ -27,6 +27,7 @@ public enum Template {
 
     LOGIN("login", "/login"),
     REGISTRATION("registration", "/register"),
+    REGISTRATION_VALIDATION("registration_validation", "/register/validation"),
     REGISTRATION_CONFIRMATION("registration_confirmation", "/confirmRegistration"),
     FORGOT_PASSWORD("forgot_password", "/forgotPassword"),
     RESET_PASSWORD("reset_password", "/resetPassword"),

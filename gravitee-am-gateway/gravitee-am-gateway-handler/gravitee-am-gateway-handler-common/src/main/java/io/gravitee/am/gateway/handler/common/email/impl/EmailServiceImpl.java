@@ -74,6 +74,8 @@ public class EmailServiceImpl implements EmailService {
 
     @Value("${user.resetPassword.token.expire-after:300}")
     private Integer resetPasswordExpireAfter;
+    @Value("${user.registrationValidation.token.expire-after:300}")
+    private Integer registrationValidationExpireAfter;
 
     @Value("${user.blockedAccount.email.subject:${msg('email.blocked_account.subject')}}")
     private String blockedAccountSubject;
@@ -83,6 +85,9 @@ public class EmailServiceImpl implements EmailService {
 
     @Value("${user.mfaChallenge.email.subject:${msg('email.mfa_challenge.subject')}}")
     private String mfaChallengeSubject;
+
+    @Value("${user.registrationValidation.email.subject:${msg('email.registration_validation.subject')}}")
+    private String registrationValidationSubject;
 
     @Value("${user.mfaChallenge.token.expire-after:300}")
     private Integer mfaChallengeExpireAfter;
@@ -294,6 +299,8 @@ public class EmailServiceImpl implements EmailService {
                 return blockedAccountSubject;
             case MFA_CHALLENGE:
                 return mfaChallengeSubject;
+            case REGISTRATION_VALIDATION:
+                return registrationValidationSubject;
             default:
                 throw new IllegalArgumentException(template.template() + " not found");
         }
@@ -307,6 +314,8 @@ public class EmailServiceImpl implements EmailService {
                 return blockedAccountExpireAfter;
             case MFA_CHALLENGE:
                 return mfaChallengeExpireAfter;
+            case REGISTRATION_VALIDATION:
+                return registrationValidationExpireAfter;
             default:
                 throw new IllegalArgumentException(template.template() + " not found");
         }

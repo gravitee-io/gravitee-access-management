@@ -1,0 +1,102 @@
+<!doctype html>
+<html>
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<title>MFA Challenge Email</title>
+	<style>
+		body {
+			background-color: #E5E5E5;
+			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+			font-style: normal;
+		}
+		.body {
+			background-color: #E5E5E5;
+			width: 100%;
+		}
+		.container {
+			display: block;
+			margin: 0 auto !important;
+			max-width: 600px;
+			padding: 10px;
+			width: 600px;
+		}
+		.content {
+			box-sizing: border-box;
+			display: block;
+			margin: 0 auto;
+			max-width: 600px;
+			padding: 10px;
+		}
+		.main {
+			background: #FFFFFF;
+			border-radius: 8px;
+			width: 100%;
+			padding: 54px;
+		}
+		h1 {
+			font-weight: 800;
+			font-size: 24px;
+			line-height: 32px;
+			color: #25213A;
+		}
+		p {
+			font-weight: normal;
+			font-size: 16px;
+			line-height: 24px;
+			color: #A5A5A9;
+		}
+		td.otp-code {
+			text-align: center;
+			box-sizing: border-box;
+			background: #FAFAFA;
+			border: 1px solid #CCCCCC;
+			border-radius: 8px;
+			padding: 24px 8px;
+		}
+		td.otp-code span {
+			color: #25213A;
+			font-weight: 700;
+			font-size: 16px;
+			line-height: 16px;
+		}
+	</style>
+</head>
+<body style="background-color: #E5E5E5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; font-style: normal;">
+	<table role="presentation" class="body" style="background-color: #E5E5E5; width: 100%;" width="100%" bgcolor="#E5E5E5">
+		<tr>
+			<td class="container" cellspacing="0" cellpadding="0" border="0" style="display: block; max-width: 600px; padding: 10px; width: 600px; margin: 0 auto;" width="600">
+				<div class="content" style="box-sizing: border-box; display: block; margin: 0 auto; max-width: 600px; padding: 10px;">
+					<table role="presentation" cellspacing="0" cellpadding="0" border="0" class="main" style="background: #FFFFFF; border-radius: 8px; width: 100%; padding: 54px;" width="100%">
+						<#include "header.html" />
+						<tr>
+							<td>
+								<h1 style="font-weight: 800; font-size: 24px; line-height: 32px; color: #25213A;">${msg('email.registration_validation.header.title', user.firstName)}</h1>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<p style="font-weight: normal; font-size: 16px; line-height: 24px; color: #A5A5A9;">${msg('email.registration_validation.header.description', client.clientName)}</p>
+							</td>
+						</tr>
+						<tr>
+							<td class="otp-code" style="text-align: center; box-sizing: border-box; background: #FAFAFA; border: 1px solid #CCCCCC; border-radius: 8px; padding: 24px 8px;" align="center">
+								<span style="color: #25213A; font-weight: 700; font-size: 16px; line-height: 16px;">
+									${user.additionalInformation['registration_code']}
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<p style="font-weight: normal; font-size: 16px; line-height: 24px; color: #A5A5A9;">
+									<#if expireAfterSeconds gte 3600> ${msg('email.registration_validation.description', expireAfterSeconds / 3600 , msg('email.common.unit.hours'))}  <#else> ${msg('email.registration_validation.description', expireAfterSeconds / 60 , msg('email.common.unit.minutes'))} </#if>
+								</p>
+							</td>
+						</tr>
+					</table>
+				</div>
+			</td>
+		</tr>
+	</table>
+</body>
+</html>
