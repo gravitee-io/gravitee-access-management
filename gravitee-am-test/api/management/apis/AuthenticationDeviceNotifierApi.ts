@@ -46,11 +46,11 @@ export interface Get21Request {
     authDeviceNotifier: string;
 }
 
-export interface Get32Request {
+export interface Get39Request {
     authDeviceNotifierId: string;
 }
 
-export interface GetSchema1Request {
+export interface GetSchema9Request {
     authDeviceNotifierId: string;
 }
 
@@ -60,7 +60,7 @@ export interface List21Request {
     domain: string;
 }
 
-export interface List32Request {
+export interface List40Request {
     expand?: Array<string>;
 }
 
@@ -226,9 +226,9 @@ export class AuthenticationDeviceNotifierApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get a Authentication Device Notifier plugin
      */
-    async get32Raw(requestParameters: Get32Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async get39Raw(requestParameters: Get39Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.authDeviceNotifierId === null || requestParameters.authDeviceNotifierId === undefined) {
-            throw new runtime.RequiredError('authDeviceNotifierId','Required parameter requestParameters.authDeviceNotifierId was null or undefined when calling get32.');
+            throw new runtime.RequiredError('authDeviceNotifierId','Required parameter requestParameters.authDeviceNotifierId was null or undefined when calling get39.');
         }
 
         const queryParameters: any = {};
@@ -253,17 +253,17 @@ export class AuthenticationDeviceNotifierApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get a Authentication Device Notifier plugin
      */
-    async get32(requestParameters: Get32Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.get32Raw(requestParameters, initOverrides);
+    async get39(requestParameters: Get39Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.get39Raw(requestParameters, initOverrides);
     }
 
     /**
      * There is no particular permission needed. User must be authenticated.
      * Get an Authentication Device Notifier plugin\'s schema
      */
-    async getSchema1Raw(requestParameters: GetSchema1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async getSchema9Raw(requestParameters: GetSchema9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.authDeviceNotifierId === null || requestParameters.authDeviceNotifierId === undefined) {
-            throw new runtime.RequiredError('authDeviceNotifierId','Required parameter requestParameters.authDeviceNotifierId was null or undefined when calling getSchema1.');
+            throw new runtime.RequiredError('authDeviceNotifierId','Required parameter requestParameters.authDeviceNotifierId was null or undefined when calling getSchema9.');
         }
 
         const queryParameters: any = {};
@@ -288,8 +288,8 @@ export class AuthenticationDeviceNotifierApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get an Authentication Device Notifier plugin\'s schema
      */
-    async getSchema1(requestParameters: GetSchema1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.getSchema1Raw(requestParameters, initOverrides);
+    async getSchema9(requestParameters: GetSchema9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.getSchema9Raw(requestParameters, initOverrides);
     }
 
     /**
@@ -340,7 +340,7 @@ export class AuthenticationDeviceNotifierApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * List authentication device notifier plugins
      */
-    async list32Raw(requestParameters: List32Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async list40Raw(requestParameters: List40Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         const queryParameters: any = {};
 
         if (requestParameters.expand) {
@@ -367,8 +367,8 @@ export class AuthenticationDeviceNotifierApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * List authentication device notifier plugins
      */
-    async list32(requestParameters: List32Request = {}, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.list32Raw(requestParameters, initOverrides);
+    async list40(requestParameters: List40Request = {}, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.list40Raw(requestParameters, initOverrides);
     }
 
     /**

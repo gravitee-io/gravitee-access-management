@@ -78,9 +78,9 @@ export interface Get12Request {
     template: Get12TemplateEnum;
 }
 
-export interface Get30Request {
+export interface Get29Request {
     organizationId: string;
-    template: Get30TemplateEnum;
+    template: Get29TemplateEnum;
 }
 
 export interface Get5Request {
@@ -464,13 +464,13 @@ export class FormApi extends runtime.BaseAPI {
      * User must have the ORGANIZATION_FORM[READ] permission on the specified organization
      * Find an organization form template
      */
-    async get30Raw(requestParameters: Get30Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async get29Raw(requestParameters: Get29Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get30.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get29.');
         }
 
         if (requestParameters.template === null || requestParameters.template === undefined) {
-            throw new runtime.RequiredError('template','Required parameter requestParameters.template was null or undefined when calling get30.');
+            throw new runtime.RequiredError('template','Required parameter requestParameters.template was null or undefined when calling get29.');
         }
 
         const queryParameters: any = {};
@@ -499,8 +499,8 @@ export class FormApi extends runtime.BaseAPI {
      * User must have the ORGANIZATION_FORM[READ] permission on the specified organization
      * Find an organization form template
      */
-    async get30(requestParameters: Get30Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.get30Raw(requestParameters, initOverrides);
+    async get29(requestParameters: Get29Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.get29Raw(requestParameters, initOverrides);
     }
 
     /**
@@ -794,7 +794,7 @@ export type Get12TemplateEnum = typeof Get12TemplateEnum[keyof typeof Get12Templ
 /**
  * @export
  */
-export const Get30TemplateEnum = {
+export const Get29TemplateEnum = {
     Login: 'LOGIN',
     Registration: 'REGISTRATION',
     RegistrationConfirmation: 'REGISTRATION_CONFIRMATION',
@@ -813,7 +813,7 @@ export const Get30TemplateEnum = {
     Error: 'ERROR',
     CertificateExpiration: 'CERTIFICATE_EXPIRATION'
 } as const;
-export type Get30TemplateEnum = typeof Get30TemplateEnum[keyof typeof Get30TemplateEnum];
+export type Get29TemplateEnum = typeof Get29TemplateEnum[keyof typeof Get29TemplateEnum];
 /**
  * @export
  */

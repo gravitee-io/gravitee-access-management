@@ -145,6 +145,7 @@ export * from './PreviewResponse';
 export * from './RememberDeviceSettings';
 export * from './Reporter';
 export * from './ReportersResource';
+export * from './ResetPasswordSettings';
 export * from './Resource';
 export * from './ResourceEntity';
 export * from './ResourceListItem';

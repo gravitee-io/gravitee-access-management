@@ -56,6 +56,12 @@ export interface Email {
     template?: string;
     /**
      * 
+     * @type {boolean}
+     * @memberof Email
+     */
+    defaultTemplate?: boolean;
+    /**
+     * 
      * @type {string}
      * @memberof Email
      */
@@ -128,6 +134,7 @@ export function EmailFromJSONTyped(json: any, ignoreDiscriminator: boolean): Ema
         'referenceId': !exists(json, 'referenceId') ? undefined : json['referenceId'],
         'client': !exists(json, 'client') ? undefined : json['client'],
         'template': !exists(json, 'template') ? undefined : json['template'],
+        'defaultTemplate': !exists(json, 'defaultTemplate') ? undefined : json['defaultTemplate'],
         'from': !exists(json, 'from') ? undefined : json['from'],
         'fromName': !exists(json, 'fromName') ? undefined : json['fromName'],
         'subject': !exists(json, 'subject') ? undefined : json['subject'],
@@ -153,6 +160,7 @@ export function EmailToJSON(value?: Email | null): any {
         'referenceId': value.referenceId,
         'client': value.client,
         'template': value.template,
+        'defaultTemplate': value.defaultTemplate,
         'from': value.from,
         'fromName': value.fromName,
         'subject': value.subject,

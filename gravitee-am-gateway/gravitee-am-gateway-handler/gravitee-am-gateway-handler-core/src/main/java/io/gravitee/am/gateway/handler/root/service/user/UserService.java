@@ -41,6 +41,7 @@ public interface UserService {
     Single<RegistrationResponse> confirmRegistration(Client client, User user, io.gravitee.am.identityprovider.api.User principal);
 
     Single<ResetPasswordResponse> resetPassword(Client client, User user, io.gravitee.am.identityprovider.api.User principal);
+    Completable checkPassword(User user, String password, io.gravitee.am.identityprovider.api.User principal);
 
     Completable forgotPassword(ForgotPasswordParameters inputParameters, Client client, io.gravitee.am.identityprovider.api.User principal);
 

@@ -53,6 +53,12 @@ export interface LoginSettings {
      * @type {boolean}
      * @memberof LoginSettings
      */
+    passwordlessRememberDeviceEnabled?: boolean;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof LoginSettings
+     */
     hideForm?: boolean;
     /**
      * 
@@ -77,6 +83,7 @@ export function LoginSettingsFromJSONTyped(json: any, ignoreDiscriminator: boole
         'registerEnabled': !exists(json, 'registerEnabled') ? undefined : json['registerEnabled'],
         'rememberMeEnabled': !exists(json, 'rememberMeEnabled') ? undefined : json['rememberMeEnabled'],
         'passwordlessEnabled': !exists(json, 'passwordlessEnabled') ? undefined : json['passwordlessEnabled'],
+        'passwordlessRememberDeviceEnabled': !exists(json, 'passwordlessRememberDeviceEnabled') ? undefined : json['passwordlessRememberDeviceEnabled'],
         'hideForm': !exists(json, 'hideForm') ? undefined : json['hideForm'],
         'identifierFirstEnabled': !exists(json, 'identifierFirstEnabled') ? undefined : json['identifierFirstEnabled'],
     };
@@ -96,6 +103,7 @@ export function LoginSettingsToJSON(value?: LoginSettings | null): any {
         'registerEnabled': value.registerEnabled,
         'rememberMeEnabled': value.rememberMeEnabled,
         'passwordlessEnabled': value.passwordlessEnabled,
+        'passwordlessRememberDeviceEnabled': value.passwordlessRememberDeviceEnabled,
         'hideForm': value.hideForm,
         'identifierFirstEnabled': value.identifierFirstEnabled,
     };

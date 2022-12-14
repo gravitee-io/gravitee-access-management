@@ -19,10 +19,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.common.exception.authentication.AccountInactiveException;
+import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
+import io.gravitee.am.gateway.handler.common.auth.user.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.gateway.handler.root.service.user.impl.UserServiceImpl;
 import io.gravitee.am.gateway.handler.root.service.user.model.ForgotPasswordParameters;
+import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.model.Domain;
@@ -42,6 +45,7 @@ import io.gravitee.am.service.TokenService;
 import io.gravitee.am.service.exception.EnforceUserIdentityException;
 import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.am.service.exception.UserNotFoundException;
+import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.validators.email.EmailValidator;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
@@ -1052,6 +1056,48 @@ public class UserServiceTest {
         testObserver.awaitTerminalEvent();
         testObserver.assertNoErrors();
         verify(commonUserService).update(any());
+    }
+
+    @Test
+    public void shouldCheckPassword() {
+        final var provider = mock(AuthenticationProvider.class);
+        when(provider.loadUserByUsername(any(EndUserAuthentication.class))).thenReturn(Maybe.just(mock(io.gravitee.am.identityprovider.api.User.class)));
+        when(identityProviderManager.getUserProvider(any())).thenReturn(Maybe.just(mock(UserProvider.class)));
+        when(identityProviderManager.get(any())).thenReturn(Maybe.just(provider));
+
+        final TestObserver<Void> observer = userService.checkPassword(mock(User.class), "oldpassword", mock(io.gravitee.am.identityprovider.api.User.class)).test();
+
+        observer.awaitTerminalEvent();
+        observer.assertNoErrors();
+
+        verify(provider).loadUserByUsername(any(EndUserAuthentication.class));
+    }
+    @Test
+    public void shouldCheckPassword_InvalidPassword() {
+        final var provider = mock(AuthenticationProvider.class);
+        when(provider.loadUserByUsername(any(EndUserAuthentication.class))).thenReturn(Maybe.error(new BadCredentialsException()));
+        when(identityProviderManager.getUserProvider(any())).thenReturn(Maybe.just(mock(UserProvider.class)));
+        when(identityProviderManager.get(any())).thenReturn(Maybe.just(provider));
+
+        final TestObserver<Void> observer = userService.checkPassword(mock(User.class), "oldpassword", mock(io.gravitee.am.identityprovider.api.User.class)).test();
+
+        observer.awaitTerminalEvent();
+        observer.assertError(BadCredentialsException.class);
+
+        verify(provider).loadUserByUsername(any(EndUserAuthentication.class));
+    }
+
+    @Test
+    public void shouldNotCheckPassword_NoUserProvider() {
+        final var provider = mock(AuthenticationProvider.class);
+        when(identityProviderManager.getUserProvider(any())).thenReturn(Maybe.empty());
+
+        final TestObserver<Void> observer = userService.checkPassword(mock(User.class), "oldpassword", mock(io.gravitee.am.identityprovider.api.User.class)).test();
+
+        observer.awaitTerminalEvent();
+        observer.assertError(UserProviderNotFoundException.class);
+
+        verify(provider, never()).loadUserByUsername(any(EndUserAuthentication.class));
     }
 
     private SortedSet<ApplicationIdentityProvider> getApplicationIdentityProviders(String... identities) {
