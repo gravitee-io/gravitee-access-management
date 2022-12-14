@@ -196,4 +196,34 @@ public class RegisterSubmissionEndpointTest extends RxWebTestBase {
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
+
+
+    @Test
+    public void shouldInvokeRegisterEndpoint_redirectUri_withoutDuplicateParam() throws Exception {
+        Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+        client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
+
+        RegistrationResponse registrationResponse = new RegistrationResponse();
+        registrationResponse.setAutoLogin(true);
+        registrationResponse.setRedirectUri("http://custom_uri?client_id=another-client-id");
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.put("client", client);
+            routingContext.next();
+        });
+
+        when(userService.register(eq(client), any(), any())).thenReturn(Single.just(registrationResponse));
+
+        testRequest(
+                HttpMethod.POST, "/register?client_id=client-id&some-param=some-value",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertEquals("http://custom_uri?client_id=another-client-id&some-param=some-value", location);
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
 }
