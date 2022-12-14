@@ -46,11 +46,11 @@ export interface Get14Request {
     reporter: string;
 }
 
-export interface Get36Request {
+export interface Get33Request {
     reporter: string;
 }
 
-export interface GetSchema5Request {
+export interface GetSchema3Request {
     reporter: string;
 }
 
@@ -220,9 +220,9 @@ export class ReporterApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get a reporter plugin
      */
-    async get36Raw(requestParameters: Get36Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async get33Raw(requestParameters: Get33Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.reporter === null || requestParameters.reporter === undefined) {
-            throw new runtime.RequiredError('reporter','Required parameter requestParameters.reporter was null or undefined when calling get36.');
+            throw new runtime.RequiredError('reporter','Required parameter requestParameters.reporter was null or undefined when calling get33.');
         }
 
         const queryParameters: any = {};
@@ -247,16 +247,16 @@ export class ReporterApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get a reporter plugin
      */
-    async get36(requestParameters: Get36Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.get36Raw(requestParameters, initOverrides);
+    async get33(requestParameters: Get33Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.get33Raw(requestParameters, initOverrides);
     }
 
     /**
      * Get a reporter plugin\'s schema
      */
-    async getSchema5Raw(requestParameters: GetSchema5Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async getSchema3Raw(requestParameters: GetSchema3Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.reporter === null || requestParameters.reporter === undefined) {
-            throw new runtime.RequiredError('reporter','Required parameter requestParameters.reporter was null or undefined when calling getSchema5.');
+            throw new runtime.RequiredError('reporter','Required parameter requestParameters.reporter was null or undefined when calling getSchema3.');
         }
 
         const queryParameters: any = {};
@@ -280,8 +280,8 @@ export class ReporterApi extends runtime.BaseAPI {
     /**
      * Get a reporter plugin\'s schema
      */
-    async getSchema5(requestParameters: GetSchema5Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.getSchema5Raw(requestParameters, initOverrides);
+    async getSchema3(requestParameters: GetSchema3Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.getSchema3Raw(requestParameters, initOverrides);
     }
 
     /**
@@ -336,7 +336,7 @@ export class ReporterApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * List reporter plugins
      */
-    async list36Raw(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async list34Raw(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -359,8 +359,8 @@ export class ReporterApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * List reporter plugins
      */
-    async list36(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.list36Raw(initOverrides);
+    async list34(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.list34Raw(initOverrides);
     }
 
     /**

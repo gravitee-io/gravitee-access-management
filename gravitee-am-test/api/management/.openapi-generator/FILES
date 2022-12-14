@@ -179,6 +179,7 @@ models/PreviewResponse.ts
 models/RememberDeviceSettings.ts
 models/Reporter.ts
 models/ReportersResource.ts
+models/ResetPasswordSettings.ts
 models/Resource.ts
 models/ResourceEntity.ts
 models/ResourceListItem.ts

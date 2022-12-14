@@ -15,11 +15,22 @@
  */
 package io.gravitee.am.gateway.handler.account.resources;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.account.services.AccountService;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.ErrorHandler;
+import io.gravitee.am.gateway.handler.root.service.response.ResetPasswordResponse;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.SelfServiceAccountManagementSettings;
+import io.gravitee.am.model.User;
+import io.gravitee.am.model.oidc.Client;
+import io.reactivex.Single;
+import io.vertx.core.http.HttpMethod;
+import io.vertx.reactivex.core.buffer.Buffer;
+import io.vertx.reactivex.core.http.HttpClientRequest;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.reactivex.Single;
@@ -48,6 +59,14 @@ import static io.gravitee.am.common.oidc.StandardClaims.WEBSITE;
 import static io.gravitee.am.common.oidc.StandardClaims.ZONEINFO;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Map;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -57,22 +76,46 @@ import static org.mockito.Mockito.when;
  */
 @RunWith(MockitoJUnitRunner.class)
 public class AccountEndpointHandlerTest extends RxWebTestBase {
-
     private static final String REQUEST_PATH = "/account/api/profile";
+    private static final String CHANGE_PWD_REQUEST_PATH = "/account/api/changePassword";
 
-    @Mock
-    AccountService accountService;
+    public static final int TOKEN_AGE_IN_SEC = 600;
 
+    private Domain domain;
     @Mock
-    Domain domain;
+    private User user;
+    @Mock
+    private JWT jwt;
+    @Mock
+    private Client client;
+    @Mock
+    private AccountService accountService;
 
     private AccountEndpointHandler accountEndpointHandler;
 
+    private ObjectMapper mapper = new ObjectMapper();
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
+
+        this.domain = new Domain();
+        final var selfAccountSettings = new SelfServiceAccountManagementSettings();
+        selfAccountSettings.setEnabled(true);
+        this.domain.setSelfServiceAccountManagementSettings(selfAccountSettings);
+
+        when(user.getUsername()).thenReturn("user1");
         accountEndpointHandler = new AccountEndpointHandler(accountService, domain);
+
+        router.route()
+                .handler(ctx -> {
+                    ctx.put(ConstantKeys.USER_CONTEXT_KEY, user);
+                    ctx.put(ConstantKeys.TOKEN_CONTEXT_KEY, jwt);
+                    ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+                    ctx.next();
+                })
+                .handler(BodyHandler.create())
+                .failureHandler(new ErrorHandler());
     }
 
     private void initUserContextKeyValue(User user) {
@@ -87,6 +130,181 @@ public class AccountEndpointHandlerTest extends RxWebTestBase {
     }
 
     @Test
+    public void shouldChangePassword_OnlyNewValue() throws Exception {
+        router.route(CHANGE_PWD_REQUEST_PATH)
+                .handler(accountEndpointHandler::changePassword)
+                .handler(rc -> rc.response().end());
+
+        when(accountService.resetPassword(any(), any(), any(), any(), any())).thenReturn(Single.just(new ResetPasswordResponse()));
+
+        testRequest(HttpMethod.POST,
+                CHANGE_PWD_REQUEST_PATH,
+                req -> {
+                    req.headers().set("content-type", "application/json");
+                    setBody(req, Map.of("password", "Test123!"));
+                },
+                204,
+                "No Content", null);
+
+        verify(accountService).resetPassword(any(), any(), eq("Test123!"), any(), any());
+    }
+
+    @Test
+    public void shouldChangePassword_TokenNotExpired() throws Exception {
+        router.route(CHANGE_PWD_REQUEST_PATH)
+                .handler(accountEndpointHandler::changePassword)
+                .handler(rc -> rc.response().end());
+
+        // reject request older than 10 minutes
+        final var resetPasswordSettings = new SelfServiceAccountManagementSettings.ResetPasswordSettings();
+        resetPasswordSettings.setTokenAge(TOKEN_AGE_IN_SEC);
+        this.domain.getSelfServiceAccountManagementSettings().setResetPassword(resetPasswordSettings);
+
+        when(jwt.getIat()).thenReturn(Instant.now().minus(TOKEN_AGE_IN_SEC - 1, ChronoUnit.SECONDS).getEpochSecond());
+
+        when(accountService.resetPassword(any(), any(), any(), any(), any())).thenReturn(Single.just(new ResetPasswordResponse()));
+
+        testRequest(HttpMethod.POST,
+                CHANGE_PWD_REQUEST_PATH,
+                req -> {
+                    req.headers().set("content-type", "application/json");
+                    setBody(req, Map.of("password", "Test123!"));
+                },
+                204,
+                "No Content", null);
+
+        verify(accountService).resetPassword(any(), any(), eq("Test123!"), any(), any());
+    }
+
+    @Test
+    public void shouldNotChangePassword_JwtTooOld() throws Exception {
+        router.route(CHANGE_PWD_REQUEST_PATH)
+                .handler(accountEndpointHandler::changePassword)
+                .handler(rc -> rc.response().end());
+
+        // reject request older than 10 minutes
+        final var resetPasswordSettings = new SelfServiceAccountManagementSettings.ResetPasswordSettings();
+        resetPasswordSettings.setTokenAge(TOKEN_AGE_IN_SEC);
+        this.domain.getSelfServiceAccountManagementSettings().setResetPassword(resetPasswordSettings);
+
+        when(jwt.getIat()).thenReturn(Instant.now().minus(TOKEN_AGE_IN_SEC + 1, ChronoUnit.SECONDS).getEpochSecond());
+
+        testRequest(HttpMethod.POST,
+                CHANGE_PWD_REQUEST_PATH,
+                req -> {
+                    req.headers().set("content-type", "application/json");
+                    setBody(req, Map.of("password", "Test123!"));
+                },
+                401,
+                "Unauthorized", null);
+
+        verify(accountService, never()).resetPassword(any(), any(), any(), any(), any());
+    }
+
+    @Test
+    public void shouldNotChangePassword_MissingOldPassword() throws Exception {
+        router.route(CHANGE_PWD_REQUEST_PATH)
+                .handler(accountEndpointHandler::changePassword)
+                .handler(rc -> rc.response().end());
+
+        // reject request older than 10 minutes
+        final var resetPasswordSettings = new SelfServiceAccountManagementSettings.ResetPasswordSettings();
+        resetPasswordSettings.setTokenAge(TOKEN_AGE_IN_SEC);
+        resetPasswordSettings.setOldPasswordRequired(true);
+        this.domain.getSelfServiceAccountManagementSettings().setResetPassword(resetPasswordSettings);
+
+        when(jwt.getIat()).thenReturn(Instant.now().getEpochSecond());
+
+        testRequest(HttpMethod.POST,
+                CHANGE_PWD_REQUEST_PATH,
+                req -> {
+                    req.headers().set("content-type", "application/json");
+                    setBody(req, Map.of("password", "Test123!"));
+                },
+                400,
+                "Bad Request", null);
+
+        verify(accountService, never()).resetPassword(any(), any(), any(), any(), any());
+    }
+
+    @Test
+    public void shouldChangePassword_WithOldPassword() throws Exception {
+        router.route(CHANGE_PWD_REQUEST_PATH)
+                .handler(accountEndpointHandler::changePassword)
+                .handler(rc -> rc.response().end());
+
+        // reject request older than 10 minutes
+        final var resetPasswordSettings = new SelfServiceAccountManagementSettings.ResetPasswordSettings();
+        resetPasswordSettings.setTokenAge(TOKEN_AGE_IN_SEC);
+        resetPasswordSettings.setOldPasswordRequired(true);
+        this.domain.getSelfServiceAccountManagementSettings().setResetPassword(resetPasswordSettings);
+
+        when(jwt.getIat()).thenReturn(Instant.now().getEpochSecond());
+
+        when(accountService.resetPassword(any(), any(), any(), any(), any())).thenReturn(Single.just(new ResetPasswordResponse()));
+
+        testRequest(HttpMethod.POST,
+                CHANGE_PWD_REQUEST_PATH,
+                req -> {
+                    req.headers().set("content-type", "application/json");
+                    setBody(req, Map.of("password", "Test123!", "oldPassword", "NewTest1234!"));
+                },
+                204,
+                "No Content", null);
+
+        verify(accountService).resetPassword(any(),
+                any(),
+                eq("Test123!"),
+                any(),
+                argThat(opt -> opt.get().equals("NewTest1234!")));
+    }
+
+    @Test
+    public void shouldNotRedirectToChangePassword_JwtTooOld() throws Exception {
+        router.route(CHANGE_PWD_REQUEST_PATH)
+                .handler(accountEndpointHandler::redirectForgotPassword)
+                .handler(rc -> rc.response().end());
+
+        // reject request older than 10 minutes
+        final var resetPasswordSettings = new SelfServiceAccountManagementSettings.ResetPasswordSettings();
+        resetPasswordSettings.setTokenAge(TOKEN_AGE_IN_SEC);
+        this.domain.getSelfServiceAccountManagementSettings().setResetPassword(resetPasswordSettings);
+
+        when(jwt.getIat()).thenReturn(Instant.now().minus(TOKEN_AGE_IN_SEC + 1, ChronoUnit.SECONDS).getEpochSecond());
+
+        testRequest(HttpMethod.GET,
+                CHANGE_PWD_REQUEST_PATH,
+                401,
+                "Unauthorized");
+    }
+
+    @Test
+    public void shouldRedirectToChangePassword_TokenNotExpired() throws Exception {
+        router.route(CHANGE_PWD_REQUEST_PATH)
+                .handler(accountEndpointHandler::redirectForgotPassword)
+                .handler(rc -> rc.response().end());
+
+        // reject request older than 10 minutes
+        final var resetPasswordSettings = new SelfServiceAccountManagementSettings.ResetPasswordSettings();
+        resetPasswordSettings.setTokenAge(TOKEN_AGE_IN_SEC);
+        this.domain.getSelfServiceAccountManagementSettings().setResetPassword(resetPasswordSettings);
+
+        when(jwt.getIat()).thenReturn(Instant.now().minus(TOKEN_AGE_IN_SEC - 1, ChronoUnit.SECONDS).getEpochSecond());
+
+        testRequest(HttpMethod.GET,
+                CHANGE_PWD_REQUEST_PATH,
+                302,
+                "Found");
+    }
+
+    private void setBody(HttpClientRequest req, Object body) {
+        try {
+            req.send(Buffer.buffer(mapper.writeValueAsString(body)));
+        } catch (Exception e) {
+            fail(e);
+        }
+    }
+
     public void shouldUpdateUser() throws Exception {
         final var existingUser = new User();
         existingUser.setId(UUID.randomUUID().toString());

@@ -14,7 +14,7 @@
 
 import * as runtime from '../runtime';
 
-export interface Get41Request {
+export interface Get40Request {
     deviceIdentifier: string;
 }
 
@@ -31,9 +31,9 @@ export class DeviceIdentifierApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get a device identifier plugin
      */
-    async get41Raw(requestParameters: Get41Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async get40Raw(requestParameters: Get40Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.deviceIdentifier === null || requestParameters.deviceIdentifier === undefined) {
-            throw new runtime.RequiredError('deviceIdentifier','Required parameter requestParameters.deviceIdentifier was null or undefined when calling get41.');
+            throw new runtime.RequiredError('deviceIdentifier','Required parameter requestParameters.deviceIdentifier was null or undefined when calling get40.');
         }
 
         const queryParameters: any = {};
@@ -58,8 +58,8 @@ export class DeviceIdentifierApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get a device identifier plugin
      */
-    async get41(requestParameters: Get41Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.get41Raw(requestParameters, initOverrides);
+    async get40(requestParameters: Get40Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.get40Raw(requestParameters, initOverrides);
     }
 
     /**

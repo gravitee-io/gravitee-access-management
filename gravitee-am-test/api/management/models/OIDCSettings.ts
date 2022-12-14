@@ -63,6 +63,12 @@ export interface OIDCSettings {
     postLogoutRedirectUris?: Array<string>;
     /**
      * 
+     * @type {Array<string>}
+     * @memberof OIDCSettings
+     */
+    requestUris?: Array<string>;
+    /**
+     * 
      * @type {CIBASettings}
      * @memberof OIDCSettings
      */
@@ -83,6 +89,7 @@ export function OIDCSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolea
         'securityProfileSettings': !exists(json, 'securityProfileSettings') ? undefined : SecurityProfileSettingsFromJSON(json['securityProfileSettings']),
         'redirectUriStrictMatching': !exists(json, 'redirectUriStrictMatching') ? undefined : json['redirectUriStrictMatching'],
         'postLogoutRedirectUris': !exists(json, 'postLogoutRedirectUris') ? undefined : json['postLogoutRedirectUris'],
+        'requestUris': !exists(json, 'requestUris') ? undefined : json['requestUris'],
         'cibaSettings': !exists(json, 'cibaSettings') ? undefined : CIBASettingsFromJSON(json['cibaSettings']),
     };
 }
@@ -100,6 +107,7 @@ export function OIDCSettingsToJSON(value?: OIDCSettings | null): any {
         'securityProfileSettings': SecurityProfileSettingsToJSON(value.securityProfileSettings),
         'redirectUriStrictMatching': value.redirectUriStrictMatching,
         'postLogoutRedirectUris': value.postLogoutRedirectUris,
+        'requestUris': value.requestUris,
         'cibaSettings': CIBASettingsToJSON(value.cibaSettings),
     };
 }

@@ -22,6 +22,7 @@ import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
+import io.gravitee.am.gateway.handler.common.auth.user.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
@@ -32,6 +33,8 @@ import io.gravitee.am.gateway.handler.root.service.user.model.ForgotPasswordPara
 import io.gravitee.am.gateway.handler.root.service.user.model.UserToken;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.UserProvider;
+import io.gravitee.am.identityprovider.api.DummyRequest;
+import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.jwt.JWTParser;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.EnrollmentSettings;
@@ -269,6 +272,15 @@ public class UserServiceImpl implements UserService {
                 .doOnSuccess(response -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(user.getClient()).principal(principal).type(EventType.REGISTRATION_CONFIRMATION)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(user.getClient()).principal(principal).type(EventType.REGISTRATION_CONFIRMATION).throwable(throwable)));
 
+    }
+
+    @Override
+    public Completable checkPassword(User user, String password, io.gravitee.am.identityprovider.api.User principal) {
+        return identityProviderManager.getUserProvider(user.getSource())
+                .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(user.getSource())))
+                .flatMap(userProvider -> identityProviderManager.get(user.getSource())
+                        .flatMap(provider -> provider.loadUserByUsername(new EndUserAuthentication(user.getUsername(), password, new SimpleAuthenticationContext(new DummyRequest())))))
+                        .ignoreElement();
     }
 
     @Override

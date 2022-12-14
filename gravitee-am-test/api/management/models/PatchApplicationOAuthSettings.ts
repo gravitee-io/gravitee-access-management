@@ -351,6 +351,12 @@ export interface PatchApplicationOAuthSettings {
     forcePKCE?: boolean;
     /**
      * 
+     * @type {boolean}
+     * @memberof PatchApplicationOAuthSettings
+     */
+    forceS256CodeChallengeMethod?: boolean;
+    /**
+     * 
      * @type {Array<string>}
      * @memberof PatchApplicationOAuthSettings
      */
@@ -437,6 +443,7 @@ export function PatchApplicationOAuthSettingsFromJSONTyped(json: any, ignoreDisc
         'authorizationEncryptedResponseAlg': !exists(json, 'authorizationEncryptedResponseAlg') ? undefined : json['authorizationEncryptedResponseAlg'],
         'authorizationEncryptedResponseEnc': !exists(json, 'authorizationEncryptedResponseEnc') ? undefined : json['authorizationEncryptedResponseEnc'],
         'forcePKCE': !exists(json, 'forcePKCE') ? undefined : json['forcePKCE'],
+        'forceS256CodeChallengeMethod': !exists(json, 'forceS256CodeChallengeMethod') ? undefined : json['forceS256CodeChallengeMethod'],
         'postLogoutRedirectUris': !exists(json, 'postLogoutRedirectUris') ? undefined : json['postLogoutRedirectUris'],
         'singleSignOut': !exists(json, 'singleSignOut') ? undefined : json['singleSignOut'],
         'silentReAuthentication': !exists(json, 'silentReAuthentication') ? undefined : json['silentReAuthentication'],
@@ -505,6 +512,7 @@ export function PatchApplicationOAuthSettingsToJSON(value?: PatchApplicationOAut
         'authorizationEncryptedResponseAlg': value.authorizationEncryptedResponseAlg,
         'authorizationEncryptedResponseEnc': value.authorizationEncryptedResponseEnc,
         'forcePKCE': value.forcePKCE,
+        'forceS256CodeChallengeMethod': value.forceS256CodeChallengeMethod,
         'postLogoutRedirectUris': value.postLogoutRedirectUris,
         'singleSignOut': value.singleSignOut,
         'silentReAuthentication': value.silentReAuthentication,

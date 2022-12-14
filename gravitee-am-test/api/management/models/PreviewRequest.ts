@@ -30,7 +30,7 @@ export interface PreviewRequest {
      * @type {string}
      * @memberof PreviewRequest
      */
-    content: string;
+    content?: string;
     /**
      * 
      * @type {Theme}
@@ -72,7 +72,7 @@ export function PreviewRequestFromJSONTyped(json: any, ignoreDiscriminator: bool
     }
     return {
         
-        'content': json['content'],
+        'content': !exists(json, 'content') ? undefined : json['content'],
         'theme': !exists(json, 'theme') ? undefined : ThemeFromJSON(json['theme']),
         'type': json['type'],
         'template': json['template'],

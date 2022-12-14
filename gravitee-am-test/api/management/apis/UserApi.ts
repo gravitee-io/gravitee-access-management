@@ -129,7 +129,7 @@ export interface Get2Request {
     consent: string;
 }
 
-export interface Get28Request {
+export interface Get27Request {
     organizationId: string;
     user: string;
 }
@@ -229,16 +229,16 @@ export interface MarkAsReadRequest {
     notificationId: string;
 }
 
-export interface ResetPasswordRequest {
+export interface ResetOrganizationUserPasswordRequest {
     organizationId: string;
-    environmentId: string;
-    domain: string;
     user: string;
     password: PasswordValue;
 }
 
-export interface ResetPassword1Request {
+export interface ResetPasswordRequest {
     organizationId: string;
+    environmentId: string;
+    domain: string;
     user: string;
     password: PasswordValue;
 }
@@ -285,6 +285,18 @@ export interface UnlockUserRequest {
     user: string;
 }
 
+export interface UpdateOrganizationUserRequest {
+    organizationId: string;
+    user: string;
+    user2: UpdateUser;
+}
+
+export interface UpdateOrganizationUserStatusRequest {
+    organizationId: string;
+    user: string;
+    status: StatusEntity;
+}
+
 export interface UpdateUserRequest {
     organizationId: string;
     environmentId: string;
@@ -293,22 +305,10 @@ export interface UpdateUserRequest {
     user2: UpdateUser;
 }
 
-export interface UpdateUser1Request {
-    organizationId: string;
-    user: string;
-    user2: UpdateUser;
-}
-
 export interface UpdateUserStatusRequest {
     organizationId: string;
     environmentId: string;
     domain: string;
-    user: string;
-    status: StatusEntity;
-}
-
-export interface UpdateUserStatus1Request {
-    organizationId: string;
     user: string;
     status: StatusEntity;
 }
@@ -835,13 +835,13 @@ export class UserApi extends runtime.BaseAPI {
      * User must have the ORGANIZATION_USER[READ] permission on the specified organization
      * Get a user
      */
-    async get28Raw(requestParameters: Get28Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<UserEntity>> {
+    async get27Raw(requestParameters: Get27Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<UserEntity>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get28.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get27.');
         }
 
         if (requestParameters.user === null || requestParameters.user === undefined) {
-            throw new runtime.RequiredError('user','Required parameter requestParameters.user was null or undefined when calling get28.');
+            throw new runtime.RequiredError('user','Required parameter requestParameters.user was null or undefined when calling get27.');
         }
 
         const queryParameters: any = {};
@@ -866,8 +866,8 @@ export class UserApi extends runtime.BaseAPI {
      * User must have the ORGANIZATION_USER[READ] permission on the specified organization
      * Get a user
      */
-    async get28(requestParameters: Get28Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<UserEntity> {
-        const response = await this.get28Raw(requestParameters, initOverrides);
+    async get27(requestParameters: Get27Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<UserEntity> {
+        const response = await this.get27Raw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -1548,6 +1548,52 @@ export class UserApi extends runtime.BaseAPI {
     }
 
     /**
+     * User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization
+     * Reset password
+     */
+    async resetOrganizationUserPasswordRaw(requestParameters: ResetOrganizationUserPasswordRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling resetOrganizationUserPassword.');
+        }
+
+        if (requestParameters.user === null || requestParameters.user === undefined) {
+            throw new runtime.RequiredError('user','Required parameter requestParameters.user was null or undefined when calling resetOrganizationUserPassword.');
+        }
+
+        if (requestParameters.password === null || requestParameters.password === undefined) {
+            throw new runtime.RequiredError('password','Required parameter requestParameters.password was null or undefined when calling resetOrganizationUserPassword.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/users/{user}/resetPassword`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"user"}}`, encodeURIComponent(String(requestParameters.user))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: PasswordValueToJSON(requestParameters.password),
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization
+     * Reset password
+     */
+    async resetOrganizationUserPassword(requestParameters: ResetOrganizationUserPasswordRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.resetOrganizationUserPasswordRaw(requestParameters, initOverrides);
+    }
+
+    /**
      * User must have the DOMAIN_USER[UPDATE] permission on the specified domain or DOMAIN_USER[UPDATE] permission on the specified environment or DOMAIN_USER[UPDATE] permission on the specified organization
      * Reset password
      */
@@ -1599,52 +1645,6 @@ export class UserApi extends runtime.BaseAPI {
      */
     async resetPassword(requestParameters: ResetPasswordRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
         await this.resetPasswordRaw(requestParameters, initOverrides);
-    }
-
-    /**
-     * User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization
-     * Reset password
-     */
-    async resetPassword1Raw(requestParameters: ResetPassword1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling resetPassword1.');
-        }
-
-        if (requestParameters.user === null || requestParameters.user === undefined) {
-            throw new runtime.RequiredError('user','Required parameter requestParameters.user was null or undefined when calling resetPassword1.');
-        }
-
-        if (requestParameters.password === null || requestParameters.password === undefined) {
-            throw new runtime.RequiredError('password','Required parameter requestParameters.password was null or undefined when calling resetPassword1.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/organizations/{organizationId}/users/{user}/resetPassword`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"user"}}`, encodeURIComponent(String(requestParameters.user))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: PasswordValueToJSON(requestParameters.password),
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization
-     * Reset password
-     */
-    async resetPassword1(requestParameters: ResetPassword1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.resetPassword1Raw(requestParameters, initOverrides);
     }
 
     /**
@@ -1933,6 +1933,100 @@ export class UserApi extends runtime.BaseAPI {
     }
 
     /**
+     * User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization
+     * Update a user
+     */
+    async updateOrganizationUserRaw(requestParameters: UpdateOrganizationUserRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<User>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling updateOrganizationUser.');
+        }
+
+        if (requestParameters.user === null || requestParameters.user === undefined) {
+            throw new runtime.RequiredError('user','Required parameter requestParameters.user was null or undefined when calling updateOrganizationUser.');
+        }
+
+        if (requestParameters.user2 === null || requestParameters.user2 === undefined) {
+            throw new runtime.RequiredError('user2','Required parameter requestParameters.user2 was null or undefined when calling updateOrganizationUser.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/users/{user}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"user"}}`, encodeURIComponent(String(requestParameters.user))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: UpdateUserToJSON(requestParameters.user2),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => UserFromJSON(jsonValue));
+    }
+
+    /**
+     * User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization
+     * Update a user
+     */
+    async updateOrganizationUser(requestParameters: UpdateOrganizationUserRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<User> {
+        const response = await this.updateOrganizationUserRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization
+     * Update a user status
+     */
+    async updateOrganizationUserStatusRaw(requestParameters: UpdateOrganizationUserStatusRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<User>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling updateOrganizationUserStatus.');
+        }
+
+        if (requestParameters.user === null || requestParameters.user === undefined) {
+            throw new runtime.RequiredError('user','Required parameter requestParameters.user was null or undefined when calling updateOrganizationUserStatus.');
+        }
+
+        if (requestParameters.status === null || requestParameters.status === undefined) {
+            throw new runtime.RequiredError('status','Required parameter requestParameters.status was null or undefined when calling updateOrganizationUserStatus.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/users/{user}/status`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"user"}}`, encodeURIComponent(String(requestParameters.user))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: StatusEntityToJSON(requestParameters.status),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => UserFromJSON(jsonValue));
+    }
+
+    /**
+     * User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization
+     * Update a user status
+     */
+    async updateOrganizationUserStatus(requestParameters: UpdateOrganizationUserStatusRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<User> {
+        const response = await this.updateOrganizationUserStatusRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
      * User must have the DOMAIN_USER[UPDATE] permission on the specified domain or DOMAIN_USER[UPDATE] permission on the specified environment or DOMAIN_USER[UPDATE] permission on the specified organization
      * Update a user
      */
@@ -1988,53 +2082,6 @@ export class UserApi extends runtime.BaseAPI {
     }
 
     /**
-     * User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization
-     * Update a user
-     */
-    async updateUser1Raw(requestParameters: UpdateUser1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<User>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling updateUser1.');
-        }
-
-        if (requestParameters.user === null || requestParameters.user === undefined) {
-            throw new runtime.RequiredError('user','Required parameter requestParameters.user was null or undefined when calling updateUser1.');
-        }
-
-        if (requestParameters.user2 === null || requestParameters.user2 === undefined) {
-            throw new runtime.RequiredError('user2','Required parameter requestParameters.user2 was null or undefined when calling updateUser1.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/organizations/{organizationId}/users/{user}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"user"}}`, encodeURIComponent(String(requestParameters.user))),
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: UpdateUserToJSON(requestParameters.user2),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => UserFromJSON(jsonValue));
-    }
-
-    /**
-     * User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization
-     * Update a user
-     */
-    async updateUser1(requestParameters: UpdateUser1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<User> {
-        const response = await this.updateUser1Raw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
      * User must have the DOMAIN_USER[UPDATE] permission on the specified domain or DOMAIN_USER[UPDATE] permission on the specified environment or DOMAIN_USER[UPDATE] permission on the specified organization
      * Update a user status
      */
@@ -2086,53 +2133,6 @@ export class UserApi extends runtime.BaseAPI {
      */
     async updateUserStatus(requestParameters: UpdateUserStatusRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<User> {
         const response = await this.updateUserStatusRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization
-     * Update a user status
-     */
-    async updateUserStatus1Raw(requestParameters: UpdateUserStatus1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<User>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling updateUserStatus1.');
-        }
-
-        if (requestParameters.user === null || requestParameters.user === undefined) {
-            throw new runtime.RequiredError('user','Required parameter requestParameters.user was null or undefined when calling updateUserStatus1.');
-        }
-
-        if (requestParameters.status === null || requestParameters.status === undefined) {
-            throw new runtime.RequiredError('status','Required parameter requestParameters.status was null or undefined when calling updateUserStatus1.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/organizations/{organizationId}/users/{user}/status`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"user"}}`, encodeURIComponent(String(requestParameters.user))),
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: StatusEntityToJSON(requestParameters.status),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => UserFromJSON(jsonValue));
-    }
-
-    /**
-     * User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization
-     * Update a user status
-     */
-    async updateUserStatus1(requestParameters: UpdateUserStatus1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<User> {
-        const response = await this.updateUserStatus1Raw(requestParameters, initOverrides);
         return await response.value();
     }
 
