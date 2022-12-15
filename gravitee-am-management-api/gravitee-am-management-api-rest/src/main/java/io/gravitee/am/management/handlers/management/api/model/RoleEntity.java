@@ -17,6 +17,7 @@ package io.gravitee.am.management.handlers.management.api.model;
 
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
+import io.swagger.annotations.ApiModelProperty;
 
 import java.util.Date;
 import java.util.List;
@@ -38,7 +39,9 @@ public class RoleEntity {
     private List<String> availablePermissions;
     private boolean system;
     private boolean defaultRole;
+    @ApiModelProperty(dataType = "java.lang.Long")
     private Date createdAt;
+    @ApiModelProperty(dataType = "java.lang.Long")
     private Date updatedAt;
 
     public RoleEntity() {

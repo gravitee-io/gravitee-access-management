@@ -16,6 +16,7 @@
 package io.gravitee.am.management.handlers.management.api.model;
 
 import io.gravitee.am.model.Installation;
+import io.swagger.annotations.ApiModelProperty;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -29,7 +30,9 @@ public class InstallationEntity {
 
     private String id;
     private Map<String, String> additionalInformation = new HashMap<>();
+    @ApiModelProperty(dataType = "java.lang.Long")
     private Date createdAt;
+    @ApiModelProperty(dataType = "java.lang.Long")
     private Date updatedAt;
 
     public InstallationEntity() {
