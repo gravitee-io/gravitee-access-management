@@ -1124,6 +1124,28 @@ jobs:
 
       - notify-on-failure
       - notify-on-success
+      - keeper/env-export:
+          secret-url: keeper://ZOz4db245GNaETVwmPBk8w/field/password
+          var-name: SLACK_ACCESS_TOKEN
+      - when:
+          condition:
+            not: << pipeline.parameters.dry_run>>
+          steps:
+            - slack/notify:
+                channel: C02NGT20S4W
+                event: always
+                custom: |
+                  {
+                    "blocks": [
+                      {
+                        "type": "section",
+                        "text": {
+                          "type": "mrkdwn",
+                          "text": "🎆 AM - << pipeline.parameters.graviteeio_version >> released!"
+                        }
+                      }
+                    ]
+                  }
   build_n_push_am_ce_job:
     description: This Orb Job performs the docker build and publish for the am_ce dockerfile
     parameters:
