@@ -17,6 +17,8 @@ package io.gravitee.am.service.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.gravitee.am.model.IUser;
+import io.swagger.annotations.ApiModelProperty;
+
 import java.util.Date;
 import java.util.Map;
 import javax.validation.constraints.NotBlank;
@@ -68,14 +70,17 @@ public class NewUser implements IUser {
 
     private Long loginsCount;
 
+    @ApiModelProperty(dataType = "java.lang.Long")
     private Date loggedAt;
 
     private String preferredLanguage;
 
     private Map<String, Object> additionalInformation;
 
+    @ApiModelProperty(dataType = "java.lang.Long")
     private Date createdAt;
 
+    @ApiModelProperty(dataType = "java.lang.Long")
     private Date updatedAt;
 
     public String getUsername() {

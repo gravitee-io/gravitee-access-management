@@ -16,6 +16,7 @@
 package io.gravitee.am.management.handlers.management.api.model;
 
 import io.gravitee.am.model.factor.EnrolledFactor;
+import io.swagger.annotations.ApiModelProperty;
 
 import java.util.Date;
 
@@ -28,7 +29,9 @@ public class EnrolledFactorEntity {
     private String id;
     private String type;
     private String name;
+    @ApiModelProperty(dataType = "java.lang.Long")
     private Date createdAt;
+    @ApiModelProperty(dataType = "java.lang.Long")
     private Date updatedAt;
 
     public EnrolledFactorEntity() {

@@ -20,6 +20,7 @@ import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.service.utils.SetterUtils;
+import io.swagger.annotations.ApiModelProperty;
 
 import java.util.Date;
 import java.util.List;
@@ -66,7 +67,9 @@ public class PatchApplicationOAuthSettings {
     private Optional<String> softwareStatement;
     private Optional<String> registrationAccessToken;
     private Optional<String> registrationClientUri;
+    @ApiModelProperty(dataType = "java.lang.Long", required = false)
     private Optional<Date> clientIdIssuedAt;
+    @ApiModelProperty(dataType = "java.lang.Long", required = false)
     private Optional<Date> clientSecretExpiresAt;
     private Optional<Boolean> enhanceScopesWithUserPermissions;
     private Optional<Integer> accessTokenValiditySeconds;

@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.model;
 
+import io.swagger.annotations.ApiModelProperty;
+
 import java.util.Date;
 import java.util.Map;
 
@@ -36,10 +38,13 @@ public class Certificate {
 
     private Map<String, Object> metadata;
 
+    @ApiModelProperty(dataType = "java.lang.Long")
     private Date createdAt;
 
+    @ApiModelProperty(dataType = "java.lang.Long")
     private Date updatedAt;
 
+    @ApiModelProperty(dataType = "java.lang.Long")
     private Date expiresAt;
 
     public Certificate() {
