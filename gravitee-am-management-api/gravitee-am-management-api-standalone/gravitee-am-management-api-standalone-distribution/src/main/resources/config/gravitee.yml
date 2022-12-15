@@ -367,6 +367,19 @@ gateway:
 #      port: 3128
 #      username: user
 #      password: secret
+#  ssl:
+#    enabled: false
+#    trustAll: false # Use this with caution (if over Internet). The gateway will trust any origin certificates. The connection will still be encrypted but this mode is vulnerable to 'man in the middle' attacks.
+#    verifyHost: true # Use to enable host name verification
+#    keystore:
+#      type: jks # Supports jks, pem, pkcs12
+#      path: ${gravitee.home}/security/keystore.jks
+#      password: secret
+#      keyPath: ${gravitee.home}/security/key.pem # Path to private key file (.PEM)
+#    truststore:
+#      type: jks # Supports jks, pem, pkcs12
+#      path: ${gravitee.home}/security/truststore.jks
+#      password: secret
 
 # Allows to enable or disable recaptcha (see https://developers.google.com/recaptcha/docs/v3). This only affect the AM login page.
 #reCaptcha:
