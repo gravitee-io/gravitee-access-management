@@ -850,28 +850,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldNotForgotPassword_userDisabled() {
-        when(domain.getId()).thenReturn("domain-id");
-        Client client = mock(Client.class);
-        when(client.getIdentityProviders()).thenReturn(null);
-        User user = mock(User.class);
-        when(user.getEmail()).thenReturn("test@test.com");
-        when(user.isEnabled()).thenReturn(false);
-        when(user.isRegistrationCompleted()).thenReturn(true);
-        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Collections.singletonList(user)));
-
-        UserProvider userProvider = mock(UserProvider.class);
-        when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
-
-        var testObserver = userService.forgotPassword(user.getEmail(), client).test();
-
-        testObserver.assertNotComplete();
-        testObserver.assertError(AccountInactiveException.class);
-        verify(commonUserService, never()).update(any());
-    }
-
-    @Test
-    public void shouldForgotPassword_userDisabled_RegistrationCompleted() {
+    public void forgotPasswordShoudFail_userDisabled_RegistrationCompleted() {
         when(domain.getId()).thenReturn("domain-id");
         Client client = mock(Client.class);
         when(client.getIdentityProviders()).thenReturn(null);
@@ -879,7 +858,8 @@ public class UserServiceTest {
         when(user.getUsername()).thenReturn("username");
         when(user.getEmail()).thenReturn("test@test.com");
         when(user.isEnabled()).thenReturn(false);
-        when(user.isRegistrationCompleted()).thenReturn(true);
+        when(user.isInactive()).thenReturn(false);
+
         when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Collections.singletonList(user)));
 
         UserProvider userProvider = mock(UserProvider.class);
@@ -892,30 +872,27 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldForgotPassword_userDisabled_RegistrationNotCompleted() {
+    public void forgotPasswordShouldFail_userDisabled_userInactive_forgotPasswordNotConfirmRegister() {
         when(domain.getId()).thenReturn("domain-id");
         Client client = mock(Client.class);
         when(client.getIdentityProviders()).thenReturn(null);
         User user = mock(User.class);
         when(user.getUsername()).thenReturn("username");
         when(user.getEmail()).thenReturn("test@test.com");
-        when(user.isEnabled()).thenReturn(false);
-        when(user.isRegistrationCompleted()).thenReturn(false);
+        when(user.isInactive()).thenReturn(true);
         when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Collections.singletonList(user)));
 
         UserProvider userProvider = mock(UserProvider.class);
         when(identityProviderManager.getUserProvider(any())).thenReturn(Maybe.just(userProvider));
-        when(userProvider.findByUsername("username")).thenReturn(Maybe.just(new DefaultUser("username")));
-        when(commonUserService.update(any())).thenReturn(Single.just(user));
 
         var testObserver = userService.forgotPassword(user.getEmail(), client).test();
         testObserver.awaitTerminalEvent();
-        testObserver.assertNoErrors();
-        verify(commonUserService).update(any());
+        testObserver.assertError(AccountInactiveException.class);
+        verify(commonUserService, never()).update(any());
     }
 
     @Test
-    public void shouldForgotPassword_userDisabled_confirmRegister() {
+    public void forgotPasswordShouldFail_userDisabled_userInactive_forgotPasswordAllowConfirmRegister() {
         when(domain.getId()).thenReturn("domain-id");
         Client client = mock(Client.class);
         final var settings = new AccountSettings();

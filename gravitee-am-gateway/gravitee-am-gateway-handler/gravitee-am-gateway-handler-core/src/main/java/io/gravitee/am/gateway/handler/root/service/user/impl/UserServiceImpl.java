@@ -419,7 +419,7 @@ public class UserServiceImpl implements UserService {
                                         return Single.error(new AccountInactiveException("User [ " + user.getUsername() + " ] needs to complete the activation process"));
                                     }
 
-                                    if (!user.isEnabled() && user.isRegistrationCompleted()) {
+                                    if (!user.isEnabled() && !user.isInactive()) {
                                         return Single.error(new AccountInactiveException("User [ " + user.getUsername() + " ] is disabled."));
                                     }
 
