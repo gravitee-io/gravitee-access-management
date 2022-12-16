@@ -38,9 +38,10 @@ export class SidenavComponent implements OnInit, OnDestroy {
   isGlobalSettings = false;
   topMenuItems: any[] = [];
   footerMenuItems: any[] = [{
-    label: 'Organization settings',
+    label: 'Organization',
     path: '/settings',
-    icon: 'gio:building'
+    icon: 'gio:building',
+    tooltip: 'Organization settings'
   }];
   navSubscription: Subscription;
   itemsSubscription: Subscription;
