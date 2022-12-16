@@ -1,6 +1,27 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/621?closed=1[AM - 3.18.13 (2022-12-16)]
+
+=== Bug fixes
+
+*_General_*
+
+- Manage X-Forwarded-Port on Gateway https://github.com/gravitee-io/issues/issues/8653[#8653]
+- Null pointer exception while creating file reporter https://github.com/gravitee-io/issues/issues/8651[#8651]
+- User authentication may fail to grant access to the user https://github.com/gravitee-io/issues/issues/8741[#8741]
+- When "Complete User Registration" is enabled forgot password doesn't work https://github.com/gravitee-io/issues/issues/8725[#8725]
+- Merge 3.15.15 into 3.18.x https://github.com/gravitee-io/issues/issues/8742[#8742]
+
+=== Improvements
+
+*_General_*
+
+- Add requested redirect_uri in error page with code redirect_uri_mismatch https://github.com/gravitee-io/issues/issues/7728[#7728]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/619?closed=1[AM - 3.15.15 (2022-12-07)]
 
 === Bug fixes
