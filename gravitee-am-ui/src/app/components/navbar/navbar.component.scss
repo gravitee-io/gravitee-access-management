@@ -2,7 +2,12 @@
 @use '@gravitee/ui-particles-angular' as gio;
 
 :host {
+  ::ng-deep.gio-top-bar {
+    height: 36px;
+    max-height: 36px;
+  }
   ::ng-deep.gio-top-bar-content {
+    height: 20px;
     max-height: 20px;
   }
 }
