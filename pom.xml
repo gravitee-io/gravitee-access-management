@@ -24,7 +24,7 @@
         <groupId>io.gravitee</groupId>
         <artifactId>gravitee-parent</artifactId>
         <version>20.0</version>
-        <relativePath></relativePath>
+        <relativePath/>
     </parent>
 
     <groupId>io.gravitee.am</groupId>
@@ -73,7 +73,7 @@
 
     <properties>
         <gravitee-bom.version>2.5</gravitee-bom.version>
-        <gravitee-common.version>1.25.0</gravitee-common.version>
+        <gravitee-common.version>2.0.0</gravitee-common.version>
         <gravitee-plugin.version>1.23.1</gravitee-plugin.version>
         <gravitee-node.version>1.24.1</gravitee-node.version>
         <gravitee-reporter.version>1.17.1</gravitee-reporter.version>
