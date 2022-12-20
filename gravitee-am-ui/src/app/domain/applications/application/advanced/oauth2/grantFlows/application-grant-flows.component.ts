@@ -83,6 +83,14 @@ export class ApplicationGrantFlowsComponent implements OnInit {
         this.snackbarService.open("The jwks_uri and jwks parameters MUST NOT be used together.")
         return;
       }
+      if (this.applicationOauthSettings.jwks) {
+        try {
+          JSON.parse(this.applicationOauthSettings.jwks);
+        } catch (e) {
+          this.snackbarService.open("The jwks parameter is malformed.")
+          return;
+        }
+      }
     }
 
     let oauthSettings: any = {};
