@@ -367,52 +367,6 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldNotUpdateUser_unknown_client() {
-        String domain = "domain";
-        String id = "id";
-
-        User user = new User();
-        user.setSource("idp");
-
-        UpdateUser updateUser = new UpdateUser();
-        updateUser.setClient("client");
-
-        when(commonUserService.findById(eq(ReferenceType.DOMAIN), eq(domain), eq(id))).thenReturn(Single.just(user));
-        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(mock(UserProvider.class)));
-        when(applicationService.findById(updateUser.getClient())).thenReturn(Maybe.empty());
-        when(applicationService.findByDomainAndClientId(domain, updateUser.getClient())).thenReturn(Maybe.empty());
-
-        userService.update(domain, id, updateUser)
-                .test()
-                .assertNotComplete()
-                .assertError(ClientNotFoundException.class);
-    }
-
-    @Test
-    public void shouldNotUpdateUser_invalid_client() {
-        String domain = "domain";
-        String id = "id";
-
-        User user = new User();
-        user.setSource("idp");
-
-        UpdateUser updateUser = new UpdateUser();
-        updateUser.setClient("client");
-
-        Application application = new Application();
-        application.setDomain("other-domain");
-
-        when(commonUserService.findById(eq(ReferenceType.DOMAIN), eq(domain), eq(id))).thenReturn(Single.just(user));
-        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(mock(UserProvider.class)));
-        when(applicationService.findById(updateUser.getClient())).thenReturn(Maybe.just(application));
-
-        userService.update(domain, id, updateUser)
-                .test()
-                .assertNotComplete()
-                .assertError(ClientNotFoundException.class);
-    }
-
-    @Test
     public void shouldResetPassword_externalIdEmpty() {
 
         Domain domain = new Domain();
