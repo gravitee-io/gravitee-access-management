@@ -341,16 +341,14 @@ settings.forEach(setting => {
                 });
             }
 
-
-
             afterAll(async () => {
                 await new Promise((r) => setTimeout(r, 1000));
             });
         });
-
     });
 
 });
+
 afterAll(async () => {
     for await (const domainId of domainIds) {
         await deleteDomain(domainId, accessToken);
@@ -364,99 +362,9 @@ const getCookieAndXsrfToken = async () => {
     return extractXsrfTokenAndActionResponse(authResponse);
 };
 
-const getCookieAndXsrfToken2 = async () => {
-    const params = `?response_type=token&client_id=${clientId}&redirect_uri=http://localhost:4000`;
-    const authResponse = await performGet(openIdConfiguration.authorization_endpoint, params).expect(302);
-    const loginResult = await extractXsrfTokenAndActionResponse(authResponse);
-    // Authentication
-    const postLogin = await performFormPost(loginResult.action, '', {
-            "X-XSRF-TOKEN": loginResult.token,
-            "username": user.username,
-            "password": "SomeP@ssw0rd",
-            "client_id": clientId
-        }, {
-            'Cookie': loginResult.headers['set-cookie'],
-            'Content-type': 'application/x-www-form-urlencoded'
-        }
-    ).expect(302);
-
-    // Post authentication
-    const postLoginRedirect = await performGet(postLogin.headers['location'], '', {
-        'Cookie': postLogin.headers['set-cookie']
-    }).expect(302);
-
-    expect(postLoginRedirect.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${domain.hrid}/oauth/consent`);
-
-    // Redirect to /oauth/consent
-    const consentResult = await extractXsrfTokenAndActionResponse(postLoginRedirect);
-
-    // Post consent
-    const postConsent = await performFormPost(consentResult.action, '', {
-            "X-XSRF-TOKEN": consentResult.token,
-            "user_oauth_approval": true,
-            "scope.openid": true
-        }, {
-            'Cookie': consentResult.headers['set-cookie'],
-            'Content-type': 'application/x-www-form-urlencoded'
-        }
-    ).expect(302);
-
-    // Redirect to URI
-    const postConsentRedirect = await performGet(postConsent.headers['location'], '', {
-        'Cookie': postLogin.headers['set-cookie']
-    });
-
-    return {headers: postConsentRedirect.headers, token: postConsentRedirect.token};
-};
-
 const params = () => {
     return `?response_type=token&client_id=${clientId}&redirect_uri=http://localhost:4000`;
 };
-
-const registerWebAuthnDevice = async () => {
-    const {headers, token} = await getCookieAndXsrfToken2();
-
-    const uri = `/${domain.hrid}/webauthn/register/credentials` + params();
-    const credentialsRes = await performPost(process.env.AM_GATEWAY_URL, uri, {
-        name: user.username,
-        displayName: user.username,
-    }, {
-        'Cookie': headers['set-cookie'],
-        'Content-type': 'application/json'
-    });
-
-    const uri2 = `/${domain.hrid}/webauthn/register`
-    await performFormPost(process.env.AM_GATEWAY_URL, uri2, {
-            "X-XSRF-TOKEN": token,
-            "username": user.username,
-            "client_id": clientId
-        }, {
-            'Cookie': headers['set-cookie'],
-            'Content-type': 'application/x-www-form-urlencoded'
-        }
-    ).expect(302);
-    //form POST register with assertion jwt
-    // navigator.credentials.create({publicKey: makeCredentialOptions})
-    //     .then(function (newCredential) {
-    //         var res = JSON.stringify({
-    //             id: newCredential.id,
-    //             rawId: bufferToBase64(newCredential.rawId),
-    //             response: {
-    //                 attestationObject: bufferToBase64(newCredential.response.attestationObject),
-    //                 clientDataJSON: bufferToBase64(newCredential.response.clientDataJSON)
-    //             },
-    //             type: newCredential.type
-    //         });
-    //         clearMessage();
-    //         // insert value as hidden field and submit the form
-    //         var input = document.createElement("input");
-    //         input.setAttribute("type", "hidden");
-    //         input.setAttribute("name", "assertion");
-    //         input.setAttribute("value", res);
-    //         registerForm.appendChild(input);
-    //         registerForm.submit();
-    //     });
-}
 
 const forgotPassword = async settings => {
     const uri = `/${domain.hrid}/forgotPassword` + params();
