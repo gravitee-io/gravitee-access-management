@@ -14,29 +14,18 @@
  * limitations under the License.
  */
 import fetch from "cross-fetch";
-
-global.fetch = fetch;
-
-import {jest, afterAll, beforeAll, expect} from "@jest/globals";
+import {afterAll, beforeAll, expect, jest} from "@jest/globals";
 import {requestAdminAccessToken} from "@management-commands/token-management-commands";
 import {createDomain, deleteDomain, patchDomain, startDomain} from "@management-commands/domain-management-commands";
 import {createIdp, deleteIdp, getAllIdps} from "@management-commands/idp-management-commands";
 import {createScope} from "@management-commands/scope-management-commands";
 import {createCertificate} from "@management-commands/certificate-management-commands";
 import {buildCertificate} from "@api-fixtures/certificates";
-import {
-    createApplication, deleteApplication, patchApplication,
-    renewApplicationSecrets,
-    updateApplication
-} from "@management-commands/application-management-commands";
-import {
-    extractXsrfTokenAndActionResponse,
-    getWellKnownOpenIdConfiguration, logoutUser,
-    performFormPost,
-    performGet,
-    performPost
-} from "@gateway-commands/oauth-oidc-commands";
+import {createApplication, deleteApplication, patchApplication, renewApplicationSecrets, updateApplication} from "@management-commands/application-management-commands";
+import {extractXsrfTokenAndActionResponse, getWellKnownOpenIdConfiguration, logoutUser, performFormPost, performGet, performPost} from "@gateway-commands/oauth-oidc-commands";
 import {applicationBase64Token, getBase64BasicAuth} from "@gateway-commands/utils";
+
+global.fetch = fetch;
 
 let domain;
 let accessToken;
@@ -924,7 +913,9 @@ describe("OAuth2 - App version", () => {
                             const error = authResponse.header["location"].match(/error=([^&]+)&?/)[1];
                             const errorDescription = authResponse.header["location"].match(/error_description=([^&]+)&?/)[1];
                             expect(error).toEqual(actual.error);
-                            expect(errorDescription).toEqual(actual.error_description);
+                            if (error !== "redirect_uri_mismatch") {
+                                expect(errorDescription).toEqual(actual.error_description);
+                            }
                         }
                         if (actual.state) {
                             const state = authResponse.header["location"].match(/state=([^&]+)&?/)[1];

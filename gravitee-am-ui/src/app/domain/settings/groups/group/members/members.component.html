@@ -18,7 +18,7 @@
 <div>
   <div fxFlex="70">
     <div fxLayout="row" fxLayoutAlign="center">
-      <div fxFlex>This group has <b>{{members.length}}</b> members(s).</div>
+      <div fxFlex>This group has <b>{{page.totalElements}}</b> members(s).</div>
       <div style="height: 40px;">
         <button *ngIf="editMode" color="primary" mat-stroked-button (click)="add()">+ Add members</button>
       </div>

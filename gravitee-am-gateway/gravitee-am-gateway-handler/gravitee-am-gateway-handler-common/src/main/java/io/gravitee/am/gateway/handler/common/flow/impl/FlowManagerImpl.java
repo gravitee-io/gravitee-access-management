@@ -18,8 +18,8 @@ package io.gravitee.am.gateway.handler.common.flow.impl;
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.event.FlowEvent;
 import io.gravitee.am.common.policy.ExtensionPoint;
-import io.gravitee.am.gateway.handler.common.flow.FlowManager;
 import io.gravitee.am.gateway.handler.common.flow.ExecutionPredicate;
+import io.gravitee.am.gateway.handler.common.flow.FlowManager;
 import io.gravitee.am.gateway.handler.common.flow.execution.ExecutionFlow;
 import io.gravitee.am.gateway.policy.Policy;
 import io.gravitee.am.model.Domain;
@@ -35,16 +35,35 @@ import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
 import io.reactivex.Single;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import static io.gravitee.am.common.policy.ExtensionPoint.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Stream;
+
+import static io.gravitee.am.common.policy.ExtensionPoint.POST_CONSENT;
+import static io.gravitee.am.common.policy.ExtensionPoint.POST_LOGIN;
+import static io.gravitee.am.common.policy.ExtensionPoint.POST_LOGIN_IDENTIFIER;
+import static io.gravitee.am.common.policy.ExtensionPoint.POST_REGISTER;
+import static io.gravitee.am.common.policy.ExtensionPoint.POST_REGISTRATION_CONFIRMATION;
+import static io.gravitee.am.common.policy.ExtensionPoint.POST_RESET_PASSWORD;
+import static io.gravitee.am.common.policy.ExtensionPoint.PRE_CONSENT;
+import static io.gravitee.am.common.policy.ExtensionPoint.PRE_LOGIN;
+import static io.gravitee.am.common.policy.ExtensionPoint.PRE_LOGIN_IDENTIFIER;
+import static io.gravitee.am.common.policy.ExtensionPoint.PRE_REGISTER;
+import static io.gravitee.am.common.policy.ExtensionPoint.PRE_REGISTRATION_CONFIRMATION;
+import static io.gravitee.am.common.policy.ExtensionPoint.PRE_RESET_PASSWORD;
+import static io.gravitee.am.common.policy.ExtensionPoint.ROOT;
 import static io.gravitee.am.gateway.handler.common.flow.ExecutionPredicate.alwaysTrue;
 import static java.util.Objects.isNull;
 import static java.util.stream.Collectors.toList;
@@ -184,7 +203,7 @@ public class FlowManagerImpl extends AbstractService implements FlowManager, Ini
         flowService.findAll(ReferenceType.DOMAIN, domain.getId())
                 .subscribe(
                         flow -> {
-                            if (flow != null && flow.getId() != null) {
+                            if (needDeployment(flow)) {
                                 loadFlow(flow);
                                 flows.put(flow.getId(), flow);
                                 logger.info("Flow {} loaded for domain {}", flow.getType(), domain.getName());
@@ -295,5 +314,17 @@ public class FlowManagerImpl extends AbstractService implements FlowManager, Ini
         return excludeApps ? isNull(executionFlow.getApplication()) : client.getId().equals(executionFlow.getApplication());
     }
 
+    /**
+     * @param flow
+     * @return true if the Flow has never been deployed or if the deployed version is not up to date
+     */
+    private boolean needDeployment(Flow flow) {
+        if (flow != null && flow.getId() != null) {
+            final Flow deployedFlow = this.flows.get(flow.getId());
+            return (deployedFlow == null || deployedFlow.getUpdatedAt().before(flow.getUpdatedAt()));
+        } else {
+            return false;
+        }
+    }
 }
 
