@@ -25,6 +25,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.Maybe;
 import io.swagger.annotations.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -69,11 +70,15 @@ public class IdentityProvidersResource extends AbstractResource {
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_IDENTITY_PROVIDER, Acl.LIST)
                 .andThen(identityProviderService.findAll(ReferenceType.ORGANIZATION, organizationId)
-                        .filter(identityProvider -> {
+                        .flatMapMaybe(identityProvider -> {
                             if (userProvider) {
-                                return identityProviderManager.userProviderExists(identityProvider.getType());
+                                // if userProvider, we only want to manage IDP with a UserProvider
+                                // as UserProvider may be disabled by configuration we have to check the existence of the instance
+                                return identityProviderManager.getUserProvider(identityProvider.getId())
+                                        .map(ignorable -> identityProvider);
+                            } else {
+                                return Maybe.just(identityProvider);
                             }
-                            return true;
                         })
                         .map(this::filterIdentityProviderInfos)
                         .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
