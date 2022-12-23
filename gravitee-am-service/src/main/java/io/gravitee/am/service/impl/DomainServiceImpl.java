@@ -69,6 +69,7 @@ import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.exception.InvalidRedirectUriException;
 import io.gravitee.am.service.exception.InvalidRoleException;
 import io.gravitee.am.service.exception.InvalidTargetUrlException;
+import io.gravitee.am.service.exception.InvalidWebAuthnConfigurationException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewDomain;
 import io.gravitee.am.service.model.NewSystemScope;
@@ -612,6 +613,13 @@ public class DomainServiceImpl implements DomainService {
                 return Completable.error(e);
             } catch (Exception e) {
                 return Completable.error(new InvalidRedirectUriException(e.getMessage()));
+            }
+        }
+
+        if (domain.getWebAuthnSettings() != null) {
+            final String origin = domain.getWebAuthnSettings().getOrigin();
+            if (origin == null || origin.isBlank()) {
+                return Completable.error(new InvalidWebAuthnConfigurationException("Error: Invalid origin. Please provide a valid origin."));
             }
         }
 
