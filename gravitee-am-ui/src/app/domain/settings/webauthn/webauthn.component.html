@@ -19,7 +19,7 @@
   <h1>WebAuthn</h1>
   <div class="gv-page-content">
     <div fxFlex="70">
-      <form (ngSubmit)="save()" fxLayout="column" #webAuthnForm="ngForm">
+      <form (ngSubmit)="save()" fxLayout="column">
         <div class="gv-form-section">
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Origin</mat-label>
@@ -157,7 +157,7 @@
           </ngx-datatable>
         </div>
         <div fxLayout="row" *hasPermission="['domain_settings_update']">
-          <button mat-raised-button color="primary" [disabled]="!webAuthnForm.valid || !formChanged" type="submit">SAVE</button>
+          <button mat-raised-button color="primary" [disabled]="!formChanged" type="submit">SAVE</button>
         </div>
       </form>
     </div>
