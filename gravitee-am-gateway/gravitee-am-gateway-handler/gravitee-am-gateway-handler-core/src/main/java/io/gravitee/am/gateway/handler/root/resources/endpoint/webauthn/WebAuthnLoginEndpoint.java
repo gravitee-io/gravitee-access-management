@@ -44,6 +44,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static io.gravitee.am.common.utils.ConstantKeys.*;
@@ -151,12 +152,13 @@ public class WebAuthnLoginEndpoint extends WebAuthnEndpoint {
                     final JsonObject getAssertion = generateServerGetAssertion.result();
                     // check if user exists in AM
                     checkUser(client, username, new VertxHttpServerRequest(ctx.request().getDelegate()), h -> {
-                        // if user doesn't exists to need to set values in the session
+                        //fix relates to AM-191 may not need to merge in 3.18.x. Please check AM-191 for more info
+                        session
+                                .put(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY, getAssertion.getString("challenge"))
+                                .put(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY, username);
+
                         if (h.result() != null) {
-                            session
-                                    .put(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY, getAssertion.getString("challenge"))
-                                    .put(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY, username)
-                                    .put(ConstantKeys.PASSWORDLESS_CHALLENGE_USER_ID, h.result().getId());
+                            session.put(ConstantKeys.PASSWORDLESS_CHALLENGE_USER_ID, h.result().getId());
                             if (rememberDeviceSettings.isActive()) {
                                 var deviceId = webauthnLogin.getString(DEVICE_ID);
                                 var deviceType = webauthnLogin.getString(DEVICE_TYPE);
@@ -167,6 +169,7 @@ public class WebAuthnLoginEndpoint extends WebAuthnEndpoint {
                                 buildResponse(ctx, getAssertion);
                             }
                         } else {
+                            session.put(ConstantKeys.PASSWORDLESS_CHALLENGE_USER_ID, UUID.randomUUID().toString());
                             buildResponse(ctx, getAssertion);
                         }
                     });
