@@ -52,6 +52,7 @@ export class ApplicationGrantFlowsComponent implements OnInit {
     { name: 'CIBA', value: this.CIBA_GRANT_TYPE, checked: false, disabled: false  }
   ];
   customGrantTypes: any[];
+  config: any = {};
 
   constructor(private route: ActivatedRoute,
               private router: Router,
@@ -64,6 +65,7 @@ export class ApplicationGrantFlowsComponent implements OnInit {
     this.application = this.route.snapshot.data['application'];
     this.customGrantTypes = this.route.snapshot.data['domainGrantTypes'] || [];
     this.applicationOauthSettings = (this.application.settings == null) ? {} : this.application.settings.oauth || {};
+    this.applicationOauthSettings.jwks = (this.applicationOauthSettings.jwks) ? JSON.stringify(this.applicationOauthSettings.jwks,null, 2) : null;
     this.readonly = !this.authService.hasPermissions(['application_openid_update']);
     this.initTokenEndpointAuthMethods();
     this.initGrantTypes();
@@ -71,6 +73,26 @@ export class ApplicationGrantFlowsComponent implements OnInit {
   }
 
   patch() {
+    // check configuration
+    if (this.applicationOauthSettings.tokenEndpointAuthMethod === 'private_key_jwt') {
+      if (!this.applicationOauthSettings.jwksUri && !this.applicationOauthSettings.jwks) {
+        this.snackbarService.open("The jwks_uri or jwks are required when using 'private_key_jwt' client authentication method");
+        return;
+      }
+      if (this.applicationOauthSettings.jwksUri && this.applicationOauthSettings.jwks) {
+        this.snackbarService.open("The jwks_uri and jwks parameters MUST NOT be used together.")
+        return;
+      }
+      if (this.applicationOauthSettings.jwks) {
+        try {
+          JSON.parse(this.applicationOauthSettings.jwks);
+        } catch (e) {
+          this.snackbarService.open("The jwks parameter is malformed.")
+          return;
+        }
+      }
+    }
+
     let oauthSettings: any = {};
     oauthSettings.grantTypes = this.selectedGrantTypes.concat(this.selectedCustomGrantTypes);
     oauthSettings.forcePKCE = this.applicationOauthSettings.forcePKCE;
@@ -81,6 +103,9 @@ export class ApplicationGrantFlowsComponent implements OnInit {
     oauthSettings.tlsClientAuthSanUri = this.applicationOauthSettings.tlsClientAuthSanUri;
     oauthSettings.tlsClientAuthSanIp = this.applicationOauthSettings.tlsClientAuthSanIp;
     oauthSettings.tlsClientAuthSanEmail = this.applicationOauthSettings.tlsClientAuthSanEmail;
+    oauthSettings.jwksUri = this.applicationOauthSettings.jwksUri;
+    oauthSettings.jwks = (this.applicationOauthSettings.jwks) ? JSON.parse(this.applicationOauthSettings.jwks): null;
+    oauthSettings.disableRefreshTokenRotation = this.applicationOauthSettings.disableRefreshTokenRotation;
     this.applicationService.patch(this.domainId, this.application.id, {'settings' : { 'oauth' : oauthSettings}}).subscribe(data => {
       this.snackbarService.open('Application updated');
       this.router.navigate(['.'], { relativeTo: this.route, queryParams: { 'reload': true }});
@@ -122,6 +147,19 @@ export class ApplicationGrantFlowsComponent implements OnInit {
 
   isS256CodeChallengeMethodForced() {
     return this.applicationOauthSettings.forceS256CodeChallengeMethod;
+  }
+
+  isRefreshTokenFlowSelected() {
+    return this.selectedGrantTypes.includes('refresh_token');
+  }
+
+  disableRefreshTokenRotation(event) {
+    this.applicationOauthSettings.disableRefreshTokenRotation = event.checked;
+    this.formChanged = true;
+  }
+
+  isRefreshTokenRotationDisabled() {
+    return this.applicationOauthSettings.disableRefreshTokenRotation;
   }
 
   get selectedGrantTypes() {

@@ -117,9 +117,9 @@ export class GroupMembersComponent implements OnInit {
 
   userLink(user) {
     if (this.organizationContext) {
-      return '/settings/management/users/' + user.id;
+      return '/settings/users/' + user.id;
     } else {
-      return '/domains/' + this.domainId + '/settings/users/' + user.id;
+      return '../../../users/' + user.id;
     }
   }
 

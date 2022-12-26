@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.model;
 
+import io.swagger.annotations.ApiModelProperty;
+
 import java.util.Date;
 import java.util.Map;
 import java.util.TreeMap;
@@ -30,7 +32,9 @@ public class I18nDictionary {
     private ReferenceType referenceType;
     private String name;
     private String locale;
+    @ApiModelProperty(dataType = "java.lang.Long")
     private Date createdAt;
+    @ApiModelProperty(dataType = "java.lang.Long")
     private Date updatedAt;
     private Map<String, String> entries = new TreeMap<>();
 

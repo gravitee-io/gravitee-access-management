@@ -179,6 +179,7 @@ public class AccountEndpointHandler {
         user.setNickName(bodyAsJson.getString(StandardClaims.NICKNAME));
         user.setProfile(bodyAsJson.getString(StandardClaims.PROFILE));
         user.setPicture(bodyAsJson.getString(StandardClaims.PICTURE));
+        user.getAdditionalInformation().put(StandardClaims.PICTURE, user.getPicture());
         user.setWebsite(bodyAsJson.getString(StandardClaims.WEBSITE));
         user.setEmail(bodyAsJson.getString(StandardClaims.EMAIL));
         user.setBirthdate(bodyAsJson.getString(StandardClaims.BIRTHDATE));

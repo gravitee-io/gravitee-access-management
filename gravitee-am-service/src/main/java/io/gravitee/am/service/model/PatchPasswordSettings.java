@@ -159,8 +159,12 @@ public class PatchPasswordSettings {
             throw new InvalidParameterException("Number of old passwords must be within the range  ["+MIN_PASSWORD_HISTORY+", "+MAX_PASSWORD_HISTORY+"]");
         }
 
-        if (toPatch.getMinLength() != null && toPatch.getMaxLength() != null) {
-            if (toPatch.getMinLength() > toPatch.getMaxLength()) {
+        if (toPatch.getMinLength() != null) {
+            if (toPatch.getMinLength() <=0) {
+                throw new InvalidParameterException("Min password length must be greater than zero");
+            }
+
+            if (toPatch.getMaxLength() != null && toPatch.getMinLength() > toPatch.getMaxLength()) {
                 throw new InvalidParameterException("Min password length must be inferior to max password length");
             }
         }

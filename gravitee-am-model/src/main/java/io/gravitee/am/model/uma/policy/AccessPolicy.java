@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.model.uma.policy;
 
+import io.swagger.annotations.ApiModelProperty;
+
 import java.util.Date;
 
 /**
@@ -34,7 +36,9 @@ public class AccessPolicy {
     private String condition;
     private String domain;
     private String resource;
+    @ApiModelProperty(dataType = "java.lang.Long")
     private Date createdAt;
+    @ApiModelProperty(dataType = "java.lang.Long")
     private Date updatedAt;
 
     public String getId() {

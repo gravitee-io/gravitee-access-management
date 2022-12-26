@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.model;
 
+import io.swagger.annotations.ApiModelProperty;
+
 import java.util.Date;
 
 /**
@@ -38,8 +40,11 @@ public class Credential {
     private String attestationStatement;
     private String ipAddress;
     private String userAgent;
+    @ApiModelProperty(dataType = "java.lang.Long")
     private Date createdAt;
+    @ApiModelProperty(dataType = "java.lang.Long")
     private Date updatedAt;
+    @ApiModelProperty(dataType = "java.lang.Long")
     private Date accessedAt;
 
     public String getId() {
