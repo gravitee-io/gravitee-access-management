@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.response;
 
+import io.gravitee.am.common.web.UriBuilder;
+
 import java.io.Serializable;
 import java.net.URISyntaxException;
 
@@ -54,4 +56,8 @@ public abstract class AuthorizationResponse implements Serializable {
     }
 
     public abstract String buildRedirectUri() throws URISyntaxException;
+
+    protected String getURLEncodedState() {
+        return UriBuilder.encodeURIComponent(getState());
+    }
 }
