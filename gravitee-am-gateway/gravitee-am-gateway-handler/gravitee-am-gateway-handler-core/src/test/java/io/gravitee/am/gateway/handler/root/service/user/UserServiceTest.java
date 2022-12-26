@@ -430,6 +430,143 @@ public class UserServiceTest {
     }
 
     @Test
+    public void shouldNotForgotPassword_CustomIdentityForm_onlyEmailMatches() {
+        Client client = mock(Client.class);
+        when(client.getId()).thenReturn("client-id");
+        final var sortedSet = new TreeSet<ApplicationIdentityProvider>();
+        final var appIdpProvider = new ApplicationIdentityProvider();
+        appIdpProvider.setIdentity("idp1");
+        sortedSet.add(appIdpProvider);
+        when(client.getIdentityProviders()).thenReturn(sortedSet);
+
+        User user = mock(User.class);
+        when(user.getEmail()).thenReturn("test@test.com");
+
+        when(domain.getId()).thenReturn("domain-id");
+        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Arrays.asList()));
+
+        final var mockUserProvider = mock(UserProvider.class);
+        when(mockUserProvider.findByEmail(eq(user.getEmail()))).thenReturn(Maybe.just(new DefaultUser()));
+        when(mockUserProvider.findByUsername(any())).thenReturn(Maybe.empty());
+        when(identityProviderManager.getUserProvider(any())).thenReturn(Maybe.just(mockUserProvider));
+
+        TestObserver testObserver = userService.forgotPassword(
+                new ForgotPasswordParameters(user.getEmail(), "unknownUsername", true, false),
+                client,
+                mock(io.gravitee.am.identityprovider.api.User.class)).test();
+
+        testObserver.assertNotComplete();
+        testObserver.assertError(UserNotFoundException.class);
+        verify(commonUserService, never()).findByDomainAndUsernameAndSource(any(), any(), anyString());
+    }
+
+    @Test
+    public void shouldNotForgotPassword_CustomIdentityForm_onlyUsernameMatches() {
+        Client client = mock(Client.class);
+        when(client.getId()).thenReturn("client-id");
+        final var sortedSet = new TreeSet<ApplicationIdentityProvider>();
+        final var appIdpProvider = new ApplicationIdentityProvider();
+        appIdpProvider.setIdentity("idp1");
+        sortedSet.add(appIdpProvider);
+        when(client.getIdentityProviders()).thenReturn(sortedSet);
+
+        User user = mock(User.class);
+        when(user.getUsername()).thenReturn("test");
+
+        when(domain.getId()).thenReturn("domain-id");
+        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Arrays.asList()));
+
+        final var mockUserProvider = mock(UserProvider.class);
+        when(mockUserProvider.findByEmail(any())).thenReturn(Maybe.empty());
+        when(mockUserProvider.findByUsername(any())).thenReturn(Maybe.just(new DefaultUser()));
+        when(identityProviderManager.getUserProvider(any())).thenReturn(Maybe.just(mockUserProvider));
+
+        TestObserver testObserver = userService.forgotPassword(
+                new ForgotPasswordParameters("unknown@acme.fr", user.getUsername(), true, false),
+                client,
+                mock(io.gravitee.am.identityprovider.api.User.class)).test();
+
+        testObserver.assertNotComplete();
+        testObserver.assertError(UserNotFoundException.class);
+        verify(commonUserService, never()).findByDomainAndUsernameAndSource(any(), any(), anyString());
+    }
+
+
+    @Test
+    public void shouldNotForgotPassword_CustomIdentityForm_EmailAndUsernameMatch_differentUser() {
+        Client client = mock(Client.class);
+        when(client.getId()).thenReturn("client-id");
+        final var sortedSet = new TreeSet<ApplicationIdentityProvider>();
+        final var appIdpProvider = new ApplicationIdentityProvider();
+        appIdpProvider.setIdentity("idp1");
+        sortedSet.add(appIdpProvider);
+        when(client.getIdentityProviders()).thenReturn(sortedSet);
+
+        User user = mock(User.class);
+        when(user.getEmail()).thenReturn("test@test.com");
+        when(user.getUsername()).thenReturn("test");
+
+        when(domain.getId()).thenReturn("domain-id");
+        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Arrays.asList()));
+
+        final var mockUserProvider = mock(UserProvider.class);
+        final var userByEmail = new DefaultUser();
+        userByEmail.setId("emailid");
+        final var userByUsername = new DefaultUser();
+        userByUsername.setId("userid");
+        when(mockUserProvider.findByEmail(eq(user.getEmail()))).thenReturn(Maybe.just(userByEmail));
+        when(mockUserProvider.findByUsername(any())).thenReturn(Maybe.just(userByUsername));
+        when(identityProviderManager.getUserProvider(any())).thenReturn(Maybe.just(mockUserProvider));
+
+        TestObserver testObserver = userService.forgotPassword(
+                new ForgotPasswordParameters(user.getEmail(), user.getUsername(), true, false),
+                client,
+                mock(io.gravitee.am.identityprovider.api.User.class)).test();
+
+        testObserver.assertNotComplete();
+        testObserver.assertError(UserNotFoundException.class);
+        verify(commonUserService, never()).findByDomainAndUsernameAndSource(any(), any(), anyString());
+    }
+
+    @Test
+    public void shouldForgotPassword_CustomIdentityForm_EmailAndUsernameMatch() {
+        Client client = mock(Client.class);
+        when(client.getId()).thenReturn("client-id");
+        final var sortedSet = new TreeSet<ApplicationIdentityProvider>();
+        final var appIdpProvider = new ApplicationIdentityProvider();
+        appIdpProvider.setIdentity("idp1");
+        sortedSet.add(appIdpProvider);
+        when(client.getIdentityProviders()).thenReturn(sortedSet);
+
+        User user = mock(User.class);
+        when(user.getEmail()).thenReturn("test@test.com");
+        when(user.getUsername()).thenReturn("test");
+
+        when(domain.getId()).thenReturn("domain-id");
+        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Arrays.asList()));
+
+        final var mockUserProvider = mock(UserProvider.class);
+        final var userByEmail = new DefaultUser();
+        userByEmail.setId("emailid");
+        when(mockUserProvider.findByEmail(eq(user.getEmail()))).thenReturn(Maybe.just(userByEmail));
+        when(mockUserProvider.findByUsername(any())).thenReturn(Maybe.just(userByEmail));
+        when(identityProviderManager.getUserProvider(any())).thenReturn(Maybe.just(mockUserProvider));
+
+        when(commonUserService.findByDomainAndUsernameAndSource(any(), any(), any())).thenReturn(Maybe.just(user));
+        when(commonUserService.update(any())).thenReturn(Single.just(user));
+
+        TestObserver testObserver = userService.forgotPassword(
+                new ForgotPasswordParameters(user.getEmail(), user.getUsername(), true, false),
+                client,
+                mock(io.gravitee.am.identityprovider.api.User.class)).test();
+
+        testObserver.awaitTerminalEvent();
+
+        verify(commonUserService).findByDomainAndUsernameAndSource(any(), any(), any());
+        verify(commonUserService).update(any());
+    }
+
+    @Test
     public void shouldForgotPassword_MultipleMatch_onlyOne_filtered() throws Exception {
         Client client = mock(Client.class);
         when(client.getId()).thenReturn("client-id");
