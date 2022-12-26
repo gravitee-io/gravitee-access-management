@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.gateway.handler.root.service.user.impl;
 
-import com.google.common.base.Strings;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.exception.authentication.AccountInactiveException;
 import io.gravitee.am.common.exception.jwt.ExpiredJWTException;
@@ -32,8 +31,15 @@ import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.gateway.handler.root.service.user.model.ForgotPasswordParameters;
 import io.gravitee.am.gateway.handler.root.service.user.model.UserToken;
 import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.jwt.JWTParser;
-import io.gravitee.am.model.*;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.EnrollmentSettings;
+import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.MFASettings;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.Template;
+import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.oidc.Client;
@@ -63,25 +69,24 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.Optional;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.lang.Boolean.FALSE;
 import static java.util.Map.entry;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -446,7 +451,7 @@ public class UserServiceImpl implements UserService {
                         return Single.error(new UserNotFoundException(email));
                     }
 
-                    if (Strings.isNullOrEmpty(params.getEmail()) & StringUtils.isEmpty(params.getUsername())) {
+                    if (isNullOrEmpty(params.getEmail()) & StringUtils.isEmpty(params.getUsername())) {
                         // no user found using criteria. email & username are missing, unable to search the user through UserProvider
                         return Single.error(new UserNotFoundException(email));
                     }
@@ -457,8 +462,12 @@ public class UserServiceImpl implements UserService {
                             .flatMapMaybe(authProvider -> identityProviderManager.getUserProvider(authProvider.getIdentity())
                                     .flatMap(userProvider -> {
                                         final String username = params.getUsername();
-                                        final Maybe<io.gravitee.am.identityprovider.api.User> findQuery = Strings.isNullOrEmpty(email) ?
-                                                userProvider.findByUsername(username) : userProvider.findByEmail(email);
+
+                                        // search by username, email or both
+                                        final Maybe<io.gravitee.am.identityprovider.api.User> findQuery = (!isNullOrEmpty(username) && !isNullOrEmpty(email)) ?
+                                                findByUsernameAndEmail(userProvider, params) :
+                                                (isNullOrEmpty(email) ? userProvider.findByUsername(username) : userProvider.findByEmail(email));
+
                                         return findQuery
                                                 .map(user -> Optional.of(new UserAuthentication(user, authProvider.getIdentity())))
                                                 .defaultIfEmpty(Optional.empty())
@@ -494,6 +503,20 @@ public class UserServiceImpl implements UserService {
                 })
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(client).principal(principal).type(EventType.FORGOT_PASSWORD_REQUESTED).throwable(throwable)))
                 .ignoreElement();
+    }
+
+    /**
+     * Find user by username and by email, if both search methods return a user with an inconsistent user id,
+     * then the Maybe returned by this method will be empty.
+     *
+     * @param userProvider
+     * @param params
+     * @return
+     */
+    private static Maybe<io.gravitee.am.identityprovider.api.User> findByUsernameAndEmail(UserProvider userProvider, ForgotPasswordParameters params) {
+        return Maybe.zip(userProvider.findByUsername(params.getUsername()), userProvider.findByEmail(params.getEmail()), (byUsername, byEmail) -> Map.of(byEmail.getId().equals(byUsername.getId()), byEmail))
+                .filter(tuple -> tuple.containsKey(Boolean.TRUE))
+                .map(tuple -> tuple.get(Boolean.TRUE));
     }
 
     @Override
