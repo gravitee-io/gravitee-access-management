@@ -62,7 +62,7 @@ public class ImplicitResponse extends AuthorizationResponse {
             uriBuilder.addFragmentParameter(Token.SCOPE, accessToken.getScope());
         }
         if (getState() != null) {
-            uriBuilder.addFragmentParameter(Parameters.STATE, getState());
+            uriBuilder.addFragmentParameter(Parameters.STATE, getURLEncodedState());
         }
         // additional information
         if (accessToken.getAdditionalInformation() != null) {
