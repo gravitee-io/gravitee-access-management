@@ -707,5 +707,8 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         router.route(PATH_LOGOUT_CALLBACK).failureHandler(errorHandler);
         router.route(PATH_LOGIN).failureHandler(errorHandler);
         router.route(PATH_IDENTIFIER_FIRST_LOGIN).failureHandler(errorHandler);
+        router.route(PATH_WEBAUTHN_LOGIN).failureHandler(errorHandler);
+        router.route(PATH_WEBAUTHN_REGISTER).failureHandler(errorHandler);
+        router.route(PATH_WEBAUTHN_RESPONSE).failureHandler(errorHandler);
     }
 }
