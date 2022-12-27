@@ -25,6 +25,8 @@ import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.plugins.certificate.core.schema.CertificateSchema;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.CertificateRepository;
+import io.gravitee.am.service.exception.CertificateNotFoundException;
+import io.gravitee.am.service.exception.CertificateWithApplicationsException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.CertificateServiceImpl;
 import io.gravitee.am.service.tasks.AssignSystemCertificate;
@@ -223,7 +225,7 @@ public class CertificateServiceTest {
 
         TestObserver testObserver = certificateService.delete("my-certificate").test();
 
-        testObserver.assertError(TechnicalManagementException.class);
+        testObserver.assertError(CertificateNotFoundException.class);
         testObserver.assertNotComplete();
 
         verify(certificateRepository, times(1)).findById("my-certificate");
@@ -238,7 +240,7 @@ public class CertificateServiceTest {
 
         TestObserver testObserver = certificateService.delete("my-certificate").test();
 
-        testObserver.assertError(TechnicalManagementException.class);
+        testObserver.assertError(CertificateWithApplicationsException.class);
         testObserver.assertNotComplete();
 
         verify(certificateRepository, times(1)).findById("my-certificate");
@@ -349,7 +351,6 @@ public class CertificateServiceTest {
         final Certificate renewedCert = new Certificate();
         renewedCert.setId("renewed-cert-id");
         when(certificateRepository.create(any())).thenReturn(Single.just(renewedCert));
-        when(certificateRepository.update(any())).thenReturn(Single.just(certLatest));
         when(eventService.create(any(Event.class))).thenReturn(Single.just(new Event()));
 
         CertificateSchema schema = new CertificateSchema();

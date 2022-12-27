@@ -106,7 +106,7 @@ public class VerifyAttemptServiceImplTest {
         when(client.getId()).thenReturn("any-client-id");
         when(accountSettings.getMfaChallengeAttemptsResetTime()).thenReturn(360000);
         final VerifyAttempt verifyAttempt = createVerifyAttempt();
-        Date pastDate = getDate("11-June-22");
+        Date pastDate = getDate("11-06-22");
         verifyAttempt.setUpdatedAt(pastDate);
 
         verifyAttempt.setAllowRequest(false);
@@ -214,7 +214,7 @@ public class VerifyAttemptServiceImplTest {
         when(accountSettings.getMfaChallengeMaxAttempts()).thenReturn(2);
 
         final VerifyAttempt verifyAttempt = createVerifyAttempt();
-        Date futureDate = getDate("11-June-29");
+        Date futureDate = getDate("11-06-29");
         verifyAttempt.setUpdatedAt(futureDate);
         verifyAttempt.setAllowRequest(false);
         verifyAttempt.setAttempts(666);
@@ -232,7 +232,7 @@ public class VerifyAttemptServiceImplTest {
     }
 
     private Date getDate(String strDate) throws ParseException {
-        DateFormat formatter = new SimpleDateFormat("dd-MMM-yy");
+        DateFormat formatter = new SimpleDateFormat("dd-MM-yy");
         return formatter.parse(strDate);
     }
 }
