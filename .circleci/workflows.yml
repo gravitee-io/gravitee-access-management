@@ -1251,7 +1251,7 @@ jobs:
       - publish_rpms:
           graviteeio_version: << parameters.graviteeio_version >>
           dry_run: << parameters.dry_run >>
-          rc_requested: << pipeline.parameters.rc_requested >>
+          rc_requested: << parameters.rc_requested >>
 
 
 workflows:
@@ -1379,12 +1379,16 @@ workflows:
           rc_requested: << pipeline.parameters.rc_requested >>
       - build_n_push_am_ce_job:
           context: cicd-orchestrator
+          requires:
+            - release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
           graviteeio_version: << pipeline.parameters.graviteeio_version >>
           dry_run: << pipeline.parameters.dry_run >>
           tag_latest: << pipeline.parameters.tag_latest >>
           tag_latest_support: << pipeline.parameters.tag_latest_support >>
       - publish_am_rpms:
           context: cicd-orchestrator
+          requires:
+            - release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
           dry_run: << pipeline.parameters.dry_run >>
           graviteeio_version: << pipeline.parameters.graviteeio_version >>
           rc_requested: << pipeline.parameters.rc_requested >>
