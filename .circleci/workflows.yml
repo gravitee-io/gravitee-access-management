@@ -1251,7 +1251,7 @@ jobs:
       - publish_rpms:
           graviteeio_version: << parameters.graviteeio_version >>
           dry_run: << parameters.dry_run >>
-          rc_requested: << pipeline.parameters.rc_requested >>
+          rc_requested: << parameters.rc_requested >>
 
 
 workflows:
@@ -1383,11 +1383,15 @@ workflows:
           dry_run: << pipeline.parameters.dry_run >>
           tag_latest: << pipeline.parameters.tag_latest >>
           tag_latest_support: << pipeline.parameters.tag_latest_support >>
+          requires:
+            - release
       - publish_am_rpms:
           context: cicd-orchestrator
           dry_run: << pipeline.parameters.dry_run >>
           graviteeio_version: << pipeline.parameters.graviteeio_version >>
           rc_requested: << pipeline.parameters.rc_requested >>
+          requires:
+            - release
 
   publish_rpms:
     when:
