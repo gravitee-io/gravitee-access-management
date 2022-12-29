@@ -76,6 +76,6 @@ export const extractXsrfToken = async (url, parameters) => {
     return {'headers': result.headers, 'token': xsrfToken};
 }
 
-export const logoutUser = async (uri, postLogin: any) =>
-    await performGet(uri, '', {'Cookie': postLogin.headers['set-cookie']}).expect(302);
-
+export const logoutUser = async (uri, postLogin: any,targetUri = null) =>
+    performGet(uri, targetUri ? `?post_logout_redirect_uri=${targetUri}` : '', {'Cookie': postLogin.headers['set-cookie']})
+        .expect(302)
