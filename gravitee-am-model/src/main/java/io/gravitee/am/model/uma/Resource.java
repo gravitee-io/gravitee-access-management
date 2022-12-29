@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.model.uma;
 
+import io.swagger.annotations.ApiModelProperty;
+
 import java.util.Date;
 import java.util.List;
 
@@ -75,11 +77,13 @@ public class Resource {
     /**
      * The Client creation date
      */
+    @ApiModelProperty(dataType = "java.lang.Long")
     private Date createdAt;
 
     /**
      * The Client last updated date
      */
+    @ApiModelProperty(dataType = "java.lang.Long")
     private Date updatedAt;
 
     public List<String> getResourceScopes() {

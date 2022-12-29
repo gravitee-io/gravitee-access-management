@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.model.alert;
 
+
 import java.util.Date;
 
 /**

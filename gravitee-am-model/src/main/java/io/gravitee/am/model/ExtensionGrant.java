@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.model;
 
+import io.swagger.annotations.ApiModelProperty;
+
 import java.util.Date;
 
 /**
@@ -41,8 +43,10 @@ public class ExtensionGrant {
 
     private boolean userExists;
 
+    @ApiModelProperty(dataType = "java.lang.Long")
     private Date createdAt;
 
+    @ApiModelProperty(dataType = "java.lang.Long")
     private Date updatedAt;
 
     public ExtensionGrant() {

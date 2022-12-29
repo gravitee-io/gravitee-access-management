@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.model;
 
+import io.swagger.annotations.ApiModelProperty;
+
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -32,7 +34,9 @@ public class Entrypoint {
     private List<String> tags;
     private String organizationId;
     private boolean defaultEntrypoint;
+    @ApiModelProperty(dataType = "java.lang.Long")
     private Date createdAt;
+    @ApiModelProperty(dataType = "java.lang.Long")
     private Date updatedAt;
 
     public Entrypoint(){}

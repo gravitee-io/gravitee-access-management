@@ -149,17 +149,22 @@ public class TokenServiceImpl implements TokenService {
                 .switchIfEmpty(Single.error(new InvalidGrantException("Refresh token is invalid")))
                 .flatMap(refreshToken1 -> {
                     if (refreshToken1.getExpireAt().before(new Date())) {
-                        throw new InvalidGrantException("Refresh token is expired");
+                        return Single.error(new InvalidGrantException("Refresh token is expired"));
                     }
                     if (!refreshToken1.getClientId().equals(tokenRequest.getClientId())) {
-                        throw new InvalidGrantException("Refresh token was issued to another client");
+                        return Single.error(new InvalidGrantException("Refresh token was issued to another client"));
                     }
                     // Propagate UMA 2.0 permissions
                     if(refreshToken1.getAdditionalInformation().get("permissions")!=null) {
                         tokenRequest.setPermissions((List<PermissionRequest>)refreshToken1.getAdditionalInformation().get("permissions"));
                     }
 
-                    // refresh token is used only once
+                    // if client has disabled refresh token rotation, do not remove the refresh token
+                    if (client.isDisableRefreshTokenRotation()) {
+                        return Single.just(refreshToken1);
+                    }
+
+                    // else, refresh token is used only once
                     return refreshTokenRepository.delete(refreshToken1.getValue())
                             .andThen(Single.just(refreshToken1));
                 });

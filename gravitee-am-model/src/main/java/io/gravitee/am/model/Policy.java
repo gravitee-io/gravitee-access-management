@@ -16,6 +16,7 @@
 package io.gravitee.am.model;
 
 import io.gravitee.am.common.policy.ExtensionPoint;
+import io.swagger.annotations.ApiModelProperty;
 
 import java.util.Date;
 
@@ -43,8 +44,10 @@ public class Policy {
 
     private String client;
 
+    @ApiModelProperty(dataType = "java.lang.Long")
     private Date createdAt;
 
+    @ApiModelProperty(dataType = "java.lang.Long")
     private Date updatedAt;
 
     public Policy() { }

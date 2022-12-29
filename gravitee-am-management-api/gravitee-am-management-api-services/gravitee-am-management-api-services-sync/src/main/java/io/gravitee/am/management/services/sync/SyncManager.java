@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.management.services.sync;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.monitoring.metrics.Constants;
 import io.gravitee.am.monitoring.metrics.GaugeHelper;
@@ -23,6 +25,7 @@ import io.gravitee.common.event.EventManager;
 import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -31,6 +34,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BinaryOperator;
 
@@ -41,7 +45,9 @@ import static java.util.stream.Collectors.toMap;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class SyncManager {
+public class SyncManager implements InitializingBean {
+    public static final int TIMEFRAME_BEFORE_DELAY = 30000;
+    public static final int TIMEFRAME_AFTER_DELAY = 30000;
 
     private final Logger logger = LoggerFactory.getLogger(SyncManager.class);
 
@@ -51,6 +57,12 @@ public class SyncManager {
     @Autowired
     private EventManager eventManager;
 
+    @Value("${services.sync.timeframeBeforeDelay:"+TIMEFRAME_BEFORE_DELAY+"}")
+    private int timeframeBeforeDelay;
+
+    @Value("${services.sync.timeframeAfterDelay:"+TIMEFRAME_AFTER_DELAY+"}")
+    private int timeframeAfterDelay;
+
     private long lastRefreshAt = System.currentTimeMillis();
 
     private long lastDelay = 0;
@@ -59,6 +71,15 @@ public class SyncManager {
 
     @Value("${services.sync.eventsTimeOutMillis:30000}")
     private int eventsTimeOut = 30000;
+
+    private Cache<String, String> processedEventIds;
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        this.processedEventIds = CacheBuilder.newBuilder()
+                .expireAfterWrite(timeframeBeforeDelay + timeframeAfterDelay, TimeUnit.MILLISECONDS)
+                .build();
+    }
 
     public void refresh() {
         logger.debug("Refreshing sync state...");
@@ -77,7 +98,9 @@ public class SyncManager {
         // search for events and compute them
         logger.debug("Events synchronization");
 
-        Single<List<Event>> eventsProcessing = eventService.findByTimeFrame(lastRefreshAt - lastDelay, nextLastRefreshAt);
+        final long from = (lastRefreshAt - lastDelay) - timeframeBeforeDelay;
+        final long to = nextLastRefreshAt + timeframeAfterDelay;
+        Single<List<Event>> eventsProcessing = eventService.findByTimeFrame(from, to);
         if (eventsTimeOut > 0) {
             eventsProcessing = eventsProcessing.timeout(eventsTimeOut, TimeUnit.MILLISECONDS);
         }
@@ -106,8 +129,12 @@ public class SyncManager {
 
     private void computeEvents(Collection<Event> events) {
         events.forEach(event -> {
-            logger.debug("Compute event id : {}, with type : {} and timestamp : {} and payload : {}", event.getId(), event.getType(), event.getCreatedAt(), event.getPayload());
-            eventManager.publishEvent(io.gravitee.am.common.event.Event.valueOf(event.getType(), event.getPayload().getAction()), event.getPayload());
+            if (Objects.isNull(processedEventIds.getIfPresent(event.getId()))) {
+                logger.debug("Compute event id : {}, with type : {} and timestamp : {} and payload : {}", event.getId(), event.getType(), event.getCreatedAt(), event.getPayload());
+                eventManager.publishEvent(io.gravitee.am.common.event.Event.valueOf(event.getType(), event.getPayload().getAction()), event.getPayload());
+            } else {
+                logger.debug("Event id {} already processed", event.getId());
+            }
         });
     }
 }

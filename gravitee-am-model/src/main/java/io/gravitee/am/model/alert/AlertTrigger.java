@@ -17,6 +17,7 @@ package io.gravitee.am.model.alert;
 
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Resource;
+import io.swagger.annotations.ApiModelProperty;
 
 import java.util.Date;
 import java.util.List;
@@ -39,9 +40,9 @@ public class AlertTrigger implements Resource {
     private String referenceId;
 
     private List<String> alertNotifiers;
-
+    @ApiModelProperty(dataType = "java.lang.Long")
     private Date createdAt;
-
+    @ApiModelProperty(dataType = "java.lang.Long")
     private Date updatedAt;
 
     public AlertTrigger() {

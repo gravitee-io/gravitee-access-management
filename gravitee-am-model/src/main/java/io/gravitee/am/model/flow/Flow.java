@@ -16,6 +16,7 @@
 package io.gravitee.am.model.flow;
 
 import io.gravitee.am.model.ReferenceType;
+import io.swagger.annotations.ApiModelProperty;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -74,10 +75,12 @@ public class Flow {
     /**
      * Flow created date
      */
+    @ApiModelProperty(dataType = "java.lang.Long")
     private Date createdAt;
     /**
      * Flow updated date
      */
+    @ApiModelProperty(dataType = "java.lang.Long")
     private Date updatedAt;
 
     public Integer getOrder() {

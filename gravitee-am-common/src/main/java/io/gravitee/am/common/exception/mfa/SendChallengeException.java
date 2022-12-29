@@ -16,6 +16,7 @@
 package io.gravitee.am.common.exception.mfa;
 
 import io.gravitee.am.common.exception.authentication.AuthenticationException;
+import io.gravitee.common.http.HttpStatusCode;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -30,5 +31,10 @@ public class SendChallengeException extends AuthenticationException {
     @Override
     public String getErrorCode() {
         return "mfa_challenge_send_error";
+    }
+
+    @Override
+    public int getHttpStatusCode() {
+        return HttpStatusCode.INTERNAL_SERVER_ERROR_500;
     }
 }

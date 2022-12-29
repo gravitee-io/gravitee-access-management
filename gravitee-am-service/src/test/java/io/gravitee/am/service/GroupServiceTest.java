@@ -44,10 +44,22 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -401,6 +413,40 @@ public class GroupServiceTest {
         observer.awaitTerminalEvent();
 
         verify(userService).findByIdIn(any());
+        verify(organizationUserService, never()).findByIdIn(any());
+    }
+
+    @Test
+    public void shouldFindMembersFromDomainUsers_Paginate() {
+        final var userIds = IntStream.range(0, 52).mapToObj(i -> "user-" + i).collect(Collectors.toList());
+        var group = mock(Group.class);
+        when(group.getReferenceType()).thenReturn(ReferenceType.DOMAIN);
+        when(group.getMembers()).thenReturn(userIds);
+
+        when(groupRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("group-id"))).thenReturn(Maybe.just(group));
+        when(userService.findByIdIn(any())).thenReturn(Flowable.fromIterable(userIds.stream().map(userId -> {
+            final var user = new User();
+            user.setId(userId);
+            return user;
+        }).collect(Collectors.toList())));
+
+        var observer = groupService.findMembers(ReferenceType.DOMAIN, DOMAIN, "group-id", 0, 25).test();
+        observer.awaitTerminalEvent();
+        observer.assertValue(page -> page.getTotalCount() == userIds.size());
+        observer.assertValue(page -> page.getCurrentPage() == 0);
+
+        observer = groupService.findMembers(ReferenceType.DOMAIN, DOMAIN, "group-id", 1, 25).test();
+        observer.awaitTerminalEvent();
+        observer.assertValue(page -> page.getTotalCount() == userIds.size());
+        observer.assertValue(page -> page.getCurrentPage() == 1);
+
+        observer = groupService.findMembers(ReferenceType.DOMAIN, DOMAIN, "group-id", 2, 25).test();
+        observer.awaitTerminalEvent();
+        observer.assertValue(page -> page.getTotalCount() == userIds.size());
+        observer.assertValue(page -> page.getCurrentPage() == 2);
+
+        verify(userService, times(2)).findByIdIn(argThat(memberIds -> memberIds.size() == 25));
+        verify(userService, times(1)).findByIdIn(argThat(memberIds -> memberIds.size() == 2));
         verify(organizationUserService, never()).findByIdIn(any());
     }
 

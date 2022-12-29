@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.model.oauth2;
 
+import io.swagger.annotations.ApiModelProperty;
+
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -52,11 +54,13 @@ public class Scope {
     /**
      * Domain creation date
      */
+    @ApiModelProperty(dataType = "java.lang.Long")
     private Date createdAt;
 
     /**
      * Domain last updated date
      */
+    @ApiModelProperty(dataType = "java.lang.Long")
     private Date updatedAt;
 
     private boolean system;

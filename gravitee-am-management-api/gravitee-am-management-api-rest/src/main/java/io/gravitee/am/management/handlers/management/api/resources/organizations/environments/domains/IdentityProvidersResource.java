@@ -83,11 +83,15 @@ public class IdentityProvidersResource extends AbstractResource {
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapPublisher(__ -> identityProviderService.findByDomain(domain))
-                        .filter(identityProvider -> {
+                        .flatMapMaybe(identityProvider -> {
                             if (userProvider) {
-                                return identityProviderManager.userProviderExists(identityProvider.getType());
+                                // if userProvider, we only want to manage IDP with a UserProvider
+                                // as UserProvider may be disabled by configuration we have to check the existence of the instance
+                                return identityProviderManager.getUserProvider(identityProvider.getId())
+                                        .map(ignorable -> identityProvider);
+                            } else {
+                                return Maybe.just(identityProvider);
                             }
-                            return true;
                         })
                         .map(this::filterIdentityProviderInfos)
                         .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))

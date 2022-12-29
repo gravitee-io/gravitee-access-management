@@ -51,6 +51,7 @@ import static io.gravitee.am.common.utils.ConstantKeys.ERROR_PARAM_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.FORGOT_ACTION_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.PARAM_CONTEXT_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.REGISTER_ACTION_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.REQUEST_CONTEXT_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.USERNAME_PARAM_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.WEBAUTHN_ACTION_KEY;
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
@@ -67,8 +68,6 @@ import static java.util.Optional.ofNullable;
 public class IdentifierFirstLoginEndpoint extends AbstractEndpoint implements Handler<RoutingContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(IdentifierFirstLoginEndpoint.class);
-    private static final String REQUEST_CONTEXT_KEY = "request";
-
 
     private final Domain domain;
     private final BotDetectionManager botDetectionManager;

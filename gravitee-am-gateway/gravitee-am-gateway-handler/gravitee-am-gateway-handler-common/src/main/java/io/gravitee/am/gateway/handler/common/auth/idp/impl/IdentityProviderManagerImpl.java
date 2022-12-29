@@ -163,35 +163,40 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
     }
 
     private Single<IdentityProvider> updateAuthenticationProvider(IdentityProvider identityProvider) {
-        return Single.fromCallable(() -> {
-            logger.info("\tInitializing identity provider: {} [{}]", identityProvider.getName(), identityProvider.getType());
-            // stop existing provider, if any
-            clearProvider(identityProvider.getId());
-            return identityProvider;
-        }).flatMap(idp -> {
-            var authProviderConfig = new AuthenticationProviderConfiguration(identityProvider, certificateManager);
-            var authenticationProvider = identityProviderPluginManager.create(authProviderConfig);
-            if (authenticationProvider != null) {
-                // init the user provider
-                return identityProviderPluginManager
-                        .create(identityProvider.getType(), identityProvider.getConfiguration(), identityProvider)
-                        .map(userProviderOpt -> {
-                            providers.put(identityProvider.getId(), authenticationProvider);
-                            identities.put(identityProvider.getId(), identityProvider);
-                            if (userProviderOpt.isPresent()) {
-                                userProviders.put(identityProvider.getId(), userProviderOpt.get());
-                            } else {
-                                userProviders.remove(identityProvider.getId());
-                            }
-                            return idp;
-                        });
-            } else {
-                return Single.just(idp);
-            }
-        }).doOnError(error -> {
-            logger.error("An error occurs while initializing the identity provider : {}", identityProvider.getName(), error);
-            clearProvider(identityProvider.getId());
-        });
+        if (needDeployment(identityProvider)) {
+            return Single.fromCallable(() -> {
+                logger.info("\tInitializing identity provider: {} [{}]", identityProvider.getName(), identityProvider.getType());
+                // stop existing provider, if any
+                clearProvider(identityProvider.getId());
+                return identityProvider;
+            }).flatMap(idp -> {
+                var authProviderConfig = new AuthenticationProviderConfiguration(identityProvider, certificateManager);
+                var authenticationProvider = identityProviderPluginManager.create(authProviderConfig);
+                if (authenticationProvider != null) {
+                    // init the user provider
+                    return identityProviderPluginManager
+                            .create(identityProvider.getType(), identityProvider.getConfiguration(), identityProvider)
+                            .map(userProviderOpt -> {
+                                providers.put(identityProvider.getId(), authenticationProvider);
+                                identities.put(identityProvider.getId(), identityProvider);
+                                if (userProviderOpt.isPresent()) {
+                                    userProviders.put(identityProvider.getId(), userProviderOpt.get());
+                                } else {
+                                    userProviders.remove(identityProvider.getId());
+                                }
+                                return idp;
+                            });
+                } else {
+                    return Single.just(idp);
+                }
+            }).doOnError(error -> {
+                logger.error("An error occurs while initializing the identity provider : {}", identityProvider.getName(), error);
+                clearProvider(identityProvider.getId());
+            });
+        }  else{
+            logger.debug("\tIdentity provider already initialized: {} [{}]", identityProvider.getName(), identityProvider.getType());
+            return Single.just(identityProvider);
+        }
     }
 
     private void clearProviders() {
@@ -218,5 +223,14 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
                 logger.error("An error has occurred while stopping the user provider : {}", identityProviderId, e);
             }
         }
+    }
+
+    /**
+     * @param provider
+     * @return true if the IDP has never been deployed or if the deployed version is not up to date
+     */
+    private boolean needDeployment(IdentityProvider provider) {
+        final IdentityProvider deployedProvider = this.identities.get(provider.getId());
+        return (deployedProvider == null || deployedProvider.getUpdatedAt().before(provider.getUpdatedAt()));
     }
 }

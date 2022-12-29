@@ -18,6 +18,7 @@ package io.gravitee.am.model.application;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.JWKSet;
+import io.swagger.annotations.ApiModelProperty;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -197,10 +198,12 @@ public class ApplicationOAuthSettings {
      * Time at which the client identifier was issued.
      * The time is represented as the number of seconds from 1970-01-01T00:00:00Z as measured in UTC until the date/time of issuance.
      */
+    @ApiModelProperty(dataType = "java.lang.Long")
     private Date clientIdIssuedAt;
     /**
      * REQUIRED if "client_secret" is issued.  Time at which the client secret will expire or 0 if it will not expire.
      */
+    @ApiModelProperty(dataType = "java.lang.Long")
     private Date clientSecretExpiresAt;
     /**
      * String containing a space-separated list of scope values (as described in Section 3.3 of OAuth 2.0 [RFC6749]) that the client can use when requesting access tokens.
@@ -310,6 +313,8 @@ public class ApplicationOAuthSettings {
 
     private boolean backchannelUserCodeParameter;
 
+    private boolean disableRefreshTokenRotation;
+
     public ApplicationOAuthSettings() {
     }
 
@@ -382,6 +387,7 @@ public class ApplicationOAuthSettings {
         this.backchannelClientNotificationEndpoint = other.backchannelClientNotificationEndpoint;
         this.backchannelAuthRequestSignAlg = other.backchannelAuthRequestSignAlg;
         this.backchannelUserCodeParameter = other.backchannelUserCodeParameter;
+        this.disableRefreshTokenRotation = other.disableRefreshTokenRotation;
     }
 
     public String getClientId() {
@@ -953,6 +959,14 @@ public class ApplicationOAuthSettings {
         this.backchannelUserCodeParameter = backchannelUserCodeParameter;
     }
 
+    public boolean isDisableRefreshTokenRotation() {
+        return disableRefreshTokenRotation;
+    }
+
+    public void setDisableRefreshTokenRotation(boolean disableRefreshTokenRotation) {
+        this.disableRefreshTokenRotation = disableRefreshTokenRotation;
+    }
+
     public void copyTo(Client client) {
         client.setClientId(this.clientId);
         client.setClientSecret(this.clientSecret);
@@ -1018,5 +1032,6 @@ public class ApplicationOAuthSettings {
         client.setBackchannelUserCodeParameter(this.backchannelUserCodeParameter);
         client.setBackchannelAuthRequestSignAlg(this.backchannelAuthRequestSignAlg);
         client.setBackchannelClientNotificationEndpoint(this.backchannelClientNotificationEndpoint);
+        client.setDisableRefreshTokenRotation(this.disableRefreshTokenRotation);
     }
 }

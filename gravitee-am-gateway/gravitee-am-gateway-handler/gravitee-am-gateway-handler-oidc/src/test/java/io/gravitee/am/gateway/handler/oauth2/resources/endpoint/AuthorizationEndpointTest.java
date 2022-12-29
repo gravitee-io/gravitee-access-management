@@ -337,7 +337,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertTrue(location.contains("/test/oauth/error?client_id=client-id&error=redirect_uri_mismatch&error_description=The+redirect_uri+MUST+match+the+registered+callback+URL+for+this+application"));
+                    assertTrue(location.contains("/test/oauth/error?client_id=client-id&error=redirect_uri_mismatch&error_description=The+redirect_uri+%255B+http%253A%252F%252Flocalhost%253A9999%252Fwrong%252Fcallback+%255D+MUST+match+the+registered+callback+URL+for+this+application"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
@@ -365,7 +365,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertTrue(location.contains("/test/oauth/error?client_id=client-id&error=redirect_uri_mismatch&error_description=The+redirect_uri+MUST+match+the+registered+callback+URL+for+this+application"));
+                    assertTrue(location.contains("/test/oauth/error?client_id=client-id&error=redirect_uri_mismatch&error_description=The+redirect_uri+%255B+http%253A%252F%252Flocalhost%253A9999%252Fauthorize%252Fcallback%253Fparam%253Dparam1+%255D+MUST+match+the+registered+callback+URL+for+this+application"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }

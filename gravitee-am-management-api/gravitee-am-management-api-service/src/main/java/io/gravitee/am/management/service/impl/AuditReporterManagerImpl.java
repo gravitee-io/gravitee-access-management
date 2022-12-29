@@ -86,7 +86,8 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
     @Autowired
     private EventManager eventManager;
 
-    private ConcurrentMap<io.gravitee.am.model.Reporter, Reporter> auditReporters = new ConcurrentHashMap<>();
+    private final ConcurrentMap<io.gravitee.am.model.Reporter, Reporter> auditReporters = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, io.gravitee.am.model.Reporter> reporters = new ConcurrentHashMap<>();
 
     private Reporter internalReporter;
 
@@ -223,7 +224,13 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
         logger.info("Management API has received a deploy reporter event for {}", reporterId);
         reporterService.findById(reporterId)
                 .subscribe(
-                        this::loadReporter,
+                        reporter -> {
+                            if (needDeployment(reporter)) {
+                                loadReporter(reporter);
+                            } else {
+                                logger.info("Reporter already deployed event for {} ignored", reporterId);
+                            }
+                        },
                         error -> logger.error("Unable to deploy reporter {}", reporterId, error),
                         () -> logger.error("No reporter found with id {}", reporterId));
     }
@@ -233,36 +240,36 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
         reporterService.findById(reporterId)
                 .subscribe(
                         reporter -> {
-                            logger.debug("Reload reporter: {} after configuration update", reporter.getName());
-                            Optional<Reporter> optionalAuditReporter = auditReporters
-                                    .entrySet()
-                                    .stream()
-                                    .filter(entry -> reporter.getId().equals(entry.getKey().getId()))
-                                    .map(entry -> entry.getValue())
-                                    .findFirst();
+                            if (needDeployment(reporter)) {
+                                logger.debug("Reload reporter: {} after configuration update", reporter.getName());
+                                auditReporters
+                                        .entrySet()
+                                        .stream()
+                                        .filter(entry -> reporter.getId().equals(entry.getKey().getId()))
+                                        .map(entry -> entry.getValue())
+                                        .findFirst()
+                                        .ifPresentOrElse(auditReporter -> {
+                                                    try {
+                                                        // reload the provider if it's enabled
+                                                        if (reporter.isEnabled()) {
+                                                            auditReporter.stop();
+                                                            auditReporters.entrySet().removeIf(entry -> entry.getKey().getId().equals(reporter.getId()));
+                                                            loadReporter(reporter);
+                                                        } else {
+                                                            logger.info("Reporter: {} has been disabled", reporter.getName());
+                                                            // unregister event bus consumer
+                                                            // we do not stop the underlying reporter if it manages search because it can be used to fetch reportable
+                                                            ((EventBusReporterWrapper) auditReporter).unregister();
+                                                            if (!auditReporter.canSearch()) {
+                                                                auditReporter.stop();
+                                                            }
+                                                        }
+                                                    } catch (Exception e) {
+                                                        logger.error("An error occurs while reloading reporter: {}", reporter.getName(), e);
+                                                    }
+                                                },
+                                                () -> logger.info("There is no reporter to reload"));
 
-                            if (optionalAuditReporter.isPresent()) {
-                                try {
-                                    Reporter auditReporter = optionalAuditReporter.get();
-                                    // reload the provider if it's enabled
-                                    if (reporter.isEnabled()) {
-                                        auditReporter.stop();
-                                        auditReporters.entrySet().removeIf(entry -> entry.getKey().getId().equals(reporter.getId()));
-                                        loadReporter(reporter);
-                                    } else {
-                                        logger.info("Reporter: {} has been disabled", reporter.getName());
-                                        // unregister event bus consumer
-                                        // we do not stop the underlying reporter if it manages search because it can be used to fetch reportable
-                                        ((EventBusReporterWrapper) auditReporter).unregister();
-                                        if (!auditReporter.canSearch()) {
-                                            auditReporter.stop();
-                                        }
-                                    }
-                                } catch (Exception e) {
-                                    logger.error("An error occurs while reloading reporter: {}", reporter.getName(), e);
-                                }
-                            } else {
-                                logger.info("There is no reporter to reload");
                             }
                         },
                         error -> logger.error("Unable to reload reporter {}", reporterId, error),
@@ -304,6 +311,7 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
                         logger.info("Initializing audit reporter : {} for domain {}", reporter.getName(), reporter.getDomain());
                         Reporter eventBusReporter = new EventBusReporterWrapper(vertx, reporter.getDomain(), auditReporter);
                         auditReporters.put(reporter, eventBusReporter);
+                        reporters.put(reporter.getId(), reporter);
                         try {
                             eventBusReporter.start();
                         } catch (Exception e) {
@@ -313,6 +321,7 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
                 } else {
                     // initialize NoOpReporter in order to allow to reload this reporter with valid implementation if it is enabled through the UI
                     auditReporters.put(reporter, new EventBusReporterWrapper(vertx, reporter.getDomain(), new NoOpReporter()));
+                    reporters.put(reporter.getId(), reporter);
                 }
             }
 
@@ -343,6 +352,7 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
             if (optionalReporter.isPresent()) {
                 optionalReporter.get().stop();
                 auditReporters.entrySet().removeIf(entry -> reporterId.equals(entry.getKey().getId()));
+                reporters.remove(reporterId);
             }
         } catch (Exception e) {
             logger.error("Unexpected error while removing reporter", e);
@@ -372,5 +382,14 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
             // Could not deploy
             logger.error("Reporter service can not be started", err);
         });
+    }
+
+    /**
+     * @param reporter
+     * @return true if the Reporter has never been deployed or if the deployed version is not up to date
+     */
+    private boolean needDeployment(io.gravitee.am.model.Reporter reporter) {
+        final io.gravitee.am.model.Reporter deployedReporter = this.reporters.get(reporter.getId());
+        return (deployedReporter == null || deployedReporter.getUpdatedAt().before(reporter.getUpdatedAt()));
     }
 }

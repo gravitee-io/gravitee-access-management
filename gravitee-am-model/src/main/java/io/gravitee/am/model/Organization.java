@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.model;
 
+import io.swagger.annotations.ApiModelProperty;
+
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -39,8 +41,10 @@ public class Organization implements Resource {
 
     private List<String> identities;
 
+    @ApiModelProperty(dataType = "java.lang.Long")
     private Date createdAt;
-    
+
+    @ApiModelProperty(dataType = "java.lang.Long")
     private Date updatedAt;
 
     public Organization() {

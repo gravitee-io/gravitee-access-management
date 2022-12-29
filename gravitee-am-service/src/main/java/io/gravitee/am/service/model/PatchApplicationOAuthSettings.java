@@ -20,6 +20,7 @@ import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.service.utils.SetterUtils;
+import io.swagger.annotations.ApiModelProperty;
 
 import java.util.Date;
 import java.util.List;
@@ -66,7 +67,9 @@ public class PatchApplicationOAuthSettings {
     private Optional<String> softwareStatement;
     private Optional<String> registrationAccessToken;
     private Optional<String> registrationClientUri;
+    @ApiModelProperty(dataType = "java.lang.Long", required = false)
     private Optional<Date> clientIdIssuedAt;
+    @ApiModelProperty(dataType = "java.lang.Long", required = false)
     private Optional<Date> clientSecretExpiresAt;
     private Optional<Boolean> enhanceScopesWithUserPermissions;
     private Optional<Integer> accessTokenValiditySeconds;
@@ -88,6 +91,8 @@ public class PatchApplicationOAuthSettings {
     private Optional<Boolean> singleSignOut;
     private Optional<Boolean> silentReAuthentication;
     private Optional<List<ApplicationScopeSettings>> scopeSettings;
+
+    private Optional<Boolean> disableRefreshTokenRotation;
 
     public Optional<List<String>> getRedirectUris() {
         return redirectUris;
@@ -545,6 +550,14 @@ public class PatchApplicationOAuthSettings {
         this.tlsClientCertificateBoundAccessTokens = tlsClientCertificateBoundAccessTokens;
     }
 
+    public Optional<Boolean> getDisableRefreshTokenRotation() {
+        return disableRefreshTokenRotation;
+    }
+
+    public void setDisableRefreshTokenRotation(Optional<Boolean> disableRefreshTokenRotation) {
+        this.disableRefreshTokenRotation = disableRefreshTokenRotation;
+    }
+
     public ApplicationOAuthSettings patch(ApplicationOAuthSettings _toPatch) {
         // create new object for audit purpose (patch json result)
         ApplicationOAuthSettings toPatch = _toPatch == null ? new ApplicationOAuthSettings() : new ApplicationOAuthSettings(_toPatch);
@@ -607,6 +620,7 @@ public class PatchApplicationOAuthSettings {
         SetterUtils.safeSet(toPatch::setPostLogoutRedirectUris, this.getPostLogoutRedirectUris());
         SetterUtils.safeSet(toPatch::setSingleSignOut, this.getSingleSignOut());
         SetterUtils.safeSet(toPatch::setSilentReAuthentication, this.getSilentReAuthentication());
+        SetterUtils.safeSet(toPatch::setDisableRefreshTokenRotation, this.getDisableRefreshTokenRotation());
         if (this.getScopeSettings() != null && this.getScopeSettings().isPresent()) {
             toPatch.setScopeSettings(this.getScopeSettings().get());
         }
