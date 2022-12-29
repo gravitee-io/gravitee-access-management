@@ -148,8 +148,12 @@ public class PatchOIDCSettings {
 
         Set<Permission> requiredPermissions = new HashSet<>();
 
-        if (clientRegistrationSettings != null && clientRegistrationSettings.isPresent()
-                || redirectUriStrictMatching != null && redirectUriStrictMatching.isPresent()) {
+        if ((clientRegistrationSettings != null && clientRegistrationSettings.isPresent())
+                || (redirectUriStrictMatching != null && redirectUriStrictMatching.isPresent())
+                || (cibaSettings != null && cibaSettings.isPresent())
+                || (postLogoutRedirectUris != null && postLogoutRedirectUris.isPresent())
+                || (requestUris != null && requestUris.isPresent())
+                || (securityProfileSettings != null && securityProfileSettings.isPresent())) {
             requiredPermissions.add(Permission.DOMAIN_OPENID);
         }
 
