@@ -19,7 +19,7 @@ version: '2'
 services:
 
   mongodb:
-    image: mongo:4.2
+    image: mongo:6.0
     container_name: gio_am_mongodb
     ports:
     - 27017:27017
@@ -77,3 +77,10 @@ services:
     container_name: gio_am_ciba
     ports:
       - 8080:8080
+
+  fakesmtp:
+    image: gessnerfl/fake-smtp-server
+    container_name: am_fake_smtp
+    ports:
+      - 5080:5080
+      - 9292:5025

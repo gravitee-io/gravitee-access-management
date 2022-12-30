@@ -49,7 +49,7 @@ export interface FindCertificateRequest {
     certificate: string;
 }
 
-export interface Get32Request {
+export interface Get29Request {
     certificate: string;
 }
 
@@ -67,7 +67,7 @@ export interface GetCertificatePublicKeysRequest {
     certificate: string;
 }
 
-export interface GetSchema1Request {
+export interface GetSchema3Request {
     certificate: string;
 }
 
@@ -247,9 +247,9 @@ export class CertificateApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get an certificate plugin
      */
-    async get32Raw(requestParameters: Get32Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async get29Raw(requestParameters: Get29Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.certificate === null || requestParameters.certificate === undefined) {
-            throw new runtime.RequiredError('certificate','Required parameter requestParameters.certificate was null or undefined when calling get32.');
+            throw new runtime.RequiredError('certificate','Required parameter requestParameters.certificate was null or undefined when calling get29.');
         }
 
         const queryParameters: any = {};
@@ -274,8 +274,8 @@ export class CertificateApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get an certificate plugin
      */
-    async get32(requestParameters: Get32Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.get32Raw(requestParameters, initOverrides);
+    async get29(requestParameters: Get29Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.get29Raw(requestParameters, initOverrides);
     }
 
     /**
@@ -378,9 +378,9 @@ export class CertificateApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get an certificate\'s schema
      */
-    async getSchema1Raw(requestParameters: GetSchema1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async getSchema3Raw(requestParameters: GetSchema3Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.certificate === null || requestParameters.certificate === undefined) {
-            throw new runtime.RequiredError('certificate','Required parameter requestParameters.certificate was null or undefined when calling getSchema1.');
+            throw new runtime.RequiredError('certificate','Required parameter requestParameters.certificate was null or undefined when calling getSchema3.');
         }
 
         const queryParameters: any = {};
@@ -405,15 +405,15 @@ export class CertificateApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get an certificate\'s schema
      */
-    async getSchema1(requestParameters: GetSchema1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.getSchema1Raw(requestParameters, initOverrides);
+    async getSchema3(requestParameters: GetSchema3Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.getSchema3Raw(requestParameters, initOverrides);
     }
 
     /**
      * There is no particular permission needed. User must be authenticated.
      * List certificate plugins
      */
-    async list32Raw(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async list30Raw(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -436,8 +436,8 @@ export class CertificateApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * List certificate plugins
      */
-    async list32(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.list32Raw(initOverrides);
+    async list30(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.list30Raw(initOverrides);
     }
 
     /**

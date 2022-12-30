@@ -83,7 +83,8 @@ export const NewEmailTemplateEnum = {
     WebauthnLogin: 'WEBAUTHN_LOGIN',
     IdentifierFirstLogin: 'IDENTIFIER_FIRST_LOGIN',
     Error: 'ERROR',
-    CertificateExpiration: 'CERTIFICATE_EXPIRATION'
+    CertificateExpiration: 'CERTIFICATE_EXPIRATION',
+    VerifyAttempt: 'VERIFY_ATTEMPT'
 } as const;
 export type NewEmailTemplateEnum = typeof NewEmailTemplateEnum[keyof typeof NewEmailTemplateEnum];
 

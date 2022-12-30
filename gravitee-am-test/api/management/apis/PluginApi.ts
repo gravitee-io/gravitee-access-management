@@ -22,47 +22,47 @@ import {
     NotifierPluginToJSON,
 } from '../models';
 
-export interface Get31Request {
-    identity: string;
-}
-
-export interface Get32Request {
-    certificate: string;
-}
-
-export interface Get33Request {
-    extensionGrant: string;
-}
-
-export interface Get34Request {
-    reporter: string;
-}
-
-export interface Get35Request {
-    policy: string;
-}
-
-export interface Get36Request {
-    factor: string;
-}
-
-export interface Get37Request {
-    resource: string;
-}
-
-export interface Get38Request {
-    notifierId: string;
-}
-
-export interface Get39Request {
-    botDetection: string;
-}
-
-export interface Get40Request {
+export interface Get26Request {
     authDeviceNotifierId: string;
 }
 
-export interface Get41Request {
+export interface Get27Request {
+    policy: string;
+}
+
+export interface Get28Request {
+    identity: string;
+}
+
+export interface Get29Request {
+    certificate: string;
+}
+
+export interface Get30Request {
+    extensionGrant: string;
+}
+
+export interface Get31Request {
+    reporter: string;
+}
+
+export interface Get32Request {
+    factor: string;
+}
+
+export interface Get33Request {
+    resource: string;
+}
+
+export interface Get34Request {
+    notifierId: string;
+}
+
+export interface Get35Request {
+    botDetection: string;
+}
+
+export interface Get36Request {
     deviceIdentifier: string;
 }
 
@@ -71,11 +71,11 @@ export interface GetDocumentationRequest {
 }
 
 export interface GetSchemaRequest {
-    identity: string;
+    authDeviceNotifierId: string;
 }
 
 export interface GetSchema1Request {
-    certificate: string;
+    policy: string;
 }
 
 export interface GetSchema10Request {
@@ -83,55 +83,55 @@ export interface GetSchema10Request {
 }
 
 export interface GetSchema2Request {
-    extensionGrant: string;
+    identity: string;
 }
 
 export interface GetSchema3Request {
-    reporter: string;
+    certificate: string;
 }
 
 export interface GetSchema4Request {
-    policy: string;
+    extensionGrant: string;
 }
 
 export interface GetSchema5Request {
-    factor: string;
+    reporter: string;
 }
 
 export interface GetSchema6Request {
-    resource: string;
+    factor: string;
 }
 
 export interface GetSchema7Request {
-    notifierId: string;
+    resource: string;
 }
 
 export interface GetSchema8Request {
-    botDetection: string;
+    notifierId: string;
 }
 
 export interface GetSchema9Request {
-    authDeviceNotifierId: string;
+    botDetection: string;
 }
 
-export interface List31Request {
+export interface List27Request {
+    expand?: Array<string>;
+}
+
+export interface List28Request {
+    expand?: Array<string>;
+}
+
+export interface List29Request {
     external?: boolean;
     expand?: Array<string>;
 }
 
+export interface List34Request {
+    expand?: Array<string>;
+}
+
 export interface List35Request {
-    expand?: Array<string>;
-}
-
-export interface List37Request {
-    expand?: Array<string>;
-}
-
-export interface List38Request {
-    expand?: Array<string>;
-}
-
-export interface List40Request {
     expand?: Array<string>;
 }
 
@@ -142,327 +142,11 @@ export class PluginApi extends runtime.BaseAPI {
 
     /**
      * There is no particular permission needed. User must be authenticated.
-     * Get an identity provider
-     */
-    async get31Raw(requestParameters: Get31Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters.identity === null || requestParameters.identity === undefined) {
-            throw new runtime.RequiredError('identity','Required parameter requestParameters.identity was null or undefined when calling get31.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/platform/plugins/identities/{identity}`.replace(`{${"identity"}}`, encodeURIComponent(String(requestParameters.identity))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * There is no particular permission needed. User must be authenticated.
-     * Get an identity provider
-     */
-    async get31(requestParameters: Get31Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.get31Raw(requestParameters, initOverrides);
-    }
-
-    /**
-     * There is no particular permission needed. User must be authenticated.
-     * Get an certificate plugin
-     */
-    async get32Raw(requestParameters: Get32Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters.certificate === null || requestParameters.certificate === undefined) {
-            throw new runtime.RequiredError('certificate','Required parameter requestParameters.certificate was null or undefined when calling get32.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/platform/plugins/certificates/{certificate}`.replace(`{${"certificate"}}`, encodeURIComponent(String(requestParameters.certificate))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * There is no particular permission needed. User must be authenticated.
-     * Get an certificate plugin
-     */
-    async get32(requestParameters: Get32Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.get32Raw(requestParameters, initOverrides);
-    }
-
-    /**
-     * There is no particular permission needed. User must be authenticated.
-     * Get an extension grant plugin
-     */
-    async get33Raw(requestParameters: Get33Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters.extensionGrant === null || requestParameters.extensionGrant === undefined) {
-            throw new runtime.RequiredError('extensionGrant','Required parameter requestParameters.extensionGrant was null or undefined when calling get33.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/platform/plugins/extensionGrants/{extensionGrant}`.replace(`{${"extensionGrant"}}`, encodeURIComponent(String(requestParameters.extensionGrant))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * There is no particular permission needed. User must be authenticated.
-     * Get an extension grant plugin
-     */
-    async get33(requestParameters: Get33Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.get33Raw(requestParameters, initOverrides);
-    }
-
-    /**
-     * There is no particular permission needed. User must be authenticated.
-     * Get a reporter plugin
-     */
-    async get34Raw(requestParameters: Get34Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters.reporter === null || requestParameters.reporter === undefined) {
-            throw new runtime.RequiredError('reporter','Required parameter requestParameters.reporter was null or undefined when calling get34.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/platform/plugins/reporters/{reporter}`.replace(`{${"reporter"}}`, encodeURIComponent(String(requestParameters.reporter))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * There is no particular permission needed. User must be authenticated.
-     * Get a reporter plugin
-     */
-    async get34(requestParameters: Get34Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.get34Raw(requestParameters, initOverrides);
-    }
-
-    /**
-     * There is no particular permission needed. User must be authenticated.
-     * Get a policy plugin
-     */
-    async get35Raw(requestParameters: Get35Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters.policy === null || requestParameters.policy === undefined) {
-            throw new runtime.RequiredError('policy','Required parameter requestParameters.policy was null or undefined when calling get35.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/platform/plugins/policies/{policy}`.replace(`{${"policy"}}`, encodeURIComponent(String(requestParameters.policy))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * There is no particular permission needed. User must be authenticated.
-     * Get a policy plugin
-     */
-    async get35(requestParameters: Get35Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.get35Raw(requestParameters, initOverrides);
-    }
-
-    /**
-     * There is no particular permission needed. User must be authenticated.
-     * Get a factor plugin
-     */
-    async get36Raw(requestParameters: Get36Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters.factor === null || requestParameters.factor === undefined) {
-            throw new runtime.RequiredError('factor','Required parameter requestParameters.factor was null or undefined when calling get36.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/platform/plugins/factors/{factor}`.replace(`{${"factor"}}`, encodeURIComponent(String(requestParameters.factor))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * There is no particular permission needed. User must be authenticated.
-     * Get a factor plugin
-     */
-    async get36(requestParameters: Get36Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.get36Raw(requestParameters, initOverrides);
-    }
-
-    /**
-     * There is no particular permission needed. User must be authenticated.
-     * Get a resource plugin
-     */
-    async get37Raw(requestParameters: Get37Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters.resource === null || requestParameters.resource === undefined) {
-            throw new runtime.RequiredError('resource','Required parameter requestParameters.resource was null or undefined when calling get37.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/platform/plugins/resources/{resource}`.replace(`{${"resource"}}`, encodeURIComponent(String(requestParameters.resource))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * There is no particular permission needed. User must be authenticated.
-     * Get a resource plugin
-     */
-    async get37(requestParameters: Get37Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.get37Raw(requestParameters, initOverrides);
-    }
-
-    /**
-     * There is no particular permission needed. User must be authenticated.
-     * Get a notifier
-     */
-    async get38Raw(requestParameters: Get38Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<NotifierPlugin>> {
-        if (requestParameters.notifierId === null || requestParameters.notifierId === undefined) {
-            throw new runtime.RequiredError('notifierId','Required parameter requestParameters.notifierId was null or undefined when calling get38.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/platform/plugins/notifiers/{notifierId}`.replace(`{${"notifierId"}}`, encodeURIComponent(String(requestParameters.notifierId))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => NotifierPluginFromJSON(jsonValue));
-    }
-
-    /**
-     * There is no particular permission needed. User must be authenticated.
-     * Get a notifier
-     */
-    async get38(requestParameters: Get38Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<NotifierPlugin> {
-        const response = await this.get38Raw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * There is no particular permission needed. User must be authenticated.
-     * Get a Bot Detection plugin
-     */
-    async get39Raw(requestParameters: Get39Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters.botDetection === null || requestParameters.botDetection === undefined) {
-            throw new runtime.RequiredError('botDetection','Required parameter requestParameters.botDetection was null or undefined when calling get39.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/platform/plugins/bot-detections/{botDetection}`.replace(`{${"botDetection"}}`, encodeURIComponent(String(requestParameters.botDetection))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * There is no particular permission needed. User must be authenticated.
-     * Get a Bot Detection plugin
-     */
-    async get39(requestParameters: Get39Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.get39Raw(requestParameters, initOverrides);
-    }
-
-    /**
-     * There is no particular permission needed. User must be authenticated.
      * Get a Authentication Device Notifier plugin
      */
-    async get40Raw(requestParameters: Get40Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async get26Raw(requestParameters: Get26Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.authDeviceNotifierId === null || requestParameters.authDeviceNotifierId === undefined) {
-            throw new runtime.RequiredError('authDeviceNotifierId','Required parameter requestParameters.authDeviceNotifierId was null or undefined when calling get40.');
+            throw new runtime.RequiredError('authDeviceNotifierId','Required parameter requestParameters.authDeviceNotifierId was null or undefined when calling get26.');
         }
 
         const queryParameters: any = {};
@@ -487,17 +171,333 @@ export class PluginApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get a Authentication Device Notifier plugin
      */
-    async get40(requestParameters: Get40Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.get40Raw(requestParameters, initOverrides);
+    async get26(requestParameters: Get26Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.get26Raw(requestParameters, initOverrides);
+    }
+
+    /**
+     * There is no particular permission needed. User must be authenticated.
+     * Get a policy plugin
+     */
+    async get27Raw(requestParameters: Get27Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.policy === null || requestParameters.policy === undefined) {
+            throw new runtime.RequiredError('policy','Required parameter requestParameters.policy was null or undefined when calling get27.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/platform/plugins/policies/{policy}`.replace(`{${"policy"}}`, encodeURIComponent(String(requestParameters.policy))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * There is no particular permission needed. User must be authenticated.
+     * Get a policy plugin
+     */
+    async get27(requestParameters: Get27Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.get27Raw(requestParameters, initOverrides);
+    }
+
+    /**
+     * There is no particular permission needed. User must be authenticated.
+     * Get an identity provider
+     */
+    async get28Raw(requestParameters: Get28Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.identity === null || requestParameters.identity === undefined) {
+            throw new runtime.RequiredError('identity','Required parameter requestParameters.identity was null or undefined when calling get28.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/platform/plugins/identities/{identity}`.replace(`{${"identity"}}`, encodeURIComponent(String(requestParameters.identity))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * There is no particular permission needed. User must be authenticated.
+     * Get an identity provider
+     */
+    async get28(requestParameters: Get28Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.get28Raw(requestParameters, initOverrides);
+    }
+
+    /**
+     * There is no particular permission needed. User must be authenticated.
+     * Get an certificate plugin
+     */
+    async get29Raw(requestParameters: Get29Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.certificate === null || requestParameters.certificate === undefined) {
+            throw new runtime.RequiredError('certificate','Required parameter requestParameters.certificate was null or undefined when calling get29.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/platform/plugins/certificates/{certificate}`.replace(`{${"certificate"}}`, encodeURIComponent(String(requestParameters.certificate))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * There is no particular permission needed. User must be authenticated.
+     * Get an certificate plugin
+     */
+    async get29(requestParameters: Get29Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.get29Raw(requestParameters, initOverrides);
+    }
+
+    /**
+     * There is no particular permission needed. User must be authenticated.
+     * Get an extension grant plugin
+     */
+    async get30Raw(requestParameters: Get30Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.extensionGrant === null || requestParameters.extensionGrant === undefined) {
+            throw new runtime.RequiredError('extensionGrant','Required parameter requestParameters.extensionGrant was null or undefined when calling get30.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/platform/plugins/extensionGrants/{extensionGrant}`.replace(`{${"extensionGrant"}}`, encodeURIComponent(String(requestParameters.extensionGrant))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * There is no particular permission needed. User must be authenticated.
+     * Get an extension grant plugin
+     */
+    async get30(requestParameters: Get30Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.get30Raw(requestParameters, initOverrides);
+    }
+
+    /**
+     * There is no particular permission needed. User must be authenticated.
+     * Get a reporter plugin
+     */
+    async get31Raw(requestParameters: Get31Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.reporter === null || requestParameters.reporter === undefined) {
+            throw new runtime.RequiredError('reporter','Required parameter requestParameters.reporter was null or undefined when calling get31.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/platform/plugins/reporters/{reporter}`.replace(`{${"reporter"}}`, encodeURIComponent(String(requestParameters.reporter))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * There is no particular permission needed. User must be authenticated.
+     * Get a reporter plugin
+     */
+    async get31(requestParameters: Get31Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.get31Raw(requestParameters, initOverrides);
+    }
+
+    /**
+     * There is no particular permission needed. User must be authenticated.
+     * Get a factor plugin
+     */
+    async get32Raw(requestParameters: Get32Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.factor === null || requestParameters.factor === undefined) {
+            throw new runtime.RequiredError('factor','Required parameter requestParameters.factor was null or undefined when calling get32.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/platform/plugins/factors/{factor}`.replace(`{${"factor"}}`, encodeURIComponent(String(requestParameters.factor))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * There is no particular permission needed. User must be authenticated.
+     * Get a factor plugin
+     */
+    async get32(requestParameters: Get32Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.get32Raw(requestParameters, initOverrides);
+    }
+
+    /**
+     * There is no particular permission needed. User must be authenticated.
+     * Get a resource plugin
+     */
+    async get33Raw(requestParameters: Get33Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.resource === null || requestParameters.resource === undefined) {
+            throw new runtime.RequiredError('resource','Required parameter requestParameters.resource was null or undefined when calling get33.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/platform/plugins/resources/{resource}`.replace(`{${"resource"}}`, encodeURIComponent(String(requestParameters.resource))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * There is no particular permission needed. User must be authenticated.
+     * Get a resource plugin
+     */
+    async get33(requestParameters: Get33Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.get33Raw(requestParameters, initOverrides);
+    }
+
+    /**
+     * There is no particular permission needed. User must be authenticated.
+     * Get a notifier
+     */
+    async get34Raw(requestParameters: Get34Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<NotifierPlugin>> {
+        if (requestParameters.notifierId === null || requestParameters.notifierId === undefined) {
+            throw new runtime.RequiredError('notifierId','Required parameter requestParameters.notifierId was null or undefined when calling get34.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/platform/plugins/notifiers/{notifierId}`.replace(`{${"notifierId"}}`, encodeURIComponent(String(requestParameters.notifierId))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => NotifierPluginFromJSON(jsonValue));
+    }
+
+    /**
+     * There is no particular permission needed. User must be authenticated.
+     * Get a notifier
+     */
+    async get34(requestParameters: Get34Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<NotifierPlugin> {
+        const response = await this.get34Raw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * There is no particular permission needed. User must be authenticated.
+     * Get a Bot Detection plugin
+     */
+    async get35Raw(requestParameters: Get35Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.botDetection === null || requestParameters.botDetection === undefined) {
+            throw new runtime.RequiredError('botDetection','Required parameter requestParameters.botDetection was null or undefined when calling get35.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/platform/plugins/bot-detections/{botDetection}`.replace(`{${"botDetection"}}`, encodeURIComponent(String(requestParameters.botDetection))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * There is no particular permission needed. User must be authenticated.
+     * Get a Bot Detection plugin
+     */
+    async get35(requestParameters: Get35Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.get35Raw(requestParameters, initOverrides);
     }
 
     /**
      * There is no particular permission needed. User must be authenticated.
      * Get a device identifier plugin
      */
-    async get41Raw(requestParameters: Get41Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async get36Raw(requestParameters: Get36Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.deviceIdentifier === null || requestParameters.deviceIdentifier === undefined) {
-            throw new runtime.RequiredError('deviceIdentifier','Required parameter requestParameters.deviceIdentifier was null or undefined when calling get41.');
+            throw new runtime.RequiredError('deviceIdentifier','Required parameter requestParameters.deviceIdentifier was null or undefined when calling get36.');
         }
 
         const queryParameters: any = {};
@@ -522,8 +522,8 @@ export class PluginApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get a device identifier plugin
      */
-    async get41(requestParameters: Get41Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.get41Raw(requestParameters, initOverrides);
+    async get36(requestParameters: Get36Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.get36Raw(requestParameters, initOverrides);
     }
 
     /**
@@ -561,11 +561,11 @@ export class PluginApi extends runtime.BaseAPI {
 
     /**
      * There is no particular permission needed. User must be authenticated.
-     * Get an identity provider plugin\'s schema
+     * Get an Authentication Device Notifier plugin\'s schema
      */
     async getSchemaRaw(requestParameters: GetSchemaRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters.identity === null || requestParameters.identity === undefined) {
-            throw new runtime.RequiredError('identity','Required parameter requestParameters.identity was null or undefined when calling getSchema.');
+        if (requestParameters.authDeviceNotifierId === null || requestParameters.authDeviceNotifierId === undefined) {
+            throw new runtime.RequiredError('authDeviceNotifierId','Required parameter requestParameters.authDeviceNotifierId was null or undefined when calling getSchema.');
         }
 
         const queryParameters: any = {};
@@ -577,7 +577,7 @@ export class PluginApi extends runtime.BaseAPI {
         }
 
         const response = await this.request({
-            path: `/platform/plugins/identities/{identity}/schema`.replace(`{${"identity"}}`, encodeURIComponent(String(requestParameters.identity))),
+            path: `/platform/plugins/auth-device-notifiers/{authDeviceNotifierId}/schema`.replace(`{${"authDeviceNotifierId"}}`, encodeURIComponent(String(requestParameters.authDeviceNotifierId))),
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
@@ -588,19 +588,18 @@ export class PluginApi extends runtime.BaseAPI {
 
     /**
      * There is no particular permission needed. User must be authenticated.
-     * Get an identity provider plugin\'s schema
+     * Get an Authentication Device Notifier plugin\'s schema
      */
     async getSchema(requestParameters: GetSchemaRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
         await this.getSchemaRaw(requestParameters, initOverrides);
     }
 
     /**
-     * There is no particular permission needed. User must be authenticated.
-     * Get an certificate\'s schema
+     * Get a policy plugin\'s schema
      */
     async getSchema1Raw(requestParameters: GetSchema1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters.certificate === null || requestParameters.certificate === undefined) {
-            throw new runtime.RequiredError('certificate','Required parameter requestParameters.certificate was null or undefined when calling getSchema1.');
+        if (requestParameters.policy === null || requestParameters.policy === undefined) {
+            throw new runtime.RequiredError('policy','Required parameter requestParameters.policy was null or undefined when calling getSchema1.');
         }
 
         const queryParameters: any = {};
@@ -612,7 +611,7 @@ export class PluginApi extends runtime.BaseAPI {
         }
 
         const response = await this.request({
-            path: `/platform/plugins/certificates/{certificate}/schema`.replace(`{${"certificate"}}`, encodeURIComponent(String(requestParameters.certificate))),
+            path: `/platform/plugins/policies/{policy}/schema`.replace(`{${"policy"}}`, encodeURIComponent(String(requestParameters.policy))),
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
@@ -622,8 +621,7 @@ export class PluginApi extends runtime.BaseAPI {
     }
 
     /**
-     * There is no particular permission needed. User must be authenticated.
-     * Get an certificate\'s schema
+     * Get a policy plugin\'s schema
      */
     async getSchema1(requestParameters: GetSchema1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
         await this.getSchema1Raw(requestParameters, initOverrides);
@@ -666,11 +664,81 @@ export class PluginApi extends runtime.BaseAPI {
 
     /**
      * There is no particular permission needed. User must be authenticated.
-     * Get an extension grant plugin\'s schema
+     * Get an identity provider plugin\'s schema
      */
     async getSchema2Raw(requestParameters: GetSchema2Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.identity === null || requestParameters.identity === undefined) {
+            throw new runtime.RequiredError('identity','Required parameter requestParameters.identity was null or undefined when calling getSchema2.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/platform/plugins/identities/{identity}/schema`.replace(`{${"identity"}}`, encodeURIComponent(String(requestParameters.identity))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * There is no particular permission needed. User must be authenticated.
+     * Get an identity provider plugin\'s schema
+     */
+    async getSchema2(requestParameters: GetSchema2Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.getSchema2Raw(requestParameters, initOverrides);
+    }
+
+    /**
+     * There is no particular permission needed. User must be authenticated.
+     * Get an certificate\'s schema
+     */
+    async getSchema3Raw(requestParameters: GetSchema3Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.certificate === null || requestParameters.certificate === undefined) {
+            throw new runtime.RequiredError('certificate','Required parameter requestParameters.certificate was null or undefined when calling getSchema3.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/platform/plugins/certificates/{certificate}/schema`.replace(`{${"certificate"}}`, encodeURIComponent(String(requestParameters.certificate))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * There is no particular permission needed. User must be authenticated.
+     * Get an certificate\'s schema
+     */
+    async getSchema3(requestParameters: GetSchema3Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.getSchema3Raw(requestParameters, initOverrides);
+    }
+
+    /**
+     * There is no particular permission needed. User must be authenticated.
+     * Get an extension grant plugin\'s schema
+     */
+    async getSchema4Raw(requestParameters: GetSchema4Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.extensionGrant === null || requestParameters.extensionGrant === undefined) {
-            throw new runtime.RequiredError('extensionGrant','Required parameter requestParameters.extensionGrant was null or undefined when calling getSchema2.');
+            throw new runtime.RequiredError('extensionGrant','Required parameter requestParameters.extensionGrant was null or undefined when calling getSchema4.');
         }
 
         const queryParameters: any = {};
@@ -695,16 +763,16 @@ export class PluginApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get an extension grant plugin\'s schema
      */
-    async getSchema2(requestParameters: GetSchema2Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.getSchema2Raw(requestParameters, initOverrides);
+    async getSchema4(requestParameters: GetSchema4Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.getSchema4Raw(requestParameters, initOverrides);
     }
 
     /**
      * Get a reporter plugin\'s schema
      */
-    async getSchema3Raw(requestParameters: GetSchema3Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async getSchema5Raw(requestParameters: GetSchema5Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.reporter === null || requestParameters.reporter === undefined) {
-            throw new runtime.RequiredError('reporter','Required parameter requestParameters.reporter was null or undefined when calling getSchema3.');
+            throw new runtime.RequiredError('reporter','Required parameter requestParameters.reporter was null or undefined when calling getSchema5.');
         }
 
         const queryParameters: any = {};
@@ -728,50 +796,17 @@ export class PluginApi extends runtime.BaseAPI {
     /**
      * Get a reporter plugin\'s schema
      */
-    async getSchema3(requestParameters: GetSchema3Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.getSchema3Raw(requestParameters, initOverrides);
-    }
-
-    /**
-     * Get a policy plugin\'s schema
-     */
-    async getSchema4Raw(requestParameters: GetSchema4Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters.policy === null || requestParameters.policy === undefined) {
-            throw new runtime.RequiredError('policy','Required parameter requestParameters.policy was null or undefined when calling getSchema4.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/platform/plugins/policies/{policy}/schema`.replace(`{${"policy"}}`, encodeURIComponent(String(requestParameters.policy))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * Get a policy plugin\'s schema
-     */
-    async getSchema4(requestParameters: GetSchema4Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.getSchema4Raw(requestParameters, initOverrides);
+    async getSchema5(requestParameters: GetSchema5Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.getSchema5Raw(requestParameters, initOverrides);
     }
 
     /**
      * There is no particular permission needed. User must be authenticated.
      * Get a factor plugin\'s schema
      */
-    async getSchema5Raw(requestParameters: GetSchema5Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async getSchema6Raw(requestParameters: GetSchema6Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.factor === null || requestParameters.factor === undefined) {
-            throw new runtime.RequiredError('factor','Required parameter requestParameters.factor was null or undefined when calling getSchema5.');
+            throw new runtime.RequiredError('factor','Required parameter requestParameters.factor was null or undefined when calling getSchema6.');
         }
 
         const queryParameters: any = {};
@@ -796,17 +831,17 @@ export class PluginApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get a factor plugin\'s schema
      */
-    async getSchema5(requestParameters: GetSchema5Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.getSchema5Raw(requestParameters, initOverrides);
+    async getSchema6(requestParameters: GetSchema6Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.getSchema6Raw(requestParameters, initOverrides);
     }
 
     /**
      * There is no particular permission needed. User must be authenticated.
      * Get a resource plugin\'s schema
      */
-    async getSchema6Raw(requestParameters: GetSchema6Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async getSchema7Raw(requestParameters: GetSchema7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.resource === null || requestParameters.resource === undefined) {
-            throw new runtime.RequiredError('resource','Required parameter requestParameters.resource was null or undefined when calling getSchema6.');
+            throw new runtime.RequiredError('resource','Required parameter requestParameters.resource was null or undefined when calling getSchema7.');
         }
 
         const queryParameters: any = {};
@@ -831,17 +866,17 @@ export class PluginApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get a resource plugin\'s schema
      */
-    async getSchema6(requestParameters: GetSchema6Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.getSchema6Raw(requestParameters, initOverrides);
+    async getSchema7(requestParameters: GetSchema7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.getSchema7Raw(requestParameters, initOverrides);
     }
 
     /**
      * There is no particular permission needed. User must be authenticated.
      * Get a notifier plugin\'s schema
      */
-    async getSchema7Raw(requestParameters: GetSchema7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<string>> {
+    async getSchema8Raw(requestParameters: GetSchema8Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<string>> {
         if (requestParameters.notifierId === null || requestParameters.notifierId === undefined) {
-            throw new runtime.RequiredError('notifierId','Required parameter requestParameters.notifierId was null or undefined when calling getSchema7.');
+            throw new runtime.RequiredError('notifierId','Required parameter requestParameters.notifierId was null or undefined when calling getSchema8.');
         }
 
         const queryParameters: any = {};
@@ -866,8 +901,8 @@ export class PluginApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get a notifier plugin\'s schema
      */
-    async getSchema7(requestParameters: GetSchema7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<string> {
-        const response = await this.getSchema7Raw(requestParameters, initOverrides);
+    async getSchema8(requestParameters: GetSchema8Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<string> {
+        const response = await this.getSchema8Raw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -875,9 +910,9 @@ export class PluginApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get a Bot Detection plugin\'s schema
      */
-    async getSchema8Raw(requestParameters: GetSchema8Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async getSchema9Raw(requestParameters: GetSchema9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.botDetection === null || requestParameters.botDetection === undefined) {
-            throw new runtime.RequiredError('botDetection','Required parameter requestParameters.botDetection was null or undefined when calling getSchema8.');
+            throw new runtime.RequiredError('botDetection','Required parameter requestParameters.botDetection was null or undefined when calling getSchema9.');
         }
 
         const queryParameters: any = {};
@@ -902,20 +937,20 @@ export class PluginApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get a Bot Detection plugin\'s schema
      */
-    async getSchema8(requestParameters: GetSchema8Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.getSchema8Raw(requestParameters, initOverrides);
+    async getSchema9(requestParameters: GetSchema9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.getSchema9Raw(requestParameters, initOverrides);
     }
 
     /**
      * There is no particular permission needed. User must be authenticated.
-     * Get an Authentication Device Notifier plugin\'s schema
+     * List authentication device notifier plugins
      */
-    async getSchema9Raw(requestParameters: GetSchema9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters.authDeviceNotifierId === null || requestParameters.authDeviceNotifierId === undefined) {
-            throw new runtime.RequiredError('authDeviceNotifierId','Required parameter requestParameters.authDeviceNotifierId was null or undefined when calling getSchema9.');
-        }
-
+    async list27Raw(requestParameters: List27Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         const queryParameters: any = {};
+
+        if (requestParameters.expand) {
+            queryParameters['expand'] = requestParameters.expand;
+        }
 
         const headerParameters: runtime.HTTPHeaders = {};
 
@@ -924,7 +959,7 @@ export class PluginApi extends runtime.BaseAPI {
         }
 
         const response = await this.request({
-            path: `/platform/plugins/auth-device-notifiers/{authDeviceNotifierId}/schema`.replace(`{${"authDeviceNotifierId"}}`, encodeURIComponent(String(requestParameters.authDeviceNotifierId))),
+            path: `/platform/plugins/auth-device-notifiers`,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
@@ -935,17 +970,52 @@ export class PluginApi extends runtime.BaseAPI {
 
     /**
      * There is no particular permission needed. User must be authenticated.
-     * Get an Authentication Device Notifier plugin\'s schema
+     * List authentication device notifier plugins
      */
-    async getSchema9(requestParameters: GetSchema9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.getSchema9Raw(requestParameters, initOverrides);
+    async list27(requestParameters: List27Request = {}, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.list27Raw(requestParameters, initOverrides);
+    }
+
+    /**
+     * There is no particular permission needed. User must be authenticated.
+     * List policy plugins
+     */
+    async list28Raw(requestParameters: List28Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+        const queryParameters: any = {};
+
+        if (requestParameters.expand) {
+            queryParameters['expand'] = requestParameters.expand;
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/platform/plugins/policies`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * There is no particular permission needed. User must be authenticated.
+     * List policy plugins
+     */
+    async list28(requestParameters: List28Request = {}, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.list28Raw(requestParameters, initOverrides);
     }
 
     /**
      * There is no particular permission needed. User must be authenticated.
      * List identity provider plugins
      */
-    async list31Raw(requestParameters: List31Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async list29Raw(requestParameters: List29Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         const queryParameters: any = {};
 
         if (requestParameters.external !== undefined) {
@@ -976,15 +1046,15 @@ export class PluginApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * List identity provider plugins
      */
-    async list31(requestParameters: List31Request = {}, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.list31Raw(requestParameters, initOverrides);
+    async list29(requestParameters: List29Request = {}, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.list29Raw(requestParameters, initOverrides);
     }
 
     /**
      * There is no particular permission needed. User must be authenticated.
      * List certificate plugins
      */
-    async list32Raw(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async list30Raw(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -1007,15 +1077,15 @@ export class PluginApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * List certificate plugins
      */
-    async list32(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.list32Raw(initOverrides);
+    async list30(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.list30Raw(initOverrides);
     }
 
     /**
      * There is no particular permission needed. User must be authenticated.
      * List extension grant plugins
      */
-    async list33Raw(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async list31Raw(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -1038,15 +1108,15 @@ export class PluginApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * List extension grant plugins
      */
-    async list33(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.list33Raw(initOverrides);
+    async list31(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.list31Raw(initOverrides);
     }
 
     /**
      * There is no particular permission needed. User must be authenticated.
      * List reporter plugins
      */
-    async list34Raw(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async list32Raw(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -1069,50 +1139,15 @@ export class PluginApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * List reporter plugins
      */
-    async list34(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.list34Raw(initOverrides);
-    }
-
-    /**
-     * There is no particular permission needed. User must be authenticated.
-     * List policy plugins
-     */
-    async list35Raw(requestParameters: List35Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
-        const queryParameters: any = {};
-
-        if (requestParameters.expand) {
-            queryParameters['expand'] = requestParameters.expand;
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/platform/plugins/policies`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * There is no particular permission needed. User must be authenticated.
-     * List policy plugins
-     */
-    async list35(requestParameters: List35Request = {}, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.list35Raw(requestParameters, initOverrides);
+    async list32(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.list32Raw(initOverrides);
     }
 
     /**
      * There is no particular permission needed. User must be authenticated.
      * List factor plugins
      */
-    async list36Raw(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async list33Raw(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -1135,15 +1170,15 @@ export class PluginApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * List factor plugins
      */
-    async list36(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.list36Raw(initOverrides);
+    async list33(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.list33Raw(initOverrides);
     }
 
     /**
      * There is no particular permission needed. User must be authenticated.
      * List resource plugins
      */
-    async list37Raw(requestParameters: List37Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async list34Raw(requestParameters: List34Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         const queryParameters: any = {};
 
         if (requestParameters.expand) {
@@ -1170,15 +1205,15 @@ export class PluginApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * List resource plugins
      */
-    async list37(requestParameters: List37Request = {}, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.list37Raw(requestParameters, initOverrides);
+    async list34(requestParameters: List34Request = {}, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.list34Raw(requestParameters, initOverrides);
     }
 
     /**
      * There is no particular permission needed. User must be authenticated.
      * List all available notifier plugins
      */
-    async list38Raw(requestParameters: List38Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<NotifierPlugin>>> {
+    async list35Raw(requestParameters: List35Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<NotifierPlugin>>> {
         const queryParameters: any = {};
 
         if (requestParameters.expand) {
@@ -1205,8 +1240,8 @@ export class PluginApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * List all available notifier plugins
      */
-    async list38(requestParameters: List38Request = {}, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<NotifierPlugin>> {
-        const response = await this.list38Raw(requestParameters, initOverrides);
+    async list35(requestParameters: List35Request = {}, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<NotifierPlugin>> {
+        const response = await this.list35Raw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -1214,7 +1249,7 @@ export class PluginApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * List bot detection plugins
      */
-    async list39Raw(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async list36Raw(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -1237,50 +1272,15 @@ export class PluginApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * List bot detection plugins
      */
-    async list39(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.list39Raw(initOverrides);
-    }
-
-    /**
-     * There is no particular permission needed. User must be authenticated.
-     * List authentication device notifier plugins
-     */
-    async list40Raw(requestParameters: List40Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
-        const queryParameters: any = {};
-
-        if (requestParameters.expand) {
-            queryParameters['expand'] = requestParameters.expand;
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/platform/plugins/auth-device-notifiers`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * There is no particular permission needed. User must be authenticated.
-     * List authentication device notifier plugins
-     */
-    async list40(requestParameters: List40Request = {}, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.list40Raw(requestParameters, initOverrides);
+    async list36(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.list36Raw(initOverrides);
     }
 
     /**
      * There is no particular permission needed. User must be authenticated.
      * List device identifier plugins
      */
-    async list41Raw(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async list37Raw(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -1303,8 +1303,8 @@ export class PluginApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * List device identifier plugins
      */
-    async list41(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.list41Raw(initOverrides);
+    async list37(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.list37Raw(initOverrides);
     }
 
 }

@@ -42,6 +42,12 @@ class Content {
 	contentType: string;
 }
 
+export async function hasEmail() {
+	const response = await fetch(process.env.FAKE_SMTP+'/api/email');
+	const array = await response.json()
+	return array.length > 0;
+}
+
 export async function getLastEmail() {
 	const response = await fetch(process.env.FAKE_SMTP+'/api/email');
 	const array = await response.json()

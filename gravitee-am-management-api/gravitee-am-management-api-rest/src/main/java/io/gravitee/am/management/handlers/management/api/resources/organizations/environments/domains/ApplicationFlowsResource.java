@@ -61,6 +61,7 @@ public class ApplicationFlowsResource extends AbstractResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "List registered flows for an application",
+            nickname = "listAppFlows",
             notes = "User must have the APPLICATION_FLOW[LIST] permission on the specified domain " +
                     "or APPLICATION_FLOW[LIST] permission on the specified environment " +
                     "or APPLICATION_FLOW[LIST] permission on the specified organization. " +
@@ -89,6 +90,7 @@ public class ApplicationFlowsResource extends AbstractResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Create or update list of flows",
+            nickname = "defineAppFlows",
             notes = "User must have the APPLICATION_FLOW[UPDATE] permission on the specified domain " +
                     "or APPLICATION_FLOW[UPDATE] permission on the specified environment " +
                     "or APPLICATION_FLOW[UPDATE] permission on the specified organization")

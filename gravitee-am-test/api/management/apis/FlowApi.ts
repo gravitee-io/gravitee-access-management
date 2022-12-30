@@ -22,32 +22,32 @@ import {
     FlowEntityToJSON,
 } from '../models';
 
-export interface Get13Request {
+export interface DefineDomainFlowsRequest {
+    organizationId: string;
+    environmentId: string;
+    domain: string;
+    flows: Array<Flow>;
+}
+
+export interface GetDomainFlowRequest {
     organizationId: string;
     environmentId: string;
     domain: string;
     flow: string;
 }
 
-export interface List7Request {
+export interface ListDomainFlowsRequest {
     organizationId: string;
     environmentId: string;
     domain: string;
 }
 
-export interface Update10Request {
+export interface UpdateDomainFlowRequest {
     organizationId: string;
     environmentId: string;
     domain: string;
     flow: string;
     flow2: Flow;
-}
-
-export interface Update9Request {
-    organizationId: string;
-    environmentId: string;
-    domain: string;
-    flows: Array<Flow>;
 }
 
 /**
@@ -56,171 +56,24 @@ export interface Update9Request {
 export class FlowApi extends runtime.BaseAPI {
 
     /**
-     * User must have the DOMAIN_FLOW[READ] permission on the specified domain or DOMAIN_FLOW[READ] permission on the specified environment or DOMAIN_FLOW[READ] permission on the specified organization
-     * Get a flow
-     */
-    async get13Raw(requestParameters: Get13Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<FlowEntity>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get13.');
-        }
-
-        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get13.');
-        }
-
-        if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get13.');
-        }
-
-        if (requestParameters.flow === null || requestParameters.flow === undefined) {
-            throw new runtime.RequiredError('flow','Required parameter requestParameters.flow was null or undefined when calling get13.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/flows/{flow}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"flow"}}`, encodeURIComponent(String(requestParameters.flow))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => FlowEntityFromJSON(jsonValue));
-    }
-
-    /**
-     * User must have the DOMAIN_FLOW[READ] permission on the specified domain or DOMAIN_FLOW[READ] permission on the specified environment or DOMAIN_FLOW[READ] permission on the specified organization
-     * Get a flow
-     */
-    async get13(requestParameters: Get13Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<FlowEntity> {
-        const response = await this.get13Raw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * User must have the DOMAIN_FLOW[LIST] permission on the specified domain or DOMAIN_FLOW[LIST] permission on the specified environment or DOMAIN_FLOW[LIST] permission on the specified organization. Except if user has DOMAIN_FLOW[READ] permission on the domain, environment or organization, each returned flow is filtered and contains only basic information such as id and name and isEnabled.
-     * List registered flows for a security domain
-     */
-    async list7Raw(requestParameters: List7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<FlowEntity>>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list7.');
-        }
-
-        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling list7.');
-        }
-
-        if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling list7.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/flows`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(FlowEntityFromJSON));
-    }
-
-    /**
-     * User must have the DOMAIN_FLOW[LIST] permission on the specified domain or DOMAIN_FLOW[LIST] permission on the specified environment or DOMAIN_FLOW[LIST] permission on the specified organization. Except if user has DOMAIN_FLOW[READ] permission on the domain, environment or organization, each returned flow is filtered and contains only basic information such as id and name and isEnabled.
-     * List registered flows for a security domain
-     */
-    async list7(requestParameters: List7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<FlowEntity>> {
-        const response = await this.list7Raw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * User must have the DOMAIN_FLOW[UPDATE] permission on the specified domain or DOMAIN_FLOW[UPDATE] permission on the specified environment or DOMAIN_FLOW[UPDATE] permission on the specified organization
-     * Update a flow
-     */
-    async update10Raw(requestParameters: Update10Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<FlowEntity>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling update10.');
-        }
-
-        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling update10.');
-        }
-
-        if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling update10.');
-        }
-
-        if (requestParameters.flow === null || requestParameters.flow === undefined) {
-            throw new runtime.RequiredError('flow','Required parameter requestParameters.flow was null or undefined when calling update10.');
-        }
-
-        if (requestParameters.flow2 === null || requestParameters.flow2 === undefined) {
-            throw new runtime.RequiredError('flow2','Required parameter requestParameters.flow2 was null or undefined when calling update10.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/flows/{flow}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"flow"}}`, encodeURIComponent(String(requestParameters.flow))),
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: FlowToJSON(requestParameters.flow2),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => FlowEntityFromJSON(jsonValue));
-    }
-
-    /**
-     * User must have the DOMAIN_FLOW[UPDATE] permission on the specified domain or DOMAIN_FLOW[UPDATE] permission on the specified environment or DOMAIN_FLOW[UPDATE] permission on the specified organization
-     * Update a flow
-     */
-    async update10(requestParameters: Update10Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<FlowEntity> {
-        const response = await this.update10Raw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
      * User must have the DOMAIN_FLOW[UPDATE] permission on the specified domain or DOMAIN_FLOW[UPDATE] permission on the specified environment or DOMAIN_FLOW[UPDATE] permission on the specified organization
      * Create or update list of flows
      */
-    async update9Raw(requestParameters: Update9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<FlowEntity>>> {
+    async defineDomainFlowsRaw(requestParameters: DefineDomainFlowsRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<FlowEntity>>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling update9.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling defineDomainFlows.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling update9.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling defineDomainFlows.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling update9.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling defineDomainFlows.');
         }
 
         if (requestParameters.flows === null || requestParameters.flows === undefined) {
-            throw new runtime.RequiredError('flows','Required parameter requestParameters.flows was null or undefined when calling update9.');
+            throw new runtime.RequiredError('flows','Required parameter requestParameters.flows was null or undefined when calling defineDomainFlows.');
         }
 
         const queryParameters: any = {};
@@ -248,8 +101,155 @@ export class FlowApi extends runtime.BaseAPI {
      * User must have the DOMAIN_FLOW[UPDATE] permission on the specified domain or DOMAIN_FLOW[UPDATE] permission on the specified environment or DOMAIN_FLOW[UPDATE] permission on the specified organization
      * Create or update list of flows
      */
-    async update9(requestParameters: Update9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<FlowEntity>> {
-        const response = await this.update9Raw(requestParameters, initOverrides);
+    async defineDomainFlows(requestParameters: DefineDomainFlowsRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<FlowEntity>> {
+        const response = await this.defineDomainFlowsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * User must have the DOMAIN_FLOW[READ] permission on the specified domain or DOMAIN_FLOW[READ] permission on the specified environment or DOMAIN_FLOW[READ] permission on the specified organization
+     * Get a flow
+     */
+    async getDomainFlowRaw(requestParameters: GetDomainFlowRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<FlowEntity>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling getDomainFlow.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling getDomainFlow.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling getDomainFlow.');
+        }
+
+        if (requestParameters.flow === null || requestParameters.flow === undefined) {
+            throw new runtime.RequiredError('flow','Required parameter requestParameters.flow was null or undefined when calling getDomainFlow.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/flows/{flow}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"flow"}}`, encodeURIComponent(String(requestParameters.flow))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => FlowEntityFromJSON(jsonValue));
+    }
+
+    /**
+     * User must have the DOMAIN_FLOW[READ] permission on the specified domain or DOMAIN_FLOW[READ] permission on the specified environment or DOMAIN_FLOW[READ] permission on the specified organization
+     * Get a flow
+     */
+    async getDomainFlow(requestParameters: GetDomainFlowRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<FlowEntity> {
+        const response = await this.getDomainFlowRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * User must have the DOMAIN_FLOW[LIST] permission on the specified domain or DOMAIN_FLOW[LIST] permission on the specified environment or DOMAIN_FLOW[LIST] permission on the specified organization. Except if user has DOMAIN_FLOW[READ] permission on the domain, environment or organization, each returned flow is filtered and contains only basic information such as id and name and isEnabled.
+     * List registered flows for a security domain
+     */
+    async listDomainFlowsRaw(requestParameters: ListDomainFlowsRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<FlowEntity>>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling listDomainFlows.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling listDomainFlows.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling listDomainFlows.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/flows`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(FlowEntityFromJSON));
+    }
+
+    /**
+     * User must have the DOMAIN_FLOW[LIST] permission on the specified domain or DOMAIN_FLOW[LIST] permission on the specified environment or DOMAIN_FLOW[LIST] permission on the specified organization. Except if user has DOMAIN_FLOW[READ] permission on the domain, environment or organization, each returned flow is filtered and contains only basic information such as id and name and isEnabled.
+     * List registered flows for a security domain
+     */
+    async listDomainFlows(requestParameters: ListDomainFlowsRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<FlowEntity>> {
+        const response = await this.listDomainFlowsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * User must have the DOMAIN_FLOW[UPDATE] permission on the specified domain or DOMAIN_FLOW[UPDATE] permission on the specified environment or DOMAIN_FLOW[UPDATE] permission on the specified organization
+     * Update a flow
+     */
+    async updateDomainFlowRaw(requestParameters: UpdateDomainFlowRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<FlowEntity>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling updateDomainFlow.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling updateDomainFlow.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling updateDomainFlow.');
+        }
+
+        if (requestParameters.flow === null || requestParameters.flow === undefined) {
+            throw new runtime.RequiredError('flow','Required parameter requestParameters.flow was null or undefined when calling updateDomainFlow.');
+        }
+
+        if (requestParameters.flow2 === null || requestParameters.flow2 === undefined) {
+            throw new runtime.RequiredError('flow2','Required parameter requestParameters.flow2 was null or undefined when calling updateDomainFlow.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/flows/{flow}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"flow"}}`, encodeURIComponent(String(requestParameters.flow))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: FlowToJSON(requestParameters.flow2),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => FlowEntityFromJSON(jsonValue));
+    }
+
+    /**
+     * User must have the DOMAIN_FLOW[UPDATE] permission on the specified domain or DOMAIN_FLOW[UPDATE] permission on the specified environment or DOMAIN_FLOW[UPDATE] permission on the specified organization
+     * Update a flow
+     */
+    async updateDomainFlow(requestParameters: UpdateDomainFlowRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<FlowEntity> {
+        const response = await this.updateDomainFlowRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

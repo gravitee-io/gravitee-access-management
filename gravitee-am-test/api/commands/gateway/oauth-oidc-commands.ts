@@ -16,6 +16,7 @@
 
 
 import {expect} from "@jest/globals";
+import { applicationBase64Token, assertGeneratedTokenAndGet } from "@gateway-commands/utils";
 
 const supertest = require('supertest');
 const cheerio = require('cheerio');
@@ -79,3 +80,67 @@ export const extractXsrfToken = async (url, parameters) => {
 export const logoutUser = async (uri, postLogin: any,targetUri = null) =>
     performGet(uri, targetUri ? `?post_logout_redirect_uri=${targetUri}` : '', {'Cookie': postLogin.headers['set-cookie']})
         .expect(302)
+
+export async function signInUser(domain, application: any, user: any, openIdConfiguration, additionalParams = null) {
+    const clientId = application.settings.oauth.clientId;
+    const redirect_uri = application.settings.oauth.redirectUris[0];
+
+    // TO FIX when it will be useful:
+    // - Manage PKCE challenge is the app requires it
+    const params = `?response_type=code&client_id=${clientId}&redirect_uri=${redirect_uri}` + (additionalParams ? `&${additionalParams}` : '');
+
+    // Initiate the Login Flow
+    const authResponse = await performGet(openIdConfiguration.authorization_endpoint, params).expect(302);
+    const loginLocation = authResponse.headers['location'];
+
+    expect(loginLocation).toBeDefined();
+    expect(loginLocation).toContain(`${process.env.AM_GATEWAY_URL}/${domain.hrid}/login`);
+    expect(loginLocation).toContain(`client_id=${clientId}`);
+
+    // Redirect to /login
+    const loginResult = await extractXsrfTokenAndActionResponse(authResponse);
+    // Authentication
+    const postLogin = await performFormPost(loginResult.action, '', {
+        "X-XSRF-TOKEN": loginResult.token,
+        "username": user.username,
+        "password": user.password,
+        "client_id": clientId
+    }, {
+        'Cookie': loginResult.headers['set-cookie'],
+        'Content-type': 'application/x-www-form-urlencoded'
+    }
+    ).expect(302);
+
+    // Post authentication
+    const postLoginRedirect = await performGet(postLogin.headers['location'], '', {
+        'Cookie': postLogin.headers['set-cookie']
+    }).expect(302);
+
+    expect(postLoginRedirect.headers['location']).toBeDefined();
+    const redirectUri = postLoginRedirect.headers['location'];
+    const codePattern = /code=([-_a-zA-Z0-9]+)&?/;
+    expect(redirectUri).toBeDefined();
+    expect(redirectUri).toContain(`${redirect_uri}?`);
+    expect(redirectUri).toMatch(codePattern);
+
+    return postLoginRedirect;
+}
+    
+export async function requestToken(application: any, openIdConfiguration: any, postLogin: any) {
+    const redirectUri = postLogin.headers['location'];
+    const codePattern = /code=([-_a-zA-Z0-9]+)&?/;
+    const authorizationCode = redirectUri.match(codePattern)[1];
+
+    // TO FIX when it will be useful : 
+    // - Adapt the authentication method based on the application settings 
+    // - Manage PKCE challenge is the app requires it
+    const redirect_uri = application.settings.oauth.redirectUris[0];
+    return await performPost(
+        openIdConfiguration.token_endpoint,
+        `?grant_type=authorization_code&code=${authorizationCode}&redirect_uri=${redirect_uri}`,
+        null, {
+                "Authorization": "Basic " + applicationBase64Token(application)
+        }
+    ).expect(200);
+}
+

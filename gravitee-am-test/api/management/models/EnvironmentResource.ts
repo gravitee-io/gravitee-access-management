@@ -33,16 +33,16 @@ import {
 export interface EnvironmentResource {
     /**
      * 
-     * @type {DomainsResource}
-     * @memberof EnvironmentResource
-     */
-    domainsResource?: DomainsResource;
-    /**
-     * 
      * @type {MembersResource}
      * @memberof EnvironmentResource
      */
     membersResource?: MembersResource;
+    /**
+     * 
+     * @type {DomainsResource}
+     * @memberof EnvironmentResource
+     */
+    domainsResource?: DomainsResource;
 }
 
 export function EnvironmentResourceFromJSON(json: any): EnvironmentResource {
@@ -55,8 +55,8 @@ export function EnvironmentResourceFromJSONTyped(json: any, ignoreDiscriminator:
     }
     return {
         
-        'domainsResource': !exists(json, 'domainsResource') ? undefined : DomainsResourceFromJSON(json['domainsResource']),
         'membersResource': !exists(json, 'membersResource') ? undefined : MembersResourceFromJSON(json['membersResource']),
+        'domainsResource': !exists(json, 'domainsResource') ? undefined : DomainsResourceFromJSON(json['domainsResource']),
     };
 }
 
@@ -69,8 +69,8 @@ export function EnvironmentResourceToJSON(value?: EnvironmentResource | null): a
     }
     return {
         
-        'domainsResource': DomainsResourceToJSON(value.domainsResource),
         'membersResource': MembersResourceToJSON(value.membersResource),
+        'domainsResource': DomainsResourceToJSON(value.domainsResource),
     };
 }
 

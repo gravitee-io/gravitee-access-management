@@ -79,3 +79,20 @@ export const renewApplicationSecrets = (domainId, accessToken, applicationId) =>
         domain: domainId,
         application: applicationId,
     });
+
+export const getApplicationFlows = (domainId, accessToken, applicationId) =>
+    getApplicationApi(accessToken).listAppFlows({
+        organizationId: process.env.AM_DEF_ORG_ID,
+        environmentId: process.env.AM_DEF_ENV_ID,
+        domain: domainId,
+        application: applicationId
+    })
+
+export const updateApplicationFlows =  (domainId, accessToken, applicationId, flows) =>
+    getApplicationApi(accessToken).defineAppFlows({
+        organizationId: process.env.AM_DEF_ORG_ID,
+        environmentId: process.env.AM_DEF_ENV_ID,
+        domain: domainId,
+        application: applicationId,
+        flows
+    })

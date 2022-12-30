@@ -14,11 +14,11 @@
 
 import * as runtime from '../runtime';
 
-export interface Get40Request {
+export interface Get36Request {
     deviceIdentifier: string;
 }
 
-export interface GetSchema9Request {
+export interface GetSchema10Request {
     deviceIdentifier: string;
 }
 
@@ -31,9 +31,9 @@ export class DeviceIdentifierApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get a device identifier plugin
      */
-    async get40Raw(requestParameters: Get40Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async get36Raw(requestParameters: Get36Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.deviceIdentifier === null || requestParameters.deviceIdentifier === undefined) {
-            throw new runtime.RequiredError('deviceIdentifier','Required parameter requestParameters.deviceIdentifier was null or undefined when calling get40.');
+            throw new runtime.RequiredError('deviceIdentifier','Required parameter requestParameters.deviceIdentifier was null or undefined when calling get36.');
         }
 
         const queryParameters: any = {};
@@ -58,17 +58,17 @@ export class DeviceIdentifierApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get a device identifier plugin
      */
-    async get40(requestParameters: Get40Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.get40Raw(requestParameters, initOverrides);
+    async get36(requestParameters: Get36Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.get36Raw(requestParameters, initOverrides);
     }
 
     /**
      * There is no particular permission needed. User must be authenticated.
      * Get a device identifier plugin\'s schema
      */
-    async getSchema9Raw(requestParameters: GetSchema9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async getSchema10Raw(requestParameters: GetSchema10Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.deviceIdentifier === null || requestParameters.deviceIdentifier === undefined) {
-            throw new runtime.RequiredError('deviceIdentifier','Required parameter requestParameters.deviceIdentifier was null or undefined when calling getSchema9.');
+            throw new runtime.RequiredError('deviceIdentifier','Required parameter requestParameters.deviceIdentifier was null or undefined when calling getSchema10.');
         }
 
         const queryParameters: any = {};
@@ -93,15 +93,15 @@ export class DeviceIdentifierApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get a device identifier plugin\'s schema
      */
-    async getSchema9(requestParameters: GetSchema9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.getSchema9Raw(requestParameters, initOverrides);
+    async getSchema10(requestParameters: GetSchema10Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.getSchema10Raw(requestParameters, initOverrides);
     }
 
     /**
      * There is no particular permission needed. User must be authenticated.
      * List device identifier plugins
      */
-    async list40Raw(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async list37Raw(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -124,8 +124,8 @@ export class DeviceIdentifierApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * List device identifier plugins
      */
-    async list40(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.list40Raw(initOverrides);
+    async list37(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.list37Raw(initOverrides);
     }
 
 }

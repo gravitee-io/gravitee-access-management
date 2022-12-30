@@ -59,6 +59,7 @@ public class FlowsResource extends AbstractResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "List registered flows for a security domain",
+            nickname = "listDomainFlows",
             notes = "User must have the DOMAIN_FLOW[LIST] permission on the specified domain " +
                     "or DOMAIN_FLOW[LIST] permission on the specified environment " +
                     "or DOMAIN_FLOW[LIST] permission on the specified organization. " +
@@ -86,6 +87,7 @@ public class FlowsResource extends AbstractResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Create or update list of flows",
+            nickname = "defineDomainFlows",
             notes = "User must have the DOMAIN_FLOW[UPDATE] permission on the specified domain " +
                     "or DOMAIN_FLOW[UPDATE] permission on the specified environment " +
                     "or DOMAIN_FLOW[UPDATE] permission on the specified organization")

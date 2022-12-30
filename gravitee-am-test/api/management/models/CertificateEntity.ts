@@ -12,6 +12,13 @@
  */
 
 import { exists, mapValues } from '../runtime';
+import {
+    Application,
+    ApplicationFromJSON,
+    ApplicationFromJSONTyped,
+    ApplicationToJSON,
+} from './Application';
+
 /**
  * 
  * @export
@@ -80,16 +87,16 @@ export interface CertificateEntity {
     system?: boolean;
     /**
      * 
-     * @type {boolean}
-     * @memberof CertificateEntity
-     */
-    deprecated?: boolean;
-    /**
-     * 
      * @type {string}
      * @memberof CertificateEntity
      */
     status?: CertificateEntityStatusEnum;
+    /**
+     * 
+     * @type {Array<Application>}
+     * @memberof CertificateEntity
+     */
+    applications?: Array<Application>;
 }
 
 
@@ -125,8 +132,8 @@ export function CertificateEntityFromJSONTyped(json: any, ignoreDiscriminator: b
         'updatedAt': !exists(json, 'updatedAt') ? undefined : (new Date(json['updatedAt'])),
         'expiresAt': !exists(json, 'expiresAt') ? undefined : (new Date(json['expiresAt'])),
         'system': !exists(json, 'system') ? undefined : json['system'],
-        'deprecated': !exists(json, 'deprecated') ? undefined : json['deprecated'],
         'status': !exists(json, 'status') ? undefined : json['status'],
+        'applications': !exists(json, 'applications') ? undefined : ((json['applications'] as Array<any>).map(ApplicationFromJSON)),
     };
 }
 
@@ -149,8 +156,8 @@ export function CertificateEntityToJSON(value?: CertificateEntity | null): any {
         'updatedAt': value.updatedAt === undefined ? undefined : (value.updatedAt.toISOString()),
         'expiresAt': value.expiresAt === undefined ? undefined : (value.expiresAt.toISOString()),
         'system': value.system,
-        'deprecated': value.deprecated,
         'status': value.status,
+        'applications': value.applications === undefined ? undefined : ((value.applications as Array<any>).map(ApplicationToJSON)),
     };
 }
 
