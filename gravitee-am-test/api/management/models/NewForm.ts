@@ -65,7 +65,8 @@ export const NewFormTemplateEnum = {
     WebauthnLogin: 'WEBAUTHN_LOGIN',
     IdentifierFirstLogin: 'IDENTIFIER_FIRST_LOGIN',
     Error: 'ERROR',
-    CertificateExpiration: 'CERTIFICATE_EXPIRATION'
+    CertificateExpiration: 'CERTIFICATE_EXPIRATION',
+    VerifyAttempt: 'VERIFY_ATTEMPT'
 } as const;
 export type NewFormTemplateEnum = typeof NewFormTemplateEnum[keyof typeof NewFormTemplateEnum];
 

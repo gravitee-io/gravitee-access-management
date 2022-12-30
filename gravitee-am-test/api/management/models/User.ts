@@ -369,18 +369,6 @@ export interface User {
     middleName?: string;
     /**
      * 
-     * @type {string}
-     * @memberof User
-     */
-    birthdate?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof User
-     */
-    phoneNumber?: string;
-    /**
-     * 
      * @type {boolean}
      * @memberof User
      */
@@ -397,6 +385,18 @@ export interface User {
      * @memberof User
      */
     website?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof User
+     */
+    birthdate?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof User
+     */
+    phoneNumber?: string;
 }
 
 
@@ -476,11 +476,11 @@ export function UserFromJSONTyped(json: any, ignoreDiscriminator: boolean): User
         'locale': !exists(json, 'locale') ? undefined : json['locale'],
         'zoneInfo': !exists(json, 'zoneInfo') ? undefined : json['zoneInfo'],
         'middleName': !exists(json, 'middleName') ? undefined : json['middleName'],
-        'birthdate': !exists(json, 'birthdate') ? undefined : json['birthdate'],
-        'phoneNumber': !exists(json, 'phoneNumber') ? undefined : json['phoneNumber'],
         'inactive': !exists(json, 'inactive') ? undefined : json['inactive'],
         'profile': !exists(json, 'profile') ? undefined : json['profile'],
         'website': !exists(json, 'website') ? undefined : json['website'],
+        'birthdate': !exists(json, 'birthdate') ? undefined : json['birthdate'],
+        'phoneNumber': !exists(json, 'phoneNumber') ? undefined : json['phoneNumber'],
     };
 }
 
@@ -546,11 +546,11 @@ export function UserToJSON(value?: User | null): any {
         'locale': value.locale,
         'zoneInfo': value.zoneInfo,
         'middleName': value.middleName,
-        'birthdate': value.birthdate,
-        'phoneNumber': value.phoneNumber,
         'inactive': value.inactive,
         'profile': value.profile,
         'website': value.website,
+        'birthdate': value.birthdate,
+        'phoneNumber': value.phoneNumber,
     };
 }
 

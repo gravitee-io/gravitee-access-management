@@ -68,3 +68,22 @@ export const createAcceptAllDeviceNotifier = (domainId, accessToken) =>
             }
         )
         .expect(201);
+
+
+export const getDomainFlows = (domainId, accessToken) =>
+    getDomainApi(accessToken).listDomainFlows({
+        organizationId: process.env.AM_DEF_ORG_ID,
+        environmentId: process.env.AM_DEF_ENV_ID,
+        // domain in path param
+        domain: domainId
+    })
+
+export const updateDomainFlows = (domainId, accessToken, flows) =>
+getDomainApi(accessToken).defineDomainFlows({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    // domain in path param
+    domain: domainId,
+    flows
+})
+

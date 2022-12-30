@@ -28,26 +28,26 @@ import {
     UpdateTagToJSON,
 } from '../models';
 
-export interface Create11Request {
+export interface Create9Request {
     organizationId: string;
     tag: NewTag;
 }
 
-export interface Delete14Request {
+export interface Delete12Request {
     organizationId: string;
     tag: string;
 }
 
-export interface Get23Request {
+export interface Get19Request {
     organizationId: string;
     tag: string;
 }
 
-export interface List23Request {
+export interface List19Request {
     organizationId: string;
 }
 
-export interface Update15Request {
+export interface Update9Request {
     organizationId: string;
     tag: string;
     tag2: UpdateTag;
@@ -62,13 +62,13 @@ export class ShardingTagsApi extends runtime.BaseAPI {
      * User must have the ORGANIZATION_TAG[CREATE] permission on the specified organization
      * Create a sharding tags
      */
-    async create11Raw(requestParameters: Create11Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async create9Raw(requestParameters: Create9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling create11.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling create9.');
         }
 
         if (requestParameters.tag === null || requestParameters.tag === undefined) {
-            throw new runtime.RequiredError('tag','Required parameter requestParameters.tag was null or undefined when calling create11.');
+            throw new runtime.RequiredError('tag','Required parameter requestParameters.tag was null or undefined when calling create9.');
         }
 
         const queryParameters: any = {};
@@ -96,21 +96,21 @@ export class ShardingTagsApi extends runtime.BaseAPI {
      * User must have the ORGANIZATION_TAG[CREATE] permission on the specified organization
      * Create a sharding tags
      */
-    async create11(requestParameters: Create11Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.create11Raw(requestParameters, initOverrides);
+    async create9(requestParameters: Create9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.create9Raw(requestParameters, initOverrides);
     }
 
     /**
      * User must have the ORGANIZATION_TAG[DELETE] permission on the specified organization
      * Delete the sharding tag
      */
-    async delete14Raw(requestParameters: Delete14Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async delete12Raw(requestParameters: Delete12Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling delete14.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling delete12.');
         }
 
         if (requestParameters.tag === null || requestParameters.tag === undefined) {
-            throw new runtime.RequiredError('tag','Required parameter requestParameters.tag was null or undefined when calling delete14.');
+            throw new runtime.RequiredError('tag','Required parameter requestParameters.tag was null or undefined when calling delete12.');
         }
 
         const queryParameters: any = {};
@@ -135,21 +135,21 @@ export class ShardingTagsApi extends runtime.BaseAPI {
      * User must have the ORGANIZATION_TAG[DELETE] permission on the specified organization
      * Delete the sharding tag
      */
-    async delete14(requestParameters: Delete14Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.delete14Raw(requestParameters, initOverrides);
+    async delete12(requestParameters: Delete12Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.delete12Raw(requestParameters, initOverrides);
     }
 
     /**
      * User must have the ORGANIZATION_TAG[READ] permission on the specified organization
      * Get a sharding tag
      */
-    async get23Raw(requestParameters: Get23Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Tag>> {
+    async get19Raw(requestParameters: Get19Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Tag>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get23.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get19.');
         }
 
         if (requestParameters.tag === null || requestParameters.tag === undefined) {
-            throw new runtime.RequiredError('tag','Required parameter requestParameters.tag was null or undefined when calling get23.');
+            throw new runtime.RequiredError('tag','Required parameter requestParameters.tag was null or undefined when calling get19.');
         }
 
         const queryParameters: any = {};
@@ -174,8 +174,8 @@ export class ShardingTagsApi extends runtime.BaseAPI {
      * User must have the ORGANIZATION_TAG[READ] permission on the specified organization
      * Get a sharding tag
      */
-    async get23(requestParameters: Get23Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Tag> {
-        const response = await this.get23Raw(requestParameters, initOverrides);
+    async get19(requestParameters: Get19Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Tag> {
+        const response = await this.get19Raw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -183,9 +183,9 @@ export class ShardingTagsApi extends runtime.BaseAPI {
      * User must have the ORGANIZATION[LIST] permission on the specified organization. Each returned tag is filtered and contains only basic information such as id and name.
      * List sharding tags
      */
-    async list23Raw(requestParameters: List23Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<Domain>>> {
+    async list19Raw(requestParameters: List19Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<Domain>>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list23.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list19.');
         }
 
         const queryParameters: any = {};
@@ -210,8 +210,8 @@ export class ShardingTagsApi extends runtime.BaseAPI {
      * User must have the ORGANIZATION[LIST] permission on the specified organization. Each returned tag is filtered and contains only basic information such as id and name.
      * List sharding tags
      */
-    async list23(requestParameters: List23Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<Domain>> {
-        const response = await this.list23Raw(requestParameters, initOverrides);
+    async list19(requestParameters: List19Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<Domain>> {
+        const response = await this.list19Raw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -219,17 +219,17 @@ export class ShardingTagsApi extends runtime.BaseAPI {
      * User must have the ORGANIZATION_TAG[UPDATE] permission on the specified organization
      * Update the sharding tag
      */
-    async update15Raw(requestParameters: Update15Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Tag>> {
+    async update9Raw(requestParameters: Update9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Tag>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling update15.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling update9.');
         }
 
         if (requestParameters.tag === null || requestParameters.tag === undefined) {
-            throw new runtime.RequiredError('tag','Required parameter requestParameters.tag was null or undefined when calling update15.');
+            throw new runtime.RequiredError('tag','Required parameter requestParameters.tag was null or undefined when calling update9.');
         }
 
         if (requestParameters.tag2 === null || requestParameters.tag2 === undefined) {
-            throw new runtime.RequiredError('tag2','Required parameter requestParameters.tag2 was null or undefined when calling update15.');
+            throw new runtime.RequiredError('tag2','Required parameter requestParameters.tag2 was null or undefined when calling update9.');
         }
 
         const queryParameters: any = {};
@@ -257,8 +257,8 @@ export class ShardingTagsApi extends runtime.BaseAPI {
      * User must have the ORGANIZATION_TAG[UPDATE] permission on the specified organization
      * Update the sharding tag
      */
-    async update15(requestParameters: Update15Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Tag> {
-        const response = await this.update15Raw(requestParameters, initOverrides);
+    async update9(requestParameters: Update9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Tag> {
+        const response = await this.update9Raw(requestParameters, initOverrides);
         return await response.value();
     }
 

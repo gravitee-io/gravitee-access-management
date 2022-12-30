@@ -41,6 +41,7 @@
   },
   "dependencies": {
     "cross-fetch": "^3.1.5",
-    "faker": "5.5.3"
+    "faker": "5.5.3",
+    "jose": "4.11.1"
   }
 }

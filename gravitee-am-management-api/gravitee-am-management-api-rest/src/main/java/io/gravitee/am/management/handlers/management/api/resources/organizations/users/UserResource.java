@@ -90,6 +90,7 @@ public class UserResource extends AbstractResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Update a user",
+            nickname = "updateOrganizationUser",
             notes = "User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 201, message = "User successfully updated", response = User.class),
@@ -111,6 +112,7 @@ public class UserResource extends AbstractResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Update a user status",
+            nickname = "updateOrganizationUserStatus",
             notes = "User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 201, message = "User status successfully updated", response = User.class),
@@ -129,6 +131,7 @@ public class UserResource extends AbstractResource {
 
     @DELETE
     @ApiOperation(value = "Delete a user",
+            nickname = "deleteOrganizationUser",
             notes = "User must have the ORGANIZATION_USER[DELETE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 204, message = "User successfully deleted"),
@@ -147,6 +150,7 @@ public class UserResource extends AbstractResource {
     @POST
     @Path("resetPassword")
     @ApiOperation(value = "Reset password",
+            nickname = "resetOrganizationUserPassword",
             notes = "User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 200, message = "Password reset"),

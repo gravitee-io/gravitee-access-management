@@ -60,6 +60,7 @@ public class GroupResource extends AbstractResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Get a platform group",
+            nickname = "getOrganizationGroup",
             notes = "User must have the ORGANIZATION_GROUP[READ] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 200, message = "Group successfully fetched", response = Group.class),
@@ -78,6 +79,7 @@ public class GroupResource extends AbstractResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Update a platform group",
+            nickname = "updateOrganizationGroup",
             notes = "User must have the ORGANIZATION_GROUP[READ] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 201, message = "Group successfully updated", response = User.class),
@@ -96,6 +98,7 @@ public class GroupResource extends AbstractResource {
 
     @DELETE
     @ApiOperation(value = "Delete a platform group",
+            nickname = "deleteOrganizationGroup",
             notes = "User must have the ORGANIZATION_GROUP[READ] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 204, message = "Group successfully deleted"),
