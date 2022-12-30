@@ -1,6 +1,17 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/623?closed=1[AM - 3.15.16 (2022-12-30)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- Make session information consistent https://github.com/gravitee-io/issues/issues/8777[#8777]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/621?closed=1[AM - 3.18.13 (2022-12-16)]
 
 === Bug fixes
