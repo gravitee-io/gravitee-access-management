@@ -147,7 +147,7 @@ public class EmailServiceImpl implements EmailService {
                         new Template("from", new StringReader(email.getFrom()), freemarkerConfiguration),
                         params, language);
                 // compute email fromName
-                final String fromName = processTemplate(
+                final String fromName = Strings.isNullOrEmpty(email.getFromName()) ? null : processTemplate(
                         new Template("fromName", new StringReader(email.getFromName()), freemarkerConfiguration),
                         params, language);
                 // compute email subject
