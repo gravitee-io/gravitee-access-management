@@ -112,6 +112,7 @@
         <reactor-netty.version>1.0.14</reactor-netty.version>
         <sonar.skip>true</sonar.skip>
         <commons-io.version>2.11.0</commons-io.version>
+        <hazelcast.version>4.1.10</hazelcast.version>
 
         <!-- External plugins versions -->
         <gravitee-policy-callout-http.version>1.13.1</gravitee-policy-callout-http.version>
@@ -376,6 +377,12 @@
                 <groupId>com.graviteesource.license</groupId>
                 <artifactId>gravitee-license-node</artifactId>
                 <version>${gravitee-license-node.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.hazelcast</groupId>
+                <artifactId>hazelcast</artifactId>
+                <version>${hazelcast.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
