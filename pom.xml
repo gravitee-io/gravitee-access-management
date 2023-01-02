@@ -113,6 +113,7 @@
         <jackson-bom.version>2.10.5.20201202</jackson-bom.version>
         <reactor-netty.version>1.0.15</reactor-netty.version>
         <commons-io.version>2.11.0</commons-io.version>
+        <hazelcast.version>4.1.10</hazelcast.version>
 
         <!-- External plugins versions -->
 
@@ -386,6 +387,12 @@
                 <groupId>io.gravitee.cockpit</groupId>
                 <artifactId>gravitee-cockpit-api</artifactId>
                 <version>${gravitee-cockpit-api.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.hazelcast</groupId>
+                <artifactId>hazelcast</artifactId>
+                <version>${hazelcast.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
