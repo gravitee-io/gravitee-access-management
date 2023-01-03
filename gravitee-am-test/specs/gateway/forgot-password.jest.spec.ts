@@ -58,12 +58,12 @@ const settings = [
         inherited: false,
         app: {
             accountSettings: {
-                inherited: true,
+                inherited: false,
                 "autoLoginAfterResetPassword": true,
                 "redirectUriAfterResetPassword": "http://localhost:4000"
             },
             passwordSettings: {
-                inherited: true,
+                inherited: false,
                 "minLength": 5,
                 "maxLength": 24,
                 "excludePasswordsInDictionary": true,
@@ -155,8 +155,8 @@ settings.forEach(setting => {
                 "loginSettings": {
                     "forgotPasswordEnabled": true,
                 },
-                "accountSettings": selectedSetting.accountSettings,
-                "passwordSettings": selectedSetting.passwordSettings
+                "accountSettings": setting.inherited ? selectedSetting.accountSettings : {},
+                "passwordSettings": setting.inherited ? selectedSetting.passwordSettings : {}
             });
 
             application = await createApplication(domain.id, accessToken, {
@@ -173,8 +173,8 @@ settings.forEach(setting => {
                             "defaultScope": true
                         }]
                     },
-                    "account": selectedSetting.accountSettings,
-                    "passwordSettings": selectedSetting.passwordSettings
+                    "account": setting.inherited ? {} : selectedSetting.accountSettings,
+                    "passwordSettings": setting.inherited ? {} : selectedSetting.passwordSettings
                 },
                 "identityProviders": [
                     {"identity": `default-idp-${domain.id}`, "priority": 0}
