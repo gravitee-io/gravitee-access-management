@@ -851,9 +851,6 @@ jobs:
       - image: sonarsource/sonar-scanner-cli
     resource_class: xlarge
     steps:
-#      - run:
-#          name: Add SSH tool
-#          command: apk add --no-cache openssh
       - checkout
       - attach_workspace:
           at: .
@@ -1234,6 +1231,105 @@ jobs:
                       echo "Gravitee Containers :  Docker tags, Releasing Docker images as NON-latest"
                   fi
                 fi;
+
+  build_n_push_am_ce_job_from_tag:
+    description: This Orb Job performs the docker build and publish for the am_ce dockerfile
+    parameters:
+      graviteeio_version:
+        type: string
+        default: ''
+        description: "Gravitee.io Release version number (semver) ?"
+    executor:
+      name: ubuntu
+      class: large
+      with_docker_layer_caching: true
+    environment:
+      GRAVITEEIO_VERSION: << parameters.graviteeio_version >>
+    steps:
+      - checkout
+      - git_config
+      - keeper/env-export:
+          secret-url: keeper://cooU9UoXIk8Kj0hsP2rkBw/field/login
+          var-name: DOCKERHUB_BOT_USER_NAME
+      - keeper/env-export:
+          secret-url: keeper://cooU9UoXIk8Kj0hsP2rkBw/field/password
+          var-name: DOCKERHUB_BOT_USER_TOKEN
+      - run:
+          name: "Build Docker Images: Gravitee AM Community Edition"
+          command: |
+            export RELEASE_VERSION=$GRAVITEEIO_VERSION
+            export RELEASE_VERSION_MAJOR=$(echo "$GRAVITEEIO_VERSION" | awk -F '.' '{print $1}')
+            export RELEASE_VERSION_MINOR=$(echo "$GRAVITEEIO_VERSION" | awk -F '.' '{print $2}')
+            export RELEASE_VERSION_PATCH=$(echo "$GRAVITEEIO_VERSION" | awk -F '.' '{print $3}')
+            
+            HIGHEST_MAJOR_VERSION=$(git tag | egrep "[0-9]+\\.[0-9]+\\.[0-9]+(\\-alpha\\.[0-9]+)?" | cut -d '.' -f1 | sort -n -u -r | head -1)
+            HIGHEST_MINOR_VERSION=$(git tag | egrep "${HIGHEST_MAJOR_VERSION=}\\.[0-9]+\\.[0-9]+(\\-alpha\\.[0-9]+)?" | cut -d '.' -f2 | sort -n -u -r | head -1)
+            
+            TAG_LATEST=false
+            if [[ $RELEASE_VERSION_MAJOR -eq $HIGHEST_MAJOR_VERSION && RELEASE_VERSION_MINOR -ge HIGHEST_MINOR_VERSION ]]; then 
+              TAG_LATEST=true
+            else
+              echo "Maintenance version: do not push latest version"
+            fi
+            
+            TAG_LATEST_SUPPORT=true
+            if [[ $GRAVITEEIO_VERSION == *"-alpha"* ]]; then
+              TAG_LATEST_SUPPORT=false
+              echo "Alpha release: do not push latest support version"
+            fi
+            
+            git checkout "${GRAVITEEIO_VERSION}"
+            
+            docker build -f docker/gateway/Dockerfile --build-arg GRAVITEEAM_VERSION=${RELEASE_VERSION} -t graviteeio/am-gateway:${RELEASE_VERSION} docker/gateway/
+            docker tag graviteeio/am-gateway:${RELEASE_VERSION} graviteeio/am-gateway:latest
+            docker tag graviteeio/am-gateway:${RELEASE_VERSION} graviteeio/am-gateway:"${RELEASE_VERSION}-ee"
+            docker tag graviteeio/am-gateway:${RELEASE_VERSION} graviteeio/am-gateway:"${RELEASE_VERSION_MAJOR}"
+            docker tag graviteeio/am-gateway:${RELEASE_VERSION} graviteeio/am-gateway:"${RELEASE_VERSION_MAJOR}-ee"
+            docker tag graviteeio/am-gateway:${RELEASE_VERSION} graviteeio/am-gateway:"${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}"
+            docker tag graviteeio/am-gateway:${RELEASE_VERSION} graviteeio/am-gateway:"${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}-ee"
+            
+            docker build -f docker/management-api/Dockerfile --build-arg GRAVITEEAM_VERSION=${RELEASE_VERSION} -t graviteeio/am-management-api:${RELEASE_VERSION} docker/management-api/
+            docker tag graviteeio/am-management-api:${RELEASE_VERSION} graviteeio/am-management-api:latest
+            docker tag graviteeio/am-management-api:${RELEASE_VERSION} graviteeio/am-management-api:"${RELEASE_VERSION}-ee"
+            docker tag graviteeio/am-management-api:${RELEASE_VERSION} graviteeio/am-management-api:"${RELEASE_VERSION_MAJOR}"
+            docker tag graviteeio/am-management-api:${RELEASE_VERSION} graviteeio/am-management-api:"${RELEASE_VERSION_MAJOR}-ee"
+            docker tag graviteeio/am-management-api:${RELEASE_VERSION} graviteeio/am-management-api:"${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}"
+            docker tag graviteeio/am-management-api:${RELEASE_VERSION} graviteeio/am-management-api:"${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}-ee"
+            
+            docker build -f docker/management-ui/Dockerfile --build-arg GRAVITEEAM_VERSION=${RELEASE_VERSION} -t graviteeio/am-management-ui:${RELEASE_VERSION} docker/management-ui/
+            docker tag graviteeio/am-management-ui:${RELEASE_VERSION} graviteeio/am-management-ui:latest
+            docker tag graviteeio/am-management-ui:${RELEASE_VERSION} graviteeio/am-management-ui:"${RELEASE_VERSION}-ee"
+            docker tag graviteeio/am-management-ui:${RELEASE_VERSION} graviteeio/am-management-ui:"${RELEASE_VERSION_MAJOR}"
+            docker tag graviteeio/am-management-ui:${RELEASE_VERSION} graviteeio/am-management-ui:"${RELEASE_VERSION_MAJOR}-ee"
+            docker tag graviteeio/am-management-ui:${RELEASE_VERSION} graviteeio/am-management-ui:"${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}"
+            docker tag graviteeio/am-management-ui:${RELEASE_VERSION} graviteeio/am-management-ui:"${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}-ee"
+  
+            docker login --username="${DOCKERHUB_BOT_USER_NAME}" -p="${DOCKERHUB_BOT_USER_TOKEN}"
+            
+            if [ "${TAG_LATEST}" == "true" ]; then
+              docker push --all-tags graviteeio/am-gateway
+              docker push --all-tags graviteeio/am-management-api
+              docker push --all-tags graviteeio/am-management-ui
+            else
+              docker push graviteeio/am-gateway:"${RELEASE_VERSION}"
+              docker push graviteeio/am-gateway:"${RELEASE_VERSION}-ee"
+              docker push graviteeio/am-management-api:"${RELEASE_VERSION}"
+              docker push graviteeio/am-management-api:"${RELEASE_VERSION}-ee"
+              docker push graviteeio/am-management-ui:"${RELEASE_VERSION}"
+              docker push graviteeio/am-management-ui:"${RELEASE_VERSION}-ee"
+              if [ "$TAG_LATEST_SUPPORT" == "true" ]; then
+                  echo "Gravitee Containers :  Docker tags, Releasing Docker images as latest support"
+                  docker push graviteeio/am-gateway:"${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}"
+                  docker push graviteeio/am-gateway:"${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}-ee"
+                  docker push graviteeio/am-management-api:"${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}"
+                  docker push graviteeio/am-management-api:"${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}-ee"
+                  docker push graviteeio/am-management-ui:"${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}"
+                  docker push graviteeio/am-management-ui:"${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}-ee"
+              else
+                  echo "Gravitee Containers :  Docker tags, Releasing Docker images as NON-latest"
+              fi
+            fi;
+
   publish_am_rpms:
     description: Runs the commands to build n publish RPM Packages for Gravitee.io AM
     executor: ubuntu
@@ -1255,6 +1351,12 @@ jobs:
       - publish_rpms:
           graviteeio_version: << parameters.graviteeio_version >>
 
+  publish_am_rpms_from_tag:
+    description: Runs the commands to build n publish RPM Packages for Gravitee.io AM
+    executor: ubuntu
+    steps:
+      - publish_rpms:
+          graviteeio_version: << pipeline.git.tag >>
 
 workflows:
   version: 2.1
@@ -1379,6 +1481,30 @@ workflows:
             - setup
           dry_run: << pipeline.parameters.dry_run >>
           rc_requested: << pipeline.parameters.rc_requested >>
+
+  release_docker_and_rpms:
+    when:
+      matches:
+        pattern: "^[0-9]+\\.[0-9]+\\.[0-9]+(-alpha\\.[0-9]+)?$"
+        value: << pipeline.git.tag >>
+    jobs:
+      - setup:
+          context: cicd-orchestrator
+      - publish_am_rpms_from_tag:
+          context: cicd-orchestrator
+          requires:
+            - setup
+          filters:
+            branches:
+              ignore:
+                - /.*/
+            tags:
+              only:
+                - /^[0-9]+\.[0-9]+\.[0-9]+(-alpha\.[0-9]+)?$/
+          graviteeio_version: << pipeline.git.tag >>
+      - build_n_push_am_ce_job_from_tag:
+          context: cicd-orchestrator
+          graviteeio_version: << pipeline.git.tag >>
 
   publish_rpms:
     when:
