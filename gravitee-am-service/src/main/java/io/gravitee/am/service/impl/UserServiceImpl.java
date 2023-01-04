@@ -18,6 +18,7 @@ package io.gravitee.am.service.impl;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
+import io.gravitee.am.common.exception.mfa.InvalidFactorAttributeException;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.analytics.AnalyticsQuery;
@@ -49,6 +50,7 @@ import org.springframework.stereotype.Component;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.util.Optional.ofNullable;
 
 /**
@@ -236,6 +238,9 @@ public class UserServiceImpl extends AbstractUserService implements UserService 
                             user.setPhoneNumbers(phoneNumbers);
                         }
                         String enrolledPhoneNumber = enrolledFactor.getChannel().getTarget();
+                        if (isNullOrEmpty(enrolledPhoneNumber)) {
+                            return Single.error(new InvalidFactorAttributeException("Phone Number required to enroll SMS factor"));
+                        }
                         if (phoneNumbers.stream().noneMatch(p -> p.getValue().equals(enrolledPhoneNumber))) {
                             Attribute newPhoneNumber = new Attribute();
                             newPhoneNumber.setType("mobile");
@@ -248,6 +253,9 @@ public class UserServiceImpl extends AbstractUserService implements UserService 
                         // MFA EMAIL currently used, preserve the email into the user profile if not yet present
                         String email = user.getEmail();
                         String enrolledEmail = enrolledFactor.getChannel().getTarget();
+                        if (isNullOrEmpty(enrolledEmail)) {
+                            return Single.error(new InvalidFactorAttributeException("Email address required to enroll Email factor"));
+                        }
                         if (email == null) {
                             user.setEmail(enrolledEmail);
                         } else if (!email.equals(enrolledEmail)){
