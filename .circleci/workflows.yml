@@ -649,7 +649,7 @@ jobs:
             export IMAGE_TAG_LATEST=graviteeio.azurecr.io/am-management-api:${TAG_LATEST}
             echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
             echo "export IMAGE_TAG_LATEST=$IMAGE_TAG_LATEST" >> $BASH_ENV
-            docker build -f docker/management-api/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} -t ${IMAGE_TAG_LATEST} /tmp
+            docker buildx build --platform=linux/arm64,linux/amd64 -f docker/management-api/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} -t ${IMAGE_TAG_LATEST} /tmp
       - run:
           name: Push API Docker image
           when: always
@@ -666,7 +666,7 @@ jobs:
             export IMAGE_TAG_LATEST=graviteeio.azurecr.io/am-gateway:${TAG_LATEST}
             echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
             echo "export IMAGE_TAG_LATEST=$IMAGE_TAG_LATEST" >> $BASH_ENV
-            docker build -f docker/gateway/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} -t ${IMAGE_TAG_LATEST} /tmp
+            docker buildx build --platform=linux/arm64,linux/amd64 -f docker/gateway/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} -t ${IMAGE_TAG_LATEST} /tmp
       - run:
           name: Push Gateway Docker image
           when: always
@@ -685,7 +685,7 @@ jobs:
             export IMAGE_TAG_LATEST=graviteeio.azurecr.io/am-management-ui:${TAG_LATEST}
             echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
             echo "export IMAGE_TAG_LATEST=$IMAGE_TAG_LATEST" >> $BASH_ENV
-            docker build -f docker/management-ui/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} -t ${IMAGE_TAG_LATEST} /tmp
+            docker buildx build --platform=linux/arm64,linux/amd64 -f docker/management-ui/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} -t ${IMAGE_TAG_LATEST} /tmp
       - run:
           name: Push Web UI Docker image
           when: always
@@ -1180,7 +1180,7 @@ jobs:
                 
                 git checkout "${GRAVITEEIO_VERSION}"
                 
-                docker build -f docker/gateway/Dockerfile --build-arg GRAVITEEAM_VERSION=${RELEASE_VERSION} -t graviteeio/am-gateway:${RELEASE_VERSION} docker/gateway/
+                docker buildx build --platform=linux/arm64,linux/amd64 -f docker/gateway/Dockerfile --build-arg GRAVITEEAM_VERSION=${RELEASE_VERSION} -t graviteeio/am-gateway:${RELEASE_VERSION} docker/gateway/
                 docker tag graviteeio/am-gateway:${RELEASE_VERSION} graviteeio/am-gateway:latest
                 docker tag graviteeio/am-gateway:${RELEASE_VERSION} graviteeio/am-gateway:"${RELEASE_VERSION}-ee"
                 docker tag graviteeio/am-gateway:${RELEASE_VERSION} graviteeio/am-gateway:"${RELEASE_VERSION_MAJOR}"
@@ -1188,7 +1188,7 @@ jobs:
                 docker tag graviteeio/am-gateway:${RELEASE_VERSION} graviteeio/am-gateway:"${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}"
                 docker tag graviteeio/am-gateway:${RELEASE_VERSION} graviteeio/am-gateway:"${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}-ee"
                 
-                docker build -f docker/management-api/Dockerfile --build-arg GRAVITEEAM_VERSION=${RELEASE_VERSION} -t graviteeio/am-management-api:${RELEASE_VERSION} docker/management-api/
+                docker buildx build --platform=linux/arm64,linux/amd64 -f docker/management-api/Dockerfile --build-arg GRAVITEEAM_VERSION=${RELEASE_VERSION} -t graviteeio/am-management-api:${RELEASE_VERSION} docker/management-api/
                 docker tag graviteeio/am-management-api:${RELEASE_VERSION} graviteeio/am-management-api:latest
                 docker tag graviteeio/am-management-api:${RELEASE_VERSION} graviteeio/am-management-api:"${RELEASE_VERSION}-ee"
                 docker tag graviteeio/am-management-api:${RELEASE_VERSION} graviteeio/am-management-api:"${RELEASE_VERSION_MAJOR}"
@@ -1196,7 +1196,7 @@ jobs:
                 docker tag graviteeio/am-management-api:${RELEASE_VERSION} graviteeio/am-management-api:"${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}"
                 docker tag graviteeio/am-management-api:${RELEASE_VERSION} graviteeio/am-management-api:"${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}-ee"
                 
-                docker build -f docker/management-ui/Dockerfile --build-arg GRAVITEEAM_VERSION=${RELEASE_VERSION} -t graviteeio/am-management-ui:${RELEASE_VERSION} docker/management-ui/
+                docker buildx build --platform=linux/arm64,linux/amd64 -f docker/management-ui/Dockerfile --build-arg GRAVITEEAM_VERSION=${RELEASE_VERSION} -t graviteeio/am-management-ui:${RELEASE_VERSION} docker/management-ui/
                 docker tag graviteeio/am-management-ui:${RELEASE_VERSION} graviteeio/am-management-ui:latest
                 docker tag graviteeio/am-management-ui:${RELEASE_VERSION} graviteeio/am-management-ui:"${RELEASE_VERSION}-ee"
                 docker tag graviteeio/am-management-ui:${RELEASE_VERSION} graviteeio/am-management-ui:"${RELEASE_VERSION_MAJOR}"
