@@ -82,6 +82,13 @@ parameters:
     description: "Is this a latest support version of the Product ? (if so minor version tagging docker images). True by default."
 
 commands:
+  create_docker_context:
+    steps:
+      - run:
+          name: "Create docker context for buildx"
+          command: |
+            docker context create tls-env
+            docker buildx create tls-env --use
   publish_bundle:
     parameters:
       dry_run:
@@ -640,6 +647,7 @@ jobs:
             # create a latest tag for the given branch to avoid flooding SNYK project
             export TAG_LATEST=$(echo "${CIRCLE_BRANCH:0:15}-latest")
             echo "export TAG_LATEST=$TAG_LATEST" >> $BASH_ENV
+      - create_docker_context
       - run:
           name: Build Management API Docker Image to Azure Registry
           when: always
@@ -647,16 +655,9 @@ jobs:
             export AM_VERSION=$(mvn -s /tmp/.gravitee.settings.xml -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
             export IMAGE_TAG=graviteeio.azurecr.io/am-management-api:${TAG}
             export IMAGE_TAG_LATEST=graviteeio.azurecr.io/am-management-api:${TAG_LATEST}
-            echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
-            echo "export IMAGE_TAG_LATEST=$IMAGE_TAG_LATEST" >> $BASH_ENV
-            docker build -f docker/management-api/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} -t ${IMAGE_TAG_LATEST} /tmp
-      - run:
-          name: Push API Docker image
-          when: always
-          command: |
+            
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
-            docker push ${IMAGE_TAG}
-            docker push ${IMAGE_TAG_LATEST}
+            docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/management-api/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} -t ${IMAGE_TAG_LATEST} /tmp
       - run:
           name: Build Gateway Docker Image to Azure Registry
           when: always
@@ -664,35 +665,20 @@ jobs:
             export AM_VERSION=$(mvn -s /tmp/.gravitee.settings.xml -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
             export IMAGE_TAG=graviteeio.azurecr.io/am-gateway:${TAG}
             export IMAGE_TAG_LATEST=graviteeio.azurecr.io/am-gateway:${TAG_LATEST}
-            echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
-            echo "export IMAGE_TAG_LATEST=$IMAGE_TAG_LATEST" >> $BASH_ENV
-            docker build -f docker/gateway/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} -t ${IMAGE_TAG_LATEST} /tmp
-      - run:
-          name: Push Gateway Docker image
-          when: always
-          command: |
+            
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
-            docker push ${IMAGE_TAG}
-            docker push ${IMAGE_TAG_LATEST}
+            docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/gateway/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} -t ${IMAGE_TAG_LATEST} /tmp
       - run:
           name: Build Web UI Docker Image to Azure Registry
           when: always
           command: |
             cp -fr docker/management-ui/config /tmp/
-            cp -fr docker/management-ui/run.sh /tmp/
             export AM_VERSION=$(mvn -s /tmp/.gravitee.settings.xml -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
             export IMAGE_TAG=graviteeio.azurecr.io/am-management-ui:${TAG}
             export IMAGE_TAG_LATEST=graviteeio.azurecr.io/am-management-ui:${TAG_LATEST}
-            echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
-            echo "export IMAGE_TAG_LATEST=$IMAGE_TAG_LATEST" >> $BASH_ENV
-            docker build -f docker/management-ui/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} -t ${IMAGE_TAG_LATEST} /tmp
-      - run:
-          name: Push Web UI Docker image
-          when: always
-          command: |
+            
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
-            docker push ${IMAGE_TAG}
-            docker push ${IMAGE_TAG_LATEST}
+            docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/management-ui/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} -t ${IMAGE_TAG_LATEST} /tmp
       - persist_to_workspace:
           root: /tmp
           paths:
@@ -1170,6 +1156,7 @@ jobs:
           - keeper/env-export:
               secret-url: keeper://cooU9UoXIk8Kj0hsP2rkBw/field/password
               var-name: DOCKERHUB_BOT_USER_TOKEN
+          - create_docker_context
           - run:
               name: "Build Docker Images: Gravitee AM Community Edition"
               command: |
@@ -1180,59 +1167,43 @@ jobs:
                 
                 git checkout "${GRAVITEEIO_VERSION}"
                 
-                docker build -f docker/gateway/Dockerfile --build-arg GRAVITEEAM_VERSION=${RELEASE_VERSION} -t graviteeio/am-gateway:${RELEASE_VERSION} docker/gateway/
-                docker tag graviteeio/am-gateway:${RELEASE_VERSION} graviteeio/am-gateway:latest
-                docker tag graviteeio/am-gateway:${RELEASE_VERSION} graviteeio/am-gateway:"${RELEASE_VERSION}-ee"
-                docker tag graviteeio/am-gateway:${RELEASE_VERSION} graviteeio/am-gateway:"${RELEASE_VERSION_MAJOR}"
-                docker tag graviteeio/am-gateway:${RELEASE_VERSION} graviteeio/am-gateway:"${RELEASE_VERSION_MAJOR}-ee"
-                docker tag graviteeio/am-gateway:${RELEASE_VERSION} graviteeio/am-gateway:"${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}"
-                docker tag graviteeio/am-gateway:${RELEASE_VERSION} graviteeio/am-gateway:"${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}-ee"
+                tag_gateway='-t graviteeio/am-gateway:${RELEASE_VERSION} -t graviteeio/am-gateway:"${RELEASE_VERSION}-ee"'
+                tag_management_api='-t graviteeio/am-management-api:${RELEASE_VERSION} -t graviteeio/am-management-api:"${RELEASE_VERSION}-ee"'
+                tag_management_ui='-t graviteeio/am-management-ui:${RELEASE_VERSION} -t graviteeio/am-management-ui:"${RELEASE_VERSION}-ee"'
                 
-                docker build -f docker/management-api/Dockerfile --build-arg GRAVITEEAM_VERSION=${RELEASE_VERSION} -t graviteeio/am-management-api:${RELEASE_VERSION} docker/management-api/
-                docker tag graviteeio/am-management-api:${RELEASE_VERSION} graviteeio/am-management-api:latest
-                docker tag graviteeio/am-management-api:${RELEASE_VERSION} graviteeio/am-management-api:"${RELEASE_VERSION}-ee"
-                docker tag graviteeio/am-management-api:${RELEASE_VERSION} graviteeio/am-management-api:"${RELEASE_VERSION_MAJOR}"
-                docker tag graviteeio/am-management-api:${RELEASE_VERSION} graviteeio/am-management-api:"${RELEASE_VERSION_MAJOR}-ee"
-                docker tag graviteeio/am-management-api:${RELEASE_VERSION} graviteeio/am-management-api:"${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}"
-                docker tag graviteeio/am-management-api:${RELEASE_VERSION} graviteeio/am-management-api:"${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}-ee"
+                if [ "$TAG_LATEST_SUPPORT" == "true" ]; then
+                  echo "Gravitee Containers :  Docker tags, Releasing Docker images as latest support"
                 
-                docker build -f docker/management-ui/Dockerfile --build-arg GRAVITEEAM_VERSION=${RELEASE_VERSION} -t graviteeio/am-management-ui:${RELEASE_VERSION} docker/management-ui/
-                docker tag graviteeio/am-management-ui:${RELEASE_VERSION} graviteeio/am-management-ui:latest
-                docker tag graviteeio/am-management-ui:${RELEASE_VERSION} graviteeio/am-management-ui:"${RELEASE_VERSION}-ee"
-                docker tag graviteeio/am-management-ui:${RELEASE_VERSION} graviteeio/am-management-ui:"${RELEASE_VERSION_MAJOR}"
-                docker tag graviteeio/am-management-ui:${RELEASE_VERSION} graviteeio/am-management-ui:"${RELEASE_VERSION_MAJOR}-ee"
-                docker tag graviteeio/am-management-ui:${RELEASE_VERSION} graviteeio/am-management-ui:"${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}"
-                docker tag graviteeio/am-management-ui:${RELEASE_VERSION} graviteeio/am-management-ui:"${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}-ee"
-
-                if [ "${DRY_RUN}" == "true" ]; then
-                  echo "# --->>> THIS IS A DRY RUN : SKIPPING DOCKER PUSH"
-                  exit 0
-                fi
-
-                docker login --username="${DOCKERHUB_BOT_USER_NAME}" -p="${DOCKERHUB_BOT_USER_TOKEN}"
-
+                  tag_gateway='${tag_gateway} -t graviteeio/am-gateway:"${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}" -t graviteeio/am-gateway:"${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}-ee"' 
+                  tag_management_api='${tag_management_api} -t graviteeio/am-management-api:"${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}" -t graviteeio/am-management-api:"${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}-ee"' 
+                  tag_management_ui='${tag_management_ui} -t graviteeio/am-management-ui:"${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}" -t graviteeio/am-management-ui:"${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}-ee"' 
+                
+                fi;
+                
                 if [ "${TAG_LATEST}" == "true" ]; then
-                  docker push --all-tags graviteeio/am-gateway
-                  docker push --all-tags graviteeio/am-management-api
-                  docker push --all-tags graviteeio/am-management-ui
+                  echo "Gravitee Containers :  Docker tags, Releasing Docker images as latest"
+                
+                  tag_gateway='${tag_gateway} -t graviteeio/am-gateway:"${RELEASE_VERSION_MAJOR}" -t graviteeio/am-gateway:"${RELEASE_VERSION_MAJOR}-ee" -t graviteeio/am-gateway:latest' 
+                  tag_management_api='${tag_management_api} -t graviteeio/am-management-api:"${RELEASE_VERSION_MAJOR}" -t graviteeio/am-management-api:"${RELEASE_VERSION_MAJOR}-ee" -t graviteeio/am-management-api:latest' 
+                  tag_management_ui='${tag_management_ui} -t graviteeio/am-management-ui:"${RELEASE_VERSION_MAJOR}" -t graviteeio/am-management-ui:"${RELEASE_VERSION_MAJOR}-ee" -t graviteeio/am-management-ui:latest' 
+                
+                fi;
+                
+                docker login --username="${DOCKERHUB_BOT_USER_NAME}" -p="${DOCKERHUB_BOT_USER_TOKEN}"
+                
+                if [ "${DRY_RUN}" == "true" ]; then
+                  echo "# --->>> THIS IS A DRY RUN : Build images without push"
+
+                  docker buildx build --platform=linux/arm64,linux/amd64 -f docker/gateway/Dockerfile --build-arg GRAVITEEAM_VERSION=${RELEASE_VERSION} ${tag_gateway} docker/gateway/
+                  docker buildx build --platform=linux/arm64,linux/amd64 -f docker/management-api/Dockerfile --build-arg GRAVITEEAM_VERSION=${RELEASE_VERSION} ${tag_management_api} docker/management-api/
+                  docker buildx build --platform=linux/arm64,linux/amd64 -f docker/management-ui/Dockerfile --build-arg GRAVITEEAM_VERSION=${RELEASE_VERSION} ${tag_management_ui} docker/management-ui/
+
                 else
-                  docker push graviteeio/am-gateway:"${RELEASE_VERSION}"
-                  docker push graviteeio/am-gateway:"${RELEASE_VERSION}-ee"
-                  docker push graviteeio/am-management-api:"${RELEASE_VERSION}"
-                  docker push graviteeio/am-management-api:"${RELEASE_VERSION}-ee"
-                  docker push graviteeio/am-management-ui:"${RELEASE_VERSION}"
-                  docker push graviteeio/am-management-ui:"${RELEASE_VERSION}-ee"
-                  if [ "$TAG_LATEST_SUPPORT" == "true" ]; then
-                      echo "Gravitee Containers :  Docker tags, Releasing Docker images as latest support"
-                      docker push graviteeio/am-gateway:"${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}"
-                      docker push graviteeio/am-gateway:"${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}-ee"
-                      docker push graviteeio/am-management-api:"${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}"
-                      docker push graviteeio/am-management-api:"${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}-ee"
-                      docker push graviteeio/am-management-ui:"${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}"
-                      docker push graviteeio/am-management-ui:"${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}-ee"
-                  else
-                      echo "Gravitee Containers :  Docker tags, Releasing Docker images as NON-latest"
-                  fi
+                  
+                  docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/gateway/Dockerfile --build-arg GRAVITEEAM_VERSION=${RELEASE_VERSION} ${tag_gateway} docker/gateway/
+                  docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/management-api/Dockerfile --build-arg GRAVITEEAM_VERSION=${RELEASE_VERSION} ${tag_management_api} docker/management-api/
+                  docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/management-ui/Dockerfile --build-arg GRAVITEEAM_VERSION=${RELEASE_VERSION} ${tag_management_ui} docker/management-ui/
+                
                 fi;
   publish_am_rpms:
     description: Runs the commands to build n publish RPM Packages for Gravitee.io AM
