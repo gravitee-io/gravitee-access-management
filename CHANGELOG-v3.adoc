@@ -1,5 +1,31 @@
 # Change Log
 
+== AM - 3.20.0 (2023-01-04)
+
+=== Bug fixes
+
+*_General_*
+
+- Merge AM 3.19.1 into 3.20.x https://github.com/gravitee-io/gravitee-access-management/pull/2196[PR#2196]
+- Merge AM 3.19.2 into 3.20.x https://github.com/gravitee-io/gravitee-access-management/pull/2247[PR#2247]
+- Merge AM 3.19.3 into 3.20.x https://github.com/gravitee-io/gravitee-access-management/pull/2294[PR#2294]
+- Merge AM 3.19.4 into 3.30.x https://github.com/gravitee-io/gravitee-access-management/pull/2294[PR#2294]
+
+=== Features
+
+*_General_*
+
+- *Password history* : Enforce my end-users to not re-use a previous password during reset password. https://github.com/gravitee-io/gravitee-access-management/pull/2171[PR#2171] & https://github.com/gravitee-io/gravitee-access-management/pull/2216[PR#2216]
+- *MFA security features* :
+** The MFA Rate Limit feature enables you to configure and limit the number of challenges a user is allowed to send within a specific time period. https://github.com/gravitee-io/gravitee-access-management/pull/2205[PR#2205]
+** The Brute Force Detection feature enables you to configure and limit the number of verification requests a user is allowed to send within a specific time period. https://github.com/gravitee-io/gravitee-access-management/pull/2220[PR#2220]
+- *System Certificates* : The certificate rotation feature enables you to generate a new system certificate quickly and easily when the previous one is about to expire https://github.com/gravitee-io/gravitee-access-management/pull/2217[PR#2217] & https://github.com/gravitee-io/gravitee-access-management/pull/2222[PR#2222]
+- *User interface* : uniform user interface accross products https://github.com/gravitee-io/gravitee-access-management/pull/2221[PR#2221]
+
+=== Improvements
+
+- Enable security headers by default https://github.com/gravitee-io/gravitee-access-management/pull/2229[PR#2229]
+
 
 == https://github.com/gravitee-io/issues/milestone/623?closed=1[AM - 3.15.16 (2022-12-30)]
 
