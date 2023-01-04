@@ -75,6 +75,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.ID_TOKEN;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -137,12 +139,12 @@ public class UserServiceImpl implements UserService {
     public Single<UserToken> extractSessionFromIdToken(String idToken) {
         // The OP SHOULD accept ID Tokens when the RP identified by the ID Token's aud claim and/or sid claim has a current session
         // or had a recent session at the OP, even when the exp time has passed.
-        return jwtService.decode(idToken)
+        return jwtService.decode(idToken, ID_TOKEN)
                 .flatMap(jwt -> {
                     return clientSyncService.findByClientId(jwt.getAud())
                             .switchIfEmpty(Single.error(new ClientNotFoundException(jwt.getAud())))
                             .flatMap(client -> {
-                                return jwtService.decodeAndVerify(idToken, client)
+                                return jwtService.decodeAndVerify(idToken, client, ID_TOKEN)
                                         .onErrorResumeNext(ex -> (ex instanceof ExpiredJWTException) ? Single.just(jwt) : Single.error(ex))
                                         .flatMap(jwt1 -> {
                                             return userService.findById(jwt1.getSub())
