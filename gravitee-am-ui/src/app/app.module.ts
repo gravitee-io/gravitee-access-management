@@ -66,6 +66,7 @@ import {AppComponent} from './app.component';
 import {HomeComponent} from './home/home.component';
 import {DisplayableItemPipe, SidenavComponent} from './components/sidenav/sidenav.component';
 import {SidenavSettingsComponent} from './components/sidenav-settings/sidenav-settings.component';
+import {SubmenuComponent, SubmenuItemsComponent} from './components/submenu/submenu.component';
 import {LoginComponent} from './login/login.component';
 import {LoginCallbackComponent} from './login/callback/callback.component';
 import {DomainsComponent} from './settings/domains/domains.component';
@@ -160,6 +161,7 @@ import {ScopeCreationComponent} from './domain/settings/scopes/creation/scope-cr
 import {ScopeComponent} from './domain/settings/scopes/scope/scope.component';
 import {SnackbarComponent} from './components/snackbar/snackbar.component';
 import {NavbarComponent} from './components/navbar/navbar.component';
+import {TabNavbarComponent} from './components/tab-navbar/tab-navbar.component';
 import {DashboardService} from './services/dashboard.service';
 import {SettingsComponent} from './settings/settings.component';
 import {HumanDatePipe} from './pipes/human-date.pipe';
@@ -428,7 +430,13 @@ import { DomainSettingsThemeComponent } from './domain/settings/theme/theme.comp
 import { ThemesResolver } from './resolvers/themes.resolver';
 import { ThemeService } from './services/theme.service';
 import {HelpTipsThemeComponent} from "./domain/settings/theme/help-tips/help-tips.component";
-import {GioMenuModule, GioTopBarLinkModule, GioTopBarMenuModule, GioTopBarModule} from "@gravitee/ui-particles-angular";
+import {
+    GioMenuModule,
+    GioSubmenuModule,
+    GioTopBarLinkModule,
+    GioTopBarMenuModule,
+    GioTopBarModule
+} from "@gravitee/ui-particles-angular";
 
 @NgModule({
   declarations: [
@@ -436,6 +444,8 @@ import {GioMenuModule, GioTopBarLinkModule, GioTopBarMenuModule, GioTopBarModule
     HomeComponent,
     SidenavComponent,
     SidenavSettingsComponent,
+    SubmenuComponent,
+    SubmenuItemsComponent,
     LoginComponent,
     LoginCallbackComponent,
     DomainsComponent,
@@ -519,6 +529,7 @@ import {GioMenuModule, GioTopBarLinkModule, GioTopBarMenuModule, GioTopBarModule
     ResourceFormComponent,
     SnackbarComponent,
     NavbarComponent,
+    TabNavbarComponent,
     SettingsComponent,
     HumanDatePipe,
     MapToIterablePipe,
@@ -690,7 +701,7 @@ import {GioMenuModule, GioTopBarLinkModule, GioTopBarMenuModule, GioTopBarModule
     CodemirrorModule,
     ClipboardModule,
     HighchartsChartModule,
-    GioMenuModule, GioTopBarModule, GioTopBarLinkModule, GioTopBarMenuModule
+    GioMenuModule, GioTopBarModule, GioTopBarLinkModule, GioTopBarMenuModule, GioSubmenuModule
   ],
   providers: [
     DomainService,

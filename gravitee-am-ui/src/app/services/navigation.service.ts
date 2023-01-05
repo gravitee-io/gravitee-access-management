@@ -25,6 +25,8 @@ export class NavigationService implements OnDestroy {
   public topMenuItemsObs$: Subject<any[]> = new ReplaySubject<any[]>(1);
   public subMenuItemsObs$: Subject<any[]> = new ReplaySubject<any[]>(1);
   public breadcrumbItemsObs$: Subject<any[]> = new ReplaySubject<any[]>(1);
+  public level2MenuItemsObs$: Subject<any[]> = new ReplaySubject<any[]>(1);
+  public level3MenuItemsObs$: Subject<any[]> = new ReplaySubject<any[]>(1);
 
   subscription: Subscription;
 
@@ -46,12 +48,16 @@ export class NavigationService implements OnDestroy {
     this.topMenuItemsObs$.complete();
     this.subMenuItemsObs$.complete();
     this.breadcrumbItemsObs$.complete();
+    this.level2MenuItemsObs$.complete();
+    this.level3MenuItemsObs$.complete();
   }
 
   notifyChanges(activatedRoute: ActivatedRouteSnapshot): void {
     let menuItems = this.getMenuItems(activatedRoute);
     this.topMenuItemsObs$.next(menuItems.filter(item => item.level === 'top'));
     this.subMenuItemsObs$.next(menuItems.filter(item => item.level !== 'top'));
+    this.level2MenuItemsObs$.next(menuItems.filter(item => item.level === 'level2'));
+    this.level3MenuItemsObs$.next(menuItems.filter(item => item.level === 'level3'));
     this.breadcrumbItemsObs$.next(this.getBreadcrumbItems(activatedRoute));
   }
 

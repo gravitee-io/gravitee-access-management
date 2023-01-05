@@ -15,14 +15,14 @@
     limitations under the License.
 
 -->
-<div class="gv-page-container" fxFlex="70">
-  <app-forms [forms]="forms"></app-forms>
-</div>
-<div class="gv-page-description" fxFlex>
-  <h3>Application's form templates</h3>
-  <div class="gv-page-description-content">
-    <p>
-      Application form templates allows you to display custom web pages to fit your corporate identity guidelines.
-    </p>
+<div fxLayout="column">
+  <div class="gv-form-section">
+    <div class="gv-form-section-title">
+      <h2>Templates</h2>
+      <span>Display custom web pages to fit tour identity guidelines.</span>
+    </div>
+    <div>
+      <app-forms [forms]="forms"></app-forms>
+    </div>
   </div>
 </div>

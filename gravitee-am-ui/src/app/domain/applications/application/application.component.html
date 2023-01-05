@@ -15,33 +15,15 @@
     limitations under the License.
 
 -->
-<div class="gv-page-container">
-  <mat-card class="application-banner" *ngIf="application.template">
-    <mat-icon>warning</mat-icon>
-    <p class="application-banner-text">Application is set as a template, thus it can not be used for authentication purpose.</p>
-  </mat-card>
-  <a [routerLink]="['..']" class="gv-back-link"><small><< Back to applications</small></a>
-  <div class="app-header" fxLayout="row">
-    <div class="app-logo">
-      <svg width="80" height="80" [identiconHash]="application.name"></svg>
-    </div>
-    <div class="app-information" fxLayout="column">
-      <span class="app-name">{{application.name}}</span>
-      <span class="app-type">{{application.type}}</span>
-    </div>
-  </div>
-  <nav mat-tab-nav-bar color="accent">
-    <a mat-tab-link
-       *ngFor="let link of navLinks"
-       [routerLink]="link.href"
-       routerLinkActive #rla="routerLinkActive"
-       [active]="rla.isActive">
-      <span style="display: flex; align-items: center;">
-        <mat-icon>{{link.icon}}</mat-icon>
-        <span style="margin-left: 5px;">{{link.label}}</span>
-      </span>
-    </a>
-  </nav>
+<div fxLayout="row">
+  <gv-submenu
+    [displaySections] = "false"
+    [hasTitle] = "true"
+    [isTemplate] = "application.template"
+    [templateTooltip]="'Application set as a template'"
+    [componentType]="application.type"
+    [componentName]="application.name">
+  </gv-submenu>
   <div class="application-content">
     <router-outlet></router-outlet>
   </div>

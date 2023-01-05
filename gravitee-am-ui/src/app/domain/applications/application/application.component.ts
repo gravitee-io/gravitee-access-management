@@ -13,12 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnDestroy, OnInit} from '@angular/core';
-import {ActivatedRoute, NavigationEnd, Router} from '@angular/router';
-import {AuthService} from '../../../services/auth.service';
-import * as _ from 'lodash';
-import {filter} from "rxjs/operators";
-import {Subject, Subscription} from "rxjs";
+import {Component, OnInit} from '@angular/core';
+import {ActivatedRoute} from '@angular/router';
 
 @Component({
   selector: 'app-application',
@@ -28,49 +24,12 @@ import {Subject, Subscription} from "rxjs";
 export class ApplicationComponent implements OnInit {
   private domainId: string;
   application: any;
-  logoUrl: string;
-  navLinks: any = [
-    {'href': 'overview' , 'label': 'Overview', 'icon': 'more_vert'},
-    {'href': 'endpoints' , 'label': 'Endpoints', 'icon': 'transform'},
-    {'href': 'idp' , 'label': 'Identity Providers', 'icon': 'swap_horiz'},
-    {'href': 'design' , 'label': 'Design', 'icon': 'palette'},
-    {'href': 'analytics' , 'label': 'Analytics', 'icon': 'bar_chart'},
-    {'href': 'settings', 'label': 'Settings', 'icon': 'settings'}
-  ];
 
-  constructor(private route: ActivatedRoute,
-              private router: Router,
-              private authService: AuthService) {
+  constructor(private route: ActivatedRoute) {
   }
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
     this.application = this.route.snapshot.data['application'];
-    this.logoUrl = 'assets/application-type-icons/' + this.application.type.toLowerCase() + '.png';
-
-    if (this.application.type === 'service') {
-      _.remove(this.navLinks, { href: 'idp' });
-      _.remove(this.navLinks, { href: 'design' });
-      _.remove(this.navLinks, { href: 'analytics' });
-    }
-    if (!this.canDisplay(['application_identity_provider_list'])) {
-      _.remove(this.navLinks, { href: 'idp' });
-    }
-    if (!this.canDisplay(['application_email_template_list', 'application_email_template_read', 'application_form_list', 'application_form_read'])) {
-      _.remove(this.navLinks, { href: 'design' });
-    }
-    if (!this.canDisplay(['application_analytics_list'])) {
-      _.remove(this.navLinks, { href: 'analytics' });
-    }
-    if (!this.canDisplay(['application_settings_read'])
-      && !this.canDisplay(['application_oauth_read'])
-      && !this.canDisplay(['application_certificate_list'])
-    ) {
-      _.remove(this.navLinks, { href: 'settings' });
-    }
-  }
-
-  private canDisplay(permissions): boolean {
-    return this.authService.hasAnyPermissions(permissions);
   }
 }

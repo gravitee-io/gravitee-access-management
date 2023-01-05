@@ -15,9 +15,12 @@
     limitations under the License.
 
 -->
-<div fxLayout="row">
-  <gv-submenu></gv-submenu>
-  <div class="domain-settings-content">
-    <router-outlet></router-outlet>
-  </div>
-</div>
+<nav mat-tab-nav-bar color="accent" class="tab-navbar">
+  <a mat-tab-link
+     *ngFor="let link of subMenuItems"
+     [routerLink]="link.path"
+     routerLinkActive #rla="routerLinkActive"
+     [active]="rla.isActive">
+    <span>{{link.label}}</span>
+  </a>
+</nav>

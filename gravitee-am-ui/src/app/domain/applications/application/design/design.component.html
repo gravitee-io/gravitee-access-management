@@ -15,13 +15,7 @@
     limitations under the License.
 
 -->
-<mat-sidenav-container fxLayout="row" fxFlex>
-  <mat-sidenav mode="side" opened="true">
-    <gv-sidenav-settings></gv-sidenav-settings>
-  </mat-sidenav>
-  <mat-sidenav-content>
-    <div class="application-design-main-content">
-      <router-outlet></router-outlet>
-    </div>
-  </mat-sidenav-content>
-</mat-sidenav-container>
+<div fxLayout="column" class="gv-page-container">
+  <gv-tab-navbar></gv-tab-navbar>
+  <router-outlet></router-outlet>
+</div>

@@ -865,13 +865,29 @@ export const routes: Routes = [
                             path: '', redirectTo: 'overview', pathMatch: 'full'
                           },
                           {
-                            path: 'overview', component: ApplicationOverviewComponent,
+                            path: 'overview',
+                            component: ApplicationOverviewComponent,
+                            data: {
+                              menu: {
+                                label: 'Overview',
+                                section: 'Overview',
+                                level: 'level2'
+                              },
+                            },
                             resolve: {
                               entrypoint: DomainEntrypointResolver
                             }
                           },
                           {
-                            path: 'endpoints', component: ApplicationEndpointsComponent,
+                            path: 'endpoints',
+                            component: ApplicationEndpointsComponent,
+                            data: {
+                              menu: {
+                                label: 'Endpoints',
+                                section: 'Endpoints',
+                                level: 'level2'
+                              },
+                            },
                             resolve: {
                               entrypoint: DomainEntrypointResolver
                             }
@@ -884,14 +900,35 @@ export const routes: Routes = [
                               identities: IdentitiesResolver
                             },
                             data: {
+                              menu: {
+                                label: 'Identity Providers',
+                                section: 'Identity Providers',
+                                level: 'level2'
+                              },
                               perms: {
                                 only: ['application_identity_provider_list']
+                              },
+                              types: {
+                                only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER']
                               }
                             }
                           },
                           {
                             path: 'design',
                             component: ApplicationDesignComponent,
+                            data: {
+                              menu: {
+                                label: 'Design',
+                                section: 'Design',
+                                level: 'level2'
+                              },
+                              perms: {
+                                only: ['application_email_template_list', 'application_email_template_read', 'application_form_list', 'application_form_read']
+                              },
+                              types: {
+                                only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER']
+                              }
+                            },
                             children: [
                               {
                                 path: 'forms',
@@ -899,7 +936,8 @@ export const routes: Routes = [
                                 data: {
                                   menu: {
                                     label: 'Forms',
-                                    section: 'Design'
+                                    section: 'Design',
+                                    level: 'level3'
                                   },
                                   perms: {
                                     only: ['application_form_list', 'application_form_read']
@@ -934,7 +972,8 @@ export const routes: Routes = [
                                 data: {
                                   menu: {
                                     label: 'Emails',
-                                    section: 'Design'
+                                    section: 'Design',
+                                    level: 'level3'
                                   },
                                   perms: {
                                     only: ['application_email_template_list', 'application_email_template_read']
@@ -979,7 +1018,8 @@ export const routes: Routes = [
                                 data: {
                                   menu: {
                                     label: 'Flows',
-                                    section: 'Design'
+                                    section: 'Design',
+                                    level: 'level3'
                                   },
                                   perms: {
                                     only: ['application_flow_list', 'application_flow_read']
@@ -992,10 +1032,33 @@ export const routes: Routes = [
                             path: 'analytics',
                             component: ApplicationAnalyticsComponent,
                             canActivate: [AuthGuard],
+                            data: {
+                              menu: {
+                                label: 'Analytics',
+                                section: 'Analytics',
+                                level: 'level2'
+                              },
+                              perms: {
+                                only: ['application_analytics_list']
+                              },
+                              types: {
+                                only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER']
+                              }
+                            }
                           },
                           {
                             path: 'settings',
                             component: ApplicationAdvancedComponent,
+                            data: {
+                              menu: {
+                                label: 'Settings',
+                                section: 'Settings',
+                                level: 'level2'
+                              },
+                              perms: {
+                                only: ['application_settings_read', 'application_oauth_read', 'application_certificate_list']
+                              }
+                            },
                             children: [
                               {
                                 path: 'general',
@@ -1004,7 +1067,8 @@ export const routes: Routes = [
                                 data: {
                                   menu: {
                                     label: 'General',
-                                    section: 'Settings'
+                                    section: 'Settings',
+                                    level: 'level3'
                                   },
                                   perms: {
                                     only: ['application_settings_read']
@@ -1018,7 +1082,8 @@ export const routes: Routes = [
                                 data: {
                                   menu: {
                                     label: 'Application metadata',
-                                    section: 'Settings'
+                                    section: 'Settings',
+                                    level: 'level3'
                                   },
                                   perms: {
                                     only: ['application_settings_read']
@@ -1031,7 +1096,8 @@ export const routes: Routes = [
                                 data: {
                                   menu: {
                                     label: 'OAuth 2.0 / OIDC',
-                                    section: 'Settings'
+                                    section: 'Settings',
+                                    level: 'level3'
                                   },
                                   perms: {
                                     only: ['application_openid_read']
@@ -1083,7 +1149,8 @@ export const routes: Routes = [
                                 data: {
                                   menu: {
                                     label: 'SAML 2.0',
-                                    section: 'Settings'
+                                    section: 'Settings',
+                                    level: 'level3'
                                   },
                                   perms: {
                                     only: ['application_saml_read']
@@ -1104,7 +1171,8 @@ export const routes: Routes = [
                                 data: {
                                   menu: {
                                     label: 'Login',
-                                    section: 'Settings'
+                                    section: 'Settings',
+                                    level: 'level3'
                                   },
                                   perms: {
                                     only: ['application_settings_read']
@@ -1124,7 +1192,8 @@ export const routes: Routes = [
                                 data: {
                                   menu: {
                                     label: 'Administrative roles',
-                                    section: 'Settings'
+                                    section: 'Settings',
+                                    level: 'level3'
                                   },
                                   perms: {
                                     only: ['application_member_list']
@@ -1141,7 +1210,8 @@ export const routes: Routes = [
                                 data: {
                                   menu: {
                                     label: 'Multifactor Auth',
-                                    section: 'Security'
+                                    section: 'Security',
+                                    level: 'level3'
                                   },
                                   perms: {
                                     only: ['application_factor_list']
@@ -1158,7 +1228,8 @@ export const routes: Routes = [
                                 data: {
                                   menu: {
                                     label: 'User Accounts',
-                                    section: 'Security'
+                                    section: 'Security',
+                                    level: 'level3'
                                   },
                                   perms: {
                                     only: ['application_settings_read']
@@ -1176,7 +1247,8 @@ export const routes: Routes = [
                                 data: {
                                   menu: {
                                     label: 'Certificates',
-                                    section: 'Security'
+                                    section: 'Security',
+                                    level: 'level3'
                                   },
                                   perms: {
                                     only: ['application_certificate_list']
@@ -1190,7 +1262,8 @@ export const routes: Routes = [
                                 data: {
                                   menu: {
                                     label: 'Password policy',
-                                    section: 'Security'
+                                    section: 'Security',
+                                    level: 'level3'
                                   },
                                   perms: {
                                     only: ['application_settings_read']
@@ -1204,7 +1277,8 @@ export const routes: Routes = [
                                 data: {
                                   menu: {
                                     label: 'Session management',
-                                    section: 'Security'
+                                    section: 'Security',
+                                    level: 'level3'
                                   },
                                   perms: {
                                     only: ['application_settings_read']
@@ -1217,7 +1291,8 @@ export const routes: Routes = [
                                 data: {
                                   menu: {
                                     label: 'Resources',
-                                    section: 'Security'
+                                    section: 'Security',
+                                    level: 'level3'
                                   },
                                   perms: {
                                     only: ['application_resource_list']
@@ -1308,7 +1383,8 @@ export const routes: Routes = [
                         data: {
                           menu: {
                             label: 'General',
-                            section: 'Settings'
+                            section: 'Settings',
+                            level: 'level2'
                           },
                           perms: {
                             only: ['domain_settings_read']
@@ -1326,7 +1402,8 @@ export const routes: Routes = [
                         data: {
                           menu: {
                             label: 'Entrypoints',
-                            section: 'Settings'
+                            section: 'Settings',
+                            level: 'level2'
                           },
                           perms: {
                             only: ['domain_settings_read']
@@ -1357,7 +1434,8 @@ export const routes: Routes = [
                         data: {
                           menu: {
                             label: 'Administrative roles',
-                            section: 'Settings'
+                            section: 'Settings',
+                            level: 'level2'
                           },
                           perms: {
                             only: ['domain_member_list']
@@ -1374,7 +1452,8 @@ export const routes: Routes = [
                         data: {
                           menu: {
                             label: 'Theme',
-                            section: 'Design'
+                            section: 'Design',
+                            level: 'level2'
                           },
                           perms: {
                             only: ['domain_theme_list', 'domain_theme_read', 'domain_form_list', 'domain_form_read']
@@ -1391,7 +1470,8 @@ export const routes: Routes = [
                         data: {
                           menu: {
                             label: 'Texts',
-                            section: 'Design'
+                            section: 'Design',
+                            level: 'level2'
                           },
                           perms: {
                             only: [
@@ -1409,7 +1489,8 @@ export const routes: Routes = [
                         data: {
                           menu: {
                             label: 'Emails',
-                            section: 'Design'
+                            section: 'Design',
+                            level: 'level2'
                           },
                           perms: {
                             only: ['domain_email_template_list', 'domain_email_template_read']
@@ -1449,7 +1530,8 @@ export const routes: Routes = [
                         data: {
                           menu: {
                             label: 'Flows',
-                            section: 'Design'
+                            section: 'Design',
+                            level: 'level2'
                           },
                           perms: {
                             only: ['domain_flow_list']
@@ -1462,7 +1544,8 @@ export const routes: Routes = [
                         data: {
                           menu: {
                             label: 'Providers',
-                            section: 'Identities'
+                            section: 'Identities',
+                            level: 'level2'
                           },
                           perms: {
                             only: ['domain_identity_provider_list']
@@ -1547,7 +1630,8 @@ export const routes: Routes = [
                         data: {
                           menu: {
                             label: 'WebAuthn',
-                            section: 'Security'
+                            section: 'Security',
+                            level: 'level2'
                           },
                           perms: {
                             only: ['domain_settings_read']
@@ -1560,7 +1644,8 @@ export const routes: Routes = [
                         data: {
                           menu: {
                             label: 'Multifactor Auth',
-                            section: 'Security'
+                            section: 'Security',
+                            level: 'level2'
                           },
                           perms: {
                             only: ['domain_factor_list']
@@ -1624,7 +1709,8 @@ export const routes: Routes = [
                         data: {
                           menu: {
                             label: 'Password policy',
-                            section: 'Security'
+                            section: 'Security',
+                            level: 'level2'
                           },
                           perms: {
                             only: ['application_settings_read']
@@ -1637,7 +1723,8 @@ export const routes: Routes = [
                         data: {
                           menu: {
                             label: 'Audit Log',
-                            section: 'Security'
+                            section: 'Security',
+                            level: 'level2'
                           },
                           perms: {
                             only: ['domain_audit_list']
@@ -1727,7 +1814,8 @@ export const routes: Routes = [
                         data: {
                           menu: {
                             label: 'User Accounts',
-                            section: 'Security'
+                            section: 'Security',
+                            level: 'level2'
                           },
                           perms: {
                             only: ['domain_settings_read']
@@ -1740,7 +1828,8 @@ export const routes: Routes = [
                         data: {
                           menu: {
                             label: 'Certificates',
-                            section: 'Security'
+                            section: 'Security',
+                            level: 'level2'
                           },
                           perms: {
                             only: ['domain_certificate_list']
@@ -1783,7 +1872,8 @@ export const routes: Routes = [
                         data: {
                           menu: {
                             label: 'Bot Detection',
-                            section: 'Security'
+                            section: 'Security',
+                            level: 'level2'
                           },
                           perms: {
                             only: ['domain_bot_detection_list']
@@ -1841,7 +1931,8 @@ export const routes: Routes = [
                         data: {
                           menu: {
                             label: 'Device Identifier',
-                            section: 'Security'
+                            section: 'Security',
+                            level: 'level2'
                           },
                           perms: {
                             only: ['domain_device_identifier_list']
@@ -1899,7 +1990,8 @@ export const routes: Routes = [
                         data: {
                           menu: {
                             label: 'Services',
-                            section: 'Resources'
+                            section: 'Resources',
+                            level: 'level2'
                           },
                           perms: {
                             only: ['domain_resource_list']
@@ -1955,7 +2047,8 @@ export const routes: Routes = [
                         data: {
                           menu: {
                             label: 'Users',
-                            section: 'User Management'
+                            section: 'User Management',
+                            level: 'level2'
                           },
                           perms: {
                             only: ['domain_user_list']
@@ -2084,7 +2177,8 @@ export const routes: Routes = [
                         data: {
                           menu: {
                             label: 'Groups',
-                            section: 'User Management'
+                            section: 'User Management',
+                            level: 'level2'
                           },
                           perms: {
                             only: ['domain_group_list']
@@ -2144,6 +2238,7 @@ export const routes: Routes = [
                           menu: {
                             label: 'Roles',
                             section: 'User Management',
+                            level: 'level2'
                           },
                           perms: {
                             only: ['domain_role_list']
@@ -2197,7 +2292,8 @@ export const routes: Routes = [
                         data: {
                           menu: {
                             label: 'SCIM',
-                            section: 'User Management'
+                            section: 'User Management',
+                            level: 'level2'
                           },
                           perms: {
                             only: ['domain_scim_read']
@@ -2211,7 +2307,8 @@ export const routes: Routes = [
                         data: {
                           menu: {
                             label: 'Self-service account',
-                            section: 'User Management'
+                            section: 'User Management',
+                            level: 'level2'
                           },
                           perms: {
                             only: ['domain_settings_read']
@@ -2224,7 +2321,8 @@ export const routes: Routes = [
                         data: {
                           menu: {
                             label: 'Scopes',
-                            section: 'OAuth 2.0'
+                            section: 'OAuth 2.0',
+                            level: 'level2'
                           },
                           perms: {
                             only: ['domain_scope_list']
@@ -2273,7 +2371,8 @@ export const routes: Routes = [
                         data: {
                           menu: {
                             label: 'Extension Grants',
-                            section: 'OAuth 2.0'
+                            section: 'OAuth 2.0',
+                            level: 'level2'
                           },
                           perms: {
                             only: ['domain_extension_grant_list']
@@ -2327,7 +2426,8 @@ export const routes: Routes = [
                         data: {
                           menu: {
                             label: 'UMA',
-                            section: 'OAuth 2.0'
+                            section: 'OAuth 2.0',
+                            level: 'level2'
                           },
                           perms: {
                             only: ['domain_uma_read']
@@ -2341,7 +2441,8 @@ export const routes: Routes = [
                         data: {
                           menu: {
                             label: 'Client Registration',
-                            section: 'Openid'
+                            section: 'Openid',
+                            level: 'level2'
                           },
                           perms: {
                             only: ['domain_openid_read']
@@ -2377,7 +2478,8 @@ export const routes: Routes = [
                         data: {
                           menu: {
                             label: 'Security Profile',
-                            section: 'Openid'
+                            section: 'Openid',
+                            level: 'level2'
                           },
                           perms: {
                             only: ['domain_openid_read']
@@ -2391,7 +2493,8 @@ export const routes: Routes = [
                         data: {
                           menu: {
                             label: 'CIBA',
-                            section: 'Openid'
+                            section: 'Openid',
+                            level: 'level2'
                           },
                           perms: {
                             only: ['domain_openid_read']
@@ -2432,7 +2535,8 @@ export const routes: Routes = [
                         data: {
                           menu: {
                             label: 'SAML 2.0',
-                            section: 'SAML 2.0'
+                            section: 'SAML 2.0',
+                            level: 'level2'
                           },
                           perms: {
                             only: ['domain_saml_read']
@@ -2455,8 +2559,7 @@ export const routes: Routes = [
                       menu: {
                         label: 'Alerts',
                         icon: 'gio:alarm',
-                        level: 'top',
-                        beta: true
+                        level: 'top'
                       },
                       perms: {
                         only: ['domain_alert_read']
@@ -2476,7 +2579,8 @@ export const routes: Routes = [
                         data: {
                           menu: {
                             label: 'General',
-                            section: 'Alerts'
+                            section: 'Alerts',
+                            level: 'level2'
                           },
                           perms: {
                             only: ['domain_alert_read']
@@ -2494,7 +2598,8 @@ export const routes: Routes = [
                         data: {
                           menu: {
                             label: 'Notifiers',
-                            section: 'Alerts'
+                            section: 'Alerts',
+                            level: 'level2'
                           },
                           perms: {
                             only: ['domain_alert_notifier_list']
