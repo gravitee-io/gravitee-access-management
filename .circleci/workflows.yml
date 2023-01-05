@@ -281,7 +281,7 @@ commands:
                     ./build.sh -v << parameters.graviteeio_version >>
                     
                     docker run --rm -v "${GIT_GRAVITEE_PACKAGES_REPO}/am/${MAJOR_VERSION_NUMBER}.x:/packages" -e PACKAGECLOUD_TOKEN=${GIO_PACKAGECLOUD_TOKEN} digitalocean/packagecloud push --yes --skip-errors --verbose graviteeio/rpms/el/7 /packages/*.rpm
-                    
+              
     
 jobs:
   setup:
@@ -712,7 +712,7 @@ jobs:
 
   deploy-on-aks:
     docker:
-      - image: mcr.microsoft.com/azure-cli:2.34.1
+      - image: mcr.microsoft.com/azure-cli:2.42.0
     resource_class: small
     steps:
       - attach_workspace:
@@ -1015,8 +1015,7 @@ jobs:
           command: |
             if [ "${DRY_RUN}" == "false" ]; then
               echo "# --->>> NO IT IS NOT A DRY RUN : so we maven deploy to nexus staging"
-              ### Ignore this temporary to be able to test the git config, uncomment once it will be OK
-              ### mvn -s /tmp/.gravitee.settings.xml -B -U -P gravitee-release deploy -DskipTests=true
+              mvn -s /tmp/.gravitee.settings.xml -B -U -P gravitee-release deploy -DskipTests=true
             else
               echo "# --->>> THIS IS A DRY RUN: no deployment to nexus staging"
               exit 0
@@ -1119,6 +1118,28 @@ jobs:
 
       - notify-on-failure
       - notify-on-success
+      - keeper/env-export:
+          secret-url: keeper://ZOz4db245GNaETVwmPBk8w/field/password
+          var-name: SLACK_ACCESS_TOKEN
+      - when:
+          condition:
+            not: << pipeline.parameters.dry_run>>
+          steps:
+            - slack/notify:
+                channel: C02NGT20S4W
+                event: always
+                custom: |
+                  {
+                    "blocks": [
+                      {
+                        "type": "section",
+                        "text": {
+                          "type": "mrkdwn",
+                          "text": "🎆 AM - << pipeline.parameters.graviteeio_version >> released!"
+                        }
+                      }
+                    ]
+                  }
   build_n_push_am_ce_job:
     description: This Orb Job performs the docker build and publish for the am_ce dockerfile
     parameters:
@@ -1141,8 +1162,7 @@ jobs:
       graviteeio_version:
         type: string
         default: ''
-        description: "Gravitee.io Release version number (semver) ?"
-    
+        description: "Gravitee.io Release version number (semver) ?" 
     executor:
         name: ubuntu
         class: large
@@ -1234,11 +1254,14 @@ jobs:
         type: boolean
         default: true
         description: "Run in dry run mode?"
+      rc_requested:
+        type: boolean
+        default: false
+        description: "Do we have to release a RC"
       graviteeio_version:
         type: string
         default: ""
         description: "The Gravitee.io release version number of Gravitee.io APIM, for which to build and publish all zip bundles"
-    
     steps:
       - checkout
       - publish_rpms:
@@ -1386,6 +1409,7 @@ workflows:
           graviteeio_version: << pipeline.parameters.graviteeio_version >>
           dry_run: << pipeline.parameters.dry_run >>
           tag_latest: << pipeline.parameters.tag_latest >>
+          tag_latest_support: << pipeline.parameters.tag_latest_support >>
 
   daily-purge-azure-registry:
     triggers:

@@ -17,15 +17,24 @@ package io.gravitee.am.gateway.handler.common.utils;
 
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.safe.UserProperties;
+import io.vertx.core.MultiMap;
+import io.vertx.core.http.HttpMethod;
+import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import static io.gravitee.am.common.utils.ConstantKeys.PARAM_CONTEXT_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.USER_CONTEXT_KEY;
 import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
@@ -40,6 +49,7 @@ public class ThymeleafDataHelperTest {
 
     @Test
     public void shouldGetUserFromContext() {
+        defineDefaultRequestMock();
         given(routingContext.get(eq(USER_CONTEXT_KEY))).willReturn(user);
         var data = ThymeleafDataHelper.generateData(routingContext, null, null);
         assertThat(data.get(USER_CONTEXT_KEY), instanceOf(UserProperties.class));
@@ -47,6 +57,7 @@ public class ThymeleafDataHelperTest {
 
     @Test
     public void shouldGetAuthenticatedUser() {
+        defineDefaultRequestMock();
         given(routingContext.get(eq(USER_CONTEXT_KEY))).willReturn(null);
         io.vertx.reactivex.ext.auth.User authenticatedUser = mock(io.vertx.reactivex.ext.auth.User.class);
         given(routingContext.user()).willReturn(authenticatedUser);
@@ -57,5 +68,74 @@ public class ThymeleafDataHelperTest {
 
         var data = ThymeleafDataHelper.generateData(routingContext, null, null);
         assertThat(data.get(USER_CONTEXT_KEY), instanceOf(UserProperties.class));
+    }
+
+    private void defineDefaultRequestMock() {
+        final HttpServerRequest serverRequest = mock(HttpServerRequest.class);
+        final io.vertx.core.http.HttpServerRequest delegatedServerRequest = mock(io.vertx.core.http.HttpServerRequest.class);
+        given(delegatedServerRequest.method()).willReturn(HttpMethod.POST);
+        given(delegatedServerRequest.params()).willReturn(MultiMap.caseInsensitiveMultiMap());
+        given(serverRequest.getDelegate()).willReturn(delegatedServerRequest);
+        given(routingContext.request()).willReturn(serverRequest);
+    }
+
+    @Test
+    public void shouldProvideRequestParameters() {
+        final HttpServerRequest serverRequest = mock(HttpServerRequest.class);
+        final io.vertx.core.http.HttpServerRequest delegatedServerRequest = mock(io.vertx.core.http.HttpServerRequest.class);
+        given(delegatedServerRequest.method()).willReturn(HttpMethod.POST);
+        given(delegatedServerRequest.params()).willReturn(MultiMap.caseInsensitiveMultiMap()
+                .add("param1", "value")
+                .add("param2", "value2-1")
+                .add("param2", "value2-2"));
+        given(serverRequest.getDelegate()).willReturn(delegatedServerRequest);
+        given(routingContext.request()).willReturn(serverRequest);
+
+        given(routingContext.get(eq(USER_CONTEXT_KEY))).willReturn(null);
+        io.vertx.reactivex.ext.auth.User authenticatedUser = mock(io.vertx.reactivex.ext.auth.User.class);
+        given(routingContext.user()).willReturn(authenticatedUser);
+        io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User delegateUser = mock(io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User.class);
+        given(authenticatedUser.getDelegate()).willReturn(delegateUser);
+        given(delegateUser.getUser()).willReturn(user);
+
+        var data = ThymeleafDataHelper.generateData(routingContext, null, null);
+        assertThat(data.get(USER_CONTEXT_KEY), instanceOf(UserProperties.class));
+        assertThat(data.get(PARAM_CONTEXT_KEY), instanceOf(Map.class));
+        assertTrue(((Map<String, Object>)data.get(PARAM_CONTEXT_KEY)).containsKey("param1"));
+        assertTrue(((Map<String, Object>)data.get(PARAM_CONTEXT_KEY)).containsKey("param2"));
+        assertEquals(((Map<String, Object>)data.get(PARAM_CONTEXT_KEY)).get("param2"), "value2-1");
+    }
+
+    @Test
+    public void shouldProvideRequestParameters_NoOverride() {
+        final HttpServerRequest serverRequest = mock(HttpServerRequest.class);
+        final io.vertx.core.http.HttpServerRequest delegatedServerRequest = mock(io.vertx.core.http.HttpServerRequest.class);
+        given(delegatedServerRequest.method()).willReturn(HttpMethod.POST);
+        given(delegatedServerRequest.params()).willReturn(MultiMap.caseInsensitiveMultiMap()
+                .add("param1", "value")
+                .add("param2", "value2-1")
+                .add("param2", "value2-2"));
+        given(serverRequest.getDelegate()).willReturn(delegatedServerRequest);
+        given(routingContext.request()).willReturn(serverRequest);
+
+        final var dataFromContext = new HashMap<String, Object>();
+        final var params = new HashMap<>();
+        params.put("param2", "original");
+        dataFromContext.put(PARAM_CONTEXT_KEY, params);
+        given(routingContext.data()).willReturn(dataFromContext);
+
+        given(routingContext.get(eq(USER_CONTEXT_KEY))).willReturn(null);
+        io.vertx.reactivex.ext.auth.User authenticatedUser = mock(io.vertx.reactivex.ext.auth.User.class);
+        given(routingContext.user()).willReturn(authenticatedUser);
+        io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User delegateUser = mock(io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User.class);
+        given(authenticatedUser.getDelegate()).willReturn(delegateUser);
+        given(delegateUser.getUser()).willReturn(user);
+
+        var data = ThymeleafDataHelper.generateData(routingContext, null, null);
+        assertThat(data.get(USER_CONTEXT_KEY), instanceOf(UserProperties.class));
+        assertThat(data.get(PARAM_CONTEXT_KEY), instanceOf(Map.class));
+        assertTrue(((Map<String, Object>)data.get(PARAM_CONTEXT_KEY)).containsKey("param1"));
+        assertTrue(((Map<String, Object>)data.get(PARAM_CONTEXT_KEY)).containsKey("param2"));
+        assertEquals(((Map<String, Object>)data.get(PARAM_CONTEXT_KEY)).get("param2"), "original");
     }
 }

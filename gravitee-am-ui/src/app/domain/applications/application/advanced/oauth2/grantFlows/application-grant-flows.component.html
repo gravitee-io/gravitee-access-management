@@ -45,6 +45,22 @@
 
       <div class="gv-form-section">
         <div class="gv-form-section-title">
+          <h5>Refresh Token</h5>
+          <small>Configure how your application will use refresh tokens.</small>
+          <mat-divider></mat-divider>
+        </div>
+        <div fxLayout="column">
+          <mat-slide-toggle
+            (change)="disableRefreshTokenRotation($event)"
+            [checked]="isRefreshTokenRotationDisabled()" [disabled]="readonly || !isRefreshTokenFlowSelected()">
+            Disable Refresh Token Rotation
+          </mat-slide-toggle>
+          <mat-hint style="font-size: 75%;">Reuse refresh tokens until expiration to issue new access tokens. Disabled by default to follow OAuth 2.0 best practices.</mat-hint>
+        </div>
+      </div>
+
+      <div class="gv-form-section">
+        <div class="gv-form-section-title">
           <h5>Proof Key for Code Exchange (PKCE)</h5>
           <small>PKCE is an extension to the Authorization Code flow to prevent interception attack for public clients.</small>
           <mat-divider></mat-divider>
@@ -116,6 +132,30 @@
             <mat-form-field appearance="outline" floatLabel="always" fxFlex="32">
               <input matInput type="text" placeholder="rfc822Name SAN entry" name="tlsClientAuthSanEmail" (ngModelChange)="modelChanged($event)" [(ngModel)]="applicationOauthSettings.tlsClientAuthSanEmail" [disabled]="readonly" />
               <mat-hint>The expected rfc822Name SAN entry in the certificate</mat-hint>
+            </mat-form-field>
+          </div>
+        </div>
+      </div>
+
+      <div class="gv-form-section" *ngIf="applicationOauthSettings.tokenEndpointAuthMethod === 'private_key_jwt'">
+        <div class="gv-form-section-title">
+          <h5>Advanced Assertion Client authentication</h5>
+          <small>When using assertions for client authentication, clients have to register a public key (JWKS format) to interact with the token endpoint.</small>
+          <mat-divider></mat-divider>
+        </div>
+        <div fxLayout="column" fxLayoutGap="10px">
+          <div fxLayout="column">
+            <mat-form-field appearance="outline" floatLabel="always">
+              <mat-label>jwks_uri</mat-label>
+              <input matInput type="text" placeholder="Enter the jwks_uri value" name="jwksUri" (ngModelChange)="modelChanged($event)" [(ngModel)]="applicationOauthSettings.jwksUri" [disabled]="readonly" />
+              <mat-hint>URL for the Client's JSON Web Key Set (JWK) document</mat-hint>
+            </mat-form-field>
+          </div>
+          <div fxLayout="column">
+            <mat-form-field appearance="outline" floatLabel="always">
+              <mat-label>jwks</mat-label>
+              <textarea rows="10" matInput type="text" placeholder="Enter the jwks value" name="jwks" (ngModelChange)="modelChanged($event)" [(ngModel)]="applicationOauthSettings.jwks" [disabled]="readonly"></textarea>
+              <mat-hint>Client's JSON Web Key Set (JWK) document, passed by value. This parameter is intended only to be used by Clients that, for some reason, are unable to use the jwks_uri parameter.</mat-hint>
             </mat-form-field>
           </div>
         </div>

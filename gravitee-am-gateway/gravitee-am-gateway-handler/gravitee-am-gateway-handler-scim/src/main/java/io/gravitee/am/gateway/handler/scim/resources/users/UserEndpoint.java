@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.scim.resources.users;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.common.scim.Schema;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidSyntaxException;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
@@ -35,6 +36,9 @@ import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.Json;
 import io.vertx.reactivex.ext.web.RoutingContext;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
@@ -101,11 +105,14 @@ public class UserEndpoint extends AbstractUserEndpoint {
      */
     public void update(RoutingContext context) {
         try {
-            if(context.getBodyAsString() == null) {
+            final String body = context.getBodyAsString();
+            if (body == null) {
                 context.fail(new InvalidSyntaxException("Unable to parse body message"));
                 return;
             }
-            final User user = Json.decodeValue(context.getBodyAsString(), User.class);
+            final Map<String, Object> payload = Json.decodeValue(body, Map.class);
+            final List<String> schemas = (List<String>) Optional.ofNullable(payload.get("schemas")).orElse(Collections.emptyList());
+            final User user = evaluateUser(schemas, body);
             final String userId = context.request().getParam("id");
 
             // username is required
@@ -116,7 +123,7 @@ public class UserEndpoint extends AbstractUserEndpoint {
 
             // schemas field is REQUIRED and MUST contain valid values and MUST not contain duplicate values
             try {
-                checkSchemas(user.getSchemas(), EnterpriseUser.SCHEMAS);
+                checkSchemas(user.getSchemas(), Schema.supportedSchemas());
             } catch (Exception ex) {
                 context.fail(ex);
                 return;

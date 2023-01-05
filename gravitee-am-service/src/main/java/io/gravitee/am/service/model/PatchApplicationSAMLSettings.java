@@ -30,6 +30,8 @@ public class PatchApplicationSAMLSettings {
     private Optional<String> attributeConsumeServiceUrl;
     private Optional<String> singleLogoutServiceUrl;
     private Optional<String> certificate;
+    private Optional<Boolean> wantResponseSigned;
+    private Optional<Boolean> wantAssertionsSigned;
 
     public Optional<String> getEntityId() {
         return entityId;
@@ -63,6 +65,22 @@ public class PatchApplicationSAMLSettings {
         this.certificate = certificate;
     }
 
+    public Optional<Boolean> getWantResponseSigned() {
+        return wantResponseSigned;
+    }
+
+    public void setWantResponseSigned(Optional<Boolean> wantResponseSigned) {
+        this.wantResponseSigned = wantResponseSigned;
+    }
+
+    public Optional<Boolean> getWantAssertionsSigned() {
+        return wantAssertionsSigned;
+    }
+
+    public void setWantAssertionsSigned(Optional<Boolean> wantAssertionsSigned) {
+        this.wantAssertionsSigned = wantAssertionsSigned;
+    }
+
     public ApplicationSAMLSettings patch(ApplicationSAMLSettings _toPatch) {
         // create new object for audit purpose (patch json result)
         ApplicationSAMLSettings toPatch = _toPatch == null ? new ApplicationSAMLSettings() : new ApplicationSAMLSettings(_toPatch);
@@ -70,6 +88,8 @@ public class PatchApplicationSAMLSettings {
         SetterUtils.safeSet(toPatch::setAttributeConsumeServiceUrl, this.getAttributeConsumeServiceUrl());
         SetterUtils.safeSet(toPatch::setSingleLogoutServiceUrl, this.getSingleLogoutServiceUrl());
         SetterUtils.safeSet(toPatch::setCertificate, this.getCertificate());
+        SetterUtils.safeSet(toPatch::setWantResponseSigned, this.getWantResponseSigned());
+        SetterUtils.safeSet(toPatch::setWantAssertionsSigned, this.getWantAssertionsSigned());
         return toPatch;
     }
 }

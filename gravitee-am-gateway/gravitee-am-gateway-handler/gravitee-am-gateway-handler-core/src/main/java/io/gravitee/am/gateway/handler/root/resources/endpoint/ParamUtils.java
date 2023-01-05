@@ -18,7 +18,10 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint;
 import com.nimbusds.jwt.JWT;
 import io.gravitee.am.common.oidc.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.common.web.UriBuilder;
+import io.gravitee.am.identityprovider.common.oauth2.utils.URLEncodedUtils;
 import io.vertx.core.json.Json;
+import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,9 +29,16 @@ import org.slf4j.LoggerFactory;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.ParseException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Pattern;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.util.Objects.nonNull;
 
 /**
@@ -141,5 +151,25 @@ public class ParamUtils {
             patternBuilder.append(patternPath);
         }
         return patternBuilder.toString();
+    }
+
+    public static String appendQueryParameter(String redirectTo, MultiMap queryParams) {
+        try {
+            final var query = new URL(redirectTo).getQuery();
+            final var redirectQueryParams = isNullOrEmpty(query) ? Collections.emptyMap() : URLEncodedUtils.format(query);
+
+            final var uriBuilder = UriBuilder.fromHttpUrl(redirectTo);
+            queryParams.forEach(entry -> {
+                if (!redirectQueryParams.containsKey(entry.getKey())) {
+                    // some parameters can be already URL encoded, decode first
+                    uriBuilder.addParameter(entry.getKey(), UriBuilder.encodeURIComponent(UriBuilder.decodeURIComponent(entry.getValue())));
+                }
+            });
+
+            return uriBuilder.buildString();
+        } catch (Exception e) {
+            LOGGER.warn("Unable to append parameters to {} due to : {}", redirectTo, e.getMessage());
+        }
+        return redirectTo;
     }
 }

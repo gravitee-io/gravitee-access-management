@@ -119,6 +119,17 @@ export class PasswordPolicyComponent implements OnInit {
 
     const data: any = {};
     data.settings = {};
+    
+    if (this.minLength && this.minLength <= 0)  {
+      this.snackbarService.open('Min length must be greater than zero');
+      return;
+    }
+
+    if (this.maxLength && this.maxLength <= 0)  {
+      this.snackbarService.open('Max length must be greater than zero');
+      return;
+    }
+
     data.settings.passwordSettings = {
       'inherited': this.inherited,
       'minLength': this.minLength,

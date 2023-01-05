@@ -17,11 +17,12 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.user.password;
 
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
+import io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.UserRequestHandler;
 import io.gravitee.am.gateway.handler.root.service.response.ResetPasswordResponse;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
@@ -30,6 +31,7 @@ import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.env.Environment;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -37,11 +39,14 @@ import org.slf4j.LoggerFactory;
  */
 public class ResetPasswordSubmissionEndpoint extends UserRequestHandler {
 
+    public static final String GATEWAY_ENDPOINT_RESET_PWD_KEEP_PARAMS = "legacy.resetPassword.keepParams";
     private static final Logger logger = LoggerFactory.getLogger(ResetPasswordSubmissionEndpoint.class);
     private final UserService userService;
 
-    public ResetPasswordSubmissionEndpoint(UserService userService) {
+    private final boolean keepParams;
+    public ResetPasswordSubmissionEndpoint(UserService userService, Environment environment) {
         this.userService = userService;
+        this.keepParams = environment.getProperty(GATEWAY_ENDPOINT_RESET_PWD_KEEP_PARAMS, boolean.class, true);
     }
 
     @Override
@@ -81,8 +86,9 @@ public class ResetPasswordSubmissionEndpoint extends UserRequestHandler {
                 return;
             }
             // else, redirect to the custom redirect_uri
+            var redirectTo = keepParams ? ParamUtils.appendQueryParameter(resetPasswordResponse.getRedirectUri(), queryParams) : resetPasswordResponse.getRedirectUri();
             context.response()
-                    .putHeader(HttpHeaders.LOCATION, resetPasswordResponse.getRedirectUri())
+                    .putHeader(HttpHeaders.LOCATION, redirectTo)
                     .setStatusCode(302)
                     .end();
         });

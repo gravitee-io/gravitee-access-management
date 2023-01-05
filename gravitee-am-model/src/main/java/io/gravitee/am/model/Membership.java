@@ -16,6 +16,7 @@
 package io.gravitee.am.model;
 
 import io.gravitee.am.model.membership.MemberType;
+import io.swagger.annotations.ApiModelProperty;
 
 import java.util.Date;
 
@@ -32,7 +33,9 @@ public class Membership {
     private String referenceId;
     private ReferenceType referenceType;
     private String roleId;
+    @ApiModelProperty(dataType = "java.lang.Long")
     private Date createdAt;
+    @ApiModelProperty(dataType = "java.lang.Long")
     private Date updatedAt;
 
     public Membership() {}

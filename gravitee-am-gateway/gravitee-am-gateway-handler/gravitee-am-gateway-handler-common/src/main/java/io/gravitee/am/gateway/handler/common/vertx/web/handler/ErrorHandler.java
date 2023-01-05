@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.common.vertx.web.handler;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.gravitee.am.common.exception.authentication.AuthenticationException;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.gateway.policy.PolicyChainException;
 import io.gravitee.am.service.exception.AbstractManagementException;
@@ -57,6 +58,9 @@ public class ErrorHandler implements Handler<RoutingContext> {
             } else if (throwable instanceof HttpException) {
                 HttpException httpStatusException = (HttpException) throwable;
                 handleException(routingContext, httpStatusException.getStatusCode(), httpStatusException.getPayload());
+            } else if (throwable instanceof AuthenticationException) {
+                AuthenticationException authenticationException = (AuthenticationException) throwable;
+                handleException(routingContext, authenticationException.getHttpStatusCode(), authenticationException.getErrorCode() + " : " + authenticationException.getMessage());
             } else {
                 logger.error(throwable.getMessage(), throwable);
                 if (routingContext.statusCode() != -1) {

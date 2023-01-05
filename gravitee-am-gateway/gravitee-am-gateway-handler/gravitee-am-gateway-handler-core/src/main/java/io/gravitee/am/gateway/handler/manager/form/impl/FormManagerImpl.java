@@ -103,13 +103,17 @@ public class FormManagerImpl extends AbstractService implements FormManager, Ini
         formRepository.findById(formId)
                 .subscribe(
                         form -> {
-                            // check if form has been disabled
-                            if (forms.containsKey(formId) && !form.isEnabled()) {
-                                removeForm(formId);
+                            if (needDeployment(form)) {
+                                // check if form has been disabled
+                                if (forms.containsKey(formId) && !form.isEnabled()) {
+                                    removeForm(formId);
+                                } else {
+                                    updateForm(form);
+                                }
+                                logger.info("Form {} {}d for domain {}", formId, eventType, domain.getName());
                             } else {
-                                updateForm(form);
+                                logger.info("Form {} already {}d for domain {}", formId, eventType, domain.getName());
                             }
-                            logger.info("Form {} {}d for domain {}", formId, eventType, domain.getName());
                         },
                         error -> logger.error("Unable to {} form for domain {}", eventType, domain.getName(), error),
                         () -> logger.error("No form found with id {}", formId));
@@ -134,5 +138,14 @@ public class FormManagerImpl extends AbstractService implements FormManager, Ini
     private String getTemplateName(Form form) {
         return form.getTemplate()
                 + ((form.getClient() != null) ? TEMPLATE_NAME_SEPARATOR + form.getClient() : "");
+    }
+
+    /**
+     * @param form
+     * @return true if the Form has never been deployed or if the deployed version is not up to date
+     */
+    private boolean needDeployment(Form form) {
+        final Form deployedForm = this.forms.get(form.getId());
+        return (deployedForm == null || deployedForm.getUpdatedAt().before(form.getUpdatedAt()));
     }
 }

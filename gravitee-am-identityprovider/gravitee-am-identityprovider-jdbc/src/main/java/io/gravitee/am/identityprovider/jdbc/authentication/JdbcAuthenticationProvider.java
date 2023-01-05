@@ -44,6 +44,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static java.util.Optional.ofNullable;
 
@@ -98,13 +99,15 @@ public class JdbcAuthenticationProvider extends JdbcAbstractProvider<Authenticat
                 })
                 .toList()
                 .flatMapMaybe(userEvaluations -> {
-                    if (userEvaluations.stream().filter(UserCredentialEvaluation::isPasswordValid).count() > 1) {
+                    final var validUsers = userEvaluations.stream().filter(UserCredentialEvaluation::isPasswordValid).collect(Collectors.toList());
+                    if (validUsers.size() > 1) {
                         LOGGER.debug("Authentication failed: multiple accounts with same credentials");
                         return Maybe.error(new BadCredentialsException("Bad credentials"));
                     }
-                    var userEvaluation = userEvaluations.get(0);
-                    var user = this.createUser(authentication.getContext(), userEvaluation.getUser());
 
+                    var userEvaluation = !validUsers.isEmpty() ?  validUsers.get(0) : userEvaluations.get(0);
+
+                    var user = this.createUser(authentication.getContext(), userEvaluation.getUser());
                     ofNullable(authentication.getContext()).ifPresent(auth -> auth.set(ACTUAL_USERNAME, user.getUsername()));
 
                     return userEvaluation.isPasswordValid() ?

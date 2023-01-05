@@ -41,6 +41,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import static io.gravitee.am.common.utils.ConstantKeys.ACTION_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.REQUEST_CONTEXT_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.TEMPLATE_KEY_ALLOW_FORGOT_PASSWORD_CONTEXT_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.TEMPLATE_KEY_ALLOW_PASSWORDLESS_CONTEXT_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.TEMPLATE_KEY_ALLOW_REGISTER_CONTEXT_KEY;
@@ -62,8 +63,6 @@ import static java.util.Optional.ofNullable;
  */
 public class LoginEndpoint extends AbstractEndpoint implements Handler<RoutingContext> {
     private static final Logger logger = LoggerFactory.getLogger(LoginEndpoint.class);
-
-    private static final String REQUEST_CONTEXT_KEY = "request";
 
     private final Domain domain;
     private final BotDetectionManager botDetectionManager;

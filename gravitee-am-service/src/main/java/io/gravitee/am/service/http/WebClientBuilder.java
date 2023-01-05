@@ -16,8 +16,7 @@
 package io.gravitee.am.service.http;
 
 import io.gravitee.common.util.EnvironmentUtils;
-import io.vertx.core.net.ProxyOptions;
-import io.vertx.core.net.ProxyType;
+import io.vertx.core.net.*;
 import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.ext.web.client.WebClient;
@@ -42,7 +41,15 @@ public class WebClientBuilder {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WebClientBuilder.class);
     private static final String HTTPS_SCHEME = "https";
-    private static final Pattern WILCARD_PATTERN = Pattern.compile("\\*\\.");
+    private static final String JKS_KEYSTORE_TYPE = "jks";
+    private static final String PKCS12_KEYSTORE_TYPE = "pkcs12";
+    private static final String PEM_KEYSTORE_TYPE = "pem";
+    private static final String SSL_TRUST_STORE_PATH = "httpClient.ssl.truststore.path";
+    private static final String SSL_TRUST_STORE_PASSWORD = "httpClient.ssl.truststore.password";
+    private static final String SSL_KEYSTORE_STORE_PATH = "httpClient.ssl.keystore.path";
+    private static final String SSL_KEYSTORE_STORE_KEY_PATH = "httpClient.ssl.keystore.keyPath";
+    private static final String SSL_KEYSTORE_STORE_PASSWORD = "httpClient.ssl.keystore.password";
+    private static final Pattern WILDCARD_PATTERN = Pattern.compile("\\*\\.");
 
     @Value("${httpClient.timeout:10000}")
     private int httpClientTimeout;
@@ -77,6 +84,21 @@ public class WebClientBuilder {
     @Value("${httpClient.proxy.enabled:false}")
     private boolean isProxyConfigured;
 
+    @Value("${httpClient.ssl.enabled:false}")
+    private boolean isSSLEnabled;
+
+    @Value("${httpClient.ssl.trustAll:false}")
+    private boolean isSSLTrustAllEnabled;
+
+    @Value("${httpClient.ssl.verifyHost:true}")
+    private boolean isSSLVerifyHostEnabled;
+
+    @Value("${httpClient.ssl.truststore.type:#{null}}")
+    private String sslTrustStoreType;
+
+    @Value("${httpClient.ssl.keystore.type:#{null}}")
+    private String sslKeyStoreType;
+
     @Autowired
     private Environment environment;
 
@@ -102,6 +124,7 @@ public class WebClientBuilder {
 
     public WebClient createWebClient(Vertx vertx, WebClientOptions options, String url) {
         setProxySettings(options, url);
+        setSSLSettings(options);
         return WebClient.create(vertx, options);
     }
 
@@ -125,6 +148,85 @@ public class WebClientBuilder {
         }
     }
 
+    private void setSSLSettings(WebClientOptions options) {
+        if (isSSLEnabled) {
+            options.setTrustAll(isSSLTrustAllEnabled);
+            options.setVerifyHost(isSSLVerifyHostEnabled);
+            if (sslTrustStoreType != null) {
+                switch(sslTrustStoreType) {
+                    case JKS_KEYSTORE_TYPE:
+                        setJksTrustOptions(options);
+                        break;
+                    case PKCS12_KEYSTORE_TYPE:
+                        setPfxTrustOptions(options);
+                        break;
+                    case PEM_KEYSTORE_TYPE:
+                        setPemTrustOptions(options);
+                        break;
+                    default:
+                        LOGGER.error("No suitable httpClient SSL TrustStore type found for : " + sslTrustStoreType);
+                }
+            }
+            if (sslKeyStoreType != null) {
+                switch(sslKeyStoreType) {
+                    case JKS_KEYSTORE_TYPE:
+                        setJksKeyOptions(options);
+                        break;
+                    case PKCS12_KEYSTORE_TYPE:
+                        setPfxKeyOptions(options);
+                        break;
+                    case PEM_KEYSTORE_TYPE:
+                        setPemKeyOptions(options);
+                        break;
+                    default:
+                        LOGGER.error("No suitable httpClient SSL KeyStore type found for : " + sslKeyStoreType);
+                }
+            }
+        }
+    }
+
+
+    private void setJksTrustOptions(WebClientOptions options) {
+        JksOptions jksOptions = new JksOptions();
+        jksOptions.setPath(environment.getProperty(SSL_TRUST_STORE_PATH));
+        jksOptions.setPassword(environment.getProperty(SSL_TRUST_STORE_PASSWORD));
+        options.setTrustStoreOptions(jksOptions);
+    }
+
+    private void setPemTrustOptions(WebClientOptions options) {
+        PemTrustOptions pemOptions = new PemTrustOptions();
+        pemOptions.addCertPath(environment.getProperty(SSL_TRUST_STORE_PATH));
+        options.setPemTrustOptions(pemOptions);
+    }
+
+    private void setPfxTrustOptions(WebClientOptions options) {
+        PfxOptions pfxOptions = new PfxOptions();
+        pfxOptions.setPath(environment.getProperty(SSL_TRUST_STORE_PATH));
+        pfxOptions.setPassword(environment.getProperty(SSL_TRUST_STORE_PASSWORD));
+        options.setPfxTrustOptions(pfxOptions);
+    }
+
+    private void setJksKeyOptions(WebClientOptions options) {
+        JksOptions jksOptions = new JksOptions();
+        jksOptions.setPath(environment.getProperty(SSL_KEYSTORE_STORE_PATH));
+        jksOptions.setPassword(environment.getProperty(SSL_KEYSTORE_STORE_PASSWORD));
+        options.setKeyStoreOptions(jksOptions);
+    }
+
+    private void setPemKeyOptions(WebClientOptions options) {
+        PemKeyCertOptions pemOptions = new PemKeyCertOptions();
+        pemOptions.setCertPath(environment.getProperty(SSL_KEYSTORE_STORE_PATH));
+        pemOptions.setKeyPath(environment.getProperty(SSL_KEYSTORE_STORE_KEY_PATH));
+        options.setPemKeyCertOptions(pemOptions);
+    }
+
+    private void setPfxKeyOptions(WebClientOptions options) {
+        PfxOptions pfxOptions = new PfxOptions();
+        pfxOptions.setPath(environment.getProperty(SSL_KEYSTORE_STORE_PATH));
+        pfxOptions.setPassword(environment.getProperty(SSL_KEYSTORE_STORE_PASSWORD));
+        options.setPfxKeyCertOptions(pfxOptions);
+    }
+
     private boolean isExcludedHost(String url) {
         if (url == null) {
             return false;
@@ -139,7 +241,7 @@ public class WebClientBuilder {
                     .collect(Collectors.toList());
 
             if(url.contains("?")) {
-                // Remove the query part as it could contains invalid characters such as those used in El expression.
+                // Remove the query part as it could contain invalid characters such as those used in El expression.
                 url = url.substring(0, url.indexOf('?'));
             }
 
@@ -147,7 +249,7 @@ public class WebClientBuilder {
             String host = uri.getHost();
             return proxyExcludeHosts.stream().anyMatch(excludedHost -> {
                 if (excludedHost.startsWith("*.")) {
-                    return host.endsWith(WILCARD_PATTERN.matcher(excludedHost).replaceFirst(""));
+                    return host.endsWith(WILDCARD_PATTERN.matcher(excludedHost).replaceFirst(""));
                 } else {
                     return host.equals(excludedHost);
                 }

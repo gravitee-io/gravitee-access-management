@@ -32,6 +32,7 @@ import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
@@ -73,7 +74,9 @@ public class WebAuthnLoginEndpoint extends AbstractEndpoint implements Handler<R
 
             final String loginActionKey = routingContext.get(CONTEXT_PATH) + "/login";
             routingContext.put(ConstantKeys.LOGIN_ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), loginActionKey, queryParams, true));
-            routingContext.put(ConstantKeys.PARAM_CONTEXT_KEY, Collections.singletonMap(Parameters.CLIENT_ID, client.getClientId()));
+            var params = new HashMap<>();
+            params.put(Parameters.CLIENT_ID, client.getClientId());
+            routingContext.put(ConstantKeys.PARAM_CONTEXT_KEY, params);
             addUserActivityTemplateVariables(routingContext, userActivityService);
             addUserActivityConsentTemplateVariables(routingContext);
 

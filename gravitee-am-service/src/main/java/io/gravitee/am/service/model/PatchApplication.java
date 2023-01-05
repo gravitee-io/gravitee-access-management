@@ -132,6 +132,12 @@ public class PatchApplication {
             toPatch.setIdentityProviders(appIdentityProviders);
         }
 
+        if (toPatch.getSettings() != null && toPatch.getSettings().getOauth() != null) {
+            // the OAuth Setting clientName can't be updated by the patch method
+            // we have to update it here
+            toPatch.getSettings().getOauth().setClientName(toPatch.getName());
+        }
+
         return toPatch;
     }
 

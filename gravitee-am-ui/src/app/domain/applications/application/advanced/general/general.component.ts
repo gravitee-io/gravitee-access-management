@@ -168,13 +168,14 @@ export class ApplicationGeneralComponent implements OnInit {
   addRedirectUris(event) {
     event.preventDefault();
     if (this.redirectUri) {
-      if (!this.redirectUris.some(el => el.value === this.redirectUri)) {
-        this.redirectUris.push({value: this.redirectUri});
+      const sanitizedUri = this.redirectUri.trim();
+      if (!this.redirectUris.some(el => el.value === sanitizedUri)) {
+        this.redirectUris.push({value: sanitizedUri});
         this.redirectUris = [...this.redirectUris];
         this.redirectUri = null;
         this.formChanged = true;
       } else {
-        this.snackbarService.open(`Error : redirect URI "${this.redirectUri}" already exists`);
+        this.snackbarService.open(`Error : redirect URI "${sanitizedUri}" already exists`);
       }
     }
   }
@@ -182,13 +183,14 @@ export class ApplicationGeneralComponent implements OnInit {
   addRequestUris(event) {
     event.preventDefault();
     if (this.requestUri) {
-      if (!this.requestUris.some(el => el.value === this.requestUri)) {
-        this.requestUris.push({value: this.requestUri});
+      const sanitizedUri = this.requestUri.trim();
+      if (!this.requestUris.some(el => el.value === sanitizedUri)) {
+        this.requestUris.push({value: sanitizedUri});
         this.requestUris = [...this.requestUris];
         this.requestUri = null;
         this.formChanged = true;
       } else {
-        this.snackbarService.open(`Error : request URI "${this.requestUri}" already exists`);
+        this.snackbarService.open(`Error : request URI "${sanitizedUri}" already exists`);
       }
     }
   }
@@ -197,13 +199,14 @@ export class ApplicationGeneralComponent implements OnInit {
   addLogoutRedirectUris(event) {
     event.preventDefault();
     if (this.logoutRedirectUri) {
-      if (!this.logoutRedirectUris.some(el => el.value === this.logoutRedirectUri)) {
-        this.logoutRedirectUris.push({value: this.logoutRedirectUri});
+      const sanitizedUri = this.logoutRedirectUri.trim();
+      if (!this.logoutRedirectUris.some(el => el.value === sanitizedUri)) {
+        this.logoutRedirectUris.push({value: sanitizedUri});
         this.logoutRedirectUris = [...this.logoutRedirectUris];
         this.logoutRedirectUri = null;
         this.formChanged = true;
       } else {
-        this.snackbarService.open(`Error : redirect URI "${this.logoutRedirectUri}" already exists`);
+        this.snackbarService.open(`Error : redirect URI "${sanitizedUri}" already exists`);
       }
     }
   }
