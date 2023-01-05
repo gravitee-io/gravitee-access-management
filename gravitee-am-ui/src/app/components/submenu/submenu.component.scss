@@ -1,0 +1,29 @@
+@use 'sass:map';
+@use '@gravitee/ui-particles-angular' as gio;
+
+.submenu__title {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  gap: 8px;
+  &__icon {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+    &__template {
+      color: map.get(gio.$mat-warning-palette, default);
+    }
+  }
+  &__type {
+    background: #fff;
+    color: map.get(gio.$mat-space-palette, lighter40);
+    padding: 4px 8px 5px 8px;
+    border-radius: 16px;
+  }
+  &__name {
+    color: map.get(gio.$mat-dove-palette, default);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}

@@ -15,14 +15,14 @@
     limitations under the License.
 
 -->
-<div class="gv-page-container" fxFlex="70">
-  <app-emails [emails]="emails"></app-emails>
-</div>
-<div class="gv-page-description" fxFlex>
-  <h3>Application's email templates</h3>
-  <div class="gv-page-description-content">
-    <p>
-      Application email templates allows you to customize your emails to fit your corporate identity guidelines.
-    </p>
+<div fxLayout="column">
+  <div class="gv-form-section">
+    <div class="gv-form-section-title">
+      <h2>Templates</h2>
+      <span>Display custom email templates to fit tour identity guidelines.</span>
+    </div>
+    <div>
+      <app-emails [emails]="emails"></app-emails>
+    </div>
   </div>
 </div>

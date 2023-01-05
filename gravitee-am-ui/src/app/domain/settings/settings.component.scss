@@ -1,11 +1,5 @@
-:host {
-  mat-sidenav {
-    overflow: scroll;
-  }
-  mat-sidenav-content {
-    width: 100%;
-  }
-  .domain-settings-main-content {
-    height: calc(100vh - 124px);
-  }
+.domain-settings-content {
+  height: calc(100vh - 68px);
+  overflow: auto;
+  width: 100%;
 }

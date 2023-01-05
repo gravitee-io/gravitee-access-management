@@ -1,4 +1,5 @@
 /* You can add global styles to this file, and also import other style files */
+@use 'sass:map';
 @use '@angular/material' as mat;
 @use '@gravitee/ui-particles-angular' as gio;
 @import '~@gravitee/ui-components/assets/css/gravitee-console-theme.css';
@@ -236,6 +237,23 @@ mat-sidenav-container {
   }
 }
 
+.gio-submenu {
+  a {
+    text-decoration: none;
+  }
+  &__loaded {
+    height: calc(100vh - 68px) !important;
+    overflow: auto;
+  }
+  &__overlay {
+    max-height: calc(100vh - 68px) !important;
+  }
+  &__reduced {
+    height: auto !important;
+    z-index: 70;
+  }
+}
+
 ngx-datatable {
   .gv-table-cell-actions {
     margin-left: -10px;
@@ -348,9 +366,9 @@ mat-horizontal-stepper {
 
 .gv-form-section {
   padding: 20px;
-  background: #fafafa;
-  border-radius: 2px;
-  border: 1px solid rgb(226, 229, 231);
+  background: #ffffff;
+  border-radius: 8px;
+  border: 1px solid map.get(gio.$mat-dove-palette, darker20);
   margin-bottom: 20px;
   .gv-form-section-title {
     margin-bottom: 10px;
@@ -361,6 +379,9 @@ mat-horizontal-stepper {
       display: block;
       margin-bottom: 5px;
       font-size: 75%;
+    }
+    span {
+      color: map.get(gio.$mat-space-palette, lighter40);
     }
   }
 }

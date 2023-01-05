@@ -15,17 +15,9 @@
     limitations under the License.
 
 -->
-<mat-sidenav-container fxLayout="row" fxFlex>
-  <mat-sidenav mode="side" opened="true">
-    <gv-sidenav-settings></gv-sidenav-settings>
-  </mat-sidenav>
-  <mat-sidenav-content>
-    <mat-card class="alert-banner" *ngIf="!alertStatus.available">
-      <mat-icon>warning</mat-icon>
-      <p class="alert-banner-text">No alert plugin is installed. Please install a plugin before being able to enable an alert.</p>
-    </mat-card>
-    <div class="domain-alerts-main-content">
-      <router-outlet></router-outlet>
-    </div>
-  </mat-sidenav-content>
-</mat-sidenav-container>
+<div fxLayout="row">
+  <gv-submenu></gv-submenu>
+  <div class="domain-alerts-content">
+    <router-outlet></router-outlet>
+  </div>
+</div>

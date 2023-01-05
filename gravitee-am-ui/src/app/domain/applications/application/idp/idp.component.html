@@ -15,103 +15,91 @@
     limitations under the License.
 
 -->
-<div fxLayout="column" fxFlex="70">
-  <div class="application-idp-content-providers">
-    <div *ngIf="hasIdentityProviders()">
-      <div fxLayout="row" class="example-box">
-        <div fxLayout="column" class="column" fxLayoutAlign="left left"><small>Identity providers</small></div>
-        <div fxLayout="column" class="column" fxLayoutAlign="center center"><small>Type</small></div>
-        <div fxLayout="column" class="column" fxLayoutAlign="center center"><small>Selection rule</small></div>
-        <div fxLayout="column" class="column" fxLayoutAlign="center center"><small>Selected</small></div>
-        <div fxLayout="column" class="column" fxLayoutAlign="center center"><small>Priority</small></div>
-      </div>
-      <div cdkDropList class="example-list">
-        <div fxLayout="row" class="example-box" *ngFor="let idp of identityProviders; index as i" cdkDrag
-             (cdkDragDropped)="changePriority(identityProviders, $event)">
-          <div fxLayout="column" class="column" fxLayoutAlign="left left">{{idp.name}}</div>
-          <div fxLayout="column flex" class="column" fxLayoutAlign="center center">
-            <small [innerHTML]="getIdentityProviderTypeIcon(idp.type) | safe:'html'"></small>
-            <small>{{ displayType(idp.type) }}</small>
+<div fxLayout="column" class="gv-page-container">
+  <div class="gv-form-section">
+    <div class="gv-form-section-title">
+      <h2>Identity Providers</h2>
+      <span>Identity sources for authenticating and retrieving information about your users.</span>
+    </div>
+    <div>
+      <div *ngIf="hasIdentityProviders()">
+        <div fxLayout="row" class="example-box">
+          <div fxLayout="column" class="column" fxLayoutAlign="left left"><small>Identity providers</small></div>
+          <div fxLayout="column" class="column" fxLayoutAlign="center center"><small>Type</small></div>
+          <div fxLayout="column" class="column" fxLayoutAlign="center center"><small>Selection rule</small></div>
+          <div fxLayout="column" class="column" fxLayoutAlign="center center"><small>Selected</small></div>
+          <div fxLayout="column" class="column" fxLayoutAlign="center center"><small>Priority</small></div>
+        </div>
+        <div cdkDropList class="example-list">
+          <div fxLayout="row" class="example-box" *ngFor="let idp of identityProviders; index as i" cdkDrag
+               (cdkDragDropped)="changePriority(identityProviders, $event)">
+            <div fxLayout="column" class="column" fxLayoutAlign="left left">{{idp.name}}</div>
+            <div fxLayout="column flex" class="column" fxLayoutAlign="center center">
+              <small [innerHTML]="getIdentityProviderTypeIcon(idp.type) | safe:'html'"></small>
+              <small>{{ displayType(idp.type) }}</small>
+            </div>
+            <div fxLayout="column" class="column" fxLayoutAlign="center center">
+              <span (click)="add(idp)" class="wrapper" style="cursor:pointer">
+                 <span [matTooltip]="idp.selectionRule ? 'Selection rule' : 'New selection rule'"
+                       [style]="idp.selectionRule ? 'color: green' : 'color: grey'"
+                       class="mat-icon notranslate material-icons mat-icon-no-color">
+                   {{ idp.selectionRule ? 'playlist_add_check' : 'playlist_add_plus' }}
+                 </span>
+              </span>
+            </div>
+            <div fxLayout="column" class="column" fxLayoutAlign="center center">
+              <mat-slide-toggle (change)="selectIdentityProvider($event, idp.id, this.identityProviders)"
+                                [checked]="idp.selected" [disabled]="readonly">
+              </mat-slide-toggle>
+            </div>
+           <div fxLayout="column" class="column" fxLayoutAlign="center center">{{ i + 1 }}</div>
           </div>
-          <div fxLayout="column" class="column" fxLayoutAlign="center center">
-            <span (click)="add(idp)" class="wrapper" style="cursor:pointer">
-               <span [matTooltip]="idp.selectionRule ? 'Selection rule' : 'New selection rule'"
-                     [style]="idp.selectionRule ? 'color: green' : 'color: grey'"
-                     class="mat-icon notranslate material-icons mat-icon-no-color">
-                 {{ idp.selectionRule ? 'playlist_add_check' : 'playlist_add_plus' }}
-               </span>
-            </span>
-          </div>
-          <div fxLayout="column" class="column" fxLayoutAlign="center center">
-            <mat-slide-toggle (change)="selectIdentityProvider($event, idp.id, this.identityProviders)"
-                              [checked]="idp.selected" [disabled]="readonly">
-            </mat-slide-toggle>
-          </div>
-         <div fxLayout="column" class="column" fxLayoutAlign="center center">{{ i + 1 }}</div>
         </div>
       </div>
-    </div>
-    <div style="margin-top: 20px;" *ngIf="hasSocialIdentityProviders()">
-      <div fxLayout="row" class="example-box">
-        <div fxLayout="column" class="column" fxLayoutAlign="left left"><small>Social / Enterprise providers</small></div>
-        <div fxLayout="column" class="column" fxLayoutAlign="center center"><small>Type</small></div>
-        <div fxLayout="column" class="column" fxLayoutAlign="center center"><small>Selection rule</small></div>
-        <div fxLayout="column" class="column" fxLayoutAlign="center center"><small>Selected</small></div>
-        <div fxLayout="column" class="column" fxLayoutAlign="center center"><small>Priority</small></div>
-      </div>
-      <div cdkDropList class="example-list">
-        <div fxLayout="row" class="example-box" *ngFor="let idp of socialIdentityProviders; index as i" cdkDrag
-             (cdkDragDropped)="changePriority(socialIdentityProviders, $event)">
-          <div fxLayout="column" class="column" fxLayoutAlign="left left">{{idp.name}}</div>
-          <div fxLayout="column flex" class="column" fxLayoutAlign="center center">
-            <small [innerHTML]="getIdentityProviderTypeIcon(idp.type) | safe:'html'"></small>
-            <small>{{ displayType(idp.type) }}</small>
+      <div style="margin-top: 20px;" *ngIf="hasSocialIdentityProviders()">
+        <div fxLayout="row" class="example-box">
+          <div fxLayout="column" class="column" fxLayoutAlign="left left"><small>Social / Enterprise providers</small></div>
+          <div fxLayout="column" class="column" fxLayoutAlign="center center"><small>Type</small></div>
+          <div fxLayout="column" class="column" fxLayoutAlign="center center"><small>Selection rule</small></div>
+          <div fxLayout="column" class="column" fxLayoutAlign="center center"><small>Selected</small></div>
+          <div fxLayout="column" class="column" fxLayoutAlign="center center"><small>Priority</small></div>
+        </div>
+        <div cdkDropList class="example-list">
+          <div fxLayout="row" class="example-box" *ngFor="let idp of socialIdentityProviders; index as i" cdkDrag
+               (cdkDragDropped)="changePriority(socialIdentityProviders, $event)">
+            <div fxLayout="column" class="column" fxLayoutAlign="left left">{{idp.name}}</div>
+            <div fxLayout="column flex" class="column" fxLayoutAlign="center center">
+              <small [innerHTML]="getIdentityProviderTypeIcon(idp.type) | safe:'html'"></small>
+              <small>{{ displayType(idp.type) }}</small>
+            </div>
+            <div fxLayout="column" class="column" fxLayoutAlign="center center">
+              <span (click)="add(idp)" class="wrapper" style="cursor:pointer">
+                 <span [matTooltip]="idp.selectionRule ? 'Selection rule' : 'New selection rule'"
+                       [style]="idp.selectionRule ? 'color: green' : 'color: grey'"
+                       class="mat-icon notranslate material-icons mat-icon-no-color">
+                   {{ idp.selectionRule ? 'playlist_add_check' : 'playlist_add_plus' }}
+                 </span>
+              </span>
+            </div>
+            <div fxLayout="column" class="column" fxLayoutAlign="center center">
+              <mat-slide-toggle (change)="selectIdentityProvider($event, idp.id, this.socialIdentityProviders)"
+                                [checked]="idp.selected" [disabled]="readonly">
+              </mat-slide-toggle>
+            </div>
+            <div fxLayout="column" class="column" fxLayoutAlign="center center">{{ i + 1 }}</div>
           </div>
-          <div fxLayout="column" class="column" fxLayoutAlign="center center">
-            <span (click)="add(idp)" class="wrapper" style="cursor:pointer">
-               <span [matTooltip]="idp.selectionRule ? 'Selection rule' : 'New selection rule'"
-                     [style]="idp.selectionRule ? 'color: green' : 'color: grey'"
-                     class="mat-icon notranslate material-icons mat-icon-no-color">
-                 {{ idp.selectionRule ? 'playlist_add_check' : 'playlist_add_plus' }}
-               </span>
-            </span>
-          </div>
-          <div fxLayout="column" class="column" fxLayoutAlign="center center">
-            <mat-slide-toggle (change)="selectIdentityProvider($event, idp.id, this.socialIdentityProviders)"
-                              [checked]="idp.selected" [disabled]="readonly">
-            </mat-slide-toggle>
-          </div>
-          <div fxLayout="column" class="column" fxLayoutAlign="center center">{{ i + 1 }}</div>
         </div>
       </div>
+
+      <app-emptystate *ngIf="!loadIdentities && !hasIdentityProviders() && !hasSocialIdentityProviders()"
+                      [message]="'No identity provider has been set up'"
+                      [subMessage]="'Come back later to start authenticating your users'"
+                      [icon]="'people'"></app-emptystate>
     </div>
 
-    <app-emptystate *ngIf="!loadIdentities && !hasIdentityProviders() && !hasSocialIdentityProviders()"
-                    [message]="'No identity provider has been set up'"
-                    [subMessage]="'Come back later to start authenticating your users'"
-                    [icon]="'people'"></app-emptystate>
-  </div>
-
-  <div *ngIf="!loadIdentities && !readonly && (hasIdentityProviders() || hasSocialIdentityProviders())" fxLayout="row"
-       style="margin-top: 20px;">
-    <button mat-raised-button color="primary" type="button" [disabled]="!formChanged" (click)="update()">SAVE</button>
-  </div>
-
-</div>
-<div class="gv-page-description" fxFlex>
-  <h3>Application's identity providers</h3>
-  <div class="gv-page-description-content">
-    <p>
-      Identity sources for authenticating and retrieving information about your users.
-    </p>
-    <p>
-      You can apply a selection rule by clicking on the
-      <span style="color: grey" class="mat-icon notranslate material-icons mat-icon-no-color">playlist_add_plus</span> or
-      <span style="color: green" class="mat-icon notranslate material-icons mat-icon-no-color">playlist_add_check</span> icon
-      to match your identity provider at login.
-    </p>
-    <p>
-      Change the processing order of authentication by drag-and-dropping your identity providers
-    </p>
+    <div *ngIf="!loadIdentities && !readonly && (hasIdentityProviders() || hasSocialIdentityProviders())" fxLayout="row"
+         style="margin-top: 20px;">
+      <button mat-raised-button color="primary" type="button" [disabled]="!formChanged" (click)="update()">SAVE</button>
+    </div>
   </div>
 </div>

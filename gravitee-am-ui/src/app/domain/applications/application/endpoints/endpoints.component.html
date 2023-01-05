@@ -15,11 +15,11 @@
     limitations under the License.
 
 -->
-<div>
-  <div class="gv-form-section" fxFlex="70">
+<div fxLayout="column" class="gv-page-container">
+  <div class="gv-form-section">
     <div class="gv-form-section-title">
-      <h5>Endpoints</h5>
-      <mat-divider></mat-divider>
+      <h2>Endpoints</h2>
+      <span>All necessary endpoints to communicate with the Authorization Server.</span>
     </div>
     <div>
       <mat-form-field appearance="outline" floatLabel="always">
@@ -130,14 +130,6 @@
           <button mat-icon-button matSuffix matTooltip="Copy to clipboard" ngxClipboard [cbContent]="endpoint('/saml2/idp/logout')" (cbOnSuccess)="valueCopied('Copied to clipboard')" (click)="$event.preventDefault();"><mat-icon>content_copy</mat-icon></button>
         </mat-form-field>
       </div>
-    </div>
-  </div>
-  <div class="gv-page-description" fxFlex>
-    <h3>Useful endpoints</h3>
-    <div class="gv-page-description-content">
-      <p>
-        All necessary endpoints to communicate with the Authorization Server.
-      </p>
     </div>
   </div>
 </div>
