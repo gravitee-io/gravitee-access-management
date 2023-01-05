@@ -20,9 +20,13 @@ import io.gravitee.common.http.HttpHeaders;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Map;
 import java.util.Map.Entry;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.util.Objects.nonNull;
 import static java.util.stream.Collectors.toMap;
 
@@ -33,6 +37,7 @@ import static java.util.stream.Collectors.toMap;
  * @author GraviteeSource Team
  */
 public class UriBuilderRequest {
+    public static final Logger LOGGER = LoggerFactory.getLogger(UriBuilderRequest.class);
 
     public static final String CONTEXT_PATH = "contextPath";
 
@@ -66,11 +71,11 @@ public class UriBuilderRequest {
      * @param encoded if request query params should be encoded
      * @return request uri representation
      */
-    public static String resolveProxyRequest(final HttpServerRequest request, final String path, final Map<String, String> parameters, boolean encoded){
+    public static String resolveProxyRequest(final HttpServerRequest request, final String path, final Map<String, String> parameters, boolean encoded) {
 
         final MultiMap queryParameters;
 
-        if(parameters != null) {
+        if (parameters != null) {
             queryParameters = MultiMap.caseInsensitiveMultiMap();
             queryParameters.addAll(getSafeParameters(parameters));
         } else {
@@ -86,11 +91,11 @@ public class UriBuilderRequest {
                 .collect(toMap(Entry::getKey, Entry::getValue));
     }
 
-    public static String resolveProxyRequest(final HttpServerRequest request, final String path, final MultiMap parameters){
+    public static String resolveProxyRequest(final HttpServerRequest request, final String path, final MultiMap parameters) {
         return resolveProxyRequest(request, path, parameters, false);
     }
 
-    public static String resolveProxyRequest(final HttpServerRequest request, final String path, final MultiMap parameters, boolean encoded){
+    public static String resolveProxyRequest(final HttpServerRequest request, final String path, final MultiMap parameters, boolean encoded) {
         return resolve(request, path, parameters, encoded);
     }
 
@@ -107,10 +112,11 @@ public class UriBuilderRequest {
 
         // host + port
         String host = request.getHeader(HttpHeaders.X_FORWARDED_HOST);
+        String port = request.getHeader(HttpHeaders.X_FORWARDED_PORT);
         if (host != null && !host.isEmpty()) {
-            handleHost(builder, host);
+            handleHost(builder, host, port);
         } else {
-            handleHost(builder, request.host());
+            handleHost(builder, request.host(), port);
         }
 
         // handle forwarded path for redirect_uri query param
@@ -136,15 +142,35 @@ public class UriBuilderRequest {
         return builder.buildString();
     }
 
-    private static void handleHost(UriBuilder builder, String host) {
+    private static void handleHost(UriBuilder builder, String host, String port) {
         if (host != null) {
             if (host.contains(":")) {
                 // host contains both host and port
                 String[] parts = host.split(":");
                 builder.host(parts[0]);
-                builder.port(Integer.valueOf(parts[1]));
+                handlePort(builder, port, parts[1]);
             } else {
                 builder.host(host);
+                handlePort(builder, port, null);
+            }
+        }
+    }
+
+    private static void handlePort(UriBuilder builder, String port, String defaultPort) {
+        if (!isNullOrEmpty(port)) {
+            try {
+                builder.port(Integer.parseInt(port));
+                return;
+            } catch (NumberFormatException ex) {
+                LOGGER.warn("X-Forward-Port contains a invalid port value : {}", port);
+            }
+        }
+
+        if (!isNullOrEmpty(defaultPort)) {
+            try {
+                builder.port(Integer.parseInt(defaultPort));
+            } catch (NumberFormatException ex) {
+                LOGGER.warn("X-Forwarded-Host contains a invalid port value : {}", defaultPort);
             }
         }
     }

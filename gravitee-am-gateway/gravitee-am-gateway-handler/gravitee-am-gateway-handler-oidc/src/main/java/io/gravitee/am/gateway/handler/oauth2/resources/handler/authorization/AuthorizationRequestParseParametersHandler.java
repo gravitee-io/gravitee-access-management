@@ -337,7 +337,7 @@ public class AuthorizationRequestParseParametersHandler extends AbstractAuthoriz
         if (registeredClientRedirectUris
                 .stream()
                 .noneMatch(registeredClientUri -> redirectMatches(requestedRedirect, registeredClientUri, this.domain.isRedirectUriStrictMatching() || this.domain.usePlainFapiProfile()))) {
-            throw new RedirectMismatchException("The redirect_uri MUST match the registered callback URL for this application");
+            throw new RedirectMismatchException(String.format("The redirect_uri [ %s ] MUST match the registered callback URL for this application", requestedRedirect));
         }
     }
 }

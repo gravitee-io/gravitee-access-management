@@ -30,6 +30,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.core.env.Environment;
 
 import java.util.Collections;
 
@@ -48,12 +49,14 @@ public class RegisterConfirmationSubmissionEndpointTest extends RxWebTestBase {
 
     @Mock
     private UserService userService;
+    @Mock
+    private Environment environment;
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
-
-        RegisterConfirmationSubmissionEndpoint registerConfirmationSubmissionEndpoint = new RegisterConfirmationSubmissionEndpoint(userService);
+        when(environment.getProperty(eq(RegisterSubmissionEndpoint.GATEWAY_ENDPOINT_REGISTRATION_KEEP_PARAMS), any(), eq(true))).thenReturn(true);
+        RegisterConfirmationSubmissionEndpoint registerConfirmationSubmissionEndpoint = new RegisterConfirmationSubmissionEndpoint(userService, environment);
         router.route(HttpMethod.POST, "/confirmRegistration")
                 .handler(BodyHandler.create())
                 .handler(registerConfirmationSubmissionEndpoint)
@@ -116,7 +119,7 @@ public class RegisterConfirmationSubmissionEndpointTest extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertEquals("http://custom_uri", location);
+                    assertEquals("http://custom_uri?client_id=client-id", location);
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }

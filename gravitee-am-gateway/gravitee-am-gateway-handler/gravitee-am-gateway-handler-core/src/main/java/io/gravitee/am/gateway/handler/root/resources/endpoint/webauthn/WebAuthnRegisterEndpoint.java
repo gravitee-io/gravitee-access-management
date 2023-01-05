@@ -36,6 +36,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
+import java.util.HashMap;
 
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
 
@@ -102,7 +103,9 @@ public class WebAuthnRegisterEndpoint extends WebAuthnHandler {
             routingContext.put(ConstantKeys.ACTION_KEY, action);
             routingContext.put(ConstantKeys.SKIP_ACTION_KEY, skipAction);
             routingContext.put(ConstantKeys.USER_CONTEXT_KEY, userProperties);
-            routingContext.put(ConstantKeys.PARAM_CONTEXT_KEY, Collections.singletonMap(Parameters.CLIENT_ID, client.getClientId()));
+            var params = new HashMap<>();
+            params.put(Parameters.CLIENT_ID, client.getClientId());
+            routingContext.put(ConstantKeys.PARAM_CONTEXT_KEY, params);
 
             if (domain.getWebAuthnSettings() != null && domain.getWebAuthnSettings().getAuthenticatorAttachment() != null) {
                 routingContext.put(ConstantKeys.PARAM_AUTHENTICATOR_ATTACHMENT_KEY, domain.getWebAuthnSettings().getAuthenticatorAttachment().getValue());

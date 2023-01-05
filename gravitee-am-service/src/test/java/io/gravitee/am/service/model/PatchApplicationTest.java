@@ -18,6 +18,7 @@ package io.gravitee.am.service.model;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.account.AccountSettings;
+import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.exception.InvalidParameterException;
@@ -31,6 +32,7 @@ import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -38,6 +40,46 @@ import static org.junit.Assert.assertTrue;
  * @author GraviteeSource Team
  */
 public class PatchApplicationTest {
+
+    @Test
+    public void updateClientName_NoSettings() {
+        final var NEW_NAME = "MyNewName";
+        final var NAME = "MyName";
+
+        final var app = new Application();
+        app.setName(NAME);
+
+        final var patchApplication = new PatchApplication();
+        patchApplication.setName(Optional.of(NEW_NAME));
+
+        final var updatedApp = patchApplication.patch(app);
+        assertEquals(NEW_NAME, updatedApp.getName());
+        assertNull(updatedApp.getSettings());
+    }
+
+    @Test
+    public void updateClientName_WithSettings() {
+        final var NEW_NAME = "MyNewName";
+        final var NAME = "MyName";
+
+        final var oauthSettings = new ApplicationOAuthSettings();
+        oauthSettings.setClientName(NAME);
+        final var settings = new ApplicationSettings();
+        settings.setOauth(oauthSettings);
+        final var app = new Application();
+        app.setName(NAME);
+        app.setSettings(settings);
+
+        final var patchApplication = new PatchApplication();
+        patchApplication.setName(Optional.of(NEW_NAME));
+
+        final var updatedApp = patchApplication.patch(app);
+        assertEquals(NEW_NAME, updatedApp.getName());
+        assertNotNull(updatedApp.getSettings());
+        assertNotNull(updatedApp.getSettings().getOauth());
+        assertEquals(NEW_NAME, updatedApp.getSettings().getOauth().getClientName());
+    }
+
 
     @Test
     public void getRequiredPermissions() {

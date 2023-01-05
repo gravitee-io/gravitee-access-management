@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.model;
 
+import io.swagger.annotations.ApiModelProperty;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -32,7 +34,9 @@ public class Group {
     private String description;
     private List<String> members;
     private List<String> roles;
+    @ApiModelProperty(dataType = "java.lang.Long")
     private Date createdAt;
+    @ApiModelProperty(dataType = "java.lang.Long")
     private Date updatedAt;
 
     public Group() {

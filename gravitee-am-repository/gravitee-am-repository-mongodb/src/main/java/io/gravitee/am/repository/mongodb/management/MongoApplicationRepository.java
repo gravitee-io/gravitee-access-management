@@ -350,6 +350,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationOAuthSettingsMongo.setBackchannelTokenDeliveryMode(other.getBackchannelTokenDeliveryMode());
         applicationOAuthSettingsMongo.setBackchannelUserCodeParameter(other.isBackchannelUserCodeParameter());
         applicationOAuthSettingsMongo.setBackchannelClientNotificationEndpoint(other.getBackchannelClientNotificationEndpoint());
+        applicationOAuthSettingsMongo.setDisableRefreshTokenRotation(other.isDisableRefreshTokenRotation());
 
         return applicationOAuthSettingsMongo;
     }
@@ -429,8 +430,9 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationOAuthSettings.setBackchannelTokenDeliveryMode(other.getBackchannelTokenDeliveryMode());
         applicationOAuthSettings.setBackchannelUserCodeParameter(other.isBackchannelUserCodeParameter());
         applicationOAuthSettings.setBackchannelClientNotificationEndpoint(other.getBackchannelClientNotificationEndpoint());
-
         applicationOAuthSettings.setRequireParRequest(other.isRequireParRequest());
+        applicationOAuthSettings.setDisableRefreshTokenRotation(other.isDisableRefreshTokenRotation());
+
         return applicationOAuthSettings;
     }
 
@@ -443,6 +445,8 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationSAMLSettingsMongo.setAttributeConsumeServiceUrl(other.getAttributeConsumeServiceUrl());
         applicationSAMLSettingsMongo.setSingleLogoutServiceUrl(other.getSingleLogoutServiceUrl());
         applicationSAMLSettingsMongo.setCertificate(other.getCertificate());
+        applicationSAMLSettingsMongo.setWantResponseSigned(other.isWantResponseSigned());
+        applicationSAMLSettingsMongo.setWantAssertionsSigned(other.isWantAssertionsSigned());
         return applicationSAMLSettingsMongo;
     }
 
@@ -455,6 +459,8 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationSAMLSettings.setAttributeConsumeServiceUrl(other.getAttributeConsumeServiceUrl());
         applicationSAMLSettings.setSingleLogoutServiceUrl(other.getSingleLogoutServiceUrl());
         applicationSAMLSettings.setCertificate(other.getCertificate());
+        applicationSAMLSettings.setWantResponseSigned(other.isWantResponseSigned());
+        applicationSAMLSettings.setWantAssertionsSigned(other.isWantAssertionsSigned());
         return applicationSAMLSettings;
     }
 

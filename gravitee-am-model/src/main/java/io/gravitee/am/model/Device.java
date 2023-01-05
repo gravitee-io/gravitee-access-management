@@ -16,6 +16,8 @@
 
 package io.gravitee.am.model;
 
+import io.swagger.annotations.ApiModelProperty;
+
 import java.util.Date;
 import java.util.Objects;
 
@@ -37,7 +39,9 @@ public class Device {
 
     private String type;
 
+    @ApiModelProperty(dataType = "java.lang.Long")
     private Date createdAt;
+    @ApiModelProperty(dataType = "java.lang.Long")
     private Date expiresAt;
 
     public Device() {

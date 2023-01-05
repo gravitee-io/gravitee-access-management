@@ -17,6 +17,7 @@ package io.gravitee.am.management.handlers.management.api.model;
 
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Theme;
+import io.swagger.annotations.ApiModelProperty;
 
 import java.util.Date;
 
@@ -36,7 +37,9 @@ public class ThemeEntity {
     private String primaryTextColorHex;
     private String secondaryTextColorHex;
     private String css;
+    @ApiModelProperty(dataType = "java.lang.Long")
     private Date createdAt;
+    @ApiModelProperty(dataType = "java.lang.Long")
     private Date updatedAt;
 
     public ThemeEntity() {

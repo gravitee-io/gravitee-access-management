@@ -384,4 +384,38 @@ public class TokenServiceTest {
         verify(refreshTokenRepository, never()).delete(anyString());
         verify(accessTokenRepository, never()).create(any());
     }
+
+    @Test
+    public void shouldRefresh_disableRefreshTokenRotation() {
+        String clientId = "client-id";
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId(clientId);
+
+        Client client = new Client();
+        client.setId(clientId);
+        client.setClientId(clientId);
+        client.setDisableRefreshTokenRotation(true);
+
+        String token = "refresh-token";
+        RefreshToken refreshToken = new RefreshToken();
+        refreshToken.setId(token);
+        refreshToken.setToken(token);
+        refreshToken.setSubject("subject");
+        refreshToken.setExpireAt(new Date(System.currentTimeMillis() + 10000));
+
+        JWT jwt = new JWT();
+        jwt.setJti(token);
+        jwt.setAud(clientId);
+        jwt.setExp(refreshToken.getExpireAt().getTime() / 1000l);
+
+        when(jwtService.decodeAndVerify(any(), any(Client.class))).thenReturn(Single.just(jwt));
+        when(refreshTokenRepository.findByToken(any())).thenReturn(Maybe.just(refreshToken));
+
+        TestObserver<Token> testObserver = tokenService.refresh(refreshToken.getToken(), tokenRequest, client).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(refreshTokenRepository, times(1)).findByToken(any());
+        verify(refreshTokenRepository, never()).delete(anyString());
+    }
 }

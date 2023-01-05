@@ -33,6 +33,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.core.env.Environment;
 
 import java.util.Collections;
 
@@ -53,14 +54,17 @@ public class RegisterSubmissionEndpointTest extends RxWebTestBase {
     @Mock
     private Domain domain;
 
+    @Mock
+    private Environment environment;
+
     @Override
     public void setUp() throws Exception {
         super.setUp();
-
+        when(environment.getProperty(eq(RegisterSubmissionEndpoint.GATEWAY_ENDPOINT_REGISTRATION_KEEP_PARAMS), any(), eq(true))).thenReturn(true);
         router.route(HttpMethod.POST, "/register")
                 .handler(BodyHandler.create())
                 .handler(new RegisterProcessHandler(userService, domain))
-                .handler(new RegisterSubmissionEndpoint())
+                .handler(new RegisterSubmissionEndpoint(environment))
                 .failureHandler(new RegisterFailureHandler());
     }
 
@@ -113,7 +117,7 @@ public class RegisterSubmissionEndpointTest extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertEquals("http://custom_uri", location);
+                    assertEquals("http://custom_uri?client_id=client-id", location);
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
@@ -189,6 +193,36 @@ public class RegisterSubmissionEndpointTest extends RxWebTestBase {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
                     assertTrue(location.endsWith("/register?client_id=client-id&warning=invalid_email"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+
+    @Test
+    public void shouldInvokeRegisterEndpoint_redirectUri_withoutDuplicateParam() throws Exception {
+        Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+        client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
+
+        RegistrationResponse registrationResponse = new RegistrationResponse();
+        registrationResponse.setAutoLogin(true);
+        registrationResponse.setRedirectUri("http://custom_uri?client_id=another-client-id");
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.put("client", client);
+            routingContext.next();
+        });
+
+        when(userService.register(eq(client), any(), any())).thenReturn(Single.just(registrationResponse));
+
+        testRequest(
+                HttpMethod.POST, "/register?client_id=client-id&some-param=some-value",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertEquals("http://custom_uri?client_id=another-client-id&some-param=some-value", location);
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }

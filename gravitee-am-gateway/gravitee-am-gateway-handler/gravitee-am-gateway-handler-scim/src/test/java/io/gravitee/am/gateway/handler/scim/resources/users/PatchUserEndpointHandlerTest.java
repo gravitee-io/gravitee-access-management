@@ -16,21 +16,34 @@
 package io.gravitee.am.gateway.handler.scim.resources.users;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.common.scim.Schema;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
-import io.gravitee.am.gateway.handler.scim.model.PatchOp;
+import io.gravitee.am.gateway.handler.scim.model.*;
 import io.gravitee.am.gateway.handler.scim.resources.ErrorHandler;
 import io.gravitee.am.gateway.handler.scim.service.UserService;
 import io.gravitee.am.model.Domain;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.Json;
 import io.vertx.reactivex.ext.web.handler.BodyHandler;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Collections;
+import java.util.Map;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 
 /**
@@ -56,8 +69,18 @@ public class PatchUserEndpointHandlerTest extends RxWebTestBase {
     public void setUp() throws Exception {
         super.setUp();
 
+        ObjectWriter objectWriter = mock(ObjectWriter.class);
+        when(objectWriter.writeValueAsString(any())).thenReturn("UserObject");
+        when(objectMapper.writerWithDefaultPrettyPrinter()).thenReturn(objectWriter);
+
         router.route()
                 .handler(BodyHandler.create())
+                .handler(rc -> {
+                    JWT token = new JWT();
+                    token.put("sub", "user-id");
+                    rc.put(ConstantKeys.TOKEN_CONTEXT_KEY, token);
+                    rc.next();
+                })
                 .failureHandler(new ErrorHandler());
     }
 
@@ -80,6 +103,40 @@ public class PatchUserEndpointHandlerTest extends RxWebTestBase {
                         "  \"detail\" : \"Field [Operations] is required\",\n" +
                         "  \"schemas\" : [ \"urn:ietf:params:scim:api:messages:2.0:Error\" ]\n" +
                         "}");
+    }
+
+    @Test
+    public void shouldPatchCustomGraviteeUser() throws Exception {
+        router.route("/Users").handler(userEndpoint::patch);
+        User scimUser = mock(User.class);
+        when(scimUser.getMeta()).thenReturn(new Meta());
+        when(userService.get(any(), any())).thenReturn(Maybe.just(new User()));
+        when(userService.patch(any(), any(), any(), any(), any(), any())).thenReturn(Single.just(scimUser));
+
+        testRequest(
+                HttpMethod.PATCH,
+                "/Users",
+                req -> {
+                    req.setChunked(true);
+                    req.write("{\n" +
+                            "     \"schemas\":[\"urn:ietf:params:scim:api:messages:2.0:PatchOp\"],\n" +
+                            "     \"Operations\": [{\n" +
+                            "        \"op\":\"Add\",\n" +
+                            "        \"path\":\"urn:ietf:params:scim:schemas:extension:custom:2.0:User\",\n" +
+                            "        \"value\": {\n" +
+                            "            \"customClaim\": \"customValue\"\n" +
+                            "        }\n" +
+                            "     }]\n" +
+                            "\n" +
+                            "}");
+                },
+                200,
+                "OK", null);
+
+        ArgumentCaptor<PatchOp> patchOpArgumentCaptor = ArgumentCaptor.forClass(PatchOp.class);
+        verify(userService).patch(any(), patchOpArgumentCaptor.capture(),  any(), any(), any(), any());
+        PatchOp patchOp = patchOpArgumentCaptor.getValue();
+        assertEquals(Schema.SCHEMA_URI_CUSTOM_USER, patchOp.getOperations().get(0).getPath().getAttributePath());
     }
 
     private PatchOp emptyPatchOp() {

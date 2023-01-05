@@ -205,4 +205,6 @@ public interface ConstantKeys {
     String REGISTER_ACTION_KEY = "registerAction";
     String WEBAUTHN_ACTION_KEY = "passwordlessAction";
     String FORGOT_ACTION_KEY = "forgotPasswordAction";
+
+    String REQUEST_CONTEXT_KEY = "request";
 }

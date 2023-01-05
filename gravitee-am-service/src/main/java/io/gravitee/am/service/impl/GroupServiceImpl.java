@@ -27,8 +27,18 @@ import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.repository.management.api.GroupRepository;
-import io.gravitee.am.service.*;
-import io.gravitee.am.service.exception.*;
+import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.CommonUserService;
+import io.gravitee.am.service.EventService;
+import io.gravitee.am.service.GroupService;
+import io.gravitee.am.service.OrganizationUserService;
+import io.gravitee.am.service.RoleService;
+import io.gravitee.am.service.UserService;
+import io.gravitee.am.service.exception.AbstractManagementException;
+import io.gravitee.am.service.exception.GroupAlreadyExistsException;
+import io.gravitee.am.service.exception.GroupNotFoundException;
+import io.gravitee.am.service.exception.RoleNotFoundException;
+import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewGroup;
 import io.gravitee.am.service.model.UpdateGroup;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -161,13 +171,15 @@ public class GroupServiceImpl implements GroupService {
         return findById(referenceType, referenceId, groupId)
                 .flatMap(group -> {
                     if (group.getMembers() == null || group.getMembers().isEmpty()) {
-                        return Single.just(new Page<>(null, page, size));
+                        return Single.just(new Page<>(null, page, 0));
                     } else {
                         // get members
                         List<String> sortedMembers = group.getMembers().stream().sorted().collect(Collectors.toList());
-                        List<String> pagedMemberIds = sortedMembers.subList(Math.min(sortedMembers.size(), page), Math.min(sortedMembers.size(), page + size));
+                        final int startOffset = page * size;
+                        final int endOffset = (page + 1) * size;
+                        List<String> pagedMemberIds = sortedMembers.subList(Math.min(sortedMembers.size(), startOffset), Math.min(sortedMembers.size(), endOffset));
                         CommonUserService service = (group.getReferenceType() == ReferenceType.ORGANIZATION ? organizationUserService : userService);
-                        return service.findByIdIn(pagedMemberIds).toList().map(users -> new Page<>(users, page, pagedMemberIds.size()));
+                        return service.findByIdIn(pagedMemberIds).toList().map(users -> new Page<>(users, page, sortedMembers.size()));
                     }
                 });
     }

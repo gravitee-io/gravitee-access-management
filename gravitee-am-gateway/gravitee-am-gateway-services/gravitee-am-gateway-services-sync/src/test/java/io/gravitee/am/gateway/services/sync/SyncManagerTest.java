@@ -218,10 +218,12 @@ public class SyncManagerTest {
         syncManager.refresh();
 
         Event event = new Event();
+        event.setId(UUID.randomUUID().toString());
         event.setType(Type.IDENTITY_PROVIDER);
+        event.setCreatedAt(new Date());
         event.setPayload(new Payload("idp-1", ReferenceType.DOMAIN, "domain-1", Action.UPDATE));
 
-        when(eventRepository.findByTimeFrame(any(Long.class), any(Long.class))).thenReturn(Flowable.just(event));
+        when(eventRepository.findByTimeFrame(any(Long.class), any(Long.class))).thenReturn(Flowable.just(event, event));
 
         syncManager.refresh();
 

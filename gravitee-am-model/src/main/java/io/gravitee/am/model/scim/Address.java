@@ -90,6 +90,10 @@ public class Address {
         return primary;
     }
 
+    public Boolean getPrimary() {
+        return primary;
+    }
+
     public void setPrimary(Boolean primary) {
         this.primary = primary;
     }

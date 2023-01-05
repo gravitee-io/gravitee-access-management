@@ -16,6 +16,7 @@
 package io.gravitee.am.common.exception.mfa;
 
 import io.gravitee.am.common.exception.authentication.AuthenticationException;
+import io.gravitee.common.http.HttpStatusCode;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -30,5 +31,10 @@ public class InvalidCodeException extends AuthenticationException {
     @Override
     public String getErrorCode() {
         return "invalid_mfa";
+    }
+
+    @Override
+    public int getHttpStatusCode() {
+        return HttpStatusCode.FORBIDDEN_403;
     }
 }

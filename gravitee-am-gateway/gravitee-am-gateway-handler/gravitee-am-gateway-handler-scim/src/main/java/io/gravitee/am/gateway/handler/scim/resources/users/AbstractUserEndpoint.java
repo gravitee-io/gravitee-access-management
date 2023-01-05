@@ -20,11 +20,14 @@ import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequ
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidSyntaxException;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
+import io.gravitee.am.gateway.handler.scim.model.EnterpriseUser;
+import io.gravitee.am.gateway.handler.scim.model.GraviteeUser;
 import io.gravitee.am.gateway.handler.scim.model.User;
 import io.gravitee.am.gateway.handler.scim.service.UserService;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.AuditService;
+import io.vertx.core.json.Json;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
@@ -85,5 +88,15 @@ public class AbstractUserEndpoint {
             }
         }
         return null;
+    }
+
+    protected User evaluateUser(List<String> schemas, String body) {
+        if (schemas.containsAll(EnterpriseUser.SCHEMAS)) {
+            return Json.decodeValue(body, EnterpriseUser.class);
+        }
+        if (schemas.containsAll(GraviteeUser.SCHEMAS)) {
+            return Json.decodeValue(body, GraviteeUser.class);
+        }
+        return Json.decodeValue(body, User.class);
     }
 }

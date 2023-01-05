@@ -427,9 +427,15 @@ public class UserServiceImpl implements UserService {
                                 .flatMap(userProvider -> {
                                     // if user registration is not completed and force registration option is disabled throw invalid account exception
                                     AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
+
                                     if (user.isInactive() && !forceUserRegistration(accountSettings)) {
                                         return Single.error(new AccountInactiveException("User [ " + user.getUsername() + " ] needs to complete the activation process"));
                                     }
+
+                                    if (!user.isEnabled() && !user.isInactive()) {
+                                        return Single.error(new AccountInactiveException("User [ " + user.getUsername() + " ] is disabled."));
+                                    }
+
                                     // fetch latest information from the identity provider and return the user
                                     return userProvider.findByUsername(user.getUsername())
                                             .map(Optional::ofNullable)

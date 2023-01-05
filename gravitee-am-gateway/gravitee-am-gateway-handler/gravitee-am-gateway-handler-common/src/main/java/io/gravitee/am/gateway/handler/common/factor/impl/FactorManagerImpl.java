@@ -135,15 +135,28 @@ public class FactorManagerImpl extends AbstractService implements FactorManager,
 
     private void updateFactor(Factor factor) {
         try {
-            var factorProviderConfig = new ProviderConfiguration(factor.getType(), factor.getConfiguration());
-            var factorProvider = factorPluginManager.create(factorProviderConfig);
-            this.factorProviders.put(factor.getId(), factorProvider);
-            this.factors.put(factor.getId(), factor);
-            logger.info("Factor {} loaded for domain {}", factor.getName(), domain.getName());
+            if (needDeployment(factor)) {
+                var factorProviderConfig = new ProviderConfiguration(factor.getType(), factor.getConfiguration());
+                var factorProvider = factorPluginManager.create(factorProviderConfig);
+                this.factorProviders.put(factor.getId(), factorProvider);
+                this.factors.put(factor.getId(), factor);
+                logger.info("Factor {} loaded for domain {}", factor.getName(), domain.getName());
+            } else {
+                logger.info("Factor {} already loaded for domain {}", factor.getName(), domain.getName());
+            }
         } catch (Exception ex) {
             this.factorProviders.remove(factor.getId());
             logger.error("Unable to create factor provider for domain {}", domain.getName(), ex);
         }
+    }
+
+    /**
+     * @param factor
+     * @return true if the Factor has never been deployed or if the deployed version is not up to date
+     */
+    private boolean needDeployment(Factor factor) {
+        final Factor deployedFactor = this.factors.get(factor.getId());
+        return (deployedFactor == null || deployedFactor.getUpdatedAt().before(factor.getUpdatedAt()));
     }
 
     @Override

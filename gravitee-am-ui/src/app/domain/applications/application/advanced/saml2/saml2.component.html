@@ -34,6 +34,14 @@
           <input matInput type="text" placeholder="Enter the single logout service URL" name="singleLogoutServiceUrl" [(ngModel)]="applicationSamlSettings.singleLogoutServiceUrl" [disabled]="!editMode">
           <mat-hint>The SP endpoint where the IdP should redirect to after performing single logout</mat-hint>
         </mat-form-field>
+        <div style="display: flex; flex-direction: column; padding: 10px 5px;">
+          <mat-checkbox name="wantResponseSigned" [(ngModel)]="applicationSamlSettings.wantResponseSigned" [disabled]="!editMode">Want Response Signed</mat-checkbox>
+          <mat-hint style="font-size: 75%;">Optional. If the parameter is set to true, the response message will be digitally signed.</mat-hint>
+        </div>
+        <div style="display: flex; flex-direction: column; padding: 10px 5px;">
+          <mat-checkbox name="wantAssertionsSigned" [(ngModel)]="applicationSamlSettings.wantAssertionsSigned" [disabled]="!editMode">Want Assertions Signed</mat-checkbox>
+          <mat-hint style="font-size: 75%;">Optional. If the parameter is set to true, the assertions will be digitally signed.</mat-hint>
+        </div>
       </div>
       <div class="gv-form-section">
         <div class="gv-form-section-title">

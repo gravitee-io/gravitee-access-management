@@ -30,12 +30,15 @@ import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Arrays;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -68,6 +71,7 @@ public class RefreshTokenGranterTest {
         OAuth2Request oAuth2Request = new OAuth2Request();
         oAuth2Request.setClientId(client.getClientId());
         oAuth2Request.setGrantType(GrantType.REFRESH_TOKEN);
+        oAuth2Request.setParameters(parameters);
 
         Token accessToken = new AccessToken("test-token");
 
@@ -110,5 +114,40 @@ public class RefreshTokenGranterTest {
         when(tokenService.refresh(refreshToken, tokenRequest, client)).thenReturn(Single.error(new InvalidGrantException()));
 
         granter.grant(tokenRequest, client).test().assertError(InvalidGrantException.class);
+    }
+
+    @Test
+    public void shouldGenerateAnAccessToken_DisableRefreshTokenRotation() {
+        String refreshToken = "refresh-token";
+        LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.set("refresh_token", refreshToken);
+
+        Client client = new Client();
+        client.setClientId("my-client-id");
+        client.setAuthorizedGrantTypes(Arrays.asList(new String[]{"refresh_token"}));
+        client.setDisableRefreshTokenRotation(true);
+
+        OAuth2Request oAuth2Request = new OAuth2Request();
+        oAuth2Request.setClientId(client.getClientId());
+        oAuth2Request.setGrantType(GrantType.REFRESH_TOKEN);
+        oAuth2Request.setParameters(parameters);
+
+        Token accessToken = new AccessToken("test-token");
+
+        when(tokenRequest.parameters()).thenReturn(parameters);
+        when(tokenRequest.createOAuth2Request()).thenReturn(oAuth2Request);
+
+        ArgumentCaptor<OAuth2Request> oAuth2RequestArgumentCaptor = ArgumentCaptor.forClass(OAuth2Request.class);
+        when(tokenService.create(oAuth2RequestArgumentCaptor.capture(), any(), any())).thenReturn(Single.just(accessToken));
+        when(tokenService.refresh(refreshToken, tokenRequest, client)).thenReturn(Single.just(new RefreshToken(refreshToken)));
+
+        TestObserver<Token> testObserver = granter.grant(tokenRequest, client).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(token -> token.getValue().equals("test-token"));
+        testObserver.assertValue(token -> token.getRefreshToken().equals(refreshToken));
+        OAuth2Request oAuth2RequestArgumentCaptorValue = oAuth2RequestArgumentCaptor.getValue();
+        assertNotNull(oAuth2RequestArgumentCaptorValue);
+        assertFalse(oAuth2RequestArgumentCaptorValue.isSupportRefreshToken());
     }
 }

@@ -21,6 +21,8 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.scim.Address;
+import io.gravitee.am.model.scim.Attribute;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -38,12 +40,19 @@ public class UserProperties {
     private String firstName;
     private String lastName;
     private String email;
+    private String phoneNumber;
     private String source;
     private String preferredLanguage;
     private Set<String> roles;
     private List<String> groups;
     private Map<String, Object> claims;
     private Map<String, Object> additionalInformation;
+    private List<Attribute> emails;
+    private List<Attribute> phoneNumbers;
+    private List<Attribute> ims;
+    private List<Attribute> photos;
+    private List<String> entitlements;
+    private List<Address> addresses;
 
     public UserProperties() {
     }
@@ -60,6 +69,7 @@ public class UserProperties {
         this.firstName = user.getFirstName();
         this.lastName = user.getLastName();
         this.email = user.getEmail();
+        this.phoneNumber = user.getPhoneNumber();
         // set groups
         this.groups = user.getGroups();
         // set roles
@@ -80,16 +90,12 @@ public class UserProperties {
         this.additionalInformation = claims; // use same ref as claims for additionalInfo to avoid regression on templates that used the User object before
         this.source = user.getSource();
         this.preferredLanguage = evaluatePreferredLanguage(user);
-    }
-
-    private String evaluatePreferredLanguage(User user) {
-        if (user.getPreferredLanguage() == null) {
-            // fall back to OIDC standard claims
-            if (user.getAdditionalInformation() != null && user.getAdditionalInformation().get(StandardClaims.LOCALE) != null) {
-                return (String) user.getAdditionalInformation().get(StandardClaims.LOCALE);
-            }
-        }
-        return user.getPreferredLanguage();
+        this.emails = evaluateAttributes(user.getEmails());
+        this.phoneNumbers = evaluateAttributes(user.getPhoneNumbers());
+        this.ims = evaluateAttributes(user.getIms());
+        this.photos = evaluateAttributes(user.getPhotos());
+        this.entitlements = user.getEntitlements();
+        this.addresses = evaluateAddresses(user.getAddresses());
     }
 
     public String getId() {
@@ -148,6 +154,14 @@ public class UserProperties {
         this.email = email;
     }
 
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
+
     public Set<String> getRoles() {
         return roles;
     }
@@ -194,5 +208,90 @@ public class UserProperties {
 
     public void setAdditionalInformation(Map<String, Object> additionalInformation) {
         this.additionalInformation = additionalInformation;
+    }
+
+    public List<Attribute> getEmails() {
+        return emails;
+    }
+
+    public void setEmails(List<Attribute> emails) {
+        this.emails = emails;
+    }
+
+    public List<Attribute> getPhoneNumbers() {
+        return phoneNumbers;
+    }
+
+    public void setPhoneNumbers(List<Attribute> phoneNumbers) {
+        this.phoneNumbers = phoneNumbers;
+    }
+
+    public List<Attribute> getIms() {
+        return ims;
+    }
+
+    public void setIms(List<Attribute> ims) {
+        this.ims = ims;
+    }
+
+    public List<Attribute> getPhotos() {
+        return photos;
+    }
+
+    public void setPhotos(List<Attribute> photos) {
+        this.photos = photos;
+    }
+
+    public List<String> getEntitlements() {
+        return entitlements;
+    }
+
+    public void setEntitlements(List<String> entitlements) {
+        this.entitlements = entitlements;
+    }
+
+    public List<Address> getAddresses() {
+        return addresses;
+    }
+
+    public void setAddresses(List<Address> addresses) {
+        this.addresses = addresses;
+    }
+
+    private String evaluatePreferredLanguage(User user) {
+        if (user.getPreferredLanguage() == null) {
+            // fall back to OIDC standard claims
+            if (user.getAdditionalInformation() != null && user.getAdditionalInformation().get(StandardClaims.LOCALE) != null) {
+                return (String) user.getAdditionalInformation().get(StandardClaims.LOCALE);
+            }
+        }
+        return user.getPreferredLanguage();
+    }
+
+    private List<Attribute> evaluateAttributes(List<Attribute> attributes) {
+        if (attributes == null) {
+            return null;
+        }
+        // Nimbus internal JSON writer do not handle null values
+        return attributes
+                .stream()
+                .map(attribute -> {
+                    attribute.setPrimary(Boolean.TRUE.equals(attribute.isPrimary()));
+                    return attribute;
+                }).collect(Collectors.toList());
+
+    }
+
+    private List<Address> evaluateAddresses(List<Address> addresses) {
+        if (addresses == null) {
+            return null;
+        }
+        // Nimbus internal JSON writer do not handle null values
+        return addresses
+                .stream()
+                .map(address -> {
+                    address.setPrimary(Boolean.TRUE.equals(address.isPrimary()));
+                    return address;
+                }).collect(Collectors.toList());
     }
 }

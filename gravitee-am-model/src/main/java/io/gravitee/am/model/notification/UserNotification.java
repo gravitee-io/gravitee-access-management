@@ -16,6 +16,7 @@
 package io.gravitee.am.model.notification;
 
 import io.gravitee.am.model.ReferenceType;
+import io.swagger.annotations.ApiModelProperty;
 
 import java.util.Date;
 
@@ -37,8 +38,10 @@ public class UserNotification {
 
     private String message;
 
+    @ApiModelProperty(dataType = "java.lang.Long")
     private Date createdAt;
 
+    @ApiModelProperty(dataType = "java.lang.Long")
     private Date updatedAt;
 
     public String getId() {

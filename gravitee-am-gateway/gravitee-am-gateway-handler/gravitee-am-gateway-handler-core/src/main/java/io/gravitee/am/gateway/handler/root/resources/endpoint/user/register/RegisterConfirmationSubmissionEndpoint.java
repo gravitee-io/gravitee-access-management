@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.user.register;
 
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
+import io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.UserRequestHandler;
 import io.gravitee.am.gateway.handler.root.service.response.RegistrationResponse;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
@@ -30,6 +31,7 @@ import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.env.Environment;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -37,12 +39,15 @@ import org.slf4j.LoggerFactory;
  */
 public class RegisterConfirmationSubmissionEndpoint extends UserRequestHandler {
 
+    public static final String GATEWAY_ENDPOINT_REGISTRATION_KEEP_PARAMS = "legacy.registration.keepParams";
     private static final Logger logger = LoggerFactory.getLogger(RegisterConfirmationSubmissionEndpoint.class);
 
     private final UserService userService;
+    private final boolean keepParams;
 
-    public RegisterConfirmationSubmissionEndpoint(UserService userService) {
+    public RegisterConfirmationSubmissionEndpoint(UserService userService, Environment environment) {
         this.userService = userService;
+        this.keepParams = environment.getProperty(GATEWAY_ENDPOINT_REGISTRATION_KEEP_PARAMS, boolean.class, true);
     }
 
     @Override
@@ -82,8 +87,9 @@ public class RegisterConfirmationSubmissionEndpoint extends UserRequestHandler {
                 return;
             }
             // else, redirect to the custom redirect_uri
+            var redirectTo = keepParams ? ParamUtils.appendQueryParameter(registrationResponse.getRedirectUri(), queryParams) : registrationResponse.getRedirectUri();
             context.response()
-                    .putHeader(HttpHeaders.LOCATION, registrationResponse.getRedirectUri())
+                    .putHeader(HttpHeaders.LOCATION, redirectTo)
                     .setStatusCode(302)
                     .end();
         });

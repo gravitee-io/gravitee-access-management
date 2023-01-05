@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.model;
 
+import io.swagger.annotations.ApiModelProperty;
+
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -43,11 +45,13 @@ public class Installation {
     /**
      * Creation date.
      */
+    @ApiModelProperty(dataType = "java.lang.Long")
     private Date createdAt;
 
     /**
      * Last update date.
      */
+    @ApiModelProperty(dataType = "java.lang.Long")
     private Date updatedAt;
 
     public Installation() {

@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.common.scim;
 
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -23,5 +26,11 @@ public interface Schema {
 
     String SCHEMA_URI_CORE = "urn:ietf:params:scim:schemas:core:2.0";
     String SCHEMA_URI_USER = "urn:ietf:params:scim:schemas:core:2.0:User";
+    String SCHEMA_URI_ENTERPRISE_USER = "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User";
+    String SCHEMA_URI_CUSTOM_USER = "urn:ietf:params:scim:schemas:extension:custom:2.0:User";
     String SCHEMA_URI_GROUP = "urn:ietf:params:scim:schemas:core:2.0:Group";
+
+    static List<String> supportedSchemas() {
+        return Arrays.asList(SCHEMA_URI_USER, SCHEMA_URI_ENTERPRISE_USER, SCHEMA_URI_CUSTOM_USER);
+    }
 }
