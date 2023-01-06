@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {getUserApi} from "./service/utils";
+import {getDomainApi, getUserApi} from "./service/utils";
 import {expect} from "@jest/globals";
 
 export const createUser = (domainId, accessToken, user) =>
@@ -128,3 +128,11 @@ export async function buildCreateAndTestUser(domainId, accessToken, i: number, p
     expect(newUser.password).not.toBeDefined();
     return newUser;
 }
+
+export const listUsers = (domainId, accessToken, query) =>
+    getDomainApi(accessToken).listUsers({
+        organizationId: process.env.AM_DEF_ORG_ID,
+        environmentId: process.env.AM_DEF_ENV_ID,
+        domain: domainId,
+        q: query,
+    })

@@ -19,7 +19,7 @@ global.fetch = fetch;
 
 import {jest, afterAll, beforeAll, expect} from "@jest/globals";
 import {requestAdminAccessToken} from "@management-commands/token-management-commands";
-import {createDomain, deleteDomain, patchDomain, startDomain} from "@management-commands/domain-management-commands";
+import {createDomain, deleteDomain, patchDomain, startDomain, waitForDomainSync} from "@management-commands/domain-management-commands";
 import {getAllIdps} from "@management-commands/idp-management-commands";
 import {createUser} from "@management-commands/user-management-commands";
 import {
@@ -49,8 +49,6 @@ let user = {
 }
 
 jest.setTimeout(200000)
-
-const waitForDomainSync = () => new Promise((r) => setTimeout(r, 10000))
 
 beforeAll(async () => {
     const adminTokenResponse = await requestAdminAccessToken();
