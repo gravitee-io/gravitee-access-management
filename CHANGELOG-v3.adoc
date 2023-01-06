@@ -1,5 +1,25 @@
 # Change Log
 
+
+== https://github.com/gravitee-io/issues/milestone/625?closed=1[AM - 3.18.14 (2023-01-06)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- Improve SAMLRequestFailureHandler https://github.com/gravitee-io/issues/issues/8159[#8159]
+
+*_General_*
+
+- - Login_sso_post template broken due to CSP rules https://github.com/gravitee-io/issues/issues/8782[#8782]
+- Internal server error on FIDO2 factor when attestation set to 'none' https://github.com/gravitee-io/issues/issues/7967[#7967]
+- Merge AM 3.15.16 into 3.18.x https://github.com/gravitee-io/issues/issues/8780[#8780]
+- Receiving email to reset password for a username which does not exist https://github.com/gravitee-io/issues/issues/8729[#8729]
+- State parameter isn't URLEncoded when redirect_uri is called https://github.com/gravitee-io/issues/issues/8761[#8761]
+- X-Forward-Port impact the iss claim https://github.com/gravitee-io/issues/issues/8807[#8807]
+
+ 
+ 
 == AM - 3.20.0 (2023-01-04)
 
 === Bug fixes
