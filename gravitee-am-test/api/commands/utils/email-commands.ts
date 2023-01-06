@@ -28,9 +28,7 @@ export class Email {
 	public extractLink() {
     if (this.contents.length > 0) {
 			const dom = cheerio.load(this.contents[0].data);
-			const link = dom("a").attr('href');
-			console.log("URL extracted from email: " + link);
-			return link;
+			return dom("a").attr('href');
 		} else {
 			throw 'Email content is missing';
 		}
@@ -42,13 +40,8 @@ class Content {
 	contentType: string;
 }
 
-export async function hasEmail() {
-	const response = await fetch(process.env.FAKE_SMTP+'/api/email');
-	const array = await response.json()
-	return array.length > 0;
-}
-
-export async function getLastEmail() {
+export async function getLastEmail(delay = 1000) {
+	await new Promise((r) => setTimeout(r, delay))
 	const response = await fetch(process.env.FAKE_SMTP+'/api/email');
 	const array = await response.json()
 	const jsonEmail = array[0];
@@ -70,4 +63,11 @@ export async function getLastEmail() {
 
 export async function clearEmails() {
 	await fetch(process.env.FAKE_SMTP+'/api/email', {method: 'delete'});
+}
+
+export async function hasEmail(delay = 1000) {
+	await new Promise((r) => setTimeout(r, delay))
+	const response = await fetch(process.env.FAKE_SMTP+'/api/email');
+	const array = await response.json()
+	return array.length > 0;
 }

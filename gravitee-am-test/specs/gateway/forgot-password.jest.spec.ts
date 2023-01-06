@@ -17,7 +17,7 @@ import * as faker from 'faker';
 import fetch from "cross-fetch";
 import {afterAll, beforeAll, expect, jest} from "@jest/globals";
 import {requestAdminAccessToken} from "@management-commands/token-management-commands";
-import {createDomain, deleteDomain, patchDomain, startDomain} from "@management-commands/domain-management-commands";
+import {createDomain, deleteDomain, patchDomain, startDomain, waitFor, waitForDomainSync} from "@management-commands/domain-management-commands";
 import {createApplication, updateApplication} from "@management-commands/application-management-commands";
 import {
     extractXsrfTokenAndActionResponse,
@@ -183,12 +183,12 @@ settings.forEach(setting => {
             clientId = application.settings.oauth.clientId;
 
             domain = await startDomain(domain.id, accessToken);
-            await new Promise((r) => setTimeout(r, 10000));
+            await waitForDomainSync();
             const result = await getWellKnownOpenIdConfiguration(domain.hrid).expect(200);
             openIdConfiguration = result.body
 
             user = await createUser(domain.id, accessToken, userProps);
-            await new Promise((r) => setTimeout(r, 1000));
+            await waitFor(1000);
             if (selectedSetting.accountSettings.resetPasswordConfirmIdentity) {
                 await createUser(domain.id, accessToken, {
                     firstName: "second",
@@ -197,7 +197,7 @@ settings.forEach(setting => {
                     username: `anotherUser`,
                     password: "r@Nd0mP@55w0rd!"
                 });
-                await new Promise((r) => setTimeout(r, 1000));
+                await waitFor(1000);
             }
             const response = await performPost(openIdConfiguration.token_endpoint, '',
                 "grant_type=password&username=test123&password=SomeP@ssw0rd01&scope=openid",
@@ -248,7 +248,7 @@ settings.forEach(setting => {
                         });
 
                         afterAll(async () => {
-                            await new Promise((r) => setTimeout(r, 1000));
+                            await waitFor(1000);
                         });
                     });
                 });
@@ -342,7 +342,7 @@ settings.forEach(setting => {
             }
 
             afterAll(async () => {
-                await new Promise((r) => setTimeout(r, 1000));
+                await waitFor(1000);
             });
         });
     });
@@ -412,7 +412,6 @@ const forgotPassword = async settings => {
 };
 
 const retrieveEmailLinkForReset = async () => {
-    await new Promise((r) => setTimeout(r, 1000))
     confirmationLink = (await getLastEmail()).extractLink();
     expect(confirmationLink).toBeDefined();
     await clearEmails();
@@ -447,7 +446,7 @@ const resetPassword = async (password, expectedMessage, setting) => {
             const decoded = JSON.parse(atob(sessionJwt));
             expect(decoded.userId).toEqual(user.id);
         }
-        await new Promise((r) => setTimeout(r, 8000));
+        await waitFor(8000);
         const response = await performPost(openIdConfiguration.introspection_endpoint, '',
             `token=${userSessionToken}`,
             {

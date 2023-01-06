@@ -16,7 +16,7 @@
 import fetch from "cross-fetch";
 import {afterAll, beforeAll, expect, jest} from "@jest/globals";
 import {requestAdminAccessToken} from "@management-commands/token-management-commands";
-import {createDomain, deleteDomain, patchDomain, startDomain} from "@management-commands/domain-management-commands";
+import {createDomain, deleteDomain, patchDomain, startDomain, waitFor, waitForDomainSync} from "@management-commands/domain-management-commands";
 import {createIdp, deleteIdp, getAllIdps} from "@management-commands/idp-management-commands";
 import {createScope} from "@management-commands/scope-management-commands";
 import {createCertificate} from "@management-commands/certificate-management-commands";
@@ -173,7 +173,7 @@ describe("OAuth2 - App version", () => {
             expect(domainStarted).toBeDefined();
             expect(domainStarted.id).toEqual(domain.id);
             domain = domainStarted;
-            await new Promise((r) => setTimeout(r, 10000));
+            await waitForDomainSync();
         });
 
         it('must reach well-known endpoint', async () => {
@@ -305,7 +305,7 @@ describe("OAuth2 - App version", () => {
             it('renew client - must renew secrets and test token', async () => {
                 application3 = await renewApplicationSecrets(domain.id, accessToken, application3.id)
                     .then(async app => {
-                        await new Promise((r) => setTimeout(r, 5000));
+                        await waitFor(5000);
                         await performPost(openIdConfiguration.token_endpoint, '',
                             "grant_type=client_credentials",
                             {
@@ -486,7 +486,7 @@ describe("OAuth2 - App version", () => {
                         }
                     }
                 }, application2.id))
-                    .then(_ => new Promise((r) => setTimeout(r, 6000)))
+                    .then(_ => waitForDomainSync())
                     .then(_ => performGet(openIdConfiguration.authorization_endpoint, params).expect(302));
 
                 expect(authResponse.headers['location']).toBeDefined();
@@ -541,7 +541,7 @@ describe("OAuth2 - App version", () => {
                 expect(postConsentRedirect.headers['location']).toMatch(/code=[-_a-zA-Z0-9]+&?/);
 
                 // Initiate the Login Flow again
-                const authResponse2 = await new Promise((r) => setTimeout(r, 6000))
+                const authResponse2 = await waitFor(6000)
                     .then(_ => performGet(openIdConfiguration.authorization_endpoint, params, {
                         'Cookie': postConsentRedirect.headers['set-cookie']
                     }).expect(302));
@@ -551,7 +551,7 @@ describe("OAuth2 - App version", () => {
 
                 await logoutUser(openIdConfiguration.end_session_endpoint, postConsentRedirect)
                     .then(_ => patchApplication(domain.id, accessToken, {"settings": application2.settings}, application2.id))
-                    .then(_ => new Promise((r) => setTimeout(r, 6000)));
+                    .then(_ => waitFor(6000));
             });
 
             it("must handle invalid client", async () => {
@@ -900,7 +900,7 @@ describe("OAuth2 - App version", () => {
                                     "redirectUriStrictMatching": true
                                 }
                             })
-                                .then(_ => new Promise((r) => setTimeout(r, 10000)))
+                                .then(_ => waitFor(10000))
                                 .then(_ => performGet(openIdConfiguration.authorization_endpoint, actual.params).expect(302));
                         } else {
                             authResponse = await performGet(openIdConfiguration.authorization_endpoint, actual.params).expect(302)

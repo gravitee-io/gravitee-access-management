@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import {afterAll, beforeAll, expect, jest} from "@jest/globals";
-import {createDomain, deleteDomain, startDomain} from "@management-commands/domain-management-commands";
+import {createDomain, deleteDomain, startDomain, waitFor} from "@management-commands/domain-management-commands";
 import {requestAdminAccessToken} from "@management-commands/token-management-commands";
 import {createApplication, updateApplication} from "@management-commands/application-management-commands";
 
@@ -76,7 +76,7 @@ beforeAll(async () => {
     * At this point I haven't found a function which is similar to retry until specific http code is returned.
     * jest.retryTimes(numRetries, options) didn't applicable in this case.
     * */
-    await new Promise((r) => setTimeout(r, 10000));
+    await waitFor(10000);
 
     const result = await getWellKnownOpenIdConfiguration(domain.hrid).expect(200);
     openIdConfiguration = result.body;
@@ -177,7 +177,7 @@ describe("MFA", () => {
             }
 
             //now wait 1 second as per the configuration
-            await new Promise((r) => setTimeout(r, (mfaChallengeAttemptsResetTime) * 1000));
+            await waitFor(mfaChallengeAttemptsResetTime * 1000);
 
             const successfulVerification = await verifySMSFactor(authResult2, validMFACode);
             expect(successfulVerification.headers['location']).toBeDefined();
@@ -222,7 +222,6 @@ describe("MFA", () => {
                 'Cookie': authorize2.headers['set-cookie']
             }).expect(200);
 
-            await new Promise((r) => setTimeout(r, 1000));
             const email = await getLastEmail();
             expect(email).toBeDefined();
             expect(email.contents[0].data).toContain(emailVerificationCode);

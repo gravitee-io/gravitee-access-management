@@ -69,7 +69,6 @@ export const createAcceptAllDeviceNotifier = (domainId, accessToken) =>
         )
         .expect(201);
 
-
 export const getDomainFlows = (domainId, accessToken) =>
     getDomainApi(accessToken).listDomainFlows({
         organizationId: process.env.AM_DEF_ORG_ID,
@@ -87,3 +86,5 @@ getDomainApi(accessToken).defineDomainFlows({
     flows
 })
 
+export const waitForDomainSync = (duration = 6000) => waitFor(duration)
+export const waitFor = (duration) => new Promise((r) => setTimeout(r, duration))

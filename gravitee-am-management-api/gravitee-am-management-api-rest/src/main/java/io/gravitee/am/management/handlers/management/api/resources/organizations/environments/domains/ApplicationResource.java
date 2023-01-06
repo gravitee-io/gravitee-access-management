@@ -279,7 +279,7 @@ public class ApplicationResource extends AbstractResource {
             // If there is no require permission, it means there is nothing to update. This is not a valid request.
             response.resume(new BadRequestException("You need to specify at least one value to update."));
         } else {
-            Completable.merge(patchApplication.getRequiredPermissions().stream()
+            Completable.merge(requiredPermissions.stream()
                     .map(permission -> checkAnyPermission(organizationId, environmentId, domain, application, permission, Acl.UPDATE))
                     .collect(Collectors.toList()))
                     .andThen(domainService.findById(domain)
