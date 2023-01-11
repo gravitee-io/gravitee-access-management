@@ -53,6 +53,8 @@ import io.reactivex.Maybe;
 import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.core.buffer.Buffer;
 import io.vertx.reactivex.ext.web.client.HttpRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
@@ -72,6 +74,8 @@ import static io.gravitee.am.common.web.UriBuilder.encodeURIComponent;
  * @author GraviteeSource Team
  */
 public abstract class AbstractOpenIDConnectAuthenticationProvider extends AbstractSocialAuthenticationProvider implements OpenIDConnectAuthenticationProvider, InitializingBean {
+
+    protected final Logger LOGGER = LoggerFactory.getLogger(getClass());
 
     public static final String HASH_VALUE_PARAMETER = "urlHash";
     public static final String ACCESS_TOKEN_PARAMETER = "access_token";
@@ -203,6 +207,7 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
                 .toMaybe()
                 .map(httpResponse -> {
                     if (httpResponse.statusCode() != 200) {
+                        LOGGER.error("HTTP error {} is thrown while exchanging code. The response body is: {} ", httpResponse.statusCode(), httpResponse.bodyAsString());
                         throw new BadCredentialsException(httpResponse.statusMessage());
                     }
                     JsonObject response = httpResponse.bodyAsJsonObject();

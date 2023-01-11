@@ -222,6 +222,7 @@ public class TwitterAuthenticationProvider extends AbstractSocialAuthenticationP
                 .toMaybe()
                 .flatMap(httpResponse -> {
                     if (httpResponse.statusCode() != 200) {
+                        LOGGER.error("HTTP error {} is thrown while exchanging code. The response body is: {} ", httpResponse.statusCode(), httpResponse.bodyAsString());
                         return Maybe.error(new BadCredentialsException(httpResponse.bodyAsString()));
                     }
                     String[] tokenInfo = httpResponse.bodyAsString().split("&");
