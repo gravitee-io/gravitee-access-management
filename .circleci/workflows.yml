@@ -673,7 +673,6 @@ jobs:
           when: always
           command: |
             cp -fr docker/management-ui/config /tmp/
-            cp -fr docker/management-ui/run.sh /tmp/
             export AM_VERSION=$(mvn -s /tmp/.gravitee.settings.xml -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
             export IMAGE_TAG=graviteeio.azurecr.io/am-management-ui:${TAG}
             export IMAGE_TAG_LATEST=graviteeio.azurecr.io/am-management-ui:${TAG_LATEST}
