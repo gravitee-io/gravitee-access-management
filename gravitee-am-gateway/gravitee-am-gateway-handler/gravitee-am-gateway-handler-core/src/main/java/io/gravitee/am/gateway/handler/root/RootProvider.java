@@ -419,7 +419,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         rootRouter.route(PATH_MFA_CHALLENGE_ALTERNATIVES)
                 .handler(clientRequestParseHandler)
                 .handler(localeHandler)
-                .handler(new MFAChallengeAlternativesEndpoint(thymeleafTemplateEngine, factorManager));
+                .handler(new MFAChallengeAlternativesEndpoint(thymeleafTemplateEngine, factorManager, domain));
         rootRouter.route(PATH_MFA_RECOVERY_CODE)
                 .handler(clientRequestParseHandler)
                 .handler(localeHandler)
