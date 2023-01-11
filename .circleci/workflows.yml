@@ -82,6 +82,13 @@ parameters:
     description: "Is this a latest support version of the Product ? (if so minor version tagging docker images). True by default."
 
 commands:
+  create_docker_context:
+    steps:
+      - run:
+          name: "Create docker context for buildx"
+          command: |
+            docker context create tls-env
+            docker buildx create tls-env --use
   publish_bundle:
     parameters:
       dry_run:
@@ -640,6 +647,7 @@ jobs:
             # create a latest tag for the given branch to avoid flooding SNYK project
             export TAG_LATEST=$(echo "${CIRCLE_BRANCH:0:15}-latest")
             echo "export TAG_LATEST=$TAG_LATEST" >> $BASH_ENV
+      - create_docker_context
       - run:
           name: Build Management API Docker Image to Azure Registry
           when: always
@@ -1170,6 +1178,7 @@ jobs:
           - keeper/env-export:
               secret-url: keeper://cooU9UoXIk8Kj0hsP2rkBw/field/password
               var-name: DOCKERHUB_BOT_USER_TOKEN
+          - create_docker_context
           - run:
               name: "Build Docker Images: Gravitee AM Community Edition"
               command: |
