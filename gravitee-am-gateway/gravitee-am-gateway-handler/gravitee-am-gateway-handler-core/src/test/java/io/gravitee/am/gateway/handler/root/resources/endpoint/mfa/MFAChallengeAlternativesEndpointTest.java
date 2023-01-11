@@ -94,7 +94,7 @@ public class MFAChallengeAlternativesEndpointTest extends RxWebTestBase {
     @Test
     public void mustNotInvokeMFAChallengeAlternativesEndpoint_noUser() throws Exception {
         router.route(HttpMethod.GET, "/mfa/challenge/alternatives")
-                .handler(new MFAChallengeAlternativesEndpoint(templateEngine, factorManager));
+                .handler(new MFAChallengeAlternativesEndpoint(templateEngine, factorManager, domain));
 
         testRequest(
                 HttpMethod.GET, "/mfa/challenge/alternatives?client_id=test",
@@ -110,7 +110,7 @@ public class MFAChallengeAlternativesEndpointTest extends RxWebTestBase {
         });
 
         router.route(HttpMethod.GET, "/mfa/challenge/alternatives")
-                .handler(new MFAChallengeAlternativesEndpoint(templateEngine, factorManager));
+                .handler(new MFAChallengeAlternativesEndpoint(templateEngine, factorManager, domain));
 
         testRequest(
                 HttpMethod.GET, "/mfa/challenge/alternatives?client_id=test",
@@ -127,7 +127,7 @@ public class MFAChallengeAlternativesEndpointTest extends RxWebTestBase {
         });
 
         router.route(HttpMethod.GET, "/mfa/challenge/alternatives")
-                .handler(new MFAChallengeAlternativesEndpoint(templateEngine, factorManager));
+                .handler(new MFAChallengeAlternativesEndpoint(templateEngine, factorManager, domain));
 
         testRequest(
                 HttpMethod.GET, "/mfa/challenge/alternatives?client_id=test",
@@ -149,7 +149,7 @@ public class MFAChallengeAlternativesEndpointTest extends RxWebTestBase {
         });
 
         router.route(HttpMethod.GET, "/mfa/challenge/alternatives")
-                .handler(get200AssertMockRoutingContextHandler(new MFAChallengeAlternativesEndpoint(templateEngine, factorManager)));
+                .handler(get200AssertMockRoutingContextHandler(new MFAChallengeAlternativesEndpoint(templateEngine, factorManager, domain)));
 
         testRequest(
                 HttpMethod.GET, "/mfa/challenge/alternatives?client_id=test",
