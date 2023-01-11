@@ -655,16 +655,9 @@ jobs:
             export AM_VERSION=$(mvn -s /tmp/.gravitee.settings.xml -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
             export IMAGE_TAG=graviteeio.azurecr.io/am-management-api:${TAG}
             export IMAGE_TAG_LATEST=graviteeio.azurecr.io/am-management-api:${TAG_LATEST}
-            echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
-            echo "export IMAGE_TAG_LATEST=$IMAGE_TAG_LATEST" >> $BASH_ENV
-            docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/management-api/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} -t ${IMAGE_TAG_LATEST} /tmp
-      - run:
-          name: Push API Docker image
-          when: always
-          command: |
+            
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
-            docker push ${IMAGE_TAG}
-            docker push ${IMAGE_TAG_LATEST}
+            docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/management-api/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} -t ${IMAGE_TAG_LATEST} /tmp
       - run:
           name: Build Gateway Docker Image to Azure Registry
           when: always
@@ -672,16 +665,9 @@ jobs:
             export AM_VERSION=$(mvn -s /tmp/.gravitee.settings.xml -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
             export IMAGE_TAG=graviteeio.azurecr.io/am-gateway:${TAG}
             export IMAGE_TAG_LATEST=graviteeio.azurecr.io/am-gateway:${TAG_LATEST}
-            echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
-            echo "export IMAGE_TAG_LATEST=$IMAGE_TAG_LATEST" >> $BASH_ENV
-            docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/gateway/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} -t ${IMAGE_TAG_LATEST} /tmp
-      - run:
-          name: Push Gateway Docker image
-          when: always
-          command: |
+            
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
-            docker push ${IMAGE_TAG}
-            docker push ${IMAGE_TAG_LATEST}
+            docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/gateway/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} -t ${IMAGE_TAG_LATEST} /tmp
       - run:
           name: Build Web UI Docker Image to Azure Registry
           when: always
@@ -691,16 +677,9 @@ jobs:
             export AM_VERSION=$(mvn -s /tmp/.gravitee.settings.xml -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
             export IMAGE_TAG=graviteeio.azurecr.io/am-management-ui:${TAG}
             export IMAGE_TAG_LATEST=graviteeio.azurecr.io/am-management-ui:${TAG_LATEST}
-            echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
-            echo "export IMAGE_TAG_LATEST=$IMAGE_TAG_LATEST" >> $BASH_ENV
-            docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/management-ui/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} -t ${IMAGE_TAG_LATEST} /tmp
-      - run:
-          name: Push Web UI Docker image
-          when: always
-          command: |
+            
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
-            docker push ${IMAGE_TAG}
-            docker push ${IMAGE_TAG_LATEST}
+            docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/management-ui/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} -t ${IMAGE_TAG_LATEST} /tmp
       - persist_to_workspace:
           root: /tmp
           paths:
