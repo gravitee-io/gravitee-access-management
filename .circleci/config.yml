@@ -49,12 +49,12 @@ parameters:
     type: boolean
     default: true
     description: "Is this a latest support version of the Product ? (if so minor version tagging docker images). True by default."
-    
+
 orbs:
   path-filtering: circleci/path-filtering@0.0.2
 workflows:
   containter-test-check:
-    jobs:    
+    jobs:
       - path-filtering/filter:
           base-revision: << pipeline.git.branch >>
           config-path: ".circleci/workflows.yml"
