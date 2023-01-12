@@ -112,7 +112,7 @@ public class UriBuilderRequest {
 
         // host + port
         String host = request.getHeader(HttpHeaders.X_FORWARDED_HOST);
-        String port = request.getHeader(HttpHeaders.X_FORWARDED_PORT);
+        String port = useNonStandardPort(request, scheme) ? request.getHeader(HttpHeaders.X_FORWARDED_PORT) : null;
         if (host != null && !host.isEmpty()) {
             handleHost(builder, host, port);
         } else {
@@ -140,6 +140,10 @@ public class UriBuilderRequest {
             }
         }
         return builder.buildString();
+    }
+
+    private static boolean useNonStandardPort(HttpServerRequest request, String scheme) {
+        return ("http".equals(scheme) && !"80".equals(request.getHeader(HttpHeaders.X_FORWARDED_PORT))) || ("https".equals(scheme) && !"443".equals(request.getHeader(HttpHeaders.X_FORWARDED_PORT)));
     }
 
     private static void handleHost(UriBuilder builder, String host, String port) {

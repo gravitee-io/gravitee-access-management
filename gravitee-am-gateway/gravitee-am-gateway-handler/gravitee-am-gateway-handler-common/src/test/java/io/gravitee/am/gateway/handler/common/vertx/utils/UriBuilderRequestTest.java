@@ -55,6 +55,37 @@ public class UriBuilderRequestTest {
     }
 
     @Test
+    public void shouldHandle_XForward_Headers_DefaultHttpPort() {
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PROTO))).thenReturn("http");
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_HOST))).thenReturn("myhost");
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PORT))).thenReturn("80");
+
+        assertEquals("http://myhost/my/path?param1=value1", UriBuilderRequest.resolveProxyRequest(request, path, params, true));
+
+        // default https port with http scheme should keep the forwarded port
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PROTO))).thenReturn("http");
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_HOST))).thenReturn("myhost");
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PORT))).thenReturn("443");
+        assertEquals("http://myhost:443/my/path?param1=value1", UriBuilderRequest.resolveProxyRequest(request, path, params, true));
+    }
+
+
+    @Test
+    public void shouldHandle_XForward_Headers_DefaultHttpsPort() {
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PROTO))).thenReturn("https");
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_HOST))).thenReturn("myhost");
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PORT))).thenReturn("443");
+
+        assertEquals("https://myhost/my/path?param1=value1", UriBuilderRequest.resolveProxyRequest(request, path, params, true));
+
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PROTO))).thenReturn("https");
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_HOST))).thenReturn("myhost");
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PORT))).thenReturn("80");
+        // default http port with https scheme should keep the forwarded port
+        assertEquals("https://myhost:80/my/path?param1=value1", UriBuilderRequest.resolveProxyRequest(request, path, params, true));
+    }
+
+    @Test
     public void shouldHandle_XForward_Headers_HostWithPort_NoXForwardPort() {
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PROTO))).thenReturn("https");
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_HOST))).thenReturn("myhost:9999");
