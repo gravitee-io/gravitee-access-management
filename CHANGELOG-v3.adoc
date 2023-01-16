@@ -1,6 +1,25 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/627?closed=1[AM - 3.19.5 (2023-01-16)]
+
+=== Bug fixes
+
+*_General_*
+
+- LoginCallbackOpenIDConnectFlowHandler throws UnsupportedOperationException https://github.com/gravitee-io/issues/issues/8819[#8819]
+- The name displayed on the user list is not updated when they are changed to the first/last name in the user's profile (self-service account management API) https://github.com/gravitee-io/issues/issues/8755[#8755]
+- Add missing error logs when external OpenID IdP authentication fails https://github.com/gravitee-io/issues/issues/8818[#8818]
+- [Self Account Management] improve reset password endpoint https://github.com/gravitee-io/issues/issues/8723[#8723]
+- Merge AM 3.18.14 into 3.19.x https://github.com/gravitee-io/issues/issues/8826[#8826]
+
+*_Policy_*
+
+- Send Email policy requires the "From Name" attribute https://github.com/gravitee-io/issues/issues/8778[#8778]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/625?closed=1[AM - 3.18.14 (2023-01-06)]
 
 === Bug fixes
