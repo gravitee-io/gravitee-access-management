@@ -17,14 +17,19 @@ package io.gravitee.am.gateway.handler.common.vertx.web.handler;
 
 import io.gravitee.am.common.exception.authentication.AccountDisabledException;
 import io.gravitee.am.common.exception.authentication.AccountIllegalStateException;
+import io.gravitee.am.common.exception.authentication.AccountLockedException;
 import io.gravitee.am.common.exception.authentication.AccountStatusException;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieSession;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.service.AuthenticationFlowContextService;
+import io.gravitee.am.service.LoginAttemptService;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -37,6 +42,8 @@ import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -53,10 +60,14 @@ public class SSOSessionHandler implements Handler<RoutingContext> {
     private static final Logger LOGGER = LoggerFactory.getLogger(SSOSessionHandler.class);
     private ClientSyncService clientSyncService;
     private AuthenticationFlowContextService authenticationFlowContextService;
+    private LoginAttemptService loginAttemptService;
+    private Domain domain;
 
-    public SSOSessionHandler(ClientSyncService clientSyncService, AuthenticationFlowContextService authenticationFlowContextService) {
+    public SSOSessionHandler(ClientSyncService clientSyncService, AuthenticationFlowContextService authenticationFlowContextService, LoginAttemptService loginAttemptService, Domain domain) {
         this.clientSyncService = clientSyncService;
         this.authenticationFlowContextService = authenticationFlowContextService;
+        this.loginAttemptService = loginAttemptService;
+        this.domain = domain;
     }
 
     @Override
@@ -158,34 +169,56 @@ public class SSOSessionHandler implements Handler<RoutingContext> {
         }
         // check if both clients (requested and user client) share the same identity provider
         Single.zip(getClient(clientId), getClient(user.getClient()), (optRequestedClient, optUserClient) -> {
-            Client requestedClient = optRequestedClient.get();
-            Client userClient = optUserClient.get();
+                    Client requestedClient = optRequestedClient.get();
+                    Client userClient = optUserClient.get();
 
-            // no client to check, continue
-            if (requestedClient == null) {
-                return Completable.complete();
-            }
+                    // no client to check, continue
+                    if (requestedClient == null) {
+                        return Completable.complete();
+                    }
 
-            // no client to check for the user, continue
-            if (userClient == null) {
-                return Completable.complete();
-            }
+                    // no client to check for the user, continue
+                    if (userClient == null) {
+                        return Completable.complete();
+                    }
 
-            // if same client, nothing to do, continue
-            if (userClient.getId().equals(requestedClient.getId())) {
-                return Completable.complete();
-            }
+                    // if same client, nothing to do, continue
+                    if (userClient.getId().equals(requestedClient.getId())) {
+                        return Completable.complete();
+                    }
 
-            // both clients are sharing the same provider, continue
-            if (requestedClient.getIdentities() != null && requestedClient.getIdentities().contains(user.getSource())) {
-                return Completable.complete();
-            }
+                    // both clients are sharing the same provider, continue
+                    if (requestedClient.getIdentities() != null && requestedClient.getIdentities().contains(user.getSource())) {
 
-            // throw error
-            throw new InvalidRequestException("User is not on a shared identity provider");
-        }).subscribe(
-            __ -> handler.handle(Future.succeededFuture()),
-            error -> handler.handle(Future.failedFuture(error)));
+                        // check brute force status to be sure that a active session on another client bypass the BlockedUser status
+                        final AccountSettings accountSettings = AccountSettings.getInstance(domain, requestedClient);
+                        if (accountSettings != null && accountSettings.isLoginAttemptsDetectionEnabled()) {
+                            LoginAttemptCriteria criteria = new LoginAttemptCriteria.Builder()
+                                    .domain(domain.getId())
+                                    .client(requestedClient.getId())
+                                    .identityProvider(user.getSource())
+                                    .username(user.getUsername())
+                                    .build();
+                            return loginAttemptService
+                                    .checkAccount(criteria, accountSettings)
+                                    .map(loginAttempt -> {
+                                        if (loginAttempt.isAccountLocked(accountSettings.getMaxLoginAttempts())) {
+                                            Map<String, String> details = new HashMap<>();
+                                            details.put("attempt_id", loginAttempt.getId());
+                                            throw new AccountLockedException("User " + user.getUsername() + " is locked", details);
+                                        }
+                                        return loginAttempt;
+                                    }).ignoreElement();
+                        }
+                        return Completable.complete();
+                    }
+
+                    // throw error
+                    throw new InvalidRequestException("User is not on a shared identity provider");
+                })
+                .subscribe(
+                        completable -> completable.subscribe(() -> handler.handle(Future.succeededFuture()), error -> handler.handle(Future.failedFuture(error))),
+                        error -> handler.handle(Future.failedFuture(error)));
 
     }
 
