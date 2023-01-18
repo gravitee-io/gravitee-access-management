@@ -41,9 +41,16 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
+import java.security.PublicKey;
+import java.security.interfaces.ECPublicKey;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.RSAPublicKeySpec;
-import java.util.*;
+import java.security.spec.X509EncodedKeySpec;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -55,7 +62,7 @@ public class JWTBearerExtensionGrantProvider implements ExtensionGrantProvider, 
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JWTBearerExtensionGrantProvider.class);
     private static final String ASSERTION_QUERY_PARAM = "assertion";
-    private static final Pattern SSH_PUB_KEY = Pattern.compile("ssh-(rsa|dsa) ([A-Za-z0-9/+]+=*)( .*)?");
+    static final Pattern SSH_PUB_KEY = Pattern.compile("((ecdsa)(.*)|ssh-(rsa|dsa)) ([A-Za-z0-9/+]+=*)( .*)?");
     private JWTParser jwtParser;
 
     @Autowired
@@ -63,7 +70,7 @@ public class JWTBearerExtensionGrantProvider implements ExtensionGrantProvider, 
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        RSAPublicKey publicKey = parsePublicKey(jwtBearerTokenGranterConfiguration.getPublicKey());
+        PublicKey publicKey = parsePublicKey(jwtBearerTokenGranterConfiguration.getPublicKey());
         jwtParser = new DefaultJWTParser(publicKey);
     }
 
@@ -117,18 +124,20 @@ public class JWTBearerExtensionGrantProvider implements ExtensionGrantProvider, 
      * @param key String.
      * @return RSAPublicKey
      */
-    static RSAPublicKey parsePublicKey(String key) {
+    static PublicKey parsePublicKey(String key) {
         Matcher m = SSH_PUB_KEY.matcher(key);
 
         if (m.matches()) {
-            String alg = m.group(1);
-            String encKey = m.group(2);
+            String alg = m.group(2) != null ? m.group(2) : m.group(4);
+            String encKey = m.group(5);
 
-            if (!"rsa".equalsIgnoreCase(alg)) {
-                throw new IllegalArgumentException("Only RSA is currently supported, but algorithm was " + alg);
+            final boolean isRSA = "rsa".equalsIgnoreCase(alg);
+            final boolean isECDSA = "ecdsa".equalsIgnoreCase(alg);
+            if (!(isRSA || isECDSA)) {
+                throw new IllegalArgumentException("Only RSA or ECDSA is currently supported, but algorithm was " + alg);
             }
 
-            return parseSSHPublicKey(encKey);
+            return isRSA ? parseSshRSAPublicKey(encKey) : parseEcPublicKey(encKey);
         }
 
         return null;
@@ -143,7 +152,7 @@ public class JWTBearerExtensionGrantProvider implements ExtensionGrantProvider, 
      * @param encKey String
      * @return RSAPublicKey
      */
-    private static RSAPublicKey parseSSHPublicKey(String encKey) {
+    private static PublicKey parseSshRSAPublicKey(String encKey) {
         final byte[] PREFIX = new byte[] {0,0,0,7, 's','s','h','-','r','s','a'};
         ByteArrayInputStream in = new ByteArrayInputStream(Base64.getDecoder().decode(StandardCharsets.UTF_8.encode(encKey)).array());
 
@@ -166,6 +175,16 @@ public class JWTBearerExtensionGrantProvider implements ExtensionGrantProvider, 
     static RSAPublicKey createPublicKey(BigInteger n, BigInteger e) {
         try {
             return (RSAPublicKey) KeyFactory.getInstance("RSA").generatePublic(new RSAPublicKeySpec(n, e));
+        }
+        catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+    static ECPublicKey parseEcPublicKey(String publicKey) {
+        try {
+            X509EncodedKeySpec x509KeySpec = new X509EncodedKeySpec(Base64.getDecoder().decode(publicKey));
+            KeyFactory keyFactory = KeyFactory.getInstance("EC");
+            return (ECPublicKey) keyFactory.generatePublic(x509KeySpec);
         }
         catch (Exception ex) {
             throw new RuntimeException(ex);
