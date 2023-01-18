@@ -48,7 +48,7 @@ public class IDTokenResponse extends AuthorizationResponse {
         UriBuilder uriBuilder = UriBuilder.fromURIString(getRedirectUri());
         uriBuilder.addFragmentParameter(ResponseType.ID_TOKEN, getIdToken());
         if (getState() != null) {
-            uriBuilder.addFragmentParameter(Parameters.STATE, getState());
+            uriBuilder.addFragmentParameter(Parameters.STATE, getURLEncodedState());
         }
         return uriBuilder.buildString();
     }

@@ -140,12 +140,19 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public Single<ResetPasswordResponse> resetPassword(User user, Client client, String password, io.gravitee.am.identityprovider.api.User principal) {
+    public Single<ResetPasswordResponse> resetPassword(User user, Client client, String password, io.gravitee.am.identityprovider.api.User principal, Optional<String> olPassword) {
         return Single.defer(() -> {
             PasswordSettings passwordSettings = PasswordSettings.getInstance(client, this.domain).orElse(null);
             passwordService.validate(password, passwordSettings, user);
             user.setPassword(password);
-            return gatewayUserService.resetPassword(client, user, principal);
+
+            final boolean needOldPassword = domain.getSelfServiceAccountManagementSettings() != null && domain.getSelfServiceAccountManagementSettings().resetPasswordWithOldValue();
+            if (needOldPassword && olPassword.isEmpty()) {
+                return Single.error(InvalidPasswordException.of("oldPassword is missing", InvalidPasswordException.INVALID_PASSWORD_VALUE));
+            }
+            var pwdCheck = needOldPassword ? gatewayUserService.checkPassword(user, olPassword.get(), principal) : Completable.complete();
+
+            return pwdCheck.andThen(Single.defer(() -> gatewayUserService.resetPassword(client, user, principal)));
         });
     }
 

@@ -15,18 +15,24 @@
  */
 package io.gravitee.am.gateway.handler.account.services;
 
+import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.gateway.handler.account.services.impl.AccountServiceImpl;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
-import io.gravitee.am.gateway.handler.common.user.UserService;
+import io.gravitee.am.gateway.handler.root.service.response.ResetPasswordResponse;
+import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.SelfServiceAccountManagementSettings;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.CredentialService;
+import io.gravitee.am.service.PasswordService;
+import io.gravitee.am.service.exception.InvalidPasswordException;
 import io.gravitee.am.service.validators.user.UserValidator;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
@@ -39,8 +45,15 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Map;
+import java.util.Optional;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -66,6 +79,12 @@ public class AccountServiceTest {
 
     @Mock
     private Domain domain;
+
+    @Mock
+    private UserService gatewayUserService;
+
+    @Mock
+    private PasswordService passwordService;
 
     @InjectMocks
     private AccountService accountService = new AccountServiceImpl();
@@ -128,6 +147,92 @@ public class AccountServiceTest {
         verify(credentialService, times(1)).findById(credentialId);
         verify(credentialService, never()).delete(credentialId);
         verify(auditService, never()).report(any());
+    }
+
+    @Test
+    public void shouldResetPassword_NoOldPassword() {
+        final var client = mock(Client.class);
+        final var user = mock(io.gravitee.am.model.User.class);
+
+        when(gatewayUserService.resetPassword(any(), any(), any())).thenReturn(Single.just(new ResetPasswordResponse()));
+
+        var observable = accountService.resetPassword(user, client, "newpassword", new DefaultUser(), Optional.empty()).test();
+
+        observable.awaitTerminalEvent();
+        observable.assertNoErrors();
+
+        verify(gatewayUserService).resetPassword(any(), any(), any());
+        verify(gatewayUserService, never()).checkPassword(any(), any(), any());
+    }
+
+    @Test
+    public void shouldNotResetPassword_NoOldPassword() {
+        final var client = mock(Client.class);
+        final var user = mock(io.gravitee.am.model.User.class);
+
+        final var settings = new SelfServiceAccountManagementSettings();
+        final var resetPasswordSettings = new SelfServiceAccountManagementSettings.ResetPasswordSettings();
+        resetPasswordSettings.setOldPasswordRequired(true);
+        settings.setResetPassword(resetPasswordSettings);
+
+        when(domain.getSelfServiceAccountManagementSettings()).thenReturn(settings);
+
+        var observable = accountService.resetPassword(user, client, "newpassword", new DefaultUser(), Optional.empty()).test();
+
+        observable.awaitTerminalEvent();
+        observable.assertError(InvalidPasswordException.class);
+
+        verify(gatewayUserService, never()).resetPassword(any(), any(), any());
+        verify(gatewayUserService, never()).checkPassword(any(), any(), any());
+    }
+
+    @Test
+    public void shouldResetPassword_OldPasswordProvided() {
+        final var client = mock(Client.class);
+        final var user = mock(io.gravitee.am.model.User.class);
+
+        final var settings = new SelfServiceAccountManagementSettings();
+        final var resetPasswordSettings = new SelfServiceAccountManagementSettings.ResetPasswordSettings();
+        resetPasswordSettings.setOldPasswordRequired(true);
+        settings.setResetPassword(resetPasswordSettings);
+
+        when(domain.getSelfServiceAccountManagementSettings()).thenReturn(settings);
+        when(gatewayUserService.resetPassword(any(), any(), any())).thenReturn(Single.just(new ResetPasswordResponse()));
+        when(gatewayUserService.checkPassword(any(), any(), any())).thenReturn(Completable.complete());
+
+        final var oldpassword = "oldpassword";
+        final var newpassword = "newpassword";
+        var observable = accountService.resetPassword(user, client, newpassword, new DefaultUser(), Optional.of(oldpassword)).test();
+
+        observable.awaitTerminalEvent();
+        observable.assertNoErrors();
+
+        verify(gatewayUserService).resetPassword(any(), any(), any());
+        verify(gatewayUserService).checkPassword(any(), argThat(pwd -> pwd.equals(oldpassword)), any());
+    }
+
+    @Test
+    public void shouldNotResetPassword_InvalidOldPassword() {
+        final var client = mock(Client.class);
+        final var user = mock(io.gravitee.am.model.User.class);
+
+        final var settings = new SelfServiceAccountManagementSettings();
+        final var resetPasswordSettings = new SelfServiceAccountManagementSettings.ResetPasswordSettings();
+        resetPasswordSettings.setOldPasswordRequired(true);
+        settings.setResetPassword(resetPasswordSettings);
+
+        when(domain.getSelfServiceAccountManagementSettings()).thenReturn(settings);
+        when(gatewayUserService.checkPassword(any(), any(), any())).thenReturn(Completable.error(new BadCredentialsException()));
+
+        final var oldpassword = "oldpassword";
+        final var newpassword = "newpassword";
+        var observable = accountService.resetPassword(user, client, newpassword, new DefaultUser(), Optional.of(oldpassword)).test();
+
+        observable.awaitTerminalEvent();
+        observable.assertError(BadCredentialsException.class);
+
+        verify(gatewayUserService).checkPassword(any(), argThat(pwd -> pwd.equals(oldpassword)), any());
+        verify(gatewayUserService, never()).resetPassword(any(), any(), any());
     }
 
     @Test

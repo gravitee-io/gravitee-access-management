@@ -51,6 +51,12 @@ export interface PatchOIDCSettings {
     postLogoutRedirectUris?: Array<string>;
     /**
      * 
+     * @type {Array<string>}
+     * @memberof PatchOIDCSettings
+     */
+    requestUris?: Array<string>;
+    /**
+     * 
      * @type {Set<string>}
      * @memberof PatchOIDCSettings
      */
@@ -156,6 +162,7 @@ export function PatchOIDCSettingsFromJSONTyped(json: any, ignoreDiscriminator: b
         
         'redirectUriStrictMatching': !exists(json, 'redirectUriStrictMatching') ? undefined : json['redirectUriStrictMatching'],
         'postLogoutRedirectUris': !exists(json, 'postLogoutRedirectUris') ? undefined : json['postLogoutRedirectUris'],
+        'requestUris': !exists(json, 'requestUris') ? undefined : json['requestUris'],
         'requiredPermissions': !exists(json, 'requiredPermissions') ? undefined : json['requiredPermissions'],
         'clientRegistrationSettings': !exists(json, 'clientRegistrationSettings') ? undefined : PatchClientRegistrationSettingsFromJSON(json['clientRegistrationSettings']),
         'securityProfileSettings': !exists(json, 'securityProfileSettings') ? undefined : PatchSecurityProfileSettingsFromJSON(json['securityProfileSettings']),
@@ -174,6 +181,7 @@ export function PatchOIDCSettingsToJSON(value?: PatchOIDCSettings | null): any {
         
         'redirectUriStrictMatching': value.redirectUriStrictMatching,
         'postLogoutRedirectUris': value.postLogoutRedirectUris,
+        'requestUris': value.requestUris,
         'requiredPermissions': value.requiredPermissions,
         'clientRegistrationSettings': PatchClientRegistrationSettingsToJSON(value.clientRegistrationSettings),
         'securityProfileSettings': PatchSecurityProfileSettingsToJSON(value.securityProfileSettings),

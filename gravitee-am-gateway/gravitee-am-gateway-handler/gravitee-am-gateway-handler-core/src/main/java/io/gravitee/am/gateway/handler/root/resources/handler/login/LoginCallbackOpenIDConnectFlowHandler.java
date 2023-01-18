@@ -27,8 +27,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+
+import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
 
 /**
  * Handle OpenID Connect response with response_type = id_token or id_token token.
@@ -83,7 +86,7 @@ public class LoginCallbackOpenIDConnectFlowHandler implements Handler<RoutingCon
         }
 
         // implicit flow, we need to retrieve hash url from the browser to get access_token, id_token, ...
-        engine.render(Collections.emptyMap(), "login_callback", res -> {
+        engine.render(new HashMap<>(), "login_callback", res -> {
             if (res.succeeded()) {
                 context.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
                 context.response().end(res.result());

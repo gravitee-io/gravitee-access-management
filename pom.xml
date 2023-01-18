@@ -30,7 +30,6 @@
     <groupId>io.gravitee.am</groupId>
     <artifactId>gravitee-am-parent</artifactId>
     <packaging>pom</packaging>
-
     <version>3.20.1-SNAPSHOT</version>
     <name>Gravitee IO - Access Management</name>
 
@@ -116,6 +115,7 @@
         <common-text.version>1.10.0</common-text.version>
         <ognl.version>3.1.12</ognl.version>
         <mockito-jupiter.version>4.4.0</mockito-jupiter.version>
+        <hazelcast.version>4.1.10</hazelcast.version>
         <!-- External plugins versions -->
         <gravitee-policy-callout-http.version>1.15.1</gravitee-policy-callout-http.version>
         <gravitee-policy-groovy.version>2.0.0</gravitee-policy-groovy.version>
@@ -389,6 +389,11 @@
                 <groupId>io.gravitee.cockpit</groupId>
                 <artifactId>gravitee-cockpit-api</artifactId>
                 <version>${gravitee-cockpit-api.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.hazelcast</groupId>
+                <artifactId>hazelcast</artifactId>
+                <version>${hazelcast.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
