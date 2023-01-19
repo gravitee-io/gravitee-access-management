@@ -30,6 +30,7 @@ import io.reactivex.Maybe;
 import io.reactivex.Single;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -43,7 +44,7 @@ public interface AccountService {
 
     Single<User> update(User user);
 
-    Single<ResetPasswordResponse> resetPassword(User user, Client client, String password, io.gravitee.am.identityprovider.api.User principal);
+    Single<ResetPasswordResponse> resetPassword(User user, Client client, String password, io.gravitee.am.identityprovider.api.User principal, Optional<String> oldPassword);
 
     Single<User> upsertFactor(String userId, EnrolledFactor enrolledFactor, io.gravitee.am.identityprovider.api.User principal);
 

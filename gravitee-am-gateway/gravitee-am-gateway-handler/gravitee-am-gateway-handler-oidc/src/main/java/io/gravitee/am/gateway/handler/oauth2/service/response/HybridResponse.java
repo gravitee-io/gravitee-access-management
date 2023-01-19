@@ -71,7 +71,7 @@ public class HybridResponse extends ImplicitResponse {
         UriBuilder uriBuilder = UriBuilder.fromURIString(getRedirectUri());
         uriBuilder.addFragmentParameter(Parameters.CODE, getCode());
         if (getState() != null) {
-            uriBuilder.addFragmentParameter(Parameters.STATE, getState());
+            uriBuilder.addFragmentParameter(Parameters.STATE, getURLEncodedState());
         }
         if (getIdToken() != null) {
             uriBuilder.addFragmentParameter(ResponseType.ID_TOKEN, getIdToken());

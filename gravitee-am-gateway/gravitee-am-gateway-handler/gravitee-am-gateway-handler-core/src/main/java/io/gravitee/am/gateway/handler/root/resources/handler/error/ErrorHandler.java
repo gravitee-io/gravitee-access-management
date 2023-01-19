@@ -26,6 +26,7 @@ import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpStatusCode;
 import io.vertx.core.Handler;
+import io.vertx.ext.auth.webauthn.impl.attestation.AttestationException;
 import io.vertx.ext.web.handler.HttpException;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerRequest;
@@ -70,6 +71,8 @@ public class ErrorHandler implements Handler<RoutingContext> {
             } else if (throwable instanceof HttpException) {
                 HttpException httpStatusException = (HttpException) throwable;
                 handleException(routingContext, httpStatusException.getMessage(), httpStatusException.getPayload());
+            }  else if (throwable instanceof AttestationException) {
+                handleException(routingContext, "technical_error", "Invalid WebAuthn attestation, make sure your device is compliant with the platform requirements");
             } else {
                 logger.error("An exception occurs while handling incoming request", throwable);
                 if (routingContext.statusCode() != -1) {

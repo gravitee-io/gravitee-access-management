@@ -110,6 +110,7 @@ public class GithubAuthenticationProvider extends AbstractSocialAuthenticationPr
                 .toMaybe()
                 .map(httpResponse -> {
                     if (httpResponse.statusCode() != 200) {
+                        LOGGER.error("HTTP error {} is thrown while exchanging code. The response body is: {} ", httpResponse.statusCode(), httpResponse.bodyAsString());
                         throw new BadCredentialsException(httpResponse.statusMessage());
                     }
 

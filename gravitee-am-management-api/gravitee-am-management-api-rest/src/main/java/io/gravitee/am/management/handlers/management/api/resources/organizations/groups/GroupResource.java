@@ -60,6 +60,7 @@ public class GroupResource extends AbstractResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Get a platform group",
+            nickname = "updateOrganizationGroup",
             notes = "User must have the ORGANIZATION_GROUP[READ] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 200, message = "Group successfully fetched", response = Group.class),

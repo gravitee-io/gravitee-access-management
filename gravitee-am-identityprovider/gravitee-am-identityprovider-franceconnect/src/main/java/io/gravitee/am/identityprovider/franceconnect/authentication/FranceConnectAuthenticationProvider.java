@@ -164,6 +164,7 @@ public class FranceConnectAuthenticationProvider extends AbstractSocialAuthentic
                 .toMaybe()
                 .map(httpResponse -> {
                     if (httpResponse.statusCode() != 200) {
+                        LOGGER.error("HTTP error {} is thrown while exchanging code. The response body is: {} ", httpResponse.statusCode(), httpResponse.bodyAsString());
                         throw new BadCredentialsException(httpResponse.statusMessage());
                     }
 
