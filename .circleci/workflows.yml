@@ -398,6 +398,9 @@ jobs:
             sleep 30
             # Run Jest tests
             npm --prefix gravitee-am-test run ci
+      - keeper/env-export:
+          secret-url: keeper://ZOz4db245GNaETVwmPBk8w/field/password
+          var-name: SLACK_ACCESS_TOKEN
       - slack/notify:
           branch_pattern: ".+"
           event: fail
@@ -500,6 +503,9 @@ jobs:
             sleep 30
             # Run Jest tests
             npm --prefix gravitee-am-test run ci
+      - keeper/env-export:
+          secret-url: keeper://ZOz4db245GNaETVwmPBk8w/field/password
+          var-name: SLACK_ACCESS_TOKEN
       - slack/notify:
           branch_pattern: ".+"
           event: fail
@@ -547,6 +553,9 @@ jobs:
             sleep 30
             # Run Postman tests
             make postman
+      - keeper/env-export:
+          secret-url: keeper://ZOz4db245GNaETVwmPBk8w/field/password
+          var-name: SLACK_ACCESS_TOKEN
       - slack/notify:
           branch_pattern: ".+"
           event: fail
@@ -625,6 +634,9 @@ jobs:
             sleep 30
             # Run Postman tests
             make postman
+      - keeper/env-export:
+          secret-url: keeper://ZOz4db245GNaETVwmPBk8w/field/password
+          var-name: SLACK_ACCESS_TOKEN
       - slack/notify:
           branch_pattern: ".+"
           event: fail
@@ -1276,24 +1288,28 @@ workflows:
           requires:
             - process_pull_request
       - run_postman_tests_mongo:
+          context: cicd-orchestrator
           requires:
             - approve-tests-mongo-psql
           matrix:
             parameters:
               mongo_version: ["4.4", "6.0"]
       - run_postman_tests_psql:
+          context: cicd-orchestrator
           requires:
             - approve-tests-mongo-psql
           matrix:
             parameters:
               psql_version: ["11.18-bullseye", "15.1"]
       - run_jest_tests_mongo:
+          context: cicd-orchestrator
           requires:
             - approve-tests-mongo-psql
           matrix:
             parameters:
               mongo_version: ["4.4", "6.0"]
       - run_jest_tests_psql:
+          context: cicd-orchestrator
           requires:
             - approve-tests-mongo-psql
           matrix:
