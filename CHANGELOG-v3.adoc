@@ -1,6 +1,30 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/629?closed=1[AM - 3.15.17 (2023-01-19)]
+
+=== Bug fixes
+
+*_General_*
+
+- A disabled user can trigger reset password and successfully reset the password (Backport #8670) https://github.com/gravitee-io/issues/issues/8712[#8712]
+- Access ManagerEmail validation regex needs updating https://github.com/gravitee-io/issues/issues/8350[#8350]
+- Improve WebAuthnSettings validation https://github.com/gravitee-io/issues/issues/8622[#8622]
+- Recovery email does not work if user has signed into another app prior to clicking on recovery link https://github.com/gravitee-io/issues/issues/8812[#8812]
+- Template can't be saved twice https://github.com/gravitee-io/issues/issues/8624[#8624]
+- 'The access token is invalid' message when actually, the refresh_token is expired https://github.com/gravitee-io/issues/issues/8791[#8791]
+
+*_MFA_*
+
+- Unable to sign in with new user if the self registration email is sent twice. https://github.com/gravitee-io/issues/issues/8806[#8806]
+
+*_Management_*
+
+- Unable to update a user linked to removed application https://github.com/gravitee-io/issues/issues/8380[#8380]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/627?closed=1[AM - 3.19.5 (2023-01-16)]
 
 === Bug fixes
