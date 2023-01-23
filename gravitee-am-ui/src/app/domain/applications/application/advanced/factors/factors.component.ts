@@ -57,10 +57,17 @@ export class ApplicationFactorsComponent implements OnInit {
     this.application = this.route.snapshot.data['application'];
     this.deviceIdentifiers = this.route.snapshot.data['deviceIdentifiers'] || [];
     this.mfa = this.application.settings == null ? {} : (this.application.settings.mfa || {});
+    this.mfa.enrollment = {
+      ...(this.mfa.enrollment ? this.mfa.enrollment : {
+        "forceEnrollment": false,
+        "skipTimeSeconds": null
+      })
+    };
     this.mfaStepUpRule = this.mfa.stepUpAuthenticationRule ? this.mfa.stepUpAuthenticationRule.slice() : "";
     this.adaptiveMfaRule = this.mfa.adaptiveAuthenticationRule ? this.mfa.adaptiveAuthenticationRule.slice() : "";
     this.rememberDevice = {...this.mfa.rememberDevice};
     this.enrollment = {...this.mfa.enrollment};
+
     this.application.settings.riskAssessment = this.application.settings.riskAssessment || ApplicationFactorsComponent.getDefaultRiskAssessment();
     this.riskAssessment = {...this.application.settings.riskAssessment};
 
