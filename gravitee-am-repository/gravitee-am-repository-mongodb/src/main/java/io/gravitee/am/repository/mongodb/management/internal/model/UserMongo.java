@@ -62,6 +62,7 @@ public class UserMongo extends Auditable {
     private String client;
     private long loginsCount;
     private Date loggedAt;
+    private Date lastLoginWithCredentials;
     private Date mfaEnrollmentSkippedAt;
     private Date lastPasswordReset;
     private Date lastLogoutAt;
@@ -319,6 +320,14 @@ public class UserMongo extends Auditable {
 
     public void setLoggedAt(Date loggedAt) {
         this.loggedAt = loggedAt;
+    }
+
+    public Date getLastLoginWithCredentials() {
+        return lastLoginWithCredentials;
+    }
+
+    public void setLastLoginWithCredentials(Date lastLoginWithCredentials) {
+        this.lastLoginWithCredentials = lastLoginWithCredentials;
     }
 
     public Date getMfaEnrollmentSkippedAt() {

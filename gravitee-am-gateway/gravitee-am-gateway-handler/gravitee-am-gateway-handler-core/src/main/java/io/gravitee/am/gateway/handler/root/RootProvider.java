@@ -103,11 +103,7 @@ import io.gravitee.am.gateway.handler.root.resources.handler.user.register.Regis
 import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterFailureHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterProcessHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterSubmissionRequestParseHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnAccessHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnLoginHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnRegisterHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnRememberDeviceHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnResponseHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.*;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
@@ -472,6 +468,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(webAuthnAccessHandler)
                 .handler(new LoginSocialAuthenticationHandler(identityProviderManager, jwtService, certificateManager))
                 .handler(localeHandler)
+                .handler(new WebAuthnEnforcePasswordHandler(domain, webAuthnCookieService))
                 .handler(new WebAuthnLoginEndpoint(thymeleafTemplateEngine, domain, deviceIdentifierManager, userActivityService));
         rootRouter.post(PATH_WEBAUTHN_LOGIN)
                 .handler(clientRequestParseHandler)
@@ -481,6 +478,8 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(userActivityHandler)
                 .handler(webAuthnRememberDeviceHandler)
                 .handler(new WebAuthnLoginPostEndpoint());
+        rootRouter.route(PATH_WEBAUTHN_LOGIN)
+                .failureHandler(new LoginFailureHandler(authenticationFlowContextService));
         rootRouter.route(PATH_WEBAUTHN_LOGIN_CREDENTIALS)
                 .handler(clientRequestParseHandler)
                 .handler(webAuthnAccessHandler)

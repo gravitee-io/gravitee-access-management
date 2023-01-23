@@ -48,6 +48,20 @@
                 </span>
             </div>
 
+            <div th:if="${error}" class="item error-text">
+                <span>
+                    <span class="error" th:text="${error}"></span>
+                    <small th:text="*{error_description}?: #{webauthn.login.error.description}"></small>
+                </span>
+            </div>
+
+            <div th:if="${passwordlessEnforcePassword}" class="item error-text">
+                <span>
+                    <span class="error" th:text="#{webauthn.login.enforcePassword.error}"/>
+                    <small class="error_description" th:text="#{webauthn.login.enforcePassword.error.description}"/>
+                </span>
+            </div>
+
             <div>
                 <button class="button primary" th:text="#{webauthn.login.button.next}"></button>
             </div>

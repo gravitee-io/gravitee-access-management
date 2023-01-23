@@ -1,0 +1,16 @@
+databaseChangeLog:
+  - changeSet:
+      id: 3.21.0-update-users-table
+      author: GraviteeSource Team
+      changes:
+        #############################
+        # Users #
+        ############################
+        - addColumn:
+            tableName: users
+            columns:
+              - column: { name: last_login_with_credentials, type: timestamp(6), constraints: { nullable: true } }
+        - addColumn:
+            tableName: organization_users
+            columns:
+              - column: { name: last_login_with_credentials, type: timestamp(6), constraints: { nullable: true } }

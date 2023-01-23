@@ -31,7 +31,7 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.util.Collections;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -79,6 +79,12 @@ public class WebAuthnLoginEndpoint extends AbstractEndpoint implements Handler<R
             routingContext.put(ConstantKeys.PARAM_CONTEXT_KEY, params);
             addUserActivityTemplateVariables(routingContext, userActivityService);
             addUserActivityConsentTemplateVariables(routingContext);
+
+            // put error in context
+            final String error = routingContext.request().getParam(ConstantKeys.ERROR_PARAM_KEY);
+            final String errorDescription = routingContext.request().getParam(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY);
+            routingContext.put(ConstantKeys.ERROR_PARAM_KEY, error);
+            routingContext.put(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, errorDescription);
 
             // render the webauthn login page
             final Map<String, Object> data = generateData(routingContext, domain, client);

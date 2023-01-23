@@ -123,6 +123,9 @@ public class User implements IUser {
     private Date loggedAt;
 
     @ApiModelProperty(dataType = "java.lang.Long")
+    private Date lastLoginWithCredentials;
+
+    @ApiModelProperty(dataType = "java.lang.Long")
     private Date lastPasswordReset;
 
     @ApiModelProperty(dataType = "java.lang.Long")
@@ -202,6 +205,7 @@ public class User implements IUser {
         this.factors = other.factors != null ? new ArrayList<>(other.factors) : null;
         this.additionalInformation = other.additionalInformation != null ? new HashMap<>(other.additionalInformation) : null;
         this.loggedAt = other.loggedAt;
+        this.lastLoginWithCredentials = other.lastLoginWithCredentials;
         this.lastPasswordReset = other.lastPasswordReset;
         this.lastLogoutAt = other.lastLogoutAt;
         this.mfaEnrollmentSkippedAt = other.mfaEnrollmentSkippedAt;
@@ -583,6 +587,14 @@ public class User implements IUser {
 
     public void setLoggedAt(Date loggedAt) {
         this.loggedAt = loggedAt;
+    }
+
+    public Date getLastLoginWithCredentials() {
+        return lastLoginWithCredentials;
+    }
+
+    public void setLastLoginWithCredentials(Date lastLoginWithCredentials) {
+        this.lastLoginWithCredentials = lastLoginWithCredentials;
     }
 
     public List<String> getRoles() {
