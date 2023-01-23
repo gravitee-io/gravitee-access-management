@@ -39,7 +39,6 @@ import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.EmailAuditBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -47,6 +46,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
+import static io.gravitee.am.common.web.UriBuilder.encodeURIComponent;
 import static org.springframework.ui.freemarker.FreeMarkerTemplateUtils.processTemplateIntoString;
 
 /**
@@ -55,29 +55,13 @@ import static org.springframework.ui.freemarker.FreeMarkerTemplateUtils.processT
  */
 public class EmailServiceImpl implements EmailService {
 
-    @Value("${email.enabled:false}")
-    private boolean enabled;
-
-    @Value("${gateway.url:http://localhost:8092}")
-    private String gatewayUrl;
-
-    @Value("${user.resetPassword.email.subject:Please reset your password}")
-    private String resetPasswordSubject;
-
-    @Value("${user.resetPassword.token.expire-after:300}")
-    private Integer resetPasswordExpireAfter;
-
-    @Value("${user.blockedAccount.email.subject:Account has been locked}")
-    private String blockedAccountSubject;
-
-    @Value("${user.blockedAccount.token.expire-after:86400}")
-    private Integer blockedAccountExpireAfter;
-
-    @Value("${user.mfaChallenge.email.subject:Verification Code}")
-    private String mfaChallengeSubject;
-
-    @Value("${user.mfaChallenge.token.expire-after:300}")
-    private Integer mfaChallengeExpireAfter;
+    private final boolean enabled;
+    private final String resetPasswordSubject;
+    private final Integer resetPasswordExpireAfter;
+    private final String blockedAccountSubject;
+    private final Integer blockedAccountExpireAfter;
+    private final String mfaChallengeSubject;
+    private final Integer mfaChallengeExpireAfter;
 
     @Autowired
     private EmailManager emailManager;
@@ -101,6 +85,23 @@ public class EmailServiceImpl implements EmailService {
     @Autowired
     private DomainService domainService;
 
+    public EmailServiceImpl(
+            boolean enabled,
+            String resetPasswordSubject,
+            int resetPasswordExpireAfter,
+            String blockedAccountSubject,
+            int blockedAccountExpireAfter,
+            String mfaChallengeSubject,
+            int mfaChallengeExpireAfter) {
+        this.enabled = enabled;
+        this.resetPasswordSubject = resetPasswordSubject;
+        this.resetPasswordExpireAfter = resetPasswordExpireAfter;
+        this.blockedAccountSubject = blockedAccountSubject;
+        this.blockedAccountExpireAfter = blockedAccountExpireAfter;
+        this.mfaChallengeSubject = mfaChallengeSubject;
+        this.mfaChallengeExpireAfter = mfaChallengeExpireAfter;
+    }
+
     @Override
     public void send(io.gravitee.am.model.Template template, User user, Client client) {
         if (enabled) {
@@ -110,7 +111,6 @@ public class EmailServiceImpl implements EmailService {
             Email email = prepareEmail(template, emailTemplate, user, client);
             // send email
             sendEmail(email, user, client);
-
         }
     }
 
@@ -178,7 +178,7 @@ public class EmailServiceImpl implements EmailService {
 
     private Email prepareEmail(io.gravitee.am.model.Template template, io.gravitee.am.model.Email emailTemplate, User user, Client client) {
         Map<String, Object> params = prepareEmailParams(user, client, emailTemplate.getExpiresAfter(), template.redirectUri());
-        Email email = new EmailBuilder()
+        return new EmailBuilder()
                 .to(user.getEmail())
                 .from(emailTemplate.getFrom())
                 .fromName(emailTemplate.getFromName())
@@ -186,7 +186,6 @@ public class EmailServiceImpl implements EmailService {
                 .template(emailTemplate.getTemplate())
                 .params(params)
                 .build();
-        return email;
     }
 
     private Map<String, Object> prepareEmailParams(User user, Client client, Integer expiresAfter, String redirectUri) {
@@ -211,7 +210,7 @@ public class EmailServiceImpl implements EmailService {
 
         if (client != null) {
             params.put("client", new ClientProperties(client));
-            redirectUrl += "&client_id=" + client.getClientId();
+            redirectUrl += "&client_id=" + encodeURIComponent(client.getClientId());
         }
 
         params.put("url", redirectUrl);

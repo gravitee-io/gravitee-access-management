@@ -49,6 +49,7 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
+import static io.gravitee.am.common.web.UriBuilder.encodeURIComponent;
 import static org.springframework.ui.freemarker.FreeMarkerTemplateUtils.processTemplateIntoString;
 
 /**
@@ -60,17 +61,10 @@ public class EmailServiceImpl implements EmailService {
 
     private static final String ADMIN_CLIENT = "admin";
 
-    @Value("${email.enabled:false}")
-    private boolean enabled;
-
-    @Value("${user.registration.email.subject:New user registration}")
-    private String registrationSubject;
-
-    @Value("${user.registration.token.expire-after:86400}")
-    private Integer registrationExpireAfter;
-
-    @Value("${services.certificate.expiryEmailSubject:Certificate will expire soon}")
-    private String certificateExpirySubject;
+    private final boolean enabled;
+    private final String registrationSubject;
+    private final Integer registrationExpireAfter;
+    private final String certificateExpirySubject;
 
     @Autowired
     private EmailManager emailManager;
@@ -90,6 +84,17 @@ public class EmailServiceImpl implements EmailService {
 
     @Autowired
     private DomainService domainService;
+
+    public EmailServiceImpl(
+            @Value("${email.enabled:false}") boolean enabled,
+            @Value("${user.registration.email.subject:New user registration}") String registrationSubject,
+            @Value("${user.registration.token.expire-after:86400}")  Integer registrationExpireAfter,
+            @Value("${services.certificate.expiryEmailSubject:Certificate will expire soon}") String certificateExpirySubject) {
+        this.enabled = enabled;
+        this.registrationSubject = registrationSubject;
+        this.registrationExpireAfter = registrationExpireAfter;
+        this.certificateExpirySubject = certificateExpirySubject;
+    }
 
     @Override
     public Completable send(Domain domain, Application client, io.gravitee.am.model.Template template, User user) {
@@ -158,7 +163,7 @@ public class EmailServiceImpl implements EmailService {
 
     private Email prepareEmail(Domain domain, Application client, io.gravitee.am.model.Template template, io.gravitee.am.model.Email emailTemplate, User user) {
         Map<String, Object> params = prepareEmailParams(domain, client, user, emailTemplate.getExpiresAfter(), template.redirectUri());
-        Email email = new EmailBuilder()
+        return new EmailBuilder()
                 .to(user.getEmail())
                 .from(emailTemplate.getFrom())
                 .fromName(emailTemplate.getFromName())
@@ -166,7 +171,6 @@ public class EmailServiceImpl implements EmailService {
                 .template(emailTemplate.getTemplate())
                 .params(params)
                 .build();
-        return email;
     }
 
     private Map<String, Object> prepareEmailParams(Domain domain, Application client, User user, Integer expiresAfter, String redirectUri) {
@@ -184,7 +188,7 @@ public class EmailServiceImpl implements EmailService {
         String redirectUrl = domainService.buildUrl(domain, redirectUri + "?token=" + token);
 
         if (client != null) {
-            redirectUrl += "&client_id=" + client.getSettings().getOauth().getClientId();
+            redirectUrl += "&client_id=" + encodeURIComponent(client.getSettings().getOauth().getClientId());
         }
 
         Map<String, Object> params = new HashMap<>();
@@ -198,13 +202,6 @@ public class EmailServiceImpl implements EmailService {
         }
 
         return params;
-    }
-
-    private String getTemplateName(io.gravitee.am.model.Template template, User user) {
-        return template.template()
-                + EmailManager.TEMPLATE_NAME_SEPARATOR
-                + user.getReferenceType() + user.getReferenceId()
-                + ((user.getClient() != null) ? EmailManager.TEMPLATE_NAME_SEPARATOR + user.getClient() : "");
     }
 
     private String getDefaultSubject(io.gravitee.am.model.Template template) {
