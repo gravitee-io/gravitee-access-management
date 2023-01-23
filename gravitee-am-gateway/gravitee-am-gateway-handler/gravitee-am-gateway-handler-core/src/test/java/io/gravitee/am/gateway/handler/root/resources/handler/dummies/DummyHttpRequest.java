@@ -34,6 +34,8 @@ import javax.security.cert.X509Certificate;
 import java.util.Map;
 import java.util.Set;
 
+import static org.mockito.Mockito.mock;
+
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
@@ -140,7 +142,7 @@ public class DummyHttpRequest implements HttpServerRequest {
 
     @Override
     public HttpServerResponse response() {
-        return null;
+        return mock(HttpServerResponse.class);
     }
 
     @Override
