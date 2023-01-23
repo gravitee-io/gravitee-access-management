@@ -40,12 +40,13 @@ public interface UserAuthenticationService {
     Single<User> connect(io.gravitee.am.identityprovider.api.User principal, boolean afterAuthentication);
 
     /**
-     * Method called when a user has been authenticated from a previous authentication step
+     * Method called when a user has been authenticated via passwordless
      *
      * @param subject Authenticated user id
+     * @param client OAuth 2.O client
      * @return user from the repository
      */
-    Single<User> connectPreAuthenticatedUser(String subject);
+    Single<User> connectWithPasswordless(String subject, Client client);
 
     /**
      * Use to find a pre-authenticated user (from a previous authentication step)

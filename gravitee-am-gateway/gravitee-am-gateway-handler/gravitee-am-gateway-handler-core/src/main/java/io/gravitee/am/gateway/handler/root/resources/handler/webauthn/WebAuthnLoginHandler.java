@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.handler.webauthn;
 
+import io.gravitee.am.common.exception.authentication.AuthenticationException;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
@@ -43,7 +44,6 @@ import org.thymeleaf.util.StringUtils;
 public class WebAuthnLoginHandler extends WebAuthnHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(WebAuthnLoginHandler.class);
-    private static final String DEFAULT_ORIGIN = "http://localhost:8092";
     private final WebAuthn webAuthn;
     private final String origin;
 
@@ -156,20 +156,29 @@ public class WebAuthnLoginHandler extends WebAuthnHandler {
 
         // authenticate the user
         webAuthn.rxAuthenticate(
-                // authInfo
-                new WebAuthnCredentials()
-                        .setOrigin(origin)
-                        .setChallenge(session.get(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY))
-                        .setUsername(session.get(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY))
-                        .setWebauthn(webauthnResp))
-                .doOnSuccess(u -> {
+                        // authInfo
+                        new WebAuthnCredentials()
+                                .setOrigin(origin)
+                                .setChallenge(session.get(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY))
+                                .setUsername(session.get(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY))
+                                .setWebauthn(webauthnResp))
+                .doFinally(() -> {
+                    // invalidate the challenge
+                    session.remove(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY);
+                    session.remove(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY);
+                })
+                .subscribe(u -> {
                     // create the authentication context
                     final AuthenticationContext authenticationContext = createAuthenticationContext(ctx);
                     // authenticate the user
                     authenticateUser(client, authenticationContext, username, credentialId, h -> {
                         if (h.failed()) {
-                            logger.error("An error has occurred while authenticating user {}", username, h.cause());
-                            ctx.fail(401);
+                            if (h.cause() instanceof AuthenticationException) {
+                                ctx.fail(h.cause());
+                            } else {
+                                logger.error("An error has occurred while authenticating user {}", username, h.cause());
+                                ctx.fail(401);
+                            }
                             return;
                         }
                         final User user = h.result();
@@ -190,16 +199,9 @@ public class WebAuthnLoginHandler extends WebAuthnHandler {
                             manageFido2FactorEnrollment(ctx, client, credentialId, authenticatedUser);
                         });
                     });
-                })
-                .doOnError(throwable -> {
+                }, throwable -> {
                     logger.error("Unexpected exception", throwable);
                     ctx.fail(throwable.getCause());
-                })
-                .doFinally(() -> {
-                    // invalidate the challenge
-                    session.remove(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY);
-                    session.remove(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY);
-                })
-                .subscribe();
+                });
     }
 }

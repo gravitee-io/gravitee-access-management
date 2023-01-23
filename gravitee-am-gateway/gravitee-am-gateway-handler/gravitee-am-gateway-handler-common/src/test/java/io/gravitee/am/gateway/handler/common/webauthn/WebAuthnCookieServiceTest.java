@@ -19,9 +19,14 @@ import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.certificate.CertificateProvider;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
+import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.model.User;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
+import io.gravitee.am.repository.exceptions.TechnicalException;
+import io.gravitee.am.service.exception.UserNotFoundException;
+import java.util.Objects;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -32,8 +37,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -44,6 +48,9 @@ public class WebAuthnCookieServiceTest {
 
     @Mock
     private JWTService jwtService;
+
+    @Mock
+    private UserService userService;
 
     @Mock
     private CertificateManager certificateManager;
@@ -70,7 +77,7 @@ public class WebAuthnCookieServiceTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         testObserver.assertComplete();
-        testObserver.assertValue(cookieValue -> "cookieValue".equals(cookieValue));
+        testObserver.assertValue("cookieValue"::equals);
     }
 
     @Test
@@ -89,5 +96,40 @@ public class WebAuthnCookieServiceTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNotComplete();
         testObserver.assertError(IllegalArgumentException.class);
+    }
+
+    @Test
+    public void shouldExtractUser_nominal_case() {
+        JWT jwt = new JWT();
+        jwt.put("userId", "user-id");
+        when(jwtService.decodeAndVerify(anyString(), eq(certificateProvider))).thenReturn(Single.just(jwt));
+        when(userService.findById("user-id")).thenReturn(Maybe.just(new User()));
+        TestObserver<User> testObserver = webAuthnCookieService.extractUserFromRememberDeviceCookieValue("cookieValue").test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+        testObserver.assertValue(Objects::nonNull);
+    }
+
+    @Test
+    public void shouldExtractUser_no_user() {
+        JWT jwt = new JWT();
+        jwt.put("userId", "user-id");
+        when(jwtService.decodeAndVerify(anyString(), eq(certificateProvider))).thenReturn(Single.just(jwt));
+        when(userService.findById("user-id")).thenReturn(Maybe.empty());
+        TestObserver<User> testObserver = webAuthnCookieService.extractUserFromRememberDeviceCookieValue("cookieValue").test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertNotComplete();
+        testObserver.assertError(UserNotFoundException.class);
+    }
+
+    @Test
+    public void shouldExtractUser_error() {
+        when(jwtService.decodeAndVerify(anyString(), eq(certificateProvider))).thenReturn(Single.error(new TechnicalException()));
+        TestObserver<User> testObserver = webAuthnCookieService.extractUserFromRememberDeviceCookieValue("cookieValue").test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertNotComplete();
+        testObserver.assertError(TechnicalException.class);
+        verify(userService, never()).findById(anyString());
     }
 }

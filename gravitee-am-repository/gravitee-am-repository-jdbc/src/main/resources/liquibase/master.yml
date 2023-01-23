@@ -93,4 +93,6 @@ databaseChangeLog:
       - file: liquibase/changelogs/v3_20_0/3.20.0-add-verify-attempt-table.yml
   - include:
       - file: liquibase/changelogs/v3_21_0/3.21.0-last-username-reset.yml
+  - include:
+      - file: liquibase/changelogs/v3_21_0/3.21.0-update-users-table.yml
 

@@ -243,7 +243,7 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
         credentialService.findByCredentialId(ReferenceType.DOMAIN, domain.getId(), credentialId)
                 .firstElement()
                 .switchIfEmpty(Maybe.error(new CredentialNotFoundException(credentialId)))
-                .flatMapSingle(credential -> userAuthenticationManager.connectPreAuthenticatedUser(client, credential.getUserId(), new EndUserAuthentication(username, null, authenticationContext)))
+                .flatMapSingle(credential -> userAuthenticationManager.connectWithPasswordless(client, credential.getUserId(), new EndUserAuthentication(username, null, authenticationContext)))
                 .subscribe(
                         user -> handler.handle(Future.succeededFuture(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user))),
                         error -> handler.handle(Future.failedFuture(error))

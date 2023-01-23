@@ -29,6 +29,10 @@
 
   <div *ngIf="!inheritMode || !loginSettings.inherited">
     <div class="gv-form-section">
+      <div class="gv-form-section-title">
+        <h5>Login</h5>
+        <mat-divider></mat-divider>
+      </div>
       <div fxLayout="column">
         <mat-slide-toggle
           (change)="enableRegistration($event)"
@@ -47,22 +51,6 @@
       </div>
       <div fxLayout="column" style="margin-top: 10px;">
         <mat-slide-toggle
-          (change)="enablePasswordless($event)"
-          [checked]="isPasswordlessEnabled()" [disabled]="readonly">
-          Passwordless
-        </mat-slide-toggle>
-        <mat-hint style="font-size: 75%;">Enable passwordless authentication (WebAuthn / FIDO).</mat-hint>
-      </div>
-      <div fxLayout="column" style="margin-top: 10px;">
-        <mat-slide-toggle
-          (change)="enablePasswordlessRememberDevice($event)"
-          [checked]="isPasswordlessRememberDeviceEnabled()" [disabled]="readonly || !isPasswordlessEnabled()">
-          Passwordless Device Recognition
-        </mat-slide-toggle>
-        <mat-hint style="font-size: 75%;">Enable passwordless remember device to improve user experience. The login page is skipped to prompt directly the passwordless login page if the user has an enrolled device.</mat-hint>
-      </div>
-      <div fxLayout="column" style="margin-top: 10px;">
-        <mat-slide-toggle
           (change)="enableHideForm($event)"
           [checked]="isHideFormEnabled()" [disabled]="readonly || isIdentifierFirstLoginEnabled()">
           Hide login form
@@ -76,6 +64,47 @@
           Identifier-first login
         </mat-slide-toggle>
         <mat-hint style="font-size: 75%;">Enables Identifier-first login (after entering the login, the user will be either asked to sign-in to an internal identity provider or will be redirected to an external provider regarding its domain whitelist).</mat-hint>
+      </div>
+    </div>
+    <div class="gv-form-section">
+      <div class="gv-form-section-title">
+        <h5>Passwordless</h5>
+        <mat-divider></mat-divider>
+      </div>
+      <div fxLayout="column">
+        <mat-slide-toggle
+          (change)="enablePasswordless($event)"
+          [checked]="isPasswordlessEnabled()" [disabled]="readonly">
+          Enable passwordless
+        </mat-slide-toggle>
+        <mat-hint style="font-size: 75%;">Enable passwordless authentication (WebAuthn / FIDO).</mat-hint>
+      </div>
+      <div fxLayout="column" style="margin-top: 10px;">
+        <mat-slide-toggle
+          (change)="enablePasswordlessRememberDevice($event)"
+          [checked]="isPasswordlessRememberDeviceEnabled()" [disabled]="readonly || !isPasswordlessEnabled()">
+          Passwordless Device Recognition
+        </mat-slide-toggle>
+        <mat-hint style="font-size: 75%;">Enable passwordless remember device to improve user experience. The login page is skipped to prompt directly the passwordless login page if the user has an enrolled device.</mat-hint>
+      </div>
+      <div fxLayout="column" style="margin-top: 10px;">
+        <mat-slide-toggle
+          (change)="enablePasswordlessEnforcePassword($event)"
+          [checked]="isPasswordlessEnforcePasswordEnabled()" [disabled]="readonly || !isPasswordlessEnabled()">
+          Passwordless Enforce Password usage
+        </mat-slide-toggle>
+        <mat-hint style="font-size: 75%;">Force user to sign in with its credentials (password or external IdP) periodically.</mat-hint>
+      </div>
+      <div fxLayout="column" style="margin-top: 10px;">
+        <mat-form-field appearance="outline" floatLabel="always">
+          <mat-label>Max passwordless usage (seconds)</mat-label>
+          <input matInput type="number" name="expiryDuration"
+                 [ngModel]="loginSettings.passwordlessEnforcePasswordMaxAge"
+                 (ngModelChange)="setEnforcePasswordMaxAge($event)"
+                 [min]="0"
+                 [disabled]="readonly || !isPasswordlessEnforcePasswordEnabled()">
+          <mat-hint>Specifies the allowable elapsed time in seconds since the last time the End-User was actively authenticated with credentials.</mat-hint>
+        </mat-form-field>
       </div>
     </div>
   </div>

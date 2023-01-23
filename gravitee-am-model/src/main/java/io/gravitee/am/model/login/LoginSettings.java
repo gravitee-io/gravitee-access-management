@@ -49,6 +49,14 @@ public class LoginSettings {
      */
     private boolean passwordlessRememberDeviceEnabled;
     /**
+     * Enable/Disable enforce password usage for passwordless (WebAuthn) feature
+     */
+    private boolean passwordlessEnforcePasswordEnabled;
+    /**
+     * Period of time (in secods) after which the user credentials (password or external IdP) is required to unlock passwordless feature
+     */
+    private Integer passwordlessEnforcePasswordMaxAge;
+    /**
      * Enable/Disable hide login form
      */
     private boolean hideForm;
@@ -67,6 +75,8 @@ public class LoginSettings {
         this.rememberMeEnabled = other.rememberMeEnabled;
         this.passwordlessEnabled = other.passwordlessEnabled;
         this.passwordlessRememberDeviceEnabled = other.passwordlessRememberDeviceEnabled;
+        this.passwordlessEnforcePasswordEnabled = other.passwordlessEnforcePasswordEnabled;
+        this.passwordlessEnforcePasswordMaxAge = other.passwordlessEnforcePasswordMaxAge;
         this.hideForm = !other.identifierFirstEnabled && other.hideForm;
         this.identifierFirstEnabled = other.identifierFirstEnabled;
     }
@@ -119,6 +129,22 @@ public class LoginSettings {
         this.passwordlessRememberDeviceEnabled = passwordlessRememberDeviceEnabled;
     }
 
+    public boolean isPasswordlessEnforcePasswordEnabled() {
+        return passwordlessEnforcePasswordEnabled;
+    }
+
+    public void setPasswordlessEnforcePasswordEnabled(boolean passwordlessEnforcePasswordEnabled) {
+        this.passwordlessEnforcePasswordEnabled = passwordlessEnforcePasswordEnabled;
+    }
+
+    public Integer getPasswordlessEnforcePasswordMaxAge() {
+        return passwordlessEnforcePasswordMaxAge;
+    }
+
+    public void setPasswordlessEnforcePasswordMaxAge(Integer passwordlessEnforcePasswordMaxAge) {
+        this.passwordlessEnforcePasswordMaxAge = passwordlessEnforcePasswordMaxAge;
+    }
+
     public boolean isHideForm() {
         return hideForm;
     }
@@ -133,6 +159,12 @@ public class LoginSettings {
 
     public void setIdentifierFirstEnabled(boolean identifierFirstEnabled) {
         this.identifierFirstEnabled = identifierFirstEnabled;
+    }
+
+    public boolean isEnforcePasswordPolicyEnabled() {
+        return passwordlessEnabled
+                && passwordlessEnforcePasswordEnabled
+                && passwordlessEnforcePasswordMaxAge != null;
     }
 
     public static LoginSettings getInstance(Domain domain, Client client) {

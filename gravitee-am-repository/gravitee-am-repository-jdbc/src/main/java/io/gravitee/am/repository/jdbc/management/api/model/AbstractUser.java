@@ -74,6 +74,8 @@ public class AbstractUser {
     private long loginsCount;
     @Column("logged_at")
     private LocalDateTime loggedAt;
+    @Column("last_login_with_credentials")
+    private LocalDateTime lastLoginWithCredentials;
     @Column("mfa_enrollment_skipped_at")
     private LocalDateTime mfaEnrollmentSkippedAt;
     @Column("last_password_reset")
@@ -323,6 +325,14 @@ public class AbstractUser {
 
     public void setLoggedAt(LocalDateTime loggedAt) {
         this.loggedAt = loggedAt;
+    }
+
+    public LocalDateTime getLastLoginWithCredentials() {
+        return lastLoginWithCredentials;
+    }
+
+    public void setLastLoginWithCredentials(LocalDateTime lastLoginWithCredentials) {
+        this.lastLoginWithCredentials = lastLoginWithCredentials;
     }
 
     public LocalDateTime getMfaEnrollmentSkippedAt() {
