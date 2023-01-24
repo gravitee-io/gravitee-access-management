@@ -98,22 +98,22 @@ export interface Credential {
     userAgent?: string;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof Credential
      */
-    createdAt?: Date;
+    createdAt?: number;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof Credential
      */
-    updatedAt?: Date;
+    updatedAt?: number;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof Credential
      */
-    accessedAt?: Date;
+    accessedAt?: number;
 }
 
 
@@ -153,9 +153,9 @@ export function CredentialFromJSONTyped(json: any, ignoreDiscriminator: boolean)
         'attestationStatement': !exists(json, 'attestationStatement') ? undefined : json['attestationStatement'],
         'ipAddress': !exists(json, 'ipAddress') ? undefined : json['ipAddress'],
         'userAgent': !exists(json, 'userAgent') ? undefined : json['userAgent'],
-        'createdAt': !exists(json, 'createdAt') ? undefined : (new Date(json['createdAt'])),
-        'updatedAt': !exists(json, 'updatedAt') ? undefined : (new Date(json['updatedAt'])),
-        'accessedAt': !exists(json, 'accessedAt') ? undefined : (new Date(json['accessedAt'])),
+        'createdAt': !exists(json, 'createdAt') ? undefined : json['createdAt'],
+        'updatedAt': !exists(json, 'updatedAt') ? undefined : json['updatedAt'],
+        'accessedAt': !exists(json, 'accessedAt') ? undefined : json['accessedAt'],
     };
 }
 
@@ -181,9 +181,9 @@ export function CredentialToJSON(value?: Credential | null): any {
         'attestationStatement': value.attestationStatement,
         'ipAddress': value.ipAddress,
         'userAgent': value.userAgent,
-        'createdAt': value.createdAt === undefined ? undefined : (value.createdAt.toISOString()),
-        'updatedAt': value.updatedAt === undefined ? undefined : (value.updatedAt.toISOString()),
-        'accessedAt': value.accessedAt === undefined ? undefined : (value.accessedAt.toISOString()),
+        'createdAt': value.createdAt,
+        'updatedAt': value.updatedAt,
+        'accessedAt': value.accessedAt,
     };
 }
 

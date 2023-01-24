@@ -165,16 +165,16 @@ export interface Domain {
     tags?: Set<string>;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof Domain
      */
-    createdAt?: Date;
+    createdAt?: number;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof Domain
      */
-    updatedAt?: Date;
+    updatedAt?: number;
     /**
      * 
      * @type {OIDCSettings}
@@ -311,8 +311,8 @@ export function DomainFromJSONTyped(json: any, ignoreDiscriminator: boolean): Do
         'vhostMode': !exists(json, 'vhostMode') ? undefined : json['vhostMode'],
         'vhosts': !exists(json, 'vhosts') ? undefined : ((json['vhosts'] as Array<any>).map(VirtualHostFromJSON)),
         'tags': !exists(json, 'tags') ? undefined : json['tags'],
-        'createdAt': !exists(json, 'createdAt') ? undefined : (new Date(json['createdAt'])),
-        'updatedAt': !exists(json, 'updatedAt') ? undefined : (new Date(json['updatedAt'])),
+        'createdAt': !exists(json, 'createdAt') ? undefined : json['createdAt'],
+        'updatedAt': !exists(json, 'updatedAt') ? undefined : json['updatedAt'],
         'oidc': !exists(json, 'oidc') ? undefined : OIDCSettingsFromJSON(json['oidc']),
         'uma': !exists(json, 'uma') ? undefined : UMASettingsFromJSON(json['uma']),
         'loginSettings': !exists(json, 'loginSettings') ? undefined : LoginSettingsFromJSON(json['loginSettings']),
@@ -355,8 +355,8 @@ export function DomainToJSON(value?: Domain | null): any {
         'vhostMode': value.vhostMode,
         'vhosts': value.vhosts === undefined ? undefined : ((value.vhosts as Array<any>).map(VirtualHostToJSON)),
         'tags': value.tags,
-        'createdAt': value.createdAt === undefined ? undefined : (value.createdAt.toISOString()),
-        'updatedAt': value.updatedAt === undefined ? undefined : (value.updatedAt.toISOString()),
+        'createdAt': value.createdAt,
+        'updatedAt': value.updatedAt,
         'oidc': OIDCSettingsToJSON(value.oidc),
         'uma': UMASettingsToJSON(value.uma),
         'loginSettings': LoginSettingsToJSON(value.loginSettings),

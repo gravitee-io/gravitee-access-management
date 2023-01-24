@@ -39,7 +39,7 @@ export interface DeleteResourceRequest {
     resource: string;
 }
 
-export interface Get33Request {
+export interface Get34Request {
     resource: string;
 }
 
@@ -50,7 +50,7 @@ export interface GetResourceRequest {
     resource: string;
 }
 
-export interface GetSchema7Request {
+export interface GetSchema8Request {
     resource: string;
 }
 
@@ -179,9 +179,9 @@ export class ResourceApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get a resource plugin
      */
-    async get33Raw(requestParameters: Get33Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async get34Raw(requestParameters: Get34Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.resource === null || requestParameters.resource === undefined) {
-            throw new runtime.RequiredError('resource','Required parameter requestParameters.resource was null or undefined when calling get33.');
+            throw new runtime.RequiredError('resource','Required parameter requestParameters.resource was null or undefined when calling get34.');
         }
 
         const queryParameters: any = {};
@@ -206,8 +206,8 @@ export class ResourceApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get a resource plugin
      */
-    async get33(requestParameters: Get33Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.get33Raw(requestParameters, initOverrides);
+    async get34(requestParameters: Get34Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.get34Raw(requestParameters, initOverrides);
     }
 
     /**
@@ -262,9 +262,9 @@ export class ResourceApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get a resource plugin\'s schema
      */
-    async getSchema7Raw(requestParameters: GetSchema7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async getSchema8Raw(requestParameters: GetSchema8Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.resource === null || requestParameters.resource === undefined) {
-            throw new runtime.RequiredError('resource','Required parameter requestParameters.resource was null or undefined when calling getSchema7.');
+            throw new runtime.RequiredError('resource','Required parameter requestParameters.resource was null or undefined when calling getSchema8.');
         }
 
         const queryParameters: any = {};
@@ -289,8 +289,8 @@ export class ResourceApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get a resource plugin\'s schema
      */
-    async getSchema7(requestParameters: GetSchema7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.getSchema7Raw(requestParameters, initOverrides);
+    async getSchema8(requestParameters: GetSchema8Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.getSchema8Raw(requestParameters, initOverrides);
     }
 
     /**

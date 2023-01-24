@@ -74,16 +74,16 @@ export interface Resource {
     clientId?: string;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof Resource
      */
-    createdAt?: Date;
+    createdAt?: number;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof Resource
      */
-    updatedAt?: Date;
+    updatedAt?: number;
 }
 
 export function ResourceFromJSON(json: any): Resource {
@@ -105,8 +105,8 @@ export function ResourceFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
         'domain': !exists(json, 'domain') ? undefined : json['domain'],
         'userId': !exists(json, 'userId') ? undefined : json['userId'],
         'clientId': !exists(json, 'clientId') ? undefined : json['clientId'],
-        'createdAt': !exists(json, 'createdAt') ? undefined : (new Date(json['createdAt'])),
-        'updatedAt': !exists(json, 'updatedAt') ? undefined : (new Date(json['updatedAt'])),
+        'createdAt': !exists(json, 'createdAt') ? undefined : json['createdAt'],
+        'updatedAt': !exists(json, 'updatedAt') ? undefined : json['updatedAt'],
     };
 }
 
@@ -128,8 +128,8 @@ export function ResourceToJSON(value?: Resource | null): any {
         'domain': value.domain,
         'userId': value.userId,
         'clientId': value.clientId,
-        'createdAt': value.createdAt === undefined ? undefined : (value.createdAt.toISOString()),
-        'updatedAt': value.updatedAt === undefined ? undefined : (value.updatedAt.toISOString()),
+        'createdAt': value.createdAt,
+        'updatedAt': value.updatedAt,
     };
 }
 

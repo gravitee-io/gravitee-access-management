@@ -111,16 +111,16 @@ export interface Application {
     identityProviders?: Set<ApplicationIdentityProvider>;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof Application
      */
-    createdAt?: Date;
+    createdAt?: number;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof Application
      */
-    updatedAt?: Date;
+    updatedAt?: number;
     /**
      * 
      * @type {PasswordSettings}
@@ -165,8 +165,8 @@ export function ApplicationFromJSONTyped(json: any, ignoreDiscriminator: boolean
         'metadata': !exists(json, 'metadata') ? undefined : json['metadata'],
         'settings': !exists(json, 'settings') ? undefined : ApplicationSettingsFromJSON(json['settings']),
         'identityProviders': !exists(json, 'identityProviders') ? undefined : (new Set((json['identityProviders'] as Array<any>).map(ApplicationIdentityProviderFromJSON))),
-        'createdAt': !exists(json, 'createdAt') ? undefined : (new Date(json['createdAt'])),
-        'updatedAt': !exists(json, 'updatedAt') ? undefined : (new Date(json['updatedAt'])),
+        'createdAt': !exists(json, 'createdAt') ? undefined : json['createdAt'],
+        'updatedAt': !exists(json, 'updatedAt') ? undefined : json['updatedAt'],
         'passwordSettings': !exists(json, 'passwordSettings') ? undefined : PasswordSettingsFromJSON(json['passwordSettings']),
     };
 }
@@ -192,8 +192,8 @@ export function ApplicationToJSON(value?: Application | null): any {
         'metadata': value.metadata,
         'settings': ApplicationSettingsToJSON(value.settings),
         'identityProviders': value.identityProviders === undefined ? undefined : (Array.from(value.identityProviders as Set<any>).map(ApplicationIdentityProviderToJSON)),
-        'createdAt': value.createdAt === undefined ? undefined : (value.createdAt.toISOString()),
-        'updatedAt': value.updatedAt === undefined ? undefined : (value.updatedAt.toISOString()),
+        'createdAt': value.createdAt,
+        'updatedAt': value.updatedAt,
         'passwordSettings': PasswordSettingsToJSON(value.passwordSettings),
     };
 }

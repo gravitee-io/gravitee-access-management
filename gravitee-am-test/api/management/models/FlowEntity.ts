@@ -69,16 +69,16 @@ export interface FlowEntity {
     condition?: string;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof FlowEntity
      */
-    createdAt?: Date;
+    createdAt?: number;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof FlowEntity
      */
-    updatedAt?: Date;
+    updatedAt?: number;
 }
 
 
@@ -114,8 +114,8 @@ export function FlowEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean)
         'enabled': !exists(json, 'enabled') ? undefined : json['enabled'],
         'type': !exists(json, 'type') ? undefined : json['type'],
         'condition': !exists(json, 'condition') ? undefined : json['condition'],
-        'createdAt': !exists(json, 'createdAt') ? undefined : (new Date(json['createdAt'])),
-        'updatedAt': !exists(json, 'updatedAt') ? undefined : (new Date(json['updatedAt'])),
+        'createdAt': !exists(json, 'createdAt') ? undefined : json['createdAt'],
+        'updatedAt': !exists(json, 'updatedAt') ? undefined : json['updatedAt'],
     };
 }
 
@@ -135,8 +135,8 @@ export function FlowEntityToJSON(value?: FlowEntity | null): any {
         'enabled': value.enabled,
         'type': value.type,
         'condition': value.condition,
-        'createdAt': value.createdAt === undefined ? undefined : (value.createdAt.toISOString()),
-        'updatedAt': value.updatedAt === undefined ? undefined : (value.updatedAt.toISOString()),
+        'createdAt': value.createdAt,
+        'updatedAt': value.updatedAt,
     };
 }
 

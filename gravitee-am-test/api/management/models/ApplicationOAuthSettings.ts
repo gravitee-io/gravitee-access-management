@@ -267,16 +267,16 @@ export interface ApplicationOAuthSettings {
     registrationClientUri?: string;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof ApplicationOAuthSettings
      */
-    clientIdIssuedAt?: Date;
+    clientIdIssuedAt?: number;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof ApplicationOAuthSettings
      */
-    clientSecretExpiresAt?: Date;
+    clientSecretExpiresAt?: number;
     /**
      * 
      * @type {Array<string>}
@@ -445,6 +445,12 @@ export interface ApplicationOAuthSettings {
      * @memberof ApplicationOAuthSettings
      */
     backchannelUserCodeParameter?: boolean;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ApplicationOAuthSettings
+     */
+    disableRefreshTokenRotation?: boolean;
 }
 
 export function ApplicationOAuthSettingsFromJSON(json: any): ApplicationOAuthSettings {
@@ -495,8 +501,8 @@ export function ApplicationOAuthSettingsFromJSONTyped(json: any, ignoreDiscrimin
         'softwareStatement': !exists(json, 'softwareStatement') ? undefined : json['softwareStatement'],
         'registrationAccessToken': !exists(json, 'registrationAccessToken') ? undefined : json['registrationAccessToken'],
         'registrationClientUri': !exists(json, 'registrationClientUri') ? undefined : json['registrationClientUri'],
-        'clientIdIssuedAt': !exists(json, 'clientIdIssuedAt') ? undefined : (new Date(json['clientIdIssuedAt'])),
-        'clientSecretExpiresAt': !exists(json, 'clientSecretExpiresAt') ? undefined : (new Date(json['clientSecretExpiresAt'])),
+        'clientIdIssuedAt': !exists(json, 'clientIdIssuedAt') ? undefined : json['clientIdIssuedAt'],
+        'clientSecretExpiresAt': !exists(json, 'clientSecretExpiresAt') ? undefined : json['clientSecretExpiresAt'],
         'scopes': !exists(json, 'scopes') ? undefined : json['scopes'],
         'defaultScopes': !exists(json, 'defaultScopes') ? undefined : json['defaultScopes'],
         'scopeApprovals': !exists(json, 'scopeApprovals') ? undefined : json['scopeApprovals'],
@@ -525,6 +531,7 @@ export function ApplicationOAuthSettingsFromJSONTyped(json: any, ignoreDiscrimin
         'backchannelClientNotificationEndpoint': !exists(json, 'backchannelClientNotificationEndpoint') ? undefined : json['backchannelClientNotificationEndpoint'],
         'backchannelAuthRequestSignAlg': !exists(json, 'backchannelAuthRequestSignAlg') ? undefined : json['backchannelAuthRequestSignAlg'],
         'backchannelUserCodeParameter': !exists(json, 'backchannelUserCodeParameter') ? undefined : json['backchannelUserCodeParameter'],
+        'disableRefreshTokenRotation': !exists(json, 'disableRefreshTokenRotation') ? undefined : json['disableRefreshTokenRotation'],
     };
 }
 
@@ -575,8 +582,8 @@ export function ApplicationOAuthSettingsToJSON(value?: ApplicationOAuthSettings 
         'softwareStatement': value.softwareStatement,
         'registrationAccessToken': value.registrationAccessToken,
         'registrationClientUri': value.registrationClientUri,
-        'clientIdIssuedAt': value.clientIdIssuedAt === undefined ? undefined : (value.clientIdIssuedAt.toISOString()),
-        'clientSecretExpiresAt': value.clientSecretExpiresAt === undefined ? undefined : (value.clientSecretExpiresAt.toISOString()),
+        'clientIdIssuedAt': value.clientIdIssuedAt,
+        'clientSecretExpiresAt': value.clientSecretExpiresAt,
         'scopes': value.scopes,
         'defaultScopes': value.defaultScopes,
         'scopeApprovals': value.scopeApprovals,
@@ -605,6 +612,7 @@ export function ApplicationOAuthSettingsToJSON(value?: ApplicationOAuthSettings 
         'backchannelClientNotificationEndpoint': value.backchannelClientNotificationEndpoint,
         'backchannelAuthRequestSignAlg': value.backchannelAuthRequestSignAlg,
         'backchannelUserCodeParameter': value.backchannelUserCodeParameter,
+        'disableRefreshTokenRotation': value.disableRefreshTokenRotation,
     };
 }
 

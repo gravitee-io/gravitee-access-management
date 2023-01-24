@@ -56,16 +56,16 @@ export interface Environment {
     organizationId?: string;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof Environment
      */
-    createdAt?: Date;
+    createdAt?: number;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof Environment
      */
-    updatedAt?: Date;
+    updatedAt?: number;
 }
 
 export function EnvironmentFromJSON(json: any): Environment {
@@ -84,8 +84,8 @@ export function EnvironmentFromJSONTyped(json: any, ignoreDiscriminator: boolean
         'description': !exists(json, 'description') ? undefined : json['description'],
         'domainRestrictions': !exists(json, 'domainRestrictions') ? undefined : json['domainRestrictions'],
         'organizationId': !exists(json, 'organizationId') ? undefined : json['organizationId'],
-        'createdAt': !exists(json, 'createdAt') ? undefined : (new Date(json['createdAt'])),
-        'updatedAt': !exists(json, 'updatedAt') ? undefined : (new Date(json['updatedAt'])),
+        'createdAt': !exists(json, 'createdAt') ? undefined : json['createdAt'],
+        'updatedAt': !exists(json, 'updatedAt') ? undefined : json['updatedAt'],
     };
 }
 
@@ -104,8 +104,8 @@ export function EnvironmentToJSON(value?: Environment | null): any {
         'description': value.description,
         'domainRestrictions': value.domainRestrictions,
         'organizationId': value.organizationId,
-        'createdAt': value.createdAt === undefined ? undefined : (value.createdAt.toISOString()),
-        'updatedAt': value.updatedAt === undefined ? undefined : (value.updatedAt.toISOString()),
+        'createdAt': value.createdAt,
+        'updatedAt': value.updatedAt,
     };
 }
 

@@ -61,12 +61,14 @@ public class UsersResource extends AbstractUsersResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List users of the organization",
+    @ApiOperation(
+            nickname = "listOrganisationUsers",
+            value = "List users of the organization",
             notes = "User must have the ORGANIZATION_USER[LIST] permission on the specified organization. " +
                     "Each returned user is filtered and contains only basic information such as id and username and displayname. " +
                     "Last login and identity provider name will be also returned if current user has ORGANIZATION_USER[READ] permission on the organization.")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "List users of the organization", response = User.class, responseContainer = "Set"),
+            @ApiResponse(code = 200, message = "List users of the organization", response = Page.class),
             @ApiResponse(code = 500, message = "Internal server error")})
     public void list(
             @PathParam("organizationId") String organizationId,
@@ -93,10 +95,12 @@ public class UsersResource extends AbstractUsersResource {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Create a platform user",
+    @ApiOperation(
+            nickname = "createOrganisationUser",
+            value = "Create a platform user",
             notes = "User must have the ORGANIZATION_USER[READ] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 201, message = "User successfully created"),
+            @ApiResponse(code = 201, message = "User successfully created", response = User.class),
             @ApiResponse(code = 500, message = "Internal server error")})
     public void create(
             @PathParam("organizationId") String organizationId,

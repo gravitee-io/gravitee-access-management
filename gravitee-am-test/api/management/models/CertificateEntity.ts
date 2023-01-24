@@ -63,22 +63,22 @@ export interface CertificateEntity {
     metadata?: { [key: string]: any; };
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof CertificateEntity
      */
-    createdAt?: Date;
+    createdAt?: number;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof CertificateEntity
      */
-    updatedAt?: Date;
+    updatedAt?: number;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof CertificateEntity
      */
-    expiresAt?: Date;
+    expiresAt?: number;
     /**
      * 
      * @type {boolean}
@@ -128,9 +128,9 @@ export function CertificateEntityFromJSONTyped(json: any, ignoreDiscriminator: b
         'configuration': !exists(json, 'configuration') ? undefined : json['configuration'],
         'domain': !exists(json, 'domain') ? undefined : json['domain'],
         'metadata': !exists(json, 'metadata') ? undefined : json['metadata'],
-        'createdAt': !exists(json, 'createdAt') ? undefined : (new Date(json['createdAt'])),
-        'updatedAt': !exists(json, 'updatedAt') ? undefined : (new Date(json['updatedAt'])),
-        'expiresAt': !exists(json, 'expiresAt') ? undefined : (new Date(json['expiresAt'])),
+        'createdAt': !exists(json, 'createdAt') ? undefined : json['createdAt'],
+        'updatedAt': !exists(json, 'updatedAt') ? undefined : json['updatedAt'],
+        'expiresAt': !exists(json, 'expiresAt') ? undefined : json['expiresAt'],
         'system': !exists(json, 'system') ? undefined : json['system'],
         'status': !exists(json, 'status') ? undefined : json['status'],
         'applications': !exists(json, 'applications') ? undefined : ((json['applications'] as Array<any>).map(ApplicationFromJSON)),
@@ -152,9 +152,9 @@ export function CertificateEntityToJSON(value?: CertificateEntity | null): any {
         'configuration': value.configuration,
         'domain': value.domain,
         'metadata': value.metadata,
-        'createdAt': value.createdAt === undefined ? undefined : (value.createdAt.toISOString()),
-        'updatedAt': value.updatedAt === undefined ? undefined : (value.updatedAt.toISOString()),
-        'expiresAt': value.expiresAt === undefined ? undefined : (value.expiresAt.toISOString()),
+        'createdAt': value.createdAt,
+        'updatedAt': value.updatedAt,
+        'expiresAt': value.expiresAt,
         'system': value.system,
         'status': value.status,
         'applications': value.applications === undefined ? undefined : ((value.applications as Array<any>).map(ApplicationToJSON)),

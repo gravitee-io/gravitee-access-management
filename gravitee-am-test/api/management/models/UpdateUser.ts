@@ -104,10 +104,10 @@ export interface UpdateUser {
     loginsCount?: number;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof UpdateUser
      */
-    loggedAt?: Date;
+    loggedAt?: number;
     /**
      * 
      * @type {string}
@@ -122,16 +122,16 @@ export interface UpdateUser {
     additionalInformation?: { [key: string]: any; };
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof UpdateUser
      */
-    createdAt?: Date;
+    createdAt?: number;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof UpdateUser
      */
-    updatedAt?: Date;
+    updatedAt?: number;
 }
 
 export function UpdateUserFromJSON(json: any): UpdateUser {
@@ -158,11 +158,11 @@ export function UpdateUserFromJSONTyped(json: any, ignoreDiscriminator: boolean)
         'source': !exists(json, 'source') ? undefined : json['source'],
         'client': !exists(json, 'client') ? undefined : json['client'],
         'loginsCount': !exists(json, 'loginsCount') ? undefined : json['loginsCount'],
-        'loggedAt': !exists(json, 'loggedAt') ? undefined : (new Date(json['loggedAt'])),
+        'loggedAt': !exists(json, 'loggedAt') ? undefined : json['loggedAt'],
         'preferredLanguage': !exists(json, 'preferredLanguage') ? undefined : json['preferredLanguage'],
         'additionalInformation': !exists(json, 'additionalInformation') ? undefined : json['additionalInformation'],
-        'createdAt': !exists(json, 'createdAt') ? undefined : (new Date(json['createdAt'])),
-        'updatedAt': !exists(json, 'updatedAt') ? undefined : (new Date(json['updatedAt'])),
+        'createdAt': !exists(json, 'createdAt') ? undefined : json['createdAt'],
+        'updatedAt': !exists(json, 'updatedAt') ? undefined : json['updatedAt'],
     };
 }
 
@@ -189,11 +189,11 @@ export function UpdateUserToJSON(value?: UpdateUser | null): any {
         'source': value.source,
         'client': value.client,
         'loginsCount': value.loginsCount,
-        'loggedAt': value.loggedAt === undefined ? undefined : (value.loggedAt.toISOString()),
+        'loggedAt': value.loggedAt,
         'preferredLanguage': value.preferredLanguage,
         'additionalInformation': value.additionalInformation,
-        'createdAt': value.createdAt === undefined ? undefined : (value.createdAt.toISOString()),
-        'updatedAt': value.updatedAt === undefined ? undefined : (value.updatedAt.toISOString()),
+        'createdAt': value.createdAt,
+        'updatedAt': value.updatedAt,
     };
 }
 

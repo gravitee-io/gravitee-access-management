@@ -68,16 +68,16 @@ export interface Form {
     assets?: string;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof Form
      */
-    createdAt?: Date;
+    createdAt?: number;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof Form
      */
-    updatedAt?: Date;
+    updatedAt?: number;
 }
 
 
@@ -112,8 +112,8 @@ export function FormFromJSONTyped(json: any, ignoreDiscriminator: boolean): Form
         'template': !exists(json, 'template') ? undefined : json['template'],
         'content': !exists(json, 'content') ? undefined : json['content'],
         'assets': !exists(json, 'assets') ? undefined : json['assets'],
-        'createdAt': !exists(json, 'createdAt') ? undefined : (new Date(json['createdAt'])),
-        'updatedAt': !exists(json, 'updatedAt') ? undefined : (new Date(json['updatedAt'])),
+        'createdAt': !exists(json, 'createdAt') ? undefined : json['createdAt'],
+        'updatedAt': !exists(json, 'updatedAt') ? undefined : json['updatedAt'],
     };
 }
 
@@ -134,8 +134,8 @@ export function FormToJSON(value?: Form | null): any {
         'template': value.template,
         'content': value.content,
         'assets': value.assets,
-        'createdAt': value.createdAt === undefined ? undefined : (value.createdAt.toISOString()),
-        'updatedAt': value.updatedAt === undefined ? undefined : (value.updatedAt.toISOString()),
+        'createdAt': value.createdAt,
+        'updatedAt': value.updatedAt,
     };
 }
 

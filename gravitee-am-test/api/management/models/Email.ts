@@ -92,16 +92,16 @@ export interface Email {
     expiresAfter?: number;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof Email
      */
-    createdAt?: Date;
+    createdAt?: number;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof Email
      */
-    updatedAt?: Date;
+    updatedAt?: number;
 }
 
 
@@ -140,8 +140,8 @@ export function EmailFromJSONTyped(json: any, ignoreDiscriminator: boolean): Ema
         'subject': !exists(json, 'subject') ? undefined : json['subject'],
         'content': !exists(json, 'content') ? undefined : json['content'],
         'expiresAfter': !exists(json, 'expiresAfter') ? undefined : json['expiresAfter'],
-        'createdAt': !exists(json, 'createdAt') ? undefined : (new Date(json['createdAt'])),
-        'updatedAt': !exists(json, 'updatedAt') ? undefined : (new Date(json['updatedAt'])),
+        'createdAt': !exists(json, 'createdAt') ? undefined : json['createdAt'],
+        'updatedAt': !exists(json, 'updatedAt') ? undefined : json['updatedAt'],
     };
 }
 
@@ -166,8 +166,8 @@ export function EmailToJSON(value?: Email | null): any {
         'subject': value.subject,
         'content': value.content,
         'expiresAfter': value.expiresAfter,
-        'createdAt': value.createdAt === undefined ? undefined : (value.createdAt.toISOString()),
-        'updatedAt': value.updatedAt === undefined ? undefined : (value.updatedAt.toISOString()),
+        'createdAt': value.createdAt,
+        'updatedAt': value.updatedAt,
     };
 }
 

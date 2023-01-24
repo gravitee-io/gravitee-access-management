@@ -21,7 +21,11 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.OrganizationUserRepository;
-import io.gravitee.am.service.exception.*;
+import io.gravitee.am.service.exception.EmailFormatInvalidException;
+import io.gravitee.am.service.exception.InvalidUserException;
+import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.exception.UserAlreadyExistsException;
+import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.impl.OrganizationUserServiceImpl;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
@@ -169,21 +173,22 @@ public class OrganizationUserServiceTest {
     public void shouldUpdate() {
         UpdateUser updateUser = Mockito.mock(UpdateUser.class);
         User user = new User();
+        user.setId("my-user");
         user.setReferenceType(ReferenceType.ORGANIZATION);
         user.setReferenceId(ORG);
 
-        when(userRepository.findById(eq(ReferenceType.ORGANIZATION), eq(ORG), eq("my-user"))).thenReturn(Maybe.just(user));
+        when(userRepository.findById(ReferenceType.ORGANIZATION, ORG, user.getId())).thenReturn(Maybe.just(user));
         when(userRepository.findByUsernameAndSource(eq(ReferenceType.ORGANIZATION), eq(ORG), any(), any())).thenReturn(Maybe.just(user));
         when(userRepository.update(any(User.class))).thenReturn(Single.just(user));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
-        TestObserver testObserver = userService.update(ReferenceType.ORGANIZATION, ORG, "my-user", updateUser).test();
+        var testObserver = userService.update(ReferenceType.ORGANIZATION, ORG, "my-user", updateUser).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(userRepository, times(1)).findById(eq(ReferenceType.ORGANIZATION), eq(ORG), eq("my-user"));
+        verify(userRepository, times(2)).findById(ReferenceType.ORGANIZATION, ORG, user.getId());
         verify(userRepository, times(1)).update(any(User.class));
         verify(eventService, times(1)).create(any());
     }
@@ -191,13 +196,14 @@ public class OrganizationUserServiceTest {
     @Test
     public void shouldNotUpdate_emailFormatInvalidException() {
         User user = new User();
+        user.setId("my-user");
         user.setReferenceType(ReferenceType.ORGANIZATION);
         user.setReferenceId(ORG);
 
         UpdateUser updateUser = new UpdateUser();
         updateUser.setEmail("invalid");
         when(userRepository.findByUsernameAndSource(eq(ReferenceType.ORGANIZATION), eq(ORG), any(), any())).thenReturn(Maybe.just(user));
-        when(userRepository.findById(eq(ReferenceType.ORGANIZATION), eq(ORG), eq("my-user"))).thenReturn(Maybe.just(user));
+        when(userRepository.findById(ReferenceType.ORGANIZATION, ORG, user.getId())).thenReturn(Maybe.just(user));
 
         TestObserver<User> testObserver = userService.update(ReferenceType.ORGANIZATION, ORG, "my-user", updateUser).test();
         testObserver.awaitTerminalEvent();
@@ -210,13 +216,14 @@ public class OrganizationUserServiceTest {
     @Test
     public void shouldNotUpdate_invalidUserException() {
         User user = new User();
+        user.setId("my-user");
         user.setReferenceType(ReferenceType.ORGANIZATION);
         user.setReferenceId(ORG);
 
         UpdateUser updateUser = new UpdateUser();
         updateUser.setFirstName("$$^^^^¨¨¨)");
         when(userRepository.findByUsernameAndSource(eq(ReferenceType.ORGANIZATION), eq(ORG), any(), any())).thenReturn(Maybe.just(user));
-        when(userRepository.findById(eq(ReferenceType.ORGANIZATION), eq(ORG), eq("my-user"))).thenReturn(Maybe.just(user));
+        when(userRepository.findById(ReferenceType.ORGANIZATION, ORG, user.getId())).thenReturn(Maybe.just(user));
 
         TestObserver<User> testObserver = userService.update(ReferenceType.ORGANIZATION, ORG, "my-user", updateUser).test();
         testObserver.awaitTerminalEvent();

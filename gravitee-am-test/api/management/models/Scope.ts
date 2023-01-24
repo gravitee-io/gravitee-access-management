@@ -56,16 +56,16 @@ export interface Scope {
     domain?: string;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof Scope
      */
-    createdAt?: Date;
+    createdAt?: number;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof Scope
      */
-    updatedAt?: Date;
+    updatedAt?: number;
     /**
      * 
      * @type {boolean}
@@ -114,8 +114,8 @@ export function ScopeFromJSONTyped(json: any, ignoreDiscriminator: boolean): Sco
         'description': !exists(json, 'description') ? undefined : json['description'],
         'iconUri': !exists(json, 'iconUri') ? undefined : json['iconUri'],
         'domain': !exists(json, 'domain') ? undefined : json['domain'],
-        'createdAt': !exists(json, 'createdAt') ? undefined : (new Date(json['createdAt'])),
-        'updatedAt': !exists(json, 'updatedAt') ? undefined : (new Date(json['updatedAt'])),
+        'createdAt': !exists(json, 'createdAt') ? undefined : json['createdAt'],
+        'updatedAt': !exists(json, 'updatedAt') ? undefined : json['updatedAt'],
         'system': !exists(json, 'system') ? undefined : json['system'],
         'claims': !exists(json, 'claims') ? undefined : json['claims'],
         'expiresIn': !exists(json, 'expiresIn') ? undefined : json['expiresIn'],
@@ -139,8 +139,8 @@ export function ScopeToJSON(value?: Scope | null): any {
         'description': value.description,
         'iconUri': value.iconUri,
         'domain': value.domain,
-        'createdAt': value.createdAt === undefined ? undefined : (value.createdAt.toISOString()),
-        'updatedAt': value.updatedAt === undefined ? undefined : (value.updatedAt.toISOString()),
+        'createdAt': value.createdAt,
+        'updatedAt': value.updatedAt,
         'system': value.system,
         'claims': value.claims,
         'expiresIn': value.expiresIn,

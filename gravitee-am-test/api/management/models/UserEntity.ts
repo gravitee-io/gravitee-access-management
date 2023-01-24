@@ -213,16 +213,16 @@ export interface UserEntity {
     accountNonLocked?: boolean;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof UserEntity
      */
-    accountLockedAt?: Date;
+    accountLockedAt?: number;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof UserEntity
      */
-    accountLockedUntil?: Date;
+    accountLockedUntil?: number;
     /**
      * 
      * @type {boolean}
@@ -315,40 +315,40 @@ export interface UserEntity {
     additionalInformation?: { [key: string]: any; };
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof UserEntity
      */
-    loggedAt?: Date;
+    loggedAt?: number;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof UserEntity
      */
-    lastPasswordReset?: Date;
+    lastPasswordReset?: number;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof UserEntity
      */
-    lastLogoutAt?: Date;
+    lastLogoutAt?: number;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof UserEntity
      */
-    mfaEnrollmentSkippedAt?: Date;
+    mfaEnrollmentSkippedAt?: number;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof UserEntity
      */
-    createdAt?: Date;
+    createdAt?: number;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof UserEntity
      */
-    updatedAt?: Date;
+    updatedAt?: number;
     /**
      * 
      * @type {ApplicationEntity}
@@ -381,12 +381,6 @@ export interface UserEntity {
     zoneInfo?: string;
     /**
      * 
-     * @type {string}
-     * @memberof UserEntity
-     */
-    middleName?: string;
-    /**
-     * 
      * @type {boolean}
      * @memberof UserEntity
      */
@@ -403,6 +397,12 @@ export interface UserEntity {
      * @memberof UserEntity
      */
     website?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof UserEntity
+     */
+    middleName?: string;
     /**
      * 
      * @type {string}
@@ -467,8 +467,8 @@ export function UserEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean)
         'x509Certificates': !exists(json, 'x509Certificates') ? undefined : ((json['x509Certificates'] as Array<any>).map(CertificateFromJSON)),
         'accountNonExpired': !exists(json, 'accountNonExpired') ? undefined : json['accountNonExpired'],
         'accountNonLocked': !exists(json, 'accountNonLocked') ? undefined : json['accountNonLocked'],
-        'accountLockedAt': !exists(json, 'accountLockedAt') ? undefined : (new Date(json['accountLockedAt'])),
-        'accountLockedUntil': !exists(json, 'accountLockedUntil') ? undefined : (new Date(json['accountLockedUntil'])),
+        'accountLockedAt': !exists(json, 'accountLockedAt') ? undefined : json['accountLockedAt'],
+        'accountLockedUntil': !exists(json, 'accountLockedUntil') ? undefined : json['accountLockedUntil'],
         'credentialsNonExpired': !exists(json, 'credentialsNonExpired') ? undefined : json['credentialsNonExpired'],
         'enabled': !exists(json, 'enabled') ? undefined : json['enabled'],
         'internal': !exists(json, 'internal') ? undefined : json['internal'],
@@ -484,21 +484,21 @@ export function UserEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean)
         'loginsCount': !exists(json, 'loginsCount') ? undefined : json['loginsCount'],
         'factors': !exists(json, 'factors') ? undefined : ((json['factors'] as Array<any>).map(EnrolledFactorFromJSON)),
         'additionalInformation': !exists(json, 'additionalInformation') ? undefined : json['additionalInformation'],
-        'loggedAt': !exists(json, 'loggedAt') ? undefined : (new Date(json['loggedAt'])),
-        'lastPasswordReset': !exists(json, 'lastPasswordReset') ? undefined : (new Date(json['lastPasswordReset'])),
-        'lastLogoutAt': !exists(json, 'lastLogoutAt') ? undefined : (new Date(json['lastLogoutAt'])),
-        'mfaEnrollmentSkippedAt': !exists(json, 'mfaEnrollmentSkippedAt') ? undefined : (new Date(json['mfaEnrollmentSkippedAt'])),
-        'createdAt': !exists(json, 'createdAt') ? undefined : (new Date(json['createdAt'])),
-        'updatedAt': !exists(json, 'updatedAt') ? undefined : (new Date(json['updatedAt'])),
+        'loggedAt': !exists(json, 'loggedAt') ? undefined : json['loggedAt'],
+        'lastPasswordReset': !exists(json, 'lastPasswordReset') ? undefined : json['lastPasswordReset'],
+        'lastLogoutAt': !exists(json, 'lastLogoutAt') ? undefined : json['lastLogoutAt'],
+        'mfaEnrollmentSkippedAt': !exists(json, 'mfaEnrollmentSkippedAt') ? undefined : json['mfaEnrollmentSkippedAt'],
+        'createdAt': !exists(json, 'createdAt') ? undefined : json['createdAt'],
+        'updatedAt': !exists(json, 'updatedAt') ? undefined : json['updatedAt'],
         'applicationEntity': !exists(json, 'applicationEntity') ? undefined : ApplicationEntityFromJSON(json['applicationEntity']),
         'sourceId': !exists(json, 'sourceId') ? undefined : json['sourceId'],
         'address': !exists(json, 'address') ? undefined : json['address'],
         'locale': !exists(json, 'locale') ? undefined : json['locale'],
         'zoneInfo': !exists(json, 'zoneInfo') ? undefined : json['zoneInfo'],
-        'middleName': !exists(json, 'middleName') ? undefined : json['middleName'],
         'inactive': !exists(json, 'inactive') ? undefined : json['inactive'],
         'profile': !exists(json, 'profile') ? undefined : json['profile'],
         'website': !exists(json, 'website') ? undefined : json['website'],
+        'middleName': !exists(json, 'middleName') ? undefined : json['middleName'],
         'birthdate': !exists(json, 'birthdate') ? undefined : json['birthdate'],
         'phoneNumber': !exists(json, 'phoneNumber') ? undefined : json['phoneNumber'],
     };
@@ -539,8 +539,8 @@ export function UserEntityToJSON(value?: UserEntity | null): any {
         'x509Certificates': value.x509Certificates === undefined ? undefined : ((value.x509Certificates as Array<any>).map(CertificateToJSON)),
         'accountNonExpired': value.accountNonExpired,
         'accountNonLocked': value.accountNonLocked,
-        'accountLockedAt': value.accountLockedAt === undefined ? undefined : (value.accountLockedAt.toISOString()),
-        'accountLockedUntil': value.accountLockedUntil === undefined ? undefined : (value.accountLockedUntil.toISOString()),
+        'accountLockedAt': value.accountLockedAt,
+        'accountLockedUntil': value.accountLockedUntil,
         'credentialsNonExpired': value.credentialsNonExpired,
         'enabled': value.enabled,
         'internal': value.internal,
@@ -556,21 +556,21 @@ export function UserEntityToJSON(value?: UserEntity | null): any {
         'loginsCount': value.loginsCount,
         'factors': value.factors === undefined ? undefined : ((value.factors as Array<any>).map(EnrolledFactorToJSON)),
         'additionalInformation': value.additionalInformation,
-        'loggedAt': value.loggedAt === undefined ? undefined : (value.loggedAt.toISOString()),
-        'lastPasswordReset': value.lastPasswordReset === undefined ? undefined : (value.lastPasswordReset.toISOString()),
-        'lastLogoutAt': value.lastLogoutAt === undefined ? undefined : (value.lastLogoutAt.toISOString()),
-        'mfaEnrollmentSkippedAt': value.mfaEnrollmentSkippedAt === undefined ? undefined : (value.mfaEnrollmentSkippedAt.toISOString()),
-        'createdAt': value.createdAt === undefined ? undefined : (value.createdAt.toISOString()),
-        'updatedAt': value.updatedAt === undefined ? undefined : (value.updatedAt.toISOString()),
+        'loggedAt': value.loggedAt,
+        'lastPasswordReset': value.lastPasswordReset,
+        'lastLogoutAt': value.lastLogoutAt,
+        'mfaEnrollmentSkippedAt': value.mfaEnrollmentSkippedAt,
+        'createdAt': value.createdAt,
+        'updatedAt': value.updatedAt,
         'applicationEntity': ApplicationEntityToJSON(value.applicationEntity),
         'sourceId': value.sourceId,
         'address': value.address,
         'locale': value.locale,
         'zoneInfo': value.zoneInfo,
-        'middleName': value.middleName,
         'inactive': value.inactive,
         'profile': value.profile,
         'website': value.website,
+        'middleName': value.middleName,
         'birthdate': value.birthdate,
         'phoneNumber': value.phoneNumber,
     };

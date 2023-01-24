@@ -38,16 +38,16 @@ export interface AccessPolicyListItem {
     description?: string;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof AccessPolicyListItem
      */
-    createdAt?: Date;
+    createdAt?: number;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof AccessPolicyListItem
      */
-    updatedAt?: Date;
+    updatedAt?: number;
 }
 
 export function AccessPolicyListItemFromJSON(json: any): AccessPolicyListItem {
@@ -63,8 +63,8 @@ export function AccessPolicyListItemFromJSONTyped(json: any, ignoreDiscriminator
         'id': !exists(json, 'id') ? undefined : json['id'],
         'name': !exists(json, 'name') ? undefined : json['name'],
         'description': !exists(json, 'description') ? undefined : json['description'],
-        'createdAt': !exists(json, 'createdAt') ? undefined : (new Date(json['createdAt'])),
-        'updatedAt': !exists(json, 'updatedAt') ? undefined : (new Date(json['updatedAt'])),
+        'createdAt': !exists(json, 'createdAt') ? undefined : json['createdAt'],
+        'updatedAt': !exists(json, 'updatedAt') ? undefined : json['updatedAt'],
     };
 }
 
@@ -80,8 +80,8 @@ export function AccessPolicyListItemToJSON(value?: AccessPolicyListItem | null):
         'id': value.id,
         'name': value.name,
         'description': value.description,
-        'createdAt': value.createdAt === undefined ? undefined : (value.createdAt.toISOString()),
-        'updatedAt': value.updatedAt === undefined ? undefined : (value.updatedAt.toISOString()),
+        'createdAt': value.createdAt,
+        'updatedAt': value.updatedAt,
     };
 }
 

@@ -23,13 +23,13 @@ export interface FormsResource {
      * @type {any}
      * @memberof FormsResource
      */
-    formResource?: any;
+    previewResource?: any;
     /**
      * 
      * @type {any}
      * @memberof FormsResource
      */
-    previewResource?: any;
+    formResource?: any;
 }
 
 export function FormsResourceFromJSON(json: any): FormsResource {
@@ -42,8 +42,8 @@ export function FormsResourceFromJSONTyped(json: any, ignoreDiscriminator: boole
     }
     return {
         
-        'formResource': !exists(json, 'formResource') ? undefined : json['formResource'],
         'previewResource': !exists(json, 'previewResource') ? undefined : json['previewResource'],
+        'formResource': !exists(json, 'formResource') ? undefined : json['formResource'],
     };
 }
 
@@ -56,8 +56,8 @@ export function FormsResourceToJSON(value?: FormsResource | null): any {
     }
     return {
         
-        'formResource': value.formResource,
         'previewResource': value.previewResource,
+        'formResource': value.formResource,
     };
 }
 
