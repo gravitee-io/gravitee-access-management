@@ -18,6 +18,7 @@ package io.gravitee.am.management.handlers.management.api.resources;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.management.handlers.management.api.model.PasswordValue;
 import io.gravitee.am.management.handlers.management.api.model.StatusEntity;
+import io.gravitee.am.management.handlers.management.api.model.UsernameEntity;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
@@ -27,12 +28,15 @@ import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-import java.util.HashMap;
-import java.util.Map;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Response;
 import org.junit.Test;
 
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.Response;
+import java.util.HashMap;
+import java.util.Map;
+
+import static javax.ws.rs.HttpMethod.PATCH;
+import static org.glassfish.jersey.client.HttpUrlConnectorProvider.SET_METHOD_WORKAROUND;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -42,6 +46,7 @@ import static org.mockito.Mockito.doReturn;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@SuppressWarnings("ReactiveStreamsUnusedPublisher")
 public class UserResourceTest extends JerseySpringTest {
 
     @Test
@@ -238,6 +243,42 @@ public class UserResourceTest extends JerseySpringTest {
 
         final Response response = target("domains").path(domainId).path("users").path(userId).request().delete();
         assertEquals(HttpStatusCode.NO_CONTENT_204, response.getStatus());
+    }
+
+    @Test
+    public void shouldUpdateUsername() {
+        final var domainId = "domain-id";
+        final var domain = new Domain();
+        domain.setId(domainId);
+
+        final var userId = "userId";
+        final var userToUpdate = new User();
+        userToUpdate.setId(userId);
+        final var username = "user-username";
+        userToUpdate.setUsername(username);
+
+        var usernameEntity = new UsernameEntity();
+        usernameEntity.setUsername(username);
+        doReturn(Maybe.just(domain)).when(domainService).findById(domainId);
+        doReturn(Single.just(userToUpdate)).when(userService).updateUsername(eq(ReferenceType.DOMAIN), eq(domainId), eq(userId), eq(usernameEntity.getUsername()), any());
+
+        final var response = target("domains").path(domainId).path("users").path(userId).path("username").request()
+                                              .property(SET_METHOD_WORKAROUND, true)
+                                              .method(PATCH, Entity.json(usernameEntity));
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+        final var updatedUser = readEntity(response, User.class);
+        assertEquals(usernameEntity.getUsername(), updatedUser.getUsername());
+    }
+
+    @Test
+    public void shouldNotUpdateUsername_domainNotFound() {
+        doReturn(Maybe.empty()).when(domainService).findById("domainId");
+        var usernameEntity = new UsernameEntity();
+        usernameEntity.setUsername("username");
+        var response = target("domains").path("domainId").path("users").path("userId").path("username").request()
+                                        .property(SET_METHOD_WORKAROUND, true)
+                                        .method(PATCH, Entity.json(usernameEntity));
+        assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
     }
 
     @Test

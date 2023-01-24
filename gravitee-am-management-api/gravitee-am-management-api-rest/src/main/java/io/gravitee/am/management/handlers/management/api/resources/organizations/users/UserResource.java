@@ -18,6 +18,7 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 import io.gravitee.am.management.handlers.management.api.model.PasswordValue;
 import io.gravitee.am.management.handlers.management.api.model.StatusEntity;
 import io.gravitee.am.management.handlers.management.api.model.UserEntity;
+import io.gravitee.am.management.handlers.management.api.model.UsernameEntity;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.management.service.OrganizationUserService;
@@ -27,6 +28,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.IdentityProviderService;
+import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.common.http.MediaType;
@@ -52,6 +54,7 @@ import javax.ws.rs.core.Response;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@SuppressWarnings("ResultOfMethodCallIgnored")
 public class UserResource extends AbstractResource {
 
     @Context
@@ -128,6 +131,30 @@ public class UserResource extends AbstractResource {
                 .andThen(organizationUserService.updateStatus(ReferenceType.ORGANIZATION, organizationId, user, status.isEnabled(), authenticatedUser))
                 .subscribe(response::resume, response::resume);
     }
+
+    @PATCH
+    @Path("/username")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            nickname = "updateUsername",
+            value = "Update a user username",
+            notes = "User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization")
+    @ApiResponses({
+            @ApiResponse(code = 201, message = "User username successfully updated", response = User.class),
+            @ApiResponse(code = 500, message = "Internal server error")})
+    public void updateUsername(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("user") String userId,
+            @ApiParam(name = "username", required = true) @Valid @NotNull UsernameEntity username,
+            @Suspended final AsyncResponse response) {
+        final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
+
+        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_USER, Acl.UPDATE)
+                .andThen(organizationUserService.updateUsername(ReferenceType.ORGANIZATION, organizationId, userId, username.getUsername(), authenticatedUser))
+                .subscribe(response::resume, response::resume);
+    }
+
 
     @DELETE
     @ApiOperation(value = "Delete a user",
