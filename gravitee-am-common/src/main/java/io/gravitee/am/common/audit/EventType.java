@@ -36,6 +36,7 @@ public interface EventType {
     String USER_LOGOUT = "USER_LOGOUT";
     String USER_CREATED = "USER_CREATED";
     String USER_UPDATED = "USER_UPDATED";
+    String USERNAME_UPDATED = "USER_UPDATED";
     String USER_DELETED = "USER_DELETED";
     String USER_LOCKED = "USER_LOCKED";
     String USER_UNLOCKED = "USER_UNLOCKED";

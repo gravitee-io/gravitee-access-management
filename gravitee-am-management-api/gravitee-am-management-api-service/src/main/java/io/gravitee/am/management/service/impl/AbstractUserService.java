@@ -153,6 +153,18 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type((status ? EventType.USER_ENABLED : EventType.USER_DISABLED)).throwable(throwable)));
     }
 
+    @Override
+    public Single<User> updateUsername(ReferenceType referenceType, String referenceId, String id, String username, io.gravitee.am.identityprovider.api.User principal) {
+        return getUserService().findById(referenceType, referenceId, id)
+                               .flatMap(user -> {
+                                   user.setUsername(username);
+                                   return getUserService().update(user);
+                               })
+                               .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USERNAME_UPDATED).user(user1)))
+                               .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USERNAME_UPDATED).throwable(throwable)));
+
+    }
+
     @SuppressWarnings("ReactiveStreamsUnusedPublisher")
     @Override
     public Completable delete(ReferenceType referenceType, String referenceId, String userId, io.gravitee.am.identityprovider.api.User principal) {
