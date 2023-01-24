@@ -30,7 +30,6 @@
     <groupId>io.gravitee.am</groupId>
     <artifactId>gravitee-am-parent</artifactId>
     <packaging>pom</packaging>
-
     <version>3.18.15-SNAPSHOT</version>
     <name>Gravitee IO - Access Management</name>
 
@@ -387,6 +386,12 @@
                 <groupId>io.gravitee.cockpit</groupId>
                 <artifactId>gravitee-cockpit-api</artifactId>
                 <version>${gravitee-cockpit-api.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.hazelcast</groupId>
+                <artifactId>hazelcast</artifactId>
+                <version>${hazelcast.version}</version>
             </dependency>
 
             <dependency>

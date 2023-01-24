@@ -464,7 +464,7 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
             }
             return applicationService.findById(client)
                     .switchIfEmpty(Maybe.defer(() -> applicationService.findByDomainAndClientId(domain, client)))
-                    .switchIfEmpty(Maybe.error(new ClientNotFoundException(client)))
+                    .switchIfEmpty(Maybe.empty())
                     .map(app1 -> {
                         if (!domain.equals(app1.getDomain())) {
                             throw new ClientNotFoundException(client);

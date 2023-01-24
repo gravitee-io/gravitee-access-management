@@ -127,7 +127,10 @@ public class UserServiceTest {
 
     @Test
     public void shouldResetPassword_userInactive_forceRegistration() {
+        final String clientIdFromClient = "CLIENT_ID_FROM_CLIENT";
+
         Client client = mock(Client.class);
+        when(client.getId()).thenReturn(clientIdFromClient);
 
         User user = mock(User.class);
         when(user.getUsername()).thenReturn("username");
@@ -156,6 +159,7 @@ public class UserServiceTest {
 
         verify(credentialService, never()).deleteByUserId(any(), any(), any());
         verify(tokenService, never()).deleteByUserId(any());
+        verify(loginAttemptService).reset(argThat(criteria -> criteria.client().equals(clientIdFromClient)));
     }
 
     @Test
@@ -987,7 +991,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void forgotPasswordShoudFail_userDisabled_RegistrationCompleted() {
+    public void forgotPasswordShouldFail_userDisabled_RegistrationCompleted() {
         when(domain.getId()).thenReturn("domain-id");
         Client client = mock(Client.class);
         when(client.getIdentityProviders()).thenReturn(null);

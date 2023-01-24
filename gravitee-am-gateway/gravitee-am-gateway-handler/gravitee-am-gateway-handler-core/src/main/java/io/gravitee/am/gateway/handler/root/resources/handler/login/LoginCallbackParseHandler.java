@@ -35,6 +35,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
+import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.STATE;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -108,7 +110,7 @@ public class LoginCallbackParseHandler implements Handler<RoutingContext> {
             return;
         }
 
-        jwtService.decodeAndVerify(state, certificateManager.defaultCertificateProvider())
+        jwtService.decodeAndVerify(state, certificateManager.defaultCertificateProvider(), STATE)
                 .doOnSuccess(stateJwt -> {
                     final MultiMap initialQueryParams = RequestUtils.getQueryParams((String) stateJwt.getOrDefault("q", ""), false);
                     context.put(ConstantKeys.PARAM_CONTEXT_KEY, initialQueryParams);
