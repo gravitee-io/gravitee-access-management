@@ -152,6 +152,7 @@ models/NewUser.ts
 models/NotifierPlugin.ts
 models/OIDCSettings.ts
 models/OrganizationResource.ts
+models/Page.ts
 models/PasswordSettings.ts
 models/PasswordValue.ts
 models/PatchAlertNotifier.ts
@@ -235,6 +236,7 @@ models/UserFactorsResource.ts
 models/UserNotificationContent.ts
 models/UserPage.ts
 models/UserRolesResource.ts
+models/UsernameEntity.ts
 models/UsersResource.ts
 models/VirtualHost.ts
 models/WebAuthnSettings.ts

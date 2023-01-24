@@ -42,6 +42,18 @@ export interface PatchApplicationSAMLSettings {
      * @memberof PatchApplicationSAMLSettings
      */
     certificate?: string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof PatchApplicationSAMLSettings
+     */
+    wantResponseSigned?: boolean;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof PatchApplicationSAMLSettings
+     */
+    wantAssertionsSigned?: boolean;
 }
 
 export function PatchApplicationSAMLSettingsFromJSON(json: any): PatchApplicationSAMLSettings {
@@ -58,6 +70,8 @@ export function PatchApplicationSAMLSettingsFromJSONTyped(json: any, ignoreDiscr
         'attributeConsumeServiceUrl': !exists(json, 'attributeConsumeServiceUrl') ? undefined : json['attributeConsumeServiceUrl'],
         'singleLogoutServiceUrl': !exists(json, 'singleLogoutServiceUrl') ? undefined : json['singleLogoutServiceUrl'],
         'certificate': !exists(json, 'certificate') ? undefined : json['certificate'],
+        'wantResponseSigned': !exists(json, 'wantResponseSigned') ? undefined : json['wantResponseSigned'],
+        'wantAssertionsSigned': !exists(json, 'wantAssertionsSigned') ? undefined : json['wantAssertionsSigned'],
     };
 }
 
@@ -74,6 +88,8 @@ export function PatchApplicationSAMLSettingsToJSON(value?: PatchApplicationSAMLS
         'attributeConsumeServiceUrl': value.attributeConsumeServiceUrl,
         'singleLogoutServiceUrl': value.singleLogoutServiceUrl,
         'certificate': value.certificate,
+        'wantResponseSigned': value.wantResponseSigned,
+        'wantAssertionsSigned': value.wantAssertionsSigned,
     };
 }
 

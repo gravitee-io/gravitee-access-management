@@ -39,7 +39,7 @@ export interface DeleteFactorRequest {
     factor: string;
 }
 
-export interface Get32Request {
+export interface Get33Request {
     factor: string;
 }
 
@@ -50,7 +50,7 @@ export interface GetFactorRequest {
     factor: string;
 }
 
-export interface GetSchema6Request {
+export interface GetSchema7Request {
     factor: string;
 }
 
@@ -175,9 +175,9 @@ export class FactorApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get a factor plugin
      */
-    async get32Raw(requestParameters: Get32Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async get33Raw(requestParameters: Get33Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.factor === null || requestParameters.factor === undefined) {
-            throw new runtime.RequiredError('factor','Required parameter requestParameters.factor was null or undefined when calling get32.');
+            throw new runtime.RequiredError('factor','Required parameter requestParameters.factor was null or undefined when calling get33.');
         }
 
         const queryParameters: any = {};
@@ -202,8 +202,8 @@ export class FactorApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get a factor plugin
      */
-    async get32(requestParameters: Get32Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.get32Raw(requestParameters, initOverrides);
+    async get33(requestParameters: Get33Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.get33Raw(requestParameters, initOverrides);
     }
 
     /**
@@ -258,9 +258,9 @@ export class FactorApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get a factor plugin\'s schema
      */
-    async getSchema6Raw(requestParameters: GetSchema6Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async getSchema7Raw(requestParameters: GetSchema7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.factor === null || requestParameters.factor === undefined) {
-            throw new runtime.RequiredError('factor','Required parameter requestParameters.factor was null or undefined when calling getSchema6.');
+            throw new runtime.RequiredError('factor','Required parameter requestParameters.factor was null or undefined when calling getSchema7.');
         }
 
         const queryParameters: any = {};
@@ -285,8 +285,8 @@ export class FactorApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get a factor plugin\'s schema
      */
-    async getSchema6(requestParameters: GetSchema6Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.getSchema6Raw(requestParameters, initOverrides);
+    async getSchema7(requestParameters: GetSchema7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.getSchema7Raw(requestParameters, initOverrides);
     }
 
     /**

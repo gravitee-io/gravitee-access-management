@@ -74,16 +74,16 @@ export interface ExtensionGrant {
     userExists?: boolean;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof ExtensionGrant
      */
-    createdAt?: Date;
+    createdAt?: number;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof ExtensionGrant
      */
-    updatedAt?: Date;
+    updatedAt?: number;
 }
 
 export function ExtensionGrantFromJSON(json: any): ExtensionGrant {
@@ -105,8 +105,8 @@ export function ExtensionGrantFromJSONTyped(json: any, ignoreDiscriminator: bool
         'identityProvider': !exists(json, 'identityProvider') ? undefined : json['identityProvider'],
         'createUser': !exists(json, 'createUser') ? undefined : json['createUser'],
         'userExists': !exists(json, 'userExists') ? undefined : json['userExists'],
-        'createdAt': !exists(json, 'createdAt') ? undefined : (new Date(json['createdAt'])),
-        'updatedAt': !exists(json, 'updatedAt') ? undefined : (new Date(json['updatedAt'])),
+        'createdAt': !exists(json, 'createdAt') ? undefined : json['createdAt'],
+        'updatedAt': !exists(json, 'updatedAt') ? undefined : json['updatedAt'],
     };
 }
 
@@ -128,8 +128,8 @@ export function ExtensionGrantToJSON(value?: ExtensionGrant | null): any {
         'identityProvider': value.identityProvider,
         'createUser': value.createUser,
         'userExists': value.userExists,
-        'createdAt': value.createdAt === undefined ? undefined : (value.createdAt.toISOString()),
-        'updatedAt': value.updatedAt === undefined ? undefined : (value.updatedAt.toISOString()),
+        'createdAt': value.createdAt,
+        'updatedAt': value.updatedAt,
     };
 }
 

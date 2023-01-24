@@ -44,16 +44,16 @@ export interface Tag {
     organizationId?: string;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof Tag
      */
-    createdAt?: Date;
+    createdAt?: number;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof Tag
      */
-    updatedAt?: Date;
+    updatedAt?: number;
 }
 
 export function TagFromJSON(json: any): Tag {
@@ -70,8 +70,8 @@ export function TagFromJSONTyped(json: any, ignoreDiscriminator: boolean): Tag {
         'name': !exists(json, 'name') ? undefined : json['name'],
         'description': !exists(json, 'description') ? undefined : json['description'],
         'organizationId': !exists(json, 'organizationId') ? undefined : json['organizationId'],
-        'createdAt': !exists(json, 'createdAt') ? undefined : (new Date(json['createdAt'])),
-        'updatedAt': !exists(json, 'updatedAt') ? undefined : (new Date(json['updatedAt'])),
+        'createdAt': !exists(json, 'createdAt') ? undefined : json['createdAt'],
+        'updatedAt': !exists(json, 'updatedAt') ? undefined : json['updatedAt'],
     };
 }
 
@@ -88,8 +88,8 @@ export function TagToJSON(value?: Tag | null): any {
         'name': value.name,
         'description': value.description,
         'organizationId': value.organizationId,
-        'createdAt': value.createdAt === undefined ? undefined : (value.createdAt.toISOString()),
-        'updatedAt': value.updatedAt === undefined ? undefined : (value.updatedAt.toISOString()),
+        'createdAt': value.createdAt,
+        'updatedAt': value.updatedAt,
     };
 }
 

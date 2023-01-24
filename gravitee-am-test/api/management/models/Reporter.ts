@@ -68,16 +68,16 @@ export interface Reporter {
     configuration?: string;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof Reporter
      */
-    createdAt?: Date;
+    createdAt?: number;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof Reporter
      */
-    updatedAt?: Date;
+    updatedAt?: number;
 }
 
 export function ReporterFromJSON(json: any): Reporter {
@@ -98,8 +98,8 @@ export function ReporterFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
         'system': !exists(json, 'system') ? undefined : json['system'],
         'dataType': !exists(json, 'dataType') ? undefined : json['dataType'],
         'configuration': !exists(json, 'configuration') ? undefined : json['configuration'],
-        'createdAt': !exists(json, 'createdAt') ? undefined : (new Date(json['createdAt'])),
-        'updatedAt': !exists(json, 'updatedAt') ? undefined : (new Date(json['updatedAt'])),
+        'createdAt': !exists(json, 'createdAt') ? undefined : json['createdAt'],
+        'updatedAt': !exists(json, 'updatedAt') ? undefined : json['updatedAt'],
     };
 }
 
@@ -120,8 +120,8 @@ export function ReporterToJSON(value?: Reporter | null): any {
         'system': value.system,
         'dataType': value.dataType,
         'configuration': value.configuration,
-        'createdAt': value.createdAt === undefined ? undefined : (value.createdAt.toISOString()),
-        'updatedAt': value.updatedAt === undefined ? undefined : (value.updatedAt.toISOString()),
+        'createdAt': value.createdAt,
+        'updatedAt': value.updatedAt,
     };
 }
 

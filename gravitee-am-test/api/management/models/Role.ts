@@ -80,16 +80,16 @@ export interface Role {
     oauthScopes?: Array<string>;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof Role
      */
-    createdAt?: Date;
+    createdAt?: number;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof Role
      */
-    updatedAt?: Date;
+    updatedAt?: number;
     /**
      * 
      * @type {boolean}
@@ -156,8 +156,8 @@ export function RoleFromJSONTyped(json: any, ignoreDiscriminator: boolean): Role
         'defaultRole': !exists(json, 'defaultRole') ? undefined : json['defaultRole'],
         'permissionAcls': !exists(json, 'permissionAcls') ? undefined : json['permissionAcls'],
         'oauthScopes': !exists(json, 'oauthScopes') ? undefined : json['oauthScopes'],
-        'createdAt': !exists(json, 'createdAt') ? undefined : (new Date(json['createdAt'])),
-        'updatedAt': !exists(json, 'updatedAt') ? undefined : (new Date(json['updatedAt'])),
+        'createdAt': !exists(json, 'createdAt') ? undefined : json['createdAt'],
+        'updatedAt': !exists(json, 'updatedAt') ? undefined : json['updatedAt'],
         'internalOnly': !exists(json, 'internalOnly') ? undefined : json['internalOnly'],
     };
 }
@@ -181,8 +181,8 @@ export function RoleToJSON(value?: Role | null): any {
         'defaultRole': value.defaultRole,
         'permissionAcls': value.permissionAcls,
         'oauthScopes': value.oauthScopes,
-        'createdAt': value.createdAt === undefined ? undefined : (value.createdAt.toISOString()),
-        'updatedAt': value.updatedAt === undefined ? undefined : (value.updatedAt.toISOString()),
+        'createdAt': value.createdAt,
+        'updatedAt': value.updatedAt,
         'internalOnly': value.internalOnly,
     };
 }

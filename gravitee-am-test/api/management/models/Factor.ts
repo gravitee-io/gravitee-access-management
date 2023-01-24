@@ -56,16 +56,16 @@ export interface Factor {
     domain?: string;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof Factor
      */
-    createdAt?: Date;
+    createdAt?: number;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof Factor
      */
-    updatedAt?: Date;
+    updatedAt?: number;
 }
 
 
@@ -100,8 +100,8 @@ export function FactorFromJSONTyped(json: any, ignoreDiscriminator: boolean): Fa
         'factorType': !exists(json, 'factorType') ? undefined : json['factorType'],
         'configuration': !exists(json, 'configuration') ? undefined : json['configuration'],
         'domain': !exists(json, 'domain') ? undefined : json['domain'],
-        'createdAt': !exists(json, 'createdAt') ? undefined : (new Date(json['createdAt'])),
-        'updatedAt': !exists(json, 'updatedAt') ? undefined : (new Date(json['updatedAt'])),
+        'createdAt': !exists(json, 'createdAt') ? undefined : json['createdAt'],
+        'updatedAt': !exists(json, 'updatedAt') ? undefined : json['updatedAt'],
     };
 }
 
@@ -120,8 +120,8 @@ export function FactorToJSON(value?: Factor | null): any {
         'factorType': value.factorType,
         'configuration': value.configuration,
         'domain': value.domain,
-        'createdAt': value.createdAt === undefined ? undefined : (value.createdAt.toISOString()),
-        'updatedAt': value.updatedAt === undefined ? undefined : (value.updatedAt.toISOString()),
+        'createdAt': value.createdAt,
+        'updatedAt': value.updatedAt,
     };
 }
 

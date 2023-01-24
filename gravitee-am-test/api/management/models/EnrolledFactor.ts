@@ -69,16 +69,16 @@ export interface EnrolledFactor {
     primary?: boolean;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof EnrolledFactor
      */
-    createdAt?: Date;
+    createdAt?: number;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof EnrolledFactor
      */
-    updatedAt?: Date;
+    updatedAt?: number;
 }
 
 
@@ -110,8 +110,8 @@ export function EnrolledFactorFromJSONTyped(json: any, ignoreDiscriminator: bool
         'security': !exists(json, 'security') ? undefined : EnrolledFactorSecurityFromJSON(json['security']),
         'channel': !exists(json, 'channel') ? undefined : EnrolledFactorChannelFromJSON(json['channel']),
         'primary': !exists(json, 'primary') ? undefined : json['primary'],
-        'createdAt': !exists(json, 'createdAt') ? undefined : (new Date(json['createdAt'])),
-        'updatedAt': !exists(json, 'updatedAt') ? undefined : (new Date(json['updatedAt'])),
+        'createdAt': !exists(json, 'createdAt') ? undefined : json['createdAt'],
+        'updatedAt': !exists(json, 'updatedAt') ? undefined : json['updatedAt'],
     };
 }
 
@@ -130,8 +130,8 @@ export function EnrolledFactorToJSON(value?: EnrolledFactor | null): any {
         'security': EnrolledFactorSecurityToJSON(value.security),
         'channel': EnrolledFactorChannelToJSON(value.channel),
         'primary': value.primary,
-        'createdAt': value.createdAt === undefined ? undefined : (value.createdAt.toISOString()),
-        'updatedAt': value.updatedAt === undefined ? undefined : (value.updatedAt.toISOString()),
+        'createdAt': value.createdAt,
+        'updatedAt': value.updatedAt,
     };
 }
 

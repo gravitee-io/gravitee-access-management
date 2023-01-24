@@ -62,16 +62,16 @@ export interface Group {
     roles?: Array<string>;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof Group
      */
-    createdAt?: Date;
+    createdAt?: number;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof Group
      */
-    updatedAt?: Date;
+    updatedAt?: number;
 }
 
 
@@ -105,8 +105,8 @@ export function GroupFromJSONTyped(json: any, ignoreDiscriminator: boolean): Gro
         'description': !exists(json, 'description') ? undefined : json['description'],
         'members': !exists(json, 'members') ? undefined : json['members'],
         'roles': !exists(json, 'roles') ? undefined : json['roles'],
-        'createdAt': !exists(json, 'createdAt') ? undefined : (new Date(json['createdAt'])),
-        'updatedAt': !exists(json, 'updatedAt') ? undefined : (new Date(json['updatedAt'])),
+        'createdAt': !exists(json, 'createdAt') ? undefined : json['createdAt'],
+        'updatedAt': !exists(json, 'updatedAt') ? undefined : json['updatedAt'],
     };
 }
 
@@ -126,8 +126,8 @@ export function GroupToJSON(value?: Group | null): any {
         'description': value.description,
         'members': value.members,
         'roles': value.roles,
-        'createdAt': value.createdAt === undefined ? undefined : (value.createdAt.toISOString()),
-        'updatedAt': value.updatedAt === undefined ? undefined : (value.updatedAt.toISOString()),
+        'createdAt': value.createdAt,
+        'updatedAt': value.updatedAt,
     };
 }
 

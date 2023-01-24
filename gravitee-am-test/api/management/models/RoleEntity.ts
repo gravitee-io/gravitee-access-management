@@ -80,16 +80,16 @@ export interface RoleEntity {
     defaultRole?: boolean;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof RoleEntity
      */
-    createdAt?: Date;
+    createdAt?: number;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof RoleEntity
      */
-    updatedAt?: Date;
+    updatedAt?: number;
 }
 
 
@@ -126,8 +126,8 @@ export function RoleEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean)
         'availablePermissions': !exists(json, 'availablePermissions') ? undefined : json['availablePermissions'],
         'system': !exists(json, 'system') ? undefined : json['system'],
         'defaultRole': !exists(json, 'defaultRole') ? undefined : json['defaultRole'],
-        'createdAt': !exists(json, 'createdAt') ? undefined : (new Date(json['createdAt'])),
-        'updatedAt': !exists(json, 'updatedAt') ? undefined : (new Date(json['updatedAt'])),
+        'createdAt': !exists(json, 'createdAt') ? undefined : json['createdAt'],
+        'updatedAt': !exists(json, 'updatedAt') ? undefined : json['updatedAt'],
     };
 }
 
@@ -150,8 +150,8 @@ export function RoleEntityToJSON(value?: RoleEntity | null): any {
         'availablePermissions': value.availablePermissions,
         'system': value.system,
         'defaultRole': value.defaultRole,
-        'createdAt': value.createdAt === undefined ? undefined : (value.createdAt.toISOString()),
-        'updatedAt': value.updatedAt === undefined ? undefined : (value.updatedAt.toISOString()),
+        'createdAt': value.createdAt,
+        'updatedAt': value.updatedAt,
     };
 }
 

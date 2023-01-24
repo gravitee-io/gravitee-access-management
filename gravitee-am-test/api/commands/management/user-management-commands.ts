@@ -63,7 +63,16 @@ export const updateUserStatus = (domainId, accessToken, userId, status: boolean)
         domain: domainId,
         user: userId,
         status: {enabled: status}
-    })
+    });
+
+export const updateUsername = (domainId, accessToken, userId, username) =>
+    getUserApi(accessToken).updateUsername({
+        organizationId: process.env.AM_DEF_ORG_ID,
+        environmentId: process.env.AM_DEF_ENV_ID,
+        domain: domainId,
+        user: userId,
+        username: {username: username}
+    });
 
 export const resetUserPassword = (domainId, accessToken, userId, password) =>
     getUserApi(accessToken).resetPassword({

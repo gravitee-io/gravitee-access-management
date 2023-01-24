@@ -86,16 +86,16 @@ export interface ThemeEntity {
     css?: string;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof ThemeEntity
      */
-    createdAt?: Date;
+    createdAt?: number;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof ThemeEntity
      */
-    updatedAt?: Date;
+    updatedAt?: number;
 }
 
 
@@ -133,8 +133,8 @@ export function ThemeEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean
         'primaryTextColorHex': !exists(json, 'primaryTextColorHex') ? undefined : json['primaryTextColorHex'],
         'secondaryTextColorHex': !exists(json, 'secondaryTextColorHex') ? undefined : json['secondaryTextColorHex'],
         'css': !exists(json, 'css') ? undefined : json['css'],
-        'createdAt': !exists(json, 'createdAt') ? undefined : (new Date(json['createdAt'])),
-        'updatedAt': !exists(json, 'updatedAt') ? undefined : (new Date(json['updatedAt'])),
+        'createdAt': !exists(json, 'createdAt') ? undefined : json['createdAt'],
+        'updatedAt': !exists(json, 'updatedAt') ? undefined : json['updatedAt'],
     };
 }
 
@@ -158,8 +158,8 @@ export function ThemeEntityToJSON(value?: ThemeEntity | null): any {
         'primaryTextColorHex': value.primaryTextColorHex,
         'secondaryTextColorHex': value.secondaryTextColorHex,
         'css': value.css,
-        'createdAt': value.createdAt === undefined ? undefined : (value.createdAt.toISOString()),
-        'updatedAt': value.updatedAt === undefined ? undefined : (value.updatedAt.toISOString()),
+        'createdAt': value.createdAt,
+        'updatedAt': value.updatedAt,
     };
 }
 
