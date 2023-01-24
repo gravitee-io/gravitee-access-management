@@ -42,6 +42,18 @@ export interface ApplicationSAMLSettings {
      * @memberof ApplicationSAMLSettings
      */
     certificate?: string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ApplicationSAMLSettings
+     */
+    wantResponseSigned?: boolean;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ApplicationSAMLSettings
+     */
+    wantAssertionsSigned?: boolean;
 }
 
 export function ApplicationSAMLSettingsFromJSON(json: any): ApplicationSAMLSettings {
@@ -58,6 +70,8 @@ export function ApplicationSAMLSettingsFromJSONTyped(json: any, ignoreDiscrimina
         'attributeConsumeServiceUrl': !exists(json, 'attributeConsumeServiceUrl') ? undefined : json['attributeConsumeServiceUrl'],
         'singleLogoutServiceUrl': !exists(json, 'singleLogoutServiceUrl') ? undefined : json['singleLogoutServiceUrl'],
         'certificate': !exists(json, 'certificate') ? undefined : json['certificate'],
+        'wantResponseSigned': !exists(json, 'wantResponseSigned') ? undefined : json['wantResponseSigned'],
+        'wantAssertionsSigned': !exists(json, 'wantAssertionsSigned') ? undefined : json['wantAssertionsSigned'],
     };
 }
 
@@ -74,6 +88,8 @@ export function ApplicationSAMLSettingsToJSON(value?: ApplicationSAMLSettings | 
         'attributeConsumeServiceUrl': value.attributeConsumeServiceUrl,
         'singleLogoutServiceUrl': value.singleLogoutServiceUrl,
         'certificate': value.certificate,
+        'wantResponseSigned': value.wantResponseSigned,
+        'wantAssertionsSigned': value.wantAssertionsSigned,
     };
 }
 

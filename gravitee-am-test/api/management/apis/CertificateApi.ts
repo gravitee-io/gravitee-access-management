@@ -413,7 +413,7 @@ export class CertificateApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * List certificate plugins
      */
-    async list30Raw(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async list29Raw(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -436,8 +436,8 @@ export class CertificateApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * List certificate plugins
      */
-    async list30(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.list30Raw(initOverrides);
+    async list29(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.list29Raw(initOverrides);
     }
 
     /**

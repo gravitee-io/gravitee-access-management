@@ -62,16 +62,16 @@ export interface Entrypoint {
     defaultEntrypoint?: boolean;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof Entrypoint
      */
-    createdAt?: Date;
+    createdAt?: number;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof Entrypoint
      */
-    updatedAt?: Date;
+    updatedAt?: number;
 }
 
 export function EntrypointFromJSON(json: any): Entrypoint {
@@ -91,8 +91,8 @@ export function EntrypointFromJSONTyped(json: any, ignoreDiscriminator: boolean)
         'tags': !exists(json, 'tags') ? undefined : json['tags'],
         'organizationId': !exists(json, 'organizationId') ? undefined : json['organizationId'],
         'defaultEntrypoint': !exists(json, 'defaultEntrypoint') ? undefined : json['defaultEntrypoint'],
-        'createdAt': !exists(json, 'createdAt') ? undefined : (new Date(json['createdAt'])),
-        'updatedAt': !exists(json, 'updatedAt') ? undefined : (new Date(json['updatedAt'])),
+        'createdAt': !exists(json, 'createdAt') ? undefined : json['createdAt'],
+        'updatedAt': !exists(json, 'updatedAt') ? undefined : json['updatedAt'],
     };
 }
 
@@ -112,8 +112,8 @@ export function EntrypointToJSON(value?: Entrypoint | null): any {
         'tags': value.tags,
         'organizationId': value.organizationId,
         'defaultEntrypoint': value.defaultEntrypoint,
-        'createdAt': value.createdAt === undefined ? undefined : (value.createdAt.toISOString()),
-        'updatedAt': value.updatedAt === undefined ? undefined : (value.updatedAt.toISOString()),
+        'createdAt': value.createdAt,
+        'updatedAt': value.updatedAt,
     };
 }
 

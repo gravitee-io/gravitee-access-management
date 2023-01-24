@@ -249,16 +249,16 @@ export interface PatchApplicationOAuthSettings {
     registrationClientUri?: string;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof PatchApplicationOAuthSettings
      */
-    clientIdIssuedAt?: Date;
+    clientIdIssuedAt?: number;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof PatchApplicationOAuthSettings
      */
-    clientSecretExpiresAt?: Date;
+    clientSecretExpiresAt?: number;
     /**
      * 
      * @type {boolean}
@@ -379,6 +379,12 @@ export interface PatchApplicationOAuthSettings {
      * @memberof PatchApplicationOAuthSettings
      */
     scopeSettings?: Array<ApplicationScopeSettings>;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof PatchApplicationOAuthSettings
+     */
+    disableRefreshTokenRotation?: boolean;
 }
 
 export function PatchApplicationOAuthSettingsFromJSON(json: any): PatchApplicationOAuthSettings {
@@ -426,8 +432,8 @@ export function PatchApplicationOAuthSettingsFromJSONTyped(json: any, ignoreDisc
         'softwareStatement': !exists(json, 'softwareStatement') ? undefined : json['softwareStatement'],
         'registrationAccessToken': !exists(json, 'registrationAccessToken') ? undefined : json['registrationAccessToken'],
         'registrationClientUri': !exists(json, 'registrationClientUri') ? undefined : json['registrationClientUri'],
-        'clientIdIssuedAt': !exists(json, 'clientIdIssuedAt') ? undefined : (new Date(json['clientIdIssuedAt'])),
-        'clientSecretExpiresAt': !exists(json, 'clientSecretExpiresAt') ? undefined : (new Date(json['clientSecretExpiresAt'])),
+        'clientIdIssuedAt': !exists(json, 'clientIdIssuedAt') ? undefined : json['clientIdIssuedAt'],
+        'clientSecretExpiresAt': !exists(json, 'clientSecretExpiresAt') ? undefined : json['clientSecretExpiresAt'],
         'enhanceScopesWithUserPermissions': !exists(json, 'enhanceScopesWithUserPermissions') ? undefined : json['enhanceScopesWithUserPermissions'],
         'accessTokenValiditySeconds': !exists(json, 'accessTokenValiditySeconds') ? undefined : json['accessTokenValiditySeconds'],
         'refreshTokenValiditySeconds': !exists(json, 'refreshTokenValiditySeconds') ? undefined : json['refreshTokenValiditySeconds'],
@@ -448,6 +454,7 @@ export function PatchApplicationOAuthSettingsFromJSONTyped(json: any, ignoreDisc
         'singleSignOut': !exists(json, 'singleSignOut') ? undefined : json['singleSignOut'],
         'silentReAuthentication': !exists(json, 'silentReAuthentication') ? undefined : json['silentReAuthentication'],
         'scopeSettings': !exists(json, 'scopeSettings') ? undefined : ((json['scopeSettings'] as Array<any>).map(ApplicationScopeSettingsFromJSON)),
+        'disableRefreshTokenRotation': !exists(json, 'disableRefreshTokenRotation') ? undefined : json['disableRefreshTokenRotation'],
     };
 }
 
@@ -495,8 +502,8 @@ export function PatchApplicationOAuthSettingsToJSON(value?: PatchApplicationOAut
         'softwareStatement': value.softwareStatement,
         'registrationAccessToken': value.registrationAccessToken,
         'registrationClientUri': value.registrationClientUri,
-        'clientIdIssuedAt': value.clientIdIssuedAt === undefined ? undefined : (value.clientIdIssuedAt.toISOString()),
-        'clientSecretExpiresAt': value.clientSecretExpiresAt === undefined ? undefined : (value.clientSecretExpiresAt.toISOString()),
+        'clientIdIssuedAt': value.clientIdIssuedAt,
+        'clientSecretExpiresAt': value.clientSecretExpiresAt,
         'enhanceScopesWithUserPermissions': value.enhanceScopesWithUserPermissions,
         'accessTokenValiditySeconds': value.accessTokenValiditySeconds,
         'refreshTokenValiditySeconds': value.refreshTokenValiditySeconds,
@@ -517,6 +524,7 @@ export function PatchApplicationOAuthSettingsToJSON(value?: PatchApplicationOAut
         'singleSignOut': value.singleSignOut,
         'silentReAuthentication': value.silentReAuthentication,
         'scopeSettings': value.scopeSettings === undefined ? undefined : ((value.scopeSettings as Array<any>).map(ApplicationScopeSettingsToJSON)),
+        'disableRefreshTokenRotation': value.disableRefreshTokenRotation,
     };
 }
 

@@ -74,16 +74,16 @@ export interface AccessPolicy {
     resource?: string;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof AccessPolicy
      */
-    createdAt?: Date;
+    createdAt?: number;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof AccessPolicy
      */
-    updatedAt?: Date;
+    updatedAt?: number;
 }
 
 
@@ -115,8 +115,8 @@ export function AccessPolicyFromJSONTyped(json: any, ignoreDiscriminator: boolea
         'condition': !exists(json, 'condition') ? undefined : json['condition'],
         'domain': !exists(json, 'domain') ? undefined : json['domain'],
         'resource': !exists(json, 'resource') ? undefined : json['resource'],
-        'createdAt': !exists(json, 'createdAt') ? undefined : (new Date(json['createdAt'])),
-        'updatedAt': !exists(json, 'updatedAt') ? undefined : (new Date(json['updatedAt'])),
+        'createdAt': !exists(json, 'createdAt') ? undefined : json['createdAt'],
+        'updatedAt': !exists(json, 'updatedAt') ? undefined : json['updatedAt'],
     };
 }
 
@@ -138,8 +138,8 @@ export function AccessPolicyToJSON(value?: AccessPolicy | null): any {
         'condition': value.condition,
         'domain': value.domain,
         'resource': value.resource,
-        'createdAt': value.createdAt === undefined ? undefined : (value.createdAt.toISOString()),
-        'updatedAt': value.updatedAt === undefined ? undefined : (value.updatedAt.toISOString()),
+        'createdAt': value.createdAt,
+        'updatedAt': value.updatedAt,
     };
 }
 

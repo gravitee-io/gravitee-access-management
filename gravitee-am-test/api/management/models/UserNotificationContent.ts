@@ -44,10 +44,10 @@ export interface UserNotificationContent {
     message?: string;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof UserNotificationContent
      */
-    createdAt?: Date;
+    createdAt?: number;
 }
 
 
@@ -75,7 +75,7 @@ export function UserNotificationContentFromJSONTyped(json: any, ignoreDiscrimina
         'status': !exists(json, 'status') ? undefined : json['status'],
         'title': !exists(json, 'title') ? undefined : json['title'],
         'message': !exists(json, 'message') ? undefined : json['message'],
-        'createdAt': !exists(json, 'createdAt') ? undefined : (new Date(json['createdAt'])),
+        'createdAt': !exists(json, 'createdAt') ? undefined : json['createdAt'],
     };
 }
 
@@ -92,7 +92,7 @@ export function UserNotificationContentToJSON(value?: UserNotificationContent | 
         'status': value.status,
         'title': value.title,
         'message': value.message,
-        'createdAt': value.createdAt === undefined ? undefined : (value.createdAt.toISOString()),
+        'createdAt': value.createdAt,
     };
 }
 

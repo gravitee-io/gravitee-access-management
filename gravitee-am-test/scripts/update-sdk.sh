@@ -56,7 +56,8 @@ npx @openapitools/openapi-generator-cli generate \
   -psortParamsByRequiredFlag=false \
   --import-mappings=DateTime=Date \
   --type-mappings=DateTime=Date,object=any \
-  --reserved-words-mappings=configuration=configuration
+  --reserved-words-mappings=configuration=configuration \
+  --skip-validate-spec
 
 find "$SDK_OUTPUT_PATH" -name "*.ts" -exec sed -i.bak "/* The version of the OpenAPI document/d" {} \;
 # must delete .bak files

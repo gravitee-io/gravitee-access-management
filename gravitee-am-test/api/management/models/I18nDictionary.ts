@@ -50,16 +50,16 @@ export interface I18nDictionary {
     locale?: string;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof I18nDictionary
      */
-    createdAt?: Date;
+    createdAt?: number;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof I18nDictionary
      */
-    updatedAt?: Date;
+    updatedAt?: number;
     /**
      * 
      * @type {{ [key: string]: string; }}
@@ -97,8 +97,8 @@ export function I18nDictionaryFromJSONTyped(json: any, ignoreDiscriminator: bool
         'referenceType': !exists(json, 'referenceType') ? undefined : json['referenceType'],
         'name': !exists(json, 'name') ? undefined : json['name'],
         'locale': !exists(json, 'locale') ? undefined : json['locale'],
-        'createdAt': !exists(json, 'createdAt') ? undefined : (new Date(json['createdAt'])),
-        'updatedAt': !exists(json, 'updatedAt') ? undefined : (new Date(json['updatedAt'])),
+        'createdAt': !exists(json, 'createdAt') ? undefined : json['createdAt'],
+        'updatedAt': !exists(json, 'updatedAt') ? undefined : json['updatedAt'],
         'entries': !exists(json, 'entries') ? undefined : json['entries'],
     };
 }
@@ -117,8 +117,8 @@ export function I18nDictionaryToJSON(value?: I18nDictionary | null): any {
         'referenceType': value.referenceType,
         'name': value.name,
         'locale': value.locale,
-        'createdAt': value.createdAt === undefined ? undefined : (value.createdAt.toISOString()),
-        'updatedAt': value.updatedAt === undefined ? undefined : (value.updatedAt.toISOString()),
+        'createdAt': value.createdAt,
+        'updatedAt': value.updatedAt,
         'entries': value.entries,
     };
 }

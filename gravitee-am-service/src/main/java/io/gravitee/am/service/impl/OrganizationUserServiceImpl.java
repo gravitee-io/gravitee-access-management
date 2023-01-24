@@ -39,6 +39,8 @@ import org.springframework.stereotype.Component;
 
 import java.util.Date;
 
+import static io.gravitee.am.model.ReferenceType.ORGANIZATION;
+
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -71,7 +73,7 @@ public class OrganizationUserServiceImpl extends AbstractUserService implements 
 
     public Completable setRoles(io.gravitee.am.identityprovider.api.User principal, io.gravitee.am.model.User user) {
 
-        final Maybe<Role> defaultRoleObs = roleService.findDefaultRole(user.getReferenceId(), DefaultRole.ORGANIZATION_USER, ReferenceType.ORGANIZATION);
+        final Maybe<Role> defaultRoleObs = roleService.findDefaultRole(user.getReferenceId(), DefaultRole.ORGANIZATION_USER, ORGANIZATION);
         Maybe<Role> roleObs = defaultRoleObs;
 
         if (principal != null && principal.getRoles() != null && !principal.getRoles().isEmpty()) {
@@ -110,13 +112,13 @@ public class OrganizationUserServiceImpl extends AbstractUserService implements 
         // updated date
         user.setUpdatedAt(new Date());
         return userValidator.validate(user).andThen(getUserRepository()
-                .findByUsernameAndSource(ReferenceType.ORGANIZATION, user.getReferenceId(), user.getUsername(), user.getSource())
+                .findByUsernameAndSource(ORGANIZATION, user.getReferenceId(), user.getUsername(), user.getSource())
+                .switchIfEmpty(getUserRepository().findById(ORGANIZATION, user.getReferenceId(), user.getId()))
                 .flatMapSingle(oldUser -> {
 
                         user.setId(oldUser.getId());
                         user.setReferenceType(oldUser.getReferenceType());
                         user.setReferenceId(oldUser.getReferenceId());
-                        user.setUsername(oldUser.getUsername());
                         if (user.getFirstName() != null) {
                             user.setDisplayName(user.getFirstName() + (user.getLastName() != null ? " " + user.getLastName() : ""));
                         }

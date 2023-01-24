@@ -86,16 +86,16 @@ export interface ResourceEntity {
     policies?: number;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof ResourceEntity
      */
-    createdAt?: Date;
+    createdAt?: number;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof ResourceEntity
      */
-    updatedAt?: Date;
+    updatedAt?: number;
 }
 
 export function ResourceEntityFromJSON(json: any): ResourceEntity {
@@ -119,8 +119,8 @@ export function ResourceEntityFromJSONTyped(json: any, ignoreDiscriminator: bool
         'userDisplayName': !exists(json, 'userDisplayName') ? undefined : json['userDisplayName'],
         'clientId': !exists(json, 'clientId') ? undefined : json['clientId'],
         'policies': !exists(json, 'policies') ? undefined : json['policies'],
-        'createdAt': !exists(json, 'createdAt') ? undefined : (new Date(json['createdAt'])),
-        'updatedAt': !exists(json, 'updatedAt') ? undefined : (new Date(json['updatedAt'])),
+        'createdAt': !exists(json, 'createdAt') ? undefined : json['createdAt'],
+        'updatedAt': !exists(json, 'updatedAt') ? undefined : json['updatedAt'],
     };
 }
 
@@ -144,8 +144,8 @@ export function ResourceEntityToJSON(value?: ResourceEntity | null): any {
         'userDisplayName': value.userDisplayName,
         'clientId': value.clientId,
         'policies': value.policies,
-        'createdAt': value.createdAt === undefined ? undefined : (value.createdAt.toISOString()),
-        'updatedAt': value.updatedAt === undefined ? undefined : (value.updatedAt.toISOString()),
+        'createdAt': value.createdAt,
+        'updatedAt': value.updatedAt,
     };
 }
 

@@ -75,22 +75,22 @@ export interface ScopeApprovalEntity {
     status?: ScopeApprovalEntityStatusEnum;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof ScopeApprovalEntity
      */
-    expiresAt?: Date;
+    expiresAt?: number;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof ScopeApprovalEntity
      */
-    createdAt?: Date;
+    createdAt?: number;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof ScopeApprovalEntity
      */
-    updatedAt?: Date;
+    updatedAt?: number;
     /**
      * 
      * @type {ApplicationEntity}
@@ -133,9 +133,9 @@ export function ScopeApprovalEntityFromJSONTyped(json: any, ignoreDiscriminator:
         'domain': !exists(json, 'domain') ? undefined : json['domain'],
         'scope': !exists(json, 'scope') ? undefined : json['scope'],
         'status': !exists(json, 'status') ? undefined : json['status'],
-        'expiresAt': !exists(json, 'expiresAt') ? undefined : (new Date(json['expiresAt'])),
-        'createdAt': !exists(json, 'createdAt') ? undefined : (new Date(json['createdAt'])),
-        'updatedAt': !exists(json, 'updatedAt') ? undefined : (new Date(json['updatedAt'])),
+        'expiresAt': !exists(json, 'expiresAt') ? undefined : json['expiresAt'],
+        'createdAt': !exists(json, 'createdAt') ? undefined : json['createdAt'],
+        'updatedAt': !exists(json, 'updatedAt') ? undefined : json['updatedAt'],
         'clientEntity': !exists(json, 'clientEntity') ? undefined : ApplicationEntityFromJSON(json['clientEntity']),
         'scopeEntity': !exists(json, 'scopeEntity') ? undefined : ScopeEntityFromJSON(json['scopeEntity']),
     };
@@ -157,9 +157,9 @@ export function ScopeApprovalEntityToJSON(value?: ScopeApprovalEntity | null): a
         'domain': value.domain,
         'scope': value.scope,
         'status': value.status,
-        'expiresAt': value.expiresAt === undefined ? undefined : (value.expiresAt.toISOString()),
-        'createdAt': value.createdAt === undefined ? undefined : (value.createdAt.toISOString()),
-        'updatedAt': value.updatedAt === undefined ? undefined : (value.updatedAt.toISOString()),
+        'expiresAt': value.expiresAt,
+        'createdAt': value.createdAt,
+        'updatedAt': value.updatedAt,
         'clientEntity': ApplicationEntityToJSON(value.clientEntity),
         'scopeEntity': ScopeEntityToJSON(value.scopeEntity),
     };

@@ -137,7 +137,7 @@ public class UserResource extends AbstractResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-            nickname = "updateUsername",
+            nickname = "updateOrganisationUsername",
             value = "Update a user username",
             notes = "User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization")
     @ApiResponses({

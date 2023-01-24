@@ -56,16 +56,16 @@ export interface ServiceResource {
     configuration?: string;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof ServiceResource
      */
-    createdAt?: Date;
+    createdAt?: number;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof ServiceResource
      */
-    updatedAt?: Date;
+    updatedAt?: number;
 }
 
 
@@ -98,8 +98,8 @@ export function ServiceResourceFromJSONTyped(json: any, ignoreDiscriminator: boo
         'name': !exists(json, 'name') ? undefined : json['name'],
         'type': !exists(json, 'type') ? undefined : json['type'],
         'configuration': !exists(json, 'configuration') ? undefined : json['configuration'],
-        'createdAt': !exists(json, 'createdAt') ? undefined : (new Date(json['createdAt'])),
-        'updatedAt': !exists(json, 'updatedAt') ? undefined : (new Date(json['updatedAt'])),
+        'createdAt': !exists(json, 'createdAt') ? undefined : json['createdAt'],
+        'updatedAt': !exists(json, 'updatedAt') ? undefined : json['updatedAt'],
     };
 }
 
@@ -118,8 +118,8 @@ export function ServiceResourceToJSON(value?: ServiceResource | null): any {
         'name': value.name,
         'type': value.type,
         'configuration': value.configuration,
-        'createdAt': value.createdAt === undefined ? undefined : (value.createdAt.toISOString()),
-        'updatedAt': value.updatedAt === undefined ? undefined : (value.updatedAt.toISOString()),
+        'createdAt': value.createdAt,
+        'updatedAt': value.updatedAt,
     };
 }
 

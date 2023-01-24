@@ -86,16 +86,16 @@ export interface IdentityProvider {
     domainWhitelist?: Array<string>;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof IdentityProvider
      */
-    createdAt?: Date;
+    createdAt?: number;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof IdentityProvider
      */
-    updatedAt?: Date;
+    updatedAt?: number;
 }
 
 
@@ -133,8 +133,8 @@ export function IdentityProviderFromJSONTyped(json: any, ignoreDiscriminator: bo
         'referenceId': !exists(json, 'referenceId') ? undefined : json['referenceId'],
         'external': !exists(json, 'external') ? undefined : json['external'],
         'domainWhitelist': !exists(json, 'domainWhitelist') ? undefined : json['domainWhitelist'],
-        'createdAt': !exists(json, 'createdAt') ? undefined : (new Date(json['createdAt'])),
-        'updatedAt': !exists(json, 'updatedAt') ? undefined : (new Date(json['updatedAt'])),
+        'createdAt': !exists(json, 'createdAt') ? undefined : json['createdAt'],
+        'updatedAt': !exists(json, 'updatedAt') ? undefined : json['updatedAt'],
     };
 }
 
@@ -158,8 +158,8 @@ export function IdentityProviderToJSON(value?: IdentityProvider | null): any {
         'referenceId': value.referenceId,
         'external': value.external,
         'domainWhitelist': value.domainWhitelist,
-        'createdAt': value.createdAt === undefined ? undefined : (value.createdAt.toISOString()),
-        'updatedAt': value.updatedAt === undefined ? undefined : (value.updatedAt.toISOString()),
+        'createdAt': value.createdAt,
+        'updatedAt': value.updatedAt,
     };
 }
 

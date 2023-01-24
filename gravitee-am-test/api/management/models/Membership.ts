@@ -62,16 +62,16 @@ export interface Membership {
     roleId?: string;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof Membership
      */
-    createdAt?: Date;
+    createdAt?: number;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof Membership
      */
-    updatedAt?: Date;
+    updatedAt?: number;
 }
 
 
@@ -114,8 +114,8 @@ export function MembershipFromJSONTyped(json: any, ignoreDiscriminator: boolean)
         'referenceId': !exists(json, 'referenceId') ? undefined : json['referenceId'],
         'referenceType': !exists(json, 'referenceType') ? undefined : json['referenceType'],
         'roleId': !exists(json, 'roleId') ? undefined : json['roleId'],
-        'createdAt': !exists(json, 'createdAt') ? undefined : (new Date(json['createdAt'])),
-        'updatedAt': !exists(json, 'updatedAt') ? undefined : (new Date(json['updatedAt'])),
+        'createdAt': !exists(json, 'createdAt') ? undefined : json['createdAt'],
+        'updatedAt': !exists(json, 'updatedAt') ? undefined : json['updatedAt'],
     };
 }
 
@@ -135,8 +135,8 @@ export function MembershipToJSON(value?: Membership | null): any {
         'referenceId': value.referenceId,
         'referenceType': value.referenceType,
         'roleId': value.roleId,
-        'createdAt': value.createdAt === undefined ? undefined : (value.createdAt.toISOString()),
-        'updatedAt': value.updatedAt === undefined ? undefined : (value.updatedAt.toISOString()),
+        'createdAt': value.createdAt,
+        'updatedAt': value.updatedAt,
     };
 }
 

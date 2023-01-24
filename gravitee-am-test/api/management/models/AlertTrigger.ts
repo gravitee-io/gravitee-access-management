@@ -56,16 +56,16 @@ export interface AlertTrigger {
     alertNotifiers?: Array<string>;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof AlertTrigger
      */
-    createdAt?: Date;
+    createdAt?: number;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof AlertTrigger
      */
-    updatedAt?: Date;
+    updatedAt?: number;
 }
 
 
@@ -107,8 +107,8 @@ export function AlertTriggerFromJSONTyped(json: any, ignoreDiscriminator: boolea
         'referenceType': !exists(json, 'referenceType') ? undefined : json['referenceType'],
         'referenceId': !exists(json, 'referenceId') ? undefined : json['referenceId'],
         'alertNotifiers': !exists(json, 'alertNotifiers') ? undefined : json['alertNotifiers'],
-        'createdAt': !exists(json, 'createdAt') ? undefined : (new Date(json['createdAt'])),
-        'updatedAt': !exists(json, 'updatedAt') ? undefined : (new Date(json['updatedAt'])),
+        'createdAt': !exists(json, 'createdAt') ? undefined : json['createdAt'],
+        'updatedAt': !exists(json, 'updatedAt') ? undefined : json['updatedAt'],
     };
 }
 
@@ -127,8 +127,8 @@ export function AlertTriggerToJSON(value?: AlertTrigger | null): any {
         'referenceType': value.referenceType,
         'referenceId': value.referenceId,
         'alertNotifiers': value.alertNotifiers,
-        'createdAt': value.createdAt === undefined ? undefined : (value.createdAt.toISOString()),
-        'updatedAt': value.updatedAt === undefined ? undefined : (value.updatedAt.toISOString()),
+        'createdAt': value.createdAt,
+        'updatedAt': value.updatedAt,
     };
 }
 
