@@ -250,6 +250,7 @@ mat-sidenav-container {
   }
   &__reduced {
     height: auto !important;
+    max-height: calc(100vh - 218px) !important;
     z-index: 70;
   }
 }
