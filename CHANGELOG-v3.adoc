@@ -1,6 +1,27 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/624?closed=1[AM - 3.18.15 (2023-01-31)]
+
+=== Bug fixes
+
+*_AM_*
+
+- '#' isn't URLEncoded when used in an Application or cliend_id of application when Login Flow URL is called. https://github.com/gravitee-io/issues/issues/8808[#8808]
+
+*_General_*
+
+- GroupNotFoundException exception is thrown when domain notification service try to notify https://github.com/gravitee-io/issues/issues/8667[#8667]
+- Merge 3.15.17 into 3.18.x https://github.com/gravitee-io/issues/issues/8850[#8850]
+- Token Exchange and Elliptic Curve public key https://github.com/gravitee-io/issues/issues/8817[#8817]
+
+*_Management_*
+
+- [ui] Multifactor Auth section does not keep configuration when saving for the first time https://github.com/gravitee-io/issues/issues/8836[#8836]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/629?closed=1[AM - 3.15.17 (2023-01-19)]
 
 === Bug fixes
