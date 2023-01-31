@@ -1204,25 +1204,25 @@ jobs:
             
             git checkout "${GRAVITEEIO_VERSION}"
             
-            tag_gateway='-t graviteeio/am-gateway:${RELEASE_VERSION} -t graviteeio/am-gateway:"${RELEASE_VERSION}-ee"'
-            tag_management_api='-t graviteeio/am-management-api:${RELEASE_VERSION} -t graviteeio/am-management-api:"${RELEASE_VERSION}-ee"'
-            tag_management_ui='-t graviteeio/am-management-ui:${RELEASE_VERSION} -t graviteeio/am-management-ui:"${RELEASE_VERSION}-ee"'
+            tag_gateway="-t graviteeio/am-gateway:${RELEASE_VERSION} -t graviteeio/am-gateway:${RELEASE_VERSION}-ee"
+            tag_management_api="-t graviteeio/am-management-api:${RELEASE_VERSION} -t graviteeio/am-management-api:${RELEASE_VERSION}-ee"
+            tag_management_ui="-t graviteeio/am-management-ui:${RELEASE_VERSION} -t graviteeio/am-management-ui:${RELEASE_VERSION}-ee"
             
             if [ "$TAG_LATEST_SUPPORT" == "true" ]; then
               echo "Gravitee Containers :  Docker tags, Releasing Docker images as latest support"
             
-              tag_gateway='${tag_gateway} -t graviteeio/am-gateway:"${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}" -t graviteeio/am-gateway:"${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}-ee"' 
-              tag_management_api='${tag_management_api} -t graviteeio/am-management-api:"${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}" -t graviteeio/am-management-api:"${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}-ee"' 
-              tag_management_ui='${tag_management_ui} -t graviteeio/am-management-ui:"${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}" -t graviteeio/am-management-ui:"${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}-ee"' 
+              tag_gateway="${tag_gateway} -t graviteeio/am-gateway:${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR} -t graviteeio/am-gateway:${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}-ee" 
+              tag_management_api="${tag_management_api} -t graviteeio/am-management-api:${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR} -t graviteeio/am-management-api:${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}-ee" 
+              tag_management_ui="${tag_management_ui} -t graviteeio/am-management-ui:${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR} -t graviteeio/am-management-ui:${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}-ee" 
             
             fi;
             
             if [ "${TAG_LATEST}" == "true" ]; then
               echo "Gravitee Containers :  Docker tags, Releasing Docker images as latest"
             
-              tag_gateway='${tag_gateway} -t graviteeio/am-gateway:"${RELEASE_VERSION_MAJOR}" -t graviteeio/am-gateway:"${RELEASE_VERSION_MAJOR}-ee" -t graviteeio/am-gateway:latest' 
-              tag_management_api='${tag_management_api} -t graviteeio/am-management-api:"${RELEASE_VERSION_MAJOR}" -t graviteeio/am-management-api:"${RELEASE_VERSION_MAJOR}-ee" -t graviteeio/am-management-api:latest' 
-              tag_management_ui='${tag_management_ui} -t graviteeio/am-management-ui:"${RELEASE_VERSION_MAJOR}" -t graviteeio/am-management-ui:"${RELEASE_VERSION_MAJOR}-ee" -t graviteeio/am-management-ui:latest' 
+              tag_gateway="${tag_gateway} -t graviteeio/am-gateway:${RELEASE_VERSION_MAJOR} -t graviteeio/am-gateway:${RELEASE_VERSION_MAJOR}-ee -t graviteeio/am-gateway:latest" 
+              tag_management_api="${tag_management_api} -t graviteeio/am-management-api:${RELEASE_VERSION_MAJOR} -t graviteeio/am-management-api:${RELEASE_VERSION_MAJOR}-ee -t graviteeio/am-management-api:latest" 
+              tag_management_ui="${tag_management_ui} -t graviteeio/am-management-ui:${RELEASE_VERSION_MAJOR} -t graviteeio/am-management-ui:${RELEASE_VERSION_MAJOR}-ee -t graviteeio/am-management-ui:latest"
             
             fi;
             
