@@ -21,14 +21,12 @@ import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.common.oidc.Parameters;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionTokenService;
-import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
-import io.gravitee.am.model.safe.ClientProperties;
-import io.gravitee.am.model.safe.UserProperties;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
@@ -40,6 +38,8 @@ import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryServ
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.model.safe.ClientProperties;
+import io.gravitee.am.model.safe.UserProperties;
 import io.gravitee.am.model.uma.PermissionRequest;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
@@ -55,7 +55,15 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.Instant;
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+
+import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.ACCESS_TOKEN;
+import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.REFRESH_TOKEN;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -92,7 +100,7 @@ public class TokenServiceImpl implements TokenService {
 
     @Override
     public Maybe<Token> getAccessToken(String token, Client client) {
-        return jwtService.decodeAndVerify(token, client)
+        return jwtService.decodeAndVerify(token, client, ACCESS_TOKEN)
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof JWTException) {
                         return Single.error(new InvalidTokenException(ex.getMessage(), ex));
@@ -104,7 +112,7 @@ public class TokenServiceImpl implements TokenService {
 
     @Override
     public Maybe<Token> getRefreshToken(String refreshToken, Client client) {
-        return jwtService.decodeAndVerify(refreshToken, client)
+        return jwtService.decodeAndVerify(refreshToken, client, REFRESH_TOKEN)
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof JWTException) {
                         return Single.error(new InvalidTokenException(ex.getMessage(), ex));

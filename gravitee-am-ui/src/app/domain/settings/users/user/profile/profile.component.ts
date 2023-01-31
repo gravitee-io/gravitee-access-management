@@ -213,7 +213,7 @@ export class UserProfileComponent implements OnInit {
   }
 
   displayClientName() {
-    return this.user.applicationEntity != null ? this.user.applicationEntity.name : this.user.client;
+    return this.user.applicationEntity != null ? this.user.applicationEntity.name : "";
   }
 
   accountLocked(user) {

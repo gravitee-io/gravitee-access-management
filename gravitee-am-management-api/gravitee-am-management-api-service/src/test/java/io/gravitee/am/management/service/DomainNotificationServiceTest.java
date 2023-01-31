@@ -227,6 +227,21 @@ public class DomainNotificationServiceTest {
 
         verify(notifierService, times(11)).register(any(), any(), any());
         verify(userService, never()).findById(any(), any(), any());
+    }
 
+    @Test
+    public void shouldNotNotifyIfGroupIsEmpty() throws Exception {
+        final Membership member = new Membership();
+        member.setMemberType(MemberType.GROUP);
+        member.setMemberId("groupId");
+        when(membershipService.findByCriteria(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), any())).thenReturn(Flowable.just(member), Flowable.empty());
+        when(groupService.findMembers(any(), any(), any(), anyInt(), anyInt())).thenReturn(Single.just(new Page<>(null, 0, 0)));
+
+        cut.registerCertificateExpiration(certificate);
+
+        Thread.sleep(1000); // wait subscription execution
+
+        verify(notifierService, never()).register(any(), any(), any());
+        verify(userService, never()).findById(any(), any(), any());
     }
 }

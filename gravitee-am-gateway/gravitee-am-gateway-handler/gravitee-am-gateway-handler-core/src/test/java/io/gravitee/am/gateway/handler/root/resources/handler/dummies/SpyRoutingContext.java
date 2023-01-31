@@ -39,6 +39,7 @@ public class SpyRoutingContext extends RoutingContext {
     private int next = 0;
     private Buffer body;
     private User user;
+    private int statusCode;
 
     public SpyRoutingContext() {
         super(null);
@@ -84,8 +85,6 @@ public class SpyRoutingContext extends RoutingContext {
         return next == expected;
     }
 
-
-
     @Override
     public User user() {
         return user;
@@ -99,6 +98,16 @@ public class SpyRoutingContext extends RoutingContext {
     @Override
     public HttpServerRequest request() {
         return httpServerRequest;
+    }
+
+    @Override
+    public void fail(int statusCode) {
+        this.statusCode = statusCode;
+    }
+
+    @Override
+    public int statusCode() {
+        return statusCode;
     }
 
     public void putParam(String key, Object value) {

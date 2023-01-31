@@ -13,15 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.certificate.api;
+package io.gravitee.am.service.exception;
+
+import io.gravitee.common.http.HttpStatusCode;
 
 /**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Ashraful Hasan (ashraful.hasan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface CertificateFormat {
+public class InvalidWebAuthnConfigurationException extends AbstractManagementException {
 
-    String SSH_RSA = "SSH-RSA";
-    String PEM = "PEM";
-    String ECDSA = "ECDSA";
+    private final String msg;
+
+    public InvalidWebAuthnConfigurationException(String msg) {
+        this.msg = msg;
+    }
+
+    @Override
+    public int getHttpStatusCode() {
+        return HttpStatusCode.BAD_REQUEST_400;
+    }
+
+    @Override
+    public String getMessage() {
+        return msg;
+    }
 }
