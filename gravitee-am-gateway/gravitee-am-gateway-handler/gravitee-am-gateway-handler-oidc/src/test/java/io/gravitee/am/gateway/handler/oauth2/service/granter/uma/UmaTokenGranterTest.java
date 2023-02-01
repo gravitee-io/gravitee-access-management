@@ -66,6 +66,7 @@ import java.util.*;
 import java.util.function.Predicate;
 
 import static io.gravitee.am.common.oauth2.Parameters.*;
+import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.ACCESS_TOKEN;
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.mock;
@@ -159,8 +160,8 @@ public class UmaTokenGranterTest {
         when(rpt.getSub()).thenReturn(USER_ID);
         when(rpt.getAud()).thenReturn(CLIENT_ID);
         when(rpt.get("permissions")).thenReturn(new LinkedList(Arrays.asList(permission)));
-        when(jwtService.decodeAndVerify(RQP_ID_TOKEN, client)).thenReturn(Single.just(jwt));
-        when(jwtService.decodeAndVerify(RPT_OLD_TOKEN, client)).thenReturn(Single.just(rpt));
+        when(jwtService.decodeAndVerify(RQP_ID_TOKEN, client, ACCESS_TOKEN)).thenReturn(Single.just(jwt));
+        when(jwtService.decodeAndVerify(RPT_OLD_TOKEN, client, ACCESS_TOKEN)).thenReturn(Single.just(rpt));
         when(userAuthenticationManager.loadPreAuthenticatedUser(USER_ID, tokenRequest)).thenReturn(Maybe.just(user));
         when(permissionTicketService.remove(TICKET_ID)).thenReturn(Single.just(new PermissionTicket().setId(TICKET_ID).setPermissionRequest(permissions)));
         when(resourceService.findByResources(Arrays.asList(RS_ONE, RS_TWO))).thenReturn(Flowable.just(
@@ -260,7 +261,7 @@ public class UmaTokenGranterTest {
     @Test
     public void grant_rptExpiredOrMalformed() {
         parameters.add(RPT, RPT_OLD_TOKEN);
-        when(jwtService.decodeAndVerify(RPT_OLD_TOKEN, client)).thenReturn(Single.error(InvalidTokenException::new));
+        when(jwtService.decodeAndVerify(RPT_OLD_TOKEN, client, ACCESS_TOKEN)).thenReturn(Single.error(InvalidTokenException::new));
         TestObserver<Token> testObserver = umaTokenGranter.grant(tokenRequest, client).test();
         testObserver.assertNotComplete().assertError(InvalidGrantException.class);
     }

@@ -202,9 +202,9 @@ public class AuthenticationRequestServiceTest {
 
         final JWT stateJwt = new JWT();
         stateJwt.setJti(EXTERNAL_ID);
-        when(this.jwtService.decode(STATE)).thenReturn(Single.just(stateJwt));
+        when(this.jwtService.decode(STATE, JWTService.TokenType.STATE)).thenReturn(Single.just(stateJwt));
         when(this.clientService.findByClientId(any())).thenReturn(Maybe.just(new Client()));
-        when(this.jwtService.decodeAndVerify(anyString(), any(Client.class))).thenReturn(Single.just(stateJwt));
+        when(this.jwtService.decodeAndVerify(anyString(), any(Client.class), any())).thenReturn(Single.just(stateJwt));
 
         final CibaAuthRequest cibaRequest = new CibaAuthRequest();
         cibaRequest.setId(AUTH_REQ_ID);
@@ -249,7 +249,7 @@ public class AuthenticationRequestServiceTest {
 
         final JWT stateJwt = new JWT();
         stateJwt.setJti(EXTERNAL_ID);
-        when(this.jwtService.decode(STATE)).thenReturn(Single.just(stateJwt));
+        when(this.jwtService.decode(STATE, JWTService.TokenType.STATE)).thenReturn(Single.just(stateJwt));
         when(this.clientService.findByClientId(any())).thenReturn(Maybe.empty());
 
         final ADCallbackContext context = new ADCallbackContext(MultiMap.caseInsensitiveMultiMap(), MultiMap.caseInsensitiveMultiMap());
@@ -272,9 +272,9 @@ public class AuthenticationRequestServiceTest {
 
         final JWT stateJwt = new JWT();
         stateJwt.setJti(EXTERNAL_ID);
-        when(this.jwtService.decode(STATE)).thenReturn(Single.just(stateJwt));
+        when(this.jwtService.decode(STATE, JWTService.TokenType.STATE)).thenReturn(Single.just(stateJwt));
         when(this.clientService.findByClientId(any())).thenReturn(Maybe.just(new Client()));
-        when(this.jwtService.decodeAndVerify(anyString(), any(Client.class))).thenReturn(Single.error(new InvalidTokenException()));
+        when(this.jwtService.decodeAndVerify(anyString(), any(Client.class), any())).thenReturn(Single.error(new InvalidTokenException()));
 
         final ADCallbackContext context = new ADCallbackContext(MultiMap.caseInsensitiveMultiMap(), MultiMap.caseInsensitiveMultiMap());
         final TestObserver<Void> observer = this.service.validateUserResponse(context).test();
@@ -297,9 +297,9 @@ public class AuthenticationRequestServiceTest {
 
         final JWT stateJwt = new JWT();
         stateJwt.setJti(EXTERNAL_ID);
-        when(this.jwtService.decode(STATE)).thenReturn(Single.just(stateJwt));
+        when(this.jwtService.decode(STATE, JWTService.TokenType.STATE)).thenReturn(Single.just(stateJwt));
         when(this.clientService.findByClientId(any())).thenReturn(Maybe.just(new Client()));
-        when(this.jwtService.decodeAndVerify(anyString(), any(Client.class))).thenReturn(Single.just(stateJwt));
+        when(this.jwtService.decodeAndVerify(anyString(), any(Client.class), any())).thenReturn(Single.just(stateJwt));
 
         final ADCallbackContext context = new ADCallbackContext(MultiMap.caseInsensitiveMultiMap(), MultiMap.caseInsensitiveMultiMap());
         final TestObserver<Void> observer = this.service.validateUserResponse(context).test();
@@ -323,9 +323,9 @@ public class AuthenticationRequestServiceTest {
 
         final JWT stateJwt = new JWT();
         stateJwt.setJti(EXTERNAL_ID);
-        when(this.jwtService.decode(STATE)).thenReturn(Single.just(stateJwt));
+        when(this.jwtService.decode(STATE, JWTService.TokenType.STATE)).thenReturn(Single.just(stateJwt));
         when(this.clientService.findByClientId(any())).thenReturn(Maybe.just(new Client()));
-        when(this.jwtService.decodeAndVerify(anyString(), any(Client.class))).thenReturn(Single.just(stateJwt));
+        when(this.jwtService.decodeAndVerify(anyString(), any(Client.class), any())).thenReturn(Single.just(stateJwt));
 
         final CibaAuthRequest cibaRequest = new CibaAuthRequest();
         cibaRequest.setId(AUTH_REQ_ID);
@@ -337,7 +337,7 @@ public class AuthenticationRequestServiceTest {
         observer.assertError(InvalidRequestException.class);
 
         verify(clientService).findByClientId(any());
-        verify(jwtService).decodeAndVerify(anyString(), any(Client.class));
+        verify(jwtService).decodeAndVerify(anyString(), any(Client.class), any());
         verify(requestRepository, never()).updateStatus(any(), any());
     }
 

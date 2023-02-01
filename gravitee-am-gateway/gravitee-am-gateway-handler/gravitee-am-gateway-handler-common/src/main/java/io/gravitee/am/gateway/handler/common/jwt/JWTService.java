@@ -28,6 +28,15 @@ import io.reactivex.Single;
  */
 public interface JWTService {
 
+    enum TokenType {
+        ACCESS_TOKEN,
+        ID_TOKEN,
+        REFRESH_TOKEN,
+        SESSION,
+        JARM,
+        STATE;
+    }
+
     /**
      * Encode raw JWT to JWT signed string representation
      * @param jwt JWT to encode
@@ -66,20 +75,22 @@ public interface JWTService {
      * @param client client which want to decode the token
      * @return JWT object
      */
-    Single<JWT> decodeAndVerify(String jwt, Client client);
+    Single<JWT> decodeAndVerify(String jwt, Client client, TokenType tokenType);
 
     /**
      * Decode JWT signed string representation to JWT using the specified certificate provider.
      * @param jwt JWT to decode
      * @param certificateProvider the certificate provider to use to verify jwt signature.
+     * @param tokenType type of the decoded token
      * @return JWT object
      */
-    Single<JWT> decodeAndVerify(String jwt, CertificateProvider certificateProvider);
+    Single<JWT> decodeAndVerify(String jwt, CertificateProvider certificateProvider, TokenType tokenType);
 
     /**
      * Decode JWT signed string representation to JWT without signature verification
      * @param jwt JWT to decode
+     * @param tokenType the type of token to decode
      * @return JWT object
      */
-    Single<JWT> decode(String jwt);
+    Single<JWT> decode(String jwt, TokenType tokenType);
 }
