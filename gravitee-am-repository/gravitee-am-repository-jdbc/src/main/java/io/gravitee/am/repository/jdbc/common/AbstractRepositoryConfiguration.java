@@ -106,6 +106,7 @@ public abstract class AbstractRepositoryConfiguration extends AbstractR2dbcConfi
     }
 
     protected final void initializeDatabaseSchema(R2DBCPoolWrapper poolWrapper, Environment environment, String prefix) throws SQLException {
+        // Upgrader framework may also set this value in the runtime to skip running Liquibase scripts in upgrade mode
         Boolean enabled = environment.getProperty("liquibase.enabled", Boolean.class, true);
         if (enabled) {
             StringBuilder builder = new StringBuilder("jdbc:");

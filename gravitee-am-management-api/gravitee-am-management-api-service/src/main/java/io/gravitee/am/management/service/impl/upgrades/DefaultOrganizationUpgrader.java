@@ -23,9 +23,9 @@ import io.gravitee.am.model.permissions.DefaultRole;
 import io.gravitee.am.service.*;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.am.service.model.PatchOrganization;
+import io.gravitee.node.api.upgrader.Upgrader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.Ordered;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
@@ -39,7 +39,7 @@ import java.util.Optional;
  * @author GraviteeSource Team
  */
 @Component
-public class DefaultOrganizationUpgrader implements Upgrader, Ordered {
+public class DefaultOrganizationUpgrader implements Upgrader {
 
     private static final Logger logger = LoggerFactory.getLogger(DefaultOrganizationUpgrader.class);
     private static final String ADMIN_DOMAIN = "admin";

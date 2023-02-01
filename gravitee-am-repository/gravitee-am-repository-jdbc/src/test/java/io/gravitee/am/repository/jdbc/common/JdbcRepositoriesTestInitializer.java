@@ -128,6 +128,8 @@ public class JdbcRepositoriesTestInitializer implements RepositoriesTestInitiali
         tables.add("rate_limit");
         tables.add("verify_attempt");
 
+        tables.add("upgraders");
+
         io.r2dbc.spi.Connection connection = Flowable.fromPublisher(connectionFactory.create()).blockingFirst();
         connection.beginTransaction();
         tables.stream().forEach(table -> {

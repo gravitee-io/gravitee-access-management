@@ -20,12 +20,12 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.IdentityProviderService;
+import io.gravitee.node.api.upgrader.Upgrader;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
 
 import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.DOMAIN_IDP_UPGRADER;
@@ -37,7 +37,7 @@ import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.DOMA
  * @author GraviteeSource Team
  */
 @Component
-public class DomainIdpUpgrader implements Upgrader, Ordered {
+public class DomainIdpUpgrader implements Upgrader {
 
     private static final Logger logger = LoggerFactory.getLogger(DomainIdpUpgrader.class);
     private static final String DEFAULT_IDP_PREFIX = "default-idp-";

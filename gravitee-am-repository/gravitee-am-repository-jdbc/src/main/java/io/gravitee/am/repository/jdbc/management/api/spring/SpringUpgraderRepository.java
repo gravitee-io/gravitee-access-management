@@ -13,15 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.service.impl.upgrades;
+package io.gravitee.am.repository.jdbc.management.api.spring;
+
+import io.gravitee.am.repository.jdbc.management.api.model.JdbcUpgrader;
+import io.reactivex.Maybe;
+import org.springframework.data.r2dbc.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.data.repository.reactive.RxJava2CrudRepository;
 
 /**
- * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface Upgrader {
+public interface SpringUpgraderRepository extends RxJava2CrudRepository<JdbcUpgrader, String> {
+    @Query("select * from upgraders where id = :id")
+    Maybe<JdbcUpgrader> findByReference(@Param("id")String id);
 
-    boolean upgrade();
-
-    int getOrder();
 }
