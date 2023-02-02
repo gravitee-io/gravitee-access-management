@@ -428,7 +428,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         rootRouter.route(PATH_MFA_ENROLL)
                 .handler(clientRequestParseHandler)
                 .handler(localeHandler)
-                .handler(new MFAEnrollEndpoint(factorManager, thymeleafTemplateEngine, userService, domain));
+                .handler(new MFAEnrollEndpoint(factorManager, thymeleafTemplateEngine, userService, domain, applicationContext));
         rootRouter.route(PATH_MFA_CHALLENGE)
                 .handler(clientRequestParseHandler)
                 .handler(rememberDeviceSettingsHandler)

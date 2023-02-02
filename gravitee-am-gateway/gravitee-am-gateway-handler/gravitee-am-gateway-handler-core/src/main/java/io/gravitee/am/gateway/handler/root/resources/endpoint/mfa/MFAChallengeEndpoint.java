@@ -222,16 +222,14 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
     }
 
     private void verifyCode(RoutingContext routingContext) {
-        final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         if (routingContext.user() == null) {
             logger.warn("User must be authenticated to submit MFA challenge.");
             routingContext.fail(401);
             return;
         }
 
-        final io.gravitee.am.model.User endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
-        final Factor factor = getFactor(routingContext, client, endUser);
-        MultiMap params = routingContext.request().formAttributes();
+        // check form inputs
+        final MultiMap params = routingContext.request().formAttributes();
         final String code = params.get("code");
         final String factorId = params.get("factorId");
         if (code == null) {
@@ -244,27 +242,30 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
             routingContext.fail(400);
             return;
         }
-        FactorProvider factorProvider = factorManager.get(factorId);
-        EnrolledFactor enrolledFactor = getEnrolledFactor(routingContext, factorProvider, factor, endUser);
-        Map<String, Object> factorData = new HashMap<>();
-        factorData.putAll(getEvaluableAttributes(routingContext));
-        factorData.put(FactorContext.KEY_ENROLLED_FACTOR, enrolledFactor);
-        factorData.put(FactorContext.KEY_CODE, code);
-        factorData.put(FactorContext.KEY_REQUEST, new EvaluableRequest(new VertxHttpServerRequest(routingContext.request().getDelegate())));
+
+        // create factor context
+        final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
+        final io.gravitee.am.model.User endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
+        final Factor factor = getFactor(routingContext, client, endUser);
+        final FactorProvider factorProvider = factorManager.get(factorId);
+        final FactorContext factorCtx = new FactorContext(applicationContext, new HashMap<>());
+        final EnrolledFactor enrolledFactor = getEnrolledFactor(routingContext, factorProvider, factor, endUser, factorCtx);
+        factorCtx.getData().putAll(getEvaluableAttributes(routingContext));
+        factorCtx.registerData(FactorContext.KEY_ENROLLED_FACTOR, enrolledFactor);
+        factorCtx.registerData(FactorContext.KEY_CODE, code);
+        factorCtx.registerData(FactorContext.KEY_REQUEST, new EvaluableRequest(new VertxHttpServerRequest(routingContext.request().getDelegate())));
 
         if(factor.is(FIDO2)){
-            factorData.put(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY, routingContext.session().get(PASSWORDLESS_CHALLENGE_KEY));
-            factorData.put(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY, routingContext.session().get(PASSWORDLESS_CHALLENGE_USERNAME_KEY));
-            factorData.put(ConstantKeys.PASSWORDLESS_ORIGIN, getOrigin(domain.getWebAuthnSettings()));
+            factorCtx.registerData(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY, routingContext.session().get(PASSWORDLESS_CHALLENGE_KEY));
+            factorCtx.registerData(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY, routingContext.session().get(PASSWORDLESS_CHALLENGE_USERNAME_KEY));
+            factorCtx.registerData(ConstantKeys.PASSWORDLESS_ORIGIN, getOrigin(domain.getWebAuthnSettings()));
         }
-
-        final FactorContext factorCtx = new FactorContext(applicationContext, factorData);
 
         verifyAttemptService.checkVerifyAttempt(endUser, factorId, client, domain)
                 .map(Optional::of)
                 .switchIfEmpty(Maybe.just(Optional.empty()))
                 .subscribe(verifyAttempt -> verify(factorProvider, factorCtx, verifyAttempt,
-                                verifyHandler(routingContext, client, endUser, factor, code, factorId, factorProvider, enrolledFactor)),
+                                verifyHandler(routingContext, client, endUser, factor, code, factorId, factorProvider, enrolledFactor, factorCtx)),
                         error -> {
                             if (error instanceof MFAValidationAttemptException) {
                                 if (verifyAttemptService.shouldSendEmail(client, domain)) {
@@ -278,9 +279,15 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
                         });
     }
 
-    private Handler<AsyncResult<Void>> verifyHandler(RoutingContext routingContext, Client client, User endUser,
-                                                     Factor factor, String code, String factorId,
-                                                     FactorProvider factorProvider, EnrolledFactor enrolledFactor) {
+    private Handler<AsyncResult<Void>> verifyHandler(RoutingContext routingContext,
+                                                     Client client,
+                                                     User endUser,
+                                                     Factor factor,
+                                                     String code,
+                                                     String factorId,
+                                                     FactorProvider factorProvider,
+                                                     EnrolledFactor enrolledFactor,
+                                                     FactorContext factorContext) {
         return h -> {
             if (h.failed()) {
                 handleException(routingContext, ERROR_PARAM_KEY, "mfa_challenge_failed");
@@ -325,7 +332,7 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
             }
             // save enrolled factor if needed and redirect to the original url
             routingContext.session().put(ConstantKeys.MFA_FACTOR_ID_CONTEXT_KEY, factorId);
-            if (routingContext.session().get(ConstantKeys.ENROLLED_FACTOR_ID_KEY) != null || factorProvider.useVariableFactorSecurity()) {
+            if (routingContext.session().get(ConstantKeys.ENROLLED_FACTOR_ID_KEY) != null || factorProvider.useVariableFactorSecurity(factorContext)) {
                 enrolledFactor.setStatus(FactorStatus.ACTIVATED);
                 saveFactor(endUser, factorProvider.changeVariableFactorSecurity(enrolledFactor), fh -> {
                     if (fh.failed()) {
@@ -402,15 +409,15 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
             return;
         }
 
-        EnrolledFactor enrolledFactor = getEnrolledFactor(routingContext, factorProvider, factor, endUser);
-        Map<String, Object> factorData = new HashMap<>();
-        factorData.putAll(getEvaluableAttributes(routingContext));
+        // create factor context
         final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
-        factorData.put(FactorContext.KEY_CLIENT, client);
-        factorData.put(KEY_USER, endUser);
-        factorData.put(FactorContext.KEY_REQUEST, new EvaluableRequest(new VertxHttpServerRequest(routingContext.request().getDelegate())));
-        factorData.put(FactorContext.KEY_ENROLLED_FACTOR, enrolledFactor);
-        FactorContext factorContext = new FactorContext(applicationContext, factorData);
+        final FactorContext factorContext = new FactorContext(applicationContext, new HashMap<>());
+        final EnrolledFactor enrolledFactor = getEnrolledFactor(routingContext, factorProvider, factor, endUser, factorContext);
+        factorContext.getData().putAll(getEvaluableAttributes(routingContext));
+        factorContext.registerData(FactorContext.KEY_CLIENT, client);
+        factorContext.registerData(KEY_USER, endUser);
+        factorContext.registerData(FactorContext.KEY_REQUEST, new EvaluableRequest(new VertxHttpServerRequest(routingContext.request().getDelegate())));
+        factorContext.registerData(FactorContext.KEY_ENROLLED_FACTOR, enrolledFactor);
 
         if(rateLimiterService.isRateLimitEnabled()) {
             rateLimiterService.tryConsume(endUser.getId(), factor.getId(), endUser.getClient(), client.getDomain())
@@ -474,7 +481,11 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
                 .orElse(factorManager.getFactor(enrolledFactors.get(0).getFactorId()));
     }
 
-    private EnrolledFactor getEnrolledFactor(RoutingContext routingContext, FactorProvider factorProvider, Factor factor, User endUser) {
+    private EnrolledFactor getEnrolledFactor(RoutingContext routingContext,
+                                             FactorProvider factorProvider,
+                                             Factor factor,
+                                             User endUser,
+                                             FactorContext factorContext) {
         // enrolled factor can be either in session (if user come from mfa/enroll page)
         // or from the user enrolled factor list
         final String savedFactorId = routingContext.session().get(ConstantKeys.ENROLLED_FACTOR_ID_KEY);
@@ -496,8 +507,6 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
                             routingContext.session().get(ConstantKeys.ENROLLED_FACTOR_PHONE_NUMBER)));
                     break;
                 case EMAIL:
-                    enrolledFactor.setSecurity(new EnrolledFactorSecurity(SHARED_SECRET,
-                            routingContext.session().get(ConstantKeys.ENROLLED_FACTOR_SECURITY_VALUE_KEY)));
                     enrolledFactor.setChannel(new EnrolledFactorChannel(Type.EMAIL,
                             routingContext.session().get(ConstantKeys.ENROLLED_FACTOR_EMAIL_ADDRESS)));
                     break;
@@ -516,7 +525,9 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
 
             // if the factor provider uses a moving factor security mechanism,
             // we ensure that every data has been shared with the user enrolled factor
-            if (factorProvider.useVariableFactorSecurity()) {
+            if (factorProvider.useVariableFactorSecurity(factorContext)) {
+                enrolledFactor.setSecurity(new EnrolledFactorSecurity(SHARED_SECRET,
+                        routingContext.session().get(ConstantKeys.ENROLLED_FACTOR_SECURITY_VALUE_KEY)));
                 Map<String, Object> additionalData = new Maps.MapBuilder(new HashMap())
                         .put(FactorDataKeys.KEY_MOVING_FACTOR, generateInitialMovingFactor(endUser))
                         .build();

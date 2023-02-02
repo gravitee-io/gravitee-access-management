@@ -179,7 +179,6 @@
         let inputElement;
 
         if (selectedFactor.factorType === 'TOTP') {
-            document.getElementById('sharedSecret').value = selectedFactor.enrollment.key;
             document.getElementById('qrCode').src = selectedFactor.enrollment.barCode;
             document.getElementById('otp-factor').classList.remove('hide');
         }
@@ -196,7 +195,6 @@
         }
 
         if (selectedFactor.factorType === 'EMAIL') {
-            document.getElementById('sharedSecret').value = selectedFactor.enrollment.key;
             document.getElementById('email').value = emailAddress;
             document.getElementById('email').setAttribute('required', '');
             const emailFactorDiv = document.getElementById('email-factor');
@@ -212,12 +210,16 @@
             document.getElementById('fido2-factor').classList.remove('hide');
         }
 
+        if (selectedFactor.enrollment.key) {
+            document.getElementById('sharedSecret').value = selectedFactor.enrollment.key;
+        }
+
         document.getElementById('enrollment-title').innerHTML = title;
         document.getElementById('enrollment-description').innerHTML = description;
         document.getElementById('mfa-enroll-step1').classList.add('hide');
         document.getElementById('mfa-enroll-step2').classList.remove('hide');
         document.getElementById('previous').classList.remove('hide');
-        if(inputElement){
+        if (inputElement) {
             inputElement.focus();
         }
     }
