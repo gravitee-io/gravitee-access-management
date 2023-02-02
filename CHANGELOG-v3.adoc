@@ -1,6 +1,23 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/632?closed=1[AM - 3.19.6 (2023-02-02)]
+
+=== Bug fixes
+
+*_General_*
+
+- Merge 3.18.15 in 3.19.x https://github.com/gravitee-io/issues/issues/8851[#8851]
+
+=== Features
+
+*_General_*
+
+- Store orginal token for Github provider https://github.com/gravitee-io/issues/issues/8852[#8852]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/624?closed=1[AM - 3.18.15 (2023-01-31)]
 
 === Bug fixes
