@@ -93,7 +93,6 @@ public class ResourceManagerImpl extends AbstractService implements ResourceMana
                         res -> {
                             var providerConfiguration = new ProviderConfiguration(res.getType(), res.getConfiguration());
                             ResourceProvider provider = resourcePluginManager.create(providerConfiguration);
-                            provider.start();
                             resourceProviders.put(res.getId(), provider);
                             resources.put(res.getId(), res);
                             logger.info("Resource {} loaded for domain {}", res.getName(), domain.getName());

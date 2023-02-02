@@ -15,14 +15,11 @@
  */
 package io.gravitee.am.factor.email.provider;
 
-import io.gravitee.am.common.email.Email;
-import io.gravitee.am.common.exception.mfa.InvalidCodeException;
 import io.gravitee.am.common.factor.FactorDataKeys;
 import io.gravitee.am.factor.api.Enrollment;
 import io.gravitee.am.factor.api.FactorContext;
-import io.gravitee.am.factor.api.FactorProvider;
+import io.gravitee.am.factor.api.OTPFactorProvider;
 import io.gravitee.am.factor.email.EmailFactorConfiguration;
-import io.gravitee.am.factor.email.utils.HOTP;
 import io.gravitee.am.factor.utils.SharedSecret;
 import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.gateway.handler.manager.resource.ResourceManager;
@@ -56,7 +53,7 @@ import static java.util.Arrays.asList;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class EmailFactorProvider implements FactorProvider {
+public class EmailFactorProvider extends OTPFactorProvider {
 
     private static final Logger logger = LoggerFactory.getLogger(EmailFactorProvider.class);
 
@@ -67,24 +64,7 @@ public class EmailFactorProvider implements FactorProvider {
     public Completable verify(FactorContext context) {
         final String code = context.getData(FactorContext.KEY_CODE, String.class);
         final EnrolledFactor enrolledFactor = context.getData(FactorContext.KEY_ENROLLED_FACTOR, EnrolledFactor.class);
-
-        return Completable.create(emitter -> {
-            try {
-                final String otpCode = generateOTP(enrolledFactor);
-                if (!code.equals(otpCode)) {
-                    emitter.onError(new InvalidCodeException("Invalid 2FA Code"));
-                }
-                // get last connection date of the user to test code
-                if (Instant.now().isAfter(Instant.ofEpochMilli(enrolledFactor.getSecurity().getData(FactorDataKeys.KEY_EXPIRE_AT, Long.class)))) {
-                    emitter.onError(new InvalidCodeException("Invalid 2FA Code"));
-                }
-                emitter.onComplete();
-            } catch (Exception ex) {
-                logger.error("An error occurs while validating 2FA code", ex);
-                emitter.onError(new InvalidCodeException("Invalid 2FA Code"));
-            }
-        });
-
+        return verifyOTP(enrolledFactor, configuration.getReturnDigits(), code);
     }
 
     @Override
@@ -127,13 +107,9 @@ public class EmailFactorProvider implements FactorProvider {
         final EnrolledFactor enrolledFactor = context.getData(FactorContext.KEY_ENROLLED_FACTOR, EnrolledFactor.class);
         ResourceManager component = context.getComponent(ResourceManager.class);
         ResourceProvider provider = component.getResourceProvider(configuration.getGraviteeResource());
-
         if (provider instanceof EmailSenderProvider) {
-
             return generateCodeAndSendEmail(context, (EmailSenderProvider) provider, enrolledFactor);
-
         } else {
-
             return Completable.error(new TechnicalException("Resource referenced can't be used for MultiFactor Authentication with type EMAIL"));
         }
     }
@@ -154,7 +130,7 @@ public class EmailFactorProvider implements FactorProvider {
 
             // register mfa code to make it available into the TemplateEngine values
             Map<String, Object> params = context.getTemplateValues();
-            params.put(FactorContext.KEY_CODE, generateOTP(enrolledFactor));
+            params.put(FactorContext.KEY_CODE, generateOTP(enrolledFactor, configuration.getReturnDigits()));
 
             final String recipient = enrolledFactor.getChannel().getTarget();
             final Locale preferredLanguage = preferredLanguage(context.getUser(), Locale.ENGLISH);
@@ -174,30 +150,5 @@ public class EmailFactorProvider implements FactorProvider {
             logger.error("Email templating fails", e);
             return Completable.error(new TechnicalException("Email can't be sent"));
         }
-    }
-
-    String generateOTP(EnrolledFactor enrolledFactor) throws NoSuchAlgorithmException, InvalidKeyException {
-        return HOTP.generateOTP(SharedSecret.base32Str2Bytes(enrolledFactor.getSecurity().getValue()),
-                enrolledFactor.getSecurity().getData(FactorDataKeys.KEY_MOVING_FACTOR, Number.class).longValue(),
-                configuration.getReturnDigits(), false, 0);
-    }
-
-    @Override
-    public boolean useVariableFactorSecurity() {
-        return true;
-    }
-
-    @Override
-    public Single<EnrolledFactor> changeVariableFactorSecurity(EnrolledFactor factor) {
-        return Single.fromCallable(() -> {
-            incrementMovingFactor(factor);
-            factor.getSecurity().removeData(FactorDataKeys.KEY_EXPIRE_AT);
-            return factor;
-        });
-    }
-
-    private void incrementMovingFactor(EnrolledFactor factor) {
-        long counter = factor.getSecurity().getData(FactorDataKeys.KEY_MOVING_FACTOR, Number.class).longValue();
-        factor.getSecurity().putData(FactorDataKeys.KEY_MOVING_FACTOR, counter + 1);
     }
 }

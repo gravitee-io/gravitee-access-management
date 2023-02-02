@@ -1,4 +1,4 @@
-package io.gravitee.am.factor.email.provider; /**
+/**
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,6 +13,7 @@ package io.gravitee.am.factor.email.provider; /**
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package io.gravitee.am.factor.email.provider;
 
 import io.gravitee.am.common.exception.mfa.InvalidCodeException;
 import io.gravitee.am.common.factor.FactorDataKeys;
