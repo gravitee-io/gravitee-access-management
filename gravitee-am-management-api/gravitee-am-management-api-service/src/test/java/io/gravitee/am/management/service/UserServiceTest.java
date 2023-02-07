@@ -19,14 +19,7 @@ import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.management.service.impl.UserServiceImpl;
-import io.gravitee.am.model.Application;
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.Email;
-import io.gravitee.am.model.PasswordHistory;
-import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.Role;
-import io.gravitee.am.model.Template;
-import io.gravitee.am.model.User;
+import io.gravitee.am.model.*;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.service.ApplicationService;
@@ -37,12 +30,7 @@ import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.TokenService;
-import io.gravitee.am.service.exception.ClientNotFoundException;
-import io.gravitee.am.service.exception.InvalidPasswordException;
-import io.gravitee.am.service.exception.PasswordHistoryException;
-import io.gravitee.am.service.exception.RoleNotFoundException;
-import io.gravitee.am.service.exception.UserAlreadyExistsException;
-import io.gravitee.am.service.exception.UserProviderNotFoundException;
+import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
@@ -68,6 +56,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static io.gravitee.am.model.ReferenceType.DOMAIN;
 import static io.gravitee.am.service.validators.email.EmailValidatorImpl.EMAIL_PATTERN;
 import static io.gravitee.am.service.validators.user.UserValidatorImpl.*;
 import static org.junit.Assert.assertEquals;
@@ -142,7 +131,7 @@ public class UserServiceTest {
     @Before
     public void setUp() {
         ((UserServiceImpl) userService).setExpireAfter(24 * 3600);
-        when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any() , any(), any())).thenReturn(Maybe.never());
+        when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any(), any(), any())).thenReturn(Maybe.never());
     }
 
     @Test
@@ -406,7 +395,7 @@ public class UserServiceTest {
         UpdateUser updateUser = new UpdateUser();
         updateUser.setClient("client");
 
-        when(commonUserService.findById(eq(ReferenceType.DOMAIN), eq(domain), eq(id))).thenReturn(Single.just(user));
+        when(commonUserService.findById(eq(DOMAIN), eq(domain), eq(id))).thenReturn(Single.just(user));
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(mock(UserProvider.class)));
         when(applicationService.findById(updateUser.getClient())).thenReturn(Maybe.empty());
         when(applicationService.findByDomainAndClientId(domain, updateUser.getClient())).thenReturn(Maybe.empty());
@@ -431,7 +420,7 @@ public class UserServiceTest {
         Application application = new Application();
         application.setDomain("other-domain");
 
-        when(commonUserService.findById(eq(ReferenceType.DOMAIN), eq(domain), eq(id))).thenReturn(Single.just(user));
+        when(commonUserService.findById(eq(DOMAIN), eq(domain), eq(id))).thenReturn(Single.just(user));
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(mock(UserProvider.class)));
         when(applicationService.findById(updateUser.getClient())).thenReturn(Maybe.just(application));
 
@@ -458,12 +447,12 @@ public class UserServiceTest {
         when(userProvider.updatePassword(any(), any())).thenReturn(Single.just(idpUser));
 
         doReturn(true).when(passwordService).isValid(eq(PASSWORD), eq(null), any());
-        when(commonUserService.findById(eq(ReferenceType.DOMAIN), eq(domain.getId()), eq("user-id"))).thenReturn(Single.just(user));
+        when(commonUserService.findById(eq(DOMAIN), eq(domain.getId()), eq("user-id"))).thenReturn(Single.just(user));
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
         when(commonUserService.update(any())).thenReturn(Single.just(user));
         when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
         when(tokenService.deleteByUserId(any())).thenReturn(Completable.complete());
-        when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any() , any(), any())).thenReturn(Maybe.just(new PasswordHistory()));
+        when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any(), any(), any())).thenReturn(Maybe.just(new PasswordHistory()));
 
 
         userService.resetPassword(domain, user.getId(), PASSWORD, null)
@@ -491,12 +480,12 @@ public class UserServiceTest {
         when(userProvider.create(any())).thenReturn(Single.just(idpUser));
 
         when(passwordService.isValid(eq(PASSWORD), eq(null), any())).thenReturn(true);
-        when(commonUserService.findById(eq(ReferenceType.DOMAIN), eq(domain.getId()), eq("user-id"))).thenReturn(Single.just(user));
+        when(commonUserService.findById(eq(DOMAIN), eq(domain.getId()), eq("user-id"))).thenReturn(Single.just(user));
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
         when(commonUserService.update(any())).thenReturn(Single.just(user));
         when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
         when(tokenService.deleteByUserId(any())).thenReturn(Completable.complete());
-        when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any() , any(), any())).thenReturn(Maybe.just(new PasswordHistory()));
+        when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any(), any(), any())).thenReturn(Maybe.just(new PasswordHistory()));
 
         userService.resetPassword(domain, user.getId(), PASSWORD, null)
                 .test()
@@ -521,11 +510,11 @@ public class UserServiceTest {
         roles.add(role1);
         roles.add(role2);
 
-        when(commonUserService.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), eq("user-id"))).thenReturn(Single.just(user));
+        when(commonUserService.findById(eq(DOMAIN), eq(DOMAIN_ID), eq("user-id"))).thenReturn(Single.just(user));
         when(roleService.findByIdIn(rolesIds)).thenReturn(Single.just(roles));
         when(commonUserService.update(any())).thenReturn(Single.just(new User()));
 
-        userService.assignRoles(ReferenceType.DOMAIN, DOMAIN_ID, user.getId(), rolesIds)
+        userService.assignRoles(DOMAIN, DOMAIN_ID, user.getId(), rolesIds)
                 .test()
                 .assertComplete()
                 .assertNoErrors();
@@ -540,10 +529,10 @@ public class UserServiceTest {
         user.setId("user-id");
         user.setSource("idp-id");
 
-        when(commonUserService.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), eq("user-id"))).thenReturn(Single.just(user));
+        when(commonUserService.findById(eq(DOMAIN), eq(DOMAIN_ID), eq("user-id"))).thenReturn(Single.just(user));
         when(roleService.findByIdIn(rolesIds)).thenReturn(Single.just(Collections.emptySet()));
 
-        userService.assignRoles(ReferenceType.DOMAIN, DOMAIN_ID, user.getId(), rolesIds)
+        userService.assignRoles(DOMAIN, DOMAIN_ID, user.getId(), rolesIds)
                 .test()
                 .assertNotComplete()
                 .assertError(RoleNotFoundException.class);
@@ -566,11 +555,11 @@ public class UserServiceTest {
         roles.add(role1);
         roles.add(role2);
 
-        when(commonUserService.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), eq("user-id"))).thenReturn(Single.just(user));
+        when(commonUserService.findById(eq(DOMAIN), eq(DOMAIN_ID), eq("user-id"))).thenReturn(Single.just(user));
         when(roleService.findByIdIn(rolesIds)).thenReturn(Single.just(roles));
         when(commonUserService.update(any())).thenReturn(Single.just(new User()));
 
-        userService.revokeRoles(ReferenceType.DOMAIN, DOMAIN_ID, user.getId(), rolesIds)
+        userService.revokeRoles(DOMAIN, DOMAIN_ID, user.getId(), rolesIds)
                 .test()
                 .assertComplete()
                 .assertNoErrors();
@@ -585,10 +574,10 @@ public class UserServiceTest {
         user.setId("user-id");
         user.setSource("idp-id");
 
-        when(commonUserService.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), eq("user-id"))).thenReturn(Single.just(user));
+        when(commonUserService.findById(eq(DOMAIN), eq(DOMAIN_ID), eq("user-id"))).thenReturn(Single.just(user));
         when(roleService.findByIdIn(rolesIds)).thenReturn(Single.just(Collections.emptySet()));
 
-        userService.revokeRoles(ReferenceType.DOMAIN, DOMAIN_ID, user.getId(), rolesIds)
+        userService.revokeRoles(DOMAIN, DOMAIN_ID, user.getId(), rolesIds)
                 .test()
                 .assertNotComplete()
                 .assertError(RoleNotFoundException.class);
@@ -623,7 +612,7 @@ public class UserServiceTest {
         user.setId("user-id");
         user.setSource("idp-id");
 
-        when(commonUserService.findById(eq(ReferenceType.DOMAIN), eq(domain.getId()), eq("user-id"))).thenReturn(Single.just(user));
+        when(commonUserService.findById(eq(DOMAIN), eq(domain.getId()), eq("user-id"))).thenReturn(Single.just(user));
 
         userService.resetPassword(domain, user.getId(), PASSWORD, null)
                 .test()
@@ -642,12 +631,213 @@ public class UserServiceTest {
         user.setSource("idp-id");
 
         when(passwordService.isValid(eq(PASSWORD), eq(null), any())).thenReturn(true);
-        when(commonUserService.findById(ReferenceType.DOMAIN, domain.getId(), "user-id")).thenReturn(Single.just(user));
-        when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any() , any(), any())).thenReturn(Maybe.error(PasswordHistoryException::passwordAlreadyInHistory));
+        when(commonUserService.findById(DOMAIN, domain.getId(), "user-id")).thenReturn(Single.just(user));
+        when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any(), any(), any())).thenReturn(Maybe.error(PasswordHistoryException::passwordAlreadyInHistory));
 
         var observer = userService.resetPassword(domain, user.getId(), PASSWORD, null)
-                   .test();
+                .test();
         observer.awaitTerminalEvent();
         observer.assertError(PasswordHistoryException.class);
+    }
+
+    @Test
+    public void must_not_reset_username_username_invalid() {
+        var observer = userService.updateUsername(DOMAIN, "domain", "any-id", "", null).test();
+
+        observer.awaitTerminalEvent();
+        observer.assertError(InvalidUserException.class);
+
+        verify(commonUserService, times(0)).update(any());
+    }
+
+    @Test
+    public void must_not_reset_username_user_not_found_by_id() {
+        Domain domain = new Domain();
+        domain.setId("domain");
+
+        User user = new User();
+        user.setId("user-id");
+        user.setSource("idp-id");
+        user.setUsername("username");
+
+
+        when(commonUserService.findById(DOMAIN, domain.getId(), user.getId()))
+                .thenReturn(Single.error(new UserNotFoundException(user.getId())));
+        var observer = userService.updateUsername(DOMAIN, domain.getId(), user.getId(), user.getUsername(), null).test();
+
+        observer.awaitTerminalEvent();
+        observer.assertError(UserNotFoundException.class);
+
+        verify(commonUserService, times(0)).update(any());
+    }
+
+    @Test
+    public void must_not_reset_username_with_existing_username() {
+        Domain domain = new Domain();
+        domain.setId("domain");
+
+        User user = new User();
+        user.setId("user-id");
+        user.setSource("idp-id");
+        user.setUsername("username");
+
+        when(commonUserService.findById(DOMAIN, domain.getId(), user.getId()))
+                .thenReturn(Single.just(user));
+        when(commonUserService.findByUsernameAndSource(DOMAIN, domain.getId(), user.getUsername(), user.getSource()))
+                .thenReturn(Maybe.just(user));
+
+        var observer = userService.updateUsername(DOMAIN, domain.getId(), user.getId(), user.getUsername(), null).test();
+
+        observer.awaitTerminalEvent();
+        observer.assertError(InvalidUserException.class);
+
+        verify(commonUserService, times(0)).update(any());
+    }
+
+    @Test
+    public void must_not_reset_username_user_provider_does_not_exist() {
+        Domain domain = new Domain();
+        domain.setId("domain");
+
+        User user = new User();
+        user.setId("user-id");
+        user.setSource("idp-id");
+        user.setUsername("username");
+
+        when(commonUserService.findById(DOMAIN, domain.getId(), user.getId()))
+                .thenReturn(Single.just(user));
+        when(commonUserService.findByUsernameAndSource(DOMAIN, domain.getId(), user.getUsername(), user.getSource()))
+                .thenReturn(Maybe.empty());
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.empty());
+
+        var observer = userService.updateUsername(DOMAIN, domain.getId(), user.getId(), user.getUsername(), null).test();
+
+        observer.awaitTerminalEvent();
+        observer.assertError(UserProviderNotFoundException.class);
+
+        verify(commonUserService, times(0)).update(any());
+    }
+
+    @Test
+    public void must_not_reset_username_does_not_exist() {
+        Domain domain = new Domain();
+        domain.setId("domain");
+
+        User user = new User();
+        user.setId("user-id");
+        user.setSource("idp-id");
+        user.setUsername("username");
+
+        when(commonUserService.findById(DOMAIN, domain.getId(), user.getId()))
+                .thenReturn(Single.just(user));
+        when(commonUserService.findByUsernameAndSource(DOMAIN, domain.getId(), user.getUsername(), user.getSource()))
+                .thenReturn(Maybe.empty());
+        final UserProvider userProvider = mock(UserProvider.class);
+        when(userProvider.findByUsername(anyString())).thenReturn(Maybe.error(new UserNotFoundException("Could not find user")));
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
+
+        var observer = userService.updateUsername(DOMAIN, domain.getId(), user.getId(), user.getUsername(), null).test();
+
+        observer.awaitTerminalEvent();
+        observer.assertError(UserNotFoundException.class);
+
+        verify(commonUserService, times(0)).update(any());
+    }
+
+    @Test
+    public void must_not_reset_username_error_when_updating() {
+        Domain domain = new Domain();
+        domain.setId("domain");
+
+        User user = new User();
+        user.setId("user-id");
+        user.setSource("idp-id");
+        user.setUsername("username");
+
+        when(commonUserService.findById(DOMAIN, domain.getId(), user.getId()))
+                .thenReturn(Single.just(user));
+        when(commonUserService.findByUsernameAndSource(DOMAIN, domain.getId(), user.getUsername(), user.getSource()))
+                .thenReturn(Maybe.empty());
+
+        final UserProvider userProvider = mock(UserProvider.class);
+        final DefaultUser defaultUser = new DefaultUser(user.getUsername());
+        defaultUser.setId("idp-user-id");
+        when(userProvider.findByUsername(anyString())).thenReturn(Maybe.just(defaultUser));
+        when(userProvider.updateUsername(anyString(), anyString())).thenReturn(Completable.error(new InvalidUserException("Could not update find user")));
+
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
+
+        var observer = userService.updateUsername(DOMAIN, domain.getId(), user.getId(), user.getUsername(), null).test();
+
+        observer.awaitTerminalEvent();
+        observer.assertError(InvalidUserException.class);
+
+        verify(commonUserService, times(0)).update(any());
+    }
+
+    @Test
+    public void must_rollback_username_if_userService_fails() {
+        Domain domain = new Domain();
+        domain.setId("domain");
+
+        User user = new User();
+        user.setId("user-id");
+        user.setSource("idp-id");
+        user.setUsername("username");
+
+        when(commonUserService.findById(DOMAIN, domain.getId(), user.getId()))
+                .thenReturn(Single.just(user));
+        when(commonUserService.findByUsernameAndSource(DOMAIN, domain.getId(), user.getUsername(), user.getSource()))
+                .thenReturn(Maybe.empty());
+        when(commonUserService.update(user)).thenReturn(Single.error(new TechnicalManagementException("an unexpected error has occurred")));
+
+        final UserProvider userProvider = mock(UserProvider.class);
+        final DefaultUser defaultUser = new DefaultUser(user.getUsername());
+        defaultUser.setId("idp-user-id");
+        when(userProvider.findByUsername(anyString())).thenReturn(Maybe.just(defaultUser));
+        when(userProvider.updateUsername(anyString(), anyString())).thenReturn(Completable.complete());
+
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
+
+        var observer = userService.updateUsername(DOMAIN, domain.getId(), user.getId(), user.getUsername(), null).test();
+
+        observer.awaitTerminalEvent();
+        observer.assertComplete();
+
+        verify(commonUserService, times(1)).update(any());
+        verify(userProvider, times(2)).updateUsername(anyString(), anyString());
+    }
+
+    @Test
+    public void must_reset_username() {
+        Domain domain = new Domain();
+        domain.setId("domain");
+
+        User user = new User();
+        user.setId("user-id");
+        user.setSource("idp-id");
+        user.setUsername("username");
+
+        when(commonUserService.findById(DOMAIN, domain.getId(), user.getId()))
+                .thenReturn(Single.just(user));
+        when(commonUserService.findByUsernameAndSource(DOMAIN, domain.getId(), user.getUsername(), user.getSource()))
+                .thenReturn(Maybe.empty());
+        when(commonUserService.update(user)).thenReturn(Single.just(user));
+
+        final UserProvider userProvider = mock(UserProvider.class);
+        final DefaultUser defaultUser = new DefaultUser(user.getUsername());
+        defaultUser.setId("idp-user-id");
+        when(userProvider.findByUsername(anyString())).thenReturn(Maybe.just(defaultUser));
+        when(userProvider.updateUsername(anyString(), anyString())).thenReturn(Completable.complete());
+
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
+
+        var observer = userService.updateUsername(DOMAIN, domain.getId(), user.getId(), user.getUsername(), null).test();
+
+        observer.awaitTerminalEvent();
+        observer.assertComplete();
+
+        verify(commonUserService, times(1)).update(any());
+        verify(userProvider, times(1)).updateUsername(anyString(), anyString());
     }
 }

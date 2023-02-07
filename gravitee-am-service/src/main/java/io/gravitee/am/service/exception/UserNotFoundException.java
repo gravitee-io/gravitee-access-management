@@ -25,7 +25,8 @@ public class UserNotFoundException extends AbstractNotFoundException {
     private String domain;
     private String username;
 
-    public UserNotFoundException() { }
+    public UserNotFoundException() {
+    }
 
     public UserNotFoundException(String id) {
         this.id = id;
@@ -43,8 +44,9 @@ public class UserNotFoundException extends AbstractNotFoundException {
     public String getMessage() {
         if (id != null) {
             return "User [" + id + "] can not be found.";
-        } else if (username != null ){
-            return "User [" + username + "] can not be found for domain[" + domain + "].";
+        } else if (username != null) {
+            final String usernameMessage = "User [" + username + "] can not be found";
+            return domain == null ? usernameMessage + "." : usernameMessage + " for domain[" + domain + "].";
         } else {
             return "No user found";
         }
