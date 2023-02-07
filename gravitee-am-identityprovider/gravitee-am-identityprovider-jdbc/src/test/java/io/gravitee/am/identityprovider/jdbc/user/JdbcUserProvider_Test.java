@@ -108,7 +108,7 @@ public abstract class JdbcUserProvider_Test {
         final String username = "userToUpdateNoPwd";
         DefaultUser user = new DefaultUser(username);
         user.setCredentials("password");
-        user.setEmail(username+"@acme.fr");
+        user.setEmail(username + "@acme.fr");
         User createdUser = userProvider.create(user).blockingGet();
 
         DefaultUser updateUser = new DefaultUser(username);
@@ -156,4 +156,43 @@ public abstract class JdbcUserProvider_Test {
         testObserver.assertNoValues();
     }
 
+    @Test
+    public void must_not_updateUsername_null_username() {
+        TestObserver testObserver = userProvider.updateUsername("5", null).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertError(IllegalArgumentException.class);
+        testObserver.assertNoValues();
+    }
+
+    @Test
+    public void must_not_updateUsername_empty_username() {
+        TestObserver testObserver = userProvider.updateUsername("5", "").test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertError(IllegalArgumentException.class);
+        testObserver.assertNoValues();
+    }
+
+    @Test
+    public void must_not_updateUsername_user_not_found() {
+        TestObserver testObserver = userProvider.updateUsername("6", "newUsername").test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertError(UserNotFoundException.class);
+        testObserver.assertNoValues();
+    }
+
+    @Test
+    public void must_updateUsername() {
+        TestObserver testObserver = userProvider.updateUsername("5", "newUsername").test();
+        testObserver.awaitTerminalEvent();
+        testObserver.assertComplete();
+
+        TestObserver<User> testObserver2 = userProvider.findByUsername("newUsername").test();
+        testObserver2.awaitTerminalEvent();
+        testObserver2.assertComplete();
+        testObserver2.assertNoErrors();
+        testObserver2.assertValue(u -> "newUsername".equals(u.getUsername()));
+    }
 }

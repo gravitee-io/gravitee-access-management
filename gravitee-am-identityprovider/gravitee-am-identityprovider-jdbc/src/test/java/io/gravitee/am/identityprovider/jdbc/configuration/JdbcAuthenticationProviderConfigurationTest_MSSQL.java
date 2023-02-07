@@ -50,7 +50,7 @@ public class JdbcAuthenticationProviderConfigurationTest_MSSQL extends JdbcAuthe
                 .execute()).flatMap(rp -> Single.fromPublisher(rp.getRowsUpdated()))
                 .blockingGet();
         Single.fromPublisher(connection.createStatement("insert into users(id, username, password, email, metadata) values( @id, @username, @password, @email , @metadata)")
-                .bind("id", "2")
+                .bind("id", "3")
                 .bind("username", "user02")
                 .bind("password", "user02")
                 .bind("email", "common@acme.com")
@@ -58,12 +58,20 @@ public class JdbcAuthenticationProviderConfigurationTest_MSSQL extends JdbcAuthe
                 .execute()).flatMap(rp -> Single.fromPublisher(rp.getRowsUpdated()))
                 .blockingGet();
         Single.fromPublisher(connection.createStatement("insert into users(id, username, password, email, metadata) values( @id, @username, @password, @email , @metadata)")
-                .bind("id", "2")
+                .bind("id", "4")
                 .bind("username", "user03")
                 .bind("password", "user03")
                 .bind("email", "common@acme.com")
                 .bindNull("metadata", String.class)
                 .execute()).flatMap(rp -> Single.fromPublisher(rp.getRowsUpdated()))
+                .blockingGet();
+        Single.fromPublisher(connection.createStatement("insert into users(id, username, password, email, metadata) values( @id, @username, @password, @email , @metadata)")
+                        .bind("id", "5")
+                        .bind("username", "changeme")
+                        .bind("password", "changepass")
+                        .bindNull("email", String.class)
+                        .bindNull("metadata", String.class)
+                        .execute()).flatMap(rp -> Single.fromPublisher(rp.getRowsUpdated()))
                 .blockingGet();
     }
 }
