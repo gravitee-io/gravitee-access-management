@@ -168,4 +168,13 @@ export class UserService {
   audit(domainId, userId, auditId): Observable<any> {
     return this.http.get<any>(this.usersURL + domainId + '/users/' + userId + '/audits/' + auditId);
   }
+
+  updateUsername(domainId, userId, organizationContext, username): Observable<any> {
+    if (organizationContext) {
+      return this.organizationService.updateUsername(userId, username);
+    }
+    return this.http.patch<any>(this.usersURL + domainId + '/users/' + userId + '/username', {
+      'username': username
+    });
+  }
 }

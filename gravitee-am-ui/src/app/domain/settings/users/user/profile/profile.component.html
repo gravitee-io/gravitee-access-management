@@ -19,13 +19,37 @@
   <div>
     <div fxFlex="70">
       <form (ngSubmit)="update()" fxLayout="column" #userForm="ngForm">
+
         <div class="gv-form-section">
-          <div fxLayout="row" *ngIf="user.username">
-            <mat-form-field appearance="outline" floatLabel="always">
-              <mat-label>Username</mat-label>
-              <input matInput placeholder="Username" disabled name="username" [value]="user.username" required>
-              <mat-hint>The username of the User.</mat-hint>
-            </mat-form-field>
+          <div class="gv-form-section-title">
+            <h5>Username</h5>
+            <small>The username of the user.</small>
+            <mat-divider></mat-divider>
+          </div>
+          <div fxLayout="column">
+            <div fxLayout="column">
+              <div fxLayout="column">
+                <form (ngSubmit)="updateUsername()" #usernameForm="ngForm" fxLayout="row">
+                  <mat-form-field fxFlex="70" appearance="outline" floatLabel="always">
+                    <mat-label>Username</mat-label>
+                    <input matInput type="text" required
+                           #username="ngModel" name="username" [(ngModel)]="user.username"
+                           placeholder="Updated Username" [disabled]="!editMode() || !canEdit"/>
+                    <mat-hint>The username of the user.</mat-hint>
+                    <mat-error *ngIf="username.errors?.required">Enter username</mat-error>
+                  </mat-form-field>
+                  <button *ngIf="editMode() && canEdit" style="min-width: 180px; height:36px; margin-left: 14px; margin-top: 5px" mat-stroked-button color="accent" [disabled]="!usernameForm.valid || usernameForm.pristine" type="submit">UPDATE USERNAME</button>
+                </form>
+                </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="gv-form-section">
+          <div class="gv-form-section-title">
+            <h5>Details</h5>
+            <small>Basic details about the user.</small>
+            <mat-divider></mat-divider>
           </div>
           <div fxLayout="row">
             <mat-form-field *ngIf="user.firstName || user.internal" appearance="outline" floatLabel="always" style="margin-right: 20px;">

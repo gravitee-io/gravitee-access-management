@@ -20,6 +20,7 @@ import {DialogService} from '../../../../../services/dialog.service';
 import {UserService} from '../../../../../services/user.service';
 import {UserClaimComponent} from '../../creation/user-claim.component';
 import {AuthService} from '../../../../../services/auth.service';
+import {NgForm} from '@angular/forms';
 
 @Component({
   selector: 'app-user-profile',
@@ -30,6 +31,7 @@ export class UserProfileComponent implements OnInit {
   private domainId: string;
   organizationContext: boolean;
   @ViewChild('passwordForm') passwordForm: any;
+  @ViewChild('usernameForm') usernameForm: NgForm;
   @ViewChild('dynamic', { read: ViewContainerRef }) viewContainerRef: ViewContainerRef;
   user: any;
   userClaims: any = {};
@@ -218,5 +220,18 @@ export class UserProfileComponent implements OnInit {
 
   accountLocked(user) {
     return !user.accountNonLocked && (user.accountLockedUntil === null || !user.accountLockedUntil || user.accountLockedUntil > new Date());
+  }
+
+  updateUsername() {
+    this.dialogService
+      .confirm('Update Username', 'Are you sure you want to update this username ?')
+      .subscribe(res => {
+        if (res) {
+          this.userService.updateUsername(this.domainId, this.user.id, this.organizationContext, this.user.username).subscribe(() => {
+            this.usernameForm.resetForm({ username: this.user.username });
+            this.snackbarService.open('Username updated');
+          })
+        }
+      });
   }
 }
