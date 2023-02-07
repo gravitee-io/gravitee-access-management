@@ -15,7 +15,7 @@
  */
 import {Injectable} from '@angular/core';
 import {HttpClient, HttpHeaders} from '@angular/common/http';
-import {from, Observable} from 'rxjs';
+import {Observable} from 'rxjs';
 import {AppConfig} from '../../config/app.config';
 import {map} from 'rxjs/operators';
 
@@ -438,4 +438,9 @@ export class OrganizationService {
     return this.http.get<any>(this.platformURL + '/configuration/spel/grammar');
   }
 
+  updateUsername(userId, username) : Observable<any> {
+    return this.http.patch<any>(this.organizationURL + '/users/' + userId + '/username', {
+      'username': username
+    });
+  }
 }
