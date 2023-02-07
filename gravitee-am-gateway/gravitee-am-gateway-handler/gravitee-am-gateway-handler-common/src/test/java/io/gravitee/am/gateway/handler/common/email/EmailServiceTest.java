@@ -35,9 +35,7 @@ import io.gravitee.am.service.i18n.FileSystemDictionaryProvider;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Spy;
+import org.mockito.*;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -56,7 +54,15 @@ import static org.mockito.Mockito.when;
 public class EmailServiceTest {
 
     @InjectMocks
-    private EmailServiceImpl cut;
+    private EmailServiceImpl cut = new EmailServiceImpl(
+            true,
+            "Please reset your password",
+            300,
+            "Account has been locked",
+            86400,
+            "Verification Code",
+            300
+    );
 
     @Mock
     private EmailService emailService;
@@ -78,9 +84,6 @@ public class EmailServiceTest {
 
     @Before
     public void init() throws Exception {
-        ReflectionTestUtils.setField(cut, "enabled", true);
-        ReflectionTestUtils.setField(cut, "resetPasswordExpireAfter", 300);
-
         freemarkerConfiguration.setLocalizedLookup(false);
         freemarkerConfiguration.setNewBuiltinClassResolver(TemplateClassResolver.SAFER_RESOLVER);
         TemplateConfiguration tcHTML = new TemplateConfiguration();
@@ -89,7 +92,7 @@ public class EmailServiceTest {
                 new ConditionalTemplateConfigurationFactory(new FileExtensionMatcher("html"), tcHTML));
         freemarkerConfiguration.setTemplateLoader(new FileTemplateLoader(new File("src/test/resources/templates")));
 
-        when(emailService.getDefaultDictionaryProvider()).thenReturn(new FileSystemDictionaryProvider("src/test/resources/templates/i18n"));
+        when(this.emailService.getDefaultDictionaryProvider()).thenReturn(new FileSystemDictionaryProvider("src/test/resources/templates/i18n"));
     }
 
     @Test

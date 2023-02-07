@@ -57,6 +57,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static io.gravitee.am.common.oidc.Scope.FULL_PROFILE;
+import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.ID_TOKEN;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -136,7 +137,7 @@ public class IDTokenServiceImpl implements IDTokenService {
 
     @Override
     public Single<User> extractUser(String idToken, Client client) {
-        return jwtService.decodeAndVerify(idToken, client)
+        return jwtService.decodeAndVerify(idToken, client, ID_TOKEN)
                 .flatMap(jwt -> userService.findById(jwt.getSub())
                         .switchIfEmpty(Single.error(new UserNotFoundException(jwt.getSub())))
                         .map(user -> {

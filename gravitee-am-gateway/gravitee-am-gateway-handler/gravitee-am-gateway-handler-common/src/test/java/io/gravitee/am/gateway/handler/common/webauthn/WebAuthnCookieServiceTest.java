@@ -73,7 +73,7 @@ public class WebAuthnCookieServiceTest {
 
     @Test
     public void shouldVerifyRememberDeviceCookieValue_nominal_case() {
-        when(jwtService.decodeAndVerify(anyString(), eq(certificateProvider))).thenReturn(Single.just(new JWT()));
+        when(jwtService.decodeAndVerify(anyString(), eq(certificateProvider), eq(JWTService.TokenType.ACCESS_TOKEN))).thenReturn(Single.just(new JWT()));
         TestObserver<Void> testObserver = webAuthnCookieService.verifyRememberDeviceCookieValue("cookieValue").test();
         testObserver.awaitTerminalEvent();
         testObserver.assertNoErrors();
@@ -82,7 +82,7 @@ public class WebAuthnCookieServiceTest {
 
     @Test
     public void shouldVerifyRememberDeviceCookieValue_error() {
-        when(jwtService.decodeAndVerify(anyString(), eq(certificateProvider))).thenReturn(Single.error(new IllegalArgumentException("invalid-token")));
+        when(jwtService.decodeAndVerify(anyString(), eq(certificateProvider), eq(JWTService.TokenType.ACCESS_TOKEN))).thenReturn(Single.error(new IllegalArgumentException("invalid-token")));
         TestObserver<Void> testObserver = webAuthnCookieService.verifyRememberDeviceCookieValue("cookieValue").test();
         testObserver.awaitTerminalEvent();
         testObserver.assertNotComplete();

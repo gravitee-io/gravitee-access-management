@@ -34,7 +34,7 @@ import static java.util.function.Predicate.not;
 public class EmailValidatorImpl implements EmailValidator {
 
     public static final int EMAIL_MAX_LENGTH = 320;
-    public static final String EMAIL_PATTERN = "^[a-zA-Z0-9_+-]+(?:\\.[a-zA-Z0-9_+-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
+    public static final String EMAIL_PATTERN = "^[a-zA-Z0-9_+-]+(?:\\.[a-zA-Z0-9_+-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,15}$";
 
     private final Pattern pattern;
 

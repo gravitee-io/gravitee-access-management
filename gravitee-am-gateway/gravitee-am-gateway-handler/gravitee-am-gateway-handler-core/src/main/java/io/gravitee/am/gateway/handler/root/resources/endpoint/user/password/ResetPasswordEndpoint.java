@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static io.gravitee.am.common.utils.ConstantKeys.PASSWORD_HISTORY;
+import static io.gravitee.am.common.web.UriBuilder.encodeURIComponent;
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 
@@ -76,7 +77,7 @@ public class ResetPasswordEndpoint extends AbstractEndpoint implements Handler<R
         params.computeIfAbsent(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, val -> errorDescription);
         routingContext.put(ConstantKeys.PARAM_CONTEXT_KEY, params);
 
-        final Map<String, String> actionParams = (client != null) ? Map.of(Parameters.CLIENT_ID, client.getClientId()) : Map.of();
+        final Map<String, String> actionParams = (client != null) ? Map.of(Parameters.CLIENT_ID, encodeURIComponent(client.getClientId())) : Map.of();
         routingContext.put(ConstantKeys.ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), actionParams));
         routingContext.put(PASSWORD_HISTORY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/passwordHistory", actionParams, true));
 
