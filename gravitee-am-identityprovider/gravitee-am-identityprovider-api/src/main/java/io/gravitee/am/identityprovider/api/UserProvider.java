@@ -37,7 +37,7 @@ public interface UserProvider extends Service<UserProvider> {
 
     Single<User> update(String id, User updateUser);
 
-    Completable updateUsername(String oldUsername, String username);
+    Completable updateUsername(String id, String username);
 
     default Single<User> updatePassword(User user, String password) {
         if (password == null || password.isEmpty()) {

@@ -20,6 +20,7 @@ import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.identityprovider.mongo.authentication.spring.MongoAuthenticationProviderConfiguration;
+import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.common.util.Maps;
 import io.reactivex.observers.TestObserver;
 import org.junit.Assert;
@@ -203,5 +204,48 @@ public class MongoUserProviderTest {
                 .put("family_name", user.getLastName()).build()
         );
         return user;
+    }
+
+    @Test
+    public void must_not_updateUsername_null_username() {
+        TestObserver testObserver = userProvider.updateUsername("5", null).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertError(IllegalArgumentException.class);
+        testObserver.assertNoValues();
+    }
+
+    @Test
+    public void must_not_updateUsername_empty_username() {
+        TestObserver testObserver = userProvider.updateUsername("5", "").test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertError(IllegalArgumentException.class);
+        testObserver.assertNoValues();
+    }
+
+    @Test
+    public void must_not_updateUsername_user_not_found() {
+        TestObserver testObserver = userProvider.updateUsername("6", "newUsername").test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertError(UserNotFoundException.class);
+        testObserver.assertNoValues();
+    }
+
+    @Test
+    public void must_updateUsername() {
+
+        var id = userProvider.findByUsername("changeme").blockingGet().getId();
+
+        TestObserver testObserver = userProvider.updateUsername(id, "newusername").test();
+        testObserver.awaitTerminalEvent();
+        testObserver.assertComplete();
+
+        TestObserver<User> testObserver2 = userProvider.findByUsername("newusername").test();
+        testObserver2.awaitTerminalEvent();
+        testObserver2.assertComplete();
+        testObserver2.assertNoErrors();
+        testObserver2.assertValue(u -> "newusername".equals(u.getUsername()));
     }
 }

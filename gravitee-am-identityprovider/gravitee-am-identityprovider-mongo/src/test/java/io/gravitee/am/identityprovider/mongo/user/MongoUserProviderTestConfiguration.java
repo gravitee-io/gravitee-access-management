@@ -57,6 +57,8 @@ public class MongoUserProviderTestConfiguration implements InitializingBean {
         Observable.fromPublisher(collection.insertOne(doc2)).blockingFirst();
         Document doc3 = new Document("username", "user02").append("email", "user02@acme.com").append("alternative_email", "user02-alt@acme.com").append("password", "user02").append("_id", UUID.randomUUID().toString());
         Observable.fromPublisher(collection.insertOne(doc3)).blockingFirst();
+        Document doc4 = new Document("username", "changeme").append("password", "changepass").append("_id", UUID.randomUUID().toString());
+        Observable.fromPublisher(collection.insertOne(doc4)).blockingFirst();
     }
 
     @Bean
