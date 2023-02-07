@@ -1101,7 +1101,7 @@ jobs:
           steps:
             - slack/notify:
                 channel: C02NGT20S4W
-                event: always
+                event: pass
                 custom: |
                   {
                     "blocks": [

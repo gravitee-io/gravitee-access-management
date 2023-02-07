@@ -100,7 +100,7 @@ public abstract class AbstractCertificateProvider implements CertificateProvider
                 if (publicKey.getAlgorithm().equals(RSA)){
                     certificateKeys.add(new CertificateKey(CertificateFormat.SSH_RSA, RSAKeyUtils.toSSHRSAString((RSAPublicKey) publicKey)));
                 } else if (publicKey.getAlgorithm().equals(EC)){
-                    certificateKeys.add(new CertificateKey(CertificateFormat.ECSDA, toEcdsaString((ECPublicKey) publicKey)));
+                    certificateKeys.add(new CertificateKey(CertificateFormat.ECDSA, toEcdsaString((ECPublicKey) publicKey)));
                 }
             } else {
                 throw new IllegalArgumentException("An ECSDA or RSA Signer must be supplied");

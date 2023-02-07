@@ -78,7 +78,6 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
     protected final Logger LOGGER = LoggerFactory.getLogger(getClass());
 
     public static final String HASH_VALUE_PARAMETER = "urlHash";
-    public static final String ACCESS_TOKEN_PARAMETER = "access_token";
     public static final String ID_TOKEN_PARAMETER = "id_token";
 
     protected JWTProcessor jwtProcessor;

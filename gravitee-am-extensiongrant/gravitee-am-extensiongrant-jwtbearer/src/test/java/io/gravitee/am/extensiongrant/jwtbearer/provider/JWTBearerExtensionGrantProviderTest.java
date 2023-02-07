@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import static io.gravitee.am.extensiongrant.jwtbearer.provider.JWTBearerExtensionGrantProvider.SSH_PUB_KEY;
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertFalse;
@@ -42,8 +43,6 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class JWTBearerExtensionGrantProviderTest {
 
-    private static final Pattern SSH_PUB_KEY = Pattern.compile("ssh-(rsa|dsa) ([A-Za-z0-9/+]+=*)( .*)?");
-
     @InjectMocks
     private JWTBearerExtensionGrantProvider jwtBearerExtensionGrantProvider = new JWTBearerExtensionGrantProvider();
 
@@ -51,7 +50,7 @@ public class JWTBearerExtensionGrantProviderTest {
     private JWTBearerExtensionGrantConfiguration jwtBearerTokenGranterConfiguration;
 
     @Test
-    public void testParseKey() {
+    public void testParseKey_RSA() {
         final String key = "ssh-rsa AAAAE2VjZHNhLXNoYTItbmlzdHAyNTY=";
         final String key2 = "ssh-rsa AAAAE2VjZHNhLXNoYTItbmlzdHAyNTY= test@test.com";
         final String key3 = "ssh";
@@ -60,6 +59,20 @@ public class JWTBearerExtensionGrantProviderTest {
         assertTrue(SSH_PUB_KEY.matcher(key2).matches());
         assertFalse(SSH_PUB_KEY.matcher(key3).matches());
         assertFalse(SSH_PUB_KEY.matcher(key4).matches());
+    }
+
+    @Test
+    public void testParseKey_ECDSA() {
+        final String key = "ecdsa AAAAE2VjZHNhLXNoYTItbmlzdHAyNTY=";
+        final String key2 = "ecdsa-sha2-xyz AAAAE2VjZHNhLXNoYTItbmlzdHAyNTY=";
+        final String key3 = "ecdsa-sha2-xyz AAAAE2VjZHNhLXNoYTItbmlzdHAyNTY= test@test.com";
+        final String key4 = "ecdsa";
+        final String key5 = "ecdsa-sha2";
+        assertTrue(SSH_PUB_KEY.matcher(key).matches());
+        assertTrue(SSH_PUB_KEY.matcher(key2).matches());
+        assertTrue(SSH_PUB_KEY.matcher(key3).matches());
+        assertFalse(SSH_PUB_KEY.matcher(key4).matches());
+        assertFalse(SSH_PUB_KEY.matcher(key5).matches());
     }
 
     @Test

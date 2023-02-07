@@ -24,6 +24,7 @@ import io.gravitee.am.model.alert.AlertTrigger;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.flow.Flow;
+import io.gravitee.am.model.login.WebAuthnSettings;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.model.uma.Resource;
@@ -35,6 +36,7 @@ import io.gravitee.am.repository.management.api.search.DomainCriteria;
 import io.gravitee.am.service.exception.DomainAlreadyExistsException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.InvalidParameterException;
+import io.gravitee.am.service.exception.InvalidWebAuthnConfigurationException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.DomainServiceImpl;
 import io.gravitee.am.service.impl.I18nDictionaryService;
@@ -856,5 +858,61 @@ public class DomainServiceTest {
         obs.awaitTerminalEvent();
         obs.assertComplete();
         obs.assertValue(domain);
+    }
+
+    @Test
+    public void should_InvalidWebAuthnConfigurationException_origin_null() {
+        Domain domain = new Domain();
+        domain.setReferenceType(ReferenceType.ENVIRONMENT);
+        domain.setName("test");
+        WebAuthnSettings webAuthnSettings = new WebAuthnSettings();
+        when(domainRepository.findById(anyString())).thenReturn(Maybe.just(domain));
+
+        domain.setWebAuthnSettings(webAuthnSettings);
+        TestObserver<Domain> testObserver = domainService.update("any-id", domain).test();
+
+        testObserver.assertError(InvalidWebAuthnConfigurationException.class);
+        testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void should_InvalidWebAuthnConfigurationException_origin_empty_string() {
+        Domain domain = new Domain();
+        domain.setReferenceType(ReferenceType.ENVIRONMENT);
+        domain.setName("test");
+        final String emptyString = "    ";
+        WebAuthnSettings webAuthnSettings = new WebAuthnSettings();
+        webAuthnSettings.setOrigin(emptyString);
+        when(domainRepository.findById(anyString())).thenReturn(Maybe.just(domain));
+
+        domain.setWebAuthnSettings(webAuthnSettings);
+        TestObserver<Domain> testObserver = domainService.update("any-id", domain).test();
+
+        testObserver.assertError(InvalidWebAuthnConfigurationException.class);
+        testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void shouldNot_InvalidWebAuthnConfigurationException() {
+        Domain domain = new Domain();
+        domain.setReferenceType(ReferenceType.ENVIRONMENT);
+        domain.setName("test");
+        WebAuthnSettings webAuthnSettings = new WebAuthnSettings();
+        domain.setWebAuthnSettings(webAuthnSettings);
+        webAuthnSettings.setOrigin("http://someorigin.com");
+        when(domainRepository.findById(anyString())).thenReturn(Maybe.just(domain));
+        when(domainRepository.findByHrid(any(), any(), any())).thenReturn(Maybe.empty());
+        when(domainRepository.update(any(Domain.class))).thenReturn(Single.just(domain));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(environmentService.findById(any())).thenReturn(Single.just(new Environment()));
+        doReturn(Single.just(List.of()).ignoreElement()).when(domainValidator).validate(any(), any());
+        doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
+        when(domainRepository.findAll()).thenReturn(Flowable.just(domain));
+
+        TestObserver<Domain> testObserver = domainService.update("any-id", domain).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(domainRepository, times(1)).update(any(Domain.class));
     }
 }

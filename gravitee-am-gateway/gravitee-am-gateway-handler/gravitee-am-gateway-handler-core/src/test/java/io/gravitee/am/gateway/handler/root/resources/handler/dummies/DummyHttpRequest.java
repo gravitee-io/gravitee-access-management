@@ -33,6 +33,9 @@ import javax.net.ssl.SSLSession;
 import javax.security.cert.X509Certificate;
 import java.util.Map;
 import java.util.Set;
+import org.mockito.Mockito;
+
+import static org.mockito.Mockito.mock;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
@@ -140,7 +143,7 @@ public class DummyHttpRequest implements HttpServerRequest {
 
     @Override
     public HttpServerResponse response() {
-        return null;
+        return mock(HttpServerResponse.class);
     }
 
     @Override
@@ -184,7 +187,7 @@ public class DummyHttpRequest implements HttpServerRequest {
 
     @Override
     public SocketAddress localAddress() {
-        return HttpServerRequest.super.localAddress();
+        return Mockito.mock(SocketAddress.class);
     }
 
     @Override
