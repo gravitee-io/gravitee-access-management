@@ -31,6 +31,7 @@ import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.service.UserActivityService;
 import io.gravitee.am.service.VerifyAttemptService;
+import io.gravitee.am.service.exception.InvalidUserException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.impl.PasswordHistoryService;
@@ -155,14 +156,38 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
 
     @Override
     public Single<User> updateUsername(ReferenceType referenceType, String referenceId, String id, String username, io.gravitee.am.identityprovider.api.User principal) {
-        return getUserService().findById(referenceType, referenceId, id)
-                               .flatMap(user -> {
-                                   user.setUsername(username);
-                                   return getUserService().update(user);
-                               })
-                               .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USERNAME_UPDATED).user(user1)))
-                               .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USERNAME_UPDATED).throwable(throwable)));
-
+        return userValidator.validateUsername(username).andThen(Single.defer(() ->
+                getUserService().findById(referenceType, referenceId, id)
+                        .toMaybe().flatMapSingle(user -> getUserService()
+                                .findByUsernameAndSource(referenceType, referenceId, username, user.getSource())
+                                //If the user is empty we throw a UserNotFoundException to allow the update
+                                .switchIfEmpty(Single.error(new UserNotFoundException(referenceId, username)))
+                                //If the user is not empty we throw a InvalidUserException to prevent username update
+                                .flatMap(existingUser -> Single.<User>error(new InvalidUserException(String.format("User with username [%s] and idp [%s] already exists", username, user.getSource()))))
+                                .onErrorResumeNext(ex -> {
+                                    if (ex instanceof UserNotFoundException) {
+                                        return Single.just(user);
+                                    }
+                                    return Single.error(ex);
+                                })
+                        ).flatMap(user -> identityProviderManager.getUserProvider(user.getSource())
+                                .switchIfEmpty(Single.error(new UserProviderNotFoundException(user.getSource())))
+                                .flatMap(userProvider -> userProvider.findByUsername(user.getUsername())
+                                        .flatMapSingle(idpUser -> userProvider.updateUsername(idpUser.getId(), username).andThen(
+                                                Single.defer(() -> Single.just(idpUser))
+                                        )).flatMap(idpUser -> {
+                                            user.setUsername(username);
+                                            return getUserService().update(user).onErrorResumeNext(ex -> {
+                                                // In the case we cannot update on our side, we rollback the username on the iDP
+                                                user.setUsername(idpUser.getUsername());
+                                                return userProvider.updateUsername(idpUser.getId(), idpUser.getUsername())
+                                                        .andThen(Single.just(user));
+                                            });
+                                        })
+                                ))
+                        .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USERNAME_UPDATED).user(user1)))
+                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USERNAME_UPDATED).throwable(throwable)))
+        ));
     }
 
     @SuppressWarnings("ReactiveStreamsUnusedPublisher")
@@ -223,7 +248,7 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
             additionalInformation.put(StandardClaims.EMAIL, newUser.getEmail());
         }
         if (newUser.getAdditionalInformation() != null) {
-            newUser.getAdditionalInformation().forEach((k, v) -> additionalInformation.putIfAbsent(k, v));
+            newUser.getAdditionalInformation().forEach(additionalInformation::putIfAbsent);
         }
         user.setAdditionalInformation(additionalInformation);
 

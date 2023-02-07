@@ -194,6 +194,11 @@ public class HttpUserProvider implements UserProvider {
     }
 
     @Override
+    public Completable updateUsername(String id, String username) {
+        return Completable.complete();
+    }
+
+    @Override
     public Completable delete(String id) {
         try {
             // prepare context

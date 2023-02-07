@@ -60,39 +60,48 @@ public class UserValidatorImpl implements UserValidator {
     }
 
     public Completable validate(IUser user) {
+        return validateUsername(user.getUsername()).andThen(Completable.defer(() -> {
+            if (!emailValidator.validate(user.getEmail())) {
+                return Completable.error(new EmailFormatInvalidException(user.getEmail()));
+            }
 
-        if (!isValid(user.getUsername(), usernamePattern)) {
-            return Completable.error(new InvalidUserException(String.format("Username [%s] is not a valid value", user.getUsername())));
-        }
+            if (!isValid(user.getFirstName(), nameStrictPattern)) {
+                return Completable.error(new InvalidUserException(String.format("First name [%s] is not a valid value", user.getFirstName())));
+            }
 
-        if (!emailValidator.validate(user.getEmail())) {
-            return Completable.error(new EmailFormatInvalidException(user.getEmail()));
-        }
+            if (!isValid(user.getLastName(), nameStrictPattern)) {
+                return Completable.error(new InvalidUserException(String.format("Last name [%s] is not a valid value", user.getLastName())));
+            }
 
-        if (!isValid(user.getFirstName(), nameStrictPattern)) {
-            return Completable.error(new InvalidUserException(String.format("First name [%s] is not a valid value", user.getFirstName())));
-        }
+            if (!isValid(user.getDisplayName(), nameLaxPattern)) {
+                return Completable.error(new InvalidUserException(String.format("Display name [%s] is not a valid value", user.getDisplayName())));
+            }
 
-        if (!isValid(user.getLastName(), nameStrictPattern)) {
-            return Completable.error(new InvalidUserException(String.format("Last name [%s] is not a valid value", user.getLastName())));
-        }
+            if (!isValid(user.getNickName(), nameLaxPattern)) {
+                return Completable.error(new InvalidUserException(String.format("Nick name [%s] is not a valid value", user.getNickName())));
+            }
 
-        if (!isValid(user.getDisplayName(), nameLaxPattern)) {
-            return Completable.error(new InvalidUserException(String.format("Display name [%s] is not a valid value", user.getDisplayName())));
-        }
+            if (user.getExternalId() != null && user.getExternalId().length() > DEFAULT_MAX_LENGTH) {
+                return Completable.error(new InvalidUserException(String.format("External id [%s] is not a valid value", user.getExternalId())));
+            }
 
-        if (!isValid(user.getNickName(), nameLaxPattern)) {
-            return Completable.error(new InvalidUserException(String.format("Nick name [%s] is not a valid value", user.getNickName())));
-        }
-
-        if (user.getExternalId() != null && user.getExternalId().length() > DEFAULT_MAX_LENGTH) {
-            return Completable.error(new InvalidUserException(String.format("External id [%s] is not a valid value", user.getExternalId())));
-        }
-
-        return Completable.complete();
+            return Completable.complete();
+        }));
     }
 
     private boolean isValid(String userInfo, Pattern pattern) {
         return userInfo == null || pattern.matcher(userInfo).matches();
+    }
+
+    @Override
+    public Completable validateUsername(String username) {
+        return privateValidateUsername(username).onErrorResumeNext(Completable::error);
+    }
+
+    private Completable privateValidateUsername(String username) {
+        if (!isValid(username, usernamePattern)) {
+            return Completable.error(new InvalidUserException(String.format("Username [%s] is not a valid value", username)));
+        }
+        return Completable.complete();
     }
 }

@@ -37,6 +37,8 @@ public interface UserProvider extends Service<UserProvider> {
 
     Single<User> update(String id, User updateUser);
 
+    Completable updateUsername(String oldUsername, String username);
+
     default Single<User> updatePassword(User user, String password) {
         if (password == null || password.isEmpty()) {
             return Single.error(new IllegalArgumentException("Password required for UserProvider.updatePassword"));

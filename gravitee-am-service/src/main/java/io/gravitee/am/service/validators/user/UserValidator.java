@@ -19,10 +19,13 @@ package io.gravitee.am.service.validators.user;
 import io.gravitee.am.model.IUser;
 import io.gravitee.am.service.validators.Validator;
 import io.reactivex.Completable;
+import java.util.regex.Pattern;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
 public interface UserValidator extends Validator<IUser, Completable> {
+
+    Completable validateUsername(String username);
 }

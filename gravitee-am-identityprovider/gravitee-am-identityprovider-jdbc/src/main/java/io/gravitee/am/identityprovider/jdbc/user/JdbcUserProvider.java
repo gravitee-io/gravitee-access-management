@@ -170,9 +170,9 @@ public class JdbcUserProvider extends JdbcAbstractProvider<UserProvider> impleme
 
     private String tableExists(String protocol, String table) {
         if ("sqlserver".equalsIgnoreCase(protocol)) {
-            return "SELECT 1 FROM sysobjects WHERE name = '"+table+"' AND xtype = 'U'";
+            return "SELECT 1 FROM sysobjects WHERE name = '" + table + "' AND xtype = 'U'";
         } else {
-            return "SELECT 1 FROM information_schema.tables WHERE table_name = '"+table+"'";
+            return "SELECT 1 FROM information_schema.tables WHERE table_name = '" + table + "'";
         }
     }
 
@@ -198,9 +198,9 @@ public class JdbcUserProvider extends JdbcAbstractProvider<UserProvider> impleme
     @Override
     public Single<User> create(User user) {
         // set technical id
-        ((DefaultUser)user).setId(user.getId() != null ? user.getId() : RandomString.generate());
+        ((DefaultUser) user).setId(user.getId() != null ? user.getId() : RandomString.generate());
 
-       return Single.fromPublisher(connectionPool.create())
+        return Single.fromPublisher(connectionPool.create())
                 .flatMap(cnx -> {
                     return selectUserByUsername(cnx, user.getUsername())
                             .isEmpty()
@@ -341,6 +341,32 @@ public class JdbcUserProvider extends JdbcAbstractProvider<UserProvider> impleme
                     ((DefaultUser) updateUser).setId(id);
                     return Single.just(updateUser);
                 });
+    }
+
+    @Override
+    public Completable updateUsername(String id, String username) {
+        if (Strings.isNullOrEmpty(username)) {
+            return Completable.error(new IllegalArgumentException("Username required for UserProvider.updatePassword"));
+        }
+
+        var sql = String.format("UPDATE %s SET %s = %s WHERE %s = %s",
+                configuration.getUsersTable(),
+                configuration.getUsernameAttribute(),
+                getIndexParameter(1, configuration.getUsernameAttribute()),
+                configuration.getIdentifierAttribute(),
+                getIndexParameter(2, configuration.getIdentifierAttribute()));
+
+        Object[] args = {username, id};
+
+        return Completable.fromSingle(query(sql, args)
+                .flatMap(Result::getRowsUpdated)
+                .first(0)
+                .flatMap(rowsUpdated -> {
+                    if (rowsUpdated == 0) {
+                        return Single.error(new UserNotFoundException(id));
+                    }
+                    return Single.just(id);
+                }));
     }
 
     @Override
