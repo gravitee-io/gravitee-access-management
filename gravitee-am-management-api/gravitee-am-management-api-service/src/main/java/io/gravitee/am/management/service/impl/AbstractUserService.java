@@ -173,6 +173,7 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
                         ).flatMap(user -> identityProviderManager.getUserProvider(user.getSource())
                                 .switchIfEmpty(Single.error(new UserProviderNotFoundException(user.getSource())))
                                 .flatMap(userProvider -> userProvider.findByUsername(user.getUsername())
+                                        .switchIfEmpty(Maybe.error(new UserNotFoundException()))
                                         .flatMapSingle(idpUser -> userProvider.updateUsername(idpUser, username))
                                         .flatMap(idpUser -> {
                                             var oldUsername = user.getUsername();
