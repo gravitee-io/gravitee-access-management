@@ -158,7 +158,9 @@ public abstract class JdbcUserProvider_Test {
 
     @Test
     public void must_not_updateUsername_null_username() {
-        TestObserver testObserver = userProvider.updateUsername("5", null).test();
+        var user = new DefaultUser();
+        user.setId("5");
+        TestObserver testObserver = userProvider.updateUsername(user, null).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertError(IllegalArgumentException.class);
@@ -167,7 +169,9 @@ public abstract class JdbcUserProvider_Test {
 
     @Test
     public void must_not_updateUsername_empty_username() {
-        TestObserver testObserver = userProvider.updateUsername("5", "").test();
+        var user = new DefaultUser();
+        user.setId("5");
+        TestObserver testObserver = userProvider.updateUsername(user, "").test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertError(IllegalArgumentException.class);
@@ -176,7 +180,9 @@ public abstract class JdbcUserProvider_Test {
 
     @Test
     public void must_not_updateUsername_user_not_found() {
-        TestObserver testObserver = userProvider.updateUsername("6", "newUsername").test();
+        var user = new DefaultUser();
+        user.setId("6");
+        TestObserver testObserver = userProvider.updateUsername(user, "newUsername").test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertError(UserNotFoundException.class);
@@ -185,7 +191,10 @@ public abstract class JdbcUserProvider_Test {
 
     @Test
     public void must_updateUsername() {
-        TestObserver testObserver = userProvider.updateUsername("5", "newUsername").test();
+        var user = new DefaultUser();
+        user.setId("5");
+
+        TestObserver testObserver = userProvider.updateUsername(user, "newUsername").test();
         testObserver.awaitTerminalEvent();
         testObserver.assertComplete();
 

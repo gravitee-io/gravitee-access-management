@@ -172,19 +172,20 @@ public class MongoUserProvider extends MongoAbstractProvider implements UserProv
     }
 
     @Override
-    public Completable updateUsername(String id, String username) {
+    public Single<User> updateUsername(User user, String username) {
         if (Strings.isNullOrEmpty(username)) {
-            return Completable.error(new IllegalArgumentException("Username required for UserProvider.updateUsername"));
+            return Single.error(new IllegalArgumentException("Username required for UserProvider.updateUsername"));
         }
 
-        return Completable.fromSingle(findById(id)
-                .switchIfEmpty(Single.error(new UserNotFoundException(id)))
-                .flatMap(user -> {
+        return findById(user.getId())
+                .switchIfEmpty(Maybe.error(new UserNotFoundException(user.getId())))
+                .flatMapSingle(foundUser -> {
                     var updates = Updates.combine(
                             Updates.set(configuration.getUsernameField(), username),
                             Updates.set(FIELD_UPDATED_AT, new Date()));
-                    return Single.fromPublisher(usersCollection.updateOne(eq(FIELD_ID, id), updates));
-                }));
+                    return Single.fromPublisher(usersCollection.updateOne(eq(FIELD_ID, user.getId()), updates))
+                            .flatMap(updateResult -> findById(user.getId()).toSingle());
+                });
     }
 
     @Override

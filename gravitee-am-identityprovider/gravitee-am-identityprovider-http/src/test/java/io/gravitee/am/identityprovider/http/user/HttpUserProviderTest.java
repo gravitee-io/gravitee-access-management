@@ -223,6 +223,28 @@ public class HttpUserProviderTest {
     }
 
     @Test
+    public void must_update_username_with_user() {
+        DefaultUser user = new DefaultUser("johndoe");
+        user.setId("123456789");
+
+        stubFor(put(urlPathEqualTo("/api/users/123456789"))
+                .withHeader(HttpHeaders.CONTENT_TYPE, containing("application/"))
+                .withRequestBody(matching(".*"))
+                .willReturn(okJson("{\"id\" : \"123456789\", \"username\" : \"newUsername\"}")));
+
+        this.mapper.setMappers(Map.of("username", "username", "id", "id", "copy_of_id", "id"));
+
+        TestObserver<User> testObserver = userProvider.updateUsername(user, "newUsername").test();
+        testObserver.awaitTerminalEvent();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(u -> "123456789".equals(u.getId()));
+        testObserver.assertValue(u -> "newUsername".equals(u.getUsername()));
+        testObserver.assertValue(u -> u.getAdditionalInformation().containsKey("copy_of_id")
+                && "123456789".equals(u.getAdditionalInformation().get("copy_of_id")));
+    }
+
+    @Test
     public void shouldUpdatePasswrd() {
         DefaultUser user = new DefaultUser("johndoe");
         user.setId("123456789");

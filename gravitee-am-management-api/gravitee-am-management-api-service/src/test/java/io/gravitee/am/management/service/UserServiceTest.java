@@ -763,7 +763,7 @@ public class UserServiceTest {
         final DefaultUser defaultUser = new DefaultUser(user.getUsername());
         defaultUser.setId("idp-user-id");
         when(userProvider.findByUsername(anyString())).thenReturn(Maybe.just(defaultUser));
-        when(userProvider.updateUsername(anyString(), anyString())).thenReturn(Completable.error(new InvalidUserException("Could not update find user")));
+        when(userProvider.updateUsername(any(), anyString())).thenReturn(Single.error(new InvalidUserException("Could not update find user")));
 
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
 
@@ -795,17 +795,17 @@ public class UserServiceTest {
         final DefaultUser defaultUser = new DefaultUser(user.getUsername());
         defaultUser.setId("idp-user-id");
         when(userProvider.findByUsername(anyString())).thenReturn(Maybe.just(defaultUser));
-        when(userProvider.updateUsername(anyString(), anyString())).thenReturn(Completable.complete());
+        when(userProvider.updateUsername(any(), anyString())).thenReturn(Single.just(defaultUser));
 
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
 
         var observer = userService.updateUsername(DOMAIN, domain.getId(), user.getId(), user.getUsername(), null).test();
 
         observer.awaitTerminalEvent();
-        observer.assertComplete();
+        observer.assertError(TechnicalManagementException.class);
 
         verify(commonUserService, times(1)).update(any());
-        verify(userProvider, times(2)).updateUsername(anyString(), anyString());
+        verify(userProvider, times(2)).updateUsername(any(), anyString());
     }
 
     @Test
@@ -828,7 +828,7 @@ public class UserServiceTest {
         final DefaultUser defaultUser = new DefaultUser(user.getUsername());
         defaultUser.setId("idp-user-id");
         when(userProvider.findByUsername(anyString())).thenReturn(Maybe.just(defaultUser));
-        when(userProvider.updateUsername(anyString(), anyString())).thenReturn(Completable.complete());
+        when(userProvider.updateUsername(any(), anyString())).thenReturn(Single.just(defaultUser));
 
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
 
@@ -838,6 +838,6 @@ public class UserServiceTest {
         observer.assertComplete();
 
         verify(commonUserService, times(1)).update(any());
-        verify(userProvider, times(1)).updateUsername(anyString(), anyString());
+        verify(userProvider, times(1)).updateUsername(any(), anyString());
     }
 }
