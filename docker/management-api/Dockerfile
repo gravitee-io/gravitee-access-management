@@ -20,6 +20,9 @@ LABEL maintainer="contact@graviteesource.com"
 ARG GRAVITEEAM_VERSION=0
 ENV GRAVITEEIO_HOME /opt/graviteeio-am-management-api
 
+RUN addgroup -g 1000 graviteeio \
+    && adduser -D -H -u 1001 graviteeio --ingroup graviteeio
+
 RUN apk update \
 	&& apk add --update --no-cache zip unzip netcat-openbsd wget \
 	&& wget --no-check-certificate  -O /tmp/gravitee-am-management-api-standalone-${GRAVITEEAM_VERSION}.zip https://download.gravitee.io/graviteeio-am/components/gravitee-am-management-api/gravitee-am-management-api-standalone-${GRAVITEEAM_VERSION}.zip \
@@ -27,9 +30,11 @@ RUN apk update \
 	&& apk del zip unzip netcat-openbsd wget \
     && mv /tmp/gravitee-am-management-api-standalone-${GRAVITEEAM_VERSION} ${GRAVITEEIO_HOME} \
     && rm -rf /tmp/* \
-	&& chgrp -R 0 ${GRAVITEEIO_HOME} \
+	&& chgrp -R graviteeio ${GRAVITEEIO_HOME} \
     && chmod -R g=u ${GRAVITEEIO_HOME}
 
 WORKDIR ${GRAVITEEIO_HOME}
 EXPOSE 8093
 ENTRYPOINT ["./bin/gravitee"]
+
+USER graviteeio
