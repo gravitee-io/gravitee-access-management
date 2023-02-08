@@ -344,9 +344,9 @@ public class JdbcUserProvider extends JdbcAbstractProvider<UserProvider> impleme
     }
 
     @Override
-    public Completable updateUsername(String id, String username) {
+    public Single<User> updateUsername(User user, String username) {
         if (Strings.isNullOrEmpty(username)) {
-            return Completable.error(new IllegalArgumentException("Username required for UserProvider.updatePassword"));
+            return Single.error(new IllegalArgumentException("Username required for UserProvider.updatePassword"));
         }
 
         var sql = String.format("UPDATE %s SET %s = %s WHERE %s = %s",
@@ -356,17 +356,18 @@ public class JdbcUserProvider extends JdbcAbstractProvider<UserProvider> impleme
                 configuration.getIdentifierAttribute(),
                 getIndexParameter(2, configuration.getIdentifierAttribute()));
 
-        Object[] args = {username, id};
+        Object[] args = {username, user.getId()};
 
-        return Completable.fromSingle(query(sql, args)
+        return query(sql, args)
                 .flatMap(Result::getRowsUpdated)
                 .first(0)
                 .flatMap(rowsUpdated -> {
                     if (rowsUpdated == 0) {
-                        return Single.error(new UserNotFoundException(id));
+                        return Single.error(new UserNotFoundException(user.getId()));
                     }
-                    return Single.just(id);
-                }));
+                    ((DefaultUser) user).setUsername(username);
+                    return Single.just(user);
+                });
     }
 
     @Override

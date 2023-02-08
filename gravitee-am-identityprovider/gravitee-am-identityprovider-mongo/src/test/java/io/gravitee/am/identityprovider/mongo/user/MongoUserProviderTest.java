@@ -208,7 +208,10 @@ public class MongoUserProviderTest {
 
     @Test
     public void must_not_updateUsername_null_username() {
-        TestObserver testObserver = userProvider.updateUsername("5", null).test();
+        var user = new DefaultUser();
+        user.setId("5");
+
+        TestObserver testObserver = userProvider.updateUsername(user, null).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertError(IllegalArgumentException.class);
@@ -217,7 +220,10 @@ public class MongoUserProviderTest {
 
     @Test
     public void must_not_updateUsername_empty_username() {
-        TestObserver testObserver = userProvider.updateUsername("5", "").test();
+        var user = new DefaultUser();
+        user.setId("6");
+
+        TestObserver testObserver = userProvider.updateUsername(user, "").test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertError(IllegalArgumentException.class);
@@ -226,7 +232,9 @@ public class MongoUserProviderTest {
 
     @Test
     public void must_not_updateUsername_user_not_found() {
-        TestObserver testObserver = userProvider.updateUsername("6", "newUsername").test();
+        var user = new DefaultUser();
+        user.setId("6");
+        TestObserver testObserver = userProvider.updateUsername(user, "newusername").test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertError(UserNotFoundException.class);
@@ -235,10 +243,10 @@ public class MongoUserProviderTest {
 
     @Test
     public void must_updateUsername() {
+        var user = new DefaultUser();
+        user.setId(userProvider.findByUsername("changeme").blockingGet().getId());
 
-        var id = userProvider.findByUsername("changeme").blockingGet().getId();
-
-        TestObserver testObserver = userProvider.updateUsername(id, "newusername").test();
+        TestObserver testObserver = userProvider.updateUsername(user, "newusername").test();
         testObserver.awaitTerminalEvent();
         testObserver.assertComplete();
 
