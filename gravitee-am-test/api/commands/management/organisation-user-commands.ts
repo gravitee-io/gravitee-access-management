@@ -15,7 +15,7 @@
  */
 import {getUserApi} from "@management-commands/service/utils";
 
-export const createUser = (accessToken, user) =>
+export const createOrganisationUser = (accessToken, user) =>
     getUserApi(accessToken).createOrganisationUser({
         organizationId: process.env.AM_DEF_ORG_ID,
         user: user

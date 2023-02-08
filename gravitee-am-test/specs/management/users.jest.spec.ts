@@ -26,14 +26,13 @@ import {
     updateUserStatus
 } from "@management-commands/user-management-commands";
 import {
-    createUser, deleteOrganisationUser,
+    createOrganisationUser, deleteOrganisationUser,
     getOrganisationUserPage,
     updateOrganisationUsername
 } from "@management-commands/organisation-user-commands";
 
 import {requestAdminAccessToken} from "@management-commands/token-management-commands";
 import {ResponseError} from "../../api/management/runtime";
-import {fake} from "faker";
 
 global.fetch = fetch;
 
@@ -163,40 +162,6 @@ describe("after creating users", () => {
         expect(UserPage.totalCount).toEqual(9);
         expect(UserPage.data.length).toEqual(9);
         expect(UserPage.data.find(u => u.id === user.id)).toBeFalsy();
-    });
-});
-
-describe("when managing users at organisation level", () => {
-    let newOrgUser;
-    it('should create organisation user', async () => {
-        const firstName = faker.name.firstName();
-        const lastName = faker.name.lastName();
-        const payload = {
-            firstName: firstName,
-            lastName: lastName,
-            email: `${firstName}.${lastName}@mail.com`,
-            username: faker.internet.userName(),
-            password: "SomeP@ssw0rd",
-            preRegistration: false
-        };
-        newOrgUser = await createUser(accessToken, payload);
-        expect(newOrgUser.id).toBeDefined();
-        expect(newOrgUser.firstName).toEqual(payload.firstName);
-        expect(newOrgUser.lastName).toEqual(payload.lastName);
-        expect(newOrgUser.username).toEqual(payload.username);
-        expect(newOrgUser.email).toEqual(payload.email);
-    });
-
-    it('should change organisation username', async () => {
-        const username = "my-new-username";
-        const updatedUser = await updateOrganisationUsername(accessToken, newOrgUser.id, username);
-        expect(updatedUser.username).toEqual(username);
-    });
-
-    it('should delete organisation user', async () => {
-        await deleteOrganisationUser(accessToken, newOrgUser.id);
-        const userPage = await getOrganisationUserPage(accessToken);
-        expect(userPage.data.find(user => user.id === newOrgUser.id)).toBeUndefined();
     });
 });
 

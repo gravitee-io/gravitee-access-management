@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.identityprovider.gravitee.user;
 
+import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.reactivex.Completable;
@@ -29,7 +30,7 @@ public class GraviteeUserProvider implements UserProvider {
 
     @Override
     public Maybe<User> findByUsername(String username) {
-        return Maybe.empty();
+        return Maybe.just(new DefaultUser(username));
     }
 
     @Override
