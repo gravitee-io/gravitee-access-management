@@ -32,8 +32,10 @@ ENV GRAVITEE_AM_HOME /opt/graviteeio-am-management-api
 
 COPY --from=build-env /tmp/graviteeio-ee-am-full-${GRAVITEEIO_AM_VERSION}/gravitee-am-management-api-standalone-${GRAVITEEIO_AM_VERSION}/ /opt/graviteeio-am-management-api/
 
-RUN chgrp -R 0 ${GRAVITEE_AM_HOME} && \
-    chmod -R g=u ${GRAVITEE_AM_HOME}
+RUN addgroup -g 1000 graviteeio \
+    && adduser -D -H -u 1001 graviteeio --ingroup graviteeio \
+    && chgrp -R graviteeio ${GRAVITEEIO_HOME} \
+    && chmod -R g=u ${GRAVITEEIO_HOME}
 
 WORKDIR ${GRAVITEE_AM_HOME}
 
@@ -42,3 +44,5 @@ EXPOSE 8093
 VOLUME ["/opt/graviteeio-am-management-api/logs"]
 
 CMD ["./bin/gravitee"]
+
+USER graviteeio

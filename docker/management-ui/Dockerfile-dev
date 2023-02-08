@@ -30,3 +30,5 @@ RUN mv /tmp/gravitee-am-webui-${GRAVITEEAM_VERSION}/* ${WWW_TARGET}
 ADD config /etc/confd
 
 CMD ["sh", "/run.sh"]
+
+USER nginx

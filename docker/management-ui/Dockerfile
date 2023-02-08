@@ -36,3 +36,6 @@ RUN apk update \
 ADD config /etc/confd
 
 CMD ["sh", "/run.sh"]
+
+USER nginx
+

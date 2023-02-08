@@ -23,6 +23,9 @@ ARG GRAVITEEIO_DOWNLOAD_URL=https://download.gravitee.io/graviteeio-ee/am/distri
 ARG GRAVITEEIO_HOME="/opt/graviteeio-am-management-api"
 ENV GRAVITEEIO_HOME="/opt/graviteeio-am-management-api"
 
+RUN addgroup -g 1000 graviteeio \
+    && adduser -D -H -u 1001 graviteeio --ingroup graviteeio
+
 RUN apk update \
     && apk add --update --no-cache wget unzip \
 	&& wget ${GRAVITEEIO_DOWNLOAD_URL}/graviteeio-ee-am-full-${GRAVITEEIO_AM_VERSION}.zip --no-check-certificate -P /tmp \
@@ -32,10 +35,12 @@ RUN apk update \
 	&& cp -fR /tmp/graviteeio-ee-am-full-${GRAVITEEIO_AM_VERSION}/graviteeio-am-management-api-${GRAVITEEIO_AM_VERSION}/* ${GRAVITEEIO_HOME} \
 	&& rm -rf /tmp/* \
     && rm -rf /var/lib/apt/lists/* \
-	&& chgrp -R 0 ${GRAVITEEIO_HOME} \
-	&& chmod -R g=u ${GRAVITEEIO_HOME}
+	&& chgrp -R graviteeio ${GRAVITEEIO_HOME} \
+    && chmod -R g=u ${GRAVITEEIO_HOME}
 
 WORKDIR /opt/graviteeio-am-management-api
 
 EXPOSE 8093
 CMD ["./bin/gravitee"]
+
+USER graviteeio
