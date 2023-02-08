@@ -45,8 +45,7 @@ public class UserNotFoundException extends AbstractNotFoundException {
         if (id != null) {
             return "User [" + id + "] can not be found.";
         } else if (username != null) {
-            final String usernameMessage = "User [" + username + "] can not be found";
-            return domain == null ? usernameMessage + "." : usernameMessage + " for domain[" + domain + "].";
+            return  "User [" + username + "] can not be found for domain[" + domain + "].";
         } else {
             return "No user found";
         }
