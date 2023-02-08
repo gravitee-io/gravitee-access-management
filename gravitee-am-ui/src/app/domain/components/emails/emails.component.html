@@ -24,7 +24,7 @@
                  [rows]='emails'
                  [sorts]="[{prop: 'enabled', dir: 'desc'}]"
                  [rowClass]="getRowClass">
-    <ngx-datatable-column name="Templates" [flexGrow]="4" [cellClass]="'email-template-name-cell'">
+    <ngx-datatable-column name="Name" [flexGrow]="4" [cellClass]="'email-template-name-cell'">
       <ng-template let-row="row" ngx-datatable-cell-template>
         <div class="email-template-header" fxLayout="row">
           <div class="email-template-icon">
@@ -37,7 +37,7 @@
         </div>
       </ng-template>
     </ngx-datatable-column>
-    <ngx-datatable-column name="" [flexGrow]="1">
+    <ngx-datatable-column name="Action" [flexGrow]="1">
       <ng-template let-row="row" ngx-datatable-cell-template>
         <div fxLayout="row" class="emails-actions">
           <mat-icon *ngIf="!row.enabled" matTooltip="Domain settings {{appId ? 'or application type ' : ''}} does not allow '{{row.name}}' email template customisation">block</mat-icon>
