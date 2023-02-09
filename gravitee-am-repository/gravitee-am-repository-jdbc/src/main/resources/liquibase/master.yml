@@ -95,4 +95,6 @@ databaseChangeLog:
       - file: liquibase/changelogs/v3_21_0/3.21.0-last-username-reset.yml
   - include:
       - file: liquibase/changelogs/v3_21_0/3.21.0-update-users-table.yml
+  - include:
+      - file: liquibase/changelogs/v3_21_0/3.21.0-update-webauthn_credentials-table.yml
 

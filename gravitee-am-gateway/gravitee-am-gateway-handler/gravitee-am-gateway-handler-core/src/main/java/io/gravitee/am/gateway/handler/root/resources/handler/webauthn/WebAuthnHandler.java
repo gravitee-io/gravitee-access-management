@@ -34,7 +34,9 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.FactorService;
 import io.gravitee.am.service.exception.CredentialNotFoundException;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -66,7 +68,7 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
     private static final Logger logger = LoggerFactory.getLogger(WebAuthnHandler.class);
     private FactorManager factorManager;
     private FactorService factorService;
-    private CredentialService credentialService;
+    protected CredentialService credentialService;
     private UserAuthenticationManager userAuthenticationManager;
     protected Domain domain;
 
@@ -240,26 +242,62 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
                                     String username,
                                     String credentialId,
                                     Handler<AsyncResult<io.vertx.ext.auth.User>> handler) {
-        credentialService.findByCredentialId(ReferenceType.DOMAIN, domain.getId(), credentialId)
-                .firstElement()
-                .switchIfEmpty(Maybe.error(new CredentialNotFoundException(credentialId)))
-                .flatMapSingle(credential -> userAuthenticationManager.connectWithPasswordless(client, credential.getUserId(), new EndUserAuthentication(username, null, authenticationContext)))
+        authenticateUser(client, authenticationContext, username, credentialId)
                 .subscribe(
-                        user -> handler.handle(Future.succeededFuture(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user))),
+                        user -> handler.handle(Future.succeededFuture(user)),
                         error -> handler.handle(Future.failedFuture(error))
                 );
     }
 
+    protected Single<io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User> authenticateUser(Client client,
+                                                                                                      AuthenticationContext authenticationContext,
+                                                                                                      String username,
+                                                                                                      String credentialId) {
+        return credentialService.findByCredentialId(ReferenceType.DOMAIN, domain.getId(), credentialId)
+                .firstElement()
+                .switchIfEmpty(Single.error(new CredentialNotFoundException(credentialId)))
+                .flatMap(credential -> userAuthenticationManager.connectWithPasswordless(client, credential.getUserId(), new EndUserAuthentication(username, null, authenticationContext)))
+                .map(user -> new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user))
+                .doOnError(error -> logger.error("An error has occurred while authenticating user {}", username, error));
+    }
+
     protected void updateCredential(AuthenticationContext authenticationContext, String credentialId, String userId, Handler<AsyncResult<Void>> handler) {
-        Credential credential = new Credential();
-        credential.setUserId(userId);
-        credential.setUserAgent(String.valueOf(authenticationContext.get(Claims.user_agent)));
-        credential.setIpAddress(String.valueOf(authenticationContext.get(Claims.ip_address)));
-        credentialService.update(ReferenceType.DOMAIN, domain.getId(), credentialId, credential)
+        updateCredential(authenticationContext, credentialId, userId, false, handler);
+    }
+
+    protected void updateCredential(AuthenticationContext authenticationContext,
+                                    String credentialId,
+                                    String userId,
+                                    boolean afterLogin,
+                                    Handler<AsyncResult<Void>> handler) {
+        updateCredential(authenticationContext, credentialId, userId, afterLogin)
                 .subscribe(
                         () -> handler.handle(Future.succeededFuture()),
                         error -> handler.handle(Future.failedFuture(error))
                 );
+    }
+
+    protected Completable updateCredential(AuthenticationContext authenticationContext, String credentialId, String userId) {
+        return updateCredential(authenticationContext, credentialId, userId, false);
+    }
+
+    protected Completable updateCredential(AuthenticationContext authenticationContext,
+                                    String credentialId,
+                                    String userId,
+                                    boolean afterLogin) {
+        Credential credential = new Credential();
+        credential.setUserId(userId);
+        credential.setUserAgent(String.valueOf(authenticationContext.get(Claims.user_agent)));
+        credential.setIpAddress(String.valueOf(authenticationContext.get(Claims.ip_address)));
+        // update last checked date only after a passwordless login and only if the option is enabled
+        if (afterLogin) {
+            final WebAuthnSettings webAuthnSettings = domain.getWebAuthnSettings();
+            if (webAuthnSettings != null && webAuthnSettings.isEnforceAuthenticatorIntegrity()) {
+                credential.setLastCheckedAt(new Date());
+            }
+        }
+        return credentialService.update(ReferenceType.DOMAIN, domain.getId(), credentialId, credential)
+                .doOnError(error -> logger.error("An error has occurred while updating user {} webauthn credential", userId, error));
     }
 
     public static String getOrigin(WebAuthnSettings settings) {

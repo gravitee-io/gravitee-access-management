@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.root.resources.handler.login;
 
 import com.google.common.net.HttpHeaders;
+import io.gravitee.am.common.exception.authentication.AccountDeviceIntegrityException;
 import io.gravitee.am.common.exception.authentication.AccountEnforcePasswordException;
 import io.gravitee.am.common.exception.authentication.AccountPasswordExpiredException;
 import io.gravitee.am.common.exception.authentication.AuthenticationException;
@@ -58,6 +59,8 @@ public class LoginFailureHandler implements Handler<RoutingContext> {
                 handleException(routingContext, ((AccountPasswordExpiredException) throwable).getErrorCode(), throwable.getMessage());
             } else if (throwable instanceof AccountEnforcePasswordException) {
                 handleException(routingContext, ((AccountEnforcePasswordException) throwable).getErrorCode(), throwable.getMessage());
+            } else if (throwable instanceof AccountDeviceIntegrityException) {
+                handleException(routingContext, ((AccountDeviceIntegrityException) throwable).getErrorCode(), throwable.getMessage());
             } else if (throwable instanceof AuthenticationException) {
                 handleException(routingContext, "invalid_user", "Invalid or unknown user");
             } else {

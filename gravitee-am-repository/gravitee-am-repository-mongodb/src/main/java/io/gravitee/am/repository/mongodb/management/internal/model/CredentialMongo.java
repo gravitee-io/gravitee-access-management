@@ -40,6 +40,7 @@ public class CredentialMongo extends Auditable {
     private String ipAddress;
     private String userAgent;
     private Date accessedAt;
+    private Date lastCheckedAt;
 
     public String getId() {
         return id;
@@ -151,5 +152,13 @@ public class CredentialMongo extends Auditable {
 
     public void setAccessedAt(Date accessedAt) {
         this.accessedAt = accessedAt;
+    }
+
+    public Date getLastCheckedAt() {
+        return lastCheckedAt;
+    }
+
+    public void setLastCheckedAt(Date lastCheckedAt) {
+        this.lastCheckedAt = lastCheckedAt;
     }
 }
