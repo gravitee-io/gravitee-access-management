@@ -139,6 +139,7 @@
         <!-- Sonar - Jacoco -->
         <jacoco-maven-plugin.version>0.8.7</jacoco-maven-plugin.version>
         <surefire.version>2.22.2</surefire.version>
+        <protobuf-java.version>3.19.6</protobuf-java.version>
     </properties>
 
     <dependencyManagement>
@@ -257,6 +258,12 @@
                 <artifactId>tink</artifactId>
                 <version>${tink.version}</version>
             </dependency>
+            <dependency>
+                <groupId>com.google.protobuf</groupId>
+                <artifactId>protobuf-java</artifactId>
+                <version>${protobuf-java.version}</version>
+            </dependency>
+
             <dependency>
                 <groupId>javax.annotation</groupId>
                 <artifactId>javax.annotation-api</artifactId>
