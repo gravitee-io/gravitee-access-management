@@ -32,6 +32,8 @@ public class WebAuthnSettingsMongo {
     private String attestationConveyancePreference;
     private boolean forceRegistration;
     private Document certificates;
+    private boolean enforceAuthenticatorIntegrity;
+    private Integer enforceAuthenticatorIntegrityMaxAge;
 
     public String getOrigin() {
         return origin;
@@ -103,5 +105,21 @@ public class WebAuthnSettingsMongo {
 
     public void setCertificates(Document certificates) {
         this.certificates = certificates;
+    }
+
+    public boolean isEnforceAuthenticatorIntegrity() {
+        return enforceAuthenticatorIntegrity;
+    }
+
+    public void setEnforceAuthenticatorIntegrity(boolean enforceAuthenticatorIntegrity) {
+        this.enforceAuthenticatorIntegrity = enforceAuthenticatorIntegrity;
+    }
+
+    public Integer getEnforceAuthenticatorIntegrityMaxAge() {
+        return enforceAuthenticatorIntegrityMaxAge;
+    }
+
+    public void setEnforceAuthenticatorIntegrityMaxAge(Integer enforceAuthenticatorIntegrityMaxAge) {
+        this.enforceAuthenticatorIntegrityMaxAge = enforceAuthenticatorIntegrityMaxAge;
     }
 }
