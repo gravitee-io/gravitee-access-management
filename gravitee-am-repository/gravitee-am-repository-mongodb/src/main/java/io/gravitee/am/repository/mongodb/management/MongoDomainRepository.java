@@ -447,6 +447,8 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
                 AttestationConveyancePreference.fromString(webAuthnSettingsMongo.getAttestationConveyancePreference()) : null);
         webAuthnSettings.setForceRegistration(webAuthnSettingsMongo.isForceRegistration());
         webAuthnSettings.setCertificates(webAuthnSettingsMongo.getCertificates());
+        webAuthnSettings.setEnforceAuthenticatorIntegrity(webAuthnSettingsMongo.isEnforceAuthenticatorIntegrity());
+        webAuthnSettings.setEnforceAuthenticatorIntegrityMaxAge(webAuthnSettingsMongo.getEnforceAuthenticatorIntegrityMaxAge());
 
         return webAuthnSettings;
     }
@@ -466,6 +468,8 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         webAuthnSettingsMongo.setAttestationConveyancePreference(webAuthnSettings.getAttestationConveyancePreference() != null ? webAuthnSettings.getAttestationConveyancePreference().getValue() : null);
         webAuthnSettingsMongo.setForceRegistration(webAuthnSettings.isForceRegistration());
         webAuthnSettingsMongo.setCertificates(webAuthnSettings.getCertificates() != null ? new Document(webAuthnSettings.getCertificates()) : null);
+        webAuthnSettingsMongo.setEnforceAuthenticatorIntegrity(webAuthnSettings.isEnforceAuthenticatorIntegrity());
+        webAuthnSettingsMongo.setEnforceAuthenticatorIntegrityMaxAge(webAuthnSettings.getEnforceAuthenticatorIntegrityMaxAge());
         return webAuthnSettingsMongo;
     }
 

@@ -481,6 +481,8 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(userActivityHandler)
                 .handler(webAuthnRememberDeviceHandler)
                 .handler(new WebAuthnLoginPostEndpoint());
+        rootRouter.route(PATH_WEBAUTHN_LOGIN)
+                .failureHandler(new LoginFailureHandler(authenticationFlowContextService));
         rootRouter.route(PATH_WEBAUTHN_LOGIN_CREDENTIALS)
                 .handler(clientRequestParseHandler)
                 .handler(webAuthnAccessHandler)

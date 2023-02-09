@@ -66,7 +66,7 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
     private static final Logger logger = LoggerFactory.getLogger(WebAuthnHandler.class);
     private FactorManager factorManager;
     private FactorService factorService;
-    private CredentialService credentialService;
+    protected CredentialService credentialService;
     private UserAuthenticationManager userAuthenticationManager;
     protected Domain domain;
 
@@ -251,10 +251,25 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
     }
 
     protected void updateCredential(AuthenticationContext authenticationContext, String credentialId, String userId, Handler<AsyncResult<Void>> handler) {
+        updateCredential(authenticationContext, credentialId, userId, false, handler);
+    }
+
+    protected void updateCredential(AuthenticationContext authenticationContext,
+                                    String credentialId,
+                                    String userId,
+                                    boolean afterLogin,
+                                    Handler<AsyncResult<Void>> handler) {
         Credential credential = new Credential();
         credential.setUserId(userId);
         credential.setUserAgent(String.valueOf(authenticationContext.get(Claims.user_agent)));
         credential.setIpAddress(String.valueOf(authenticationContext.get(Claims.ip_address)));
+        // update last checked date only after a passwordless login and only if the option is enabled
+        if (afterLogin) {
+            final WebAuthnSettings webAuthnSettings = domain.getWebAuthnSettings();
+            if (webAuthnSettings != null && webAuthnSettings.isEnforceAuthenticatorIntegrity()) {
+                credential.setLastCheckedAt(new Date());
+            }
+        }
         credentialService.update(ReferenceType.DOMAIN, domain.getId(), credentialId, credential)
                 .subscribe(
                         () -> handler.handle(Future.succeededFuture()),

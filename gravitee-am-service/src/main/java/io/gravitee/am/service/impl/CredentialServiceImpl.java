@@ -140,6 +140,7 @@ public class CredentialServiceImpl implements CredentialService {
                     credentialToUpdate.setUserAgent(credential.getUserAgent());
                     credentialToUpdate.setUpdatedAt(new Date());
                     credentialToUpdate.setAccessedAt(credentialToUpdate.getUpdatedAt());
+                    credentialToUpdate.setLastCheckedAt(credential.getLastCheckedAt());
                     return credentialRepository.update(credentialToUpdate);
                 })
                 .ignoreElements();

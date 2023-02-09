@@ -15,19 +15,27 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.handler.webauthn;
 
+import io.gravitee.am.common.exception.authentication.AccountDeviceIntegrityException;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.login.WebAuthnSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.FactorService;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
+import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
+import io.vertx.ext.auth.webauthn.AttestationCertificates;
+import io.vertx.ext.auth.webauthn.Authenticator;
 import io.vertx.ext.auth.webauthn.WebAuthnCredentials;
 import io.vertx.rxjava3.ext.auth.webauthn.WebAuthn;
 import io.vertx.rxjava3.ext.web.RoutingContext;
@@ -36,6 +44,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.thymeleaf.util.StringUtils;
 
+import java.time.Instant;
+import java.util.Date;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -43,7 +54,6 @@ import org.thymeleaf.util.StringUtils;
 public class WebAuthnLoginHandler extends WebAuthnHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(WebAuthnLoginHandler.class);
-    private static final String DEFAULT_ORIGIN = "http://localhost:8092";
     private final WebAuthn webAuthn;
     private final String origin;
 
@@ -156,50 +166,109 @@ public class WebAuthnLoginHandler extends WebAuthnHandler {
 
         // authenticate the user
         webAuthn.rxAuthenticate(
-                // authInfo
-                new WebAuthnCredentials()
-                        .setOrigin(origin)
-                        .setChallenge(session.get(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY))
-                        .setUsername(session.get(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY))
-                        .setWebauthn(webauthnResp))
-                .doOnSuccess(u -> {
-                    // create the authentication context
-                    final AuthenticationContext authenticationContext = createAuthenticationContext(ctx);
-                    // authenticate the user
-                    authenticateUser(client, authenticationContext, username, credentialId, h -> {
-                        if (h.failed()) {
-                            logger.error("An error has occurred while authenticating user {}", username, h.cause());
-                            ctx.fail(401);
-                            return;
-                        }
-                        final User user = h.result();
-                        // save the user into the context
-                        ctx.getDelegate().setUser(user);
-                        ctx.put(ConstantKeys.USER_CONTEXT_KEY, ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) user).getUser());
-                        // the user has upgraded from unauthenticated to authenticated
-                        // session should be upgraded as recommended by owasp
-                        session.regenerateId();
-                        final io.gravitee.am.model.User authenticatedUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) user).getUser();
-                        // update the credential
-                        updateCredential(authenticationContext, credentialId, authenticatedUser.getId(), credentialHandler -> {
-                            if (credentialHandler.failed()) {
-                                logger.error("An error has occurred while authenticating user {}", username, credentialHandler.cause());
-                                ctx.fail(401);
-                                return;
-                            }
-                            manageFido2FactorEnrollment(ctx, client, credentialId, authenticatedUser);
-                        });
-                    });
-                })
-                .doOnError(throwable -> {
-                    logger.error("Unexpected exception", throwable);
-                    ctx.fail(throwable.getCause());
-                })
+                        // authInfo
+                        new WebAuthnCredentials()
+                                .setOrigin(origin)
+                                .setChallenge(session.get(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY))
+                                .setUsername(session.get(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY))
+                                .setWebauthn(webauthnResp))
                 .doFinally(() -> {
                     // invalidate the challenge
                     session.remove(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY);
                     session.remove(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY);
-                })
-                .subscribe();
+                }).subscribe(u -> {
+                            // create the authentication context
+                            final AuthenticationContext authenticationContext = createAuthenticationContext(ctx);
+                            // authenticate the user
+                            authenticateUser(client, authenticationContext, username, credentialId, h -> {
+                                if (h.failed()) {
+                                    logger.error("An error has occurred while authenticating user {}", username, h.cause());
+                                    ctx.fail(401);
+                                    return;
+                                }
+                                final User user = h.result();
+                                final io.gravitee.am.model.User authenticatedUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) user).getUser();
+                                // check user authenticator conformity
+                                checkAuthenticatorConformity(credentialId, ah -> {
+                                    if (ah.failed()) {
+                                        logger.error("User {} webauthn authenticator {} has not been trusted", username, credentialId, h.cause());
+                                        ctx.fail(new AccountDeviceIntegrityException("Invalid user webauthn authenticator"));
+                                        return;
+                                    }
+                                    // save the user into the context
+                                    ctx.getDelegate().setUser(user);
+                                    ctx.put(ConstantKeys.USER_CONTEXT_KEY, ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) user).getUser());
+                                    // the user has upgraded from unauthenticated to authenticated
+                                    // session should be upgraded as recommended by owasp
+                                    session.regenerateId();
+                                    // update the credential
+                                    updateCredential(authenticationContext, credentialId, authenticatedUser.getId(), true, credentialHandler -> {
+                                        if (credentialHandler.failed()) {
+                                            logger.error("An error has occurred while authenticating user {}", username, credentialHandler.cause());
+                                            ctx.fail(401);
+                                            return;
+                                        }
+                                        manageFido2FactorEnrollment(ctx, client, credentialId, authenticatedUser);
+                                    });
+                                });
+                            });
+                        },
+                        throwable -> {
+                            logger.error("Unexpected exception", throwable);
+                            ctx.fail(throwable.getCause());
+                        });
     }
+
+    private void checkAuthenticatorConformity(String credentialId,
+                                              Handler<AsyncResult<User>> handler) {
+        final WebAuthnSettings webAuthnSettings = domain.getWebAuthnSettings();
+        // option is disabled, continue
+        if (webAuthnSettings == null || !webAuthnSettings.isEnforceAuthenticatorIntegrity()) {
+            handler.handle(Future.succeededFuture());
+            return;
+        }
+        // max Age is not defined, continue
+        final Integer maxAge = webAuthnSettings.getEnforceAuthenticatorIntegrityMaxAge();
+        if (maxAge == null) {
+            logger.warn("WebAuthn enforce authenticator integrity is enabled but max age has not been set");
+            handler.handle(Future.succeededFuture());
+            return;
+        }
+
+        credentialService.findByCredentialId(ReferenceType.DOMAIN, domain.getId(), credentialId)
+                .filter(credential -> {
+                    final String fmt = credential.getAttestationStatementFormat();
+                    final Date lastCheckedAt = credential.getLastCheckedAt();
+                    // if the attestation "fmt" set to "none",
+                    // then no attestation is provided, and you don’t have anything to verify.
+                    if ("none".equals(fmt)) {
+                        return false;
+                    }
+                    // check only credential with elapsed last checked date
+                    return (lastCheckedAt == null || Instant.now().isAfter(lastCheckedAt.toInstant().plusSeconds(maxAge)));
+                })
+                .firstElement()
+                .map(credential -> {
+                    Authenticator authenticator = new Authenticator();
+                    authenticator.setUserName(credential.getUsername());
+                    authenticator.setCredID(credential.getCredentialId());
+                    authenticator.setAaguid(credential.getAaguid());
+                    authenticator.setCounter(credential.getCounter());
+                    authenticator.setPublicKey(credential.getPublicKey());
+                    authenticator.setFmt(credential.getAttestationStatementFormat());
+                    JsonObject jsonObject = new JsonObject(credential.getAttestationStatement());
+                    authenticator.setAttestationCertificates(new AttestationCertificates(jsonObject));
+                    // verify integrity (throws RuntimeException if the authenticator is invalid or
+                    // returns an MDS statement for this authenticator or null).
+                    JsonObject statement = webAuthn.metaDataService().verify(authenticator);
+                    return statement != null ? statement : new JsonObject();
+                })
+                .subscribe(
+                        __ -> handler.handle(Future.succeededFuture()),
+                        error -> handler.handle(Future.failedFuture(error)),
+                        () -> handler.handle(Future.succeededFuture())
+                );
+    }
+
+
 }

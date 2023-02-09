@@ -48,6 +48,13 @@
                 </span>
             </div>
 
+            <div th:if="${error}" class="item error-text">
+                <span>
+                    <span class="error" th:text="${error}"></span>
+                    <small th:text="*{error_description}?: #{webauthn.login.error.description}"></small>
+                </span>
+            </div>
+
             <div>
                 <button class="button primary" th:text="#{webauthn.login.button.next}"></button>
             </div>
