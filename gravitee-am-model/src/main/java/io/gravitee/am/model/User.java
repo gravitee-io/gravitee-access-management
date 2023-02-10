@@ -126,6 +126,9 @@ public class User implements IUser {
     private Date lastPasswordReset;
 
     @ApiModelProperty(dataType = "java.lang.Long")
+    private Date lastUsernameReset;
+
+    @ApiModelProperty(dataType = "java.lang.Long")
     private Date lastLogoutAt;
 
     @ApiModelProperty(dataType = "java.lang.Long")
@@ -652,6 +655,14 @@ public class User implements IUser {
         this.lastPasswordReset = lastPasswordReset;
     }
 
+    public Date getLastUsernameReset() {
+        return lastUsernameReset;
+    }
+
+    public void setLastUsernameReset(Date lastUsernameReset) {
+        this.lastUsernameReset = lastUsernameReset;
+    }
+
     public Date getLastLogoutAt() {
         return lastLogoutAt;
     }
@@ -746,4 +757,5 @@ public class User implements IUser {
     public void setAddress(Map<String, Object> address) {
         putAdditionalInformation(StandardClaims.ADDRESS, address);
     }
+
 }

@@ -65,6 +65,7 @@ public class UserMongo extends Auditable {
     private Date mfaEnrollmentSkippedAt;
     private Date lastPasswordReset;
     private Date lastLogoutAt;
+    private Date lastUsernameReset;
     private List<AttributeMongo> emails;
     private List<AttributeMongo> phoneNumbers;
     private List<AttributeMongo> ims;
@@ -422,6 +423,14 @@ public class UserMongo extends Auditable {
 
     public void setAdditionalInformation(Document additionalInformation) {
         this.additionalInformation = additionalInformation;
+    }
+
+    public Date getLastUsernameReset() {
+        return lastUsernameReset;
+    }
+
+    public void setLastUsernameReset(Date lastUsernameReset) {
+        this.lastUsernameReset = lastUsernameReset;
     }
 
     @Override

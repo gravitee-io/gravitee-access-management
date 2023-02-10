@@ -57,6 +57,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static io.gravitee.gateway.api.http.HttpHeaderNames.AUTHORIZATION;
+import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
 
 /**
@@ -64,6 +66,8 @@ import static java.util.stream.Collectors.toList;
  * @author GraviteeSource Team
  */
 public class JWTAuthenticationFilter extends AbstractAuthenticationProcessingFilter implements InitializingBean {
+
+    private static final String BEARER_PREFIX = "Bearer ";
 
     @Value("${jwt.cookie-path:/}")
     private String jwtCookiePath;
@@ -100,8 +104,8 @@ public class JWTAuthenticationFilter extends AbstractAuthenticationProcessingFil
         String authToken;
 
         // first check Authorization request header
-        final String authorization = request.getHeader(HttpHeaders.AUTHORIZATION);
-        if (authorization != null && authorization.startsWith("Bearer ")) {
+        final String authorization = request.getHeader(AUTHORIZATION);
+        if (authorization != null && authorization.startsWith(BEARER_PREFIX)) {
             authToken = authorization.substring(7);
         } else {
             // if no authorization header found, check authorization cookie
@@ -115,7 +119,7 @@ public class JWTAuthenticationFilter extends AbstractAuthenticationProcessingFil
                         .findAny();
             }
 
-            if (optionalStringToken.isEmpty() || !optionalStringToken.get().getValue().startsWith("Bearer ")) {
+            if (optionalStringToken.isEmpty() || !optionalStringToken.get().getValue().startsWith(BEARER_PREFIX)) {
                 throw new BadCredentialsException("No JWT token found");
             }
             authToken = optionalStringToken.get().getValue().substring(7);
@@ -126,10 +130,24 @@ public class JWTAuthenticationFilter extends AbstractAuthenticationProcessingFil
             Map<String, Object> claims = new HashMap<>(payload);
             claims.put(Claims.ip_address, remoteAddress(request));
             claims.put(Claims.user_agent, userAgent(request));
-            User orgUser = userService.findById(ReferenceType.ORGANIZATION, (String)payload.get("org"), (String) claims.get(StandardClaims.SUB)).blockingGet();
-            if (orgUser.getLastLogoutAt() != null && orgUser.getLastLogoutAt().after(new Date(payload.getIat()*1000))) {
+            User orgUser = userService.findById(ReferenceType.ORGANIZATION, (String) payload.get("org"), (String) claims.get(StandardClaims.SUB)).blockingGet();
+
+            var dates = List.of(
+                    // We check the last logout of the user
+                    ofNullable(orgUser.getLastLogoutAt()),
+                    // We check if the username has been reset
+                    ofNullable(orgUser.getLastUsernameReset())
+            );
+
+            var isSessionException = dates.stream()
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .anyMatch(time -> time.after(new Date(payload.getIat() * 1000)));
+
+            if (isSessionException) {
                 throw new SessionAuthenticationException("Session expired");
             }
+
             DefaultUser user = new DefaultUser((String) claims.get(StandardClaims.PREFERRED_USERNAME));
             user.setId((String) claims.get(StandardClaims.SUB));
             user.setAdditionalInformation(claims);

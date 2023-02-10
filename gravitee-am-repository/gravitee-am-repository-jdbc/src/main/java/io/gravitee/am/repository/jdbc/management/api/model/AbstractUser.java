@@ -80,6 +80,8 @@ public class AbstractUser {
     private LocalDateTime lastPasswordReset;
     @Column("last_logout_at")
     private LocalDateTime lastLogoutAt;
+    @Column("last_username_reset")
+    private LocalDateTime lastUsernameReset;
     @Column("created_at")
     private LocalDateTime createdAt;
     @Column("updated_at")
@@ -345,6 +347,14 @@ public class AbstractUser {
 
     public void setLastLogoutAt(LocalDateTime lastLogoutAt) {
         this.lastLogoutAt = lastLogoutAt;
+    }
+
+    public LocalDateTime getLastUsernameReset() {
+        return lastUsernameReset;
+    }
+
+    public void setLastUsernameReset(LocalDateTime lastUsernameReset) {
+        this.lastUsernameReset = lastUsernameReset;
     }
 
     public LocalDateTime getCreatedAt() {
