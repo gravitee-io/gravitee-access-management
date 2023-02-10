@@ -39,7 +39,7 @@ public interface UserProvider extends Service<UserProvider> {
 
     default Single<User> updateUsername(User user, String username) {
         if (username == null || username.isEmpty()) {
-            return Single.error(new IllegalArgumentException("Username required for UserProvider.updatePassword"));
+            return Single.error(new IllegalArgumentException("Username required for UserProvider.updateUsername"));
         }
         ((DefaultUser) user).setUsername(username);
         return this.update(user.getId(), user);
