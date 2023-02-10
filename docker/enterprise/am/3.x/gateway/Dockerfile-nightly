@@ -36,8 +36,8 @@ COPY --from=build-env /tmp/graviteeio-ee-am-full-${GRAVITEEIO_AM_VERSION}/gravit
 
 RUN addgroup -g 1000 graviteeio \
     && adduser -D -H -u 1001 graviteeio --ingroup graviteeio \
-    && chgrp -R graviteeio ${GRAVITEEIO_HOME} \
-    && chmod -R g=u ${GRAVITEEIO_HOME}
+    && chgrp -R graviteeio ${GRAVITEE_AM_HOME} \
+    && chmod -R g=u ${GRAVITEE_AM_HOME}
 
 WORKDIR ${GRAVITEE_AM_HOME}
 
