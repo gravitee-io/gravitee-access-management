@@ -1,6 +1,25 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/633?closed=1[AM - 3.20.1 (2023-02-10)]
+
+=== Bug fixes
+
+*_General_*
+
+- Merge 3.19.5 into 3.20.1 https://github.com/gravitee-io/issues/issues/8827[#8827]
+- Merge 3.19.6 into 3.20.1 https://github.com/gravitee-io/issues/issues/8864[#8864]
+
+=== Features
+
+*_Gateway_*
+
+- [saml2] Add option to sign assertion https://github.com/gravitee-io/issues/issues/8868[#8868]
+- [saml2] HTTP-POST Binding https://github.com/gravitee-io/issues/issues/8869[#8869]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/632?closed=1[AM - 3.19.6 (2023-02-02)]
 
 === Bug fixes
