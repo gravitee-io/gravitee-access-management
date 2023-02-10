@@ -143,6 +143,40 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
     }
 
     @Test
+    public void shouldInvoke_user_username_reset() throws Exception {
+        User user = new User();
+        user.setId("user-id");
+        user.setLastUsernameReset(new Date(System.currentTimeMillis() - 1000 * 60));
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.setUser(new io.vertx.reactivex.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+            routingContext.next();
+        });
+
+        testRequest(
+                HttpMethod.GET,
+                "/login?client_id=test-client",
+                HttpStatusCode.OK_200, "OK");
+    }
+
+    @Test
+    public void shouldNotInvoke_user_username_reset() throws Exception {
+        User user = new User();
+        user.setId("user-id");
+        user.setLastUsernameReset(new Date(System.currentTimeMillis() + 1000 * 60));
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.setUser(new io.vertx.reactivex.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+            routingContext.next();
+        });
+
+        testRequest(
+                HttpMethod.GET,
+                "/login?client_id=test-client",
+                HttpStatusCode.UNAUTHORIZED_401, "Unauthorized");
+    }
+
+    @Test
     public void shouldInvoke_sameClient() throws Exception {
         User user = new User();
         user.setId("user-id");

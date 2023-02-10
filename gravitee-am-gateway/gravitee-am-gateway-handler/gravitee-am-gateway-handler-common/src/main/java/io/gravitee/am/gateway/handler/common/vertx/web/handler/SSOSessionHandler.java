@@ -40,6 +40,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Optional;
 
 import static java.util.Objects.nonNull;
+import static java.util.Optional.ofNullable;
 
 /**
  * SSO Session Handler to check if the user stored in the HTTP session is still "valid" upon the incoming request
@@ -122,28 +123,30 @@ public class SSOSessionHandler implements Handler<RoutingContext> {
             handler.handle(Future.failedFuture(new AccountDisabledException(user.getId())));
             return;
         }
-
-        // if user has reset its password, check the last login date to make sure that the current session is not compromised
         CookieSession session = (CookieSession) context.session().getDelegate();
-        if (user.getLastPasswordReset() != null &&
+        var dates = List.of(
+                // if user has reset its password, check the last login date to make sure that the current session is not compromised
+                ofNullable(user.getLastPasswordReset()),
+                // We check if the username has been reset and invalidate the session
+                ofNullable(user.getLastUsernameReset()),
+                // if user has been sign out in a REST manner way, check the last login date to make sure that the current session is not compromised
+                ofNullable(user.getLastLogoutAt())
+        );
+
+        final long sessionTime = session.lastLogin().getTime();
+        final boolean isIllegalStateAccount = dates.stream()
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .map(Date::getTime)
                 // "exp" claim is stored in epoch seconds format in the cookie session
                 // we need to compare both dates without the milliseconds
-                user.getLastPasswordReset().getTime() - session.lastLogin().getTime() > 1000) {
-            handler.handle(Future.failedFuture(new AccountIllegalStateException(user.getId())));
-            return;
-        }
+                .anyMatch(time -> time - sessionTime > 1000L);
 
-        // if user has been sign out in a REST manner way, check the last login date to make sure that the current session is not compromised
-        if (user.getLastLogoutAt() != null &&
-                // "exp" claim is stored in epoch seconds format in the cookie session
-                // we need to compare both dates without the milliseconds
-                user.getLastLogoutAt().getTime() - session.lastLogin().getTime() > 1000) {
+        if (isIllegalStateAccount) {
             handler.handle(Future.failedFuture(new AccountIllegalStateException(user.getId())));
-            return;
+        } else {
+            handler.handle(Future.succeededFuture());
         }
-
-        // continue
-        handler.handle(Future.succeededFuture());
     }
 
     private void checkClient(RoutingContext context, io.gravitee.am.model.User user, Handler<AsyncResult<Void>> handler) {
@@ -188,8 +191,8 @@ public class SSOSessionHandler implements Handler<RoutingContext> {
             // throw error
             throw new InvalidRequestException("User is not on a shared identity provider");
         }).subscribe(
-            __ -> handler.handle(Future.succeededFuture()),
-            error -> handler.handle(Future.failedFuture(error)));
+                __ -> handler.handle(Future.succeededFuture()),
+                error -> handler.handle(Future.failedFuture(error)));
 
     }
 

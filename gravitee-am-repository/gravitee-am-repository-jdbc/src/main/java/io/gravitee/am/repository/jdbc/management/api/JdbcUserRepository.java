@@ -132,6 +132,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
     private static final String USER_COL_ADDITIONAL_INFORMATION = "additional_information";
 
     public static final String USER_COL_LAST_PASSWORD_RESET = "last_password_reset";
+    public static final String USER_COL_LAST_USERNAME_RESET = "last_username_reset";
     public static final String USER_COL_LAST_LOGOUT_AT = "last_logout_at";
     private static final List<String> USER_COLUMNS = List.of(
             USER_COL_ID,
@@ -164,6 +165,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
             USER_COL_LOGINS_COUNT,
             USER_COL_LOGGED_AT,
             USER_COL_LAST_PASSWORD_RESET,
+            USER_COL_LAST_USERNAME_RESET,
             USER_COL_LAST_LOGOUT_AT,
             USER_COL_MFA_ENROLLMENT_SKIPPED_AT,
             USER_COL_CREATED_AT,
@@ -515,6 +517,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         insertSpec = addQuotedField(insertSpec, USER_COL_LOGINS_COUNT, item.getLoginsCount(), Integer.class);
         insertSpec = addQuotedField(insertSpec, USER_COL_LOGGED_AT, dateConverter.convertTo(item.getLoggedAt(), null), LocalDateTime.class);
         insertSpec = addQuotedField(insertSpec, USER_COL_LAST_PASSWORD_RESET, dateConverter.convertTo(item.getLastPasswordReset(), null), LocalDateTime.class);
+        insertSpec = addQuotedField(insertSpec, USER_COL_LAST_USERNAME_RESET, dateConverter.convertTo(item.getLastUsernameReset(), null), LocalDateTime.class);
         insertSpec = addQuotedField(insertSpec, USER_COL_LAST_LOGOUT_AT, dateConverter.convertTo(item.getLastLogoutAt(), null), LocalDateTime.class);
         insertSpec = addQuotedField(insertSpec, USER_COL_MFA_ENROLLMENT_SKIPPED_AT, dateConverter.convertTo(item.getMfaEnrollmentSkippedAt(), null), LocalDateTime.class);
         insertSpec = addQuotedField(insertSpec, USER_COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
@@ -569,6 +572,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         update = addQuotedField(update, USER_COL_LOGINS_COUNT, item.getLoginsCount(), Integer.class);
         update = addQuotedField(update, USER_COL_LOGGED_AT, dateConverter.convertTo(item.getLoggedAt(), null), LocalDateTime.class);
         update = addQuotedField(update, USER_COL_LAST_PASSWORD_RESET, dateConverter.convertTo(item.getLastPasswordReset(), null), LocalDateTime.class);
+        update = addQuotedField(update, USER_COL_LAST_USERNAME_RESET, dateConverter.convertTo(item.getLastUsernameReset(), null), LocalDateTime.class);
         update = addQuotedField(update, USER_COL_LAST_LOGOUT_AT, dateConverter.convertTo(item.getLastLogoutAt(), null), LocalDateTime.class);
         update = addQuotedField(update, USER_COL_MFA_ENROLLMENT_SKIPPED_AT, dateConverter.convertTo(item.getMfaEnrollmentSkippedAt(), null), LocalDateTime.class);
         update = addQuotedField(update, USER_COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
