@@ -346,7 +346,7 @@ public class JdbcUserProvider extends JdbcAbstractProvider<UserProvider> impleme
     @Override
     public Single<User> updateUsername(User user, String username) {
         if (Strings.isNullOrEmpty(username)) {
-            return Single.error(new IllegalArgumentException("Username required for UserProvider.updatePassword"));
+            return Single.error(new IllegalArgumentException("Username required for UserProvider.updateUsername"));
         }
 
         var sql = String.format("UPDATE %s SET %s = %s WHERE %s = %s",
