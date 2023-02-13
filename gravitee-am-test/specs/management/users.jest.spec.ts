@@ -25,11 +25,6 @@ import {
     getUserPage, lockUser, resetUserPassword, sendRegistrationConfirmation, unlockUser, updateUser, updateUsername,
     updateUserStatus
 } from "@management-commands/user-management-commands";
-import {
-    createOrganisationUser, deleteOrganisationUser,
-    getOrganisationUserPage,
-    updateOrganisationUsername
-} from "@management-commands/organisation-user-commands";
 
 import {requestAdminAccessToken} from "@management-commands/token-management-commands";
 import {ResponseError} from "../../api/management/runtime";
