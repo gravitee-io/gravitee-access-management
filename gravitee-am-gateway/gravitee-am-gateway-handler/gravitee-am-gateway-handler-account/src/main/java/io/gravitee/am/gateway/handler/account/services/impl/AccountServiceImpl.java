@@ -36,9 +36,9 @@ import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.CredentialAuditBuilder;
 import io.gravitee.am.service.validators.user.UserValidator;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -116,17 +116,15 @@ public class AccountServiceImpl implements AccountService {
         LOGGER.debug("Update a user {} for domain {}", user.getUsername(), domain.getName());
 
         return userValidator.validate(user).andThen(identityProviderManager.getUserProvider(user.getSource())
-                .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(user.getSource())))
-                .flatMapSingle(userProvider -> {
+                .switchIfEmpty(Single.error(new UserProviderNotFoundException(user.getSource())))
+                .flatMap(userProvider -> {
                     if (user.getExternalId() == null) {
                         return Single.error(new InvalidRequestException("User does not exist in upstream IDP"));
                     } else {
                         return userProvider.update(user.getExternalId(), convert(user));
                     }
                 })
-                .flatMap(idpUser -> {
-                    return userRepository.update(user);
-                })
+                .flatMap(idpUser -> userRepository.update(user))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof UserNotFoundException || ex instanceof UserInvalidException) {
                         // idp user does not exist, only update AM user

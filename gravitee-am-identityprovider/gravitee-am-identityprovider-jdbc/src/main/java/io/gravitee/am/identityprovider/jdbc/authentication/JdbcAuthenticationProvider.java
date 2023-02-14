@@ -33,9 +33,9 @@ import io.gravitee.am.identityprovider.jdbc.authentication.spring.JdbcAuthentica
 import io.gravitee.am.identityprovider.jdbc.utils.ColumnMapRowMapper;
 import io.gravitee.am.identityprovider.jdbc.utils.ParametersUtils;
 import io.r2dbc.spi.Statement;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 import org.springframework.util.StringUtils;

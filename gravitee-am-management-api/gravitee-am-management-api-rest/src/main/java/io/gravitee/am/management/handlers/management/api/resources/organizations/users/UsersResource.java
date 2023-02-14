@@ -25,8 +25,8 @@ import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.OrganizationService;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Observable;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.Single;
 import io.swagger.annotations.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -137,8 +137,7 @@ public class UsersResource extends AbstractUsersResource {
                             filteredUser.setSource(idP.getName());
                             return filteredUser;
                         })
-                        .defaultIfEmpty(filteredUser)
-                        .toSingle();
+                        .defaultIfEmpty(filteredUser);
             }
         } else {
             // Current user doesn't have read permission, select only few information and remove default values that could be inexact.

@@ -26,13 +26,15 @@ import io.gravitee.am.service.exception.FlowNotFoundException;
 import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.FlowServiceImpl;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
-import io.reactivex.subscribers.TestSubscriber;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -68,7 +70,7 @@ public class FlowServiceTest {
     public void shouldFindAll_flowDoesNotHaveType() {
         when(flowRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Flowable.just(new Flow()));
         TestSubscriber<Flow> testObserver = flowService.findAll(ReferenceType.DOMAIN, DOMAIN).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValueCount(7);
@@ -78,7 +80,7 @@ public class FlowServiceTest {
     public void shouldFindAll_returnAllWhenEmpty() {
         when(flowRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Flowable.empty());
         TestSubscriber<Flow> testObserver = flowService.findAll(ReferenceType.DOMAIN, DOMAIN).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValueCount(7);
@@ -90,7 +92,7 @@ public class FlowServiceTest {
         flow.setType(Type.ROOT);
         when(flowRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Flowable.just(flow));
         TestSubscriber<Flow> testObserver = flowService.findAll(ReferenceType.DOMAIN, DOMAIN).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValueCount(7);
@@ -110,7 +112,7 @@ public class FlowServiceTest {
 
         when(flowRepository.findByApplication(ReferenceType.DOMAIN, DOMAIN, "appid")).thenReturn(Flowable.just(flowApp, flowApp2));
         TestSubscriber<Flow> testObserver = flowService.findByApplication(ReferenceType.DOMAIN, DOMAIN, "appid").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValueCount(8);
@@ -120,7 +122,7 @@ public class FlowServiceTest {
     public void shouldFindByApp_returnAllWhenEmpty() {
         when(flowRepository.findByApplication(ReferenceType.DOMAIN, DOMAIN, "appid")).thenReturn(Flowable.empty());
         TestSubscriber<Flow> testObserver = flowService.findByApplication(ReferenceType.DOMAIN, DOMAIN, "appid").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValueCount(7);
@@ -144,7 +146,7 @@ public class FlowServiceTest {
 
         when(flowRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Flowable.just(flow, flowApp, flowApp2));
         TestSubscriber<Flow> testObserver = flowService.findAll(ReferenceType.DOMAIN, DOMAIN).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValueCount(9);
@@ -167,7 +169,7 @@ public class FlowServiceTest {
 
         when(flowRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Flowable.just(flow, flow2, flowApp));
         TestSubscriber<Flow> testObserver = flowService.findAll(ReferenceType.DOMAIN, DOMAIN, true).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValueCount(8);
@@ -190,7 +192,7 @@ public class FlowServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = flowService.create(ReferenceType.DOMAIN, DOMAIN, newFlow).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -205,7 +207,7 @@ public class FlowServiceTest {
         when(flowRepository.create(any(Flow.class))).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver testObserver = flowService.create(ReferenceType.DOMAIN, DOMAIN, newFlow).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
@@ -224,7 +226,7 @@ public class FlowServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = flowService.update(ReferenceType.DOMAIN, DOMAIN, "my-flow", updateFlow).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -244,7 +246,7 @@ public class FlowServiceTest {
         when(flowRepository.findById(ReferenceType.DOMAIN, DOMAIN, "my-flow")).thenReturn(Maybe.just(existingFlow));
 
         TestObserver testObserver = flowService.update(ReferenceType.DOMAIN, DOMAIN, "my-flow", updateFlow).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(InvalidParameterException.class);
 
         verify(flowRepository, times(1)).findById(ReferenceType.DOMAIN, DOMAIN, "my-flow");
@@ -270,7 +272,7 @@ public class FlowServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = flowService.update(ReferenceType.DOMAIN, DOMAIN, ID, updateFlow).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -342,7 +344,7 @@ public class FlowServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = flowService.delete("my-flow").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -363,7 +365,7 @@ public class FlowServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = flowService.createOrUpdate(ReferenceType.DOMAIN, DOMAIN, Arrays.asList(newFlow, newFlow2)).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -400,7 +402,7 @@ public class FlowServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = flowService.createOrUpdate(ReferenceType.DOMAIN, DOMAIN, Arrays.asList(updateFlow, updateFlow2)).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -432,7 +434,7 @@ public class FlowServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = flowService.createOrUpdate(ReferenceType.DOMAIN, DOMAIN, Arrays.asList(updateFlow, updateFlow2)).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -461,7 +463,7 @@ public class FlowServiceTest {
         when(flowRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Flowable.just(existingFlow, existingFlow2));
 
         TestObserver testObserver = flowService.createOrUpdate(ReferenceType.DOMAIN, DOMAIN, Arrays.asList(updateFlow, updateFlow2)).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(InvalidParameterException.class);
 
@@ -476,7 +478,7 @@ public class FlowServiceTest {
         updateFlow.setId("flow1");
 
         TestObserver testObserver = flowService.createOrUpdate(ReferenceType.DOMAIN, DOMAIN, Arrays.asList(updateFlow, updateFlow)).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(InvalidParameterException.class);
 
@@ -506,7 +508,7 @@ public class FlowServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = flowService.createOrUpdate(ReferenceType.DOMAIN, DOMAIN, Arrays.asList(updateFlow2)).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();

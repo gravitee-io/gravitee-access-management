@@ -25,10 +25,10 @@ import io.gravitee.am.service.exception.ClientNotFoundException;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.gravitee.am.service.exception.InvalidRedirectUriException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -38,6 +38,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Collections;
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
@@ -63,7 +64,7 @@ public class ClientServiceTest {
         when(applicationService.findById("my-client")).thenReturn(Maybe.just(new Application()));
         TestObserver testObserver = clientService.findById("my-client").test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValueCount(1);
@@ -73,7 +74,7 @@ public class ClientServiceTest {
     public void shouldFindById_notExistingClient() {
         when(applicationService.findById("my-client")).thenReturn(Maybe.empty());
         TestObserver testObserver = clientService.findById("my-client").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNoValues();
     }
@@ -103,7 +104,7 @@ public class ClientServiceTest {
         toCreate.setResponseTypes(Collections.singletonList("token"));
         when(applicationService.create(any())).thenReturn(Single.error(new InvalidRedirectUriException()));
         TestObserver testObserver = clientService.create(toCreate).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNotComplete();
         testObserver.assertError(InvalidRedirectUriException.class);
@@ -117,7 +118,7 @@ public class ClientServiceTest {
         toCreate.setDomain(DOMAIN);
         toCreate.setRedirectUris(Collections.singletonList("https://callback"));
         TestObserver testObserver = clientService.create(toCreate).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -144,7 +145,7 @@ public class ClientServiceTest {
         toUpdate.setResponseTypes(Collections.singletonList("token"));
         toUpdate.setDomain(DOMAIN);
         TestObserver testObserver = clientService.update(toUpdate).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNotComplete();
         testObserver.assertError(InvalidRedirectUriException.class);
@@ -158,7 +159,7 @@ public class ClientServiceTest {
         toUpdate.setDomain(DOMAIN);
         toUpdate.setRedirectUris(Collections.singletonList("https://callback"));
         TestObserver testObserver = clientService.update(toUpdate).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -175,7 +176,7 @@ public class ClientServiceTest {
         toUpdate.setAuthorizedGrantTypes(Collections.singletonList("client_credentials"));
         toUpdate.setResponseTypes(Collections.emptyList());
         TestObserver testObserver = clientService.update(toUpdate).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -192,7 +193,7 @@ public class ClientServiceTest {
         email.setId("email-id");
 
         TestObserver testObserver = clientService.delete("my-client").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -205,7 +206,7 @@ public class ClientServiceTest {
         when(applicationService.delete("my-client", null)).thenReturn(Completable.complete());
 
         TestObserver testObserver = clientService.delete("my-client").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -218,7 +219,7 @@ public class ClientServiceTest {
         when(applicationService.delete("my-client", null)).thenReturn(Completable.error(TechnicalManagementException::new));
 
         TestObserver testObserver = clientService.delete("my-client").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
@@ -229,7 +230,7 @@ public class ClientServiceTest {
         when(applicationService.delete("my-client", null)).thenReturn(Completable.error(new ClientNotFoundException("my-client")));
 
         TestObserver testObserver = clientService.delete("my-client").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(ClientNotFoundException.class);
         testObserver.assertNotComplete();
@@ -245,7 +246,7 @@ public class ClientServiceTest {
         when(applicationService.renewClientSecret(DOMAIN, "my-client", null)).thenReturn(Single.just(new Application()));
 
         TestObserver testObserver = clientService.renewClientSecret(DOMAIN, "my-client").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -258,7 +259,7 @@ public class ClientServiceTest {
         when(applicationService.renewClientSecret(DOMAIN, "my-client", null)).thenReturn(Single.error(new ClientNotFoundException("my-client")));
 
         TestObserver testObserver = clientService.renewClientSecret(DOMAIN, "my-client").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(ClientNotFoundException.class);
         testObserver.assertNotComplete();
@@ -271,7 +272,7 @@ public class ClientServiceTest {
         when(applicationService.renewClientSecret(DOMAIN, "my-client", null)).thenReturn(Single.error(TechnicalManagementException::new));
 
         TestObserver testObserver = clientService.renewClientSecret(DOMAIN, "my-client").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();

@@ -71,7 +71,7 @@ import io.gravitee.am.service.TokenService;
 import io.gravitee.am.service.UserActivityService;
 import io.gravitee.am.service.impl.I18nDictionaryService;
 import io.gravitee.am.service.validators.user.UserValidator;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
 import org.junit.After;

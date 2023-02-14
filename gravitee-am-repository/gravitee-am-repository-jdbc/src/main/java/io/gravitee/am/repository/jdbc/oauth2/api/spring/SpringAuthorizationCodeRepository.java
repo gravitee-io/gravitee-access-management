@@ -16,10 +16,10 @@
 package io.gravitee.am.repository.jdbc.oauth2.api.spring;
 
 import io.gravitee.am.repository.jdbc.oauth2.api.model.JdbcAuthorizationCode;
-import io.reactivex.Maybe;
+import io.reactivex.rxjava3.core.Maybe;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.data.repository.reactive.RxJava2CrudRepository;
+import org.springframework.data.repository.reactive.RxJava3CrudRepository;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -29,7 +29,7 @@ import java.time.LocalDateTime;
  * @author GraviteeSource Team
  */
 @Repository
-public interface SpringAuthorizationCodeRepository extends RxJava2CrudRepository<JdbcAuthorizationCode, String> {
+public interface SpringAuthorizationCodeRepository extends RxJava3CrudRepository<JdbcAuthorizationCode, String> {
     @Query("select * from authorization_codes c where c.code = :code and (c.expire_at > :now or c.expire_at is null)")
     Maybe<JdbcAuthorizationCode> findByCode(@Param("code") String code, @Param("now")LocalDateTime now);
 

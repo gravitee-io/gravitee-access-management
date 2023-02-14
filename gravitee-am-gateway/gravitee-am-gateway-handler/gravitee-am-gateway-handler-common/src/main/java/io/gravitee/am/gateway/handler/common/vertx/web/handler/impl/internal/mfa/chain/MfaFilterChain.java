@@ -19,7 +19,7 @@ package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mf
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.AuthenticationFlowChain;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.MFAStep;
-import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 import java.util.List;
 import java.util.function.Supplier;
 

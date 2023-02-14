@@ -21,7 +21,7 @@ import io.gravitee.alert.api.trigger.command.Handler;
 import io.gravitee.alert.api.trigger.command.ResolvePropertyCommand;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.DomainService;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -100,7 +100,8 @@ public class ResolvePropertyCommandHandler implements TriggerProvider.OnCommandR
 
                     return Single.just(properties);
                 })
-                .onErrorResumeNext(Single.just(properties));
+                .toSingle()
+                .onErrorResumeNext(exception -> Single.just(properties));
     }
 
     private Single<Map<String, Object>> resolveApplicationProperties(String applicationId) {
@@ -117,6 +118,7 @@ public class ResolvePropertyCommandHandler implements TriggerProvider.OnCommandR
 
                     return Single.just(properties);
                 })
-                .onErrorResumeNext(Single.just(properties));
+                .toSingle()
+                .onErrorResumeNext(exception -> Single.just(properties));
     }
 }

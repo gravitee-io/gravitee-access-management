@@ -24,7 +24,7 @@ import io.gravitee.am.model.UserActivity;
 import io.gravitee.am.model.UserActivity.Type;
 import io.gravitee.am.repository.management.api.UserActivityRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.UserActivityMongo;
-import io.reactivex.*;
+import io.reactivex.rxjava3.core.*;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.PostConstruct;
 import org.bson.Document;

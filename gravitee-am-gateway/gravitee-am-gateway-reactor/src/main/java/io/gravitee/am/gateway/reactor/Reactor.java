@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.reactor;
 import io.gravitee.am.gateway.handler.vertx.VertxSecurityDomainHandler;
 import io.gravitee.am.model.Domain;
 import io.gravitee.common.service.Service;
-import io.vertx.reactivex.ext.web.Router;
+import io.vertx.rxjava3.ext.web.Router;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

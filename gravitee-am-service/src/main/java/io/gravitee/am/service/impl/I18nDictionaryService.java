@@ -28,15 +28,16 @@ import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.DictionaryAlreadyExistsException;
+import io.gravitee.am.service.exception.DictionaryNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewDictionary;
 import io.gravitee.am.service.model.UpdateI18nDictionary;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.DictionaryAuditBuilder;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,7 +52,7 @@ import static io.gravitee.am.common.audit.EventType.I18N_DICTIONARY_CREATED;
 import static io.gravitee.am.common.audit.EventType.I18N_DICTIONARY_UPDATED;
 import static io.gravitee.am.common.event.Action.UPDATE;
 import static io.gravitee.am.common.event.Type.I18N_DICTIONARY;
-import static io.reactivex.Completable.fromSingle;
+import static io.reactivex.rxjava3.core.Completable.fromSingle;
 
 @Component
 public class I18nDictionaryService {
@@ -128,6 +129,7 @@ public class I18nDictionaryService {
     public Single<I18nDictionary> update(ReferenceType referenceType, String referenceId, String id, UpdateI18nDictionary updateDictionary, User principal) {
         LOGGER.debug("Update a dictionary {} for {} {}", id, referenceType, referenceId);
         return findById(referenceType, referenceId, id)
+                .switchIfEmpty(Single.error(new DictionaryNotFoundException(id)))
                 // check uniqueness
                 .flatMap(existingDictionary -> repository
                         .findByName(referenceType, referenceId, updateDictionary.getName())
@@ -140,7 +142,7 @@ public class I18nDictionaryService {
                             return existingDictionary;
                         })
                 )
-                .flatMapSingle(oldDictionary -> {
+                .flatMap(oldDictionary -> {
                     var toUpdate = new I18nDictionary(oldDictionary);
                     if (updateDictionary.getName() != null) {
                         toUpdate.setName(updateDictionary.getName());
@@ -182,7 +184,8 @@ public class I18nDictionaryService {
     public Single<I18nDictionary> updateEntries(ReferenceType referenceType, String referenceId, String id, Map<String, String> entries, User principal) {
         LOGGER.debug("Update entries for dictionary {} for {} {}", id, referenceType, referenceId);
         return findById(referenceType, referenceId, id)
-                .flatMapSingle(oldDictionary -> {
+                .switchIfEmpty(Single.error(new DictionaryNotFoundException(id)))
+                .flatMap(oldDictionary -> {
                     var toUpdate = new I18nDictionary(oldDictionary);
                     toUpdate.setEntries(entries);
                     return repository.update(toUpdate);

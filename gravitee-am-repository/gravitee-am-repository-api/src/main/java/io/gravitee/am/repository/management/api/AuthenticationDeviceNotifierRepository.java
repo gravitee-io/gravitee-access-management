@@ -18,7 +18,7 @@ package io.gravitee.am.repository.management.api;
 import io.gravitee.am.model.AuthenticationDeviceNotifier;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.common.CrudRepository;
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)

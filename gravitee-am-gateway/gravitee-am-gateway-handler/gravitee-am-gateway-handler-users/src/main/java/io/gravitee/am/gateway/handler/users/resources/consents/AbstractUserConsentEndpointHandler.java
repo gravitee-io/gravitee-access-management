@@ -25,8 +25,8 @@ import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.impl.user.activity.utils.ConsentUtils;
-import io.reactivex.Single;
-import io.vertx.reactivex.ext.web.RoutingContext;
+import io.reactivex.rxjava3.core.Single;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -76,8 +76,7 @@ public class AbstractUserConsentEndpointHandler {
                         ((DefaultUser) principal).setAdditionalInformation(additionalInformation);
                         return principal;
                     })
-                    .defaultIfEmpty(defaultPrincipal(context, token))
-                    .toSingle();
+                    .defaultIfEmpty(defaultPrincipal(context, token));
         } else {
             // revocation made oauth2 clients
             return clientSyncService.findByClientId(token.getAud())
@@ -96,8 +95,7 @@ public class AbstractUserConsentEndpointHandler {
                         ((DefaultUser) principal).setAdditionalInformation(additionalInformation);
                         return principal;
                     })
-                    .defaultIfEmpty(defaultPrincipal(context, token))
-                    .toSingle();
+                    .defaultIfEmpty(defaultPrincipal(context, token));
         }
 
     }

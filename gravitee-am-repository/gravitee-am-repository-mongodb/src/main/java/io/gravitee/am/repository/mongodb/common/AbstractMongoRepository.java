@@ -17,7 +17,7 @@ package io.gravitee.am.repository.mongodb.common;
 
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

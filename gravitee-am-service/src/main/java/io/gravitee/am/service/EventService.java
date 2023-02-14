@@ -16,7 +16,7 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.model.common.event.Event;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 
 import java.util.List;
 

@@ -28,9 +28,9 @@ import io.gravitee.common.http.MediaType;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.webauthn.WebAuthnCredentials;
-import io.vertx.reactivex.ext.auth.webauthn.WebAuthn;
-import io.vertx.reactivex.ext.web.RoutingContext;
-import io.vertx.reactivex.ext.web.Session;
+import io.vertx.rxjava3.ext.auth.webauthn.WebAuthn;
+import io.vertx.rxjava3.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.thymeleaf.util.StringUtils;
@@ -114,29 +114,26 @@ public class WebAuthnRegisterHandler extends WebAuthnHandler {
         User user = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) ctx.user().getDelegate()).getUser();
 
         // register credentials
-        webAuthn.createCredentialsOptions(webauthnRegister, createCredentialsOptions -> {
-            if (createCredentialsOptions.failed()) {
-                ctx.fail(createCredentialsOptions.cause());
-                return;
-            }
+        webAuthn.createCredentialsOptions(webauthnRegister)
+                .doOnSuccess(entries -> {
+                    // force user id with our own user id
+                    entries.getJsonObject("user").put("id", user.getId());
 
-            final JsonObject credentialsOptions = createCredentialsOptions.result();
-            // force user id with our own user id
-            credentialsOptions.getJsonObject("user").put("id", user.getId());
+                    // force registration if option is enabled
+                    if (domain.getWebAuthnSettings() != null && domain.getWebAuthnSettings().isForceRegistration()) {
+                        entries.remove("excludeCredentials");
+                    }
 
-            // force registration if option is enabled
-            if (domain.getWebAuthnSettings() != null && domain.getWebAuthnSettings().isForceRegistration()) {
-                credentialsOptions.remove("excludeCredentials");
-            }
+                    // save challenge to the session
+                    ctx.session()
+                            .put(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY, entries.getString("challenge"))
+                            .put(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY, webauthnRegister.getString("name"));
 
-            // save challenge to the session
-            ctx.session()
-                    .put(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY, credentialsOptions.getString("challenge"))
-                    .put(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY, webauthnRegister.getString("name"));
-
-            ctx.put(ConstantKeys.PASSWORDLESS_ASSERTION, credentialsOptions);
-            ctx.next();
-        });
+                    ctx.put(ConstantKeys.PASSWORDLESS_ASSERTION, entries);
+                    ctx.next();
+                })
+                .doOnError(throwable -> ctx.fail(throwable.getCause()))
+                .subscribe();
     }
 
     private void registerV1(RoutingContext ctx) {
@@ -185,32 +182,33 @@ public class WebAuthnRegisterHandler extends WebAuthnHandler {
                         .setOrigin(origin)
                         .setChallenge(session.get(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY))
                         .setUsername(session.get(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY))
-                        .setWebauthn(webauthnResp), authenticate -> {
-
+                        .setWebauthn(webauthnResp))
+                .doOnSuccess(user -> {
+                    // create the authentication context
+                    final AuthenticationContext authenticationContext = createAuthenticationContext(ctx);
+                    // update the credential
+                    updateCredential(authenticationContext, credentialId, authenticatedUser.getId(), credentialHandler -> {
+                        if (credentialHandler.failed()) {
+                            logger.error("An error has occurred while updating credential for user {}", username, credentialHandler.cause());
+                            ctx.fail(401);
+                            return;
+                        }
+                        if (isEnrollingFido2Factor(ctx)) {
+                            enrollFido2Factor(ctx, authenticatedUser, createEnrolledFactor(session.get(ENROLLED_FACTOR_ID_KEY), credentialId));
+                        } else {
+                            manageFido2FactorEnrollment(ctx, client, credentialId, authenticatedUser);
+                        }
+                    });
+                })
+                .doOnError(throwable -> {
+                    logger.error("Unexpected exception", throwable);
+                    ctx.fail(throwable.getCause());
+                })
+                .doFinally(() -> {
                     // invalidate the challenge
                     session.remove(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY);
                     session.remove(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY);
-
-                    if (authenticate.succeeded()) {
-                        // create the authentication context
-                        final AuthenticationContext authenticationContext = createAuthenticationContext(ctx);
-                        // update the credential
-                        updateCredential(authenticationContext, credentialId, authenticatedUser.getId(), credentialHandler -> {
-                            if (credentialHandler.failed()) {
-                                logger.error("An error has occurred while updating credential for user {}", username, credentialHandler.cause());
-                                ctx.fail(401);
-                                return;
-                            }
-                            if (isEnrollingFido2Factor(ctx)) {
-                                enrollFido2Factor(ctx, authenticatedUser, createEnrolledFactor(session.get(ENROLLED_FACTOR_ID_KEY), credentialId));
-                            } else {
-                                manageFido2FactorEnrollment(ctx, client, credentialId, authenticatedUser);
-                            }
-                        });
-                    } else {
-                        logger.error("Unexpected exception", authenticate.cause());
-                        ctx.fail(authenticate.cause());
-                    }
-                });
+                })
+                .subscribe();
     }
 }

@@ -22,8 +22,8 @@ import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.am.repository.exceptions.TechnicalException;
-import io.reactivex.observers.TestObserver;
-import io.reactivex.subscribers.TestSubscriber;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -31,6 +31,7 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -68,7 +69,7 @@ public class EventRepositoryTest extends AbstractManagementTest {
 
         // fetch events
         TestSubscriber<Event> testSubscriber = eventRepository.findByTimeFrame(from, to).test();
-        testSubscriber.awaitTerminalEvent();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
 
         testSubscriber.assertComplete();
         testSubscriber.assertNoErrors();
@@ -88,7 +89,7 @@ public class EventRepositoryTest extends AbstractManagementTest {
 
         // fetch domain
         TestObserver<Event> testObserver = eventRepository.findById(eventCreated.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -116,7 +117,7 @@ public class EventRepositoryTest extends AbstractManagementTest {
         event.setPayload(payload);
 
         TestObserver<Event> testObserver = eventRepository.create(event).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -132,14 +133,14 @@ public class EventRepositoryTest extends AbstractManagementTest {
 
         // fetch event
         TestObserver<Event> testObserver = eventRepository.findById(eventCreated.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(e -> e.getType().equals(Type.DOMAIN));
 
         // delete event
         TestObserver testObserver1 = eventRepository.delete(eventCreated.getId()).test();
-        testObserver1.awaitTerminalEvent();
+        testObserver1.awaitDone(10, TimeUnit.SECONDS);
 
         // fetch event
         eventRepository.findById(eventCreated.getId()).test().assertEmpty();

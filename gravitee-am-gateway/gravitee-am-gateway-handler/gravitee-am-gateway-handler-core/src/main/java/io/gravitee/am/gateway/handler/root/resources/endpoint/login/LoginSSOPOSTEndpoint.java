@@ -20,9 +20,9 @@ import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
-import io.vertx.reactivex.core.MultiMap;
-import io.vertx.reactivex.ext.web.RoutingContext;
-import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
+import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.rxjava3.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
@@ -59,14 +59,15 @@ public class LoginSSOPOSTEndpoint implements Handler<RoutingContext> {
         }
 
         // Render login SSO POST form.
-        engine.render(routingContext.data(), "login_sso_post", res -> {
-            if (res.succeeded()) {
-                routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
-                routingContext.response().end(res.result());
-            } else {
-                logger.error("Unable to render Login SSO POST page", res.cause());
-                routingContext.fail(res.cause());
-            }
-        });
+        engine.rxRender(routingContext.data(), "login_sso_post")
+                .doOnSuccess(buffer -> {
+                    routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
+                    routingContext.response().end(buffer);
+                })
+                .doOnError(throwable -> {
+                    logger.error("Unable to render Login SSO POST page", throwable);
+                    routingContext.fail(throwable.getCause());
+                })
+                .subscribe();
     }
 }

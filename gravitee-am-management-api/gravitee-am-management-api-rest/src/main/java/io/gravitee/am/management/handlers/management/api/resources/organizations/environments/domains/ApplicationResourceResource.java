@@ -27,7 +27,7 @@ import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.exception.ApplicationNotFoundException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Maybe;
+import io.reactivex.rxjava3.core.Maybe;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
@@ -87,19 +87,15 @@ public class ApplicationResourceResource extends AbstractResource {
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMap(__ -> applicationService.findById(application))
                         .switchIfEmpty(Maybe.error(new ApplicationNotFoundException(application)))
-                        .flatMap(application1 -> {
-                            return resourceService.findByDomainAndClientResource(domain, application1.getId(), resource)
-                                    .flatMap(r -> {
-                                        return userService.findById(r.getUserId())
-                                                .map(Optional::ofNullable)
-                                                .defaultIfEmpty(Optional.empty())
-                                                .map(optUser -> {
-                                                    ResourceEntity resourceEntity = new ResourceEntity(r);
-                                                    resourceEntity.setUserDisplayName(optUser.isPresent() ? optUser.get().getDisplayName() : "Unknown user");
-                                                    return resourceEntity;
-                                                });
-                                    });
-                        }))
+                        .flatMap(application1 -> resourceService.findByDomainAndClientResource(domain, application1.getId(), resource)
+                                .flatMap(r -> userService.findById(r.getUserId())
+                                        .map(Optional::ofNullable)
+                                        .defaultIfEmpty(Optional.empty())
+                                        .map(optUser -> {
+                                            ResourceEntity resourceEntity = new ResourceEntity(r);
+                                            resourceEntity.setUserDisplayName(optUser.isPresent() ? optUser.get().getDisplayName() : "Unknown user");
+                                            return resourceEntity;
+                                        }).toMaybe())))
                 .subscribe(response::resume, response::resume);
     }
 

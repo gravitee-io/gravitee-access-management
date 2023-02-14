@@ -16,10 +16,10 @@
 package io.gravitee.am.repository.jdbc.management.api.spring.application;
 
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcApplication;
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.data.repository.reactive.RxJava2CrudRepository;
+import org.springframework.data.repository.reactive.RxJava3CrudRepository;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -27,7 +27,7 @@ import org.springframework.stereotype.Repository;
  * @author GraviteeSource Team
  */
 @Repository
-public interface SpringApplicationIdentityRepository extends RxJava2CrudRepository<JdbcApplication.Identity, String> {
+public interface SpringApplicationIdentityRepository extends RxJava3CrudRepository<JdbcApplication.Identity, String> {
 
     @Query("Select * from application_identities i where i.application_id = :appId")
     Flowable<JdbcApplication.Identity> findAllByApplicationId(@Param("appId") String applicationId);

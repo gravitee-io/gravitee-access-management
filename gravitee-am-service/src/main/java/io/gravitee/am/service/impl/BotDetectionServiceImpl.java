@@ -26,16 +26,13 @@ import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.repository.management.api.BotDetectionRepository;
 import io.gravitee.am.service.*;
-import io.gravitee.am.service.exception.AbstractManagementException;
-import io.gravitee.am.service.exception.BotDetectionNotFoundException;
-import io.gravitee.am.service.exception.BotDetectionUsedException;
-import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.model.NewBotDetection;
 import io.gravitee.am.service.model.UpdateBotDetection;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.BotDetectionAuditBuilder;
-import io.reactivex.*;
-import io.reactivex.functions.Function;
+import io.reactivex.rxjava3.core.*;
+import io.reactivex.rxjava3.functions.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -128,8 +125,8 @@ public class BotDetectionServiceImpl implements BotDetectionService {
         LOGGER.debug("Update bot detection {} for domain {}", id, domain);
 
         return botDetectionRepository.findById(id)
-                .switchIfEmpty(Maybe.error(new BotDetectionNotFoundException(id)))
-                .flatMapSingle(oldBotDetection -> {
+                .switchIfEmpty(Single.error(new BotDetectionNotFoundException(id)))
+                .flatMap(oldBotDetection -> {
                     BotDetection botDetectionToUpdate = new BotDetection(oldBotDetection);
                     botDetectionToUpdate.setName(updateBotDetection.getName());
                     botDetectionToUpdate.setConfiguration(updateBotDetection.getConfiguration());
@@ -157,15 +154,14 @@ public class BotDetectionServiceImpl implements BotDetectionService {
         LOGGER.debug("Delete bot detection {}", botDetectionId);
 
         return botDetectionRepository.findById(botDetectionId)
-                .switchIfEmpty(Maybe.error(new BotDetectionNotFoundException(botDetectionId)))
-                .flatMapSingle(checkBotDetectionReleasedByDomain(domainId, botDetectionId))
+                .switchIfEmpty(Single.error(new BotDetectionNotFoundException(botDetectionId)))
+                .flatMap(checkBotDetectionReleasedByDomain(domainId, botDetectionId))
                 .flatMap(checkBotDetectionReleasedByApp(domainId, botDetectionId))
                 .flatMapCompletable(botDetection -> {
                     // create event for sync process
                     Event event = new Event(Type.BOT_DETECTION, new Payload(botDetectionId, ReferenceType.DOMAIN, domainId, Action.DELETE));
-                    return botDetectionRepository.delete(botDetectionId)
-                            .andThen(eventService.create(event))
-                            .toCompletable()
+                    return Completable.fromSingle(botDetectionRepository.delete(botDetectionId)
+                            .andThen(eventService.create(event)))
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(BotDetectionAuditBuilder.class).principal(principal).type(EventType.BOT_DETECTION_DELETED).botDetection(botDetection)))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(BotDetectionAuditBuilder.class).principal(principal).type(EventType.BOT_DETECTION_DELETED).throwable(throwable)));
                 })
@@ -194,7 +190,8 @@ public class BotDetectionServiceImpl implements BotDetectionService {
 
     private Function<BotDetection, SingleSource<? extends BotDetection>> checkBotDetectionReleasedByDomain(String domainId, String botDetectionId) {
         return botDetection -> domainService.findById(domainId)
-                .flatMapSingle(domain -> {
+                .switchIfEmpty(Single.error(new DomainNotFoundException(domainId)))
+                .flatMap(domain -> {
                     if (domain.getAccountSettings() != null &&
                             botDetectionId.equals(domain.getAccountSettings().getBotDetectionPlugin())) {
                         throw new BotDetectionUsedException();

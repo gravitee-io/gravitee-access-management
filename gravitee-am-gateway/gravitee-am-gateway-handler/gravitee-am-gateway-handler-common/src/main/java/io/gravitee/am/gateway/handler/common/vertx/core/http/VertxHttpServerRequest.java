@@ -57,7 +57,7 @@ public class VertxHttpServerRequest implements Request {
     private boolean decoded;
     private MultiValueMap<String, String> pathParameters = null;
 
-    private io.vertx.reactivex.core.MultiMap originalParams;
+    private io.vertx.rxjava3.core.MultiMap originalParams;
 
     public VertxHttpServerRequest(HttpServerRequest httpServerRequest) {
         this.httpServerRequest = httpServerRequest;
@@ -83,7 +83,7 @@ public class VertxHttpServerRequest implements Request {
      * @param httpServerRequest
      * @param originalParams
      */
-    public VertxHttpServerRequest(HttpServerRequest httpServerRequest, io.vertx.reactivex.core.MultiMap originalParams) {
+    public VertxHttpServerRequest(HttpServerRequest httpServerRequest, io.vertx.rxjava3.core.MultiMap originalParams) {
         this(httpServerRequest);
         this.originalParams = originalParams;
     }

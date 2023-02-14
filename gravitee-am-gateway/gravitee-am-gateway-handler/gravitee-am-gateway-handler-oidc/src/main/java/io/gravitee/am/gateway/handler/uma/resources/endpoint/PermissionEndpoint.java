@@ -27,12 +27,12 @@ import io.gravitee.am.service.PermissionTicketService;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 
 import java.util.Arrays;
 import java.util.LinkedHashMap;

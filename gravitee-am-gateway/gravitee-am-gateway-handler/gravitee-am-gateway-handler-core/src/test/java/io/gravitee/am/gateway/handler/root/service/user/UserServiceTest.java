@@ -46,10 +46,10 @@ import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.gravitee.am.service.validators.email.EmailValidator;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -62,6 +62,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -142,7 +143,7 @@ public class UserServiceTest {
         when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any() , any(), any())).thenReturn(Maybe.error(PasswordHistoryException::passwordAlreadyInHistory));
 
         var testObserver = userService.resetPassword(mock(Client.class), user).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(PasswordHistoryException.class);
     }
 
@@ -495,7 +496,7 @@ public class UserServiceTest {
         // wait for the email service execution
         Thread.sleep(1000);
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         verify(tokenService, never()).deleteByUserId(any());
         verify(emailService).send(any(), any(), any());
@@ -528,7 +529,7 @@ public class UserServiceTest {
         // wait for the email service execution
         Thread.sleep(1000);
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(EnforceUserIdentityException.class);
         verify(tokenService, never()).deleteByUserId(any());
         verify(emailService, never()).send(any(), any(), any());
@@ -899,7 +900,7 @@ public class UserServiceTest {
         when(identityProviderManager.getUserProvider(any())).thenReturn(Maybe.just(userProvider));
 
         var testObserver = userService.forgotPassword(user.getEmail(), client).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(AccountInactiveException.class);
         verify(commonUserService, never()).update(any());
     }
@@ -919,7 +920,7 @@ public class UserServiceTest {
         when(identityProviderManager.getUserProvider(any())).thenReturn(Maybe.just(userProvider));
 
         var testObserver = userService.forgotPassword(user.getEmail(), client).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(AccountInactiveException.class);
         verify(commonUserService, never()).update(any());
     }
@@ -945,7 +946,7 @@ public class UserServiceTest {
         when(commonUserService.update(any())).thenReturn(Single.just(new User()));
 
         var testObserver = userService.forgotPassword(user.getEmail(), client).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         verify(commonUserService).update(any());
     }

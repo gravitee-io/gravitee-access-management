@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.identityprovider.api;
 
-import io.reactivex.Maybe;
+import io.reactivex.rxjava3.core.Maybe;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

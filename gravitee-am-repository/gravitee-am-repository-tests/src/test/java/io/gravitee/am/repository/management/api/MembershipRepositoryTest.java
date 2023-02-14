@@ -20,13 +20,14 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.am.repository.management.api.search.MembershipCriteria;
-import io.reactivex.observers.TestObserver;
-import io.reactivex.subscribers.TestSubscriber;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -51,7 +52,7 @@ public class MembershipRepositoryTest extends AbstractManagementTest {
 
         TestObserver<Membership> obs = membershipRepository.findById(createdMembership.getId()).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertComplete();
         obs.assertValue(m -> m.getId().equals(createdMembership.getId())
                 && m.getRoleId().equals(membership.getRoleId())
@@ -74,7 +75,7 @@ public class MembershipRepositoryTest extends AbstractManagementTest {
         Membership createdMembership = membershipRepository.create(membership).blockingGet();
 
         TestObserver<List<Membership>> obs = membershipRepository.findByReference(ORGANIZATION_ID, ReferenceType.ORGANIZATION).toList().test();
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
 
         obs.assertComplete();
         obs.assertValue(m -> m.size() == 1 && m.get(0).getId().equals(createdMembership.getId()));
@@ -93,7 +94,7 @@ public class MembershipRepositoryTest extends AbstractManagementTest {
         Membership createdMembership = membershipRepository.create(membership).blockingGet();
 
         TestObserver<List<Membership>> obs = membershipRepository.findByMember("user#1", MemberType.USER).toList().test();
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
 
         obs.assertComplete();
         obs.assertValue(m -> m.size() == 1 && m.get(0).getMemberId().equals(createdMembership.getMemberId()));
@@ -112,7 +113,7 @@ public class MembershipRepositoryTest extends AbstractManagementTest {
         Membership createdMembership = membershipRepository.create(membership).blockingGet();
 
         TestObserver<Membership> obs = membershipRepository.findByReferenceAndMember(ReferenceType.ORGANIZATION, ORGANIZATION_ID, membership.getMemberType(), membership.getMemberId()).test();
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
 
         obs.assertComplete();
         obs.assertValue(m -> m.getId().equals(createdMembership.getId()));
@@ -141,13 +142,13 @@ public class MembershipRepositoryTest extends AbstractManagementTest {
         MembershipCriteria criteria = new MembershipCriteria();
         TestSubscriber<Membership> obs = membershipRepository.findByCriteria(ReferenceType.ORGANIZATION, ORGANIZATION_ID, criteria).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValueCount(2);
 
         criteria.setUserId("user#1");
         obs = membershipRepository.findByCriteria(ReferenceType.ORGANIZATION, ORGANIZATION_ID, criteria).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValueCount(1);
         obs.assertValue(m -> m.getMemberType() == MemberType.USER && m.getMemberId().equals("user#1"));
 
@@ -155,7 +156,7 @@ public class MembershipRepositoryTest extends AbstractManagementTest {
         criteria.setGroupIds(Arrays.asList("group#1"));
         obs = membershipRepository.findByCriteria(ReferenceType.ORGANIZATION, ORGANIZATION_ID, criteria).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValueCount(1);
         obs.assertValue(m -> m.getMemberType() == MemberType.GROUP && m.getMemberId().equals("group#1"));
 
@@ -163,7 +164,7 @@ public class MembershipRepositoryTest extends AbstractManagementTest {
         criteria.setGroupIds(Arrays.asList("group#1"));
         obs = membershipRepository.findByCriteria(ReferenceType.ORGANIZATION, ORGANIZATION_ID, criteria).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertNoValues();
         obs.assertNoErrors();
 
@@ -172,7 +173,7 @@ public class MembershipRepositoryTest extends AbstractManagementTest {
         criteria.setLogicalOR(true);
         obs = membershipRepository.findByCriteria(ReferenceType.ORGANIZATION, ORGANIZATION_ID, criteria).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValueCount(2);
     }
 

@@ -40,10 +40,10 @@ import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.am.service.utils.UserFactorUpdater;
 import io.gravitee.am.service.validators.user.UserValidator;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -251,8 +251,8 @@ public abstract class AbstractUserService<T extends CommonUserRepository> implem
         LOGGER.debug("Update a user {} for {} {}", id, referenceType, referenceId);
 
         return getUserRepository().findById(referenceType, referenceId, id)
-                .switchIfEmpty(Maybe.error(new UserNotFoundException(id)))
-                .flatMapSingle(oldUser -> {
+                .switchIfEmpty(Single.error(new UserNotFoundException(id)))
+                .flatMap(oldUser -> {
                     User tmpUser = new User();
                     tmpUser.setEmail(updateUser.getEmail());
                     tmpUser.setAdditionalInformation(updateUser.getAdditionalInformation());

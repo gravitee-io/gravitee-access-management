@@ -19,7 +19,7 @@ import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.am.gateway.certificate.CertificateProviderManager;
 import io.gravitee.am.gateway.handler.common.certificate.impl.CertificateManagerImpl;
 import io.gravitee.am.model.Domain;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

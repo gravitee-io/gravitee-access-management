@@ -16,7 +16,7 @@
 package io.gravitee.am.gateway.handler.oidc.service.clientregistration;
 
 import io.gravitee.am.model.oidc.Client;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)

@@ -28,8 +28,8 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.util.LinkedMultiValueMap;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.apache.shiro.crypto.hash.Hash;
 import org.junit.Before;
 import org.junit.Test;
@@ -38,6 +38,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.HashMap;
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Mockito.*;
 
@@ -79,7 +80,7 @@ public class CibaTokenGranterTest {
         when(tokenRequest.parameters()).thenReturn(new LinkedMultiValueMap<>());
 
         final TestObserver<Token> test = granter.grant(tokenRequest, mock(Client.class)).test();
-        test.awaitTerminalEvent();
+        test.awaitDone(10, TimeUnit.SECONDS);
         test.assertError(InvalidRequestException.class);
     }
 
@@ -92,7 +93,7 @@ public class CibaTokenGranterTest {
         when(authenticationRequestService.retrieve(any(), any())).thenReturn(Single.error(new AuthenticationRequestNotFoundException("unknown_req_id")));
 
         final TestObserver<Token> test = granter.grant(tokenRequest, mock(Client.class)).test();
-        test.awaitTerminalEvent();
+        test.awaitDone(10, TimeUnit.SECONDS);
         test.assertError(AuthenticationRequestNotFoundException.class);
     }
 
@@ -105,7 +106,7 @@ public class CibaTokenGranterTest {
         when(authenticationRequestService.retrieve(any(), any())).thenReturn(Single.error(new SlowDownException()));
 
         final TestObserver<Token> test = granter.grant(tokenRequest, mock(Client.class)).test();
-        test.awaitTerminalEvent();
+        test.awaitDone(10, TimeUnit.SECONDS);
         test.assertError(SlowDownException.class);
     }
 

@@ -16,7 +16,7 @@
 package io.gravitee.am.gateway.handler.common.oauth2;
 
 import io.gravitee.am.common.jwt.JWT;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

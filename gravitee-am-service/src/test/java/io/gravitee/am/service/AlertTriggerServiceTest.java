@@ -26,11 +26,11 @@ import io.gravitee.am.repository.management.api.search.AlertTriggerCriteria;
 import io.gravitee.am.service.impl.AlertTriggerServiceImpl;
 import io.gravitee.am.service.model.PatchAlertTrigger;
 import io.gravitee.am.service.reporter.builder.management.AlertTriggerAuditBuilder;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
-import io.reactivex.subscribers.TestSubscriber;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -40,6 +40,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -78,7 +79,7 @@ public class AlertTriggerServiceTest {
         when(alertTriggerRepository.findById(ALERT_TRIGGER_ID)).thenReturn(Maybe.just(alertTrigger));
         final TestObserver<AlertTrigger> obs = cut.getById(ALERT_TRIGGER_ID).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValue(alertTrigger);
     }
 
@@ -87,7 +88,7 @@ public class AlertTriggerServiceTest {
         when(alertTriggerRepository.findById(ALERT_TRIGGER_ID)).thenReturn(Maybe.empty());
         final TestObserver<AlertTrigger> obs = cut.getById(ALERT_TRIGGER_ID).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertError(AlertTriggerNotFoundException.class);
     }
 
@@ -98,7 +99,7 @@ public class AlertTriggerServiceTest {
         when(alertTriggerRepository.findByCriteria(ReferenceType.DOMAIN, DOMAIN_ID, criteria)).thenReturn(Flowable.just(alertTrigger));
         final TestSubscriber<AlertTrigger> obs = cut.findByDomainAndCriteria(DOMAIN_ID, criteria).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertComplete();
         obs.assertValue(alertTrigger);
     }
@@ -120,7 +121,7 @@ public class AlertTriggerServiceTest {
 
         final TestObserver<AlertTrigger> obs = cut.createOrUpdate(ReferenceType.DOMAIN, DOMAIN_ID, patchAlertTrigger, new DefaultUser(USERNAME)).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertComplete();
         obs.assertValue(alertTrigger -> {
             assertNotNull(alertTrigger.getId());
@@ -157,7 +158,7 @@ public class AlertTriggerServiceTest {
 
         final TestObserver<AlertTrigger> obs = cut.createOrUpdate(ReferenceType.DOMAIN, DOMAIN_ID, patchAlertTrigger, new DefaultUser(USERNAME)).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertComplete();
         obs.assertValue(alertTrigger -> {
             assertEquals(AlertTriggerType.TOO_MANY_LOGIN_FAILURES, alertTrigger.getType());

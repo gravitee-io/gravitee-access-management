@@ -16,10 +16,10 @@
 package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.AuthenticationFlowContext;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 
 /**
  * Repository to store information between different phases of authentication flow.

@@ -21,7 +21,7 @@ import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.EnrollmentSettings;
 import io.gravitee.am.model.oidc.Client;
-import io.vertx.reactivex.ext.web.Session;
+import io.vertx.rxjava3.ext.web.Session;
 
 import java.util.Objects;
 

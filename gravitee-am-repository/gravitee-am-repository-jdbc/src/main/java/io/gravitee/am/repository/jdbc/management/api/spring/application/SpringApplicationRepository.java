@@ -16,11 +16,11 @@
 package io.gravitee.am.repository.jdbc.management.api.spring.application;
 
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcApplication;
-import io.reactivex.Flowable;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Single;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.data.repository.reactive.RxJava2CrudRepository;
+import org.springframework.data.repository.reactive.RxJava3CrudRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -30,7 +30,7 @@ import java.util.List;
  * @author GraviteeSource Team
  */
 @Repository
-public interface SpringApplicationRepository extends RxJava2CrudRepository<JdbcApplication, String> {
+public interface SpringApplicationRepository extends RxJava3CrudRepository<JdbcApplication, String> {
     @Query("select count(a.id) from applications a where a.domain = :domain")
     Single<Long> countByDomain(@Param("domain") String domain);
 

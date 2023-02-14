@@ -19,8 +19,8 @@ import io.gravitee.am.reporter.api.Reportable;
 import io.gravitee.am.service.reporter.AuditReporterService;
 import io.gravitee.node.reporter.vertx.eventbus.ReportableMessageCodec;
 import io.vertx.core.eventbus.DeliveryOptions;
-import io.vertx.reactivex.core.AbstractVerticle;
-import io.vertx.reactivex.core.eventbus.MessageProducer;
+import io.vertx.rxjava3.core.AbstractVerticle;
+import io.vertx.rxjava3.core.eventbus.MessageProducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -54,11 +54,9 @@ public class AuditReporterVerticle extends AbstractVerticle implements AuditRepo
 
     public void report(Reportable reportable) {
         if (producer != null) {
-            producer.write(reportable, event -> {
-                if (event.failed()) {
-                    LOGGER.error("Unexpected error while sending a reportable element", event.cause());
-                }
-            });
+            producer.write(reportable)
+                    .doOnError(throwable -> LOGGER.error("Unexpected error while sending a reportable element", throwable))
+                    .subscribe();
         }
     }
 }

@@ -23,7 +23,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.management.api.GroupRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.GroupMongo;
-import io.reactivex.*;
+import io.reactivex.rxjava3.core.*;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 

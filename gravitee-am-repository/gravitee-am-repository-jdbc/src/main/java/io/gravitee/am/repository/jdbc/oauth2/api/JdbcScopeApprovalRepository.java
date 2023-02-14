@@ -21,10 +21,10 @@ import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.oauth2.api.model.JdbcScopeApproval;
 import io.gravitee.am.repository.jdbc.oauth2.api.spring.SpringScopeApprovalRepository;
 import io.gravitee.am.repository.oauth2.api.ScopeApprovalRepository;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.stereotype.Repository;
@@ -35,8 +35,8 @@ import java.util.Optional;
 
 import static java.time.ZoneOffset.UTC;
 import static org.springframework.data.relational.core.query.Criteria.where;
-import static reactor.adapter.rxjava.RxJava2Adapter.monoToCompletable;
-import static reactor.adapter.rxjava.RxJava2Adapter.monoToSingle;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToCompletable;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -83,7 +83,7 @@ public class JdbcScopeApprovalRepository extends AbstractJdbcRepository implemen
                 .map(this::toEntity)
                 .map(Optional::of)
                 .defaultIfEmpty(Optional.empty())
-                .flatMapSingle(optionalApproval -> {
+                .flatMap(optionalApproval -> {
                     if (!optionalApproval.isPresent()) {
                         scopeApproval.setCreatedAt(new Date());
                         scopeApproval.setUpdatedAt(scopeApproval.getCreatedAt());

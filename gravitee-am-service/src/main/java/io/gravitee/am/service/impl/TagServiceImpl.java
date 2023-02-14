@@ -30,7 +30,7 @@ import io.gravitee.am.service.model.NewTag;
 import io.gravitee.am.service.model.UpdateTag;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.TagAuditBuilder;
-import io.reactivex.*;
+import io.reactivex.rxjava3.core.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -119,8 +119,8 @@ public class TagServiceImpl implements TagService {
     public Single<Tag> update(String tagId, String organizationId, UpdateTag updateTag, User principal) {
         LOGGER.debug("Update an existing tag: {}", updateTag);
         return tagRepository.findById(tagId, organizationId)
-                .switchIfEmpty(Maybe.error(new TagNotFoundException(tagId)))
-                .flatMapSingle(oldTag -> {
+                .switchIfEmpty(Single.error(new TagNotFoundException(tagId)))
+                .flatMap(oldTag -> {
                     Tag tag = new Tag();
                     tag.setId(tagId);
                     tag.setName(updateTag.getName());
@@ -154,7 +154,7 @@ public class TagServiceImpl implements TagService {
                                 .flatMapCompletable(domain -> {
                                     if (domain.getTags() != null) {
                                         domain.getTags().remove(tagId);
-                                        return domainService.update(domain.getId(), domain).toCompletable();
+                                        return Completable.fromSingle(domainService.update(domain.getId(), domain));
                                     }
                                     return Completable.complete();
                                 })

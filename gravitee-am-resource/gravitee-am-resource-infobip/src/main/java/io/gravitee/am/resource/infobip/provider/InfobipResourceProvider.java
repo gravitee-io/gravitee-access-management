@@ -28,7 +28,7 @@ import io.gravitee.am.resource.api.mfa.MFAChallenge;
 import io.gravitee.am.resource.api.mfa.MFALink;
 import io.gravitee.am.resource.api.mfa.MFAResourceProvider;
 import io.gravitee.am.resource.infobip.InfobipResourceConfiguration;
-import io.reactivex.Completable;
+import io.reactivex.rxjava3.core.Completable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

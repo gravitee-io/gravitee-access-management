@@ -23,12 +23,12 @@ import io.gravitee.am.reporter.api.Reportable;
 import io.gravitee.am.reporter.api.provider.ReportableCriteria;
 import io.gravitee.am.reporter.api.provider.Reporter;
 import io.gravitee.common.component.Lifecycle;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Handler;
-import io.vertx.reactivex.core.Vertx;
-import io.vertx.reactivex.core.eventbus.Message;
-import io.vertx.reactivex.core.eventbus.MessageConsumer;
+import io.vertx.rxjava3.core.Vertx;
+import io.vertx.rxjava3.core.eventbus.Message;
+import io.vertx.rxjava3.core.eventbus.MessageConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -116,19 +116,17 @@ public class EventBusReporterWrapper implements Reporter, Handler<Message<Report
     @Override
     public Object start() throws Exception {
         // start the delegate reporter
-        vertx.executeBlocking(event -> {
-            try {
-                reporter.start();
-                event.complete(reporter);
-            } catch (Exception ex) {
-                logger.error("Error while starting reporter", ex);
-                event.fail(ex);
-            }
-        }, event -> {
-            if (event.succeeded()) {
-                messageConsumer = vertx.eventBus().consumer(EVENT_BUS_ADDRESS, EventBusReporterWrapper.this);
-            }
-        });
+        vertx.rxExecuteBlocking(event -> {
+                    try {
+                        reporter.start();
+                        event.complete(reporter);
+                    } catch (Exception ex) {
+                        logger.error("Error while starting reporter", ex);
+                        event.fail(ex);
+                    }
+                })
+                .doOnSuccess(o -> messageConsumer = vertx.eventBus().consumer(EVENT_BUS_ADDRESS, EventBusReporterWrapper.this))
+                .subscribe();
 
         return reporter;
     }

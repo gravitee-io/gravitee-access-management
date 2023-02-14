@@ -25,10 +25,10 @@ import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.Handler;
-import io.vertx.reactivex.core.MultiMap;
-import io.vertx.reactivex.core.http.HttpServerRequest;
-import io.vertx.reactivex.ext.web.RoutingContext;
-import io.vertx.reactivex.ext.web.common.template.TemplateEngine;
+import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.rxjava3.core.http.HttpServerRequest;
+import io.vertx.rxjava3.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

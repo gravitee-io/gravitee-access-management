@@ -19,11 +19,10 @@ import io.gravitee.am.model.AuthenticationFlowContext;
 import io.gravitee.am.repository.management.api.AuthenticationFlowContextRepository;
 import io.gravitee.am.service.exception.AuthenticationFlowConsistencyException;
 import io.gravitee.am.service.impl.AuthenticationFlowContextServiceImpl;
-import io.gravitee.am.service.utils.SetterUtilsTest;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -32,6 +31,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -56,7 +56,7 @@ public class AuthenticationFlowContextServiceTest {
         when(authFlowContextRepository.findLastByTransactionId(any())).thenReturn(Maybe.empty());
 
         TestObserver<AuthenticationFlowContext> testObserver = service.loadContext(SESSION_ID, 1).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         testObserver.assertValue(ctx -> ctx.getVersion() == 0);
         verify(authFlowContextRepository).findLastByTransactionId(any());
@@ -72,7 +72,7 @@ public class AuthenticationFlowContextServiceTest {
         when(authFlowContextRepository.findLastByTransactionId(any())).thenReturn(Maybe.just(context));
 
         TestObserver<AuthenticationFlowContext> testObserver = service.loadContext(SESSION_ID, 1).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         testObserver.assertValue(ctx -> ctx.getVersion() == 1);
         testObserver.assertValue(ctx -> ctx.getTransactionId().equals(SESSION_ID));
@@ -89,7 +89,7 @@ public class AuthenticationFlowContextServiceTest {
         when(authFlowContextRepository.findLastByTransactionId(any())).thenReturn(Maybe.just(context));
 
         TestObserver<AuthenticationFlowContext> testObserver = service.loadContext(SESSION_ID, 2).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(error -> error instanceof AuthenticationFlowConsistencyException);
         verify(authFlowContextRepository).findLastByTransactionId(any());
     }
@@ -98,7 +98,7 @@ public class AuthenticationFlowContextServiceTest {
     public void testClearContext() {
         when(authFlowContextRepository.delete(SESSION_ID)).thenReturn(Completable.complete());
         TestObserver<Void> testObserver = service.clearContext(SESSION_ID).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         verify(authFlowContextRepository).delete(SESSION_ID);
     }
@@ -106,7 +106,7 @@ public class AuthenticationFlowContextServiceTest {
     @Test
     public void testClearContext_NullId() {
         TestObserver<Void> testObserver = service.clearContext(null).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         verify(authFlowContextRepository, never()).delete(any());
     }
@@ -121,7 +121,7 @@ public class AuthenticationFlowContextServiceTest {
         authContext.setExpireAt(now);
         final TestObserver<AuthenticationFlowContext> testObserver = service.updateContext(authContext).test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertValueCount(1);
 
         verify(this.authFlowContextRepository).create(argThat(ctx -> ctx.getVersion() == 2

@@ -25,7 +25,7 @@ import io.gravitee.am.plugins.idp.core.impl.IdentityProviderMapperFactoryImpl;
 import io.gravitee.am.plugins.idp.core.impl.IdentityProviderPluginManagerImpl;
 import io.gravitee.am.plugins.idp.core.impl.IdentityProviderRoleMapperFactoryImpl;
 import io.gravitee.plugin.core.api.PluginContextFactory;
-import io.vertx.reactivex.core.Vertx;
+import io.vertx.rxjava3.core.Vertx;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

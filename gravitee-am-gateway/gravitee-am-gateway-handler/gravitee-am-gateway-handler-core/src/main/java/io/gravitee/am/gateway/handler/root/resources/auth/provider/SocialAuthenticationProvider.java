@@ -36,13 +36,13 @@ import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.common.event.EventManager;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
-import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -115,8 +115,8 @@ public class SocialAuthenticationProvider implements UserAuthProvider {
 
         // authenticate the user via the social provider
         authenticationProvider.loadUserByUsername(endUserAuthentication)
-                .switchIfEmpty(Maybe.error(new BadCredentialsException("Unable to authenticate social provider, authentication provider has returned empty value")))
-                .flatMapSingle(user -> checkDomainWhitelist(user, authProvider))
+                .switchIfEmpty(Single.error(new BadCredentialsException("Unable to authenticate social provider, authentication provider has returned empty value")))
+                .flatMap(user -> checkDomainWhitelist(user, authProvider))
                 .flatMap(user -> {
                     // set source and client for the current authenticated end-user
                     Map<String, Object> additionalInformation = user.getAdditionalInformation() == null ? new HashMap<>() : new HashMap<>(user.getAdditionalInformation());

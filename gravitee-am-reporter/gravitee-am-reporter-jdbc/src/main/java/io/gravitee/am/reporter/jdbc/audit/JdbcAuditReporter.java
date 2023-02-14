@@ -43,11 +43,11 @@ import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.Result;
 import io.r2dbc.spi.Statement;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.reactivex.disposables.Disposable;
-import io.reactivex.processors.PublishProcessor;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.processors.PublishProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -78,7 +78,7 @@ import java.util.stream.Collectors;
 
 import static io.gravitee.am.reporter.jdbc.dialect.AbstractDialect.intervals;
 import static org.springframework.data.relational.core.query.Criteria.where;
-import static reactor.adapter.rxjava.RxJava2Adapter.*;
+import static reactor.adapter.rxjava.RxJava3Adapter.*;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)

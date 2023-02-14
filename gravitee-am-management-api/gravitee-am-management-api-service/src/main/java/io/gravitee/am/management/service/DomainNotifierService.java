@@ -16,7 +16,7 @@
 package io.gravitee.am.management.service;
 
 import io.gravitee.am.model.Certificate;
-import io.reactivex.Completable;
+import io.reactivex.rxjava3.core.Completable;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)

@@ -22,6 +22,7 @@ import io.gravitee.am.service.validators.domain.DomainValidator;
 import io.gravitee.am.service.validators.domain.DomainValidatorImpl;
 import io.gravitee.am.service.validators.path.PathValidatorImpl;
 import io.gravitee.am.service.validators.virtualhost.VirtualHostValidatorImpl;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -48,8 +49,7 @@ public class DomainValidatorTest {
     @Test
     public void validate() {
         Domain domain = getValidDomain();
-        Throwable throwable = domainValidator.validate(domain, emptyList()).blockingGet();
-        assertNull(throwable);
+        domainValidator.validate(domain, emptyList()).test().assertNoErrors();
     }
 
     @Test
@@ -57,11 +57,8 @@ public class DomainValidatorTest {
         Domain domain = getValidDomain();
         domain.setPath("");
 
-        Throwable throwable = domainValidator.validate(domain, emptyList()).blockingGet();
-
         // Empty path is replaced with '/' but '/' is not allowed in context-path mode.
-        assertNotNull(throwable);
-        assertTrue(throwable instanceof InvalidDomainException);
+        TestObserver<Void> test = domainValidator.validate(domain, emptyList()).test().assertError(InvalidDomainException.class);
     }
 
     @Test
@@ -69,11 +66,8 @@ public class DomainValidatorTest {
         Domain domain = getValidDomain();
         domain.setPath(null);
 
-        Throwable throwable = domainValidator.validate(domain, emptyList()).blockingGet();
-
         // Null path is replaced with '/' but '/' is not allowed in context-path mode.
-        assertNotNull(throwable);
-        assertTrue(throwable instanceof InvalidDomainException);
+        domainValidator.validate(domain, emptyList()).test().assertError(InvalidDomainException.class);
     }
 
     @Test
@@ -81,10 +75,8 @@ public class DomainValidatorTest {
         Domain domain = getValidDomain();
         domain.setPath("/////test////");
 
-        Throwable throwable = domainValidator.validate(domain, emptyList()).blockingGet();
-
         // Multiple '/' in path should be removed.
-        assertNull(throwable);
+        domainValidator.validate(domain, emptyList()).test().assertNoErrors();
     }
 
     @Test
@@ -92,10 +84,8 @@ public class DomainValidatorTest {
         Domain domain = getValidDomain();
         domain.setPath("test");
 
-        Throwable throwable = domainValidator.validate(domain, emptyList()).blockingGet();
-
         // '/' should be automatically append.
-        assertNull(throwable);
+        domainValidator.validate(domain, emptyList()).test().assertNoErrors();
     }
 
     @Test
@@ -103,10 +93,7 @@ public class DomainValidatorTest {
         Domain domain = getValidDomain();
         domain.setName("Invalid/Name");
 
-        Throwable throwable = domainValidator.validate(domain, emptyList()).blockingGet();
-
-        assertNotNull(throwable);
-        assertTrue(throwable instanceof InvalidDomainException);
+        domainValidator.validate(domain, emptyList()).test().assertError(InvalidDomainException.class);
     }
 
     @Test
@@ -114,10 +101,7 @@ public class DomainValidatorTest {
         Domain domain = getValidDomain();
         domain.setVhostMode(false);
 
-        Throwable throwable = domainValidator.validate(domain, singletonList("constraint.gravitee.io")).blockingGet();
-
-        assertNotNull(throwable);
-        assertTrue(throwable instanceof InvalidDomainException);
+        domainValidator.validate(domain, singletonList("constraint.gravitee.io")).test().assertError(InvalidDomainException.class);
     }
 
     @Test
@@ -126,10 +110,7 @@ public class DomainValidatorTest {
         domain.setVhostMode(true);
         domain.setVhosts(emptyList());
 
-        Throwable throwable = domainValidator.validate(domain, emptyList()).blockingGet();
-
-        assertNotNull(throwable);
-        assertTrue(throwable instanceof InvalidDomainException);
+        domainValidator.validate(domain, emptyList()).test().assertError(InvalidDomainException.class);
     }
 
     @Test
@@ -138,10 +119,7 @@ public class DomainValidatorTest {
         domain.setVhostMode(true);
         domain.setVhosts(null);
 
-        Throwable throwable = domainValidator.validate(domain, emptyList()).blockingGet();
-
-        assertNotNull(throwable);
-        assertTrue(throwable instanceof InvalidDomainException);
+        domainValidator.validate(domain, emptyList()).test().assertError(InvalidDomainException.class);
     }
 
     @Test
@@ -154,10 +132,7 @@ public class DomainValidatorTest {
         vhost.setOverrideEntrypoint(true);
         domain.getVhosts().add(vhost);
 
-        Throwable throwable = domainValidator.validate(domain, emptyList()).blockingGet();
-
-        assertNotNull(throwable);
-        assertTrue(throwable instanceof InvalidDomainException);
+        domainValidator.validate(domain, emptyList()).test().assertError(InvalidDomainException.class);
     }
 
 
@@ -167,10 +142,7 @@ public class DomainValidatorTest {
         domain.setVhostMode(true);
         domain.getVhosts().get(0).setOverrideEntrypoint(false);
 
-        Throwable throwable = domainValidator.validate(domain, emptyList()).blockingGet();
-
-        assertNotNull(throwable);
-        assertTrue(throwable instanceof InvalidDomainException);
+        domainValidator.validate(domain, emptyList()).test().assertError(InvalidDomainException.class);
     }
 
     @Test
@@ -178,9 +150,7 @@ public class DomainValidatorTest {
         Domain domain = getValidDomain();
         domain.setVhostMode(true);
 
-        Throwable throwable = domainValidator.validate(domain, emptyList()).blockingGet();
-
-        assertNull(throwable);
+        domainValidator.validate(domain, emptyList()).test().assertNoErrors();
     }
 
     private Domain getValidDomain() {

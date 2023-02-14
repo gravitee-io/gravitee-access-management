@@ -33,7 +33,7 @@ import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.oidc.model.CibaAuthRequest;
 import io.gravitee.common.http.HttpStatusCode;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.http.HttpMethod;
 import org.junit.Test;
 import org.junit.runner.RunWith;

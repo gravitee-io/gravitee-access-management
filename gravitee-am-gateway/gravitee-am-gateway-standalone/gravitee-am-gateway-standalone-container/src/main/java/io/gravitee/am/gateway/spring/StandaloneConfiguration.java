@@ -90,8 +90,8 @@ public class StandaloneConfiguration {
     }
 
     @Bean
-    public io.vertx.reactivex.core.Vertx vertx(@Autowired Vertx vertx) {
-        return io.vertx.reactivex.core.Vertx.newInstance(vertx);
+    public io.vertx.rxjava3.core.Vertx vertx(@Autowired Vertx vertx) {
+        return io.vertx.rxjava3.core.Vertx.newInstance(vertx);
     }
 
     @Bean

@@ -19,7 +19,7 @@ import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.model.UpdateIdentityProvider;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

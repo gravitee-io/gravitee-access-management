@@ -16,9 +16,9 @@
 package io.gravitee.am.repository.jdbc.management.api.spring;
 
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcCertificate;
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 import org.springframework.data.r2dbc.repository.Query;
-import org.springframework.data.repository.reactive.RxJava2CrudRepository;
+import org.springframework.data.repository.reactive.RxJava3CrudRepository;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -26,7 +26,7 @@ import org.springframework.stereotype.Repository;
  * @author GraviteeSource Team
  */
 @Repository
-public interface SpringCertificateRepository extends RxJava2CrudRepository<JdbcCertificate, String> {
+public interface SpringCertificateRepository extends RxJava3CrudRepository<JdbcCertificate, String> {
 
     @Query("Select * from certificates c  where c.domain = :domain")
     Flowable<JdbcCertificate> findByDomain(String domain);

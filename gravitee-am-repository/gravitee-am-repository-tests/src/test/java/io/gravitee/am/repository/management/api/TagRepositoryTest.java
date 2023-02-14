@@ -18,10 +18,12 @@ package io.gravitee.am.repository.management.api;
 import io.gravitee.am.model.Tag;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.am.repository.exceptions.TechnicalException;
-import io.reactivex.observers.TestObserver;
-import io.reactivex.subscribers.TestSubscriber;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -44,7 +46,7 @@ public class TagRepositoryTest extends AbstractManagementTest {
 
         // fetch domains
         TestSubscriber<Tag> testObserver1 = tagRepository.findAll(ORGANIZATION_ID).test();
-        testObserver1.awaitTerminalEvent();
+        testObserver1.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver1.assertComplete();
         testObserver1.assertNoErrors();
@@ -60,7 +62,7 @@ public class TagRepositoryTest extends AbstractManagementTest {
 
         // fetch domain
         TestObserver<Tag> testObserver = tagRepository.findById(tagCreated.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -79,7 +81,7 @@ public class TagRepositoryTest extends AbstractManagementTest {
         tag.setName("testName");
 
         TestObserver<Tag> testObserver = tagRepository.create(tag).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -99,7 +101,7 @@ public class TagRepositoryTest extends AbstractManagementTest {
         updatedTag.setName("testUpdatedName");
 
         TestObserver<Tag> testObserver = tagRepository.update(updatedTag).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -116,14 +118,14 @@ public class TagRepositoryTest extends AbstractManagementTest {
 
         // fetch tag
         TestObserver<Tag> testObserver = tagRepository.findById(tagCreated.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(t -> t.getName().equals(tag.getName()));
 
         // delete tag
         TestObserver testObserver1 = tagRepository.delete(tagCreated.getId()).test();
-        testObserver1.awaitTerminalEvent();
+        testObserver1.awaitDone(10, TimeUnit.SECONDS);
 
         // fetch tag
         tagRepository.findById(tagCreated.getId()).test().assertEmpty();

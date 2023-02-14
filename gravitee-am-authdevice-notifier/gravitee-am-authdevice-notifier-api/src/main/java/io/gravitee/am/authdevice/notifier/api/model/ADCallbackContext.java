@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.authdevice.notifier.api.model;
 
-import io.vertx.reactivex.core.MultiMap;
+import io.vertx.rxjava3.core.MultiMap;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)

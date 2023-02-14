@@ -17,7 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.service.request;
 
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.User;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

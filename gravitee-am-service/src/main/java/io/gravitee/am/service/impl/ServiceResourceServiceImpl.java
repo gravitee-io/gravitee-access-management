@@ -37,10 +37,10 @@ import io.gravitee.am.service.model.NewServiceResource;
 import io.gravitee.am.service.model.UpdateServiceResource;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.ServiceResourceAuditBuilder;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -129,8 +129,8 @@ public class ServiceResourceServiceImpl implements ServiceResourceService {
         LOGGER.debug("Update a resource {} for domain {}", id, domain);
 
         return serviceResourceRepository.findById(id)
-                .switchIfEmpty(Maybe.error(new ServiceResourceNotFoundException(id)))
-                .flatMapSingle(oldServiceResource -> {
+                .switchIfEmpty(Single.error(new ServiceResourceNotFoundException(id)))
+                .flatMap(oldServiceResource -> {
                     ServiceResource factorToUpdate = new ServiceResource(oldServiceResource);
                     factorToUpdate.setName(updateResource.getName());
                     factorToUpdate.setConfiguration(updateResource.getConfiguration());

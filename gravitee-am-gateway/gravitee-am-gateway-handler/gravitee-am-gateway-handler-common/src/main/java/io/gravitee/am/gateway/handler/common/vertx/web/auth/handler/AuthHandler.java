@@ -16,7 +16,7 @@
 package io.gravitee.am.gateway.handler.common.vertx.web.auth.handler;
 
 import io.vertx.core.Handler;
-import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

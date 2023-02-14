@@ -28,16 +28,13 @@ import io.gravitee.am.identityprovider.mongo.MongoAbstractProvider;
 import io.gravitee.am.identityprovider.mongo.authentication.spring.MongoAuthenticationProviderConfiguration;
 import io.gravitee.am.service.exception.UserAlreadyExistsException;
 import io.gravitee.am.service.exception.UserNotFoundException;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Observable;
-import io.reactivex.Single;
-import java.util.regex.Pattern;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.Single;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.conversions.Bson;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 
@@ -137,8 +134,8 @@ public class MongoUserProvider extends MongoAbstractProvider implements UserProv
     @Override
     public Single<User> update(String id, User updateUser) {
         return findById(id, false)
-                .switchIfEmpty(Maybe.error(new UserNotFoundException(id)))
-                .flatMapSingle(oldUser -> {
+                .switchIfEmpty(Single.error(new UserNotFoundException(id)))
+                .flatMap(oldUser -> {
                     Document document = new Document();
                     // set username (keep the original value)
                     document.put(configuration.getUsernameField(), oldUser.getUsername());
@@ -176,8 +173,8 @@ public class MongoUserProvider extends MongoAbstractProvider implements UserProv
         }
 
         return findById(user.getId())
-                .switchIfEmpty(Maybe.error(new UserNotFoundException(user.getId())))
-                .flatMapSingle(foundUser -> {
+                .switchIfEmpty(Single.error(new UserNotFoundException(user.getId())))
+                .flatMap(foundUser -> {
                     var updates = Updates.combine(
                             Updates.set(configuration.getUsernameField(), username.toLowerCase()),
                             Updates.set(FIELD_UPDATED_AT, new Date()));
@@ -194,8 +191,8 @@ public class MongoUserProvider extends MongoAbstractProvider implements UserProv
         }
 
         return findById(user.getId(), false)
-                .switchIfEmpty(Maybe.error(new UserNotFoundException(user.getId())))
-                .flatMapSingle(oldUser -> {
+                .switchIfEmpty(Single.error(new UserNotFoundException(user.getId())))
+                .flatMap(oldUser -> {
                     // set password
                     Bson passwordField = null;
                     Bson passwordSaltField = null;

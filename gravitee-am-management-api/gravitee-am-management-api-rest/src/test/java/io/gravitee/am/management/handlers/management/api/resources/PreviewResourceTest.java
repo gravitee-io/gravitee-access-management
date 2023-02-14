@@ -23,7 +23,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.Theme;
 import io.gravitee.common.http.HttpStatusCode;
-import io.reactivex.Maybe;
+import io.reactivex.rxjava3.core.Maybe;
 import org.junit.Test;
 
 import javax.ws.rs.client.Entity;

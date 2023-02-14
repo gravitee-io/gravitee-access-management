@@ -16,11 +16,11 @@
 package io.gravitee.am.repository.jdbc.management.api.spring;
 
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcFlow;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.data.repository.reactive.RxJava2CrudRepository;
+import org.springframework.data.repository.reactive.RxJava3CrudRepository;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -28,7 +28,7 @@ import org.springframework.stereotype.Repository;
  * @author GraviteeSource Team
  */
 @Repository
-public interface SpringFlowRepository extends RxJava2CrudRepository<JdbcFlow, String> {
+public interface SpringFlowRepository extends RxJava3CrudRepository<JdbcFlow, String> {
 
     @Query("SELECT * FROM flows f WHERE f.reference_type = :refType AND f.reference_id = :refId AND f.id = :id")
     Maybe<JdbcFlow> findById(@Param("refType") String referenceType, @Param("refId") String referenceId, @Param("id") String id);

@@ -20,10 +20,10 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
 import io.vertx.core.Handler;
-import io.vertx.reactivex.core.MultiMap;
-import io.vertx.reactivex.core.http.HttpServerResponse;
-import io.vertx.reactivex.ext.web.RoutingContext;
-import io.vertx.reactivex.ext.web.Session;
+import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.rxjava3.core.http.HttpServerResponse;
+import io.vertx.rxjava3.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.Session;
 
 import static io.gravitee.am.common.utils.ConstantKeys.ID_TOKEN_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.PARAM_CONTEXT_KEY;

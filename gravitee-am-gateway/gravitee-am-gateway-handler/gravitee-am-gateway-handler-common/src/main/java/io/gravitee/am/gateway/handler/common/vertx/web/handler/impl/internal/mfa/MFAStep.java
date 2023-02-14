@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mf
 import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.AuthenticationFlowStep;
 import io.vertx.core.Handler;
-import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

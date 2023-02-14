@@ -26,11 +26,11 @@ import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
 import io.gravitee.am.service.exception.PasswordHistoryException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -47,10 +47,11 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import static io.gravitee.am.model.ReferenceType.DOMAIN;
-import static io.reactivex.Flowable.fromIterable;
+import static io.reactivex.rxjava3.core.Flowable.fromIterable;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.isA;
@@ -110,7 +111,7 @@ class PasswordHistoryServiceTest {
         var testObserver = service
                 .addPasswordToHistory(ReferenceType.DOMAIN, REFERENCE_ID, user, password , new DefaultUser(), passwordSettings)
                 .test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
@@ -140,7 +141,7 @@ class PasswordHistoryServiceTest {
         var testObserver = service
                 .addPasswordToHistory(ReferenceType.DOMAIN, REFERENCE_ID, user, password , new DefaultUser(), passwordSettings)
                 .test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(PasswordHistoryException.class);
     }
 
@@ -167,7 +168,7 @@ class PasswordHistoryServiceTest {
         var testObserver = service
                 .addPasswordToHistory(ReferenceType.DOMAIN, REFERENCE_ID, user, password , new DefaultUser(), passwordSettings)
                 .test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
@@ -192,7 +193,7 @@ class PasswordHistoryServiceTest {
         given(repository.findByReference(any(), any())).willReturn(Flowable.error(IllegalArgumentException::new));
 
         var testSubscriber = service.findByReference(ReferenceType.DOMAIN, REFERENCE_ID).test();
-        testSubscriber.awaitTerminalEvent();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
         testSubscriber.assertError(TechnicalManagementException.class);
     }
 
@@ -205,10 +206,10 @@ class PasswordHistoryServiceTest {
         var testObserver = service
                 .addPasswordToHistory(ReferenceType.DOMAIN, REFERENCE_ID, user, password , new DefaultUser(), passwordSettings)
                 .test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        testObserver.assertNever(new PasswordHistory());
+        testObserver.assertNoValues();
     }
 
     private PasswordSettings getPasswordSettings(int oldPasswords) {
@@ -228,7 +229,7 @@ class PasswordHistoryServiceTest {
 
         var testObserver = service
                 .passwordAlreadyUsed(ReferenceType.DOMAIN, REFERENCE_ID, userId, password, passwordSettings).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(matches);
@@ -239,7 +240,7 @@ class PasswordHistoryServiceTest {
     void checkPasswordReturnsFalseWithNoSettings(PasswordSettings passwordSettings) {
         var testObserver = service
                 .passwordAlreadyUsed(ReferenceType.DOMAIN, REFERENCE_ID, userId, password, passwordSettings).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(false);

@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.certificate.CertificateProvider;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 import io.vertx.ext.web.Session;
 import io.vertx.ext.web.sstore.AbstractSession;
 import org.springframework.util.StringUtils;

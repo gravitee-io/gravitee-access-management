@@ -17,7 +17,7 @@ package io.gravitee.am.gateway.handler.common.vertx.web.handler;
 
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CSRFHandlerImpl;
 import io.vertx.core.Vertx;
-import io.vertx.reactivex.ext.web.handler.CSRFHandler;
+import io.vertx.rxjava3.ext.web.handler.CSRFHandler;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;

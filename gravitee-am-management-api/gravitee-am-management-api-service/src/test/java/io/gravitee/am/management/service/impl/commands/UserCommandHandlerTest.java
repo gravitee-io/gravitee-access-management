@@ -26,8 +26,8 @@ import io.gravitee.cockpit.api.command.CommandStatus;
 import io.gravitee.cockpit.api.command.user.UserCommand;
 import io.gravitee.cockpit.api.command.user.UserPayload;
 import io.gravitee.cockpit.api.command.user.UserReply;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -35,6 +35,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.HashMap;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.*;
@@ -94,7 +95,7 @@ public class UserCommandHandlerTest {
 
         TestObserver<UserReply> obs = cut.handle(command).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.SUCCEEDED));
     }
 
@@ -112,7 +113,7 @@ public class UserCommandHandlerTest {
 
         TestObserver<UserReply> obs = cut.handle(command).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.ERROR));
     }
 }

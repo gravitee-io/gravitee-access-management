@@ -18,8 +18,8 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
 import io.vertx.core.Handler;
-import io.vertx.reactivex.core.MultiMap;
-import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 
 /**
  * The callback route to verify attestations and assertions. Usually this route is <pre>/webauthn/response</pre>

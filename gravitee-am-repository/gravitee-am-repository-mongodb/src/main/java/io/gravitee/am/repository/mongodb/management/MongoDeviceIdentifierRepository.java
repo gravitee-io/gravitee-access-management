@@ -21,7 +21,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.DeviceIdentifier;
 import io.gravitee.am.repository.management.api.DeviceIdentifierRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.DeviceIdentifierMongo;
-import io.reactivex.*;
+import io.reactivex.rxjava3.core.*;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 

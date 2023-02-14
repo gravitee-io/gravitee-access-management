@@ -18,13 +18,14 @@ package io.gravitee.am.repository.management.api;
 import io.gravitee.am.model.Form;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.management.AbstractManagementTest;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -56,7 +57,7 @@ public class FormRepositoryTest extends AbstractManagementTest {
     @Test
     public void shouldNotFindById() {
         final TestObserver<Form> testObserver = repository.findById("unknownId").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoValues();
     }
 
@@ -66,7 +67,7 @@ public class FormRepositoryTest extends AbstractManagementTest {
         Form createdForm = repository.create(form).blockingGet();
 
         TestObserver<Form> testObserver = repository.findById(createdForm.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -79,7 +80,7 @@ public class FormRepositoryTest extends AbstractManagementTest {
         Form createdForm = repository.create(form).blockingGet();
 
         TestObserver<Form> testObserver = repository.findById(createdForm.getReferenceType(), createdForm.getReferenceId(), createdForm.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -92,7 +93,7 @@ public class FormRepositoryTest extends AbstractManagementTest {
         Form createdForm = repository.create(form).blockingGet();
 
         TestObserver<Form> testObserver = repository.findById(createdForm.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -101,7 +102,7 @@ public class FormRepositoryTest extends AbstractManagementTest {
         Form updatableForm = buildForm();
         updatableForm.setId(createdForm.getId());
         TestObserver<Form> updatedForm = repository.update(updatableForm).test();
-        updatedForm.awaitTerminalEvent();
+        updatedForm.awaitDone(10, TimeUnit.SECONDS);
         assertEqualsTo(updatableForm, createdForm.getId(), updatedForm);
     }
 
@@ -122,16 +123,16 @@ public class FormRepositoryTest extends AbstractManagementTest {
         Form createdForm = repository.create(form).blockingGet();
 
         TestObserver<Form> testObserver = repository.findById(createdForm.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         assertEqualsTo(form, createdForm.getId(), testObserver);
 
-        repository.delete(createdForm.getId()).blockingGet();
+        repository.delete(createdForm.getId()).blockingAwait();
 
         testObserver = repository.findById(createdForm.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoValues();
@@ -152,7 +153,7 @@ public class FormRepositoryTest extends AbstractManagementTest {
         }
 
         TestObserver<List<Form>> testObserver = repository.findAll(ReferenceType.DOMAIN, FIXED_REF_ID).toList().test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         testObserver.assertValue(l -> l.size() == loop);
         testObserver.assertValue(l -> l.stream().map(Form::getId).distinct().count() == loop);
@@ -176,7 +177,7 @@ public class FormRepositoryTest extends AbstractManagementTest {
         }
 
         TestObserver<List<Form>> testObserver = repository.findByClient(ReferenceType.DOMAIN, FIXED_REF_ID, FIXED_CLI_ID).toList().test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         testObserver.assertValue(l -> l.size() == loop);
         testObserver.assertValue(l -> l.stream().map(Form::getId).distinct().count() == loop);
@@ -198,7 +199,7 @@ public class FormRepositoryTest extends AbstractManagementTest {
         Form templateForm = repository.create(form).blockingGet();
 
         TestObserver<Form> testMaybe = repository.findByTemplate(ReferenceType.DOMAIN, FIXED_REF_ID, "MyTemplateId").test();
-        testMaybe.awaitTerminalEvent();
+        testMaybe.awaitDone(10, TimeUnit.SECONDS);
         testMaybe.assertNoErrors();
         assertEqualsTo(templateForm, templateForm.getId(), testMaybe);
     }
@@ -220,7 +221,7 @@ public class FormRepositoryTest extends AbstractManagementTest {
         Form templateForm = repository.create(form).blockingGet();
 
         TestObserver<Form> testMaybe = repository.findByClientAndTemplate(ReferenceType.DOMAIN, FIXED_REF_ID, FIXED_CLI_ID, "MyTemplateId").test();
-        testMaybe.awaitTerminalEvent();
+        testMaybe.awaitDone(10, TimeUnit.SECONDS);
         testMaybe.assertNoErrors();
         assertEqualsTo(templateForm, templateForm.getId(), testMaybe);
     }

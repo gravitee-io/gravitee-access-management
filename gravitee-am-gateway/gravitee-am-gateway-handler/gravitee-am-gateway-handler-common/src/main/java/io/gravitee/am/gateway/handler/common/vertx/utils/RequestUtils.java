@@ -19,8 +19,8 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.common.http.HttpHeaders;
 import io.netty.handler.codec.http.QueryStringDecoder;
 import io.vertx.core.net.SocketAddress;
-import io.vertx.reactivex.core.MultiMap;
-import io.vertx.reactivex.core.http.HttpServerRequest;
+import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.rxjava3.core.http.HttpServerRequest;
 
 import java.net.URI;
 

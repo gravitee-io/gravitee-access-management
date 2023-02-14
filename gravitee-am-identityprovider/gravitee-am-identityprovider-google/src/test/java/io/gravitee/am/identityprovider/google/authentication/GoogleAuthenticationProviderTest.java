@@ -28,13 +28,13 @@ import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.MultiValueMap;
 import io.gravitee.el.TemplateEngine;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.observers.TestObserver;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.impl.ClientPhase;
 import io.vertx.ext.web.client.impl.WebClientInternal;
-import io.vertx.reactivex.core.Vertx;
-import io.vertx.reactivex.ext.web.client.WebClient;
+import io.vertx.rxjava3.core.Vertx;
+import io.vertx.rxjava3.ext.web.client.WebClient;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -47,6 +47,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
@@ -194,7 +195,7 @@ public class GoogleAuthenticationProviderTest {
 
         TestObserver<User> obs = provider.loadUserByUsername(authentication).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValue(user -> {
             assertEquals("subjohndoe", user.getId());
             assertEquals("john.doe@graviteesource.com", user.getUsername());
@@ -246,7 +247,7 @@ public class GoogleAuthenticationProviderTest {
 
         TestObserver<User> obs = provider.loadUserByUsername(authentication).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValue(user -> {
             assertEquals("subjohndoe", user.getId());
             assertEquals("john.doe@graviteesource.com", user.getUsername());
@@ -295,7 +296,7 @@ public class GoogleAuthenticationProviderTest {
 
         TestObserver<User> obs = provider.loadUserByUsername(authentication).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertError(BadCredentialsException.class);
 
         verify(authenticationContext, times(1)).set("id_token", badJwt);

@@ -21,9 +21,9 @@ import io.gravitee.am.repository.jdbc.oauth2.oidc.model.JdbcCibaAuthRequest;
 import io.gravitee.am.repository.jdbc.oauth2.oidc.model.JdbcRequestObject;
 import io.gravitee.am.repository.oidc.api.CibaAuthRequestRepository;
 import io.gravitee.am.repository.oidc.model.CibaAuthRequest;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.core.query.Update;
 import org.springframework.stereotype.Repository;
@@ -33,7 +33,7 @@ import java.time.LocalDateTime;
 
 import static java.time.ZoneOffset.UTC;
 import static org.springframework.data.relational.core.query.Criteria.where;
-import static reactor.adapter.rxjava.RxJava2Adapter.*;
+import static reactor.adapter.rxjava.RxJava3Adapter.*;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)

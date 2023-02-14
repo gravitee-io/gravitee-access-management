@@ -27,10 +27,10 @@ import io.gravitee.am.service.exception.ThemeNotFoundException;
 import io.gravitee.am.service.impl.ThemeServiceImpl;
 import io.gravitee.am.service.model.NewTheme;
 import io.gravitee.am.service.validators.theme.ThemeValidator;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -38,6 +38,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -71,7 +72,7 @@ public class ThemeServiceTest {
     public void testFindByReference() {
         when(repository.findByReference(any(), any())).thenReturn(Maybe.just(new Theme()));
         final TestObserver<Theme> test = cut.findByReference(ReferenceType.DOMAIN, DOMAIN_ID_1).test();
-        test.awaitTerminalEvent();
+        test.awaitDone(10, TimeUnit.SECONDS);
         test.assertValueCount(1);
     }
 
@@ -79,7 +80,7 @@ public class ThemeServiceTest {
     public void testFindByReference_Error() {
         when(repository.findByReference(any(), any())).thenReturn(Maybe.error(new RuntimeException()));
         final TestObserver<Theme> test = cut.findByReference(ReferenceType.DOMAIN, DOMAIN_ID_1).test();
-        test.awaitTerminalEvent();
+        test.awaitDone(10, TimeUnit.SECONDS);
         test.assertError(TechnicalManagementException.class);
     }
 
@@ -99,7 +100,7 @@ public class ThemeServiceTest {
         newTheme.setFaviconUrl("http://test/toto/titi?ok=tutu");
         final TestObserver<Theme> test = cut.create(domain, newTheme, new DefaultUser()).test();
 
-        test.awaitTerminalEvent();
+        test.awaitDone(10, TimeUnit.SECONDS);
         test.assertValueCount(1);
 
         verify(repository).create(argThat(input -> ReferenceType.DOMAIN.equals(input.getReferenceType()) && DOMAIN_ID_1.equals(input.getReferenceId())));
@@ -118,7 +119,7 @@ public class ThemeServiceTest {
 
         final TestObserver<Theme> test = cut.create(domain, new NewTheme(), new DefaultUser()).test();
 
-        test.awaitTerminalEvent();
+        test.awaitDone(10, TimeUnit.SECONDS);
         test.assertError(TechnicalManagementException.class);
 
         verify(repository).create(argThat(input -> ReferenceType.DOMAIN.equals(input.getReferenceType()) && DOMAIN_ID_1.equals(input.getReferenceId())));
@@ -136,7 +137,7 @@ public class ThemeServiceTest {
         updatedTheme.setReferenceType(ReferenceType.DOMAIN);
 
         final TestObserver<Theme> test = cut.update(domain, updatedTheme, new DefaultUser()).test();
-        test.awaitTerminalEvent();
+        test.awaitDone(10, TimeUnit.SECONDS);
 
         verify(repository, never()).update(any());
         verify(auditService, never()).report(any());
@@ -161,7 +162,7 @@ public class ThemeServiceTest {
 
         final TestObserver<Theme> test = cut.update(domain, updatedTheme, new DefaultUser()).test();
 
-        test.awaitTerminalEvent();
+        test.awaitDone(10, TimeUnit.SECONDS);
         test.assertError(InvalidThemeException.class);
 
         verify(repository, never()).update(any());
@@ -187,7 +188,7 @@ public class ThemeServiceTest {
 
         final TestObserver<Theme> test = cut.update(domain, updatedTheme, new DefaultUser()).test();
 
-        test.awaitTerminalEvent();
+        test.awaitDone(10, TimeUnit.SECONDS);
         test.assertError(InvalidThemeException.class);
 
         verify(repository, never()).update(any());
@@ -209,7 +210,7 @@ public class ThemeServiceTest {
 
         final TestObserver<Theme> test = cut.update(domain, updatedTheme, new DefaultUser()).test();
 
-        test.awaitTerminalEvent();
+        test.awaitDone(10, TimeUnit.SECONDS);
         test.assertError(ThemeNotFoundException.class);
 
         verify(repository, never()).update(any());
@@ -240,7 +241,7 @@ public class ThemeServiceTest {
 
         final TestObserver<Theme> test = cut.update(domain, updatedTheme, new DefaultUser()).test();
 
-        test.awaitTerminalEvent();
+        test.awaitDone(10, TimeUnit.SECONDS);
         test.assertValueCount(1);
 
         verify(repository).update(any());
@@ -260,7 +261,7 @@ public class ThemeServiceTest {
         domain.setId(DOMAIN_ID_1);
         final TestObserver<Theme> test = cut.getTheme(domain, "anyid").test();
 
-        test.awaitTerminalEvent();
+        test.awaitDone(10, TimeUnit.SECONDS);
         test.assertValueCount(1);
     }
 
@@ -276,7 +277,7 @@ public class ThemeServiceTest {
         domain.setId(DOMAIN_ID_1);
         final TestObserver<Theme> test = cut.getTheme(domain, "anyid").test();
 
-        test.awaitTerminalEvent();
+        test.awaitDone(10, TimeUnit.SECONDS);
         test.assertError(ThemeNotFoundException.class);
     }
 
@@ -292,7 +293,7 @@ public class ThemeServiceTest {
         domain.setId(DOMAIN_ID_1);
         final TestObserver<Theme> test = cut.getTheme(domain, "anyid").test();
 
-        test.awaitTerminalEvent();
+        test.awaitDone(10, TimeUnit.SECONDS);
         test.assertError(ThemeNotFoundException.class);
     }
 
@@ -312,7 +313,7 @@ public class ThemeServiceTest {
 
         final TestObserver<Void> test = cut.delete(domain, "themeid", new DefaultUser()).test();
 
-        test.awaitTerminalEvent();
+        test.awaitDone(10, TimeUnit.SECONDS);
         test.assertNoErrors();
 
         verify(repository).delete(any());
@@ -333,7 +334,7 @@ public class ThemeServiceTest {
 
         final TestObserver<Void> test = cut.delete(domain, "themeid", new DefaultUser()).test();
 
-        test.awaitTerminalEvent();
+        test.awaitDone(10, TimeUnit.SECONDS);
         test.assertError(InvalidThemeException.class);
 
         verify(repository, never()).delete(any());

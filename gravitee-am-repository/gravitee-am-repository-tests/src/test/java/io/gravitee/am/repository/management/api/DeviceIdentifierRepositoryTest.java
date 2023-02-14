@@ -20,12 +20,13 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.common.utils.UUID;
-import io.reactivex.observers.TestObserver;
-import io.reactivex.subscribers.TestSubscriber;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
@@ -44,7 +45,7 @@ public class DeviceIdentifierRepositoryTest extends AbstractManagementTest {
         repository.create(botDetection).blockingGet();
 
         TestSubscriber<DeviceIdentifier> testSubscriber = repository.findByReference(ReferenceType.DOMAIN, "testDomain").test();
-        testSubscriber.awaitTerminalEvent();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
 
         testSubscriber.assertComplete();
         testSubscriber.assertNoErrors();
@@ -70,7 +71,7 @@ public class DeviceIdentifierRepositoryTest extends AbstractManagementTest {
         DeviceIdentifier deviceIdentifierCreated = repository.create(deviceIdentifier).blockingGet();
 
         TestObserver<DeviceIdentifier> testObserver = repository.findById(deviceIdentifierCreated.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -91,7 +92,7 @@ public class DeviceIdentifierRepositoryTest extends AbstractManagementTest {
         DeviceIdentifier bDetection = buildDeviceIdentifier();
 
         TestObserver<DeviceIdentifier> testObserver = repository.create(bDetection).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -112,7 +113,7 @@ public class DeviceIdentifierRepositoryTest extends AbstractManagementTest {
         bDetection.setName("testUpdatedName");
 
         TestObserver<DeviceIdentifier> testObserver = repository.update(bDetection).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -129,13 +130,13 @@ public class DeviceIdentifierRepositoryTest extends AbstractManagementTest {
         DeviceIdentifier deviceIdentifierCreated = repository.create(botDetection).blockingGet();
 
         TestObserver<DeviceIdentifier> testObserver = repository.findById(deviceIdentifierCreated.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(bd -> bd.getName().equals(deviceIdentifierCreated.getName()));
 
         TestObserver testObserver1 = repository.delete(deviceIdentifierCreated.getId()).test();
-        testObserver1.awaitTerminalEvent();
+        testObserver1.awaitDone(10, TimeUnit.SECONDS);
 
         repository.findById(deviceIdentifierCreated.getId()).test().assertEmpty();
     }

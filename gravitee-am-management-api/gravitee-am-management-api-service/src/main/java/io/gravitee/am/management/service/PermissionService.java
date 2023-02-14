@@ -22,8 +22,8 @@ import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.repository.management.api.search.MembershipCriteria;
 import io.gravitee.am.service.*;
 import io.gravitee.am.service.exception.InvalidUserException;
-import io.reactivex.Flowable;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Single;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -119,7 +119,7 @@ public class PermissionService {
 
             return Single.merge(obs)
                     .all(consistent -> consistent)
-                    .onErrorResumeNext(Single.just(false))
+                    .onErrorResumeNext(exception -> Single.just(false))
                     .doOnSuccess(consistent -> consistencyCache.put(key, consistent));
         } catch (Exception e){
             return Single.just(false);
@@ -140,7 +140,7 @@ public class PermissionService {
                         // Need to fetch the domain to check if it belongs to the environment / organization.
                         return isDomainIdConsistent(application.getDomain(), environmentId, organizationId);
                     }
-                });
+                }).toSingle();
     }
 
     private Single<Boolean> isDomainIdConsistent(String domainId, String environmentId, String organizationId) {
@@ -157,7 +157,7 @@ public class PermissionService {
                         // Need to fetch the environment to check if it belongs to the organization.
                         return isEnvironmentIdConsistent(domain.getReferenceId(), organizationId);
                     }
-                });
+                }).toSingle();
     }
 
     private Single<Boolean> isEnvironmentIdConsistent(String environmentId, String organizationId) {
@@ -168,7 +168,7 @@ public class PermissionService {
 
         return environmentService.findById(environmentId, organizationId)
                 .map(environment -> true)
-                .onErrorResumeNext(Single.just(false));
+                .onErrorResumeNext(exception -> Single.just(false));
     }
 
     private Single<Map<Membership, Map<Permission, Set<Acl>>>> findMembershipPermissions(User user, Stream<Map.Entry<ReferenceType, String>> referenceStream) {

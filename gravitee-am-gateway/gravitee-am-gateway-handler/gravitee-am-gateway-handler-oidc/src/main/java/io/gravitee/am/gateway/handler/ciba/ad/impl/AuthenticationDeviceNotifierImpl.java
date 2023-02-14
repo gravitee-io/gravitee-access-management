@@ -22,12 +22,12 @@ import io.gravitee.am.gateway.handler.ciba.exception.DeviceNotificationException
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.http.WebClientBuilder;
 import io.gravitee.common.http.HttpStatusCode;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
-import io.vertx.reactivex.core.MultiMap;
-import io.vertx.reactivex.core.Vertx;
-import io.vertx.reactivex.ext.web.client.WebClient;
+import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.rxjava3.core.Vertx;
+import io.vertx.rxjava3.ext.web.client.WebClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -94,7 +94,7 @@ public class AuthenticationDeviceNotifierImpl implements AuthenticationDeviceNot
         return this.client.requestAbs(HttpMethod.POST, URL_TO_GET_FROM_DOMAIN_SETTINGS)
                 .rxSendForm(formData)
                 .doOnError((error) -> LOGGER.warn("Unexpected error during device notification : {}", error.getMessage(), error))
-                .onErrorResumeNext(Single.error(new DeviceNotificationException("Unexpected error during device notification")))
+                .onErrorResumeNext(exception -> Single.error(new DeviceNotificationException("Unexpected error during device notification")))
                 .map(response -> {
                     if (response.statusCode() != HttpStatusCode.OK_200) {
                         LOGGER.info("Device notification fails for tid '{}' with status '{}'", request.getTransactionId(), response.statusCode());

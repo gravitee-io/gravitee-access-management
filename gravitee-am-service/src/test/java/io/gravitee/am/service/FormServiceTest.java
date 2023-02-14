@@ -23,11 +23,11 @@ import io.gravitee.am.repository.management.api.FormRepository;
 import io.gravitee.am.service.exception.FormAlreadyExistsException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.FormServiceImpl;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
-import io.reactivex.subscribers.TestSubscriber;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -36,6 +36,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.when;
@@ -126,7 +127,7 @@ public class FormServiceTest {
 
         TestSubscriber<Form> obs = formService.findAll(ReferenceType.ORGANIZATION).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertComplete();
         obs.assertValue(form);
     }
@@ -138,7 +139,7 @@ public class FormServiceTest {
 
         TestSubscriber<Form> obs = formService.findAll(ReferenceType.ORGANIZATION).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertNoErrors();
         obs.assertComplete();
         obs.assertNoValues();
@@ -151,14 +152,14 @@ public class FormServiceTest {
 
         TestSubscriber<Form> obs = formService.findAll(ReferenceType.ORGANIZATION).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertError(TechnicalException.class);
     }
 
     @Test
     public void shouldGetDefaultByDomainAndTemplate_Form() {
         TestObserver<Form> obs = formService.getDefaultByDomainAndTemplate("test", "valid").test();
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertComplete();
         obs.assertValue(form -> form.getContent().contains("test content"));
     }
@@ -166,7 +167,7 @@ public class FormServiceTest {
     @Test
     public void shouldGetDefaultByDomainAndTemplate_TechnicalManagementException() {
         TestObserver<Form> obs = formService.getDefaultByDomainAndTemplate("test", "invalid").test();
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertError(TechnicalManagementException.class);
     }
 }

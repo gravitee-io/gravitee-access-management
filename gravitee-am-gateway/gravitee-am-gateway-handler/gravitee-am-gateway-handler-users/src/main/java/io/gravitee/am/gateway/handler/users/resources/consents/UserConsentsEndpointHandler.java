@@ -20,9 +20,9 @@ import io.gravitee.am.gateway.handler.users.service.UserService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.json.Json;
-import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 
 import java.util.Optional;
 

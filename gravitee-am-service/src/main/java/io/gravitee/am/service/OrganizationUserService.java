@@ -16,7 +16,7 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.model.User;
-import io.reactivex.Completable;
+import io.reactivex.rxjava3.core.Completable;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)

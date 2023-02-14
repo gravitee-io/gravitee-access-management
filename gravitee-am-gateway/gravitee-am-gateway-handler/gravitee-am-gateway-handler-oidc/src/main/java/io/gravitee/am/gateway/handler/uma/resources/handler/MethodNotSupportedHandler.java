@@ -17,7 +17,7 @@ package io.gravitee.am.gateway.handler.uma.resources.handler;
 
 import io.gravitee.am.common.exception.oauth2.MethodNotSupportedException;
 import io.vertx.core.Handler;
-import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 
 /**
  * UMA Specification state that if the resource server request used an unsupported HTTP method,

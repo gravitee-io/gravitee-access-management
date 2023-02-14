@@ -35,10 +35,10 @@ import io.gravitee.am.service.model.NewMembership;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.DomainAuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.MembershipAuditBuilder;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -125,7 +125,7 @@ public class MembershipServiceImpl implements MembershipService {
                 .andThen(membershipRepository.findByReferenceAndMember(membership.getReferenceType(), membership.getReferenceId(), membership.getMemberType(), membership.getMemberId())
                         .map(Optional::of)
                         .defaultIfEmpty(Optional.empty())
-                        .flatMapSingle(optMembership -> {
+                        .flatMap(optMembership -> {
                             if (!optMembership.isPresent()) {
                                 // add membership
                                 Membership newMembership = new Membership();

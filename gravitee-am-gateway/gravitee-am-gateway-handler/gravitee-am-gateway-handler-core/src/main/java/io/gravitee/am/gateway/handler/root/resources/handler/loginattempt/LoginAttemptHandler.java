@@ -25,9 +25,9 @@ import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria.Builder;
 import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.UserActivityService;
-import io.reactivex.Maybe;
+import io.reactivex.rxjava3.core.Maybe;
 import io.vertx.core.Handler;
-import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -103,6 +103,6 @@ public class LoginAttemptHandler implements Handler<RoutingContext> {
     }
 
     private Maybe<Optional<LoginAttempt>> getLoginAttempt(AccountSettings accountSettings, LoginAttemptCriteria criteria) {
-        return loginAttemptService.checkAccount(criteria, accountSettings).map(Optional::ofNullable).defaultIfEmpty(Optional.empty());
+        return loginAttemptService.checkAccount(criteria, accountSettings).map(Optional::ofNullable).switchIfEmpty(Maybe.just(Optional.empty()));
     }
 }

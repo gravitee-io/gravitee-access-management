@@ -23,11 +23,11 @@ import io.gravitee.am.identityprovider.common.oauth2.authentication.AbstractSoci
 import io.gravitee.am.identityprovider.facebook.FacebookIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.facebook.authentication.spring.FacebookAuthenticationProviderConfiguration;
 import io.gravitee.am.identityprovider.facebook.model.FacebookUser;
-import io.reactivex.Maybe;
+import io.reactivex.rxjava3.core.Maybe;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.reactivex.core.MultiMap;
-import io.vertx.reactivex.ext.web.client.WebClient;
+import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.rxjava3.ext.web.client.WebClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

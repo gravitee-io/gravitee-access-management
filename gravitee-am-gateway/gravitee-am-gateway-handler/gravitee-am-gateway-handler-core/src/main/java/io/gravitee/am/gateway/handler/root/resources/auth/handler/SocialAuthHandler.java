@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.handler.root.resources.auth.handler;
 import io.gravitee.am.gateway.handler.root.resources.auth.handler.impl.SocialAuthHandlerImpl;
 import io.gravitee.am.gateway.handler.root.resources.auth.provider.SocialAuthenticationProvider;
 import io.vertx.core.Handler;
-import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

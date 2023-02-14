@@ -21,9 +21,9 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.gateway.handler.oauth2.service.token.impl.AccessToken;
 import io.gravitee.am.model.User;
 import io.gravitee.am.service.UserService;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -32,6 +32,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Collections;
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Mockito.*;
 
@@ -63,7 +64,7 @@ public class IntrospectionServiceTest {
         IntrospectionRequest introspectionRequest = new IntrospectionRequest(token);
         TestObserver<IntrospectionResponse> testObserver = introspectionService.introspect(introspectionRequest).test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         verify(userService, times(1)).findById("user");
@@ -80,7 +81,7 @@ public class IntrospectionServiceTest {
         IntrospectionRequest introspectionRequest = new IntrospectionRequest(token);
         TestObserver<IntrospectionResponse> testObserver = introspectionService.introspect(introspectionRequest).test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         verify(userService, never()).findById(anyString());
@@ -100,7 +101,7 @@ public class IntrospectionServiceTest {
         IntrospectionRequest introspectionRequest = new IntrospectionRequest(token);
         TestObserver<IntrospectionResponse> testObserver = introspectionService.introspect(introspectionRequest).test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(introspectionResponse -> introspectionResponse.get("custom-claim").equals("test"));
@@ -120,7 +121,7 @@ public class IntrospectionServiceTest {
         IntrospectionRequest introspectionRequest = new IntrospectionRequest(token);
         TestObserver<IntrospectionResponse> testObserver = introspectionService.introspect(introspectionRequest).test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(introspectionResponse -> !introspectionResponse.containsKey(Claims.aud));

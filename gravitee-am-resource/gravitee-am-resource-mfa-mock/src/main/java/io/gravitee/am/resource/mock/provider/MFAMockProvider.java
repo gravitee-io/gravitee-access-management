@@ -20,7 +20,7 @@ import io.gravitee.am.resource.api.mfa.MFAChallenge;
 import io.gravitee.am.resource.api.mfa.MFALink;
 import io.gravitee.am.resource.api.mfa.MFAResourceProvider;
 import io.gravitee.am.resource.mock.MFAResourceConfiguration;
-import io.reactivex.Completable;
+import io.reactivex.rxjava3.core.Completable;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**

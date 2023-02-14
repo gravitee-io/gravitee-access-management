@@ -37,10 +37,10 @@ import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.am.service.model.UpdateIdentityProvider;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.IdentityProviderAuditBuilder;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -168,8 +168,8 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
         LOGGER.debug("Update an identity provider {} for {} {}", id, referenceType, referenceId);
 
         return identityProviderRepository.findById(referenceType, referenceId, id)
-                .switchIfEmpty(Maybe.error(new IdentityProviderNotFoundException(id)))
-                .flatMapSingle(oldIdentity -> {
+                .switchIfEmpty(Single.error(new IdentityProviderNotFoundException(id)))
+                .flatMap(oldIdentity -> {
                     IdentityProvider identityToUpdate = new IdentityProvider(oldIdentity);
                     identityToUpdate.setName(updateIdentityProvider.getName());
                     if (!identityToUpdate.isSystem() || isUpgrader){
@@ -215,8 +215,8 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
                     // create event for sync process
                     Event event = new Event(Type.IDENTITY_PROVIDER, new Payload(identityProviderId, referenceType, referenceId, Action.DELETE));
 
-                    return identityProviderRepository.delete(identityProviderId)
-                            .andThen(eventService.create(event)).toCompletable()
+                    return Completable.fromSingle(identityProviderRepository.delete(identityProviderId)
+                            .andThen(eventService.create(event)))
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).principal(principal).type(EventType.IDENTITY_PROVIDER_DELETED).identityProvider(identityProvider)))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).principal(principal).type(EventType.IDENTITY_PROVIDER_DELETED).throwable(throwable)));
                 })

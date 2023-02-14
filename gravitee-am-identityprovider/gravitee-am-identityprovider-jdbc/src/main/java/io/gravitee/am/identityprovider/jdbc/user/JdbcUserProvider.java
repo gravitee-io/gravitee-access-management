@@ -31,10 +31,10 @@ import io.gravitee.am.service.exception.UserNotFoundException;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.Result;
 import io.r2dbc.spi.Statement;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 
@@ -104,7 +104,7 @@ public class JdbcUserProvider extends JdbcAbstractProvider<UserProvider> impleme
                                     .doFinally(() -> Completable.fromPublisher(connection.close()).subscribe());
                         })
                         .ignoreElements()
-                        .blockingGet();
+                        .blockingAwait();
             } catch (Exception e) {
                 LOGGER.error("Unable to initialize the identity provider schema", e);
             }

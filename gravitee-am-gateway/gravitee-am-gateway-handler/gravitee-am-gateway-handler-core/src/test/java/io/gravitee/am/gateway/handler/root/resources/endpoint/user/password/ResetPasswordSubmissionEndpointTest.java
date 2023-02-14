@@ -23,10 +23,10 @@ import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpStatusCode;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.reactivex.core.buffer.Buffer;
-import io.vertx.reactivex.ext.web.handler.BodyHandler;
+import io.vertx.rxjava3.core.buffer.Buffer;
+import io.vertx.rxjava3.ext.web.handler.BodyHandler;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -127,7 +127,7 @@ public class ResetPasswordSubmissionEndpointTest extends RxWebTestBase {
                 HttpStatusCode.FOUND_302, "Found", null);
     }
 
-    private void postPassword(io.vertx.reactivex.core.http.HttpClientRequest httpClientRequest) {
+    private void postPassword(io.vertx.rxjava3.core.http.HttpClientRequest httpClientRequest) {
         httpClientRequest.putHeader(CONTENT_TYPE, APPLICATION_X_WWW_FORM_URLENCODED);
         httpClientRequest.setChunked(true);
         httpClientRequest.write(Buffer.buffer("password=toto"));

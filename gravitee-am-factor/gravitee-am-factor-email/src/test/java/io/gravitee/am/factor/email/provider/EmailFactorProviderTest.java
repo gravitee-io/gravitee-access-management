@@ -29,9 +29,9 @@ import io.gravitee.am.model.factor.EnrolledFactorChannel;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.resource.api.email.EmailSenderProvider;
 import io.gravitee.common.util.Maps;
-import io.reactivex.Completable;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -42,6 +42,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -114,7 +115,7 @@ public class EmailFactorProviderTest {
         when(smtpProvider.sendMessage(any(), anyBoolean())).thenReturn(Completable.complete());
 
         TestObserver<Void> test = cut.sendChallenge(factorContext).test();
-        test.awaitTerminalEvent();
+        test.awaitDone(10, TimeUnit.SECONDS);
         test.assertNoValues();
         test.assertNoErrors();
 
@@ -138,7 +139,7 @@ public class EmailFactorProviderTest {
         when(factorContext.getData(FactorContext.KEY_CODE, String.class)).thenReturn(CODE);
 
         TestObserver<Void> test = cut.verify(factorContext).test();
-        test.awaitTerminalEvent();
+        test.awaitDone(10, TimeUnit.SECONDS);
         test.assertNoValues();
         test.assertNoErrors();
     }
@@ -158,7 +159,7 @@ public class EmailFactorProviderTest {
         when(factorContext.getData(FactorContext.KEY_CODE, String.class)).thenReturn(CODE);
 
         TestObserver<Void> test = cut.verify(factorContext).test();
-        test.awaitTerminalEvent();
+        test.awaitDone(10, TimeUnit.SECONDS);
         test.assertNoValues();
         test.assertError(InvalidCodeException.class);
     }
@@ -177,7 +178,7 @@ public class EmailFactorProviderTest {
         when(factorContext.getData(FactorContext.KEY_CODE, String.class)).thenReturn(CODE);
 
         TestObserver<Void> test = cut.verify(factorContext).test();
-        test.awaitTerminalEvent();
+        test.awaitDone(10, TimeUnit.SECONDS);
         test.assertNoValues();
         test.assertError(InvalidCodeException.class);
     }

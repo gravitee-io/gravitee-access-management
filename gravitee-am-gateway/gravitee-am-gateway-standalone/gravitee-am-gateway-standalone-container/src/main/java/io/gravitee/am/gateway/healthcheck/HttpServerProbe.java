@@ -18,8 +18,8 @@ package io.gravitee.am.gateway.healthcheck;
 import io.gravitee.node.api.healthcheck.Probe;
 import io.gravitee.node.api.healthcheck.Result;
 import io.vertx.core.net.NetClientOptions;
-import io.vertx.reactivex.core.Vertx;
-import io.vertx.reactivex.core.net.NetClient;
+import io.vertx.rxjava3.core.Vertx;
+import io.vertx.rxjava3.core.net.NetClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 

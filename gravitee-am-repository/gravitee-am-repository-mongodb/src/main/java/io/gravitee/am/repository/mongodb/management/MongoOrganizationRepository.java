@@ -20,7 +20,7 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.repository.management.api.OrganizationRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.OrganizationMongo;
-import io.reactivex.*;
+import io.reactivex.rxjava3.core.*;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;

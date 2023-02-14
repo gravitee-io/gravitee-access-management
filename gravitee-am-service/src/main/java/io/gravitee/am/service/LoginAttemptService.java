@@ -18,9 +18,9 @@ package io.gravitee.am.service;
 import io.gravitee.am.model.LoginAttempt;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

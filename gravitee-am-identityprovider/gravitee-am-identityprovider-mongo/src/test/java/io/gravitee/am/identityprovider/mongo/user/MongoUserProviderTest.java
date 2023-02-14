@@ -22,7 +22,7 @@ import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.identityprovider.mongo.authentication.spring.MongoAuthenticationProviderConfiguration;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.common.util.Maps;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -32,6 +32,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
 
 import java.util.HashMap;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -47,7 +48,7 @@ public class MongoUserProviderTest {
     @Test
     public void shouldSelectUserByUsername() {
         TestObserver<User> testObserver = userProvider.findByUsername("bob").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -57,7 +58,7 @@ public class MongoUserProviderTest {
     @Test
     public void shouldSelectUserByUsernameWithSpaces() {
         TestObserver<User> testObserver = userProvider.findByUsername("b o b").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -67,7 +68,7 @@ public class MongoUserProviderTest {
     @Test
     public void shouldSelectUserByEmail() {
         TestObserver<User> testObserver = userProvider.findByEmail("user01@acme.com").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -77,7 +78,7 @@ public class MongoUserProviderTest {
     @Test
     public void shouldSelectUserByEmail_AlternativeAttribute() {
         TestObserver<User> testObserver = userProvider.findByEmail("user02-alt@acme.com").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -87,7 +88,7 @@ public class MongoUserProviderTest {
     @Test
     public void shouldNotSelectUserByUsername_userNotFound() {
         TestObserver<User> testObserver = userProvider.findByUsername("unknown").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoValues();
@@ -96,7 +97,7 @@ public class MongoUserProviderTest {
     @Test
     public void shouldNotSelectUserByEmail_userNotFound() {
         TestObserver<User> testObserver = userProvider.findByEmail("unknown@acme.com").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoValues();
@@ -107,7 +108,7 @@ public class MongoUserProviderTest {
         DefaultUser user = createUserBean();
         TestObserver<User> testObserver = userProvider.create(user).test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -131,7 +132,7 @@ public class MongoUserProviderTest {
         userToUpdate.getAdditionalInformation().put("family_name", userToUpdate.getLastName());
 
         final TestObserver<User> observer = userProvider.update(createdUser.getId(), userToUpdate).test();
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertNoErrors();
         observer.assertValue(u -> assertUserMatch(userToUpdate, u));
         observer.assertValue(u -> u.getCredentials().equals(userToUpdate.getCredentials()));
@@ -160,7 +161,7 @@ public class MongoUserProviderTest {
         userToUpdate.getAdditionalInformation().put("family_name", userToUpdate.getLastName());
 
         final TestObserver<User> observer = userProvider.update(createdUser.getId(), userToUpdate).test();
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertNoErrors();
         observer.assertValue(u -> assertUserMatch(userToUpdate, u));
         observer.assertValue(u -> u.getCredentials().equals(userToUpdate.getCredentials()));
@@ -183,7 +184,7 @@ public class MongoUserProviderTest {
         userToUpdate.getAdditionalInformation().put("family_name", userToUpdate.getLastName());
 
         final TestObserver<User> observer = userProvider.updatePassword(userToUpdate, "something").test();
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertNoErrors();
         observer.assertValue(u -> assertUserMatch(user, u));
         observer.assertValue(u -> u.getCredentials().equals("something"));
@@ -222,7 +223,7 @@ public class MongoUserProviderTest {
         user.setId("5");
 
         TestObserver testObserver = userProvider.updateUsername(user, null).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(IllegalArgumentException.class);
         testObserver.assertNoValues();
@@ -234,7 +235,7 @@ public class MongoUserProviderTest {
         user.setId("6");
 
         TestObserver testObserver = userProvider.updateUsername(user, "").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(IllegalArgumentException.class);
         testObserver.assertNoValues();
@@ -245,7 +246,7 @@ public class MongoUserProviderTest {
         var user = new DefaultUser();
         user.setId("6");
         TestObserver testObserver = userProvider.updateUsername(user, "newusername").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(UserNotFoundException.class);
         testObserver.assertNoValues();
@@ -257,11 +258,11 @@ public class MongoUserProviderTest {
         user.setId(userProvider.findByUsername("changeme").blockingGet().getId());
 
         TestObserver testObserver = userProvider.updateUsername(user, "newusername").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
 
         TestObserver<User> testObserver2 = userProvider.findByUsername("newusername").test();
-        testObserver2.awaitTerminalEvent();
+        testObserver2.awaitDone(10, TimeUnit.SECONDS);
         testObserver2.assertComplete();
         testObserver2.assertNoErrors();
         testObserver2.assertValue(u -> "newusername".equals(u.getUsername()));

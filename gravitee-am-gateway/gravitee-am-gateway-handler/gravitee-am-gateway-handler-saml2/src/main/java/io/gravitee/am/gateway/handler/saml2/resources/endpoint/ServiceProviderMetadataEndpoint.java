@@ -21,8 +21,8 @@ import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpStatusCode;
 import io.vertx.core.Handler;
-import io.vertx.reactivex.core.http.HttpServerResponse;
-import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.rxjava3.core.http.HttpServerResponse;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 

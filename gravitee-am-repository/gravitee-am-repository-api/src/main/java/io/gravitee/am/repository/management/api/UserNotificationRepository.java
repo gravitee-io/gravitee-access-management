@@ -18,8 +18,8 @@ package io.gravitee.am.repository.management.api;
 import io.gravitee.am.model.notification.UserNotification;
 import io.gravitee.am.model.notification.UserNotificationStatus;
 import io.gravitee.am.repository.common.CrudRepository;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)

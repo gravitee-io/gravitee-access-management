@@ -22,12 +22,14 @@ import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.repository.management.api.search.MembershipCriteria;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.RoleService;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Function;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -70,11 +72,12 @@ public class MembershipHelper {
 
         MembershipCriteria criteria = new MembershipCriteria();
         criteria.setRoleId(organizationPrimaryOwnerRole.getId());
-        Membership member = membershipService.findByCriteria(ReferenceType.ORGANIZATION, Organization.DEFAULT, criteria).filter(membership -> membership.getMemberType() == MemberType.USER).blockingFirst(null);
+        var member = membershipService.findByCriteria(ReferenceType.ORGANIZATION, Organization.DEFAULT, criteria)
+                .filter(membership -> membership.getMemberType() == MemberType.USER)
+                .map(Optional::ofNullable)
+                .blockingFirst(Optional.empty());
 
-        if (member != null) {
-            membershipService.setPlatformAdmin(member.getMemberId()).blockingGet();
-        }
+        member.map(Membership::getMemberId).ifPresent(memberId -> membershipService.setPlatformAdmin(memberId).blockingGet());
     }
 
     /**

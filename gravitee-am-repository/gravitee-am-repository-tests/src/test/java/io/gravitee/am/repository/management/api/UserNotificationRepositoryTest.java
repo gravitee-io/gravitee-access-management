@@ -20,13 +20,14 @@ import io.gravitee.am.model.notification.UserNotification;
 import io.gravitee.am.model.notification.UserNotificationStatus;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.AbstractManagementTest;
-import io.reactivex.observers.TestObserver;
-import io.reactivex.subscribers.TestSubscriber;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Date;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -62,7 +63,7 @@ public class UserNotificationRepositoryTest extends AbstractManagementTest {
         repository.create(userNotification).blockingGet();
 
         final TestSubscriber<UserNotification> testSubscriber = repository.findAllByAudienceAndStatus("audid", UserNotificationStatus.UNREAD).test();
-        testSubscriber.awaitTerminalEvent();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
 
         testSubscriber.assertComplete();
         testSubscriber.assertNoErrors();
@@ -76,24 +77,24 @@ public class UserNotificationRepositoryTest extends AbstractManagementTest {
         UserNotification createdNotification = repository.create(userNotification).blockingGet();
 
         TestSubscriber<UserNotification> testSubscriber = repository.findAllByAudienceAndStatus(createdNotification.getAudienceId(), UserNotificationStatus.UNREAD).test();
-        testSubscriber.awaitTerminalEvent();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
 
         testSubscriber.assertComplete();
         testSubscriber.assertNoErrors();
         testSubscriber.assertValueCount(1);
 
         final TestObserver<Void> update = repository.updateNotificationStatus(createdNotification.getId(), UserNotificationStatus.READ).test();
-        update.awaitTerminalEvent();
+        update.awaitDone(10, TimeUnit.SECONDS);
         update.assertNoErrors();
 
         testSubscriber = repository.findAllByAudienceAndStatus(createdNotification.getAudienceId(), UserNotificationStatus.UNREAD).test();
-        testSubscriber.awaitTerminalEvent();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
         testSubscriber.assertComplete();
         testSubscriber.assertNoErrors();
         testSubscriber.assertValueCount(0);
 
         testSubscriber = repository.findAllByAudienceAndStatus(createdNotification.getAudienceId(), UserNotificationStatus.READ).test();
-        testSubscriber.awaitTerminalEvent();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
         testSubscriber.assertComplete();
         testSubscriber.assertNoErrors();
         testSubscriber.assertValueCount(1);
@@ -105,7 +106,7 @@ public class UserNotificationRepositoryTest extends AbstractManagementTest {
         UserNotification notification = repository.create(userNotification).blockingGet();
 
         TestObserver<UserNotification> testObserver = repository.findById(notification.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -115,7 +116,7 @@ public class UserNotificationRepositoryTest extends AbstractManagementTest {
     @Test
     public void testNotFoundById() throws TechnicalException {
         final TestObserver<UserNotification> test = repository.findById("test").test();
-        test.awaitTerminalEvent();
+        test.awaitDone(10, TimeUnit.SECONDS);
         test.assertNoValues();
         test.assertNoErrors();
     }
@@ -125,7 +126,7 @@ public class UserNotificationRepositoryTest extends AbstractManagementTest {
         UserNotification userNotification = createUserNotification();
 
         TestObserver<UserNotification> testObserver = repository.create(userNotification).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -163,7 +164,7 @@ public class UserNotificationRepositoryTest extends AbstractManagementTest {
         updatedTag.setStatus(UserNotificationStatus.READ);
 
         TestObserver<UserNotification> testObserver = repository.update(updatedTag).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -179,19 +180,19 @@ public class UserNotificationRepositoryTest extends AbstractManagementTest {
 
 
         TestObserver<UserNotification> testObserver = repository.findById(notification.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValueCount(1);
 
         // delete tag
         TestObserver testObserver1 = repository.delete(notification.getId()).test();
-        testObserver1.awaitTerminalEvent();
+        testObserver1.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
 
         // fetch tag
         final TestObserver<UserNotification> test = repository.findById(notification.getId()).test();
-        test.awaitTerminalEvent();
+        test.awaitDone(10, TimeUnit.SECONDS);
         test.assertNoErrors();
         test.assertNoValues();
     }

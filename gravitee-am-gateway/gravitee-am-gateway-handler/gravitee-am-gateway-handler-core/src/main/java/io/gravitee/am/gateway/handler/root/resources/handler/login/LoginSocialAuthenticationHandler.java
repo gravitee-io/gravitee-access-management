@@ -28,12 +28,12 @@ import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpMethod;
-import io.reactivex.Maybe;
-import io.reactivex.Observable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Observable;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -144,7 +144,7 @@ public class LoginSocialAuthenticationHandler implements Handler<RoutingContext>
 
     private void enhanceSocialIdentityProviders(List<IdentityProvider> identityProviders, RoutingContext context, Handler<AsyncResult<List<SocialProviderData>>> resultHandler) {
         Observable.fromIterable(identityProviders)
-                .flatMapMaybe(identityProvider -> {
+                .flatMapSingle(identityProvider -> {
                     // get social identity provider type (currently use for display purpose (logo, description, ...)
                     identityProvider.setType(socialProviders.getOrDefault(identityProvider.getType(), identityProvider.getType()));
                     // get social sign in url

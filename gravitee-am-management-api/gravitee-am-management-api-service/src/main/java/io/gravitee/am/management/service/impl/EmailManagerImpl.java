@@ -30,7 +30,7 @@ import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.event.EventManager;
 import io.gravitee.common.service.AbstractService;
-import io.reactivex.Maybe;
+import io.reactivex.rxjava3.core.Maybe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -123,7 +123,8 @@ public class EmailManagerImpl extends AbstractService<EmailManager> implements E
 
                 })
                 // if there is nothing in database, return the classpath copy one
-                .defaultIfEmpty(create(template.template(), defaultFrom, null, format(subject, defaultSubject), defaultExpiresAfter));
+                .defaultIfEmpty(create(template.template(), defaultFrom, null, format(subject, defaultSubject), defaultExpiresAfter))
+                .toMaybe();
     }
 
     private void removeEmail(String email) {

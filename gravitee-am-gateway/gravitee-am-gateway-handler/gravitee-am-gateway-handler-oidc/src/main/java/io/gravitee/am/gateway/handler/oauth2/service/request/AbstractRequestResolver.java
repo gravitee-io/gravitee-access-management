@@ -22,7 +22,7 @@ import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.oidc.Client;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 
 import java.util.*;
 import java.util.stream.Collectors;

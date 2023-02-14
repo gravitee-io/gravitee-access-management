@@ -22,7 +22,7 @@ import io.gravitee.am.monitoring.metrics.Constants;
 import io.gravitee.am.monitoring.metrics.GaugeHelper;
 import io.gravitee.am.service.EventService;
 import io.gravitee.common.event.EventManager;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;

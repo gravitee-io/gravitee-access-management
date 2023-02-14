@@ -23,7 +23,7 @@ import io.gravitee.am.model.alert.AlertTriggerType;
 import io.gravitee.am.repository.management.api.AlertTriggerRepository;
 import io.gravitee.am.repository.management.api.search.AlertTriggerCriteria;
 import io.gravitee.am.repository.mongodb.management.internal.model.AlertTriggerMongo;
-import io.reactivex.*;
+import io.reactivex.rxjava3.core.*;
 import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 

@@ -31,7 +31,7 @@ import io.gravitee.gateway.api.ExecutionContext;
 import io.gravitee.gateway.api.Request;
 import io.gravitee.gateway.api.Response;
 import io.gravitee.policy.api.PolicyChain;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;

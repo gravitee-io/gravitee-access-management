@@ -18,7 +18,7 @@ package io.gravitee.am.management.handlers.management.api.resources.platform.plu
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.service.model.plugin.DeviceIdentifierPlugin;
 import io.gravitee.common.http.HttpStatusCode;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 import org.junit.Test;
 
 import javax.ws.rs.core.Response;

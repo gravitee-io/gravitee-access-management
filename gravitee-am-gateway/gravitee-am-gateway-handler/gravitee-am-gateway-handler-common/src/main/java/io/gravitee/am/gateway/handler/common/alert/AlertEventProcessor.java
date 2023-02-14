@@ -29,8 +29,8 @@ import io.gravitee.gateway.api.Request;
 import io.gravitee.node.api.Node;
 import io.gravitee.plugin.alert.AlertEventProducer;
 import io.gravitee.risk.assessment.api.assessment.AssessmentMessageResult;
-import io.reactivex.Maybe;
-import io.reactivex.functions.Consumer;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.functions.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -130,11 +130,18 @@ public class AlertEventProcessor extends AbstractService {
 
         if (SUCCESS.equals(eventItem.type())) {
             this.riskAssessmentHelper
-                    .computeRiskAssessment(authenticationDetails, sendAssessmentMessageResult(eventBuilder))
-                    .switchIfEmpty(Maybe.defer(() -> {
+                    .computeRiskAssessment(authenticationDetails)
+                    .map(result -> {
+                        Map.of(
+                                PROPERTY_RISK_ASSESSMENT + "." + PROPERTY_UNKNOWN_DEVICES, result.getDevices().getAssessment(),
+                                PROPERTY_RISK_ASSESSMENT + "." + PROPERTY_IP_REPUTATION, result.getIpReputation().getAssessment(),
+                                PROPERTY_RISK_ASSESSMENT + "." + PROPERTY_GEO_VELOCITY, result.getGeoVelocity().getAssessment()
+                        ).forEach((property, assessment) -> eventBuilder.property(property, assessment.name()));
                         sendEvent(eventBuilder.build());
-                        return Maybe.empty();
-                    })).ignoreElement().subscribe();
+                        return eventBuilder;
+                    })
+                    .switchIfEmpty(Maybe.just(eventBuilder))
+                    .subscribe(builder -> sendEvent(builder.build()));
         } else {
             sendEvent(eventBuilder.build());
         }

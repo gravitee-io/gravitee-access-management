@@ -27,12 +27,12 @@ import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.EmailTemplateServiceImpl;
 import io.gravitee.am.service.model.NewEmail;
 import io.gravitee.am.service.model.UpdateEmail;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
-import io.reactivex.subscribers.TestSubscriber;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -42,6 +42,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Mockito.*;
 
@@ -72,7 +73,7 @@ public class EmailTemplateServiceTest {
         when(emailRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Flowable.just(new Email()));
         TestSubscriber testObserver = emailTemplateService.findAll(ReferenceType.DOMAIN, DOMAIN).test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValueCount(1);
@@ -83,7 +84,7 @@ public class EmailTemplateServiceTest {
         when(emailRepository.findByTemplate(ReferenceType.DOMAIN, DOMAIN, Template.LOGIN.template())).thenReturn(Maybe.just(new Email()));
         TestObserver testObserver = emailTemplateService.findByDomainAndTemplate(DOMAIN, Template.LOGIN.template()).test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValueCount(1);
@@ -93,7 +94,7 @@ public class EmailTemplateServiceTest {
     public void shouldFindByDomainAndTemplate_notExistingEmail() {
         when(emailRepository.findByTemplate(ReferenceType.DOMAIN, DOMAIN, Template.LOGIN.template())).thenReturn(Maybe.empty());
         TestObserver testObserver = emailTemplateService.findByDomainAndTemplate(DOMAIN, Template.LOGIN.template()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNoValues();
     }
@@ -117,7 +118,7 @@ public class EmailTemplateServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = emailTemplateService.create(DOMAIN, newEmail).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -164,7 +165,7 @@ public class EmailTemplateServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = emailTemplateService.update(DOMAIN, "my-email", updateEmail).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -237,7 +238,7 @@ public class EmailTemplateServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = emailTemplateService.delete(email.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();

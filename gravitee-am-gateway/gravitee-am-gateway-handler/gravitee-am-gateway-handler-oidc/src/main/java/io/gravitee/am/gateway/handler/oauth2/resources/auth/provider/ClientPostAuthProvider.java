@@ -23,8 +23,8 @@ import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.reactivex.core.http.HttpServerRequest;
-import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.rxjava3.core.http.HttpServerRequest;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 
 /**
  * Client Authentication method : client_secret_post

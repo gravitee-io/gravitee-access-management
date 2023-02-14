@@ -17,7 +17,7 @@ package io.gravitee.am.gateway.handler.common.certificate;
 
 import io.gravitee.am.gateway.certificate.CertificateProvider;
 import io.gravitee.common.service.Service;
-import io.reactivex.Maybe;
+import io.reactivex.rxjava3.core.Maybe;
 
 import java.util.Collection;
 

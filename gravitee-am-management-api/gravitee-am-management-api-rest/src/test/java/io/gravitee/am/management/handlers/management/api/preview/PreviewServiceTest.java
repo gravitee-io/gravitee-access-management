@@ -28,11 +28,11 @@ import io.gravitee.am.service.FormService;
 import io.gravitee.am.service.ThemeService;
 import io.gravitee.am.service.impl.I18nDictionaryService;
 import io.gravitee.am.service.impl.ThemeServiceImpl;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -45,6 +45,7 @@ import org.thymeleaf.cache.StandardCacheManager;
 
 import java.util.Locale;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -101,7 +102,7 @@ public class PreviewServiceTest {
         previewRequest.setTemplate(Template.LOGIN.template());
         final TestObserver<PreviewResponse> observer = previewService.previewDomainForm(DOMAIN_ID, previewRequest, Locale.ENGLISH).test();
 
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertNoErrors();
         observer.assertValue(response -> response.getContent() != null && response.getContent().contains("PreviewApp"));
         observer.assertValue(response -> response.getContent() != null && response.getContent().contains("#6A4FF7"));
@@ -123,7 +124,7 @@ public class PreviewServiceTest {
         previewRequest.setTemplate(Template.LOGIN.template());
         final TestObserver<PreviewResponse> observer = previewService.previewDomainForm(DOMAIN_ID, previewRequest, Locale.ENGLISH).test();
 
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertNoErrors();
         observer.assertValue(response -> response.getContent() != null &&
                 ("<html lang=\"en\"><head><style>:root {--primary-background-color:#FFFFFF;--primary-foreground-color:#FFFFFF;" +
@@ -155,7 +156,7 @@ public class PreviewServiceTest {
         previewRequest.setTheme(overrideTheme);
         final TestObserver<PreviewResponse> observer = previewService.previewDomainForm(DOMAIN_ID, previewRequest, Locale.ENGLISH).test();
 
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertNoErrors();
         observer.assertValue(response -> response.getContent() != null &&
                 ("<html lang=\"en\"><head><style>:root {--primary-background-color:#FF0000;--primary-foreground-color:#FF0000;" +
@@ -175,7 +176,7 @@ public class PreviewServiceTest {
         previewRequest.setTemplate(Template.LOGIN.template());
         final TestObserver<PreviewResponse> observer = previewService.previewDomainForm(DOMAIN_ID, previewRequest, Locale.ENGLISH).test();
 
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(PreviewException.class);
     }
 
@@ -199,7 +200,7 @@ public class PreviewServiceTest {
         previewRequest.setTemplate(Template.LOGIN.template());
         final TestObserver<PreviewResponse> observer = previewService.previewDomainForm(DOMAIN_ID, previewRequest, Locale.ENGLISH).test();
 
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertNoErrors();
         observer.assertValue(response -> response.getContent() != null &&
                 ("<html lang=\"en\"><head><style>:root {--primary-background-color:#FFFFFF;--primary-foreground-color:#FFFFFF;" +

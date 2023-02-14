@@ -22,10 +22,10 @@ import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.repository.management.api.search.MembershipCriteria;
 import io.gravitee.am.service.*;
 import io.gravitee.am.service.exception.EnvironmentNotFoundException;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -33,6 +33,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 import static io.gravitee.am.management.service.permissions.Permissions.of;
 import static io.gravitee.am.management.service.permissions.Permissions.*;
@@ -112,7 +113,7 @@ public class PermissionServiceTest {
         TestObserver<Boolean> obs = cut.hasPermission(user, of(ReferenceType.ORGANIZATION, ORGANIZATION_ID, Permission.ORGANIZATION, READ))
                 .test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertComplete();
         obs.assertValue(true);
     }
@@ -150,7 +151,7 @@ public class PermissionServiceTest {
         TestObserver<Boolean> obs = cut.hasPermission(user, of(ReferenceType.ORGANIZATION, ORGANIZATION_ID, Permission.ORGANIZATION, READ))
                 .test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertComplete();
         obs.assertValue(true);
     }
@@ -167,7 +168,7 @@ public class PermissionServiceTest {
         TestObserver<Boolean> obs = cut.hasPermission(user, of(ReferenceType.ORGANIZATION, ORGANIZATION_ID, Permission.ORGANIZATION, READ))
                 .test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertComplete();
         obs.assertValue(false);
     }
@@ -234,7 +235,7 @@ public class PermissionServiceTest {
                         of(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, DOMAIN, READ),
                         of(ReferenceType.DOMAIN, DOMAIN_ID, Permission.DOMAIN, READ))).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertComplete();
         obs.assertValue(true);
     }
@@ -287,7 +288,7 @@ public class PermissionServiceTest {
                 and(of(ReferenceType.ORGANIZATION, ORGANIZATION_ID, Permission.ORGANIZATION, READ),
                         of(ReferenceType.DOMAIN, DOMAIN_ID, Permission.DOMAIN, READ))).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertComplete();
         obs.assertValue(false);
     }
@@ -340,7 +341,7 @@ public class PermissionServiceTest {
                 or(of(ReferenceType.ORGANIZATION, ORGANIZATION_ID, Permission.ORGANIZATION, READ),
                         of(ReferenceType.DOMAIN, DOMAIN_ID, Permission.DOMAIN, READ))).test(); // OR instead of AND
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertComplete();
         obs.assertValue(true);
     }
@@ -381,7 +382,7 @@ public class PermissionServiceTest {
                 and(of(ReferenceType.ORGANIZATION, ORGANIZATION_ID, DOMAIN, READ),
                         of(ReferenceType.DOMAIN, DOMAIN_ID, Permission.DOMAIN, CREATE))).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertComplete();
         obs.assertValue(false);
     }
@@ -411,7 +412,7 @@ public class PermissionServiceTest {
         TestObserver<Boolean> obs = cut.hasPermission(user, of(ReferenceType.APPLICATION, APPLICATION_ID, APPLICATION, READ))
                 .test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertComplete();
         obs.assertValue(false);
     }
@@ -468,7 +469,7 @@ public class PermissionServiceTest {
 
         TestObserver<Boolean> obs = cut.hasPermission(user, of(ReferenceType.ORGANIZATION, ORGANIZATION_ID, Permission.ORGANIZATION, READ, CREATE)).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertComplete();
         obs.assertValue(true);
     }
@@ -516,7 +517,7 @@ public class PermissionServiceTest {
 
         TestObserver<Map<Permission, Set<Acl>>> obs = cut.findAllPermissions(user, ReferenceType.ORGANIZATION, ORGANIZATION_ID).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertComplete();
         obs.assertValue(permissions -> permissions.get(ORGANIZATION).containsAll(new HashSet<>(Arrays.asList(READ, CREATE))));
     }
@@ -544,7 +545,7 @@ public class PermissionServiceTest {
                 of(ReferenceType.DOMAIN, DOMAIN_ID, APPLICATION, READ),
                 of(ReferenceType.APPLICATION, APPLICATION_ID, APPLICATION, READ))).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertComplete();
         obs.assertValue(true);
     }
@@ -571,7 +572,7 @@ public class PermissionServiceTest {
                 of(ReferenceType.DOMAIN, DOMAIN_ID, APPLICATION, READ),
                 of(ReferenceType.APPLICATION, APPLICATION_ID, APPLICATION, READ))).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertComplete();
         obs.assertValue(false);
     }
@@ -599,7 +600,7 @@ public class PermissionServiceTest {
                 of(ReferenceType.DOMAIN, DOMAIN_ID, APPLICATION, READ),
                 of(ReferenceType.APPLICATION, APPLICATION_ID, APPLICATION, READ))).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertComplete();
         obs.assertValue(false);
     }
@@ -623,7 +624,7 @@ public class PermissionServiceTest {
                 of(ReferenceType.DOMAIN, DOMAIN_ID, APPLICATION, READ),
                 of(ReferenceType.APPLICATION, APPLICATION_ID, APPLICATION, READ))).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertComplete();
         obs.assertValue(false);
     }
@@ -633,7 +634,7 @@ public class PermissionServiceTest {
 
         TestObserver<Boolean> obs = cut.haveConsistentReferenceIds(of(ReferenceType.APPLICATION, APPLICATION_ID, APPLICATION, READ)).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertComplete();
         obs.assertValue(true);
 
@@ -664,7 +665,7 @@ public class PermissionServiceTest {
                 of(ReferenceType.DOMAIN, DOMAIN_ID, APPLICATION, READ),
                 of(ReferenceType.APPLICATION, APPLICATION_ID, APPLICATION, READ))).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertComplete();
         obs.assertValue(true);
 
@@ -678,7 +679,7 @@ public class PermissionServiceTest {
                 of(ReferenceType.DOMAIN, DOMAIN_ID, APPLICATION, READ),
                 of(ReferenceType.APPLICATION, APPLICATION_ID, APPLICATION, READ))).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertComplete();
         obs.assertValue(true);
 

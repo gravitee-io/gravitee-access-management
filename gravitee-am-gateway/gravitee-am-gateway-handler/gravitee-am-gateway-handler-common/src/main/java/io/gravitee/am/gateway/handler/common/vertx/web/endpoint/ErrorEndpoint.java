@@ -26,14 +26,14 @@ import io.gravitee.am.model.Template;
 import io.gravitee.am.service.exception.ClientNotFoundException;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Single;
-import io.reactivex.functions.Consumer;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.functions.Consumer;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.reactivex.core.http.HttpServerRequest;
-import io.vertx.reactivex.ext.web.RoutingContext;
-import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
+import io.vertx.rxjava3.core.http.HttpServerRequest;
+import io.vertx.rxjava3.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -132,14 +132,13 @@ public class ErrorEndpoint implements Handler<RoutingContext> {
         // put parameters in context (backward compatibility)
         routingContext.put(PARAM_CONTEXT_KEY, params);
 
-        engine.render(generateData(routingContext, domain, client), getTemplateFileName(client), res -> {
-            if (res.succeeded()) {
-                routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
-                routingContext.response().end(res.result());
-            } else {
-                routingContext.fail(res.cause());
-            }
-        });
+        engine.rxRender(generateData(routingContext, domain, client), getTemplateFileName(client))
+                .doOnSuccess(buffer -> {
+                    routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
+                    routingContext.response().end(buffer);
+                })
+                .doOnError(throwable -> routingContext.fail(throwable.getCause()))
+                .subscribe();
     }
 
     private String getTemplateFileName(Client client) {

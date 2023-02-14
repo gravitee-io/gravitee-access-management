@@ -83,11 +83,11 @@ import io.gravitee.am.service.validators.accountsettings.AccountSettingsValidato
 import io.gravitee.am.service.validators.domain.DomainValidator;
 import io.gravitee.am.service.validators.virtualhost.VirtualHostValidator;
 import io.gravitee.common.utils.IdGenerator;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Observable;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -262,6 +262,7 @@ public class DomainServiceImpl implements DomainService {
                 .flatMapPublisher(envId -> domainRepository.search(environmentId, query))
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error has occurred when trying to search domains with query {} for environmentId {}", query, environmentId, ex);
+                    return Flowable.empty();
                 });
     }
 
@@ -274,6 +275,7 @@ public class DomainServiceImpl implements DomainService {
                 .flatMapPublisher(envId -> domainRepository.findAllByReferenceId(envId))
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error has occurred when trying to find domains by environment", ex);
+                    return Flowable.empty();
                 });
     }
 
@@ -379,8 +381,8 @@ public class DomainServiceImpl implements DomainService {
     public Single<Domain> update(String domainId, Domain domain) {
         LOGGER.debug("Update an existing domain: {}", domain);
         return domainRepository.findById(domainId)
-                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
-                .flatMapSingle(__ -> {
+                .switchIfEmpty(Single.error(new DomainNotFoundException(domainId)))
+                .flatMap(__ -> {
                     domain.setHrid(IdGenerator.generate(domain.getName()));
                     domain.setUpdatedAt(new Date());
                     return validateDomain(domain)
@@ -404,8 +406,8 @@ public class DomainServiceImpl implements DomainService {
     public Single<Domain> patch(String domainId, PatchDomain patchDomain, User principal) {
         LOGGER.debug("Patching an existing domain ({}) with : {}", domainId, patchDomain);
         return domainRepository.findById(domainId)
-                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
-                .flatMapSingle(oldDomain -> {
+                .switchIfEmpty(Single.error(new DomainNotFoundException(domainId)))
+                .flatMap(oldDomain -> {
                     Domain toPatch = patchDomain.patch(oldDomain);
                     final AccountSettings accountSettings = toPatch.getAccountSettings();
                     if (!accountSettingsValidator.validate(accountSettings)) {

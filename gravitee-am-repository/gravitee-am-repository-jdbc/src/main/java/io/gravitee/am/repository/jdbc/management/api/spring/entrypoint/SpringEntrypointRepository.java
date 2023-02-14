@@ -16,11 +16,11 @@
 package io.gravitee.am.repository.jdbc.management.api.spring.entrypoint;
 
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcEntrypoint;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.data.repository.reactive.RxJava2CrudRepository;
+import org.springframework.data.repository.reactive.RxJava3CrudRepository;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -28,7 +28,7 @@ import org.springframework.stereotype.Repository;
  * @author GraviteeSource Team
  */
 @Repository
-public interface SpringEntrypointRepository extends RxJava2CrudRepository<JdbcEntrypoint, String> {
+public interface SpringEntrypointRepository extends RxJava3CrudRepository<JdbcEntrypoint, String> {
     @Query("select * from entrypoints e where e.id = :id and e.organization_id = :org")
     Maybe<JdbcEntrypoint> findById(@Param("id") String id,@Param("org") String organizationId);
 

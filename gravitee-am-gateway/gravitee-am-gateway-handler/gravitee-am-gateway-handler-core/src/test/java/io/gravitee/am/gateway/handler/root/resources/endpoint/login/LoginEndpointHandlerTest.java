@@ -31,12 +31,12 @@ import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.UserActivityService;
 import io.gravitee.common.http.HttpStatusCode;
-import io.reactivex.Maybe;
+import io.reactivex.rxjava3.core.Maybe;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.reactivex.core.MultiMap;
-import io.vertx.reactivex.ext.web.RoutingContext;
-import io.vertx.reactivex.ext.web.common.template.TemplateEngine;
+import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.rxjava3.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -319,7 +319,7 @@ public class LoginEndpointHandlerTest extends RxWebTestBase {
                     routingContext.end();
                 }
                 return answer;
-            }).when(templateEngine).render(Mockito.<Map<String, Object>>any(), Mockito.any(), Mockito.any());
+            }).when(templateEngine).render(Mockito.<Map<String, Object>>any(), Mockito.any());
             loginEndpoint.handle(routingContext);
         };
     }

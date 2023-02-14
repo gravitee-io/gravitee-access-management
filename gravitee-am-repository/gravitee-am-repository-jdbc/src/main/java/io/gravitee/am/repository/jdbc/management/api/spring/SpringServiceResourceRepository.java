@@ -16,10 +16,10 @@
 package io.gravitee.am.repository.jdbc.management.api.spring;
 
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcServiceResource;
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.data.repository.reactive.RxJava2CrudRepository;
+import org.springframework.data.repository.reactive.RxJava3CrudRepository;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -27,7 +27,7 @@ import org.springframework.stereotype.Repository;
  * @author GraviteeSource Team
  */
 @Repository
-public interface SpringServiceResourceRepository extends RxJava2CrudRepository<JdbcServiceResource, String> {
+public interface SpringServiceResourceRepository extends RxJava3CrudRepository<JdbcServiceResource, String> {
     @Query("select * from service_resources r where r.reference_id = :refId and r.reference_type = :refType")
     Flowable<JdbcServiceResource> findByReference(@Param("refType") String referenceType, @Param("refId") String referenceId);
 }

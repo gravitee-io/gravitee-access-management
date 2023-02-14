@@ -16,8 +16,8 @@
 package io.gravitee.am.management.service;
 
 import io.gravitee.am.service.model.plugin.IdentityProviderPlugin;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 
 import java.util.List;
 

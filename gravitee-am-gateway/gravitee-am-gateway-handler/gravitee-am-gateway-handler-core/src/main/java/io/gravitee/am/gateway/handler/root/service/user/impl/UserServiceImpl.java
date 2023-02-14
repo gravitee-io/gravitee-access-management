@@ -54,12 +54,12 @@ import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
 import io.gravitee.am.service.validators.email.EmailValidator;
 import io.gravitee.am.service.validators.user.UserValidator;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.MaybeSource;
-import io.reactivex.Observable;
-import io.reactivex.Single;
-import io.reactivex.functions.Predicate;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.MaybeSource;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.functions.Predicate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -189,8 +189,8 @@ public class UserServiceImpl implements UserService {
                             // check if user provider exists
                             return identityProviderManager.getUserProvider(source);
                         })
-                        .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(source)))
-                        .flatMapSingle(userProvider -> userProvider.create(convert(user)))
+                        .switchIfEmpty(Single.error(new UserProviderNotFoundException(source)))
+                        .flatMap(userProvider -> userProvider.create(convert(user)))
                         .flatMap(idpUser -> {
                             // AM 'users' collection is not made for authentication (but only management stuff)
                             // clear password
@@ -235,11 +235,11 @@ public class UserServiceImpl implements UserService {
         final var rawPassword = user.getPassword();
         // user has completed his account, add it to the idp
         return identityProviderManager.getUserProvider(user.getSource())
-                .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(user.getSource())))
+                .switchIfEmpty(Single.error(new UserProviderNotFoundException(user.getSource())))
                 // update the idp user
-                .flatMapSingle(userProvider -> userProvider.findByUsername(user.getUsername())
-                        .switchIfEmpty(Maybe.error(new UserNotFoundException(user.getUsername())))
-                        .flatMapSingle(idpUser -> userProvider.update(idpUser.getId(), convert(user)))
+                .flatMap(userProvider -> userProvider.findByUsername(user.getUsername())
+                        .switchIfEmpty(Single.error(new UserNotFoundException(user.getUsername())))
+                        .flatMap(idpUser -> userProvider.update(idpUser.getId(), convert(user)))
                         .onErrorResumeNext(ex -> {
                             if (ex instanceof UserNotFoundException) {
                                 // idp user not found, create its account
@@ -290,18 +290,18 @@ public class UserServiceImpl implements UserService {
 
         // only idp manage password, find user idp and update its password
         return identityProviderManager.getUserProvider(user.getSource())
-                .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(user.getSource())))
+                .switchIfEmpty(Single.error(new UserProviderNotFoundException(user.getSource())))
                 // update the idp user
-                .flatMapSingle(userProvider -> {
+                .flatMap(userProvider -> {
                     // retrieve its technical from the idp and then update the password
                     // we can't rely on the external_id since the value can be different from IdP user ID
                     // see https://github.com/gravitee-io/issues/issues/8407
                     return userProvider.findByUsername(user.getUsername())
-                            .switchIfEmpty(Maybe.error(new UserNotFoundException(user.getUsername())))
-                            .flatMapSingle(idpUser -> passwordHistoryService
+                            .switchIfEmpty(Single.error(new UserNotFoundException(user.getUsername())))
+                            .flatMap(idpUser -> passwordHistoryService
                                     .addPasswordToHistory(DOMAIN, domain.getId(), user, user.getPassword() , principal, getPasswordSettings(client))
-                                    .switchIfEmpty(Maybe.just(new PasswordHistory()))
-                                    .flatMapSingle(passwordHistory -> userProvider.updatePassword(idpUser, user.getPassword())))
+                                    .switchIfEmpty(Single.just(new PasswordHistory()))
+                                    .flatMap(passwordHistory -> userProvider.updatePassword(idpUser, user.getPassword())))
                             .onErrorResumeNext(ex -> {
                                 if (ex instanceof UserNotFoundException && forceUserRegistration(accountSettings)) {
                                     // idp user not found, create its account, only if force registration is enabled
@@ -440,7 +440,7 @@ public class UserServiceImpl implements UserService {
                                     return userProvider.findByUsername(user.getUsername())
                                             .map(Optional::ofNullable)
                                             .defaultIfEmpty(Optional.empty())
-                                            .flatMapSingle(optUser -> {
+                                            .flatMap(optUser -> {
                                                 if (optUser.isEmpty()) {
                                                     return Single.just(user);
                                                 }
@@ -467,8 +467,8 @@ public class UserServiceImpl implements UserService {
                     // Single field search using email or username with IdP linked to the clientApp
                     // email used in priority for backward compatibility
                     return Observable.fromIterable(client.getIdentityProviders())
-                            .flatMapMaybe(authProvider -> identityProviderManager.getUserProvider(authProvider.getIdentity())
-                                    .flatMap(userProvider -> {
+                            .flatMapSingle(authProvider -> identityProviderManager.getUserProvider(authProvider.getIdentity())
+                                    .flatMapSingle(userProvider -> {
                                         final String username = params.getUsername();
                                         final Maybe<io.gravitee.am.identityprovider.api.User> findQuery = Strings.isNullOrEmpty(email) ?
                                                 userProvider.findByUsername(username) : userProvider.findByEmail(email);
@@ -490,14 +490,14 @@ public class UserServiceImpl implements UserService {
                                         .switchIfEmpty(Maybe.defer(() -> userService.findByDomainAndExternalIdAndSource(domain.getId(), idpUser.getUser().getId(), idpUser.getSource())))
                                         .map(Optional::ofNullable)
                                         .defaultIfEmpty(Optional.empty())
-                                        .flatMapSingle(optEndUser -> {
+                                        .flatMap(optEndUser -> {
                                             if (optEndUser.isEmpty()) {
                                                 return userService.create(convert(idpUser.getUser(), idpUser.getSource()));
                                             }
                                             return userService.update(enhanceUser(optEndUser.get(), idpUser.getUser()));
                                         });
                             })
-                            .onErrorResumeNext(Single.error(new UserNotFoundException(email != null ? email : params.getUsername())));
+                            .onErrorResumeNext(exception-> Single.error(new UserNotFoundException(email != null ? email : params.getUsername())));
                 })
                 .doOnSuccess(user -> new Thread(() -> emailService.send(Template.RESET_PASSWORD, user, client)).start())
                 .doOnSuccess(user1 -> {
@@ -566,8 +566,8 @@ public class UserServiceImpl implements UserService {
         }
 
         return clientSyncService.findById(audience)
-                .map(client -> Optional.of(client))
-                .defaultIfEmpty(Optional.empty());
+                .map(Optional::of)
+                .switchIfEmpty(Maybe.just(Optional.empty()));
     }
 
     private boolean forceUserRegistration(AccountSettings accountSettings) {

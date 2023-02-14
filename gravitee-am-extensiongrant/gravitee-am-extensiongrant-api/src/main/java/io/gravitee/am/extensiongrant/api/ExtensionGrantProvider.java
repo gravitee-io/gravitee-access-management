@@ -17,7 +17,7 @@ package io.gravitee.am.extensiongrant.api;
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.repository.oauth2.model.request.TokenRequest;
-import io.reactivex.Maybe;
+import io.reactivex.rxjava3.core.Maybe;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

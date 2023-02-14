@@ -19,7 +19,7 @@ import com.google.common.base.CaseFormat;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.reporter.api.audit.AuditReportableCriteria;
 import io.r2dbc.spi.Row;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 import org.springframework.r2dbc.core.DatabaseClient;
 
 import java.time.Instant;
@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import static reactor.adapter.rxjava.RxJava2Adapter.fluxToFlowable;
+import static reactor.adapter.rxjava.RxJava3Adapter.fluxToFlowable;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)

@@ -26,13 +26,14 @@ import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.AbstractManagementTest;
-import io.reactivex.observers.TestObserver;
-import io.reactivex.subscribers.TestSubscriber;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.mockito.internal.util.collections.Sets;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toCollection;
@@ -56,7 +57,7 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
 
         // fetch applications
         TestObserver<Page<Application>> testObserver = applicationRepository.findByDomain("testDomain", 0, Integer.MAX_VALUE).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -78,7 +79,7 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
 
         // fetch applications
         TestSubscriber<Application> testSubscriber = applicationRepository.findByDomainAndExtensionGrant("testDomain", "test-grant").test();
-        testSubscriber.awaitTerminalEvent();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
 
         testSubscriber.assertComplete();
         testSubscriber.assertNoErrors();
@@ -102,7 +103,7 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
 
         // fetch applications
         TestObserver<Application> testObserver = applicationRepository.findByDomainAndClientId("testDomain", "clientId1").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -124,7 +125,7 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         applicationRepository.create(app2).blockingGet();
 
         TestObserver<Page<Application>> testObserver = applicationRepository.findByDomain("testDomainPagination", 1, 1).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -139,7 +140,7 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
 
         // fetch app
         TestObserver<Application> testObserver = applicationRepository.findById(appCreated.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -155,7 +156,7 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         // fetch app
         final String next = appCreated.getIdentityProviders().stream().map(ApplicationIdentityProvider::getIdentity).iterator().next();
         TestSubscriber<Application> testSubscriber = applicationRepository.findByIdentityProvider(next).test();
-        testSubscriber.awaitTerminalEvent();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
 
         testSubscriber.assertComplete();
         testSubscriber.assertNoErrors();
@@ -258,7 +259,7 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         application.setName("testClientId");
 
         TestObserver<Application> testObserver = applicationRepository.create(application).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -276,7 +277,7 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         updatedApp.setId(appCreated.getId());
 
         TestObserver<Application> testObserver = applicationRepository.update(updatedApp).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -292,14 +293,14 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
 
         // fetch app
         TestObserver<Application> testObserver = applicationRepository.findById(appCreated.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(a -> a.getName().equals(app.getName()));
 
         // delete app
         TestObserver testObserver1 = applicationRepository.delete(appCreated.getId()).test();
-        testObserver1.awaitTerminalEvent();
+        testObserver1.awaitDone(10, TimeUnit.SECONDS);
 
         // fetch app
         applicationRepository.findById(appCreated.getId()).test().assertEmpty();
@@ -321,7 +322,7 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
 
         // fetch user
         TestObserver<Page<Application>> testObserver = applicationRepository.search(domain, "clientId", 0, Integer.MAX_VALUE).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -362,7 +363,7 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
 
         // fetch apps
         TestObserver<Page<Application>> testObserver = applicationRepository.search(domain, "clientId*", 0, Integer.MAX_VALUE).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();

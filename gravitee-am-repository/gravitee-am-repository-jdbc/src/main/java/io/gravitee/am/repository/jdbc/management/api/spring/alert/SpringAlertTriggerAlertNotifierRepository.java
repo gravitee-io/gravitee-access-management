@@ -16,10 +16,10 @@
 package io.gravitee.am.repository.jdbc.management.api.spring.alert;
 
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcAlertTrigger;
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.data.repository.reactive.RxJava2CrudRepository;
+import org.springframework.data.repository.reactive.RxJava3CrudRepository;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -27,7 +27,7 @@ import org.springframework.stereotype.Repository;
  * @author GraviteeSource Team
  */
 @Repository
-public interface SpringAlertTriggerAlertNotifierRepository extends RxJava2CrudRepository<JdbcAlertTrigger.AlertNotifier, String> {
+public interface SpringAlertTriggerAlertNotifierRepository extends RxJava3CrudRepository<JdbcAlertTrigger.AlertNotifier, String> {
 
     @Query("select * from alert_triggers_alert_notifiers n where n.alert_trigger_id = :alertTriggerId")
     Flowable<JdbcAlertTrigger.AlertNotifier> findByAlertTriggerId(@Param("alertTriggerId") String alertTriggerId);

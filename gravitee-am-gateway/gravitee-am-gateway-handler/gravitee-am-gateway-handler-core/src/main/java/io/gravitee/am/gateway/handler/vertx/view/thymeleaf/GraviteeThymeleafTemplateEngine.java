@@ -15,11 +15,10 @@
  */
 package io.gravitee.am.gateway.handler.vertx.view.thymeleaf;
 
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Handler;
-import io.vertx.reactivex.core.Vertx;
-import io.vertx.reactivex.core.buffer.Buffer;
-import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
+import io.reactivex.rxjava3.core.Single;
+import io.vertx.rxjava3.core.Vertx;
+import io.vertx.rxjava3.core.buffer.Buffer;
+import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 
 import java.util.Map;
 
@@ -40,8 +39,8 @@ public class GraviteeThymeleafTemplateEngine extends ThymeleafTemplateEngine {
     }
 
     @Override
-    public void render(Map<String, Object> context, String templateFileName, Handler<AsyncResult<Buffer>> handler) {
+    public Single<Buffer> render(Map<String, Object> context, String templateFileName) {
         themeResolver.resolveTheme(context);
-        super.render(context, templateFileName, handler);
+        return super.rxRender(context, templateFileName);
     }
 }

@@ -18,7 +18,7 @@ package io.gravitee.am.repository.oauth2.api;
 import io.gravitee.am.repository.jdbc.oauth2.oidc.JdbcCibaAuthReqRepository;
 import io.gravitee.am.repository.oauth2.AbstractOAuthTest;
 import io.gravitee.am.repository.oidc.model.CibaAuthRequest;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -26,6 +26,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -60,14 +61,14 @@ public class CibaAuthRequestRepositoryPurgeTest extends AbstractOAuthTest {
         object2.setLastAccessAt(new Date(now.minus(2, ChronoUnit.MINUTES).toEpochMilli()));
         object2.setExpireAt(new Date(now.minus(1, ChronoUnit.MINUTES).toEpochMilli()));
 
-        cibaRepository.create(object1).test().awaitTerminalEvent();
-        cibaRepository.create(object2).test().awaitTerminalEvent();
+        cibaRepository.create(object1).test().awaitDone(10, TimeUnit.SECONDS);
+        cibaRepository.create(object2).test().awaitDone(10, TimeUnit.SECONDS);
 
         assertNotNull(cibaRepository.findById(object1.getId()).blockingGet());
         assertNull(cibaRepository.findById(object2.getId()).blockingGet());
 
         TestObserver<Void> testPurge = cibaRepository.purgeExpiredData().test();
-        testPurge.awaitTerminalEvent();
+        testPurge.awaitDone(10, TimeUnit.SECONDS);
         testPurge.assertNoErrors();
 
         assertNotNull(cibaRepository.findById(object1.getId()).blockingGet());

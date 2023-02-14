@@ -30,14 +30,17 @@ import io.gravitee.cockpit.api.command.membership.MembershipCommand;
 import io.gravitee.cockpit.api.command.membership.MembershipPayload;
 import io.gravitee.cockpit.api.command.membership.MembershipReply;
 import io.gravitee.common.utils.UUID;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -102,7 +105,7 @@ public class MembershipCommandHandlerTest {
 
         TestObserver<MembershipReply> obs = cut.handle(command).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertNoErrors();
         obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.SUCCEEDED));
     }
@@ -137,7 +140,7 @@ public class MembershipCommandHandlerTest {
 
         TestObserver<MembershipReply> obs = cut.handle(command).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertNoErrors();
         obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.SUCCEEDED));
     }
@@ -166,7 +169,7 @@ public class MembershipCommandHandlerTest {
 
         TestObserver<MembershipReply> obs = cut.handle(command).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertNoErrors();
         obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.ERROR));
 

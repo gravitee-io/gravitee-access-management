@@ -34,10 +34,10 @@ import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.http.MediaType;
 import io.gravitee.common.service.AbstractService;
 import io.vertx.core.Handler;
-import io.vertx.reactivex.core.Vertx;
-import io.vertx.reactivex.ext.web.Router;
-import io.vertx.reactivex.ext.web.RoutingContext;
-import io.vertx.reactivex.ext.web.handler.CorsHandler;
+import io.vertx.rxjava3.core.Vertx;
+import io.vertx.rxjava3.ext.web.Router;
+import io.vertx.rxjava3.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.handler.CorsHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import static io.gravitee.am.gateway.handler.uma.constants.UMAConstants.*;

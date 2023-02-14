@@ -24,7 +24,7 @@ import io.gravitee.am.model.Platform;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;

@@ -23,7 +23,7 @@ import io.gravitee.am.common.oidc.ResponseType;
 import io.gravitee.am.identityprovider.api.*;
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.identityprovider.oauth2.OAuth2GenericIdentityProviderConfiguration;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -32,6 +32,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.text.ParseException;
 import java.util.Collections;
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Mockito.when;
 
@@ -106,7 +107,7 @@ public class OAuth2GenericAuthenticationProviderTest_idToken {
             }
         }).test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(BadCredentialsException.class);
     }
 }

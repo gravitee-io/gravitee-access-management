@@ -28,7 +28,7 @@ import io.gravitee.am.gateway.handler.oidc.service.jws.JWSService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 import net.minidev.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

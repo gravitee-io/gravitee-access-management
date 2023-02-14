@@ -22,9 +22,9 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Theme;
 import io.gravitee.am.service.model.NewTheme;
 import io.gravitee.common.http.HttpStatusCode;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import org.junit.Before;
 import org.junit.Test;
 

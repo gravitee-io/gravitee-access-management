@@ -19,7 +19,7 @@ import io.gravitee.am.service.CertificatePluginService;
 import io.gravitee.am.service.exception.CertificatePluginNotFoundException;
 import io.gravitee.am.service.exception.CertificatePluginSchemaNotFoundException;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Maybe;
+import io.reactivex.rxjava3.core.Maybe;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 

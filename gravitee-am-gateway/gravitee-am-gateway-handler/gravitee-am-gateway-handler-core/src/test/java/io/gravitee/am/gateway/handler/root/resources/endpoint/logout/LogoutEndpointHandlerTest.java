@@ -35,12 +35,12 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.common.http.HttpStatusCode;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.reactivex.ext.web.client.HttpResponse;
-import io.vertx.reactivex.ext.web.client.WebClient;
+import io.vertx.rxjava3.ext.web.client.HttpResponse;
+import io.vertx.rxjava3.ext.web.client.WebClient;
 import java.util.Arrays;
 import java.util.HashMap;
 import org.junit.Test;
@@ -581,8 +581,8 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
         when(authProvider.signOutUrl(any())).thenReturn(Maybe.just(req));
         when(identityProviderManager.get(any())).thenReturn(Maybe.just(authProvider));
 
-        io.vertx.reactivex.ext.web.client.HttpRequest<io.vertx.reactivex.core.buffer.Buffer> httpRequest = mock(io.vertx.reactivex.ext.web.client.HttpRequest.class);
-        io.vertx.ext.web.client.HttpResponse<io.vertx.reactivex.core.buffer.Buffer> httpResponse = mock(io.vertx.ext.web.client.HttpResponse.class);
+        io.vertx.rxjava3.ext.web.client.HttpRequest<io.vertx.rxjava3.core.buffer.Buffer> httpRequest = mock(io.vertx.rxjava3.ext.web.client.HttpRequest.class);
+        io.vertx.ext.web.client.HttpResponse<io.vertx.rxjava3.core.buffer.Buffer> httpResponse = mock(io.vertx.ext.web.client.HttpResponse.class);
         when(httpResponse.statusCode()).thenReturn(200);
         when(httpRequest.rxSend()).thenReturn(Single.just(new HttpResponse<>(httpResponse)));
         when(webClient.getAbs(anyString())).thenReturn(httpRequest);

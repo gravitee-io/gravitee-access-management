@@ -37,12 +37,12 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.repository.oauth2.api.PushedAuthorizationRequestRepository;
 import io.gravitee.am.repository.oauth2.model.PushedAuthorizationRequest;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.MaybeSource;
-import io.reactivex.Single;
-import io.reactivex.SingleSource;
-import io.reactivex.functions.Function;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.MaybeSource;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.core.SingleSource;
+import io.reactivex.rxjava3.functions.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -219,28 +219,19 @@ public class PushedAuthorizationRequestServiceImpl implements PushedAuthorizatio
 
     private Single<JWT> validateSignature(SignedJWT jwt, Client client) {
         return jwkService.getKeys(client)
-                .switchIfEmpty(Maybe.error(new InvalidRequestObjectException()))
-                .flatMap(new Function<JWKSet, MaybeSource<JWK>>() {
-                    @Override
-                    public MaybeSource<JWK> apply(JWKSet jwkSet) throws Exception {
-                        return jwkService.getKey(jwkSet, jwt.getHeader().getKeyID());
-                    }
-                })
-                .switchIfEmpty(Maybe.error(new InvalidRequestObjectException("Invalid key ID")))
-                .flatMapSingle(new Function<JWK, SingleSource<JWT>>() {
-                    @Override
-                    public SingleSource<JWT> apply(JWK jwk) throws Exception {
-                        // 6.3.2.  Signed Request Object
-                        // To perform Signature Validation, the alg Header Parameter in the
-                        // JOSE Header MUST match the value of the request_object_signing_alg
-                        // set during Client Registration
-                        if (!jwt.getHeader().getAlgorithm().getName().equals(client.getRequestObjectSigningAlg())) {
-                            return Single.error(new InvalidRequestObjectException("Invalid request object signing algorithm"));
-                        } else if (jwsService.isValidSignature(jwt, jwk)) {
-                            return Single.just(jwt);
-                        } else {
-                            return Single.error(new InvalidRequestObjectException("Invalid signature"));
-                        }
+                .switchIfEmpty(Single.error(new InvalidRequestObjectException()))
+                .flatMap((Function<JWKSet, Single<JWK>>) jwkSet -> jwkService.getKey(jwkSet, jwt.getHeader().getKeyID()).switchIfEmpty(Single.error(new InvalidRequestObjectException("Invalid key ID"))))
+                .flatMap((Function<JWK, SingleSource<JWT>>) jwk -> {
+                    // 6.3.2.  Signed Request Object
+                    // To perform Signature Validation, the alg Header Parameter in the
+                    // JOSE Header MUST match the value of the request_object_signing_alg
+                    // set during Client Registration
+                    if (!jwt.getHeader().getAlgorithm().getName().equals(client.getRequestObjectSigningAlg())) {
+                        return Single.error(new InvalidRequestObjectException("Invalid request object signing algorithm"));
+                    } else if (jwsService.isValidSignature(jwt, jwk)) {
+                        return Single.just(jwt);
+                    } else {
+                        return Single.error(new InvalidRequestObjectException("Invalid signature"));
                     }
                 });
     }

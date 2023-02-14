@@ -16,7 +16,7 @@
 package io.gravitee.am.identityprovider.inline.authentication.provisioning;
 
 import io.gravitee.am.identityprovider.inline.model.User;
-import io.reactivex.Maybe;
+import io.reactivex.rxjava3.core.Maybe;
 
 import java.util.HashMap;
 import java.util.Map;

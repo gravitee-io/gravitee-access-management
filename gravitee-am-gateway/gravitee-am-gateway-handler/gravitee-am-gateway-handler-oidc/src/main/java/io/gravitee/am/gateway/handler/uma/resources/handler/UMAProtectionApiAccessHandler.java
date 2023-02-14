@@ -19,7 +19,7 @@ import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHa
 import io.gravitee.am.gateway.handler.uma.exception.UMAProtectionApiForbiddenException;
 import io.gravitee.am.model.Domain;
 import io.vertx.core.Handler;
-import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

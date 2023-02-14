@@ -16,7 +16,7 @@
 package io.gravitee.am.identityprovider.http;
 
 import io.gravitee.common.http.HttpHeaders;
-import io.vertx.reactivex.ext.web.client.HttpResponse;
+import io.vertx.rxjava3.ext.web.client.HttpResponse;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

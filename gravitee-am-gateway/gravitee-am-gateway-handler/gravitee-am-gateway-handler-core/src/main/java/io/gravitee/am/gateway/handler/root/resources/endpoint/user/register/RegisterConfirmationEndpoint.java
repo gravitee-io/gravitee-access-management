@@ -27,10 +27,10 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
-import io.vertx.reactivex.core.MultiMap;
-import io.vertx.reactivex.core.http.HttpServerRequest;
-import io.vertx.reactivex.ext.web.RoutingContext;
-import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
+import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.rxjava3.core.http.HttpServerRequest;
+import io.vertx.rxjava3.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -95,15 +95,16 @@ public class RegisterConfirmationEndpoint extends UserRequestHandler {
         routingContext.put(ConstantKeys.ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), actionParams));
 
         // render the registration confirmation page
-        engine.render(generateData(routingContext, domain, client), getTemplateFileName(client), res -> {
-            if (res.succeeded()) {
-                routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
-                routingContext.response().end(res.result());
-            } else {
-                logger.error("Unable to render registration confirmation page", res.cause());
-                routingContext.fail(res.cause());
-            }
-        });
+        engine.render(generateData(routingContext, domain, client), getTemplateFileName(client))
+                .doOnSuccess(buffer -> {
+                    routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
+                    routingContext.response().end(buffer);
+                })
+                .doOnError(throwable -> {
+                    logger.error("Unable to render registration confirmation page", throwable);
+                    routingContext.fail(throwable.getCause());
+                })
+                .subscribe();
     }
 
     private String getTemplateFileName(Client client) {

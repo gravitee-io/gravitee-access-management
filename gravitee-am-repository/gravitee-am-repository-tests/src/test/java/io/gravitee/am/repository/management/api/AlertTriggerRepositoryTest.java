@@ -21,14 +21,15 @@ import io.gravitee.am.model.alert.AlertTrigger;
 import io.gravitee.am.model.alert.AlertTriggerType;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.am.repository.management.api.search.AlertTriggerCriteria;
-import io.reactivex.observers.TestObserver;
-import io.reactivex.subscribers.TestSubscriber;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -51,7 +52,7 @@ public class AlertTriggerRepositoryTest extends AbstractManagementTest {
 
         // fetch idp
         TestObserver<AlertTrigger> testObserver = alertTriggerRepository.findById(alertTriggerCreated.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -67,7 +68,7 @@ public class AlertTriggerRepositoryTest extends AbstractManagementTest {
     public void testCreate() {
         AlertTrigger alertTrigger = buildAlertTrigger();
         TestObserver<AlertTrigger> testObserver = alertTriggerRepository.create(alertTrigger).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -86,7 +87,7 @@ public class AlertTriggerRepositoryTest extends AbstractManagementTest {
         updatedAlertTrigger.setEnabled(false);
 
         TestObserver<AlertTrigger> testObserver = alertTriggerRepository.update(updatedAlertTrigger).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -102,7 +103,7 @@ public class AlertTriggerRepositoryTest extends AbstractManagementTest {
 
         // delete idp
         TestObserver<Void> testObserver1 = alertTriggerRepository.delete(alertTriggerCreated.getId()).test();
-        testObserver1.awaitTerminalEvent();
+        testObserver1.awaitDone(10, TimeUnit.SECONDS);
 
         // fetch idp
         alertTriggerRepository.findById(alertTriggerCreated.getId()).test().assertEmpty();
@@ -122,7 +123,7 @@ public class AlertTriggerRepositoryTest extends AbstractManagementTest {
         criteria.setAlertNotifierIds(Collections.singletonList(NOTIFIER_ID1));
         TestSubscriber<AlertTrigger> testObserver1 = alertTriggerRepository.findByCriteria(ReferenceType.DOMAIN, DOMAIN_ID, criteria).test();
 
-        testObserver1.awaitTerminalEvent();
+        testObserver1.awaitDone(10, TimeUnit.SECONDS);
         testObserver1.assertComplete();
         testObserver1.assertNoErrors();
         testObserver1.assertNoValues();
@@ -130,7 +131,7 @@ public class AlertTriggerRepositoryTest extends AbstractManagementTest {
         alertTriggerCreated.setEnabled(false);
         final AlertTrigger alertTriggerUpdated = alertTriggerRepository.update(alertTriggerCreated).blockingGet();
         testObserver1 = alertTriggerRepository.findByCriteria(ReferenceType.DOMAIN, DOMAIN_ID, criteria).test();
-        testObserver1.awaitTerminalEvent();
+        testObserver1.awaitDone(10, TimeUnit.SECONDS);
         testObserver1.assertComplete();
         testObserver1.assertNoErrors();
         testObserver1.assertValue(alertTrigger -> alertTrigger.getId().equals(alertTriggerUpdated.getId()));
@@ -146,7 +147,7 @@ public class AlertTriggerRepositoryTest extends AbstractManagementTest {
         criteria.setType(AlertTriggerType.TOO_MANY_LOGIN_FAILURES);
         TestSubscriber<AlertTrigger> testObserver1 = alertTriggerRepository.findByCriteria(ReferenceType.DOMAIN, DOMAIN_ID, criteria).test();
 
-        testObserver1.awaitTerminalEvent();
+        testObserver1.awaitDone(10, TimeUnit.SECONDS);
         testObserver1.assertComplete();
         testObserver1.assertNoErrors();
         testObserver1.assertValue(alertTrigger -> alertTrigger.getId().equals(alertTriggerCreated.getId()));
@@ -156,7 +157,7 @@ public class AlertTriggerRepositoryTest extends AbstractManagementTest {
     public void findAll() {
         TestSubscriber<AlertTrigger> testObserver1 = alertTriggerRepository.findAll(ReferenceType.DOMAIN, DOMAIN_ID).test();
 
-        testObserver1.awaitTerminalEvent();
+        testObserver1.awaitDone(10, TimeUnit.SECONDS);
         testObserver1.assertComplete();
         testObserver1.assertNoErrors();
         testObserver1.assertNoValues();
@@ -168,7 +169,7 @@ public class AlertTriggerRepositoryTest extends AbstractManagementTest {
 
         testObserver1 = alertTriggerRepository.findAll(ReferenceType.DOMAIN, DOMAIN_ID).test();
 
-        testObserver1.awaitTerminalEvent();
+        testObserver1.awaitDone(10, TimeUnit.SECONDS);
         testObserver1.assertComplete();
         testObserver1.assertValue(alertTrigger -> alertTrigger.getId().equals(alertTriggerCreated1.getId()));
     }
@@ -177,7 +178,7 @@ public class AlertTriggerRepositoryTest extends AbstractManagementTest {
     public void findByCriteriaWithEmptyAlertNotifierIdList() {
         TestSubscriber<AlertTrigger> testObserver1 = alertTriggerRepository.findAll(ReferenceType.DOMAIN, DOMAIN_ID).test();
 
-        testObserver1.awaitTerminalEvent();
+        testObserver1.awaitDone(10, TimeUnit.SECONDS);
         testObserver1.assertComplete();
         testObserver1.assertNoErrors();
         testObserver1.assertNoValues();
@@ -191,7 +192,7 @@ public class AlertTriggerRepositoryTest extends AbstractManagementTest {
         criteria.setAlertNotifierIds(Collections.emptyList());
         testObserver1 = alertTriggerRepository.findByCriteria(ReferenceType.DOMAIN, DOMAIN_ID, criteria).test();
 
-        testObserver1.awaitTerminalEvent();
+        testObserver1.awaitDone(10, TimeUnit.SECONDS);
         testObserver1.assertComplete();
         testObserver1.assertValue(alertTrigger -> alertTrigger.getId().equals(alertTriggerCreated1.getId()));
     }

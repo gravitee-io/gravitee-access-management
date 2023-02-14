@@ -17,9 +17,9 @@ package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.repository.common.CrudRepository;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Single;
 
 import java.util.Date;
 import java.util.Set;

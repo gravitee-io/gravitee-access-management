@@ -16,9 +16,9 @@
 package io.gravitee.am.repository.oidc.api;
 
 import io.gravitee.am.repository.oidc.model.RequestObject;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)

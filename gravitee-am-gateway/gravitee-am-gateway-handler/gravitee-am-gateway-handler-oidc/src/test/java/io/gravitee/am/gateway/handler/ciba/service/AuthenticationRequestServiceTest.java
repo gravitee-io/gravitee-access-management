@@ -35,11 +35,11 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.repository.oidc.api.CibaAuthRequestRepository;
 import io.gravitee.am.repository.oidc.model.CibaAuthRequest;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
-import io.vertx.reactivex.core.MultiMap;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.vertx.rxjava3.core.MultiMap;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -49,6 +49,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -94,7 +95,7 @@ public class AuthenticationRequestServiceTest {
         when(requestRepository.findById(anyString())).thenReturn(Maybe.empty());
 
         final TestObserver<CibaAuthRequest> observer = service.retrieve(domain, "unknown").test();
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(AuthenticationRequestNotFoundException.class);
     }
 
@@ -109,7 +110,7 @@ public class AuthenticationRequestServiceTest {
 
         final TestObserver<CibaAuthRequest> observer = service.retrieve(domain,"reqid").test();
 
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(SlowDownException.class);
     }
 
@@ -125,7 +126,7 @@ public class AuthenticationRequestServiceTest {
 
         final TestObserver<CibaAuthRequest> observer = service.retrieve(domain,"reqid").test();
 
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(AuthorizationPendingException.class);
 
         verify(requestRepository).update(request);
@@ -142,7 +143,7 @@ public class AuthenticationRequestServiceTest {
 
         final TestObserver<CibaAuthRequest> observer = service.retrieve(domain,"reqid").test();
 
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(AccessDeniedException.class);
     }
 
@@ -157,7 +158,7 @@ public class AuthenticationRequestServiceTest {
 
         final TestObserver<CibaAuthRequest> observer = service.retrieve(domain,"reqid").test();
 
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertValueCount(1);
     }
 
@@ -167,7 +168,7 @@ public class AuthenticationRequestServiceTest {
         when(requestRepository.findById(any())).thenReturn(Maybe.empty());
         final TestObserver<CibaAuthRequest> observer = service.updateAuthDeviceInformation(request).test();
 
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(AuthenticationRequestNotFoundException.class);
 
         verify(requestRepository, never()).update(any());
@@ -181,7 +182,7 @@ public class AuthenticationRequestServiceTest {
 
         final TestObserver<CibaAuthRequest> observer = service.updateAuthDeviceInformation(request).test();
 
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertValueCount(1);
 
         verify(request, never()).setLastAccessAt(any());
@@ -215,7 +216,7 @@ public class AuthenticationRequestServiceTest {
 
         final ADCallbackContext context = new ADCallbackContext(MultiMap.caseInsensitiveMultiMap(), MultiMap.caseInsensitiveMultiMap());
         final TestObserver<Void> observer = this.service.validateUserResponse(context).test();
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertNoErrors();
 
         verify(requestRepository).updateStatus(AUTH_REQ_ID, status);
@@ -230,7 +231,7 @@ public class AuthenticationRequestServiceTest {
         final ADCallbackContext context = new ADCallbackContext(MultiMap.caseInsensitiveMultiMap(), MultiMap.caseInsensitiveMultiMap());
         final TestObserver<Void> observer = this.service.validateUserResponse(context).test();
 
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(NoSuchElementException.class);
 
         verify(clientService, never()).findByClientId(any());
@@ -254,7 +255,7 @@ public class AuthenticationRequestServiceTest {
 
         final ADCallbackContext context = new ADCallbackContext(MultiMap.caseInsensitiveMultiMap(), MultiMap.caseInsensitiveMultiMap());
         final TestObserver<Void> observer = this.service.validateUserResponse(context).test();
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(InvalidRequestException.class);
 
         verify(requestRepository, never()).updateStatus(any(), any());
@@ -278,7 +279,7 @@ public class AuthenticationRequestServiceTest {
 
         final ADCallbackContext context = new ADCallbackContext(MultiMap.caseInsensitiveMultiMap(), MultiMap.caseInsensitiveMultiMap());
         final TestObserver<Void> observer = this.service.validateUserResponse(context).test();
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(InvalidRequestException.class);
 
         verify(clientService).findByClientId(any());
@@ -303,7 +304,7 @@ public class AuthenticationRequestServiceTest {
 
         final ADCallbackContext context = new ADCallbackContext(MultiMap.caseInsensitiveMultiMap(), MultiMap.caseInsensitiveMultiMap());
         final TestObserver<Void> observer = this.service.validateUserResponse(context).test();
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(InvalidRequestException.class);
 
         verify(clientService).findByClientId(any());
@@ -333,7 +334,7 @@ public class AuthenticationRequestServiceTest {
 
         final ADCallbackContext context = new ADCallbackContext(MultiMap.caseInsensitiveMultiMap(), MultiMap.caseInsensitiveMultiMap());
         final TestObserver<Void> observer = this.service.validateUserResponse(context).test();
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(InvalidRequestException.class);
 
         verify(clientService).findByClientId(any());

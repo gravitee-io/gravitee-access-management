@@ -21,9 +21,9 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.service.ScopeApprovalService;
 import io.gravitee.am.service.exception.ScopeApprovalNotFoundException;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.HashSet;

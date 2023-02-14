@@ -16,8 +16,8 @@
 package io.gravitee.am.gateway.handler.common.vertx.utils;
 
 import com.google.common.net.HttpHeaders;
-import io.vertx.reactivex.core.MultiMap;
-import io.vertx.reactivex.core.http.HttpServerRequest;
+import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.rxjava3.core.http.HttpServerRequest;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

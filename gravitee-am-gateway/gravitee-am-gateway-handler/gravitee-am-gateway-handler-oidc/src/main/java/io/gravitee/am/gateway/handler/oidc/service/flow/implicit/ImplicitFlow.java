@@ -28,7 +28,7 @@ import io.gravitee.am.gateway.handler.oidc.service.flow.AbstractFlow;
 import io.gravitee.am.gateway.handler.oidc.service.idtoken.IDTokenService;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 
 import java.util.Arrays;
 import java.util.List;

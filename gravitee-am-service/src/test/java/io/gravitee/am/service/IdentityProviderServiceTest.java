@@ -27,18 +27,20 @@ import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.IdentityProviderServiceImpl;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.am.service.model.UpdateIdentityProvider;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
-import io.reactivex.subscribers.TestSubscriber;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
+
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
@@ -73,7 +75,7 @@ public class IdentityProviderServiceTest {
         when(identityProviderRepository.findById("my-identity-provider")).thenReturn(Maybe.just(new IdentityProvider()));
         TestObserver testObserver = identityProviderService.findById("my-identity-provider").test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValueCount(1);
@@ -83,7 +85,7 @@ public class IdentityProviderServiceTest {
     public void shouldFindById_notExistingIdentityProvider() {
         when(identityProviderRepository.findById("my-identity-provider")).thenReturn(Maybe.empty());
         TestObserver testObserver = identityProviderService.findById("my-identity-provider").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNoValues();
     }
@@ -102,7 +104,7 @@ public class IdentityProviderServiceTest {
     public void shouldFindByDomain() {
         when(identityProviderRepository.findAll(eq(ReferenceType.DOMAIN), eq(DOMAIN))).thenReturn(Flowable.just(new IdentityProvider()));
         TestSubscriber<IdentityProvider> testObserver = identityProviderService.findByDomain(DOMAIN).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -127,7 +129,7 @@ public class IdentityProviderServiceTest {
 
         TestSubscriber<IdentityProvider> obs = identityProviderService.findAll(ReferenceType.ORGANIZATION).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertComplete();
         obs.assertValue(identityProvider);
     }
@@ -139,7 +141,7 @@ public class IdentityProviderServiceTest {
 
         TestSubscriber<IdentityProvider> obs = identityProviderService.findAll(ReferenceType.ORGANIZATION).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertNoErrors();
         obs.assertComplete();
         obs.assertNoValues();
@@ -152,7 +154,7 @@ public class IdentityProviderServiceTest {
 
         TestSubscriber<IdentityProvider> obs = identityProviderService.findAll(ReferenceType.ORGANIZATION).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertError(TechnicalException.class);
     }
 
@@ -166,7 +168,7 @@ public class IdentityProviderServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = identityProviderService.create(DOMAIN, newIdentityProvider).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -199,7 +201,7 @@ public class IdentityProviderServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = identityProviderService.update(DOMAIN, "my-identity-provider", updateIdentityProvider, false).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -218,7 +220,7 @@ public class IdentityProviderServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = identityProviderService.update(DOMAIN, "my-identity-provider", updateIdentityProvider, true).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -239,7 +241,7 @@ public class IdentityProviderServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = identityProviderService.update(DOMAIN, "my-identity-provider", updateIdentityProvider, false).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -261,7 +263,7 @@ public class IdentityProviderServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = identityProviderService.update(DOMAIN, "my-identity-provider", updateIdentityProvider, false).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -350,7 +352,7 @@ public class IdentityProviderServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = identityProviderService.delete(DOMAIN, "my-identity-provider").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();

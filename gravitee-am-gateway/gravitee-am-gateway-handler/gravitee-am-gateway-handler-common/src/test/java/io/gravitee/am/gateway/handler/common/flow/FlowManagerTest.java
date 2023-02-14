@@ -29,8 +29,8 @@ import io.gravitee.am.plugins.policy.core.PolicyPluginManager;
 import io.gravitee.am.service.FlowService;
 import io.gravitee.el.TemplateEngine;
 import io.gravitee.gateway.api.ExecutionContext;
-import io.reactivex.Flowable;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -40,6 +40,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Mockito.*;
 
@@ -71,7 +72,7 @@ public class FlowManagerTest {
         when(flowService.findAll(ReferenceType.DOMAIN, domain.getId())).thenReturn(Flowable.empty());
         flowManager.afterPropertiesSet();
         TestObserver<List<Policy>> obs = flowManager.findByExtensionPoint(ExtensionPoint.PRE_CONSENT, null, null).test();
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValue(policies -> {
             Assert.assertTrue(policies.isEmpty());
             return true;
@@ -89,7 +90,7 @@ public class FlowManagerTest {
         when(flowService.findAll(ReferenceType.DOMAIN, domain.getId())).thenReturn(Flowable.just(flow));
         flowManager.afterPropertiesSet();
         TestObserver<List<Policy>> obs = flowManager.findByExtensionPoint(ExtensionPoint.PRE_CONSENT, null, null).test();
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValue(policies -> {
             Assert.assertTrue(policies.isEmpty());
             return true;
@@ -107,7 +108,7 @@ public class FlowManagerTest {
         when(flowService.findAll(ReferenceType.DOMAIN, domain.getId())).thenReturn(Flowable.just(flow));
         flowManager.afterPropertiesSet();
         TestObserver<List<Policy>> obs = flowManager.findByExtensionPoint(ExtensionPoint.PRE_CONSENT, null, null).test();
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValue(policies -> {
             Assert.assertTrue(policies.isEmpty());
             return true;
@@ -129,7 +130,7 @@ public class FlowManagerTest {
         when(flowService.findAll(ReferenceType.DOMAIN, domain.getId())).thenReturn(Flowable.just(flow));
         flowManager.afterPropertiesSet();
         TestObserver<List<Policy>> obs = flowManager.findByExtensionPoint(ExtensionPoint.PRE_CONSENT, null, null).test();
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValue(policies -> {
             Assert.assertTrue(policies.isEmpty());
             return true;
@@ -157,7 +158,7 @@ public class FlowManagerTest {
         when(flowService.findAll(ReferenceType.DOMAIN, domain.getId())).thenReturn(Flowable.just(flow));
         flowManager.afterPropertiesSet();
         TestObserver<List<Policy>> obs = flowManager.findByExtensionPoint(ExtensionPoint.PRE_CONSENT, null, null).test();
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValue(policies -> {
             Assert.assertTrue(policies.isEmpty());
             return true;
@@ -186,7 +187,7 @@ public class FlowManagerTest {
         when(flowService.findAll(ReferenceType.DOMAIN, domain.getId())).thenReturn(Flowable.just(flow));
         flowManager.afterPropertiesSet();
         TestObserver<List<Policy>> obs = flowManager.findByExtensionPoint(ExtensionPoint.PRE_CONSENT, null, null).test();
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValue(policies -> {
             Assert.assertTrue(policies.size() == 1);
             return true;
@@ -215,7 +216,7 @@ public class FlowManagerTest {
         when(flowService.findAll(ReferenceType.DOMAIN, domain.getId())).thenReturn(Flowable.just(flow));
         flowManager.afterPropertiesSet();
         TestObserver<List<Policy>> obs = flowManager.findByExtensionPoint(ExtensionPoint.PRE_CONSENT, null, null).test();
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValue(policies -> {
             Assert.assertTrue(policies.isEmpty());
             return true;
@@ -246,7 +247,7 @@ public class FlowManagerTest {
         when(flowService.findAll(ReferenceType.DOMAIN, domain.getId())).thenReturn(Flowable.just(flow));
         flowManager.afterPropertiesSet();
         TestObserver<List<Policy>> obs = flowManager.findByExtensionPoint(ExtensionPoint.PRE_CONSENT, client, null).test();
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValue(policies -> {
             Assert.assertTrue(policies.isEmpty());
             return true;
@@ -277,7 +278,7 @@ public class FlowManagerTest {
         when(flowService.findAll(ReferenceType.DOMAIN, domain.getId())).thenReturn(Flowable.just(flow));
         flowManager.afterPropertiesSet();
         TestObserver<List<Policy>> obs = flowManager.findByExtensionPoint(ExtensionPoint.PRE_CONSENT, client, null).test();
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValue(policies -> {
             Assert.assertTrue(policies.size() == 1);
             return true;
@@ -322,7 +323,7 @@ public class FlowManagerTest {
         when(flowService.findAll(ReferenceType.DOMAIN, domain.getId())).thenReturn(Flowable.just(domainFlow, appFlow));
         flowManager.afterPropertiesSet();
         TestObserver<List<Policy>> obs = flowManager.findByExtensionPoint(ExtensionPoint.PRE_CONSENT, client, null).test();
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValue(policies -> {
             Assert.assertTrue(policies.size() == 1);
             Assert.assertTrue(policies.get(0).id().equals(appPolicy.id()));
@@ -370,7 +371,7 @@ public class FlowManagerTest {
         when(flowService.findAll(ReferenceType.DOMAIN, domain.getId())).thenReturn(Flowable.just(domainFlow, appFlow));
         flowManager.afterPropertiesSet();
         TestObserver<List<Policy>> obs = flowManager.findByExtensionPoint(ExtensionPoint.PRE_CONSENT, client, ExecutionPredicate.alwaysTrue()).test();
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValue(policies -> {
             Assert.assertTrue(policies.size() == 2);
             Assert.assertTrue(policies.get(0).id().equals(domainPolicy.id()));
@@ -423,7 +424,7 @@ public class FlowManagerTest {
         when(executionContext.getTemplateEngine()).thenReturn(TemplateEngine.templateEngine());
 
         TestObserver<List<Policy>> obs = flowManager.findByExtensionPoint(ExtensionPoint.PRE_CONSENT, client, ExecutionPredicate.from(executionContext)).test();
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValue(policies -> {
             Assert.assertTrue(policies.size() == 1);
             Assert.assertTrue(policies.get(0).id().equals(appPolicy.id()));

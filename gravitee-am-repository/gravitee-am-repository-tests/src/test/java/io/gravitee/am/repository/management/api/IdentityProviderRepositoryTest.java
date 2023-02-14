@@ -19,11 +19,12 @@ import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.am.repository.exceptions.TechnicalException;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -53,7 +54,7 @@ public class IdentityProviderRepositoryTest extends AbstractManagementTest {
 
         // fetch idps
         TestObserver<List<IdentityProvider>> testObserver = identityProviderRepository.findAll(ReferenceType.DOMAIN, "testDomain").toList().test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -97,7 +98,7 @@ public class IdentityProviderRepositoryTest extends AbstractManagementTest {
 
         // fetch idp
         TestObserver<IdentityProvider> testObserver = identityProviderRepository.findById(identityProviderCreated.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -128,7 +129,7 @@ public class IdentityProviderRepositoryTest extends AbstractManagementTest {
 
         // fetch idp
         TestObserver<IdentityProvider> testObserver = identityProviderRepository.findById(ReferenceType.ORGANIZATION, ORGANIZATION_ID, identityProviderCreated.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -147,7 +148,7 @@ public class IdentityProviderRepositoryTest extends AbstractManagementTest {
         identityProvider.setMappers(Collections.singletonMap("username", "johndoe"));
         identityProvider.setRoleMapper(Collections.singletonMap("username=johndoe", new String[]{"dev", "admin"}));
         TestObserver<IdentityProvider> testObserver = identityProviderRepository.create(identityProvider).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -167,7 +168,7 @@ public class IdentityProviderRepositoryTest extends AbstractManagementTest {
         updatedIdentityProvider.setId(identityProviderCreated.getId());
 
         TestObserver<IdentityProvider> testObserver = identityProviderRepository.update(updatedIdentityProvider).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -183,14 +184,14 @@ public class IdentityProviderRepositoryTest extends AbstractManagementTest {
 
         // fetch idp
         TestObserver<IdentityProvider> testObserver = identityProviderRepository.findById(identityProviderCreated.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(idp -> idp.getName().equals(identityProvider.getName()));
 
         // delete idp
         TestObserver testObserver1 = identityProviderRepository.delete(identityProviderCreated.getId()).test();
-        testObserver1.awaitTerminalEvent();
+        testObserver1.awaitDone(10, TimeUnit.SECONDS);
 
         // fetch idp
         identityProviderRepository.findById(identityProviderCreated.getId()).test().assertEmpty();

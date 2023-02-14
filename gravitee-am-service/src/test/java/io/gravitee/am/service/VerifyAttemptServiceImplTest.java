@@ -22,9 +22,9 @@ import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.management.api.VerifyAttemptRepository;
 import io.gravitee.am.service.impl.VerifyAttemptServiceImpl;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -223,8 +223,7 @@ public class VerifyAttemptServiceImplTest {
 
         TestObserver<VerifyAttempt> observer = verifyAttemptService.checkVerifyAttempt(user, factorId, client, domain).test();
 
-        observer.assertNotComplete();
-        assertTrue("Maximum verification limit error should be thrown", observer.errors().get(0).getMessage().equals("Maximum verification limit exceed"));
+        observer.assertNotComplete().assertError(err -> "Maximum verification limit exceed".equals(err.getMessage()));
     }
 
     private VerifyAttempt createVerifyAttempt() {

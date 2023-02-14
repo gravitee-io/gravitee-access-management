@@ -21,53 +21,30 @@ import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.management.service.EmailService;
 import io.gravitee.am.management.service.UserService;
-import io.gravitee.am.model.Application;
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.PasswordHistory;
-import io.gravitee.am.model.PasswordSettings;
-import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.Role;
-import io.gravitee.am.model.Template;
-import io.gravitee.am.model.User;
+import io.gravitee.am.model.*;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
-import io.gravitee.am.service.ApplicationService;
-import io.gravitee.am.service.DomainService;
-import io.gravitee.am.service.LoginAttemptService;
-import io.gravitee.am.service.RoleService;
-import io.gravitee.am.service.exception.ClientNotFoundException;
-import io.gravitee.am.service.exception.DomainNotFoundException;
-import io.gravitee.am.service.exception.InvalidPasswordException;
-import io.gravitee.am.service.exception.RoleNotFoundException;
-import io.gravitee.am.service.exception.UserAlreadyExistsException;
-import io.gravitee.am.service.exception.UserInvalidException;
-import io.gravitee.am.service.exception.UserNotFoundException;
-import io.gravitee.am.service.exception.UserProviderNotFoundException;
-import io.gravitee.am.service.TokenService;
-import io.gravitee.am.service.impl.PasswordHistoryService;
+import io.gravitee.am.service.*;
+import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
 import io.gravitee.am.service.validators.email.EmailValidator;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
@@ -168,13 +145,13 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
                     } else {
                         // check user provider
                         return identityProviderManager.getUserProvider(newUser.getSource())
-                                .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(newUser.getSource())))
-                                .flatMapSingle(userProvider -> {
+                                .switchIfEmpty(Single.error(new UserProviderNotFoundException(newUser.getSource())))
+                                .flatMap(userProvider -> {
                                     // check client
                                     return checkClientFunction().apply(domain.getId(), newUser.getClient())
                                             .map(Optional::of)
                                             .defaultIfEmpty(Optional.empty())
-                                            .flatMapSingle(optClient -> {
+                                            .flatMap(optClient -> {
                                                 Application client = optClient.orElse(null);
                                                 newUser.setDomain(domain.getId());
                                                 newUser.setClient(client != null ? client.getId() : null);
@@ -230,7 +207,7 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
                                                                                         newUser.setUsername(idpUser.getUsername());
                                                                                         return newUser;
                                                                                     }
-                                                                                }));
+                                                                                })).toSingle();
                                                             } else {
                                                                 return Single.error(ex);
                                                             }
@@ -242,7 +219,7 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
                                                                        user.setRegistrationUserUri(domainService.buildUrl(domain, "/confirmRegistration"));
                                                                        user.setRegistrationAccessToken(token);
                                                                        return user;
-                                                                   }).defaultIfEmpty(user);
+                                                                   }).defaultIfEmpty(user).toMaybe();
                                                                }
                                                                return Maybe.just(user);
                                                            })
@@ -285,7 +262,7 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
                     return checkClientFunction().apply(domain.getId(), user.getClient())
                             .map(Optional::ofNullable)
                             .defaultIfEmpty(Optional.empty())
-                            .flatMapSingle(optClient -> {
+                            .flatMap(optClient -> {
                                 // check user password
                                 if (isInvalidUserPassword(password, optClient.orElse(null), domain, user)) {
                                     return Single.error(InvalidPasswordException.of("Field [password] is invalid", "invalid_password_value"));
@@ -294,12 +271,12 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
                                 return passwordHistoryService.addPasswordToHistory(DOMAIN, domain.getId(), user, password , principal, PasswordSettings.getInstance(client, domain).orElse(null))
                                         .isEmpty().flatMap(empty -> Single.just(new PasswordHistory()))
                                         .flatMap(passwordHistory -> identityProviderManager.getUserProvider(user.getSource())
-                                                                                       .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(user.getSource())))
-                                                                                       .flatMapSingle(userProvider -> {
+                                                                                       .switchIfEmpty(Single.error(new UserProviderNotFoundException(user.getSource())))
+                                                                                       .flatMap(userProvider -> {
                                                                           // update idp user
                                                                           return userProvider.findByUsername(user.getUsername())
-                                                                                             .switchIfEmpty(Maybe.error(new UserNotFoundException(user.getUsername())))
-                                                                                             .flatMapSingle(idpUser -> userProvider.updatePassword(idpUser, password))
+                                                                                             .switchIfEmpty(Single.error(new UserNotFoundException(user.getUsername())))
+                                                                                             .flatMap(idpUser -> userProvider.updatePassword(idpUser, password))
                                                                                              .onErrorResumeNext(ex -> {
                                                                                                  if (ex instanceof UserNotFoundException) {
                                                                                                      // idp user not found, create its account
@@ -377,8 +354,8 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
 
                     return identityProviderManager.getUserProvider(user.getSource())
                             .switchIfEmpty(identityProviderManager.getUserProvider(user.getSource()))
-                            .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(user.getSource())))
-                            .flatMapSingle(__ -> {
+                            .switchIfEmpty(Single.error(new UserProviderNotFoundException(user.getSource())))
+                            .flatMap(__ -> {
                                 // reset login attempts and update user
                                 // We also make sure to make it at lock not to interfere with LoginAttempt if active
                                 LoginAttemptCriteria criteria = new LoginAttemptCriteria.Builder()
@@ -428,8 +405,8 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
     @Override
     public Single<User> enrollFactors(String userId, List<EnrolledFactor> factors, io.gravitee.am.identityprovider.api.User principal) {
         return userService.findById(userId)
-                .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
-                .flatMapSingle(oldUser -> {
+                .switchIfEmpty(Single.error(new UserNotFoundException(userId)))
+                .flatMap(oldUser -> {
                     User userToUpdate = new User(oldUser);
                     userToUpdate.setFactors(factors);
                     return userService.update(userToUpdate)
@@ -489,7 +466,7 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
                         throw new RoleNotFoundException(String.join(",", roles));
                     }
                     return roles1;
-                }).toCompletable();
+                }).ignoreElement();
     }
 
     private boolean isInvalidUserPassword(String password, Application application, Domain domain, User user) {

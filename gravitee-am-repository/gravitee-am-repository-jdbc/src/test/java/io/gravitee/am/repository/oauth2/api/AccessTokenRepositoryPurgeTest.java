@@ -18,13 +18,14 @@ package io.gravitee.am.repository.oauth2.api;
 import io.gravitee.am.repository.jdbc.oauth2.api.JdbcAccessTokenRepository;
 import io.gravitee.am.repository.oauth2.AbstractOAuthTest;
 import io.gravitee.am.repository.oauth2.model.AccessToken;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -60,14 +61,14 @@ public class AccessTokenRepositoryPurgeTest extends AbstractOAuthTest {
         TestObserver<Void> test = accessTokenRepository.create(token1).ignoreElement()
                 .andThen(accessTokenRepository.create(token2).ignoreElement())
                 .test();
-        test.awaitTerminalEvent();
+        test.awaitDone(10, TimeUnit.SECONDS);
         test.assertNoErrors();
 
         assertNotNull(accessTokenRepository.findByToken("my-token").blockingGet());
         assertNull(accessTokenRepository.findByToken("my-token2").blockingGet());
 
         TestObserver<Void> testPurge = accessTokenRepository.purgeExpiredData().test();
-        testPurge.awaitTerminalEvent();
+        testPurge.awaitDone(10, TimeUnit.SECONDS);
         testPurge.assertNoErrors();
 
         assertNotNull(accessTokenRepository.findByToken("my-token").blockingGet());

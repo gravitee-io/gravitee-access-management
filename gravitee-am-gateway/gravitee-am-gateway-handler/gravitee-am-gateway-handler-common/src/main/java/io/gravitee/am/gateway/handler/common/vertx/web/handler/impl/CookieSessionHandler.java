@@ -24,10 +24,10 @@ import io.gravitee.am.model.SessionSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.safe.ClientProperties;
 import io.gravitee.am.service.UserService;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Handler;
-import io.vertx.reactivex.core.http.Cookie;
-import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.rxjava3.core.http.Cookie;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
@@ -113,7 +113,7 @@ public class CookieSessionHandler implements Handler<RoutingContext> {
                                     .flatMap(user -> userService.enhance(user).toMaybe())
                                     .map(user -> currentSession)
                                     .switchIfEmpty(cleanupSession(currentSession))
-                                    .onErrorResumeNext(cleanupSession(currentSession));
+                                    .onErrorResumeNext(exception -> cleanupSession(currentSession));
                         } else {
                             return Single.just(currentSession);
                         }

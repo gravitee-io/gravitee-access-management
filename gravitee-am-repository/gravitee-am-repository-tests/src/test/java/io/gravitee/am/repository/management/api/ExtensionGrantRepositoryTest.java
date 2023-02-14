@@ -18,13 +18,14 @@ package io.gravitee.am.repository.management.api;
 import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.AbstractManagementTest;
-import io.reactivex.observers.TestObserver;
-import io.reactivex.subscribers.TestSubscriber;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Date;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -47,7 +48,7 @@ public class ExtensionGrantRepositoryTest extends AbstractManagementTest {
 
         // fetch extension grants
         TestSubscriber<ExtensionGrant> testSubscriber = extensionGrantRepository.findByDomain("testDomain").test();
-        testSubscriber.awaitTerminalEvent();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
 
         testSubscriber.assertComplete();
         testSubscriber.assertNoErrors();
@@ -63,7 +64,7 @@ public class ExtensionGrantRepositoryTest extends AbstractManagementTest {
 
         // fetch extension grant
         TestObserver<ExtensionGrant> testObserver = extensionGrantRepository.findById(extensionGrantCreated.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -104,7 +105,7 @@ public class ExtensionGrantRepositoryTest extends AbstractManagementTest {
         ExtensionGrant extensionGrant = buildExtensionGrant();
 
         TestObserver<ExtensionGrant> testObserver = extensionGrantRepository.create(extensionGrant).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -123,7 +124,7 @@ public class ExtensionGrantRepositoryTest extends AbstractManagementTest {
         updatedExtension.setName("testUpdatedName");
 
         TestObserver<ExtensionGrant> testObserver = extensionGrantRepository.update(updatedExtension).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -138,14 +139,14 @@ public class ExtensionGrantRepositoryTest extends AbstractManagementTest {
 
         // fetch extension grant
         TestObserver<ExtensionGrant> testObserver = extensionGrantRepository.findById(extensionGrantCreated.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(e -> e.getName().equals(extensionGrantCreated.getName()));
 
         // delete extension grant
         TestObserver testObserver1 = extensionGrantRepository.delete(extensionGrantCreated.getId()).test();
-        testObserver1.awaitTerminalEvent();
+        testObserver1.awaitDone(10, TimeUnit.SECONDS);
 
         // fetch extension grant
         extensionGrantRepository.findById(extensionGrantCreated.getId()).test().assertEmpty();

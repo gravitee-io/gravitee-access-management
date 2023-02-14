@@ -19,7 +19,7 @@ import io.gravitee.am.gateway.handler.scim.model.AuthenticationScheme;
 import io.gravitee.am.gateway.handler.scim.model.ComplexType;
 import io.gravitee.am.gateway.handler.scim.model.ServiceProviderConfiguration;
 import io.gravitee.am.gateway.handler.scim.service.ServiceProviderConfigService;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 
 import java.util.Collections;
 

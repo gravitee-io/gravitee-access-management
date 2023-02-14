@@ -18,7 +18,7 @@ package io.gravitee.am.repository.management.api;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Theme;
 import io.gravitee.am.repository.common.CrudRepository;
-import io.reactivex.Maybe;
+import io.reactivex.rxjava3.core.Maybe;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)

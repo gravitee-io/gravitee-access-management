@@ -32,10 +32,10 @@ import io.gravitee.am.service.reporter.vertx.EventBusReporterWrapper;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
-import io.reactivex.Single;
-import io.reactivex.schedulers.Schedulers;
-import io.vertx.reactivex.core.RxHelper;
-import io.vertx.reactivex.core.Vertx;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
+import io.vertx.rxjava3.core.RxHelper;
+import io.vertx.rxjava3.core.Vertx;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import org.slf4j.Logger;
@@ -144,16 +144,18 @@ public class AuditReporterManagerImpl extends AbstractService implements AuditRe
         eventManager.unsubscribeForEvents(this, ReporterEvent.class, domain.getId());
 
         if (deploymentId != null) {
-            vertx.undeploy(deploymentId, event -> {
-                for(io.gravitee.am.reporter.api.provider.Reporter reporter : reporterPlugins.values()) {
-                    try {
-                        logger.info("Stopping reporter: {}", reporter);
-                        reporter.stop();
-                    } catch (Exception ex) {
-                        logger.error("Unexpected error while stopping reporter", ex);
-                    }
-                }
-            });
+            vertx.rxUndeploy(deploymentId)
+                    .doFinally(() -> {
+                        for(io.gravitee.am.reporter.api.provider.Reporter reporter : reporterPlugins.values()) {
+                            try {
+                                logger.info("Stopping reporter: {}", reporter);
+                                reporter.stop();
+                            } catch (Exception ex) {
+                                logger.error("Unexpected error while stopping reporter", ex);
+                            }
+                        }
+                    })
+                    .subscribe();
         }
     }
 

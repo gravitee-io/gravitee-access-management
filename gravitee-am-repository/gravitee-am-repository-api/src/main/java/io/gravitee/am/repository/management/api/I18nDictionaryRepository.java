@@ -18,8 +18,8 @@ package io.gravitee.am.repository.management.api;
 import io.gravitee.am.model.I18nDictionary;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.common.CrudRepository;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
 
 public interface I18nDictionaryRepository extends CrudRepository<I18nDictionary, String> {
     Maybe<I18nDictionary> findByName(ReferenceType referenceType, String referenceId, String name);

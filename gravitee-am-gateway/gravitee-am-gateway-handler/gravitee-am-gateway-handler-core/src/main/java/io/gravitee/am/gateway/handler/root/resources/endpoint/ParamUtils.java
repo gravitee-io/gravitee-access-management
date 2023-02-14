@@ -21,8 +21,8 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.identityprovider.common.oauth2.utils.URLEncodedUtils;
 import io.vertx.core.json.Json;
-import io.vertx.reactivex.core.MultiMap;
-import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

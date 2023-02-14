@@ -24,8 +24,8 @@ import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -36,6 +36,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static io.gravitee.am.common.factor.FactorSecurityType.RECOVERY_CODE;
 import static org.hamcrest.CoreMatchers.is;
@@ -89,7 +90,7 @@ public class RecoveryCodeFactorProviderTest {
         when(configuration.getCount()).thenReturn(anyDigit);
 
         TestObserver<EnrolledFactorSecurity> test = recoveryCodeFactorProvider.generateRecoveryCode(factorContext).test();
-        test.awaitTerminalEvent();
+        test.awaitDone(10, TimeUnit.SECONDS);
 
         test.assertNoErrors();
         EnrolledFactorSecurity security = test.values().get(0);
@@ -105,7 +106,7 @@ public class RecoveryCodeFactorProviderTest {
         when(factorContext.getData(FactorContext.KEY_CODE, String.class)).thenReturn(code);
 
         TestObserver<Void> test = recoveryCodeFactorProvider.verify(factorContext).test();
-        test.awaitTerminalEvent();
+        test.awaitDone(10, TimeUnit.SECONDS);
 
         test.assertNoValues();
         test.assertNoErrors();
@@ -118,7 +119,7 @@ public class RecoveryCodeFactorProviderTest {
         when(factorContext.getData(FactorContext.KEY_CODE, String.class)).thenReturn(invalidCode);
 
         TestObserver<Void> test = recoveryCodeFactorProvider.verify(factorContext).test();
-        test.awaitTerminalEvent();
+        test.awaitDone(10, TimeUnit.SECONDS);
 
         test.assertNoValues();
         test.assertError(InvalidCodeException.class);

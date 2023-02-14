@@ -17,7 +17,7 @@ package io.gravitee.am.repository.mongodb.common;
 
 import com.mongodb.reactivestreams.client.MongoDatabase;
 import io.gravitee.am.repository.RepositoriesTestInitializer;
-import io.reactivex.Observable;
+import io.reactivex.rxjava3.core.Observable;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

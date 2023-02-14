@@ -16,11 +16,11 @@
 package io.gravitee.am.repository.jdbc.management.api.spring;
 
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcPermissionTicket;
-import org.springframework.data.repository.reactive.RxJava2CrudRepository;
+import org.springframework.data.repository.reactive.RxJava3CrudRepository;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface SpringPermissionTicketRepository extends RxJava2CrudRepository<JdbcPermissionTicket, String> {
+public interface SpringPermissionTicketRepository extends RxJava3CrudRepository<JdbcPermissionTicket, String> {
 }

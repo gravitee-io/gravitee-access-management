@@ -19,8 +19,8 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.safe.UserProperties;
 import io.vertx.core.MultiMap;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.reactivex.core.http.HttpServerRequest;
-import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.rxjava3.core.http.HttpServerRequest;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -59,7 +59,7 @@ public class ThymeleafDataHelperTest {
     public void shouldGetAuthenticatedUser() {
         defineDefaultRequestMock();
         given(routingContext.get(eq(USER_CONTEXT_KEY))).willReturn(null);
-        io.vertx.reactivex.ext.auth.User authenticatedUser = mock(io.vertx.reactivex.ext.auth.User.class);
+        io.vertx.rxjava3.ext.auth.User authenticatedUser = mock(io.vertx.rxjava3.ext.auth.User.class);
         given(routingContext.user()).willReturn(authenticatedUser);
         io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User delegateUser = mock(io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User.class);
         given(authenticatedUser.getDelegate()).willReturn(delegateUser);
@@ -92,7 +92,7 @@ public class ThymeleafDataHelperTest {
         given(routingContext.request()).willReturn(serverRequest);
 
         given(routingContext.get(eq(USER_CONTEXT_KEY))).willReturn(null);
-        io.vertx.reactivex.ext.auth.User authenticatedUser = mock(io.vertx.reactivex.ext.auth.User.class);
+        io.vertx.rxjava3.ext.auth.User authenticatedUser = mock(io.vertx.rxjava3.ext.auth.User.class);
         given(routingContext.user()).willReturn(authenticatedUser);
         io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User delegateUser = mock(io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User.class);
         given(authenticatedUser.getDelegate()).willReturn(delegateUser);
@@ -125,7 +125,7 @@ public class ThymeleafDataHelperTest {
         given(routingContext.data()).willReturn(dataFromContext);
 
         given(routingContext.get(eq(USER_CONTEXT_KEY))).willReturn(null);
-        io.vertx.reactivex.ext.auth.User authenticatedUser = mock(io.vertx.reactivex.ext.auth.User.class);
+        io.vertx.rxjava3.ext.auth.User authenticatedUser = mock(io.vertx.rxjava3.ext.auth.User.class);
         given(routingContext.user()).willReturn(authenticatedUser);
         io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User delegateUser = mock(io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User.class);
         given(authenticatedUser.getDelegate()).willReturn(delegateUser);

@@ -19,8 +19,8 @@ import io.gravitee.am.gateway.handler.vertx.auth.webauthn.store.RepositoryCreden
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.login.WebAuthnSettings;
 import io.vertx.ext.auth.webauthn.RelyingParty;
-import io.vertx.reactivex.core.Vertx;
-import io.vertx.reactivex.ext.auth.webauthn.WebAuthn;
+import io.vertx.rxjava3.core.Vertx;
+import io.vertx.rxjava3.ext.auth.webauthn.WebAuthn;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;

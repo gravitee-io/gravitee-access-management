@@ -38,8 +38,8 @@ import io.gravitee.am.gateway.handler.vertx.auth.webauthn.store.RepositoryCreden
 import io.gravitee.am.gateway.handler.vertx.spring.SecurityDomainRouterConfiguration;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
 import io.gravitee.am.service.authentication.crypto.password.bcrypt.BCryptPasswordEncoder;
-import io.vertx.reactivex.core.Vertx;
-import io.vertx.reactivex.ext.web.Router;
+import io.vertx.rxjava3.core.Vertx;
+import io.vertx.rxjava3.ext.web.Router;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

@@ -30,12 +30,12 @@ import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.FactorServiceImpl;
 import io.gravitee.am.service.model.NewFactor;
 import io.gravitee.am.service.model.UpdateFactor;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
-import io.reactivex.subscribers.TestSubscriber;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -45,6 +45,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
@@ -81,7 +82,7 @@ public class FactorServiceTest {
         when(factorRepository.findById("my-factor")).thenReturn(Maybe.just(new Factor()));
         TestObserver testObserver = factorService.findById("my-factor").test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValueCount(1);
@@ -91,7 +92,7 @@ public class FactorServiceTest {
     public void shouldFindById_notExistingFactor() {
         when(factorRepository.findById("my-factor")).thenReturn(Maybe.empty());
         TestObserver testObserver = factorService.findById("my-factor").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNoValues();
     }
@@ -110,7 +111,7 @@ public class FactorServiceTest {
     public void shouldFindByDomain() {
         when(factorRepository.findByDomain(DOMAIN)).thenReturn(Flowable.just(new Factor()));
         TestSubscriber<Factor> testObserver = factorService.findByDomain(DOMAIN).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -135,7 +136,7 @@ public class FactorServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = factorService.create(DOMAIN, newFactor).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -154,7 +155,7 @@ public class FactorServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = factorService.create(DOMAIN, newFactor).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -171,7 +172,7 @@ public class FactorServiceTest {
         when(newFactor.getConfiguration()).thenReturn("{\"countryCodes\":\"fr, g8\"}");
 
         TestObserver testObserver = factorService.create(DOMAIN, newFactor).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(FactorConfigurationException.class);
 
@@ -218,7 +219,7 @@ public class FactorServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = factorService.update(DOMAIN, "my-factor", updateFactor).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -303,7 +304,7 @@ public class FactorServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = factorService.delete(DOMAIN, factor.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -319,7 +320,7 @@ public class FactorServiceTest {
         when(userService.upsertFactor(anyString(), any(EnrolledFactor.class), any(User.class))).thenReturn(Single.just(new io.gravitee.am.model.User()));
 
         TestObserver testObserver = factorService.enrollFactor(user, enrolledFactor).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();

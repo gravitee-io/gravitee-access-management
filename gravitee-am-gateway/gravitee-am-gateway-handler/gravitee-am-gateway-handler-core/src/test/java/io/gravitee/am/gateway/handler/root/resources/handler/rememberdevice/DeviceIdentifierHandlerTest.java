@@ -23,7 +23,7 @@ import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.DeviceService;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.http.HttpMethod;
 import org.junit.Assert;
 import org.junit.Before;

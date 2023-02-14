@@ -30,9 +30,10 @@ import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.RoleNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.gravitee.am.service.exception.UserNotFoundException;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -86,7 +87,7 @@ public class OrganizationUserServiceImpl extends AbstractUserService implements 
                         if (throwable instanceof RoleNotFoundException) {
                             return roleService.findById(ReferenceType.PLATFORM, Platform.DEFAULT, roleId).toMaybe()
                                     .switchIfEmpty(defaultRoleObs)
-                                    .onErrorResumeNext(defaultRoleObs);
+                                    .onErrorResumeNext(exception -> defaultRoleObs);
                         } else {
                             return defaultRoleObs;
                         }
@@ -114,7 +115,8 @@ public class OrganizationUserServiceImpl extends AbstractUserService implements 
         return userValidator.validate(user).andThen(getUserRepository()
                 .findByUsernameAndSource(ORGANIZATION, user.getReferenceId(), user.getUsername(), user.getSource())
                 .switchIfEmpty(getUserRepository().findById(ORGANIZATION, user.getReferenceId(), user.getId()))
-                .flatMapSingle(oldUser -> {
+                        .switchIfEmpty(Single.error(new UserNotFoundException(user.getId())))
+                .flatMap(oldUser -> {
 
                         user.setId(oldUser.getId());
                         user.setReferenceType(oldUser.getReferenceType());

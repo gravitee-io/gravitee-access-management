@@ -18,7 +18,7 @@ package io.gravitee.am.management.handlers.management.api.resources.platform.plu
 import io.gravitee.am.management.service.AuthenticationDeviceNotifierPluginService;
 import io.gravitee.am.management.service.exception.AuthenticationDeviceNotifierPluginNotFoundException;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Maybe;
+import io.reactivex.rxjava3.core.Maybe;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 

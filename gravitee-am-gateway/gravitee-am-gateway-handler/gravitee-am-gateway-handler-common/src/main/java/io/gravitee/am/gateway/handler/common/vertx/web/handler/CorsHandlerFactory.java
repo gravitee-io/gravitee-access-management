@@ -16,7 +16,7 @@
 package io.gravitee.am.gateway.handler.common.vertx.web.handler;
 
 import io.vertx.core.http.HttpMethod;
-import io.vertx.reactivex.ext.web.handler.CorsHandler;
+import io.vertx.rxjava3.ext.web.handler.CorsHandler;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;

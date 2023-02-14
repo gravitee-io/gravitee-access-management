@@ -21,7 +21,7 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.repository.mongodb.oauth2.internal.model.ScopeApprovalMongo;
 import io.gravitee.am.repository.oauth2.api.ScopeApprovalRepository;
-import io.reactivex.*;
+import io.reactivex.rxjava3.core.*;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
@@ -105,7 +105,7 @@ public class MongoScopeApprovalRepository extends AbstractOAuth2MongoRepository 
                 .firstElement()
                 .map(Optional::of)
                 .defaultIfEmpty(Optional.empty())
-                .flatMapSingle(optionalApproval -> {
+                .flatMap(optionalApproval -> {
                     if (optionalApproval.isEmpty()) {
                         scopeApproval.setCreatedAt(new Date());
                         scopeApproval.setUpdatedAt(scopeApproval.getCreatedAt());

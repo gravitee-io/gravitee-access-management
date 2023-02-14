@@ -20,7 +20,7 @@ import io.gravitee.am.gateway.handler.scim.service.ServiceProviderConfigService;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
-import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 
 /**
  * An HTTP GET to this endpoint will return a JSON structure that describes the SCIM specification features available on a service provider.

@@ -21,7 +21,7 @@ import io.gravitee.am.identityprovider.api.*;
 import io.gravitee.am.identityprovider.inline.InlineIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.inline.authentication.provisioning.InlineInMemoryUserDetailsManager;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
-import io.reactivex.Maybe;
+import io.reactivex.rxjava3.core.Maybe;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;

@@ -45,11 +45,11 @@ import io.gravitee.am.service.model.PatchDomain;
 import io.gravitee.am.service.validators.accountsettings.AccountSettingsValidator;
 import io.gravitee.am.service.validators.domain.DomainValidator;
 import io.gravitee.am.service.validators.virtualhost.VirtualHostValidator;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
-import io.reactivex.subscribers.TestSubscriber;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -64,9 +64,10 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import static io.gravitee.am.model.ReferenceType.DOMAIN;
-import static io.reactivex.Completable.complete;
+import static io.reactivex.rxjava3.core.Completable.complete;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
@@ -244,7 +245,7 @@ public class DomainServiceTest {
         when(domainRepository.findById("my-domain")).thenReturn(Maybe.just(new Domain()));
         TestObserver testObserver = domainService.findById("my-domain").test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValueCount(1);
@@ -254,7 +255,7 @@ public class DomainServiceTest {
     public void shouldFindById_notExistingDomain() {
         when(domainRepository.findById("my-domain")).thenReturn(Maybe.empty());
         TestObserver testObserver = domainService.findById("my-domain").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNoValues();
     }
@@ -273,7 +274,7 @@ public class DomainServiceTest {
     public void shouldFindAll() {
         when(domainRepository.findAll()).thenReturn(Flowable.just(new Domain()));
         TestObserver<List<Domain>> testObserver = domainService.findAll().test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -295,7 +296,7 @@ public class DomainServiceTest {
     public void shouldFindByIdsIn() {
         when(domainRepository.findByIdIn(Arrays.asList("1", "2"))).thenReturn(Flowable.just(new Domain()));
         TestSubscriber<Domain> testSubscriber = domainService.findByIdIn(Arrays.asList("1", "2")).test();
-        testSubscriber.awaitTerminalEvent();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
 
         testSubscriber.assertComplete();
         testSubscriber.assertNoErrors();
@@ -333,7 +334,7 @@ public class DomainServiceTest {
         doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
 
         TestObserver testObserver = domainService.create(ORGANIZATION_ID, ENVIRONMENT_ID, newDomain, new DefaultUser("username")).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -428,7 +429,7 @@ public class DomainServiceTest {
         doReturn(true).when(accountSettingsValidator).validate(any());
 
         TestObserver testObserver = domainService.patch("my-domain", patchDomain).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -463,7 +464,7 @@ public class DomainServiceTest {
         doReturn(true).when(accountSettingsValidator).validate(any());
 
         TestObserver testObserver = domainService.patch("my-domain", patchDomain).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -501,7 +502,7 @@ public class DomainServiceTest {
         doReturn(true).when(accountSettingsValidator).validate(any());
 
         TestObserver testObserver = domainService.patch("my-domain", patchDomain).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -532,7 +533,7 @@ public class DomainServiceTest {
         doReturn(false).when(accountSettingsValidator).validate(any());
 
         TestObserver testObserver = domainService.patch("my-domain", patchDomain).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNotComplete();
         testObserver.assertError(InvalidParameterException.class);
@@ -673,7 +674,7 @@ public class DomainServiceTest {
         when(verifyAttemptService.deleteByDomain(any(), any())).thenReturn(complete());
 
         var testObserver = domainService.delete(DOMAIN_ID).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNoErrors();
         testObserver.assertComplete();
@@ -727,7 +728,7 @@ public class DomainServiceTest {
         when(verifyAttemptService.deleteByDomain(any(), any())).thenReturn(complete());
 
         var testObserver = domainService.delete(DOMAIN_ID).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -853,7 +854,7 @@ public class DomainServiceTest {
 
         final TestSubscriber<Domain> obs = domainService.findAllByCriteria(criteria).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertComplete();
         obs.assertValue(domain);
     }

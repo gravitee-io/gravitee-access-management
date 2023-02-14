@@ -41,9 +41,9 @@ import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
 import io.gravitee.gateway.api.Request;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -184,12 +184,12 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
         String source = (String) principal.getAdditionalInformation().get(SOURCE_FIELD);
         return userService.findByDomainAndExternalIdAndSource(domain.getId(), principal.getId(), source)
                 .switchIfEmpty(Maybe.defer(() -> userService.findByDomainAndUsernameAndSource(domain.getId(), principal.getUsername(), source)))
-                .switchIfEmpty(Maybe.error(new UserNotFoundException(principal.getUsername())))
+                .switchIfEmpty(Single.error(new UserNotFoundException(principal.getUsername())))
                 .flatMap(user -> isIndefinitelyLocked(user) ?
-                        Maybe.error(new AccountLockedException("User " + user.getUsername() + " is locked")) :
-                        Maybe.just(user)
+                        Single.error(new AccountLockedException("User " + user.getUsername() + " is locked")) :
+                        Single.just(user)
                 )
-                .flatMapSingle(existingUser -> update(existingUser, principal, afterAuthentication))
+                .flatMap(existingUser -> update(existingUser, principal, afterAuthentication))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof UserNotFoundException) {
                         return create(principal, afterAuthentication);

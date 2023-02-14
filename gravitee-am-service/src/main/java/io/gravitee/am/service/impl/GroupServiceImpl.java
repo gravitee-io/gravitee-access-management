@@ -43,10 +43,10 @@ import io.gravitee.am.service.model.NewGroup;
 import io.gravitee.am.service.model.UpdateGroup;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.GroupAuditBuilder;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -249,7 +249,7 @@ public class GroupServiceImpl implements GroupService {
 
         return findById(referenceType, referenceId, id)
                 // check uniqueness
-                .flatMapMaybe(existingGroup -> groupRepository.findByName(referenceType, referenceId, updateGroup.getName())
+                .flatMap(existingGroup -> groupRepository.findByName(referenceType, referenceId, updateGroup.getName())
                         .map(Optional::of)
                         .defaultIfEmpty(Optional.empty())
                         .map(optionalGroup -> {
@@ -259,7 +259,7 @@ public class GroupServiceImpl implements GroupService {
                             return existingGroup;
                         })
                 )
-                .flatMapSingle(oldGroup -> {
+                .flatMap(oldGroup -> {
                     Group groupToUpdate = new Group(oldGroup);
                     groupToUpdate.setName(updateGroup.getName());
                     groupToUpdate.setDescription(updateGroup.getDescription());
@@ -361,7 +361,7 @@ public class GroupServiceImpl implements GroupService {
     }
 
     private Completable checkRoles(List<String> roles) {
-        return roleService.findByIdIn(roles)
+        return Completable.fromSingle(roleService.findByIdIn(roles)
                 .map(roles1 -> {
                     if (roles1.size() != roles.size()) {
                         // find difference between the two list
@@ -369,6 +369,6 @@ public class GroupServiceImpl implements GroupService {
                         throw new RoleNotFoundException(String.join(",", roles));
                     }
                     return roles1;
-                }).toCompletable();
+                }));
     }
 }

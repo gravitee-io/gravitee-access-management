@@ -16,7 +16,7 @@
 package io.gravitee.am.resource.api.mfa;
 
 import io.gravitee.am.resource.api.ResourceProvider;
-import io.reactivex.Completable;
+import io.reactivex.rxjava3.core.Completable;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)

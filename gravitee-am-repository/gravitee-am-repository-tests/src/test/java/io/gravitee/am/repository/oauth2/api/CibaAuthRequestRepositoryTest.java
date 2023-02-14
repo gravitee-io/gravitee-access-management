@@ -19,7 +19,7 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.repository.oauth2.AbstractOAuthTest;
 import io.gravitee.am.repository.oidc.api.CibaAuthRequestRepository;
 import io.gravitee.am.repository.oidc.model.CibaAuthRequest;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -41,7 +42,7 @@ public class CibaAuthRequestRepositoryTest extends AbstractOAuthTest {
     public void shouldNotFindById() {
         TestObserver<CibaAuthRequest> observer = repository.findById("unknown-id").test();
 
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
 
         observer.assertComplete();
         observer.assertValueCount(0);
@@ -53,11 +54,11 @@ public class CibaAuthRequestRepositoryTest extends AbstractOAuthTest {
         final String id = RandomString.generate();
         CibaAuthRequest authRequest = buildCibaAuthRequest(id);
 
-        repository.create(authRequest).test().awaitTerminalEvent();
+        repository.create(authRequest).test().awaitDone(10, TimeUnit.SECONDS);
 
         TestObserver<CibaAuthRequest> observer = repository.findById(id).test();
 
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
 
         observer.assertComplete();
         observer.assertValueCount(1);
@@ -69,11 +70,11 @@ public class CibaAuthRequestRepositoryTest extends AbstractOAuthTest {
         final String id = RandomString.generate();
         CibaAuthRequest authRequest = buildCibaAuthRequest(id);
 
-        repository.create(authRequest).test().awaitTerminalEvent();
+        repository.create(authRequest).test().awaitDone(10, TimeUnit.SECONDS);
 
         TestObserver<CibaAuthRequest> observer = repository.findByExternalId(authRequest.getExternalTrxId()).test();
 
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
 
         observer.assertComplete();
         observer.assertValueCount(1);
@@ -85,11 +86,11 @@ public class CibaAuthRequestRepositoryTest extends AbstractOAuthTest {
         final String id = RandomString.generate();
         CibaAuthRequest authRequest = buildCibaAuthRequest(id);
 
-        repository.create(authRequest).test().awaitTerminalEvent();
+        repository.create(authRequest).test().awaitDone(10, TimeUnit.SECONDS);
 
         TestObserver<CibaAuthRequest> observer = repository.findById(id).test();
 
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
 
         observer.assertComplete();
         observer.assertValueCount(1);
@@ -99,10 +100,10 @@ public class CibaAuthRequestRepositoryTest extends AbstractOAuthTest {
         authRequest.setStatus("SUCCESS");
         authRequest.setDeviceNotifierId("notifierId");
 
-        repository.update(authRequest).test().awaitTerminalEvent();
+        repository.update(authRequest).test().awaitDone(10, TimeUnit.SECONDS);
         observer = repository.findById(id).test();
 
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
 
         observer.assertComplete();
         observer.assertValueCount(1);
@@ -115,21 +116,21 @@ public class CibaAuthRequestRepositoryTest extends AbstractOAuthTest {
         final String id = RandomString.generate();
         CibaAuthRequest authRequest = buildCibaAuthRequest(id);
 
-        repository.create(authRequest).test().awaitTerminalEvent();
+        repository.create(authRequest).test().awaitDone(10, TimeUnit.SECONDS);
 
         TestObserver<CibaAuthRequest> observer = repository.findById(id).test();
 
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
 
         observer.assertComplete();
         observer.assertValueCount(1);
         observer.assertValue(req -> req.getStatus().equals("ONGOING"));
         observer.assertNoErrors();
 
-        repository.updateStatus(authRequest.getId(), "SUCCESS").test().awaitTerminalEvent();
+        repository.updateStatus(authRequest.getId(), "SUCCESS").test().awaitDone(10, TimeUnit.SECONDS);
         observer = repository.findById(id).test();
 
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
 
         observer.assertComplete();
         observer.assertValueCount(1);
@@ -167,7 +168,7 @@ public class CibaAuthRequestRepositoryTest extends AbstractOAuthTest {
                 .andThen(repository.findById(id))
                 .test();
 
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertNoValues();
         observer.assertNoErrors();
     }

@@ -29,11 +29,11 @@ import io.gravitee.am.gateway.handler.oidc.service.request.impl.RequestObjectSer
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.OIDCSettings;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
-import io.vertx.reactivex.ext.web.client.HttpRequest;
-import io.vertx.reactivex.ext.web.client.HttpResponse;
-import io.vertx.reactivex.ext.web.client.WebClient;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.vertx.rxjava3.ext.web.client.HttpRequest;
+import io.vertx.rxjava3.ext.web.client.HttpResponse;
+import io.vertx.rxjava3.ext.web.client.WebClient;
 import net.minidev.json.JSONObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -43,6 +43,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.text.ParseException;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -122,7 +123,7 @@ public class RequestObjectServiceTest {
         when(jweService.decrypt(anyString(),anyBoolean())).thenReturn(Single.just(signedJWT));
 
         TestObserver<JWT> testObserver = requestObjectService.readRequestObjectFromURI(request, client).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         // JSON return is invalid but the test is a success as we want to check
         // the call to the Http service target by the request_uri
         testObserver.assertError(InvalidRequestObjectException.class);
@@ -142,7 +143,7 @@ public class RequestObjectServiceTest {
         when(domain.getOidc()).thenReturn(oidcDomainSettings);
 
         TestObserver<JWT> testObserver = requestObjectService.readRequestObjectFromURI(request, client).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(InvalidRequestUriException.class);
 
         verify(webClient, never()).getAbs(any());
@@ -160,7 +161,7 @@ public class RequestObjectServiceTest {
         when(domain.getOidc()).thenReturn(oidcDomainSettings);
 
         TestObserver<JWT> testObserver = requestObjectService.readRequestObjectFromURI(request, client).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(InvalidRequestUriException.class);
 
         verify(webClient, never()).getAbs(any());
@@ -190,7 +191,7 @@ public class RequestObjectServiceTest {
         when(jweService.decrypt(anyString(),anyBoolean())).thenReturn(Single.just(signedJWT));
 
         TestObserver<JWT> testObserver = requestObjectService.readRequestObjectFromURI(request, client).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         // JSON return is invalid but the test is a success as we want to check
         // the call to the Http service target by the request_uri
         testObserver.assertError(InvalidRequestObjectException.class);

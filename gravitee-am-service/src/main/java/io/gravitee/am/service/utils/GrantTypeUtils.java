@@ -19,7 +19,7 @@ import io.gravitee.am.model.Application;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 
 import java.util.*;
 import java.util.stream.Collectors;

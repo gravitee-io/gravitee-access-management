@@ -16,9 +16,9 @@
 package io.gravitee.am.repository.jdbc.management.api.spring.organization;
 
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcOrganization;
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 import org.springframework.data.r2dbc.repository.Query;
-import org.springframework.data.repository.reactive.RxJava2CrudRepository;
+import org.springframework.data.repository.reactive.RxJava3CrudRepository;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -26,7 +26,7 @@ import org.springframework.stereotype.Repository;
  * @author GraviteeSource Team
  */
 @Repository
-public interface SpringOrganizationHridsRepository extends RxJava2CrudRepository<JdbcOrganization.Hrid, String> {
+public interface SpringOrganizationHridsRepository extends RxJava3CrudRepository<JdbcOrganization.Hrid, String> {
     @Query("select * from organization_hrids c where c.organization_id = :organizationId order by pos")
     Flowable<JdbcOrganization.Hrid> findAllByOrganizationId(String organizationId);
 }

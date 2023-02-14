@@ -17,9 +17,12 @@ package io.gravitee.am.repository.oauth2.api;
 
 import io.gravitee.am.repository.oauth2.AbstractOAuthTest;
 import io.gravitee.am.repository.oauth2.model.AuthorizationCode;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -40,7 +43,7 @@ public class AuthorizationCodeRepositoryTest extends AbstractOAuthTest {
         authorizationCodeRepository.create(authorizationCode).blockingGet();
 
         TestObserver<AuthorizationCode> testObserver = authorizationCodeRepository.findByCode(code).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -52,7 +55,7 @@ public class AuthorizationCodeRepositoryTest extends AbstractOAuthTest {
     public void shouldNotFindCode() {
         String code = "unknownCode";
         TestObserver<AuthorizationCode> test = authorizationCodeRepository.findByCode(code).test();
-        test.awaitTerminalEvent();
+        test.awaitDone(10, TimeUnit.SECONDS);
         //test.assertEmpty();
         test.assertNoValues();
     }
@@ -64,12 +67,11 @@ public class AuthorizationCodeRepositoryTest extends AbstractOAuthTest {
         authorizationCode.setId(code);
         authorizationCode.setCode(code);
 
-        TestObserver<AuthorizationCode> testObserver = authorizationCodeRepository
-                .create(authorizationCode)
-                .toCompletable()
+        TestObserver<AuthorizationCode> testObserver = Completable.fromSingle(authorizationCodeRepository
+                .create(authorizationCode))
                 .andThen(authorizationCodeRepository.delete(code))
                 .test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         testObserver.assertValue(v -> v.getId().equals(authorizationCode.getId()));
     }

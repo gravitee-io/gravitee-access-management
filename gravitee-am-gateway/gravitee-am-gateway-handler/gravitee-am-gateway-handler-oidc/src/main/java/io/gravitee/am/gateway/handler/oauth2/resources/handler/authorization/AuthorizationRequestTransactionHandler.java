@@ -17,8 +17,8 @@ package io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization;
 
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.vertx.core.Handler;
-import io.vertx.reactivex.ext.web.RoutingContext;
-import io.vertx.reactivex.ext.web.Session;
+import io.vertx.rxjava3.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.Session;
 
 /**
  * This handler is responsible to initialize the authorization transaction id when it begin.

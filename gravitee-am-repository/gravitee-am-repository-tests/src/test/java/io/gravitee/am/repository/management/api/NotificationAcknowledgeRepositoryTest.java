@@ -19,11 +19,12 @@ import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.node.api.notifier.NotificationAcknowledge;
 import io.gravitee.node.api.notifier.NotificationAcknowledgeRepository;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -48,7 +49,7 @@ public class NotificationAcknowledgeRepositoryTest extends AbstractManagementTes
         repository.create(acknowledge).blockingGet();
 
         TestObserver<NotificationAcknowledge> testObserver = repository.findById(acknowledge.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -69,7 +70,7 @@ public class NotificationAcknowledgeRepositoryTest extends AbstractManagementTes
         repository.create(acknowledge).blockingGet();
 
         TestObserver<NotificationAcknowledge> testObserver = repository.findById(acknowledge.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -79,7 +80,7 @@ public class NotificationAcknowledgeRepositoryTest extends AbstractManagementTes
         acknowledge.incrementCounter();
 
         testObserver = repository.update(acknowledge).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -87,7 +88,7 @@ public class NotificationAcknowledgeRepositoryTest extends AbstractManagementTes
 
         // retrieve by ID to confirm the update has been done
         testObserver = repository.findById(acknowledge.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -109,7 +110,7 @@ public class NotificationAcknowledgeRepositoryTest extends AbstractManagementTes
         repository.create(acknowledge).blockingGet();
 
         TestObserver<NotificationAcknowledge> testObserver = repository.findByResourceIdAndTypeAndAudienceId(acknowledge.getResourceId(), acknowledge.getResourceType(), acknowledge.getType(), acknowledge.getAudienceId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -119,7 +120,7 @@ public class NotificationAcknowledgeRepositoryTest extends AbstractManagementTes
     @Test
     public void testNotFound() throws TechnicalException {
         final TestObserver<NotificationAcknowledge> test = repository.findByResourceIdAndTypeAndAudienceId("unknown", "unknown", "unknown", "unknonwn").test();
-        test.awaitTerminalEvent();
+        test.awaitDone(10, TimeUnit.SECONDS);
         test.assertNoValues();
     }
 
@@ -137,17 +138,17 @@ public class NotificationAcknowledgeRepositoryTest extends AbstractManagementTes
         repository.create(acknowledge).blockingGet();
 
         TestObserver<NotificationAcknowledge> testObserver = repository.findById(acknowledge.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(d -> d.getId().equals(acknowledge.getId()));
 
         final TestObserver<Void> test = repository.deleteByResourceId(acknowledge.getResourceId(), acknowledge.getResourceType()).test();
-        test.awaitTerminalEvent();
+        test.awaitDone(10, TimeUnit.SECONDS);
         test.assertNoErrors();
 
         testObserver = repository.findById(acknowledge.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoValues();
     }
 }

@@ -36,14 +36,14 @@ import io.gravitee.risk.assessment.api.assessment.settings.AssessmentSettings;
 import io.gravitee.risk.assessment.api.assessment.settings.RiskAssessmentSettings;
 import io.gravitee.risk.assessment.api.devices.Devices;
 import io.gravitee.risk.assessment.api.geovelocity.GeoTimeCoordinate;
-import io.reactivex.Single;
-import io.reactivex.functions.Function;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.functions.Function;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
-import io.vertx.reactivex.core.eventbus.EventBus;
-import io.vertx.reactivex.core.eventbus.Message;
-import io.vertx.reactivex.core.http.HttpServerRequest;
-import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.rxjava3.core.eventbus.EventBus;
+import io.vertx.rxjava3.core.eventbus.Message;
+import io.vertx.rxjava3.core.http.HttpServerRequest;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 import java.util.List;
 import java.util.Optional;
 import org.slf4j.Logger;
@@ -175,21 +175,21 @@ public class RiskAssessmentHandler implements Handler<RoutingContext> {
     }
 
     private void decorateWithRiskAssessment(RoutingContext routingContext, AssessmentMessage message) throws JsonProcessingException {
-        eventBus.<String>request(RISK_ASSESSMENT_SERVICE, objectMapper.writeValueAsString(message), response -> {
-            if (response.succeeded()) {
-                var messageResult = extractMessageResult(response);
-                routingContext.session().put(ConstantKeys.RISK_ASSESSMENT_KEY, messageResult);
-            } else if (response.failed()) {
-                logger.warn("{} could not be called, reason: {}", RISK_ASSESSMENT_SERVICE, response.cause().getMessage());
-                logger.debug("", response.cause());
-            }
-            routingContext.next();
-        });
+        eventBus.<String>request(RISK_ASSESSMENT_SERVICE, objectMapper.writeValueAsString(message))
+                .doOnSuccess(stringMessage -> {
+                    routingContext.session().put(ConstantKeys.RISK_ASSESSMENT_KEY, extractMessageResult(stringMessage));
+                })
+                .doOnError(throwable -> {
+                    logger.warn("{} could not be called, reason: {}", RISK_ASSESSMENT_SERVICE, throwable.getCause().getMessage());
+                    logger.debug("", throwable.getCause());
+                })
+                .doFinally(routingContext::next)
+                .subscribe();
     }
 
-    private AssessmentMessageResult extractMessageResult(AsyncResult<Message<String>> response) {
+    private AssessmentMessageResult extractMessageResult(Message<String> response) {
         try {
-            return objectMapper.readValue(response.result().body(), AssessmentMessageResult.class);
+            return objectMapper.readValue(response.body(), AssessmentMessageResult.class);
         } catch (JsonProcessingException e) {
             logger.error("An unexpected error has occurred: ", e);
             return new AssessmentMessageResult()

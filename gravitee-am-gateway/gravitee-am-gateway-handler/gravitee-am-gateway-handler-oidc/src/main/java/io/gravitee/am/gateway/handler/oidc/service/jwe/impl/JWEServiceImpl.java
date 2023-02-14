@@ -37,10 +37,10 @@ import io.gravitee.am.model.jose.*;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -286,8 +286,8 @@ public class JWEServiceImpl implements JWEService {
     private Single<String> encrypt(JWEObject jwe, Client client, Predicate<JWK> filter, JWEEncrypterFunction<JWK, JWEEncrypter> function) {
         return jwkService.getKeys(client)
                 .flatMap(jwkSet -> jwkService.filter(jwkSet, filter))
-                .switchIfEmpty(Maybe.error(new InvalidClientMetadataException("no matching key found to encrypt")))
-                .flatMapSingle(jwk -> Single.just(function.apply(jwk)))
+                .switchIfEmpty(Single.error(new InvalidClientMetadataException("no matching key found to encrypt")))
+                .flatMap(jwk -> Single.just(function.apply(jwk)))
                 .map(encrypter -> {
                     jwe.encrypt(encrypter);
                     return jwe.serialize();

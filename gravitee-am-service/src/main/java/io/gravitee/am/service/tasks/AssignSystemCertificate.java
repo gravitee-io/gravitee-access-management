@@ -19,8 +19,8 @@ import io.gravitee.am.model.Application;
 import io.gravitee.am.repository.management.api.CertificateRepository;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.TaskManager;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -86,8 +86,8 @@ public class AssignSystemCertificate extends AbstractTask<AssignSystemCertificat
                             if (needProcessing) {
                                 return this.certificateRepository.findById(renewedCertificate)
                                         .map(Optional::ofNullable)
-                                        .switchIfEmpty(Maybe.just(Optional.empty()))
-                                        .flatMapSingle(cert -> {
+                                        .switchIfEmpty(Single.just(Optional.empty()))
+                                        .flatMap(cert -> {
                                             if (cert.isPresent()) {
                                                 return this.applicationService.findByDomain(domainId)
                                                         .flattenAsFlowable(apps -> apps)

@@ -40,9 +40,9 @@ import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
 import io.gravitee.am.service.validators.user.UserValidator;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -109,23 +109,23 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
         return userValidator.validate(updateUser).andThen(
                 getUserService().findById(referenceType, referenceId, id)
                         .flatMap(user -> identityProviderManager.getUserProvider(user.getSource())
-                                .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(user.getSource())))
+                                .switchIfEmpty(Single.error(new UserProviderNotFoundException(user.getSource())))
                                 // check client
-                                .flatMapSingle(userProvider -> {
+                                .flatMap(userProvider -> {
                                     String client = updateUser.getClient() != null ? updateUser.getClient() : user.getClient();
                                     if (client != null && referenceType == DOMAIN) {
                                         return checkClient.apply(referenceId, client)
                                                 .flatMapSingle(client1 -> {
                                                     updateUser.setClient(client1.getId());
                                                     return Single.just(userProvider);
-                                                });
+                                                }).toSingle();
                                     }
                                     return Single.just(userProvider);
                                 })
                                 // update the idp user
                                 .flatMap(userProvider -> userProvider.findByUsername(user.getUsername())
-                                        .switchIfEmpty(Maybe.error(new UserNotFoundException(user.getUsername())))
-                                        .flatMapSingle(idpUser -> userProvider.update(idpUser.getId(), convert(user.getUsername(), updateUser))))
+                                        .switchIfEmpty(Single.error(new UserNotFoundException(user.getUsername())))
+                                        .flatMap(idpUser -> userProvider.update(idpUser.getId(), convert(user.getUsername(), updateUser))))
                                 .flatMap(idpUser -> {
                                     // set external id
                                     updateUser.setExternalId(idpUser.getId());
@@ -157,8 +157,7 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
     @Override
     public Single<User> updateUsername(ReferenceType referenceType, String referenceId, String id, String username, io.gravitee.am.identityprovider.api.User principal) {
         return userValidator.validateUsername(username).andThen(Single.defer(() ->
-                getUserService().findById(referenceType, referenceId, id)
-                        .toMaybe().flatMapSingle(user -> getUserService()
+                getUserService().findById(referenceType, referenceId, id).flatMap(user -> getUserService()
                                 .findByUsernameAndSource(referenceType, referenceId, username, user.getSource())
                                 //If the user is empty we throw a UserNotFoundException to allow the update
                                 .switchIfEmpty(Single.error(new UserNotFoundException(referenceId, username)))
@@ -173,8 +172,8 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
                         ).flatMap(user -> identityProviderManager.getUserProvider(user.getSource())
                                 .switchIfEmpty(Single.error(new UserProviderNotFoundException(user.getSource())))
                                 .flatMap(userProvider -> userProvider.findByUsername(user.getUsername())
-                                        .switchIfEmpty(Maybe.error(new UserNotFoundException()))
-                                        .flatMapSingle(idpUser -> userProvider.updateUsername(idpUser, username))
+                                        .switchIfEmpty(Single.error(new UserNotFoundException()))
+                                        .flatMap(idpUser -> userProvider.updateUsername(idpUser, username))
                                         .flatMap(idpUser -> {
                                             var oldUsername = user.getUsername();
                                             user.setUsername(username);

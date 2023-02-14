@@ -18,13 +18,14 @@ package io.gravitee.am.repository.oauth2.api;
 import io.gravitee.am.repository.jdbc.oauth2.oidc.JdbcRequestObjectRepository;
 import io.gravitee.am.repository.oauth2.AbstractOAuthTest;
 import io.gravitee.am.repository.oidc.model.RequestObject;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -50,14 +51,14 @@ public class RequestObjectRepositoryPurgeTest extends AbstractOAuthTest {
         object2.setClient("client");
         object2.setExpireAt(new Date(now.minus(1, ChronoUnit.MINUTES).toEpochMilli()));
 
-        requestObjectRepository.create(object1).test().awaitTerminalEvent();
-        requestObjectRepository.create(object2).test().awaitTerminalEvent();
+        requestObjectRepository.create(object1).test().awaitDone(10, TimeUnit.SECONDS);
+        requestObjectRepository.create(object2).test().awaitDone(10, TimeUnit.SECONDS);
 
         assertNotNull(requestObjectRepository.findById(object1.getId()).blockingGet());
         assertNull(requestObjectRepository.findById(object2.getId()).blockingGet());
 
         TestObserver<Void> testPurge = requestObjectRepository.purgeExpiredData().test();
-        testPurge.awaitTerminalEvent();
+        testPurge.awaitDone(10, TimeUnit.SECONDS);
         testPurge.assertNoErrors();
 
         assertNotNull(requestObjectRepository.findById(object1.getId()).blockingGet());

@@ -19,9 +19,9 @@ import io.gravitee.am.model.RateLimit;
 import io.gravitee.am.repository.management.api.RateLimitRepository;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.RateLimiterServiceImpl;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -121,8 +121,8 @@ public class RateLimiterServiceImplTest {
 
         TestObserver<Boolean> observer = rateLimiterService.tryConsume(USER_ID, FACTOR_ID, CLIENT, DOMAIN).test();
         observer.assertNotComplete();
-        observer.assertError(TechnicalManagementException.class);
-        observer.assertErrorMessage("An error occurs while trying to add/update rate limit.");
+        observer.assertError(TechnicalManagementException.class)
+                .assertError(err -> "An error occurs while trying to add/update rate limit.".equals(err.getMessage()));
     }
 
     @Test

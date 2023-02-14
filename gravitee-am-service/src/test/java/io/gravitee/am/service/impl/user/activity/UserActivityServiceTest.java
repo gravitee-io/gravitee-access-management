@@ -23,13 +23,15 @@ import io.gravitee.am.service.UserActivityService;
 import io.gravitee.am.service.impl.UserActivityServiceImpl;
 import io.gravitee.am.service.impl.user.activity.configuration.UserActivityConfiguration;
 import io.gravitee.am.service.impl.user.activity.configuration.UserActivityConfiguration.Algorithm;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
-import io.reactivex.subscribers.TestSubscriber;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -87,7 +89,7 @@ public class UserActivityServiceTest {
         doReturn(Single.just(new UserActivity())).when(userActivityRepository).create(any());
         final TestObserver<Void> testObserver = userActivityService.save("domain", "user-id", Type.LOGIN, Map.of()).test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
     }
@@ -97,7 +99,7 @@ public class UserActivityServiceTest {
         doReturn(Completable.complete()).when(userActivityRepository).deleteByDomain(anyString());
         final TestObserver<Void> testObserver = userActivityService.deleteByDomain("domain").test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
     }
@@ -107,7 +109,7 @@ public class UserActivityServiceTest {
         doReturn(Completable.complete()).when(userActivityRepository).deleteByDomainAndKey(anyString(), anyString());
         final TestObserver<Void> testObserver = userActivityService.deleteByDomainAndUser("domain", "user-id").test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
     }
@@ -117,7 +119,7 @@ public class UserActivityServiceTest {
         doReturn(Completable.error(new IllegalArgumentException("An Error"))).when(userActivityRepository).deleteByDomainAndKey(anyString(), anyString());;
         final TestObserver<Void> testObserver = userActivityService.deleteByDomainAndUser("domain", "user-id").test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(IllegalArgumentException.class);
     }
 
@@ -126,7 +128,7 @@ public class UserActivityServiceTest {
         doReturn(Completable.error(new IllegalArgumentException("An Error"))).when(userActivityRepository).deleteByDomain(anyString());
         final TestObserver<Void> testObserver = userActivityService.deleteByDomain("domain").test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(IllegalArgumentException.class);
     }
 
@@ -137,7 +139,7 @@ public class UserActivityServiceTest {
         final TestSubscriber<UserActivity> testObserver =
                 userActivityService.findByDomainAndTypeAndUserAndLimit("domain", Type.LOGIN, "user-id", 3).test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValueCount(3);

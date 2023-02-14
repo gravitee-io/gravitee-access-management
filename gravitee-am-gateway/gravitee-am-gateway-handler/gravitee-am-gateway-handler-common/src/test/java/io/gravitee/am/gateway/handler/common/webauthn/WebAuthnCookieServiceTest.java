@@ -20,14 +20,16 @@ import io.gravitee.am.gateway.certificate.CertificateProvider;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.model.User;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.mock;
@@ -65,7 +67,7 @@ public class WebAuthnCookieServiceTest {
         when(jwtService.encode(any(), eq(certificateProvider))).thenReturn(Single.just("cookieValue"));
 
         TestObserver<String> testObserver = webAuthnCookieService.generateRememberDeviceCookieValue(user).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         testObserver.assertComplete();
         testObserver.assertValue(cookieValue -> "cookieValue".equals(cookieValue));
@@ -75,7 +77,7 @@ public class WebAuthnCookieServiceTest {
     public void shouldVerifyRememberDeviceCookieValue_nominal_case() {
         when(jwtService.decodeAndVerify(anyString(), eq(certificateProvider))).thenReturn(Single.just(new JWT()));
         TestObserver<Void> testObserver = webAuthnCookieService.verifyRememberDeviceCookieValue("cookieValue").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         testObserver.assertComplete();
     }
@@ -84,7 +86,7 @@ public class WebAuthnCookieServiceTest {
     public void shouldVerifyRememberDeviceCookieValue_error() {
         when(jwtService.decodeAndVerify(anyString(), eq(certificateProvider))).thenReturn(Single.error(new IllegalArgumentException("invalid-token")));
         TestObserver<Void> testObserver = webAuthnCookieService.verifyRememberDeviceCookieValue("cookieValue").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNotComplete();
         testObserver.assertError(IllegalArgumentException.class);
     }

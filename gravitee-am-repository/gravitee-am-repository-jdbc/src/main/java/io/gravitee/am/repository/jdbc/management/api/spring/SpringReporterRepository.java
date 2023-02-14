@@ -16,10 +16,10 @@
 package io.gravitee.am.repository.jdbc.management.api.spring;
 
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcReporter;
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.data.repository.reactive.RxJava2CrudRepository;
+import org.springframework.data.repository.reactive.RxJava3CrudRepository;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -27,7 +27,7 @@ import org.springframework.stereotype.Repository;
  * @author GraviteeSource Team
  */
 @Repository
-public interface SpringReporterRepository extends RxJava2CrudRepository<JdbcReporter, String> {
+public interface SpringReporterRepository extends RxJava3CrudRepository<JdbcReporter, String> {
     @Query("select * from reporters r where r.domain = :domain")
     Flowable<JdbcReporter> findByDomain(@Param("domain") String domain);
 }

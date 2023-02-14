@@ -25,8 +25,8 @@ import io.gravitee.am.model.flow.Type;
 import io.gravitee.am.repository.management.api.PolicyRepository;
 import io.gravitee.am.service.FlowService;
 import io.gravitee.am.service.model.plugin.PolicyPlugin;
-import io.reactivex.Completable;
-import io.reactivex.Observable;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Observable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -112,7 +112,7 @@ public class PoliciesToFlowsUpgrader implements Upgrader, Ordered {
         }
 
         return Observable.fromIterable(flows.values())
-                .flatMapCompletable(flow -> flowService.create(ReferenceType.DOMAIN, domain, flow).toCompletable())
+                .flatMapCompletable(flow -> flowService.create(ReferenceType.DOMAIN, domain, flow).ignoreElement())
                 .doOnComplete(() -> LOGGER.info("Policies migrated to flows for domain {}", domain))
                 .doOnError((error) -> LOGGER.info("Error during policies migration for domain {}", domain, error));
     }

@@ -20,14 +20,16 @@ import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.repository.management.api.LoginAttemptRepository;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.service.impl.LoginAttemptServiceImpl;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Mockito.when;
 
@@ -65,7 +67,7 @@ public class LoginAttemptServiceTest {
         when(loginAttemptRepository.update(loginAttempt)).thenReturn(Single.just(loginAttempt));
 
         TestObserver testObserver = loginAttemptService.loginFailed(loginAttemptCriteria, accountSettings).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
     }
 
@@ -90,7 +92,7 @@ public class LoginAttemptServiceTest {
         when(loginAttemptRepository.update(loginAttempt)).thenReturn(Single.just(loginAttempt));
 
         TestObserver testObserver = loginAttemptService.loginFailed(loginAttemptCriteria, accountSettings).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
     }
 }

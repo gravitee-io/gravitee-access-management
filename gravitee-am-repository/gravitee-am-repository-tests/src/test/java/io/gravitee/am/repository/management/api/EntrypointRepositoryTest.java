@@ -17,15 +17,16 @@ package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.Entrypoint;
 import io.gravitee.am.repository.management.AbstractManagementTest;
-import io.reactivex.observers.BaseTestConsumer;
-import io.reactivex.observers.TestObserver;
-import io.reactivex.subscribers.TestSubscriber;
+import io.reactivex.rxjava3.observers.BaseTestConsumer;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Arrays;
 import java.util.Date;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -44,7 +45,7 @@ public class EntrypointRepositoryTest extends AbstractManagementTest {
         Entrypoint cratedEntrypoint =entrypointRepository.create(entrypoint).blockingGet();
 
         TestSubscriber<Entrypoint> testObserver1 = entrypointRepository.findAll(ORGANIZATION_ID).test();
-        testObserver1.awaitTerminalEvent();
+        testObserver1.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver1.assertComplete();
         testObserver1.assertNoErrors();
@@ -83,7 +84,7 @@ public class EntrypointRepositoryTest extends AbstractManagementTest {
         Entrypoint entrypointCreated = entrypointRepository.create(entrypoint).blockingGet();
 
         TestObserver<Entrypoint> testObserver = entrypointRepository.findById(entrypointCreated.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -100,7 +101,7 @@ public class EntrypointRepositoryTest extends AbstractManagementTest {
         Entrypoint entrypoint = buildEntrypoint();
         entrypoint.setId(UUID.randomUUID().toString());
         TestObserver<Entrypoint> testObserver = entrypointRepository.create(entrypoint).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -118,7 +119,7 @@ public class EntrypointRepositoryTest extends AbstractManagementTest {
         updatedEntrypoint.setName("testUpdatedName");
 
         TestObserver<Entrypoint> testObserver = entrypointRepository.update(updatedEntrypoint).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -132,16 +133,16 @@ public class EntrypointRepositoryTest extends AbstractManagementTest {
         Entrypoint entrypointCreated = entrypointRepository.create(entrypoint).blockingGet();
 
         TestObserver<Entrypoint> testObserver = entrypointRepository.findById(entrypointCreated.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         assertEquals(entrypoint, entrypointCreated.getId(), testObserver);
 
         TestObserver testObserver1 = entrypointRepository.delete(entrypointCreated.getId()).test();
-        testObserver1.awaitTerminalEvent();
+        testObserver1.awaitDone(10, TimeUnit.SECONDS);
 
         final TestObserver<Entrypoint> testFind = entrypointRepository.findById(entrypointCreated.getId()).test();
-        testFind.awaitTerminalEvent();
+        testFind.awaitDone(10, TimeUnit.SECONDS);
         testFind.assertNoValues();
     }
 

@@ -22,7 +22,7 @@ import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
-import io.reactivex.Maybe;
+import io.reactivex.rxjava3.core.Maybe;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;

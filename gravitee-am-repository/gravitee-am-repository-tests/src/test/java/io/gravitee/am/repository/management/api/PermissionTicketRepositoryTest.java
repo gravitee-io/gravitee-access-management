@@ -19,11 +19,12 @@ import io.gravitee.am.model.uma.PermissionRequest;
 import io.gravitee.am.model.uma.PermissionTicket;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.am.repository.exceptions.TechnicalException;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -44,7 +45,7 @@ public class PermissionTicketRepositoryTest extends AbstractManagementTest {
 
         // fetch permission_ticket
         TestObserver<PermissionTicket> testObserver = repository.findById(ptCreated.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -61,7 +62,7 @@ public class PermissionTicketRepositoryTest extends AbstractManagementTest {
 
         // fetch permission_ticket
         TestObserver<PermissionTicket> testObserver = repository.update(toUpdate).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -76,7 +77,7 @@ public class PermissionTicketRepositoryTest extends AbstractManagementTest {
 
         // fetch permission_ticket
         TestObserver<Void> testObserver = repository.delete(ptCreated.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();

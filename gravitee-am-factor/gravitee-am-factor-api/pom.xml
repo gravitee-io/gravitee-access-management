@@ -57,16 +57,16 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- RxJava 2 -->
+        <!-- RxJava -->
         <dependency>
-            <groupId>io.reactivex.rxjava2</groupId>
+            <groupId>io.reactivex.rxjava3</groupId>
             <artifactId>rxjava</artifactId>
         </dependency>
 
         <!-- vertx -->
         <dependency>
             <groupId>io.vertx</groupId>
-            <artifactId>vertx-rx-java2</artifactId>
+            <artifactId>vertx-rx-java3</artifactId>
             <scope>provided</scope>
         </dependency>
 

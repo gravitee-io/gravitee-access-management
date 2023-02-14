@@ -18,9 +18,9 @@ package io.gravitee.am.management.handlers.management.api.resources.platform.plu
 import io.gravitee.am.management.service.IdentityProviderPluginService;
 import io.gravitee.am.management.service.impl.IdentityProviderManagerImpl;
 import io.gravitee.am.service.model.plugin.IdentityProviderPlugin;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.reactivex.functions.Function;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.functions.Function;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 

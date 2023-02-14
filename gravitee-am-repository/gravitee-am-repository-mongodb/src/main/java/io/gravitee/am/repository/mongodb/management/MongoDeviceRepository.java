@@ -22,7 +22,7 @@ import io.gravitee.am.model.Device;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.management.api.DeviceRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.DeviceMongo;
-import io.reactivex.*;
+import io.reactivex.rxjava3.core.*;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 

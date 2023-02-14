@@ -30,9 +30,9 @@ import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -110,8 +110,8 @@ public class OrganizationUserServiceImpl extends AbstractUserService<io.gravitee
                     } else {
                         // check user provider
                         return identityProviderManager.getUserProvider(newUser.getSource())
-                                .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(newUser.getSource())))
-                                .flatMapSingle(userProvider -> {
+                                .switchIfEmpty(Single.error(new UserProviderNotFoundException(newUser.getSource())))
+                                .flatMap(userProvider -> {
                                     newUser.setDomain(null);
                                     newUser.setClient(null);
                                     // user is flagged as internal user

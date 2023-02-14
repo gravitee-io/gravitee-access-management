@@ -48,17 +48,17 @@ public class VHostRouter implements Router {
     private final Router delegate;
     private final VirtualHost vhost;
 
-    public static io.vertx.reactivex.ext.web.Router router(Domain domain, VirtualHost vhost, io.vertx.reactivex.ext.web.Router delegate) {
+    public static io.vertx.rxjava3.ext.web.Router router(Domain domain, VirtualHost vhost, io.vertx.rxjava3.ext.web.Router delegate) {
 
-        return io.vertx.reactivex.ext.web.Router.newInstance(new VHostRouter(domain, vhost, delegate));
+        return io.vertx.rxjava3.ext.web.Router.newInstance(new VHostRouter(domain, vhost, delegate));
     }
 
-    public static io.vertx.reactivex.ext.web.Router router(Domain domain, io.vertx.reactivex.ext.web.Router delegate) {
+    public static io.vertx.rxjava3.ext.web.Router router(Domain domain, io.vertx.rxjava3.ext.web.Router delegate) {
 
-        return io.vertx.reactivex.ext.web.Router.newInstance(new VHostRouter(domain, delegate));
+        return io.vertx.rxjava3.ext.web.Router.newInstance(new VHostRouter(domain, delegate));
     }
 
-    private VHostRouter(Domain domain, io.vertx.reactivex.ext.web.Router delegate) {
+    private VHostRouter(Domain domain, io.vertx.rxjava3.ext.web.Router delegate) {
 
         this(domain, delegate.getDelegate());
     }
@@ -72,7 +72,7 @@ public class VHostRouter implements Router {
         this.delegate = delegate;
     }
 
-    private VHostRouter(Domain domain, VirtualHost vhost, io.vertx.reactivex.ext.web.Router delegate) {
+    private VHostRouter(Domain domain, VirtualHost vhost, io.vertx.rxjava3.ext.web.Router delegate) {
 
         this(domain, vhost, delegate.getDelegate());
     }

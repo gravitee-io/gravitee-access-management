@@ -24,9 +24,9 @@ import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.TokenServiceImpl;
 import io.gravitee.am.service.model.TotalToken;
-import io.reactivex.Completable;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -36,6 +36,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Mockito.when;
 
@@ -85,7 +86,7 @@ public class TokenServiceTest {
         when(accessTokenRepository.countByClientId("app2")).thenReturn(Single.just(1l));
 
         TestObserver<TotalToken> testObserver = tokenService.findTotalTokensByDomain(DOMAIN).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNoErrors();
         testObserver.assertComplete();
@@ -153,7 +154,7 @@ public class TokenServiceTest {
         when(accessTokenRepository.countByClientId("app2")).thenReturn(Single.just(1l));
 
         TestObserver<TotalToken> testObserver = tokenService.findTotalTokens().test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNoErrors();
         testObserver.assertComplete();

@@ -16,7 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.service.revocation;
 
 import io.gravitee.am.model.oidc.Client;
-import io.reactivex.Completable;
+import io.reactivex.rxjava3.core.Completable;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

@@ -16,10 +16,10 @@
 package io.gravitee.am.repository.jdbc.management.api.spring;
 
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcCredential;
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.data.repository.reactive.RxJava2CrudRepository;
+import org.springframework.data.repository.reactive.RxJava3CrudRepository;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -27,7 +27,7 @@ import org.springframework.stereotype.Repository;
  * @author GraviteeSource Team
  */
 @Repository
-public interface SpringCredentialRepository extends RxJava2CrudRepository<JdbcCredential, String> {
+public interface SpringCredentialRepository extends RxJava3CrudRepository<JdbcCredential, String> {
     @Query("Select * from webauthn_credentials c where c.reference_id = :refId and c.reference_type = :refType and user_id = :userId")
     Flowable<JdbcCredential> findByUserId(@Param("refType") String referenceType, @Param("refId")String referenceId, @Param("userId")String userId);
 

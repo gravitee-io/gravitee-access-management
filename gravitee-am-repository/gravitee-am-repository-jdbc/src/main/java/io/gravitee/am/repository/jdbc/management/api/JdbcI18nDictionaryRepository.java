@@ -21,10 +21,10 @@ import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcI18nDictionary;
 import io.gravitee.am.repository.jdbc.management.api.spring.SpringI18nDictionaryRepository;
 import io.gravitee.am.repository.management.api.I18nDictionaryRepository;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.relational.core.query.Query;
@@ -40,7 +40,7 @@ import java.util.List;
 
 import static io.gravitee.am.common.utils.RandomString.generate;
 import static org.springframework.data.relational.core.query.Criteria.where;
-import static reactor.adapter.rxjava.RxJava2Adapter.*;
+import static reactor.adapter.rxjava.RxJava3Adapter.*;
 
 @Repository
 public class JdbcI18nDictionaryRepository extends AbstractJdbcRepository implements I18nDictionaryRepository, InitializingBean {
@@ -172,7 +172,7 @@ public class JdbcI18nDictionaryRepository extends AbstractJdbcRepository impleme
         LOGGER.debug("findByName({}, {}, {})", referenceType, referenceId, name);
         return repository.findByName(referenceType.toString(), referenceId, name)
                          .map(this::toEntity)
-                         .flatMapSingleElement(this::completeDictionary);
+                         .flatMapSingle(this::completeDictionary);
     }
 
     @Override
@@ -188,7 +188,7 @@ public class JdbcI18nDictionaryRepository extends AbstractJdbcRepository impleme
         LOGGER.debug("findById({}, {}, {})", referenceType, referenceId, id);
         return repository.findById(referenceType.toString(), referenceId, id)
                          .map(this::toEntity)
-                         .flatMapSingleElement(this::completeDictionary);
+                         .flatMapSingle(this::completeDictionary);
     }
 
     @Override
@@ -196,7 +196,7 @@ public class JdbcI18nDictionaryRepository extends AbstractJdbcRepository impleme
         LOGGER.debug("findById({})", id);
         return repository.findById(id)
                          .map(this::toEntity)
-                         .flatMapSingleElement(this::completeDictionary);
+                         .flatMapSingle(this::completeDictionary);
     }
 
     private Single<I18nDictionary> completeDictionary(I18nDictionary dictionary) {

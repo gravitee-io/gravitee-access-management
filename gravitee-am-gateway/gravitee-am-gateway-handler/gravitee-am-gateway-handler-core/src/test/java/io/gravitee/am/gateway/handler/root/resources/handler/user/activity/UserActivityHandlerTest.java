@@ -26,7 +26,7 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.DeviceService;
 import io.gravitee.am.service.UserActivityService;
 import io.gravitee.common.http.HttpHeaders;
-import io.reactivex.Completable;
+import io.reactivex.rxjava3.core.Completable;
 import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
@@ -67,7 +67,7 @@ public class UserActivityHandlerTest {
         user.setId("user-id");
 
         routingContext = new SpyRoutingContext();
-        routingContext.setUser(new io.vertx.reactivex.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+        routingContext.setUser(new io.vertx.rxjava3.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
         doReturn(true).when(userActivityService).canSaveUserActivity();
         doReturn(Completable.complete()).when(userActivityService).save(anyString(), anyString(), eq(Type.LOGIN), any());
     }

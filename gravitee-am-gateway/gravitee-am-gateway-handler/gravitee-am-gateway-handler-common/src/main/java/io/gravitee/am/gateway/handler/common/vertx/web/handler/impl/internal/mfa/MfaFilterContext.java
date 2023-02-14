@@ -29,8 +29,8 @@ import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.risk.assessment.api.assessment.settings.AssessmentSettings;
 import io.gravitee.risk.assessment.api.assessment.settings.RiskAssessmentSettings;
-import io.vertx.reactivex.ext.web.RoutingContext;
-import io.vertx.reactivex.ext.web.Session;
+import io.vertx.rxjava3.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.Session;
 import java.util.Map;
 
 import java.util.Date;

@@ -22,9 +22,9 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.plugins.idp.core.IdentityProviderPluginManager;
 import io.gravitee.am.service.RoleService;
-import io.reactivex.Flowable;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -36,6 +36,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.core.env.StandardEnvironment;
 
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -134,11 +135,11 @@ public class IdentityProviderManagerTest {
     @Test
     public void shouldGetGraviteeProvider() {
         when(this.idpPluginManager.create(any(), any(), any())).thenReturn(Single.just(Optional.of(mock(UserProvider.class))));
-        cut.loadIdentityProviders().blockingGet();
+        cut.loadIdentityProviders().blockingAwait();
 
         final TestObserver<UserProvider> observer = this.cut.getUserProvider(IdentityProviderManagerImpl.IDP_GRAVITEE).test();
 
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertNoErrors();
         observer.assertValueCount(1);
 

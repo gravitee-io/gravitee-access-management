@@ -71,7 +71,7 @@
         <!-- Vert.x -->
         <dependency>
             <groupId>io.vertx</groupId>
-            <artifactId>vertx-rx-java2</artifactId>
+            <artifactId>vertx-rx-java3</artifactId>
             <scope>provided</scope>
         </dependency>
         <dependency>

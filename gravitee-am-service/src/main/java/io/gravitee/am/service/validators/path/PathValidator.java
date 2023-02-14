@@ -17,7 +17,7 @@
 package io.gravitee.am.service.validators.path;
 
 import io.gravitee.am.service.validators.Validator;
-import io.reactivex.Completable;
+import io.reactivex.rxjava3.core.Completable;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)

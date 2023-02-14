@@ -32,12 +32,12 @@ import io.gravitee.am.service.impl.CertificateServiceImpl;
 import io.gravitee.am.service.tasks.AssignSystemCertificate;
 import io.gravitee.am.service.tasks.AssignSystemCertificateDefinition;
 import io.gravitee.am.service.tasks.TaskType;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
-import io.reactivex.subscribers.TestSubscriber;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -136,7 +136,7 @@ public class CertificateServiceTest {
         when(certificateRepository.findById("my-certificate")).thenReturn(Maybe.just(new Certificate()));
         TestObserver testObserver = certificateService.findById("my-certificate").test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValueCount(1);
@@ -146,7 +146,7 @@ public class CertificateServiceTest {
     public void shouldFindById_notExistingCertificate() {
         when(certificateRepository.findById("my-certificate")).thenReturn(Maybe.empty());
         TestObserver testObserver = certificateService.findById("my-certificate").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNoValues();
     }
@@ -165,7 +165,7 @@ public class CertificateServiceTest {
     public void shouldFindByDomain() {
         when(certificateRepository.findByDomain(DOMAIN)).thenReturn(Flowable.just(new Certificate()));
         TestSubscriber<Certificate> testSubscriber = certificateService.findByDomain(DOMAIN).test();
-        testSubscriber.awaitTerminalEvent();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
 
         testSubscriber.assertComplete();
         testSubscriber.assertNoErrors();
@@ -194,7 +194,7 @@ public class CertificateServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = certificateService.delete("my-certificate").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -282,7 +282,7 @@ public class CertificateServiceTest {
         when(certificatePluginService.getSchema(CertificateServiceImpl.DEFAULT_CERTIFICATE_PLUGIN))
                 .thenReturn(Maybe.just(certificateSchemaDefinition));
         TestObserver<Certificate> testObserver = certificateService.create(DOMAIN_NAME).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         if (shouldBeSuccessful) {
             verify(certificateRepository).create(argThat(cert -> cert.isSystem()
@@ -359,7 +359,7 @@ public class CertificateServiceTest {
                 .thenReturn(Maybe.just(certificateSchemaDefinition));
 
         TestObserver<Certificate> testObserver = certificateService.rotate(DOMAIN, mock(User.class)).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         verify(certificateRepository).create(argThat(cert -> cert.isSystem()
                 && cert.getDomain().equals(DOMAIN)
@@ -410,7 +410,7 @@ public class CertificateServiceTest {
                 .thenReturn(Maybe.just(certificateSchemaDefinition));
 
         TestObserver<Certificate> testObserver = certificateService.rotate(DOMAIN, mock(User.class)).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         verify(certificateRepository).create(argThat(cert -> cert.isSystem()
                 && cert.getDomain().equals(DOMAIN)

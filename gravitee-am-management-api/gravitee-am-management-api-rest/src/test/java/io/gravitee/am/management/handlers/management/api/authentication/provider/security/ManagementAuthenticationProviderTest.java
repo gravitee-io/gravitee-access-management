@@ -22,8 +22,8 @@ import io.gravitee.am.management.handlers.management.api.authentication.manager.
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.service.OrganizationService;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;

@@ -119,7 +119,7 @@ public class DefaultOrganizationUpgrader implements Upgrader, Ordered {
                     } while (userPage.getData().size() == PAGE_SIZE);
 
                     // then delete the domain
-                    domainService.delete(ADMIN_DOMAIN).blockingGet();
+                    domainService.delete(ADMIN_DOMAIN).blockingAwait();
                 } else if (useDefaultAdmin) {
                     // Need to create an inline provider and an admin user for this newly created default organization.
                     IdentityProvider inlineProvider = createInlineProvider();
@@ -130,7 +130,7 @@ public class DefaultOrganizationUpgrader implements Upgrader, Ordered {
 
             if (identityProviderManager != null) {
                 // call the idpManager here to ensure that roles have been created
-                identityProviderManager.loadIdentityProviders().blockingGet();
+                identityProviderManager.loadIdentityProviders().blockingAwait();
             }
 
             // Get organization with fresh data.

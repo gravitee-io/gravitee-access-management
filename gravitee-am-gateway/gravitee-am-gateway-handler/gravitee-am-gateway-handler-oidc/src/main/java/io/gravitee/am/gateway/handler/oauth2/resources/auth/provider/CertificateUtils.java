@@ -16,7 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.resources.auth.provider;
 
 import com.nimbusds.jose.util.Base64URL;
-import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;

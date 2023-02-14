@@ -369,8 +369,9 @@ jobs:
             unzip /tmp/workspace/gravitee-am-management-api-standalone-*.zip
             export AM_VERSION=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
             curl https://download.gravitee.io/plugins/services/gravitee-service-geoip-1.2.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-1.2.0.zip
-            curl https://repo.maven.apache.org/maven2/io/gravitee/am/resource/gravitee-am-resource-mfa-mock/3.12.1/gravitee-am-resource-mfa-mock-3.12.1.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-am-resource-mfa-mock-3.12.1.zip
-            cp gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-am-resource-mfa-mock-3.12.1.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
+            
+            cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
+            cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/
             
             # EXPORT env var to start AM using SMTP Server
             export GRAVITEE_EMAIL_ENABLED=true
@@ -445,8 +446,10 @@ jobs:
             unzip /tmp/workspace/gravitee-am-management-api-standalone-*.zip
             export AM_VERSION=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
             curl https://download.gravitee.io/plugins/services/gravitee-service-geoip-1.2.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-1.2.0.zip
-            curl https://repo.maven.apache.org/maven2/io/gravitee/am/resource/gravitee-am-resource-mfa-mock/3.12.1/gravitee-am-resource-mfa-mock-3.12.1.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-am-resource-mfa-mock-3.12.1.zip
-            cp gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-am-resource-mfa-mock-3.12.1.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
+            
+            cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
+            cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/
+            
             # copy r2dbc & jdbc drivers
             curl https://jdbc.postgresql.org/download/postgresql-42.3.3.jar -o postgresql-42.3.3.jar
             curl https://repo1.maven.org/maven2/io/r2dbc/r2dbc-postgresql/0.8.9.RELEASE/r2dbc-postgresql-0.8.9.RELEASE.jar -o r2dbc-postgresql-0.8.9.RELEASE.jar
@@ -537,8 +540,10 @@ jobs:
             unzip /tmp/workspace/gravitee-am-management-api-standalone-*.zip
             export AM_VERSION=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
             curl https://download.gravitee.io/plugins/services/gravitee-service-geoip-1.2.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-1.2.0.zip
-            curl https://repo.maven.apache.org/maven2/io/gravitee/am/resource/gravitee-am-resource-mfa-mock/3.12.1/gravitee-am-resource-mfa-mock-3.12.1.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-am-resource-mfa-mock-3.12.1.zip
-            cp gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-am-resource-mfa-mock-3.12.1.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
+            
+            cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
+            cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/
+            
             # Start AM Management
             gravitee-am-management-api-standalone-${AM_VERSION}/bin/gravitee &
             # Start AM Gateway
@@ -589,8 +594,10 @@ jobs:
             unzip /tmp/workspace/gravitee-am-management-api-standalone-*.zip
             export AM_VERSION=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
             curl https://download.gravitee.io/plugins/services/gravitee-service-geoip-1.2.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-1.2.0.zip
-            curl https://repo.maven.apache.org/maven2/io/gravitee/am/resource/gravitee-am-resource-mfa-mock/3.12.1/gravitee-am-resource-mfa-mock-3.12.1.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-am-resource-mfa-mock-3.12.1.zip
-            cp gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-am-resource-mfa-mock-3.12.1.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
+            
+            cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
+            cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/
+            
             # copy r2dbc & jdbc drivers
             curl https://jdbc.postgresql.org/download/postgresql-42.3.3.jar -o postgresql-42.3.3.jar
             curl https://repo1.maven.org/maven2/io/r2dbc/r2dbc-postgresql/0.8.9.RELEASE/r2dbc-postgresql-0.8.9.RELEASE.jar -o r2dbc-postgresql-0.8.9.RELEASE.jar
@@ -936,12 +943,14 @@ jobs:
             cp ./gravitee-am-gateway/gravitee-am-gateway-standalone/gravitee-am-gateway-standalone-distribution/gravitee-am-gateway-standalone-distribution-zip/target/*.zip ~/
             cp ./gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-management-api-standalone-distribution/gravitee-am-management-api-standalone-distribution-zip/target/*.zip ~/
             cp ./gravitee-am-ui/target/*.zip ~/
+            cp ./gravitee-am-resource/gravitee-am-resource-mfa-mock/target/*.zip ~/
       - persist_to_workspace:
           root: ~/
           paths:
             - ./gravitee-am-gateway-standalone-*.zip
             - ./gravitee-am-management-api-standalone-*.zip
             - ./gravitee-am-webui-*.zip
+            - ./gravitee-am-resource-mfa-mock-*.zip
   release:
     parameters:
       dry_run:

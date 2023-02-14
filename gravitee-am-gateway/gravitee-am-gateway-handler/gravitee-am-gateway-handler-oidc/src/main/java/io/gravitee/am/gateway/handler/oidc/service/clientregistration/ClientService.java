@@ -18,9 +18,9 @@ package io.gravitee.am.gateway.handler.oidc.service.clientregistration;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.ApplicationService;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 
 /**
  * NOTE : this service must only be used in an OpenID Connect context

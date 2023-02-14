@@ -21,7 +21,7 @@ import io.gravitee.am.gateway.handler.common.vertx.web.handler.PolicyChainHandle
 import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
 import io.gravitee.am.gateway.policy.PolicyChainProcessorFactory;
 import io.vertx.core.Handler;
-import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Objects;

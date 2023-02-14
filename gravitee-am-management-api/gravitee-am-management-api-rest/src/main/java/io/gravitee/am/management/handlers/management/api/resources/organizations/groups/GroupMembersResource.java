@@ -24,8 +24,8 @@ import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.GroupService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Observable;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.Single;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
@@ -89,8 +89,7 @@ public class GroupMembersResource extends AbstractResource {
                                                         member.setSource(idP.getName());
                                                         return member;
                                                     })
-                                                    .defaultIfEmpty(member)
-                                                    .toSingle();
+                                                    .defaultIfEmpty(member);
                                         }
                                         return Single.just(member);
                                     })

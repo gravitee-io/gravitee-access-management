@@ -17,7 +17,7 @@ package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.repository.management.AbstractManagementTest;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -25,6 +25,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -53,7 +54,7 @@ public class OrganizationRepositoryTest extends AbstractManagementTest {
         Organization organizationCreated = organizationRepository.create(organization).blockingGet();
 
         TestObserver<Organization> obs = organizationRepository.findById(organizationCreated.getId()).test();
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
 
         obs.assertComplete();
         obs.assertNoErrors();
@@ -68,7 +69,7 @@ public class OrganizationRepositoryTest extends AbstractManagementTest {
     @Test
     public void testNotFoundById() {
         TestObserver<Organization> testObserver = organizationRepository.findById("unknown").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         testObserver.assertNoValues();
     }
@@ -80,7 +81,7 @@ public class OrganizationRepositoryTest extends AbstractManagementTest {
         organization.setName("testName");
 
         TestObserver<Organization> obs = organizationRepository.create(organization).test();
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
 
         obs.assertComplete();
         obs.assertNoErrors();
@@ -108,7 +109,7 @@ public class OrganizationRepositoryTest extends AbstractManagementTest {
         organizationUpdated.setHrids(Arrays.asList("Hrid2", "Hrid3", "Hrid4"));
 
         TestObserver<Organization> obs = organizationRepository.update(organizationUpdated).test();
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
 
         obs.assertComplete();
         obs.assertNoErrors();
@@ -134,7 +135,7 @@ public class OrganizationRepositoryTest extends AbstractManagementTest {
         assertNotNull(organizationRepository.findById(organizationCreated.getId()).blockingGet());
 
         TestObserver<Void> obs = organizationRepository.delete(organizationCreated.getId()).test();
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertNoValues();
 
         assertNull(organizationRepository.findById(organizationCreated.getId()).blockingGet());
@@ -164,7 +165,7 @@ public class OrganizationRepositoryTest extends AbstractManagementTest {
         Organization organizationCreated2 = organizationRepository.create(organization2).blockingGet();
 
         TestObserver<List<Organization>> obs = organizationRepository.findByHrids(Collections.singletonList("Hrid1")).toList().test();
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
 
         obs.assertComplete();
         obs.assertNoErrors();

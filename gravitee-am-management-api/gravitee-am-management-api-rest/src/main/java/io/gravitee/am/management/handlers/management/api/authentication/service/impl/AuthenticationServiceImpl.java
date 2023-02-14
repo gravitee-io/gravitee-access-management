@@ -34,9 +34,9 @@ import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.AuthenticationAuditBuilder;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 
@@ -79,8 +79,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         final String source = details.get(SOURCE);
         io.gravitee.am.model.User endUser = userService.findByExternalIdAndSource(ReferenceType.ORGANIZATION, organizationId, principal.getId(), source)
                 .switchIfEmpty(Maybe.defer(() -> userService.findByUsernameAndSource(ReferenceType.ORGANIZATION, organizationId, principal.getUsername(), source)))
-                .switchIfEmpty(Maybe.error(new UserNotFoundException(principal.getUsername())))
-                .flatMapSingle(existingUser -> {
+                .switchIfEmpty(Single.error(new UserNotFoundException(principal.getUsername())))
+                .flatMap(existingUser -> {
                     existingUser.setSource(details.get(SOURCE));
                     existingUser.setLoggedAt(new Date());
                     existingUser.setLoginsCount(existingUser.getLoginsCount() + 1);

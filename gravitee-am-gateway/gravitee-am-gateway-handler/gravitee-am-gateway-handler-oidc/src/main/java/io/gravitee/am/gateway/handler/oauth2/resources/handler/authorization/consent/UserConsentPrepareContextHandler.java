@@ -21,8 +21,8 @@ import io.gravitee.am.gateway.handler.oauth2.exception.AccessDeniedException;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.Handler;
-import io.vertx.reactivex.ext.auth.User;
-import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.auth.User;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

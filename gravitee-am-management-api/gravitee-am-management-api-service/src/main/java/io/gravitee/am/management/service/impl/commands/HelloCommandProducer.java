@@ -25,7 +25,7 @@ import io.gravitee.cockpit.api.command.CommandStatus;
 import io.gravitee.cockpit.api.command.hello.HelloCommand;
 import io.gravitee.cockpit.api.command.hello.HelloReply;
 import io.gravitee.node.api.Node;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 

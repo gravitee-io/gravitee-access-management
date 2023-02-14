@@ -21,7 +21,7 @@ import io.gravitee.am.service.exception.InvalidDomainException;
 import io.gravitee.am.service.validators.virtualhost.VirtualHostValidator;
 import io.gravitee.am.service.validators.virtualhost.VirtualHostValidatorImpl;
 import io.gravitee.am.service.validators.path.PathValidator;
-import io.reactivex.Completable;
+import io.reactivex.rxjava3.core.Completable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;

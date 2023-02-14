@@ -17,7 +17,7 @@ package io.gravitee.am.gateway.handler.common.utils;
 
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User;
-import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 
 import java.util.Arrays;
 import java.util.HashMap;

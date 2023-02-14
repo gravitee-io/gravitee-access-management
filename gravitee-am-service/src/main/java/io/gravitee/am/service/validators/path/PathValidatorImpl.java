@@ -16,7 +16,7 @@
 package io.gravitee.am.service.validators.path;
 
 import io.gravitee.am.service.exception.InvalidPathException;
-import io.reactivex.Completable;
+import io.reactivex.rxjava3.core.Completable;
 import org.springframework.stereotype.Component;
 
 import java.util.regex.Matcher;

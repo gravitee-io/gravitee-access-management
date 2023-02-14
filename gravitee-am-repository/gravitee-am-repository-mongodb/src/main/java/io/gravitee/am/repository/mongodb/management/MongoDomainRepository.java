@@ -52,11 +52,7 @@ import io.gravitee.am.repository.mongodb.management.internal.model.oidc.ClientRe
 import io.gravitee.am.repository.mongodb.management.internal.model.oidc.OIDCSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.oidc.SecurityProfileSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.uma.UMASettingsMongo;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Observable;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.*;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.conversions.Bson;

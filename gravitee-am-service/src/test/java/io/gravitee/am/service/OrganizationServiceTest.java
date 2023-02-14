@@ -30,11 +30,11 @@ import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.OrganizationServiceImpl;
 import io.gravitee.am.service.model.NewOrganization;
 import io.gravitee.am.service.model.PatchOrganization;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -43,6 +43,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -86,7 +87,7 @@ public class OrganizationServiceTest {
 
         TestObserver<Organization> obs = cut.findById(ORGANIZATION_ID).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertComplete();
         obs.assertValue(organization);
     }
@@ -98,7 +99,7 @@ public class OrganizationServiceTest {
 
         TestObserver<Organization> obs = cut.findById(ORGANIZATION_ID).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertError(OrganizationNotFoundException.class);
     }
 
@@ -109,7 +110,7 @@ public class OrganizationServiceTest {
 
         TestObserver<Organization> obs = cut.findById(ORGANIZATION_ID).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertError(TechnicalException.class);
     }
 
@@ -126,7 +127,7 @@ public class OrganizationServiceTest {
 
         TestObserver<Organization> obs = cut.createDefault().test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValue(defaultOrganization);
 
         verify(auditService, times(1)).report(argThat(builder -> {
@@ -149,7 +150,7 @@ public class OrganizationServiceTest {
 
         TestObserver<Organization> obs = cut.createDefault().test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertComplete();
         obs.assertNoValues();
 
@@ -169,7 +170,7 @@ public class OrganizationServiceTest {
 
         TestObserver<Organization> obs = cut.createDefault().test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertError(TechnicalManagementException.class);
 
         verify(auditService, times(1)).report(argThat(builder -> {
@@ -202,7 +203,7 @@ public class OrganizationServiceTest {
 
         TestObserver<Organization> obs = cut.createOrUpdate(ORGANIZATION_ID, newOrganization, createdBy).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValue(organization -> {
             assertEquals(ORGANIZATION_ID, organization.getId());
             assertEquals(newOrganization.getName(), organization.getName());
@@ -241,7 +242,7 @@ public class OrganizationServiceTest {
 
         TestObserver<Organization> obs = cut.createOrUpdate(ORGANIZATION_ID, newOrganization, createdBy).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertError(TechnicalManagementException.class);
 
         verify(auditService, times(1)).report(argThat(builder -> {
@@ -276,7 +277,7 @@ public class OrganizationServiceTest {
 
         TestObserver<Organization> obs = cut.createOrUpdate(ORGANIZATION_ID, newOrganization, createdBy).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValue(organization -> {
             assertEquals(ORGANIZATION_ID, organization.getId());
             assertEquals(newOrganization.getName(), organization.getName());
@@ -318,7 +319,7 @@ public class OrganizationServiceTest {
 
         TestObserver<Organization> obs = cut.createOrUpdate(ORGANIZATION_ID, newOrganization, createdBy).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertError(TechnicalManagementException.class);
 
         verify(auditService, times(1)).report(argThat(builder -> {
@@ -348,7 +349,7 @@ public class OrganizationServiceTest {
 
         TestObserver<Organization> obs = cut.update(ORGANIZATION_ID, patchOrganization, new DefaultUser("username")).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValue(updated -> updated.getIdentities().equals(identities));
     }
 
@@ -362,7 +363,7 @@ public class OrganizationServiceTest {
 
         TestObserver<Organization> obs = cut.update(ORGANIZATION_ID, patchOrganization, new DefaultUser("username")).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertError(OrganizationNotFoundException.class);
     }
 }

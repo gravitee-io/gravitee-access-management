@@ -21,9 +21,9 @@ import io.gravitee.am.repository.jdbc.oauth2.oidc.model.JdbcRequestObject;
 import io.gravitee.am.repository.jdbc.oauth2.oidc.spring.SpringRequestObjectRepository;
 import io.gravitee.am.repository.oidc.api.RequestObjectRepository;
 import io.gravitee.am.repository.oidc.model.RequestObject;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.stereotype.Repository;
@@ -33,8 +33,8 @@ import java.time.LocalDateTime;
 
 import static java.time.ZoneOffset.UTC;
 import static org.springframework.data.relational.core.query.Criteria.where;
-import static reactor.adapter.rxjava.RxJava2Adapter.monoToCompletable;
-import static reactor.adapter.rxjava.RxJava2Adapter.monoToSingle;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToCompletable;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)

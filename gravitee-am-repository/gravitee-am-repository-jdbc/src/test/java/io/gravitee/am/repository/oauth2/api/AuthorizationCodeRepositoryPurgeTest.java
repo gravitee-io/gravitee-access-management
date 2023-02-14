@@ -18,13 +18,14 @@ package io.gravitee.am.repository.oauth2.api;
 import io.gravitee.am.repository.jdbc.oauth2.api.JdbcAuthorizationCodeRepository;
 import io.gravitee.am.repository.oauth2.AbstractOAuthTest;
 import io.gravitee.am.repository.oauth2.model.AuthorizationCode;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -53,17 +54,17 @@ public class AuthorizationCodeRepositoryPurgeTest extends AbstractOAuthTest {
         authorizationCodeExpired.setExpireAt(new Date(now.minus(1, ChronoUnit.MINUTES).toEpochMilli()));
 
         TestObserver<AuthorizationCode> testObserver = authorizationCodeRepository.create(authorizationCode).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         testObserver = authorizationCodeRepository.create(authorizationCodeExpired).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
 
         assertNotNull(authorizationCodeRepository.findByCode(code).blockingGet());
         assertNull(authorizationCodeRepository.findByCode(codeExpired).blockingGet());
 
         TestObserver<Void> testPurge = authorizationCodeRepository.purgeExpiredData().test();
-        testPurge.awaitTerminalEvent();
+        testPurge.awaitDone(10, TimeUnit.SECONDS);
         testPurge.assertNoErrors();
 
         assertNotNull(authorizationCodeRepository.findByCode(code).blockingGet());

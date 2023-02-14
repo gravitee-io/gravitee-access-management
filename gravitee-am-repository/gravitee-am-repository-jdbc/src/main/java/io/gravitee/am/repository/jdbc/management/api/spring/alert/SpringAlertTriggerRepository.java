@@ -16,11 +16,7 @@
 package io.gravitee.am.repository.jdbc.management.api.spring.alert;
 
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcAlertTrigger;
-import io.gravitee.am.repository.jdbc.management.api.model.JdbcInstallation;
-import io.reactivex.Maybe;
-import org.springframework.data.r2dbc.repository.Query;
-import org.springframework.data.repository.query.Param;
-import org.springframework.data.repository.reactive.RxJava2CrudRepository;
+import org.springframework.data.repository.reactive.RxJava3CrudRepository;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -28,5 +24,5 @@ import org.springframework.stereotype.Repository;
  * @author GraviteeSource Team
  */
 @Repository
-public interface SpringAlertTriggerRepository extends RxJava2CrudRepository<JdbcAlertTrigger, String> {
+public interface SpringAlertTriggerRepository extends RxJava3CrudRepository<JdbcAlertTrigger, String> {
 }

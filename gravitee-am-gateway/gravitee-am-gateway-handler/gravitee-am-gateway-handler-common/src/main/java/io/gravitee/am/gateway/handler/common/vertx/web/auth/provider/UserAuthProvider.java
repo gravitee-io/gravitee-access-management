@@ -20,7 +20,7 @@ import io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
-import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 
 /**
  * End users Auth Provider (end-users authentication (username/password))

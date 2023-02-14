@@ -23,8 +23,8 @@ import io.gravitee.cockpit.api.command.CommandStatus;
 import io.gravitee.cockpit.api.command.installation.InstallationCommand;
 import io.gravitee.cockpit.api.command.installation.InstallationPayload;
 import io.gravitee.cockpit.api.command.installation.InstallationReply;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
 import junit.framework.TestCase;
 import org.junit.Before;
 import org.junit.Test;
@@ -33,6 +33,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.HashMap;
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.Mockito.*;
@@ -79,7 +80,7 @@ public class InstallationCommandHandlerTest extends TestCase {
 
         TestObserver<InstallationReply> obs = cut.handle(command).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.SUCCEEDED));
 
         final HashMap<String, String> expectedAdditionalInfos = new HashMap<>();
@@ -105,7 +106,7 @@ public class InstallationCommandHandlerTest extends TestCase {
 
         TestObserver<InstallationReply> obs = cut.handle(command).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.ERROR));
     }
 }

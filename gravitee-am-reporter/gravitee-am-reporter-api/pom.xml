@@ -43,9 +43,9 @@
             <version>${project.version}</version>
         </dependency>
 
-        <!-- RxJava 2 -->
+        <!-- RxJava -->
         <dependency>
-            <groupId>io.reactivex.rxjava2</groupId>
+            <groupId>io.reactivex.rxjava3</groupId>
             <artifactId>rxjava</artifactId>
         </dependency>
     </dependencies>

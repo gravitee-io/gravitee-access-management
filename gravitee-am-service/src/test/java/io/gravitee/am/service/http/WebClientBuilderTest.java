@@ -16,7 +16,7 @@
 package io.gravitee.am.service.http;
 
 import io.vertx.ext.web.client.WebClientOptions;
-import io.vertx.reactivex.core.Vertx;
+import io.vertx.rxjava3.core.Vertx;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;

@@ -20,11 +20,12 @@ import io.gravitee.am.model.Installation;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.AbstractManagementTest;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -44,7 +45,7 @@ public class InstallationRepositoryTest extends AbstractManagementTest {
 
         // fetch idp
         TestObserver<Installation> testObserver = installationRepository.findById(installationCreated.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -61,7 +62,7 @@ public class InstallationRepositoryTest extends AbstractManagementTest {
     public void testCreate() {
         Installation installation = buildInstallation();
         TestObserver<Installation> testObserver = installationRepository.create(installation).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -83,7 +84,7 @@ public class InstallationRepositoryTest extends AbstractManagementTest {
 
 
         TestObserver<Installation> testObserver = installationRepository.update(updatedInstallation).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -99,7 +100,7 @@ public class InstallationRepositoryTest extends AbstractManagementTest {
 
         // delete idp
         TestObserver<Void> testObserver1 = installationRepository.delete(installationCreated.getId()).test();
-        testObserver1.awaitTerminalEvent();
+        testObserver1.awaitDone(10, TimeUnit.SECONDS);
 
         // fetch idp
         installationRepository.findById(installationCreated.getId()).test().assertEmpty();

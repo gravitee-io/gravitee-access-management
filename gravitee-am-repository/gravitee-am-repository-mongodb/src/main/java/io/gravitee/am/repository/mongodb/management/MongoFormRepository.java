@@ -21,7 +21,7 @@ import io.gravitee.am.model.Form;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.management.api.FormRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.FormMongo;
-import io.reactivex.*;
+import io.reactivex.rxjava3.core.*;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 

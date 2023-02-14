@@ -29,7 +29,7 @@ import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter.StepUpAuthenticationFilter;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.Handler;
-import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

@@ -26,12 +26,12 @@ import io.gravitee.am.repository.management.api.ResourceRepository;
 import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.impl.ResourceServiceImpl;
 import io.gravitee.am.service.model.NewResource;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
-import io.reactivex.subscribers.TestSubscriber;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import io.vertx.core.json.JsonObject;
 import org.junit.Assert;
 import org.junit.Before;
@@ -43,6 +43,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -175,7 +176,7 @@ public class ResourceServiceTest {
     public void findByDomain_fail() {
         when(repository.findByDomain(DOMAIN_ID, 0, Integer.MAX_VALUE)).thenReturn(Single.error(new ArrayIndexOutOfBoundsException()));
         TestObserver<Set<Resource>> testObserver = service.findByDomain(DOMAIN_ID).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(TechnicalManagementException.class);
     }
 
@@ -183,7 +184,7 @@ public class ResourceServiceTest {
     public void findByDomain_success() {
         when(repository.findByDomain(DOMAIN_ID, 0, Integer.MAX_VALUE)).thenReturn(Single.just(new Page<>(Collections.singleton(new Resource()), 0, 1)));
         TestObserver<Set<Resource>> testObserver = service.findByDomain(DOMAIN_ID).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();

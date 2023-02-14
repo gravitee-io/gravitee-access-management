@@ -17,7 +17,7 @@
 package io.gravitee.am.factor.api;
 
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 
 /**
  * @author Ashraful Hasan (ashraful.hasan at graviteesource.com)

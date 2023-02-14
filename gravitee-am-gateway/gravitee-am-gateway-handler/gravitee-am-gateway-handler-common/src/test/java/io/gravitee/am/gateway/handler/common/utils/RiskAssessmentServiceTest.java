@@ -16,6 +16,7 @@
 
 package io.gravitee.am.gateway.handler.common.utils;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.gateway.handler.common.auth.AuthenticationDetails;
 import io.gravitee.am.identityprovider.api.Authentication;
@@ -26,16 +27,20 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserActivity;
 import io.gravitee.am.service.DeviceService;
 import io.gravitee.am.service.UserActivityService;
+import io.gravitee.risk.assessment.api.assessment.AssessmentMessageResult;
+import io.gravitee.risk.assessment.api.assessment.AssessmentResult;
 import io.gravitee.risk.assessment.api.assessment.settings.AssessmentSettings;
 import io.gravitee.risk.assessment.api.assessment.settings.RiskAssessmentSettings;
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
-import io.vertx.reactivex.core.Vertx;
-import io.vertx.reactivex.core.eventbus.EventBus;
-import io.vertx.reactivex.core.eventbus.Message;
+import io.vertx.rxjava3.core.Vertx;
+import io.vertx.rxjava3.core.eventbus.EventBus;
+import io.vertx.rxjava3.core.eventbus.Message;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -44,8 +49,9 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Date;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
-import static io.gravitee.risk.assessment.api.assessment.Assessment.LOW;
+import static io.gravitee.risk.assessment.api.assessment.Assessment.*;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.any;
@@ -65,6 +71,7 @@ import static org.mockito.Mockito.when;
  */
 public class RiskAssessmentServiceTest {
 
+    private final ObjectMapper objectMapper = new ObjectMapper();
     @Mock
     private Vertx vertx;
     @Mock
@@ -73,6 +80,9 @@ public class RiskAssessmentServiceTest {
     private UserActivityService userActivityService;
     @Mock
     private EventBus eventBus;
+
+    @Mock
+    private Message<String> message;
 
     private RiskAssessmentService riskAssessmentService;
 
@@ -83,43 +93,59 @@ public class RiskAssessmentServiceTest {
 
     @Test
     public void must_test_not_computeRiskAssessment_disabled() {
-        riskAssessmentService = new RiskAssessmentService(deviceService, userActivityService, new ObjectMapper(), new RiskAssessmentSettings(), vertx);
-        var testObserver = riskAssessmentService.computeRiskAssessment(authDetailsStub(), Assert::assertNotNull).test();
-        testObserver.awaitTerminalEvent();
+        riskAssessmentService = new RiskAssessmentService(deviceService, userActivityService, objectMapper, new RiskAssessmentSettings(), vertx);
+        var testObserver = riskAssessmentService.computeRiskAssessment(authDetailsStub()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
         verify(eventBus, times(0)).request(
-                any(), anyString(), (Handler<AsyncResult<Message<Object>>>) Mockito.any());
+                any(), anyString());
+
+        verify(eventBus, times(0)).request(
+                any(), anyString());
     }
 
     @Test
-    public void must_test_not_computeRiskAssessment_enabled_but_not_other_assessment() {
+    public void must_test_not_computeRiskAssessment_enabled_but_not_other_assessment() throws JsonProcessingException {
         var settings = new RiskAssessmentSettings()
                 .setEnabled(true)
                 .setDeviceAssessment(new AssessmentSettings().setEnabled(false))
                 .setIpReputationAssessment(new AssessmentSettings().setEnabled(false))
                 .setGeoVelocityAssessment(new AssessmentSettings().setEnabled(false));
 
-        riskAssessmentService = new RiskAssessmentService(deviceService, userActivityService, new ObjectMapper(), settings, vertx);
-        var testObserver = riskAssessmentService.computeRiskAssessment(authDetailsStub(), Assert::assertNotNull).test();
-        testObserver.awaitTerminalEvent();
+        when(message.body()).thenReturn(objectMapper.writeValueAsString(new AssessmentMessageResult()));
+        when(eventBus.<String>rxRequest(anyString(), any())).thenReturn(Single.just(message));
+        riskAssessmentService = new RiskAssessmentService(deviceService, userActivityService, objectMapper, settings, vertx);
+        var testObserver = riskAssessmentService.computeRiskAssessment(authDetailsStub()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(eventBus, times(1)).request(
-                any(), anyString(), (Handler<AsyncResult<Message<Object>>>) Mockito.any());
+        verify(eventBus, times(1)).rxRequest(
+                any(), anyString());
+
+        verify(eventBus, times(1)).rxRequest(
+                any(), anyString());
     }
 
     @Test
-    public void must_test_computeRiskAssessment() {
+    public void must_test_computeRiskAssessment() throws JsonProcessingException {
         var settings = new RiskAssessmentSettings()
                 .setEnabled(true)
                 .setDeviceAssessment(new AssessmentSettings().setEnabled(true).setThresholds(Map.of(LOW, 1.0D)))
                 .setIpReputationAssessment(new AssessmentSettings().setEnabled(true).setThresholds(Map.of(LOW, 30D)))
                 .setGeoVelocityAssessment(new AssessmentSettings().setEnabled(true).setThresholds(Map.of(LOW, 5.0D / 18D)));
 
-        riskAssessmentService = new RiskAssessmentService(deviceService, userActivityService, new ObjectMapper(), settings, vertx);
+        when(message.body()).thenReturn(objectMapper.writeValueAsString(
+                new AssessmentMessageResult()
+                        .setDevices(new AssessmentResult<Double>().setResult(58d).setAssessment(MEDIUM))
+                        .setGeoVelocity(new AssessmentResult<Double>().setResult(1000d).setAssessment(LOW))
+                        .setIpReputation(new AssessmentResult<Double>().setResult(60d).setAssessment(HIGH))
+        ));
+        when(eventBus.<String>rxRequest(anyString(), any())).thenReturn(Single.just(message));
+
+        riskAssessmentService = new RiskAssessmentService(deviceService, userActivityService, objectMapper, settings, vertx);
 
         //device
         doReturn(Flowable.just(new Device().setDeviceId("1"), new Device().setDeviceId("2")))
@@ -130,13 +156,16 @@ public class RiskAssessmentServiceTest {
                 new UserActivity().setLatitude(50.34D).setLongitude(3.025D).setCreatedAt(new Date())
         )).when(userActivityService).findByDomainAndTypeAndUserAndLimit(anyString(), any(), anyString(), eq(2));
 
-        var testObserver = riskAssessmentService.computeRiskAssessment(authDetailsStub(), Assert::assertNotNull).test();
-        testObserver.awaitTerminalEvent();
+        var testObserver = riskAssessmentService.computeRiskAssessment(authDetailsStub()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(eventBus, times(1)).request(
-                any(), anyString(), (Handler<AsyncResult<Message<Object>>>) Mockito.any());
+        verify(eventBus, times(1)).rxRequest(
+                any(), anyString());
+
+        verify(eventBus, times(1)).rxRequest(
+                any(), anyString());
     }
 
     private AuthenticationDetails authDetailsStub() {

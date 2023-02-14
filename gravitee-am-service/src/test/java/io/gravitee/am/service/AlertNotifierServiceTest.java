@@ -26,11 +26,11 @@ import io.gravitee.am.service.impl.AlertNotifierServiceImpl;
 import io.gravitee.am.service.model.NewAlertNotifier;
 import io.gravitee.am.service.model.PatchAlertNotifier;
 import io.gravitee.am.service.reporter.builder.management.AlertNotifierAuditBuilder;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
-import io.reactivex.subscribers.TestSubscriber;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -39,6 +39,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Date;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -83,7 +84,7 @@ public class AlertNotifierServiceTest {
         when(alertNotifierRepository.findById(ALERT_NOTIFIER_ID)).thenReturn(Maybe.just(alertNotifier));
         final TestObserver<AlertNotifier> obs = cut.getById(ReferenceType.DOMAIN, DOMAIN_ID, ALERT_NOTIFIER_ID).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValue(alertNotifier);
     }
 
@@ -92,7 +93,7 @@ public class AlertNotifierServiceTest {
         when(alertNotifierRepository.findById(ALERT_NOTIFIER_ID)).thenReturn(Maybe.empty());
         final TestObserver<AlertNotifier> obs = cut.getById(ReferenceType.DOMAIN, DOMAIN_ID, ALERT_NOTIFIER_ID).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertError(AlertNotifierNotFoundException.class);
     }
 
@@ -103,7 +104,7 @@ public class AlertNotifierServiceTest {
         when(alertNotifierRepository.findByCriteria(ReferenceType.DOMAIN, DOMAIN_ID, criteria)).thenReturn(Flowable.just(alertNotifier));
         final TestSubscriber<AlertNotifier> obs = cut.findByDomainAndCriteria(DOMAIN_ID, criteria).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertComplete();
         obs.assertValue(alertNotifier);
     }
@@ -115,7 +116,7 @@ public class AlertNotifierServiceTest {
         when(alertNotifierRepository.findByCriteria(ReferenceType.DOMAIN, DOMAIN_ID, criteria)).thenReturn(Flowable.just(alertNotifier));
         final TestSubscriber<AlertNotifier> obs = cut.findByReferenceAndCriteria(ReferenceType.DOMAIN, DOMAIN_ID, criteria).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertComplete();
         obs.assertValue(alertNotifier);
     }
@@ -135,7 +136,7 @@ public class AlertNotifierServiceTest {
 
         final TestObserver<AlertNotifier> obs = cut.create(ReferenceType.DOMAIN, DOMAIN_ID, newAlertNotifier, new DefaultUser(USERNAME)).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertComplete();
         obs.assertValue(alertNotifier -> {
             assertNotNull(alertNotifier.getId());
@@ -175,7 +176,7 @@ public class AlertNotifierServiceTest {
 
         final TestObserver<AlertNotifier> obs = cut.update(ReferenceType.DOMAIN, DOMAIN_ID, ALERT_NOTIFIER_ID, patchAlertNotifier, new DefaultUser(USERNAME)).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertComplete();
         obs.assertValue(alertNotifier -> {
             assertNotNull(alertNotifier.getId());
@@ -206,7 +207,7 @@ public class AlertNotifierServiceTest {
 
         final TestObserver<AlertNotifier> obs = cut.update(ReferenceType.DOMAIN, DOMAIN_ID, ALERT_NOTIFIER_ID, patchAlertNotifier, new DefaultUser(USERNAME)).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertError(AlertNotifierNotFoundException.class);
 
         verifyZeroInteractions(auditService, eventService);

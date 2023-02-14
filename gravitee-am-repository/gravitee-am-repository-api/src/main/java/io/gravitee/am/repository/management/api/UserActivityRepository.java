@@ -20,8 +20,8 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.UserActivity;
 import io.gravitee.am.model.UserActivity.Type;
 import io.gravitee.am.repository.common.CrudRepository;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)

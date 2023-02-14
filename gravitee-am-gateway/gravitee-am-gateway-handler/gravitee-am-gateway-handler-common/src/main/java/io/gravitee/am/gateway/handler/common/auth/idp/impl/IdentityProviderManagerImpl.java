@@ -32,8 +32,8 @@ import io.gravitee.am.repository.management.api.IdentityProviderRepository;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -148,7 +148,6 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
         logger.info("Domain {} has received {} identity provider event for {}", domain.getName(), eventType, identityProviderId);
         identityProviderRepository.findById(identityProviderId)
                 .flatMapSingle(this::updateAuthenticationProvider)
-                .toMaybe()
                 .subscribe(
                         identityProvider -> {
                             logger.info("Identity provider {} {}d for domain {}", identityProviderId, eventType, domain.getName());

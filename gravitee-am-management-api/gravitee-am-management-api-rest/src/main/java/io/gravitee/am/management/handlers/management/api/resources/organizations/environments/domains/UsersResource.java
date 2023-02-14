@@ -27,9 +27,9 @@ import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Maybe;
-import io.reactivex.Observable;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.Single;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -99,8 +99,8 @@ public class UsersResource extends AbstractUsersResource {
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_USER, Acl.LIST)
                 .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(__ -> searchUsers(ReferenceType.DOMAIN, domain, query, filter, page, size))
+                        .switchIfEmpty(Single.error(new DomainNotFoundException(domain)))
+                        .flatMap(__ -> searchUsers(ReferenceType.DOMAIN, domain, query, filter, page, size))
                         .flatMap(pagedUsers ->
                                 hasAnyPermission(authenticatedUser, organizationId, environmentId, domain, Permission.DOMAIN_USER, Acl.READ)
                                         .flatMap(hasPermission -> Observable.fromIterable(pagedUsers.getData())
@@ -159,8 +159,7 @@ public class UsersResource extends AbstractUsersResource {
                             filteredUser.setSource(idP.getName());
                             return filteredUser;
                         })
-                        .defaultIfEmpty(filteredUser)
-                        .toSingle();
+                        .defaultIfEmpty(filteredUser);
             }
         } else {
             // Current user doesn't have read permission, select only few information and remove default values that could be inexact.

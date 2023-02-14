@@ -25,10 +25,10 @@ import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.CredentialCurrentlyUsedException;
 import io.gravitee.am.service.exception.CredentialNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -118,8 +118,8 @@ public class CredentialServiceImpl implements CredentialService {
     public Single<Credential> update(Credential credential) {
         LOGGER.debug("Update a credential {}", credential);
         return credentialRepository.findById(credential.getId())
-                .switchIfEmpty(Maybe.error(new CredentialNotFoundException(credential.getId())))
-                .flatMapSingle(__ -> credentialRepository.update(credential))
+                .switchIfEmpty(Single.error(new CredentialNotFoundException(credential.getId())))
+                .flatMap(__ -> credentialRepository.update(credential))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);

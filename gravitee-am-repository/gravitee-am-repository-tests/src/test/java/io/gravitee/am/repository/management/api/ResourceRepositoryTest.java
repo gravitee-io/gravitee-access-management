@@ -19,13 +19,14 @@ import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.uma.Resource;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.am.repository.exceptions.TechnicalException;
-import io.reactivex.observers.TestObserver;
-import io.reactivex.subscribers.TestSubscriber;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -49,7 +50,7 @@ public class ResourceRepositoryTest extends AbstractManagementTest {
 
         // fetch resource_set
         TestObserver<Resource> testObserver = repository.findById(rsCreated.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -86,7 +87,7 @@ public class ResourceRepositoryTest extends AbstractManagementTest {
 
         // fetch resource_set
         TestObserver<Resource> testObserver = repository.update(toUpdate).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -101,7 +102,7 @@ public class ResourceRepositoryTest extends AbstractManagementTest {
 
         // fetch resource_set
         TestObserver<Void> testObserver = repository.delete(rsCreated.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -121,7 +122,7 @@ public class ResourceRepositoryTest extends AbstractManagementTest {
 
         // fetch scope
         TestObserver<Resource> testObserver = repository.findByDomainAndClientAndUserAndResource(DOMAIN_ID, CLIENT_ID, USER_ID, rsCreated.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -139,7 +140,7 @@ public class ResourceRepositoryTest extends AbstractManagementTest {
 
         // fetch scope
         TestObserver<List<Resource>> testObserver = repository.findByDomainAndClientAndUser(DOMAIN_ID, CLIENT_ID, USER_ID).toList().test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -158,7 +159,7 @@ public class ResourceRepositoryTest extends AbstractManagementTest {
 
         // fetch applications
         TestObserver<Page<Resource>> testObserver = repository.findByDomain(DOMAIN_ID, 0, Integer.MAX_VALUE).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -175,7 +176,7 @@ public class ResourceRepositoryTest extends AbstractManagementTest {
         repository.create(resource2).blockingGet();
 
         TestObserver<Page<Resource>> testObserver = repository.findByDomain(DOMAIN_ID, 0, 1).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         Set<String> readIds = new HashSet<>();
         testObserver.assertComplete();
@@ -185,7 +186,7 @@ public class ResourceRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(resources -> readIds.add(resources.getData().iterator().next().getId()));
 
         testObserver = repository.findByDomain(DOMAIN_ID, 1, 1).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -207,7 +208,7 @@ public class ResourceRepositoryTest extends AbstractManagementTest {
 
         // fetch applications
         TestSubscriber<Resource> testSubscriber = repository.findByResources(Arrays.asList(rsCreated1.getId(),rsCreated2.getId(),"notMatching")).test();
-        testSubscriber.awaitTerminalEvent();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
 
         testSubscriber.assertComplete();
         testSubscriber.assertNoErrors();
@@ -233,7 +234,7 @@ public class ResourceRepositoryTest extends AbstractManagementTest {
         TestSubscriber<Resource> testSubscriber = repository.findByDomainAndClientAndResources(DOMAIN_ID, CLIENT_ID, Arrays.asList(
                 rsCreated1.getId(),rsCreated2.getId(),rsCreated3.getId(),rsCreated4.getId(),rsCreated5.getId(),"unknown"
         )).test();
-        testSubscriber.awaitTerminalEvent();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
 
         testSubscriber.assertComplete();
         testSubscriber.assertNoErrors();

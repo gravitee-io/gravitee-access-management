@@ -27,12 +27,12 @@ import io.gravitee.am.gateway.handler.oidc.service.flow.Flow;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Completable;
+import io.reactivex.rxjava3.core.Completable;
 import io.vertx.core.Handler;
-import io.vertx.reactivex.core.MultiMap;
-import io.vertx.reactivex.ext.auth.User;
-import io.vertx.reactivex.ext.web.RoutingContext;
-import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
+import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.rxjava3.ext.auth.User;
+import io.vertx.rxjava3.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -121,18 +121,19 @@ public class AuthorizationEndpoint implements Handler<RoutingContext> {
             context.put(FORM_PARAMETERS, queryParams.remove(ACTION_KEY));
 
             // Render Authorization form_post form.
-            engine.render(context.data(), "login_sso_post", res -> {
-                if (res.succeeded()) {
-                    context.response()
-                            .putHeader(HttpHeaders.CACHE_CONTROL, "no-cache, no-store")
-                            .putHeader(HttpHeaders.PRAGMA, "no-cache")
-                            .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML)
-                            .end(res.result());
-                } else {
-                    logger.error("Unable to render Authorization form_post page", res.cause());
-                    context.fail(res.cause());
-                }
-            });
+            engine.render(context.data(), "login_sso_post")
+                    .doOnSuccess(buffer -> {
+                        context.response()
+                                .putHeader(HttpHeaders.CACHE_CONTROL, "no-cache, no-store")
+                                .putHeader(HttpHeaders.PRAGMA, "no-cache")
+                                .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML)
+                                .end(buffer);
+                    })
+                    .doOnError(throwable -> {
+                        logger.error("Unable to render Authorization form_post page", throwable);
+                        context.fail(throwable.getCause());
+                    })
+                    .subscribe();
         } catch (Exception e) {
             logger.error("Unable to redirect to client redirect_uri", e);
             context.fail(new ServerErrorException());

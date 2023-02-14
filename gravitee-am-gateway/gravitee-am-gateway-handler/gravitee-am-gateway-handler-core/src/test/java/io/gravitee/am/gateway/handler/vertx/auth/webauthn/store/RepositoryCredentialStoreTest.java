@@ -20,7 +20,7 @@ import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.service.CredentialService;
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 import io.vertx.ext.auth.webauthn.Authenticator;
 import org.junit.Assert;
 import org.junit.Test;
@@ -62,8 +62,8 @@ public class RepositoryCredentialStoreTest {
         when(credentialService.findByUsername(ReferenceType.DOMAIN, domain.getId(), query.getUserName())).thenReturn(Flowable.empty());
         when(jwtBuilder.sign(any())).thenReturn("part1.part2.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c");
 
-        List<Authenticator> authenticators = repositoryCredentialStore.fetch(query).result();
-        List<Authenticator> authenticators2 = repositoryCredentialStore.fetch(query).result();
+        List<Authenticator> authenticators = repositoryCredentialStore.fetch(query).blockingGet();
+        List<Authenticator> authenticators2 = repositoryCredentialStore.fetch(query).blockingGet();
 
         Assert.assertNotNull(authenticators);
         Assert.assertNotNull(authenticators2);
@@ -86,14 +86,14 @@ public class RepositoryCredentialStoreTest {
         when(credentialService.findByUsername(ReferenceType.DOMAIN, domain.getId(), query2.getUserName())).thenReturn(Flowable.empty());
         when(jwtBuilder.sign(any())).thenReturn("part1.part2.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c").thenReturn("part1.part2.-sVkXqTOhFeJwQXyH3WhuNJfAfnRkVM6llEu6k46iqY");
 
-        List<Authenticator> authenticators = repositoryCredentialStore.fetch(query).result();
-        List<Authenticator> authenticators2 = repositoryCredentialStore.fetch(query2).result();
+        List<Authenticator> authenticators = repositoryCredentialStore.fetch(query).blockingGet();
+        List<Authenticator> authenticators2 = repositoryCredentialStore.fetch(query2).blockingGet();
 
         Assert.assertNotNull(authenticators);
         Assert.assertNotNull(authenticators2);
-        Assert.assertTrue(!authenticators.isEmpty());
-        Assert.assertTrue(!authenticators2.isEmpty());
-        Assert.assertTrue(!authenticators.get(0).getCredID().equals(authenticators2.get(0).getCredID()));
+        Assert.assertFalse(authenticators.isEmpty());
+        Assert.assertFalse(authenticators2.isEmpty());
+        Assert.assertFalse(authenticators.get(0).getCredID().equals(authenticators2.get(0).getCredID()));
         verify(jwtBuilder, times(4)).sign(any());
     }
 
@@ -108,12 +108,12 @@ public class RepositoryCredentialStoreTest {
 
         when(domain.getId()).thenReturn("domain-id");
         when(credentialService.findByUsername(ReferenceType.DOMAIN, domain.getId(), query.getUserName())).thenReturn(Flowable.just(credential));
-        List<Authenticator> authenticators = repositoryCredentialStore.fetch(query).result();
+        List<Authenticator> authenticators = repositoryCredentialStore.fetch(query).blockingGet();
 
         Assert.assertNotNull(authenticators);
-        Assert.assertTrue(authenticators.size() == 1);
-        Assert.assertTrue(authenticators.get(0).getCredID().equals("credID"));
-        Assert.assertTrue(authenticators.get(0).getUserName().equals(query.getUserName()));
+        Assert.assertEquals(1, authenticators.size());
+        Assert.assertEquals("credID", authenticators.get(0).getCredID());
+        Assert.assertEquals(authenticators.get(0).getUserName(), query.getUserName());
         verify(jwtBuilder, never()).sign(any());
     }
 }

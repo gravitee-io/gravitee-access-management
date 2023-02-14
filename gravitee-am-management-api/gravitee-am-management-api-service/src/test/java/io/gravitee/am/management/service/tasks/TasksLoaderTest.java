@@ -20,7 +20,7 @@ import io.gravitee.am.model.SystemTask;
 import io.gravitee.am.repository.management.api.SystemTaskRepository;
 import io.gravitee.am.service.tasks.AssignSystemCertificate;
 import io.gravitee.am.service.tasks.TaskType;
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;

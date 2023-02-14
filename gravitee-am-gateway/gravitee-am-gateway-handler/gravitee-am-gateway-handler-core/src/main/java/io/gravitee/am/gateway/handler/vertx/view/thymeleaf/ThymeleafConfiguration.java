@@ -16,8 +16,8 @@
 package io.gravitee.am.gateway.handler.vertx.view.thymeleaf;
 
 import io.gravitee.am.service.i18n.GraviteeMessageResolver;
-import io.vertx.reactivex.core.Vertx;
-import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
+import io.vertx.rxjava3.core.Vertx;
+import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;

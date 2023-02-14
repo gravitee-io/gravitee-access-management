@@ -19,8 +19,8 @@ import com.nimbusds.jwt.JWT;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDProviderMetadata;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.oauth2.model.PushedAuthorizationRequest;
-import io.reactivex.Completable;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Single;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)

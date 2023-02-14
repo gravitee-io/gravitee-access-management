@@ -19,10 +19,10 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.service.model.NewReporter;
 import io.gravitee.am.service.model.UpdateReporter;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

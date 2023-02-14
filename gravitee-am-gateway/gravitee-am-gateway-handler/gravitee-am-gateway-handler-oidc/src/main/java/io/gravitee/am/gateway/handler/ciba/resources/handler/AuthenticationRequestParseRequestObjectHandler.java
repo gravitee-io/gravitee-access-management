@@ -27,10 +27,10 @@ import io.gravitee.am.gateway.handler.oidc.service.request.RequestObjectService;
 import io.gravitee.am.jwt.DefaultJWTParser;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Handler;
-import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 
 import java.text.ParseException;
 import java.time.Instant;

@@ -17,8 +17,8 @@ package io.gravitee.am.service;
 
 import io.gravitee.am.model.Application;
 import io.gravitee.am.service.model.TotalToken;
-import io.reactivex.Completable;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Single;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

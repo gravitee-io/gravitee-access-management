@@ -28,11 +28,13 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Email;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
+import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.EmailService;
 import io.gravitee.am.service.i18n.FileSystemDictionaryProvider;
-import io.reactivex.Maybe;
+import io.reactivex.rxjava3.core.Maybe;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -74,6 +76,9 @@ public class EmailServiceTest {
     @Mock
     private DomainService domainService;
 
+    @Mock
+    private AuditService auditService;
+
     @Before
     public void init() throws Exception {
         ReflectionTestUtils.setField(cut, "enabled", true);
@@ -104,7 +109,7 @@ public class EmailServiceTest {
         user.setFirstName("John");
         user.setLastName("Doe");
         user.setPreferredLanguage("fr");
-        cut.send(new Domain(), null, registrationTpl, user).blockingGet();
+        cut.send(new Domain(), null, registrationTpl, user).blockingAwait();
 
         verify(emailService).send(argThat(msg -> msg.getSubject().equals("Nouvel enregistrement d'utilisateur") &&
                 msg.getContent().contains("Bonjour John Doe,")));
@@ -123,7 +128,7 @@ public class EmailServiceTest {
         user.setFirstName("John");
         user.setLastName("Doe");
         user.setPreferredLanguage("en");
-        cut.send(new Domain(), null, registrationTpl, user).blockingGet();
+        cut.send(new Domain(), null, registrationTpl, user).blockingAwait();
 
         verify(emailService).send(argThat(msg -> msg.getSubject().equals("New user registration") &&
                 msg.getContent().contains("You have been") &&

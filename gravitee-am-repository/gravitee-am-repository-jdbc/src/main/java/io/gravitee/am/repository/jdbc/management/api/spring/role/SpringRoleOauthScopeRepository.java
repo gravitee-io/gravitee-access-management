@@ -16,10 +16,10 @@
 package io.gravitee.am.repository.jdbc.management.api.spring.role;
 
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcRole;
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.data.repository.reactive.RxJava2CrudRepository;
+import org.springframework.data.repository.reactive.RxJava3CrudRepository;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -27,7 +27,7 @@ import org.springframework.stereotype.Repository;
  * @author GraviteeSource Team
  */
 @Repository
-public interface SpringRoleOauthScopeRepository extends RxJava2CrudRepository<JdbcRole.OAuthScope, String> {
+public interface SpringRoleOauthScopeRepository extends RxJava3CrudRepository<JdbcRole.OAuthScope, String> {
     @Query("select * from role_oauth_scopes s where s.role_id = :roleId")
     Flowable<JdbcRole.OAuthScope> findAllByRole(@Param("roleId")String roleId);
 }

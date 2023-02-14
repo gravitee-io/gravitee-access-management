@@ -16,10 +16,10 @@
 package io.gravitee.am.repository.jdbc.management.api.spring;
 
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcEvent;
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.data.repository.reactive.RxJava2CrudRepository;
+import org.springframework.data.repository.reactive.RxJava3CrudRepository;
 
 import java.time.LocalDateTime;
 
@@ -27,7 +27,7 @@ import java.time.LocalDateTime;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface SpringEventRepository extends RxJava2CrudRepository<JdbcEvent, String> {
+public interface SpringEventRepository extends RxJava3CrudRepository<JdbcEvent, String> {
     @Query("select * from events e where e.updated_at >= :from and e.updated_at <= :to")
     Flowable<JdbcEvent> findByTimeFrame(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
 }

@@ -34,10 +34,10 @@ import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.model.*;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.ScopeAuditBuilder;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Observable;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -193,8 +193,8 @@ public class ScopeServiceImpl implements ScopeService {
     public Single<Scope> patch(String domain, String id, PatchScope patchScope, User principal) {
         LOGGER.debug("Patching a scope {} for domain {}", id, domain);
         return scopeRepository.findById(id)
-                .switchIfEmpty(Maybe.error(new ScopeNotFoundException(id)))
-                .flatMapSingle(oldScope -> {
+                .switchIfEmpty(Single.error(new ScopeNotFoundException(id)))
+                .flatMap(oldScope -> {
                     Scope scopeToUpdate = patchScope.patch(oldScope);
                     return update(domain, scopeToUpdate, oldScope, principal);
                 })
@@ -211,8 +211,8 @@ public class ScopeServiceImpl implements ScopeService {
     public Single<Scope> update(String domain, String id, UpdateScope updateScope, User principal) {
         LOGGER.debug("Update a scope {} for domain {}", id, domain);
         return scopeRepository.findById(id)
-                .switchIfEmpty(Maybe.error(new ScopeNotFoundException(id)))
-                .flatMapSingle(oldScope -> {
+                .switchIfEmpty(Single.error(new ScopeNotFoundException(id)))
+                .flatMap(oldScope -> {
                     Scope scopeToUpdate = new Scope(oldScope);
                     scopeToUpdate.setName(updateScope.getName());
                     scopeToUpdate.setDescription(updateScope.getDescription());
@@ -254,8 +254,8 @@ public class ScopeServiceImpl implements ScopeService {
     public Single<Scope> update(String domain, String id, UpdateSystemScope updateScope) {
         LOGGER.debug("Update a system scope {} for domain {}", id, domain);
         return scopeRepository.findById(id)
-                .switchIfEmpty(Maybe.error(new ScopeNotFoundException(id)))
-                .flatMapSingle(scope -> {
+                .switchIfEmpty(Single.error(new ScopeNotFoundException(id)))
+                .flatMap(scope -> {
                     scope.setName(updateScope.getName());
                     scope.setDescription(updateScope.getDescription());
                     scope.setUpdatedAt(new Date());
@@ -309,7 +309,7 @@ public class ScopeServiceImpl implements ScopeService {
                                         }).toList())
                                 .andThen(
                                         // 2_ Remove scopes from application
-                                        applicationService.findByDomain(scope.getDomain())
+                                        Completable.fromSingle(applicationService.findByDomain(scope.getDomain())
                                                 .flatMapObservable(applications -> Observable.fromIterable(applications.stream()
                                                         .filter(application -> {
                                                             if (application.getSettings() == null) {
@@ -328,7 +328,7 @@ public class ScopeServiceImpl implements ScopeService {
                                                     application.getSettings().getOauth().setScopeSettings(cleanScopes);
                                                     // Then update
                                                     return applicationService.update(application);
-                                                }).toList()).toCompletable()
+                                                }).toList()))
                                 // 3_ Remove scopes from scope_approvals
                                 .andThen(scopeApprovalRepository.deleteByDomainAndScopeKey(scope.getDomain(), scope.getKey()))
                                 // 4_ Delete scope

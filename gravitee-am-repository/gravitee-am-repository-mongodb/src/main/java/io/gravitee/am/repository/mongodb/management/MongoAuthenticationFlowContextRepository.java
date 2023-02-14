@@ -21,7 +21,7 @@ import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.model.AuthenticationFlowContext;
 import io.gravitee.am.repository.management.api.AuthenticationFlowContextRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.AuthenticationFlowContextMongo;
-import io.reactivex.*;
+import io.reactivex.rxjava3.core.*;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 

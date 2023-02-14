@@ -40,10 +40,10 @@ import io.gravitee.am.service.model.NewFactor;
 import io.gravitee.am.service.model.UpdateFactor;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.FactorAuditBuilder;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;
@@ -171,8 +171,8 @@ public class FactorServiceImpl implements FactorService {
         LOGGER.debug("Update an factor {} for domain {}", id, domain);
 
         return factorRepository.findById(id)
-                .switchIfEmpty(Maybe.error(new FactorNotFoundException(id)))
-                .flatMapSingle(oldFactor -> {
+                .switchIfEmpty(Single.error(new FactorNotFoundException(id)))
+                .flatMap(oldFactor -> {
                     Factor factorToUpdate = new Factor(oldFactor);
                     factorToUpdate.setName(updateFactor.getName());
                     factorToUpdate.setConfiguration(updateFactor.getConfiguration());

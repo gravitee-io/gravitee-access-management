@@ -21,8 +21,8 @@ import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.model.NewSystemScope;
 import io.gravitee.am.service.model.UpdateSystemScope;
-import io.reactivex.Observable;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -72,7 +72,7 @@ public class OpenIDScopeUpgrader implements Upgrader, Ordered {
         return scopeService.findByDomainAndKey(domain, systemScope.getKey())
                 .map(scope -> Optional.of(scope))
                 .defaultIfEmpty(Optional.empty())
-                .flatMapSingle(optScope -> {
+                .flatMap(optScope -> {
                     if (!optScope.isPresent()) {
                         logger.info("Create a new system scope key[{}] for domain[{}]", systemScope.getKey(), domain);
                         NewSystemScope scope = new NewSystemScope();

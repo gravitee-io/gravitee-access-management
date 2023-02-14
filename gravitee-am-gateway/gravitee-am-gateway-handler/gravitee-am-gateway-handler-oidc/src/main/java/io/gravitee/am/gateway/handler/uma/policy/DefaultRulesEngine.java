@@ -20,7 +20,7 @@ import io.gravitee.am.gateway.policy.PolicyChainException;
 import io.gravitee.am.gateway.policy.PolicyChainProcessorFactory;
 import io.gravitee.am.plugins.policy.core.PolicyPluginManager;
 import io.gravitee.gateway.api.ExecutionContext;
-import io.reactivex.Completable;
+import io.reactivex.rxjava3.core.Completable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -20,8 +20,8 @@ import io.gravitee.am.model.*;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewDomain;
 import io.gravitee.common.http.HttpStatusCode;
-import io.reactivex.Flowable;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Single;
 import org.junit.Test;
 
 import javax.ws.rs.client.Entity;

@@ -22,7 +22,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.assertion.ClientAssertionSe
 import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.model.Domain;
 import io.vertx.core.Handler;
-import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 
 import java.util.ArrayList;
 import java.util.List;

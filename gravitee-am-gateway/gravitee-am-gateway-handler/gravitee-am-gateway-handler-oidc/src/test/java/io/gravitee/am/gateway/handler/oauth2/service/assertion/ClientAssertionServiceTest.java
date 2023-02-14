@@ -38,8 +38,8 @@ import io.gravitee.am.model.jose.JWK;
 import io.gravitee.am.model.jose.RSAKey;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.JWKSet;
-import io.reactivex.Maybe;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -59,6 +59,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Matchers.any;
@@ -361,7 +362,7 @@ public class ClientAssertionServiceTest {
 
         when(domain.usePlainFapiProfile()).thenReturn(true);
         TestObserver testObserver = clientAssertionService.assertClient(JWT_BEARER_TYPE,assertion,basePath).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(InvalidClientException.class);
     }
 
@@ -480,7 +481,7 @@ public class ClientAssertionServiceTest {
         when(domain.usePlainFapiProfile()).thenReturn(true);
 
         TestObserver testObserver = clientAssertionService.assertClient(JWT_BEARER_TYPE,assertion,basePath).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(InvalidClientException.class);
     }
 

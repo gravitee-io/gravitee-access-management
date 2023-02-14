@@ -30,11 +30,11 @@ import io.gravitee.am.service.impl.EntrypointServiceImpl;
 import io.gravitee.am.service.model.NewEntrypoint;
 import io.gravitee.am.service.model.UpdateEntrypoint;
 import io.gravitee.am.service.validators.virtualhost.VirtualHostValidator;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
-import io.reactivex.subscribers.TestSubscriber;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -44,6 +44,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -88,7 +89,7 @@ public class EntrypointServiceTest {
 
         TestObserver<Entrypoint> obs = cut.findById(ENTRYPOINT_ID, ORGANIZATION_ID).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertComplete();
         obs.assertValue(entrypoint);
     }
@@ -100,7 +101,7 @@ public class EntrypointServiceTest {
 
         TestObserver<Entrypoint> obs = cut.findById(ENTRYPOINT_ID, ORGANIZATION_ID).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertError(EntrypointNotFoundException.class);
     }
 
@@ -111,7 +112,7 @@ public class EntrypointServiceTest {
 
         TestObserver<Entrypoint> obs = cut.findById(ENTRYPOINT_ID, ORGANIZATION_ID).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertError(TechnicalException.class);
     }
 
@@ -127,7 +128,7 @@ public class EntrypointServiceTest {
 
         TestSubscriber<Entrypoint> obs = cut.createDefaults(organization).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValue(entrypoint -> entrypoint.getId() != null
                 && entrypoint.isDefaultEntrypoint() && entrypoint.getOrganizationId().equals(ORGANIZATION_ID));
 
@@ -157,7 +158,7 @@ public class EntrypointServiceTest {
 
         TestSubscriber<Entrypoint> obs = cut.createDefaults(organization).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValueAt(0, entrypoint -> entrypoint.getId() != null
                 && entrypoint.isDefaultEntrypoint() && entrypoint.getOrganizationId().equals(ORGANIZATION_ID));
         obs.assertValueAt(1, entrypoint -> entrypoint.getId() != null
@@ -194,7 +195,7 @@ public class EntrypointServiceTest {
         doReturn(true).when(virtualHostValidator).isValidDomainOrSubDomain("auth.company.com", null);
         TestObserver<Entrypoint> obs = cut.create(ORGANIZATION_ID, newEntrypoint, user).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValue(entrypoint -> entrypoint.getId() != null
                 && !entrypoint.isDefaultEntrypoint()
                 && entrypoint.getOrganizationId().equals(ORGANIZATION_ID)
@@ -230,7 +231,7 @@ public class EntrypointServiceTest {
 
         TestObserver<Entrypoint> obs = cut.create(ORGANIZATION_ID, newEntrypoint, user).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertError(InvalidEntrypointException.class);
 
         verify(auditService, times(0)).report(any());
@@ -259,7 +260,7 @@ public class EntrypointServiceTest {
 
         TestObserver<Entrypoint> obs = cut.update(ENTRYPOINT_ID, ORGANIZATION_ID, updateEntrypoint, user).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValue(entrypoint -> entrypoint.getId() != null
                 && !entrypoint.isDefaultEntrypoint()
                 && entrypoint.getOrganizationId().equals(ORGANIZATION_ID)
@@ -301,7 +302,7 @@ public class EntrypointServiceTest {
 
         TestObserver<Entrypoint> obs = cut.update(ENTRYPOINT_ID, ORGANIZATION_ID, updateEntrypoint, user).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertError(InvalidEntrypointException.class);
 
         verify(auditService, times(0)).report(any());
@@ -317,7 +318,7 @@ public class EntrypointServiceTest {
 
         TestObserver<Entrypoint> obs = cut.update(ENTRYPOINT_ID, ORGANIZATION_ID, new UpdateEntrypoint(), user).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertError(EntrypointNotFoundException.class);
 
         verify(auditService, times(0)).report(any());
@@ -350,7 +351,7 @@ public class EntrypointServiceTest {
 
         TestObserver<Entrypoint> obs = cut.update(ENTRYPOINT_ID, ORGANIZATION_ID, updateEntrypoint, user).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValue(entrypoint -> entrypoint.getId() != null
                 && !entrypoint.isDefaultEntrypoint()
                 && entrypoint.getOrganizationId().equals(ORGANIZATION_ID)
@@ -399,19 +400,19 @@ public class EntrypointServiceTest {
 
         updateEntrypoint.setName("updated");
         obs = cut.update(ENTRYPOINT_ID, ORGANIZATION_ID, updateEntrypoint, user).test();
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertError(InvalidEntrypointException.class);
 
         updateEntrypoint.setName(existingEntrypoint.getName());
         updateEntrypoint.setDescription("updated");
         obs = cut.update(ENTRYPOINT_ID, ORGANIZATION_ID, updateEntrypoint, user).test();
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertError(InvalidEntrypointException.class);
 
         updateEntrypoint.setDescription(existingEntrypoint.getDescription());
         updateEntrypoint.setTags(Arrays.asList("updated"));
         obs = cut.update(ENTRYPOINT_ID, ORGANIZATION_ID, updateEntrypoint, user).test();
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertError(InvalidEntrypointException.class);
 
         verify(auditService, times(0)).report(any());
@@ -432,7 +433,7 @@ public class EntrypointServiceTest {
 
         TestObserver<Void> obs = cut.delete(ENTRYPOINT_ID, ORGANIZATION_ID, user).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertComplete();
 
         verify(auditService, times(1)).report(argThat(builder -> {
@@ -457,7 +458,7 @@ public class EntrypointServiceTest {
 
         TestObserver<Void> obs = cut.delete(ENTRYPOINT_ID, ORGANIZATION_ID, user).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertError(EntrypointNotFoundException.class);
 
         verify(auditService, times(0)).report(any());

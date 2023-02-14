@@ -16,10 +16,10 @@
 package io.gravitee.am.repository.jdbc.oauth2.api.spring;
 
 import io.gravitee.am.repository.jdbc.oauth2.api.model.JdbcRefreshToken;
-import io.reactivex.Maybe;
+import io.reactivex.rxjava3.core.Maybe;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.data.repository.reactive.RxJava2CrudRepository;
+import org.springframework.data.repository.reactive.RxJava3CrudRepository;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -29,7 +29,7 @@ import java.time.LocalDateTime;
  * @author GraviteeSource Team
  */
 @Repository
-public interface SpringRefreshTokenRepository extends RxJava2CrudRepository<JdbcRefreshToken, String> {
+public interface SpringRefreshTokenRepository extends RxJava3CrudRepository<JdbcRefreshToken, String> {
     @Query("select * from refresh_tokens a where a.token = :token and (a.expire_at > :now or a.expire_at is null)")
     Maybe<JdbcRefreshToken> findByToken(@Param("token") String token, @Param("now") LocalDateTime now);
 }

@@ -38,9 +38,9 @@ import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.repository.oauth2.api.PushedAuthorizationRequestRepository;
 import io.gravitee.am.repository.oauth2.model.PushedAuthorizationRequest;
 import io.gravitee.common.util.LinkedMultiValueMap;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -50,6 +50,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.text.ParseException;
 import java.time.Instant;
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -93,7 +94,7 @@ public class PushedAuthorizationRequestServiceTest {
 
         final TestObserver<PushedAuthorizationRequestResponse> observer = cut.registerParameters(par, client).test();
 
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(InvalidRequestException.class);
         verify(repository, never()).create(any());
     }
@@ -116,7 +117,7 @@ public class PushedAuthorizationRequestServiceTest {
 
         final TestObserver<PushedAuthorizationRequestResponse> observer = cut.registerParameters(par, client).test();
 
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertNoErrors();
         observer.assertValue(parr -> parr.getExp() > 0 && parr.getRequestUri().equals(PushedAuthorizationRequestService.PAR_URN_PREFIX+par.getId()));
 
@@ -138,7 +139,7 @@ public class PushedAuthorizationRequestServiceTest {
 
         final TestObserver<PushedAuthorizationRequestResponse> observer = cut.registerParameters(par, client).test();
 
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertFailure(InvalidRequestException.class);
 
         verify(repository, never()).create(any());
@@ -161,7 +162,7 @@ public class PushedAuthorizationRequestServiceTest {
 
         final TestObserver<PushedAuthorizationRequestResponse> observer = cut.registerParameters(par, client).test();
 
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertFailure(InvalidRequestObjectException.class);
 
         verify(repository, never()).create(any());
@@ -187,7 +188,7 @@ public class PushedAuthorizationRequestServiceTest {
 
         final TestObserver<PushedAuthorizationRequestResponse> observer = cut.registerParameters(par, client).test();
 
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(e -> e instanceof InvalidRequestObjectException && e.getMessage().equals("Claims request and request_uri are forbidden"));
 
         verify(repository, never()).create(any());
@@ -204,7 +205,7 @@ public class PushedAuthorizationRequestServiceTest {
     public void shouldNot_ReadFromURI_InvalidURI() {
         final TestObserver<JWT> testObserver = cut.readFromURI("invalideuri", createClient(), new OpenIDProviderMetadata()).test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(InvalidRequestException.class);
 
         verify(repository, never()).findById(any());
@@ -219,7 +220,7 @@ public class PushedAuthorizationRequestServiceTest {
 
         final TestObserver<JWT> testObserver = cut.readFromURI(requestUri, createClient(), new OpenIDProviderMetadata()).test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(InvalidRequestUriException.class);
 
         verify(repository).findById(eq(ID));
@@ -237,7 +238,7 @@ public class PushedAuthorizationRequestServiceTest {
 
         final TestObserver<JWT> testObserver = cut.readFromURI(requestUri, createClient(), new OpenIDProviderMetadata()).test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(InvalidRequestUriException.class);
 
         verify(repository).findById(eq(ID));
@@ -258,7 +259,7 @@ public class PushedAuthorizationRequestServiceTest {
 
         final TestObserver<JWT> testObserver = cut.readFromURI(requestUri, createClient(), new OpenIDProviderMetadata()).test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(InvalidRequestException.class);
 
         verify(repository).findById(eq(ID));
@@ -282,7 +283,7 @@ public class PushedAuthorizationRequestServiceTest {
 
         final TestObserver<JWT> testObserver = cut.readFromURI(requestUri, createClient(), new OpenIDProviderMetadata()).test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         testObserver.assertValue(jwt ->
                 jwt.getJWTClaimsSet().getStringClaim("key1") != null &&
@@ -328,7 +329,7 @@ public class PushedAuthorizationRequestServiceTest {
 
         final TestObserver<JWT> testObserver = cut.readFromURI(requestUri, client, new OpenIDProviderMetadata()).test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         testObserver.assertValue(jwt ->
                 jwt.getJWTClaimsSet().getStringClaim(Claims.aud) != null &&

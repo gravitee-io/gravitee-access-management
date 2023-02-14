@@ -27,9 +27,9 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.gateway.api.Request;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -41,6 +41,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -88,7 +89,7 @@ public class UserAuthenticationServiceTest {
         when(userService.enhance(createdUser)).thenReturn(Single.just(createdUser));
 
         TestObserver testObserver = userAuthenticationService.connect(user).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -119,7 +120,7 @@ public class UserAuthenticationServiceTest {
         when(userService.enhance(updatedUser)).thenReturn(Single.just(updatedUser));
 
         TestObserver testObserver = userAuthenticationService.connect(user).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -152,7 +153,7 @@ public class UserAuthenticationServiceTest {
         when(userService.enhance(updatedUser)).thenReturn(Single.just(updatedUser));
 
         TestObserver testObserver = userAuthenticationService.connect(user).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -177,7 +178,7 @@ public class UserAuthenticationServiceTest {
         when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(foundUser));
 
         TestObserver testObserver = userAuthenticationService.connect(user).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNotComplete();
         testObserver.assertError(AccountLockedException.class);
@@ -204,7 +205,7 @@ public class UserAuthenticationServiceTest {
         when(userService.update(any())).thenReturn(Single.just(updatedUser));
 
         TestObserver testObserver = userAuthenticationService.connect(user).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNotComplete();
         testObserver.assertError(AccountDisabledException.class);
@@ -236,7 +237,7 @@ public class UserAuthenticationServiceTest {
         when(userService.enhance(createdUser)).thenReturn(Single.just(createdUser));
 
         TestObserver<User> testObserver = userAuthenticationService.connect(user).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -270,7 +271,7 @@ public class UserAuthenticationServiceTest {
         when(userService.enhance(updatedUser)).thenReturn(Single.just(updatedUser));
 
         TestObserver<User> testObserver = userAuthenticationService.connect(user).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -305,7 +306,7 @@ public class UserAuthenticationServiceTest {
         when(userService.enhance(updatedUser)).thenReturn(Single.just(updatedUser));
 
         TestObserver<User> testObserver = userAuthenticationService.connect(user).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -343,7 +344,7 @@ public class UserAuthenticationServiceTest {
         when(userService.enhance(updatedUser)).thenReturn(Single.just(updatedUser));
 
         TestObserver<User> testObserver = userAuthenticationService.connect(user).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -379,7 +380,7 @@ public class UserAuthenticationServiceTest {
         when(userService.enhance(updatedUser)).thenReturn(Single.just(updatedUser));
 
         TestObserver<User> testObserver = userAuthenticationService.connect(user).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -409,7 +410,7 @@ public class UserAuthenticationServiceTest {
         when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(existingUser));
 
         TestObserver<User> testObserver = userAuthenticationService.loadPreAuthenticatedUser(user).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -440,7 +441,7 @@ public class UserAuthenticationServiceTest {
         when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(existingUser));
 
         TestObserver<User> testObserver = userAuthenticationService.loadPreAuthenticatedUser(user).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNotComplete();
         testObserver.assertFailure(AccountLockedException.class);
@@ -455,7 +456,7 @@ public class UserAuthenticationServiceTest {
         when(userService.findById(any())).thenReturn(Maybe.empty());
 
         TestObserver<User> testObserver = userAuthenticationService.loadPreAuthenticatedUser("some_id", request).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNotComplete();
         testObserver.assertFailure(UserNotFoundException.class);
@@ -473,7 +474,7 @@ public class UserAuthenticationServiceTest {
         when(userService.findById(existingUser.getId())).thenReturn(Maybe.just(existingUser));
 
         TestObserver<User> testObserver = userAuthenticationService.loadPreAuthenticatedUser(existingUser.getId(), request).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNotComplete();
         testObserver.assertFailure(AccountLockedException.class);
@@ -503,7 +504,7 @@ public class UserAuthenticationServiceTest {
         when(userService.enhance(existingUser)).thenReturn(Single.just(existingUser));
 
         TestObserver<User> testObserver = userAuthenticationService.loadPreAuthenticatedUser(existingUser.getId(), request).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertValue(user1 -> user1.equals(existingUser));
@@ -538,7 +539,7 @@ public class UserAuthenticationServiceTest {
         when(userService.update(existingUser)).thenReturn(Single.just(existingUser));
 
         TestObserver<User> testObserver = userAuthenticationService.loadPreAuthenticatedUser(existingUser.getId(), request).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertValue(user1 -> user1.equals(existingUser));

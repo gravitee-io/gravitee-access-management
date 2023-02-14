@@ -48,11 +48,11 @@ import io.gravitee.am.service.exception.InvalidRedirectUriException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.utils.GrantTypeUtils;
 import io.gravitee.am.service.utils.ResponseTypeUtils;
-import io.reactivex.*;
-import io.reactivex.Observable;
+import io.reactivex.rxjava3.core.*;
+import io.reactivex.rxjava3.core.Observable;
 import io.vertx.core.json.JsonArray;
-import io.vertx.reactivex.ext.web.client.HttpResponse;
-import io.vertx.reactivex.ext.web.client.WebClient;
+import io.vertx.rxjava3.ext.web.client.HttpResponse;
+import io.vertx.rxjava3.ext.web.client.WebClient;
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 import org.slf4j.Logger;
@@ -193,8 +193,8 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
      */
     private Single<Client> createClientFromTemplate(DynamicClientRegistrationRequest request, String basePath) {
         return clientService.findById(request.getSoftwareId().get())
-                .switchIfEmpty(Maybe.error(new InvalidClientMetadataException("No template found for software_id " + request.getSoftwareId().get())))
-                .flatMapSingle(this::sanitizeTemplate)
+                .switchIfEmpty(Single.error(new InvalidClientMetadataException("No template found for software_id " + request.getSoftwareId().get())))
+                .flatMap(this::sanitizeTemplate)
                 .map(request::patch)
                 .flatMap(app -> this.applyRegistrationAccessToken(basePath, app))
                 .flatMap(clientService::create)
@@ -248,7 +248,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
                     appIdp.setPriority(-1);
                     client.setIdentityProviders(new TreeSet<>(Set.of(appIdp)));
                     return client;
-                }).defaultIfEmpty(client).toSingle();
+                }).defaultIfEmpty(client);
     }
 
     /**
@@ -617,7 +617,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
                     .rxSend()
                     .map(HttpResponse::bodyAsString)
                     .map(JsonArray::new)
-                    .onErrorResumeNext(Single.error(new InvalidClientMetadataException("Unable to parse sector_identifier_uri : " + uri.toString())))
+                    .onErrorResumeNext(exception -> Single.error(new InvalidClientMetadataException("Unable to parse sector_identifier_uri : " + uri.toString())))
                     .flatMapPublisher(Flowable::fromIterable)
                     .cast(String.class)
                     .collect(HashSet::new, (set, value) -> set.add(value))
@@ -649,8 +649,8 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
         //Check jwks_uri
         if (request.getJwksUri() != null && request.getJwksUri().isPresent()) {
             return jwkService.getKeys(request.getJwksUri().get())
-                    .switchIfEmpty(Maybe.error(new InvalidClientMetadataException("No JWK found behind jws uri...")))
-                    .flatMapSingle(jwkSet -> {
+                    .switchIfEmpty(Single.error(new InvalidClientMetadataException("No JWK found behind jws uri...")))
+                    .flatMap(jwkSet -> {
                         /* Uncomment if we expect to save it as fallback
                         if(jwkSet!=null && jwkSet.isPresent()) {
                             request.setJwks(jwkSet);

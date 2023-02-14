@@ -23,7 +23,7 @@ import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.repository.management.api.EventRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.EventMongo;
-import io.reactivex.*;
+import io.reactivex.rxjava3.core.*;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;

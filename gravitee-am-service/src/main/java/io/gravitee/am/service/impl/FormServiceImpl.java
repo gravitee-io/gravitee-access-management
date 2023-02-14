@@ -38,10 +38,10 @@ import io.gravitee.am.service.model.UpdateForm;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.FormTemplateAuditBuilder;
 import io.micrometer.core.instrument.util.IOUtils;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -195,8 +195,8 @@ public class FormServiceImpl implements FormService {
         LOGGER.debug("Update a form {} for {}} {}", id, referenceType, referenceId);
 
         return formRepository.findById(referenceType, referenceId, id)
-                .switchIfEmpty(Maybe.error(new FormNotFoundException(id)))
-                .flatMapSingle(oldForm -> {
+                .switchIfEmpty(Single.error(new FormNotFoundException(id)))
+                .flatMap(oldForm -> {
                     Form formToUpdate = new Form(oldForm);
                     formToUpdate.setEnabled(updateForm.isEnabled());
                     formToUpdate.setContent(updateForm.getContent());
@@ -279,8 +279,8 @@ public class FormServiceImpl implements FormService {
                     // create event for sync process
                     Event event = new Event(Type.FORM, new Payload(page.getId(), page.getReferenceType(), page.getReferenceId(), Action.DELETE));
 
-                    return formRepository.delete(formId)
-                            .andThen(eventService.create(event)).toCompletable()
+                    return Completable.fromSingle(formRepository.delete(formId)
+                            .andThen(eventService.create(event)))
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(FormTemplateAuditBuilder.class).principal(principal).type(EventType.FORM_TEMPLATE_DELETED).form(page)))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(FormTemplateAuditBuilder.class).principal(principal).type(EventType.FORM_TEMPLATE_DELETED).throwable(throwable)));
                 })

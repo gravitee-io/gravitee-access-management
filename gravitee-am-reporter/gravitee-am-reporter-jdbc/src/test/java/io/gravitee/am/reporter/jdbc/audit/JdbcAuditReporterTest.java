@@ -25,7 +25,7 @@ import io.gravitee.am.reporter.api.audit.model.AuditAccessPoint;
 import io.gravitee.am.reporter.api.audit.model.AuditEntity;
 import io.gravitee.am.reporter.api.audit.model.AuditOutcome;
 import io.gravitee.am.reporter.jdbc.tool.DatabaseUrlProvider;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -44,6 +44,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
@@ -119,7 +120,7 @@ public class JdbcAuditReporterTest {
                 .types(Arrays.asList("FIXED_TYPE"))
                 .build();
         TestObserver<Map<Object, Object>> test = auditReporter.aggregate(ReferenceType.DOMAIN, "testReporter_aggregationHistogram", criteria, Type.DATE_HISTO).test();
-        test.awaitTerminalEvent();
+        test.awaitDone(10, TimeUnit.SECONDS);
         test.assertNoErrors();
 
         test.assertValue(map -> map.size() == 2);
@@ -159,7 +160,7 @@ public class JdbcAuditReporterTest {
                 .field("outcome.status")
                 .build();
         TestObserver<Map<Object, Object>> test = auditReporter.aggregate(ReferenceType.DOMAIN, "testReporter_aggregationGroupBy", criteria, Type.GROUP_BY).test();
-        test.awaitTerminalEvent();
+        test.awaitDone(10, TimeUnit.SECONDS);
         test.assertNoErrors();
 
         int expectedFailure = accFailure;
@@ -194,7 +195,7 @@ public class JdbcAuditReporterTest {
 
         AuditReportableCriteria criteria = new AuditReportableCriteria.Builder().user(MY_USER).build();
         TestObserver<Map<Object, Object>> test = auditReporter.aggregate(ReferenceType.DOMAIN, "testReporter_aggregationCount", criteria, Type.COUNT).test();
-        test.awaitTerminalEvent();
+        test.awaitDone(10, TimeUnit.SECONDS);
         test.assertNoErrors();
         test.assertValue(map -> map.size() == 1);
         test.assertValue(map -> map.containsKey("data"));
@@ -222,7 +223,7 @@ public class JdbcAuditReporterTest {
 
         AuditReportableCriteria criteria = new AuditReportableCriteria.Builder().accessPointId(accessPointId).build();
         TestObserver<Map<Object, Object>> test = auditReporter.aggregate(ReferenceType.DOMAIN, "testReporter_aggregationCount", criteria, Type.COUNT).test();
-        test.awaitTerminalEvent();
+        test.awaitDone(10, TimeUnit.SECONDS);
         test.assertNoErrors();
         test.assertValue(map -> map.size() == 1);
         test.assertValue(map -> map.containsKey("data"));
@@ -252,7 +253,7 @@ public class JdbcAuditReporterTest {
 
         AuditReportableCriteria criteria = new AuditReportableCriteria.Builder().user(MY_USER).build();
         TestObserver<Page<Audit>> test = auditReporter.search(ReferenceType.DOMAIN, "testReporter_searchUser", criteria, 0, 20).test();
-        test.awaitTerminalEvent();
+        test.awaitDone(10, TimeUnit.SECONDS);
         test.assertNoErrors();
         int expectedResult = acc;
         test.assertValue(page -> page.getTotalCount() == expectedResult);
@@ -277,7 +278,7 @@ public class JdbcAuditReporterTest {
 
         AuditReportableCriteria criteria = new AuditReportableCriteria.Builder().types(types).build();
         TestObserver<Page<Audit>> test = auditReporter.search(ReferenceType.DOMAIN, "testReporter_searchUser", criteria, 0, 20).test();
-        test.awaitTerminalEvent();
+        test.awaitDone(10, TimeUnit.SECONDS);
         test.assertNoErrors();
         test.assertValue(page -> page.getTotalCount() == types.size());
         test.assertValue(page -> page.getCurrentPage() == 0);
@@ -297,7 +298,7 @@ public class JdbcAuditReporterTest {
         waitBulkLoadFlush();
 
         TestObserver<Page<Audit>> test = auditReporter.search(ReferenceType.DOMAIN, "testReporter_search", new AuditReportableCriteria.Builder().build(), 0, 20).test();
-        test.awaitTerminalEvent();
+        test.awaitDone(10, TimeUnit.SECONDS);
         test.assertNoErrors();
         test.assertValue(page -> page.getTotalCount() == loop);
         test.assertValue(page -> page.getCurrentPage() == 0);
@@ -307,7 +308,7 @@ public class JdbcAuditReporterTest {
         List<Audit> readAudits = new ArrayList<>();
         // test paging - read first page
         test = auditReporter.search(ReferenceType.DOMAIN, "testReporter_search", new AuditReportableCriteria.Builder().build(), 0, 5).test();
-        test.awaitTerminalEvent();
+        test.awaitDone(10, TimeUnit.SECONDS);
         test.assertNoErrors();
         test.assertValue(page -> page.getTotalCount() == loop);
         test.assertValue(page -> page.getCurrentPage() == 0);
@@ -316,7 +317,7 @@ public class JdbcAuditReporterTest {
         test.assertValue(page -> readAudits.addAll(page.getData()));
         // test paging - read second page
         test = auditReporter.search(ReferenceType.DOMAIN, "testReporter_search", new AuditReportableCriteria.Builder().build(), 1, 5).test();
-        test.awaitTerminalEvent();
+        test.awaitDone(10, TimeUnit.SECONDS);
         test.assertNoErrors();
         test.assertValue(page -> page.getTotalCount() == loop);
         test.assertValue(page -> page.getCurrentPage() == 1);
@@ -343,7 +344,7 @@ public class JdbcAuditReporterTest {
         Audit audit = reportables.get(new Random().nextInt(loop));
 
         TestObserver<Audit> test = auditReporter.findById(audit.getReferenceType(), audit.getReferenceId(), audit.getId()).test();
-        test.awaitTerminalEvent();
+        test.awaitDone(10, TimeUnit.SECONDS);
         test.assertNoErrors();
         assertReportEqualsTo(audit, test);
     }
