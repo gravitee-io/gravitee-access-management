@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.root.resources.handler.login;
 
 import io.gravitee.am.common.exception.authentication.InternalAuthenticationServiceException;
+import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
@@ -66,6 +67,12 @@ public class LoginCallbackOpenIDConnectFlowHandler implements Handler<RoutingCon
             final String relayState = request.getParam(RELAY_STATE_PARAM_KEY);
             // if SAML 2.0 is used, continue
             if (relayState != null) {
+                context.next();
+                return;
+            }
+            // if OAuth 2.0 authorization_code flow is used, continue
+            final String code = request.getParam(Parameters.CODE);
+            if (code != null) {
                 context.next();
                 return;
             }

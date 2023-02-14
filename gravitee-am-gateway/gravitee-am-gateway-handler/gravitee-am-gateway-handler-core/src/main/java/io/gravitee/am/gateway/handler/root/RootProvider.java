@@ -74,6 +74,7 @@ import io.gravitee.am.gateway.handler.root.resources.handler.client.ClientReques
 import io.gravitee.am.gateway.handler.root.resources.handler.consent.DataConsentHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.error.ErrorHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.geoip.GeoIpHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginCallbackDeviceIdHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginCallbackFailureHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginCallbackOpenIDConnectFlowHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginCallbackParseHandler;
@@ -396,12 +397,15 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         Handler<RoutingContext> socialAuthHandler = SocialAuthHandler.create(new SocialAuthenticationProvider(userAuthenticationManager, eventManager, identityProviderManager, domain, gatewayMetricProvider));
         Handler<RoutingContext> loginCallbackParseHandler = new LoginCallbackParseHandler(clientSyncService, identityProviderManager, jwtService, certificateManager);
         Handler<RoutingContext> loginCallbackOpenIDConnectFlowHandler = new LoginCallbackOpenIDConnectFlowHandler(thymeleafTemplateEngine);
+        Handler<RoutingContext> loginCallbackDeviceIdHandler = new LoginCallbackDeviceIdHandler(thymeleafTemplateEngine, deviceIdentifierManager);
         Handler<RoutingContext> loginCallbackFailureHandler = new LoginCallbackFailureHandler(domain, authenticationFlowContextService, identityProviderManager);
         Handler<RoutingContext> loginCallbackEndpoint = new LoginCallbackEndpoint();
         Handler<RoutingContext> loginSSOPOSTEndpoint = new LoginSSOPOSTEndpoint(thymeleafTemplateEngine);
         rootRouter.get(PATH_LOGIN_CALLBACK)
                 .handler(loginCallbackOpenIDConnectFlowHandler)
                 .handler(loginCallbackParseHandler)
+                .handler(rememberDeviceSettingsHandler)
+                .handler(loginCallbackDeviceIdHandler)
                 .handler(socialAuthHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.POST_LOGIN))
                 .handler(loginPostWebAuthnHandler)
@@ -411,6 +415,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(loginCallbackOpenIDConnectFlowHandler)
                 .handler(loginCallbackParseHandler)
                 .handler(socialAuthHandler)
+                .handler(deviceIdentifierHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.POST_LOGIN))
                 .handler(loginPostWebAuthnHandler)
                 .handler(loginCallbackEndpoint)
