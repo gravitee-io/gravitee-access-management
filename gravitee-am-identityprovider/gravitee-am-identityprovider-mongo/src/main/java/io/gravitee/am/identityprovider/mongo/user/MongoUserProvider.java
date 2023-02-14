@@ -32,6 +32,7 @@ import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
+import java.util.regex.Pattern;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -53,10 +54,12 @@ import static com.mongodb.client.model.Filters.eq;
  */
 @Import({MongoAuthenticationProviderConfiguration.class})
 public class MongoUserProvider extends MongoAbstractProvider implements UserProvider {
-    private static final Logger LOGGER = LoggerFactory.getLogger(MongoUserProvider.class);
     private static final String FIELD_ID = "_id";
     private static final String FIELD_CREATED_AT = "createdAt";
     private static final String FIELD_UPDATED_AT = "updatedAt";
+    private static final String JSON_SPECIAL_CHARS = "\\{\\}\\[\\],:";
+    private static final String QUOTE = "\"";
+    private static final String SAFE_QUOTE_REPLACEMENT = "\\\\\\\\\\\\" + QUOTE;
 
     @Autowired
     private BinaryToTextEncoder binaryToTextEncoder;
@@ -90,10 +93,10 @@ public class MongoUserProvider extends MongoAbstractProvider implements UserProv
     @Override
     public Maybe<User> findByUsername(String username) {
         // lowercase username since case-sensitivity feature
-        final String encodedUsername = username.toLowerCase();
+        final String encodedUsername = username.toLowerCase().replaceAll(QUOTE, SAFE_QUOTE_REPLACEMENT);
 
-        String rawQuery = this.configuration.getFindUserByUsernameQuery().replaceAll("\\?", encodedUsername);
-        String jsonQuery = convertToJsonString(rawQuery);
+        String rawQuery = this.configuration.getFindUserByUsernameQuery();
+        String jsonQuery = convertToJsonString(rawQuery).replaceAll("\\?", encodedUsername);
         BsonDocument query = BsonDocument.parse(jsonQuery);
         return Observable.fromPublisher(usersCollection.find(query).first()).firstElement().map(this::convert);
     }
@@ -268,8 +271,9 @@ public class MongoUserProvider extends MongoAbstractProvider implements UserProv
     }
 
     private String convertToJsonString(String rawString) {
-        rawString = rawString.replaceAll("[^\\{\\}\\[\\],:\\s]+", "\"$0\"").replaceAll("\\s+", "");
-        return rawString;
+        return rawString
+                .replaceAll("[^" + JSON_SPECIAL_CHARS + "\\s]+", "\"$0\"")
+                .replaceAll("\\s+", "");
     }
 
     private byte[] createSalt() {
