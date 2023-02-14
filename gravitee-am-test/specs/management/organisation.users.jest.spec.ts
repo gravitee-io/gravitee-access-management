@@ -15,30 +15,19 @@
  */
 
 import fetch from "cross-fetch";
-import * as faker from 'faker';
 import {afterAll, beforeAll, expect} from "@jest/globals";
-import {createDomain, deleteDomain, startDomain} from "@management-commands/domain-management-commands";
 import {
-    buildCreateAndTestUser, deleteUser,
-    getAllUsers,
-    getUser,
-    getUserPage, lockUser, resetUserPassword, sendRegistrationConfirmation, unlockUser, updateUser, updateUsername,
-    updateUserStatus
-} from "@management-commands/user-management-commands";
-import {
-    createOrganisationUser, deleteOrganisationUser,
-    getOrganisationUserPage,
-    updateOrganisationUsername
+    createOrganisationUser, deleteOrganisationUser, getCurrentUser, getOrganisationUserPage, updateOrganisationUsername
 } from "@management-commands/organisation-user-commands";
 
-import {requestAdminAccessToken} from "@management-commands/token-management-commands";
-import {ResponseError} from "../../api/management/runtime";
+import {requestAccessToken, requestAdminAccessToken} from "@management-commands/token-management-commands";
 
 global.fetch = fetch;
 
 let accessToken;
-let domain;
 let organisationUser;
+const password = "SomeP@ssw0rd";
+let organisationUserToken;
 
 beforeAll(async () => {
     const adminTokenResponse = await requestAdminAccessToken();
@@ -54,8 +43,8 @@ describe("when using the users commands", () => {
             firstName: firstName,
             lastName: lastName,
             email: `${firstName}.${lastName}@mail.com`,
-            username: "orgUsername",
-            password: "SomeP@ssw0rd",
+            username: "organization_username",
+            password: password,
             preRegistration: false
         };
         organisationUser = await createOrganisationUser(accessToken, payload);
@@ -68,10 +57,37 @@ describe("when using the users commands", () => {
 });
 
 describe("when managing users at organisation level", () => {
+    it('it should get current user', async () => {
+        const responseAccess = await requestAccessToken(organisationUser.username, password);
+        organisationUserToken = responseAccess.body.access_token;
+
+        const currentOrgUser = await getCurrentUser(organisationUserToken);
+        expect(currentOrgUser.email).toEqual(organisationUser.email);
+    });
+
     it('should change organisation username', async () => {
         const username = "my-new-username";
-        const updatedUser = await updateOrganisationUsername(accessToken, organisationUser.id, username);
-        expect(updatedUser.username).toEqual(username);
+        organisationUser = await updateOrganisationUsername(accessToken, organisationUser.id, username);
+        expect(organisationUser.username).toEqual(username);
+    })
+
+    it('should not be authorized due to username change', async () => {
+        let isUserDisconnected = false;
+        try {
+            await getCurrentUser(organisationUserToken)
+        } catch (e) {
+            isUserDisconnected = true;
+        }
+        expect(isUserDisconnected).toBeTruthy();
+    });
+
+    it('it should get current user with new username', async () => {
+        const responseAccess = await requestAccessToken(organisationUser.username, password);
+        const newOrganisationUserToken = responseAccess.body.access_token;
+
+        expect(newOrganisationUserToken).toBeDefined();
+        expect(newOrganisationUserToken).not.toEqual(organisationUserToken);
+
     });
 });
 
