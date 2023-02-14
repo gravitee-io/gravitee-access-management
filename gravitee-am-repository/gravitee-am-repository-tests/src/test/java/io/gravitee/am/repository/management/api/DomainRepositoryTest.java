@@ -30,8 +30,8 @@ import io.gravitee.am.model.uma.UMASettings;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.am.repository.management.api.search.DomainCriteria;
-import io.reactivex.observers.TestObserver;
-import io.reactivex.subscribers.TestSubscriber;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -41,6 +41,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -59,7 +60,7 @@ public class DomainRepositoryTest extends AbstractManagementTest {
 
         // fetch domains
         TestObserver<List<Domain>> testObserver1 = domainRepository.findAll().toList().test();
-        testObserver1.awaitTerminalEvent();
+        testObserver1.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver1.assertComplete();
         testObserver1.assertNoErrors();
@@ -133,7 +134,7 @@ public class DomainRepositoryTest extends AbstractManagementTest {
 
         // fetch domains
         TestSubscriber<Domain> testObserver1 = domainRepository.findAllByReferenceId("environment#1").test();
-        testObserver1.awaitTerminalEvent();
+        testObserver1.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver1.assertComplete();
         testObserver1.assertNoErrors();
@@ -148,7 +149,7 @@ public class DomainRepositoryTest extends AbstractManagementTest {
 
         // fetch domains
         TestSubscriber<Domain> testSubscriber = domainRepository.findByIdIn(Collections.singleton(domainCreated.getId())).test();
-        testSubscriber.awaitTerminalEvent();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
 
         testSubscriber.assertComplete();
         testSubscriber.assertNoErrors();
@@ -163,7 +164,7 @@ public class DomainRepositoryTest extends AbstractManagementTest {
 
         // fetch domain
         TestObserver<Domain> testObserver = domainRepository.findById(domainCreated.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -207,7 +208,7 @@ public class DomainRepositoryTest extends AbstractManagementTest {
         Domain domain = initDomain();
 
         TestObserver<Domain> testObserver = domainRepository.create(domain).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -233,7 +234,7 @@ public class DomainRepositoryTest extends AbstractManagementTest {
         updatedDomain.setTags(new HashSet<>(Arrays.asList("test")));
         updatedDomain.setIdentities(new HashSet<>(Arrays.asList("test")));
         TestObserver<Domain> testObserver = domainRepository.update(updatedDomain).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -272,14 +273,14 @@ public class DomainRepositoryTest extends AbstractManagementTest {
 
         // fetch domain
         TestObserver<Domain> testObserver = domainRepository.findById(domainCreated.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(d -> d.getName().equals(domain.getName()));
 
         // delete domain
         TestObserver testObserver1 = domainRepository.delete(domainCreated.getId()).test();
-        testObserver1.awaitTerminalEvent();
+        testObserver1.awaitDone(10, TimeUnit.SECONDS);
 
         // fetch domain
         domainRepository.findById(domainCreated.getId()).test().assertEmpty();
@@ -294,7 +295,7 @@ public class DomainRepositoryTest extends AbstractManagementTest {
         criteria.setAlertEnabled(true);
         TestSubscriber<Domain> testObserver1 = domainRepository.findAllByCriteria(criteria).test();
 
-        testObserver1.awaitTerminalEvent();
+        testObserver1.awaitDone(10, TimeUnit.SECONDS);
         testObserver1.assertComplete();
         testObserver1.assertNoErrors();
         testObserver1.assertNoValues();
@@ -302,7 +303,7 @@ public class DomainRepositoryTest extends AbstractManagementTest {
         domainCreated.setAlertEnabled(true);
         final Domain domainUpdated = domainRepository.update(domainCreated).blockingGet();
         testObserver1 = domainRepository.findAllByCriteria(criteria).test();
-        testObserver1.awaitTerminalEvent();
+        testObserver1.awaitDone(10, TimeUnit.SECONDS);
         testObserver1.assertComplete();
         testObserver1.assertNoErrors();
         testObserver1.assertValue(domain -> domain.getId().equals(domainUpdated.getId()));
@@ -319,7 +320,7 @@ public class DomainRepositoryTest extends AbstractManagementTest {
 
         // fetch domains
         TestSubscriber<Domain> testObserver1 = domainRepository.search("environment#1", "testName").test();
-        testObserver1.awaitTerminalEvent();
+        testObserver1.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver1.assertComplete();
         testObserver1.assertNoErrors();

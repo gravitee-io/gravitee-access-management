@@ -24,7 +24,7 @@ import io.gravitee.am.identityprovider.ldap.LdapIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.ldap.authentication.spring.LdapAuthenticationProviderConfiguration;
 import io.gravitee.am.identityprovider.ldap.common.utils.LdapUtils;
 import io.gravitee.common.service.AbstractService;
-import io.reactivex.Maybe;
+import io.reactivex.rxjava3.core.Maybe;
 import org.ldaptive.*;
 import org.ldaptive.auth.AuthenticationRequest;
 import org.ldaptive.auth.AuthenticationResponse;

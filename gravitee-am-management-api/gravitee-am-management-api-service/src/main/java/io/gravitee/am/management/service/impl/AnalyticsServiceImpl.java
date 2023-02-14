@@ -25,8 +25,8 @@ import io.gravitee.am.model.analytics.*;
 import io.gravitee.am.reporter.api.audit.AuditReportableCriteria;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.UserService;
-import io.reactivex.Observable;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -128,7 +128,8 @@ public class AnalyticsServiceImpl implements AnalyticsService {
                             data.put("domain", application.getDomain());
                             return Collections.singletonMap((String) appId, data);
                         })
-                        .defaultIfEmpty(Collections.singletonMap((String) appId, getGenericMetadata("Deleted application", true))))
+                        .defaultIfEmpty(Collections.singletonMap((String) appId, getGenericMetadata("Deleted application", true)))
+                        .toMaybe())
                 .toList()
                 .map(result -> {
                     Map<String, Map<String, Object>> metadata = result.stream()

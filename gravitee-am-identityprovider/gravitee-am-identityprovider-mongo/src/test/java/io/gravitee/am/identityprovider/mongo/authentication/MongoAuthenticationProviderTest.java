@@ -22,14 +22,15 @@ import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.mongo.authentication.spring.MongoAuthenticationProviderConfiguration;
-import io.reactivex.observers.TestObserver;
-import java.util.concurrent.TimeUnit;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
+
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
@@ -72,7 +73,7 @@ public class MongoAuthenticationProviderTest {
             }
         }).test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -102,7 +103,7 @@ public class MongoAuthenticationProviderTest {
             }
         }).test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -132,7 +133,7 @@ public class MongoAuthenticationProviderTest {
             }
         }).test();
 
-        testObserver.awaitTerminalEvent(10, TimeUnit.SECONDS);
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -162,7 +163,7 @@ public class MongoAuthenticationProviderTest {
             }
         }).test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -197,7 +198,7 @@ public class MongoAuthenticationProviderTest {
             }
         }).test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -227,7 +228,7 @@ public class MongoAuthenticationProviderTest {
             }
         }).test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(BadCredentialsException.class);
     }
@@ -256,7 +257,7 @@ public class MongoAuthenticationProviderTest {
             }
         }).test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -287,7 +288,7 @@ public class MongoAuthenticationProviderTest {
                 return authenticationContext;
             }
         }).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(BadCredentialsException.class);
     }
 
@@ -316,7 +317,7 @@ public class MongoAuthenticationProviderTest {
             }
         }).test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(UsernameNotFoundException.class);
     }
 

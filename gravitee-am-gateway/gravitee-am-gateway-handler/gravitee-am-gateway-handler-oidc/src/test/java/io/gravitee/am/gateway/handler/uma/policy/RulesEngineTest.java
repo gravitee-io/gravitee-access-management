@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.handler.uma.policy;
 import io.gravitee.am.gateway.policy.PolicyChainProcessorFactory;
 import io.gravitee.am.plugins.policy.core.PolicyPluginManager;
 import io.gravitee.gateway.api.ExecutionContext;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -26,6 +26,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Collections;
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -51,7 +52,7 @@ public class RulesEngineTest {
     @Test
     public void shouldNotInvoke_noPolicies() {
         TestObserver testObserver = rulesEngine.fire(Collections.emptyList(), executionContext).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete().assertNoErrors();
         verify(policyPluginManager, never()).create(anyString(), anyString());
         verify(policyChainProcessorFactory, never()).create(any(), any());

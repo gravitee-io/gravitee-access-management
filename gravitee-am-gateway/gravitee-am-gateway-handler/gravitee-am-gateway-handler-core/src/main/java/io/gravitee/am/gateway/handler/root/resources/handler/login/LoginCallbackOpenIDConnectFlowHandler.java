@@ -20,9 +20,9 @@ import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.reactivex.core.http.HttpServerRequest;
-import io.vertx.reactivex.ext.web.RoutingContext;
-import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
+import io.vertx.rxjava3.core.http.HttpServerRequest;
+import io.vertx.rxjava3.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -83,15 +83,16 @@ public class LoginCallbackOpenIDConnectFlowHandler implements Handler<RoutingCon
         }
 
         // implicit flow, we need to retrieve hash url from the browser to get access_token, id_token, ...
-        engine.render(Collections.emptyMap(), "login_callback", res -> {
-            if (res.succeeded()) {
-                context.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
-                context.response().end(res.result());
-            } else {
-                logger.error("Unable to render login callback page", res.cause());
-                context.fail(res.cause());
-            }
-        });
+        engine.render(Collections.emptyMap(), "login_callback")
+                .doOnSuccess(buffer -> {
+                    context.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
+                    context.response().end(buffer);
+                })
+                .doOnError(throwable -> {
+                    logger.error("Unable to render login callback page", throwable);
+                    context.fail(throwable.getCause());
+                })
+                .subscribe();
     }
 
     private Map<String, String> getParams(String query) {

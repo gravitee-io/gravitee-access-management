@@ -39,9 +39,9 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.PermissionTicketService;
 import io.gravitee.am.service.ResourceService;
-import io.reactivex.Maybe;
-import io.reactivex.Observable;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
@@ -106,8 +106,8 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
                 .fromIterable(tokenGranters.values())
                 .filter(tokenGranter -> tokenGranter.handle(tokenRequest.getGrantType(), client))
                 .firstElement()
-                .switchIfEmpty(Maybe.error(new UnsupportedGrantTypeException("Unsupported grant type: " + tokenRequest.getGrantType())))
-                .flatMapSingle(tokenGranter -> tokenGranter.grant(tokenRequest, client));
+                .switchIfEmpty(Single.error(new UnsupportedGrantTypeException("Unsupported grant type: " + tokenRequest.getGrantType())))
+                .flatMap(tokenGranter -> tokenGranter.grant(tokenRequest, client));
     }
 
 

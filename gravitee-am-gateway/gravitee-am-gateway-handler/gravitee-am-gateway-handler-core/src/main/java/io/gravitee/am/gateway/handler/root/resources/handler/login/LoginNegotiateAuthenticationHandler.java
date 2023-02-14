@@ -27,9 +27,9 @@ import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
-import io.vertx.reactivex.core.MultiMap;
-import io.vertx.reactivex.ext.web.RoutingContext;
-import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
+import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.rxjava3.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -123,17 +123,18 @@ public class LoginNegotiateAuthenticationHandler implements Handler<RoutingConte
             // Responds with an 401 response with the "WWW-Authenticate: Negotiate" HTTP Response Header.
             // This tells the web browser that it needs to check with the local OS regarding what options it has available
             // from the Negotiate Security Support Provider (SSP) to authenticate the user.
-            engine.render(context.data(), "login_sso_spnego", res -> {
-                if (res.succeeded()) {
-                    context.response().putHeader(HttpHeaders.WWW_AUTHENTICATE, AUTH_NEGOTIATE_KEY);
-                    context.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
-                    context.response().setStatusCode(UNAUTHORIZED_401);
-                    context.response().end(res.result());
-                } else {
-                    LOGGER.error("Unable to render Login SSO SPNEGO page", res.cause());
-                    context.fail(res.cause());
-                }
-            });
+            engine.rxRender(context.data(), "login_sso_spnego")
+                    .doOnSuccess(buffer -> {
+                        context.response().putHeader(HttpHeaders.WWW_AUTHENTICATE, AUTH_NEGOTIATE_KEY);
+                        context.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
+                        context.response().setStatusCode(UNAUTHORIZED_401);
+                        context.response().end(buffer);
+                    })
+                    .doOnError(throwable -> {
+                        LOGGER.error("Unable to render Login SSO SPNEGO page", throwable);
+                        context.fail(throwable.getCause());
+                    })
+                    .subscribe();
         }
     }
 }

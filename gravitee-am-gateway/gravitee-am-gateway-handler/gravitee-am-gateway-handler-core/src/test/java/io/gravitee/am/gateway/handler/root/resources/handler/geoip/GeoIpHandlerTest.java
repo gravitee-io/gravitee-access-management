@@ -23,20 +23,19 @@ import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.UserActivityService;
 import io.gravitee.common.http.HttpHeaders;
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Handler;
+import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.json.JsonObject;
-import io.vertx.reactivex.core.eventbus.EventBus;
-import io.vertx.reactivex.core.eventbus.Message;
-import io.vertx.reactivex.core.http.HttpServerRequest;
-import java.util.HashMap;
+import io.vertx.rxjava3.core.eventbus.EventBus;
+import io.vertx.rxjava3.core.eventbus.Message;
+import io.vertx.rxjava3.core.http.HttpServerRequest;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
+
+import java.util.HashMap;
 
 import static io.gravitee.am.common.utils.ConstantKeys.GEOIP_KEY;
 import static org.mockito.Mockito.*;
@@ -53,6 +52,9 @@ public class GeoIpHandlerTest {
 
     @Mock
     private UserActivityService userActivityService;
+
+    @Mock
+    private Message<Object> message;
 
     @Spy
     private SpyRoutingContext routingContext;
@@ -77,6 +79,8 @@ public class GeoIpHandlerTest {
         doReturn(request).when(routingContext).request();
 
         doNothing().when(routingContext).next();
+
+        when(eventBus.request(anyString(), anyString())).thenReturn(Single.just(message));
     }
 
     @Test
@@ -110,7 +114,7 @@ public class GeoIpHandlerTest {
         request.getDelegate().headers().add(HttpHeaders.X_FORWARDED_FOR, "55.55.55.55");
         geoIpHandler.handle(routingContext);
         verify(eventBus, times(1)).request(
-                any(), anyString(), (Handler<AsyncResult<Message<Object>>>) Mockito.any());
+                any(), anyString());
     }
 
     @Test
@@ -119,7 +123,7 @@ public class GeoIpHandlerTest {
         request.getDelegate().headers().add(HttpHeaders.X_FORWARDED_FOR, "55.55.55.55");
         geoIpHandler.handle(routingContext);
         verify(eventBus, times(1)).request(
-                any(), anyString(), (Handler<AsyncResult<Message<Object>>>) Mockito.any());
+                any(), anyString());
     }
 
 }

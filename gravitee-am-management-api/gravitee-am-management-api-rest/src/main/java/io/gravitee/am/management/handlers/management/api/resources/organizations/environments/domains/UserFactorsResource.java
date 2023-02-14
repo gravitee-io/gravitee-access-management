@@ -27,9 +27,9 @@ import io.gravitee.am.service.FactorService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Maybe;
-import io.reactivex.Observable;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.Single;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
@@ -102,6 +102,7 @@ public class UserFactorsResource extends AbstractResource {
                                                         return enrolledFactorEntity;
                                                     })
                                                     .defaultIfEmpty(unknown(enrolledFactor))
+                                                    .toMaybe()
                                     )
                                     .toList();
                         }))

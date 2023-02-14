@@ -28,8 +28,8 @@ import io.gravitee.am.service.ScopeApprovalService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.ScopeApprovalNotFoundException;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
@@ -120,7 +120,6 @@ public class UserConsentResource extends AbstractResource {
     private Single<ApplicationEntity> getClient(String domain, String clientId) {
         return applicationService.findByDomainAndClientId(domain, clientId)
                 .map(ApplicationEntity::new)
-                .defaultIfEmpty(new ApplicationEntity("unknown-id", clientId, "unknown-client-name"))
-                .toSingle();
+                .defaultIfEmpty(new ApplicationEntity("unknown-id", clientId, "unknown-client-name"));
     }
 }

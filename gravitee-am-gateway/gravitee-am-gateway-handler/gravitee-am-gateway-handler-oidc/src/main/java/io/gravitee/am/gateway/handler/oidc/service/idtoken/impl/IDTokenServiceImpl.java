@@ -43,7 +43,7 @@ import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.gateway.api.ExecutionContext;
 import io.gravitee.gateway.api.context.SimpleExecutionContext;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -107,7 +107,7 @@ public class IDTokenServiceImpl implements IDTokenService {
                     return certificateManager.findByAlgorithm(client.getIdTokenSignedResponseAlg())
                             .switchIfEmpty(certificateManager.get(client.getCertificate()))
                             .defaultIfEmpty(certificateManager.defaultCertificateProvider())
-                            .flatMapSingle(certificateProvider -> {
+                            .flatMap(certificateProvider -> {
                                 // set hash claims (hybrid flow)
                                 if (oAuth2Request.getContext() != null && !oAuth2Request.getContext().isEmpty()) {
                                     oAuth2Request.getContext().forEach((claimName, claimValue) -> {

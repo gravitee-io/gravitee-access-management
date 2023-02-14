@@ -23,7 +23,7 @@ import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryServ
 import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.Environment;
 

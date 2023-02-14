@@ -20,15 +20,17 @@ import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.EventRepository;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.EventServiceImpl;
-import io.reactivex.Flowable;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
+
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -51,7 +53,7 @@ public class EventServiceTest {
         when(eventRepository.findByTimeFrame(0, 1)).thenReturn(Flowable.just(new Event()));
         TestObserver testObserver = eventService.findByTimeFrame(0, 1).test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValueCount(1);
@@ -72,7 +74,7 @@ public class EventServiceTest {
         when(eventRepository.create(any(Event.class))).thenReturn(Single.just(newEvent));
 
         TestObserver testObserver = eventService.create(newEvent).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -86,7 +88,7 @@ public class EventServiceTest {
         when(eventRepository.create(any(Event.class))).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver testObserver = eventService.create(newEvent).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();

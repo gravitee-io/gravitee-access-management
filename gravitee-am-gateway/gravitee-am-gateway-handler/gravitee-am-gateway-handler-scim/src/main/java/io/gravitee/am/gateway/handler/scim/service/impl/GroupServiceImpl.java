@@ -33,7 +33,7 @@ import io.gravitee.am.service.exception.GroupNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.GroupAuditBuilder;
-import io.reactivex.*;
+import io.reactivex.rxjava3.core.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -164,8 +164,8 @@ public class GroupServiceImpl implements GroupService {
     public Single<Group> update(String groupId, Group group, String baseUrl, io.gravitee.am.identityprovider.api.User principal) {
         LOGGER.debug("Update a group {} for domain {}", groupId, domain.getName());
         return groupRepository.findById(groupId)
-                .switchIfEmpty(Maybe.error(new GroupNotFoundException(groupId)))
-                .flatMapSingle(existingGroup -> groupRepository.findByName(ReferenceType.DOMAIN, domain.getId(), group.getDisplayName())
+                .switchIfEmpty(Single.error(new GroupNotFoundException(groupId)))
+                .flatMap(existingGroup -> groupRepository.findByName(ReferenceType.DOMAIN, domain.getId(), group.getDisplayName())
                         .map(group1 -> {
                             // if display name has changed check uniqueness
                             if (!existingGroup.getId().equals(group1.getId())) {
@@ -175,7 +175,7 @@ public class GroupServiceImpl implements GroupService {
                         })
                         .defaultIfEmpty(existingGroup)
                         // set members
-                        .flatMapSingle(irrelevant -> setMembers(group, baseUrl))
+                        .flatMap(irrelevant -> setMembers(group, baseUrl))
                         .flatMap(group1 -> {
                             io.gravitee.am.model.Group groupToUpdate = convert(group1);
                             // set immutable attribute

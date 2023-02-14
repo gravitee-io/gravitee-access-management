@@ -27,7 +27,7 @@ import io.gravitee.am.service.DeviceIdentifierService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.UpdateDeviceIdentifier;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Maybe;
+import io.reactivex.rxjava3.core.Maybe;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;

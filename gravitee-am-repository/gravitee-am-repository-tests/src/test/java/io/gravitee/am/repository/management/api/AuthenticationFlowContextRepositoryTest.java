@@ -17,8 +17,8 @@ package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.AuthenticationFlowContext;
 import io.gravitee.am.repository.management.AbstractManagementTest;
-import io.reactivex.observers.TestObserver;
-import io.reactivex.subscribers.TestSubscriber;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +28,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.Date;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.*;
 
@@ -49,7 +50,7 @@ public class AuthenticationFlowContextRepositoryTest extends AbstractManagementT
     @Test
     public void shouldNotFindSession() {
         TestSubscriber<AuthenticationFlowContext> observer = authenticationFlowContextRepository.findByTransactionId("unknown-sessions").test();
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
 
         observer.assertComplete();
         observer.assertValueCount(0);
@@ -59,7 +60,7 @@ public class AuthenticationFlowContextRepositoryTest extends AbstractManagementT
     @Test
     public void shouldNotFindLastSession() {
         TestObserver<AuthenticationFlowContext> observer = authenticationFlowContextRepository.findLastByTransactionId("unknown-sessions").test();
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
 
         observer.assertComplete();
         observer.assertValueCount(0);
@@ -72,7 +73,7 @@ public class AuthenticationFlowContextRepositoryTest extends AbstractManagementT
 
         AuthenticationFlowContext entity = generateAuthContext();
         TestObserver<AuthenticationFlowContext> observer = authenticationFlowContextRepository.create(entity).test();
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
 
         observer.assertComplete();
         observer.assertNoErrors();
@@ -95,16 +96,16 @@ public class AuthenticationFlowContextRepositoryTest extends AbstractManagementT
         authenticationFlowContextRepository.create(entity).blockingGet();
 
         TestSubscriber<AuthenticationFlowContext> testList = authenticationFlowContextRepository.findByTransactionId(TRANSACTION_ID).test();
-        testList.awaitTerminalEvent();
+        testList.awaitDone(10, TimeUnit.SECONDS);
         testList.assertNoErrors();
         testList.assertValueCount(2);
 
         TestObserver<Void> testObserver = authenticationFlowContextRepository.delete(TRANSACTION_ID).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
 
         testList = authenticationFlowContextRepository.findByTransactionId(TRANSACTION_ID).test();
-        testList.awaitTerminalEvent();
+        testList.awaitDone(10, TimeUnit.SECONDS);
         testList.assertNoErrors();
         testList.assertNoValues();
     }
@@ -117,16 +118,16 @@ public class AuthenticationFlowContextRepositoryTest extends AbstractManagementT
         authenticationFlowContextRepository.create(entity).blockingGet();
 
         TestSubscriber<AuthenticationFlowContext> testList = authenticationFlowContextRepository.findByTransactionId(TRANSACTION_ID).test();
-        testList.awaitTerminalEvent();
+        testList.awaitDone(10, TimeUnit.SECONDS);
         testList.assertNoErrors();
         testList.assertValueCount(2);
 
         TestObserver<Void> testObserver = authenticationFlowContextRepository.delete(TRANSACTION_ID, 1).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
 
         testList = authenticationFlowContextRepository.findByTransactionId(TRANSACTION_ID).test();
-        testList.awaitTerminalEvent();
+        testList.awaitDone(10, TimeUnit.SECONDS);
         testList.assertNoErrors();
         testList.assertValueCount(1);
 
@@ -143,12 +144,12 @@ public class AuthenticationFlowContextRepositoryTest extends AbstractManagementT
         authenticationFlowContextRepository.create(entity).blockingGet();
 
         TestSubscriber<AuthenticationFlowContext> testList = authenticationFlowContextRepository.findByTransactionId(TRANSACTION_ID).test();
-        testList.awaitTerminalEvent();
+        testList.awaitDone(10, TimeUnit.SECONDS);
         testList.assertNoErrors();
         testList.assertValueCount(2);
 
         TestObserver<AuthenticationFlowContext> testObserver = authenticationFlowContextRepository.findLastByTransactionId(TRANSACTION_ID).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         assertSameContext(entity, testObserver);
     }
@@ -157,7 +158,7 @@ public class AuthenticationFlowContextRepositoryTest extends AbstractManagementT
     @Test
     public void shouldNotFind_NullTransactionId() {
         TestSubscriber<AuthenticationFlowContext> testList = authenticationFlowContextRepository.findByTransactionId(null).test();
-        testList.awaitTerminalEvent();
+        testList.awaitDone(10, TimeUnit.SECONDS);
         testList.assertNoValues();
         testList.assertNoErrors();
     }
@@ -170,12 +171,12 @@ public class AuthenticationFlowContextRepositoryTest extends AbstractManagementT
         authenticationFlowContextRepository.create(entity).blockingGet();
 
         TestSubscriber<AuthenticationFlowContext> testList = authenticationFlowContextRepository.findByTransactionId(TRANSACTION_ID).test();
-        testList.awaitTerminalEvent();
+        testList.awaitDone(10, TimeUnit.SECONDS);
         testList.assertNoErrors();
         testList.assertValueCount(1);
 
         TestObserver<AuthenticationFlowContext> testObserver = authenticationFlowContextRepository.findLastByTransactionId(TRANSACTION_ID).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         assertSameContext(entity, testObserver);
     }

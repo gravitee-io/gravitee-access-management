@@ -16,17 +16,17 @@
 package io.gravitee.am.repository.jdbc.management.api.spring;
 
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcTag;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.data.repository.reactive.RxJava2CrudRepository;
+import org.springframework.data.repository.reactive.RxJava3CrudRepository;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface SpringTagRepository extends RxJava2CrudRepository<JdbcTag, String> {
+public interface SpringTagRepository extends RxJava3CrudRepository<JdbcTag, String> {
     @Query("select * from tags t where t.organization_id = :orgId")
     Flowable<JdbcTag> findByOrganization(@Param("orgId") String organizationId);
 

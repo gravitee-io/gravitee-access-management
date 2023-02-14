@@ -20,7 +20,7 @@ import io.gravitee.am.model.uma.PermissionTicket;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.jdbc.management.api.JdbcPermissionTicketRepository;
 import io.gravitee.am.repository.management.AbstractManagementTest;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -29,6 +29,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.NoSuchElementException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -53,29 +54,29 @@ public class PermissionTicketRepositoryPurgeTest extends AbstractManagementTest 
         PermissionTicket permissionTicketExpired = new PermissionTicket().setPermissionRequest(Arrays.asList(permission));
         permissionTicketExpired.setExpireAt(new Date(now.minus(10, ChronoUnit.MINUTES).toEpochMilli()));
         TestObserver<PermissionTicket> test = repository.create(permissionTicketExpired).test();
-        test.awaitTerminalEvent();
+        test.awaitDone(10, TimeUnit.SECONDS);
         test.assertNoErrors();
 
         // fetch permission_ticket
         TestObserver<PermissionTicket> testObserver = repository.findById(ptValid.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertValue(this::isValid);
         testObserver = repository.findById(ptValid2.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertValue(this::isValid);
 
         TestObserver<Void> testPurge = repository.purgeExpiredData().test();
-        testPurge.awaitTerminalEvent();
+        testPurge.awaitDone(10, TimeUnit.SECONDS);
         testPurge.assertNoErrors();
 
         testObserver = repository.findById(ptValid.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertValue(this::isValid);
         testObserver = repository.findById(ptValid2.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertValue(this::isValid);
     }

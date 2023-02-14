@@ -24,7 +24,7 @@ import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpStatusCode;
-import io.reactivex.Maybe;
+import io.reactivex.rxjava3.core.Maybe;
 import io.vertx.core.http.HttpMethod;
 import org.junit.Test;
 import org.junit.runner.RunWith;

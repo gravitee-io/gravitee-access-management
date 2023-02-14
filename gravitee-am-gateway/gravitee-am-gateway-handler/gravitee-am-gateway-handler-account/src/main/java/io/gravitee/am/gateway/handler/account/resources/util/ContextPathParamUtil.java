@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.account.resources.util;
 
-import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 
 import java.util.Objects;
 

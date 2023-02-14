@@ -17,7 +17,7 @@ package io.gravitee.am.gateway.reactor.impl.transaction;
 
 import io.gravitee.common.utils.UUID;
 import io.vertx.core.Handler;
-import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 
 /**
  * A {@link Handler} used to set the transaction ID of the request and the response.

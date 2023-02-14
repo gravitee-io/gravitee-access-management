@@ -19,11 +19,13 @@ import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.service.exception.UserNotFoundException;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -38,7 +40,7 @@ public abstract class JdbcUserProvider_Test {
     @Test
     public void shouldSelectUserByUsername() {
         TestObserver<User> testObserver = userProvider.findByUsername("bob").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -48,7 +50,7 @@ public abstract class JdbcUserProvider_Test {
     @Test
     public void shouldSelectUserByUsernameWithSpaces() {
         TestObserver<User> testObserver = userProvider.findByUsername("b o b").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -58,7 +60,7 @@ public abstract class JdbcUserProvider_Test {
     @Test
     public void shouldSelectUserByEmail() {
         TestObserver<User> testObserver = userProvider.findByEmail("user01@acme.com").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -68,7 +70,7 @@ public abstract class JdbcUserProvider_Test {
     @Test
     public void shouldNotSelectUserByUsername_userNotFound() {
         TestObserver<User> testObserver = userProvider.findByUsername("unknown").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoValues();
@@ -77,7 +79,7 @@ public abstract class JdbcUserProvider_Test {
     @Test
     public void shouldNotSelectUserByEmail_userNotFound() {
         TestObserver<User> testObserver = userProvider.findByEmail("unknown@acme.com").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoValues();
@@ -87,7 +89,7 @@ public abstract class JdbcUserProvider_Test {
     public void shouldCreate() {
         DefaultUser user = new DefaultUser("username1");
         TestObserver<User> testObserver = userProvider.create(user).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertValue(u -> u.getId() != null);
@@ -106,7 +108,7 @@ public abstract class JdbcUserProvider_Test {
         userProvider.update(createdUser.getId(), updateUser).blockingGet();
 
         TestObserver<User> testObserver = userProvider.findByUsername("userToUpdate").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertValue(u -> u.getCredentials() == null);
@@ -127,7 +129,7 @@ public abstract class JdbcUserProvider_Test {
         userProvider.update(createdUser.getId(), updateUser).blockingGet();
 
         TestObserver<User> testObserver = userProvider.findByUsername(username).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertValue(u -> u.getCredentials() == null);
@@ -138,7 +140,7 @@ public abstract class JdbcUserProvider_Test {
     public void shouldNotUpdate_userNotFound() {
         DefaultUser user = new DefaultUser("userToUpdate");
         TestObserver testObserver = userProvider.update("unknown", user).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(UserNotFoundException.class);
         testObserver.assertNoValues();
@@ -148,10 +150,10 @@ public abstract class JdbcUserProvider_Test {
     public void shouldDelete() {
         DefaultUser user = new DefaultUser("userToDelete");
         User createdUser = userProvider.create(user).blockingGet();
-        userProvider.delete(createdUser.getId()).blockingGet();
+        userProvider.delete(createdUser.getId()).blockingAwait();
 
         TestObserver<User> testObserver = userProvider.findByUsername("userToDelete").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoValues();
@@ -160,7 +162,7 @@ public abstract class JdbcUserProvider_Test {
     @Test
     public void shouldNotDelete_userNotFound() {
         TestObserver testObserver = userProvider.delete("unknown").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(UserNotFoundException.class);
         testObserver.assertNoValues();
@@ -171,7 +173,7 @@ public abstract class JdbcUserProvider_Test {
         var user = new DefaultUser();
         user.setId("5");
         TestObserver testObserver = userProvider.updateUsername(user, null).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(IllegalArgumentException.class);
         testObserver.assertNoValues();
@@ -182,7 +184,7 @@ public abstract class JdbcUserProvider_Test {
         var user = new DefaultUser();
         user.setId("5");
         TestObserver testObserver = userProvider.updateUsername(user, "").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(IllegalArgumentException.class);
         testObserver.assertNoValues();
@@ -193,7 +195,7 @@ public abstract class JdbcUserProvider_Test {
         var user = new DefaultUser();
         user.setId("7");
         TestObserver testObserver = userProvider.updateUsername(user, "newUsername").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(UserNotFoundException.class);
         testObserver.assertNoValues();
@@ -205,11 +207,11 @@ public abstract class JdbcUserProvider_Test {
         user.setId("5");
 
         TestObserver testObserver = userProvider.updateUsername(user, "newUsername").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
 
         TestObserver<User> testObserver2 = userProvider.findByUsername("newUsername").test();
-        testObserver2.awaitTerminalEvent();
+        testObserver2.awaitDone(10, TimeUnit.SECONDS);
         testObserver2.assertComplete();
         testObserver2.assertNoErrors();
         testObserver2.assertValue(u -> "newUsername".equals(u.getUsername()));

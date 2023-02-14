@@ -35,12 +35,12 @@ import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.impl.ApplicationServiceImpl;
 import io.gravitee.am.service.model.*;
 import io.gravitee.am.service.validators.accountsettings.AccountSettingsValidator;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
-import io.reactivex.subscribers.TestSubscriber;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -52,6 +52,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
@@ -115,7 +116,7 @@ public class ApplicationServiceTest {
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(new Application()));
         TestObserver testObserver = applicationService.findById("my-client").test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValueCount(1);
@@ -125,7 +126,7 @@ public class ApplicationServiceTest {
     public void shouldFindById_notExistingClient() {
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.empty());
         TestObserver testObserver = applicationService.findById("my-client").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNoValues();
     }
@@ -145,7 +146,7 @@ public class ApplicationServiceTest {
         when(applicationRepository.findByDomainAndClientId(DOMAIN, "my-client")).thenReturn(Maybe.just(new Application()));
         TestObserver testObserver = applicationService.findByDomainAndClientId(DOMAIN, "my-client").test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValueCount(1);
@@ -155,7 +156,7 @@ public class ApplicationServiceTest {
     public void shouldFindByDomainAndClientId_noApp() {
         when(applicationRepository.findByDomainAndClientId(DOMAIN, "my-client")).thenReturn(Maybe.empty());
         TestObserver testObserver = applicationService.findByDomainAndClientId(DOMAIN, "my-client").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNoValues();
     }
@@ -174,7 +175,7 @@ public class ApplicationServiceTest {
     public void shouldFindByDomain() {
         when(applicationRepository.findByDomain(DOMAIN, 0, Integer.MAX_VALUE)).thenReturn(Single.just(new Page<>(Collections.singleton(new Application()), 0, 1)));
         TestObserver<Set<Application>> testObserver = applicationService.findByDomain(DOMAIN).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -197,7 +198,7 @@ public class ApplicationServiceTest {
         Page pageClients = new Page(Collections.singleton(new Application()), 1, 1);
         when(applicationRepository.findByDomain(DOMAIN, 1, 1)).thenReturn(Single.just(pageClients));
         TestObserver<Page<Application>> testObserver = applicationService.findByDomain(DOMAIN, 1, 1).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -219,7 +220,7 @@ public class ApplicationServiceTest {
     public void shouldFindByIdentityProvider() {
         when(applicationRepository.findByIdentityProvider("client-idp")).thenReturn(Flowable.just(new Application()));
         TestSubscriber<Application> testSubscriber = applicationService.findByIdentityProvider("client-idp").test();
-        testSubscriber.awaitTerminalEvent();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
 
         testSubscriber.assertComplete();
         testSubscriber.assertNoErrors();
@@ -240,7 +241,7 @@ public class ApplicationServiceTest {
     public void shouldFindByCertificate() {
         when(applicationRepository.findByCertificate("client-certificate")).thenReturn(Flowable.just(new Application()));
         TestSubscriber<Application> testObserver = applicationService.findByCertificate("client-certificate").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -261,7 +262,7 @@ public class ApplicationServiceTest {
     public void shouldFindByExtensionGrant() {
         when(applicationRepository.findByDomainAndExtensionGrant(DOMAIN, "client-extension-grant")).thenReturn(Flowable.just(new Application()));
         TestObserver<Set<Application>> testObserver = applicationService.findByDomainAndExtensionGrant(DOMAIN, "client-extension-grant").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -283,7 +284,7 @@ public class ApplicationServiceTest {
     public void shouldFindAll() {
         when(applicationRepository.findAll(0, Integer.MAX_VALUE)).thenReturn(Single.just(new Page(Collections.singleton(new Application()), 0, 1)));
         TestObserver<Set<Application>> testObserver = applicationService.findAll().test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -306,7 +307,7 @@ public class ApplicationServiceTest {
         Page pageClients = new Page(Collections.singleton(new Application()), 1, 1);
         when(applicationRepository.findAll(1, 1)).thenReturn(Single.just(pageClients));
         TestObserver<Page<Application>> testObserver = applicationService.findAll(1, 1).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -329,7 +330,7 @@ public class ApplicationServiceTest {
         when(applicationRepository.countByDomain(DOMAIN)).thenReturn(Single.just(1l));
         TestObserver<Long> testObserver = applicationService.countByDomain(DOMAIN).test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -352,7 +353,7 @@ public class ApplicationServiceTest {
         when(applicationRepository.count()).thenReturn(Single.just(1l));
         TestObserver<Long> testObserver = applicationService.count().test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -379,7 +380,7 @@ public class ApplicationServiceTest {
         user.setAdditionalInformation(Collections.singletonMap(Claims.organization, ORGANIZATION_ID));
 
         TestObserver<Application> testObserver = applicationService.create(DOMAIN, newClient, user).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -419,7 +420,7 @@ public class ApplicationServiceTest {
         user.setAdditionalInformation(Collections.singletonMap(Claims.organization, ORGANIZATION_ID));
 
         TestObserver<Application> testObserver = applicationService.create(DOMAIN, newClient, user).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -460,7 +461,7 @@ public class ApplicationServiceTest {
         user.setAdditionalInformation(Collections.singletonMap(Claims.organization, ORGANIZATION_ID));
 
         TestObserver<Application> testObserver = applicationService.create(DOMAIN, newClient, user).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -495,7 +496,7 @@ public class ApplicationServiceTest {
         user.setAdditionalInformation(Collections.singletonMap(Claims.organization, ORGANIZATION_ID));
 
         TestObserver<Application> testObserver = applicationService.create(DOMAIN, newClient, user).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -604,7 +605,7 @@ public class ApplicationServiceTest {
         toCreate.setSettings(settings);
 
         TestObserver testObserver = applicationService.create(toCreate).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNotComplete();
         testObserver.assertError(InvalidRedirectUriException.class);
@@ -631,7 +632,7 @@ public class ApplicationServiceTest {
         when(certificateService.findByDomain(DOMAIN)).thenReturn(Flowable.empty());
 
         TestObserver testObserver = applicationService.create(DOMAIN, newClient).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -677,7 +678,7 @@ public class ApplicationServiceTest {
         when(scopeService.validateScope(DOMAIN, new ArrayList<>())).thenReturn(Single.just(true));
 
         TestObserver<Application> testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -722,7 +723,7 @@ public class ApplicationServiceTest {
         doReturn(true).when(accountSettingsValidator).validate(any());
 
         TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNotComplete();
         testObserver.assertError(InvalidRedirectUriException.class);
@@ -794,7 +795,7 @@ public class ApplicationServiceTest {
         toPatch.setSettings(settings);
 
         TestObserver testObserver = applicationService.update(toPatch).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNotComplete();
         testObserver.assertError(InvalidRedirectUriException.class);
@@ -820,7 +821,7 @@ public class ApplicationServiceTest {
         toPatch.setSettings(settings);
 
         TestObserver testObserver = applicationService.update(toPatch).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -847,7 +848,7 @@ public class ApplicationServiceTest {
         toPatch.setSettings(settings);
 
         TestObserver testObserver = applicationService.update(toPatch).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -887,7 +888,7 @@ public class ApplicationServiceTest {
         doReturn(true).when(accountSettingsValidator).validate(any());
 
         TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -934,7 +935,7 @@ public class ApplicationServiceTest {
         doReturn(true).when(accountSettingsValidator).validate(any());
 
         TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -975,7 +976,7 @@ public class ApplicationServiceTest {
         doReturn(false).when(accountSettingsValidator).validate(any());
 
         TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNotComplete();
         testObserver.assertError(InvalidParameterException.class);
@@ -1007,7 +1008,7 @@ public class ApplicationServiceTest {
         doReturn(true).when(accountSettingsValidator).validate(any());
 
         TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -1038,7 +1039,7 @@ public class ApplicationServiceTest {
         doReturn(true).when(accountSettingsValidator).validate(any());
 
         TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -1069,7 +1070,7 @@ public class ApplicationServiceTest {
         when(membershipService.delete(anyString())).thenReturn(Completable.complete());
 
         TestObserver testObserver = applicationService.delete(existingClient.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -1093,7 +1094,7 @@ public class ApplicationServiceTest {
         when(membershipService.findByReference(existingClient.getId(), ReferenceType.APPLICATION)).thenReturn(Flowable.empty());
 
         TestObserver testObserver = applicationService.delete(existingClient.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -1110,7 +1111,7 @@ public class ApplicationServiceTest {
         when(applicationRepository.delete(anyString())).thenReturn(Completable.error(TechnicalException::new));
 
         TestObserver testObserver = applicationService.delete("my-client").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
@@ -1121,7 +1122,7 @@ public class ApplicationServiceTest {
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.error(TechnicalException::new));
 
         TestObserver testObserver = applicationService.delete("my-client").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
@@ -1132,7 +1133,7 @@ public class ApplicationServiceTest {
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.empty());
 
         TestObserver testObserver = applicationService.delete("my-client").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(ApplicationNotFoundException.class);
         testObserver.assertNotComplete();
@@ -1344,7 +1345,7 @@ public class ApplicationServiceTest {
         doReturn(true).when(accountSettingsValidator).validate(any());
 
         TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -1367,7 +1368,7 @@ public class ApplicationServiceTest {
         when(applicationRepository.update(any(Application.class))).thenReturn(Single.just(new Application()));
 
         TestObserver testObserver = applicationService.renewClientSecret(DOMAIN, "my-client").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -1381,7 +1382,7 @@ public class ApplicationServiceTest {
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.empty());
 
         TestObserver testObserver = applicationService.renewClientSecret(DOMAIN, "my-client").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(ApplicationNotFoundException.class);
         testObserver.assertNotComplete();
@@ -1394,7 +1395,7 @@ public class ApplicationServiceTest {
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.error(TechnicalException::new));
 
         TestObserver testObserver = applicationService.renewClientSecret(DOMAIN, "my-client").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();

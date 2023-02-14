@@ -20,7 +20,7 @@ import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.plugin.BotDetectionPlugin;
 import io.gravitee.am.service.model.plugin.ResourcePlugin;
 import io.gravitee.common.http.HttpStatusCode;
-import io.reactivex.Maybe;
+import io.reactivex.rxjava3.core.Maybe;
 import org.junit.Test;
 
 import javax.ws.rs.core.Response;

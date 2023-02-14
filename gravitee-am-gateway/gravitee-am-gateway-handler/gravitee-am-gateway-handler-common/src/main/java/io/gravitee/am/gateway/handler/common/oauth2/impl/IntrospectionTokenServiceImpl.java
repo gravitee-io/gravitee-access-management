@@ -22,8 +22,8 @@ import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionTokenService;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,8 +55,8 @@ public class IntrospectionTokenServiceImpl implements IntrospectionTokenService 
     public Single<JWT> introspect(String token, boolean offlineVerification) {
         return jwtService.decode(token)
                 .flatMapMaybe(jwt -> clientService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud()))
-                .switchIfEmpty(Maybe.error(new InvalidTokenException("Invalid or unknown client for this token")))
-                .flatMapSingle(client -> jwtService.decodeAndVerify(token, client))
+                .switchIfEmpty(Single.error(new InvalidTokenException("Invalid or unknown client for this token")))
+                .flatMap(client -> jwtService.decodeAndVerify(token, client))
                 .flatMap(jwt -> {
                     // Just check the JWT signature and JWT validity if offline verification option is enabled
                     // or if the token has just been created (could not be in database so far because of async database storing process delay)

@@ -19,9 +19,11 @@ import io.gravitee.am.model.Theme;
 import io.gravitee.am.service.exception.ThemeInvalidException;
 import io.gravitee.am.service.validators.theme.ThemeValidator;
 import io.gravitee.am.service.validators.theme.impl.ThemeValidatorImpl;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -39,7 +41,7 @@ public class ThemeValidatorTest {
     @Test
     public void shouldValidate_NewTheme() {
         final TestObserver<Void> observer = themeValidator.validate(new Theme()).test();
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertNoErrors();
     }
 
@@ -48,7 +50,7 @@ public class ThemeValidatorTest {
         final Theme theme = new Theme();
         theme.setFaviconUrl("http://comewhere/image.png");
         final TestObserver<Void> observer = themeValidator.validate(theme).test();
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertNoErrors();
     }
 
@@ -57,7 +59,7 @@ public class ThemeValidatorTest {
         final Theme theme = new Theme();
         theme.setLogoUrl("http://comewhere/image.png");
         final TestObserver<Void> observer = themeValidator.validate(theme).test();
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertNoErrors();
     }
 
@@ -66,7 +68,7 @@ public class ThemeValidatorTest {
         final Theme theme = new Theme();
         theme.setLogoUrl("file://comewhere/image.png");
         final TestObserver<Void> observer = themeValidator.validate(theme).test();
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(ThemeInvalidException.class);
     }
 

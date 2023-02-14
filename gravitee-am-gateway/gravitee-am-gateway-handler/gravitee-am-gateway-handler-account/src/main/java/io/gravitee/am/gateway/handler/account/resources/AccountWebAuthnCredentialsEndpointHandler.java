@@ -19,7 +19,7 @@ import io.gravitee.am.gateway.handler.account.services.AccountService;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.User;
-import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

@@ -23,14 +23,13 @@ import io.gravitee.am.service.UserActivityService;
 import io.gravitee.am.service.exception.NotImplementedException;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Handler;
-import io.vertx.reactivex.core.MultiMap;
-import io.vertx.reactivex.core.buffer.Buffer;
-import io.vertx.reactivex.core.http.HttpServerRequest;
-import io.vertx.reactivex.ext.web.RoutingContext;
-import io.vertx.reactivex.ext.web.Session;
-import io.vertx.reactivex.ext.web.common.template.TemplateEngine;
+import io.reactivex.rxjava3.core.Single;
+import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.rxjava3.core.buffer.Buffer;
+import io.vertx.rxjava3.core.http.HttpServerRequest;
+import io.vertx.rxjava3.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.Session;
+import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
@@ -72,19 +71,20 @@ public abstract class AbstractEndpoint {
     }
 
     protected void renderPage(RoutingContext routingContext, Map<String, Object> data, Client client, Logger logger, String errorMessage) {
-        this.renderPage(data, client, res -> {
-            if (res.succeeded()) {
-                routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
-                routingContext.response().end(res.result());
-            } else {
-                logger.error(errorMessage, res.cause());
-                routingContext.fail(res.cause());
-            }
-        });
+        this.renderPage(data, client)
+                .doOnSuccess(buffer -> {
+                    routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
+                    routingContext.response().end(buffer);
+                })
+                .doOnError(throwable -> {
+                    logger.error(errorMessage, throwable);
+                    routingContext.fail(throwable.getCause());
+                })
+                .subscribe();
     }
 
-    protected void renderPage(Map<String, Object> data, Client client, Handler<AsyncResult<Buffer>> handler) {
-        templateEngine.render(data, getTemplateFileName(client), handler);
+    protected Single<Buffer> renderPage(Map<String, Object> data, Client client) {
+        return templateEngine.render(data, getTemplateFileName(client));
     }
 
     protected final String getReturnUrl(RoutingContext context, MultiMap queryParams) {

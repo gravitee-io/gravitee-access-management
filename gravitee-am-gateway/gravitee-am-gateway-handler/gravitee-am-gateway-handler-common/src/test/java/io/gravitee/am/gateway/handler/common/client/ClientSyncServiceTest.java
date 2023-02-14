@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.handler.common.client;
 import io.gravitee.am.gateway.handler.common.client.impl.ClientSyncServiceImpl;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;

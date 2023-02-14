@@ -18,7 +18,7 @@ package io.gravitee.am.identityprovider.api.social;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.common.Request;
-import io.reactivex.Maybe;
+import io.reactivex.rxjava3.core.Maybe;
 
 import java.util.Optional;
 

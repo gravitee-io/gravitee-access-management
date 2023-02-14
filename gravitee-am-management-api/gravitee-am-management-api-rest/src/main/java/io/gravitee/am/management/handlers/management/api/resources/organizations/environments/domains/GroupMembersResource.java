@@ -28,9 +28,9 @@ import io.gravitee.am.service.GroupService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Maybe;
-import io.reactivex.Observable;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.Single;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
@@ -90,8 +90,8 @@ public class GroupMembersResource extends AbstractResource {
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_GROUP, Acl.READ)
                 .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(irrelevant -> groupService.findMembers(ReferenceType.DOMAIN, domain, group, page, Integer.min(size, MAX_MEMBERS_SIZE_PER_PAGE)))
+                        .switchIfEmpty(Single.error(new DomainNotFoundException(domain)))
+                        .flatMap(irrelevant -> groupService.findMembers(ReferenceType.DOMAIN, domain, group, page, Integer.min(size, MAX_MEMBERS_SIZE_PER_PAGE)))
                         .flatMap(pagedMembers -> {
                             if (pagedMembers.getData() == null) {
                                 return Single.just(pagedMembers);
@@ -104,8 +104,7 @@ public class GroupMembersResource extends AbstractResource {
                                                         member.setSource(idP.getName());
                                                         return member;
                                                     })
-                                                    .defaultIfEmpty(member)
-                                                    .toSingle();
+                                                    .defaultIfEmpty(member);
                                         }
                                         return Single.just(member);
                                     })

@@ -22,10 +22,10 @@ import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.repository.mongodb.oauth2.internal.model.CibaAuthRequestMongo;
 import io.gravitee.am.repository.oidc.api.CibaAuthRequestRepository;
 import io.gravitee.am.repository.oidc.model.CibaAuthRequest;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Observable;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.Single;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 

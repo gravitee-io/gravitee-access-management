@@ -17,9 +17,9 @@ package io.gravitee.am.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.service.ReCaptchaService;
-import io.reactivex.Single;
-import io.vertx.reactivex.core.MultiMap;
-import io.vertx.reactivex.ext.web.client.WebClient;
+import io.reactivex.rxjava3.core.Single;
+import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.rxjava3.ext.web.client.WebClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

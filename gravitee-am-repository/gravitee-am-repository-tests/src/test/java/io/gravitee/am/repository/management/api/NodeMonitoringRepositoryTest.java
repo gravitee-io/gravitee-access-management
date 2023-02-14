@@ -19,15 +19,15 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.node.api.Monitoring;
 import io.gravitee.node.api.NodeMonitoringRepository;
-import io.reactivex.observers.TestObserver;
-import io.reactivex.subscribers.TestSubscriber;
-import org.junit.Assert;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertTrue;
 
@@ -47,7 +47,7 @@ public class NodeMonitoringRepositoryTest extends AbstractManagementTest {
     public void testCreate() {
         Monitoring alertNotifier = buildMonitoring();
         TestObserver<Monitoring> testObserver = nodeMonitoringRepository.create(alertNotifier).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -66,7 +66,7 @@ public class NodeMonitoringRepositoryTest extends AbstractManagementTest {
         updatedMonitoring.setPayload("updatedPayload");
 
         TestObserver<Monitoring> testObserver = nodeMonitoringRepository.update(updatedMonitoring).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -91,7 +91,7 @@ public class NodeMonitoringRepositoryTest extends AbstractManagementTest {
         final Monitoring monitoringCreated = nodeMonitoringRepository.create(monitoringToCreate).blockingGet();
 
         TestObserver<Monitoring> obs = nodeMonitoringRepository.findByNodeIdAndType(NODE_ID, MONITORING_TYPE).test();
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertComplete();
         obs.assertNoErrors();
         obs.assertValue(monitoring -> monitoring.getId().equals(monitoringCreated.getId()));
@@ -121,7 +121,7 @@ public class NodeMonitoringRepositoryTest extends AbstractManagementTest {
         }
 
         TestSubscriber<Monitoring> obs = nodeMonitoringRepository.findByTypeAndTimeFrame(MONITORING_TYPE, from, to).test();
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValueCount(4);
 
         obs.values().forEach(monitoring -> {

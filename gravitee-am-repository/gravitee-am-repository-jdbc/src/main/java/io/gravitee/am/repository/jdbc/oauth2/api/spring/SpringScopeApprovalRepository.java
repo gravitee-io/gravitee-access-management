@@ -16,11 +16,11 @@
 package io.gravitee.am.repository.jdbc.oauth2.api.spring;
 
 import io.gravitee.am.repository.jdbc.oauth2.api.model.JdbcScopeApproval;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.data.repository.reactive.RxJava2CrudRepository;
+import org.springframework.data.repository.reactive.RxJava3CrudRepository;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -28,7 +28,7 @@ import org.springframework.stereotype.Repository;
  * @author GraviteeSource Team
  */
 @Repository
-public interface SpringScopeApprovalRepository extends RxJava2CrudRepository<JdbcScopeApproval, String> {
+public interface SpringScopeApprovalRepository extends RxJava3CrudRepository<JdbcScopeApproval, String> {
 
     @Query("Select * from scope_approvals s where domain = :domain and user_id = :user and client_id = :client")
     Flowable<JdbcScopeApproval> findByDomainAndUserAndClient(@Param("domain") String domain, @Param("user") String user,

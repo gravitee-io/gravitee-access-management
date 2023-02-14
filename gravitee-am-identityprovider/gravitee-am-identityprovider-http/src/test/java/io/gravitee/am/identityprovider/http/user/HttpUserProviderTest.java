@@ -25,7 +25,7 @@ import io.gravitee.am.identityprovider.http.user.spring.HttpUserProviderConfigur
 import io.gravitee.am.service.exception.UserAlreadyExistsException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.common.http.HttpHeaders;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -36,6 +36,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
 
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
@@ -72,7 +73,7 @@ public class HttpUserProviderTest {
                 .willReturn(okJson("{\"id\" : \"123456789\", \"username\" : \"johndoe\"}")));
 
         TestObserver<User> testObserver = userProvider.create(user).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(u -> "123456789".equals(u.getId()));
@@ -89,7 +90,7 @@ public class HttpUserProviderTest {
                 .willReturn(okJson("{\"id\" : 80100, \"username\" : \"johndoe\"}")));
 
         TestObserver<User> testObserver = userProvider.create(user).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(u -> "80100".equals(u.getId()));
@@ -106,7 +107,7 @@ public class HttpUserProviderTest {
                 .willReturn(badRequest()));
 
         TestObserver<User> testObserver = userProvider.create(user).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(UserAlreadyExistsException.class);
     }
 
@@ -117,7 +118,7 @@ public class HttpUserProviderTest {
                 .willReturn(okJson("{\"id\" : \"123456789\", \"username\" : \"johndoe\"}")));
 
         TestObserver<User> testObserver = userProvider.findByUsername("johndoe").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(u -> "123456789".equals(u.getId()));
@@ -133,7 +134,7 @@ public class HttpUserProviderTest {
         this.mapper.setMappers(Map.of("username", "username", "id", "id", "copy_of_id", "id"));
 
         TestObserver<User> testObserver = userProvider.findByUsername("johndoe").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(u -> "123456789".equals(u.getId()));
@@ -149,7 +150,7 @@ public class HttpUserProviderTest {
                 .willReturn(okJson("[{\"id\" : \"123456789\", \"username\" : \"johndoe\"}]")));
 
         TestObserver<User> testObserver = userProvider.findByUsername("johndoe").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(u -> "123456789".equals(u.getId()));
@@ -163,7 +164,7 @@ public class HttpUserProviderTest {
                 .willReturn(okJson("{\"id\" : \"123456789\", \"username\" : \"johndoe\"}")));
 
         TestObserver<User> testObserver = userProvider.findByEmail("johndoe@mail.com").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(u -> "123456789".equals(u.getId()));
@@ -177,7 +178,7 @@ public class HttpUserProviderTest {
                 .willReturn(okJson("[{\"id\" : \"123456789\", \"username\" : \"johndoe\"}]")));
 
         TestObserver<User> testObserver = userProvider.findByEmail("johndoe@mail.com").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(u -> "123456789".equals(u.getId()));
@@ -194,7 +195,7 @@ public class HttpUserProviderTest {
                 .willReturn(okJson("{\"id\" : \"123456789\", \"username\" : \"johndoe\"}")));
 
         TestObserver<User> testObserver = userProvider.update("123456789", user).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(u -> "123456789".equals(u.getId()));
@@ -213,7 +214,7 @@ public class HttpUserProviderTest {
         this.mapper.setMappers(Map.of("username", "username", "id", "id", "copy_of_id", "id"));
 
         TestObserver<User> testObserver = userProvider.update("123456789", user).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(u -> "123456789".equals(u.getId()));
@@ -235,7 +236,7 @@ public class HttpUserProviderTest {
         this.mapper.setMappers(Map.of("username", "username", "id", "id", "copy_of_id", "id"));
 
         TestObserver<User> testObserver = userProvider.updateUsername(user, "newUsername").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(u -> "123456789".equals(u.getId()));
@@ -255,7 +256,7 @@ public class HttpUserProviderTest {
                 .willReturn(okJson("{\"id\" : \"123456789\", \"username\" : \"johndoe\"}")));
 
         TestObserver<User> testObserver = userProvider.updatePassword(user, "password").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(u -> "123456789".equals(u.getId()));
@@ -272,7 +273,7 @@ public class HttpUserProviderTest {
                 .willReturn(notFound()));
 
         TestObserver<User> testObserver = userProvider.update("123456789", user).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(UserNotFoundException.class);
     }
 
@@ -282,7 +283,7 @@ public class HttpUserProviderTest {
                 .willReturn(ok()));
 
         TestObserver testObserver = userProvider.delete("123456789").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
     }
@@ -293,7 +294,7 @@ public class HttpUserProviderTest {
                 .willReturn(notFound()));
 
         TestObserver testObserver = userProvider.delete("123456789").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNotComplete();
         testObserver.assertError(UserNotFoundException.class);
     }

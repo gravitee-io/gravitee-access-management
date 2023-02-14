@@ -20,7 +20,7 @@ import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.util.MultiValueMap;
 import io.gravitee.el.spel.context.SecuredMethodResolver;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 import net.minidev.json.JSONObject;
 import net.minidev.json.parser.JSONParser;
 import net.minidev.json.parser.ParseException;

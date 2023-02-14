@@ -17,7 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.service.scope;
 
 import io.gravitee.am.gateway.handler.oauth2.service.scope.impl.ScopeServiceImpl;
 import io.gravitee.am.model.oauth2.Scope;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

@@ -33,14 +33,14 @@ import io.gravitee.risk.assessment.api.assessment.settings.AssessmentSettings;
 import io.gravitee.risk.assessment.api.assessment.settings.RiskAssessmentSettings;
 import io.gravitee.risk.assessment.api.devices.Devices;
 import io.gravitee.risk.assessment.api.geovelocity.GeoTimeCoordinate;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.reactivex.functions.Consumer;
-import io.reactivex.functions.Function;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.functions.Consumer;
+import io.reactivex.rxjava3.functions.Function;
 import io.vertx.core.AsyncResult;
-import io.vertx.reactivex.core.Vertx;
-import io.vertx.reactivex.core.eventbus.EventBus;
-import io.vertx.reactivex.core.eventbus.Message;
+import io.vertx.rxjava3.core.Vertx;
+import io.vertx.rxjava3.core.eventbus.EventBus;
+import io.vertx.rxjava3.core.eventbus.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -83,9 +83,8 @@ public class RiskAssessmentService {
         this.eventBus = vertx.eventBus();
     }
 
-    public Maybe<AssessmentMessage> computeRiskAssessment(
-            AuthenticationDetails authenticationDetails,
-            Consumer<AssessmentMessageResult> resultConsumer) {
+    public Maybe<AssessmentMessageResult> computeRiskAssessment(
+            AuthenticationDetails authenticationDetails) {
         if (riskAssessmentSettings.isEnabled()) {
             var assessmentMessage = Single.just(new AssessmentMessage().setSettings(riskAssessmentSettings).setData(new AssessmentData()));
             Domain domain = authenticationDetails.getDomain();
@@ -94,9 +93,8 @@ public class RiskAssessmentService {
                     .flatMap(buildDeviceAssessmentMessage(authenticationDetails, domain, user))
                     .flatMap(buildIpReputationMessage(authenticationDetails))
                     .flatMap(buildGeoVelocityMessage(domain, user))
-                    .doOnSuccess(processedMessage -> consumeRiskAssessmentResult(processedMessage, resultConsumer))
-                    .doOnError(throwable -> logger.error("An unexpected error has occurred while trying to apply risk assessment: ", throwable))
-                    .toMaybe();
+                    .flatMapMaybe(this::consumeRiskAssessmentResult)
+                    .doOnError(throwable -> logger.error("An unexpected error has occurred while trying to apply risk assessment: ", throwable));
         }
         return Maybe.empty();
     }
@@ -159,24 +157,20 @@ public class RiskAssessmentService {
                 ).collect(toList());
     }
 
-    private void consumeRiskAssessmentResult(AssessmentMessage message, Consumer<AssessmentMessageResult> resultConsumer) throws JsonProcessingException {
-        eventBus.<String>request(RISK_ASSESSMENT_SERVICE, objectMapper.writeValueAsString(message), response -> {
-            if (response.succeeded()) {
-                try {
-                    resultConsumer.accept(extractMessageResult(response));
-                } catch (Exception e) {
-                    logger.error("Error processing risk assessment response.", e);
-                }
-            } else if (response.failed()) {
-                logger.warn("{} could not be called, reason: {}", RISK_ASSESSMENT_SERVICE, response.cause().getMessage());
-                logger.debug("", response.cause());
-            }
-        });
+    private Maybe<AssessmentMessageResult> consumeRiskAssessmentResult(AssessmentMessage message) throws JsonProcessingException {
+        return eventBus.<String>rxRequest(RISK_ASSESSMENT_SERVICE, objectMapper.writeValueAsString(message))
+                .flatMapMaybe(stringMessage -> Maybe.just(extractMessageResult(stringMessage)))
+                .onErrorResumeNext(throwable -> {
+                    logger.warn("{} could not be called, reason: {}", RISK_ASSESSMENT_SERVICE, throwable.getCause().getMessage());
+                    logger.debug("", throwable.getCause());
+
+                    return Maybe.empty();
+                });
     }
 
-    private AssessmentMessageResult extractMessageResult(AsyncResult<Message<String>> response) {
+    private AssessmentMessageResult extractMessageResult(Message<String> response) {
         try {
-            return objectMapper.readValue(response.result().body(), AssessmentMessageResult.class);
+            return objectMapper.readValue(response.body(), AssessmentMessageResult.class);
         } catch (JsonProcessingException e) {
             logger.error("An unexpected error has occurred: ", e);
             return new AssessmentMessageResult()

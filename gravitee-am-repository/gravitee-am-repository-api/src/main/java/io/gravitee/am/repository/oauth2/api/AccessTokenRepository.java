@@ -16,7 +16,7 @@
 package io.gravitee.am.repository.oauth2.api;
 
 import io.gravitee.am.repository.oauth2.model.AccessToken;
-import io.reactivex.*;
+import io.reactivex.rxjava3.core.*;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)

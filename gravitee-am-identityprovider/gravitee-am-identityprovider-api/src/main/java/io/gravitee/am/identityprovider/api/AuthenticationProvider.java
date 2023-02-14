@@ -17,7 +17,7 @@ package io.gravitee.am.identityprovider.api;
 
 import io.gravitee.common.component.Lifecycle;
 import io.gravitee.common.service.Service;
-import io.reactivex.Maybe;
+import io.reactivex.rxjava3.core.Maybe;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)

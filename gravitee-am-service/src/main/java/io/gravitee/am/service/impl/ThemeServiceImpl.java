@@ -33,9 +33,9 @@ import io.gravitee.am.service.model.NewTheme;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.ThemeAuditBuilder;
 import io.gravitee.am.service.validators.theme.ThemeValidator;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import org.apache.commons.text.StringEscapeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -143,8 +143,8 @@ public class ThemeServiceImpl implements ThemeService {
         Objects.requireNonNull(updatedTheme.getId(), "theme id is required to update a theme");
 
         return this.themeRepository.findById(updatedTheme.getId())
-                .switchIfEmpty(Maybe.error(new ThemeNotFoundException(updatedTheme.getId(), domain.getId())))
-                .flatMapSingle(existingTheme -> {
+                .switchIfEmpty(Single.error(new ThemeNotFoundException(updatedTheme.getId(), domain.getId())))
+                .flatMap(existingTheme -> {
 
                     if (!domain.getId().equals(updatedTheme.getReferenceId())) {
                         return Single.error(new InvalidThemeException("Updated theme is not linked to the domain"));

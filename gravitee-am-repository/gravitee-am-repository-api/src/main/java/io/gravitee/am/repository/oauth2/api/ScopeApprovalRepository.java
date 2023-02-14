@@ -17,9 +17,9 @@ package io.gravitee.am.repository.oauth2.api;
 
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.repository.common.CrudRepository;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Single;
 
 import java.util.Set;
 

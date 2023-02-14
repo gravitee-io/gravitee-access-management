@@ -22,10 +22,10 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.service.exception.NotImplementedException;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
-import io.vertx.reactivex.core.http.HttpServerRequest;
-import io.vertx.reactivex.ext.auth.webauthn.WebAuthn;
-import io.vertx.reactivex.ext.web.RoutingContext;
-import io.vertx.reactivex.ext.web.Session;
+import io.vertx.rxjava3.core.http.HttpServerRequest;
+import io.vertx.rxjava3.ext.auth.webauthn.WebAuthn;
+import io.vertx.rxjava3.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -92,30 +92,27 @@ public class WebAuthnRegisterCredentialsEndpoint extends WebAuthnHandler {
             User user = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) ctx.user().getDelegate()).getUser();
 
             // register credentials
-            webAuthn.createCredentialsOptions(webauthnRegister, createCredentialsOptions -> {
-                if (createCredentialsOptions.failed()) {
-                    ctx.fail(createCredentialsOptions.cause());
-                    return;
-                }
+            webAuthn.createCredentialsOptions(webauthnRegister)
+                    .doOnSuccess(entries -> {
+                        // force user id with our own user id
+                        entries.getJsonObject("user").put("id", user.getId());
 
-                final JsonObject credentialsOptions = createCredentialsOptions.result();
-                // force user id with our own user id
-                credentialsOptions.getJsonObject("user").put("id", user.getId());
+                        // force registration if option is enabled
+                        if (domain.getWebAuthnSettings() != null && domain.getWebAuthnSettings().isForceRegistration()) {
+                            entries.remove("excludeCredentials");
+                        }
 
-                // force registration if option is enabled
-                if (domain.getWebAuthnSettings() != null && domain.getWebAuthnSettings().isForceRegistration()) {
-                    credentialsOptions.remove("excludeCredentials");
-                }
+                        // save challenge to the session
+                        ctx.session()
+                                .put(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY, entries.getString("challenge"))
+                                .put(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY, webauthnRegister.getString("name"));
 
-                // save challenge to the session
-                ctx.session()
-                        .put(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY, credentialsOptions.getString("challenge"))
-                        .put(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY, webauthnRegister.getString("name"));
-
-                ctx.response()
-                        .putHeader(io.vertx.core.http.HttpHeaders.CONTENT_TYPE, "application/json; charset=utf-8")
-                        .end(Json.encodePrettily(credentialsOptions));
-            });
+                        ctx.response()
+                                .putHeader(io.vertx.core.http.HttpHeaders.CONTENT_TYPE, "application/json; charset=utf-8")
+                                .end(Json.encodePrettily(entries));
+                    })
+                    .doOnError(throwable -> ctx.fail(throwable.getCause()))
+                    .subscribe();
         } catch (IllegalArgumentException e) {
             ctx.fail(400);
         } catch (RuntimeException e) {

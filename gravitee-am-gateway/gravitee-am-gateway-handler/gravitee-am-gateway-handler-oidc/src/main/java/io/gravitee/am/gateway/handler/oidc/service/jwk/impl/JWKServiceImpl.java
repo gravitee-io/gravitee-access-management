@@ -23,11 +23,11 @@ import io.gravitee.am.model.jose.JWK;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.vertx.reactivex.ext.web.client.HttpResponse;
-import io.vertx.reactivex.ext.web.client.WebClient;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+import io.vertx.rxjava3.ext.web.client.HttpResponse;
+import io.vertx.rxjava3.ext.web.client.WebClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 
@@ -97,7 +97,7 @@ public class JWKServiceImpl implements JWKService {
                         }
                         return Maybe.empty();
                     })
-                    .onErrorResumeNext(Maybe.error(new InvalidClientMetadataException("Unable to parse jwks from : " + jwksUri)));
+                    .onErrorResumeNext(exception -> Maybe.error(new InvalidClientMetadataException("Unable to parse jwks from : " + jwksUri)));
         }
         catch(IllegalArgumentException | URISyntaxException ex) {
             return Maybe.error(new InvalidClientMetadataException(jwksUri+" is not valid."));

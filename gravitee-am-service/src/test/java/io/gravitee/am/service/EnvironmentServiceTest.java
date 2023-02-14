@@ -30,11 +30,11 @@ import io.gravitee.am.service.exception.OrganizationNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.EnvironmentServiceImpl;
 import io.gravitee.am.service.model.NewEnvironment;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
-import io.reactivex.subscribers.TestSubscriber;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -42,6 +42,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Collections;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -83,7 +84,7 @@ public class EnvironmentServiceTest {
 
         TestObserver<Environment> obs = cut.findById(ENVIRONMENT_ID, ORGANIZATION_ID).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertComplete();
         obs.assertValue(environment);
     }
@@ -95,7 +96,7 @@ public class EnvironmentServiceTest {
 
         TestObserver<Environment> obs = cut.findById(ENVIRONMENT_ID, ORGANIZATION_ID).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertError(EnvironmentNotFoundException.class);
     }
 
@@ -106,7 +107,7 @@ public class EnvironmentServiceTest {
 
         TestObserver<Environment> obs = cut.findById(ENVIRONMENT_ID, ORGANIZATION_ID).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertError(TechnicalException.class);
     }
 
@@ -118,7 +119,7 @@ public class EnvironmentServiceTest {
 
         TestObserver<Environment> obs = cut.findById(ENVIRONMENT_ID).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertComplete();
         obs.assertValue(environment);
     }
@@ -130,7 +131,7 @@ public class EnvironmentServiceTest {
 
         TestObserver<Environment> obs = cut.findById(ENVIRONMENT_ID).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertError(EnvironmentNotFoundException.class);
     }
 
@@ -141,7 +142,7 @@ public class EnvironmentServiceTest {
 
         TestObserver<Environment> obs = cut.findById(ENVIRONMENT_ID).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertError(TechnicalException.class);
     }
 
@@ -153,7 +154,7 @@ public class EnvironmentServiceTest {
 
         TestSubscriber<Environment> obs = cut.findAll(ORGANIZATION_ID).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertComplete();
         obs.assertValue(environment);
     }
@@ -165,7 +166,7 @@ public class EnvironmentServiceTest {
 
         TestSubscriber<Environment> obs = cut.findAll(ORGANIZATION_ID).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertNoErrors();
         obs.assertComplete();
         obs.assertNoValues();
@@ -178,7 +179,7 @@ public class EnvironmentServiceTest {
 
         TestSubscriber<Environment> obs = cut.findAll(ORGANIZATION_ID).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertError(TechnicalException.class);
     }
 
@@ -194,7 +195,7 @@ public class EnvironmentServiceTest {
 
         TestObserver<Environment> obs = cut.createDefault().test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValue(defaultEnvironment);
 
         verify(auditService, times(1)).report(argThat(builder -> {
@@ -217,7 +218,7 @@ public class EnvironmentServiceTest {
 
         TestObserver<Environment> obs = cut.createDefault().test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertComplete();
         obs.assertNoValues();
 
@@ -247,7 +248,7 @@ public class EnvironmentServiceTest {
 
         TestObserver<Environment> obs = cut.createOrUpdate(ORGANIZATION_ID, ENVIRONMENT_ID, newEnvironment, createdBy).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValue(environment -> {
             assertEquals(ORGANIZATION_ID, environment.getOrganizationId());
             assertEquals(newEnvironment.getName(), environment.getName());
@@ -290,7 +291,7 @@ public class EnvironmentServiceTest {
 
         TestObserver<Environment> obs = cut.createOrUpdate(ORGANIZATION_ID, ENVIRONMENT_ID, newEnvironment, createdBy).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertError(TechnicalManagementException.class);
 
         verify(auditService, times(1)).report(argThat(builder -> {
@@ -321,7 +322,7 @@ public class EnvironmentServiceTest {
 
         TestObserver<Environment> obs = cut.createOrUpdate(ORGANIZATION_ID, ENVIRONMENT_ID, newEnvironment, createdBy).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertError(OrganizationNotFoundException.class);
 
         verifyZeroInteractions(auditService);
@@ -348,7 +349,7 @@ public class EnvironmentServiceTest {
 
         TestObserver<Environment> obs = cut.createOrUpdate(ORGANIZATION_ID, ENVIRONMENT_ID, newEnvironment, createdBy).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValue(environment -> {
             assertEquals(ENVIRONMENT_ID, environment.getId());
             assertEquals(newEnvironment.getName(), environment.getName());
@@ -391,7 +392,7 @@ public class EnvironmentServiceTest {
 
         TestObserver<Environment> obs = cut.createOrUpdate(ORGANIZATION_ID, ENVIRONMENT_ID, newEnvironment, createdBy).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertError(TechnicalManagementException.class);
 
         verify(auditService, times(1)).report(argThat(builder -> {

@@ -15,29 +15,27 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx;
 
-import io.vertx.core.AsyncResult;
+import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.DeploymentOptions;
-import io.vertx.core.Handler;
 import io.vertx.core.VertxOptions;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 import io.vertx.core.net.*;
 import io.vertx.core.spi.cluster.ClusterManager;
-import io.vertx.reactivex.core.AbstractVerticle;
-import io.vertx.reactivex.core.Vertx;
+import io.vertx.rxjava3.core.AbstractVerticle;
+import io.vertx.rxjava3.core.Vertx;
+import io.vertx.rxjava3.impl.AsyncResultSingle;
 import io.vertx.test.core.AsyncTestBase;
 import io.vertx.test.core.RepeatRule;
 import io.vertx.test.core.VertxTestBase;
 import io.vertx.test.fakecluster.FakeClusterManager;
 import org.junit.Rule;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -87,12 +85,10 @@ public class RxVertxTestBase extends AsyncTestBase {
         if (created != null) {
             CountDownLatch latch = new CountDownLatch(created.size());
             for (Vertx v : created) {
-                v.close(ar -> {
-                    if (ar.failed()) {
-                        log.error("Failed to shutdown vert.x", ar.cause());
-                    }
-                    latch.countDown();
-                });
+                v.rxClose()
+                        .doOnError(exception -> log.error("Failed to shutdown vert.x", exception))
+                        .doFinally(latch::countDown)
+                        .subscribe();
             }
             assertTrue(latch.await(180, TimeUnit.SECONDS));
         }
@@ -127,16 +123,18 @@ public class RxVertxTestBase extends AsyncTestBase {
     /**
      * Create a blank new clustered Vert.x instance with @{@code options} closed when tear down executes.
      */
-    protected void clusteredVertx(VertxOptions options, Handler<AsyncResult<Vertx>> ar) {
+    protected Single<Vertx> clusteredVertx(VertxOptions options) {
         if (created == null) {
             created = Collections.synchronizedList(new ArrayList<>());
         }
-        Vertx.clusteredVertx(options, event -> {
-            if (event.succeeded()) {
-                created.add(event.result());
+
+        return AsyncResultSingle.toSingle(resultHandler -> io.vertx.core.Vertx.clusteredVertx(options, ar -> {
+            if (ar.succeeded()) {
+                resultHandler.handle(io.vertx.core.Future.succeededFuture(Vertx.newInstance(ar.result())));
+            } else {
+                resultHandler.handle(io.vertx.core.Future.failedFuture(ar.cause()));
             }
-            ar.handle(event);
-        });
+        }));
     }
 
     protected ClusterManager getClusterManager() {
@@ -151,19 +149,13 @@ public class RxVertxTestBase extends AsyncTestBase {
         CountDownLatch latch = new CountDownLatch(numNodes);
         vertices = new Vertx[numNodes];
         for (int i = 0; i < numNodes; i++) {
-            int index = i;
-            clusteredVertx(options.setClusterManager(getClusterManager()), ar -> {
-                try {
-                    if (ar.failed()) {
-                        ar.cause().printStackTrace();
-                    }
-                    assertTrue("Failed to start node", ar.succeeded());
-                    vertices[index] = ar.result();
+            AsyncResultSingle.toSingle(resultHandler -> io.vertx.core.Vertx.clusteredVertx(options, ar -> {
+                if (ar.succeeded()) {
+                    resultHandler.handle(io.vertx.core.Future.succeededFuture(Vertx.newInstance(ar.result())));
+                } else {
+                    resultHandler.handle(io.vertx.core.Future.failedFuture(ar.cause()));
                 }
-                finally {
-                    latch.countDown();
-                }
-            });
+            })).subscribe();
         }
         try {
             assertTrue(latch.await(2, TimeUnit.MINUTES));
@@ -264,16 +256,9 @@ public class RxVertxTestBase extends AsyncTestBase {
      * @return the context
      * @throws Exception anything preventing the creation of the worker
      */
-    protected String createWorker() throws Exception {
-        CompletableFuture<String> fut = new CompletableFuture<>();
-        vertx.deployVerticle(AbstractVerticle.class.getName(), new DeploymentOptions().setWorker(true), ar -> {
-            if (ar.failed()) {
-                fut.completeExceptionally(ar.cause());
-            } else {
-                fut.complete(ar.result());
-            }
-        });
-        return fut.get();
+    protected String createWorker() {
+        return vertx.deployVerticle(AbstractVerticle.class.getName(), new DeploymentOptions().setWorker(true))
+                .blockingGet();
     }
 
     /**

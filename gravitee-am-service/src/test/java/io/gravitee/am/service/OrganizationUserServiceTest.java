@@ -32,11 +32,11 @@ import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.am.service.validators.email.EmailValidatorImpl;
 import io.gravitee.am.service.validators.user.UserValidator;
 import io.gravitee.am.service.validators.user.UserValidatorImpl;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -44,6 +44,8 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.runners.MockitoJUnitRunner;
+
+import java.util.concurrent.TimeUnit;
 
 import static io.gravitee.am.service.validators.email.EmailValidatorImpl.EMAIL_PATTERN;
 import static io.gravitee.am.service.validators.user.UserValidatorImpl.*;
@@ -93,7 +95,7 @@ public class OrganizationUserServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = userService.create(ReferenceType.ORGANIZATION, ORG, newUser).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -114,7 +116,7 @@ public class OrganizationUserServiceTest {
         when(userRepository.create(any(User.class))).thenReturn(Single.just(user));
 
         TestObserver<User> testObserver = userService.create(ReferenceType.ORGANIZATION, ORG, newUser).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(EmailFormatInvalidException.class);
 
@@ -133,7 +135,7 @@ public class OrganizationUserServiceTest {
         when(userRepository.create(any(User.class))).thenReturn(Single.just(user));
 
         TestObserver<User> testObserver = userService.create(ReferenceType.ORGANIZATION, ORG, newUser).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(InvalidUserException.class);
 
@@ -183,7 +185,7 @@ public class OrganizationUserServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         var testObserver = userService.update(ReferenceType.ORGANIZATION, ORG, "my-user", updateUser).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -206,7 +208,7 @@ public class OrganizationUserServiceTest {
         when(userRepository.findById(ReferenceType.ORGANIZATION, ORG, user.getId())).thenReturn(Maybe.just(user));
 
         TestObserver<User> testObserver = userService.update(ReferenceType.ORGANIZATION, ORG, "my-user", updateUser).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(EmailFormatInvalidException.class);
 
@@ -226,7 +228,7 @@ public class OrganizationUserServiceTest {
         when(userRepository.findById(ReferenceType.ORGANIZATION, ORG, user.getId())).thenReturn(Maybe.just(user));
 
         TestObserver<User> testObserver = userService.update(ReferenceType.ORGANIZATION, ORG, "my-user", updateUser).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(InvalidUserException.class);
 
@@ -270,7 +272,7 @@ public class OrganizationUserServiceTest {
         when(credentialService.findByUserId(user.getReferenceType(), user.getReferenceId(), user.getId())).thenReturn(Flowable.empty());
 
         TestObserver testObserver = userService.delete("my-user").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -297,7 +299,7 @@ public class OrganizationUserServiceTest {
         when(credentialService.delete(credential.getId(),false)).thenReturn(Completable.complete());
 
         TestObserver testObserver = userService.delete("my-user").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();

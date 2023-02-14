@@ -17,7 +17,7 @@ package io.gravitee.am.gateway.handler.oidc.service.jwe;
 
 import com.nimbusds.jwt.JWT;
 import io.gravitee.am.model.oidc.Client;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)

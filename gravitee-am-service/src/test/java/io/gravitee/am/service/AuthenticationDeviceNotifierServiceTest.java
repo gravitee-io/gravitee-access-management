@@ -26,18 +26,20 @@ import io.gravitee.am.service.impl.AuthenticationDeviceNotifierServiceImpl;
 import io.gravitee.am.service.model.NewAuthenticationDeviceNotifier;
 import io.gravitee.am.service.model.UpdateAuthenticationDeviceNotifier;
 import io.gravitee.am.service.reporter.builder.management.AuthDeviceNotifierAuditBuilder;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
-import io.reactivex.subscribers.TestSubscriber;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
+
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
@@ -68,7 +70,7 @@ public class AuthenticationDeviceNotifierServiceTest {
         when(authDeviceNotifierRepository.findById("auth-dev-notifier")).thenReturn(Maybe.just(new AuthenticationDeviceNotifier()));
         TestObserver testObserver = authDeviceNotifierService.findById("auth-dev-notifier").test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValueCount(1);
@@ -78,7 +80,7 @@ public class AuthenticationDeviceNotifierServiceTest {
     public void shouldFindById_notExistingAuthenticationDeviceNotifier() {
         when(authDeviceNotifierRepository.findById("auth-dev-notifier")).thenReturn(Maybe.empty());
         TestObserver testObserver = authDeviceNotifierService.findById("auth-dev-notifier").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNoValues();
     }
@@ -97,7 +99,7 @@ public class AuthenticationDeviceNotifierServiceTest {
     public void shouldFindByDomain() {
         when(authDeviceNotifierRepository.findByReference(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Flowable.just(new AuthenticationDeviceNotifier()));
         TestSubscriber<AuthenticationDeviceNotifier> testSubscriber = authDeviceNotifierService.findByDomain(DOMAIN).test();
-        testSubscriber.awaitTerminalEvent();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
 
         testSubscriber.assertComplete();
         testSubscriber.assertNoErrors();
@@ -121,7 +123,7 @@ public class AuthenticationDeviceNotifierServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = authDeviceNotifierService.create(DOMAIN, newAuthenticationDeviceNotifier).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -155,7 +157,7 @@ public class AuthenticationDeviceNotifierServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = authDeviceNotifierService.update(DOMAIN, "auth-dev-notifier", updateAuthenticationDeviceNotifier).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -211,7 +213,7 @@ public class AuthenticationDeviceNotifierServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = authDeviceNotifierService.delete(DOMAIN, deviceNotifier.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();

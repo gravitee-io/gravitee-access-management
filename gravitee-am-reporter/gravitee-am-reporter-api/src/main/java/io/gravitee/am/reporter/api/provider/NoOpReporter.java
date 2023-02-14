@@ -24,8 +24,8 @@ import io.gravitee.am.reporter.api.audit.AuditReporter;
 import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.common.component.Lifecycle;
 import io.gravitee.reporter.api.Reportable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

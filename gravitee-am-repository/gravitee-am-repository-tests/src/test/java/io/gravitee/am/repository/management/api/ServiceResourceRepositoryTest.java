@@ -20,12 +20,13 @@ import io.gravitee.am.model.resource.ServiceResource;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.common.utils.UUID;
-import io.reactivex.observers.TestObserver;
-import io.reactivex.subscribers.TestSubscriber;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -45,7 +46,7 @@ public class ServiceResourceRepositoryTest extends AbstractManagementTest {
 
         // fetch factors
         TestSubscriber<ServiceResource> testDomain = serviceResourceRepository.findByReference(ReferenceType.DOMAIN, "testDomain").test();
-        testDomain.awaitTerminalEvent();
+        testDomain.awaitDone(10, TimeUnit.SECONDS);
 
         testDomain.assertComplete();
         testDomain.assertNoErrors();
@@ -78,7 +79,7 @@ public class ServiceResourceRepositoryTest extends AbstractManagementTest {
 
         // fetch resource
         TestObserver<ServiceResource> testObserver = serviceResourceRepository.findById(resourceCreated.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -100,7 +101,7 @@ public class ServiceResourceRepositoryTest extends AbstractManagementTest {
         ServiceResource resource = buildResource();
 
         TestObserver<ServiceResource> testObserver = serviceResourceRepository.create(resource).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -122,7 +123,7 @@ public class ServiceResourceRepositoryTest extends AbstractManagementTest {
         updateResource.setName("testUpdatedName");
 
         TestObserver<ServiceResource> testObserver = serviceResourceRepository.update(updateResource).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -140,13 +141,13 @@ public class ServiceResourceRepositoryTest extends AbstractManagementTest {
         ServiceResource resourceCreated = serviceResourceRepository.create(resource).blockingGet();
 
         TestObserver<ServiceResource> testObserver = serviceResourceRepository.findById(resourceCreated.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(f -> f.getName().equals(resourceCreated.getName()));
 
         TestObserver testObserver1 = serviceResourceRepository.delete(resourceCreated.getId()).test();
-        testObserver1.awaitTerminalEvent();
+        testObserver1.awaitDone(10, TimeUnit.SECONDS);
 
         serviceResourceRepository.findById(resourceCreated.getId()).test().assertEmpty();
     }

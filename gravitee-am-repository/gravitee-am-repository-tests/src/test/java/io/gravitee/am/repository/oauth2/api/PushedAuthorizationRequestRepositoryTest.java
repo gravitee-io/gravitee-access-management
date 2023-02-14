@@ -19,9 +19,11 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.repository.oauth2.AbstractOAuthTest;
 import io.gravitee.am.repository.oauth2.model.PushedAuthorizationRequest;
 import io.gravitee.common.util.LinkedMultiValueMap;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -36,7 +38,7 @@ public class PushedAuthorizationRequestRepositoryTest extends AbstractOAuthTest 
     public void shouldNotFindById() {
         TestObserver<PushedAuthorizationRequest> observer = repository.findById("unknown-id").test();
 
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
 
         observer.assertComplete();
         observer.assertValueCount(0);
@@ -54,11 +56,11 @@ public class PushedAuthorizationRequestRepositoryTest extends AbstractOAuthTest 
         parameters.add("key", "value");
         par.setParameters(parameters);
 
-        repository.create(par).test().awaitTerminalEvent();
+        repository.create(par).test().awaitDone(10, TimeUnit.SECONDS);
 
         TestObserver<PushedAuthorizationRequest> observer = repository.findById(id).test();
 
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
 
         observer.assertComplete();
         observer.assertValueCount(1);
@@ -85,7 +87,7 @@ public class PushedAuthorizationRequestRepositoryTest extends AbstractOAuthTest 
                 .andThen(repository.findById(id))
                 .test();
 
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertNoValues();
         observer.assertNoErrors();
     }

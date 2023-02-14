@@ -18,7 +18,7 @@ package io.gravitee.am.service.validators.domain;
 
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.validators.Validator;
-import io.reactivex.Completable;
+import io.reactivex.rxjava3.core.Completable;
 
 import java.util.List;
 

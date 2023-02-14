@@ -20,13 +20,14 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.alert.AlertNotifier;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.am.repository.management.api.search.AlertNotifierCriteria;
-import io.reactivex.observers.TestObserver;
-import io.reactivex.subscribers.TestSubscriber;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Collections;
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -47,7 +48,7 @@ public class AlertNotifierRepositoryTest extends AbstractManagementTest {
 
         // fetch idp
         TestObserver<AlertNotifier> testObserver = alertNotifierRepository.findById(alertNotifierCreated.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -63,7 +64,7 @@ public class AlertNotifierRepositoryTest extends AbstractManagementTest {
     public void testCreate() {
         AlertNotifier alertNotifier = buildAlertNotifier();
         TestObserver<AlertNotifier> testObserver = alertNotifierRepository.create(alertNotifier).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -82,7 +83,7 @@ public class AlertNotifierRepositoryTest extends AbstractManagementTest {
         updatedAlertNotifier.setEnabled(false);
 
         TestObserver<AlertNotifier> testObserver = alertNotifierRepository.update(updatedAlertNotifier).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -98,7 +99,7 @@ public class AlertNotifierRepositoryTest extends AbstractManagementTest {
 
         // delete idp
         TestObserver<Void> testObserver1 = alertNotifierRepository.delete(alertNotifierCreated.getId()).test();
-        testObserver1.awaitTerminalEvent();
+        testObserver1.awaitDone(10, TimeUnit.SECONDS);
 
         // fetch idp
         alertNotifierRepository.findById(alertNotifierCreated.getId()).test().assertEmpty();
@@ -113,7 +114,7 @@ public class AlertNotifierRepositoryTest extends AbstractManagementTest {
         criteria.setEnabled(false);
         TestSubscriber<AlertNotifier> testObserver1 = alertNotifierRepository.findByCriteria(ReferenceType.DOMAIN, DOMAIN_ID, criteria).test();
 
-        testObserver1.awaitTerminalEvent();
+        testObserver1.awaitDone(10, TimeUnit.SECONDS);
         testObserver1.assertComplete();
         testObserver1.assertNoErrors();
         testObserver1.assertNoValues();
@@ -121,7 +122,7 @@ public class AlertNotifierRepositoryTest extends AbstractManagementTest {
         alertNotifierCreated.setEnabled(false);
         final AlertNotifier alertNotifierUpdated = alertNotifierRepository.update(alertNotifierCreated).blockingGet();
         testObserver1 = alertNotifierRepository.findByCriteria(ReferenceType.DOMAIN, DOMAIN_ID, criteria).test();
-        testObserver1.awaitTerminalEvent();
+        testObserver1.awaitDone(10, TimeUnit.SECONDS);
         testObserver1.assertComplete();
         testObserver1.assertNoErrors();
         testObserver1.assertValue(alertNotifier -> alertNotifier.getId().equals(alertNotifierUpdated.getId()));
@@ -131,7 +132,7 @@ public class AlertNotifierRepositoryTest extends AbstractManagementTest {
     public void findAll() {
         TestSubscriber<AlertNotifier> testObserver1 = alertNotifierRepository.findAll(ReferenceType.DOMAIN, DOMAIN_ID).test();
 
-        testObserver1.awaitTerminalEvent();
+        testObserver1.awaitDone(10, TimeUnit.SECONDS);
         testObserver1.assertComplete();
         testObserver1.assertNoErrors();
         testObserver1.assertNoValues();
@@ -143,7 +144,7 @@ public class AlertNotifierRepositoryTest extends AbstractManagementTest {
 
         testObserver1 = alertNotifierRepository.findAll(ReferenceType.DOMAIN, DOMAIN_ID).test();
 
-        testObserver1.awaitTerminalEvent();
+        testObserver1.awaitDone(10, TimeUnit.SECONDS);
         testObserver1.assertComplete();
         testObserver1.assertValue(alertNotifier -> alertNotifier.getId().equals(alertNotifierCreated1.getId()));
     }
@@ -152,7 +153,7 @@ public class AlertNotifierRepositoryTest extends AbstractManagementTest {
     public void findByCriteriaWithEmptyNotifierIdList() {
         TestSubscriber<AlertNotifier> testObserver1 = alertNotifierRepository.findAll(ReferenceType.DOMAIN, DOMAIN_ID).test();
 
-        testObserver1.awaitTerminalEvent();
+        testObserver1.awaitDone(10, TimeUnit.SECONDS);
         testObserver1.assertComplete();
         testObserver1.assertNoErrors();
         testObserver1.assertNoValues();
@@ -166,7 +167,7 @@ public class AlertNotifierRepositoryTest extends AbstractManagementTest {
         criteria.setIds(Collections.emptyList());
         testObserver1 = alertNotifierRepository.findByCriteria(ReferenceType.DOMAIN, DOMAIN_ID, criteria).test();
 
-        testObserver1.awaitTerminalEvent();
+        testObserver1.awaitDone(10, TimeUnit.SECONDS);
         testObserver1.assertComplete();
         testObserver1.assertValue(alertNotifier -> alertNotifier.getId().equals(alertNotifierCreated1.getId()));
     }

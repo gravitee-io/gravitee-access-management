@@ -38,10 +38,10 @@ import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -201,8 +201,8 @@ public class UserServiceImpl extends AbstractUserService implements UserService 
     @Override
     public Single<User> upsertFactor(String userId, EnrolledFactor enrolledFactor, io.gravitee.am.identityprovider.api.User principal) {
         return findById(userId)
-                .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
-                .flatMapSingle(oldUser -> {
+                .switchIfEmpty(Single.error(new UserNotFoundException(userId)))
+                .flatMap(oldUser -> {
                     User user = new User(oldUser);
                     List<EnrolledFactor> enrolledFactors = user.getFactors();
                     if (enrolledFactors == null || enrolledFactors.isEmpty()) {

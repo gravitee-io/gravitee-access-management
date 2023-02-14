@@ -16,7 +16,7 @@
 
 package io.gravitee.am.gateway.handler.dummies;
 
-import io.vertx.reactivex.core.http.HttpServerRequest;
+import io.vertx.rxjava3.core.http.HttpServerRequest;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)

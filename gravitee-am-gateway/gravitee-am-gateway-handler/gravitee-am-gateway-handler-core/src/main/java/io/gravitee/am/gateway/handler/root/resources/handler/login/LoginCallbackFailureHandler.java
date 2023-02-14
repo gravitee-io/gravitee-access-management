@@ -35,9 +35,9 @@ import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.common.http.HttpStatusCode;
 import io.vertx.core.Handler;
-import io.vertx.reactivex.core.MultiMap;
-import io.vertx.reactivex.core.http.HttpServerResponse;
-import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.rxjava3.core.http.HttpServerResponse;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

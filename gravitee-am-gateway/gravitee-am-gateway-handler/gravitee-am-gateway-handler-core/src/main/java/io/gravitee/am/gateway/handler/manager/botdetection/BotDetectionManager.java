@@ -19,7 +19,7 @@ import io.gravitee.am.botdetection.api.BotDetectionContext;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.service.Service;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 
 import java.util.Map;
 

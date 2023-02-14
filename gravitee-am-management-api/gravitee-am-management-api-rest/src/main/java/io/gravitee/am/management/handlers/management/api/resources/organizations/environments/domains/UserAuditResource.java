@@ -22,7 +22,7 @@ import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.service.exception.AuditNotFoundException;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Maybe;
+import io.reactivex.rxjava3.core.Maybe;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;

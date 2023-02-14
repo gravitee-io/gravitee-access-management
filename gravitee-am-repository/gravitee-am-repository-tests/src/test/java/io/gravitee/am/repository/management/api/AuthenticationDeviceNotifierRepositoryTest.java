@@ -20,12 +20,13 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.common.utils.UUID;
-import io.reactivex.observers.TestObserver;
-import io.reactivex.subscribers.TestSubscriber;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -44,7 +45,7 @@ public class AuthenticationDeviceNotifierRepositoryTest extends AbstractManageme
         repository.create(plugin).blockingGet();
 
         TestSubscriber<AuthenticationDeviceNotifier> testSubscriber = repository.findByReference(ReferenceType.DOMAIN,"testDomain").test();
-        testSubscriber.awaitTerminalEvent();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
 
         testSubscriber.assertComplete();
         testSubscriber.assertNoErrors();
@@ -70,7 +71,7 @@ public class AuthenticationDeviceNotifierRepositoryTest extends AbstractManageme
         AuthenticationDeviceNotifier pluginCreated = repository.create(plugin).blockingGet();
 
         TestObserver<AuthenticationDeviceNotifier> testObserver = repository.findById(pluginCreated.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -91,7 +92,7 @@ public class AuthenticationDeviceNotifierRepositoryTest extends AbstractManageme
         AuthenticationDeviceNotifier plugin = buildNotifierPlugin();
 
         TestObserver<AuthenticationDeviceNotifier> testObserver = repository.create(plugin).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -112,7 +113,7 @@ public class AuthenticationDeviceNotifierRepositoryTest extends AbstractManageme
         pluginToUpdate.setName("testUpdatedName");
 
         TestObserver<AuthenticationDeviceNotifier> testObserver = repository.update(pluginToUpdate).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -129,13 +130,13 @@ public class AuthenticationDeviceNotifierRepositoryTest extends AbstractManageme
         AuthenticationDeviceNotifier pluginCreated = repository.create(plugin).blockingGet();
 
         TestObserver<AuthenticationDeviceNotifier> testObserver = repository.findById(pluginCreated.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(bd -> bd.getName().equals(pluginCreated.getName()));
 
         TestObserver testObserver1 = repository.delete(pluginCreated.getId()).test();
-        testObserver1.awaitTerminalEvent();
+        testObserver1.awaitDone(10, TimeUnit.SECONDS);
 
         repository.findById(pluginCreated.getId()).test().assertEmpty();
     }

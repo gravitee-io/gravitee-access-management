@@ -16,10 +16,10 @@
 package io.gravitee.am.repository.jdbc.management.api.spring.user;
 
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcUser;
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.data.repository.reactive.RxJava2CrudRepository;
+import org.springframework.data.repository.reactive.RxJava3CrudRepository;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -27,7 +27,7 @@ import org.springframework.stereotype.Repository;
  * @author GraviteeSource Team
  */
 @Repository
-public interface SpringUserAddressesRepository extends RxJava2CrudRepository<JdbcUser.Address, String> {
+public interface SpringUserAddressesRepository extends RxJava3CrudRepository<JdbcUser.Address, String> {
     @Query("select * from user_addresses a where a.user_id = :user")
     Flowable<JdbcUser.Address> findByUserId(@Param("user") String userId);
 }

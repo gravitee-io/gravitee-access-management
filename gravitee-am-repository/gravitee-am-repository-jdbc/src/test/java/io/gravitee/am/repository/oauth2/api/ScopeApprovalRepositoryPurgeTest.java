@@ -18,7 +18,7 @@ package io.gravitee.am.repository.oauth2.api;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.repository.jdbc.oauth2.api.JdbcScopeApprovalRepository;
 import io.gravitee.am.repository.oauth2.AbstractOAuthTest;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -28,6 +28,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -56,21 +57,21 @@ public class ScopeApprovalRepositoryPurgeTest extends AbstractOAuthTest {
         scope2.setStatus(ScopeApproval.ApprovalStatus.APPROVED);
         scope2.setExpiresAt(new Date(now.minus(1, ChronoUnit.MINUTES).toEpochMilli()));
 
-        scopeApprovalRepository.create(scope1).test().awaitTerminalEvent();
-        scopeApprovalRepository.create(scope2).test().awaitTerminalEvent();
+        scopeApprovalRepository.create(scope1).test().awaitDone(10, TimeUnit.SECONDS);
+        scopeApprovalRepository.create(scope2).test().awaitDone(10, TimeUnit.SECONDS);
 
         TestObserver<HashSet<ScopeApproval>> testObserver = scopeApprovalRepository.findByDomainAndUser("domain", "user").collect(HashSet<ScopeApproval>::new, Set::add).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         testObserver.assertValue(s -> s.size() == 1);
         testObserver.assertValue(s -> s.iterator().next().getScope().equals("scope1"));
 
         TestObserver<Void> testPurge = scopeApprovalRepository.purgeExpiredData().test();
-        testPurge.awaitTerminalEvent();
+        testPurge.awaitDone(10, TimeUnit.SECONDS);
         testPurge.assertNoErrors();
 
         testObserver = scopeApprovalRepository.findByDomainAndUser("domain", "user").collect(HashSet<ScopeApproval>::new, Set::add).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         testObserver.assertValue(s -> s.size() == 1);
         testObserver.assertValue(s -> s.iterator().next().getScope().equals("scope1"));

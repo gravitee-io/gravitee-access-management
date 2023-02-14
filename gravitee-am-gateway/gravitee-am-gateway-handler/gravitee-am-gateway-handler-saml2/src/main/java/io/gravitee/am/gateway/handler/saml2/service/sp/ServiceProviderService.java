@@ -16,7 +16,7 @@
 package io.gravitee.am.gateway.handler.saml2.service.sp;
 
 import io.gravitee.am.identityprovider.api.Metadata;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

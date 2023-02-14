@@ -22,7 +22,7 @@ import io.gravitee.am.model.flow.Flow;
 import io.gravitee.am.model.flow.Type;
 import io.gravitee.am.repository.management.api.FlowRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.FlowMongo;
-import io.reactivex.*;
+import io.reactivex.rxjava3.core.*;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 

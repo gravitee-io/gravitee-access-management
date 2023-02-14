@@ -18,21 +18,23 @@ package io.gravitee.am.botdetection.google.recaptcha.provider;
 import io.gravitee.am.botdetection.api.BotDetectionContext;
 import io.gravitee.am.botdetection.google.recaptcha.GoogleReCaptchaV3Configuration;
 import io.gravitee.common.http.HttpStatusCode;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.observers.TestObserver;
 import io.vertx.core.http.impl.headers.HeadersMultiMap;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.impl.ClientPhase;
 import io.vertx.ext.web.client.impl.WebClientInternal;
-import io.vertx.reactivex.core.MultiMap;
-import io.vertx.reactivex.core.Vertx;
-import io.vertx.reactivex.ext.web.client.WebClient;
+import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.rxjava3.core.Vertx;
+import io.vertx.rxjava3.ext.web.client.WebClient;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Mockito.when;
 
@@ -78,7 +80,7 @@ public class GoogleReCaptchaV3ProviderTest {
     public void shouldNoValidate_MissingToken() {
         final TestObserver<Boolean> testCall = cut.validate(new BotDetectionContext("plugin_id", null, null)).test();
 
-        testCall.awaitTerminalEvent();
+        testCall.awaitDone(10, TimeUnit.SECONDS);
         testCall.assertNoErrors();
         testCall.assertValue(false);
     }
@@ -100,7 +102,7 @@ public class GoogleReCaptchaV3ProviderTest {
 
         final TestObserver<Boolean> testCall = cut.validate(new BotDetectionContext("plugin_id", multiMap, null)).test();
 
-        testCall.awaitTerminalEvent();
+        testCall.awaitDone(10, TimeUnit.SECONDS);
         testCall.assertNoErrors();
         testCall.assertValue(true);
     }
@@ -122,7 +124,7 @@ public class GoogleReCaptchaV3ProviderTest {
 
         final TestObserver<Boolean> testCall = cut.validate(new BotDetectionContext("plugin_id", multiMap, null)).test();
 
-        testCall.awaitTerminalEvent();
+        testCall.awaitDone(10, TimeUnit.SECONDS);
         testCall.assertNoErrors();
         testCall.assertValue(false);
     }
@@ -142,7 +144,7 @@ public class GoogleReCaptchaV3ProviderTest {
 
         final TestObserver<Boolean> testCall = cut.validate(new BotDetectionContext("plugin_id", multiMap, null)).test();
 
-        testCall.awaitTerminalEvent();
+        testCall.awaitDone(10, TimeUnit.SECONDS);
         testCall.assertNoErrors();
         testCall.assertValue(false);
     }
@@ -157,7 +159,7 @@ public class GoogleReCaptchaV3ProviderTest {
 
         final TestObserver<Boolean> testCall = cut.validate(new BotDetectionContext("plugin_id", multiMap, null)).test();
 
-        testCall.awaitTerminalEvent();
+        testCall.awaitDone(10, TimeUnit.SECONDS);
         testCall.assertNoErrors();
         testCall.assertValue(false);
     }

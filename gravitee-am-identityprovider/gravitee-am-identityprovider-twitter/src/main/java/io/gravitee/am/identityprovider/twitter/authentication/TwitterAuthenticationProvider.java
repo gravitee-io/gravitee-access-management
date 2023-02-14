@@ -31,10 +31,10 @@ import io.gravitee.am.identityprovider.twitter.authentication.utils.OAuthCredent
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpMethod;
 import io.gravitee.common.util.Maps;
-import io.reactivex.Maybe;
+import io.reactivex.rxjava3.core.Maybe;
 import io.vertx.core.json.JsonObject;
-import io.vertx.reactivex.core.MultiMap;
-import io.vertx.reactivex.ext.web.client.WebClient;
+import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.rxjava3.ext.web.client.WebClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Import;

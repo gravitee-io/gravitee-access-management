@@ -16,7 +16,7 @@
 
 package io.gravitee.am.service.impl.user.activity.utils;
 
-import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 
 import static io.gravitee.am.common.utils.ConstantKeys.USER_CONSENT_IP_LOCATION;
 import static io.gravitee.am.common.utils.ConstantKeys.USER_CONSENT_USER_AGENT;

@@ -27,7 +27,7 @@ import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewAuthenticationDeviceNotifier;
 import io.gravitee.am.service.model.NewBotDetection;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Maybe;
+import io.reactivex.rxjava3.core.Maybe;
 import io.swagger.annotations.*;
 import org.springframework.beans.factory.annotation.Autowired;
 

@@ -18,9 +18,9 @@ package io.gravitee.am.repository.jdbc.management.api;
 import io.gravitee.am.model.Policy;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.management.api.PolicyRepository;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Single;
 import org.springframework.stereotype.Repository;
 
 /**

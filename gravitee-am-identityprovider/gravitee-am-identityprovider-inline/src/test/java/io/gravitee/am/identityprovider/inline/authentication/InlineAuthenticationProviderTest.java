@@ -21,13 +21,15 @@ import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.inline.authentication.provisioning.InlineInMemoryUserDetailsManager;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
-import io.reactivex.Maybe;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Mockito.*;
 
@@ -61,7 +63,7 @@ public class InlineAuthenticationProviderTest {
         when(passwordEncoder.matches((String) authentication.getCredentials(), user.getPassword())).thenReturn(true);
 
         TestObserver<User> testObserver = inlineAuthenticationProvider.loadUserByUsername(authentication).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();

@@ -16,11 +16,11 @@
 package io.gravitee.am.repository.jdbc.management.api.spring;
 
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcIdentityProvider;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.data.repository.reactive.RxJava2CrudRepository;
+import org.springframework.data.repository.reactive.RxJava3CrudRepository;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -28,7 +28,7 @@ import org.springframework.stereotype.Repository;
  * @author GraviteeSource Team
  */
 @Repository
-public interface SpringIdentityProviderRepository extends RxJava2CrudRepository<JdbcIdentityProvider, String> {
+public interface SpringIdentityProviderRepository extends RxJava3CrudRepository<JdbcIdentityProvider, String> {
     @Query("select * from identities i where i.reference_type = :refType and i.reference_id = :refId")
     Flowable<JdbcIdentityProvider> findAll(@Param("refType") String referenceType, @Param("refId") String referenceId);
 

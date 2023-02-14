@@ -50,9 +50,7 @@ public class VirtualHostValidatorTest {
 
         VirtualHost vhost = getValidVirtualHost();
 
-        Throwable throwable = virtualHostValidator.validate(vhost, emptyList()).blockingGet();
-
-        assertNull(throwable);
+        virtualHostValidator.validate(vhost, emptyList()).test().assertNoErrors();
     }
 
     @Test
@@ -61,10 +59,7 @@ public class VirtualHostValidatorTest {
         VirtualHost vhost = getValidVirtualHost();
         vhost.setPath("");
 
-        Throwable throwable = virtualHostValidator.validate(vhost, emptyList()).blockingGet();
-
-        // Empty path should be replaced with '/'.
-        assertNull(throwable);
+        virtualHostValidator.validate(vhost, emptyList()).test().assertNoErrors();
     }
 
     @Test
@@ -73,10 +68,7 @@ public class VirtualHostValidatorTest {
         VirtualHost vhost = getValidVirtualHost();
         vhost.setPath(null);
 
-        Throwable throwable = virtualHostValidator.validate(vhost, emptyList()).blockingGet();
-
-        // Null path should be replaced with '/'.
-        assertNull(throwable);
+        virtualHostValidator.validate(vhost, emptyList()).test().assertNoErrors();
     }
 
     @Test
@@ -85,10 +77,8 @@ public class VirtualHostValidatorTest {
         VirtualHost vhost = getValidVirtualHost();
         vhost.setPath("/////test////");
 
-        Throwable throwable = virtualHostValidator.validate(vhost, emptyList()).blockingGet();
-
         // Multiple '/' in path should be removed.
-        assertNull(throwable);
+        virtualHostValidator.validate(vhost, emptyList()).test().assertNoErrors();
     }
 
     @Test
@@ -97,10 +87,8 @@ public class VirtualHostValidatorTest {
         VirtualHost vhost = getValidVirtualHost();
         vhost.setPath("test");
 
-        Throwable throwable = virtualHostValidator.validate(vhost, emptyList()).blockingGet();
-
         // '/' should be automatically append.
-        assertNull(throwable);
+        virtualHostValidator.validate(vhost, emptyList()).test().assertNoErrors();
     }
 
     @Test
@@ -109,10 +97,7 @@ public class VirtualHostValidatorTest {
         VirtualHost vhost = getValidVirtualHost();
         vhost.setHost("Invalid/Host");
 
-        Throwable throwable = virtualHostValidator.validate(vhost, emptyList()).blockingGet();
-
-        assertNotNull(throwable);
-        assertTrue(throwable instanceof InvalidVirtualHostException);
+        virtualHostValidator.validate(vhost, emptyList()).test().assertError(InvalidVirtualHostException.class);
     }
 
     @Test
@@ -121,10 +106,7 @@ public class VirtualHostValidatorTest {
         VirtualHost vhost = getValidVirtualHost();
         vhost.setHost("");
 
-        Throwable throwable = virtualHostValidator.validate(vhost, emptyList()).blockingGet();
-
-        assertNotNull(throwable);
-        assertTrue(throwable instanceof InvalidVirtualHostException);
+        virtualHostValidator.validate(vhost, emptyList()).test().assertError(InvalidVirtualHostException.class);
     }
 
     @Test
@@ -133,10 +115,7 @@ public class VirtualHostValidatorTest {
         VirtualHost vhost = getValidVirtualHost();
         vhost.setHost(null);
 
-        Throwable throwable = virtualHostValidator.validate(vhost, emptyList()).blockingGet();
-
-        assertNotNull(throwable);
-        assertTrue(throwable instanceof InvalidVirtualHostException);
+        virtualHostValidator.validate(vhost, emptyList()).test().assertError(InvalidVirtualHostException.class);
     }
 
     @Test
@@ -145,10 +124,7 @@ public class VirtualHostValidatorTest {
         VirtualHost vhost = getValidVirtualHost();
         vhost.setHost("locahost:null");
 
-        Throwable throwable = virtualHostValidator.validate(vhost, emptyList()).blockingGet();
-
-        assertNotNull(throwable);
-        assertTrue(throwable instanceof InvalidVirtualHostException);
+        virtualHostValidator.validate(vhost, emptyList()).test().assertError(InvalidVirtualHostException.class);
     }
 
     @Test
@@ -157,10 +133,7 @@ public class VirtualHostValidatorTest {
         VirtualHost vhost = getValidVirtualHost();
         vhost.setHost("locahost:");
 
-        Throwable throwable = virtualHostValidator.validate(vhost, emptyList()).blockingGet();
-
-        assertNotNull(throwable);
-        assertTrue(throwable instanceof InvalidVirtualHostException);
+        virtualHostValidator.validate(vhost, emptyList()).test().assertError(InvalidVirtualHostException.class);
     }
 
     @Test
@@ -169,10 +142,7 @@ public class VirtualHostValidatorTest {
         VirtualHost vhost = getValidVirtualHost();
         vhost.setHost("locahost:70000");
 
-        Throwable throwable = virtualHostValidator.validate(vhost, emptyList()).blockingGet();
-
-        assertNotNull(throwable);
-        assertTrue(throwable instanceof InvalidVirtualHostException);
+        virtualHostValidator.validate(vhost, emptyList()).test().assertError(InvalidVirtualHostException.class);
     }
 
     @Test
@@ -181,10 +151,7 @@ public class VirtualHostValidatorTest {
         VirtualHost vhost = getValidVirtualHost();
         vhost.setHost(":8080");
 
-        Throwable throwable = virtualHostValidator.validate(vhost, emptyList()).blockingGet();
-
-        assertNotNull(throwable);
-        assertTrue(throwable instanceof InvalidVirtualHostException);
+        virtualHostValidator.validate(vhost, emptyList()).test().assertError(InvalidVirtualHostException.class);
     }
 
     @Test
@@ -192,9 +159,7 @@ public class VirtualHostValidatorTest {
 
         VirtualHost vhost = getValidVirtualHost();
 
-        Throwable throwable = virtualHostValidator.validate(vhost, singletonList(vhost.getHost())).blockingGet();
-
-        assertNull(throwable);
+        virtualHostValidator.validate(vhost, singletonList(vhost.getHost())).test().assertNoErrors();
     }
 
     @Test
@@ -204,9 +169,7 @@ public class VirtualHostValidatorTest {
         String domainConstraint = vhost.getHost();
         vhost.setHost("level2.level1." + domainConstraint);
 
-        Throwable throwable = virtualHostValidator.validate(vhost, singletonList(domainConstraint)).blockingGet();
-
-        assertNull(throwable);
+        virtualHostValidator.validate(vhost, singletonList(domainConstraint)).test().assertNoErrors();
     }
 
     @Test
@@ -216,9 +179,7 @@ public class VirtualHostValidatorTest {
         String domainConstraint = vhost.getHost();
         vhost.setHost("level2.level1." + domainConstraint);
 
-        Throwable throwable = virtualHostValidator.validate(vhost, Arrays.asList("test.gravitee.io", "other.gravitee.io", domainConstraint)).blockingGet();
-
-        assertNull(throwable);
+        virtualHostValidator.validate(vhost, Arrays.asList("test.gravitee.io", "other.gravitee.io", domainConstraint)).test().assertNoErrors();;
     }
 
     @Test
@@ -226,10 +187,7 @@ public class VirtualHostValidatorTest {
 
         VirtualHost vhost = getValidVirtualHost();
 
-        Throwable throwable = virtualHostValidator.validate(vhost, Arrays.asList("test.gravitee.io", "other.gravitee.io")).blockingGet();
-
-        assertNotNull(throwable);
-        assertTrue(throwable instanceof InvalidVirtualHostException);
+        virtualHostValidator.validate(vhost, Arrays.asList("test.gravitee.io", "other.gravitee.io")).test().assertError(InvalidVirtualHostException.class);
     }
 
     @Test
@@ -250,9 +208,7 @@ public class VirtualHostValidatorTest {
         List<Domain> otherDomains = new ArrayList<>();
         otherDomains.add(otherDomain);
 
-        Throwable throwable = virtualHostValidator.validateDomainVhosts(domain, otherDomains).blockingGet();
-
-        assertNull(throwable);
+        virtualHostValidator.validateDomainVhosts(domain, otherDomains).test().assertNoErrors();
     }
 
     @Test
@@ -268,9 +224,7 @@ public class VirtualHostValidatorTest {
         otherDomains.add(otherDomain);
         otherDomain.getVhosts().get(0).setPath("/"); // "/" path in vhost mode should not be considered as overlap.
 
-        Throwable throwable = virtualHostValidator.validateDomainVhosts(domain, otherDomains).blockingGet();
-
-        assertNull(throwable);
+        virtualHostValidator.validateDomainVhosts(domain, otherDomains).test().assertNoErrors();
     }
 
 
@@ -293,9 +247,7 @@ public class VirtualHostValidatorTest {
         List<Domain> otherDomains = new ArrayList<>();
         otherDomains.add(otherDomain);
 
-        Throwable throwable = virtualHostValidator.validateDomainVhosts(domain, otherDomains).blockingGet();
-
-        assertNull(throwable);
+        virtualHostValidator.validateDomainVhosts(domain, otherDomains).test().assertNoErrors();
     }
 
     @Test
@@ -310,10 +262,7 @@ public class VirtualHostValidatorTest {
         List<Domain> otherDomains = new ArrayList<>();
         otherDomains.add(otherDomain);
 
-        Throwable throwable = virtualHostValidator.validateDomainVhosts(domain, otherDomains).blockingGet();
-
-        assertNotNull(throwable);
-        assertTrue(throwable instanceof InvalidVirtualHostException);
+        virtualHostValidator.validateDomainVhosts(domain, otherDomains).test().assertError(InvalidVirtualHostException.class);;
     }
 
     @Test
@@ -329,10 +278,7 @@ public class VirtualHostValidatorTest {
         List<Domain> otherDomains = new ArrayList<>();
         otherDomains.add(otherDomain);
 
-        Throwable throwable = virtualHostValidator.validateDomainVhosts(domain, otherDomains).blockingGet();
-
-        assertNotNull(throwable);
-        assertTrue(throwable instanceof InvalidVirtualHostException);
+        virtualHostValidator.validateDomainVhosts(domain, otherDomains).test().assertError(InvalidVirtualHostException.class);
     }
 
     @Test
@@ -349,10 +295,7 @@ public class VirtualHostValidatorTest {
         List<Domain> otherDomains = new ArrayList<>();
         otherDomains.add(otherDomain);
 
-        Throwable throwable = virtualHostValidator.validateDomainVhosts(domain, otherDomains).blockingGet();
-
-        assertNotNull(throwable);
-        assertTrue(throwable instanceof InvalidVirtualHostException);
+        virtualHostValidator.validateDomainVhosts(domain, otherDomains).test().assertError(InvalidVirtualHostException.class);
     }
 
     @Test
@@ -369,10 +312,7 @@ public class VirtualHostValidatorTest {
         List<Domain> otherDomains = new ArrayList<>();
         otherDomains.add(otherDomain);
 
-        Throwable throwable = virtualHostValidator.validateDomainVhosts(domain, otherDomains).blockingGet();
-
-        assertNotNull(throwable);
-        assertTrue(throwable instanceof InvalidVirtualHostException);
+        virtualHostValidator.validateDomainVhosts(domain, otherDomains).test().assertError(InvalidVirtualHostException.class);
     }
 
     private VirtualHost getValidVirtualHost() {

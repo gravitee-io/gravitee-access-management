@@ -17,7 +17,7 @@ package io.gravitee.am.management.service.impl.upgrades;
 
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.service.RoleService;
-import io.reactivex.Completable;
+import io.reactivex.rxjava3.core.Completable;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

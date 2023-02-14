@@ -31,7 +31,7 @@ import io.gravitee.am.reporter.api.audit.model.AuditEntity;
 import io.gravitee.am.reporter.api.audit.model.AuditOutcome;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;

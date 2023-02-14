@@ -38,10 +38,10 @@ import io.gravitee.am.service.model.NewReporter;
 import io.gravitee.am.service.model.UpdateReporter;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.ReporterAuditBuilder;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;
@@ -188,8 +188,8 @@ public class ReporterServiceImpl implements ReporterService {
         LOGGER.debug("Update a reporter {} for domain {}", id, domain);
 
         return reporterRepository.findById(id)
-                .switchIfEmpty(Maybe.error(new ReporterNotFoundException(id)))
-                .flatMapSingle(oldReporter -> {
+                .switchIfEmpty(Single.error(new ReporterNotFoundException(id)))
+                .flatMap(oldReporter -> {
                     Reporter reporterToUpdate = new Reporter(oldReporter);
                     reporterToUpdate.setEnabled(updateReporter.isEnabled());
                     reporterToUpdate.setName(updateReporter.getName());
@@ -232,9 +232,8 @@ public class ReporterServiceImpl implements ReporterService {
                 .flatMapCompletable(reporter -> {
                     // create event for sync process
                     Event event = new Event(Type.REPORTER, new Payload(reporterId, ReferenceType.DOMAIN, reporter.getDomain(), Action.DELETE));
-                    return reporterRepository.delete(reporterId)
-                            .andThen(eventService.create(event))
-                            .toCompletable()
+                    return Completable.fromSingle(reporterRepository.delete(reporterId)
+                            .andThen(eventService.create(event)))
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(ReporterAuditBuilder.class).principal(principal).type(EventType.REPORTER_DELETED).reporter(reporter)))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(ReporterAuditBuilder.class).principal(principal).type(EventType.REPORTER_DELETED).throwable(throwable)));
                 })

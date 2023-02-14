@@ -27,9 +27,9 @@ import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.reactivex.ext.web.RoutingContext;
-import io.vertx.reactivex.ext.web.handler.BodyHandler;
-import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
+import io.vertx.rxjava3.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.handler.BodyHandler;
+import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -83,7 +83,7 @@ public class MFARecoveryCodeEndpointTest extends RxWebTestBase {
 
         router.route()
                 .handler(ctx -> {
-                    ctx.setUser(io.vertx.reactivex.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+                    ctx.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
                     ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
                     ctx.next();
                 })
@@ -113,7 +113,7 @@ public class MFARecoveryCodeEndpointTest extends RxWebTestBase {
 
                 routingContext.next();
                 return answer;
-            }).when(templateEngine).render(Mockito.<Map<String, Object>>any(), Mockito.any(), Mockito.any());
+            }).when(templateEngine).render(Mockito.<Map<String, Object>>any(), Mockito.any());
 
             mfaRecoveryCodeEndpoint.handle(routingContext);
         };

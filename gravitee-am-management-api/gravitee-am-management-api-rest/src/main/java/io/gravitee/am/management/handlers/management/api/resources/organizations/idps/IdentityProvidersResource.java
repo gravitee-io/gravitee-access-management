@@ -25,7 +25,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Maybe;
+import io.reactivex.rxjava3.core.Maybe;
 import io.swagger.annotations.*;
 import org.springframework.beans.factory.annotation.Autowired;
 

@@ -23,9 +23,9 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpHeaders;
-import io.vertx.reactivex.core.http.Cookie;
-import io.vertx.reactivex.ext.auth.User;
-import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.rxjava3.core.http.Cookie;
+import io.vertx.rxjava3.ext.auth.User;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 
 import java.util.concurrent.TimeUnit;
 

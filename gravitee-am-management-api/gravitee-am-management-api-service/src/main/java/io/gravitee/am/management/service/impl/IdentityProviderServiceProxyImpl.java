@@ -33,10 +33,10 @@ import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.am.service.model.UpdateIdentityProvider;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.IdentityProviderAuditBuilder;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -137,7 +137,6 @@ public class IdentityProviderServiceProxyImpl extends AbstractSensitiveProxy imp
         return identityProviderPluginService.getSchema(idp.getType())
                 .map(Optional::ofNullable)
                 .defaultIfEmpty(Optional.empty())
-                .toSingle()
                 .map(schema -> {
                     // Duplicate the object to avoid side effect
                     var filteredEntity = new IdentityProvider(idp);

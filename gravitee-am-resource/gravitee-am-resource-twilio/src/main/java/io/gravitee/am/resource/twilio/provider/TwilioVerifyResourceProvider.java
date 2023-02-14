@@ -29,7 +29,7 @@ import io.gravitee.am.resource.api.mfa.MFALink;
 import io.gravitee.am.resource.api.mfa.MFAResourceProvider;
 import io.gravitee.am.resource.twilio.TwilioVerifyResourceConfiguration;
 import io.gravitee.common.util.EnvironmentUtils;
-import io.reactivex.Completable;
+import io.reactivex.rxjava3.core.Completable;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;

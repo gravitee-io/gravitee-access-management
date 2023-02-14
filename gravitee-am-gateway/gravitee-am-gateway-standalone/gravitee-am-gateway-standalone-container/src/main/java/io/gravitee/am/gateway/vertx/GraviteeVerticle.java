@@ -19,7 +19,7 @@ import io.gravitee.am.gateway.reactor.Reactor;
 import io.gravitee.node.vertx.configuration.HttpServerConfiguration;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
-import io.vertx.reactivex.core.http.HttpServer;
+import io.vertx.rxjava3.core.http.HttpServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,21 +46,24 @@ public class GraviteeVerticle extends AbstractVerticle {
     public void start(Promise<Void> startPromise) {
         httpServer.requestHandler(reactor.route());
 
-        httpServer.listen(res -> {
-            if (res.succeeded()) {
-                logger.info("HTTP Server is now listening for requests on port {}",
-                        httpServerConfiguration.getPort());
-                startPromise.complete();
-            } else {
-                logger.error("Unable to start HTTP Server", res.cause());
-                startPromise.fail(res.cause());
-            }
-        });
+        httpServer.rxListen()
+                .doOnSuccess(httpServer1 -> {
+                    logger.info("HTTP Server is now listening for requests on port {}",
+                            httpServerConfiguration.getPort());
+                    startPromise.complete();
+                })
+                .doOnError(throwable -> {
+                    logger.error("Unable to start HTTP Server", throwable);
+                    startPromise.fail(throwable.getCause());
+                })
+                .subscribe();
     }
 
     @Override
     public void stop() throws Exception {
         logger.info("Stopping HTTP Server...");
-        httpServer.close(voidAsyncResult -> logger.info("HTTP Server has been correctly stopped"));
+        httpServer.close()
+                .doFinally(() -> logger.info("HTTP Server has been correctly stopped"))
+                .subscribe();
     }
 }

@@ -36,10 +36,10 @@ import io.gravitee.am.service.model.NewAuthenticationDeviceNotifier;
 import io.gravitee.am.service.model.UpdateAuthenticationDeviceNotifier;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.AuthDeviceNotifierAuditBuilder;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -127,8 +127,8 @@ public class AuthenticationDeviceNotifierServiceImpl implements AuthenticationDe
         LOGGER.debug("Update AuthenticationDevice Notifier {} for domain {}", id, domain);
 
         return adNotifierRepository.findById(id)
-                .switchIfEmpty(Maybe.error(new BotDetectionNotFoundException(id)))
-                .flatMapSingle(oldNotifier -> {
+                .switchIfEmpty(Single.error(new BotDetectionNotFoundException(id)))
+                .flatMap(oldNotifier -> {
                     AuthenticationDeviceNotifier notifierToUpdate = new AuthenticationDeviceNotifier(oldNotifier);
                     notifierToUpdate.setName(updateNotifier.getName());
                     notifierToUpdate.setConfiguration(updateNotifier.getConfiguration());
@@ -162,9 +162,8 @@ public class AuthenticationDeviceNotifierServiceImpl implements AuthenticationDe
                 .flatMapCompletable(notifier -> {
                     // create event for sync process
                     Event event = new Event(Type.AUTH_DEVICE_NOTIFIER, new Payload(notifierId, ReferenceType.DOMAIN, domainId, Action.DELETE));
-                    return adNotifierRepository.delete(notifierId)
-                            .andThen(eventService.create(event))
-                            .toCompletable()
+                    return Completable.fromSingle(adNotifierRepository.delete(notifierId)
+                            .andThen(eventService.create(event)))
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(AuthDeviceNotifierAuditBuilder.class).principal(principal).type(EventType.AUTH_DEVICE_NOTIFIER_DELETED).authDeviceNotifier(notifier)))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(AuthDeviceNotifierAuditBuilder.class).principal(principal).type(EventType.AUTH_DEVICE_NOTIFIER_DELETED).throwable(throwable)));
                 })

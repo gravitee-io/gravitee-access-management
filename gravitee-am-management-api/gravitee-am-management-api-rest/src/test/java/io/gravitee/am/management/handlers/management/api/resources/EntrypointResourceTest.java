@@ -21,7 +21,7 @@ import io.gravitee.am.model.Entrypoint;
 import io.gravitee.am.service.exception.EntrypointNotFoundException;
 import io.gravitee.am.service.model.UpdateEntrypoint;
 import io.gravitee.common.http.HttpStatusCode;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 import org.junit.Test;
 
 import javax.ws.rs.core.Response;

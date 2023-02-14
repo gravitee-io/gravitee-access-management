@@ -21,8 +21,6 @@ import io.gravitee.am.service.validators.path.PathValidatorImpl;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
-
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
@@ -38,53 +36,31 @@ public class PathValidatorTest {
 
     @Test
     public void validate() {
-
-        Throwable throwable = pathValidator.validate("/test").blockingGet();
-
-        assertNull(throwable);
+        pathValidator.validate("/test").test().assertNoErrors();
     }
 
     @Test
     public void validateSpecialCharacters() {
-
-        Throwable throwable = pathValidator.validate("/test/subpath/subpath2_with-and.dot/AND_UPPERCASE").blockingGet();
-
-        assertNull(throwable);
+        pathValidator.validate("/test/subpath/subpath2_with-and.dot/AND_UPPERCASE").test().assertNoErrors();
     }
 
     @Test
     public void validate_invalidEmptyPath() {
-
-        Throwable throwable = pathValidator.validate("").blockingGet();
-
-        assertNotNull(throwable);
-        assertTrue(throwable instanceof InvalidPathException);
+        pathValidator.validate("").test().assertError(InvalidPathException.class);
     }
 
     @Test
     public void validate_nullPath() {
-
-        Throwable throwable = pathValidator.validate(null).blockingGet();
-
-        assertNotNull(throwable);
-        assertTrue(throwable instanceof InvalidPathException);
+        pathValidator.validate(null).test().assertError(InvalidPathException.class);
     }
 
     @Test
     public void validate_multipleSlashesPath() {
-
-        Throwable throwable = pathValidator.validate("/////test////").blockingGet();
-
-        assertNotNull(throwable);
-        assertTrue(throwable instanceof InvalidPathException);
+        pathValidator.validate("/////test////").test().assertError(InvalidPathException.class);
     }
 
     @Test
     public void validate_invalidCharacters() {
-
-        Throwable throwable = pathValidator.validate("/test$:\\;,+").blockingGet();
-
-        assertNotNull(throwable);
-        assertTrue(throwable instanceof InvalidPathException);
+        pathValidator.validate("/test$:\\;,+").test().assertError(InvalidPathException.class);
     }
 }

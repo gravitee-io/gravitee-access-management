@@ -24,13 +24,13 @@ import io.gravitee.am.authdevice.notifier.api.model.ADUserResponse;
 import io.gravitee.am.authdevice.notifier.http.HttpAuthenticationDeviceNotifierConfiguration;
 import io.gravitee.am.authdevice.notifier.http.provider.spring.HttpAuthenticationDeviceProviderSpringConfiguration;
 import io.gravitee.common.http.HttpStatusCode;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
-import io.vertx.reactivex.core.MultiMap;
-import io.vertx.reactivex.core.buffer.Buffer;
-import io.vertx.reactivex.ext.web.client.HttpRequest;
-import io.vertx.reactivex.ext.web.client.WebClient;
+import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.rxjava3.core.buffer.Buffer;
+import io.vertx.rxjava3.ext.web.client.HttpRequest;
+import io.vertx.rxjava3.ext.web.client.WebClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -97,7 +97,7 @@ public class HttpAuthenticationDeviceNotifierProvider implements AuthenticationD
         return notificationRequest
                 .rxSendForm(formData)
                 .doOnError((error) -> LOGGER.warn("Unexpected error during device notification : {}", error.getMessage(), error))
-                .onErrorResumeNext(Single.error(new DeviceNotificationException("Unexpected error during device notification")))
+                .onErrorResumeNext(exception -> Single.error(new DeviceNotificationException("Unexpected error during device notification")))
                 .flatMap(response -> {
                     if (response.statusCode() != HttpStatusCode.OK_200) {
                         LOGGER.info("Device notification fails for tid '{}' with status '{}'", request.getTransactionId(), response.statusCode());

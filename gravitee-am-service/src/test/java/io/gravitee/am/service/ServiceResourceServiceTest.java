@@ -28,12 +28,12 @@ import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.ServiceResourceServiceImpl;
 import io.gravitee.am.service.model.NewServiceResource;
 import io.gravitee.am.service.model.UpdateServiceResource;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
-import io.reactivex.subscribers.TestSubscriber;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -42,6 +42,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Date;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -76,7 +77,7 @@ public class ServiceResourceServiceTest {
         when(resourceRepository.findById("my-resource")).thenReturn(Maybe.just(new ServiceResource()));
         TestObserver testObserver = resourceService.findById("my-resource").test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValueCount(1);
@@ -87,7 +88,7 @@ public class ServiceResourceServiceTest {
         when(resourceRepository.findById("my-resource")).thenReturn(Maybe.empty());
         TestObserver testObserver = resourceService.findById("my-resource").test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertNoValues();
@@ -97,7 +98,7 @@ public class ServiceResourceServiceTest {
     public void shouldFindByDomain() {
         when(resourceRepository.findByReference(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Flowable.just(new ServiceResource()));
         TestSubscriber<ServiceResource> testObserver = resourceService.findByDomain(DOMAIN).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValueCount(1);
@@ -124,7 +125,7 @@ public class ServiceResourceServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver<ServiceResource> testObserver = resourceService.create(DOMAIN, resource, null).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValueCount(1);
@@ -143,7 +144,7 @@ public class ServiceResourceServiceTest {
                 .thenReturn(Single.error(new TechnicalException()));
 
         TestObserver<ServiceResource> testObserver = resourceService.create(DOMAIN, resource, null).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNoValues();
 
@@ -171,7 +172,7 @@ public class ServiceResourceServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver<ServiceResource> testObserver = resourceService.update(DOMAIN, record.getId(), resource, null).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValueCount(1);
@@ -184,7 +185,7 @@ public class ServiceResourceServiceTest {
         when(resourceRepository.findById(any())).thenReturn(Maybe.empty());
 
         TestObserver<ServiceResource> testObserver = resourceService.update(DOMAIN, UUID.randomUUID().toString(), new UpdateServiceResource(), null).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(ServiceResourceNotFoundException.class);
 
         verify(auditService, never()).report(any());
@@ -197,7 +198,7 @@ public class ServiceResourceServiceTest {
         when(resourceRepository.findById(any())).thenReturn(Maybe.empty());
 
         TestObserver<Void> testObserver = resourceService.delete(DOMAIN, UUID.randomUUID().toString(), null).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(ServiceResourceNotFoundException.class);
 
         verify(auditService, never()).report(any());
@@ -219,7 +220,7 @@ public class ServiceResourceServiceTest {
         when(factorService.findByDomain(DOMAIN)).thenReturn(Flowable.empty());
 
         TestObserver<Void> testObserver = resourceService.delete(DOMAIN, record.getId(), null).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
 
         verify(auditService).report(argThat(auditBuilder -> auditBuilder.build(new ObjectMapper()).getOutcome().getStatus().equals("SUCCESS")));
@@ -241,7 +242,7 @@ public class ServiceResourceServiceTest {
         when(factorService.findByDomain(DOMAIN)).thenReturn(Flowable.just(factor));
 
         TestObserver<Void> testObserver = resourceService.delete(DOMAIN, record.getId(), null).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(ServiceResourceCurrentlyUsedException.class);
 
         verify(auditService, never()).report(any());

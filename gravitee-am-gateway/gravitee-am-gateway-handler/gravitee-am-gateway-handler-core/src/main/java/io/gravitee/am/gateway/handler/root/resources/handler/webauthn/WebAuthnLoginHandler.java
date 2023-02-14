@@ -29,9 +29,9 @@ import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.auth.webauthn.WebAuthnCredentials;
-import io.vertx.reactivex.ext.auth.webauthn.WebAuthn;
-import io.vertx.reactivex.ext.web.RoutingContext;
-import io.vertx.reactivex.ext.web.Session;
+import io.vertx.rxjava3.ext.auth.webauthn.WebAuthn;
+import io.vertx.rxjava3.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.thymeleaf.util.StringUtils;
@@ -107,22 +107,19 @@ public class WebAuthnLoginHandler extends WebAuthnHandler {
         final String username = webauthnLogin.getString("name");
 
         // STEP 18 Generate assertion
-        webAuthn.getCredentialsOptions(username, generateServerGetAssertion -> {
-            if (generateServerGetAssertion.failed()) {
-                logger.error("Unexpected exception", generateServerGetAssertion.cause());
-                ctx.fail(generateServerGetAssertion.cause());
-                return;
-            }
+        webAuthn.getCredentialsOptions(username)
+                .doOnSuccess(entries -> {
+                    session
+                            .put(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY, entries.getString("challenge"))
+                            .put(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY, username);
 
-            final JsonObject getAssertion = generateServerGetAssertion.result();
-
-            session
-                    .put(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY, getAssertion.getString("challenge"))
-                    .put(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY, username);
-
-            ctx.put(ConstantKeys.PASSWORDLESS_ASSERTION, getAssertion);
-            ctx.next();
-        });
+                    ctx.put(ConstantKeys.PASSWORDLESS_ASSERTION, entries);
+                    ctx.next();
+                })
+                .doOnError(throwable -> {
+                    logger.error("Unexpected exception", throwable);
+                    ctx.fail(throwable.getCause());
+                }).subscribe();
     }
 
     private void authenticateV1(RoutingContext ctx) {
@@ -158,52 +155,51 @@ public class WebAuthnLoginHandler extends WebAuthnHandler {
         final String credentialId = webauthnResp.getString("id");
 
         // authenticate the user
-        webAuthn.authenticate(
+        webAuthn.rxAuthenticate(
                 // authInfo
                 new WebAuthnCredentials()
                         .setOrigin(origin)
                         .setChallenge(session.get(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY))
                         .setUsername(session.get(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY))
-                        .setWebauthn(webauthnResp), authenticate -> {
-
-                    // invalidate the challenge
-                    session.remove(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY);
-                    session.remove(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY);
-
-                    if (authenticate.succeeded()) {
-                        // create the authentication context
-                        final AuthenticationContext authenticationContext = createAuthenticationContext(ctx);
-                        // authenticate the user
-                        authenticateUser(client, authenticationContext, username, credentialId, h -> {
-                            if (h.failed()) {
-                                logger.error("An error has occurred while authenticating user {}", username, h.cause());
+                        .setWebauthn(webauthnResp))
+                .doOnSuccess(u -> {
+                    // create the authentication context
+                    final AuthenticationContext authenticationContext = createAuthenticationContext(ctx);
+                    // authenticate the user
+                    authenticateUser(client, authenticationContext, username, credentialId, h -> {
+                        if (h.failed()) {
+                            logger.error("An error has occurred while authenticating user {}", username, h.cause());
+                            ctx.fail(401);
+                            return;
+                        }
+                        final User user = h.result();
+                        // save the user into the context
+                        ctx.getDelegate().setUser(user);
+                        ctx.put(ConstantKeys.USER_CONTEXT_KEY, ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) user).getUser());
+                        // the user has upgraded from unauthenticated to authenticated
+                        // session should be upgraded as recommended by owasp
+                        session.regenerateId();
+                        final io.gravitee.am.model.User authenticatedUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) user).getUser();
+                        // update the credential
+                        updateCredential(authenticationContext, credentialId, authenticatedUser.getId(), credentialHandler -> {
+                            if (credentialHandler.failed()) {
+                                logger.error("An error has occurred while authenticating user {}", username, credentialHandler.cause());
                                 ctx.fail(401);
                                 return;
                             }
-                            final User user = h.result();
-                            // save the user into the context
-                            ctx.getDelegate().setUser(user);
-                            ctx.put(ConstantKeys.USER_CONTEXT_KEY, ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) user).getUser());
-                            // the user has upgraded from unauthenticated to authenticated
-                            // session should be upgraded as recommended by owasp
-                            session.regenerateId();
-                            final io.gravitee.am.model.User authenticatedUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) user).getUser();
-                            // update the credential
-                            updateCredential(authenticationContext, credentialId, authenticatedUser.getId(), credentialHandler -> {
-                                if (credentialHandler.failed()) {
-                                    logger.error("An error has occurred while authenticating user {}", username, credentialHandler.cause());
-                                    ctx.fail(401);
-                                    return;
-                                }
-                                manageFido2FactorEnrollment(ctx, client, credentialId, authenticatedUser);
-                            });
+                            manageFido2FactorEnrollment(ctx, client, credentialId, authenticatedUser);
                         });
-                    } else {
-                        logger.error("Unexpected exception", authenticate.cause());
-                        ctx.fail(authenticate.cause());
-                    }
-                });
+                    });
+                })
+                .doOnError(throwable -> {
+                    logger.error("Unexpected exception", throwable);
+                    ctx.fail(throwable.getCause());
+                })
+                .doFinally(() -> {
+                    // invalidate the challenge
+                    session.remove(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY);
+                    session.remove(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY);
+                })
+                .subscribe();
     }
-
-
 }

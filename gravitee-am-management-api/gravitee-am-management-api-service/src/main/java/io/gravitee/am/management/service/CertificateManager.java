@@ -17,7 +17,7 @@ package io.gravitee.am.management.service;
 
 import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.common.service.Service;
-import io.reactivex.Maybe;
+import io.reactivex.rxjava3.core.Maybe;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

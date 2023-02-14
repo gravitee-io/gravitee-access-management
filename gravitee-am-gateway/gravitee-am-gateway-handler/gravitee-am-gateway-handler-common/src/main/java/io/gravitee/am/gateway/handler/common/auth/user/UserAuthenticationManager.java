@@ -19,8 +19,8 @@ import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.gateway.api.Request;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)

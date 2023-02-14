@@ -23,8 +23,8 @@ import io.gravitee.am.service.PermissionTicketService;
 import io.gravitee.am.service.ResourceService;
 import io.gravitee.am.service.exception.InvalidPermissionRequestException;
 import io.gravitee.am.service.exception.InvalidPermissionTicketException;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -83,8 +83,8 @@ public class PermissionTicketServiceImpl implements PermissionTicketService {
     @Override
     public Single<PermissionTicket> remove(String id) {
         return repository.findById(id)
-                .switchIfEmpty(Maybe.error(new InvalidPermissionTicketException()))
-                .flatMapSingle(permissionTicket -> repository.delete(permissionTicket.getId()).andThen(Single.just(permissionTicket)));
+                .switchIfEmpty(Single.error(new InvalidPermissionTicketException()))
+                .flatMap(permissionTicket -> repository.delete(permissionTicket.getId()).andThen(Single.just(permissionTicket)));
     }
 
     /**

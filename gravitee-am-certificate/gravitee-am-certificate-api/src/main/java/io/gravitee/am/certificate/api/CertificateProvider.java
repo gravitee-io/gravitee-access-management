@@ -16,8 +16,8 @@
 package io.gravitee.am.certificate.api;
 
 import io.gravitee.am.model.jose.JWK;
-import io.reactivex.Flowable;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Single;
 
 import java.security.cert.Certificate;
 import java.util.Collections;

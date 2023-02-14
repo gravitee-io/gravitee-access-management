@@ -24,10 +24,10 @@ import io.gravitee.am.repository.jdbc.management.api.spring.organization.SpringO
 import io.gravitee.am.repository.jdbc.management.api.spring.organization.SpringOrganizationIdentitiesRepository;
 import io.gravitee.am.repository.jdbc.management.api.spring.organization.SpringOrganizationRepository;
 import io.gravitee.am.repository.management.api.OrganizationRepository;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.stereotype.Component;
@@ -39,7 +39,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
-import static reactor.adapter.rxjava.RxJava2Adapter.*;
+import static reactor.adapter.rxjava.RxJava3Adapter.*;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)

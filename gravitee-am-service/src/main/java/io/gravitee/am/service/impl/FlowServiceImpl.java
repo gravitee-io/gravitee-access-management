@@ -35,12 +35,12 @@ import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.FlowAuditBuilder;
 import io.micrometer.core.instrument.util.IOUtils;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Observable;
-import io.reactivex.Observable;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.Single;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -193,8 +193,8 @@ public class FlowServiceImpl implements FlowService {
         LOGGER.debug("Update a flow {} ", flow);
 
         return flowRepository.findById(referenceType, referenceId, id)
-                .switchIfEmpty(Maybe.error(new FlowNotFoundException(id)))
-                .flatMapSingle(oldFlow -> {
+                .switchIfEmpty(Single.error(new FlowNotFoundException(id)))
+                .flatMap(oldFlow -> {
 
                     // if type isn't define, continue as the oldFlow will contains the right value
                     if (flow.getType() != null && !oldFlow.getType().equals(flow.getType())) {

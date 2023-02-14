@@ -28,8 +28,8 @@ import io.gravitee.am.model.scim.Certificate;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
-import io.reactivex.observers.TestObserver;
-import io.reactivex.subscribers.TestSubscriber;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +43,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import static java.time.ZoneOffset.UTC;
 
@@ -68,7 +69,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
 
         // fetch users
         TestSubscriber<User> testSubscriber = organizationUserRepository.findAll(ReferenceType.ORGANIZATION, "testOrga").test();
-        testSubscriber.awaitTerminalEvent();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
 
         testSubscriber.assertComplete();
         testSubscriber.assertNoErrors();
@@ -87,7 +88,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
 
         // fetch users
         TestObserver<User> testObserver = organizationUserRepository.findByUsernameAndSource(ReferenceType.ORGANIZATION, "testOrga", user.getUsername(), user.getSource()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -105,7 +106,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
 
         // fetch users
         TestObserver<Page<User>> testObserver = organizationUserRepository.findAll(ReferenceType.ORGANIZATION, user.getReferenceId(), 0, 10).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -120,7 +121,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
 
         // fetch user
         TestObserver<User> testObserver = organizationUserRepository.findById(userCreated.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -151,7 +152,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
 
         // fetch user
         TestSubscriber<User> testObserver = organizationUserRepository.findByIdIn(Arrays.asList(userCreated.getId())).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -166,7 +167,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
 
         // fetch user
         TestObserver<User> testObserver = organizationUserRepository.findByExternalIdAndSource(userCreated.getReferenceType(), userCreated.getReferenceId(), userCreated.getExternalId(), userCreated.getSource()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -199,7 +200,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
 
         // fetch user
         TestObserver<User> testObserver = organizationUserRepository.findByExternalIdAndSource(userCreated.getReferenceType(), userCreated.getReferenceId(), userCreated.getExternalId()+"unknown", userCreated.getSource()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -278,7 +279,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
 
         // fetch user
         TestObserver<User> testObserver = organizationUserRepository.findById(ReferenceType.ORGANIZATION, ORGANIZATION_ID, userCreated.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -298,7 +299,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
         user.setUsername("testsUsername");
         user.setAdditionalInformation(Collections.singletonMap("email", "johndoe@test.com"));
         TestObserver<User> testObserver = organizationUserRepository.create(user).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -322,7 +323,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
         updatedUser.setUsername("testUpdatedUsername");
 
         TestObserver<User> testObserver = organizationUserRepository.update(updatedUser).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -340,14 +341,14 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
 
         // fetch user
         TestObserver<User> testObserver = organizationUserRepository.findById(userCreated.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(u -> u.getUsername().equals(user.getUsername()));
 
         // delete user
         TestObserver testObserver1 = organizationUserRepository.delete(userCreated.getId()).test();
-        testObserver1.awaitTerminalEvent();
+        testObserver1.awaitDone(10, TimeUnit.SECONDS);
 
         // fetch user
         organizationUserRepository.findById(userCreated.getId()).test().assertEmpty();
@@ -427,7 +428,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
 
         // fetch user (page 0)
         TestObserver<Page<User>> testObserverP0 = organizationUserRepository.search(ReferenceType.ORGANIZATION, organization, "testUsername*", 0, 2).test();
-        testObserverP0.awaitTerminalEvent();
+        testObserverP0.awaitDone(10, TimeUnit.SECONDS);
 
         testObserverP0.assertComplete();
         testObserverP0.assertNoErrors();
@@ -439,7 +440,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
 
         // fetch user (page 1)
         TestObserver<Page<User>> testObserverP1 = organizationUserRepository.search(ReferenceType.ORGANIZATION, organization, "testUsername*", 1, 2).test();
-        testObserverP1.awaitTerminalEvent();
+        testObserverP1.awaitDone(10, TimeUnit.SECONDS);
 
         testObserverP1.assertComplete();
         testObserverP1.assertNoErrors();
@@ -492,7 +493,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
         criteria.setOperator("and");
         criteria.setFilterComponents(Arrays.asList(criteriaDate, criteriaName));
         TestObserver<Page<User>> testObserverP0 = organizationUserRepository.search(ReferenceType.ORGANIZATION, organization, criteria, 0, 4).test();
-        testObserverP0.awaitTerminalEvent();
+        testObserverP0.awaitDone(10, TimeUnit.SECONDS);
 
         testObserverP0.assertComplete();
         testObserverP0.assertNoErrors();
@@ -500,7 +501,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
 
         // fetch user (page 1)
         TestObserver<Page<User>> testObserverP1 = organizationUserRepository.search(ReferenceType.ORGANIZATION, organization, criteria, 1, 2).test();
-        testObserverP1.awaitTerminalEvent();
+        testObserverP1.awaitDone(10, TimeUnit.SECONDS);
 
         testObserverP1.assertComplete();
         testObserverP1.assertNoErrors();
@@ -536,7 +537,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
         criteria.setOperator("sw");
         criteria.setQuoteFilterValue(true);
         TestObserver<Page<User>> testObserverP0 = organizationUserRepository.search(ReferenceType.ORGANIZATION, organization, criteria, 0, 4).test();
-        testObserverP0.awaitTerminalEvent();
+        testObserverP0.awaitDone(10, TimeUnit.SECONDS);
 
         testObserverP0.assertComplete();
         testObserverP0.assertNoErrors();
@@ -544,7 +545,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
 
         // fetch user (page 1)
         TestObserver<Page<User>> testObserverP1 = organizationUserRepository.search(ReferenceType.ORGANIZATION, organization, criteria, 1, 2).test();
-        testObserverP1.awaitTerminalEvent();
+        testObserverP1.awaitDone(10, TimeUnit.SECONDS);
 
         testObserverP1.assertComplete();
         testObserverP1.assertNoErrors();
@@ -580,7 +581,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
         criteria.setOperator("sw");
         criteria.setQuoteFilterValue(true);
         final TestSubscriber<User> testObserverP0 = organizationUserRepository.search(ReferenceType.ORGANIZATION, organization, criteria).test();
-        testObserverP0.awaitTerminalEvent();
+        testObserverP0.awaitDone(10, TimeUnit.SECONDS);
 
         testObserverP0.assertComplete();
         testObserverP0.assertNoErrors();
@@ -618,7 +619,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
         criteria.setOperator("sw");
         criteria.setQuoteFilterValue(true);
         TestObserver<Page<User>> testObserverP0 = organizationUserRepository.search(ReferenceType.ORGANIZATION, organization, criteria, 0, 4).test();
-        testObserverP0.awaitTerminalEvent();
+        testObserverP0.awaitDone(10, TimeUnit.SECONDS);
 
         testObserverP0.assertComplete();
         testObserverP0.assertNoErrors();
@@ -626,7 +627,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
 
         // fetch user (page 1)
         TestObserver<Page<User>> testObserverP1 = organizationUserRepository.search(ReferenceType.ORGANIZATION, organization, criteria, 1, 1).test();
-        testObserverP1.awaitTerminalEvent();
+        testObserverP1.awaitDone(10, TimeUnit.SECONDS);
 
         testObserverP1.assertComplete();
         testObserverP1.assertNoErrors();
@@ -656,7 +657,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
         criteria.setOperator("eq");
         criteria.setQuoteFilterValue(true);
         TestObserver<Page<User>> testObserverP0 = organizationUserRepository.search(ReferenceType.ORGANIZATION, organization, criteria, 0, 4).test();
-        testObserverP0.awaitTerminalEvent();
+        testObserverP0.awaitDone(10, TimeUnit.SECONDS);
 
         testObserverP0.assertComplete();
         testObserverP0.assertNoErrors();
@@ -687,7 +688,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
         criteria.setFilterValue("");
         criteria.setOperator("pr");
         TestObserver<Page<User>> testObserverP0 = organizationUserRepository.search(ReferenceType.ORGANIZATION, organization, criteria, 0, 4).test();
-        testObserverP0.awaitTerminalEvent();
+        testObserverP0.awaitDone(10, TimeUnit.SECONDS);
 
         testObserverP0.assertComplete();
         testObserverP0.assertNoErrors();
@@ -720,7 +721,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
         criteria.setOperator("ne");
         criteria.setQuoteFilterValue(true);
         TestObserver<Page<User>> testObserverP0 = organizationUserRepository.search(ReferenceType.ORGANIZATION, organization, criteria, 0, 4).test();
-        testObserverP0.awaitTerminalEvent();
+        testObserverP0.awaitDone(10, TimeUnit.SECONDS);
 
         testObserverP0.assertComplete();
         testObserverP0.assertNoErrors();
@@ -754,7 +755,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
 
         // fetch user
         TestObserver<Page<User>> testObserver = organizationUserRepository.search(ReferenceType.ORGANIZATION, organization, query, 0, 10).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -788,7 +789,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
 
         // fetch user
         TestObserver<Page<User>> testObserver = organizationUserRepository.search(ReferenceType.ORGANIZATION, organization, query, 0, 10).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -823,11 +824,11 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
 
         // delete user
         TestObserver testObserver1 = organizationUserRepository.deleteByReference(ReferenceType.ORGANIZATION, ORG_1).test();
-        testObserver1.awaitTerminalEvent();
+        testObserver1.awaitDone(10, TimeUnit.SECONDS);
 
         // fetch user
         final TestSubscriber<User> find = organizationUserRepository.findAll(ReferenceType.ORGANIZATION, ORG_1).test();
-        find.awaitTerminalEvent();
+        find.awaitDone(10, TimeUnit.SECONDS);
         find.assertNoValues();
 
         usersDomain2 = organizationUserRepository.findAll(ReferenceType.ORGANIZATION, ORG_2).count().blockingGet();

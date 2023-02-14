@@ -34,10 +34,10 @@ import io.gravitee.am.service.model.NewExtensionGrant;
 import io.gravitee.am.service.model.UpdateExtensionGrant;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.ExtensionGrantAuditBuilder;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -145,11 +145,10 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
         LOGGER.debug("Update a extension grant {} for domain {}", id, domain);
 
         return extensionGrantRepository.findById(id)
-                .switchIfEmpty(Maybe.error(new ExtensionGrantNotFoundException(id)))
-                .flatMapSingle(tokenGranter -> extensionGrantRepository.findByDomainAndName(domain, updateExtensionGrant.getName())
+                .switchIfEmpty(Single.error(new ExtensionGrantNotFoundException(id)))
+                .flatMap(tokenGranter -> extensionGrantRepository.findByDomainAndName(domain, updateExtensionGrant.getName())
                         .map(extensionGrant -> Optional.of(extensionGrant))
                         .defaultIfEmpty(Optional.empty())
-                        .toSingle()
                         .flatMap(existingTokenGranter -> {
                             if (existingTokenGranter.isPresent() && !existingTokenGranter.get().getId().equals(id)) {
                                 throw new ExtensionGrantAlreadyExistsException("Extension grant with the same name already exists");
@@ -216,9 +215,8 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
                 .flatMapCompletable(extensionGrant -> {
                     // create event for sync process
                     Event event = new Event(Type.EXTENSION_GRANT, new Payload(extensionGrantId, ReferenceType.DOMAIN, domain, Action.DELETE));
-                    return extensionGrantRepository.delete(extensionGrantId)
-                            .andThen(eventService.create(event))
-                            .toCompletable()
+                    return Completable.fromSingle(extensionGrantRepository.delete(extensionGrantId)
+                            .andThen(eventService.create(event)))
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(ExtensionGrantAuditBuilder.class).principal(principal).type(EventType.EXTENSION_GRANT_DELETED).extensionGrant(extensionGrant)))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(ExtensionGrantAuditBuilder.class).principal(principal).type(EventType.EXTENSION_GRANT_DELETED).throwable(throwable)));
                 })

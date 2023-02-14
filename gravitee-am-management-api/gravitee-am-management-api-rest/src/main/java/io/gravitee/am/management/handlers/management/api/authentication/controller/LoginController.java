@@ -23,7 +23,7 @@ import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.service.OrganizationService;
 import io.gravitee.am.service.ReCaptchaService;
 import io.gravitee.common.http.HttpHeaders;
-import io.reactivex.Maybe;
+import io.reactivex.rxjava3.core.Maybe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -20,7 +20,7 @@ import io.gravitee.am.model.flow.Flow;
 import io.gravitee.am.model.flow.Step;
 import io.gravitee.am.model.flow.Type;
 import io.gravitee.am.repository.management.AbstractManagementTest;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -54,7 +55,7 @@ public class FlowRepositoryTest extends AbstractManagementTest {
         Flow flow2Created = flowRepository.create(flow2).blockingGet();
 
         TestObserver<List<Flow>> obs = flowRepository.findAll(ReferenceType.DOMAIN, "DOMAIN1").toList().test();
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
 
         obs.assertComplete();
         obs.assertNoErrors();
@@ -77,7 +78,7 @@ public class FlowRepositoryTest extends AbstractManagementTest {
         Flow flow2Created = flowRepository.create(flow2).blockingGet();
 
         TestObserver<List<Flow>> obs = flowRepository.findByApplication(ReferenceType.DOMAIN, "DOMAIN1", "APP1").toList().test();
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
 
         obs.assertComplete();
         obs.assertNoErrors();
@@ -94,7 +95,7 @@ public class FlowRepositoryTest extends AbstractManagementTest {
         Flow flowCreated = flowRepository.create(flow).blockingGet();
 
         TestObserver<Flow> obs = flowRepository.findById(ReferenceType.DOMAIN, "DOMAIN1", flowCreated.getId()).test();
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
 
         obs.assertComplete();
         obs.assertNoErrors();
@@ -145,7 +146,7 @@ public class FlowRepositoryTest extends AbstractManagementTest {
         Flow flowCreated = flowRepository.create(flow).blockingGet();
 
         TestObserver<Flow> obs = flowRepository.findById(flowCreated.getId()).test();
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
 
         obs.assertComplete();
         obs.assertNoErrors();
@@ -159,7 +160,7 @@ public class FlowRepositoryTest extends AbstractManagementTest {
         Flow flowCreated = flowRepository.create(flow).blockingGet();
 
         TestObserver<Flow> obs = flowRepository.findById(flowCreated.getId()).test();
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
 
         obs.assertComplete();
         obs.assertNoErrors();
@@ -175,7 +176,7 @@ public class FlowRepositoryTest extends AbstractManagementTest {
         Flow flowCreated = flowRepository.create(flow).blockingGet();
 
         TestObserver<Flow> obs = flowRepository.findById(flowCreated.getId()).test();
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
 
         obs.assertComplete();
         obs.assertNoErrors();
@@ -194,7 +195,7 @@ public class FlowRepositoryTest extends AbstractManagementTest {
         flow.setOrder(5);
 
         TestObserver<Flow> obs = flowRepository.create(flow).test();
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertComplete();
         obs.assertNoErrors();
         obs.assertValue(o -> o.getName().equals(flow.getName()) && o.getId() != null);
@@ -210,7 +211,7 @@ public class FlowRepositoryTest extends AbstractManagementTest {
         flowUpdated.setName("testNameUpdated");
 
         TestObserver<Flow> obs = flowRepository.update(flowUpdated).test();
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
 
         obs.assertComplete();
         obs.assertNoErrors();
@@ -229,7 +230,7 @@ public class FlowRepositoryTest extends AbstractManagementTest {
         flowUpdated.setName("testNameUpdated");
 
         TestObserver<Flow> obs = flowRepository.update(flowUpdated).test();
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
 
         obs.assertComplete();
         obs.assertNoErrors();
@@ -248,7 +249,7 @@ public class FlowRepositoryTest extends AbstractManagementTest {
         assertNotNull(flowRepository.findById(flowCreated.getId()).blockingGet());
 
         TestObserver<Void> obs = flowRepository.delete(flowCreated.getId()).test();
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertNoValues();
 
         assertNull(flowRepository.findById(flowCreated.getId()).blockingGet());

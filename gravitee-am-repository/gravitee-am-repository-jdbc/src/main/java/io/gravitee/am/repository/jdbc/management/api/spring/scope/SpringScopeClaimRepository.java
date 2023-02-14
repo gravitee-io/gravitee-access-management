@@ -16,10 +16,10 @@
 package io.gravitee.am.repository.jdbc.management.api.spring.scope;
 
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcScope;
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.data.repository.reactive.RxJava2CrudRepository;
+import org.springframework.data.repository.reactive.RxJava3CrudRepository;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -27,7 +27,7 @@ import org.springframework.stereotype.Repository;
  * @author GraviteeSource Team
  */
 @Repository
-public interface SpringScopeClaimRepository extends RxJava2CrudRepository<JdbcScope.Claims, String> {
+public interface SpringScopeClaimRepository extends RxJava3CrudRepository<JdbcScope.Claims, String> {
 
     @Query("select * from scope_claims c where c.scope_id = :scope")
     Flowable<JdbcScope.Claims> findByScopeId(@Param("scope")String scope);

@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.csp;
 
 import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.CSPHandler;
-import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 
 import java.util.List;
 import java.util.Map;
@@ -39,13 +39,13 @@ public class CspHandlerImpl implements CSPHandler {
     public static final String NONCE_SUFIX = "'";
     public static final String SCRIPT_SRC_DIRECTIVE = "script-src";
     private final boolean scriptInlineNonce;
-    private final io.vertx.reactivex.ext.web.handler.CSPHandler delegate;
+    private final io.vertx.rxjava3.ext.web.handler.CSPHandler delegate;
 
     private String staticScriptSrcDirective;
 
     public CspHandlerImpl(Boolean isReportOnly, List<String> directives, boolean scriptInlineNonce) {
         // adds "default-src": "self" as default configuration
-        this.delegate = io.vertx.reactivex.ext.web.handler.CSPHandler.create().setReportOnly(TRUE.equals(isReportOnly));
+        this.delegate = io.vertx.rxjava3.ext.web.handler.CSPHandler.create().setReportOnly(TRUE.equals(isReportOnly));
         this.scriptInlineNonce = scriptInlineNonce;
         addDirectives(directives);
     }

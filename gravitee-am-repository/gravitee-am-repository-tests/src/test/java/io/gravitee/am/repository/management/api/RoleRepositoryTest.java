@@ -22,13 +22,14 @@ import io.gravitee.am.model.Role;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.AbstractManagementTest;
-import io.reactivex.observers.TestObserver;
-import io.reactivex.subscribers.TestSubscriber;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.mockito.internal.util.collections.Sets;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertTrue;
@@ -54,7 +55,7 @@ public class RoleRepositoryTest extends AbstractManagementTest {
 
         // fetch roles
         TestObserver<List<Role>> testObserver = roleRepository.findAll(ReferenceType.DOMAIN, "testDomain").toList().test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -98,7 +99,7 @@ public class RoleRepositoryTest extends AbstractManagementTest {
 
         // fetch roles 1 & 2
         TestObserver<List<Role>> testObserver = roleRepository.findByNamesAndAssignableType(ReferenceType.PLATFORM, Platform.DEFAULT, Arrays.asList(NAME_1, NAME_2), ReferenceType.ORGANIZATION).toList().test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -113,7 +114,7 @@ public class RoleRepositoryTest extends AbstractManagementTest {
 
         // fetch role
         TestObserver<Role> testObserver = roleRepository.findById(roleCreated.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -161,7 +162,7 @@ public class RoleRepositoryTest extends AbstractManagementTest {
 
         // fetch role
         TestObserver<Role> testObserver = roleRepository.findById(ReferenceType.DOMAIN, DOMAIN_ID, roleCreated.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -192,7 +193,7 @@ public class RoleRepositoryTest extends AbstractManagementTest {
 
         // fetch role
         TestSubscriber<Role> testObserver = roleRepository.findAll(ReferenceType.DOMAIN, DOMAIN_ID).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -212,7 +213,7 @@ public class RoleRepositoryTest extends AbstractManagementTest {
         Role role = new Role();
         role.setName("testName");
         TestObserver<Role> testObserver = roleRepository.create(role).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -232,7 +233,7 @@ public class RoleRepositoryTest extends AbstractManagementTest {
         updatedRole.setName("testUpdatedName");
 
         TestObserver<Role> testObserver = roleRepository.update(updatedRole).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -248,14 +249,14 @@ public class RoleRepositoryTest extends AbstractManagementTest {
 
         // fetch role
         TestObserver<Role> testObserver = roleRepository.findById(roleCreated.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(r -> r.getName().equals(roleCreated.getName()));
 
         // delete role
         TestObserver testObserver1 = roleRepository.delete(roleCreated.getId()).test();
-        testObserver1.awaitTerminalEvent();
+        testObserver1.awaitDone(10, TimeUnit.SECONDS);
 
         // fetch role
         roleRepository.findById(roleCreated.getId()).test().assertEmpty();

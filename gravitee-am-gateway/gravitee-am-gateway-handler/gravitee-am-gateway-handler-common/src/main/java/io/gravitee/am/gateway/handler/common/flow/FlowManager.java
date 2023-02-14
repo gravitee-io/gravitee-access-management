@@ -19,7 +19,7 @@ import io.gravitee.am.common.policy.ExtensionPoint;
 import io.gravitee.am.gateway.policy.Policy;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.service.Service;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 import java.util.List;
 
 /**

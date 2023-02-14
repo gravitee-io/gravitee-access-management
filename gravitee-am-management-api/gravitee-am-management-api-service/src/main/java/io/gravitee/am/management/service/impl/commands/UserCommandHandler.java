@@ -26,7 +26,7 @@ import io.gravitee.cockpit.api.command.CommandStatus;
 import io.gravitee.cockpit.api.command.user.UserCommand;
 import io.gravitee.cockpit.api.command.user.UserPayload;
 import io.gravitee.cockpit.api.command.user.UserReply;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;

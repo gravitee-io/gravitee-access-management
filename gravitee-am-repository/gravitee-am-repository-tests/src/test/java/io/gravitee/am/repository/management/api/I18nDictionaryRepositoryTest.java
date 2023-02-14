@@ -17,13 +17,14 @@ package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.I18nDictionary;
 import io.gravitee.am.repository.management.AbstractManagementTest;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Date;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.TimeUnit;
 
 import static io.gravitee.am.model.ReferenceType.DOMAIN;
 import static java.util.UUID.randomUUID;
@@ -50,7 +51,7 @@ public class I18nDictionaryRepositoryTest extends AbstractManagementTest {
     public void shouldFindById() {
         var created = repository.create(buildDictionary(randomUUID().toString())).blockingGet();
         var observer = repository.findById(created.getId()).test();
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertComplete();
         observer.assertNoErrors();
 
@@ -62,7 +63,7 @@ public class I18nDictionaryRepositoryTest extends AbstractManagementTest {
         String referenceId = randomUUID().toString();
         var created = repository.create(buildDictionary(referenceId)).blockingGet();
         var observer = repository.findById(DOMAIN, referenceId, created.getId()).test();
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertComplete();
         observer.assertNoErrors();
 
@@ -74,7 +75,7 @@ public class I18nDictionaryRepositoryTest extends AbstractManagementTest {
         String referenceId = randomUUID().toString();
         var created = repository.create(buildDictionary(referenceId)).blockingGet();
         var observer = repository.findByName(DOMAIN, referenceId, created.getName()).test();
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertComplete();
         observer.assertNoErrors();
 
@@ -107,7 +108,7 @@ public class I18nDictionaryRepositoryTest extends AbstractManagementTest {
 
         var observer = repository.findAll(DOMAIN, referenceId).toList().test();
 
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertNoErrors();
         observer.assertValue(l -> l.size() == dictCount);
     }
@@ -118,7 +119,7 @@ public class I18nDictionaryRepositoryTest extends AbstractManagementTest {
         var created = repository.create(buildDictionary(referenceId)).blockingGet();
 
         var findObserver = repository.findById(created.getId()).test();
-        findObserver.awaitTerminalEvent();
+        findObserver.awaitDone(10, TimeUnit.SECONDS);
         findObserver.assertNoErrors();
         findObserver.assertComplete();
         findObserver.assertValue(i18nDictionary -> i18nDictionary.getId().equals(created.getId()));
@@ -134,7 +135,7 @@ public class I18nDictionaryRepositoryTest extends AbstractManagementTest {
         toUpdate.setEntries(Map.of("key1", "val1", "key2", "val2"));
 
         var updateObserver = repository.update(toUpdate).test();
-        updateObserver.awaitTerminalEvent();
+        updateObserver.awaitDone(10, TimeUnit.SECONDS);
         updateObserver.assertComplete();
         assertObservedValues(toUpdate, updateObserver);
     }
@@ -145,7 +146,7 @@ public class I18nDictionaryRepositoryTest extends AbstractManagementTest {
         var created = repository.create(buildDictionary(referenceId)).blockingGet();
 
         var observer = repository.delete(created.getId()).test();
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertNoErrors();
 
         repository.findById(created.getId()).test().assertEmpty();

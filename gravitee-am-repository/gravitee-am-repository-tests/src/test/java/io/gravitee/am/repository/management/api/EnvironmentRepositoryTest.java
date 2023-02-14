@@ -19,8 +19,8 @@ import io.gravitee.am.model.Environment;
 import io.gravitee.am.model.Form;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.management.AbstractManagementTest;
-import io.reactivex.observers.TestObserver;
-import io.reactivex.subscribers.TestSubscriber;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -28,6 +28,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -51,7 +52,7 @@ public class EnvironmentRepositoryTest extends AbstractManagementTest {
         Environment envCreated = environmentRepository.create(environment).blockingGet();
 
         TestObserver<Environment> obs = environmentRepository.findById(envCreated.getId()).test();
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
 
         obs.assertComplete();
         obs.assertNoErrors();
@@ -75,7 +76,7 @@ public class EnvironmentRepositoryTest extends AbstractManagementTest {
         env.setName("testName");
 
         TestObserver<Environment> obs = environmentRepository.create(env).test();
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
 
         obs.assertComplete();
         obs.assertNoErrors();
@@ -102,7 +103,7 @@ public class EnvironmentRepositoryTest extends AbstractManagementTest {
         envUpdated.setHrids(Arrays.asList("Hrid2", "Hrid3", "Hrid4"));
 
         TestObserver<Environment> obs = environmentRepository.update(envUpdated).test();
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
 
         obs.assertComplete();
         obs.assertNoErrors();
@@ -127,7 +128,7 @@ public class EnvironmentRepositoryTest extends AbstractManagementTest {
         assertNotNull(environmentRepository.findById(envCreated.getId()).blockingGet());
 
         TestObserver<Void> obs = environmentRepository.delete(envCreated.getId()).test();
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertNoValues();
 
         assertNull(environmentRepository.findById(envCreated.getId()).blockingGet());
@@ -148,7 +149,7 @@ public class EnvironmentRepositoryTest extends AbstractManagementTest {
         }
 
         TestObserver<List<Environment>> testObserver = environmentRepository.findAll(FIXED_REF_ID).toList().test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         testObserver.assertValue(l -> l.size() == loop);
         testObserver.assertValue(l -> l.stream().map(Environment::getId).distinct().count() == loop);
@@ -163,7 +164,7 @@ public class EnvironmentRepositoryTest extends AbstractManagementTest {
         }
 
         TestObserver<List<Environment>> testObserver = environmentRepository.findAll().toList().test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         testObserver.assertValue(l -> l.size() == loop);
         testObserver.assertValue(l -> l.stream().map(Environment::getId).distinct().count() == loop);

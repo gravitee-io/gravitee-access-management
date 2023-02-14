@@ -24,7 +24,7 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.service.DomainService;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.inject.Named;

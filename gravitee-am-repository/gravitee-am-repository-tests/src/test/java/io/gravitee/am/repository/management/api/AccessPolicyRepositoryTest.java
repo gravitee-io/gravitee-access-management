@@ -20,13 +20,14 @@ import io.gravitee.am.model.uma.policy.AccessPolicy;
 import io.gravitee.am.model.uma.policy.AccessPolicyType;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.am.repository.exceptions.TechnicalException;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -56,7 +57,7 @@ public class AccessPolicyRepositoryTest extends AbstractManagementTest {
         AccessPolicy apCreated = repository.create(accessPolicy).blockingGet();
 
         TestObserver<AccessPolicy> testObserver = repository.findById(apCreated.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -81,7 +82,7 @@ public class AccessPolicyRepositoryTest extends AbstractManagementTest {
         toUpdate.setName("accessPolicyUpdatedName");
 
         TestObserver<AccessPolicy> testObserver = repository.update(toUpdate).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -96,7 +97,7 @@ public class AccessPolicyRepositoryTest extends AbstractManagementTest {
 
         // fetch resource_set
         TestObserver<Void> testObserver = repository.delete(apCreated.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -117,7 +118,7 @@ public class AccessPolicyRepositoryTest extends AbstractManagementTest {
         repository.create(accessPolicyOtherDomain).blockingGet();
 
         TestObserver<Page<AccessPolicy>> testObserver = repository.findByDomain(DOMAIN_SINGLE, 0, 20).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -146,7 +147,7 @@ public class AccessPolicyRepositoryTest extends AbstractManagementTest {
 
         // list all in one page
         TestObserver<Page<AccessPolicy>> testObserver = repository.findByDomain(DOMAIN10, 0, totalCount+1).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -155,7 +156,7 @@ public class AccessPolicyRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(p -> p.getData().size() == totalCount);
 
         testObserver = repository.findByDomain(DOMAIN10, 0, totalCount/2).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -166,7 +167,7 @@ public class AccessPolicyRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(p -> p.getData().stream().map(AccessPolicy::getName).filter(name -> name.matches("accessPolicyName[56789]")).count() == totalCount/2);
 
         testObserver = repository.findByDomain(DOMAIN10, 1, totalCount/2).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -198,7 +199,7 @@ public class AccessPolicyRepositoryTest extends AbstractManagementTest {
         repository.create(accessPolicy3).blockingGet();
 
         TestObserver<List<AccessPolicy>> testObserver = repository.findByDomainAndResource(DOMAIN_ID, RESOURCE_ID).toList().test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -227,7 +228,7 @@ public class AccessPolicyRepositoryTest extends AbstractManagementTest {
         repository.create(accessPolicy3).blockingGet();
 
         TestObserver<List<AccessPolicy>> testObserver = repository.findByResources(Arrays.asList(RESOURCE_ID, RESOURCE_ID+"2")).toList().test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();

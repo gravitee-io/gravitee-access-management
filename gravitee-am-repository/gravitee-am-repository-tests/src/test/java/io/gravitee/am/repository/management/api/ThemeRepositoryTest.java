@@ -19,9 +19,11 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Theme;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.AbstractManagementTest;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -54,7 +56,7 @@ public class ThemeRepositoryTest extends AbstractManagementTest {
         Theme themeCreated = themeRepository.create(theme).blockingGet();
 
         TestObserver<Theme> testObserver = themeRepository.findById(themeCreated.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -79,7 +81,7 @@ public class ThemeRepositoryTest extends AbstractManagementTest {
         themeRepository.create(buildTheme(ReferenceType.APPLICATION, APP_ID)).blockingGet();
 
         TestObserver<Theme> testObserver = themeRepository.findByReference(ReferenceType.DOMAIN, DOMAIN_ID).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -92,7 +94,7 @@ public class ThemeRepositoryTest extends AbstractManagementTest {
         themeRepository.create(buildTheme(ReferenceType.APPLICATION, APP_ID)).blockingGet();
 
         TestObserver<Theme> testObserver = themeRepository.findByReference(ReferenceType.APPLICATION, APP_ID).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -102,7 +104,7 @@ public class ThemeRepositoryTest extends AbstractManagementTest {
     @Test
     public void testFindByReference_NotFound() throws TechnicalException {
         final TestObserver<Theme> testObserver = themeRepository.findByReference(ReferenceType.APPLICATION, "unknown").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoValues();
     }
 
@@ -110,7 +112,7 @@ public class ThemeRepositoryTest extends AbstractManagementTest {
     public void testCreate() throws TechnicalException {
         Theme theme = buildTheme(ReferenceType.DOMAIN, DOMAIN_ID);
         TestObserver<Theme> testObserver = themeRepository.create(theme).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -144,7 +146,7 @@ public class ThemeRepositoryTest extends AbstractManagementTest {
         updateTheme.setLogoWidth(224);
 
         TestObserver<Theme> testObserver = themeRepository.update(updateTheme).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -164,12 +166,12 @@ public class ThemeRepositoryTest extends AbstractManagementTest {
         Theme theme = buildTheme(ReferenceType.DOMAIN, DOMAIN_ID);
         Theme themeCreated = themeRepository.create(theme).blockingGet();
         TestObserver<Theme> testObserver = themeRepository.findById(themeCreated.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
         TestObserver testObserver1 = themeRepository.delete(themeCreated.getId()).test();
-        testObserver1.awaitTerminalEvent();
+        testObserver1.awaitDone(10, TimeUnit.SECONDS);
 
         themeRepository.findById(themeCreated.getId()).test().assertEmpty();
     }

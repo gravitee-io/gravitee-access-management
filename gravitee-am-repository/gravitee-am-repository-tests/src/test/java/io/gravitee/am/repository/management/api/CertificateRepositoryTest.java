@@ -18,8 +18,8 @@ package io.gravitee.am.repository.management.api;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.AbstractManagementTest;
-import io.reactivex.observers.TestObserver;
-import io.reactivex.subscribers.TestSubscriber;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -28,6 +28,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -48,7 +49,7 @@ public class CertificateRepositoryTest extends AbstractManagementTest {
 
         // fetch certificates
         TestSubscriber<Certificate> testSubscriber = certificateRepository.findByDomain("DomainTestFindByDomain").test();
-        testSubscriber.awaitTerminalEvent();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
 
         testSubscriber.assertComplete();
         testSubscriber.assertNoErrors();
@@ -87,7 +88,7 @@ public class CertificateRepositoryTest extends AbstractManagementTest {
 
         // fetch certificate
         TestObserver<Certificate> testObserver = certificateRepository.findById(certificateCreated.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -113,7 +114,7 @@ public class CertificateRepositoryTest extends AbstractManagementTest {
         Certificate certificate = buildCertificate();
 
         TestObserver<Certificate> testObserver = certificateRepository.create(certificate).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -132,7 +133,7 @@ public class CertificateRepositoryTest extends AbstractManagementTest {
         updatedCertificate.setName("testUpdatedName");
 
         TestObserver<Certificate> testObserver = certificateRepository.update(updatedCertificate).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -147,11 +148,11 @@ public class CertificateRepositoryTest extends AbstractManagementTest {
         final Date exp = new Date(Instant.now().plus(5, ChronoUnit.DAYS).toEpochMilli());
 
         final TestObserver<Void> testObserver = certificateRepository.updateExpirationDate(certificateCreated.getId(), exp).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
 
         TestObserver<Certificate> testUpdatedValueObs = certificateRepository.findById(certificateCreated.getId()).test();
-        testUpdatedValueObs.awaitTerminalEvent();
+        testUpdatedValueObs.awaitDone(10, TimeUnit.SECONDS);
         testUpdatedValueObs.assertComplete();
         testUpdatedValueObs.assertNoErrors();
         testUpdatedValueObs.assertValue(d -> d.getId().equals(certificateCreated.getId()));
@@ -169,14 +170,14 @@ public class CertificateRepositoryTest extends AbstractManagementTest {
 
         // fetch certificate
         TestObserver<Certificate> testObserver = certificateRepository.findById(certificateCreated.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(d -> d.getName().equals(certificateCreated.getName()));
 
         // delete domain
         TestObserver testObserver1 = certificateRepository.delete(certificateCreated.getId()).test();
-        testObserver1.awaitTerminalEvent();
+        testObserver1.awaitDone(10, TimeUnit.SECONDS);
 
         // fetch domain
         certificateRepository.findById(certificateCreated.getId()).test().assertEmpty();

@@ -16,12 +16,12 @@
 package io.gravitee.am.repository.jdbc.oauth2.api.spring;
 
 import io.gravitee.am.repository.jdbc.oauth2.api.model.JdbcAccessToken;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.data.repository.reactive.RxJava2CrudRepository;
+import org.springframework.data.repository.reactive.RxJava3CrudRepository;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -31,7 +31,7 @@ import java.time.LocalDateTime;
  * @author GraviteeSource Team
  */
 @Repository
-public interface SpringAccessTokenRepository extends RxJava2CrudRepository<JdbcAccessToken, String> {
+public interface SpringAccessTokenRepository extends RxJava3CrudRepository<JdbcAccessToken, String> {
     @Query("select * from access_tokens a where a.token = :token and (a.expire_at > :now or a.expire_at is null)")
     Maybe<JdbcAccessToken> findByToken(@Param("token") String token, @Param("now")LocalDateTime now);
 

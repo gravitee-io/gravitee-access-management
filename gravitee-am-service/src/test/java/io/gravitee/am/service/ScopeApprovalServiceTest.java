@@ -26,11 +26,11 @@ import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.impl.ScopeApprovalServiceImpl;
 import io.gravitee.am.service.reporter.builder.UserConsentAuditBuilder;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.observers.TestObserver;
-import io.reactivex.subscribers.TestSubscriber;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -39,6 +39,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
@@ -75,7 +76,7 @@ public class ScopeApprovalServiceTest {
         when(scopeApprovalRepository.findById("my-consent")).thenReturn(Maybe.just(new ScopeApproval()));
         TestObserver testObserver = scopeApprovalService.findById("my-consent").test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValueCount(1);
@@ -85,7 +86,7 @@ public class ScopeApprovalServiceTest {
     public void shouldFindById_notExistingScopeApproval() {
         when(scopeApprovalRepository.findById("my-consent")).thenReturn(Maybe.empty());
         TestObserver testObserver = scopeApprovalService.findById("my-consent").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNoValues();
     }
@@ -108,7 +109,7 @@ public class ScopeApprovalServiceTest {
         dummyScopeApproval.setScope("");
         when(scopeApprovalRepository.findByDomainAndUser(DOMAIN, "userId")).thenReturn(Flowable.just(dummyScopeApproval));
         TestObserver<HashSet<ScopeApproval>> testObserver = scopeApprovalService.findByDomainAndUser(DOMAIN, "userId").collect(HashSet<ScopeApproval>::new, Set::add).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -133,7 +134,7 @@ public class ScopeApprovalServiceTest {
         dummyScopeApproval.setScope("");
         when(scopeApprovalRepository.findByDomainAndUserAndClient(DOMAIN, "userId", "clientId")).thenReturn(Flowable.just(dummyScopeApproval));
         TestObserver<HashSet<ScopeApproval>> testObserver = scopeApprovalService.findByDomainAndUserAndClient(DOMAIN, "userId", "clientId").collect(HashSet<ScopeApproval>::new, Set::add).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -174,7 +175,7 @@ public class ScopeApprovalServiceTest {
 
 
         TestObserver testObserver = scopeApprovalService.revokeByConsent("my-domain","user-id", "my-consent").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -198,7 +199,7 @@ public class ScopeApprovalServiceTest {
         when(refreshTokenRepository.deleteByDomainIdAndUserId("my-domain", "user-id")).thenReturn(Completable.complete());
 
         TestObserver<Void> testObserver = scopeApprovalService.revokeByUser("my-domain", "user-id", new DefaultUser("user-id")).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -230,7 +231,7 @@ public class ScopeApprovalServiceTest {
         when(refreshTokenRepository.deleteByDomainIdClientIdAndUserId("my-domain", "client-id", "user-id")).thenReturn(Completable.complete());
 
         TestObserver<Void> testObserver = scopeApprovalService.revokeByUserAndClient("my-domain", "user-id", "client-id", new DefaultUser("user-id")).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();

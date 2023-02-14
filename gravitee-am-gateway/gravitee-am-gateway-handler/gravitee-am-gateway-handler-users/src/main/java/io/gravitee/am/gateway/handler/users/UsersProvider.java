@@ -25,8 +25,8 @@ import io.gravitee.am.gateway.handler.users.resources.consents.UserConsentsEndpo
 import io.gravitee.am.gateway.handler.users.service.UserService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.common.service.AbstractService;
-import io.vertx.reactivex.core.Vertx;
-import io.vertx.reactivex.ext.web.Router;
+import io.vertx.rxjava3.core.Vertx;
+import io.vertx.rxjava3.ext.web.Router;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**

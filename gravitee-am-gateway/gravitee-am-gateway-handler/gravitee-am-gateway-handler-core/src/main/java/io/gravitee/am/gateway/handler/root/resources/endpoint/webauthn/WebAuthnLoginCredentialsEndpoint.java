@@ -20,10 +20,10 @@ import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnHa
 import io.gravitee.am.service.exception.NotImplementedException;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
-import io.vertx.reactivex.core.http.HttpServerRequest;
-import io.vertx.reactivex.ext.auth.webauthn.WebAuthn;
-import io.vertx.reactivex.ext.web.RoutingContext;
-import io.vertx.reactivex.ext.web.Session;
+import io.vertx.rxjava3.core.http.HttpServerRequest;
+import io.vertx.rxjava3.ext.auth.webauthn.WebAuthn;
+import io.vertx.rxjava3.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -83,23 +83,20 @@ public class WebAuthnLoginCredentialsEndpoint extends WebAuthnHandler {
             final String username = webauthnLogin.getString("name");
 
             // STEP 18 Generate assertion
-            webAuthn.getCredentialsOptions(username, generateServerGetAssertion -> {
-                if (generateServerGetAssertion.failed()) {
-                    logger.error("Unexpected exception", generateServerGetAssertion.cause());
-                    ctx.fail(generateServerGetAssertion.cause());
-                    return;
-                }
+            webAuthn.getCredentialsOptions(username)
+                    .doOnError(throwable -> {
+                        logger.error("Unexpected exception", throwable);
+                        ctx.fail(throwable.getCause());
+                    })
+                    .doOnSuccess(entries -> {
+                        session
+                                .put(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY, entries.getString("challenge"))
+                                .put(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY, username);
 
-                final JsonObject getAssertion = generateServerGetAssertion.result();
-
-                session
-                        .put(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY, getAssertion.getString("challenge"))
-                        .put(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY, username);
-
-                ctx.response()
-                        .putHeader(io.vertx.core.http.HttpHeaders.CONTENT_TYPE, "application/json; charset=utf-8")
-                        .end(Json.encodePrettily(getAssertion));
-            });
+                        ctx.response()
+                                .putHeader(io.vertx.core.http.HttpHeaders.CONTENT_TYPE, "application/json; charset=utf-8")
+                                .end(Json.encodePrettily(entries));
+                    }).subscribe();
         } catch (IllegalArgumentException e) {
             logger.error("Unexpected exception", e);
             ctx.fail(400);

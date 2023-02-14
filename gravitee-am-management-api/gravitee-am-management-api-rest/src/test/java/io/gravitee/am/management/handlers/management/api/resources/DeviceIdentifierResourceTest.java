@@ -20,7 +20,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.DeviceIdentifier;
 import io.gravitee.common.http.HttpStatusCode;
-import io.reactivex.Maybe;
+import io.reactivex.rxjava3.core.Maybe;
 import org.junit.Test;
 
 import javax.ws.rs.core.Response;

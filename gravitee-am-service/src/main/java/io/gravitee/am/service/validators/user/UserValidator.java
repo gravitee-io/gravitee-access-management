@@ -18,8 +18,7 @@ package io.gravitee.am.service.validators.user;
 
 import io.gravitee.am.model.IUser;
 import io.gravitee.am.service.validators.Validator;
-import io.reactivex.Completable;
-import java.util.regex.Pattern;
+import io.reactivex.rxjava3.core.Completable;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)

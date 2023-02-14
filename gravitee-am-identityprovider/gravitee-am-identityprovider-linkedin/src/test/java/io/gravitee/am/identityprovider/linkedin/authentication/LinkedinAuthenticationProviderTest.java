@@ -26,14 +26,14 @@ import io.gravitee.common.http.HttpMethod;
 import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.MultiValueMap;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.observers.TestObserver;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.impl.ClientPhase;
 import io.vertx.ext.web.client.impl.WebClientInternal;
-import io.vertx.reactivex.core.Vertx;
-import io.vertx.reactivex.ext.web.client.WebClient;
+import io.vertx.rxjava3.core.Vertx;
+import io.vertx.rxjava3.ext.web.client.WebClient;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -45,6 +45,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
@@ -169,7 +170,7 @@ public class LinkedinAuthenticationProviderTest {
 
         TestObserver<User> obs = cut.loadUserByUsername(authentication).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValue(user -> {
             assertEquals("LINKEDINID", user.getId());
             assertEquals("John", user.getFirstName());
@@ -214,7 +215,7 @@ public class LinkedinAuthenticationProviderTest {
 
         TestObserver<User> obs = cut.loadUserByUsername(authentication).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertError(BadCredentialsException.class);
 
         verify(client, times(1)).postAbs("https://www.linkedin.com/oauth/v2/accessToken");
@@ -249,7 +250,7 @@ public class LinkedinAuthenticationProviderTest {
 
         TestObserver<User> obs = cut.loadUserByUsername(authentication).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertError(BadCredentialsException.class);
 
         verify(client, times(1)).postAbs("https://www.linkedin.com/oauth/v2/accessToken");

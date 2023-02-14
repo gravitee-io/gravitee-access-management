@@ -18,9 +18,12 @@ package io.gravitee.am.repository.oauth2.api;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.repository.oauth2.AbstractOAuthTest;
 import io.gravitee.am.repository.oauth2.model.AccessToken;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -37,7 +40,7 @@ public class AccessTokenRepositoryTest extends AbstractOAuthTest {
     public void shouldNotFindToken() {
         TestObserver<AccessToken> observer = accessTokenRepository.findByToken("unknown-token").test();
 
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
 
         observer.assertComplete();
         observer.assertValueCount(0);
@@ -50,13 +53,12 @@ public class AccessTokenRepositoryTest extends AbstractOAuthTest {
         token.setId(RandomString.generate());
         token.setToken("my-token");
 
-        TestObserver<AccessToken> observer = accessTokenRepository
-                .create(token)
-                .toCompletable()
+        TestObserver<AccessToken> observer = Completable.fromSingle(accessTokenRepository
+                .create(token))
                 .andThen(accessTokenRepository.findByToken("my-token"))
                 .test();
 
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
 
         observer.assertComplete();
         observer.assertValueCount(1);
@@ -69,20 +71,19 @@ public class AccessTokenRepositoryTest extends AbstractOAuthTest {
         token.setId(RandomString.generate());
         token.setToken("my-token-todelete");
 
-        TestObserver<AccessToken> observer = accessTokenRepository
-                .create(token)
-                .toCompletable()
+        TestObserver<AccessToken> observer = Completable.fromSingle(accessTokenRepository
+                .create(token))
                 .andThen(accessTokenRepository.findByToken(token.getToken()))
                 .test();
 
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
 
         observer.assertComplete();
         observer.assertValueCount(1);
         observer.assertNoErrors();
 
         TestObserver<Void> testDelete = accessTokenRepository.delete(token.getToken()).test();
-        testDelete.awaitTerminalEvent();
+        testDelete.awaitDone(10, TimeUnit.SECONDS);
         testDelete.assertNoErrors();
     }
 
@@ -93,13 +94,12 @@ public class AccessTokenRepositoryTest extends AbstractOAuthTest {
         token.setToken("my-token");
         token.setAuthorizationCode("some-auth-code");
 
-        TestObserver<AccessToken> observer = accessTokenRepository
-                .create(token)
-                .toCompletable()
+        TestObserver<AccessToken> observer = Completable.fromSingle(accessTokenRepository
+                .create(token))
                 .andThen(accessTokenRepository.findByAuthorizationCode(token.getAuthorizationCode()))
                 .test();
 
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
 
         observer.assertComplete();
         observer.assertValueCount(1);
@@ -112,13 +112,12 @@ public class AccessTokenRepositoryTest extends AbstractOAuthTest {
         token.setToken("my-token");
         token.setAuthorizationCode("some-auth-code");
 
-        TestObserver<AccessToken> observer = accessTokenRepository
-                .create(token)
-                .toCompletable()
+        TestObserver<AccessToken> observer = Completable.fromSingle(accessTokenRepository
+                .create(token))
                 .andThen(accessTokenRepository.findByAuthorizationCode("unknown"))
                 .test();
 
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertComplete();
         observer.assertNoValues();
         observer.assertNoErrors();
@@ -132,13 +131,12 @@ public class AccessTokenRepositoryTest extends AbstractOAuthTest {
         token.setClient("my-client-id");
         token.setSubject("my-subject");
 
-        TestObserver<AccessToken> observer = accessTokenRepository.create(token)
-                .toCompletable()
+        TestObserver<AccessToken> observer = Completable.fromSingle(accessTokenRepository.create(token))
                 .andThen(accessTokenRepository.findByClientIdAndSubject("my-client-id", "my-subject"))
                 .test();
 
 
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
 
         observer.assertComplete();
         observer.assertNoErrors();
@@ -152,12 +150,11 @@ public class AccessTokenRepositoryTest extends AbstractOAuthTest {
         token.setToken("my-token");
         token.setClient("my-client-id-2");
 
-        TestObserver<AccessToken> observer = accessTokenRepository.create(token)
-                .toCompletable()
+        TestObserver<AccessToken> observer = Completable.fromSingle(accessTokenRepository.create(token))
                 .andThen(accessTokenRepository.findByClientId("my-client-id-2"))
                 .test();
 
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertComplete();
         observer.assertNoErrors();
         observer.assertValueCount(1);
@@ -170,12 +167,11 @@ public class AccessTokenRepositoryTest extends AbstractOAuthTest {
         token.setToken("my-token");
         token.setClient("my-client-id-count");
 
-        TestObserver<Long> observer = accessTokenRepository.create(token)
-                .toCompletable()
+        TestObserver<Long> observer = Completable.fromSingle(accessTokenRepository.create(token))
                 .andThen(accessTokenRepository.countByClientId("my-client-id-count"))
                 .test();
 
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertComplete();
         observer.assertNoErrors();
         observer.assertValue(Long.valueOf(1));
@@ -202,8 +198,8 @@ public class AccessTokenRepositoryTest extends AbstractOAuthTest {
                 .andThen(accessTokenRepository.deleteByDomainIdClientIdAndUserId("domain-id", "client-id", "user-id"))
                 .andThen(accessTokenRepository.findByToken("my-token"))
                 .test();
-        testObserver.awaitTerminalEvent();
-        assertEquals(0, testObserver.valueCount());
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertNoValues();
 
         assertNotNull(accessTokenRepository.findByToken("my-token2").blockingGet());
     }
@@ -229,8 +225,8 @@ public class AccessTokenRepositoryTest extends AbstractOAuthTest {
                 .andThen(accessTokenRepository.deleteByDomainIdAndUserId("domain-id", "user-id"))
                 .andThen(accessTokenRepository.findByToken("my-token"))
                 .test();
-        testObservable.awaitTerminalEvent();
-        assertEquals(0, testObservable.valueCount());
+        testObservable.awaitDone(10, TimeUnit.SECONDS);
+        testObservable.assertNoValues();
 
         assertNotNull(accessTokenRepository.findByToken("my-token2").blockingGet());
     }

@@ -16,10 +16,10 @@
 package io.gravitee.am.repository.jdbc.management.api.spring.group;
 
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcGroup;
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.data.repository.reactive.RxJava2CrudRepository;
+import org.springframework.data.repository.reactive.RxJava3CrudRepository;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -27,7 +27,7 @@ import org.springframework.stereotype.Repository;
  * @author GraviteeSource Team
  */
 @Repository
-public interface SpringGroupMemberRepository extends RxJava2CrudRepository<JdbcGroup.JdbcMember, String> {
+public interface SpringGroupMemberRepository extends RxJava3CrudRepository<JdbcGroup.JdbcMember, String> {
     @Query("select * from group_members g where g.group_id = :gid")
     Flowable<JdbcGroup.JdbcMember> findAllByGroup(@Param("gid")String group);
 }

@@ -18,7 +18,7 @@ package io.gravitee.am.repository.management.api;
 import io.gravitee.am.model.LoginAttempt;
 import io.gravitee.am.repository.jdbc.management.api.JdbcLoginAttemptRepository;
 import io.gravitee.am.repository.management.AbstractManagementTest;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -27,6 +27,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.NoSuchElementException;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -49,13 +50,13 @@ public class LoginAttemptRepositoryPurgeTest extends AbstractManagementTest {
         LoginAttempt attemptNotExpired = buildLoginAttempt(now.plus(1, ChronoUnit.MINUTES));
 
         TestObserver<LoginAttempt> testObserver = repository.create(attemptExpired).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         testObserver = repository.create(attemptExpired2).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         testObserver = repository.create(attemptNotExpired).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
 
         assertNull(repository.findById(attemptExpired.getId()).blockingGet());
@@ -63,7 +64,7 @@ public class LoginAttemptRepositoryPurgeTest extends AbstractManagementTest {
         assertNotNull(repository.findById(attemptNotExpired.getId()).blockingGet());
 
         TestObserver<Void> test = repository.purgeExpiredData().test();
-        test.awaitTerminalEvent();
+        test.awaitDone(10, TimeUnit.SECONDS);
         test.assertNoErrors();
 
         assertNotNull(repository.findById(attemptNotExpired.getId()).blockingGet());

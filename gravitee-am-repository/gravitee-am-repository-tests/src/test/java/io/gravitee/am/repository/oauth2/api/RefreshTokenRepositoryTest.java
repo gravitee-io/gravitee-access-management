@@ -18,9 +18,12 @@ package io.gravitee.am.repository.oauth2.api;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.repository.oauth2.AbstractOAuthTest;
 import io.gravitee.am.repository.oauth2.model.RefreshToken;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -37,7 +40,7 @@ public class RefreshTokenRepositoryTest extends AbstractOAuthTest {
     public void shouldNotFindToken() {
         TestObserver<RefreshToken> observer = refreshTokenRepository.findByToken("unknown-token").test();
 
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
 
         observer.assertComplete();
         observer.assertValueCount(0);
@@ -50,13 +53,12 @@ public class RefreshTokenRepositoryTest extends AbstractOAuthTest {
         token.setId(RandomString.generate());
         token.setToken("my-token");
 
-        TestObserver<RefreshToken> observer = refreshTokenRepository
-                .create(token)
-                .toCompletable()
+        TestObserver<RefreshToken> observer = Completable.fromSingle(refreshTokenRepository
+                .create(token))
                 .andThen(refreshTokenRepository.findByToken("my-token"))
                 .test();
 
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
 
         observer.assertComplete();
         observer.assertValueCount(1);
@@ -69,13 +71,12 @@ public class RefreshTokenRepositoryTest extends AbstractOAuthTest {
         token.setId("my-token");
         token.setToken("my-token");
 
-        TestObserver<RefreshToken> testObserver = refreshTokenRepository
-                .create(token)
-                .toCompletable()
+        TestObserver<RefreshToken> testObserver = Completable.fromSingle(refreshTokenRepository
+                .create(token))
                 .andThen(refreshTokenRepository.delete("my-token"))
                 .andThen(refreshTokenRepository.findByToken("my-token"))
                 .test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoValues();
     }
 
@@ -100,9 +101,9 @@ public class RefreshTokenRepositoryTest extends AbstractOAuthTest {
                 .andThen(refreshTokenRepository.deleteByDomainIdClientIdAndUserId("domain-id", "client-id", "user-id"))
                 .andThen(refreshTokenRepository.findByToken("my-token"))
                 .test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
-        assertEquals(0, testObserver.valueCount());
+        testObserver.assertNoValues();
 
         assertNotNull(refreshTokenRepository.findByToken("my-token2").blockingGet());
     }
@@ -128,8 +129,8 @@ public class RefreshTokenRepositoryTest extends AbstractOAuthTest {
                 .andThen(refreshTokenRepository.deleteByDomainIdAndUserId("domain-id", "user-id"))
                 .andThen(refreshTokenRepository.findByToken("my-token"))
                 .test();
-        testObserver.awaitTerminalEvent();
-        assertEquals(0, testObserver.valueCount());
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertNoValues();
 
         assertNotNull(refreshTokenRepository.findByToken("my-token2").blockingGet());
     }

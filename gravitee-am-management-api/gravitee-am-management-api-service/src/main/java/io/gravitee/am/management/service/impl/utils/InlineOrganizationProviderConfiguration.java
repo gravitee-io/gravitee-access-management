@@ -18,7 +18,7 @@ package io.gravitee.am.management.service.impl.utils;
 import io.gravitee.am.model.*;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.service.RoleService;
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;

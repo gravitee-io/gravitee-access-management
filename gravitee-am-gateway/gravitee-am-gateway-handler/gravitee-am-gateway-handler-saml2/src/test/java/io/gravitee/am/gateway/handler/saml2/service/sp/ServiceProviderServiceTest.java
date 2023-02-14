@@ -21,13 +21,15 @@ import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.Metadata;
 import io.gravitee.am.service.exception.IdentityProviderMetadataNotFoundException;
 import io.gravitee.am.service.exception.IdentityProviderNotFoundException;
-import io.reactivex.Maybe;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -49,7 +51,7 @@ public class ServiceProviderServiceTest {
     public void shouldNotGetMetadata_idp_not_found() {
         when(identityProviderManager.get("provider-id")).thenReturn(Maybe.empty());
         TestObserver testObserver = serviceProviderService.metadata("provider-id", "https://idp.example.com").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(IdentityProviderNotFoundException.class);
     }
 
@@ -59,7 +61,7 @@ public class ServiceProviderServiceTest {
         when(authenticationProvider.metadata("https://idp.example.com")).thenReturn(null);
         when(identityProviderManager.get("provider-id")).thenReturn(Maybe.just(authenticationProvider));
         TestObserver testObserver = serviceProviderService.metadata("provider-id", "https://idp.example.com").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(IdentityProviderMetadataNotFoundException.class);
     }
 
@@ -71,7 +73,7 @@ public class ServiceProviderServiceTest {
         when(authenticationProvider.metadata("https://idp.example.com")).thenReturn(metadata);
         when(identityProviderManager.get("provider-id")).thenReturn(Maybe.just(authenticationProvider));
         TestObserver<Metadata> testObserver = serviceProviderService.metadata("provider-id", "https://idp.example.com").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         testObserver.assertValue(m -> m.getBody().equals("metadata-payload"));
     }

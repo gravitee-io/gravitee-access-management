@@ -44,15 +44,15 @@ import io.gravitee.am.service.FormService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.gravitee.am.service.exception.InvalidRedirectUriException;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
-import io.vertx.reactivex.core.buffer.Buffer;
-import io.vertx.reactivex.ext.web.client.HttpRequest;
-import io.vertx.reactivex.ext.web.client.HttpResponse;
-import io.vertx.reactivex.ext.web.client.WebClient;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.vertx.rxjava3.core.buffer.Buffer;
+import io.vertx.rxjava3.ext.web.client.HttpRequest;
+import io.vertx.rxjava3.ext.web.client.HttpResponse;
+import io.vertx.rxjava3.ext.web.client.WebClient;
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 import org.junit.Before;
@@ -70,6 +70,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static io.gravitee.am.gateway.handler.oidc.service.clientregistration.impl.DynamicClientRegistrationServiceImpl.*;
@@ -170,7 +171,8 @@ public class DynamicClientRegistrationServiceTest {
     public void create_nullRequest() {
         TestObserver<Client> testObserver = dcrService.create(null, BASE_PATH).test();
         testObserver.assertError(InvalidClientMetadataException.class);
-        testObserver.assertErrorMessage("One of the Client Metadata value is invalid.");
+        testObserver.assertError(throwable -> "One of the Client Metadata value is invalid.".equals(
+                throwable.getMessage()));
         testObserver.assertNotComplete();
     }
 
@@ -178,7 +180,8 @@ public class DynamicClientRegistrationServiceTest {
     public void create_missingRedirectUri() {
         TestObserver<Client> testObserver = dcrService.create(new DynamicClientRegistrationRequest(), BASE_PATH).test();
         testObserver.assertError(InvalidRedirectUriException.class);
-        testObserver.assertErrorMessage("Missing or invalid redirect_uris.");//redirect_uri metadata can be null but is mandatory
+        testObserver.assertError(throwable -> "Missing or invalid redirect_uris.".equals(
+                throwable.getMessage()));//redirect_uri metadata can be null but is mandatory
         testObserver.assertNotComplete();
     }
 
@@ -363,7 +366,8 @@ public class DynamicClientRegistrationServiceTest {
 
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertError(InvalidClientMetadataException.class);
-        testObserver.assertErrorMessage("Invalid response type.");
+        testObserver.assertError(throwable -> "Invalid response type.".equals(
+                throwable.getMessage()));
         testObserver.assertNotComplete();
     }
 
@@ -375,7 +379,8 @@ public class DynamicClientRegistrationServiceTest {
 
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertError(InvalidClientMetadataException.class);
-        testObserver.assertErrorMessage("Missing or invalid grant type.");
+        testObserver.assertError(throwable -> "Missing or invalid grant type.".equals(
+                throwable.getMessage()));
         testObserver.assertNotComplete();
     }
 
@@ -387,7 +392,8 @@ public class DynamicClientRegistrationServiceTest {
 
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertError(InvalidClientMetadataException.class);
-        testObserver.assertErrorMessage("Unsupported subject type");
+        testObserver.assertError(throwable -> "Unsupported subject type".equals(
+                throwable.getMessage()));
         testObserver.assertNotComplete();
     }
 
@@ -399,7 +405,8 @@ public class DynamicClientRegistrationServiceTest {
 
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertError(InvalidClientMetadataException.class);
-        testObserver.assertErrorMessage("Unsupported userinfo signing algorithm");
+        testObserver.assertError(throwable -> "Unsupported userinfo signing algorithm".equals(
+                throwable.getMessage()));
         testObserver.assertNotComplete();
     }
 
@@ -411,7 +418,8 @@ public class DynamicClientRegistrationServiceTest {
 
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertError(InvalidClientMetadataException.class);
-        testObserver.assertErrorMessage("Unsupported userinfo_encrypted_response_alg value");
+        testObserver.assertError(throwable -> "Unsupported userinfo_encrypted_response_alg value".equals(
+                throwable.getMessage()));
         testObserver.assertNotComplete();
     }
 
@@ -423,7 +431,8 @@ public class DynamicClientRegistrationServiceTest {
 
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertError(InvalidClientMetadataException.class);
-        testObserver.assertErrorMessage("When userinfo_encrypted_response_enc is included, userinfo_encrypted_response_alg MUST also be provided");
+        testObserver.assertError(throwable -> "When userinfo_encrypted_response_enc is included, userinfo_encrypted_response_alg MUST also be provided".equals(
+                throwable.getMessage()));
         testObserver.assertNotComplete();
     }
 
@@ -436,7 +445,8 @@ public class DynamicClientRegistrationServiceTest {
 
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertError(InvalidClientMetadataException.class);
-        testObserver.assertErrorMessage("Unsupported userinfo_encrypted_response_enc value");
+        testObserver.assertError(throwable -> "Unsupported userinfo_encrypted_response_enc value".equals(
+                throwable.getMessage()));
         testObserver.assertNotComplete();
     }
 
@@ -460,7 +470,8 @@ public class DynamicClientRegistrationServiceTest {
 
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertError(InvalidClientMetadataException.class);
-        testObserver.assertErrorMessage("Unsupported id_token signing algorithm");
+        testObserver.assertError(throwable -> "Unsupported id_token signing algorithm".equals(
+                throwable.getMessage()));
         testObserver.assertNotComplete();
     }
 
@@ -472,7 +483,8 @@ public class DynamicClientRegistrationServiceTest {
 
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertError(InvalidClientMetadataException.class);
-        testObserver.assertErrorMessage("Unsupported id_token_encrypted_response_alg value");
+        testObserver.assertError(throwable -> "Unsupported id_token_encrypted_response_alg value".equals(
+                throwable.getMessage()));
         testObserver.assertNotComplete();
     }
 
@@ -484,7 +496,8 @@ public class DynamicClientRegistrationServiceTest {
 
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertError(InvalidClientMetadataException.class);
-        testObserver.assertErrorMessage("When id_token_encrypted_response_enc is included, id_token_encrypted_response_alg MUST also be provided");
+        testObserver.assertError(throwable -> "When id_token_encrypted_response_enc is included, id_token_encrypted_response_alg MUST also be provided".equals(
+                throwable.getMessage()));
         testObserver.assertNotComplete();
     }
 
@@ -497,7 +510,8 @@ public class DynamicClientRegistrationServiceTest {
 
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertError(InvalidClientMetadataException.class);
-        testObserver.assertErrorMessage("Unsupported id_token_encrypted_response_enc value");
+        testObserver.assertError(throwable -> "Unsupported id_token_encrypted_response_enc value".equals(
+                throwable.getMessage()));
         testObserver.assertNotComplete();
     }
 
@@ -522,8 +536,8 @@ public class DynamicClientRegistrationServiceTest {
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertError(InvalidClientMetadataException.class);
         testObserver.assertNotComplete();
-        assertTrue("Should have only one exception", testObserver.errorCount() == 1);
-        assertTrue("Unexpected start of error message", testObserver.errors().get(0).getMessage().startsWith("request_uris:"));
+        testObserver.assertNoValues();
+        testObserver.assertError(throwable -> throwable.getMessage().startsWith("request_uris:"));
     }
 
     @Test
@@ -535,8 +549,8 @@ public class DynamicClientRegistrationServiceTest {
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertError(InvalidClientMetadataException.class);
         testObserver.assertNotComplete();
-        assertTrue("Should have only one exception", testObserver.errorCount() == 1);
-        assertTrue("Unexpected start of error message", testObserver.errors().get(0).getMessage().equals("Missing TLS parameter for tls_client_auth."));
+        testObserver.assertNoValues();
+        testObserver.assertError(throwable -> throwable.getMessage().startsWith("Missing TLS parameter for tls_client_auth."));
     }
 
     @Test
@@ -550,8 +564,8 @@ public class DynamicClientRegistrationServiceTest {
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertError(InvalidClientMetadataException.class);
         testObserver.assertNotComplete();
-        assertTrue("Should have only one exception", testObserver.errorCount() == 1);
-        assertTrue("Unexpected start of error message", testObserver.errors().get(0).getMessage().equals("The tls_client_auth must use exactly one of the TLS parameters."));
+        testObserver.assertNoValues();
+        testObserver.assertError(throwable -> throwable.getMessage().startsWith("The tls_client_auth must use exactly one of the TLS parameters."));
     }
 
     @Test
@@ -563,8 +577,8 @@ public class DynamicClientRegistrationServiceTest {
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertError(InvalidClientMetadataException.class);
         testObserver.assertNotComplete();
-        assertTrue("Should have only one exception", testObserver.errorCount() == 1);
-        assertTrue("Unexpected start of error message", testObserver.errors().get(0).getMessage().equals("The self_signed_tls_client_auth requires at least a jwks or a valid jwks_uri."));
+        testObserver.assertNoValues();
+        testObserver.assertError(throwable -> "The self_signed_tls_client_auth requires at least a jwks or a valid jwks_uri.".equals(throwable.getMessage()));
     }
 
     @Test
@@ -601,8 +615,8 @@ public class DynamicClientRegistrationServiceTest {
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertError(InvalidClientMetadataException.class);
         testObserver.assertNotComplete();
-        assertTrue("Should have only one exception", testObserver.errorCount() == 1);
-        assertTrue("Unexpected start of error message", testObserver.errors().get(0).getMessage().startsWith("sector_identifier_uri:"));
+        testObserver.assertNoValues();
+        testObserver.assertError(throwable -> throwable.getMessage().startsWith("sector_identifier_uri:"));
     }
 
     @Test
@@ -614,8 +628,8 @@ public class DynamicClientRegistrationServiceTest {
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertError(InvalidClientMetadataException.class);
         testObserver.assertNotComplete();
-        assertTrue("Should have only one exception", testObserver.errorCount() == 1);
-        assertTrue("Unexpected start of error message", testObserver.errors().get(0).getMessage().startsWith("Scheme must be https for sector_identifier_uri"));
+        testObserver.assertNoValues();
+        testObserver.assertError(throwable -> throwable.getMessage().startsWith("Scheme must be https for sector_identifier_uri"));
     }
 
     @Test
@@ -633,8 +647,8 @@ public class DynamicClientRegistrationServiceTest {
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertError(InvalidClientMetadataException.class);
         testObserver.assertNotComplete();
-        assertTrue("Should have only one exception", testObserver.errorCount() == 1);
-        assertTrue("Unexpected start of error message", testObserver.errors().get(0).getMessage().startsWith("Unable to parse sector_identifier_uri"));
+        testObserver.assertNoValues();
+        testObserver.assertError(throwable -> throwable.getMessage().startsWith("Unable to parse sector_identifier_uri"));
     }
 
     @Test
@@ -683,7 +697,8 @@ public class DynamicClientRegistrationServiceTest {
 
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertError(InvalidClientMetadataException.class);
-        testObserver.assertErrorMessage("The jwks_uri and jwks parameters MUST NOT be used together.");
+        testObserver.assertError(throwable -> "The jwks_uri and jwks parameters MUST NOT be used together.".equals(
+                throwable.getMessage()));
         testObserver.assertNotComplete();
     }
 
@@ -697,7 +712,8 @@ public class DynamicClientRegistrationServiceTest {
 
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertError(InvalidClientMetadataException.class);
-        testObserver.assertErrorMessage("No JWK found behind jws uri...");
+        testObserver.assertError(throwable -> "No JWK found behind jws uri...".equals(
+                throwable.getMessage()));
         testObserver.assertNotComplete();
     }
 
@@ -791,7 +807,8 @@ public class DynamicClientRegistrationServiceTest {
     public void update_missingRedirectUri() {
         TestObserver<Client> testObserver = dcrService.update(new Client(), new DynamicClientRegistrationRequest(), BASE_PATH).test();
         testObserver.assertError(InvalidRedirectUriException.class);
-        testObserver.assertErrorMessage("Missing or invalid redirect_uris.");//redirect_uri metadata can be null but is mandatory
+        testObserver.assertError(throwable -> "Missing or invalid redirect_uris.".equals(
+                throwable.getMessage()));//redirect_uri metadata can be null but is mandatory
         testObserver.assertNotComplete();
     }
 
@@ -843,7 +860,8 @@ public class DynamicClientRegistrationServiceTest {
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertNotComplete();
         testObserver.assertError(InvalidClientMetadataException.class);
-        testObserver.assertErrorMessage("No template found for software_id 123");
+        testObserver.assertError(throwable -> "No template found for software_id 123".equals(
+                throwable.getMessage()));
         verify(clientService, times(0)).create(any());
     }
 
@@ -868,7 +886,8 @@ public class DynamicClientRegistrationServiceTest {
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertNotComplete();
         testObserver.assertError(InvalidClientMetadataException.class);
-        testObserver.assertErrorMessage("Client behind software_id is not a template");
+        testObserver.assertError(throwable -> "Client behind software_id is not a template".equals(
+                throwable.getMessage()));
         verify(clientService, times(0)).create(any());
     }
 
@@ -917,7 +936,8 @@ public class DynamicClientRegistrationServiceTest {
 
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertError(InvalidClientMetadataException.class);
-        testObserver.assertErrorMessage("Unsupported authorization signing algorithm");
+        testObserver.assertError(throwable -> "Unsupported authorization signing algorithm".equals(
+                throwable.getMessage()));
         testObserver.assertNotComplete();
     }
 
@@ -941,7 +961,8 @@ public class DynamicClientRegistrationServiceTest {
 
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertError(InvalidClientMetadataException.class);
-        testObserver.assertErrorMessage("Unsupported request object signing algorithm");
+        testObserver.assertError(throwable -> "Unsupported request object signing algorithm".equals(
+                throwable.getMessage()));
         testObserver.assertNotComplete();
     }
 
@@ -954,7 +975,8 @@ public class DynamicClientRegistrationServiceTest {
 
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertError(InvalidClientMetadataException.class);
-        testObserver.assertErrorMessage("request_object_signing_alg shall be PS256");
+        testObserver.assertError(throwable -> "request_object_signing_alg shall be PS256".equals(
+                throwable.getMessage()));
         testObserver.assertNotComplete();
     }
 
@@ -967,7 +989,8 @@ public class DynamicClientRegistrationServiceTest {
 
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertError(InvalidClientMetadataException.class);
-        testObserver.assertErrorMessage("When request_object_encryption_enc is included, request_object_encryption_alg MUST also be provided");
+        testObserver.assertError(throwable -> "When request_object_encryption_enc is included, request_object_encryption_alg MUST also be provided".equals(
+                throwable.getMessage()));
         testObserver.assertNotComplete();
     }
 
@@ -980,7 +1003,8 @@ public class DynamicClientRegistrationServiceTest {
 
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertError(InvalidClientMetadataException.class);
-        testObserver.assertErrorMessage("Unsupported request_object_encryption_alg value");
+        testObserver.assertError(throwable -> "Unsupported request_object_encryption_alg value".equals(
+                throwable.getMessage()));
         testObserver.assertNotComplete();
     }
 
@@ -1005,7 +1029,8 @@ public class DynamicClientRegistrationServiceTest {
 
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertError(InvalidClientMetadataException.class);
-        testObserver.assertErrorMessage("Unsupported request_object_encryption_enc value");
+        testObserver.assertError(throwable -> "Unsupported request_object_encryption_enc value".equals(
+                throwable.getMessage()));
         testObserver.assertNotComplete();
     }
 
@@ -1021,7 +1046,8 @@ public class DynamicClientRegistrationServiceTest {
 
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertError(InvalidClientMetadataException.class);
-        testObserver.assertErrorMessage("Request object must be encrypted using RSA-OAEP with A256GCM");
+        testObserver.assertError(throwable -> "Request object must be encrypted using RSA-OAEP with A256GCM".equals(
+                throwable.getMessage()));
         testObserver.assertNotComplete();
     }
 
@@ -1039,7 +1065,8 @@ public class DynamicClientRegistrationServiceTest {
 
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertError(InvalidClientMetadataException.class);
-        testObserver.assertErrorMessage("No jwks_uri for OpenBanking Directory, unable to validate software_statement");
+        testObserver.assertError(throwable -> "No jwks_uri for OpenBanking Directory, unable to validate software_statement".equals(
+                throwable.getMessage()));
         testObserver.assertNotComplete();
     }
 
@@ -1059,7 +1086,8 @@ public class DynamicClientRegistrationServiceTest {
 
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertError(InvalidClientMetadataException.class);
-        testObserver.assertErrorMessage("software_statement isn't signed or doesn't use PS256");
+        testObserver.assertError(throwable -> "software_statement isn't signed or doesn't use PS256".equals(
+                throwable.getMessage()));
         testObserver.assertNotComplete();
     }
 
@@ -1083,7 +1111,8 @@ public class DynamicClientRegistrationServiceTest {
 
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertError(InvalidClientMetadataException.class);
-        testObserver.assertErrorMessage("Invalid signature for software_statement");
+        testObserver.assertError(throwable -> "Invalid signature for software_statement".equals(
+                throwable.getMessage()));
         testObserver.assertNotComplete();
     }
 
@@ -1107,7 +1136,8 @@ public class DynamicClientRegistrationServiceTest {
 
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertError(InvalidClientMetadataException.class);
-        testObserver.assertErrorMessage("software_statement older than 5 minutes");
+        testObserver.assertError(throwable -> "software_statement older than 5 minutes".equals(
+                throwable.getMessage()));
         testObserver.assertNotComplete();
     }
 
@@ -1134,7 +1164,8 @@ public class DynamicClientRegistrationServiceTest {
 
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertError(InvalidClientMetadataException.class);
-        testObserver.assertErrorMessage("jwks is forbidden, prefer jwks_uri");
+        testObserver.assertError(throwable -> "jwks is forbidden, prefer jwks_uri".equals(
+                throwable.getMessage()));
         testObserver.assertNotComplete();
     }
 
@@ -1158,7 +1189,8 @@ public class DynamicClientRegistrationServiceTest {
 
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertError(InvalidClientMetadataException.class);
-        testObserver.assertErrorMessage("jwks_uri is required");
+        testObserver.assertError(throwable -> "jwks_uri is required".equals(
+                throwable.getMessage()));
         testObserver.assertNotComplete();
     }
 
@@ -1183,7 +1215,8 @@ public class DynamicClientRegistrationServiceTest {
 
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertError(InvalidClientMetadataException.class);
-        testObserver.assertErrorMessage("jwks_uri doesn't match the software_jwks_uri");
+        testObserver.assertError(throwable -> "jwks_uri doesn't match the software_jwks_uri".equals(
+                throwable.getMessage()));
         testObserver.assertNotComplete();
     }
 
@@ -1210,7 +1243,8 @@ public class DynamicClientRegistrationServiceTest {
 
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertError(InvalidClientMetadataException.class);
-        testObserver.assertErrorMessage("redirect_uris are missing");
+        testObserver.assertError(throwable -> "redirect_uris are missing".equals(
+                throwable.getMessage()));
         testObserver.assertNotComplete();
     }
 
@@ -1237,7 +1271,8 @@ public class DynamicClientRegistrationServiceTest {
 
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertError(InvalidClientMetadataException.class);
-        testObserver.assertErrorMessage("redirect_uris contains unknown uri from software_statement");
+        testObserver.assertError(throwable -> "redirect_uris contains unknown uri from software_statement".equals(
+                throwable.getMessage()));
         testObserver.assertNotComplete();
     }
 
@@ -1270,7 +1305,8 @@ public class DynamicClientRegistrationServiceTest {
 
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertError(InvalidClientMetadataException.class);
-        testObserver.assertErrorMessage("tls_client_auth_subject_dn is required with tls_client_auth as client authentication method");
+        testObserver.assertError(throwable -> "tls_client_auth_subject_dn is required with tls_client_auth as client authentication method".equals(
+                throwable.getMessage()));
         testObserver.assertNotComplete();
     }
 
@@ -1371,7 +1407,7 @@ public class DynamicClientRegistrationServiceTest {
         when(jwkService.getKeys(anyString())).thenReturn(Maybe.just(new JWKSet()));
 
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(InvalidClientMetadataException.class);
     }
 
@@ -1398,7 +1434,7 @@ public class DynamicClientRegistrationServiceTest {
         when(jwkService.getKeys(anyString())).thenReturn(Maybe.just(new JWKSet()));
 
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(InvalidClientMetadataException.class);
     }
 

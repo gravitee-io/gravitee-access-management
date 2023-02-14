@@ -20,13 +20,14 @@ import io.gravitee.am.repository.oauth2.AbstractOAuthTest;
 import io.gravitee.am.repository.oauth2.model.PushedAuthorizationRequest;
 import io.gravitee.am.repository.oidc.model.RequestObject;
 import io.gravitee.common.util.LinkedMultiValueMap;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -55,14 +56,14 @@ public class PushedAuthorizationRequestRepositoryPurgeTest extends AbstractOAuth
         object2.setParameters(new LinkedMultiValueMap<>());
         object2.setExpireAt(new Date(now.minus(1, ChronoUnit.MINUTES).toEpochMilli()));
 
-        parRepository.create(object1).test().awaitTerminalEvent();
-        parRepository.create(object2).test().awaitTerminalEvent();
+        parRepository.create(object1).test().awaitDone(10, TimeUnit.SECONDS);
+        parRepository.create(object2).test().awaitDone(10, TimeUnit.SECONDS);
 
         assertNotNull(parRepository.findById(object1.getId()).blockingGet());
         assertNull(parRepository.findById(object2.getId()).blockingGet());
 
         TestObserver<Void> testPurge = parRepository.purgeExpiredData().test();
-        testPurge.awaitTerminalEvent();
+        testPurge.awaitDone(10, TimeUnit.SECONDS);
         testPurge.assertNoErrors();
 
         assertNotNull(parRepository.findById(object1.getId()).blockingGet());

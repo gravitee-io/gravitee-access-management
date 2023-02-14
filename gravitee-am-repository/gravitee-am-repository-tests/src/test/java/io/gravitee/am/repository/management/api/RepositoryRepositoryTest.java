@@ -17,13 +17,14 @@ package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.repository.management.AbstractManagementTest;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -39,7 +40,7 @@ public class RepositoryRepositoryTest extends AbstractManagementTest {
         Reporter reporter = buildReporter();
 
         TestObserver<Reporter> testObserver = repository.create(reporter).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         testObserver.assertValue( p -> p.getId() != null);
         assertEqualsTo(reporter, testObserver);
@@ -51,7 +52,7 @@ public class RepositoryRepositoryTest extends AbstractManagementTest {
         Reporter createdReporter = repository.create(reporter).blockingGet();
 
         TestObserver<Reporter> testObserver = repository.findById(createdReporter.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         testObserver.assertValue( p -> p.getId().equals(createdReporter.getId()));
         assertEqualsTo(reporter, testObserver);
@@ -63,7 +64,7 @@ public class RepositoryRepositoryTest extends AbstractManagementTest {
         Reporter createdReporter = repository.create(reporter).blockingGet();
 
         TestObserver<Reporter> testObserver = repository.findById(createdReporter.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         testObserver.assertValue( p -> p.getId().equals(createdReporter.getId()));
         assertEqualsTo(reporter, testObserver);
@@ -73,7 +74,7 @@ public class RepositoryRepositoryTest extends AbstractManagementTest {
         Reporter updatedReporter = repository.update(updatableReporter).blockingGet();
 
         testObserver = repository.findById(createdReporter.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         testObserver.assertValue( p -> p.getId().equals(createdReporter.getId()));
         assertEqualsTo(updatableReporter, testObserver);
@@ -85,16 +86,16 @@ public class RepositoryRepositoryTest extends AbstractManagementTest {
         Reporter createdReporter = repository.create(reporter).blockingGet();
 
         TestObserver<Reporter> testObserver = repository.findById(createdReporter.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         testObserver.assertValue( p -> p.getId().equals(createdReporter.getId()));
 
         TestObserver<Void> deleteObserver = repository.delete(createdReporter.getId()).test();
-        deleteObserver.awaitTerminalEvent();
+        deleteObserver.awaitDone(10, TimeUnit.SECONDS);
         deleteObserver.assertNoErrors();
 
         testObserver = repository.findById(createdReporter.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         testObserver.assertNoValues();
     }
@@ -108,7 +109,7 @@ public class RepositoryRepositoryTest extends AbstractManagementTest {
         }
 
         TestObserver<List<Reporter>> testObserver = repository.findAll().toList().test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         testObserver.assertValue( p -> p.size() == loop);
         testObserver.assertValue( p -> p.stream().map(Reporter::getId).distinct().count() == loop);
@@ -125,7 +126,7 @@ public class RepositoryRepositoryTest extends AbstractManagementTest {
         }
 
         TestObserver<List<Reporter>> testObserver = repository.findByDomain(domain).toList().test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         testObserver.assertValue( p -> p.size() == loop/2);
         testObserver.assertValue( p -> p.stream().map(Reporter::getId).distinct().count() == loop/2);

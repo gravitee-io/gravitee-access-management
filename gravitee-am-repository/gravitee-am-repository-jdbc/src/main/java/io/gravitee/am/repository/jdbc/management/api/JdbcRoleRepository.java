@@ -24,10 +24,10 @@ import io.gravitee.am.repository.jdbc.management.api.model.JdbcRole;
 import io.gravitee.am.repository.jdbc.management.api.spring.role.SpringRoleOauthScopeRepository;
 import io.gravitee.am.repository.jdbc.management.api.spring.role.SpringRoleRepository;
 import io.gravitee.am.repository.management.api.RoleRepository;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import org.reactivestreams.Publisher;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,7 +45,7 @@ import java.util.List;
 import java.util.function.Function;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
-import static reactor.adapter.rxjava.RxJava2Adapter.*;
+import static reactor.adapter.rxjava.RxJava3Adapter.*;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)

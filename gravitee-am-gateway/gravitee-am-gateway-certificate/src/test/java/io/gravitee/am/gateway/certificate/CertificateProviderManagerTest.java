@@ -20,8 +20,8 @@ import io.gravitee.am.certificate.api.DefaultKey;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.certificate.impl.CertificateProviderManagerImpl;
 import io.gravitee.am.model.jose.JWK;
-import io.reactivex.Flowable;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Single;
 import org.junit.Test;
 
 import javax.crypto.spec.SecretKeySpec;

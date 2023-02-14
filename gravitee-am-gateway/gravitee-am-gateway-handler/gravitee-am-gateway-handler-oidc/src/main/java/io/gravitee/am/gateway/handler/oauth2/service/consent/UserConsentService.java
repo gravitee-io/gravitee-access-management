@@ -19,7 +19,7 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.model.oidc.Client;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 
 import java.util.List;
 import java.util.Set;

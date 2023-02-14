@@ -22,10 +22,11 @@ import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.repository.management.api.search.MembershipCriteria;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.RoleService;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -103,7 +104,7 @@ public class MembershipHelperTest {
 
         cut.setPlatformAdminRole();
 
-        verify(membershipService).setPlatformAdmin(userId);
+        verify(membershipService, times(1)).setPlatformAdmin(userId);
     }
 
     @Test

@@ -22,7 +22,7 @@ import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.uma.Resource;
 import io.gravitee.am.repository.management.api.ResourceRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.uma.ResourceMongo;
-import io.reactivex.*;
+import io.reactivex.rxjava3.core.*;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 

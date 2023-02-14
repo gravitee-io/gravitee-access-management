@@ -23,7 +23,7 @@ import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.repository.management.api.MembershipRepository;
 import io.gravitee.am.repository.management.api.search.MembershipCriteria;
 import io.gravitee.am.repository.mongodb.management.internal.model.MembershipMongo;
-import io.reactivex.*;
+import io.reactivex.rxjava3.core.*;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;

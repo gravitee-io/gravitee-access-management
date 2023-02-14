@@ -17,7 +17,7 @@ package io.gravitee.am.service.validators.theme;
 
 import io.gravitee.am.model.Theme;
 import io.gravitee.am.service.validators.Validator;
-import io.reactivex.Completable;
+import io.reactivex.rxjava3.core.Completable;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)

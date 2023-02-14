@@ -16,7 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.service.scope;
 
 import io.gravitee.am.model.oauth2.Scope;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 
 import java.util.List;
 import java.util.Set;

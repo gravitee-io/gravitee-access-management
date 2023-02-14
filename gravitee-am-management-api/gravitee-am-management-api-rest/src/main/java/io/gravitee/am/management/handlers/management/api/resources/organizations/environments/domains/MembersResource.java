@@ -27,8 +27,8 @@ import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewMembership;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
@@ -77,8 +77,8 @@ public class MembersResource extends AbstractResource {
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_MEMBER, Acl.LIST)
                 .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(domain1 -> membershipService.findByReference(domain1.getId(), ReferenceType.DOMAIN).toList())
+                        .switchIfEmpty(Single.error(new DomainNotFoundException(domain)))
+                        .flatMap(domain1 -> membershipService.findByReference(domain1.getId(), ReferenceType.DOMAIN).toList())
                         .flatMap(memberships -> membershipService.getMetadata(memberships)
                                 .map(metadata -> new MembershipListItem(memberships, metadata))))
                 .subscribe(response::resume, response::resume);
@@ -111,8 +111,8 @@ public class MembersResource extends AbstractResource {
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_MEMBER, Acl.CREATE)
                 .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(domain1 -> membershipService.addOrUpdate(organizationId, membership, authenticatedUser))
+                        .switchIfEmpty(Single.error(new DomainNotFoundException(domain)))
+                        .flatMap(domain1 -> membershipService.addOrUpdate(organizationId, membership, authenticatedUser))
                         .flatMap(membership1 -> membershipService.addEnvironmentUserRoleIfNecessary(organizationId, environmentId, newMembership, authenticatedUser)
                                 .andThen(Single.just(Response
                                         .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain + "/members/" + membership1.getId()))

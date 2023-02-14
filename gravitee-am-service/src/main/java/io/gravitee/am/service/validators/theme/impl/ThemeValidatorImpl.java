@@ -19,7 +19,7 @@ import com.google.common.base.Strings;
 import io.gravitee.am.model.Theme;
 import io.gravitee.am.service.exception.ThemeInvalidException;
 import io.gravitee.am.service.validators.theme.ThemeValidator;
-import io.reactivex.Completable;
+import io.reactivex.rxjava3.core.Completable;
 import org.springframework.stereotype.Component;
 
 import java.net.MalformedURLException;

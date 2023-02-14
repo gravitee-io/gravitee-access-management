@@ -26,15 +26,17 @@ import io.gravitee.am.repository.management.api.search.MembershipCriteria;
 import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.impl.MembershipServiceImpl;
 import io.gravitee.am.service.model.NewMembership;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -98,7 +100,7 @@ public class MembershipServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = membershipService.addOrUpdate(ORGANIZATION_ID, membership).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -134,7 +136,7 @@ public class MembershipServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = membershipService.addOrUpdate(ORGANIZATION_ID, membership).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -167,7 +169,7 @@ public class MembershipServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = membershipService.addOrUpdate(ORGANIZATION_ID, membership).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -194,7 +196,7 @@ public class MembershipServiceTest {
         when(membershipRepository.findByReferenceAndMember(membership.getReferenceType(), membership.getReferenceId(), membership.getMemberType(), membership.getMemberId())).thenReturn(Maybe.empty());
 
         TestObserver testObserver = membershipService.addOrUpdate(ORGANIZATION_ID, membership).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNotComplete();
         testObserver.assertError(UserNotFoundException.class);
@@ -230,7 +232,7 @@ public class MembershipServiceTest {
         when(membershipRepository.findByReferenceAndMember(membership.getReferenceType(), membership.getReferenceId(), membership.getMemberType(), membership.getMemberId())).thenReturn(Maybe.empty());
 
         TestObserver testObserver = membershipService.addOrUpdate(ORGANIZATION_ID, membership).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(SinglePrimaryOwnerException.class);
     }
 
@@ -261,7 +263,7 @@ public class MembershipServiceTest {
         when(membershipRepository.findByReferenceAndMember(membership.getReferenceType(), membership.getReferenceId(), membership.getMemberType(), membership.getMemberId())).thenReturn(Maybe.empty());
 
         TestObserver testObserver = membershipService.addOrUpdate(ORGANIZATION_ID, membership).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(InvalidRoleException.class);
     }
 
@@ -286,7 +288,7 @@ public class MembershipServiceTest {
         when(membershipRepository.findByReferenceAndMember(membership.getReferenceType(), membership.getReferenceId(), membership.getMemberType(), membership.getMemberId())).thenReturn(Maybe.empty());
 
         TestObserver testObserver = membershipService.addOrUpdate(ORGANIZATION_ID, membership).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNotComplete();
         testObserver.assertError(GroupNotFoundException.class);
@@ -319,7 +321,7 @@ public class MembershipServiceTest {
         when(membershipRepository.findByReferenceAndMember(membership.getReferenceType(), membership.getReferenceId(), membership.getMemberType(), membership.getMemberId())).thenReturn(Maybe.empty());
 
         TestObserver testObserver = membershipService.addOrUpdate(ORGANIZATION_ID, membership).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNotComplete();
         testObserver.assertError(RoleNotFoundException.class);
@@ -353,7 +355,7 @@ public class MembershipServiceTest {
         when(membershipRepository.findByReferenceAndMember(membership.getReferenceType(), membership.getReferenceId(), membership.getMemberType(), membership.getMemberId())).thenReturn(Maybe.empty());
 
         TestObserver testObserver = membershipService.addOrUpdate(ORGANIZATION_ID, membership).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNotComplete();
         testObserver.assertError(InvalidRoleException.class);
@@ -387,7 +389,7 @@ public class MembershipServiceTest {
         when(membershipRepository.findByReferenceAndMember(membership.getReferenceType(), membership.getReferenceId(), membership.getMemberType(), membership.getMemberId())).thenReturn(Maybe.empty());
 
         TestObserver testObserver = membershipService.addOrUpdate(ORGANIZATION_ID, membership).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNotComplete();
         testObserver.assertError(InvalidRoleException.class);
@@ -421,7 +423,7 @@ public class MembershipServiceTest {
         when(membershipRepository.findByReferenceAndMember(membership.getReferenceType(), membership.getReferenceId(), membership.getMemberType(), membership.getMemberId())).thenReturn(Maybe.empty());
 
         TestObserver testObserver = membershipService.addOrUpdate(ORGANIZATION_ID, membership).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNotComplete();
         testObserver.assertError(InvalidRoleException.class);
@@ -453,7 +455,7 @@ public class MembershipServiceTest {
 
         TestObserver<Void> completable = membershipService.addEnvironmentUserRoleIfNecessary("orga#1", "env#1", membership, principal).test();
 
-        completable.awaitTerminalEvent();
+        completable.awaitDone(10, TimeUnit.SECONDS);
         completable.assertNoErrors();
         completable.assertComplete();
     }
@@ -479,7 +481,7 @@ public class MembershipServiceTest {
 
         TestObserver<Void> completable = membershipService.addEnvironmentUserRoleIfNecessary("orga#1", "env#1", membership, principal).test();
 
-        completable.awaitTerminalEvent();
+        completable.awaitDone(10, TimeUnit.SECONDS);
         completable.assertNoErrors();
         completable.assertComplete();
 
@@ -513,7 +515,7 @@ public class MembershipServiceTest {
 
         TestObserver<Void> completable = membershipService.addDomainUserRoleIfNecessary("orga#1", "env#1", "domain#1", membership, principal).test();
 
-        completable.awaitTerminalEvent();
+        completable.awaitDone(10, TimeUnit.SECONDS);
         completable.assertNoErrors();
         completable.assertComplete();
     }
@@ -540,7 +542,7 @@ public class MembershipServiceTest {
 
         TestObserver<Void> completable = membershipService.addDomainUserRoleIfNecessary("orga#1", "env#1", "domain#1", membership, principal).test();
 
-        completable.awaitTerminalEvent();
+        completable.awaitDone(10, TimeUnit.SECONDS);
         completable.assertNoErrors();
         completable.assertComplete();
 
@@ -561,7 +563,7 @@ public class MembershipServiceTest {
 
         final TestObserver<Membership> obs = membershipService.setPlatformAdmin(userId).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertComplete();
         obs.assertValue(membership -> {
             assertEquals(MemberType.USER, membership.getMemberType());
@@ -580,7 +582,7 @@ public class MembershipServiceTest {
 
         final TestObserver<Membership> obs = membershipService.setPlatformAdmin(userId).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertError(RoleNotFoundException.class);
     }
 
@@ -596,7 +598,7 @@ public class MembershipServiceTest {
 
         final TestObserver<Membership> obs = membershipService.setPlatformAdmin(userId).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertComplete();
         obs.assertValue(alreadyExisting);
 

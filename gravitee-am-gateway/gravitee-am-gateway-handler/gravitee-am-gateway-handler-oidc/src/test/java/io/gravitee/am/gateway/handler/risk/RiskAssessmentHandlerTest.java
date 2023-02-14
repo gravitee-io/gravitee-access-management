@@ -26,11 +26,11 @@ import io.gravitee.am.service.DeviceService;
 import io.gravitee.am.service.UserActivityService;
 import io.gravitee.risk.assessment.api.assessment.settings.AssessmentSettings;
 import io.gravitee.risk.assessment.api.assessment.settings.RiskAssessmentSettings;
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
-import io.vertx.reactivex.core.eventbus.EventBus;
-import io.vertx.reactivex.core.eventbus.Message;
+import io.vertx.rxjava3.core.eventbus.EventBus;
+import io.vertx.rxjava3.core.eventbus.Message;
 import java.util.Date;
 import org.junit.Before;
 import org.junit.Test;
@@ -98,7 +98,7 @@ public class RiskAssessmentHandlerTest {
     @Test
     public void must_next_only_client_and_user_in_context() {
         routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-        routingContext.setUser(new io.vertx.reactivex.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+        routingContext.setUser(new io.vertx.rxjava3.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
 
         handler.handle(routingContext);
         assertTrue(routingContext.verifyNext(1));
@@ -108,7 +108,7 @@ public class RiskAssessmentHandlerTest {
     public void must_next_only_client_and_user_with_risk_assessment_disabled() {
         client.setRiskAssessment(new RiskAssessmentSettings());
         routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-        routingContext.setUser(new io.vertx.reactivex.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+        routingContext.setUser(new io.vertx.rxjava3.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
 
         handler.handle(routingContext);
         assertTrue(routingContext.verifyNext(1));
@@ -120,11 +120,11 @@ public class RiskAssessmentHandlerTest {
         riskAssessment.setEnabled(true);
         client.setRiskAssessment(riskAssessment);
         routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-        routingContext.setUser(new io.vertx.reactivex.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+        routingContext.setUser(new io.vertx.rxjava3.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
 
         handler.handle(routingContext);
         verify(eventBus, times(1)).request(
-                any(), anyString(), (Handler<AsyncResult<Message<Object>>>) Mockito.any());
+                any(), anyString());
     }
 
     @Test
@@ -141,7 +141,7 @@ public class RiskAssessmentHandlerTest {
         client.setMfaSettings(mfaSettings);
 
         routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-        routingContext.setUser(new io.vertx.reactivex.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+        routingContext.setUser(new io.vertx.rxjava3.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
         routingContext.session().put(DEVICE_ID, "deviceId");
 
         doReturn(Flowable.just(new Device().setDeviceId("1"), new Device().setDeviceId("2")))
@@ -150,7 +150,7 @@ public class RiskAssessmentHandlerTest {
         handler.handle(routingContext);
 
         verify(eventBus, times(1)).request(
-                any(), anyString(), (Handler<AsyncResult<Message<Object>>>) Mockito.any());
+                any(), anyString());
     }
 
     @Test
@@ -161,13 +161,13 @@ public class RiskAssessmentHandlerTest {
         client.setRiskAssessment(riskAssessment);
 
         routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-        routingContext.setUser(new io.vertx.reactivex.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+        routingContext.setUser(new io.vertx.rxjava3.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
         routingContext.request().headers().set(X_FORWARDED_FOR, "192.168.0.1");
 
         handler.handle(routingContext);
 
         verify(eventBus, times(1)).request(
-                any(), anyString(), (Handler<AsyncResult<Message<Object>>>) Mockito.any());
+                any(), anyString());
     }
 
     @Test
@@ -178,7 +178,7 @@ public class RiskAssessmentHandlerTest {
         client.setRiskAssessment(riskAssessment);
 
         routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-        routingContext.setUser(new io.vertx.reactivex.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+        routingContext.setUser(new io.vertx.rxjava3.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
 
         doReturn(Flowable.just(
                 new UserActivity().setLatitude(50.34D).setLongitude(3.025D).setCreatedAt(new Date()),
@@ -188,6 +188,6 @@ public class RiskAssessmentHandlerTest {
         handler.handle(routingContext);
 
         verify(eventBus, times(1)).request(
-                any(), anyString(), (Handler<AsyncResult<Message<Object>>>) Mockito.any());
+                any(), anyString());
     }
 }

@@ -27,12 +27,12 @@ import io.gravitee.am.service.exception.CredentialCurrentlyUsedException;
 import io.gravitee.am.service.exception.CredentialNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.CredentialServiceImpl;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
-import io.reactivex.subscribers.TestSubscriber;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -41,6 +41,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
@@ -68,7 +69,7 @@ public class CredentialServiceTest {
         when(credentialRepository.findById("my-credential")).thenReturn(Maybe.just(new Credential()));
         TestObserver testObserver = credentialService.findById("my-credential").test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValueCount(1);
@@ -78,7 +79,7 @@ public class CredentialServiceTest {
     public void shouldFindById_notExistingCredential() {
         when(credentialRepository.findById("my-credential")).thenReturn(Maybe.empty());
         TestObserver testObserver = credentialService.findById("my-credential").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNoValues();
     }
@@ -97,7 +98,7 @@ public class CredentialServiceTest {
     public void shouldFindByUserId() {
         when(credentialRepository.findByUserId(ReferenceType.DOMAIN, DOMAIN, "user-id")).thenReturn(Flowable.just(new Credential()));
         TestSubscriber<Credential> testSubscriber = credentialService.findByUserId(ReferenceType.DOMAIN, DOMAIN, "user-id").test();
-        testSubscriber.awaitTerminalEvent();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
 
         testSubscriber.assertComplete();
         testSubscriber.assertNoErrors();
@@ -118,7 +119,7 @@ public class CredentialServiceTest {
     public void shouldFindByUsername() {
         when(credentialRepository.findByUsername(ReferenceType.DOMAIN, DOMAIN, "username")).thenReturn(Flowable.just(new Credential()));
         TestSubscriber<Credential> testObserver = credentialService.findByUsername(ReferenceType.DOMAIN, DOMAIN, "username").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -139,7 +140,7 @@ public class CredentialServiceTest {
     public void shouldFindByCredentialId() {
         when(credentialRepository.findByCredentialId(ReferenceType.DOMAIN, DOMAIN, "credentialId")).thenReturn(Flowable.just(new Credential()));
         TestSubscriber<Credential> testSubscriber = credentialService.findByCredentialId(ReferenceType.DOMAIN, DOMAIN, "credentialId").test();
-        testSubscriber.awaitTerminalEvent();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
 
         testSubscriber.assertComplete();
         testSubscriber.assertNoErrors();
@@ -162,7 +163,7 @@ public class CredentialServiceTest {
         when(credentialRepository.create(any(Credential.class))).thenReturn(Single.just(new Credential()));
 
         TestObserver testObserver = credentialService.create(newCredential).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -190,7 +191,7 @@ public class CredentialServiceTest {
         when(credentialRepository.update(any(Credential.class))).thenReturn(Single.just(new Credential()));
 
         TestObserver testObserver = credentialService.update(updateCredential).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -266,7 +267,7 @@ public class CredentialServiceTest {
         when(userService.findById(anyString())).thenReturn(Maybe.just(user));
 
         TestObserver testObserver = credentialService.delete("my-credential").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -290,7 +291,7 @@ public class CredentialServiceTest {
         when(userService.findById(anyString())).thenReturn(Maybe.just(user));
 
         TestObserver testObserver = credentialService.delete("my-credential").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(CredentialCurrentlyUsedException.class);
         verify(credentialRepository, never()).delete("my-credential");

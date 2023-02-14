@@ -49,12 +49,12 @@ import io.gravitee.am.service.reporter.builder.management.CertificateAuditBuilde
 import io.gravitee.am.service.tasks.AssignSystemCertificate;
 import io.gravitee.am.service.tasks.AssignSystemCertificateDefinition;
 import io.gravitee.am.service.utils.CertificateTimeComparator;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.reactivex.SingleSource;
-import io.reactivex.functions.Function;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.core.SingleSource;
+import io.reactivex.rxjava3.functions.Function;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.BasicConstraints;
@@ -183,9 +183,9 @@ public class CertificateServiceImpl implements CertificateService {
 
         Single<Certificate> certificateSingle = certificatePluginService
                 .getSchema(newCertificate.getType())
-                .switchIfEmpty(Maybe.error(new CertificatePluginSchemaNotFoundException(newCertificate.getType())))
+                .switchIfEmpty(Single.error(new CertificatePluginSchemaNotFoundException(newCertificate.getType())))
                 .map(schema -> objectMapper.readValue(schema, CertificateSchema.class))
-                .flatMapSingle(new Function<CertificateSchema, SingleSource<Certificate>>() {
+                .flatMap(new Function<CertificateSchema, SingleSource<Certificate>>() {
                     @Override
                     public SingleSource<Certificate> apply(CertificateSchema certificateSchema) throws Exception {
 
@@ -270,13 +270,13 @@ public class CertificateServiceImpl implements CertificateService {
         LOGGER.debug("Update a certificate {} for domain {}", id, domain);
 
         return certificateRepository.findById(id)
-                .switchIfEmpty(Maybe.error(new CertificateNotFoundException(id)))
-                .flatMapSingle(new Function<Certificate, SingleSource<CertificateWithSchema>>() {
+                .switchIfEmpty(Single.error(new CertificateNotFoundException(id)))
+                .flatMap(new Function<Certificate, SingleSource<CertificateWithSchema>>() {
                     @Override
                     public SingleSource<CertificateWithSchema> apply(Certificate certificate) throws Exception {
                         return certificatePluginService.getSchema(certificate.getType())
-                                .switchIfEmpty(Maybe.error(new CertificatePluginSchemaNotFoundException(certificate.getType())))
-                                .flatMapSingle(new Function<String, SingleSource<? extends CertificateWithSchema>>() {
+                                .switchIfEmpty(Single.error(new CertificatePluginSchemaNotFoundException(certificate.getType())))
+                                .flatMap(new Function<String, SingleSource<? extends CertificateWithSchema>>() {
                                     @Override
                                     public SingleSource<? extends CertificateWithSchema> apply(String schema) throws Exception {
                                         return Single.just(new CertificateWithSchema(certificate, objectMapper.readValue(schema, CertificateSchema.class)));
@@ -364,9 +364,8 @@ public class CertificateServiceImpl implements CertificateService {
                 .flatMapCompletable(certificate -> {
                     // create event for sync process
                     Event event = new Event(Type.CERTIFICATE, new Payload(certificate.getId(), ReferenceType.DOMAIN, certificate.getDomain(), Action.DELETE));
-                    return certificateRepository.delete(certificateId)
-                            .andThen(eventService.create(event))
-                            .toCompletable()
+                    return Completable.fromSingle(certificateRepository.delete(certificateId)
+                            .andThen(eventService.create(event)))
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class).principal(principal).type(EventType.CERTIFICATE_DELETED).certificate(certificate)))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class).principal(principal).type(EventType.CERTIFICATE_DELETED).throwable(throwable)));
                 })
@@ -403,56 +402,46 @@ public class CertificateServiceImpl implements CertificateService {
         return certificatePluginService
                 // Just to check that certificate is available
                 .getSchema(certificate.getType())
-                .map(new Function<String, CertificateSchema>() {
-                    @Override
-                    public CertificateSchema apply(String schema) throws Exception {
-                        return objectMapper.readValue(schema, CertificateSchema.class);
-                    }
-                })
-                .map(new Function<CertificateSchema, String>() {
-                    @Override
-                    public String apply(CertificateSchema certificateSchema) throws Exception {
-                        final int keySize = environment.getProperty("domains.certificates.default.keysize", int.class, DEFAULT_CERT_KEYSIZE);
-                        final int validity = environment.getProperty("domains.certificates.default.validity", int.class, DEFAULT_CERT_VALIDITY_IN_DAYS);
-                        final String name = environment.getProperty("domains.certificates.default.name", String.class, DEFAULT_CERT_CN_NAME);
-                        final String sigAlgName = environment.getProperty("domains.certificates.default.algorithm", String.class, DEFAULT_CERT_ALGO);
-                        final String alias = environment.getProperty("domains.certificates.default.alias", String.class, DEFAULT_CERT_ALIAS);
-                        final String keyPass = environment.getProperty("domains.certificates.default.keypass", String.class, DEFAULT_CERT_PWD);
-                        final String storePass = environment.getProperty("domains.certificates.default.storepass", String.class, DEFAULT_CERT_PWD);
+                .switchIfEmpty(Single.error(new CertificatePluginSchemaNotFoundException(certificate.getType())))
+                .map(schema -> objectMapper.readValue(schema, CertificateSchema.class))
+                .map(certificateSchema -> {
+                    final int keySize = environment.getProperty("domains.certificates.default.keysize", int.class, DEFAULT_CERT_KEYSIZE);
+                    final int validity = environment.getProperty("domains.certificates.default.validity", int.class, DEFAULT_CERT_VALIDITY_IN_DAYS);
+                    final String name = environment.getProperty("domains.certificates.default.name", String.class, DEFAULT_CERT_CN_NAME);
+                    final String sigAlgName = environment.getProperty("domains.certificates.default.algorithm", String.class, DEFAULT_CERT_ALGO);
+                    final String alias = environment.getProperty("domains.certificates.default.alias", String.class, DEFAULT_CERT_ALIAS);
+                    final String keyPass = environment.getProperty("domains.certificates.default.keypass", String.class, DEFAULT_CERT_PWD);
+                    final String storePass = environment.getProperty("domains.certificates.default.storepass", String.class, DEFAULT_CERT_PWD);
 
-                        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(getAlgorithmCategory(sigAlgName));
-                        keyPairGenerator.initialize(keySize);
-                        KeyPair keyPair = keyPairGenerator.generateKeyPair();
+                    KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(getAlgorithmCategory(sigAlgName));
+                    keyPairGenerator.initialize(keySize);
+                    KeyPair keyPair = keyPairGenerator.generateKeyPair();
 
-                        java.security.cert.Certificate[] chain = {
-                                generateCertificate(name, keyPair, validity, sigAlgName)
-                        };
+                    java.security.cert.Certificate[] chain = {
+                            generateCertificate(name, keyPair, validity, sigAlgName)
+                    };
 
-                        KeyStore ks = KeyStore.getInstance("pkcs12");
-                        ks.load(null, null);
-                        ks.setKeyEntry(alias, keyPair.getPrivate(), keyPass.toCharArray(), chain);
+                    KeyStore ks = KeyStore.getInstance("pkcs12");
+                    ks.load(null, null);
+                    ks.setKeyEntry(alias, keyPair.getPrivate(), keyPass.toCharArray(), chain);
 
-                        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                        ks.store(outputStream, storePass.toCharArray());
+                    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                    ks.store(outputStream, storePass.toCharArray());
 
-                        ObjectNode certificateNode = objectMapper.createObjectNode();
+                    ObjectNode certificateNode = objectMapper.createObjectNode();
 
-                        ObjectNode contentNode = objectMapper.createObjectNode();
-                        contentNode.put("content", new String(Base64.getEncoder().encode(outputStream.toByteArray())));
-                        contentNode.put("name", domain + ".p12");
-                        certificateNode.put("content", objectMapper.writeValueAsString(contentNode));
-                        certificateNode.put("alias", alias);
-                        certificateNode.put("storepass", storePass);
-                        certificateNode.put("keypass", keyPass);
+                    ObjectNode contentNode = objectMapper.createObjectNode();
+                    contentNode.put("content", new String(Base64.getEncoder().encode(outputStream.toByteArray())));
+                    contentNode.put("name", domain + ".p12");
+                    certificateNode.put("content", objectMapper.writeValueAsString(contentNode));
+                    certificateNode.put("alias", alias);
+                    certificateNode.put("storepass", storePass);
+                    certificateNode.put("keypass", keyPass);
 
-                        return objectMapper.writeValueAsString(certificateNode);
-                    }
-                }).flatMapSingle(new Function<String, SingleSource<Certificate>>() {
-                    @Override
-                    public SingleSource<Certificate> apply(String configuration) throws Exception {
-                        certificate.setConfiguration(configuration);
-                        return create(domain, certificate, true);
-                    }
+                    return objectMapper.writeValueAsString(certificateNode);
+                }).flatMap((Function<String, SingleSource<Certificate>>) configuration -> {
+                    certificate.setConfiguration(configuration);
+                    return create(domain, certificate, true);
                 });
     }
 
@@ -463,8 +452,8 @@ public class CertificateServiceImpl implements CertificateService {
                 .sorted(new CertificateTimeComparator())
                 .firstElement()
                 .map(Optional::ofNullable)
-                .switchIfEmpty(Maybe.just(Optional.empty()))
-                .flatMapSingle(optCert -> {
+                .switchIfEmpty(Single.just(Optional.empty()))
+                .flatMap(optCert -> {
                     if (optCert.isPresent()) {
                         final Certificate deprecatedCert = optCert.get();
 

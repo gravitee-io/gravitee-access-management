@@ -19,7 +19,7 @@ import io.gravitee.am.management.service.PolicyPluginService;
 import io.gravitee.am.management.service.exception.PolicyPluginNotFoundException;
 import io.gravitee.am.management.service.exception.PolicyPluginSchemaNotFoundException;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Maybe;
+import io.reactivex.rxjava3.core.Maybe;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 

@@ -20,9 +20,9 @@ import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.model.AuthenticationFlowContext;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.User;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)

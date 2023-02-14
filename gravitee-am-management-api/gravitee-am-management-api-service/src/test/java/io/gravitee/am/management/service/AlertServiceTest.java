@@ -17,7 +17,7 @@ package io.gravitee.am.management.service;
 
 import io.gravitee.alert.api.trigger.TriggerProvider;
 import io.gravitee.plugin.alert.AlertTriggerProviderManager;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -25,6 +25,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Collections;
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -52,7 +53,7 @@ public class AlertServiceTest {
         when(triggerProviderManager.findAll()).thenReturn(Collections.singleton(mock(TriggerProvider.class)));
         final TestObserver<Boolean> obs = cut.isAlertingAvailable().test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValue(true);
     }
 
@@ -62,7 +63,7 @@ public class AlertServiceTest {
         when(triggerProviderManager.findAll()).thenReturn(Collections.emptyList());
         final TestObserver<Boolean> obs = cut.isAlertingAvailable().test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValue(false);
     }
 }

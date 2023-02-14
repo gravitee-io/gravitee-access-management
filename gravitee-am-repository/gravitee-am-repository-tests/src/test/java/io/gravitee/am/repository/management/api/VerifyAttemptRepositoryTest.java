@@ -19,12 +19,13 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.VerifyAttempt;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.am.repository.management.api.search.VerifyAttemptCriteria;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Date;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Ashraful Hasan (ashraful.hasan at graviteesource.com)
@@ -40,7 +41,7 @@ public class VerifyAttemptRepositoryTest extends AbstractManagementTest {
         VerifyAttempt verifyAttempt = createVerifyAttempt();
 
         TestObserver<VerifyAttempt> observer = repository.create(verifyAttempt).test();
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
 
         observer.assertNoErrors();
         observer.assertValue(obj -> obj.getId() != null);
@@ -53,7 +54,7 @@ public class VerifyAttemptRepositoryTest extends AbstractManagementTest {
         VerifyAttempt createdVerifyAttempt = repository.create(verifyAttempt).blockingGet();
 
         TestObserver<VerifyAttempt> observer = repository.findById(createdVerifyAttempt.getId()).test();
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
 
         observer.assertNoErrors();
         observer.assertValue(obj -> obj.getId().equals(createdVerifyAttempt.getId()));
@@ -70,7 +71,7 @@ public class VerifyAttemptRepositoryTest extends AbstractManagementTest {
                 .client(createdVerifyAttempt.getClient())
                 .build();
         TestObserver<VerifyAttempt> observer = repository.findByCriteria(criteria).test();
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
 
         observer.assertNoErrors();
         observer.assertValue(obj -> obj.getId().equals(createdVerifyAttempt.getId()));
@@ -87,7 +88,7 @@ public class VerifyAttemptRepositoryTest extends AbstractManagementTest {
                 .client(createdVerifyAttempt.getClient())
                 .build();
         TestObserver<VerifyAttempt> observer = repository.findByCriteria(criteria).test();
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
 
         observer.assertNoErrors();
         observer.assertNoErrors();
@@ -99,7 +100,7 @@ public class VerifyAttemptRepositoryTest extends AbstractManagementTest {
         VerifyAttempt createdVerifyAttempt = repository.create(verifyAttempt).blockingGet();
 
         TestObserver<VerifyAttempt> observer = repository.findById(createdVerifyAttempt.getId()).test();
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
 
         observer.assertNoErrors();
         observer.assertValue(obj -> obj.getId().equals(createdVerifyAttempt.getId()));
@@ -110,7 +111,7 @@ public class VerifyAttemptRepositoryTest extends AbstractManagementTest {
         updatableVerifyAttempt.setAllowRequest(false);
 
         TestObserver<VerifyAttempt> updatedObserver = repository.update(updatableVerifyAttempt).test();
-        updatedObserver.awaitTerminalEvent();
+        updatedObserver.awaitDone(10, TimeUnit.SECONDS);
 
         updatedObserver.assertNoErrors();
         updatedObserver.assertValue(obj -> obj.getId().equals(createdVerifyAttempt.getId()));
@@ -125,17 +126,17 @@ public class VerifyAttemptRepositoryTest extends AbstractManagementTest {
         VerifyAttempt createdVerifyAttempt = repository.create(verifyAttempt).blockingGet();
 
         TestObserver<VerifyAttempt> observer = repository.findById(createdVerifyAttempt.getId()).test();
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
 
         observer.assertNoErrors();
         observer.assertValue(obj -> obj.getId().equals(createdVerifyAttempt.getId()));
 
         TestObserver<Void> deleteObserver = repository.delete(createdVerifyAttempt.getId()).test();
-        deleteObserver.awaitTerminalEvent();
+        deleteObserver.awaitDone(10, TimeUnit.SECONDS);
         deleteObserver.assertNoErrors();
 
         TestObserver<VerifyAttempt> afterDeleteObserver = repository.findById(createdVerifyAttempt.getId()).test();
-        afterDeleteObserver.awaitTerminalEvent();
+        afterDeleteObserver.awaitDone(10, TimeUnit.SECONDS);
         afterDeleteObserver.assertNoErrors();
         afterDeleteObserver.assertNoValues();
 
@@ -147,7 +148,7 @@ public class VerifyAttemptRepositoryTest extends AbstractManagementTest {
         VerifyAttempt createdVerifyAttempt = repository.create(verifyAttempt).blockingGet();
 
         TestObserver<VerifyAttempt> observer = repository.findById(createdVerifyAttempt.getId()).test();
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
 
         observer.assertNoErrors();
         observer.assertValue(obj -> obj.getId().equals(createdVerifyAttempt.getId()));
@@ -159,11 +160,11 @@ public class VerifyAttemptRepositoryTest extends AbstractManagementTest {
                 .build();
 
         TestObserver<Void> deleteObserver = repository.delete(criteria).test();
-        deleteObserver.awaitTerminalEvent();
+        deleteObserver.awaitDone(10, TimeUnit.SECONDS);
         deleteObserver.assertNoErrors();
 
         TestObserver<VerifyAttempt> afterDeleteFindObserver = repository.findById(createdVerifyAttempt.getId()).test();
-        afterDeleteFindObserver.awaitTerminalEvent();
+        afterDeleteFindObserver.awaitDone(10, TimeUnit.SECONDS);
         afterDeleteFindObserver.assertNoErrors();
         afterDeleteFindObserver.assertNoValues();
     }
@@ -175,7 +176,7 @@ public class VerifyAttemptRepositoryTest extends AbstractManagementTest {
         verifyAttempt1.setUserId(userId);
         VerifyAttempt createdVerifyAttempt1 = repository.create(verifyAttempt1).blockingGet();
         TestObserver<VerifyAttempt> observer1 = repository.findById(createdVerifyAttempt1.getId()).test();
-        observer1.awaitTerminalEvent();
+        observer1.awaitDone(10, TimeUnit.SECONDS);
         observer1.assertNoErrors();
         observer1.assertValue(obj -> obj.getId().equals(createdVerifyAttempt1.getId()));
         observer1.assertValue(obj -> obj.getUserId().equals(userId));
@@ -184,22 +185,22 @@ public class VerifyAttemptRepositoryTest extends AbstractManagementTest {
         verifyAttempt2.setUserId(userId);
         VerifyAttempt createdVerifyAttempt2 = repository.create(verifyAttempt2).blockingGet();
         TestObserver<VerifyAttempt> observer2 = repository.findById(createdVerifyAttempt2.getId()).test();
-        observer2.awaitTerminalEvent();
+        observer2.awaitDone(10, TimeUnit.SECONDS);
         observer2.assertNoErrors();
         observer2.assertValue(obj -> obj.getId().equals(createdVerifyAttempt2.getId()));
         observer2.assertValue(obj -> obj.getUserId().equals(userId));
 
         TestObserver<Void> deleteObserver = repository.deleteByUser(userId).test();
-        deleteObserver.awaitTerminalEvent();
+        deleteObserver.awaitDone(10, TimeUnit.SECONDS);
         deleteObserver.assertNoErrors();
 
         TestObserver<VerifyAttempt> afterDeleteFindObserver = repository.findById(createdVerifyAttempt1.getId()).test();
-        afterDeleteFindObserver.awaitTerminalEvent();
+        afterDeleteFindObserver.awaitDone(10, TimeUnit.SECONDS);
         afterDeleteFindObserver.assertNoErrors();
         afterDeleteFindObserver.assertNoValues();
 
         TestObserver<VerifyAttempt> afterDeleteFindObserver2 = repository.findById(createdVerifyAttempt2.getId()).test();
-        afterDeleteFindObserver2.awaitTerminalEvent();
+        afterDeleteFindObserver2.awaitDone(10, TimeUnit.SECONDS);
         afterDeleteFindObserver2.assertNoErrors();
         afterDeleteFindObserver2.assertNoValues();
     }
@@ -211,7 +212,7 @@ public class VerifyAttemptRepositoryTest extends AbstractManagementTest {
         verifyAttempt1.setReferenceId(domainId);
         VerifyAttempt createdVerifyAttempt1 = repository.create(verifyAttempt1).blockingGet();
         TestObserver<VerifyAttempt> observer1 = repository.findById(createdVerifyAttempt1.getId()).test();
-        observer1.awaitTerminalEvent();
+        observer1.awaitDone(10, TimeUnit.SECONDS);
         observer1.assertNoErrors();
         observer1.assertValue(obj -> obj.getId().equals(createdVerifyAttempt1.getId()));
         observer1.assertValue(obj -> obj.getReferenceId().equals(domainId));
@@ -220,22 +221,22 @@ public class VerifyAttemptRepositoryTest extends AbstractManagementTest {
         verifyAttempt2.setReferenceId(domainId);
         VerifyAttempt createdVerifyAttempt2 = repository.create(verifyAttempt2).blockingGet();
         TestObserver<VerifyAttempt> observer2 = repository.findById(createdVerifyAttempt2.getId()).test();
-        observer2.awaitTerminalEvent();
+        observer2.awaitDone(10, TimeUnit.SECONDS);
         observer2.assertNoErrors();
         observer2.assertValue(obj -> obj.getId().equals(createdVerifyAttempt2.getId()));
         observer2.assertValue(obj -> obj.getReferenceId().equals(domainId));
 
         TestObserver<Void> deleteObserver = repository.deleteByDomain(domainId, ReferenceType.DOMAIN).test();
-        deleteObserver.awaitTerminalEvent();
+        deleteObserver.awaitDone(10, TimeUnit.SECONDS);
         deleteObserver.assertNoErrors();
 
         TestObserver<VerifyAttempt> afterDeleteFindObserver = repository.findById(createdVerifyAttempt1.getId()).test();
-        afterDeleteFindObserver.awaitTerminalEvent();
+        afterDeleteFindObserver.awaitDone(10, TimeUnit.SECONDS);
         afterDeleteFindObserver.assertNoErrors();
         afterDeleteFindObserver.assertNoValues();
 
         TestObserver<VerifyAttempt> afterDeleteFindObserver2 = repository.findById(createdVerifyAttempt2.getId()).test();
-        afterDeleteFindObserver2.awaitTerminalEvent();
+        afterDeleteFindObserver2.awaitDone(10, TimeUnit.SECONDS);
         afterDeleteFindObserver2.assertNoErrors();
         afterDeleteFindObserver2.assertNoValues();
 

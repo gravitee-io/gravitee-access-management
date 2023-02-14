@@ -25,7 +25,7 @@ import io.gravitee.am.service.EntrypointService;
 import io.gravitee.am.service.exception.EntrypointNotFoundException;
 import io.gravitee.am.service.model.UpdateEntrypoint;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Maybe;
+import io.reactivex.rxjava3.core.Maybe;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;

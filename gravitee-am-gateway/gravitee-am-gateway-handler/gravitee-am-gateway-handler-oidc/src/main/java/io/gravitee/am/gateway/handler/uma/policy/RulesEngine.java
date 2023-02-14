@@ -16,7 +16,7 @@
 package io.gravitee.am.gateway.handler.uma.policy;
 
 import io.gravitee.gateway.api.ExecutionContext;
-import io.reactivex.Completable;
+import io.reactivex.rxjava3.core.Completable;
 
 import java.util.List;
 

@@ -35,10 +35,10 @@ import io.gravitee.am.service.model.NewDeviceIdentifier;
 import io.gravitee.am.service.model.UpdateDeviceIdentifier;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.DeviceIdentifierAuditBuilder;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -124,9 +124,8 @@ public class DeviceIdentifierServiceImpl implements DeviceIdentifierService {
         LOGGER.debug("Update device identifier {} for domain {}", id, domain);
 
         return deviceIdentifierRepository.findById(id)
-                .switchIfEmpty(Maybe.error(new DeviceIdentifierNotFoundException(id)))
-                //
-                .flatMapSingle(oldDeviceIdentifier -> {
+                .switchIfEmpty(Single.error(new DeviceIdentifierNotFoundException(id)))
+                .flatMap(oldDeviceIdentifier -> {
                     DeviceIdentifier deviceIdentifierToUpdate = new DeviceIdentifier(oldDeviceIdentifier);
                     deviceIdentifierToUpdate.setName(updateDeviceIdentifier.getName());
                     deviceIdentifierToUpdate.setConfiguration(updateDeviceIdentifier.getConfiguration());

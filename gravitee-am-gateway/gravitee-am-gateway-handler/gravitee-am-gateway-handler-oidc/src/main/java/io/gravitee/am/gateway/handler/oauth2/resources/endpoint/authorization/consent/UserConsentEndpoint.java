@@ -26,12 +26,12 @@ import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.reactivex.ext.web.RoutingContext;
-import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
+import io.vertx.rxjava3.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -76,15 +76,16 @@ public class UserConsentEndpoint implements Handler<RoutingContext> {
             List<Scope> requestedScopes = h.result();
             routingContext.put(ConstantKeys.SCOPES_CONTEXT_KEY, requestedScopes);
             routingContext.put(ConstantKeys.ACTION_KEY, action);
-            engine.render(generateData(routingContext, domain, client), getTemplateFileName(client), res -> {
-                if (res.succeeded()) {
-                    routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
-                    routingContext.response().end(res.result());
-                } else {
-                    logger.error("Unable to render user consent page", res.cause());
-                    routingContext.fail(res.cause());
-                }
-            });
+            engine.render(generateData(routingContext, domain, client), getTemplateFileName(client))
+                    .doOnSuccess(buffer -> {
+                        routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
+                        routingContext.response().end(buffer);
+                    })
+                    .doOnError(throwable -> {
+                        logger.error("Unable to render user consent page", throwable);
+                        routingContext.fail(throwable.getCause());
+                    })
+                    .subscribe();
         });
     }
 

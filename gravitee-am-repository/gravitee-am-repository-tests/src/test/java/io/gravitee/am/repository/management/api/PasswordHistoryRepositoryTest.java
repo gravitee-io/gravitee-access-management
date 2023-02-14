@@ -18,11 +18,12 @@ package io.gravitee.am.repository.management.api;
 import io.gravitee.am.model.PasswordHistory;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.management.AbstractManagementTest;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 import static java.util.UUID.randomUUID;
 import static junit.framework.TestCase.*;
@@ -37,7 +38,7 @@ public class PasswordHistoryRepositoryTest extends AbstractManagementTest {
     public void shouldCreatePasswordHistory() {
         var history = buildPasswordHistory();
         var testObserver = repository.create(history).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         assertEqualsTo(history, testObserver);
@@ -48,7 +49,7 @@ public class PasswordHistoryRepositoryTest extends AbstractManagementTest {
         var created = repository.create(buildPasswordHistory()).blockingGet();
         assertNotNull(created.getId());
         var testObserver = repository.delete(created.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         repository.findById(created.getId()).test().assertEmpty();
@@ -60,7 +61,7 @@ public class PasswordHistoryRepositoryTest extends AbstractManagementTest {
         created.setUpdatedAt(new Date());
         var updated = repository.update(created).blockingGet();
         var testObserver = repository.findById(created.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         assertEqualsTo(updated, testObserver);
@@ -75,7 +76,7 @@ public class PasswordHistoryRepositoryTest extends AbstractManagementTest {
             repository.create(history).blockingGet();
         }
         var testObserver = repository.findUserHistory(ReferenceType.DOMAIN, REF_ID, userId).toList().test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(passwordHistories -> passwordHistories.stream().allMatch(p -> p.getUserId()
@@ -90,7 +91,7 @@ public class PasswordHistoryRepositoryTest extends AbstractManagementTest {
             repository.create(history).blockingGet();
         }
         var testSubscriber = repository.findByReference(ReferenceType.DOMAIN, REF_ID).test();
-        testSubscriber.awaitTerminalEvent();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
         testSubscriber.assertComplete();
         testSubscriber.assertNoErrors();
         testSubscriber.assertValueCount(expectedHistoriesForDomain);
@@ -103,11 +104,11 @@ public class PasswordHistoryRepositoryTest extends AbstractManagementTest {
             repository.create(history).blockingGet();
         }
         var testObserver = repository.deleteByReference(ReferenceType.DOMAIN, REF_ID).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         var testSubscriber = repository.findByReference(ReferenceType.DOMAIN, REF_ID).test();
-        testSubscriber.awaitTerminalEvent();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
         testSubscriber.assertComplete();
         testSubscriber.assertNoErrors();
         testSubscriber.assertValueCount(0);
@@ -121,11 +122,11 @@ public class PasswordHistoryRepositoryTest extends AbstractManagementTest {
             repository.create(history).blockingGet();
         }
         var testObserver = repository.deleteByUserId(userId).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         var testSubscriber = repository.findUserHistory(ReferenceType.DOMAIN, REF_ID, userId).test();
-        testSubscriber.awaitTerminalEvent();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
         testSubscriber.assertComplete();
         testSubscriber.assertNoErrors();
         testSubscriber.assertValueCount(0);
@@ -135,7 +136,7 @@ public class PasswordHistoryRepositoryTest extends AbstractManagementTest {
     public void shouldFindById() {
         var passwordHistory = repository.create(buildPasswordHistory()).blockingGet();
         var testObserver = repository.findById(passwordHistory.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         assertEqualsTo(passwordHistory, testObserver);

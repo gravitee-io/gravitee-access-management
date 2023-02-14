@@ -18,7 +18,7 @@ package io.gravitee.am.management.service.impl.upgrades;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.service.ReporterService;
 import io.gravitee.am.service.model.UpdateReporter;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

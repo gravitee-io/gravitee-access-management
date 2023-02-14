@@ -30,8 +30,8 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.exception.EnforceUserIdentityException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.impl.user.activity.utils.ConsentUtils;
-import io.vertx.reactivex.core.MultiMap;
-import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 
 import java.util.HashMap;
 import java.util.Map;

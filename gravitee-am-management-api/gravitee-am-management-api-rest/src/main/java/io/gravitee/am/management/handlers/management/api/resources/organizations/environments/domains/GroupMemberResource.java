@@ -25,8 +25,8 @@ import io.gravitee.am.service.GroupService;
 import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.model.UpdateGroup;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
@@ -84,8 +84,8 @@ public class GroupMemberResource extends AbstractResource {
                         .flatMap(__ -> groupService.findById(group))
                         .switchIfEmpty(Maybe.error(new GroupNotFoundException(group)))
                         .flatMapSingle(group1 -> userService.findById(userId)
-                                .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
-                                .flatMapSingle(user -> {
+                                .switchIfEmpty(Single.error(new UserNotFoundException(userId)))
+                                .flatMap(user -> {
                                     if (group1.getMembers() != null && group1.getMembers().contains(userId)) {
                                         return Single.error(new MemberAlreadyExistsException(userId));
                                     }
@@ -131,8 +131,8 @@ public class GroupMemberResource extends AbstractResource {
                         .flatMap(__ -> groupService.findById(group))
                         .switchIfEmpty(Maybe.error(new GroupNotFoundException(group)))
                         .flatMapSingle(group1 -> userService.findById(userId)
-                                .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
-                                .flatMapSingle(user -> {
+                                .switchIfEmpty(Single.error(new UserNotFoundException(userId)))
+                                .flatMap(user -> {
                                     if (group1.getMembers() == null || !group1.getMembers().contains(userId)) {
                                         return Single.error(new MemberNotFoundException(userId));
                                     }

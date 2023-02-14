@@ -19,12 +19,13 @@ import io.gravitee.am.model.Factor;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.common.utils.UUID;
-import io.reactivex.observers.TestObserver;
-import io.reactivex.subscribers.TestSubscriber;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -43,7 +44,7 @@ public class FactorRepositoryTest extends AbstractManagementTest {
 
         // fetch factors
         TestSubscriber<Factor> testSubscriber = factorRepository.findByDomain("testDomain").test();
-        testSubscriber.awaitTerminalEvent();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
 
         testSubscriber.assertComplete();
         testSubscriber.assertNoErrors();
@@ -71,7 +72,7 @@ public class FactorRepositoryTest extends AbstractManagementTest {
 
         // fetch factor
         TestObserver<Factor> testObserver = factorRepository.findById(factorCreated.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -93,7 +94,7 @@ public class FactorRepositoryTest extends AbstractManagementTest {
         Factor factor = buildFactor();
 
         TestObserver<Factor> testObserver = factorRepository.create(factor).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -117,7 +118,7 @@ public class FactorRepositoryTest extends AbstractManagementTest {
         updateFactor.setName("testUpdatedName");
 
         TestObserver<Factor> testObserver = factorRepository.update(updateFactor).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -137,14 +138,14 @@ public class FactorRepositoryTest extends AbstractManagementTest {
 
         // fetch factor
         TestObserver<Factor> testObserver = factorRepository.findById(factorCreated.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(f -> f.getName().equals(factorCreated.getName()));
 
         // delete factor
         TestObserver testObserver1 = factorRepository.delete(factorCreated.getId()).test();
-        testObserver1.awaitTerminalEvent();
+        testObserver1.awaitDone(10, TimeUnit.SECONDS);
 
         // fetch factor
         factorRepository.findById(factorCreated.getId()).test().assertEmpty();

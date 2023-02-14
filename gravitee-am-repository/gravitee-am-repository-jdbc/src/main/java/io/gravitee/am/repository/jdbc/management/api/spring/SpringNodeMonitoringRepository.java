@@ -16,11 +16,11 @@
 package io.gravitee.am.repository.jdbc.management.api.spring;
 
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcMonitoring;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.data.repository.reactive.RxJava2CrudRepository;
+import org.springframework.data.repository.reactive.RxJava3CrudRepository;
 
 import java.time.LocalDateTime;
 
@@ -28,7 +28,7 @@ import java.time.LocalDateTime;
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface SpringNodeMonitoringRepository extends RxJava2CrudRepository<JdbcMonitoring, String> {
+public interface SpringNodeMonitoringRepository extends RxJava3CrudRepository<JdbcMonitoring, String> {
 
     @Query("select * from node_monitoring m where m.node_id = :nodeId and m.type = :type")
     Maybe<JdbcMonitoring> findByNodeIdAndType(@Param("nodeId") String nodeId, @Param("type") String type);

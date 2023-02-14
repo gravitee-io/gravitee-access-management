@@ -18,16 +18,19 @@ package io.gravitee.am.repository.management.api;
 import io.gravitee.am.model.Email;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.management.AbstractManagementTest;
-import io.reactivex.observers.TestObserver;
-import io.reactivex.subscribers.TestSubscriber;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -61,7 +64,7 @@ public class EmailRepositoryTest extends AbstractManagementTest {
     @Test
     public void shouldNotFindById() {
         final TestObserver<Email> testObserver = repository.findById("unknownId").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoValues();
     }
 
@@ -71,7 +74,7 @@ public class EmailRepositoryTest extends AbstractManagementTest {
         Email createdEmail = repository.create(email).blockingGet();
 
         TestObserver<Email> testObserver = repository.findById(createdEmail.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -84,7 +87,7 @@ public class EmailRepositoryTest extends AbstractManagementTest {
         Email createdEmail = repository.create(email).blockingGet();
 
         TestObserver<Email> testObserver = repository.findById(createdEmail.getReferenceType(), createdEmail.getReferenceId(), createdEmail.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -97,7 +100,7 @@ public class EmailRepositoryTest extends AbstractManagementTest {
         Email createdEmail = repository.create(email).blockingGet();
 
         TestObserver<Email> testObserver = repository.findById(createdEmail.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -106,7 +109,7 @@ public class EmailRepositoryTest extends AbstractManagementTest {
         Email updatableEmail = buildEmail();
         updatableEmail.setId(createdEmail.getId());
         TestObserver<Email> updatedEmail = repository.update(updatableEmail).test();
-        updatedEmail.awaitTerminalEvent();
+        updatedEmail.awaitDone(10, TimeUnit.SECONDS);
         assertEqualsTo(updatableEmail, createdEmail.getId(), updatedEmail);
     }
 
@@ -129,16 +132,16 @@ public class EmailRepositoryTest extends AbstractManagementTest {
         Email createdEmail = repository.create(email).blockingGet();
 
         TestObserver<Email> testObserver = repository.findById(createdEmail.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         assertEqualsTo(email, createdEmail.getId(), testObserver);
 
-        repository.delete(createdEmail.getId()).blockingGet();
+        repository.delete(createdEmail.getId()).blockingAwait();
 
         testObserver = repository.findById(createdEmail.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoValues();
@@ -147,7 +150,7 @@ public class EmailRepositoryTest extends AbstractManagementTest {
     @Test
     public void shouldFindAllEmails() {
         TestSubscriber<Email> testSubscriber = repository.findAll().test();
-        testSubscriber.awaitTerminalEvent();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
         testSubscriber.assertNoErrors();
         testSubscriber.assertNoValues();
 
@@ -158,17 +161,23 @@ public class EmailRepositoryTest extends AbstractManagementTest {
             return e;
         }).blockingGet());
 
-        TestSubscriber<String> testIdSubscriber = repository.findAll().map(Email::getId).test();
-        testIdSubscriber.awaitTerminalEvent();
-        testIdSubscriber.assertNoErrors();
-        testIdSubscriber.assertValueCount(loop);
-        testIdSubscriber.assertValueSet(emails.stream().map(Email::getId).collect(Collectors.toList()));
+        var testIdSubscriber = repository.findAll().map(Email::getId).toList().test();
+
+        testIdSubscriber.awaitDone(10, TimeUnit.SECONDS)
+                .assertNoErrors()
+                .assertValueCount(loop)
+                .assertValue(result -> {
+                    assertThat(result)
+                            .hasSize(emails.size())
+                            .containsExactlyInAnyOrderElementsOf(emails.stream().map(Email::getId).collect(Collectors.toList()));
+                    return true;
+                });
     }
 
     @Test
     public void shouldFindAllByReference() {
         TestSubscriber<Email> testSubscriber = repository.findAll().test();
-        testSubscriber.awaitTerminalEvent();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
         testSubscriber.assertNoErrors();
         testSubscriber.assertNoValues();
 
@@ -186,17 +195,23 @@ public class EmailRepositoryTest extends AbstractManagementTest {
         // random refId
         IntStream.range(0, loop).forEach(email -> repository.create(buildEmail()).blockingGet());
 
-        TestSubscriber<String> testIdSubscriber = repository.findAll(ReferenceType.DOMAIN, FIXED_REF_ID).map(Email::getId).test();
-        testIdSubscriber.awaitTerminalEvent();
-        testIdSubscriber.assertNoErrors();
-        testIdSubscriber.assertValueCount(loop);
-        testIdSubscriber.assertValueSet(emails.stream().map(Email::getId).collect(Collectors.toList()));
+        var testIdSubscriber = repository.findAll(ReferenceType.DOMAIN, FIXED_REF_ID).map(Email::getId).toList().test();
+
+        testIdSubscriber.awaitDone(10, TimeUnit.SECONDS)
+                .assertNoErrors()
+                .assertValueCount(loop)
+                .assertValue(result -> {
+                    assertThat(result)
+                            .hasSize(emails.size())
+                            .containsExactlyInAnyOrderElementsOf(emails.stream().map(Email::getId).collect(Collectors.toList()));
+                    return true;
+                });
     }
 
     @Test
     public void shouldFindByClient() {
         TestSubscriber<Email> testSubscriber = repository.findAll().test();
-        testSubscriber.awaitTerminalEvent();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
         testSubscriber.assertNoErrors();
         testSubscriber.assertNoValues();
 
@@ -218,17 +233,23 @@ public class EmailRepositoryTest extends AbstractManagementTest {
             repository.create(email).blockingGet();
         }
 
-        TestSubscriber<String> testIdSubscriber = repository.findByClient(ReferenceType.DOMAIN, FIXED_REF_ID, FIXED_CLI_ID).map(Email::getId).test();
-        testIdSubscriber.awaitTerminalEvent();
-        testIdSubscriber.assertNoErrors();
-        testIdSubscriber.assertValueCount(loop);
-        testIdSubscriber.assertValueSet(emails.stream().map(Email::getId).collect(Collectors.toList()));
+        var testIdSubscriber = repository.findByClient(ReferenceType.DOMAIN, FIXED_REF_ID, FIXED_CLI_ID).map(Email::getId).toList().test();
+
+        testIdSubscriber.awaitDone(10, TimeUnit.SECONDS)
+                .assertNoErrors()
+                .assertValueCount(loop)
+                .assertValue(result -> {
+                    assertThat(result)
+                            .hasSize(emails.size())
+                            .containsExactlyInAnyOrderElementsOf(emails.stream().map(Email::getId).collect(Collectors.toList()));
+                    return true;
+                });
     }
 
     @Test
     public void shouldFindByTemplate() {
         TestSubscriber<Email> testSubscriber = repository.findAll().test();
-        testSubscriber.awaitTerminalEvent();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
         testSubscriber.assertNoErrors();
         testSubscriber.assertNoValues();
 
@@ -246,7 +267,7 @@ public class EmailRepositoryTest extends AbstractManagementTest {
         Email templateEmail = repository.create(email).blockingGet();
 
         TestObserver<Email> testMaybe = repository.findByTemplate(ReferenceType.DOMAIN, FIXED_REF_ID, "MyTemplateId").test();
-        testMaybe.awaitTerminalEvent();
+        testMaybe.awaitDone(10, TimeUnit.SECONDS);
         testMaybe.assertNoErrors();
         assertEqualsTo(templateEmail, templateEmail.getId(), testMaybe);
     }
@@ -254,7 +275,7 @@ public class EmailRepositoryTest extends AbstractManagementTest {
     @Test
     public void shouldFindByClientAndTemplate() {
         TestSubscriber<Email> testSubscriber = repository.findAll().test();
-        testSubscriber.awaitTerminalEvent();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
         testSubscriber.assertNoErrors();
         testSubscriber.assertNoValues();
 
@@ -273,7 +294,7 @@ public class EmailRepositoryTest extends AbstractManagementTest {
         Email templateEmail = repository.create(email).blockingGet();
 
         TestObserver<Email> testMaybe = repository.findByClientAndTemplate(ReferenceType.DOMAIN, FIXED_REF_ID, FIXED_CLI_ID, "MyTemplateId").test();
-        testMaybe.awaitTerminalEvent();
+        testMaybe.awaitDone(10, TimeUnit.SECONDS);
         testMaybe.assertNoErrors();
         assertEqualsTo(templateEmail, templateEmail.getId(), testMaybe);
     }

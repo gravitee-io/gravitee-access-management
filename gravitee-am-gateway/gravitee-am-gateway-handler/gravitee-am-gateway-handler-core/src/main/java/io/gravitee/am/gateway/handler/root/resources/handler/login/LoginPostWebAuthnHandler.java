@@ -17,8 +17,8 @@ package io.gravitee.am.gateway.handler.root.resources.handler.login;
 
 import io.gravitee.am.gateway.handler.common.webauthn.WebAuthnCookieService;
 import io.vertx.core.Handler;
-import io.vertx.reactivex.core.http.Cookie;
-import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.rxjava3.core.http.Cookie;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 
 /**
  * Post Login WebAuthn Remember Device Cookie handler

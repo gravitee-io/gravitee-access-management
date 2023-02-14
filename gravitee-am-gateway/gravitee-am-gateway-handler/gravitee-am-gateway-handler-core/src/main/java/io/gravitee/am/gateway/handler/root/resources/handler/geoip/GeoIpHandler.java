@@ -22,8 +22,8 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.UserActivityService;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
-import io.vertx.reactivex.core.eventbus.EventBus;
-import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.rxjava3.core.eventbus.EventBus;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 import java.util.Optional;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
@@ -69,13 +69,10 @@ public class GeoIpHandler implements Handler<RoutingContext> {
     }
 
     private void getGeoipData(RoutingContext routingContext, String ip) {
-        eventBus.<JsonObject>request(GEOIP_SERVICE, ip, message -> {
-            if (message.succeeded()) {
-                final JsonObject body = message.result().body();
-                routingContext.data().put(GEOIP_KEY, body.getMap());
-            }
-            routingContext.next();
-        });
+        eventBus.<JsonObject>request(GEOIP_SERVICE, ip)
+                .doOnSuccess(jsonObjectMessage -> routingContext.data().put(GEOIP_KEY, jsonObjectMessage.body().getMap()))
+                .doFinally(routingContext::next)
+                .subscribe();
     }
 
 }

@@ -24,9 +24,9 @@ import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.LoginAttemptNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,7 +55,7 @@ public class LoginAttemptServiceImpl implements LoginAttemptService {
         return loginAttemptRepository.findByCriteria(criteria)
                 .map(Optional::of)
                 .defaultIfEmpty(Optional.empty())
-                .flatMapSingle(optionalLoginAttempt -> {
+                .flatMap(optionalLoginAttempt -> {
                     if (optionalLoginAttempt.isPresent()) {
                         LoginAttempt loginAttempt = optionalLoginAttempt.get();
                         loginAttempt.setAttempts(loginAttempt.getAttempts() + 1);

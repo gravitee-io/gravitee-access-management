@@ -29,10 +29,10 @@ import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.model.NewResource;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -177,8 +177,8 @@ public class ResourceServiceImpl implements ResourceService {
     public Single<Resource> update(NewResource newResource, String domain, String client, String userId, String resourceId) {
         LOGGER.debug("Updating resource id {} for resource owner {} and client {}", resourceId, userId, client);
         return findByDomainAndClientAndUserAndResource(domain, client, userId, resourceId)
-                .switchIfEmpty(Maybe.error(new ResourceNotFoundException(resourceId)))
-                .flatMapSingle(Single::just)
+                .switchIfEmpty(Single.error(new ResourceNotFoundException(resourceId)))
+                .flatMap(Single::just)
                 .map(toUpdate -> newResource.update(toUpdate))
                 .map(toUpdate -> toUpdate.setUpdatedAt(new Date()))
                 .flatMap(this::validateScopes)

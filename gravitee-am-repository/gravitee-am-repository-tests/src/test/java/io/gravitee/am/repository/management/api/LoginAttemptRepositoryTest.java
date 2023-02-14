@@ -18,13 +18,14 @@ package io.gravitee.am.repository.management.api;
 import io.gravitee.am.model.LoginAttempt;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.Instant;
 import java.util.Date;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -39,7 +40,7 @@ public class LoginAttemptRepositoryTest extends AbstractManagementTest {
         LoginAttempt attempt = buildLoginAttempt();
 
         TestObserver<LoginAttempt> testObserver = repository.create(attempt).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         testObserver.assertValue(l -> l.getId() != null);
         assertEqualsTo(attempt, testObserver);
@@ -51,7 +52,7 @@ public class LoginAttemptRepositoryTest extends AbstractManagementTest {
         LoginAttempt createdAttempt = repository.create(attempt).blockingGet();
 
         TestObserver<LoginAttempt> testObserver = repository.findById(createdAttempt.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         testObserver.assertValue(l -> l.getId().equals(createdAttempt.getId()));
         assertEqualsTo(attempt, testObserver);
@@ -72,7 +73,7 @@ public class LoginAttemptRepositoryTest extends AbstractManagementTest {
                 .identityProvider(attempt.getIdentityProvider())
                 .build()).test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         testObserver.assertValue(l -> l.getId().equals(createdAttempt.getId()));
         assertEqualsTo(attempt, testObserver);
@@ -90,7 +91,7 @@ public class LoginAttemptRepositoryTest extends AbstractManagementTest {
                 .identityProvider(attempt.getIdentityProvider())
                 .build()).test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         testObserver.assertNoValues();
     }
@@ -102,7 +103,7 @@ public class LoginAttemptRepositoryTest extends AbstractManagementTest {
         LoginAttempt createdAttempt = repository.create(attempt).blockingGet();
 
         TestObserver<LoginAttempt> testObserver = repository.findById(createdAttempt.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         assertEqualsTo(createdAttempt, testObserver);
 
@@ -111,7 +112,7 @@ public class LoginAttemptRepositoryTest extends AbstractManagementTest {
         LoginAttempt createdUnexpectedAttempt = repository.create(unexpectedAttempt).blockingGet();
 
         testObserver = repository.findById(createdUnexpectedAttempt.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         assertEqualsTo(createdUnexpectedAttempt, testObserver);
 
@@ -123,18 +124,18 @@ public class LoginAttemptRepositoryTest extends AbstractManagementTest {
                 .identityProvider(attempt.getIdentityProvider())
                 .build()).test();
 
-        deleteObserver.awaitTerminalEvent();
+        deleteObserver.awaitDone(10, TimeUnit.SECONDS);
         deleteObserver.assertNoErrors();
 
         // check delete successful
         testObserver = repository.findById(createdAttempt.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         testObserver.assertNoValues();
 
         // shouldn't be deleted
         testObserver = repository.findById(createdUnexpectedAttempt.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         assertEqualsTo(createdUnexpectedAttempt, testObserver);
     }
@@ -145,16 +146,16 @@ public class LoginAttemptRepositoryTest extends AbstractManagementTest {
         LoginAttempt createdAttempt = repository.create(attempt).blockingGet();
 
         TestObserver<LoginAttempt> testObserver = repository.findById(createdAttempt.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         testObserver.assertValue(l -> l != null);
 
         TestObserver<Void> deleteObserver = repository.delete(createdAttempt.getId()).test();
-        deleteObserver.awaitTerminalEvent();
+        deleteObserver.awaitDone(10, TimeUnit.SECONDS);
         deleteObserver.assertNoErrors();
 
         testObserver = repository.findById(createdAttempt.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         testObserver.assertNoValues();
     }
@@ -165,7 +166,7 @@ public class LoginAttemptRepositoryTest extends AbstractManagementTest {
         LoginAttempt createdAttempt = repository.create(attempt).blockingGet();
 
         TestObserver<LoginAttempt> testObserver = repository.findById(createdAttempt.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         testObserver.assertValue(l -> l != null);
 
@@ -174,7 +175,7 @@ public class LoginAttemptRepositoryTest extends AbstractManagementTest {
         updatableAttempt.setAttempts(654);
 
         TestObserver<LoginAttempt> updateObserver = repository.update(updatableAttempt).test();
-        updateObserver.awaitTerminalEvent();
+        updateObserver.awaitDone(10, TimeUnit.SECONDS);
         updateObserver.assertNoErrors();
         updateObserver.assertValue( l -> l.getId().equals(createdAttempt.getId()));
         assertEqualsTo(updatableAttempt, updateObserver);

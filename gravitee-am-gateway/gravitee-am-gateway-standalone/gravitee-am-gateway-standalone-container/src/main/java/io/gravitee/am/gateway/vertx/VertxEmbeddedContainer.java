@@ -17,10 +17,10 @@ package io.gravitee.am.gateway.vertx;
 
 import io.gravitee.common.component.AbstractLifecycleComponent;
 import io.gravitee.node.vertx.verticle.factory.SpringVerticleFactory;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.VertxOptions;
-import io.vertx.reactivex.core.Vertx;
+import io.vertx.rxjava3.core.Vertx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

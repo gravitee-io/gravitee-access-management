@@ -50,10 +50,10 @@ import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
 import io.gravitee.am.service.utils.UserFactorUpdater;
 import io.gravitee.am.service.validators.user.UserValidator;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Observable;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -261,8 +261,8 @@ public class UserServiceImpl implements UserService {
 
         final var rawPassword = user.getPassword();
         return userRepository.findById(userId)
-                .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
-                .flatMapSingle(existingUser -> {
+                .switchIfEmpty(Single.error(new UserNotFoundException(userId)))
+                .flatMap(existingUser -> {
                     // check roles
                     return checkRoles(user.getRoles())
                             // and update the user
@@ -327,8 +327,8 @@ public class UserServiceImpl implements UserService {
                                                                     return userProvider.create(UserMapper.convert(userToUpdate));
                                                                 } else {
                                                                     return createPasswordHistory(domain, userToUpdate, rawPassword, principal, client)
-                                                                            .switchIfEmpty(Maybe.just(new PasswordHistory()))
-                                                                            .flatMapSingle(ph -> userProvider.update(userToUpdate.getExternalId(), UserMapper.convert(userToUpdate)))
+                                                                            .switchIfEmpty(Single.just(new PasswordHistory()))
+                                                                            .flatMap(ph -> userProvider.update(userToUpdate.getExternalId(), UserMapper.convert(userToUpdate)))
                                                                             .flatMap(updatedUser -> {
                                                                                          if (!isNullOrEmpty(user.getPassword())) {
                                                                                              return userProvider.updatePassword(updatedUser, user.getPassword());

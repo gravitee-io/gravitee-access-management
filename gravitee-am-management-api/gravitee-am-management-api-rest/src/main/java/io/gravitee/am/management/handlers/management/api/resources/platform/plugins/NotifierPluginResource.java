@@ -19,7 +19,7 @@ import io.gravitee.am.management.handlers.management.api.model.ErrorEntity;
 import io.gravitee.am.management.service.impl.plugins.NotifierPluginService;
 import io.gravitee.am.service.model.plugin.NotifierPlugin;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;

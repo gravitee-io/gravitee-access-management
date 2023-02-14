@@ -17,7 +17,7 @@ package io.gravitee.am.management.service;
 
 import io.gravitee.am.model.analytics.AnalyticsQuery;
 import io.gravitee.am.model.analytics.AnalyticsResponse;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 
 public interface ApplicationAnalyticsService {
 

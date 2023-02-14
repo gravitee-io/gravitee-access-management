@@ -23,7 +23,7 @@ import io.gravitee.am.gateway.certificate.CertificateProvider;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.model.oidc.Client;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,7 +57,7 @@ public class JWTServiceImpl implements JWTService {
     public Single<String> encode(JWT jwt, Client client) {
         return certificateManager.get(client.getCertificate())
                 .defaultIfEmpty(certificateManager.defaultCertificateProvider())
-                .flatMapSingle(certificateProvider -> encode(jwt, certificateProvider));
+                .flatMap(certificateProvider -> encode(jwt, certificateProvider));
     }
 
     @Override
@@ -70,7 +70,7 @@ public class JWTServiceImpl implements JWTService {
         return certificateManager.findByAlgorithm(client.getUserinfoSignedResponseAlg())
                 .switchIfEmpty(certificateManager.get(client.getCertificate()))
                 .defaultIfEmpty(certificateManager.defaultCertificateProvider())
-                .flatMapSingle(certificateProvider -> encode(jwt, certificateProvider));
+                .flatMap(certificateProvider -> encode(jwt, certificateProvider));
     }
 
     @Override
@@ -88,14 +88,14 @@ public class JWTServiceImpl implements JWTService {
         return certificateManager.findByAlgorithm(signedResponseAlg)
                 .switchIfEmpty(certificateManager.get(client.getCertificate()))
                 .defaultIfEmpty(certificateManager.defaultCertificateProvider())
-                .flatMapSingle(certificateProvider -> encode(jwt, certificateProvider));
+                .flatMap(certificateProvider -> encode(jwt, certificateProvider));
     }
 
     @Override
     public Single<JWT> decodeAndVerify(String jwt, Client client) {
         return certificateManager.get(client.getCertificate())
                 .defaultIfEmpty(certificateManager.defaultCertificateProvider())
-                .flatMapSingle(certificateProvider -> decodeAndVerify(jwt, certificateProvider));
+                .flatMap(certificateProvider -> decodeAndVerify(jwt, certificateProvider));
     }
 
     @Override

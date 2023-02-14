@@ -33,12 +33,12 @@ import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.am.service.utils.UserProfileUtils;
 import io.gravitee.am.service.validators.email.EmailValidatorImpl;
 import io.gravitee.am.service.validators.user.UserValidatorImpl;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
-import io.reactivex.subscribers.TestSubscriber;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -48,6 +48,7 @@ import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Collections;
+import java.util.concurrent.TimeUnit;
 
 import static io.gravitee.am.service.validators.email.EmailValidatorImpl.EMAIL_PATTERN;
 import static io.gravitee.am.service.validators.user.UserValidatorImpl.NAME_LAX_PATTERN;
@@ -97,7 +98,7 @@ public class UserServiceTest {
         when(userRepository.findById("my-user")).thenReturn(Maybe.just(new User()));
         TestObserver testObserver = userService.findById("my-user").test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValueCount(1);
@@ -107,7 +108,7 @@ public class UserServiceTest {
     public void shouldFindById_notExistingUser() {
         when(userRepository.findById("my-user")).thenReturn(Maybe.empty());
         TestObserver testObserver = userService.findById("my-user").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNoValues();
     }
@@ -127,7 +128,7 @@ public class UserServiceTest {
     public void shouldFindByDomain() {
         when(userRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Flowable.just(new User()));
         TestSubscriber<User> testSubscriber = userService.findByDomain(DOMAIN).test();
-        testSubscriber.awaitTerminalEvent();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
 
         testSubscriber.assertComplete();
         testSubscriber.assertNoErrors();
@@ -149,7 +150,7 @@ public class UserServiceTest {
         Page pageUsers = new Page(Collections.singleton(new User()), 1 , 1);
         when(userRepository.findAll(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq(1) , eq(1))).thenReturn(Single.just(pageUsers));
         TestObserver<Page<User>> testObserver = userService.findByDomain(DOMAIN, 1, 1).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -172,7 +173,7 @@ public class UserServiceTest {
         when(userRepository.findByUsernameAndDomain(DOMAIN, "my-user")).thenReturn(Maybe.just(new User()));
         TestObserver testObserver = userService.findByDomainAndUsername(DOMAIN, "my-user").test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValueCount(1);
@@ -182,7 +183,7 @@ public class UserServiceTest {
     public void shouldLoadUserByUsernameAndDomain_notExistingUser() {
         when(userRepository.findByUsernameAndDomain(DOMAIN, "my-user")).thenReturn(Maybe.empty());
         TestObserver testObserver = userService.findByDomainAndUsername(DOMAIN, "my-user").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNoValues();
     }
@@ -211,7 +212,7 @@ public class UserServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = userService.create(DOMAIN, newUser).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -232,7 +233,7 @@ public class UserServiceTest {
         when(userRepository.create(any(User.class))).thenReturn(Single.just(user));
 
         TestObserver<User> testObserver = userService.create(DOMAIN, newUser).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(EmailFormatInvalidException.class);
 
@@ -251,7 +252,7 @@ public class UserServiceTest {
         when(userRepository.create(any(User.class))).thenReturn(Single.just(user));
 
         TestObserver<User> testObserver = userService.create(DOMAIN, newUser).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(InvalidUserException.class);
 
@@ -299,7 +300,7 @@ public class UserServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = userService.update(DOMAIN, "my-user", updateUser).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -328,7 +329,7 @@ public class UserServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = userService.update(DOMAIN, "my-user", updateUser).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -358,7 +359,7 @@ public class UserServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = userService.update(DOMAIN, "my-user", updateUser).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -388,7 +389,7 @@ public class UserServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = userService.update(DOMAIN, "my-user", updateUser).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -410,7 +411,7 @@ public class UserServiceTest {
         when(userRepository.update(any(User.class))).thenReturn(Single.just(user));
 
         TestObserver<User> testObserver = userService.update(DOMAIN, "my-user", updateUser).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(EmailFormatInvalidException.class);
 
@@ -429,7 +430,7 @@ public class UserServiceTest {
         when(userRepository.update(any(User.class))).thenReturn(Single.just(user));
 
         TestObserver<User> testObserver = userService.update(DOMAIN, "my-user", updateUser).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(InvalidUserException.class);
 
@@ -474,7 +475,7 @@ public class UserServiceTest {
         when(credentialService.findByUserId(user.getReferenceType(), user.getReferenceId(), user.getId())).thenReturn(Flowable.empty());
 
         TestObserver testObserver = userService.delete("my-user").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -501,7 +502,7 @@ public class UserServiceTest {
         when(credentialService.delete(credential.getId(), false)).thenReturn(Completable.complete());
 
         TestObserver testObserver = userService.delete("my-user").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();

@@ -16,10 +16,10 @@
 package io.gravitee.am.repository.jdbc.management.api.spring.entrypoint;
 
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcEntrypoint;
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.data.repository.reactive.RxJava2CrudRepository;
+import org.springframework.data.repository.reactive.RxJava3CrudRepository;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -27,7 +27,7 @@ import org.springframework.stereotype.Repository;
  * @author GraviteeSource Team
  */
 @Repository
-public interface SpringEntrypointTagRepository extends RxJava2CrudRepository<JdbcEntrypoint.Tag, String> {
+public interface SpringEntrypointTagRepository extends RxJava3CrudRepository<JdbcEntrypoint.Tag, String> {
     @Query("select * from entrypoint_tags e where e.entrypoint_id = :epi")
     Flowable<JdbcEntrypoint.Tag> findAllByEntrypoint(@Param("epi") String entrypointId);
 }

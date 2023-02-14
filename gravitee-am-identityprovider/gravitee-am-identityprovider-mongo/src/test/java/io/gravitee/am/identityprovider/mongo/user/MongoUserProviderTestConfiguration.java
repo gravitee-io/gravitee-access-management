@@ -29,7 +29,7 @@ import io.gravitee.am.identityprovider.mongo.authentication.MongoAuthenticationP
 import io.gravitee.am.identityprovider.mongo.utils.PasswordEncoder;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.repository.provider.ConnectionProvider;
-import io.reactivex.Observable;
+import io.reactivex.rxjava3.core.Observable;
 import org.bson.Document;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;

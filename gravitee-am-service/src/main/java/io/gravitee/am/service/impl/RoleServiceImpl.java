@@ -39,8 +39,8 @@ import io.gravitee.am.service.model.NewRole;
 import io.gravitee.am.service.model.UpdateRole;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.RoleAuditBuilder;
-import io.reactivex.Observable;
-import io.reactivex.*;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -321,7 +321,7 @@ public class RoleServiceImpl implements RoleService {
                         LOGGER.debug("Create a system role {}", role.getAssignableType() + ":" + role.getName());
                         role.setCreatedAt(new Date());
                         role.setUpdatedAt(role.getCreatedAt());
-                        return roleRepository.create(role)
+                        return Completable.fromSingle(roleRepository.create(role)
                                 .flatMap(role1 -> {
                                     Event event = new Event(Type.ROLE, new Payload(role1.getId(), role1.getReferenceType(), role1.getReferenceId(), Action.CREATE));
                                     return eventService.create(event).flatMap(__ -> Single.just(role1));
@@ -334,8 +334,7 @@ public class RoleServiceImpl implements RoleService {
                                     return Single.error(new TechnicalManagementException("An error occurs while trying to create a role", ex));
                                 })
                                 .doOnSuccess(role1 -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).type(EventType.ROLE_CREATED).role(role1)))
-                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).type(EventType.ROLE_CREATED).throwable(throwable)))
-                                .toCompletable();
+                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).type(EventType.ROLE_CREATED).throwable(throwable))));
                     } else {
                         // check if permission set has changed
                         Role currentRole = optRole.get();
@@ -347,7 +346,7 @@ public class RoleServiceImpl implements RoleService {
                         role.setId(currentRole.getId());
                         role.setPermissionAcls(role.getPermissionAcls());
                         role.setUpdatedAt(new Date());
-                        return roleRepository.update(role)
+                        return Completable.fromSingle(roleRepository.update(role)
                                 .flatMap(role1 -> {
                                     Event event = new Event(Type.ROLE, new Payload(role1.getId(), role1.getReferenceType(), role1.getReferenceId(), Action.UPDATE));
                                     return eventService.create(event).flatMap(__ -> Single.just(role1));
@@ -360,8 +359,7 @@ public class RoleServiceImpl implements RoleService {
                                     return Single.error(new TechnicalManagementException("An error occurs while trying to update a role", ex));
                                 })
                                 .doOnSuccess(role1 -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).type(EventType.ROLE_UPDATED).oldValue(currentRole).role(role1)))
-                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).type(EventType.ROLE_UPDATED).throwable(throwable)))
-                                .toCompletable();
+                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).type(EventType.ROLE_UPDATED).throwable(throwable))));
                     }
                 });
 

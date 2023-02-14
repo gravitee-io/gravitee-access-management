@@ -19,7 +19,7 @@ import io.gravitee.am.management.service.ExtensionGrantPluginService;
 import io.gravitee.am.management.service.exception.ExtensionGrantPluginNotFoundException;
 import io.gravitee.am.management.service.exception.ExtensionGrantPluginSchemaNotFoundException;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Maybe;
+import io.reactivex.rxjava3.core.Maybe;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 

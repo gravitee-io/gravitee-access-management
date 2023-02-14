@@ -31,8 +31,8 @@ import io.gravitee.am.service.exception.AuthenticationDeviceNotifierNotFoundExce
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
-import io.reactivex.Maybe;
-import io.reactivex.schedulers.Schedulers;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;

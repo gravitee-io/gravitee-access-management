@@ -29,10 +29,10 @@ import io.gravitee.am.service.ScopeApprovalService;
 import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Observable;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.Single;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
@@ -145,7 +145,6 @@ public class UserConsentsResource extends AbstractResource {
         return applicationService.findByDomainAndClientId(domain, clientId)
                 .map(ApplicationEntity::new)
                 .defaultIfEmpty(new ApplicationEntity("unknown-id", clientId, "unknown-client-name"))
-                .toSingle()
                 .cache();
     }
 
@@ -159,7 +158,6 @@ public class UserConsentsResource extends AbstractResource {
                 }))
                 .map(ScopeEntity::new)
                 .defaultIfEmpty(new ScopeEntity("unknown-id", scopeKey, "unknown-scope-name", "unknown-scope-description"))
-                .toSingle()
                 .cache();
     }
 

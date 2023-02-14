@@ -41,10 +41,7 @@ public class DefaultRoleUpgrader implements Upgrader, Ordered {
         logger.info("Applying default roles upgrade");
         try {
             // create or update system roles
-            Throwable throwable = roleService.createOrUpdateSystemRoles().blockingGet();
-            if (throwable != null) {
-                throw throwable;
-            }
+            roleService.createOrUpdateSystemRoles().blockingAwait();
             logger.info("Default roles upgrade, done.");
         } catch (Throwable e) {
             logger.error("An error occurs while updating default roles", e);

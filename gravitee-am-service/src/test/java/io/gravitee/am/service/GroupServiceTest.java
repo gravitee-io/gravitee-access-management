@@ -31,12 +31,12 @@ import io.gravitee.am.service.impl.EventServiceImpl;
 import io.gravitee.am.service.impl.GroupServiceImpl;
 import io.gravitee.am.service.model.NewGroup;
 import io.gravitee.am.service.model.UpdateGroup;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
-import io.reactivex.subscribers.TestSubscriber;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -49,6 +49,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -96,7 +97,7 @@ public class GroupServiceTest {
         when(groupRepository.findById("my-group")).thenReturn(Maybe.just(new Group()));
         TestObserver testObserver = groupService.findById("my-group").test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValueCount(1);
@@ -106,7 +107,7 @@ public class GroupServiceTest {
     public void shouldFindById_groupNotFound() {
         when(groupRepository.findById("my-group")).thenReturn(Maybe.empty());
         TestObserver testObserver = groupService.findById("my-group").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNoValues();
     }
@@ -126,7 +127,7 @@ public class GroupServiceTest {
     public void shouldFindByDomain() {
         when(groupRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Flowable.just(new Group()));
         TestObserver<List<Group>> testObserver = groupService.findByDomain(DOMAIN).toList().test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -148,7 +149,7 @@ public class GroupServiceTest {
         Page pagedGroups = new Page(Collections.singleton(new Group()), 1, 1);
         when(groupRepository.findAll(ReferenceType.DOMAIN, DOMAIN, 1, 1)).thenReturn(Single.just(pagedGroups));
         TestObserver<Page<Group>> testObserver = groupService.findByDomain(DOMAIN, 1, 1).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -179,7 +180,7 @@ public class GroupServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = groupService.create(DOMAIN, newGroup).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -228,7 +229,7 @@ public class GroupServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = groupService.update(DOMAIN, "my-group", updateGroup).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -268,7 +269,7 @@ public class GroupServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = groupService.delete(ReferenceType.DOMAIN, DOMAIN, "my-group").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -410,7 +411,7 @@ public class GroupServiceTest {
         when(userService.findByIdIn(any())).thenReturn(Flowable.just(new User()));
 
         final TestObserver<Page<User>> observer = groupService.findMembers(ReferenceType.DOMAIN, DOMAIN, "group-id", 0, 0).test();
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
 
         verify(userService).findByIdIn(any());
         verify(organizationUserService, never()).findByIdIn(any());
@@ -431,17 +432,17 @@ public class GroupServiceTest {
         }).collect(Collectors.toList())));
 
         var observer = groupService.findMembers(ReferenceType.DOMAIN, DOMAIN, "group-id", 0, 25).test();
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertValue(page -> page.getTotalCount() == userIds.size());
         observer.assertValue(page -> page.getCurrentPage() == 0);
 
         observer = groupService.findMembers(ReferenceType.DOMAIN, DOMAIN, "group-id", 1, 25).test();
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertValue(page -> page.getTotalCount() == userIds.size());
         observer.assertValue(page -> page.getCurrentPage() == 1);
 
         observer = groupService.findMembers(ReferenceType.DOMAIN, DOMAIN, "group-id", 2, 25).test();
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertValue(page -> page.getTotalCount() == userIds.size());
         observer.assertValue(page -> page.getCurrentPage() == 2);
 
@@ -460,7 +461,7 @@ public class GroupServiceTest {
         when(organizationUserService.findByIdIn(any())).thenReturn(Flowable.just(new User()));
 
         final TestObserver<Page<User>> observer = groupService.findMembers(ReferenceType.DOMAIN, DOMAIN, "group-id", 0, 0).test();
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
 
         verify(organizationUserService).findByIdIn(any());
         verify(userService, never()).findByIdIn(any());

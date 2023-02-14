@@ -28,12 +28,12 @@ import io.gravitee.am.service.exception.EmailFormatInvalidException;
 import io.gravitee.am.service.exception.EnforceUserIdentityException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.common.http.HttpStatusCode;
-import io.reactivex.Completable;
+import io.reactivex.rxjava3.core.Completable;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.reactivex.core.buffer.Buffer;
-import io.vertx.reactivex.ext.web.Session;
-import io.vertx.reactivex.ext.web.handler.BodyHandler;
-import io.vertx.reactivex.ext.web.handler.SessionHandler;
+import io.vertx.rxjava3.core.buffer.Buffer;
+import io.vertx.rxjava3.ext.web.Session;
+import io.vertx.rxjava3.ext.web.handler.BodyHandler;
+import io.vertx.rxjava3.ext.web.handler.SessionHandler;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -197,7 +197,7 @@ public class ForgotPasswordSubmissionEndpointTest extends RxWebTestBase {
                 HttpStatusCode.FOUND_302, "Found", null);
     }
 
-    private void postEmail(io.vertx.reactivex.core.http.HttpClientRequest httpClientRequest, String email) {
+    private void postEmail(io.vertx.rxjava3.core.http.HttpClientRequest httpClientRequest, String email) {
         httpClientRequest.putHeader(CONTENT_TYPE, APPLICATION_X_WWW_FORM_URLENCODED);
         httpClientRequest.setChunked(true);
         httpClientRequest.write(Buffer.buffer("email=" + email));

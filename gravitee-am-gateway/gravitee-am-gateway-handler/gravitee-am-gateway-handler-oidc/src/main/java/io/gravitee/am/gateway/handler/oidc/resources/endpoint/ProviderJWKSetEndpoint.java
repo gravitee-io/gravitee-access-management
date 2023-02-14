@@ -20,7 +20,7 @@ import io.gravitee.am.gateway.handler.oidc.model.jwk.converter.JWKConverter;
 import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
-import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 
 /**
  * The JWKSet Endpoint provide a set of JWKs (keys) to enable clients to verify the authenticity of JWT tokens.

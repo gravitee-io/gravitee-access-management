@@ -16,7 +16,7 @@
 package io.gravitee.am.repository.jdbc.oauth2.api.spring;
 
 import io.gravitee.am.repository.jdbc.oauth2.api.model.JdbcPushedAuthorizationRequest;
-import org.springframework.data.repository.reactive.RxJava2CrudRepository;
+import org.springframework.data.repository.reactive.RxJava3CrudRepository;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -24,5 +24,5 @@ import org.springframework.stereotype.Repository;
  * @author GraviteeSource Team
  */
 @Repository
-public interface SpringPushedAuthorizationRequestRepository extends RxJava2CrudRepository<JdbcPushedAuthorizationRequest, String> {
+public interface SpringPushedAuthorizationRequestRepository extends RxJava3CrudRepository<JdbcPushedAuthorizationRequest, String> {
 }

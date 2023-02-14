@@ -16,12 +16,12 @@
 package io.gravitee.am.repository.jdbc.management.api.spring.user;
 
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcOrganizationUser;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.data.repository.reactive.RxJava2CrudRepository;
+import org.springframework.data.repository.reactive.RxJava3CrudRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -31,7 +31,7 @@ import java.util.List;
  * @author GraviteeSource Team
  */
 @Repository
-public interface SpringOrganizationUserRepository extends RxJava2CrudRepository<JdbcOrganizationUser, String> {
+public interface SpringOrganizationUserRepository extends RxJava3CrudRepository<JdbcOrganizationUser, String> {
 
     @Query("select count(u.id) from organization_users u where u.reference_type = :refType and u.reference_id = :refId")
     Single<Long> countByReference(@Param("refType")String refType, @Param("refId") String refId);

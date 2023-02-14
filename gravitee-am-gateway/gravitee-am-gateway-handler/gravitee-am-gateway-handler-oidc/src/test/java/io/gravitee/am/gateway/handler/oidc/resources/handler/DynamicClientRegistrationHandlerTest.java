@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.handler.oidc.resources.handler;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
 import io.gravitee.am.gateway.handler.oidc.exception.ClientRegistrationForbiddenException;
 import io.gravitee.am.model.Domain;
-import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;

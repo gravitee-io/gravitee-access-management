@@ -22,14 +22,8 @@ import io.gravitee.am.management.service.impl.UserServiceImpl;
 import io.gravitee.am.model.*;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
-import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.DomainService;
-import io.gravitee.am.service.LoginAttemptService;
-import io.gravitee.am.service.MembershipService;
-import io.gravitee.am.service.PasswordService;
-import io.gravitee.am.service.RoleService;
-import io.gravitee.am.service.TokenService;
+import io.gravitee.am.service.*;
 import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.gravitee.am.service.model.NewUser;
@@ -37,9 +31,9 @@ import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.am.service.validators.email.EmailValidatorImpl;
 import io.gravitee.am.service.validators.user.UserValidator;
 import io.gravitee.am.service.validators.user.UserValidatorImpl;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -50,11 +44,8 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 import static io.gravitee.am.model.ReferenceType.DOMAIN;
 import static io.gravitee.am.service.validators.email.EmailValidatorImpl.EMAIL_PATTERN;
@@ -635,8 +626,8 @@ public class UserServiceTest {
         when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any(), any(), any())).thenReturn(Maybe.error(PasswordHistoryException::passwordAlreadyInHistory));
 
         var observer = userService.resetPassword(domain, user.getId(), PASSWORD, null)
-                .test();
-        observer.awaitTerminalEvent();
+                   .test();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(PasswordHistoryException.class);
     }
 
@@ -644,7 +635,7 @@ public class UserServiceTest {
     public void must_not_reset_username_username_invalid() {
         var observer = userService.updateUsername(DOMAIN, "domain", "any-id", "", null).test();
 
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(InvalidUserException.class);
 
         verify(commonUserService, times(0)).update(any());
@@ -665,7 +656,7 @@ public class UserServiceTest {
                 .thenReturn(Single.error(new UserNotFoundException(user.getId())));
         var observer = userService.updateUsername(DOMAIN, domain.getId(), user.getId(), user.getUsername(), null).test();
 
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(UserNotFoundException.class);
 
         verify(commonUserService, times(0)).update(any());
@@ -688,7 +679,7 @@ public class UserServiceTest {
 
         var observer = userService.updateUsername(DOMAIN, domain.getId(), user.getId(), user.getUsername(), null).test();
 
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(InvalidUserException.class);
 
         verify(commonUserService, times(0)).update(any());
@@ -712,7 +703,7 @@ public class UserServiceTest {
 
         var observer = userService.updateUsername(DOMAIN, domain.getId(), user.getId(), user.getUsername(), null).test();
 
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(UserProviderNotFoundException.class);
 
         verify(commonUserService, times(0)).update(any());
@@ -738,7 +729,7 @@ public class UserServiceTest {
 
         var observer = userService.updateUsername(DOMAIN, domain.getId(), user.getId(), user.getUsername(), null).test();
 
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(UserNotFoundException.class);
 
         verify(commonUserService, times(0)).update(any());
@@ -769,7 +760,7 @@ public class UserServiceTest {
 
         var observer = userService.updateUsername(DOMAIN, domain.getId(), user.getId(), user.getUsername(), null).test();
 
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(InvalidUserException.class);
 
         verify(commonUserService, times(0)).update(any());
@@ -801,7 +792,7 @@ public class UserServiceTest {
 
         var observer = userService.updateUsername(DOMAIN, domain.getId(), user.getId(), user.getUsername(), null).test();
 
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(TechnicalManagementException.class);
 
         verify(commonUserService, times(1)).update(any());
@@ -834,7 +825,7 @@ public class UserServiceTest {
 
         var observer = userService.updateUsername(DOMAIN, domain.getId(), user.getId(), user.getUsername(), null).test();
 
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertComplete();
 
         verify(commonUserService, times(1)).update(any());

@@ -28,7 +28,7 @@ import io.gravitee.am.gateway.handler.common.webauthn.WebAuthnCookieService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.CredentialService;
 import io.vertx.core.Handler;
-import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.LinkedList;

@@ -21,7 +21,7 @@ import io.gravitee.am.identityprovider.api.*;
 import io.gravitee.am.identityprovider.common.oauth2.utils.URLEncodedUtils;
 import io.gravitee.am.identityprovider.github.authentication.spring.GithubAuthenticationProviderConfiguration;
 import io.gravitee.common.http.HttpHeaders;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -34,6 +34,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
@@ -87,7 +88,7 @@ public class GithubAuthenticationProviderTest {
             }
         }).test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -119,7 +120,7 @@ public class GithubAuthenticationProviderTest {
                 return new DummyAuthenticationContext(Collections.singletonMap("redirect_uri", "http://redirect_uri"), dummyRequest);
             }
         }).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(BadCredentialsException.class);
     }
@@ -155,7 +156,7 @@ public class GithubAuthenticationProviderTest {
                 return new DummyAuthenticationContext(Collections.singletonMap("redirect_uri", "http://redirect_uri"), dummyRequest);
             }
         }).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(BadCredentialsException.class);
     }
@@ -197,7 +198,7 @@ public class GithubAuthenticationProviderTest {
             }
         }).test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();

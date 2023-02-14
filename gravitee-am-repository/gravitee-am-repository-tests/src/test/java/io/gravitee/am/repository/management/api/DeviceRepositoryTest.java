@@ -20,12 +20,13 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.common.utils.UUID;
-import io.reactivex.observers.TestObserver;
-import io.reactivex.subscribers.TestSubscriber;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 import static java.util.Objects.nonNull;
 
@@ -47,7 +48,7 @@ public class DeviceRepositoryTest extends AbstractManagementTest {
                 createdDevice.getReferenceId(),
                 createdDevice.getUserId()
         ).test();
-        testSubscriber.awaitTerminalEvent();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
 
         testSubscriber.assertComplete();
         testSubscriber.assertNoErrors();
@@ -87,7 +88,7 @@ public class DeviceRepositoryTest extends AbstractManagementTest {
         Device deviceCreated = repository.create(device).blockingGet();
 
         TestObserver<Device> testObserver = repository.findById(deviceCreated.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -121,7 +122,7 @@ public class DeviceRepositoryTest extends AbstractManagementTest {
                 deviceCreated.getUserId(),
                 deviceCreated.getDeviceIdentifierId(),
                 deviceCreated.getDeviceId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -170,7 +171,7 @@ public class DeviceRepositoryTest extends AbstractManagementTest {
         Device device = buildDevice();
 
         TestObserver<Device> testObserver = repository.create(device).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -194,7 +195,7 @@ public class DeviceRepositoryTest extends AbstractManagementTest {
         device.setExpiresAt(new Date());
 
         TestObserver<Device> testObserver = repository.update(device).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -214,13 +215,13 @@ public class DeviceRepositoryTest extends AbstractManagementTest {
         Device deviceCreated = repository.create(device).blockingGet();
 
         TestObserver<Device> testObserver = repository.findById(deviceCreated.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(bd -> bd.getId().equals(deviceCreated.getId()));
 
         TestObserver testObserver1 = repository.delete(deviceCreated.getId()).test();
-        testObserver1.awaitTerminalEvent();
+        testObserver1.awaitDone(10, TimeUnit.SECONDS);
 
         repository.findById(deviceCreated.getId()).test().assertEmpty();
     }

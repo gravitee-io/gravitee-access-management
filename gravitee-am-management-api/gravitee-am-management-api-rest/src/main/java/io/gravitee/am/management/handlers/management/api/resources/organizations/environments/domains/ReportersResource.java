@@ -25,8 +25,8 @@ import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewReporter;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -79,8 +79,8 @@ public class ReportersResource extends AbstractResource {
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_REPORTER, Acl.LIST)
                 .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(irrelevant -> reporterService.findByDomain(domain).toList()))
+                        .switchIfEmpty(Single.error(new DomainNotFoundException(domain)))
+                        .flatMap(irrelevant -> reporterService.findByDomain(domain).toList()))
                 .flatMap(reporters ->
                     hasAnyPermission(authenticatedUser, organizationId, environmentId, domain, Permission.DOMAIN_REPORTER, Acl.READ)
                         .map(hasPermission -> {

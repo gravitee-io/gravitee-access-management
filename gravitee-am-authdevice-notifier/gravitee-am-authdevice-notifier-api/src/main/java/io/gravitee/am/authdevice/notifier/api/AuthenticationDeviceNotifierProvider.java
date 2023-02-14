@@ -21,7 +21,7 @@ import io.gravitee.am.authdevice.notifier.api.model.ADNotificationResponse;
 import io.gravitee.am.authdevice.notifier.api.model.ADUserResponse;
 import io.gravitee.common.component.Lifecycle;
 import io.gravitee.common.service.Service;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 
 import java.util.Optional;
 

@@ -25,7 +25,7 @@ import io.gravitee.am.service.exception.PasswordHistoryException;
 import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.gravitee.common.http.HttpStatusCode;
 import io.vertx.core.Handler;
-import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 
 /**
  * Checks a password against a user's history of passwords and returns either a

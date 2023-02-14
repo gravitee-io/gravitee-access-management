@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.handler.root.resources.handler.consent;
 
 import io.gravitee.am.gateway.handler.root.resources.handler.dummies.SpyRoutingContext;
 import io.vertx.core.json.JsonObject;
-import io.vertx.reactivex.core.buffer.Buffer;
+import io.vertx.rxjava3.core.buffer.Buffer;
 import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;

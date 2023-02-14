@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.handler.oidc.resources.handler;
 import io.gravitee.am.gateway.handler.oidc.exception.ClientRegistrationForbiddenException;
 import io.gravitee.am.model.Domain;
 import io.vertx.core.Handler;
-import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)

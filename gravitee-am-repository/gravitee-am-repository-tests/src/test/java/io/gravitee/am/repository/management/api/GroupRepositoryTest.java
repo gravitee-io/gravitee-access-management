@@ -19,11 +19,12 @@ import io.gravitee.am.model.Group;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.management.AbstractManagementTest;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
@@ -43,7 +44,7 @@ public class GroupRepositoryTest extends AbstractManagementTest {
         Group group = buildGroup();
 
         TestObserver<Group> testObserver = repository.create(group).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -85,7 +86,7 @@ public class GroupRepositoryTest extends AbstractManagementTest {
         Group createdGroup = repository.create(group).blockingGet();
 
         TestObserver<Group> testObserver = repository.findById(createdGroup.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -99,7 +100,7 @@ public class GroupRepositoryTest extends AbstractManagementTest {
         Group createdGroup = repository.create(group).blockingGet();
 
         TestObserver<Group> testObserver = repository.findById(createdGroup.getReferenceType(), createdGroup.getReferenceId(), createdGroup.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -117,7 +118,7 @@ public class GroupRepositoryTest extends AbstractManagementTest {
 
         // update and check response
         final TestObserver<Group> testUpdate = repository.update(toUpdate).test();
-        testUpdate.awaitTerminalEvent();
+        testUpdate.awaitDone(10, TimeUnit.SECONDS);
 
         testUpdate.assertComplete();
         testUpdate.assertNoErrors();
@@ -126,7 +127,7 @@ public class GroupRepositoryTest extends AbstractManagementTest {
 
         // validate the update using findById
         TestObserver<Group> testObserver = repository.findById(toUpdate.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -141,14 +142,14 @@ public class GroupRepositoryTest extends AbstractManagementTest {
 
         // validate the creation using findById
         TestObserver<Group> testObserver = repository.findById(createdGroup.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(g -> g.getId().equals(createdGroup.getId()));
 
         final TestObserver<Void> testDelete = repository.delete(createdGroup.getId()).test();
-        testDelete.awaitTerminalEvent();
+        testDelete.awaitDone(10, TimeUnit.SECONDS);
 
         testDelete.assertComplete();
         testDelete.assertNoErrors();
@@ -170,7 +171,7 @@ public class GroupRepositoryTest extends AbstractManagementTest {
         Group createdGroup2 = repository.create(group2).blockingGet();
 
         TestObserver<List<Group>> testObserver = repository.findByMember(member1).toList().test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -178,7 +179,7 @@ public class GroupRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(g -> g.stream().map(Group::getId).collect(Collectors.toSet()).containsAll(Arrays.asList(createdGroup1.getId(), createdGroup2.getId())));
 
         testObserver = repository.findByMember(member2).toList().test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -285,7 +286,7 @@ public class GroupRepositoryTest extends AbstractManagementTest {
         }
 
         final TestObserver<List<Group>> testObserver = repository.findByIdIn(ids).toList().test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         testObserver.assertValue(lg -> lg.size() == ids.size());
         testObserver.assertValue(lg -> lg.stream().map(Group::getId).collect(Collectors.toList()).containsAll(ids));
@@ -297,7 +298,7 @@ public class GroupRepositoryTest extends AbstractManagementTest {
         Group createdGroup = repository.create(group).blockingGet();
 
         TestObserver<Group> testObserver = repository.findByName(group.getReferenceType(), group.getReferenceId(), group.getName()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -311,7 +312,7 @@ public class GroupRepositoryTest extends AbstractManagementTest {
         repository.create(group).blockingGet();
 
         TestObserver<Group> testObserver = repository.findByName(group.getReferenceType(), group.getReferenceId(), "unknown").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();

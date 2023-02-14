@@ -16,16 +16,16 @@
 package io.gravitee.am.repository.jdbc.management.api.spring;
 
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcTheme;
-import io.reactivex.Maybe;
+import io.reactivex.rxjava3.core.Maybe;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.data.repository.reactive.RxJava2CrudRepository;
+import org.springframework.data.repository.reactive.RxJava3CrudRepository;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface SpringThemeRepository extends RxJava2CrudRepository<JdbcTheme, String> {
+public interface SpringThemeRepository extends RxJava3CrudRepository<JdbcTheme, String> {
     @Query("select * from themes where reference_id = :refId and reference_type = :refType")
     Maybe<JdbcTheme> findByReference(@Param("refId")String refId, @Param("refType") String refType);
 

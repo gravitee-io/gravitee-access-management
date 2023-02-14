@@ -28,10 +28,10 @@ import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.validators.user.UserValidator;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -39,6 +39,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Mockito.*;
 
@@ -83,7 +84,7 @@ public class AccountServiceTest {
         when(credentialService.delete(credentialId)).thenReturn(Completable.complete());
 
         TestObserver testObserver = accountService.removeWebAuthnCredential(userId, credentialId, principal).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
@@ -101,7 +102,7 @@ public class AccountServiceTest {
         when(credentialService.findById(credentialId)).thenReturn(Maybe.empty());
 
         TestObserver testObserver = accountService.removeWebAuthnCredential(userId, credentialId, principal).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
@@ -121,7 +122,7 @@ public class AccountServiceTest {
         when(credentialService.findById(credentialId)).thenReturn(Maybe.just(credential));
 
         TestObserver testObserver = accountService.removeWebAuthnCredential(userId, credentialId, principal).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
@@ -160,7 +161,7 @@ public class AccountServiceTest {
         when(userRepository.update(any())).thenReturn(Single.just(userUpdate));
 
         TestObserver testObserver = accountService.update(userUpdate).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 

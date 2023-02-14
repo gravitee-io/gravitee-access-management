@@ -24,10 +24,10 @@ import io.gravitee.am.service.impl.I18nDictionaryService;
 import io.gravitee.am.service.model.NewDictionary;
 import io.gravitee.am.service.model.UpdateI18nDictionary;
 import io.gravitee.am.service.reporter.builder.DictionaryAuditBuilder;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -37,9 +37,10 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import static io.gravitee.am.model.ReferenceType.DOMAIN;
-import static io.reactivex.Maybe.just;
+import static io.reactivex.rxjava3.core.Maybe.just;
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
@@ -87,7 +88,7 @@ public class I18nDictionaryServiceTest {
 
         var observer = service
                 .create(DOMAIN, REFERENCE_ID, newDictionary, new DefaultUser()).test();
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertComplete();
         observer.assertNoErrors();
 
@@ -121,7 +122,7 @@ public class I18nDictionaryServiceTest {
 
 
         var testObserver = service.update(DOMAIN, REFERENCE_ID, ID, updateDict, new DefaultUser()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
@@ -148,7 +149,7 @@ public class I18nDictionaryServiceTest {
 
 
         var testObserver = service.updateEntries(DOMAIN, REFERENCE_ID, ID, entries, new DefaultUser()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
@@ -169,7 +170,7 @@ public class I18nDictionaryServiceTest {
         given(repository.findByName(eq(DOMAIN), any(), eq(english))).willReturn(just(dictionary));
 
         var observer = service.findByName(DOMAIN, "", english).test();
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertComplete();
         observer.assertNoErrors();
         observer.assertValueCount(1);
@@ -182,7 +183,7 @@ public class I18nDictionaryServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         var observer = service.delete(DOMAIN, REFERENCE_ID, ID, new DefaultUser()).test();
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertComplete();
         observer.assertNoErrors();
 
@@ -193,7 +194,7 @@ public class I18nDictionaryServiceTest {
     public void shouldReturnTechnicalManagementExceptionWhenErrorThrownDuringFindByName() {
         given(repository.findByName(eq(DOMAIN), any(), any())).willReturn(Maybe.error(Exception::new));
         var observer = service.findByName(DOMAIN, REFERENCE_ID, "test").test();
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(TechnicalManagementException.class);
     }
 
@@ -201,7 +202,7 @@ public class I18nDictionaryServiceTest {
     public void shouldReturnTechnicalManagementExceptionWhenErrorThrownDuringFindAll() {
         given(repository.findAll(any(), any())).willReturn(Flowable.error(Exception::new));
         var observer = service.findAll(DOMAIN, REFERENCE_ID).test();
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(TechnicalManagementException.class);
     }
 
@@ -209,7 +210,7 @@ public class I18nDictionaryServiceTest {
     public void shouldReturnDictionaryNotFoundExceptionWhenDictionaryIdNotFound() {
         given(repository.findById(eq(DOMAIN), any(), any())).willReturn(Maybe.error(Exception::new));
         var observer = service.findById(DOMAIN, REFERENCE_ID, ID).test();
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(TechnicalManagementException.class);
     }
 }

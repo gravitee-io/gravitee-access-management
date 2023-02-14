@@ -20,7 +20,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.response.AuthorizationRespo
 import io.gravitee.am.model.AuthenticationFlowContext;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 
 /**
  * OpenID Connect performs authentication to log in the End-User or to determine that the End-User is already logged in.

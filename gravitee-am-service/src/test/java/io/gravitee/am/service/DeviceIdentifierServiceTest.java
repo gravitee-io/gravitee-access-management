@@ -26,18 +26,20 @@ import io.gravitee.am.service.impl.DeviceIdentifierServiceImpl;
 import io.gravitee.am.service.model.NewDeviceIdentifier;
 import io.gravitee.am.service.model.UpdateDeviceIdentifier;
 import io.gravitee.am.service.reporter.builder.management.DeviceIdentifierAuditBuilder;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
-import io.reactivex.subscribers.TestSubscriber;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
+
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
@@ -68,7 +70,7 @@ public class DeviceIdentifierServiceTest {
         when(deviceIdentifierRepository.findById("device-identifier")).thenReturn(Maybe.just(new DeviceIdentifier()));
         TestObserver testObserver = deviceIdentifierService.findById("device-identifier").test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValueCount(1);
@@ -78,7 +80,7 @@ public class DeviceIdentifierServiceTest {
     public void shouldFindById_notExistingDeviceIdentifier() {
         when(deviceIdentifierRepository.findById("device-identifier")).thenReturn(Maybe.empty());
         TestObserver testObserver = deviceIdentifierService.findById("device-identifier").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNoValues();
     }
@@ -97,7 +99,7 @@ public class DeviceIdentifierServiceTest {
     public void shouldFindByDomain() {
         when(deviceIdentifierRepository.findByReference(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Flowable.just(new DeviceIdentifier()));
         TestSubscriber<DeviceIdentifier> testSubscriber = deviceIdentifierService.findByDomain(DOMAIN).test();
-        testSubscriber.awaitTerminalEvent();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
 
         testSubscriber.assertComplete();
         testSubscriber.assertNoErrors();
@@ -121,7 +123,7 @@ public class DeviceIdentifierServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = deviceIdentifierService.create(DOMAIN, newDeviceIdentifier).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -155,7 +157,7 @@ public class DeviceIdentifierServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = deviceIdentifierService.update(DOMAIN, "device-identifier", updateDeviceIdentifier).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -211,7 +213,7 @@ public class DeviceIdentifierServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = deviceIdentifierService.delete(DOMAIN, detection.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();

@@ -23,9 +23,9 @@ import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.service.CredentialService;
-import io.reactivex.Completable;
-import io.reactivex.Observable;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.ext.auth.webauthn.Authenticator;
@@ -54,14 +54,13 @@ public class RepositoryCredentialStore {
     @Autowired
     private Domain domain;
 
-    public Future<List<Authenticator>> fetch(Authenticator query) {
-        Promise<List<Authenticator>> promise = Promise.promise();
+    public Single<List<Authenticator>> fetch(Authenticator query) {
 
         Single<List<Credential>> fetchCredentials = query.getUserName() != null ?
                 credentialService.findByUsername(ReferenceType.DOMAIN, domain.getId(), query.getUserName()).toList() :
                 credentialService.findByCredentialId(ReferenceType.DOMAIN, domain.getId(), query.getCredID()).toList();
 
-        fetchCredentials
+        return fetchCredentials
                 .flatMap(credentials -> {
                     if (credentials.isEmpty() && query.getUserName() != null) {
                         // If, when initiating an authentication ceremony, there is no account matching the provided username,
@@ -113,19 +112,12 @@ public class RepositoryCredentialStore {
                                 .map(this::convert)
                                 .collect(Collectors.toList()));
                     }
-                })
-                .subscribe(
-                        authenticators -> promise.complete(authenticators),
-                        error -> promise.fail(error)
-                );
-
-        return promise.future();
+                });
     }
 
-    public Future<Void> store(Authenticator authenticator) {
-        Promise<Void> promise = Promise.promise();
+    public Completable store(Authenticator authenticator) {
 
-        credentialService.findByCredentialId(ReferenceType.DOMAIN, domain.getId(), authenticator.getCredID())
+        return credentialService.findByCredentialId(ReferenceType.DOMAIN, domain.getId(), authenticator.getCredID())
                 .toList()
                 .flatMapCompletable(credentials -> {
                     if (credentials.isEmpty()) {
@@ -140,12 +132,7 @@ public class RepositoryCredentialStore {
                                     return credentialService.update(credential).ignoreElement();
                                 });
                     }
-                })
-                .subscribe(
-                        () ->  promise.complete(),
-                        error -> promise.fail(error.getMessage())
-                );
-        return promise.future();
+                });
     }
 
     private Completable create(Authenticator authenticator) {

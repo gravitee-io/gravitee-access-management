@@ -19,11 +19,12 @@ import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.am.repository.exceptions.TechnicalException;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -45,7 +46,7 @@ public class ScopeRepositoryTest extends AbstractManagementTest {
 
         // fetch scopes
         TestObserver<Page<Scope>> testObserver = scopeRepository.findByDomain("testDomain", 0, Integer.MAX_VALUE).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -70,7 +71,7 @@ public class ScopeRepositoryTest extends AbstractManagementTest {
 
         // fetch scopes
         TestObserver<Scope> testObserver = scopeRepository.findByDomainAndKey("testDomain","one").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -99,7 +100,7 @@ public class ScopeRepositoryTest extends AbstractManagementTest {
 
         // fetch scopes
         TestObserver<List<Scope>> testObserver = scopeRepository.findByDomainAndKeys("testDomain", Arrays.asList("one","two","three")).toList().test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -119,7 +120,7 @@ public class ScopeRepositoryTest extends AbstractManagementTest {
 
         // fetch scope
         TestObserver<Scope> testObserver = scopeRepository.findById(scopeCreated.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -169,7 +170,7 @@ public class ScopeRepositoryTest extends AbstractManagementTest {
         scope.setSystem(true);
         scope.setClaims(Collections.emptyList());
         TestObserver<Scope> testObserver = scopeRepository.create(scope).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -187,7 +188,7 @@ public class ScopeRepositoryTest extends AbstractManagementTest {
         updatedScope.setId(scopeCreated.getId());
 
         TestObserver<Scope> testObserver = scopeRepository.update(updatedScope).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -203,14 +204,14 @@ public class ScopeRepositoryTest extends AbstractManagementTest {
 
         // fetch scope
         TestObserver<Scope> testObserver = scopeRepository.findById(scopeCreated.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(s -> s.getName().equals(scope.getName()));
 
         // delete scope
         TestObserver testObserver1 = scopeRepository.delete(scopeCreated.getId()).test();
-        testObserver1.awaitTerminalEvent();
+        testObserver1.awaitDone(10, TimeUnit.SECONDS);
 
         // fetch scope
         scopeRepository.findById(scopeCreated.getId()).test().assertEmpty();
@@ -227,7 +228,7 @@ public class ScopeRepositoryTest extends AbstractManagementTest {
         Scope scopeCreated = scopeRepository.create(scope).blockingGet();
 
         TestObserver<Page<Scope>> testObserver = scopeRepository.search(scopeCreated.getDomain(), "*" + scopeName + "*", 0, Integer.MAX_VALUE).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(s -> s.getData().size() == 1);

@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.handler.oauth2.service.scope.impl;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeService;
 import io.gravitee.am.model.oauth2.Scope;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Collections;

@@ -24,13 +24,15 @@ import io.gravitee.cockpit.api.command.Command;
 import io.gravitee.cockpit.api.command.hello.HelloCommand;
 import io.gravitee.cockpit.api.command.hello.HelloPayload;
 import io.gravitee.node.api.Node;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -82,7 +84,7 @@ public class HelloCommandProducerTest {
         command.setPayload(payload);
         final TestObserver<HelloCommand> obs = cut.prepare(command).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValue(helloCommand -> {
             assertEquals(CUSTOM_VALUE, helloCommand.getPayload().getAdditionalInformation().get(CUSTOM_KEY));
             assertTrue(helloCommand.getPayload().getAdditionalInformation().containsKey("API_URL"));
@@ -103,7 +105,7 @@ public class HelloCommandProducerTest {
         when(installationService.getOrInitialize()).thenReturn(Single.error(new TechnicalException()));
         final TestObserver<HelloCommand> obs = cut.prepare(new HelloCommand()).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertError(TechnicalException.class);
     }
 }

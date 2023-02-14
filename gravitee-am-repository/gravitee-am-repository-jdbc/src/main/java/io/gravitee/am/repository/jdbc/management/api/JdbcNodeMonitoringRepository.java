@@ -20,9 +20,9 @@ import io.gravitee.am.repository.jdbc.management.api.model.JdbcMonitoring;
 import io.gravitee.am.repository.jdbc.management.api.spring.SpringNodeMonitoringRepository;
 import io.gravitee.node.api.Monitoring;
 import io.gravitee.node.api.NodeMonitoringRepository;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -30,7 +30,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 
 import static java.time.ZoneOffset.UTC;
-import static reactor.adapter.rxjava.RxJava2Adapter.monoToSingle;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)

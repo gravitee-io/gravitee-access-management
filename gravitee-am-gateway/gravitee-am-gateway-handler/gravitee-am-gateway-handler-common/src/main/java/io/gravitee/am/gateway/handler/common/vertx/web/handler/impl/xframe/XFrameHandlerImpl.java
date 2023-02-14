@@ -16,7 +16,7 @@
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.xframe;
 
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.XFrameHandler;
-import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -24,10 +24,10 @@ import io.vertx.reactivex.ext.web.RoutingContext;
  */
 public class XFrameHandlerImpl implements XFrameHandler {
 
-    private final io.vertx.reactivex.ext.web.handler.XFrameHandler delegate;
+    private final io.vertx.rxjava3.ext.web.handler.XFrameHandler delegate;
 
     public XFrameHandlerImpl(String action) {
-        this.delegate = io.vertx.reactivex.ext.web.handler.XFrameHandler.create(action);
+        this.delegate = io.vertx.rxjava3.ext.web.handler.XFrameHandler.create(action);
     }
 
     @Override

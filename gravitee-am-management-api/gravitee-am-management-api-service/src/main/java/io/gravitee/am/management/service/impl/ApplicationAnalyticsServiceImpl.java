@@ -22,7 +22,7 @@ import io.gravitee.am.management.service.AuditService;
 import io.gravitee.am.model.analytics.*;
 import io.gravitee.am.reporter.api.audit.AuditReportableCriteria;
 import io.gravitee.am.service.UserService;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

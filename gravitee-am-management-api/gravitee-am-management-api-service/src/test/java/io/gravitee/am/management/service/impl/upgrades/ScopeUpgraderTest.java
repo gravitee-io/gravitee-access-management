@@ -26,7 +26,7 @@ import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.*;
 import io.gravitee.am.service.model.NewScope;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;

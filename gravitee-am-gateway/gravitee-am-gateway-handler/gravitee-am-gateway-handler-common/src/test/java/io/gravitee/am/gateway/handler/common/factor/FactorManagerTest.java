@@ -22,7 +22,7 @@ import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.plugins.factor.core.FactorPluginManager;
 import io.gravitee.am.service.FactorService;
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

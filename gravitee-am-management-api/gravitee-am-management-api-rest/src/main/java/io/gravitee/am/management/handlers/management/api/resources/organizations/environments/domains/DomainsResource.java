@@ -25,7 +25,7 @@ import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.model.NewDomain;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 import io.swagger.annotations.*;
 import org.springframework.beans.factory.annotation.Autowired;
 

@@ -32,11 +32,11 @@ import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.validators.email.EmailValidatorImpl;
 import io.gravitee.am.service.validators.user.UserValidatorImpl;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -45,6 +45,7 @@ import org.mockito.Spy;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.HashMap;
+import java.util.concurrent.TimeUnit;
 
 import static io.gravitee.am.service.validators.user.UserValidatorImpl.*;
 import static org.junit.Assert.assertEquals;
@@ -182,7 +183,7 @@ public class OrganizationUserServiceTest {
         when(commonUserService.setRoles(any())).thenReturn(Completable.complete());
 
         TestObserver<User> testObserver = organizationUserService.createGraviteeUser(new Organization(), newUser, null).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
 
         verify(provider).create(any());
@@ -198,7 +199,7 @@ public class OrganizationUserServiceTest {
         newUser.setEmail("email@acme.fr");
 
         TestObserver<User> testObserver = organizationUserService.createGraviteeUser(new Organization(), newUser, null).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(UserInvalidException.class);
 
         verify(commonUserService, never()).create(argThat(user -> user.getPassword() == null));
@@ -215,7 +216,7 @@ public class OrganizationUserServiceTest {
         when(commonUserService.findByUsernameAndSource(ReferenceType.ORGANIZATION, organization.getId(), newUser.getUsername(), newUser.getSource())).thenReturn(Maybe.just(new User()));
 
         TestObserver<User> testObserver = organizationUserService.createGraviteeUser(organization, newUser, null).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(UserAlreadyExistsException.class);
     }
 
@@ -230,7 +231,7 @@ public class OrganizationUserServiceTest {
         when(identityProviderManager.getUserProvider(newUser.getSource())).thenReturn(Maybe.empty());
 
         TestObserver<User> testObserver = organizationUserService.createGraviteeUser(organization, newUser, null).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(UserProviderNotFoundException.class);
     }
 
@@ -242,7 +243,7 @@ public class OrganizationUserServiceTest {
         when(commonUserService.findByUsernameAndSource(any(), any(),  any(),  any())).thenReturn(Maybe.empty());
         when(identityProviderManager.getUserProvider(any())).thenReturn(Maybe.just(mock(UserProvider.class)));
         TestObserver<User> testObserver = organizationUserService.createGraviteeUser(new Organization(), newUser, null).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(InvalidPasswordException.class);
     }
 
@@ -270,7 +271,7 @@ public class OrganizationUserServiceTest {
 
         TestObserver<User> obs = organizationUserService.createOrUpdate(ReferenceType.ORGANIZATION, "orga#1", newUser).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertNoErrors();
         obs.assertValue(updatedUser -> {
             assertEquals(updatedUser.getId(), user.getId());
@@ -308,7 +309,7 @@ public class OrganizationUserServiceTest {
 
         TestObserver<User> obs = organizationUserService.updateLogoutDate(ReferenceType.ORGANIZATION, "orga#1", user.getId()).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertNoErrors();
         obs.assertValue(updatedUser -> {
             assertEquals(updatedUser.getId(), user.getId());
@@ -347,7 +348,7 @@ public class OrganizationUserServiceTest {
 
         TestObserver<User> obs = organizationUserService.createOrUpdate(ReferenceType.ORGANIZATION, "orga#1", newUser).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertNoErrors();
         obs.assertValue(updatedUser -> {
             assertEquals(updatedUser.getId(), user.getId());
@@ -384,7 +385,7 @@ public class OrganizationUserServiceTest {
 
         TestObserver<User> obs = organizationUserService.createOrUpdate(ReferenceType.ORGANIZATION, "orga#1", newUser).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertNoErrors();
         obs.assertValue(updatedUser -> {
             assertNotNull(updatedUser.getId());
@@ -401,7 +402,7 @@ public class OrganizationUserServiceTest {
     @Test
     public void shouldNotResetPassword_MissingPwd() {
         final TestObserver<Void> testObserver = organizationUserService.resetPassword("org#1", new User(), null, null).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(InvalidPasswordException.class);
     }
 
@@ -409,7 +410,7 @@ public class OrganizationUserServiceTest {
     public void shouldNotResetPassword_invalidPwd() {
         when(passwordService.isValid(anyString())).thenReturn(false);
         final TestObserver<Void> testObserver = organizationUserService.resetPassword("org#1", new User(), "simple", null).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(InvalidPasswordException.class);
     }
 
@@ -424,7 +425,7 @@ public class OrganizationUserServiceTest {
         when(commonUserService.update(any())).thenReturn(Single.just(user));
 
         final TestObserver<Void> testObserver = organizationUserService.resetPassword("org#1", user, "Test123!", null).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
 
         verify(commonUserService).update(any());
@@ -439,7 +440,7 @@ public class OrganizationUserServiceTest {
         user.setSource("invalid");
 
         final TestObserver<Void> testObserver = organizationUserService.resetPassword("org#1", user, "Test123!", null).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(InvalidUserException.class);
 
         verify(commonUserService, never()).update(any());

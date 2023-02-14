@@ -34,7 +34,7 @@ import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Maybe;
+import io.reactivex.rxjava3.core.Maybe;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -368,9 +368,11 @@ public class UserResource extends AbstractResource {
                                 .map(up -> {
                                     userEntity.setInternal(true);
                                     return userEntity;
-                                }).defaultIfEmpty(userEntity);
+                                }).defaultIfEmpty(userEntity)
+                                .toMaybe();
                     })
-                    .defaultIfEmpty(userEntity);
+                    .defaultIfEmpty(userEntity)
+                    .toMaybe();
         }
         return Maybe.just(userEntity);
     }
@@ -383,7 +385,8 @@ public class UserResource extends AbstractResource {
                         userEntity.setApplicationEntity(new ApplicationEntity(application));
                         return userEntity;
                     })
-                    .defaultIfEmpty(userEntity);
+                    .defaultIfEmpty(userEntity)
+                    .toMaybe();
         }
         return Maybe.just(userEntity);
     }

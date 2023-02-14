@@ -25,15 +25,17 @@ import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.TagServiceImpl;
 import io.gravitee.am.service.model.NewTag;
 import io.gravitee.am.service.model.UpdateTag;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
+
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -59,7 +61,7 @@ public class TagServiceTest {
         when(tagRepository.findById("my-tag", Organization.DEFAULT)).thenReturn(Maybe.just(new Tag()));
         TestObserver testObserver = tagService.findById("my-tag", Organization.DEFAULT).test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValueCount(1);
@@ -69,7 +71,7 @@ public class TagServiceTest {
     public void shouldFindById_notExistingScope() {
         when(tagRepository.findById("my-tag", Organization.DEFAULT)).thenReturn(Maybe.empty());
         TestObserver testObserver = tagService.findById("my-tag", Organization.DEFAULT).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNoValues();
     }
@@ -92,7 +94,7 @@ public class TagServiceTest {
         when(tagRepository.create(any(Tag.class))).thenReturn(Single.just(new Tag()));
 
         TestObserver testObserver = tagService.create(newTag, Organization.DEFAULT, null).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -143,7 +145,7 @@ public class TagServiceTest {
         TestObserver<Tag> testObserver = new TestObserver<>();
         tagService.update("my-tag", Organization.DEFAULT, updateTag,null).subscribe(testObserver);
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
 
         verify(tagRepository, times(1)).findById(eq("my-tag"), eq(Organization.DEFAULT));
@@ -159,7 +161,7 @@ public class TagServiceTest {
         TestObserver<Tag> testObserver = new TestObserver<>();
         tagService.update("my-tag", Organization.DEFAULT, updateTag,null).subscribe(testObserver);
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(TagNotFoundException.class);
 
         verify(tagRepository, times(1)).findById(eq("my-tag"), eq(Organization.DEFAULT));

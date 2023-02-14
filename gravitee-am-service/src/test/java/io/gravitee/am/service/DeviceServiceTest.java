@@ -21,12 +21,12 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.management.api.DeviceRepository;
 import io.gravitee.am.service.exception.DeviceNotFoundException;
 import io.gravitee.am.service.impl.DeviceServiceImpl;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
-import io.reactivex.subscribers.TestSubscriber;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -37,6 +37,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
@@ -104,7 +105,7 @@ public class DeviceServiceTest {
         doReturn(Flowable.fromIterable(List.of(device1, device2))).when(deviceRepository).findByDomainAndClientAndUser(DOMAIN, USER);
 
         final TestSubscriber<Device> testFull = deviceService.findByDomainAndUser(DOMAIN, USER).test();
-        testFull.awaitTerminalEvent();
+        testFull.awaitDone(10, TimeUnit.SECONDS);
         testFull.assertNoErrors();
         testFull.assertValueCount(2);
 
@@ -116,7 +117,7 @@ public class DeviceServiceTest {
         doReturn(Flowable.fromIterable(List.of())).when(deviceRepository).findByDomainAndClientAndUser(DOMAIN2, USER);
 
         final TestSubscriber<Device> testEmpty = deviceService.findByDomainAndUser(DOMAIN2, USER).test();
-        testEmpty.awaitTerminalEvent();
+        testEmpty.awaitDone(10, TimeUnit.SECONDS);
         testEmpty.assertNoErrors();
         testEmpty.assertValueCount(0);
 
@@ -128,7 +129,7 @@ public class DeviceServiceTest {
         doReturn(Single.just(device1)).when(deviceRepository).create(any());
 
         final TestObserver<Device> testObserver = deviceService.create(DOMAIN, CLIENT, USER, DEVICE_IDENTIFIER, TYPE, 7200L, DEVICE1).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         testObserver.assertValue(device1::equals);
     }
@@ -139,12 +140,12 @@ public class DeviceServiceTest {
         doReturn(Maybe.just(device2)).when(deviceRepository).findByDomainAndClientAndUserAndDeviceIdentifierAndDeviceId(DOMAIN2, CLIENT, USER, DEVICE_IDENTIFIER, DEVICE1);
 
         final TestObserver<Boolean> testObserverEmpty = deviceService.deviceExists(DOMAIN, CLIENT, USER, DEVICE_IDENTIFIER, DEVICE1).test();
-        testObserverEmpty.awaitTerminalEvent();
+        testObserverEmpty.awaitDone(10, TimeUnit.SECONDS);
         testObserverEmpty.assertNoErrors();
         testObserverEmpty.assertValue(TRUE::equals);
 
         final TestObserver<Boolean> testObserver = deviceService.deviceExists(DOMAIN2, CLIENT, USER, DEVICE_IDENTIFIER, DEVICE1).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         testObserver.assertValue(FALSE::equals);
     }

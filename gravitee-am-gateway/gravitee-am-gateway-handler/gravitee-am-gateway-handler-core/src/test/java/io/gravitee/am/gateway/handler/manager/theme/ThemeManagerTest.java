@@ -25,7 +25,7 @@ import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.ThemeRepository;
 import io.gravitee.common.event.Event;
-import io.reactivex.Maybe;
+import io.reactivex.rxjava3.core.Maybe;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

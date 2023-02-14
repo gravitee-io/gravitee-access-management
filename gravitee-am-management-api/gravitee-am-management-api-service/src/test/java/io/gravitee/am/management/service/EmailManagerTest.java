@@ -23,7 +23,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.service.EmailTemplateService;
-import io.reactivex.Maybe;
+import io.reactivex.rxjava3.core.Maybe;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;

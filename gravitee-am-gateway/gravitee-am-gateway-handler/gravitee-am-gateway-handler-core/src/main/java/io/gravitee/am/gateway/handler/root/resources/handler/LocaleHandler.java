@@ -17,7 +17,7 @@ package io.gravitee.am.gateway.handler.root.resources.handler;
 
 import io.gravitee.am.service.i18n.GraviteeMessageResolver;
 import io.vertx.core.Handler;
-import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 
 import java.util.Locale;
 

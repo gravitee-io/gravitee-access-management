@@ -22,8 +22,8 @@ import io.gravitee.am.gateway.handler.oauth2.service.revocation.RevocationTokenS
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.model.oidc.Client;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Maybe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

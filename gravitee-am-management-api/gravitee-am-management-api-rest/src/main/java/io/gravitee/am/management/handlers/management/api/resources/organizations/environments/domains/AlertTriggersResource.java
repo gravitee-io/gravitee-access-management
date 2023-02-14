@@ -25,7 +25,7 @@ import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.repository.management.api.search.AlertTriggerCriteria;
 import io.gravitee.am.service.model.PatchAlertTrigger;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 import io.swagger.annotations.*;
 
 import javax.inject.Inject;

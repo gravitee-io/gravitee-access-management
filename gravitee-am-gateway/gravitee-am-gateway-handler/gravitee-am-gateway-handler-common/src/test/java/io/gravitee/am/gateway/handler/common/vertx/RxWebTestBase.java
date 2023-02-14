@@ -17,15 +17,18 @@ package io.gravitee.am.gateway.handler.common.vertx;
 
 
 import io.gravitee.am.model.Domain;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Maybe;
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServerOptions;
-import io.vertx.reactivex.core.buffer.Buffer;
-import io.vertx.reactivex.core.http.HttpClient;
-import io.vertx.reactivex.core.http.HttpClientRequest;
-import io.vertx.reactivex.core.http.HttpClientResponse;
-import io.vertx.reactivex.core.http.HttpServer;
-import io.vertx.reactivex.ext.web.Router;
+import io.vertx.rxjava3.core.buffer.Buffer;
+import io.vertx.rxjava3.core.http.HttpClient;
+import io.vertx.rxjava3.core.http.HttpClientRequest;
+import io.vertx.rxjava3.core.http.HttpClientResponse;
+import io.vertx.rxjava3.core.http.HttpServer;
+import io.vertx.rxjava3.ext.web.Router;
+import reactor.core.Disposable;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -38,7 +41,6 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Consumer;
-
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
@@ -63,7 +65,13 @@ public class RxWebTestBase extends RxVertxTestBase {
         server = vertx.createHttpServer(getHttpServerOptions());
         client = vertx.createHttpClient(getHttpClientOptions());
         CountDownLatch latch = new CountDownLatch(1);
-        server.requestHandler(router).listen(onSuccess(res -> latch.countDown()));
+        server.requestHandler(router).rxListen()
+                .toMaybe()
+                .onErrorResumeNext(throwable -> {
+                    throwable.printStackTrace();
+                    return Maybe.empty();
+                }).doFinally(latch::countDown)
+                .subscribe();
         awaitLatch(latch);
     }
 
@@ -100,10 +108,12 @@ public class RxWebTestBase extends RxVertxTestBase {
         }
         if (server != null) {
             CountDownLatch latch = new CountDownLatch(1);
-            server.close((asyncResult) -> {
-                assertTrue(asyncResult.succeeded());
-                latch.countDown();
-            });
+            server.rxClose()
+                    .onErrorResumeNext(throwable -> {
+                        throwable.printStackTrace();
+                        return Completable.complete();
+                    }).doFinally(latch::countDown)
+                    .subscribe();
             awaitLatch(latch);
         }
         super.tearDown();
@@ -170,38 +180,32 @@ public class RxWebTestBase extends RxVertxTestBase {
                                      Buffer responseBodyBuffer, boolean normalizeLineEndings) throws Exception {
         CountDownLatch latch = new CountDownLatch(1);
 
-        client.request(method, port, "localhost", path, asyncReq -> {
-            if (asyncReq.succeeded()) {
-                HttpClientRequest request = asyncReq.result();
+        client.rxRequest(method, port, "localhost", path).doOnSuccess(request -> {
 
-                if(requestAction != null) {
-                    requestAction.accept(request);
-                }
-
-                request.send(asyncResp -> {
-
-                    assertTrue(asyncResp.succeeded());
-
-                    final HttpClientResponse response = asyncResp.result();
-                    assertEquals(statusCode, response.statusCode());
-                    assertEquals(statusMessage, response.statusMessage());
-                    if (responseAction != null) {
-                        responseAction.accept(response);
-                    }
-                    if (responseBodyBuffer == null) {
-                        latch.countDown();
-                    } else {
-                        response.bodyHandler(buff -> {
-                            if (normalizeLineEndings) {
-                                buff = normalizeLineEndingsFor(buff);
-                            }
-                            assertEquals(responseBodyBuffer, buff);
-                            latch.countDown();
-                        });
-                    }
-                });
+            if(requestAction != null) {
+                requestAction.accept(request);
             }
-        });
+
+            request.rxSend().doOnSuccess(response -> {
+
+                assertEquals(statusCode, response.statusCode());
+                assertEquals(statusMessage, response.statusMessage());
+                if (responseAction != null) {
+                    responseAction.accept(response);
+                }
+                if (responseBodyBuffer == null) {
+                    latch.countDown();
+                } else {
+                    response.bodyHandler(buff -> {
+                        if (normalizeLineEndings) {
+                            buff = normalizeLineEndingsFor(buff);
+                        }
+                        assertEquals(responseBodyBuffer, buff);
+                        latch.countDown();
+                    });
+                }
+            }).doOnError(Throwable::printStackTrace).subscribe();
+        }).doOnError(Throwable::printStackTrace).subscribe();
 
         awaitLatch(latch);
     }

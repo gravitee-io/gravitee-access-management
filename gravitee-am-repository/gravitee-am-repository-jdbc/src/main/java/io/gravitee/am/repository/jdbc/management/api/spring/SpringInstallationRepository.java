@@ -15,12 +15,11 @@
  */
 package io.gravitee.am.repository.jdbc.management.api.spring;
 
-import io.gravitee.am.repository.jdbc.management.api.JdbcInstallationRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcInstallation;
-import io.reactivex.Maybe;
+import io.reactivex.rxjava3.core.Maybe;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.data.repository.reactive.RxJava2CrudRepository;
+import org.springframework.data.repository.reactive.RxJava3CrudRepository;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -28,7 +27,7 @@ import org.springframework.stereotype.Repository;
  * @author GraviteeSource Team
  */
 @Repository
-public interface SpringInstallationRepository extends RxJava2CrudRepository<JdbcInstallation, String> {
+public interface SpringInstallationRepository extends RxJava3CrudRepository<JdbcInstallation, String> {
 
     @Query("select * from installations i where i.id = :id")
     Maybe<JdbcInstallation> findById(@Param("id") String id);

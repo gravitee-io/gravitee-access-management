@@ -23,7 +23,7 @@ import io.gravitee.am.gateway.handler.scim.service.GroupService;
 import io.gravitee.am.gateway.handler.scim.service.UserService;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.Json;
-import io.vertx.reactivex.ext.web.handler.BodyHandler;
+import io.vertx.rxjava3.ext.web.handler.BodyHandler;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;

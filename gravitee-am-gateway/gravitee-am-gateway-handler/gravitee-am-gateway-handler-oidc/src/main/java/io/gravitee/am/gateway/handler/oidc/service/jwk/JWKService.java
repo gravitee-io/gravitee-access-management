@@ -18,8 +18,8 @@ package io.gravitee.am.gateway.handler.oidc.service.jwk;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.jose.JWK;
 import io.gravitee.am.model.oidc.JWKSet;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 
 import java.util.function.Predicate;
 

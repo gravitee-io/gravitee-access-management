@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.management.service;
 
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 
 import java.util.List;
 

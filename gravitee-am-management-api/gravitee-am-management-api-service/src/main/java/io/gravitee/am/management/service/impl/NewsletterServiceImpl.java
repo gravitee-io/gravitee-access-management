@@ -17,8 +17,8 @@ package io.gravitee.am.management.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.management.service.NewsletterService;
-import io.reactivex.Single;
-import io.vertx.reactivex.ext.web.client.WebClient;
+import io.reactivex.rxjava3.core.Single;
+import io.vertx.rxjava3.ext.web.client.WebClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
@@ -60,13 +60,8 @@ public class NewsletterServiceImpl implements NewsletterService, InitializingBea
 
     @Override
     public void subscribe(Object user) {
-        executorService.execute(() -> {
-            client.post(newsletterURI).sendJson(user, handler -> {
-                if (handler.failed()) {
-                    LOGGER.error("An error has occurred while register newsletter for a user", handler.cause());
-                }
-            });
-        });
+        executorService.execute(() -> client.post(newsletterURI).sendJson(user)
+                .doOnError(throwable -> LOGGER.error("An error has occurred while register newsletter for a user", throwable)).subscribe());
     }
 
     @Override

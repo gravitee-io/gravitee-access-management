@@ -25,15 +25,15 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieSession;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.AuthenticationFlowContextService;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.ext.web.handler.HttpException;
-import io.vertx.reactivex.ext.auth.User;
-import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.auth.User;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -197,7 +197,6 @@ public class SSOSessionHandler implements Handler<RoutingContext> {
         return clientSyncService.findById(clientId)
                 .switchIfEmpty(Maybe.defer(() -> clientSyncService.findByClientId(clientId)))
                 .map(Optional::ofNullable)
-                .defaultIfEmpty(Optional.empty())
-                .toSingle();
+                .defaultIfEmpty(Optional.empty());
     }
 }

@@ -17,7 +17,7 @@ package io.gravitee.am.gateway.handler.ciba.ad;
 
 import io.gravitee.am.gateway.handler.ciba.ad.model.ADNotificationRequest;
 import io.gravitee.am.gateway.handler.ciba.ad.model.ADNotificationResponse;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 
 /**
  * This notifier implementation is responsible for the interaction with the user authentication device.

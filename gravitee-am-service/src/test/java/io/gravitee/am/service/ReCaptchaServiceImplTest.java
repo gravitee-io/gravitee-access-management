@@ -18,16 +18,16 @@ package io.gravitee.am.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.service.impl.ReCaptchaServiceImpl;
 import io.gravitee.common.http.HttpStatusCode;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
-import io.reactivex.schedulers.TestScheduler;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.schedulers.TestScheduler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.impl.ClientPhase;
 import io.vertx.ext.web.client.impl.WebClientInternal;
-import io.vertx.reactivex.core.Vertx;
-import io.vertx.reactivex.ext.web.client.HttpRequest;
-import io.vertx.reactivex.ext.web.client.WebClient;
+import io.vertx.rxjava3.core.Vertx;
+import io.vertx.rxjava3.ext.web.client.HttpRequest;
+import io.vertx.rxjava3.ext.web.client.WebClient;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -38,6 +38,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
@@ -73,15 +74,15 @@ public class ReCaptchaServiceImplTest {
         ReflectionTestUtils.setField(reCaptchaService, "enabled", false);
 
         TestObserver<Boolean> obs = reCaptchaService.isValid(null).test();
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValue(true);
 
         obs = reCaptchaService.isValid("").test();
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValue(true);
 
         obs = reCaptchaService.isValid("any").test();
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValue(true);
     }
 
@@ -91,11 +92,11 @@ public class ReCaptchaServiceImplTest {
         ReflectionTestUtils.setField(reCaptchaService, "enabled", true);
 
         TestObserver<Boolean> obs = reCaptchaService.isValid(null).test();
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValue(false);
 
         obs = reCaptchaService.isValid("").test();
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValue(false);
     }
 
@@ -111,7 +112,7 @@ public class ReCaptchaServiceImplTest {
         spyHttpRequest(client.post(eq("https://verif")));
 
         TestObserver<Boolean> obs = reCaptchaService.isValid("any").test();
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValue(true);
     }
 
@@ -127,7 +128,7 @@ public class ReCaptchaServiceImplTest {
         spyHttpRequest(client.post(eq("https://verif")));
 
         TestObserver<Boolean> obs = reCaptchaService.isValid("any").test();
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValue(true);
     }
 
@@ -143,7 +144,7 @@ public class ReCaptchaServiceImplTest {
         spyHttpRequest(client.post(eq("https://verif")));
 
         TestObserver<Boolean> obs = reCaptchaService.isValid("any").test();
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValue(false);
     }
 
@@ -159,7 +160,7 @@ public class ReCaptchaServiceImplTest {
         spyHttpRequest(client.post(eq("https://verif")));
 
         TestObserver<Boolean> obs = reCaptchaService.isValid("any").test();
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValue(false);
     }
 

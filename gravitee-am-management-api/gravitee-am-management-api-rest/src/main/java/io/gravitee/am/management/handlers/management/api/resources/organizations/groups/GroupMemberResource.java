@@ -25,7 +25,7 @@ import io.gravitee.am.service.exception.MemberAlreadyExistsException;
 import io.gravitee.am.service.exception.MemberNotFoundException;
 import io.gravitee.am.service.model.UpdateGroup;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;

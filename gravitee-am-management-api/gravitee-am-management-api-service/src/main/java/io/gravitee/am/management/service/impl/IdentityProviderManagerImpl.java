@@ -33,9 +33,9 @@ import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.event.EventManager;
 import io.gravitee.common.service.AbstractService;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -134,7 +134,7 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
                 .flatMapMaybe(identityProvider -> {
                     logger.info("\tInitializing user provider: {} [{}]", identityProvider.getName(), identityProvider.getType());
                     return loadUserProvider(identityProvider);
-                }).ignoreElements().blockingGet();
+                }).ignoreElements().blockingAwait();
 
     }
 

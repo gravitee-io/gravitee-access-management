@@ -23,7 +23,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.gateway.handler.oauth2.service.token.impl.AccessToken;
 import io.gravitee.am.model.User;
 import io.gravitee.am.service.UserService;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Map;
@@ -50,14 +50,13 @@ public class IntrospectionServiceImpl implements IntrospectionService {
                         return userService
                                 .findById(accessToken.getSubject())
                                 .map(user -> convert(accessToken, user))
-                                .defaultIfEmpty(convert(accessToken, null))
-                                .toSingle();
+                                .defaultIfEmpty(convert(accessToken, null));
 
                     } else {
                         return Single.just(convert(accessToken, null));
                     }
                 })
-                .onErrorResumeNext(Single.just(new IntrospectionResponse(false)));
+                .onErrorResumeNext(exception -> Single.just(new IntrospectionResponse(false)));
     }
 
     private IntrospectionResponse convert(AccessToken accessToken, User user) {

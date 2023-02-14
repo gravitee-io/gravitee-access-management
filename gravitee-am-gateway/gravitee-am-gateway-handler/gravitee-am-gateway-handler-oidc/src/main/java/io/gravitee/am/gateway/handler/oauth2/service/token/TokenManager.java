@@ -16,7 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.service.token;
 
 import io.gravitee.common.service.Service;
-import io.reactivex.Completable;
+import io.reactivex.rxjava3.core.Completable;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

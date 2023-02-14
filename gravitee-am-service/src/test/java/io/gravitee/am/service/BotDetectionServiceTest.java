@@ -32,12 +32,12 @@ import io.gravitee.am.service.impl.BotDetectionServiceImpl;
 import io.gravitee.am.service.model.NewBotDetection;
 import io.gravitee.am.service.model.UpdateBotDetection;
 import io.gravitee.am.service.reporter.builder.management.BotDetectionAuditBuilder;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
-import io.reactivex.subscribers.TestSubscriber;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -46,6 +46,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Collections;
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
@@ -82,7 +83,7 @@ public class BotDetectionServiceTest {
         when(botDetectionRepository.findById("bot-detection")).thenReturn(Maybe.just(new BotDetection()));
         TestObserver testObserver = botDetectionService.findById("bot-detection").test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValueCount(1);
@@ -92,7 +93,7 @@ public class BotDetectionServiceTest {
     public void shouldFindById_notExistingBotDetection() {
         when(botDetectionRepository.findById("bot-detection")).thenReturn(Maybe.empty());
         TestObserver testObserver = botDetectionService.findById("bot-detection").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNoValues();
     }
@@ -111,7 +112,7 @@ public class BotDetectionServiceTest {
     public void shouldFindByDomain() {
         when(botDetectionRepository.findByReference(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Flowable.just(new BotDetection()));
         TestSubscriber<BotDetection> testSubscriber = botDetectionService.findByDomain(DOMAIN).test();
-        testSubscriber.awaitTerminalEvent();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
 
         testSubscriber.assertComplete();
         testSubscriber.assertNoErrors();
@@ -136,7 +137,7 @@ public class BotDetectionServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = botDetectionService.create(DOMAIN, newBotDetection).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -171,7 +172,7 @@ public class BotDetectionServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = botDetectionService.update(DOMAIN, "bot-detection", updateBotDetection).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -230,7 +231,7 @@ public class BotDetectionServiceTest {
         when(applicationService.findByDomain(DOMAIN)).thenReturn(Single.just(Collections.emptySet()));
 
         TestObserver testObserver = botDetectionService.delete(DOMAIN, detection.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -251,7 +252,7 @@ public class BotDetectionServiceTest {
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(domain));
 
         TestObserver testObserver = botDetectionService.delete(DOMAIN, detection.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(BotDetectionUsedException.class);
 
@@ -274,7 +275,7 @@ public class BotDetectionServiceTest {
         when(applicationService.findByDomain(DOMAIN)).thenReturn(Single.just(Sets.newHashSet(app)));
 
         TestObserver testObserver = botDetectionService.delete(DOMAIN, detection.getId()).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(BotDetectionUsedException.class);
 

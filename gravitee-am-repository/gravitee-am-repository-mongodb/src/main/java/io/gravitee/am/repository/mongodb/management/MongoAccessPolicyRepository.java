@@ -23,7 +23,7 @@ import io.gravitee.am.model.uma.policy.AccessPolicy;
 import io.gravitee.am.model.uma.policy.AccessPolicyType;
 import io.gravitee.am.repository.management.api.AccessPolicyRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.uma.AccessPolicyMongo;
-import io.reactivex.*;
+import io.reactivex.rxjava3.core.*;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 

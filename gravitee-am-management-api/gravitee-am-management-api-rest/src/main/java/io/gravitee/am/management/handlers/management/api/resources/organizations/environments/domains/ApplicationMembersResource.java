@@ -33,9 +33,9 @@ import io.gravitee.am.service.exception.ApplicationNotFoundException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewMembership;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
@@ -92,8 +92,8 @@ public class ApplicationMembersResource extends AbstractResource {
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMap(__ -> applicationService.findById(application))
-                        .switchIfEmpty(Maybe.error(new ApplicationNotFoundException(application)))
-                        .flatMapSingle(application1 -> membershipService.findByReference(application1.getId(), ReferenceType.APPLICATION).toList())
+                        .switchIfEmpty(Single.error(new ApplicationNotFoundException(application)))
+                        .flatMap(application1 -> membershipService.findByReference(application1.getId(), ReferenceType.APPLICATION).toList())
                         .flatMap(memberships -> membershipService.getMetadata(memberships).map(metadata -> new MembershipListItem(memberships, metadata))))
                 .subscribe(response::resume, response::resume);
     }
@@ -129,8 +129,8 @@ public class ApplicationMembersResource extends AbstractResource {
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMap(__ -> applicationService.findById(application))
-                        .switchIfEmpty(Maybe.error(new ApplicationNotFoundException(application)))
-                        .flatMapSingle(__ -> membershipService.addOrUpdate(organizationId, membership, authenticatedUser))
+                        .switchIfEmpty(Single.error(new ApplicationNotFoundException(application)))
+                        .flatMap(__ -> membershipService.addOrUpdate(organizationId, membership, authenticatedUser))
                         .flatMap(membership1 -> membershipService.addDomainUserRoleIfNecessary(organizationId, environmentId, domain, newMembership, authenticatedUser)
                                 .andThen(Single.just(Response
                                         .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain + "/applications/" + application + "/members/" + membership1.getId()))

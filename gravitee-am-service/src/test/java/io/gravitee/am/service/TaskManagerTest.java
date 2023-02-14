@@ -21,7 +21,7 @@ import io.gravitee.am.repository.management.api.CertificateRepository;
 import io.gravitee.am.repository.management.api.SystemTaskRepository;
 import io.gravitee.am.service.tasks.AssignSystemCertificate;
 import io.gravitee.am.service.tasks.AssignSystemCertificateDefinition;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;

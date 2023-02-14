@@ -36,22 +36,23 @@ import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.event.EventManager;
 import io.gravitee.common.service.AbstractService;
-import io.reactivex.Single;
-import io.reactivex.functions.BiConsumer;
-import io.reactivex.schedulers.Schedulers;
-import io.vertx.reactivex.core.RxHelper;
-import io.vertx.reactivex.core.Vertx;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.functions.Consumer;
+import io.reactivex.rxjava3.schedulers.Schedulers;
+import io.vertx.rxjava3.core.RxHelper;
+import io.vertx.rxjava3.core.Vertx;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.stereotype.Component;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
-import org.springframework.stereotype.Component;
 
 import static java.util.Arrays.asList;
 
@@ -126,7 +127,7 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
                             }
                         })
                         .subscribeOn(Schedulers.io())
-                        .subscribe(launcher);
+                        .subscribe(launcher, throwable -> logger.error("Unable to load reporter '{}'", reporter.getId(), throwable));
             } catch (Exception ex) {
                 logger.error("An error has occurred while loading audit reporter: {} [{}]", reporter.getName(), reporter.getType(), ex);
                 removeReporter(reporter.getId());
@@ -142,16 +143,18 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
         super.doStop();
 
         if (deploymentId != null) {
-            vertx.undeploy(deploymentId, event -> {
-                for (io.gravitee.reporter.api.Reporter reporter : auditReporters.values()) {
-                    try {
-                        logger.info("Stopping reporter: {}", reporter);
-                        reporter.stop();
-                    } catch (Exception ex) {
-                        logger.error("Unexpected error while stopping reporter", ex);
-                    }
-                }
-            });
+            vertx.rxUndeploy(deploymentId)
+                    .doFinally(() -> {
+                        for (io.gravitee.reporter.api.Reporter reporter : auditReporters.values()) {
+                            try {
+                                logger.info("Stopping reporter: {}", reporter);
+                                reporter.stop();
+                            } catch (Exception ex) {
+                                logger.error("Unexpected error while stopping reporter", ex);
+                            }
+                        }
+                    })
+                    .subscribe();
         }
     }
 
@@ -289,20 +292,18 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
                     }
                 })
                 .subscribeOn(Schedulers.io())
-                .subscribe(launcher);
+                .subscribe(launcher, throwable -> logger.error("Unable to load reporter '{}'", reporter.getId(), throwable));
     }
 
-    public class AuditReporterLauncher implements BiConsumer<GraviteeContext, Throwable> {
+    public class AuditReporterLauncher implements Consumer<GraviteeContext> {
         private io.gravitee.am.model.Reporter reporter;
-
-        private Throwable error;
 
         public AuditReporterLauncher(io.gravitee.am.model.Reporter reporter) {
             this.reporter = reporter;
         }
 
         @Override
-        public void accept(GraviteeContext graviteeContext, Throwable throwable) throws Exception {
+        public void accept(GraviteeContext graviteeContext) throws Exception {
             if (graviteeContext != null) {
                 if (reporter.isEnabled()) {
                     var providerConfig = new ReporterProviderConfiguration(reporter, graviteeContext);
@@ -324,19 +325,6 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
                     reporters.put(reporter.getId(), reporter);
                 }
             }
-
-            if (throwable != null) {
-                logger.error("Unable to load reporter '{}'", reporter.getId(), throwable);
-                this.error = throwable;
-            }
-        }
-
-        public boolean failed() {
-            return error != null;
-        }
-
-        public Throwable getError() {
-            return error;
         }
     }
 

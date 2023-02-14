@@ -33,11 +33,11 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.UserService;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
-import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.springframework.core.env.Environment;
 
 import java.util.Arrays;
@@ -95,9 +95,9 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
         Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         String subject = accessToken.getSub();
         userService.findById(subject)
-                .switchIfEmpty(Maybe.error(new InvalidTokenException("No user found for this token")))
+                .switchIfEmpty(Single.error(new InvalidTokenException("No user found for this token")))
                 // enhance user information
-                .flatMapSingle(user -> enhance(user, accessToken))
+                .flatMap(user -> enhance(user, accessToken))
                 // process user claims
                 .map(user -> processClaims(user, accessToken))
                 // encode response

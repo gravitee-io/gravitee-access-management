@@ -27,11 +27,11 @@ import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.impl.RoleServiceImpl;
 import io.gravitee.am.service.model.NewRole;
 import io.gravitee.am.service.model.UpdateRole;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -42,6 +42,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Matchers.anyList;
 import static org.mockito.Matchers.anyString;
@@ -74,7 +75,7 @@ public class RoleServiceTest {
         when(roleRepository.findById("my-role")).thenReturn(Maybe.just(new Role()));
         TestObserver testObserver = roleService.findById("my-role").test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValueCount(1);
@@ -84,7 +85,7 @@ public class RoleServiceTest {
     public void shouldFindById_notExistingRole() {
         when(roleRepository.findById("my-role")).thenReturn(Maybe.empty());
         TestObserver testObserver = roleService.findById("my-role").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNoValues();
     }
@@ -103,7 +104,7 @@ public class RoleServiceTest {
     public void shouldFindByDomain() {
         when(roleRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Flowable.just(new Role()));
         TestObserver<Set<Role>> testObserver = roleService.findByDomain(DOMAIN).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -124,7 +125,7 @@ public class RoleServiceTest {
     public void shouldFindByIdsIn() {
         when(roleRepository.findByIdIn(Arrays.asList("my-role"))).thenReturn(Flowable.just(new Role()));
         TestObserver<Set<Role>> testObserver = roleService.findByIdIn(Arrays.asList("my-role")).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -153,7 +154,7 @@ public class RoleServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = roleService.create(DOMAIN, newRole).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -210,7 +211,7 @@ public class RoleServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = roleService.update(DOMAIN, "my-role", updateRole).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -238,7 +239,7 @@ public class RoleServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = roleService.update(ReferenceType.ORGANIZATION, ORGANIZATION_ID, "my-role", updateRole, null).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -313,7 +314,7 @@ public class RoleServiceTest {
         when(roleRepository.findById(ReferenceType.ORGANIZATION, ORGANIZATION_ID, "my-role")).thenReturn(Maybe.just(role));
 
         TestObserver testObserver = roleService.update(ReferenceType.ORGANIZATION, ORGANIZATION_ID, "my-role", updateRole, null).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNotComplete();
         testObserver.assertError(SystemRoleUpdateException.class);
@@ -339,7 +340,7 @@ public class RoleServiceTest {
         when(roleRepository.findById(ReferenceType.ORGANIZATION, ORGANIZATION_ID, "my-role")).thenReturn(Maybe.just(role));
 
         TestObserver testObserver = roleService.update(ReferenceType.ORGANIZATION, ORGANIZATION_ID, "my-role", updateRole, null).test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNotComplete();
         testObserver.assertError(DefaultRoleUpdateException.class);
@@ -381,7 +382,7 @@ public class RoleServiceTest {
         when(roleRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-role"))).thenReturn(Maybe.just(role));
 
         TestObserver testObserver = roleService.delete(ReferenceType.DOMAIN, DOMAIN, "my-role").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNotComplete();
         testObserver.assertError(SystemRoleDeleteException.class);
@@ -399,7 +400,7 @@ public class RoleServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = roleService.delete(ReferenceType.DOMAIN, DOMAIN, "my-role").test();
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();

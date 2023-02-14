@@ -20,10 +20,10 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Installation;
 import io.gravitee.am.repository.management.api.InstallationRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.InstallationMongo;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Observable;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.Single;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;

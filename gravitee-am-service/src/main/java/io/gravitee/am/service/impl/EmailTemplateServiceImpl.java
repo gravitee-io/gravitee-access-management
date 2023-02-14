@@ -37,10 +37,10 @@ import io.gravitee.am.service.model.NewEmail;
 import io.gravitee.am.service.model.UpdateEmail;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.EmailTemplateAuditBuilder;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -197,26 +197,25 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
     @Override
     public Completable delete(String emailId, User principal) {
         LOGGER.debug("Delete email {}", emailId);
-        return emailRepository.findById(emailId)
+        return Completable.fromMaybe(emailRepository.findById(emailId)
                 .switchIfEmpty(Maybe.error(new EmailNotFoundException(emailId)))
-                .flatMapCompletable(email -> {
+                .flatMapSingle(email -> {
                     // create event for sync process
                     Event event = new Event(Type.EMAIL, new Payload(email.getId(), email.getReferenceType(), email.getReferenceId(), Action.DELETE));
                     return emailRepository.delete(emailId)
                             .andThen(eventService.create(event))
-                            .toCompletable()
-                            .doOnComplete(() -> auditService.report(AuditBuilder.builder(EmailTemplateAuditBuilder.class).principal(principal).type(EventType.EMAIL_TEMPLATE_DELETED).email(email)))
+                            .doOnSuccess(event1 -> auditService.report(AuditBuilder.builder(EmailTemplateAuditBuilder.class).principal(principal).type(EventType.EMAIL_TEMPLATE_DELETED).email(email)))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(EmailTemplateAuditBuilder.class).principal(principal).type(EventType.EMAIL_TEMPLATE_DELETED).throwable(throwable)));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
-                        return Completable.error(ex);
+                        return Maybe.error(ex);
                     }
 
                     LOGGER.error("An error occurs while trying to delete email: {}", emailId, ex);
-                    return Completable.error(new TechnicalManagementException(
+                    return Maybe.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to delete email: %s", emailId), ex));
-                });
+                }));
     }
 
 
@@ -261,8 +260,8 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
 
     private Single<Email> update0(ReferenceType referenceType, String referenceId, String id, UpdateEmail updateEmail, User principal) {
         return emailRepository.findById(referenceType, referenceId, id)
-                .switchIfEmpty(Maybe.error(new EmailNotFoundException(id)))
-                .flatMapSingle(oldEmail -> {
+                .switchIfEmpty(Single.error(new EmailNotFoundException(id)))
+                .flatMap(oldEmail -> {
                     Email emailToUpdate = new Email(oldEmail);
                     emailToUpdate.setEnabled(updateEmail.isEnabled());
                     emailToUpdate.setFrom(updateEmail.getFrom());

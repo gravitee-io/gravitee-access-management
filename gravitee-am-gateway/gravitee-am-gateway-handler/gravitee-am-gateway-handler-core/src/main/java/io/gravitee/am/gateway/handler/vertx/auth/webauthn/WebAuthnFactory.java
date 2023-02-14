@@ -25,8 +25,8 @@ import io.gravitee.am.model.login.WebAuthnSettings;
 import io.vertx.ext.auth.webauthn.AuthenticatorTransport;
 import io.vertx.ext.auth.webauthn.RelyingParty;
 import io.vertx.ext.auth.webauthn.WebAuthnOptions;
-import io.vertx.reactivex.core.Vertx;
-import io.vertx.reactivex.ext.auth.webauthn.WebAuthn;
+import io.vertx.rxjava3.core.Vertx;
+import io.vertx.rxjava3.ext.auth.webauthn.WebAuthn;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.annotation.Autowired;
 

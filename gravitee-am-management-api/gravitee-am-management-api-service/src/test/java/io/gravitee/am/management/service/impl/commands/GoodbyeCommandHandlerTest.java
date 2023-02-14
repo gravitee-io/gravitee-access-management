@@ -21,8 +21,8 @@ import io.gravitee.cockpit.api.command.Command;
 import io.gravitee.cockpit.api.command.CommandStatus;
 import io.gravitee.cockpit.api.command.goodbye.GoodbyeCommand;
 import io.gravitee.cockpit.api.command.goodbye.GoodbyeReply;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
 import junit.framework.TestCase;
 import org.junit.Before;
 import org.junit.Test;
@@ -32,6 +32,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static io.gravitee.am.management.service.impl.commands.GoodbyeCommandHandler.DELETED_STATUS;
 import static io.gravitee.am.model.Installation.COCKPIT_INSTALLATION_STATUS;
@@ -67,7 +68,7 @@ public class GoodbyeCommandHandlerTest extends TestCase {
 
         TestObserver<GoodbyeReply> obs = cut.handle(command).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.SUCCEEDED));
 
         final ArgumentCaptor<Map<String, String>> expectedAdditionalInfos = ArgumentCaptor.forClass(Map.class);
@@ -84,7 +85,7 @@ public class GoodbyeCommandHandlerTest extends TestCase {
 
         TestObserver<GoodbyeReply> obs = cut.handle(command).test();
 
-        obs.awaitTerminalEvent();
+        obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.ERROR));
     }
 }

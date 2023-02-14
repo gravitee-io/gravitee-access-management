@@ -22,7 +22,7 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserActivity.Type;
 import io.gravitee.am.service.UserActivityService;
 import io.vertx.core.Handler;
-import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 import java.util.HashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

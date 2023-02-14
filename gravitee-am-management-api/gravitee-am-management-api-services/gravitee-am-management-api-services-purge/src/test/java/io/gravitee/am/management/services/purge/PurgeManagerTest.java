@@ -19,7 +19,7 @@ import io.gravitee.am.repository.management.api.*;
 import io.gravitee.am.repository.oauth2.api.*;
 import io.gravitee.am.repository.oidc.api.CibaAuthRequestRepository;
 import io.gravitee.am.repository.oidc.api.RequestObjectRepository;
-import io.reactivex.Completable;
+import io.reactivex.rxjava3.core.Completable;
 import java.util.Arrays;
 import java.util.Collections;
 import org.junit.Before;

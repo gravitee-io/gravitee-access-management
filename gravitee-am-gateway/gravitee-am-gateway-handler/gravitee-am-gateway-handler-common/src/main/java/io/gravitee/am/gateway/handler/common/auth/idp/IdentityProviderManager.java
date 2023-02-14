@@ -19,7 +19,7 @@ import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.common.service.Service;
-import io.reactivex.Maybe;
+import io.reactivex.rxjava3.core.Maybe;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)

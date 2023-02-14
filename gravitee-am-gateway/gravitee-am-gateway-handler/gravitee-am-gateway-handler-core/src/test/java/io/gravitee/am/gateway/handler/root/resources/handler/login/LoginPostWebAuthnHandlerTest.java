@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.handler.root.resources.handler.login;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.webauthn.WebAuthnCookieService;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.reactivex.core.http.Cookie;
+import io.vertx.rxjava3.core.http.Cookie;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;

@@ -20,7 +20,7 @@ import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.common.exception.authentication.UsernameNotFoundException;
 import io.gravitee.am.identityprovider.api.*;
 import io.gravitee.am.identityprovider.http.authentication.spring.HttpAuthenticationProviderConfiguration;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -31,6 +31,7 @@ import org.springframework.test.context.support.AnnotationConfigContextLoader;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
@@ -78,7 +79,7 @@ public class HttpAuthenticationProviderTest {
             }
         }).test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -109,7 +110,7 @@ public class HttpAuthenticationProviderTest {
             }
         }).test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(BadCredentialsException.class);
     }
 
@@ -136,7 +137,7 @@ public class HttpAuthenticationProviderTest {
             }
         }).test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(UsernameNotFoundException.class);
     }
 
@@ -169,7 +170,7 @@ public class HttpAuthenticationProviderTest {
             }
         }).test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -206,7 +207,7 @@ public class HttpAuthenticationProviderTest {
             }
         }).test();
 
-        testObserver.awaitTerminalEvent();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();

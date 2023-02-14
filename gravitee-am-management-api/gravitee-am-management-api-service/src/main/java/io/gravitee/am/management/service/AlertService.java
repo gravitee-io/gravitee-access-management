@@ -16,7 +16,7 @@
 package io.gravitee.am.management.service;
 
 import io.gravitee.plugin.alert.AlertTriggerProviderManager;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;

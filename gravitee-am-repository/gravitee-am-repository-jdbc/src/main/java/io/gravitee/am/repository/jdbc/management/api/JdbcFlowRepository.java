@@ -23,10 +23,10 @@ import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcFlow;
 import io.gravitee.am.repository.jdbc.management.api.spring.SpringFlowRepository;
 import io.gravitee.am.repository.management.api.FlowRepository;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
@@ -42,7 +42,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
-import static reactor.adapter.rxjava.RxJava2Adapter.*;
+import static reactor.adapter.rxjava.RxJava3Adapter.*;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -126,7 +126,7 @@ public class JdbcFlowRepository extends AbstractJdbcRepository implements FlowRe
         LOGGER.debug("findById({})", id);
         return flowRepository.findById(id)
                 .map(this::toEntity)
-                .flatMapSingleElement(this::completeFlow);
+                .flatMapSingle(this::completeFlow);
     }
 
     @Override

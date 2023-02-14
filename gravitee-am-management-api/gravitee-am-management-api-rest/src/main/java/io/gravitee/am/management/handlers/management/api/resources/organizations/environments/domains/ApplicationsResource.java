@@ -26,7 +26,8 @@ import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewApplication;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Maybe;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import io.swagger.annotations.*;
 import java.util.Collection;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -90,8 +91,8 @@ public class ApplicationsResource extends AbstractResource {
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.APPLICATION, Acl.LIST)
                 .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(__ -> {
+                        .switchIfEmpty(Single.error(new DomainNotFoundException(domain)))
+                        .flatMap(__ -> {
                             if (query != null) {
                                 return applicationService.search(domain, query, 0, Integer.MAX_VALUE);
                             } else {

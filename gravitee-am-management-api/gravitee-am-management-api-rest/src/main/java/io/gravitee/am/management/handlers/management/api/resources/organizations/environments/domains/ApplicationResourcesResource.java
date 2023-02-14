@@ -28,8 +28,9 @@ import io.gravitee.am.service.ResourceService;
 import io.gravitee.am.service.exception.ApplicationNotFoundException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Maybe;
-import io.reactivex.Observable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.Single;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
@@ -87,8 +88,8 @@ public class ApplicationResourcesResource extends AbstractResource {
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMap(__ -> applicationService.findById(application))
-                        .switchIfEmpty(Maybe.error(new ApplicationNotFoundException(application)))
-                        .flatMapSingle(application1 -> resourceService.findByDomainAndClient(domain, application1.getId(), page, Integer.min(MAX_RESOURCES_SIZE_PER_PAGE, size)))
+                        .switchIfEmpty(Single.error(new ApplicationNotFoundException(application)))
+                        .flatMap(application1 -> resourceService.findByDomainAndClient(domain, application1.getId(), page, Integer.min(MAX_RESOURCES_SIZE_PER_PAGE, size)))
                         .flatMap(pagedResources -> Observable.fromIterable(pagedResources.getData())
                                 .flatMapSingle(r -> resourceService.countAccessPolicyByResource(r.getId())
                                         .map(policies -> {

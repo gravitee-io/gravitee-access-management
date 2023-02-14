@@ -22,14 +22,16 @@ import io.gravitee.am.service.exception.ReporterConfigurationException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.ReporterServiceImpl;
 import io.gravitee.am.service.model.NewReporter;
-import io.reactivex.Flowable;
-import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
@@ -65,7 +67,7 @@ public class ReporterServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         final TestObserver<Reporter> observer = reporterService.create("domain", reporter).test();
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertNoErrors();
 
         verify(reporterRepository).create(any());
@@ -80,7 +82,7 @@ public class ReporterServiceTest {
         reporter.setConfiguration("{\"filename\":\"../9f4bdf97-5481-4420-8bdf-9754818420f3\"}");
 
         final TestObserver<Reporter> observer = reporterService.create("domain", reporter).test();
-        observer.awaitTerminalEvent();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(ex -> ex instanceof TechnicalManagementException && ex.getCause() instanceof ReporterConfigurationException);
 
         verify(reporterRepository, never()).create(any());

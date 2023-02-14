@@ -24,6 +24,8 @@ import java.time.Clock;
 import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -47,7 +49,7 @@ public class UserActivityRepositoryTest extends AbstractManagementTest {
         var createdUserActivity = userActivityRepository.create(userActivity).blockingGet();
         var testSubscriber = userActivityRepository.findById(id).test();
 
-        testSubscriber.awaitTerminalEvent();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
         testSubscriber.assertComplete();
         testSubscriber.assertNoErrors();
         testSubscriber.assertValue(ua -> createdUserActivity.getId().equals(ua.getId()));
@@ -89,7 +91,7 @@ public class UserActivityRepositoryTest extends AbstractManagementTest {
         var userActivity = buildUserActivity(UUID.randomUUID().toString(), key, "domainId");
         var testSubscriber = userActivityRepository.create(userActivity).test();
 
-        testSubscriber.awaitTerminalEvent();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
         testSubscriber.assertComplete();
         testSubscriber.assertNoErrors();
 
@@ -118,7 +120,7 @@ public class UserActivityRepositoryTest extends AbstractManagementTest {
 
         var testSubscriber = userActivityRepository.update(activityToUpdate).test();
 
-        testSubscriber.awaitTerminalEvent();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
         testSubscriber.assertComplete();
         testSubscriber.assertNoErrors();
 
@@ -133,7 +135,7 @@ public class UserActivityRepositoryTest extends AbstractManagementTest {
         userActivityRepository.create(buildUserActivity(null, "key-2", "domainId2")).blockingGet();
         var testSubscriber = userActivityRepository.findByDomainAndTypeAndKey("domainId", Type.LOGIN, key).test();
 
-        testSubscriber.awaitTerminalEvent();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
         testSubscriber.assertComplete();
         testSubscriber.assertNoErrors();
         testSubscriber.assertValueCount(2);
@@ -147,7 +149,7 @@ public class UserActivityRepositoryTest extends AbstractManagementTest {
         userActivityRepository.create(buildUserActivity(null, "key-2", "domainId2")).blockingGet();
         var testSubscriber = userActivityRepository.findByDomainAndTypeAndKeyAndLimit("domainId", Type.LOGIN, key, 1).test();
 
-        testSubscriber.awaitTerminalEvent();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
         testSubscriber.assertComplete();
         testSubscriber.assertNoErrors();
         testSubscriber.assertValueCount(1);
@@ -168,7 +170,7 @@ public class UserActivityRepositoryTest extends AbstractManagementTest {
     public void must_delete_by_id() {
         final String key = "key-" + UUID.randomUUID();
         userActivityRepository.create(buildUserActivity(null, key, "domainId")).blockingGet();
-        userActivityRepository.delete(key).test().awaitTerminalEvent();
+        userActivityRepository.delete(key).test().awaitDone(10, TimeUnit.SECONDS);
 
         userActivityRepository.findById(key).test().assertEmpty();
     }
@@ -177,7 +179,7 @@ public class UserActivityRepositoryTest extends AbstractManagementTest {
     public void must_delete_by_domain_and_key() {
         final String key = "key-" + UUID.randomUUID();
         userActivityRepository.create(buildUserActivity(null, key, "domainId")).blockingGet();
-        userActivityRepository.deleteByDomainAndKey("domainId", key).test().awaitTerminalEvent();
+        userActivityRepository.deleteByDomainAndKey("domainId", key).test().awaitDone(10, TimeUnit.SECONDS);
 
         userActivityRepository.findByDomainAndTypeAndKey("domain", Type.LOGIN, key).test().assertEmpty();
     }
@@ -186,7 +188,7 @@ public class UserActivityRepositoryTest extends AbstractManagementTest {
     public void must_delete_by_domain() {
         final String key = "key-" + UUID.randomUUID();
         userActivityRepository.create(buildUserActivity(null, key, "domainId")).blockingGet();
-        userActivityRepository.deleteByDomain("domainId").test().awaitTerminalEvent();
+        userActivityRepository.deleteByDomain("domainId").test().awaitDone(10, TimeUnit.SECONDS);
 
         userActivityRepository.findByDomainAndTypeAndKey("domainId", Type.LOGIN, key).test().assertEmpty();
     }

@@ -74,11 +74,11 @@ import io.gravitee.am.service.reporter.builder.management.ApplicationAuditBuilde
 import io.gravitee.am.service.utils.CertificateTimeComparator;
 import io.gravitee.am.service.utils.GrantTypeUtils;
 import io.gravitee.am.service.validators.accountsettings.AccountSettingsValidator;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Observable;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -338,8 +338,8 @@ public class ApplicationServiceImpl implements ApplicationService {
         }
 
         return applicationRepository.findById(application.getId())
-                .switchIfEmpty(Maybe.error(new ApplicationNotFoundException(application.getId())))
-                .flatMapSingle(application1 -> update0(application1.getDomain(), application1, application, null))
+                .switchIfEmpty(Single.error(new ApplicationNotFoundException(application.getId())))
+                .flatMap(application1 -> update0(application1.getDomain(), application1, application, null))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException || ex instanceof OAuth2Exception) {
                         return Single.error(ex);
@@ -354,8 +354,8 @@ public class ApplicationServiceImpl implements ApplicationService {
         LOGGER.debug("Update application {} type to {} for domain {}", id, type, domain);
 
         return applicationRepository.findById(id)
-                .switchIfEmpty(Maybe.error(new ApplicationNotFoundException(id)))
-                .flatMapSingle(existingApplication -> {
+                .switchIfEmpty(Single.error(new ApplicationNotFoundException(id)))
+                .flatMap(existingApplication -> {
                     Application toPatch = new Application(existingApplication);
                     toPatch.setType(type);
                     applicationTemplateManager.changeType(toPatch);
@@ -375,8 +375,8 @@ public class ApplicationServiceImpl implements ApplicationService {
         LOGGER.debug("Patch an application {} for domain {}", id, domain);
 
         return applicationRepository.findById(id)
-                .switchIfEmpty(Maybe.error(new ApplicationNotFoundException(id)))
-                .flatMapSingle(existingApplication -> {
+                .switchIfEmpty(Single.error(new ApplicationNotFoundException(id)))
+                .flatMap(existingApplication -> {
                     Application toPatch = patchApplication.patch(existingApplication);
                     applicationTemplateManager.apply(toPatch);
                     final AccountSettings accountSettings = toPatch.getSettings().getAccount();
@@ -398,8 +398,8 @@ public class ApplicationServiceImpl implements ApplicationService {
     public Single<Application> renewClientSecret(String domain, String id, User principal) {
         LOGGER.debug("Renew client secret for application {} and domain {}", id, domain);
         return applicationRepository.findById(id)
-                .switchIfEmpty(Maybe.error(new ApplicationNotFoundException(id)))
-                .flatMapSingle(application -> {
+                .switchIfEmpty(Single.error(new ApplicationNotFoundException(id)))
+                .flatMap(application -> {
                     // check application
                     if (application.getSettings() == null) {
                         return Single.error(new IllegalStateException("Application settings is undefined"));
@@ -438,7 +438,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                     // create event for sync process
                     Event event = new Event(Type.APPLICATION, new Payload(application.getId(), ReferenceType.DOMAIN, application.getDomain(), Action.DELETE));
                     return applicationRepository.delete(id)
-                            .andThen(eventService.create(event).toCompletable())
+                            .andThen(Completable.fromSingle(eventService.create(event)))
                             // delete email templates
                             .andThen(emailTemplateService.findByClient(ReferenceType.DOMAIN, application.getDomain(), application.getId())
                                     .flatMapCompletable(email -> emailTemplateService.delete(email.getId()))
@@ -697,8 +697,8 @@ public class ApplicationServiceImpl implements ApplicationService {
         ApplicationOAuthSettings oAuthSettings = application.getSettings().getOauth();
 
         return domainService.findById(application.getDomain())
-                .switchIfEmpty(Maybe.error(new DomainNotFoundException(application.getDomain())))
-                .flatMapSingle(domain -> {
+                .switchIfEmpty(Single.error(new DomainNotFoundException(application.getDomain())))
+                .flatMap(domain -> {
                     //check redirect_uri
                     if (GrantTypeUtils.isRedirectUriRequired(oAuthSettings.getGrantTypes()) && CollectionUtils.isEmpty(oAuthSettings.getRedirectUris())) {
                         // if client type is from V2, it means that the application has been created from an old client without redirect_uri control (via the upgrader)
@@ -838,8 +838,8 @@ public class ApplicationServiceImpl implements ApplicationService {
         ApplicationOAuthSettings oAuthSettings = application.getSettings().getOauth();
 
         return domainService.findById(application.getDomain())
-                .switchIfEmpty(Maybe.error(new DomainNotFoundException(application.getDomain())))
-                .flatMapSingle(domain -> {
+                .switchIfEmpty(Single.error(new DomainNotFoundException(application.getDomain())))
+                .flatMap(domain -> {
                     if (oAuthSettings.getPostLogoutRedirectUris() != null) {
                         for (String logoutRedirectUri : oAuthSettings.getPostLogoutRedirectUris()) {
                             try {
@@ -881,8 +881,8 @@ public class ApplicationServiceImpl implements ApplicationService {
         ApplicationOAuthSettings oAuthSettings = application.getSettings().getOauth();
 
         return domainService.findById(application.getDomain())
-                .switchIfEmpty(Maybe.error(new DomainNotFoundException(application.getDomain())))
-                .flatMapSingle(domain -> {
+                .switchIfEmpty(Single.error(new DomainNotFoundException(application.getDomain())))
+                .flatMap(domain -> {
                     if (oAuthSettings.getRequestUris() != null) {
                         for (String requestUri : oAuthSettings.getRequestUris()) {
                             try {

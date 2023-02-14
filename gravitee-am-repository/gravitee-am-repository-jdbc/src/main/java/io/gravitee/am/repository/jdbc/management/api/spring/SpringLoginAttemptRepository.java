@@ -16,7 +16,7 @@
 package io.gravitee.am.repository.jdbc.management.api.spring;
 
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcLoginAttempt;
-import org.springframework.data.repository.reactive.RxJava2CrudRepository;
+import org.springframework.data.repository.reactive.RxJava3CrudRepository;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -24,5 +24,5 @@ import org.springframework.stereotype.Repository;
  * @author GraviteeSource Team
  */
 @Repository
-public interface SpringLoginAttemptRepository extends RxJava2CrudRepository<JdbcLoginAttempt, String> {
+public interface SpringLoginAttemptRepository extends RxJava3CrudRepository<JdbcLoginAttempt, String> {
 }

@@ -17,9 +17,9 @@
 package io.gravitee.am.gateway.handler.root.resources.handler.consent;
 
 import io.vertx.core.Handler;
-import io.vertx.reactivex.core.MultiMap;
-import io.vertx.reactivex.core.http.HttpServerRequest;
-import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.rxjava3.core.http.HttpServerRequest;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.springframework.core.env.Environment;
 
 import java.util.List;
@@ -27,7 +27,7 @@ import java.util.List;
 import static io.gravitee.am.common.utils.ConstantKeys.USER_CONSENT_IP_LOCATION;
 import static io.gravitee.am.common.utils.ConstantKeys.USER_CONSENT_USER_AGENT;
 import static io.gravitee.common.http.MediaType.APPLICATION_JSON;
-import static io.vertx.reactivex.core.http.HttpHeaders.CONTENT_TYPE;
+import static io.vertx.rxjava3.core.http.HttpHeaders.CONTENT_TYPE;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
 
