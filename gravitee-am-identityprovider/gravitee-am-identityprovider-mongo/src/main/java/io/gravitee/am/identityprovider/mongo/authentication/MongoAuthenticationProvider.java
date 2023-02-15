@@ -63,6 +63,7 @@ public class MongoAuthenticationProvider extends MongoAbstractProvider implement
     private static final String FIELD_CREATED_AT = "createdAt";
     private static final String FIELD_UPDATED_AT = "updatedAt";
 
+
     @Autowired
     private IdentityProviderMapper mapper;
 
@@ -78,7 +79,7 @@ public class MongoAuthenticationProvider extends MongoAbstractProvider implement
     }
 
     public Maybe<User> loadUserByUsername(Authentication authentication) {
-        String username = ((String) authentication.getPrincipal()).toLowerCase();
+        String username = getSafeUsername((String) authentication.getPrincipal());
         return findUserByMultipleField(username)
                 .toList()
                 .flatMapPublisher(users -> {
@@ -119,7 +120,7 @@ public class MongoAuthenticationProvider extends MongoAbstractProvider implement
                         return Maybe.error(new BadCredentialsException("Bad credentials"));
                     }
 
-                    var userEvaluation = !validUsers.isEmpty() ?  validUsers.get(0) : userEvaluations.get(0);
+                    var userEvaluation = !validUsers.isEmpty() ? validUsers.get(0) : userEvaluations.get(0);
 
                     var user = this.createUser(authentication.getContext(), userEvaluation.getUser());
                     ofNullable(authentication.getContext()).ifPresent(auth -> auth.set(ACTUAL_USERNAME, user.getUsername()));
@@ -132,14 +133,14 @@ public class MongoAuthenticationProvider extends MongoAbstractProvider implement
     private Flowable<Document> findUserByMultipleField(String value) {
         MongoCollection<Document> usersCol = this.mongoClient.getDatabase(this.configuration.getDatabase()).getCollection(this.configuration.getUsersCollection());
         String findQuery = this.configuration.getFindUserByMultipleFieldsQuery() != null ? this.configuration.getFindUserByMultipleFieldsQuery() : this.configuration.getFindUserByUsernameQuery();
-        String rawQuery = findQuery.replaceAll("\\?", value);
-        String jsonQuery = convertToJsonString(rawQuery);
+        String jsonQuery = convertToJsonString(findQuery)
+                .replaceAll("\\?", value);
         BsonDocument query = BsonDocument.parse(jsonQuery);
         return Flowable.fromPublisher(usersCol.find(query));
     }
 
     public Maybe<User> loadUserByUsername(String username) {
-        final String encodedUsername = username.toLowerCase();
+        final String encodedUsername = getSafeUsername(username);
         return findUserByUsername(encodedUsername)
                 .map(document -> createUser(new SimpleAuthenticationContext(), document));
     }
@@ -205,7 +206,7 @@ public class MongoAuthenticationProvider extends MongoAbstractProvider implement
     }
 
     private String convertToJsonString(String rawString) {
-        rawString = rawString.replaceAll("[^\\{\\}\\[\\],:\\s]+", "\"$0\"").replaceAll("\\s+", "");
+        rawString = rawString.replaceAll("[^" + JSON_SPECIAL_CHARS + "\\s]+", "\"$0\"").replaceAll("\\s+", "");
         return rawString;
     }
 
