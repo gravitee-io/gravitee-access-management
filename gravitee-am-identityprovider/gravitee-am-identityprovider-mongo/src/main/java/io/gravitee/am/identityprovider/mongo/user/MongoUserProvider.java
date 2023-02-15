@@ -57,9 +57,6 @@ public class MongoUserProvider extends MongoAbstractProvider implements UserProv
     private static final String FIELD_ID = "_id";
     private static final String FIELD_CREATED_AT = "createdAt";
     private static final String FIELD_UPDATED_AT = "updatedAt";
-    private static final String JSON_SPECIAL_CHARS = "\\{\\}\\[\\],:";
-    private static final String QUOTE = "\"";
-    private static final String SAFE_QUOTE_REPLACEMENT = "\\\\\\\\\\\\" + QUOTE;
 
     @Autowired
     private BinaryToTextEncoder binaryToTextEncoder;
@@ -92,8 +89,7 @@ public class MongoUserProvider extends MongoAbstractProvider implements UserProv
 
     @Override
     public Maybe<User> findByUsername(String username) {
-        // lowercase username since case-sensitivity feature
-        final String encodedUsername = username.toLowerCase().replaceAll(QUOTE, SAFE_QUOTE_REPLACEMENT);
+        final String encodedUsername = getSafeUsername(username);
 
         String rawQuery = this.configuration.getFindUserByUsernameQuery();
         String jsonQuery = convertToJsonString(rawQuery).replaceAll("\\?", encodedUsername);
@@ -103,8 +99,7 @@ public class MongoUserProvider extends MongoAbstractProvider implements UserProv
 
     @Override
     public Single<User> create(User user) {
-        // lowercase username to avoid duplicate account
-        final String username = user.getUsername().toLowerCase();
+        final String username = getSafeUsername(user.getUsername());
 
         return findByUsername(username)
                 .isEmpty()
@@ -184,7 +179,7 @@ public class MongoUserProvider extends MongoAbstractProvider implements UserProv
                 .switchIfEmpty(Maybe.error(new UserNotFoundException(user.getId())))
                 .flatMapSingle(foundUser -> {
                     var updates = Updates.combine(
-                            Updates.set(configuration.getUsernameField(), username),
+                            Updates.set(configuration.getUsernameField(), username.toLowerCase()),
                             Updates.set(FIELD_UPDATED_AT, new Date()));
                     return Single.fromPublisher(usersCollection.updateOne(eq(FIELD_ID, user.getId()), updates))
                             .flatMap(updateResult -> findById(user.getId()).toSingle());

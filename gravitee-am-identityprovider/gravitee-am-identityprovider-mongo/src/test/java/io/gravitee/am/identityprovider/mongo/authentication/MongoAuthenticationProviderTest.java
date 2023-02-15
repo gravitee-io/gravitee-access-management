@@ -23,6 +23,7 @@ import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.mongo.authentication.spring.MongoAuthenticationProviderConfiguration;
 import io.reactivex.observers.TestObserver;
+import java.util.concurrent.TimeUnit;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -106,6 +107,36 @@ public class MongoAuthenticationProviderTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(u -> "user01".equals(u.getUsername()));
+    }
+
+    @Test
+    public void shouldLoadUserByUsername_authentication_multifield_username_with_spaces() {
+        TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
+            private final AuthenticationContext authenticationContext = mock(AuthenticationContext.class);
+
+            @Override
+            public Object getCredentials() {
+                return "b o bpassword";
+            }
+
+            @Override
+            public Object getPrincipal() {
+                return "b o b";
+            }
+
+            @Override
+            public AuthenticationContext getContext() {
+                doReturn(authenticationContext).when(authenticationContext).set(anyString(), anyString());
+                doReturn(getPrincipal().toString()).when(authenticationContext).get(getPrincipal().toString());
+                return authenticationContext;
+            }
+        }).test();
+
+        testObserver.awaitTerminalEvent(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(u -> "b o b".equals(u.getUsername()));
     }
 
     @Test

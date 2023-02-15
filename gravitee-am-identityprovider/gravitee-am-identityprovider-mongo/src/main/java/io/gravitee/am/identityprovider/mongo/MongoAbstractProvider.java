@@ -46,6 +46,11 @@ public abstract class MongoAbstractProvider implements InitializingBean {
 
     protected MongoClient mongoClient;
 
+    protected static final String JSON_SPECIAL_CHARS = "\\{\\}\\[\\],:";
+    protected static final String QUOTE = "\"";
+    protected static final String SAFE_QUOTE_REPLACEMENT = "\\\\\\\\\\\\" + QUOTE;
+
+
     /**
      * This provider is used to create MongoClient when the main backend is JDBC/R2DBC because in that case the commonConnectionProvider will provide R2DBC ConnectionPool.
      * This is useful if the user want to create a Mongo IDP when the main backend if a RDBMS.
@@ -62,5 +67,10 @@ public abstract class MongoAbstractProvider implements InitializingBean {
             this.clientWrapper = mongoProvider.getClientFromConfiguration(this.configuration);
         }
         this.mongoClient = this.clientWrapper.getClient();
+    }
+
+    protected String getSafeUsername(String username) {
+        // lowercase username since case-sensitivity feature
+        return username.toLowerCase().replaceAll(QUOTE, SAFE_QUOTE_REPLACEMENT);
     }
 }

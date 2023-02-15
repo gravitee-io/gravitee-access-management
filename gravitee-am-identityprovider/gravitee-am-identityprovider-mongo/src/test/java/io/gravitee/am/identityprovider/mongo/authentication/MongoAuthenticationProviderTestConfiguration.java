@@ -48,7 +48,8 @@ public class MongoAuthenticationProviderTestConfiguration implements Initializin
                 new Document("username", "bob").append("password", "bobspassword"),
                 new Document("username", "user01").append("email", "user01@acme.com").append("password", "user01"),
                 new Document("username", "user02").append("email", "common@acme.com").append("password", "user02"),
-                new Document("username", "user03").append("email", "common@acme.com").append("password", "user03")
+                new Document("username", "user03").append("email", "common@acme.com").append("password", "user03"),
+                new Document("username", "b o b").append("email", "b+o+b@acme.com").append("password", "b o bpassword")
         );
         users.stream().forEach(doc -> Observable.fromPublisher(collection.insertOne(doc)).blockingFirst());
     }
