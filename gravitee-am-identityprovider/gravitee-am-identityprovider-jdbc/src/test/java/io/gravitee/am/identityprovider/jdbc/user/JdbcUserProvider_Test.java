@@ -46,6 +46,16 @@ public abstract class JdbcUserProvider_Test {
     }
 
     @Test
+    public void shouldSelectUserByUsernameWithSpaces() {
+        TestObserver<User> testObserver = userProvider.findByUsername("b o b").test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(u -> "b o b".equals(u.getUsername()));
+    }
+
+    @Test
     public void shouldSelectUserByEmail() {
         TestObserver<User> testObserver = userProvider.findByEmail("user01@acme.com").test();
         testObserver.awaitTerminalEvent();
@@ -181,7 +191,7 @@ public abstract class JdbcUserProvider_Test {
     @Test
     public void must_not_updateUsername_user_not_found() {
         var user = new DefaultUser();
-        user.setId("6");
+        user.setId("7");
         TestObserver testObserver = userProvider.updateUsername(user, "newUsername").test();
         testObserver.awaitTerminalEvent();
 

@@ -76,6 +76,7 @@ public abstract class JdbcAuthenticationProviderConfigurationTest implements Ini
         Single.fromPublisher(connection.createStatement("insert into users values('3', 'user02', 'user02', 'common@acme.com', null)").execute()).subscribe();
         Single.fromPublisher(connection.createStatement("insert into users values('4', 'user03', 'user03', 'common@acme.com', null)").execute()).subscribe();
         Single.fromPublisher(connection.createStatement("insert into users values('5', 'changeme', 'changepass', null, null)").execute()).subscribe();
+        Single.fromPublisher(connection.createStatement("insert into users values('6', 'b o b', 'changepass', null, null)").execute()).subscribe();
     }
 
     @Bean

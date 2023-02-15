@@ -55,6 +55,16 @@ public class MongoUserProviderTest {
     }
 
     @Test
+    public void shouldSelectUserByUsernameWithSpaces() {
+        TestObserver<User> testObserver = userProvider.findByUsername("b o b").test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(u -> "b o b".equals(u.getUsername()));
+    }
+
+    @Test
     public void shouldSelectUserByEmail() {
         TestObserver<User> testObserver = userProvider.findByEmail("user01@acme.com").test();
         testObserver.awaitTerminalEvent();

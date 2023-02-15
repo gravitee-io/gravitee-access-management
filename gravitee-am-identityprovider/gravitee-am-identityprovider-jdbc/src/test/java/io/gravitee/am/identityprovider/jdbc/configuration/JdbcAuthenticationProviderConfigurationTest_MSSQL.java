@@ -73,5 +73,13 @@ public class JdbcAuthenticationProviderConfigurationTest_MSSQL extends JdbcAuthe
                         .bindNull("metadata", String.class)
                         .execute()).flatMap(rp -> Single.fromPublisher(rp.getRowsUpdated()))
                 .blockingGet();
+        Single.fromPublisher(connection.createStatement("insert into users(id, username, password, email, metadata) values( @id, @username, @password, @email , @metadata)")
+                        .bind("id", "6")
+                        .bind("username", "b o b")
+                        .bind("password", "changepass")
+                        .bindNull("email", String.class)
+                        .bindNull("metadata", String.class)
+                        .execute()).flatMap(rp -> Single.fromPublisher(rp.getRowsUpdated()))
+                .blockingGet();
     }
 }
