@@ -224,7 +224,7 @@ export class UserProfileComponent implements OnInit {
 
   updateUsername() {
     this.dialogService
-      .confirm('Update Username', 'Are you sure you want to update this username ?')
+      .confirm('Update Username', 'Are you sure you want to update this username?')
       .subscribe(res => {
         if (res) {
           this.userService.updateUsername(this.domainId, this.user.id, this.organizationContext, this.user.username).subscribe(() => {
