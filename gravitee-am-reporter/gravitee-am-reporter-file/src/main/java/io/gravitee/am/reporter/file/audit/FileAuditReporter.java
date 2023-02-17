@@ -16,6 +16,7 @@
 package io.gravitee.am.reporter.file.audit;
 
 import io.gravitee.am.common.analytics.Type;
+import io.gravitee.am.common.utils.GraviteeContext;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.reporter.api.audit.AuditReportableCriteria;
@@ -29,10 +30,10 @@ import io.gravitee.am.reporter.file.formatter.Formatter;
 import io.gravitee.am.reporter.file.formatter.FormatterFactory;
 import io.gravitee.am.reporter.file.spring.FileReporterSpringConfiguration;
 import io.gravitee.am.reporter.file.vertx.VertxFileWriter;
-import io.gravitee.am.common.utils.GraviteeContext;
 import io.gravitee.common.service.AbstractService;
 import io.gravitee.node.api.Node;
 import io.gravitee.reporter.api.Reportable;
+import io.gravitee.reporter.api.Reporter;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Future;
@@ -59,7 +60,7 @@ import java.util.Map;
  * @author GraviteeSource Team
  */
 @Import(FileReporterSpringConfiguration.class)
-public class FileAuditReporter extends AbstractService implements AuditReporter, InitializingBean {
+public class FileAuditReporter extends AbstractService<Reporter> implements AuditReporter, InitializingBean {
     public static final String REPORTERS_FILE_ENABLED = "reporters.file.enabled";
     public static final String REPORTERS_FILE_DIRECTORY = "reporters.file.directory";
     public static final String REPORTERS_FILE_OUTPUT = "reporters.file.output";

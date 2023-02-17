@@ -42,6 +42,7 @@ import io.gravitee.am.repository.provider.ClientWrapper;
 import io.gravitee.am.repository.provider.ConnectionProvider;
 import io.gravitee.common.service.AbstractService;
 import io.gravitee.reporter.api.Reportable;
+import io.gravitee.reporter.api.Reporter;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -81,7 +82,7 @@ import static com.mongodb.client.model.Filters.or;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class MongoAuditReporter extends AbstractService implements AuditReporter, InitializingBean {
+public class MongoAuditReporter extends AbstractService<Reporter> implements AuditReporter, InitializingBean {
 
     private static final Logger logger = LoggerFactory.getLogger(MongoAuditReporter.class);
     private static final String FIELD_ID = "_id";

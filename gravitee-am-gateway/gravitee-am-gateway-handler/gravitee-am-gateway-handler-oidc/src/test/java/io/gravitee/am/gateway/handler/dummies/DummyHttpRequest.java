@@ -158,6 +158,16 @@ public class DummyHttpRequest implements HttpServerRequest {
     }
 
     @Override
+    public HttpServerRequest setParamsCharset(String s) {
+        return null;
+    }
+
+    @Override
+    public String getParamsCharset() {
+        return null;
+    }
+
+    @Override
     public MultiMap params() {
         return params;
     }

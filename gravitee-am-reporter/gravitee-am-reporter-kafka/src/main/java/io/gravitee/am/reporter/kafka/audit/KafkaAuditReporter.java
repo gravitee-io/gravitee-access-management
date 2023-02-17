@@ -28,6 +28,7 @@ import io.gravitee.am.reporter.kafka.kafka.JacksonSerializer;
 import io.gravitee.common.service.AbstractService;
 import io.gravitee.node.api.Node;
 import io.gravitee.reporter.api.Reportable;
+import io.gravitee.reporter.api.Reporter;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Vertx;
@@ -47,7 +48,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @author Florent Amaridon
  * @author Visiativ
  */
-public class KafkaAuditReporter extends AbstractService implements AuditReporter, InitializingBean {
+public class KafkaAuditReporter extends AbstractService<Reporter> implements AuditReporter, InitializingBean {
 
   private static Logger LOGGER = LoggerFactory.getLogger(KafkaAuditReporter.class);
 

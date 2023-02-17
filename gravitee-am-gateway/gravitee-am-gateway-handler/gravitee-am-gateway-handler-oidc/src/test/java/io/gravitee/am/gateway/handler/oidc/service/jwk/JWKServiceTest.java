@@ -145,7 +145,7 @@ public class JWKServiceTest {
         HttpResponse<Buffer> response = Mockito.mock(HttpResponse.class);
 
 
-        when(webClient.getAbs(any())).thenReturn(request);
+        when(webClient.getAbs(anyString())).thenReturn(request);
         when(request.rxSend()).thenReturn(Single.just(response));
 
         TestObserver testObserver = jwkService.getKeys(JWKS_URI).test();
@@ -161,7 +161,7 @@ public class JWKServiceTest {
         HttpResponse<Buffer> response = Mockito.mock(HttpResponse.class);
 
 
-        when(webClient.getAbs(any())).thenReturn(request);
+        when(webClient.getAbs(anyString())).thenReturn(request);
         when(request.rxSend()).thenReturn(Single.just(response));
         when(response.bodyAsString()).thenReturn("{\"unknown\":[]}");
 
@@ -179,7 +179,7 @@ public class JWKServiceTest {
 
         String bodyAsString = "{\"keys\":[{\"kty\": \"RSA\",\"use\": \"enc\",\"kid\": \"KID\",\"n\": \"modulus\",\"e\": \"exponent\"}]}";
 
-        when(webClient.getAbs(any())).thenReturn(request);
+        when(webClient.getAbs(anyString())).thenReturn(request);
         when(request.rxSend()).thenReturn(Single.just(response));
         when(response.bodyAsString()).thenReturn(bodyAsString);
 
@@ -268,7 +268,7 @@ public class JWKServiceTest {
 
         String bodyAsString = "{\"keys\":[{\"kty\": \"RSA\",\"use\": \"enc\",\"kid\": \"KID\",\"n\": \"modulus\",\"e\": \"exponent\"}]}";
 
-        when(webClient.getAbs(any())).thenReturn(request);
+        when(webClient.getAbs(anyString())).thenReturn(request);
         when(request.rxSend()).thenReturn(Single.just(response));
         when(response.bodyAsString()).thenReturn(bodyAsString);
 
