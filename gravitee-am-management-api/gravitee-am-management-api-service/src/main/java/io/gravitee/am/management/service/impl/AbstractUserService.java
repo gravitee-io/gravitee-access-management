@@ -176,12 +176,13 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
                                         .flatMap(idpUser -> userProvider.updateUsername(idpUser, username))
                                         .flatMap(idpUser -> {
                                             var oldUsername = user.getUsername();
+                                            var oldLastPasswordReset = user.getLastPasswordReset();
                                             user.setUsername(username);
                                             user.setLastUsernameReset(new Date());
                                             return getUserService().update(user).onErrorResumeNext(ex -> {
                                                 // In the case we cannot update on our side, we rollback the username on the iDP
                                                 user.setUsername(oldUsername);
-                                                user.setLastUsernameReset(null);
+                                                user.setLastUsernameReset(oldLastPasswordReset);
                                                 ((DefaultUser) idpUser).setUsername(oldUsername);
                                                 return userProvider.updateUsername(idpUser, idpUser.getUsername())
                                                         .flatMap(rolledBackUser -> Single.error(ex));
