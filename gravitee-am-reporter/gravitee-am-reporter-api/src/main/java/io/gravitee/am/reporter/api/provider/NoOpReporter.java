@@ -24,6 +24,7 @@ import io.gravitee.am.reporter.api.audit.AuditReporter;
 import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.common.component.Lifecycle;
 import io.gravitee.reporter.api.Reportable;
+import io.gravitee.reporter.api.Reporter;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
@@ -90,12 +91,12 @@ public class NoOpReporter implements AuditReporter {
     }
 
     @Override
-    public Object start() throws Exception {
+    public Reporter start() throws Exception {
         return this;
     }
 
     @Override
-    public Object stop() throws Exception {
+    public Reporter stop() throws Exception {
         return this;
     }
 }

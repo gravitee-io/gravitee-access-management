@@ -63,6 +63,7 @@ public class CSRFHandlerImpl implements CSRFHandler {
     private long timeout = SessionHandler.DEFAULT_SESSION_TIMEOUT;
     private String origin;
     private boolean httpOnly;
+    private boolean cookieSecure;
 
     public CSRFHandlerImpl(Vertx vertx, final String secret) {
         this.RAND = VertxContextPRNG.current(vertx);
@@ -95,6 +96,12 @@ public class CSRFHandlerImpl implements CSRFHandler {
     @Override
     public CSRFHandler setCookieHttpOnly(boolean httpOnly) {
         this.httpOnly = httpOnly;
+        return this;
+    }
+
+    @Override
+    public CSRFHandler setCookieSecure(boolean cookieSecure) {
+        this.cookieSecure = cookieSecure;
         return this;
     }
 

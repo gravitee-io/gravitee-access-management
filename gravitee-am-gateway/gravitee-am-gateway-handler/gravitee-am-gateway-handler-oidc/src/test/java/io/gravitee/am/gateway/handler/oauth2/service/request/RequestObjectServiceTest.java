@@ -114,7 +114,7 @@ public class RequestObjectServiceTest {
         final HttpResponse httpResponse = mock(HttpResponse.class);
         when(httpResponse.bodyAsString()).thenReturn("request_uri_payload");
         when(httpRequest.rxSend()).thenReturn(Single.just(httpResponse));
-        when(webClient.getAbs(any())).thenReturn(httpRequest);
+        when(webClient.getAbs(anyString())).thenReturn(httpRequest);
 
         JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.parse("NONE"));
         JSONObject jsonObject = new JSONObject();
@@ -146,7 +146,7 @@ public class RequestObjectServiceTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(InvalidRequestUriException.class);
 
-        verify(webClient, never()).getAbs(any());
+        verify(webClient, never()).getAbs(anyString());
         verify(jweService, never()).decrypt(any(),anyBoolean());
     }
 
@@ -164,7 +164,7 @@ public class RequestObjectServiceTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(InvalidRequestUriException.class);
 
-        verify(webClient, never()).getAbs(any());
+        verify(webClient, never()).getAbs(anyString());
         verify(jweService, never()).decrypt(any(),anyBoolean());
     }
 
@@ -182,7 +182,7 @@ public class RequestObjectServiceTest {
         final HttpResponse httpResponse = mock(HttpResponse.class);
         when(httpResponse.bodyAsString()).thenReturn("request_uri_payload");
         when(httpRequest.rxSend()).thenReturn(Single.just(httpResponse));
-        when(webClient.getAbs(any())).thenReturn(httpRequest);
+        when(webClient.getAbs(anyString())).thenReturn(httpRequest);
 
         JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.parse("NONE"));
         JSONObject jsonObject = new JSONObject();

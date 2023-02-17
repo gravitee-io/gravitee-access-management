@@ -38,6 +38,7 @@ import io.gravitee.am.reporter.jdbc.spring.JdbcReporterSpringConfiguration;
 import io.gravitee.am.reporter.jdbc.utils.JSONMapper;
 import io.gravitee.common.service.AbstractService;
 import io.gravitee.reporter.api.Reportable;
+import io.gravitee.reporter.api.Reporter;
 import io.r2dbc.pool.ConnectionPool;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactory;
@@ -85,7 +86,7 @@ import static reactor.adapter.rxjava.RxJava3Adapter.*;
  * @author GraviteeSource Team
  */
 @Import(JdbcReporterSpringConfiguration.class)
-public class JdbcAuditReporter extends AbstractService implements AuditReporter, InitializingBean {
+public class JdbcAuditReporter extends AbstractService<Reporter> implements AuditReporter, InitializingBean {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JdbcAuditReporter.class);
     public static final String REPORTER_AUTO_PROVISIONING = "management.jdbc.reporter.provisioning";
