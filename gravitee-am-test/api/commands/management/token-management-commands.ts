@@ -18,7 +18,7 @@ const btoa = require('btoa');
 
 export const requestAdminAccessToken = () => requestAccessToken(process.env.AM_ADMIN_USERNAME, process.env.AM_ADMIN_PASSWORD)
 
-export const requestAccessToken = (username:string, password:string) =>{
+export const requestAccessToken = (username:string, password:string) => {
     return request(process.env.AM_MANAGEMENT_URL)
         .post('/management/auth/token')
         .set('Authorization', 'Basic ' + btoa(`${username}:${password}`))
