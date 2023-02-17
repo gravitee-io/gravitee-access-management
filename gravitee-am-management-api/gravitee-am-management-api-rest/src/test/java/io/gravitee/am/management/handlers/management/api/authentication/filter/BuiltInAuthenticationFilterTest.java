@@ -22,7 +22,7 @@ import io.gravitee.am.jwt.JWTParser;
 import io.gravitee.am.management.service.OrganizationUserService;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 import java.awt.EventQueue;
 import java.io.IOException;
 import java.util.Date;
