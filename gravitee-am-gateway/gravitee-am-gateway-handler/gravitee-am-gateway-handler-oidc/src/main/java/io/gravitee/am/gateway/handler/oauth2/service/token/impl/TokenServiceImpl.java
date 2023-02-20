@@ -147,6 +147,12 @@ public class TokenServiceImpl implements TokenService {
         // invalid, expired, revoked or was issued to another client.
         return getRefreshToken(refreshToken, client)
                 .switchIfEmpty(Single.error(new InvalidGrantException("Refresh token is invalid")))
+                .onErrorResumeNext(error -> {
+                    if (error instanceof InvalidTokenException) {
+                        return Single.error(new InvalidGrantException("Refresh token is invalid"));
+                    }
+                    return Single.error(error);
+                })
                 .flatMap(refreshToken1 -> {
                     if (refreshToken1.getExpireAt().before(new Date())) {
                         return Single.error(new InvalidGrantException("Refresh token is expired"));
