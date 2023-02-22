@@ -17,7 +17,6 @@ package io.gravitee.am.management.service.impl.commands;
 
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.management.service.OrganizationUserService;
-import io.gravitee.am.management.service.UserService;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.cockpit.api.command.Command;
@@ -57,8 +56,11 @@ public class UserCommandHandler implements CommandHandler<UserCommand, UserReply
 
     @Override
     public Single<UserReply> handle(UserCommand command) {
-
         UserPayload userPayload = command.getPayload();
+        if (userPayload.getUsername() == null) {
+            logger.warn("Request rejected due to null username.");
+            return Single.just(new UserReply(command.getId(), CommandStatus.ERROR));
+        }
 
         NewUser newUser = new NewUser();
         newUser.setInternal(false);
