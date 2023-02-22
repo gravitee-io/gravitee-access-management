@@ -1417,7 +1417,8 @@ export const routes: Routes = [
                         data: {
                           menu: {
                             label: 'Login',
-                            section: 'Settings'
+                            section: 'Settings',
+                            level: 'level2'
                           },
                           perms: {
                             only: ['domain_settings_read']
