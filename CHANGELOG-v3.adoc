@@ -1,6 +1,19 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/634?closed=1[AM - 3.18.16 (2023-02-23)]
+
+=== Bug fixes
+
+*_General_*
+
+- Factor State is not accurate https://github.com/gravitee-io/issues/issues/8766[#8766]
+- FilterCriteriaParser parse can't handle apostrophes https://github.com/gravitee-io/issues/issues/8679[#8679]
+- Pre login exit on error message sent to provider instead of callback https://github.com/gravitee-io/issues/issues/8750[#8750]
+
+
+
+
 == https://github.com/gravitee-io/issues/milestone/633?closed=1[AM - 3.20.1 (2023-02-10)]
 
 === Bug fixes
@@ -17,8 +30,8 @@
 - [saml2] Add option to sign assertion https://github.com/gravitee-io/issues/issues/8868[#8868]
 - [saml2] HTTP-POST Binding https://github.com/gravitee-io/issues/issues/8869[#8869]
 
- 
- 
+
+
 
 == https://github.com/gravitee-io/issues/milestone/632?closed=1[AM - 3.19.6 (2023-02-02)]
 
