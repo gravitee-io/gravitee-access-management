@@ -27,9 +27,20 @@ import java.util.List;
 public final class FilterCriteriaParser {
 
     private static final int MAX_SIZE = 64;
-    private static final List<String> specialCharsList = new ArrayList<>() {
+    private static final List<String> nameSpecialCharsList = new ArrayList<>() {
         {
             add("'");
+            add("\"");
+            add("\\");
+            add(";");
+            add("{");
+            add("}");
+            add("$");
+        }
+    };
+
+    private static final List<String> valueSpecialCharsList = new ArrayList<>() {
+        {
             add("\"");
             add("\\");
             add(";");
@@ -120,7 +131,7 @@ public final class FilterCriteriaParser {
             return null;
         }
 
-        if (specialCharsList.stream().anyMatch(s -> filterName.contains(s))) {
+        if (nameSpecialCharsList.stream().anyMatch(s -> filterName.contains(s))) {
             throw new IllegalArgumentException("Invalid filter name [" + filterName + "] found in the the search query");
         }
 
@@ -159,7 +170,7 @@ public final class FilterCriteriaParser {
     }
 
     private static String convertFilterValue(FilterCriteria criteria, String filterName, String operator) {
-        if (specialCharsList.stream().anyMatch(s -> criteria.getFilterValue().contains(s))) {
+        if (valueSpecialCharsList.stream().anyMatch(s -> criteria.getFilterValue().contains(s))) {
             throw new IllegalArgumentException("Invalid filter value [" + criteria.getFilterValue() + "] found in the the search query");
         }
 

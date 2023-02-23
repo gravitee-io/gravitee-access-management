@@ -366,7 +366,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(new LoginPostEndpoint());
 
         rootRouter.route(PATH_LOGIN)
-                .failureHandler(new LoginFailureHandler(authenticationFlowContextService));
+                .failureHandler(new LoginFailureHandler(authenticationFlowContextService, domain, identityProviderManager));
 
         // logout route
         rootRouter.route(PATH_LOGOUT)
