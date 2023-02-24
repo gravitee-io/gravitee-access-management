@@ -232,7 +232,7 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
         factorData.put(FactorContext.KEY_CODE, code);
         factorData.put(FactorContext.KEY_REQUEST, new EvaluableRequest(new VertxHttpServerRequest(routingContext.request().getDelegate())));
 
-        if(factor.is(FIDO2)){
+        if (factor.is(FIDO2)) {
             factorData.put(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY, routingContext.session().get(PASSWORDLESS_CHALLENGE_KEY));
             factorData.put(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY, routingContext.session().get(PASSWORDLESS_CHALLENGE_USERNAME_KEY));
             factorData.put(ConstantKeys.PASSWORDLESS_ORIGIN, getOrigin(domain.getWebAuthnSettings()));
@@ -247,28 +247,49 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
             }
 
             if (factor.is(FIDO2)) {
-                final String userId = endUser.getId();
-                final JsonObject webauthnResp = new JsonObject(code);
-                final String credentialId = webauthnResp.getString("id");
-                updateCredential(routingContext.request(), credentialId, userId, ch -> {
+                handleFido2Factor(routingContext, client, endUser, code, h);
+                return;
+            }
+            // save enrolled factor if needed and redirect to the original url
+            routingContext.session().put(ConstantKeys.MFA_FACTOR_ID_CONTEXT_KEY, factorId);
+            enrolledFactor.setStatus(FactorStatus.ACTIVATED);
+            saveFactor(endUser, factorProvider.changeVariableFactorSecurity(enrolledFactor), fh -> {
+                if (fh.failed()) {
+                    logger.error("An error occurs while saving enrolled factor for the current user", fh.cause());
+                    handleException(routingContext);
+                    return;
+                }
 
-                    if (ch.failed()) {
-                        final String username = routingContext.session().get(PASSWORDLESS_CHALLENGE_USERNAME_KEY);
-                        logger.error("An error has occurred while updating credential for the user {}", username, h.cause());
-                        routingContext.fail(401);
-                        return;
-                    }
+                cleanSession(routingContext);
+                updateStrongAuthStatus(routingContext);
+                redirectToAuthorize(routingContext, client);
+            });
+        });
+    }
 
-                    updateStrongAuthStatus(routingContext);
+    private void handleFido2Factor(RoutingContext routingContext, Client client, User endUser, String code, AsyncResult<Void> h) {
+        final String userId = endUser.getId();
+        final JsonObject webauthnResp = new JsonObject(code);
+        final String credentialId = webauthnResp.getString("id");
+        updateCredential(routingContext.request(), credentialId, userId, ch -> {
 
-                    if (userHasFido2Factor(endUser)) {
-                        cleanSession(routingContext);
-                        redirectToAuthorize(routingContext, client);
-                    } else {
-                        final String fidoFactorId = routingContext.session().get(ENROLLED_FACTOR_ID_KEY);
-                        factorService.enrollFactor(endUser, createEnrolledFactor(fidoFactorId, credentialId))
-                                .ignoreElement()
-                                .subscribe(
+            if (ch.failed()) {
+                final String username = routingContext.session().get(PASSWORDLESS_CHALLENGE_USERNAME_KEY);
+                logger.error("An error has occurred while updating credential for the user {}", username, h.cause());
+                routingContext.fail(401);
+                return;
+            }
+
+            updateStrongAuthStatus(routingContext);
+
+            if (userHasFido2Factor(endUser)) {
+                cleanSession(routingContext);
+                redirectToAuthorize(routingContext, client);
+            } else {
+                final String fidoFactorId = routingContext.session().get(ENROLLED_FACTOR_ID_KEY);
+                factorService.enrollFactor(endUser, createEnrolledFactor(fidoFactorId, credentialId))
+                        .ignoreElement()
+                        .subscribe(
                                 () -> {
                                     cleanSession(routingContext);
                                     redirectToAuthorize(routingContext, client);
@@ -278,30 +299,9 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
                                     routingContext.fail(401);
                                 }
                         );
-                    }
-                });
-                return;
-            }
-            // save enrolled factor if needed and redirect to the original url
-            routingContext.session().put(ConstantKeys.MFA_FACTOR_ID_CONTEXT_KEY, factorId);
-            if (routingContext.session().get(ConstantKeys.ENROLLED_FACTOR_ID_KEY) != null || factorProvider.useVariableFactorSecurity()) {
-                enrolledFactor.setStatus(FactorStatus.ACTIVATED);
-                saveFactor(endUser, factorProvider.changeVariableFactorSecurity(enrolledFactor), fh -> {
-                    if (fh.failed()) {
-                        logger.error("An error occurs while saving enrolled factor for the current user", fh.cause());
-                        handleException(routingContext);
-                        return;
-                    }
-
-                    cleanSession(routingContext);
-                    updateStrongAuthStatus(routingContext);
-                    redirectToAuthorize(routingContext, client);
-                });
-            } else {
-                updateStrongAuthStatus(routingContext);
-                redirectToAuthorize(routingContext, client);
             }
         });
+        return;
     }
 
     private void redirectToAuthorize(RoutingContext routingContext, Client client) {
@@ -587,14 +587,12 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
         return enrolledFactor;
     }
 
-    private boolean enableAlternateMFAOptions(Client client, io.gravitee.am.model.User endUser ){
-        if(endUser.getFactors() == null || endUser.getFactors().size() <= 1) {
+    private boolean enableAlternateMFAOptions(Client client, io.gravitee.am.model.User endUser) {
+        if (endUser.getFactors() == null || endUser.getFactors().size() <= 1) {
             return false;
-        }
-        else if(client.getFactors() == null || client.getFactors().size() <= 1){
+        } else if (client.getFactors() == null || client.getFactors().size() <= 1) {
             return false;
-        }
-        else {
+        } else {
             final Set<String> clientFactorIds = client.getFactors();
             final List<EnrolledFactor> activeEnrolledFactors = endUser.getFactors()
                     .stream()
