@@ -82,11 +82,14 @@ if [ "x$GIO_USE_IPV4" != "x" ]; then
   JAVA_OPTS="$JAVA_OPTS -Djava.net.preferIPv4Stack=true"
 fi
 
-# Causes the JVM to dump its heap on OutOfMemory.
-JAVA_OPTS="$JAVA_OPTS -XX:+HeapDumpOnOutOfMemoryError"
-# The path to the heap dump location, note directory must exists and have enough
-# space for a full heap dump.
-#JAVA_OPTS="$JAVA_OPTS -XX:HeapDumpPath=$GRAVITEE_HOME/logs/heapdump.hprof"
+# Causes the JVM to dump its heap on OutOfMemory if the heap dump path exists. 
+# Note that the heap dump path could be a file or directory.
+GIO_HEAP_DUMP_FILE=${GIO_HEAP_DUMP_FILE:-"heapdump.hprof"}
+if [ -d $GIO_HEAP_DUMP_DIR ]; then
+  JAVA_OPTS="$JAVA_OPTS -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=$GIO_HEAP_DUMP_DIR/$GIO_HEAP_DUMP_FILE"
+else
+  echo "The directory $GIO_HEAP_DUMP_DIR is not specified or does not exist. Heap dump on OutOfMemoryError is disabled."
+fi
 
 # JVM exits on the first occurrence of an out-of-memory error.
 GIO_EXIT_ON_OOM_ERROR=${GIO_EXIT_ON_OOM_ERROR:-true}
