@@ -40,7 +40,6 @@ import java.util.Map;
 
 import static io.gravitee.am.common.event.AlertEventKeys.*;
 import static io.gravitee.am.gateway.handler.common.auth.event.AuthenticationEvent.SUCCESS;
-import static io.gravitee.risk.assessment.api.assessment.Assessment.NONE;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -137,7 +136,6 @@ public class AlertEventProcessor extends AbstractService {
                                 PROPERTY_RISK_ASSESSMENT + "." + PROPERTY_IP_REPUTATION, result.getIpReputation().getAssessment(),
                                 PROPERTY_RISK_ASSESSMENT + "." + PROPERTY_GEO_VELOCITY, result.getGeoVelocity().getAssessment()
                         ).forEach((property, assessment) -> eventBuilder.property(property, assessment.name()));
-                        sendEvent(eventBuilder.build());
                         return eventBuilder;
                     })
                     .switchIfEmpty(Maybe.just(eventBuilder))
@@ -145,17 +143,6 @@ public class AlertEventProcessor extends AbstractService {
         } else {
             sendEvent(eventBuilder.build());
         }
-    }
-
-    private Consumer<AssessmentMessageResult> sendAssessmentMessageResult(DefaultEvent.Builder eventBuilder) {
-        return result -> {
-            Map.of(
-                    PROPERTY_RISK_ASSESSMENT + "." + PROPERTY_UNKNOWN_DEVICES, result.getDevices().getAssessment(),
-                    PROPERTY_RISK_ASSESSMENT + "." + PROPERTY_IP_REPUTATION, result.getIpReputation().getAssessment(),
-                    PROPERTY_RISK_ASSESSMENT + "." + PROPERTY_GEO_VELOCITY, result.getGeoVelocity().getAssessment()
-            ).forEach((property, assessment) -> eventBuilder.property(property, assessment.name()));
-            sendEvent(eventBuilder.build());
-        };
     }
 
     private void sendEvent(io.gravitee.alert.api.event.Event event) {
