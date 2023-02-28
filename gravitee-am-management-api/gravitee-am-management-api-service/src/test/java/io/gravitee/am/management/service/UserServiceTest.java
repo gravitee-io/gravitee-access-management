@@ -822,6 +822,7 @@ public class UserServiceTest {
         when(userProvider.updateUsername(any(), anyString())).thenReturn(Single.just(defaultUser));
 
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
+        when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
 
         var observer = userService.updateUsername(DOMAIN, domain.getId(), user.getId(), user.getUsername(), null).test();
 
@@ -830,5 +831,6 @@ public class UserServiceTest {
 
         verify(commonUserService, times(1)).update(any());
         verify(userProvider, times(1)).updateUsername(any(), anyString());
+        verify(loginAttemptService, times(1)).reset(any());
     }
 }

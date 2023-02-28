@@ -25,7 +25,9 @@ import io.gravitee.am.model.Application;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.membership.MemberType;
+import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.RateLimiterService;
@@ -51,6 +53,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 
 import static io.gravitee.am.model.ReferenceType.DOMAIN;
@@ -89,6 +92,9 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
 
     @Autowired
     protected VerifyAttemptService verifyAttemptService;
+
+    @Autowired
+    private LoginAttemptService loginAttemptService;
 
 
     protected abstract BiFunction<String, String, Maybe<Application>> checkClientFunction();
@@ -156,6 +162,7 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
 
     @Override
     public Single<User> updateUsername(ReferenceType referenceType, String referenceId, String id, String username, io.gravitee.am.identityprovider.api.User principal) {
+        final AtomicReference<String> oldUsername = new AtomicReference<>();
         return userValidator.validateUsername(username).andThen(Single.defer(() ->
                 getUserService().findById(referenceType, referenceId, id).flatMap(user -> getUserService()
                                 .findByUsernameAndSource(referenceType, referenceId, username, user.getSource())
@@ -175,18 +182,28 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
                                         .switchIfEmpty(Single.error(new UserNotFoundException()))
                                         .flatMap(idpUser -> userProvider.updateUsername(idpUser, username))
                                         .flatMap(idpUser -> {
-                                            var oldUsername = user.getUsername();
+                                            oldUsername.set(user.getUsername());
                                             user.setUsername(username);
                                             user.setLastUsernameReset(new Date());
                                             return getUserService().update(user).onErrorResumeNext(ex -> {
                                                 // In the case we cannot update on our side, we rollback the username on the iDP
-                                                ((DefaultUser) idpUser).setUsername(oldUsername);
+                                                ((DefaultUser) idpUser).setUsername(oldUsername.get());
                                                 return userProvider.updateUsername(idpUser, idpUser.getUsername())
                                                         .flatMap(rolledBackUser -> Single.error(ex));
                                             });
                                         })
                                 ))
-                        .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USERNAME_UPDATED).user(user1)))
+                        .doOnSuccess(user1 -> {
+                            auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USERNAME_UPDATED).user(user1));
+                            if (DOMAIN.equals(referenceType)) {
+                                loginAttemptService.reset(createLoginAttemptCriteria(referenceId, oldUsername.get()))
+                                        .onErrorResumeNext(error -> {
+                                            logger.warn("Could not delete login attempt {}", error.getMessage());
+                                            return Completable.complete();
+                                        })
+                                        .subscribe();
+                            }
+                        })
                         .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USERNAME_UPDATED).throwable(throwable)))
         ));
     }
@@ -332,5 +349,12 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
         }
         idpUser.setAdditionalInformation(additionalInformation);
         return idpUser;
+    }
+
+    private LoginAttemptCriteria createLoginAttemptCriteria(String domainId, String username){
+        return new LoginAttemptCriteria.Builder()
+                .domain(domainId)
+                .username(username)
+                .build();
     }
 }
