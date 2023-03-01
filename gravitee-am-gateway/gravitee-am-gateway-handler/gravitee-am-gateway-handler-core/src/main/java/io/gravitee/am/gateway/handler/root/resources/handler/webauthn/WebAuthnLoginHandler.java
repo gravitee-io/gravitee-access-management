@@ -108,18 +108,20 @@ public class WebAuthnLoginHandler extends WebAuthnHandler {
 
         // STEP 18 Generate assertion
         webAuthn.getCredentialsOptions(username)
-                .doOnSuccess(entries -> {
-                    session
-                            .put(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY, entries.getString("challenge"))
-                            .put(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY, username);
+                .subscribe(
+                        entries -> {
+                            session
+                                    .put(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY, entries.getString("challenge"))
+                                    .put(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY, username);
 
-                    ctx.put(ConstantKeys.PASSWORDLESS_ASSERTION, entries);
-                    ctx.next();
-                })
-                .doOnError(throwable -> {
-                    logger.error("Unexpected exception", throwable);
-                    ctx.fail(throwable.getCause());
-                }).subscribe();
+                            ctx.put(ConstantKeys.PASSWORDLESS_ASSERTION, entries);
+                            ctx.next();
+                        },
+                        throwable -> {
+                            logger.error("Unexpected exception", throwable);
+                            ctx.fail(throwable.getCause());
+                        }
+                );
     }
 
     private void authenticateV1(RoutingContext ctx) {

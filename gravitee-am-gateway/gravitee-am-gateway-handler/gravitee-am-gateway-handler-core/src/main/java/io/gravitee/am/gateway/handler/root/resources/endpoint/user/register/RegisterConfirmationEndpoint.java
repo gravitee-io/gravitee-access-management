@@ -96,15 +96,16 @@ public class RegisterConfirmationEndpoint extends UserRequestHandler {
 
         // render the registration confirmation page
         engine.render(generateData(routingContext, domain, client), getTemplateFileName(client))
-                .doOnSuccess(buffer -> {
-                    routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
-                    routingContext.response().end(buffer);
-                })
-                .doOnError(throwable -> {
-                    logger.error("Unable to render registration confirmation page", throwable);
-                    routingContext.fail(throwable.getCause());
-                })
-                .subscribe();
+                .subscribe(
+                        buffer -> {
+                            routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
+                            routingContext.response().end(buffer);
+                        },
+                        throwable -> {
+                            logger.error("Unable to render registration confirmation page", throwable);
+                            routingContext.fail(throwable.getCause());
+                        }
+                );
     }
 
     private String getTemplateFileName(Client client) {

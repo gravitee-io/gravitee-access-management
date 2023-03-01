@@ -93,26 +93,27 @@ public class WebAuthnRegisterCredentialsEndpoint extends WebAuthnHandler {
 
             // register credentials
             webAuthn.createCredentialsOptions(webauthnRegister)
-                    .doOnSuccess(entries -> {
-                        // force user id with our own user id
-                        entries.getJsonObject("user").put("id", user.getId());
+                    .subscribe(
+                            entries -> {
+                                // force user id with our own user id
+                                entries.getJsonObject("user").put("id", user.getId());
 
-                        // force registration if option is enabled
-                        if (domain.getWebAuthnSettings() != null && domain.getWebAuthnSettings().isForceRegistration()) {
-                            entries.remove("excludeCredentials");
-                        }
+                                // force registration if option is enabled
+                                if (domain.getWebAuthnSettings() != null && domain.getWebAuthnSettings().isForceRegistration()) {
+                                    entries.remove("excludeCredentials");
+                                }
 
-                        // save challenge to the session
-                        ctx.session()
-                                .put(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY, entries.getString("challenge"))
-                                .put(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY, webauthnRegister.getString("name"));
+                                // save challenge to the session
+                                ctx.session()
+                                        .put(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY, entries.getString("challenge"))
+                                        .put(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY, webauthnRegister.getString("name"));
 
-                        ctx.response()
-                                .putHeader(io.vertx.core.http.HttpHeaders.CONTENT_TYPE, "application/json; charset=utf-8")
-                                .end(Json.encodePrettily(entries));
-                    })
-                    .doOnError(throwable -> ctx.fail(throwable.getCause()))
-                    .subscribe();
+                                ctx.response()
+                                        .putHeader(io.vertx.core.http.HttpHeaders.CONTENT_TYPE, "application/json; charset=utf-8")
+                                        .end(Json.encodePrettily(entries));
+                            },
+                            throwable -> ctx.fail(throwable.getCause())
+                    );
         } catch (IllegalArgumentException e) {
             ctx.fail(400);
         } catch (RuntimeException e) {

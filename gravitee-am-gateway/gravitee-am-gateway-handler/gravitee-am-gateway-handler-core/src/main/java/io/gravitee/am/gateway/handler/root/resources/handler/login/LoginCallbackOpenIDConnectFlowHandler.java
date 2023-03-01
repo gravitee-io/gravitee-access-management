@@ -91,15 +91,16 @@ public class LoginCallbackOpenIDConnectFlowHandler implements Handler<RoutingCon
 
         // implicit flow, we need to retrieve hash url from the browser to get access_token, id_token, ...
         engine.render(Collections.emptyMap(), "login_callback")
-                .doOnSuccess(buffer -> {
-                    context.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
-                    context.response().end(buffer);
-                })
-                .doOnError(throwable -> {
-                    logger.error("Unable to render login callback page", throwable);
-                    context.fail(throwable.getCause());
-                })
-                .subscribe();
+                .subscribe(
+                        buffer -> {
+                            context.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
+                            context.response().end(buffer);
+                        },
+                        throwable -> {
+                            logger.error("Unable to render login callback page", throwable);
+                            context.fail(throwable.getCause());
+                        }
+                );
     }
 
     private Map<String, String> getParams(String query) {

@@ -77,15 +77,16 @@ public class UserConsentEndpoint implements Handler<RoutingContext> {
             routingContext.put(ConstantKeys.SCOPES_CONTEXT_KEY, requestedScopes);
             routingContext.put(ConstantKeys.ACTION_KEY, action);
             engine.render(generateData(routingContext, domain, client), getTemplateFileName(client))
-                    .doOnSuccess(buffer -> {
-                        routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
-                        routingContext.response().end(buffer);
-                    })
-                    .doOnError(throwable -> {
-                        logger.error("Unable to render user consent page", throwable);
-                        routingContext.fail(throwable.getCause());
-                    })
-                    .subscribe();
+                    .subscribe(
+                            buffer -> {
+                                routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
+                                routingContext.response().end(buffer);
+                            },
+                            throwable -> {
+                                logger.error("Unable to render user consent page", throwable);
+                                routingContext.fail(throwable.getCause());
+                            }
+                    );
         });
     }
 
