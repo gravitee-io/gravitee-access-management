@@ -123,18 +123,19 @@ public class LoginNegotiateAuthenticationHandler implements Handler<RoutingConte
             // Responds with an 401 response with the "WWW-Authenticate: Negotiate" HTTP Response Header.
             // This tells the web browser that it needs to check with the local OS regarding what options it has available
             // from the Negotiate Security Support Provider (SSP) to authenticate the user.
-            engine.rxRender(context.data(), "login_sso_spnego")
-                    .doOnSuccess(buffer -> {
-                        context.response().putHeader(HttpHeaders.WWW_AUTHENTICATE, AUTH_NEGOTIATE_KEY);
-                        context.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
-                        context.response().setStatusCode(UNAUTHORIZED_401);
-                        context.response().end(buffer);
-                    })
-                    .doOnError(throwable -> {
-                        LOGGER.error("Unable to render Login SSO SPNEGO page", throwable);
-                        context.fail(throwable.getCause());
-                    })
-                    .subscribe();
+            engine.render(context.data(), "login_sso_spnego")
+                    .subscribe(
+                            buffer -> {
+                                context.response().putHeader(HttpHeaders.WWW_AUTHENTICATE, AUTH_NEGOTIATE_KEY);
+                                context.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
+                                context.response().setStatusCode(UNAUTHORIZED_401);
+                                context.response().end(buffer);
+                            },
+                            throwable -> {
+                                LOGGER.error("Unable to render Login SSO SPNEGO page", throwable);
+                                context.fail(throwable.getCause());
+                            }
+                    );
         }
     }
 }

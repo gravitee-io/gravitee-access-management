@@ -132,13 +132,14 @@ public class ErrorEndpoint implements Handler<RoutingContext> {
         // put parameters in context (backward compatibility)
         routingContext.put(PARAM_CONTEXT_KEY, params);
 
-        engine.rxRender(generateData(routingContext, domain, client), getTemplateFileName(client))
-                .doOnSuccess(buffer -> {
-                    routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
-                    routingContext.response().end(buffer);
-                })
-                .doOnError(throwable -> routingContext.fail(throwable.getCause()))
-                .subscribe();
+        engine.render(generateData(routingContext, domain, client), getTemplateFileName(client))
+                .subscribe(
+                        buffer -> {
+                            routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
+                            routingContext.response().end(buffer);
+                        },
+                        throwable -> routingContext.fail(throwable.getCause())
+                );
     }
 
     private String getTemplateFileName(Client client) {
