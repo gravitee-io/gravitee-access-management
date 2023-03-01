@@ -52,6 +52,7 @@ import org.slf4j.LoggerFactory;
 import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ID;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils.remoteAddress;
 import static io.gravitee.risk.assessment.api.assessment.Assessment.NONE;
+import static java.lang.Enum.valueOf;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
@@ -102,11 +103,10 @@ public class RiskAssessmentHandler implements Handler<RoutingContext> {
                 .flatMap(buildDeviceMessage(client, user.getId(), deviceId))
                 .flatMap(buildIpReputationMessage(context.request()))
                 .flatMap(buildGeoVelocityMessage(client.getDomain(), user.getId()))
-                .doOnSuccess(message -> decorateWithRiskAssessment(context, message))
-                .doOnError(throwable -> {
+                .subscribe(message -> decorateWithRiskAssessment(context, message), throwable -> {
                     logger.error("An unexpected error has occurred while trying to apply risk assessment: ", throwable);
                     context.next();
-                }).subscribe();
+                });
     }
 
     private Function<AssessmentMessage, Single<AssessmentMessage>> buildDeviceMessage(
@@ -176,15 +176,14 @@ public class RiskAssessmentHandler implements Handler<RoutingContext> {
 
     private void decorateWithRiskAssessment(RoutingContext routingContext, AssessmentMessage message) throws JsonProcessingException {
         eventBus.<String>request(RISK_ASSESSMENT_SERVICE, objectMapper.writeValueAsString(message))
-                .doOnSuccess(stringMessage -> {
-                    routingContext.session().put(ConstantKeys.RISK_ASSESSMENT_KEY, extractMessageResult(stringMessage));
-                })
-                .doOnError(throwable -> {
-                    logger.warn("{} could not be called, reason: {}", RISK_ASSESSMENT_SERVICE, throwable.getCause().getMessage());
-                    logger.debug("", throwable.getCause());
-                })
                 .doFinally(routingContext::next)
-                .subscribe();
+                .subscribe(
+                        stringMessage -> routingContext.session().put(ConstantKeys.RISK_ASSESSMENT_KEY, extractMessageResult(stringMessage)),
+                        throwable -> {
+                            var cause = ofNullable(throwable.getCause()).orElse(throwable);
+                            logger.warn("{} could not be called, reason: {}", RISK_ASSESSMENT_SERVICE, cause.getMessage());
+                            logger.debug("", cause);
+                        });
     }
 
     private AssessmentMessageResult extractMessageResult(Message<String> response) {
