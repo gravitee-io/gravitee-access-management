@@ -41,6 +41,7 @@ import io.vertx.core.AsyncResult;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.core.eventbus.EventBus;
 import io.vertx.rxjava3.core.eventbus.Message;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -161,9 +162,9 @@ public class RiskAssessmentService {
         return eventBus.<String>rxRequest(RISK_ASSESSMENT_SERVICE, objectMapper.writeValueAsString(message))
                 .flatMapMaybe(stringMessage -> Maybe.just(extractMessageResult(stringMessage)))
                 .onErrorResumeNext(throwable -> {
-                    logger.warn("{} could not be called, reason: {}", RISK_ASSESSMENT_SERVICE, throwable.getCause().getMessage());
-                    logger.debug("", throwable.getCause());
-
+                    final Throwable cause = ofNullable(throwable.getCause()).orElse(throwable);
+                    logger.warn("{} could not be called, reason: {}", RISK_ASSESSMENT_SERVICE, cause.getMessage());
+                    logger.debug("", cause);
                     return Maybe.empty();
                 });
     }
