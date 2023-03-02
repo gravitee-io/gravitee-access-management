@@ -1,6 +1,19 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/638?closed=1[AM - 3.19.7 (2023-03-02)]
+
+=== Bug fixes
+
+*_General_*
+
+- Error while selecting users on AM settings https://github.com/gravitee-io/issues/issues/8873[#8873]
+- Merge 3.18.16 to 3.19.x https://github.com/gravitee-io/issues/issues/8906[#8906]
+- When using an internal API for AM no validation of the requests payload it provided. https://github.com/gravitee-io/issues/issues/8865[#8865]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/634?closed=1[AM - 3.18.16 (2023-02-23)]
 
 === Bug fixes
