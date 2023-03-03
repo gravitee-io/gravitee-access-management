@@ -93,4 +93,16 @@ public class FilterCriteriaParserTest {
         String query = FilterCriteriaParser.parse(filterCriteria);
         Assert.assertEquals("{$and:[{\"username\":{$eq:\"Alice\"}},{$or:[{\"email\":{$regex:\"Alice\",$options:\"i\"}},{\"nickname\":{$regex:\"^Alice\",$options:\"i\"}}]}]}", query);
     }
+
+    @Test
+    public void shouldParse_email_with_special_character() {
+        FilterCriteria filterCriteria = new FilterCriteria();
+        filterCriteria.setOperator("eq");
+        filterCriteria.setFilterName("email");
+        filterCriteria.setFilterValue("alice.o'brian@test.com");
+        filterCriteria.setQuoteFilterValue(true);
+
+        String query = FilterCriteriaParser.parse(filterCriteria);
+        Assert.assertEquals("{\"email\":{$eq:\"alice.o'brian@test.com\"}}", query);
+    }
 }
