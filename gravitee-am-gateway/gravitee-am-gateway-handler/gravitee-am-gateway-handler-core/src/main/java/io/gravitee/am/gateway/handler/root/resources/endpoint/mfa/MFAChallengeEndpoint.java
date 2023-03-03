@@ -288,40 +288,7 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
             }
 
             if (factor.is(FIDO2)) {
-                final String userId = endUser.getId();
-                final JsonObject webauthnResp = new JsonObject(code);
-                final String credentialId = webauthnResp.getString("id");
-                updateCredential(routingContext.request(), credentialId, userId, ch -> {
-
-                    if (ch.failed()) {
-                        final String username = routingContext.session().get(PASSWORDLESS_CHALLENGE_USERNAME_KEY);
-                        logger.error("An error has occurred while updating credential for the user {}", username, h.cause());
-                        routingContext.fail(401);
-                        return;
-                    }
-
-                    updateStrongAuthStatus(routingContext);
-
-                    if (userHasFido2Factor(endUser)) {
-                        cleanSession(routingContext);
-                        redirectToAuthorize(routingContext, client);
-                    } else {
-                        final String fidoFactorId = routingContext.session().get(ENROLLED_FACTOR_ID_KEY);
-                        factorService.enrollFactor(endUser, createEnrolledFactor(fidoFactorId, credentialId))
-                                     .ignoreElement()
-                                     .subscribe(
-                                             () -> {
-                                                 cleanSession(routingContext);
-                                                 redirectToAuthorize(routingContext, client);
-                                             },
-                                             error -> {
-                                                 logger.error("Could not update user profile with FIDO2 factor detail", error);
-                                                 routingContext.fail(401);
-                                             }
-                                     );
-                    }
-                });
-                return;
+                handleFido2Factor(routingContext, client, endUser, code, h);
             }
             // save enrolled factor if needed and redirect to the original url
             routingContext.session().put(ConstantKeys.MFA_FACTOR_ID_CONTEXT_KEY, factorId);
