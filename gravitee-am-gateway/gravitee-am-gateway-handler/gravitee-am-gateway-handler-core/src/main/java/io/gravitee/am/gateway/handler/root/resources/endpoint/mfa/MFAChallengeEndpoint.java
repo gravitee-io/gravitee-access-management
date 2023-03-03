@@ -289,6 +289,7 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
 
             if (factor.is(FIDO2)) {
                 handleFido2Factor(routingContext, client, endUser, code, h);
+                return;
             }
             // save enrolled factor if needed and redirect to the original url
             routingContext.session().put(ConstantKeys.MFA_FACTOR_ID_CONTEXT_KEY, factorId);
