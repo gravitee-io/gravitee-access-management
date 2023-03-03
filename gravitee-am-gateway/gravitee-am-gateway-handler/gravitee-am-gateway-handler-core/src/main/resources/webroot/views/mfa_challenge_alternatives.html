@@ -41,7 +41,7 @@
                     </div>
                 </div>
 
-                <div th:if="${factor.factorType == 'SMS' || factor.factorType == 'CALL'}" class="radio-card">
+                <div th:if="${factor.factorType == 'SMS'}" class="radio-card">
                     <div class="card-content">
                         <span class="radio">
                             <input type="radio" th:id="'list-factor-' + ${factor.id}" th:name="factorId" th:value="${factor.id}" class="sms"/>
@@ -49,6 +49,18 @@
                         <span class="radio-detail">
                             <span class="enroll-name" th:text="#{mfa.sms}"/>
                             <span class="enroll-description" th:text="#{mfa_alternative.sms}"/>
+                        </span>
+                    </div>
+                </div>
+
+                <div th:if="${factor.factorType == 'CALL'}" class="radio-card">
+                    <div class="card-content">
+                        <span class="radio">
+                            <input type="radio" th:id="'list-factor-' + ${factor.id}" th:name="factorId" th:value="${factor.id}" class="call"/>
+                        </span>
+                        <span class="radio-detail">
+                            <span class="enroll-name" th:text="#{mfa.call}"/>
+                            <span class="enroll-description" th:text="#{mfa_alternative.call}"/>
                         </span>
                     </div>
                 </div>
