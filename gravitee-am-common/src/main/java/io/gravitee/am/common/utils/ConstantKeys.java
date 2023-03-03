@@ -20,7 +20,6 @@ package io.gravitee.am.common.utils;
  * @author GraviteeSource Team
  */
 public interface ConstantKeys {
-
     // Common key.
     String CLIENT_CONTEXT_KEY = "client";
     String USER_CONTEXT_KEY = "user";
@@ -40,6 +39,8 @@ public interface ConstantKeys {
     String ID_TOKEN_HINT_KEY = "id_token_hint";
     String EMAIL_PARAM_KEY = "email";
     String ERROR_PARAM_KEY = "error";
+    String RATE_LIMIT_ERROR_PARAM_KEY = "request_limit_error";
+    String VERIFY_ATTEMPT_ERROR_PARAM_KEY = "verify_attempt_error";
     String ERROR_CODE_PARAM_KEY = "error_code";
     String ERROR_DESCRIPTION_PARAM_KEY = "error_description";
     String SUCCESS_PARAM_KEY = "success";
@@ -119,6 +120,7 @@ public interface ConstantKeys {
     // Forgot Password
     String FORGOT_PASSWORD_FIELDS_KEY = "forgotPwdFormFields";
     String FORGOT_PASSWORD_CONFIRM = "forgot_password_confirm";
+    String PASSWORD_HISTORY = "passwordHistory";
 
     // Login keys.
     String USER_LOGIN_COMPLETED_KEY = "userLoginCompleted";

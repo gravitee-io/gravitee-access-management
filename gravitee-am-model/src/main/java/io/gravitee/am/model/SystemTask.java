@@ -27,12 +27,15 @@ public class SystemTask {
 
     private String id;
     private String type;
+    private String kind;
     private String status;
     private String operationId;
     @ApiModelProperty(dataType = "java.lang.Long")
     private Date createdAt;
     @ApiModelProperty(dataType = "java.lang.Long")
     private Date updatedAt;
+
+    private String configuration;
 
     public String getId() {
         return id;
@@ -48,6 +51,14 @@ public class SystemTask {
 
     public void setType(String type) {
         this.type = type;
+    }
+
+    public String getKind() {
+        return kind;
+    }
+
+    public void setKind(String kind) {
+        this.kind = kind;
     }
 
     public String getStatus() {
@@ -80,5 +91,13 @@ public class SystemTask {
 
     public void setOperationId(String operationId) {
         this.operationId = operationId;
+    }
+
+    public String getConfiguration() {
+        return configuration;
+    }
+
+    public void setConfiguration(String configuration) {
+        this.configuration = configuration;
     }
 }

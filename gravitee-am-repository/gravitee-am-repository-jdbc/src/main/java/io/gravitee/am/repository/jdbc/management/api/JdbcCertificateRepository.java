@@ -55,6 +55,7 @@ public class JdbcCertificateRepository extends AbstractJdbcRepository implements
     public static final String COL_CREATED_AT = "created_at";
     public static final String COL_UPDATED_AT = "updated_at";
     public static final String COL_EXPIRES_AT = "expires_at";
+    public static final String COL_SYSTEM = "system";
 
     private static final List<String> columns = List.of(
             COL_ID,
@@ -65,7 +66,8 @@ public class JdbcCertificateRepository extends AbstractJdbcRepository implements
             COL_METADATA,
             COL_CREATED_AT,
             COL_UPDATED_AT,
-            COL_EXPIRES_AT
+            COL_EXPIRES_AT,
+            COL_SYSTEM
     );
 
     private String INSERT_STATEMENT;
@@ -135,6 +137,7 @@ public class JdbcCertificateRepository extends AbstractJdbcRepository implements
         insertSpec = addQuotedField(insertSpec,COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
         insertSpec = addQuotedField(insertSpec,COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
         insertSpec = addQuotedField(insertSpec,COL_EXPIRES_AT, dateConverter.convertTo(item.getExpiresAt(), null), LocalDateTime.class);
+        insertSpec = addQuotedField(insertSpec,COL_SYSTEM, item.isSystem(), boolean.class);
 
         Mono<Integer> action = insertSpec.fetch().rowsUpdated();
 
@@ -157,6 +160,7 @@ public class JdbcCertificateRepository extends AbstractJdbcRepository implements
         update = addQuotedField(update,COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
         update = addQuotedField(update,COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
         update = addQuotedField(update,COL_EXPIRES_AT, dateConverter.convertTo(item.getExpiresAt(), null), LocalDateTime.class);
+        update = addQuotedField(update,COL_SYSTEM, item.isSystem(), boolean.class);
 
         Mono<Integer> updateAction = update.fetch().rowsUpdated();
 

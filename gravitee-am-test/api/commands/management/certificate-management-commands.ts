@@ -71,3 +71,10 @@ export const deleteCertificate = (domainId, accessToken, certificateId) =>
         domain: domainId,
         certificate: certificateId,
     })
+
+export const rotateCertificate = (domainId, accessToken) =>
+    getCertificateApi(accessToken).rotateCertificate({
+        organizationId: process.env.AM_DEF_ORG_ID,
+        environmentId: process.env.AM_DEF_ENV_ID,
+        domain: domainId
+    })

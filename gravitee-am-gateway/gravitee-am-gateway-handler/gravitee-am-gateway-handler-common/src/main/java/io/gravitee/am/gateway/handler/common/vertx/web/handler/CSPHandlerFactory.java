@@ -17,11 +17,17 @@ package io.gravitee.am.gateway.handler.common.vertx.web.handler;
 
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.csp.CspHandlerImpl;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.csp.NoOpCspHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.core.env.Environment;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static java.util.Objects.isNull;
 
@@ -30,6 +36,7 @@ import static java.util.Objects.isNull;
  * @author GraviteeSource Team
  */
 public class CSPHandlerFactory implements FactoryBean<CSPHandler> {
+    public final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private static final String HTTP_CSP_ENABLED = "http.csp.enabled";
     private static final String HTTP_CSP_REPORT_ONLY = "http.csp.reportOnly";
@@ -49,7 +56,7 @@ public class CSPHandlerFactory implements FactoryBean<CSPHandler> {
         if (isNull(INSTANCE)) {
             var reportOnly = environment.getProperty(HTTP_CSP_REPORT_ONLY, Boolean.class);
             var directives = getDirectives();
-            var scriptInlineNonce = environment.getProperty(HTTP_CSP_SCRIPT_INLINE_NONCE, Boolean.class, false);
+            var scriptInlineNonce = environment.getProperty(HTTP_CSP_SCRIPT_INLINE_NONCE, Boolean.class, true);
             final boolean notEnabled = !environment.getProperty(HTTP_CSP_ENABLED, Boolean.class, true);
             if ((isNull(reportOnly) && isNull(directives) && !scriptInlineNonce) || notEnabled) {
                 INSTANCE = new NoOpCspHandler();
@@ -72,6 +79,15 @@ public class CSPHandlerFactory implements FactoryBean<CSPHandler> {
                     directives = new ArrayList<>();
                 }
                 directives.add(value);
+            }
+        }
+
+        if (isNull(directives) || directives.isEmpty()) {
+            // no directives defined by user, use default ones
+            try(var reader = new BufferedReader(new InputStreamReader(this.getClass().getClassLoader().getResourceAsStream("default-csp-directives.properties")))) {
+                directives = reader.lines().collect(Collectors.toList());
+            } catch (IOException e) {
+                logger.warn("Unable to load default CSP directives from the classpath: {}", e.getMessage());
             }
         }
         return directives;

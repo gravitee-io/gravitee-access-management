@@ -24,14 +24,14 @@ public abstract class AbstractManagementException extends RuntimeException {
     /**
      * Constructor.
      */
-    public AbstractManagementException() {
+    protected AbstractManagementException() {
     }
 
     /**
      * Constructor.
      * @param cause the exception cause
      */
-    public AbstractManagementException(Throwable cause) {
+    protected AbstractManagementException(Throwable cause) {
         super(cause);
     }
 
@@ -39,7 +39,7 @@ public abstract class AbstractManagementException extends RuntimeException {
      * Constructor.
      * @param message the exception message
      */
-    public AbstractManagementException(String message) {
+    protected AbstractManagementException(String message) {
         super(message);
     }
 
@@ -48,7 +48,7 @@ public abstract class AbstractManagementException extends RuntimeException {
      * @param message the exception message
      * @param cause the exception cause
      */
-    public AbstractManagementException(String message, Throwable cause) {
+    protected AbstractManagementException(String message, Throwable cause) {
         super(message, cause);
     }
 

@@ -25,6 +25,8 @@ public class ApplicationSAMLSettingsMongo {
     private String attributeConsumeServiceUrl;
     private String singleLogoutServiceUrl;
     private String certificate;
+    private boolean wantResponseSigned = true;
+    private boolean wantAssertionsSigned;
 
     public String getEntityId() {
         return entityId;
@@ -56,5 +58,21 @@ public class ApplicationSAMLSettingsMongo {
 
     public void setCertificate(String certificate) {
         this.certificate = certificate;
+    }
+
+    public boolean isWantResponseSigned() {
+        return wantResponseSigned;
+    }
+
+    public void setWantResponseSigned(boolean wantResponseSigned) {
+        this.wantResponseSigned = wantResponseSigned;
+    }
+
+    public boolean isWantAssertionsSigned() {
+        return wantAssertionsSigned;
+    }
+
+    public void setWantAssertionsSigned(boolean wantAssertionsSigned) {
+        this.wantAssertionsSigned = wantAssertionsSigned;
     }
 }

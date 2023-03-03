@@ -54,5 +54,8 @@ export class CertificateService {
   publicKeys(domainId, id): Observable<any> {
     return this.http.get(this.certificatesURL + domainId + "/certificates/" + id + "/keys");
   }
-
+  
+  rotateCertificate(domainId): Observable<any> {
+    return this.http.post<any>(this.certificatesURL + domainId + "/certificates/rotate", null);
+  }
 }

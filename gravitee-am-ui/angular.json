@@ -61,6 +61,11 @@
                 "glob": "asciidoctor.js",
                 "input": "node_modules/@asciidoctor/core/dist/browser",
                 "output": "@asciidoctor/"
+              },
+              {
+                "glob": "**/*",
+                "input": "node_modules/@gravitee/ui-particles-angular/assets",
+                "output": "assets/"
               }
             ],
             "styles": [

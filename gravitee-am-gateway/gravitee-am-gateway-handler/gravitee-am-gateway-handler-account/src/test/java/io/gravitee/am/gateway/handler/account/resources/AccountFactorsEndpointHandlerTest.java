@@ -26,6 +26,7 @@ import io.gravitee.am.gateway.handler.account.services.AccountService;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.ErrorHandler;
+import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
@@ -75,13 +76,16 @@ public class AccountFactorsEndpointHandlerTest extends RxWebTestBase {
     @Mock
     ApplicationContext applicationContext;
 
+    @Mock
+    RateLimiterService rateLimiterService;
+
     private AccountFactorsEndpointHandler accountFactorsEndpointHandler;
     private User user;
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        accountFactorsEndpointHandler = new AccountFactorsEndpointHandler(accountService, factorManager, applicationContext);
+        accountFactorsEndpointHandler = new AccountFactorsEndpointHandler(accountService, factorManager, applicationContext, rateLimiterService);
         user = new User();
 
         router.route()

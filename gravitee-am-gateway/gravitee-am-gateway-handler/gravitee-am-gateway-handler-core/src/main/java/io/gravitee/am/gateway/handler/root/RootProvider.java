@@ -23,6 +23,7 @@ import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.UserAuthProvider;
@@ -91,6 +92,7 @@ import io.gravitee.am.gateway.handler.root.resources.handler.user.UserTokenReque
 import io.gravitee.am.gateway.handler.root.resources.handler.user.activity.UserActivityHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.password.ForgotPasswordAccessHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.password.ForgotPasswordSubmissionRequestParseHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.user.password.PasswordHistoryHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.password.ResetPasswordOneTimeTokenHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.password.ResetPasswordRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.password.ResetPasswordSubmissionRequestParseHandler;
@@ -114,8 +116,11 @@ import io.gravitee.am.service.DeviceService;
 import io.gravitee.am.service.FactorService;
 import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.PasswordService;
+import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.service.UserActivityService;
+import io.gravitee.am.service.VerifyAttemptService;
 import io.gravitee.am.service.i18n.GraviteeMessageResolver;
+import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.gravitee.common.service.AbstractService;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
@@ -273,6 +278,19 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
     @Autowired
     private WebAuthnCookieService webAuthnCookieService;
 
+    @Autowired
+    private RateLimiterService rateLimiterService;
+
+    @Autowired
+    private PasswordHistoryService passwordHistoryService;
+
+    @Autowired
+    private VerifyAttemptService verifyAttemptService;
+
+    @Autowired
+    private EmailService emailService;
+
+
     @Override
     protected void doStart() throws Exception {
         super.doStart();
@@ -414,7 +432,8 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(clientRequestParseHandler)
                 .handler(rememberDeviceSettingsHandler)
                 .handler(localeHandler)
-                .handler(new MFAChallengeEndpoint(factorManager, userService, thymeleafTemplateEngine, deviceService, applicationContext, domain, credentialService, factorService))
+                .handler(new MFAChallengeEndpoint(factorManager, userService, thymeleafTemplateEngine, deviceService, applicationContext,
+                        domain, credentialService, factorService, rateLimiterService, verifyAttemptService, emailService))
                 .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService));
         rootRouter.route(PATH_MFA_CHALLENGE_ALTERNATIVES)
                 .handler(clientRequestParseHandler)
@@ -534,6 +553,10 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(new ResetPasswordSubmissionEndpoint(userService, environment));
         rootRouter.route(PATH_RESET_PASSWORD)
                 .failureHandler(resetPasswordFailureHandler);
+
+        rootRouter.route(HttpMethod.POST, "/passwordHistory")
+                  .handler(clientRequestParseHandlerOptional)
+                  .handler(new PasswordHistoryHandler(passwordHistoryService, userService, domain));
 
         // error route
         rootRouter.route(HttpMethod.GET, PATH_ERROR)

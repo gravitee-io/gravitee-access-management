@@ -74,6 +74,18 @@ export interface CertificateEntity {
     expiresAt?: Date;
     /**
      * 
+     * @type {boolean}
+     * @memberof CertificateEntity
+     */
+    system?: boolean;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof CertificateEntity
+     */
+    deprecated?: boolean;
+    /**
+     * 
      * @type {string}
      * @memberof CertificateEntity
      */
@@ -87,7 +99,8 @@ export interface CertificateEntity {
 export const CertificateEntityStatusEnum = {
     Valid: 'VALID',
     WillExpire: 'WILL_EXPIRE',
-    Expired: 'EXPIRED'
+    Expired: 'EXPIRED',
+    Renewed: 'RENEWED'
 } as const;
 export type CertificateEntityStatusEnum = typeof CertificateEntityStatusEnum[keyof typeof CertificateEntityStatusEnum];
 
@@ -111,6 +124,8 @@ export function CertificateEntityFromJSONTyped(json: any, ignoreDiscriminator: b
         'createdAt': !exists(json, 'createdAt') ? undefined : (new Date(json['createdAt'])),
         'updatedAt': !exists(json, 'updatedAt') ? undefined : (new Date(json['updatedAt'])),
         'expiresAt': !exists(json, 'expiresAt') ? undefined : (new Date(json['expiresAt'])),
+        'system': !exists(json, 'system') ? undefined : json['system'],
+        'deprecated': !exists(json, 'deprecated') ? undefined : json['deprecated'],
         'status': !exists(json, 'status') ? undefined : json['status'],
     };
 }
@@ -133,6 +148,8 @@ export function CertificateEntityToJSON(value?: CertificateEntity | null): any {
         'createdAt': value.createdAt === undefined ? undefined : (value.createdAt.toISOString()),
         'updatedAt': value.updatedAt === undefined ? undefined : (value.updatedAt.toISOString()),
         'expiresAt': value.expiresAt === undefined ? undefined : (value.expiresAt.toISOString()),
+        'system': value.system,
+        'deprecated': value.deprecated,
         'status': value.status,
     };
 }

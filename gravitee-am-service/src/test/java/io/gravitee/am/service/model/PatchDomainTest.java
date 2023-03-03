@@ -16,6 +16,7 @@
 package io.gravitee.am.service.model;
 
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.ClientRegistrationSettings;
@@ -23,6 +24,7 @@ import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.model.scim.SCIMSettings;
 import io.gravitee.am.model.uma.UMASettings;
+import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.model.openid.PatchClientRegistrationSettings;
 import io.gravitee.am.service.model.openid.PatchOIDCSettings;
 import org.junit.Test;
@@ -113,6 +115,79 @@ public class PatchDomainTest {
         assertNotNull(result.getOidc());
         assertNotNull(result.getOidc().getClientRegistrationSettings());
         assertTrue("should have been enabled", result.getOidc().getClientRegistrationSettings().isDynamicClientRegistrationEnabled());
+    }
+
+    @Test
+    public void testPatchWithPasswordPolicy() {
+        //Build patcher
+        PatchPasswordSettings pwdPolicyPatcher = new PatchPasswordSettings();
+        pwdPolicyPatcher.setOldPasswords(Optional.of((short) 24));
+        pwdPolicyPatcher.setPasswordHistoryEnabled(Optional.of(true));
+
+        PatchDomain patch = new PatchDomain();
+        patch.setPasswordSettings(Optional.of(pwdPolicyPatcher));
+
+        Domain toPatch = new Domain();
+        toPatch.setPasswordSettings(new PasswordSettings());
+
+        //apply patch
+        Domain result = patch.patch(toPatch);
+
+        //check.
+        assertNotNull("was expecting a domain", result);
+        assertNotNull(result.getPasswordSettings());
+        assertTrue(result.getPasswordSettings().isPasswordHistoryEnabled());
+        assertEquals(24, result.getPasswordSettings().getOldPasswords().shortValue());
+    }
+
+    @Test(expected = InvalidParameterException.class)
+    public void testPatchWithPasswordPolicy_missingOldPassword() {
+        //Build patcher
+        PatchPasswordSettings pwdPolicyPatcher = new PatchPasswordSettings();
+        pwdPolicyPatcher.setPasswordHistoryEnabled(Optional.of(true));
+
+        PatchDomain patch = new PatchDomain();
+        patch.setPasswordSettings(Optional.of(pwdPolicyPatcher));
+
+        Domain toPatch = new Domain();
+        toPatch.setPasswordSettings(new PasswordSettings());
+
+        //apply patch
+        patch.patch(toPatch);
+    }
+
+    @Test(expected = InvalidParameterException.class)
+    public void testPatchWithPasswordPolicy_outOfRange_min_OldPassword() {
+        //Build patcher
+        PatchPasswordSettings pwdPolicyPatcher = new PatchPasswordSettings();
+        pwdPolicyPatcher.setOldPasswords(Optional.of((short) -5));
+        pwdPolicyPatcher.setPasswordHistoryEnabled(Optional.of(true));
+
+        PatchDomain patch = new PatchDomain();
+        patch.setPasswordSettings(Optional.of(pwdPolicyPatcher));
+
+        Domain toPatch = new Domain();
+        toPatch.setPasswordSettings(new PasswordSettings());
+
+        //apply patch
+        patch.patch(toPatch);
+    }
+
+    @Test(expected = InvalidParameterException.class)
+    public void testPatchWithPasswordPolicy_outOfRange_max_OldPassword() {
+        //Build patcher
+        PatchPasswordSettings pwdPolicyPatcher = new PatchPasswordSettings();
+        pwdPolicyPatcher.setOldPasswords(Optional.of((short) 25));
+        pwdPolicyPatcher.setPasswordHistoryEnabled(Optional.of(true));
+
+        PatchDomain patch = new PatchDomain();
+        patch.setPasswordSettings(Optional.of(pwdPolicyPatcher));
+
+        Domain toPatch = new Domain();
+        toPatch.setPasswordSettings(new PasswordSettings());
+
+        //apply patch
+        patch.patch(toPatch);
     }
 
     @Test

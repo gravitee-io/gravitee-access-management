@@ -15,7 +15,13 @@
  */
 package io.gravitee.am.management.standalone.node;
 
-import io.gravitee.am.management.service.*;
+import io.gravitee.am.management.service.AlertTriggerManager;
+import io.gravitee.am.management.service.AuditReporterManager;
+import io.gravitee.am.management.service.CertificateManager;
+import io.gravitee.am.management.service.EmailManager;
+import io.gravitee.am.management.service.IdentityProviderManager;
+import io.gravitee.am.management.service.InitializerService;
+import io.gravitee.am.management.service.tasks.TasksLoader;
 import io.gravitee.common.component.LifecycleComponent;
 import io.gravitee.node.api.NodeMetadataResolver;
 import io.gravitee.node.jetty.node.JettyNode;
@@ -70,6 +76,7 @@ public class ManagementNode extends JettyNode {
         components.add(AlertTriggerManager.class);
         components.add(AlertTriggerProviderManager.class);
         components.add(AlertEventProducerManager.class);
+        components.add(TasksLoader.class);
 
         return components;
     }

@@ -40,6 +40,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -174,7 +176,7 @@ public class UsersEndpoint extends AbstractUserEndpoint {
                     .map(scimUser -> new DefaultUser(UserMapper.convert(scimUser)))
                     .map(Optional::ofNullable)
                     .switchIfEmpty(Maybe.just(Optional.empty()))
-                    .flatMapSingle(optPrincipal -> userService.create(user, source, baseUrl, optPrincipal.orElse(null)))
+                    .flatMapSingle(optPrincipal -> userService.create(user, source, baseUrl, optPrincipal.orElse(null), context.get(CLIENT_CONTEXT_KEY)))
                     .subscribe(
                             user1 -> context.response()
                                     .setStatusCode(201)

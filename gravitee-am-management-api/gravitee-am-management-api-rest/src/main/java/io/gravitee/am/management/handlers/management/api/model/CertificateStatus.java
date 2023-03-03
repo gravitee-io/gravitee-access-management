@@ -22,5 +22,6 @@ package io.gravitee.am.management.handlers.management.api.model;
 public enum CertificateStatus {
     VALID,
     WILL_EXPIRE,
-    EXPIRED;
+    EXPIRED,
+    RENEWED;
 }

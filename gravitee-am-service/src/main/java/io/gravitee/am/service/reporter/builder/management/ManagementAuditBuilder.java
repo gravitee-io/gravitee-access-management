@@ -56,6 +56,11 @@ public abstract class ManagementAuditBuilder<T> extends AuditBuilder<T> {
         return (T) this;
     }
 
+    public T systemPrincipal() {
+        setActor(SYSTEM, SYSTEM, SYSTEM, SYSTEM, ReferenceType.PLATFORM, Platform.DEFAULT);
+        return (T) this;
+    }
+
     private String getDisplayName(User user) {
         final String displayName =
                 // display name

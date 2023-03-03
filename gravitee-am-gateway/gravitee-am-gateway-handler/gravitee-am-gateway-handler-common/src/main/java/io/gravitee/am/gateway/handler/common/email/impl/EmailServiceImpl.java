@@ -41,6 +41,7 @@ import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.EmailAuditBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -71,6 +72,9 @@ public class EmailServiceImpl implements EmailService {
     private final Integer blockedAccountExpireAfter;
     private final String mfaChallengeSubject;
     private final Integer mfaChallengeExpireAfter;
+
+    @Value("${user.mfaVerifyAttempt.email.subject:${msg('email.verify_attempt.subject')}}")
+    private String mfaVerifyAttemptSubject;
 
     @Autowired
     private EmailManager emailManager;
@@ -294,6 +298,8 @@ public class EmailServiceImpl implements EmailService {
                 return blockedAccountSubject;
             case MFA_CHALLENGE:
                 return mfaChallengeSubject;
+            case VERIFY_ATTEMPT:
+                return mfaVerifyAttemptSubject;
             default:
                 throw new IllegalArgumentException(template.template() + " not found");
         }
@@ -307,6 +313,8 @@ public class EmailServiceImpl implements EmailService {
                 return blockedAccountExpireAfter;
             case MFA_CHALLENGE:
                 return mfaChallengeExpireAfter;
+            case VERIFY_ATTEMPT:
+                return 0;
             default:
                 throw new IllegalArgumentException(template.template() + " not found");
         }

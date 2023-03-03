@@ -21,6 +21,7 @@ import {createDomain, deleteDomain, startDomain} from "@management-commands/doma
 import {
     createCertificate, deleteCertificate, getAllCertificates,
     getCertificate, getPublicKey, getPublicKeys,
+    rotateCertificate,
     updateCertificate
 } from "@management-commands/certificate-management-commands";
 import {buildCertificate} from "../../api/fixtures/certificates";
@@ -104,6 +105,58 @@ describe("after creating certificates", () => {
 
           expect(idpSet.size).toEqual(10);
       });
+});
+
+describe("When we want to renew a certificate", () => {
+    let certificateCount = 0;
+    it('before the renewal, only one System certificate exists', async () => {
+        const foundCertificates = await getAllCertificates(domain.id, accessToken);
+        certificateCount = foundCertificates.size;
+        let numberOfDefault = 0;
+        foundCertificates.forEach(cert => {
+            if (cert.system) {
+                numberOfDefault++;
+            }
+        })
+        expect(foundCertificates).toBeDefined();
+        expect(numberOfDefault).toEqual(1);
+    });
+
+    it('when rotate endpoint is called, new system certificate is generated', async () => {
+        const refreshCert = await rotateCertificate(domain.id, accessToken);
+        expect(refreshCert.name.startsWith("Default ")).toBeTruthy();
+        expect(refreshCert.system).toBeTruthy();
+        certificate = refreshCert;
+    });
+
+    it('must find certificate public key', async () => {
+        const publicKey = await getPublicKey(domain.id, accessToken, certificate.id);
+        expect(publicKey).toBeDefined();
+    });
+
+    it('must find certificate public keys', async () => {
+        const foundCertificate = await getPublicKeys(domain.id, accessToken, certificate.id);
+        expect(foundCertificate).toBeDefined();
+        expect(foundCertificate.length).toEqual(2);
+    });
+
+    it('After the renewal, two System certificates exist', async () => {
+        const foundCertificates = await getAllCertificates(domain.id, accessToken);
+        certificateCount = foundCertificates.size;
+        let numberOfDefault = 0;
+        let numberOfRenewed = 0;
+        foundCertificates.forEach(cert => {
+            if (cert.system) {
+                numberOfDefault++;
+            }
+            if (cert.status.toLowerCase() === 'renewed') {
+                numberOfRenewed++;
+            }
+        })
+        expect(foundCertificates).toBeDefined();
+        expect(numberOfDefault).toEqual(2);
+        expect(numberOfRenewed).toEqual(1);
+    });
 });
 
 afterAll(async () => {

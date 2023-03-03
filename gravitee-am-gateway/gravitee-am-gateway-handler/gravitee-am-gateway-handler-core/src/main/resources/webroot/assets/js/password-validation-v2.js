@@ -17,6 +17,7 @@ const mixedCase = document.getElementById("mixedCase");
 const maxConsecutiveLetters = document.getElementById("maxConsecutiveLetters");
 const excludeUserProfileInfoInPassword = document.getElementById("excludeUserProfileInfoInPassword");
 const matchPasswords = document.getElementById("matchPasswords");
+const excludePasswordsInHistory = document.getElementById("excludePasswordsInHistory");
 
 function validatePassword() {
     if (passwordSettings == null) {
@@ -76,6 +77,23 @@ function validatePassword() {
     return isMinLengthOk && isIncludeNumbersOk && isIncludeSpecialCharactersOk && isLettersInMixedCaseOk && isMaxConsecutiveLettersOk && isExcludeUserProfileInfoInPasswordOk;
 }
 
+const checkPasswordHistory = () => {
+    let passwordPromise = Promise.resolve();
+    const isResetForm = document.getElementById("token");
+    if (isResetForm && passwordSettings && passwordSettings.passwordHistoryEnabled) {
+        const token = document.getElementById("token").getAttribute("value");
+        const csrfToken = document.getElementById("csrfToken").getAttribute("value");
+        const formData = new FormData();
+        formData.append('token', token);
+        formData.append('csrfToken', csrfToken);
+        formData.append('password', passwordInput.value);
+        passwordPromise = fetch(passwordHistory, {
+            method: 'POST',
+            body: formData
+        });
+    }
+    return passwordPromise;
+};
 
 /**
  *
@@ -132,8 +150,16 @@ function disableSubmitButton(){
 }
 
 function enableSubmitButton(){
-    submitBtn.disabled = false;
-    submitBtn.classList.remove("button-disabled");
+    checkPasswordHistory().then(response => {
+            const passwordNotInHistory = response ? response.ok : true;
+            if (excludePasswordsInHistory) {
+                validateMessageElement(excludePasswordsInHistory, passwordNotInHistory);
+            }
+            if (passwordNotInHistory) {
+                submitBtn.disabled = false;
+                submitBtn.classList.remove("button-disabled");
+            }
+        });
 }
 
 function toggleSubmit(element) {

@@ -37,11 +37,18 @@ public class ApplicationSAMLSettings {
      * Single Logout Service URL — the SP endpoint where the IdP should redirect to after performing single logout
      */
     private String singleLogoutServiceUrl;
-
     /**
      * X.509 Public Key Certificate — the SP's base-64 encoded public key certificate, which is used by the IdP to verify SAML authorization requests
      */
     private String certificate;
+    /**
+     * SP requires that the SAML Response must be signed
+     */
+    private boolean wantResponseSigned = true;
+    /**
+     * SP requires that the SAML Assertions must be signed
+     */
+    private boolean wantAssertionsSigned;
 
     public ApplicationSAMLSettings() {
     }
@@ -51,6 +58,8 @@ public class ApplicationSAMLSettings {
         this.attributeConsumeServiceUrl = other.attributeConsumeServiceUrl;
         this.singleLogoutServiceUrl = other.singleLogoutServiceUrl;
         this.certificate = other.certificate;
+        this.wantResponseSigned = other.wantResponseSigned;
+        this.wantAssertionsSigned = other.wantAssertionsSigned;
     }
 
     public String getEntityId() {
@@ -85,10 +94,28 @@ public class ApplicationSAMLSettings {
         this.certificate = certificate;
     }
 
+    public boolean isWantResponseSigned() {
+        return wantResponseSigned;
+    }
+
+    public void setWantResponseSigned(boolean wantResponseSigned) {
+        this.wantResponseSigned = wantResponseSigned;
+    }
+
+    public boolean isWantAssertionsSigned() {
+        return wantAssertionsSigned;
+    }
+
+    public void setWantAssertionsSigned(boolean wantAssertionsSigned) {
+        this.wantAssertionsSigned = wantAssertionsSigned;
+    }
+
     public void copyTo(Client client) {
         client.setEntityId(this.entityId);
         client.setAttributeConsumeServiceUrl(this.attributeConsumeServiceUrl);
         client.setSingleLogoutServiceUrl(singleLogoutServiceUrl);
         client.setSamlCertificate(this.certificate);
+        client.setWantResponseSigned(this.wantResponseSigned);
+        client.setWantAssertionsSigned(this.wantAssertionsSigned);
     }
 }

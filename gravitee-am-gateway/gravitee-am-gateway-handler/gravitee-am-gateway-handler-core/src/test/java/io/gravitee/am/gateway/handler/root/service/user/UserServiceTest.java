@@ -32,6 +32,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.EnrollmentSettings;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.MFASettings;
+import io.gravitee.am.model.PasswordHistory;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
@@ -43,8 +44,10 @@ import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.TokenService;
 import io.gravitee.am.service.exception.EnforceUserIdentityException;
+import io.gravitee.am.service.exception.PasswordHistoryException;
 import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.am.service.exception.UserNotFoundException;
+import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.validators.email.EmailValidator;
 import io.reactivex.Completable;
@@ -79,6 +82,7 @@ import static org.mockito.Mockito.when;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@SuppressWarnings("ALL")
 @RunWith(MockitoJUnitRunner.class)
 public class UserServiceTest {
 
@@ -112,9 +116,38 @@ public class UserServiceTest {
     @Mock
     private AuditService auditService;
 
+    @Mock
+    private PasswordHistoryService passwordHistoryService;
+
     @Before
     public void before(){
         doReturn(true).when(emailValidator).validate(anyString());
+        when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any() , any(), any())).thenReturn(Maybe.just(new PasswordHistory()));
+
+    }
+
+    @Test
+    public void resetShouldReturnErrorWhenPasswordAlreadyInHistory() {
+        User user = mock(User.class);
+        when(user.getUsername()).thenReturn("username");
+        when(user.isInactive()).thenReturn(true);
+        when(user.getSource()).thenReturn("default-idp");
+
+        io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.DefaultUser.class);
+
+        AccountSettings accountSettings = mock(AccountSettings.class);
+        when(accountSettings.isCompleteRegistrationWhenResetPassword()).thenReturn(true);
+
+        UserProvider userProvider = mock(UserProvider.class);
+        when(userProvider.findByUsername(user.getUsername())).thenReturn(Maybe.just(idpUser));
+
+        when(domain.getAccountSettings()).thenReturn(accountSettings);
+        when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
+        when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any() , any(), any())).thenReturn(Maybe.error(PasswordHistoryException::passwordAlreadyInHistory));
+
+        var testObserver = userService.resetPassword(mock(Client.class), user).test();
+        testObserver.awaitTerminalEvent();
+        testObserver.assertError(PasswordHistoryException.class);
     }
 
     @Test
@@ -124,7 +157,7 @@ public class UserServiceTest {
 
         when(user.isInactive()).thenReturn(true);
 
-        TestObserver testObserver = userService.resetPassword(client, user).test();
+        var testObserver = userService.resetPassword(client, user).test();
         testObserver.assertNotComplete();
         testObserver.assertError(AccountInactiveException.class);
     }
@@ -157,7 +190,7 @@ public class UserServiceTest {
         when(commonUserService.enhance(any())).thenReturn(Single.just(user));
         when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
 
-        TestObserver testObserver = userService.resetPassword(client, user).test();
+        var testObserver = userService.resetPassword(client, user).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
@@ -187,7 +220,7 @@ public class UserServiceTest {
         when(commonUserService.enhance(any())).thenReturn(Single.just(user));
         when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
 
-        TestObserver testObserver = userService.resetPassword(client, user).test();
+        var testObserver = userService.resetPassword(client, user).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
@@ -216,7 +249,7 @@ public class UserServiceTest {
         when(commonUserService.enhance(any())).thenReturn(Single.just(user));
         when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
 
-        TestObserver testObserver = userService.resetPassword(client, user).test();
+        var testObserver = userService.resetPassword(client, user).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
@@ -249,7 +282,7 @@ public class UserServiceTest {
         when(commonUserService.enhance(any())).thenReturn(Single.just(user));
         when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
 
-        TestObserver testObserver = userService.resetPassword(client, user).test();
+        var testObserver = userService.resetPassword(client, user).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         verify(userProvider, times(1)).create(any());
@@ -274,7 +307,7 @@ public class UserServiceTest {
         when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Collections.singletonList(user)));
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
 
-        TestObserver testObserver = userService.forgotPassword(user.getEmail(), client).test();
+        var testObserver = userService.forgotPassword(user.getEmail(), client).test();
         testObserver.assertNotComplete();
         testObserver.assertError(AccountInactiveException.class);
 
@@ -296,7 +329,7 @@ public class UserServiceTest {
         when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Collections.singletonList(user)));
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.empty());
 
-        TestObserver testObserver = userService.forgotPassword(user.getEmail(), client).test();
+        var testObserver = userService.forgotPassword(user.getEmail(), client).test();
         testObserver.assertNotComplete();
         testObserver.assertError(UserInvalidException.class);
     }
@@ -326,7 +359,7 @@ public class UserServiceTest {
         when(userProvider.findByUsername("username")).thenReturn(Maybe.just(new DefaultUser("username")));
         when(commonUserService.update(any())).thenReturn(Single.just(user));
 
-        TestObserver testObserver = userService.forgotPassword(user.getEmail(), client).test();
+        var testObserver = userService.forgotPassword(user.getEmail(), client).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
@@ -354,7 +387,7 @@ public class UserServiceTest {
         when(userProvider.findByUsername("username")).thenReturn(Maybe.just(new DefaultUser("username")));
         when(commonUserService.update(any())).thenReturn(Single.just(user));
 
-        TestObserver testObserver = userService.forgotPassword(user.getEmail(), client).test();
+        var testObserver = userService.forgotPassword(user.getEmail(), client).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         verify(tokenService, never()).deleteByUserId(any());
@@ -379,7 +412,7 @@ public class UserServiceTest {
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
         when(userProvider.findByUsername("username")).thenReturn(Maybe.empty());
 
-        TestObserver testObserver = userService.forgotPassword(user.getEmail(), client).test();
+        var testObserver = userService.forgotPassword(user.getEmail(), client).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         verify(commonUserService, never()).update(any());
@@ -406,7 +439,7 @@ public class UserServiceTest {
         when(commonUserService.update(any())).thenReturn(Single.just(user));
         when(userProvider.findByUsername("username")).thenReturn(Maybe.just(new DefaultUser("username")));
 
-        TestObserver testObserver = userService.forgotPassword(
+        var testObserver = userService.forgotPassword(
                 new ForgotPasswordParameters(user.getEmail(), false, false),
                 client,
                 mock(io.gravitee.am.identityprovider.api.User.class)).test();
@@ -427,7 +460,7 @@ public class UserServiceTest {
         when(domain.getId()).thenReturn("domain-id");
         when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Arrays.asList(user, user)));
 
-        TestObserver testObserver = userService.forgotPassword(
+        var testObserver = userService.forgotPassword(
                 new ForgotPasswordParameters(user.getEmail(), true, true),
                 client,
                 mock(io.gravitee.am.identityprovider.api.User.class)).test();
@@ -674,7 +707,7 @@ public class UserServiceTest {
         when(commonUserService.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
         when(commonUserService.findByDomainAndExternalIdAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
 
-        TestObserver testObserver = userService.forgotPassword(user.getEmail(), client).test();
+        var testObserver = userService.forgotPassword(user.getEmail(), client).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         verify(commonUserService, times(1)).create(any());
@@ -704,7 +737,7 @@ public class UserServiceTest {
         when(commonUserService.update(any())).thenReturn(Single.just(user));
         when(commonUserService.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.just(user));
 
-        TestObserver testObserver = userService.forgotPassword(user.getEmail(), client).test();
+        var testObserver = userService.forgotPassword(user.getEmail(), client).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         verify(commonUserService, never()).findByDomainAndExternalIdAndSource(anyString(), anyString(), anyString());
@@ -724,7 +757,7 @@ public class UserServiceTest {
         when(domain.getId()).thenReturn("domain-id");
         when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Collections.emptyList()));
 
-        TestObserver testObserver = userService.forgotPassword(user.getEmail(), client).test();
+        var testObserver = userService.forgotPassword(user.getEmail(), client).test();
         testObserver.assertNotComplete();
         testObserver.assertError(UserNotFoundException.class);
         verify(tokenService, never()).deleteByUserId(any());
@@ -745,7 +778,7 @@ public class UserServiceTest {
         when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Collections.emptyList()));
         when(identityProviderManager.getUserProvider("idp-1")).thenReturn(Maybe.empty());
 
-        TestObserver testObserver = userService.forgotPassword(user.getEmail(), client).test();
+        var testObserver = userService.forgotPassword(user.getEmail(), client).test();
         testObserver.assertNotComplete();
         testObserver.assertError(UserNotFoundException.class);
         verify(tokenService, never()).deleteByUserId(any());
@@ -768,7 +801,7 @@ public class UserServiceTest {
         when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Collections.emptyList()));
         when(identityProviderManager.getUserProvider("idp-1")).thenReturn(Maybe.just(userProvider));
 
-        TestObserver testObserver = userService.forgotPassword(user.getEmail(), client).test();
+        var testObserver = userService.forgotPassword(user.getEmail(), client).test();
         testObserver.assertNotComplete();
         testObserver.assertError(UserNotFoundException.class);
         verify(tokenService, never()).deleteByUserId(any());
@@ -801,7 +834,7 @@ public class UserServiceTest {
         when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
         when(credentialService.deleteByUserId(any(), any(), any())).thenReturn(Completable.complete());
 
-        TestObserver testObserver = userService.resetPassword(client, user).test();
+        var testObserver = userService.resetPassword(client, user).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
@@ -835,7 +868,7 @@ public class UserServiceTest {
         when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
         when(tokenService.deleteByUserId(any())).thenReturn(Completable.complete());
 
-        TestObserver testObserver = userService.resetPassword(client, user).test();
+        var testObserver = userService.resetPassword(client, user).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
@@ -925,7 +958,7 @@ public class UserServiceTest {
         when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Collections.singletonList(user)));
 
 
-        TestObserver testObserver = userService.forgotPassword(user.getEmail(), client).test();
+        var testObserver = userService.forgotPassword(user.getEmail(), client).test();
         testObserver.assertNotComplete();
         testObserver.assertError(UserNotFoundException.class);
     }
@@ -952,7 +985,7 @@ public class UserServiceTest {
         when(client.getIdentityProviders()).thenReturn(applicationIdentityProviders);
 
 
-        TestObserver testObserver = userService.forgotPassword(user.getEmail(), client).test();
+        var testObserver = userService.forgotPassword(user.getEmail(), client).test();
         testObserver.assertNotComplete();
         testObserver.assertError(UserNotFoundException.class);
     }
@@ -986,7 +1019,7 @@ public class UserServiceTest {
         when(client.getIdentityProviders()).thenReturn(applicationIdentityProviders);
 
 
-        TestObserver testObserver = userService.forgotPassword(user.getEmail(), client).test();
+        var testObserver = userService.forgotPassword(user.getEmail(), client).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 

@@ -25,7 +25,10 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.PasswordService;
+import io.gravitee.am.service.RateLimiterService;
+import io.gravitee.am.service.VerifyAttemptService;
 import io.gravitee.am.service.exception.*;
+import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.validators.email.EmailValidatorImpl;
 import io.gravitee.am.service.validators.user.UserValidatorImpl;
@@ -76,6 +79,15 @@ public class OrganizationUserServiceTest {
     @Mock
     private MembershipService membershipService;
 
+    @Mock
+    private RateLimiterService rateLimiterService;
+
+    @Mock
+    private PasswordHistoryService passwordHistoryService;
+
+    @Mock
+    private VerifyAttemptService verifyAttemptService;
+
     @Spy
     private UserValidatorImpl userValidator = new UserValidatorImpl(
             NAME_STRICT_PATTERN,
@@ -97,6 +109,9 @@ public class OrganizationUserServiceTest {
         when(identityProviderManager.getUserProvider(any())).thenReturn(Maybe.empty());
         when(commonUserService.delete(anyString())).thenReturn(Completable.complete());
         when(membershipService.findByMember(any(), any())).thenReturn(Flowable.empty());
+        when(rateLimiterService.deleteByUser(any())).thenReturn(Completable.complete());
+        when(passwordHistoryService.deleteByUser(any())).thenReturn(Completable.complete());
+        when(verifyAttemptService.deleteByUser(any())).thenReturn(Completable.complete());
 
         organizationUserService.delete(ReferenceType.ORGANIZATION, organization, userId)
                 .test()
@@ -127,6 +142,9 @@ public class OrganizationUserServiceTest {
         when(commonUserService.delete(anyString())).thenReturn(Completable.complete());
         when(membershipService.findByMember(any(), any())).thenReturn(Flowable.just(m1, m2, m3));
         when(membershipService.delete(anyString())).thenReturn(Completable.complete());
+        when(rateLimiterService.deleteByUser(any())).thenReturn(Completable.complete());
+        when(passwordHistoryService.deleteByUser(any())).thenReturn(Completable.complete());
+        when(verifyAttemptService.deleteByUser(any())).thenReturn(Completable.complete());
 
         organizationUserService.delete(ReferenceType.ORGANIZATION, organization, userId)
                 .test()

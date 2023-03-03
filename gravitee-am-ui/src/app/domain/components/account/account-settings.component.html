@@ -95,6 +95,54 @@
 
     <div class="gv-form-section">
       <div class="gv-form-section-title">
+        <h5>MFA</h5>
+        <mat-divider></mat-divider>
+      </div>
+      <div>
+        <div fxLayout="column">
+          <mat-slide-toggle
+            (change)="enableMFABrutForceAuthenticationDetection($event)"
+            [checked]="isMFAChallengeBrutForceAuthenticationEnabled()" [disabled]="readonly">
+            Brute Force Detection
+          </mat-slide-toggle>
+          <mat-hint style="font-size: 75%;">Prevent MFA brute force challenge attempts.</mat-hint>
+        </div>
+        <div fxLayout="row">
+          <mat-form-field appearance="outline" floatLabel="always">
+            <input matInput type="number" placeholder="Max Challenge Attempts" name="maxChallengeAttempts" [(ngModel)]="accountSettings.mfaChallengeMaxAttempts" (ngModelChange)="updateModel()" [disabled]="!isMFAChallengeBrutForceAuthenticationEnabled()" required>
+            <mat-hint>Max challenge attempts after which the user will not be able to send request until <b>MFA Attempts Reset Time</b> is reached.</mat-hint>
+          </mat-form-field>
+        </div>
+        <div fxLayout="row">
+          <mat-form-field appearance="outline" floatLabel="always">
+            <input matInput type="number" placeholder="MFA Attempts Reset Time" name="challengeAttemptsResetTime" [(ngModel)]="accountSettings.mfaChallengeAttemptsResetTime" (ngModelChange)="updateModel()" [disabled]="!isMFAChallengeBrutForceAuthenticationEnabled()" required>
+            <mat-hint>Time after which the challenge attempts will be reset.</mat-hint>
+          </mat-form-field>
+          <mat-form-field fxFlex style="margin-left: 20px;" appearance="outline" floatLabel="always">
+            <mat-select placeholder="Unit time" name="challengeAttemptsResetTimeUnit" [(ngModel)]="accountSettings.mfaChallengeAttemptsResetTimeUnit" (ngModelChange)="updateModel()" [disabled]="!isMFAChallengeBrutForceAuthenticationEnabled()" required>
+              <mat-option value="seconds">SECONDS</mat-option>
+              <mat-option value="minutes">MINUTES</mat-option>
+              <mat-option value="hours">HOURS</mat-option>
+              <mat-option value="days">DAYS</mat-option>
+              <mat-option value="weeks">WEEKS</mat-option>
+              <mat-option value="months">MONTHS</mat-option>
+              <mat-option value="years">YEARS</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+        <div fxLayout="column" style="margin-top: 10px;">
+          <mat-slide-toggle
+            (change)="enableMFAChallengeSendVerifyAlertEmail($event)"
+            [checked]="isMFAChallengeSendVerifyAlertEmailEnabled()" [disabled]="readonly">
+            Send alert email
+          </mat-slide-toggle>
+          <mat-hint style="font-size: 75%;">Send an email if maximum challenge attempts are detected.</mat-hint>
+        </div>
+      </div>
+    </div>
+
+    <div class="gv-form-section">
+      <div class="gv-form-section-title">
         <h5>User registration</h5>
         <mat-divider></mat-divider>
       </div>

@@ -33,8 +33,11 @@ public class SystemTaskMongo extends Auditable {
     @BsonId
     private String id;
     private String type;
+    private String kind;
     private String status;
     private String operationId;
+
+    private String configuration;
 
     public String getId() {
         return id;
@@ -50,6 +53,14 @@ public class SystemTaskMongo extends Auditable {
 
     public void setType(String type) {
         this.type = type;
+    }
+
+    public String getKind() {
+        return kind;
+    }
+
+    public void setKind(String kind) {
+        this.kind = kind;
     }
 
     public String getStatus() {
@@ -68,14 +79,24 @@ public class SystemTaskMongo extends Auditable {
         this.operationId = operationId;
     }
 
+    public String getConfiguration() {
+        return configuration;
+    }
+
+    public void setConfiguration(String configuration) {
+        this.configuration = configuration;
+    }
+
     public SystemTask convert() {
         SystemTask task = new SystemTask();
         task.setId(getId());
         task.setType(getType());
+        task.setKind(getKind());
         task.setStatus(getStatus());
         task.setCreatedAt(getCreatedAt());
         task.setUpdatedAt(getUpdatedAt());
         task.setOperationId(getOperationId());
+        task.setConfiguration(getConfiguration());
         return task;
     }
 
@@ -83,13 +104,16 @@ public class SystemTaskMongo extends Auditable {
         if (task == null) {
             return null;
         }
+
         SystemTaskMongo taskMongo = new SystemTaskMongo();
         taskMongo.setId(task.getId());
         taskMongo.setType(task.getType());
+        taskMongo.setKind(task.getKind());
         taskMongo.setStatus(task.getStatus());
         taskMongo.setCreatedAt(task.getCreatedAt());
         taskMongo.setUpdatedAt(task.getUpdatedAt());
         taskMongo.setOperationId(task.getOperationId());
+        taskMongo.setConfiguration(task.getConfiguration());
 
         return taskMongo;
     }

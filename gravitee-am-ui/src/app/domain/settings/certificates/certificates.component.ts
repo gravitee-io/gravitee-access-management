@@ -39,6 +39,7 @@ export class DomainSettingsCertificatesComponent implements OnInit {
   certificates: any[];
   domainId: string;
   threshold: number;
+  ongoingRotation: boolean = false;
 
   constructor(private certificateService: CertificateService, private dialogService: DialogService,
               private snackbarService: SnackbarService, private route: ActivatedRoute, private dialog: MatDialog) { }
@@ -80,21 +81,30 @@ export class DomainSettingsCertificatesComponent implements OnInit {
   }
 
   certificateWillExpire(cert) {
-    return (cert.status == 'will_expire')
+    return cert.status === 'will_expire';
   }
 
   certificateIsExpired(cert) {
-    return (cert.status == 'expired')
+    return cert.status === 'expired';
+  }
+
+  certificateIsRenewed(cert) {
+    return cert.status === 'renewed';
+  }
+
+  computeAppsLabel(cert) {
+    const apps = cert.applications ? cert.applications.map(app => app.name).length : 0;
+    return `${apps} app` + (apps > 1 ? "s" : "");
+  }
+
+  getAppNames(cert) {
+    const names = cert.applications ? cert.applications.map(app => app.name).join(' / ') : [];
+    const length = cert.applications ? cert.applications.map(app => app.name).length : 0;
+    return length > 4 ? names + " / ..." : names
   }
 
   expireInDays(expiry) {
     return Math.ceil( (expiry - Date.now()) / (1000 * 3600 * 24));
-  }
-
-  private computeDate(days) {
-    var result = new Date();
-    result.setDate(result.getDate() + days);
-    return result;
   }
 
   delete(id, event) {
@@ -116,6 +126,35 @@ export class DomainSettingsCertificatesComponent implements OnInit {
     dialogRef.componentInstance.title = 'Public certificate key';
     dialogRef.componentInstance.certificateKeys = publicKeys;
     dialogRef.componentInstance.error = error;
+  }
+
+  rotateCertificate() {
+    this.ongoingRotation = true;
+    this.dialogService
+      .confirm('Rotate key', 'Are you sure you want to generate a new system certificate ?')
+      .subscribe(res => {
+        if (res) {
+          this.certificateService.rotateCertificate(this.domainId).subscribe(response => {
+            this.snackbarService.open('New system certificate created');
+            this.loadCertificates();
+            this.ongoingRotation = false
+            
+            // expiration date is extract during the certificate plugin generation
+            // we trigger a 5 second delay refresh to try provide the information 
+            // without user interaction 
+            setTimeout(() => {
+              this.loadCertificates()
+            }, 5000);
+
+          });
+        } else {
+          this.ongoingRotation = false;
+        }
+      });
+  }
+
+  preventRotateCertificate() {
+    return this.ongoingRotation;
   }
 }
 

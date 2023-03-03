@@ -40,6 +40,8 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.EnrollmentSettings;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.MFASettings;
+import io.gravitee.am.model.PasswordHistory;
+import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
@@ -58,6 +60,7 @@ import io.gravitee.am.service.exception.UserAlreadyExistsException;
 import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.exception.UserProviderNotFoundException;
+import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
 import io.gravitee.am.service.validators.email.EmailValidator;
@@ -82,14 +85,21 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
-
+import static io.gravitee.am.model.ReferenceType.DOMAIN;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.lang.Boolean.FALSE;
+import static java.lang.Boolean.TRUE;
 import static java.util.Map.entry;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.ID_TOKEN;
 
@@ -143,6 +153,9 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private EmailValidator emailValidator;
 
+    @Autowired
+    private PasswordHistoryService passwordHistoryService;
+
     @Override
     public Maybe<UserToken> verifyToken(String token) {
         return Maybe.fromCallable(() -> jwtParser.parse(token))
@@ -182,7 +195,7 @@ public class UserServiceImpl implements UserService {
         AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
         final String source = (accountSettings != null && accountSettings.getDefaultIdentityProviderForRegistration() != null) ? accountSettings.getDefaultIdentityProviderForRegistration()
                 : (user.getSource() == null ? DEFAULT_IDP_PREFIX + domain.getId() : user.getSource());
-
+        final var rawPassword = user.getPassword();
         // validate user and then check user uniqueness
         return userValidator.validate(user)
                 .andThen(userService.findByDomainAndUsernameAndSource(domain.getId(), user.getUsername(), source)
@@ -221,7 +234,10 @@ public class UserServiceImpl implements UserService {
                             }
                             return userService.create(user);
                         })
-                        .flatMap(userService::enhance)
+                        .flatMap( amUser -> {
+                            createPasswordHistory(client, amUser, rawPassword, principal);
+                            return userService.enhance(amUser);
+                        })
                         .map(user1 -> new RegistrationResponse(user1, accountSettings != null ? accountSettings.getRedirectUriAfterRegistration() : null, accountSettings != null && accountSettings.isAutoLoginAfterRegistration()))
                         .doOnSuccess(registrationResponse -> {
                             // reload principal
@@ -235,6 +251,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public Single<RegistrationResponse> confirmRegistration(Client client, User user, io.gravitee.am.identityprovider.api.User
             principal) {
+        final var rawPassword = user.getPassword();
         // user has completed his account, add it to the idp
         return identityProviderManager.getUserProvider(user.getSource())
                 .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(user.getSource())))
@@ -266,7 +283,10 @@ public class UserServiceImpl implements UserService {
                     }
                     return userService.update(user);
                 })
-                .flatMap(userService::enhance)
+                .flatMap( amUser -> {
+                    createPasswordHistory(client, amUser, rawPassword, principal);
+                    return userService.enhance(amUser);
+                })
                 .map(user1 -> {
                     AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
                     return new RegistrationResponse(user1, accountSettings != null ? accountSettings.getRedirectUriAfterRegistration() : null, accountSettings != null ? accountSettings.isAutoLoginAfterRegistration() : false);
@@ -285,13 +305,14 @@ public class UserServiceImpl implements UserService {
                         .ignoreElement();
     }
 
+    @SuppressWarnings({"ReactiveStreamsUnusedPublisher", "ResultOfMethodCallIgnored"})
     @Override
     public Single<ResetPasswordResponse> resetPassword(Client client, User user, io.gravitee.am.identityprovider.api.User principal) {
         // get account settings
         final AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
 
         // if user registration is not completed and force registration option is disabled throw invalid account exception
-        if (user.isInactive() && !forceUserRegistration(accountSettings)) {
+        if (TRUE.equals(user.isInactive()) && !forceUserRegistration(accountSettings)) {
             return Single.error(new AccountInactiveException("User needs to complete the activation process"));
         }
 
@@ -305,13 +326,14 @@ public class UserServiceImpl implements UserService {
                     // see https://github.com/gravitee-io/issues/issues/8407
                     return userProvider.findByUsername(user.getUsername())
                             .switchIfEmpty(Maybe.error(new UserNotFoundException(user.getUsername())))
-                            .flatMapSingle(idpUser -> userProvider.updatePassword(idpUser, user.getPassword()))
+                            .flatMapSingle(idpUser -> passwordHistoryService
+                                    .addPasswordToHistory(DOMAIN, domain.getId(), user, user.getPassword() , principal, getPasswordSettings(client))
+                                    .switchIfEmpty(Maybe.just(new PasswordHistory()))
+                                    .flatMapSingle(passwordHistory -> userProvider.updatePassword(idpUser, user.getPassword())))
                             .onErrorResumeNext(ex -> {
-                                if (ex instanceof UserNotFoundException) {
+                                if (ex instanceof UserNotFoundException && forceUserRegistration(accountSettings)) {
                                     // idp user not found, create its account, only if force registration is enabled
-                                    if (forceUserRegistration(accountSettings)) {
-                                        return userProvider.create(convert(user));
-                                    }
+                                    return userProvider.create(convert(user));
                                 }
                                 return Single.error(ex);
                             });
@@ -320,7 +342,7 @@ public class UserServiceImpl implements UserService {
                 .flatMap(idpUser -> {
                     // update 'users' collection for management and audit purpose
                     // if user was in pre-registration mode, end the registration process
-                    if (user.isPreRegistration()) {
+                    if (TRUE.equals(user.isPreRegistration())) {
                         user.setRegistrationCompleted(true);
                         user.setEnabled(true);
                     }
@@ -683,7 +705,20 @@ public class UserServiceImpl implements UserService {
         return user;
     }
 
+    @SuppressWarnings("ResultOfMethodCallIgnored")
+    private void createPasswordHistory(Client client, User user, String rawPassword, io.gravitee.am.identityprovider.api.User principal) {
+        passwordHistoryService
+                .addPasswordToHistory(DOMAIN, domain.getId(), user, rawPassword , principal, getPasswordSettings(client))
+                .subscribe(passwordHistory -> logger.debug("Created password history for user {}", user.getUsername()),
+                           throwable -> logger.debug("Failed to create password history", throwable));
+    }
+
+    private PasswordSettings getPasswordSettings(Client client) {
+        return PasswordSettings.getInstance(client, domain).orElse(null);
+    }
+
     private class UserAuthentication {
+
         private final io.gravitee.am.identityprovider.api.User user;
         private final String source;
 
@@ -699,6 +734,6 @@ public class UserServiceImpl implements UserService {
         public String getSource() {
             return source;
         }
-    }
 
+    }
 }

@@ -20,7 +20,11 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.repository.management.api.CertificateRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.CertificateMongo;
-import io.reactivex.*;
+import io.reactivex.Completable;
+import io.reactivex.Flowable;
+import io.reactivex.Maybe;
+import io.reactivex.Observable;
+import io.reactivex.Single;
 import org.bson.Document;
 import org.bson.types.Binary;
 import org.springframework.stereotype.Component;
@@ -120,6 +124,7 @@ public class MongoCertificateRepository extends AbstractManagementMongoRepositor
         certificate.setCreatedAt(certificateMongo.getCreatedAt());
         certificate.setUpdatedAt(certificateMongo.getUpdatedAt());
         certificate.setExpiresAt(certificateMongo.getExpiresAt());
+        certificate.setSystem(certificateMongo.isSystem());
 
         return certificate;
     }
@@ -139,6 +144,7 @@ public class MongoCertificateRepository extends AbstractManagementMongoRepositor
         certificateMongo.setCreatedAt(certificate.getCreatedAt());
         certificateMongo.setUpdatedAt(certificate.getUpdatedAt());
         certificateMongo.setExpiresAt(certificate.getExpiresAt());
+        certificateMongo.setSystem(certificate.isSystem());
 
         return certificateMongo;
     }

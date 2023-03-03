@@ -93,7 +93,7 @@ public class UpdateUserEndpointHandlerTest extends RxWebTestBase {
     @Test
     public void shouldNotInvokeSCIMUpdateUserEndpoint_invalid_password() throws Exception {
         router.route("/Users").handler(userEndpoint::update);
-        when(userService.update(eq(null), any(), eq(null), any(), any())).thenReturn(Single.error(new InvalidValueException("Field [password] is invalid")));
+        when(userService.update(eq(null), any(), eq(null), any(), any(), any())).thenReturn(Single.error(new InvalidValueException("Field [password] is invalid")));
 
         testRequest(
                 HttpMethod.PUT,
@@ -115,7 +115,7 @@ public class UpdateUserEndpointHandlerTest extends RxWebTestBase {
     @Test
     public void shouldInvokeSCIMUpdateUserEndpoint_valid_password() throws Exception {
         router.route("/Users").handler(userEndpoint::update);
-        when(userService.update(any(), any(), eq(null), any(), any())).thenReturn(Single.just(getUser()));
+        when(userService.update(any(), any(), eq(null), any(), any(), any())).thenReturn(Single.just(getUser()));
 
         testRequest(
                 HttpMethod.PUT,
@@ -131,7 +131,7 @@ public class UpdateUserEndpointHandlerTest extends RxWebTestBase {
     @Test
     public void shouldNotInvokeSCIMUpdateUserEndpoint_invalid_roles() throws Exception {
         router.route("/Users").handler(userEndpoint::update);
-        when(userService.update(any(), any(), eq(null), anyString(), any())).thenReturn(Single.error(new InvalidValueException("Role [role-1] can not be found.")));
+        when(userService.update(any(), any(), eq(null), anyString(), any(), any())).thenReturn(Single.error(new InvalidValueException("Role [role-1] can not be found.")));
 
         testRequest(
                 HttpMethod.PUT,
@@ -153,7 +153,7 @@ public class UpdateUserEndpointHandlerTest extends RxWebTestBase {
     @Test
     public void shouldReturn400WhenInvalidUserException() throws Exception {
         router.route("/Users").handler(userEndpoint::update);
-        when(userService.update(any(), any(), eq(null), anyString(), any())).thenReturn(Single.error(new InvalidUserException("Invalid user infos")));
+        when(userService.update(any(), any(), eq(null), anyString(), any(), any())).thenReturn(Single.error(new InvalidUserException("Invalid user infos")));
 
         testRequest(
                 HttpMethod.PUT,
@@ -175,7 +175,7 @@ public class UpdateUserEndpointHandlerTest extends RxWebTestBase {
     @Test
     public void shouldReturn400WhenEmailFormatInvalidException() throws Exception {
         router.route("/Users").handler(userEndpoint::update);
-        when(userService.update(any(), any(), eq(null), anyString(), any())).thenReturn(Single.error(new EmailFormatInvalidException("Invalid email")));
+        when(userService.update(any(), any(), eq(null), anyString(), any(), any())).thenReturn(Single.error(new EmailFormatInvalidException("Invalid email")));
 
         testRequest(
                 HttpMethod.PUT,
@@ -201,7 +201,7 @@ public class UpdateUserEndpointHandlerTest extends RxWebTestBase {
         when(scimSettings.getIdpSelectionRule()).thenReturn("{#context.attributes['token']['idp']}");
         when(domain.getScim()).thenReturn(scimSettings);
         router.route("/Users").handler(userEndpoint::update);
-        when(userService.update(any(), any(), eq("123456"), any(), any())).thenReturn(Single.just(getUser()));
+        when(userService.update(any(), any(), eq("123456"), any(), any(), any())).thenReturn(Single.just(getUser()));
 
         testRequest(
                 HttpMethod.PUT,
@@ -219,7 +219,7 @@ public class UpdateUserEndpointHandlerTest extends RxWebTestBase {
         SCIMSettings scimSettings = mock(SCIMSettings.class);
         when(domain.getScim()).thenReturn(scimSettings);
         router.route("/Users").handler(userEndpoint::update);
-        when(userService.update(any(), any(), any(), any(), any())).thenReturn(Single.just(getUser()));
+        when(userService.update(any(), any(), any(), any(), any(), any())).thenReturn(Single.just(getUser()));
 
         testRequest(
                 HttpMethod.PUT,
@@ -232,7 +232,7 @@ public class UpdateUserEndpointHandlerTest extends RxWebTestBase {
                 "OK", null);
 
         ArgumentCaptor<User> userArgumentCaptor = ArgumentCaptor.forClass(User.class);
-        verify(userService).update(any(), userArgumentCaptor.capture(),  any(), any(), any());
+        verify(userService).update(any(), userArgumentCaptor.capture(),  any(), any(), any(), any());
         User scimUser = userArgumentCaptor.getValue();
         assertTrue(scimUser instanceof GraviteeUser);
         Map<String, Object> additionalInformation = ((GraviteeUser) scimUser).getAdditionalInformation();

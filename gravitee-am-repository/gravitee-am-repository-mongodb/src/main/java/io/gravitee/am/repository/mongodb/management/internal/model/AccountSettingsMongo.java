@@ -46,6 +46,10 @@ public class AccountSettingsMongo {
     private List<FormFieldMongo> resetPasswordCustomFormFields;
     private boolean resetPasswordConfirmIdentity;
     private boolean resetPasswordInvalidateTokens;
+    private boolean mfaChallengeAttemptsDetectionEnabled;
+    private Integer mfaChallengeMaxAttempts;
+    private Integer mfaChallengeAttemptsResetTime;
+    private boolean mfaChallengeSendRecoverAccountEmail;
 
     public boolean isInherited() {
         return inherited;
@@ -207,6 +211,38 @@ public class AccountSettingsMongo {
         this.resetPasswordInvalidateTokens = resetPasswordInvalidateTokens;
     }
 
+    public boolean isMfaChallengeAttemptsDetectionEnabled() {
+        return mfaChallengeAttemptsDetectionEnabled;
+    }
+
+    public void setMfaChallengeAttemptsDetectionEnabled(boolean mfaChallengeAttemptsDetectionEnabled) {
+        this.mfaChallengeAttemptsDetectionEnabled = mfaChallengeAttemptsDetectionEnabled;
+    }
+
+    public Integer getMfaChallengeMaxAttempts() {
+        return mfaChallengeMaxAttempts;
+    }
+
+    public void setMfaChallengeMaxAttempts(Integer mfaChallengeMaxAttempts) {
+        this.mfaChallengeMaxAttempts = mfaChallengeMaxAttempts;
+    }
+
+    public Integer getMfaChallengeAttemptsResetTime() {
+        return mfaChallengeAttemptsResetTime;
+    }
+
+    public void setMfaChallengeAttemptsResetTime(Integer mfaChallengeAttemptsResetTime) {
+        this.mfaChallengeAttemptsResetTime = mfaChallengeAttemptsResetTime;
+    }
+
+    public boolean isMfaChallengeSendRecoverAccountEmail() {
+        return mfaChallengeSendRecoverAccountEmail;
+    }
+
+    public void setMfaChallengeSendRecoverAccountEmail(boolean mfaChallengeSendRecoverAccountEmail) {
+        this.mfaChallengeSendRecoverAccountEmail = mfaChallengeSendRecoverAccountEmail;
+    }
+
     public AccountSettings convert() {
         AccountSettings accountSettings = new AccountSettings();
         accountSettings.setInherited(isInherited());
@@ -233,6 +269,11 @@ public class AccountSettingsMongo {
             accountSettings.setResetPasswordCustomFormFields(null);
         }
         accountSettings.setResetPasswordInvalidateTokens(isResetPasswordInvalidateTokens());
+        accountSettings.setMfaChallengeAttemptsDetectionEnabled(isMfaChallengeAttemptsDetectionEnabled());
+        accountSettings.setMfaChallengeMaxAttempts(getMfaChallengeMaxAttempts());
+        accountSettings.setMfaChallengeAttemptsResetTime(getMfaChallengeAttemptsResetTime());
+        accountSettings.setMfaChallengeSendVerifyAlertEmail(isMfaChallengeSendRecoverAccountEmail());
+
         return accountSettings;
     }
 
@@ -265,6 +306,10 @@ public class AccountSettingsMongo {
             accountSettingsMongo.setResetPasswordCustomFormFields(null);
         }
         accountSettingsMongo.setResetPasswordInvalidateTokens(accountSettings.isResetPasswordInvalidateTokens());
+        accountSettingsMongo.setMfaChallengeAttemptsDetectionEnabled(accountSettings.isMfaChallengeAttemptsDetectionEnabled());
+        accountSettingsMongo.setMfaChallengeMaxAttempts(accountSettings.getMfaChallengeMaxAttempts());
+        accountSettingsMongo.setMfaChallengeAttemptsResetTime(accountSettings.getMfaChallengeAttemptsResetTime());
+        accountSettingsMongo.setMfaChallengeSendRecoverAccountEmail(accountSettings.isMfaChallengeSendVerifyAlertEmail());
         return accountSettingsMongo;
     }
 }

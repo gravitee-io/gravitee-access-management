@@ -41,6 +41,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -136,7 +138,7 @@ public class UserEndpoint extends AbstractUserEndpoint {
                     .map(scimUser -> new DefaultUser(UserMapper.convert(scimUser)))
                     .map(Optional::ofNullable)
                     .switchIfEmpty(Maybe.just(Optional.empty()))
-                    .flatMapSingle(optPrincipal -> userService.update(userId, user, source, baseUrl, optPrincipal.orElse(null)))
+                    .flatMapSingle(optPrincipal -> userService.update(userId, user, source, baseUrl, optPrincipal.orElse(null), context.get(CLIENT_CONTEXT_KEY)))
                     .subscribe(
                             user1 -> context.response()
                                     .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
@@ -207,7 +209,7 @@ public class UserEndpoint extends AbstractUserEndpoint {
                     .map(scimUser -> new DefaultUser(UserMapper.convert(scimUser)))
                     .map(Optional::ofNullable)
                     .switchIfEmpty(Maybe.just(Optional.empty()))
-                    .flatMapSingle(optPrincipal -> userService.patch(userId, patchOp, source, baseUrl, optPrincipal.orElse(null)))
+                    .flatMapSingle(optPrincipal -> userService.patch(userId, patchOp, source, baseUrl, optPrincipal.orElse(null), context.get(CLIENT_CONTEXT_KEY)))
                     .subscribe(
                             user1 -> context.response()
                                     .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")

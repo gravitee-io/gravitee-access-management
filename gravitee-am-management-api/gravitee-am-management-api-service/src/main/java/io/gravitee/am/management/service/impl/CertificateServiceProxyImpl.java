@@ -84,8 +84,8 @@ public class CertificateServiceProxyImpl extends AbstractSensitiveProxy implemen
     }
 
     @Override
-    public Single<Certificate> create(String domain, NewCertificate newCertificate, User principal) {
-        return certificateService.create(domain, newCertificate, principal)
+    public Single<Certificate> create(String domain, NewCertificate newCertificate, User principal, boolean isSystem) {
+        return certificateService.create(domain, newCertificate, principal, isSystem)
                 .flatMap(this::filterSensitiveData)
                 .doOnSuccess(certificate -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class).principal(principal).type(EventType.CERTIFICATE_CREATED).certificate(certificate)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class).principal(principal).type(EventType.CERTIFICATE_CREATED).throwable(throwable)));
@@ -112,6 +112,11 @@ public class CertificateServiceProxyImpl extends AbstractSensitiveProxy implemen
     @Override
     public Completable delete(String certificateId, User principal) {
         return certificateService.delete(certificateId, principal);
+    }
+
+    @Override
+    public Single<Certificate> rotate(String domain, User principal) {
+        return certificateService.rotate(domain, principal);
     }
 
     private Single<Certificate> filterSensitiveData(Certificate cert) {

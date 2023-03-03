@@ -28,9 +28,12 @@ import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.PasswordService;
+import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.service.UserActivityService;
+import io.gravitee.am.service.VerifyAttemptService;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.exception.UserProviderNotFoundException;
+import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -39,14 +42,15 @@ import io.gravitee.am.service.validators.user.UserValidator;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import static io.gravitee.am.model.ReferenceType.DOMAIN;
 
@@ -75,6 +79,16 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
 
     @Autowired
     protected UserActivityService userActivityService;
+
+    @Autowired
+    protected RateLimiterService rateLimiterService;
+
+    @Autowired
+    protected PasswordHistoryService passwordHistoryService;
+
+    @Autowired
+    protected VerifyAttemptService verifyAttemptService;
+
 
     protected abstract BiFunction<String, String, Maybe<Application>> checkClientFunction();
 
@@ -127,6 +141,7 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type((status ? EventType.USER_ENABLED : EventType.USER_DISABLED)).throwable(throwable)));
     }
 
+    @SuppressWarnings("ReactiveStreamsUnusedPublisher")
     @Override
     public Completable delete(ReferenceType referenceType, String referenceId, String userId, io.gravitee.am.identityprovider.api.User principal) {
         return getUserService().findById(referenceType, referenceId, userId)
@@ -152,11 +167,15 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
                         })
                         // Delete trace of user activity
                         .andThen((DOMAIN.equals(referenceType)) ? userActivityService.deleteByDomainAndUser(referenceId, userId) : Completable.complete())
+                        // Delete rate limit
+                        .andThen(rateLimiterService.deleteByUser(user))
+                        .andThen(verifyAttemptService.deleteByUser(user))
                         .andThen(getUserService().delete(userId))
                         // remove from memberships if user is an administrative user
                         .andThen((ReferenceType.ORGANIZATION != referenceType) ? Completable.complete() :
                                 membershipService.findByMember(userId, MemberType.USER)
                                         .flatMapCompletable(membership -> membershipService.delete(membership.getId())))
+                        .andThen(passwordHistoryService.deleteByUser(userId))
                         .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_DELETED).user(user)))
                         .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_DELETED).throwable(throwable)))
                 );

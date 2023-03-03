@@ -15,7 +15,10 @@
  */
 package io.gravitee.am.management.handlers.management.api.model;
 
+import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Certificate;
+
+import java.util.List;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -27,9 +30,14 @@ public class CertificateEntity extends Certificate {
 
     public CertificateEntity(Certificate certificate) {
         super(certificate);
+        if (isSystem()) {
+            // we do not want to expose configuration for system cert
+            this.setConfiguration("{}");
+        }
     }
 
     private CertificateStatus status;
+    private List<Application> applications;
 
     public CertificateStatus getStatus() {
         return status;
@@ -37,5 +45,13 @@ public class CertificateEntity extends Certificate {
 
     public void setStatus(CertificateStatus status) {
         this.status = status;
+    }
+
+    public List<Application> getApplications() {
+        return applications;
+    }
+
+    public void setApplications(List<Application> applications) {
+        this.applications = applications;
     }
 }

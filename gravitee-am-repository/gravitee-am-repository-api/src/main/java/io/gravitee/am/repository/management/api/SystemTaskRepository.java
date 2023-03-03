@@ -17,6 +17,7 @@ package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.SystemTask;
 import io.gravitee.am.repository.common.CrudRepository;
+import io.reactivex.Flowable;
 import io.reactivex.Single;
 
 /**
@@ -26,4 +27,6 @@ import io.reactivex.Single;
 public interface SystemTaskRepository extends CrudRepository<SystemTask, String> {
 
     Single<SystemTask> updateIf(SystemTask item, String operationId);
+
+    Flowable<SystemTask> findByType(String type);
 }

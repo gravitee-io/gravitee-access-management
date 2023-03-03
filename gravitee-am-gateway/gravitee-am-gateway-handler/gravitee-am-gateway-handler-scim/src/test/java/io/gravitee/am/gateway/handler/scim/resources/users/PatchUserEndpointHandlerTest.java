@@ -111,7 +111,7 @@ public class PatchUserEndpointHandlerTest extends RxWebTestBase {
         User scimUser = mock(User.class);
         when(scimUser.getMeta()).thenReturn(new Meta());
         when(userService.get(any(), any())).thenReturn(Maybe.just(new User()));
-        when(userService.patch(any(), any(), any(), any(), any())).thenReturn(Single.just(scimUser));
+        when(userService.patch(any(), any(), any(), any(), any(), any())).thenReturn(Single.just(scimUser));
 
         testRequest(
                 HttpMethod.PATCH,
@@ -134,7 +134,7 @@ public class PatchUserEndpointHandlerTest extends RxWebTestBase {
                 "OK", null);
 
         ArgumentCaptor<PatchOp> patchOpArgumentCaptor = ArgumentCaptor.forClass(PatchOp.class);
-        verify(userService).patch(any(), patchOpArgumentCaptor.capture(),  any(), any(), any());
+        verify(userService).patch(any(), patchOpArgumentCaptor.capture(),  any(), any(), any(), any());
         PatchOp patchOp = patchOpArgumentCaptor.getValue();
         assertEquals(Schema.SCHEMA_URI_CUSTOM_USER, patchOp.getOperations().get(0).getPath().getAttributePath());
     }

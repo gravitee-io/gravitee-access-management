@@ -22,6 +22,7 @@ import io.gravitee.am.repository.jdbc.management.api.model.JdbcSystemTask;
 import io.gravitee.am.repository.jdbc.management.api.model.mapper.LocalDateConverter;
 import io.gravitee.am.repository.management.api.SystemTaskRepository;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.beans.factory.InitializingBean;
@@ -49,6 +50,8 @@ public class JdbcSystemTaskRepository extends AbstractJdbcRepository implements 
     public static final String COL_OPERATION_ID = "operation_id";
     public static final String COL_CREATED_AT = "created_at";
     public static final String COL_UPDATED_AT = "updated_at";
+    public static final String COL_CONFIGURATION = "configuration";
+    public static final String COL_KIND = "kind";
     public static final String WHERE_SUFFIX = "_where";
 
     private static final List<String> columns = List.of(
@@ -57,7 +60,9 @@ public class JdbcSystemTaskRepository extends AbstractJdbcRepository implements 
             COL_STATUS,
             COL_OPERATION_ID,
             COL_CREATED_AT,
-            COL_UPDATED_AT
+            COL_UPDATED_AT,
+            COL_CONFIGURATION,
+            COL_KIND
     );
 
     private String INSERT_STATEMENT;
@@ -99,6 +104,8 @@ public class JdbcSystemTaskRepository extends AbstractJdbcRepository implements 
         insertSpec = addQuotedField(insertSpec, COL_OPERATION_ID, item.getOperationId(), String.class);
         insertSpec = addQuotedField(insertSpec, COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
         insertSpec = addQuotedField(insertSpec, COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
+        insertSpec = addQuotedField(insertSpec, COL_CONFIGURATION, item.getConfiguration(), String.class);
+        insertSpec = addQuotedField(insertSpec, COL_KIND, item.getKind(), String.class);
 
         Mono<Integer> action = insertSpec.fetch().rowsUpdated();
         return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle());
@@ -121,6 +128,8 @@ public class JdbcSystemTaskRepository extends AbstractJdbcRepository implements 
         updateSpec = addQuotedField(updateSpec, COL_OPERATION_ID, item.getOperationId(), String.class);
         updateSpec = addQuotedField(updateSpec, COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
         updateSpec = addQuotedField(updateSpec, COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
+        updateSpec = addQuotedField(updateSpec, COL_CONFIGURATION, item.getConfiguration(), String.class);
+        updateSpec = addQuotedField(updateSpec, COL_KIND, item.getKind(), String.class);
         updateSpec = addQuotedField(updateSpec, COL_OPERATION_ID + WHERE_SUFFIX, operationId, String.class);
 
         Mono<Integer> action = updateSpec.fetch().rowsUpdated();
@@ -133,5 +142,11 @@ public class JdbcSystemTaskRepository extends AbstractJdbcRepository implements 
         Mono<Integer> delete = template.delete(JdbcSystemTask.class)
                 .matching(Query.query(where(COL_ID).is(id))).all();
         return monoToCompletable(delete);
+    }
+
+    @Override
+    public Flowable<SystemTask> findByType(String type) {
+        return fluxToFlowable(template.select(Query.query(where(COL_TYPE).is(type)), JdbcSystemTask.class))
+                .map(this::toEntity);
     }
 }

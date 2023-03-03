@@ -30,8 +30,7 @@
     <groupId>io.gravitee.am</groupId>
     <artifactId>gravitee-am-parent</artifactId>
     <packaging>pom</packaging>
-
-    <version>3.19.8-SNAPSHOT</version>
+    <version>3.20.2-SNAPSHOT</version>
     <name>Gravitee IO - Access Management</name>
 
     <scm>
@@ -115,6 +114,7 @@
         <commons-io.version>2.11.0</commons-io.version>
         <common-text.version>1.10.0</common-text.version>
         <ognl.version>3.1.12</ognl.version>
+        <mockito-jupiter.version>4.4.0</mockito-jupiter.version>
         <hazelcast.version>4.1.10</hazelcast.version>
         <!-- External plugins versions -->
         <gravitee-policy-callout-http.version>1.15.1</gravitee-policy-callout-http.version>
@@ -125,7 +125,7 @@
         <gravitee-cockpit-connectors.version>2.6.0</gravitee-cockpit-connectors.version>
         <gravitee-ae-connectors.version>1.0.0</gravitee-ae-connectors.version>
         <gravitee-notifier-webhook.version>1.1.0</gravitee-notifier-webhook.version>
-        <gravitee-notifier-email.version>1.4.1</gravitee-notifier-email.version>
+        <gravitee-notifier-email.version>1.5.0</gravitee-notifier-email.version>
         <gravitee-notifier-slack.version>1.3.0</gravitee-notifier-slack.version>
         <gravitee-alert-api.version>1.8.0</gravitee-alert-api.version>
         <gravitee-notifier-api.version>1.4.1</gravitee-notifier-api.version>
@@ -137,6 +137,7 @@
 
         <!-- Sonar - Jacoco -->
         <jacoco-maven-plugin.version>0.8.7</jacoco-maven-plugin.version>
+        <surefire.version>2.22.2</surefire.version>
     </properties>
 
     <dependencyManagement>
@@ -389,7 +390,6 @@
                 <artifactId>gravitee-cockpit-api</artifactId>
                 <version>${gravitee-cockpit-api.version}</version>
             </dependency>
-
             <dependency>
                 <groupId>com.hazelcast</groupId>
                 <artifactId>hazelcast</artifactId>
@@ -491,6 +491,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
+                <version>${surefire.version}</version>
                 <configuration>
                     <argLine>@{argLine} --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED
                         --add-opens java.base/java.util.regex=ALL-UNNAMED --add-opens

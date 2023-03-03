@@ -1,17 +1,20 @@
+.actions-row {
+  display: flex;
+  flex-direction: row-reverse;
+  gap: 10px;
+}
+
 .certificate-header {
-  margin: 5px;
+  margin: 10px;
   align-items: center;
   .certificate-icon {
-    margin: 0 12px 0 0;
+    margin: 5px 12px 0 0;
   }
   .certificate-information {
     h3 {
       font-size: 14px;
       font-weight: normal;
       margin: 0;
-    }
-    small {
-      color: rgba(0,0,0,.54);
     }
   }
 }
@@ -22,8 +25,18 @@
   }
 }
 
+.certificate-simple-text {
+  align-items: center;
+  h3 {
+    font-size: 14px;
+    font-weight: normal;
+    margin: 0;
+  }
+}
+
 .certificate-expiry {
   margin: 5px;
+  align-items: center;
   h3 {
     font-size: 14px;
     font-weight: normal;
@@ -32,6 +45,10 @@
 }
 
 
+.renew {
+  font-size: 18px;
+  margin-left: 5px;
+}
 .warning {
   font-size: 18px;
   margin-left: 5px;

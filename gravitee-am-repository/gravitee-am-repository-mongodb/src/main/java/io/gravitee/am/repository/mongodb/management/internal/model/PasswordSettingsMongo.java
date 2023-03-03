@@ -73,6 +73,16 @@ public class PasswordSettingsMongo {
      */
     private Integer expiryDuration;
 
+    /**
+     * Does the password history is enabled to prevent the usage of old password
+     */
+    private boolean passwordHistoryEnabled;
+
+    /**
+     * How many passwords are preserved into the history
+     */
+    private Short oldPasswords;
+
     public boolean isInherited() {
         return inherited;
     }
@@ -153,6 +163,22 @@ public class PasswordSettingsMongo {
         this.expiryDuration = expiryDuration;
     }
 
+    public boolean isPasswordHistoryEnabled() {
+        return passwordHistoryEnabled;
+    }
+
+    public void setPasswordHistoryEnabled(boolean passwordHistoryEnabled) {
+        this.passwordHistoryEnabled = passwordHistoryEnabled;
+    }
+
+    public Short getOldPasswords() {
+        return oldPasswords;
+    }
+
+    public void setOldPasswords(Short oldPasswords) {
+        this.oldPasswords = oldPasswords;
+    }
+
     public PasswordSettings convert() {
         PasswordSettings passwordSettings = new PasswordSettings();
         passwordSettings.setInherited(isInherited());
@@ -165,6 +191,8 @@ public class PasswordSettingsMongo {
         passwordSettings.setExcludePasswordsInDictionary(isExcludePasswordsInDictionary());
         passwordSettings.setExcludeUserProfileInfoInPassword(isExcludeUserProfileInfoInPassword());
         passwordSettings.setExpiryDuration(getExpiryDuration());
+        passwordSettings.setPasswordHistoryEnabled(isPasswordHistoryEnabled());
+        passwordSettings.setOldPasswords(getOldPasswords());
         return passwordSettings;
     }
 
@@ -183,6 +211,8 @@ public class PasswordSettingsMongo {
         passwordSettings.setExcludePasswordsInDictionary(other.isExcludePasswordsInDictionary());
         passwordSettings.setExcludeUserProfileInfoInPassword(other.isExcludeUserProfileInfoInPassword());
         passwordSettings.setExpiryDuration(other.getExpiryDuration());
+        passwordSettings.setPasswordHistoryEnabled(other.isPasswordHistoryEnabled());
+        passwordSettings.setOldPasswords(other.getOldPasswords());
         return passwordSettings;
     }
 }

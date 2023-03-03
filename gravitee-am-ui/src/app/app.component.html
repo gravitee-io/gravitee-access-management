@@ -15,14 +15,13 @@
     limitations under the License.
 
 -->
-<mat-sidenav-container>
-  <mat-sidenav *ngIf="displaySidenav()" mode="side" opened="true" class="main-sidenav">
-    <gv-sidenav></gv-sidenav>
-  </mat-sidenav>
-  <mat-sidenav-content [ngClass]="{'gs-sidenav-content-min': reducedMode}">
-    <gv-navbar *ngIf="displayNavbar()"></gv-navbar>
+<div fxLayout="column">
+  <gv-navbar *ngIf="displayNavbar()"></gv-navbar>
+  <div fxLayout="row">
+    <gv-sidenav *ngIf="displaySidenav()"></gv-sidenav>
     <div class="main-content">
+      <gv-breadcrumb *ngIf="displayBreadcrumb()"></gv-breadcrumb>
       <router-outlet></router-outlet>
     </div>
-  </mat-sidenav-content>
-</mat-sidenav-container>
+  </div>
+</div>

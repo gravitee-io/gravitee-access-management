@@ -44,7 +44,27 @@ public interface CertificateService {
      */
     Single<Certificate> create(String domain);
 
-    Single<Certificate> create(String domain, NewCertificate newCertificate, User principal);
+    /**
+     * Request the generation of a new system certificate for the given domain
+     * @param domain
+     * @return the new Certificate
+     */
+    Single<Certificate> rotate(String domain, User principal);
+
+    default Single<Certificate> create(String domain, NewCertificate newCertificate, User principal) {
+        return this.create(domain, newCertificate, principal, false);
+    }
+
+    /**
+     * This method is used to create a new certificate. If the isSystem parameter is set to true,
+     * the certificate is a <i>Default</i> certificate generate during the domain creation
+     * @param domain
+     * @param newCertificate
+     * @param principal
+     * @param isSystem
+     * @return
+     */
+    Single<Certificate> create(String domain, NewCertificate newCertificate, User principal, boolean isSystem);
 
     Single<Certificate> update(String domain, String id, UpdateCertificate updateCertificate, User principal);
 
@@ -52,8 +72,8 @@ public interface CertificateService {
 
     Completable updateExpirationDate(String certificateId, Date expirationDate);
 
-    default Single<Certificate> create(String domain, NewCertificate newCertificate) {
-        return create(domain, newCertificate, null);
+    default Single<Certificate> create(String domain, NewCertificate newCertificate, boolean isSystem) {
+        return create(domain, newCertificate, null, isSystem);
     }
 
     default Single<Certificate> update(String domain, String id, UpdateCertificate updateCertificate) {

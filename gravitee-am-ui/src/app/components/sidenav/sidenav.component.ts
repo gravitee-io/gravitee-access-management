@@ -1,4 +1,3 @@
-import {filter, tap} from 'rxjs/operators';
 /*
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
  *
@@ -14,8 +13,8 @@ import {filter, tap} from 'rxjs/operators';
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnDestroy, OnInit} from '@angular/core';
-import {ActivatedRoute, ActivationEnd, NavigationEnd, Router} from '@angular/router';
+import {Component, OnDestroy, OnInit, Pipe, PipeTransform} from '@angular/core';
+import {ActivatedRoute, NavigationEnd, Router} from '@angular/router';
 import {SidenavService} from './sidenav.service';
 import {AppConfig} from '../../../config/app.config';
 import {Subscription} from 'rxjs';
@@ -23,6 +22,7 @@ import {NavigationService} from "../../services/navigation.service";
 import {MatSelectChange} from "@angular/material/select";
 import {EnvironmentService} from "../../services/environment.service";
 import {AuthService} from "../../services/auth.service";
+import {filter} from 'rxjs/operators';
 
 @Component({
   selector: 'gv-sidenav',
@@ -37,10 +37,17 @@ export class SidenavComponent implements OnInit, OnDestroy {
   reducedMode = false;
   isGlobalSettings = false;
   topMenuItems: any[] = [];
+  footerMenuItems: any[] = [{
+    label: 'Organization',
+    path: '/settings',
+    icon: 'gio:building',
+    tooltip: 'Organization settings'
+  }];
   navSubscription: Subscription;
   itemsSubscription: Subscription;
   currentEnvironment: any;
   environments: any[] = [];
+  private rawEnvironments: any[] = [];
 
   constructor(private router: Router,
               private route: ActivatedRoute,
@@ -77,15 +84,10 @@ export class SidenavComponent implements OnInit, OnDestroy {
     this.sidenavService.resize(this.reducedMode);
   }
 
-  private initEnvironments() {
-    this.environmentService.getAllEnvironments().subscribe(environments => {
-      this.environments = environments;
-    });
-  }
-
-  switchEnvironment($event: MatSelectChange) {
-    this.environmentService.setCurrentEnvironment($event.value);
-    this.router.navigate(['/', 'environments', $event.value.hrids[0]]);
+  switchEnvironment($event: any) {
+    const currentEnvironment = this.rawEnvironments.find(element => element.id === $event);
+    this.environmentService.setCurrentEnvironment(currentEnvironment);
+    this.router.navigate(['/', 'environments', currentEnvironment.hrids[0]]);
   }
 
   canDisplayEnvironments(): boolean {
@@ -94,5 +96,25 @@ export class SidenavComponent implements OnInit, OnDestroy {
 
   canDisplayOrganizationSettings(): boolean {
     return !this.router.url.startsWith('/settings') && this.authService.hasPermissions(['organization_settings_read']);
+  }
+
+  private initEnvironments() {
+    this.environmentService.getAllEnvironments().subscribe(environments => {
+      this.rawEnvironments = environments;
+      this.environments = environments.map((env) => ({ value: env.id, displayValue: env.name }));
+    });
+  }
+}
+
+@Pipe({
+  name: 'displayableItemFilter',
+  pure: false
+})
+export class DisplayableItemPipe implements PipeTransform {
+  transform(items: any[]): any {
+    if (!items || !filter) {
+      return items;
+    }
+    return items.filter(item => item.display);
   }
 }

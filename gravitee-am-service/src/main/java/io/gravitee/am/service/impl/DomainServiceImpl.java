@@ -56,6 +56,7 @@ import io.gravitee.am.service.FormService;
 import io.gravitee.am.service.GroupService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.MembershipService;
+import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.service.ReporterService;
 import io.gravitee.am.service.ResourceService;
 import io.gravitee.am.service.RoleService;
@@ -63,6 +64,7 @@ import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.ThemeService;
 import io.gravitee.am.service.UserActivityService;
 import io.gravitee.am.service.UserService;
+import io.gravitee.am.service.VerifyAttemptService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.DomainAlreadyExistsException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
@@ -217,6 +219,16 @@ public class DomainServiceImpl implements DomainService {
 
     @Autowired
     private ThemeService themeService;
+
+    @Autowired
+    private RateLimiterService rateLimiterService;
+
+    @Autowired
+    private PasswordHistoryService passwordHistoryService;
+
+    @Autowired
+    private VerifyAttemptService verifyAttemptService;
+
 
     @Override
     public Maybe<Domain> findById(String id) {
@@ -535,6 +547,10 @@ public class DomainServiceImpl implements DomainService {
                                     .flatMapCompletable(theme -> themeService.delete(domain, theme.getId(), principal)
                                     )
                             )
+                            // delete rate limit
+                            .andThen(rateLimiterService.deleteByDomain(domain, DOMAIN))
+                            .andThen(passwordHistoryService.deleteByReference(ReferenceType.DOMAIN, domainId))
+                            .andThen(verifyAttemptService.deleteByDomain(domain, DOMAIN))
                             .andThen(domainRepository.delete(domainId))
                             .andThen(Completable.fromSingle(eventService.create(new Event(Type.DOMAIN, new Payload(domainId, DOMAIN, domainId, Action.DELETE)))))
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).type(EventType.DOMAIN_DELETED).domain(domain)))
@@ -577,7 +593,7 @@ public class DomainServiceImpl implements DomainService {
         String uri = null;
 
         if (domain.isVhostMode()) {
-            // Try generate uri using defined virtual hosts.
+            // Try to generate uri using defined virtual hosts.
             Matcher matcher = SCHEME_PATTERN.matcher(entryPoint);
             String scheme = "http";
             if (matcher.matches()) {

@@ -126,6 +126,27 @@ public class AccountSettings {
      */
     private boolean resetPasswordInvalidateTokens;
 
+    /**
+     * Enable/Disable MFA challenge brut force attempts detection feature
+     */
+    private boolean mfaChallengeAttemptsDetectionEnabled;
+
+    /**
+     * Allowed max MFA challenge attempts
+     */
+    private Integer mfaChallengeMaxAttempts;
+
+    /**
+     * Amount of time after which the user MFA challenge attempts will be erased if max challenge attempts has not been reached
+     */
+    private Integer mfaChallengeAttemptsResetTime;
+
+    /**
+     * Enable/Disable alert email due to too many MFA challenge
+     */
+    private boolean mfaChallengeSendVerifyAlertEmail;
+
+
     public AccountSettings() {
     }
 
@@ -150,6 +171,10 @@ public class AccountSettings {
         this.useBotDetection = other.useBotDetection;
         this.botDetectionPlugin = other.botDetectionPlugin;
         this.defaultIdentityProviderForRegistration = other.defaultIdentityProviderForRegistration;
+        this.mfaChallengeAttemptsDetectionEnabled = other.mfaChallengeAttemptsDetectionEnabled;
+        this.mfaChallengeMaxAttempts = other.mfaChallengeMaxAttempts;
+        this.mfaChallengeAttemptsResetTime = other.mfaChallengeAttemptsResetTime;
+        this.mfaChallengeSendVerifyAlertEmail = other.mfaChallengeSendVerifyAlertEmail;
     }
 
     public boolean isInherited() {
@@ -310,6 +335,38 @@ public class AccountSettings {
 
     public void setResetPasswordInvalidateTokens(boolean resetPasswordInvalidateTokens) {
         this.resetPasswordInvalidateTokens = resetPasswordInvalidateTokens;
+    }
+
+    public boolean isMfaChallengeAttemptsDetectionEnabled() {
+        return mfaChallengeAttemptsDetectionEnabled;
+    }
+
+    public void setMfaChallengeAttemptsDetectionEnabled(boolean mfaChallengeAttemptsDetectionEnabled) {
+        this.mfaChallengeAttemptsDetectionEnabled = mfaChallengeAttemptsDetectionEnabled;
+    }
+
+    public Integer getMfaChallengeMaxAttempts() {
+        return mfaChallengeMaxAttempts;
+    }
+
+    public void setMfaChallengeMaxAttempts(Integer mfaChallengeMaxAttempts) {
+        this.mfaChallengeMaxAttempts = mfaChallengeMaxAttempts;
+    }
+
+    public Integer getMfaChallengeAttemptsResetTime() {
+        return mfaChallengeAttemptsResetTime;
+    }
+
+    public void setMfaChallengeAttemptsResetTime(Integer mfaChallengeAttemptsResetTime) {
+        this.mfaChallengeAttemptsResetTime = mfaChallengeAttemptsResetTime;
+    }
+
+    public boolean isMfaChallengeSendVerifyAlertEmail() {
+        return mfaChallengeSendVerifyAlertEmail;
+    }
+
+    public void setMfaChallengeSendVerifyAlertEmail(boolean mfaChallengeSendVerifyAlertEmail) {
+        this.mfaChallengeSendVerifyAlertEmail = mfaChallengeSendVerifyAlertEmail;
     }
 
     public static AccountSettings getInstance(Domain domain, Client client) {

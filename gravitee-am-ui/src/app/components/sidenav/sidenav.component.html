@@ -15,53 +15,30 @@
     limitations under the License.
 
 -->
-<div class="gv-sidenav" fxLayout="column" fxFlex [ngClass]="{'gv-sidenav-min': reducedMode, 'gv-sidenav-settings': isGlobalSettings }">
-  <mat-toolbar class="navigation-header" fxLayout="row" fxLayoutAlign="space-between center">
-    <a [routerLink]="['']" style="text-decoration: none;" [matTooltip]="title + ' / ' + version" [matTooltipPosition]="'right'">
-    <div fxLayout="row" fxLayoutAlign="center center">
-        <img class="logo-image"
-             [ngClass]="{'reduce-mode': reducedMode}"
-             [src]="isGlobalSettings ? 'assets/theme/logo_gravitee' + ((reducedMode) ? '_min' : '') + '_light.png' : 'assets/theme/logo_gravitee' + ((reducedMode) ? '_min' : '') +'_dark.png'"
-             (error)="isGlobalSettings ? mainLogo.src='assets/logo_gravitee' + ((reducedMode) ? '_min' : '') +  '_light.png' : mainLogo.src='assets/logo_gravitee' + ((reducedMode) ? '_min' : '') + '_dark.png'"
-             #mainLogo/>
-    </div>
-    </a>
-  </mat-toolbar>
-
-  <mat-list class="sidenav-list">
-    <!-- First level menus -->
-    <div class="side-nav-environments" *ngIf="canDisplayEnvironments()">
-      <mat-form-field *ngIf="!reducedMode" appearance="outline">
-        <mat-select [(value)]="currentEnvironment" (selectionChange)="switchEnvironment($event)" [disabled]="environments.length === 1">
-          <mat-option *ngFor="let env of environments" [value]="env">
-            {{env.name}}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
-    </div>
-    <div>
-      <mat-list-item *ngFor="let menuItem of topMenuItems">
-        <a [routerLink]="menuItem.path" title="{{menuItem.label}}" *ngIf="menuItem.display"
-           routerLinkActive="sidenav-active" [routerLinkActiveOptions]="menuItem.routerLinkActiveOptions">
-          <mat-icon>{{menuItem.icon}}</mat-icon>
-          <span *ngIf="!reducedMode">{{menuItem.label}}</span>
-        </a>
-      </mat-list-item>
-    </div>
-  </mat-list>
-
-  <mat-list class="sidenav-footer">
-    <mat-list-item>
-      <a *ngIf="canDisplayOrganizationSettings()" [routerLink]="[ '/settings' ]" title="Organization settings" routerLinkActive="sidenav-active">
-        <mat-icon>settings_applications</mat-icon>
-        <span *ngIf="!reducedMode">Organization settings</span>
+<div class="gio-side-nav mat mat-typography mat-app-background">
+  <gio-menu>
+    <gio-menu-header>
+      <gio-menu-selector *ngIf="canDisplayEnvironments()"
+        [selectedItemValue]="currentEnvironment.id"
+        selectorTitle="Environment"
+        [selectorItems]="environments"
+        (selectChange)="switchEnvironment($event)"
+      ></gio-menu-selector>
+    </gio-menu-header>
+    <gio-menu-list>
+      <a *ngFor="let item of topMenuItems | displayableItemFilter" [routerLink]="item.path" title="{{item.label}}"
+         routerLinkActive #rla="routerLinkActive" [routerLinkActiveOptions]="item.routerLinkActiveOptions">
+        <gio-menu-item
+          [icon]="item.icon"
+          [active]="rla.isActive">{{ item.label }}</gio-menu-item>
       </a>
-    </mat-list-item>
-    <mat-list-item>
-      <button mat-icon-button (click)="resize()">
-        <mat-icon *ngIf="reducedMode" class="sidenav-toggle-icon">menu</mat-icon>
-        <mat-icon *ngIf="!reducedMode" class="sidenav-toggle-icon">menu_open</mat-icon>
-      </button>
-    </mat-list-item>
-  </mat-list>
+    </gio-menu-list>
+    <gio-menu-footer *ngIf="canDisplayOrganizationSettings()">
+      <a *ngFor="let item of footerMenuItems"
+         [routerLink]="item.path"
+         [matTooltip]="item.tooltip" [matTooltipPosition]="'right'">
+        <gio-menu-item [icon]="item.icon">{{ item.label }}</gio-menu-item>
+      </a>
+    </gio-menu-footer>
+  </gio-menu>
 </div>

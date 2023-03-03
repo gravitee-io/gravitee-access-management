@@ -27,13 +27,15 @@ import io.reactivex.Single;
 import org.junit.Test;
 
 import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
-import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.*;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
 
 /**
@@ -60,6 +62,7 @@ public class CertificatesResourceTest extends JerseySpringTest {
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Flowable.just(mockCertificate, mockCertificate2)).when(certificateService).findByDomain(domainId);
+        doReturn(Flowable.empty()).when(applicationService).findByCertificate(anyString());
 
         final Response response = target("domains").path(domainId).path("certificates").request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
@@ -101,5 +104,29 @@ public class CertificatesResourceTest extends JerseySpringTest {
                 .path("certificates")
                 .request().post(Entity.json(newCertificate));
         assertEquals(HttpStatusCode.CREATED_201, response.getStatus());
+    }
+
+    @Test
+    public void shouldRotate() {
+        final String domainId = "domain-1";
+        final Domain mockDomain = new Domain();
+        mockDomain.setId(domainId);
+
+        Certificate certificate = new Certificate();
+        certificate.setId("certificate-id");
+        certificate.setName("certificate-name");
+
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+        doReturn(Maybe.just("certificate-schema")).when(certificatePluginService).getSchema(anyString());
+        doReturn(Single.just(certificate)).when(certificateService).rotate(eq(domainId), any());
+
+        final Response response = target("domains")
+                .path(domainId)
+                .path("certificates")
+                .path("rotate")
+                .request().post(Entity.json(null));
+
+        assertEquals(HttpStatusCode.CREATED_201, response.getStatus());
+        assertTrue(response.getHeaderString(HttpHeaders.LOCATION).endsWith("certificates/"+certificate.getId()));
     }
 }

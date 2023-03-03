@@ -48,4 +48,10 @@ export class AppComponent implements OnInit {
     return this.router.url !== '/login' && this.router.url !== '/newsletter';
   }
 
+  displayBreadcrumb(): boolean {
+    return !this.router.url.startsWith('/domains/new') &&
+      !this.router.url.startsWith('/login') &&
+      !this.router.url.startsWith('/logout') &&
+      !this.router.url.startsWith('/404');
+  }
 }
