@@ -70,10 +70,10 @@ public class I18nDictionaryRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void shouldFindByName() {
+    public void shouldFindByNameAndLocale() {
         String referenceId = randomUUID().toString();
         var created = repository.create(buildDictionary(referenceId)).blockingGet();
-        var observer = repository.findByName(DOMAIN, referenceId, created.getName()).test();
+        var observer = repository.findByLocale(DOMAIN, referenceId, "fr").test();
         observer.awaitTerminalEvent();
         observer.assertComplete();
         observer.assertNoErrors();
@@ -93,7 +93,7 @@ public class I18nDictionaryRepositoryTest extends AbstractManagementTest {
 
     @Test
     public void shouldNotFindByName() {
-        repository.findByName(DOMAIN, "1234", "no").test().assertEmpty();
+        repository.findByLocale(DOMAIN, "1234", null).test().assertEmpty();
     }
 
     @Test

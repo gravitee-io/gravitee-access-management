@@ -168,9 +168,9 @@ public class JdbcI18nDictionaryRepository extends AbstractJdbcRepository impleme
     }
 
     @Override
-    public Maybe<I18nDictionary> findByName(ReferenceType referenceType, String referenceId, String name) {
-        LOGGER.debug("findByName({}, {}, {})", referenceType, referenceId, name);
-        return repository.findByName(referenceType.toString(), referenceId, name)
+    public Maybe<I18nDictionary> findByLocale(ReferenceType referenceType, String referenceId, String locale) {
+        LOGGER.debug("findByLocale({}, {}, {})", referenceType, referenceId, locale);
+        return repository.findByLocale(referenceType.toString(), referenceId, locale)
                          .map(this::toEntity)
                          .flatMapSingleElement(this::completeDictionary);
     }

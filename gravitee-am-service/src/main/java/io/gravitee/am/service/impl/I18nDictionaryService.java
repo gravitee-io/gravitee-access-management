@@ -28,6 +28,7 @@ import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.DictionaryAlreadyExistsException;
+import io.gravitee.am.service.exception.InvalidLocaleException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewDictionary;
 import io.gravitee.am.service.model.UpdateI18nDictionary;
@@ -44,8 +45,10 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import static io.gravitee.am.common.audit.EventType.I18N_DICTIONARY_CREATED;
 import static io.gravitee.am.common.audit.EventType.I18N_DICTIONARY_UPDATED;
@@ -69,11 +72,11 @@ public class I18nDictionaryService {
     }
 
     public Single<I18nDictionary> create(ReferenceType referenceType, String referenceId, NewDictionary newDictionary, User principal) {
-        return findByName(referenceType, referenceId, newDictionary.getName())
+        return findByLocale(referenceType, referenceId, newDictionary.getLocale())
                 .isEmpty()
                 .map(isEmpty -> {
                     if (!isEmpty) {
-                        throw new DictionaryAlreadyExistsException(newDictionary.getName());
+                        throw new DictionaryAlreadyExistsException(newDictionary.getName(), newDictionary.getLocale());
                     } else {
                         var dictionary = new I18nDictionary();
                         dictionary.setId(RandomString.generate());
@@ -114,14 +117,18 @@ public class I18nDictionaryService {
                                                                     .throwable(throwable)));
     }
 
-    public Maybe<I18nDictionary> findByName(ReferenceType referenceType, String referenceId, String name) {
-        LOGGER.debug("Find dictionary by {} and name: {} {}", referenceType, referenceId, name);
-        return repository.findByName(referenceType, referenceId, name)
+    public Maybe<I18nDictionary> findByLocale(ReferenceType referenceType, String referenceId, String locale) {
+        LOGGER.debug("Find dictionary by {} and locale {}", referenceId, locale);
+        if (Stream.of(Locale.getAvailableLocales()).noneMatch(l -> l.getLanguage().equals(locale))) {
+            LOGGER.warn("Client requested invalid locale {}", locale);
+            return Maybe.error(InvalidLocaleException::new);
+        }
+        return repository.findByLocale(referenceType, referenceId, locale)
                          .onErrorResumeNext(ex -> {
-                             String msg = "An error occurred while trying to find a dictionary using its name: ? for the ? ?";
-                             LOGGER.error(msg.replace("?", "{}"), name, referenceType, referenceId, ex);
+                             String msg = "An error occurred while trying to find a dictionary using its locale: ? for the ? ?";
+                             LOGGER.error(msg.replace("?", "{}"), locale, referenceType, referenceId, ex);
                              return Maybe.error(new TechnicalManagementException(
-                                     String.format(msg.replace("?", "%s"), name, referenceType, referenceId), ex));
+                                     String.format(msg.replace("?", "%s"), locale, referenceType, referenceId), ex));
                          });
     }
 
@@ -130,12 +137,12 @@ public class I18nDictionaryService {
         return findById(referenceType, referenceId, id)
                 // check uniqueness
                 .flatMap(existingDictionary -> repository
-                        .findByName(referenceType, referenceId, updateDictionary.getName())
+                        .findByLocale(referenceType, referenceId, null)
                         .map(Optional::ofNullable)
                         .defaultIfEmpty(Optional.empty())
                         .map(optionalDict -> {
                             if (optionalDict.isPresent() && !optionalDict.get().getId().equals(id)) {
-                                throw new DictionaryAlreadyExistsException(updateDictionary.getName());
+                                throw new DictionaryAlreadyExistsException(updateDictionary.getName(), updateDictionary.getLocale());
                             }
                             return existingDictionary;
                         })
