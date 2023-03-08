@@ -32,6 +32,7 @@ import io.gravitee.am.service.validators.email.EmailValidatorImpl;
 import io.gravitee.am.service.validators.user.UserValidator;
 import io.gravitee.am.service.validators.user.UserValidatorImpl;
 import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.junit.Assert;
@@ -65,6 +66,8 @@ public class UserServiceTest {
 
     public static final String DOMAIN_ID = "domain#1";
     public static final String PASSWORD = "password";
+    public static final String NEW_USERNAME = "newUsername";
+    public static final String USERNAME = "username";
 
     @InjectMocks
     private final UserService userService = new UserServiceImpl();
@@ -111,6 +114,9 @@ public class UserServiceTest {
     @Mock
     private PasswordHistoryService passwordHistoryService;
 
+    @Mock
+    private CredentialService credentialService;
+
     @Spy
     private UserValidator userValidator = new UserValidatorImpl(
             NAME_STRICT_PATTERN,
@@ -134,7 +140,7 @@ public class UserServiceTest {
         domain.setId(domainId);
 
         NewUser newUser = new NewUser();
-        newUser.setUsername("username");
+        newUser.setUsername(USERNAME);
         newUser.setSource("unknown-idp");
         newUser.setPassword("myPassword");
         newUser.setClient(clientId);
@@ -158,7 +164,7 @@ public class UserServiceTest {
         domain.setId(domainId);
 
         NewUser newUser = new NewUser();
-        newUser.setUsername("username");
+        newUser.setUsername(USERNAME);
         newUser.setSource("idp");
         newUser.setClient(clientId);
         newUser.setPassword("myPassword");
@@ -183,7 +189,7 @@ public class UserServiceTest {
         domain.setId(domainId);
 
         NewUser newUser = new NewUser();
-        newUser.setUsername("username");
+        newUser.setUsername(USERNAME);
         newUser.setSource("idp");
         newUser.setClient("client");
         newUser.setPassword("MyPassword");
@@ -211,7 +217,7 @@ public class UserServiceTest {
         domain.setId(domainId);
 
         NewUser newUser = new NewUser();
-        newUser.setUsername("username");
+        newUser.setUsername(USERNAME);
         newUser.setSource("idp");
         newUser.setPassword("MyPassword");
         newUser.setClient(clientId);
@@ -238,7 +244,7 @@ public class UserServiceTest {
         domain.setAccountSettings(accountSettings);
 
         NewUser newUser = new NewUser();
-        newUser.setUsername("username");
+        newUser.setUsername(USERNAME);
         newUser.setSource("idp");
         newUser.setClient("client");
         newUser.setPreRegistration(true);
@@ -290,7 +296,7 @@ public class UserServiceTest {
         domain.setAccountSettings(accountSettings);
 
         NewUser newUser = new NewUser();
-        newUser.setUsername("username");
+        newUser.setUsername(USERNAME);
         newUser.setSource("idp");
         newUser.setClient("client");
         newUser.setPreRegistration(true);
@@ -337,7 +343,7 @@ public class UserServiceTest {
         domain.setId(domainId);
 
         NewUser newUser = new NewUser();
-        newUser.setUsername("username");
+        newUser.setUsername(USERNAME);
         newUser.setSource("idp");
         newUser.setClient("client");
         newUser.setPreRegistration(true);
@@ -649,12 +655,12 @@ public class UserServiceTest {
         User user = new User();
         user.setId("user-id");
         user.setSource("idp-id");
-        user.setUsername("username");
+        user.setUsername(USERNAME);
 
 
         when(commonUserService.findById(DOMAIN, domain.getId(), user.getId()))
                 .thenReturn(Single.error(new UserNotFoundException(user.getId())));
-        var observer = userService.updateUsername(DOMAIN, domain.getId(), user.getId(), user.getUsername(), null).test();
+        var observer = userService.updateUsername(DOMAIN, domain.getId(), user.getId(), NEW_USERNAME, null).test();
 
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(UserNotFoundException.class);
@@ -670,14 +676,14 @@ public class UserServiceTest {
         User user = new User();
         user.setId("user-id");
         user.setSource("idp-id");
-        user.setUsername("username");
+        user.setUsername(USERNAME);
 
         when(commonUserService.findById(DOMAIN, domain.getId(), user.getId()))
                 .thenReturn(Single.just(user));
-        when(commonUserService.findByUsernameAndSource(DOMAIN, domain.getId(), user.getUsername(), user.getSource()))
+        when(commonUserService.findByUsernameAndSource(DOMAIN, domain.getId(), NEW_USERNAME, user.getSource()))
                 .thenReturn(Maybe.just(user));
 
-        var observer = userService.updateUsername(DOMAIN, domain.getId(), user.getId(), user.getUsername(), null).test();
+        var observer = userService.updateUsername(DOMAIN, domain.getId(), user.getId(), NEW_USERNAME, null).test();
 
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(InvalidUserException.class);
@@ -693,15 +699,15 @@ public class UserServiceTest {
         User user = new User();
         user.setId("user-id");
         user.setSource("idp-id");
-        user.setUsername("username");
+        user.setUsername(USERNAME);
 
         when(commonUserService.findById(DOMAIN, domain.getId(), user.getId()))
                 .thenReturn(Single.just(user));
-        when(commonUserService.findByUsernameAndSource(DOMAIN, domain.getId(), user.getUsername(), user.getSource()))
+        when(commonUserService.findByUsernameAndSource(DOMAIN, domain.getId(), NEW_USERNAME, user.getSource()))
                 .thenReturn(Maybe.empty());
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.empty());
 
-        var observer = userService.updateUsername(DOMAIN, domain.getId(), user.getId(), user.getUsername(), null).test();
+        var observer = userService.updateUsername(DOMAIN, domain.getId(), user.getId(), NEW_USERNAME, null).test();
 
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(UserProviderNotFoundException.class);
@@ -717,17 +723,17 @@ public class UserServiceTest {
         User user = new User();
         user.setId("user-id");
         user.setSource("idp-id");
-        user.setUsername("username");
+        user.setUsername(USERNAME);
 
         when(commonUserService.findById(DOMAIN, domain.getId(), user.getId()))
                 .thenReturn(Single.just(user));
-        when(commonUserService.findByUsernameAndSource(DOMAIN, domain.getId(), user.getUsername(), user.getSource()))
+        when(commonUserService.findByUsernameAndSource(DOMAIN, domain.getId(), NEW_USERNAME, user.getSource()))
                 .thenReturn(Maybe.empty());
         final UserProvider userProvider = mock(UserProvider.class);
         when(userProvider.findByUsername(anyString())).thenReturn(Maybe.error(new UserNotFoundException("Could not find user")));
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
 
-        var observer = userService.updateUsername(DOMAIN, domain.getId(), user.getId(), user.getUsername(), null).test();
+        var observer = userService.updateUsername(DOMAIN, domain.getId(), user.getId(), NEW_USERNAME, null).test();
 
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(UserNotFoundException.class);
@@ -743,11 +749,11 @@ public class UserServiceTest {
         User user = new User();
         user.setId("user-id");
         user.setSource("idp-id");
-        user.setUsername("username");
+        user.setUsername(USERNAME);
 
         when(commonUserService.findById(DOMAIN, domain.getId(), user.getId()))
                 .thenReturn(Single.just(user));
-        when(commonUserService.findByUsernameAndSource(DOMAIN, domain.getId(), user.getUsername(), user.getSource()))
+        when(commonUserService.findByUsernameAndSource(DOMAIN, domain.getId(), NEW_USERNAME, user.getSource()))
                 .thenReturn(Maybe.empty());
 
         final UserProvider userProvider = mock(UserProvider.class);
@@ -758,7 +764,7 @@ public class UserServiceTest {
 
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
 
-        var observer = userService.updateUsername(DOMAIN, domain.getId(), user.getId(), user.getUsername(), null).test();
+        var observer = userService.updateUsername(DOMAIN, domain.getId(), user.getId(), NEW_USERNAME, null).test();
 
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(InvalidUserException.class);
@@ -774,29 +780,42 @@ public class UserServiceTest {
         User user = new User();
         user.setId("user-id");
         user.setSource("idp-id");
-        user.setUsername("username");
+        user.setUsername(USERNAME);
 
         when(commonUserService.findById(DOMAIN, domain.getId(), user.getId()))
                 .thenReturn(Single.just(user));
-        when(commonUserService.findByUsernameAndSource(DOMAIN, domain.getId(), user.getUsername(), user.getSource()))
+        when(commonUserService.findByUsernameAndSource(DOMAIN, domain.getId(), NEW_USERNAME, user.getSource()))
                 .thenReturn(Maybe.empty());
         when(commonUserService.update(user)).thenReturn(Single.error(new TechnicalManagementException("an unexpected error has occurred")));
 
         final UserProvider userProvider = mock(UserProvider.class);
-        final DefaultUser defaultUser = new DefaultUser(user.getUsername());
+
+        final var defaultUser = new DefaultUser(user.getUsername());
         defaultUser.setId("idp-user-id");
+        final var idpUserUpdated = new DefaultUser(NEW_USERNAME);
+        defaultUser.setId("idp-user-id");
+
         when(userProvider.findByUsername(anyString())).thenReturn(Maybe.just(defaultUser));
-        when(userProvider.updateUsername(any(), anyString())).thenReturn(Single.just(defaultUser));
+        when(userProvider.updateUsername(any(), anyString())).thenReturn(Single.just(idpUserUpdated));
 
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
 
-        var observer = userService.updateUsername(DOMAIN, domain.getId(), user.getId(), user.getUsername(), null).test();
+        var credential = new Credential();
+        credential.setUsername(user.getUsername());
+
+        when(credentialService.findByUsername(any(), anyString(), eq(user.getUsername()))).thenReturn(Flowable.just(credential));
+        when(credentialService.update(credential)).thenReturn(Single.just(credential));
+
+        var observer = userService.updateUsername(DOMAIN, domain.getId(), user.getId(), NEW_USERNAME, null).test();
 
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(TechnicalManagementException.class);
 
         verify(commonUserService, times(1)).update(any());
         verify(userProvider, times(2)).updateUsername(any(), anyString());
+
+        verify(credentialService, times(2)).findByUsername(any(), anyString(), eq(USERNAME));
+        verify(credentialService, times(2)).update(any());
     }
 
     @Test
@@ -807,24 +826,79 @@ public class UserServiceTest {
         User user = new User();
         user.setId("user-id");
         user.setSource("idp-id");
-        user.setUsername("username");
+        user.setUsername(USERNAME);
 
         when(commonUserService.findById(DOMAIN, domain.getId(), user.getId()))
                 .thenReturn(Single.just(user));
-        when(commonUserService.findByUsernameAndSource(DOMAIN, domain.getId(), user.getUsername(), user.getSource()))
+        when(commonUserService.findByUsernameAndSource(DOMAIN, domain.getId(), NEW_USERNAME, user.getSource()))
                 .thenReturn(Maybe.empty());
         when(commonUserService.update(user)).thenReturn(Single.just(user));
 
         final UserProvider userProvider = mock(UserProvider.class);
-        final DefaultUser defaultUser = new DefaultUser(user.getUsername());
+
+        final var defaultUser = new DefaultUser(user.getUsername());
         defaultUser.setId("idp-user-id");
+        final var idpUserUpdated = new DefaultUser(NEW_USERNAME);
+        defaultUser.setId("idp-user-id");
+
         when(userProvider.findByUsername(anyString())).thenReturn(Maybe.just(defaultUser));
-        when(userProvider.updateUsername(any(), anyString())).thenReturn(Single.just(defaultUser));
+        when(userProvider.updateUsername(any(), anyString())).thenReturn(Single.just(idpUserUpdated));
 
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
+
         when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
 
-        var observer = userService.updateUsername(DOMAIN, domain.getId(), user.getId(), user.getUsername(), null).test();
+        when(credentialService.findByUsername(any(), anyString(), eq(user.getUsername()))).thenReturn(Flowable.empty());
+
+        var observer = userService.updateUsername(DOMAIN, domain.getId(), user.getId(), NEW_USERNAME, null).test();
+
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertComplete();
+
+        verify(commonUserService, times(1)).update(any());
+        verify(userProvider, times(1)).updateUsername(any(), anyString());
+        verify(credentialService, times(1)).findByUsername(any(), anyString(), eq(USERNAME));
+        verify(credentialService, never()).update(any());
+        verify(loginAttemptService, times(1)).reset(any());
+    }
+
+    @Test
+    public void must_update_user_webauth_credential() {
+        Domain domain = new Domain();
+        domain.setId("domain");
+
+        User user = new User();
+        user.setId("user-id");
+        user.setSource("idp-id");
+        user.setUsername(USERNAME);
+
+        when(commonUserService.findById(DOMAIN, domain.getId(), user.getId()))
+                .thenReturn(Single.just(user));
+        when(commonUserService.findByUsernameAndSource(DOMAIN, domain.getId(), NEW_USERNAME, user.getSource()))
+                .thenReturn(Maybe.empty());
+        when(commonUserService.update(user)).thenReturn(Single.just(user));
+
+        final UserProvider userProvider = mock(UserProvider.class);
+
+        final var defaultUser = new DefaultUser(user.getUsername());
+        defaultUser.setId("idp-user-id");
+        final var idpUserUpdated = new DefaultUser(NEW_USERNAME);
+        defaultUser.setId("idp-user-id");
+
+        when(userProvider.findByUsername(anyString())).thenReturn(Maybe.just(defaultUser));
+        when(userProvider.updateUsername(any(), anyString())).thenReturn(Single.just(idpUserUpdated));
+
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
+
+        when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
+
+        var credential = new Credential();
+        credential.setUsername(user.getUsername());
+
+        when(credentialService.findByUsername(any(), anyString(), eq(user.getUsername()))).thenReturn(Flowable.just(credential));
+        when(credentialService.update(credential)).thenReturn(Single.just(credential));
+
+        var observer = userService.updateUsername(DOMAIN, domain.getId(), user.getId(), NEW_USERNAME, null).test();
 
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertComplete();
@@ -832,5 +906,7 @@ public class UserServiceTest {
         verify(commonUserService, times(1)).update(any());
         verify(userProvider, times(1)).updateUsername(any(), anyString());
         verify(loginAttemptService, times(1)).reset(any());
+        verify(credentialService, times(1)).findByUsername(any(), anyString(), eq(USERNAME));
+        verify(credentialService, times(1)).update(argThat(argument -> NEW_USERNAME.equals(argument.getUsername())));
     }
 }

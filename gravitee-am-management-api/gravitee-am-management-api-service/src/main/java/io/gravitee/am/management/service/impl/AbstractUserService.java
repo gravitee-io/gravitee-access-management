@@ -27,6 +27,7 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.PasswordService;
@@ -94,8 +95,10 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
     protected VerifyAttemptService verifyAttemptService;
 
     @Autowired
-    private LoginAttemptService loginAttemptService;
+    protected CredentialService credentialService;
 
+    @Autowired
+    private LoginAttemptService loginAttemptService;
 
     protected abstract BiFunction<String, String, Maybe<Application>> checkClientFunction();
 
@@ -183,12 +186,16 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
                                         .flatMap(idpUser -> userProvider.updateUsername(idpUser, username))
                                         .flatMap(idpUser -> {
                                             oldUsername.set(user.getUsername());
+                                            return updateCredentialUsername(referenceType, referenceId, oldUsername.get(), idpUser);
+                                        })
+                                        .flatMap(idpUser -> {
                                             user.setUsername(username);
                                             user.setLastUsernameReset(new Date());
                                             return getUserService().update(user).onErrorResumeNext(ex -> {
-                                                // In the case we cannot update on our side, we rollback the username on the iDP
+                                                // In the case we cannot update on our side, we rollback the username on the iDP and these credentials
                                                 ((DefaultUser) idpUser).setUsername(oldUsername.get());
                                                 return userProvider.updateUsername(idpUser, idpUser.getUsername())
+                                                        .flatMap(idpUser1 -> updateCredentialUsername(referenceType, referenceId, idpUser1.getUsername(), oldUsername.get()))
                                                         .flatMap(rolledBackUser -> Single.error(ex));
                                             });
                                         })
@@ -356,5 +363,21 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
                 .domain(domainId)
                 .username(username)
                 .build();
+    }
+
+    private Single<io.gravitee.am.identityprovider.api.User> updateCredentialUsername(ReferenceType referenceType, String referenceId, String oldUsername, io.gravitee.am.identityprovider.api.User user) {
+        return updateCredentialUsername(referenceType, referenceId, oldUsername, user.getUsername())
+                .flatMap(__ -> Single.just(user));
+    }
+
+    private Single<String> updateCredentialUsername(ReferenceType referenceType, String referenceId, String oldUsername, String newUsername) {
+        return credentialService.findByUsername(referenceType, referenceId, oldUsername)
+                .map(credential -> {
+                    credential.setUsername(newUsername);
+                    return credentialService.update(credential).subscribe();
+                })
+                .toList()
+                .flatMapMaybe(singles -> Maybe.just(newUsername))
+                .toSingle();
     }
 }
