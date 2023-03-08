@@ -27,6 +27,9 @@ import io.gravitee.am.repository.jdbc.common.dialect.ScimUserSearch;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcUser;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcUser.AbstractRole;
+import io.gravitee.am.repository.jdbc.management.api.model.mapper.EnrolledFactorsConverter;
+import io.gravitee.am.repository.jdbc.management.api.model.mapper.MapToStringConverter;
+import io.gravitee.am.repository.jdbc.management.api.model.mapper.X509Converter;
 import io.gravitee.am.repository.jdbc.management.api.spring.user.SpringDynamicUserRoleRepository;
 import io.gravitee.am.repository.jdbc.management.api.spring.user.SpringUserAddressesRepository;
 import io.gravitee.am.repository.jdbc.management.api.spring.user.SpringUserAttributesRepository;
@@ -54,6 +57,7 @@ import reactor.core.publisher.Mono;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -220,12 +224,133 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
     @Autowired
     protected SpringUserEntitlementRepository entitlementRepository;
 
+    private EnrolledFactorsConverter enrolledFactorsConverter = new EnrolledFactorsConverter();
+    private MapToStringConverter mapToStringConverter = new MapToStringConverter();
+    private X509Converter x509Converter = new X509Converter();
+
     protected User toEntity(JdbcUser entity) {
-        return mapper.map(entity, User.class);
+        var result = new User();
+        result.setDisplayName(entity.getDisplayName());
+        result.setClient(entity.getClient());
+        result.setId(entity.getId());
+        result.setEmail(entity.getEmail());
+        result.setExternalId(entity.getExternalId());
+        result.setFirstName(entity.getFirstName());
+        result.setLastName(entity.getLastName());
+        result.setLoginsCount(entity.getLoginsCount());
+        result.setNewsletter(entity.getNewsletter());
+        result.setNickName(entity.getNickName());
+        result.setPreferredLanguage(entity.getPreferredLanguage());
+        result.setReferenceId(entity.getReferenceId());
+        result.setReferenceType(ReferenceType.valueOf(entity.getReferenceType()));
+        result.setRegistrationAccessToken(entity.getRegistrationAccessToken());
+        result.setRegistrationUserUri(entity.getRegistrationUserUri());
+        result.setSource(entity.getSource());
+        result.setTitle(entity.getTitle());
+        result.setType(entity.getType());
+        result.setUsername(entity.getUsername());
+        result.setRegistrationCompleted(entity.isRegistrationCompleted());
+        result.setPreRegistration(entity.isPreRegistration());
+        result.setInternal(entity.isInternal());
+        result.setEnabled(entity.isEnabled());
+        result.setCredentialsNonExpired(entity.isCredentialsNonExpired());
+        result.setAccountNonExpired(entity.isAccountNonExpired());
+        result.setAccountNonLocked(entity.isAccountNonLocked());
+
+        if (entity.getAccountLockedAt() != null) {
+            result.setAccountLockedAt(Date.from(entity.getAccountLockedAt().atZone(UTC).toInstant()));
+        }
+        if (entity.getAccountLockedUntil() != null) {
+            result.setAccountLockedUntil(Date.from(entity.getAccountLockedUntil().atZone(UTC).toInstant()));
+        }
+        if (entity.getCreatedAt() != null) {
+            result.setCreatedAt(Date.from(entity.getCreatedAt().atZone(UTC).toInstant()));
+        }
+        if (entity.getLastLogoutAt() != null) {
+            result.setLastLogoutAt(Date.from(entity.getLastLogoutAt().atZone(UTC).toInstant()));
+        }
+        if (entity.getLastPasswordReset() != null) {
+            result.setLastPasswordReset(Date.from(entity.getLastPasswordReset().atZone(UTC).toInstant()));
+        }
+        if (entity.getLoggedAt() != null) {
+            result.setLoggedAt(Date.from(entity.getLoggedAt().atZone(UTC).toInstant()));
+        }
+        if (entity.getMfaEnrollmentSkippedAt() != null) {
+            result.setMfaEnrollmentSkippedAt(Date.from(entity.getMfaEnrollmentSkippedAt().atZone(UTC).toInstant()));
+        }
+        if (entity.getUpdatedAt() != null) {
+            result.setUpdatedAt(Date.from(entity.getUpdatedAt().atZone(UTC).toInstant()));
+        }
+
+        result.setFactors(enrolledFactorsConverter.convertFrom(entity.getFactors(), null));
+        result.setAdditionalInformation(mapToStringConverter.convertFrom(entity.getAdditionalInformation(), null));
+        result.setX509Certificates(x509Converter.convertFrom(entity.getX509Certificates(), null));
+
+        return result;
+        //return mapper.map(entity, User.class);
     }
 
     protected JdbcUser toJdbcEntity(User entity) {
-        return mapper.map(entity, JdbcUser.class);
+        var result = new JdbcUser();
+
+        result.setDisplayName(entity.getDisplayName());
+        result.setClient(entity.getClient());
+        result.setId(entity.getId());
+        result.setEmail(entity.getEmail());
+        result.setExternalId(entity.getExternalId());
+        result.setFirstName(entity.getFirstName());
+        result.setLastName(entity.getLastName());
+        result.setLoginsCount(entity.getLoginsCount());
+        result.setNewsletter(entity.isNewsletter());
+        result.setNickName(entity.getNickName());
+        result.setPreferredLanguage(entity.getPreferredLanguage());
+        result.setReferenceId(entity.getReferenceId());
+        result.setReferenceType(entity.getReferenceType().name());
+        result.setRegistrationAccessToken(entity.getRegistrationAccessToken());
+        result.setRegistrationUserUri(entity.getRegistrationUserUri());
+        result.setSource(entity.getSource());
+        result.setTitle(entity.getTitle());
+        result.setType(entity.getType());
+        result.setUsername(entity.getUsername());
+        result.setRegistrationCompleted(entity.isRegistrationCompleted());
+        result.setPreRegistration(entity.isPreRegistration());
+        result.setInternal(entity.isInternal());
+        result.setEnabled(entity.isEnabled());
+        result.setCredentialsNonExpired(entity.isCredentialsNonExpired());
+        result.setAccountNonExpired(entity.isAccountNonExpired());
+        result.setAccountNonLocked(entity.isAccountNonLocked());
+
+        if (entity.getAccountLockedAt() != null) {
+            result.setAccountLockedAt(LocalDateTime.ofInstant(entity.getAccountLockedAt().toInstant(), UTC));
+        }
+        if (entity.getAccountLockedUntil() != null) {
+            result.setAccountLockedUntil(LocalDateTime.ofInstant(entity.getAccountLockedUntil().toInstant(), UTC));
+        }
+        if (entity.getCreatedAt() != null) {
+            result.setCreatedAt(LocalDateTime.ofInstant(entity.getCreatedAt().toInstant(), UTC));
+        }
+        if (entity.getLastLogoutAt() != null) {
+            result.setLastLogoutAt(LocalDateTime.ofInstant(entity.getLastLogoutAt().toInstant(), UTC));
+        }
+        if (entity.getLastPasswordReset() != null) {
+            result.setLastPasswordReset(LocalDateTime.ofInstant(entity.getLastPasswordReset().toInstant(), UTC));
+        }
+        if (entity.getLoggedAt() != null) {
+            result.setLoggedAt(LocalDateTime.ofInstant(entity.getLoggedAt().toInstant(), UTC));
+        }
+        if (entity.getMfaEnrollmentSkippedAt() != null) {
+            result.setMfaEnrollmentSkippedAt(LocalDateTime.ofInstant(entity.getMfaEnrollmentSkippedAt().toInstant(), UTC));
+        }
+        if (entity.getUpdatedAt() != null) {
+            result.setUpdatedAt(LocalDateTime.ofInstant(entity.getUpdatedAt().toInstant(), UTC));
+        }
+
+        result.setFactors(enrolledFactorsConverter.convertTo(entity.getFactors(), null));
+        result.setAdditionalInformation(mapToStringConverter.convertTo(entity.getAdditionalInformation(), null));
+        result.setX509Certificates(x509Converter.convertTo(entity.getX509Certificates(), null));
+
+        return result;
+        //return mapper.map(entity, JdbcUser.class);
     }
 
     @Override
