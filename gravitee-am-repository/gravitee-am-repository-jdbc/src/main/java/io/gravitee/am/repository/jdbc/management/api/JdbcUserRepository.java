@@ -285,13 +285,18 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         if (entity.getUpdatedAt() != null) {
             result.setUpdatedAt(Date.from(entity.getUpdatedAt().atZone(UTC).toInstant()));
         }
+        if (entity.getLastLoginWithCredentials() != null) {
+            result.setLastLoginWithCredentials(Date.from(entity.getLastLoginWithCredentials().atZone(UTC).toInstant()));
+        }
+        if (entity.getLastUsernameReset() != null) {
+            result.setLastUsernameReset(Date.from(entity.getLastUsernameReset().atZone(UTC).toInstant()));
+        }
 
         result.setFactors(enrolledFactorsConverter.convertFrom(entity.getFactors(), null));
         result.setAdditionalInformation(mapToStringConverter.convertFrom(entity.getAdditionalInformation(), null));
         result.setX509Certificates(x509Converter.convertFrom(entity.getX509Certificates(), null));
 
         return result;
-        //return mapper.map(entity, User.class);
     }
 
     protected JdbcUser toJdbcEntity(User entity) {
@@ -348,13 +353,18 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         if (entity.getUpdatedAt() != null) {
             result.setUpdatedAt(LocalDateTime.ofInstant(entity.getUpdatedAt().toInstant(), UTC));
         }
+        if (entity.getLastLoginWithCredentials() != null) {
+            result.setLastLoginWithCredentials(LocalDateTime.ofInstant(entity.getLastLoginWithCredentials().toInstant(), UTC));
+        }
+        if (entity.getLastUsernameReset() != null) {
+            result.setLastUsernameReset(LocalDateTime.ofInstant(entity.getLastUsernameReset().toInstant(), UTC));
+        }
 
         result.setFactors(enrolledFactorsConverter.convertTo(entity.getFactors(), null));
         result.setAdditionalInformation(mapToStringConverter.convertTo(entity.getAdditionalInformation(), null));
         result.setX509Certificates(x509Converter.convertTo(entity.getX509Certificates(), null));
 
         return result;
-        //return mapper.map(entity, JdbcUser.class);
     }
 
     @Override
