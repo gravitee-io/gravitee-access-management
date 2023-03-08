@@ -19,6 +19,12 @@ import {
     AccountSettingsToJSON,
 } from './AccountSettings';
 import {
+    CorsSettings,
+    CorsSettingsFromJSON,
+    CorsSettingsFromJSONTyped,
+    CorsSettingsToJSON,
+} from './CorsSettings';
+import {
     LoginSettings,
     LoginSettingsFromJSON,
     LoginSettingsFromJSONTyped,
@@ -231,6 +237,12 @@ export interface Domain {
     saml?: SAMLSettings;
     /**
      * 
+     * @type {CorsSettings}
+     * @memberof Domain
+     */
+    corsSettings?: CorsSettings;
+    /**
+     * 
      * @type {boolean}
      * @memberof Domain
      */
@@ -322,6 +334,7 @@ export function DomainFromJSONTyped(json: any, ignoreDiscriminator: boolean): Do
         'passwordSettings': !exists(json, 'passwordSettings') ? undefined : PasswordSettingsFromJSON(json['passwordSettings']),
         'selfServiceAccountManagementSettings': !exists(json, 'selfServiceAccountManagementSettings') ? undefined : SelfServiceAccountManagementSettingsFromJSON(json['selfServiceAccountManagementSettings']),
         'saml': !exists(json, 'saml') ? undefined : SAMLSettingsFromJSON(json['saml']),
+        'corsSettings': !exists(json, 'corsSettings') ? undefined : CorsSettingsFromJSON(json['corsSettings']),
         'redirectUriLocalhostAllowed': !exists(json, 'redirectUriLocalhostAllowed') ? undefined : json['redirectUriLocalhostAllowed'],
         'redirectUriUnsecuredHttpSchemeAllowed': !exists(json, 'redirectUriUnsecuredHttpSchemeAllowed') ? undefined : json['redirectUriUnsecuredHttpSchemeAllowed'],
         'redirectUriWildcardAllowed': !exists(json, 'redirectUriWildcardAllowed') ? undefined : json['redirectUriWildcardAllowed'],
@@ -366,6 +379,7 @@ export function DomainToJSON(value?: Domain | null): any {
         'passwordSettings': PasswordSettingsToJSON(value.passwordSettings),
         'selfServiceAccountManagementSettings': SelfServiceAccountManagementSettingsToJSON(value.selfServiceAccountManagementSettings),
         'saml': SAMLSettingsToJSON(value.saml),
+        'corsSettings': CorsSettingsToJSON(value.corsSettings),
         'redirectUriLocalhostAllowed': value.redirectUriLocalhostAllowed,
         'redirectUriUnsecuredHttpSchemeAllowed': value.redirectUriUnsecuredHttpSchemeAllowed,
         'redirectUriWildcardAllowed': value.redirectUriWildcardAllowed,

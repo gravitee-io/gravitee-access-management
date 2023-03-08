@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
+import io.gravitee.am.model.CorsSettings;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.VirtualHost;
 import io.gravitee.am.repository.mongodb.common.model.Auditable;
@@ -67,6 +68,8 @@ public class DomainMongo extends Auditable {
     private SelfServiceAccountManagementSettingsMongo selfServiceAccountManagementSettings;
 
     private SAMLSettingsMongo saml;
+
+    private CorsSettings corsSettings;
 
     private Set<String> tags;
 
@@ -260,6 +263,14 @@ public class DomainMongo extends Auditable {
 
     public void setMaster(boolean master) {
         this.master = master;
+    }
+
+    public CorsSettings getCorsSettings() {
+        return corsSettings;
+    }
+
+    public void setCorsSettings(CorsSettings corsSettings) {
+        this.corsSettings = corsSettings;
     }
 
     @Override

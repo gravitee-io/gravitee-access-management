@@ -17,7 +17,7 @@ import fetch from "cross-fetch";
 import * as faker from 'faker';
 import {afterAll, beforeAll, expect} from '@jest/globals';
 import {requestAdminAccessToken} from "@management-commands/token-management-commands";
-import {createDomain, deleteDomain, getDomain, startDomain} from "@management-commands/domain-management-commands";
+import {createDomain, deleteDomain, getDomain, patchDomain, startDomain} from "@management-commands/domain-management-commands";
 
 global.fetch = fetch;
 
@@ -49,6 +49,78 @@ describe("when using the domains commands", () => {
         const domainStarted = await startDomain(domain.id, accessToken);
         expect(domainStarted).toBeDefined();
         expect(domainStarted.id).toEqual(domain.id);
+    });
+});
+
+describe("Entrypoints: CORS settings", () => {
+    it("should create default CORS settings", async () => {
+        const patchedDomain = await patchDomain(domain.id, accessToken, {
+            "path": `${domain.path}`,
+            "vhostMode": false,
+            "vhosts": [],
+            "corsSettings": {
+                "allowedOrigins": ["*"],
+                "allowedMethods": [],
+                "allowedHeaders": [],
+                "allowCredentials": false,
+                "enabled": true
+            }
+        });
+
+        const corsSettings = patchedDomain.corsSettings;
+        expect(corsSettings.enabled).toBe(true);
+        expect(corsSettings.allowedOrigins).toHaveLength(1);
+        expect(corsSettings.allowedOrigins).toContain("*");
+        expect(corsSettings.allowedHeaders).toHaveLength(0)
+        expect(corsSettings.allowedMethods).toHaveLength(0);
+    });
+
+    it("should disable CORS settings", async () => {
+        const patchedDomain = await patchDomain(domain.id, accessToken, {
+            "path": `${domain.path}`,
+            "vhostMode": false,
+            "vhosts": [],
+            "corsSettings": {
+                "allowedOrigins": ["*"],
+                "allowedMethods": [],
+                "allowedHeaders": [],
+                "allowCredentials": false,
+                "enabled": false
+            }
+        });
+
+        const corsSettings = patchedDomain.corsSettings;
+        expect(corsSettings.enabled).toBe(false);
+        expect(corsSettings.allowedOrigins).toHaveLength(1);
+        expect(corsSettings.allowedOrigins).toContain("*");
+        expect(corsSettings.allowedHeaders).toHaveLength(0)
+        expect(corsSettings.allowedMethods).toHaveLength(0);
+    });
+
+    it("should create custom CORS settings", async () => {
+        const patchedDomain = await patchDomain(domain.id, accessToken, {
+            "path": `${domain.path}`,
+            "vhostMode": false,
+            "vhosts": [],
+            "corsSettings": {
+                "allowedOrigins": ["https://foo.com, https://bar.com/*"],
+                "allowedMethods": ["PUT", "DELETE"],
+                "allowedHeaders": ["Authorization", "Application-Json"],
+                "allowCredentials": true,
+                "enabled": true,
+                "maxAge": 50
+            }
+        });
+
+        const corsSettings = patchedDomain.corsSettings;
+        expect(corsSettings.enabled).toBe(true);
+        expect(corsSettings.allowedOrigins).toHaveLength(1);
+        expect(corsSettings.allowedOrigins).toContain("https://foo.com, https://bar.com/*");
+        expect(corsSettings.allowedHeaders).toHaveLength(2);
+        expect(corsSettings.allowedHeaders).toEqual(expect.arrayContaining(["Authorization", "Application-Json"]));
+        expect(corsSettings.allowedMethods).toHaveLength(2);
+        expect(corsSettings.allowedMethods).toEqual(expect.arrayContaining(["PUT", "DELETE"]));
+        expect(corsSettings.maxAge).toBe(50);
     });
 });
 

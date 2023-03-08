@@ -21,7 +21,6 @@ import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.AuthenticationFlowHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.CSPHandlerFactory;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.CSRFHandlerFactory;
-import io.gravitee.am.gateway.handler.common.vertx.web.handler.CorsHandlerFactory;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.PolicyChainHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.SSOSessionHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.XFrameHandlerFactory;
@@ -44,11 +43,6 @@ import org.springframework.core.env.Environment;
  */
 @Configuration
 public class WebConfiguration {
-
-    @Bean
-    public CorsHandlerFactory corsHandler() {
-        return new CorsHandlerFactory();
-    }
 
     @Bean
     public CSPHandlerFactory cspHandlerFactory(Environment environment) {

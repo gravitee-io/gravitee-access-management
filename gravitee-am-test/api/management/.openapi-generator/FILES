@@ -80,6 +80,7 @@ models/CertificateKey.ts
 models/CertificatesResource.ts
 models/ClientRegistrationSettings.ts
 models/CookieSettings.ts
+models/CorsSettings.ts
 models/Credential.ts
 models/DeviceIdentifiersResource.ts
 models/DevicesResource.ts

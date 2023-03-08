@@ -659,6 +659,10 @@ public class DomainServiceImpl implements DomainService {
             }
         }
 
+        if(domain.getCorsSettings() != null && domain.getCorsSettings().getAllowedOrigins().isEmpty()) {
+            return Completable.error(new InvalidDomainException("CORS settings are invalid: allow origin is empty. Default value should be '*'"));
+        }
+
         // check the uniqueness of the domain
         return domainRepository.findByHrid(domain.getReferenceType(), domain.getReferenceId(), domain.getHrid())
                 .map(Optional::of)
