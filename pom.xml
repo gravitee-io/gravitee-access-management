@@ -75,7 +75,7 @@
         <gravitee-bom.version>4.0.0-alpha.1</gravitee-bom.version>
         <gravitee-common.version>1.25.0</gravitee-common.version>
         <gravitee-plugin.version>1.23.1</gravitee-plugin.version>
-        <gravitee-node.version>3.0.0-alpha.3</gravitee-node.version>
+        <gravitee-node.version>3.0.0-alpha.4</gravitee-node.version>
         <hazelcast.version>4.1.10</hazelcast.version>
         <gravitee-reporter.version>1.17.1</gravitee-reporter.version>
         <gravitee-gateway-api.version>1.31.2</gravitee-gateway-api.version>
@@ -130,7 +130,7 @@
         <gravitee-notifier-slack.version>1.3.0</gravitee-notifier-slack.version>
         <gravitee-alert-api.version>1.8.0</gravitee-alert-api.version>
         <gravitee-notifier-api.version>1.4.1</gravitee-notifier-api.version>
-        <gravitee-risk-assessment-api.version>1.0.1</gravitee-risk-assessment-api.version>
+        <gravitee-risk-assessment-api.version>2.0.0-alpha.1</gravitee-risk-assessment-api.version>
 
         <jdk.version>11</jdk.version>
 
