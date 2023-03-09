@@ -1,6 +1,17 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/644?closed=1[AM - 3.20.2 (2023-03-09)]
+
+=== Bug fixes
+
+*_General_*
+
+- Merge 3.19.7 to 3.20.x https://github.com/gravitee-io/issues/issues/8908[#8908]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/638?closed=1[AM - 3.19.7 (2023-03-02)]
 
 === Bug fixes
