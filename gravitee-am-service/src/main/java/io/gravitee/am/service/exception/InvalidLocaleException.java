@@ -15,29 +15,13 @@
  */
 package io.gravitee.am.service.exception;
 
-import io.gravitee.common.http.HttpStatusCode;
-
-/**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
- * @author GraviteeSource Team
- */
-public class DictionaryAlreadyExistsException extends AbstractManagementException {
-
-    private final String name;
-    private final String locale;
-
-    public DictionaryAlreadyExistsException(String name, String locale) {
-        this.name = name;
-        this.locale = locale;
+public class InvalidLocaleException extends AbstractManagementException {
+    public InvalidLocaleException() {
+        super("Invalid locale provided");
     }
 
     @Override
     public int getHttpStatusCode() {
-        return HttpStatusCode.BAD_REQUEST_400;
-    }
-
-    @Override
-    public String getMessage() {
-        return "An i18n dictionary [" + name + "] already exists for " + locale;
+        return 400;
     }
 }
