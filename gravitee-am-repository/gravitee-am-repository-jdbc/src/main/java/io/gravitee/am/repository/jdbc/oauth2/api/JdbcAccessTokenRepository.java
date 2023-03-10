@@ -17,6 +17,7 @@ package io.gravitee.am.repository.jdbc.oauth2.api;
 
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
+import io.gravitee.am.repository.jdbc.management.api.model.mapper.LocalDateConverter;
 import io.gravitee.am.repository.jdbc.oauth2.api.model.JdbcAccessToken;
 import io.gravitee.am.repository.jdbc.oauth2.api.spring.SpringAccessTokenRepository;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
@@ -46,12 +47,34 @@ public class JdbcAccessTokenRepository extends AbstractJdbcRepository implements
     @Autowired
     private SpringAccessTokenRepository accessTokenRepository;
 
+    private LocalDateConverter dateConverter = new LocalDateConverter();
+
     protected AccessToken toEntity(JdbcAccessToken entity) {
-        return mapper.map(entity, AccessToken.class);
+        final var result = new AccessToken();
+        result.setClient(entity.getClient());
+        result.setId(entity.getId());
+        result.setToken(entity.getToken());
+        result.setRefreshToken(entity.getRefreshToken());
+        result.setAuthorizationCode(entity.getAuthorizationCode());
+        result.setCreatedAt(dateConverter.convertFrom(entity.getCreatedAt(), null));
+        result.setDomain(entity.getDomain());
+        result.setExpireAt(dateConverter.convertFrom(entity.getExpireAt(), null));
+        result.setSubject(entity.getSubject());
+        return result;
     }
 
     protected JdbcAccessToken toJdbcEntity(AccessToken entity) {
-        return mapper.map(entity, JdbcAccessToken.class);
+        final var result = new JdbcAccessToken();
+        result.setClient(entity.getClient());
+        result.setId(entity.getId());
+        result.setToken(entity.getToken());
+        result.setRefreshToken(entity.getRefreshToken());
+        result.setAuthorizationCode(entity.getAuthorizationCode());
+        result.setCreatedAt(dateConverter.convertTo(entity.getCreatedAt(), null));
+        result.setDomain(entity.getDomain());
+        result.setExpireAt(dateConverter.convertTo(entity.getExpireAt(), null));
+        result.setSubject(entity.getSubject());
+        return result;
     }
 
     @Override
