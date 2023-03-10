@@ -170,11 +170,7 @@ public class UsersEndpoint extends AbstractUserEndpoint {
             final String source = userSource(context);
             final JWT accessToken = context.get(ConstantKeys.TOKEN_CONTEXT_KEY);
             final String baseUrl = location(context.request());
-            userService.get(accessToken.getSub(), baseUrl)
-                    .map(scimUser -> new DefaultUser(UserMapper.convert(scimUser)))
-                    .map(Optional::ofNullable)
-                    .switchIfEmpty(Maybe.just(Optional.empty()))
-                    .flatMapSingle(optPrincipal -> userService.create(user, source, baseUrl, optPrincipal.orElse(null)))
+            userService.create(user, source, baseUrl, null)
                     .subscribe(
                             user1 -> context.response()
                                     .setStatusCode(201)
