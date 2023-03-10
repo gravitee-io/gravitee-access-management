@@ -16,7 +16,9 @@
 package io.gravitee.am.management.service.impl;
 
 import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.common.factor.FactorDataKeys;
 import io.gravitee.am.common.oidc.StandardClaims;
+import io.gravitee.am.common.utils.MovingFactorUtils;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.management.service.CommonUserService;
@@ -191,6 +193,11 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
                                         .flatMap(idpUser -> {
                                             user.setUsername(username);
                                             user.setLastUsernameReset(new Date());
+
+                                            // Generate a new moving factor based on user id instead of username. Necessary
+                                            // since username can be changed.
+                                            generateNewMovingFactorBasedOnUserId(user);
+
                                             return getUserService().update(user).onErrorResumeNext(ex -> {
                                                 // In the case we cannot update on our side, we rollback the username on the iDP and these credentials
                                                 ((DefaultUser) idpUser).setUsername(oldUsername.get());
@@ -379,5 +386,27 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
                 .toList()
                 .flatMapMaybe(singles -> Maybe.just(newUsername))
                 .toSingle();
+    }
+
+    private void generateNewMovingFactorBasedOnUserId(User user) {
+
+        Optional.ofNullable(user.getFactors()).ifPresent(enrolledFactors ->
+
+            user.getFactors()
+                    .stream()
+                    .filter(enrolledFactor -> Optional.ofNullable(enrolledFactor.getSecurity()).isPresent())
+                    .forEach(enrolledFactor -> {
+
+                        final var additionalData = enrolledFactor.getSecurity().getAdditionalData();
+
+                        if (additionalData.containsKey(FactorDataKeys.KEY_MOVING_FACTOR)) {
+                            additionalData.put(
+                                    FactorDataKeys.KEY_MOVING_FACTOR,
+                                    MovingFactorUtils.generateInitialMovingFactor(user.getId())
+                            );
+                            enrolledFactor.setUpdatedAt(new Date());
+                        }
+                    })
+        );
     }
 }

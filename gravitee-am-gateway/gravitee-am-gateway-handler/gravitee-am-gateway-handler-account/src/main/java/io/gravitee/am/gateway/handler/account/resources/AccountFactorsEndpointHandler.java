@@ -20,6 +20,7 @@ import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.factor.FactorDataKeys;
 import io.gravitee.am.common.factor.FactorType;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.common.utils.MovingFactorUtils;
 import io.gravitee.am.factor.api.Enrollment;
 import io.gravitee.am.factor.api.FactorContext;
 import io.gravitee.am.factor.api.FactorProvider;
@@ -29,7 +30,6 @@ import io.gravitee.am.gateway.handler.account.model.UpdateEnrolledFactor;
 import io.gravitee.am.gateway.handler.account.services.AccountService;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
-import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.User;
@@ -39,6 +39,7 @@ import io.gravitee.am.model.factor.EnrolledFactorChannel.Type;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.factor.FactorStatus;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.service.exception.FactorNotFoundException;
 import io.gravitee.am.service.exception.RateLimitException;
 import io.gravitee.common.util.Maps;
@@ -55,9 +56,6 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.springframework.context.ApplicationContext;
 
-import java.nio.charset.StandardCharsets;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -696,7 +694,7 @@ public class AccountFactorsEndpointHandler {
         if (factorProvider.useVariableFactorSecurity(factorContext)) {
             final User user = factorContext.getUser();
             Map<String, Object> additionalData = new Maps.MapBuilder(new HashMap())
-                    .put(FactorDataKeys.KEY_MOVING_FACTOR, generateInitialMovingFactor(user))
+                    .put(FactorDataKeys.KEY_MOVING_FACTOR, MovingFactorUtils.generateInitialMovingFactor(user.getId()))
                     .build();
             getEnrolledFactor(factor.getId(), user).ifPresent(ef -> {
                 additionalData.put(FactorDataKeys.KEY_EXPIRE_AT, ef.getSecurity().getData(FactorDataKeys.KEY_EXPIRE_AT, Long.class));
@@ -718,16 +716,6 @@ public class AccountFactorsEndpointHandler {
                 .stream()
                 .filter(factor -> Objects.equals(factorId, factor.getFactorId()))
                 .findFirst();
-    }
-
-    private int generateInitialMovingFactor(User endUser) {
-        try {
-            SecureRandom secureRandom = SecureRandom.getInstance("SHA1PRNG");
-            secureRandom.setSeed(endUser.getUsername().getBytes(StandardCharsets.UTF_8));
-            return secureRandom.nextInt(1000) + 1;
-        } catch (NoSuchAlgorithmException e) {
-            return 0;
-        }
     }
 
     /**

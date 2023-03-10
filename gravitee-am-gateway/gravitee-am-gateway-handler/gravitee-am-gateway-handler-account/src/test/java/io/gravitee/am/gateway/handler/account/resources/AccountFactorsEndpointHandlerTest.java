@@ -94,6 +94,7 @@ public class AccountFactorsEndpointHandlerTest extends RxWebTestBase {
         super.setUp();
         accountFactorsEndpointHandler = new AccountFactorsEndpointHandler(accountService, factorManager, applicationContext, rateLimiterService);
         user = new User();
+        user.setId("xxx-xxx-xxx");
         user.setUsername("username");
 
         router.route()

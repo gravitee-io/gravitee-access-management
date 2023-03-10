@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.vertx.auth.webauthn.store;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oidc.StandardClaims;
+import io.gravitee.am.common.utils.MovingFactorUtils;
 import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Domain;
@@ -26,8 +27,6 @@ import io.gravitee.am.service.CredentialService;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
-import io.vertx.core.Future;
-import io.vertx.core.Promise;
 import io.vertx.ext.auth.webauthn.Authenticator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -71,7 +70,7 @@ public class RepositoryCredentialStore {
                                 generateCredID(query.getUserName(), Claims.sub),
                                 generateCredID(query.getUserName(), StandardClaims.PREFERRED_USERNAME), (part1, part2) -> {
                                     MessageDigest md = MessageDigest.getInstance("SHA-512");
-                                    SecureRandom secureRandom = SecureRandom.getInstance("SHA1PRNG");
+                                    SecureRandom secureRandom = SecureRandom.getInstance(MovingFactorUtils.SHA_1_PRNG);
                                     secureRandom.setSeed(part1.getBytes());
                                     int nbDevices = secureRandom.nextInt(3) + 1;
                                     int deviceType = secureRandom.nextInt(2) + 1;

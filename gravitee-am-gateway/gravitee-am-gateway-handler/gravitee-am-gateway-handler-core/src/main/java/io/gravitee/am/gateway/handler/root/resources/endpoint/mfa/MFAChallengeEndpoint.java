@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.mfa;
 
 import io.gravitee.am.common.factor.FactorDataKeys;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.common.utils.MovingFactorUtils;
 import io.gravitee.am.factor.api.FactorContext;
 import io.gravitee.am.factor.api.FactorProvider;
 import io.gravitee.am.gateway.handler.common.email.EmailService;
@@ -69,9 +70,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 
-import java.nio.charset.StandardCharsets;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
@@ -529,7 +527,7 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
                 enrolledFactor.setSecurity(new EnrolledFactorSecurity(SHARED_SECRET,
                         routingContext.session().get(ConstantKeys.ENROLLED_FACTOR_SECURITY_VALUE_KEY)));
                 Map<String, Object> additionalData = new Maps.MapBuilder(new HashMap())
-                        .put(FactorDataKeys.KEY_MOVING_FACTOR, generateInitialMovingFactor(endUser))
+                        .put(FactorDataKeys.KEY_MOVING_FACTOR, MovingFactorUtils.generateInitialMovingFactor(endUser.getId()))
                         .build();
                 getEnrolledFactor(factor, endUser).ifPresent(ef -> {
                     additionalData.put(FactorDataKeys.KEY_EXPIRE_AT, ef.getSecurity().getData(FactorDataKeys.KEY_EXPIRE_AT, Long.class));
@@ -555,16 +553,6 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
                 .stream()
                 .filter(f -> factor.getId().equals(f.getFactorId()))
                 .findFirst();
-    }
-
-    private int generateInitialMovingFactor(User endUser) {
-        try {
-            SecureRandom secureRandom = SecureRandom.getInstance("SHA1PRNG");
-            secureRandom.setSeed(endUser.getUsername().getBytes(StandardCharsets.UTF_8));
-            return secureRandom.nextInt(1000) + 1;
-        } catch (NoSuchAlgorithmException e) {
-            return 0;
-        }
     }
 
     @Override
