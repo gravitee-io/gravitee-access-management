@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.management.service;
 
+import io.gravitee.am.common.factor.FactorDataKeys;
+import io.gravitee.am.common.utils.MovingFactorUtils;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.jwt.JWTBuilder;
@@ -22,6 +24,9 @@ import io.gravitee.am.management.service.impl.UserServiceImpl;
 import io.gravitee.am.model.*;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
+import io.gravitee.am.model.factor.EnrolledFactor;
+import io.gravitee.am.model.factor.EnrolledFactorSecurity;
+import io.gravitee.am.model.factor.FactorStatus;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.*;
 import io.gravitee.am.service.exception.*;
@@ -52,6 +57,7 @@ import static io.gravitee.am.model.ReferenceType.DOMAIN;
 import static io.gravitee.am.service.validators.email.EmailValidatorImpl.EMAIL_PATTERN;
 import static io.gravitee.am.service.validators.user.UserValidatorImpl.*;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
@@ -781,6 +787,7 @@ public class UserServiceTest {
         user.setId("user-id");
         user.setSource("idp-id");
         user.setUsername(USERNAME);
+        user.setFactors(List.of());
 
         when(commonUserService.findById(DOMAIN, domain.getId(), user.getId()))
                 .thenReturn(Single.just(user));
@@ -827,6 +834,7 @@ public class UserServiceTest {
         user.setId("user-id");
         user.setSource("idp-id");
         user.setUsername(USERNAME);
+        user.setFactors(List.of());
 
         when(commonUserService.findById(DOMAIN, domain.getId(), user.getId()))
                 .thenReturn(Single.just(user));
@@ -871,6 +879,7 @@ public class UserServiceTest {
         user.setId("user-id");
         user.setSource("idp-id");
         user.setUsername(USERNAME);
+        user.setFactors(List.of());
 
         when(commonUserService.findById(DOMAIN, domain.getId(), user.getId()))
                 .thenReturn(Single.just(user));
@@ -908,5 +917,67 @@ public class UserServiceTest {
         verify(loginAttemptService, times(1)).reset(any());
         verify(credentialService, times(1)).findByUsername(any(), anyString(), eq(USERNAME));
         verify(credentialService, times(1)).update(argThat(argument -> NEW_USERNAME.equals(argument.getUsername())));
+    }
+
+    @Test
+    public void must_update_user_moving_factor() {
+        var domain = new Domain();
+        domain.setId("domain");
+
+        var enrolledFactor = new EnrolledFactor();
+        enrolledFactor.setFactorId("xxx-xxx-xxx");
+        enrolledFactor.setStatus(FactorStatus.ACTIVATED);
+
+        var enrolledFactorSecurity = new EnrolledFactorSecurity();
+        enrolledFactorSecurity.putData(FactorDataKeys.KEY_MOVING_FACTOR, MovingFactorUtils.generateInitialMovingFactor("user-id"));
+
+        enrolledFactor.setSecurity(enrolledFactorSecurity);
+
+        var user = new User();
+        user.setId("user-id");
+        user.setSource("idp-id");
+        user.setUsername(USERNAME);
+        user.setFactors(List.of(enrolledFactor));
+
+        when(commonUserService.findById(DOMAIN, domain.getId(), user.getId()))
+                .thenReturn(Single.just(user));
+        when(commonUserService.findByUsernameAndSource(DOMAIN, domain.getId(), NEW_USERNAME, user.getSource()))
+                .thenReturn(Maybe.empty());
+        when(commonUserService.update(user)).thenReturn(Single.just(user));
+
+        final UserProvider userProvider = mock(UserProvider.class);
+
+        final var defaultUser = new DefaultUser(user.getUsername());
+        defaultUser.setId("idp-user-id");
+        final var idpUserUpdated = new DefaultUser(NEW_USERNAME);
+        defaultUser.setId("idp-user-id");
+
+        when(userProvider.findByUsername(anyString())).thenReturn(Maybe.just(defaultUser));
+        when(userProvider.updateUsername(any(), anyString())).thenReturn(Single.just(idpUserUpdated));
+
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
+
+        when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
+        when(credentialService.findByUsername(any(), anyString(), eq(user.getUsername()))).thenReturn(Flowable.empty());
+
+        var observer = userService.updateUsername(DOMAIN, domain.getId(), user.getId(), NEW_USERNAME, null).test();
+
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertComplete();
+
+        verify(commonUserService, times(1)).update(any());
+        verify(userProvider, times(1)).updateUsername(any(), anyString());
+        verify(loginAttemptService, times(1)).reset(any());
+        verify(credentialService, times(1)).findByUsername(any(), anyString(), eq(USERNAME));
+
+        assertEquals(1, user.getFactors().size());
+        assertNotEquals(
+                MovingFactorUtils.generateInitialMovingFactor(user.getUsername()),
+                user.getFactors().get(0).getSecurity().getAdditionalData().get(FactorDataKeys.KEY_MOVING_FACTOR)
+        );
+        assertEquals(
+                MovingFactorUtils.generateInitialMovingFactor(user.getId()),
+                user.getFactors().get(0).getSecurity().getAdditionalData().get(FactorDataKeys.KEY_MOVING_FACTOR)
+        );
     }
 }
