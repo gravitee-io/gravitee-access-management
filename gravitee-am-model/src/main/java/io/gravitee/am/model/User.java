@@ -211,6 +211,7 @@ public class User implements IUser {
         this.mfaEnrollmentSkippedAt = other.mfaEnrollmentSkippedAt;
         this.createdAt = other.createdAt;
         this.updatedAt = other.updatedAt;
+        this.lastUsernameReset = other.lastUsernameReset;
     }
 
     public String getId() {
