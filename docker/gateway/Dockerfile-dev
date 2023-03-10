@@ -32,7 +32,8 @@ ENV GRAVITEE_AM_HOME /opt/graviteeio-am-gateway
 COPY --from=build-env /tmp/gravitee-am-gateway-standalone-* /opt/graviteeio-am-gateway/
 
 RUN chgrp -R 0 ${GRAVITEE_AM_HOME} && \
-    chmod -R g=u ${GRAVITEE_AM_HOME}
+    chmod -R g=u ${GRAVITEE_AM_HOME} && \
+    apk add libstdc++6 libstdc++
 
 WORKDIR ${GRAVITEE_AM_HOME}
 
