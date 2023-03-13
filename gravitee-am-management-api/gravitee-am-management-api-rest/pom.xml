@@ -61,6 +61,11 @@
             <artifactId>spring-web</artifactId>
         </dependency>
         <dependency>
+            <groupId>io.gravitee.am</groupId>
+            <artifactId>gravitee-am-spring-web</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-webmvc</artifactId>
         </dependency>
