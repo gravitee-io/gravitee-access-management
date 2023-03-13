@@ -58,6 +58,8 @@ import static io.gravitee.am.service.validators.email.EmailValidatorImpl.EMAIL_P
 import static io.gravitee.am.service.validators.user.UserValidatorImpl.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
@@ -979,5 +981,50 @@ public class UserServiceTest {
                 MovingFactorUtils.generateInitialMovingFactor(user.getId()),
                 user.getFactors().get(0).getSecurity().getAdditionalData().get(FactorDataKeys.KEY_MOVING_FACTOR)
         );
+    }
+
+    @Test
+    public void must_reset_username_and_unlock_user() {
+        Domain domain = new Domain();
+        domain.setId("domain");
+
+        User user = new User();
+        user.setId("user-id");
+        user.setSource("idp-id");
+        user.setUsername(USERNAME);
+        user.setAccountLockedAt(new Date());
+        user.setAccountLockedUntil(new Date());
+        user.setAccountNonLocked(false);
+
+        when(commonUserService.findById(DOMAIN, domain.getId(), user.getId()))
+                .thenReturn(Single.just(user));
+        when(commonUserService.findByUsernameAndSource(DOMAIN, domain.getId(), NEW_USERNAME, user.getSource()))
+                .thenReturn(Maybe.empty());
+        when(commonUserService.update(user)).thenReturn(Single.just(user));
+
+        final UserProvider userProvider = mock(UserProvider.class);
+        final DefaultUser defaultUser = new DefaultUser(NEW_USERNAME);
+        defaultUser.setId("idp-user-id");
+        when(userProvider.findByUsername(anyString())).thenReturn(Maybe.just(defaultUser));
+        when(userProvider.updateUsername(any(), anyString())).thenReturn(Single.just(defaultUser));
+
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
+        when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
+        when(credentialService.findByUsername(any(), anyString(), eq(user.getUsername()))).thenReturn(Flowable.empty());
+
+        var observer = userService.updateUsername(DOMAIN, domain.getId(), user.getId(), NEW_USERNAME, null).test();
+
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertComplete();
+
+        verify(commonUserService, times(1)).update(argThat(argument -> {
+            assertEquals(NEW_USERNAME, argument.getUsername());
+            assertTrue(argument.isAccountNonLocked());
+            assertNull(argument.getAccountLockedUntil());
+            assertNull(argument.getAccountLockedAt());
+            return true;
+        }));
+        verify(userProvider, times(1)).updateUsername(any(), anyString());
+        verify(loginAttemptService, times(1)).reset(any());
     }
 }

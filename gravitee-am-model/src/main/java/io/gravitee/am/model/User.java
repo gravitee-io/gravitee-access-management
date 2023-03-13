@@ -771,4 +771,15 @@ public class User implements IUser {
         putAdditionalInformation(StandardClaims.ADDRESS, address);
     }
 
+    public void updateUsername(String username) {
+        setUsername(username);
+        setLastUsernameReset(new Date());
+        unlockUser();
+    }
+
+    public void unlockUser() {
+        setAccountNonLocked(true);
+        setAccountLockedAt(null);
+        setAccountLockedUntil(null);
+    }
 }
