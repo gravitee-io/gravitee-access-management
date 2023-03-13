@@ -191,8 +191,7 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
                                             return updateCredentialUsername(referenceType, referenceId, oldUsername.get(), idpUser);
                                         })
                                         .flatMap(idpUser -> {
-                                            user.setUsername(username);
-                                            user.setLastUsernameReset(new Date());
+                                            user.updateUsername(username);
 
                                             // Generate a new moving factor based on user id instead of username. Necessary
                                             // since username can be changed.
