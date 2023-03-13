@@ -98,7 +98,7 @@
       <div fxLayout="column" style="margin-top: 10px;">
         <mat-form-field appearance="outline" floatLabel="always">
           <mat-label>Max passwordless usage (seconds)</mat-label>
-          <input matInput type="number" name="expiryDuration"
+          <input matInput type="number" name="expiryDuration" required
                  [ngModel]="loginSettings.passwordlessEnforcePasswordMaxAge"
                  (ngModelChange)="setEnforcePasswordMaxAge($event)"
                  [min]="0"
@@ -110,6 +110,6 @@
   </div>
 
   <div fxLayout="row" *ngIf="!readonly">
-    <button mat-raised-button color="primary" [disabled]="(!formChanged)" type="submit">SAVE</button>
+    <button mat-raised-button color="primary" [disabled]="(!formChanged || !isFormValid())" type="submit">SAVE</button>
   </div>
 </form>

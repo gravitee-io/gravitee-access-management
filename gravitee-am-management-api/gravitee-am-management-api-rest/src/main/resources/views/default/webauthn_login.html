@@ -55,7 +55,7 @@
                 </span>
             </div>
 
-            <div th:if="${passwordlessEnforcePassword}" class="item error-text">
+            <div th:if="${passwordlessEnforcePassword && error == null}" class="item error-text">
                 <span>
                     <span class="error" th:text="#{webauthn.login.enforcePassword.error}"/>
                     <small class="error_description" th:text="#{webauthn.login.enforcePassword.error.description}"/>

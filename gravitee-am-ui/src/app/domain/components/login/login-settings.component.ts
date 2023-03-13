@@ -130,4 +130,8 @@ export class LoginSettingsComponent implements OnInit, OnChanges {
   isIdentifierFirstLoginEnabled() {
     return this.loginSettings && this.loginSettings.identifierFirstEnabled;
   }
+
+  isFormValid() : boolean {
+    return this.form.disabled ? true : this.form.valid
+  }
 }
