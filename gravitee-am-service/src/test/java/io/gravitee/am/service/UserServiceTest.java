@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.exception.mfa.InvalidFactorAttributeException;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Credential;
@@ -24,6 +26,7 @@ import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorChannel;
+import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.service.exception.EmailFormatInvalidException;
@@ -34,6 +37,7 @@ import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.impl.UserServiceImpl;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.utils.UserProfileUtils;
 import io.gravitee.am.service.validators.email.EmailValidatorImpl;
 import io.gravitee.am.service.validators.user.UserValidatorImpl;
@@ -45,6 +49,7 @@ import io.reactivex.observers.TestObserver;
 import io.reactivex.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentMatcher;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -53,6 +58,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Collections;
 
+import static io.gravitee.am.common.audit.EventType.USER_CREATED;
 import static io.gravitee.am.service.validators.email.EmailValidatorImpl.EMAIL_PATTERN;
 import static io.gravitee.am.service.validators.user.UserValidatorImpl.NAME_LAX_PATTERN;
 import static io.gravitee.am.service.validators.user.UserValidatorImpl.NAME_STRICT_PATTERN;
@@ -93,6 +99,9 @@ public class UserServiceTest {
 
     @Mock
     private CredentialService credentialService;
+
+    @Mock
+    private AuditService auditService;
 
     private final static String DOMAIN = "domain1";
 
@@ -222,6 +231,9 @@ public class UserServiceTest {
 
         verify(userRepository, times(1)).create(any(User.class));
         verify(eventService, times(1)).create(any());
+        verify(auditService, times(1)).report(argThat(
+            (ArgumentMatcher<AuditBuilder<Audit>>) audit -> USER_CREATED.equals(audit.build(new ObjectMapper()).getType())
+        ));
     }
 
     @Test
