@@ -13,15 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service.exception;
+package io.gravitee.am.service.validators.annotations;
 
-public class InvalidLocaleException extends AbstractManagementException {
-    public InvalidLocaleException() {
-        super("Invalid locale provided");
-    }
+import org.apache.commons.lang3.StringUtils;
+
+import javax.validation.ConstraintValidator;
+import javax.validation.ConstraintValidatorContext;
+
+public class IfNotNullThenNotBlankValidator implements ConstraintValidator<IfNotNullThenNotBlank, String> {
 
     @Override
-    public int getHttpStatusCode() {
-        return 400;
+    public boolean isValid(String value, ConstraintValidatorContext context) {
+        return value == null || StringUtils.isNotBlank(value);
     }
 }

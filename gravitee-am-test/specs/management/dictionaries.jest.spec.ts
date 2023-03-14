@@ -127,7 +127,7 @@ describe("Testing dictionaries api...", () => {
             dictionary = await testCreate();
             const beforeUpdate = await getDictionary(domain.id, accessToken, dictionary.id);
             let updateName = "updated name";
-            let updateLocale = "updated locale";
+            let updateLocale = "ja";
             let entries = {
                 "login.title": "Welcome"
             };
