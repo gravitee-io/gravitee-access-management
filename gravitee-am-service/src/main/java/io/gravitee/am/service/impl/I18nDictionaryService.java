@@ -28,7 +28,6 @@ import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.DictionaryAlreadyExistsException;
-import io.gravitee.am.service.exception.InvalidLocaleException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewDictionary;
 import io.gravitee.am.service.model.UpdateI18nDictionary;
@@ -45,10 +44,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 import static io.gravitee.am.common.audit.EventType.I18N_DICTIONARY_CREATED;
 import static io.gravitee.am.common.audit.EventType.I18N_DICTIONARY_UPDATED;
@@ -76,7 +73,7 @@ public class I18nDictionaryService {
                 .isEmpty()
                 .map(isEmpty -> {
                     if (!isEmpty) {
-                        throw new DictionaryAlreadyExistsException(newDictionary.getName(), newDictionary.getLocale());
+                        throw new DictionaryAlreadyExistsException(newDictionary.getLocale());
                     } else {
                         var dictionary = new I18nDictionary();
                         dictionary.setId(RandomString.generate());
@@ -119,10 +116,6 @@ public class I18nDictionaryService {
 
     public Maybe<I18nDictionary> findByLocale(ReferenceType referenceType, String referenceId, String locale) {
         LOGGER.debug("Find dictionary by {} and locale {}", referenceId, locale);
-        if (Stream.of(Locale.getAvailableLocales()).noneMatch(l -> l.getLanguage().equals(locale))) {
-            LOGGER.warn("Client requested invalid locale {}", locale);
-            return Maybe.error(InvalidLocaleException::new);
-        }
         return repository.findByLocale(referenceType, referenceId, locale)
                          .onErrorResumeNext(ex -> {
                              String msg = "An error occurred while trying to find a dictionary using its locale: ? for the ? ?";
@@ -137,12 +130,12 @@ public class I18nDictionaryService {
         return findById(referenceType, referenceId, id)
                 // check uniqueness
                 .flatMap(existingDictionary -> repository
-                        .findByLocale(referenceType, referenceId, null)
+                        .findByLocale(referenceType, referenceId, updateDictionary.getLocale())
                         .map(Optional::ofNullable)
                         .defaultIfEmpty(Optional.empty())
                         .map(optionalDict -> {
                             if (optionalDict.isPresent() && !optionalDict.get().getId().equals(id)) {
-                                throw new DictionaryAlreadyExistsException(updateDictionary.getName(), updateDictionary.getLocale());
+                                throw new DictionaryAlreadyExistsException(updateDictionary.getLocale());
                             }
                             return existingDictionary;
                         })

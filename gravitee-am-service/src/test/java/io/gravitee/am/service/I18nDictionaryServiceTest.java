@@ -102,7 +102,7 @@ public class I18nDictionaryServiceTest {
         var dictionary = new I18nDictionary();
 
         when(repository.findById(DOMAIN, REFERENCE_ID, ID)).thenReturn(just(dictionary));
-        when(repository.findByLocale(DOMAIN, REFERENCE_ID, null)).thenReturn(Maybe.empty());
+        when(repository.findByLocale(DOMAIN, REFERENCE_ID, expectedLocale)).thenReturn(Maybe.empty());
         when(repository.update(any(I18nDictionary.class))).thenReturn(Single.just(dictionary));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
