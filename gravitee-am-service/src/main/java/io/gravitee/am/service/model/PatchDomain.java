@@ -209,6 +209,7 @@ public class PatchDomain {
         SetterUtils.safeSet(toPatch::setSelfServiceAccountManagementSettings, this.getSelfServiceAccountManagementSettings());
         SetterUtils.safeSet(toPatch::setTags, this.getTags());
         SetterUtils.safeSet(toPatch::setMaster, this.getMaster(), boolean.class);
+        SetterUtils.safeSet(toPatch::setCorsSettings, this.getCorsSettings());
 
         if (this.getOidc() != null) {
             if (this.getOidc().isPresent()) {
@@ -225,10 +226,6 @@ public class PatchDomain {
 
         if (this.getSaml() != null && this.getSaml().isPresent()) {
             toPatch.setSaml(this.getSaml().get().patch(toPatch.getSaml()));
-        }
-
-        if(this.getCorsSettings().isPresent()) {
-            SetterUtils.safeSet(toPatch::setCorsSettings, this.getCorsSettings());
         }
 
         return toPatch;
