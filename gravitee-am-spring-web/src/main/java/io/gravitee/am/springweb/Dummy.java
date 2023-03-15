@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/**
- * This empty package is here only to use a copy of org.springframework:spring-web:5.3.18
- * and remove the HttpInvokerServiceExporter.class which is impacted by the CVE-2016-1000027.
- *
- * @since 3.21.0
- * @version 3.21.0
- */
 package io.gravitee.am.springweb;
+
+/**
+ * This class exist only to not have an empty package and let generate source and javadoc.
+ */
+public class Dummy {
+}
