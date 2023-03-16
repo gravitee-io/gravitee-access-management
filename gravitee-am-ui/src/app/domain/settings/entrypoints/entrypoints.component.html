@@ -79,7 +79,7 @@
               <mat-label>Allow-Methods</mat-label>
               <mat-select multiple
                           [(value)]="domain.corsSettings.allowedMethods"
-                          (selectionChange)="updateAllowedMethod($event)" placeholder="Favorite food"
+                          (selectionChange)="updateAllowedMethod($event)" placeholder="GET, POST, PUT, DELETE, ..."
                           [disabled]="!isCorsSettingsEnabled()">
                 <mat-option *ngFor="let httpMethod of httpMethods" [value]="httpMethod">
                   {{httpMethod}}

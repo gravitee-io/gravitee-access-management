@@ -19,6 +19,8 @@ import io.gravitee.am.model.CorsSettings;
 import io.gravitee.am.model.Domain;
 import io.vertx.ext.web.handler.impl.CorsHandlerImpl;
 import io.vertx.rxjava3.ext.web.handler.CorsHandler;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -41,6 +43,8 @@ import static io.gravitee.am.gateway.handler.vertx.cors.CorsHandlerFactory.DEFAU
 import static io.gravitee.am.gateway.handler.vertx.cors.CorsHandlerFactory.DEFAULT_MAX_AGE_VALUE;
 import static io.gravitee.am.gateway.handler.vertx.cors.CorsHandlerFactory.DEFAULT_ORIGIN_VALUE;
 import static java.util.Arrays.asList;
+import static java.util.Arrays.stream;
+import static java.util.stream.Collectors.toSet;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
@@ -67,7 +71,7 @@ public class CorsHandlerFactoryTest {
     }
 
     @Test
-    public void shouldCrate_default_cors_settings() {
+    public void shouldCreate_default_cors_settings() {
         when(domain.getCorsSettings()).thenReturn(null);
 
         final CorsHandler handler = factory.getObject();
@@ -77,11 +81,10 @@ public class CorsHandlerFactoryTest {
     }
 
     @Test
-    public void shouldCrate_default_cors_settings_when_settings_disabled() {
+    public void shouldCreate_default_cors_settings_when_settings_disabled() {
         final CorsSettings settings = new CorsSettings();
         settings.setEnabled(false);
-
-        when(domain.getCorsSettings()).thenReturn(null);
+        when(domain.getCorsSettings()).thenReturn(settings);
 
         final CorsHandler handler = factory.getObject();
         final CorsHandlerImpl handlerObject = (CorsHandlerImpl) handler.getDelegate();
@@ -90,7 +93,7 @@ public class CorsHandlerFactoryTest {
     }
 
     @Test
-    public void shouldCrate_custom_cors_settings() {
+    public void shouldCreate_custom_cors_settings() {
         final CorsSettings corsSettings = new CorsSettings();
         corsSettings.setAllowedOrigins(Set.of("http.foo.com", "https.bar.com/*"));
         corsSettings.setAllowedHeaders(Set.of("Authorization", "custom-header"));
@@ -107,7 +110,7 @@ public class CorsHandlerFactoryTest {
     }
 
     @Test
-    public void shouldCrate_default_cors_settings_exception() {
+    public void shouldCreate_default_cors_settings_exception() {
         final CorsSettings invalidSettings = new CorsSettings();
         when(domain.getCorsSettings()).thenReturn(invalidSettings);
 
@@ -153,6 +156,6 @@ public class CorsHandlerFactoryTest {
     }
 
     private Set<String> strToSet(String property) {
-        return new HashSet<>(asList(property.replaceAll("\\s+", "").split(",")));
+        return stream(property.replaceAll("\\s+", "").split(",")).collect(toSet());
     }
 }

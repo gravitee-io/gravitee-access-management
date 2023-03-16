@@ -23,7 +23,7 @@ import java.util.Set;
  */
 
 public class CorsSettings {
-    boolean enabled;
+    private boolean enabled;
     private Set<String> allowedOrigins;
     private Set<String> allowedMethods;
     private Set<String> allowedHeaders;
