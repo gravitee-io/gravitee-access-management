@@ -72,6 +72,18 @@ export interface WebAuthnSettings {
      * @memberof WebAuthnSettings
      */
     certificates?: { [key: string]: any; };
+    /**
+     * 
+     * @type {boolean}
+     * @memberof WebAuthnSettings
+     */
+    enforceAuthenticatorIntegrity?: boolean;
+    /**
+     * 
+     * @type {number}
+     * @memberof WebAuthnSettings
+     */
+    enforceAuthenticatorIntegrityMaxAge?: number;
 }
 
 
@@ -124,6 +136,8 @@ export function WebAuthnSettingsFromJSONTyped(json: any, ignoreDiscriminator: bo
         'attestationConveyancePreference': !exists(json, 'attestationConveyancePreference') ? undefined : json['attestationConveyancePreference'],
         'forceRegistration': !exists(json, 'forceRegistration') ? undefined : json['forceRegistration'],
         'certificates': !exists(json, 'certificates') ? undefined : json['certificates'],
+        'enforceAuthenticatorIntegrity': !exists(json, 'enforceAuthenticatorIntegrity') ? undefined : json['enforceAuthenticatorIntegrity'],
+        'enforceAuthenticatorIntegrityMaxAge': !exists(json, 'enforceAuthenticatorIntegrityMaxAge') ? undefined : json['enforceAuthenticatorIntegrityMaxAge'],
     };
 }
 
@@ -145,6 +159,8 @@ export function WebAuthnSettingsToJSON(value?: WebAuthnSettings | null): any {
         'attestationConveyancePreference': value.attestationConveyancePreference,
         'forceRegistration': value.forceRegistration,
         'certificates': value.certificates,
+        'enforceAuthenticatorIntegrity': value.enforceAuthenticatorIntegrity,
+        'enforceAuthenticatorIntegrityMaxAge': value.enforceAuthenticatorIntegrityMaxAge,
     };
 }
 

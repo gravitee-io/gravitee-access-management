@@ -114,6 +114,12 @@ export interface Credential {
      * @memberof Credential
      */
     accessedAt?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof Credential
+     */
+    lastCheckedAt?: number;
 }
 
 
@@ -156,6 +162,7 @@ export function CredentialFromJSONTyped(json: any, ignoreDiscriminator: boolean)
         'createdAt': !exists(json, 'createdAt') ? undefined : json['createdAt'],
         'updatedAt': !exists(json, 'updatedAt') ? undefined : json['updatedAt'],
         'accessedAt': !exists(json, 'accessedAt') ? undefined : json['accessedAt'],
+        'lastCheckedAt': !exists(json, 'lastCheckedAt') ? undefined : json['lastCheckedAt'],
     };
 }
 
@@ -184,6 +191,7 @@ export function CredentialToJSON(value?: Credential | null): any {
         'createdAt': value.createdAt,
         'updatedAt': value.updatedAt,
         'accessedAt': value.accessedAt,
+        'lastCheckedAt': value.lastCheckedAt,
     };
 }
 

@@ -46,6 +46,7 @@ export * from './CertificateKey';
 export * from './CertificatesResource';
 export * from './ClientRegistrationSettings';
 export * from './CookieSettings';
+export * from './CorsSettings';
 export * from './Credential';
 export * from './DeviceIdentifiersResource';
 export * from './DevicesResource';
