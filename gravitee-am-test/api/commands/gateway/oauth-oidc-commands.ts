@@ -51,6 +51,12 @@ export const performGet = (baseUrl, uri = '', headers = null) => {
     return request.send();
 }
 
+export const performOptions = (baseUrl, uri = '', headers = null) => {
+    const request = supertest(baseUrl).options(uri);
+    setHeaders(request, headers);
+    return request.send();
+}
+
 export const getWellKnownOpenIdConfiguration = (domainHrid) =>
     performGet(process.env.AM_GATEWAY_URL, `/${domainHrid}/${URLS.WELL_KNOWN_OPENID_CONFIG}`)
 
