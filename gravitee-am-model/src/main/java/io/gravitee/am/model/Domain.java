@@ -167,6 +167,11 @@ public class Domain implements Resource {
      */
     private SAMLSettings saml;
 
+    /**
+     * CORS settings
+     */
+    private CorsSettings corsSettings;
+
     public Domain() {
     }
 
@@ -196,6 +201,7 @@ public class Domain implements Resource {
         this.passwordSettings = other.passwordSettings;
         this.selfServiceAccountManagementSettings = other.selfServiceAccountManagementSettings;
         this.saml = other.saml;
+        this.corsSettings = other.corsSettings;
     }
 
     @Override
@@ -397,6 +403,14 @@ public class Domain implements Resource {
 
     public void setSaml(SAMLSettings saml) {
         this.saml = saml;
+    }
+
+    public CorsSettings getCorsSettings() {
+        return corsSettings;
+    }
+
+    public void setCorsSettings(CorsSettings corsSettings) {
+        this.corsSettings = corsSettings;
     }
 
     public boolean isDynamicClientRegistrationEnabled() {

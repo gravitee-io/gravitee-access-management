@@ -59,6 +59,18 @@ export interface LoginSettings {
      * @type {boolean}
      * @memberof LoginSettings
      */
+    passwordlessEnforcePasswordEnabled?: boolean;
+    /**
+     * 
+     * @type {number}
+     * @memberof LoginSettings
+     */
+    passwordlessEnforcePasswordMaxAge?: number;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof LoginSettings
+     */
     hideForm?: boolean;
     /**
      * 
@@ -66,6 +78,12 @@ export interface LoginSettings {
      * @memberof LoginSettings
      */
     identifierFirstEnabled?: boolean;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof LoginSettings
+     */
+    enforcePasswordPolicyEnabled?: boolean;
 }
 
 export function LoginSettingsFromJSON(json: any): LoginSettings {
@@ -84,8 +102,11 @@ export function LoginSettingsFromJSONTyped(json: any, ignoreDiscriminator: boole
         'rememberMeEnabled': !exists(json, 'rememberMeEnabled') ? undefined : json['rememberMeEnabled'],
         'passwordlessEnabled': !exists(json, 'passwordlessEnabled') ? undefined : json['passwordlessEnabled'],
         'passwordlessRememberDeviceEnabled': !exists(json, 'passwordlessRememberDeviceEnabled') ? undefined : json['passwordlessRememberDeviceEnabled'],
+        'passwordlessEnforcePasswordEnabled': !exists(json, 'passwordlessEnforcePasswordEnabled') ? undefined : json['passwordlessEnforcePasswordEnabled'],
+        'passwordlessEnforcePasswordMaxAge': !exists(json, 'passwordlessEnforcePasswordMaxAge') ? undefined : json['passwordlessEnforcePasswordMaxAge'],
         'hideForm': !exists(json, 'hideForm') ? undefined : json['hideForm'],
         'identifierFirstEnabled': !exists(json, 'identifierFirstEnabled') ? undefined : json['identifierFirstEnabled'],
+        'enforcePasswordPolicyEnabled': !exists(json, 'enforcePasswordPolicyEnabled') ? undefined : json['enforcePasswordPolicyEnabled'],
     };
 }
 
@@ -104,8 +125,11 @@ export function LoginSettingsToJSON(value?: LoginSettings | null): any {
         'rememberMeEnabled': value.rememberMeEnabled,
         'passwordlessEnabled': value.passwordlessEnabled,
         'passwordlessRememberDeviceEnabled': value.passwordlessRememberDeviceEnabled,
+        'passwordlessEnforcePasswordEnabled': value.passwordlessEnforcePasswordEnabled,
+        'passwordlessEnforcePasswordMaxAge': value.passwordlessEnforcePasswordMaxAge,
         'hideForm': value.hideForm,
         'identifierFirstEnabled': value.identifierFirstEnabled,
+        'enforcePasswordPolicyEnabled': value.enforcePasswordPolicyEnabled,
     };
 }
 

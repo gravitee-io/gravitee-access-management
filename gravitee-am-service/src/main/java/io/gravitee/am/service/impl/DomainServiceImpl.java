@@ -24,6 +24,7 @@ import io.gravitee.am.common.utils.PathUtils;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.model.CorsSettings;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Environment;
 import io.gravitee.am.model.Membership;
@@ -88,6 +89,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -110,6 +112,7 @@ import java.util.stream.Collectors;
 
 import static io.gravitee.am.common.web.UriBuilder.isHttp;
 import static java.util.Objects.nonNull;
+import static java.util.Optional.ofNullable;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -659,6 +662,10 @@ public class DomainServiceImpl implements DomainService {
             }
         }
 
+        if (hasAllowedOrigins(domain)) {
+            return Completable.error(new InvalidDomainException("CORS settings are invalid: allow origin is empty. Default value should be '*'"));
+        }
+
         // check the uniqueness of the domain
         return domainRepository.findByHrid(domain.getReferenceType(), domain.getReferenceId(), domain.getHrid())
                 .map(Optional::of)
@@ -672,6 +679,18 @@ public class DomainServiceImpl implements DomainService {
                                 .flatMapCompletable(environment -> validateDomain(domain, environment));
                     }
                 });
+    }
+
+    private boolean hasAllowedOrigins(Domain domain) {
+        var corsSettings = ofNullable(domain.getCorsSettings());
+        if (corsSettings.isPresent()){
+          return hasAllowedOrigins(corsSettings);
+        }
+        return false;
+    }
+
+    private boolean hasAllowedOrigins(Optional<CorsSettings> corsSettings) {
+        return corsSettings.map(CorsSettings::getAllowedOrigins).map(Set::isEmpty).orElse(false);
     }
 
     private void validatePostLogoutRedirectUris(Domain domain) throws Exception {

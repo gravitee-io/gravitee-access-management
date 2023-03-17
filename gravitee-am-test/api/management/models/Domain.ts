@@ -19,6 +19,12 @@ import {
     AccountSettingsToJSON,
 } from './AccountSettings';
 import {
+    CorsSettings,
+    CorsSettingsFromJSON,
+    CorsSettingsFromJSONTyped,
+    CorsSettingsToJSON,
+} from './CorsSettings';
+import {
     LoginSettings,
     LoginSettingsFromJSON,
     LoginSettingsFromJSONTyped,
@@ -231,22 +237,10 @@ export interface Domain {
     saml?: SAMLSettings;
     /**
      * 
-     * @type {boolean}
+     * @type {CorsSettings}
      * @memberof Domain
      */
-    redirectUriLocalhostAllowed?: boolean;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof Domain
-     */
-    redirectUriUnsecuredHttpSchemeAllowed?: boolean;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof Domain
-     */
-    redirectUriWildcardAllowed?: boolean;
+    corsSettings?: CorsSettings;
     /**
      * 
      * @type {boolean}
@@ -271,6 +265,24 @@ export interface Domain {
      * @memberof Domain
      */
     dynamicClientRegistrationTemplateEnabled?: boolean;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof Domain
+     */
+    redirectUriLocalhostAllowed?: boolean;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof Domain
+     */
+    redirectUriUnsecuredHttpSchemeAllowed?: boolean;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof Domain
+     */
+    redirectUriWildcardAllowed?: boolean;
 }
 
 
@@ -322,13 +334,14 @@ export function DomainFromJSONTyped(json: any, ignoreDiscriminator: boolean): Do
         'passwordSettings': !exists(json, 'passwordSettings') ? undefined : PasswordSettingsFromJSON(json['passwordSettings']),
         'selfServiceAccountManagementSettings': !exists(json, 'selfServiceAccountManagementSettings') ? undefined : SelfServiceAccountManagementSettingsFromJSON(json['selfServiceAccountManagementSettings']),
         'saml': !exists(json, 'saml') ? undefined : SAMLSettingsFromJSON(json['saml']),
-        'redirectUriLocalhostAllowed': !exists(json, 'redirectUriLocalhostAllowed') ? undefined : json['redirectUriLocalhostAllowed'],
-        'redirectUriUnsecuredHttpSchemeAllowed': !exists(json, 'redirectUriUnsecuredHttpSchemeAllowed') ? undefined : json['redirectUriUnsecuredHttpSchemeAllowed'],
-        'redirectUriWildcardAllowed': !exists(json, 'redirectUriWildcardAllowed') ? undefined : json['redirectUriWildcardAllowed'],
+        'corsSettings': !exists(json, 'corsSettings') ? undefined : CorsSettingsFromJSON(json['corsSettings']),
         'dynamicClientRegistrationEnabled': !exists(json, 'dynamicClientRegistrationEnabled') ? undefined : json['dynamicClientRegistrationEnabled'],
         'openDynamicClientRegistrationEnabled': !exists(json, 'openDynamicClientRegistrationEnabled') ? undefined : json['openDynamicClientRegistrationEnabled'],
         'redirectUriStrictMatching': !exists(json, 'redirectUriStrictMatching') ? undefined : json['redirectUriStrictMatching'],
         'dynamicClientRegistrationTemplateEnabled': !exists(json, 'dynamicClientRegistrationTemplateEnabled') ? undefined : json['dynamicClientRegistrationTemplateEnabled'],
+        'redirectUriLocalhostAllowed': !exists(json, 'redirectUriLocalhostAllowed') ? undefined : json['redirectUriLocalhostAllowed'],
+        'redirectUriUnsecuredHttpSchemeAllowed': !exists(json, 'redirectUriUnsecuredHttpSchemeAllowed') ? undefined : json['redirectUriUnsecuredHttpSchemeAllowed'],
+        'redirectUriWildcardAllowed': !exists(json, 'redirectUriWildcardAllowed') ? undefined : json['redirectUriWildcardAllowed'],
     };
 }
 
@@ -366,13 +379,14 @@ export function DomainToJSON(value?: Domain | null): any {
         'passwordSettings': PasswordSettingsToJSON(value.passwordSettings),
         'selfServiceAccountManagementSettings': SelfServiceAccountManagementSettingsToJSON(value.selfServiceAccountManagementSettings),
         'saml': SAMLSettingsToJSON(value.saml),
-        'redirectUriLocalhostAllowed': value.redirectUriLocalhostAllowed,
-        'redirectUriUnsecuredHttpSchemeAllowed': value.redirectUriUnsecuredHttpSchemeAllowed,
-        'redirectUriWildcardAllowed': value.redirectUriWildcardAllowed,
+        'corsSettings': CorsSettingsToJSON(value.corsSettings),
         'dynamicClientRegistrationEnabled': value.dynamicClientRegistrationEnabled,
         'openDynamicClientRegistrationEnabled': value.openDynamicClientRegistrationEnabled,
         'redirectUriStrictMatching': value.redirectUriStrictMatching,
         'dynamicClientRegistrationTemplateEnabled': value.dynamicClientRegistrationTemplateEnabled,
+        'redirectUriLocalhostAllowed': value.redirectUriLocalhostAllowed,
+        'redirectUriUnsecuredHttpSchemeAllowed': value.redirectUriUnsecuredHttpSchemeAllowed,
+        'redirectUriWildcardAllowed': value.redirectUriWildcardAllowed,
     };
 }
 

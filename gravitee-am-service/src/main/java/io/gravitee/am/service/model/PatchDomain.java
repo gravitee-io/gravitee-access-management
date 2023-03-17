@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service.model;
 
+import io.gravitee.am.model.CorsSettings;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.SelfServiceAccountManagementSettings;
 import io.gravitee.am.model.VirtualHost;
@@ -57,6 +58,7 @@ public class PatchDomain {
     private Optional<Set<String>> tags;
     private Optional<Boolean> master;
     private Optional<PatchSAMLSettings> saml;
+    private Optional<CorsSettings> corsSettings;
 
     public PatchDomain() {}
 
@@ -180,6 +182,14 @@ public class PatchDomain {
         this.saml = saml;
     }
 
+    public Optional<CorsSettings> getCorsSettings() {
+        return corsSettings;
+    }
+
+    public void setCorsSettings(Optional<CorsSettings> corsSettings) {
+        this.corsSettings = corsSettings;
+    }
+
     public Domain patch(Domain _toPatch) {
         // create new object for audit purpose (patch json result)
         Domain toPatch = new Domain(_toPatch);
@@ -199,6 +209,7 @@ public class PatchDomain {
         SetterUtils.safeSet(toPatch::setSelfServiceAccountManagementSettings, this.getSelfServiceAccountManagementSettings());
         SetterUtils.safeSet(toPatch::setTags, this.getTags());
         SetterUtils.safeSet(toPatch::setMaster, this.getMaster(), boolean.class);
+        SetterUtils.safeSet(toPatch::setCorsSettings, this.getCorsSettings());
 
         if (this.getOidc() != null) {
             if (this.getOidc().isPresent()) {

@@ -99,4 +99,5 @@ databaseChangeLog:
       - file: liquibase/changelogs/v3_21_0/3.21.0-update-webauthn_credentials-table.yml
   - include:
       - file: liquibase/changelogs/v3_21_0/3.21.0-index-upper-username-source.yml
-
+  - include:
+      - file: liquibase/changelogs/v3_21_0/3.21.0-update-domains-table.yml
