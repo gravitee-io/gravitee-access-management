@@ -1,6 +1,23 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/643?closed=1[AM - 3.19.8 (2023-03-17)]
+
+=== Bug fixes
+
+*_General_*
+
+- AM - Management - Incorrect locale 'name' displaying in response error message https://github.com/gravitee-io/issues/issues/8943[#8943]
+- Thymeleaf template engine is ignoring variables https://github.com/gravitee-io/issues/issues/8895[#8895]
+
+*_Management_*
+
+- Shouldn't be possible to create dictionary with invalid locale https://github.com/gravitee-io/issues/issues/8885[#8885]
+- Shouldn't be possible to create two dictionaries with same locale https://github.com/gravitee-io/issues/issues/8886[#8886]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/644?closed=1[AM - 3.20.2 (2023-03-09)]
 
 === Bug fixes
