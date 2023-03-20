@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.service.model;
 
+import io.gravitee.am.service.validators.annotations.IfNotNullThenNotBlank;
+import io.gravitee.am.service.validators.dictionary.ValidLocale;
+
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -23,7 +26,10 @@ import java.util.TreeMap;
  * @author GraviteeSource Team
  */
 public class UpdateI18nDictionary {
+    @IfNotNullThenNotBlank
     private String name;
+    @IfNotNullThenNotBlank
+    @ValidLocale
     private String locale;
     private Map<String, String> entries;
 

@@ -35,32 +35,19 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
 import static io.gravitee.am.model.ReferenceType.DOMAIN;
 import static io.reactivex.Maybe.just;
-import static org.junit.Assert.*;
+import static java.util.Locale.ENGLISH;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.verify;
 import static org.mockito.Mockito.when;
 
-/**
- * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
- * <p>
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 @RunWith(MockitoJUnitRunner.class)
 public class I18nDictionaryServiceTest {
 
@@ -79,9 +66,9 @@ public class I18nDictionaryServiceTest {
     public void shouldCreateEmptyDictionary() {
         var newDictionary = new NewDictionary();
         newDictionary.setName("Français");
-        newDictionary.setLocale("fr");
+        newDictionary.setLocale(Locale.FRENCH.getLanguage());
 
-        given(repository.findByName(DOMAIN, REFERENCE_ID, newDictionary.getName())).willReturn(Maybe.empty());
+        given(repository.findByLocale(DOMAIN, REFERENCE_ID, Locale.FRENCH.getLanguage())).willReturn(Maybe.empty());
         given(repository.create(any(I18nDictionary.class))).willReturn(Single.just(new I18nDictionary()));
         given(eventService.create(any())).willReturn(Single.just(new Event()));
 
@@ -115,7 +102,7 @@ public class I18nDictionaryServiceTest {
         var dictionary = new I18nDictionary();
 
         when(repository.findById(DOMAIN, REFERENCE_ID, ID)).thenReturn(just(dictionary));
-        when(repository.findByName(DOMAIN, REFERENCE_ID, updateDict.getName())).thenReturn(Maybe.empty());
+        when(repository.findByLocale(DOMAIN, REFERENCE_ID, expectedLocale)).thenReturn(Maybe.empty());
         when(repository.update(any(I18nDictionary.class))).thenReturn(Single.just(dictionary));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
@@ -165,10 +152,10 @@ public class I18nDictionaryServiceTest {
     public void shouldFindByName() {
         var dictionary = new I18nDictionary();
         String english = "English";
-        dictionary.setName(english);
-        given(repository.findByName(eq(DOMAIN), any(), eq(english))).willReturn(just(dictionary));
+        dictionary.setLocale(ENGLISH.getLanguage());
+        given(repository.findByLocale(eq(DOMAIN), any(), eq(ENGLISH.getLanguage()))).willReturn(just(dictionary));
 
-        var observer = service.findByName(DOMAIN, "", english).test();
+        var observer = service.findByLocale(DOMAIN, "", ENGLISH.getLanguage()).test();
         observer.awaitTerminalEvent();
         observer.assertComplete();
         observer.assertNoErrors();
@@ -191,8 +178,8 @@ public class I18nDictionaryServiceTest {
 
     @Test
     public void shouldReturnTechnicalManagementExceptionWhenErrorThrownDuringFindByName() {
-        given(repository.findByName(eq(DOMAIN), any(), any())).willReturn(Maybe.error(Exception::new));
-        var observer = service.findByName(DOMAIN, REFERENCE_ID, "test").test();
+        given(repository.findByLocale(eq(DOMAIN), any(), eq(ENGLISH.getLanguage()))).willReturn(Maybe.error(Exception::new));
+        var observer = service.findByLocale(DOMAIN, REFERENCE_ID, ENGLISH.getLanguage()).test();
         observer.awaitTerminalEvent();
         observer.assertError(TechnicalManagementException.class);
     }

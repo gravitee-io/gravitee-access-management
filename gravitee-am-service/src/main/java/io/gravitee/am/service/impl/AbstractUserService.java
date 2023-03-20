@@ -281,8 +281,6 @@ public abstract class AbstractUserService<T extends CommonUserRepository> implem
                     }
                     oldUser.setEmail(updateUser.getEmail());
                     oldUser.setEnabled(updateUser.isEnabled());
-                    oldUser.setLoggedAt(updateUser.getLoggedAt());
-                    oldUser.setLoginsCount(updateUser.getLoginsCount());
                     if (!StringUtils.isEmpty(updateUser.getPreferredLanguage())) {
                         oldUser.setPreferredLanguage(updateUser.getPreferredLanguage());
                     }

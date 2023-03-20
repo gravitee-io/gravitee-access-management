@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.management.api;
+package io.gravitee.am.service.validators.annotations;
 
-import io.gravitee.am.model.I18nDictionary;
-import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.repository.common.CrudRepository;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
+import org.apache.commons.lang3.StringUtils;
 
-public interface I18nDictionaryRepository extends CrudRepository<I18nDictionary, String> {
-    Maybe<I18nDictionary> findByLocale(ReferenceType referenceType, String referenceId, String locale);
+import javax.validation.ConstraintValidator;
+import javax.validation.ConstraintValidatorContext;
 
-    Flowable<I18nDictionary> findAll(ReferenceType referenceType, String referenceId);
+public class IfNotNullThenNotBlankValidator implements ConstraintValidator<IfNotNullThenNotBlank, String> {
 
-    Maybe<I18nDictionary> findById(ReferenceType referenceType, String referenceId, String id);
+    @Override
+    public boolean isValid(String value, ConstraintValidatorContext context) {
+        return value == null || StringUtils.isNotBlank(value);
+    }
 }

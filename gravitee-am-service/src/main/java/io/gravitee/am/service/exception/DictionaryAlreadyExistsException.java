@@ -23,10 +23,11 @@ import io.gravitee.common.http.HttpStatusCode;
  */
 public class DictionaryAlreadyExistsException extends AbstractManagementException {
 
-    private final String name;
 
-    public DictionaryAlreadyExistsException(String name) {
-        this.name = name;
+    private final String locale;
+
+    public DictionaryAlreadyExistsException(String locale) {
+        this.locale = locale;
     }
 
     @Override
@@ -36,6 +37,6 @@ public class DictionaryAlreadyExistsException extends AbstractManagementExceptio
 
     @Override
     public String getMessage() {
-        return "An i18n dictionary [" + name + "] already exists.";
+        return "An i18n dictionary already exists for " + locale;
     }
 }

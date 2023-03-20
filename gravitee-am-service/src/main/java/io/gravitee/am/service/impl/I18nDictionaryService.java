@@ -69,11 +69,11 @@ public class I18nDictionaryService {
     }
 
     public Single<I18nDictionary> create(ReferenceType referenceType, String referenceId, NewDictionary newDictionary, User principal) {
-        return findByName(referenceType, referenceId, newDictionary.getName())
+        return findByLocale(referenceType, referenceId, newDictionary.getLocale())
                 .isEmpty()
                 .map(isEmpty -> {
                     if (!isEmpty) {
-                        throw new DictionaryAlreadyExistsException(newDictionary.getName());
+                        throw new DictionaryAlreadyExistsException(newDictionary.getLocale());
                     } else {
                         var dictionary = new I18nDictionary();
                         dictionary.setId(RandomString.generate());
@@ -114,14 +114,14 @@ public class I18nDictionaryService {
                                                                     .throwable(throwable)));
     }
 
-    public Maybe<I18nDictionary> findByName(ReferenceType referenceType, String referenceId, String name) {
-        LOGGER.debug("Find dictionary by {} and name: {} {}", referenceType, referenceId, name);
-        return repository.findByName(referenceType, referenceId, name)
+    public Maybe<I18nDictionary> findByLocale(ReferenceType referenceType, String referenceId, String locale) {
+        LOGGER.debug("Find dictionary by {} and locale {}", referenceId, locale);
+        return repository.findByLocale(referenceType, referenceId, locale)
                          .onErrorResumeNext(ex -> {
-                             String msg = "An error occurred while trying to find a dictionary using its name: ? for the ? ?";
-                             LOGGER.error(msg.replace("?", "{}"), name, referenceType, referenceId, ex);
+                             String msg = "An error occurred while trying to find a dictionary using its locale: ? for the ? ?";
+                             LOGGER.error(msg.replace("?", "{}"), locale, referenceType, referenceId, ex);
                              return Maybe.error(new TechnicalManagementException(
-                                     String.format(msg.replace("?", "%s"), name, referenceType, referenceId), ex));
+                                     String.format(msg.replace("?", "%s"), locale, referenceType, referenceId), ex));
                          });
     }
 
@@ -130,12 +130,12 @@ public class I18nDictionaryService {
         return findById(referenceType, referenceId, id)
                 // check uniqueness
                 .flatMap(existingDictionary -> repository
-                        .findByName(referenceType, referenceId, updateDictionary.getName())
+                        .findByLocale(referenceType, referenceId, updateDictionary.getLocale())
                         .map(Optional::ofNullable)
                         .defaultIfEmpty(Optional.empty())
                         .map(optionalDict -> {
                             if (optionalDict.isPresent() && !optionalDict.get().getId().equals(id)) {
-                                throw new DictionaryAlreadyExistsException(updateDictionary.getName());
+                                throw new DictionaryAlreadyExistsException(updateDictionary.getLocale());
                             }
                             return existingDictionary;
                         })
