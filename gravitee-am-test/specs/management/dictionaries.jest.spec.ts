@@ -26,6 +26,7 @@ import {
     updateDictionary,
     updateDictionaryEntries
 } from "@management-commands/dictionary-management-commands";
+import {ResponseError} from "../../api/management/runtime";
 
 global.fetch = fetch;
 
@@ -35,26 +36,21 @@ let dictionary;
 let i18nLanguages;
 beforeAll(async () => {
     i18nLanguages = [
-        {"locale": "aa", "country": "Afar"},
-        {"locale":"ab", "country": "Abkhazian"},
-        {"locale":"ae", "country": "Avestan"},
         {"locale":"af", "country": "Afrikaans"},
-        {"locale":"ak", "country": "Akan"},
-        {"locale":"am", "country": "Amharic"},
-        {"locale":"an", "country": "Aragonese"},
         {"locale":"ar", "country": "Arabic"},
-        {"locale":"as", "country": "Assamese"},
-        {"locale":"av", "country": "Avaric"},
-        {"locale":"ay", "country": "Aymara"},
         {"locale":"az", "country": "Azerbaijani"},
-        {"locale":"ba", "country": "Bashkir"},
         {"locale":"be", "country": "Belarusian"},
         {"locale":"bg", "country": "Bulgarian"},
-        {"locale":"bh", "country": "Bihari i18nLanguages"},
-        {"locale":"bi", "country": "Bislama"},
-        {"locale":"bm", "country": "Bambara"},
         {"locale":"bn", "country": "Bengali"},
-        {"locale":"bo", "country": "Tibetan"}
+        {"locale":"cy", "country": "Cymraeg"},
+        {"locale":"de", "country": "German"},
+        {"locale":"eu", "country": "Basque"},
+        {"locale":"fa", "country": "Persian"},
+        {"locale":"hr", "country": "Croatian"},
+        {"locale":"it", "country": "Italian"},
+        {"locale":"zh", "country": "Chinese"},
+        {"locale":"sv", "country": "Swedish"},
+        {"locale":"tr", "country": "Turkish"},
     ];
 
     const adminTokenResponse = await requestAdminAccessToken();
@@ -76,7 +72,7 @@ async function testCreate() {
     const i18Language = i18nLanguages.pop();
     const name = i18Language.country;
     const locale = i18Language.locale;
-    const created = await createDictionary(domain.id, accessToken, {name: name, "locale": locale})
+    const created = await createDictionary(domain.id, accessToken, {name: name, "locale": locale});
     expect(created).toBeDefined();
     expect(created.id).toBeDefined();
     expect(created.name).toEqual(name);
@@ -99,6 +95,17 @@ describe("Testing dictionaries api...", () => {
             expect(dictionaries).toHaveLength(ids.length);
             dictionaries.forEach(value => expect(ids).toContain(value.id));
         });
+        it('should error when attempting to create dictionary with used locale', async () => {
+            await expect(async () => {
+                const res = await createDictionary(domain.id, accessToken, {name: 'German2', "locale": 'de'});
+                console.log(res);
+            }).rejects.toThrow(ResponseError);
+        });
+        it('should error when attempting to create dictionary with invalid locale', async () => {
+            await expect(async () => {
+                await createDictionary(domain.id, accessToken, {name: 'Mumbo Jumbo', "locale": 'mj'});
+            }).rejects.toThrow(ResponseError);
+        });
     });
 
     describe("When creating a sole dictionary", () => {
@@ -120,7 +127,7 @@ describe("Testing dictionaries api...", () => {
             dictionary = await testCreate();
             const beforeUpdate = await getDictionary(domain.id, accessToken, dictionary.id);
             let updateName = "updated name";
-            let updateLocale = "updated locale";
+            let updateLocale = "ja";
             let entries = {
                 "login.title": "Welcome"
             };
