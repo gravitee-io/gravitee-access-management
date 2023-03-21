@@ -150,7 +150,7 @@ public class JWTServiceImpl implements JWTService {
                 Map<String, Object> decodedPayload = certificateProvider.getJwtParser().parse(payload);
                 emitter.onSuccess(decodedPayload);
             } catch (Exception ex) {
-                logger.error("Failed to decode {} JWT", tokenType, ex);
+                logger.debug("Failed to decode {} JWT", tokenType, ex);
                 emitter.onError(buildInvalidTokenException(tokenType, ex));
             }
         });
