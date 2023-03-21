@@ -210,6 +210,6 @@ public class AlertNotifierServiceTest {
         obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertError(AlertNotifierNotFoundException.class);
 
-        verifyZeroInteractions(auditService, eventService);
-    }
+        verify(eventService, times(0)).create(any());
+        verify(auditService, times(0)).report(any());    }
 }

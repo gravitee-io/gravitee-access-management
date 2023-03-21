@@ -236,7 +236,7 @@ public class AlertTriggerManagerTest {
 
         this.cut.onAlertNotifierEvent(event);
 
-        verifyZeroInteractions(triggerProvider);
+        verify(triggerProvider, times(0)).register(any());
     }
 
     @Test
@@ -255,6 +255,6 @@ public class AlertTriggerManagerTest {
 
         this.cut.onAlertNotifierEvent(event);
 
-        verifyZeroInteractions(triggerProvider);
+        verify(triggerProvider, times(0)).register(any());
     }
 }

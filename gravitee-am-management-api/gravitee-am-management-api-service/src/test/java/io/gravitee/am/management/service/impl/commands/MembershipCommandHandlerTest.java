@@ -173,7 +173,7 @@ public class MembershipCommandHandlerTest {
         obs.assertNoErrors();
         obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.ERROR));
 
-        verifyZeroInteractions(membershipService);
+        verify(membershipService, times(0)).addOrUpdate(any(), any());
     }
 
 }
