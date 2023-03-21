@@ -224,7 +224,7 @@ public class EnvironmentServiceTest {
 
         verify(environmentRepository, times(1)).count();
         verifyNoMoreInteractions(environmentRepository);
-        verifyZeroInteractions(auditService);
+        verify(auditService, times(0)).report(any());
     }
 
     @Test
@@ -325,7 +325,7 @@ public class EnvironmentServiceTest {
         obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertError(OrganizationNotFoundException.class);
 
-        verifyZeroInteractions(auditService);
+        verify(auditService, times(0)).report(any());
     }
 
     @Test

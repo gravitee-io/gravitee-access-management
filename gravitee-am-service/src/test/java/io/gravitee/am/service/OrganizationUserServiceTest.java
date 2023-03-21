@@ -43,13 +43,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.Spy;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.concurrent.TimeUnit;
 
 import static io.gravitee.am.service.validators.email.EmailValidatorImpl.EMAIL_PATTERN;
 import static io.gravitee.am.service.validators.user.UserValidatorImpl.*;
-import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.*;
 
 /**
@@ -120,7 +120,7 @@ public class OrganizationUserServiceTest {
 
         testObserver.assertError(EmailFormatInvalidException.class);
 
-        verifyZeroInteractions(eventService);
+        verify(eventService, times(0)).create(any());
     }
 
     @Test
@@ -139,7 +139,7 @@ public class OrganizationUserServiceTest {
 
         testObserver.assertError(InvalidUserException.class);
 
-        verifyZeroInteractions(eventService);
+        verify(eventService, times(0)).create(any());
     }
 
     @Test
@@ -212,7 +212,7 @@ public class OrganizationUserServiceTest {
 
         testObserver.assertError(EmailFormatInvalidException.class);
 
-        verifyZeroInteractions(eventService);
+        verify(eventService, times(0)).create(any());
     }
 
     @Test
@@ -232,7 +232,7 @@ public class OrganizationUserServiceTest {
 
         testObserver.assertError(InvalidUserException.class);
 
-        verifyZeroInteractions(eventService);
+        verify(eventService, times(0)).create(any());
     }
 
     @Test

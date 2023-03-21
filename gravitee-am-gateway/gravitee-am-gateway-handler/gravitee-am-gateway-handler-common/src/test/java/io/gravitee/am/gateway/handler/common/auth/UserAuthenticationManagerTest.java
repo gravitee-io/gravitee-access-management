@@ -47,7 +47,7 @@ import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.*;
 
 /**
@@ -108,7 +108,8 @@ public class UserAuthenticationManagerTest {
         }).test();
         observer.assertNotComplete();
         observer.assertError(InternalAuthenticationServiceException.class);
-        verifyZeroInteractions(userAuthenticationService);
+        verify(userAuthenticationService, times(0)).connect(any());
+        verify(userAuthenticationService, times(0)).connect(any(), anyBoolean());
     }
 
     @Test
@@ -257,7 +258,9 @@ public class UserAuthenticationManagerTest {
             }
         }).test();
 
-        verifyZeroInteractions(userAuthenticationService);
+        verify(userAuthenticationService, times(0)).connect(any());
+        verify(userAuthenticationService, times(0)).connect(any(), anyBoolean());
+
         observer.assertError(BadCredentialsException.class);
         verify(eventManager, times(1)).publishEvent(eq(AuthenticationEvent.FAILURE), any());
     }
@@ -562,7 +565,8 @@ public class UserAuthenticationManagerTest {
         TestObserver<User> observer = userAuthenticationManager.authenticate(client, null).test();
         observer.assertNotComplete();
         observer.assertError(InternalAuthenticationServiceException.class);
-        verifyZeroInteractions(userAuthenticationService);
+        verify(userAuthenticationService, times(0)).connect(any());
+        verify(userAuthenticationService, times(0)).connect(any(), anyBoolean());
     }
 
     @Test

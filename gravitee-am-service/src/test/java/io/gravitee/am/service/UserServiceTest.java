@@ -54,14 +54,13 @@ import static io.gravitee.am.service.validators.email.EmailValidatorImpl.EMAIL_P
 import static io.gravitee.am.service.validators.user.UserValidatorImpl.NAME_LAX_PATTERN;
 import static io.gravitee.am.service.validators.user.UserValidatorImpl.NAME_STRICT_PATTERN;
 import static io.gravitee.am.service.validators.user.UserValidatorImpl.USERNAME_PATTERN;
-import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 /**
@@ -236,8 +235,7 @@ public class UserServiceTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(EmailFormatInvalidException.class);
-
-        verifyZeroInteractions(eventService);
+        verify(eventService, times(0)).create(any());
     }
 
     @Test
@@ -248,7 +246,8 @@ public class UserServiceTest {
 
         NewUser newUser = new NewUser();
         newUser.setUsername("##&##");
-        when(userRepository.findByUsernameAndSource(ReferenceType.DOMAIN, DOMAIN, newUser.getUsername(), newUser.getSource())).thenReturn(Maybe.empty());
+        when(userRepository.findByUsernameAndSource(ReferenceType.DOMAIN, DOMAIN,
+            newUser.getUsername(), newUser.getSource())).thenReturn(Maybe.empty());
         when(userRepository.create(any(User.class))).thenReturn(Single.just(user));
 
         TestObserver<User> testObserver = userService.create(DOMAIN, newUser).test();
@@ -256,7 +255,7 @@ public class UserServiceTest {
 
         testObserver.assertError(InvalidUserException.class);
 
-        verifyZeroInteractions(eventService);
+        verify(eventService, times(0)).create(any());
     }
 
     @Test
@@ -407,7 +406,8 @@ public class UserServiceTest {
 
         UpdateUser updateUser = new UpdateUser();
         updateUser.setEmail("invalid");
-        when(userRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-user"))).thenReturn(Maybe.just(user));
+        when(userRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN),
+            eq("my-user"))).thenReturn(Maybe.just(user));
         when(userRepository.update(any(User.class))).thenReturn(Single.just(user));
 
         TestObserver<User> testObserver = userService.update(DOMAIN, "my-user", updateUser).test();
@@ -415,7 +415,7 @@ public class UserServiceTest {
 
         testObserver.assertError(EmailFormatInvalidException.class);
 
-        verifyZeroInteractions(eventService);
+        verify(eventService, times(0)).create(any());
     }
 
     @Test
@@ -434,7 +434,7 @@ public class UserServiceTest {
 
         testObserver.assertError(InvalidUserException.class);
 
-        verifyZeroInteractions(eventService);
+        verify(eventService, times(0)).create(any());
     }
 
     @Test

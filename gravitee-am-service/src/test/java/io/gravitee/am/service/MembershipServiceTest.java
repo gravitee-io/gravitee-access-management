@@ -486,7 +486,7 @@ public class MembershipServiceTest {
         completable.assertComplete();
 
         verify(membershipRepository, times(0)).create(any());
-        verifyZeroInteractions(auditService);
+        verify(auditService, times(0)).report(any());
     }
 
     @Test
@@ -547,7 +547,7 @@ public class MembershipServiceTest {
         completable.assertComplete();
 
         verify(membershipRepository, times(0)).create(any());
-        verifyZeroInteractions(auditService);
+        verify(auditService, times(0)).report(any());
     }
 
     @Test
@@ -603,7 +603,7 @@ public class MembershipServiceTest {
         obs.assertValue(alreadyExisting);
 
         verify(membershipRepository, times(0)).create(any(Membership.class));
-        verifyZeroInteractions(eventService);
-        verifyZeroInteractions(auditService);
+        verify(eventService, times(0)).create(any());
+        verify(auditService, times(0)).report(any());
     }
 }
