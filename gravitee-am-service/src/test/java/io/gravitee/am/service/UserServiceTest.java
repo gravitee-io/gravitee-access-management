@@ -15,11 +15,18 @@
  */
 package io.gravitee.am.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.common.exception.mfa.InvalidFactorAttributeException;
+import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Event;
+import io.gravitee.am.model.factor.EnrolledFactor;
+import io.gravitee.am.model.factor.EnrolledFactorChannel;
+import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.service.exception.EmailFormatInvalidException;
@@ -30,6 +37,7 @@ import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.impl.UserServiceImpl;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.utils.UserProfileUtils;
 import io.gravitee.am.service.validators.email.EmailValidatorImpl;
 import io.gravitee.am.service.validators.user.UserValidatorImpl;
@@ -41,6 +49,7 @@ import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentMatcher;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -50,6 +59,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
+import static io.gravitee.am.common.audit.EventType.USER_CREATED;
 import static io.gravitee.am.service.validators.email.EmailValidatorImpl.EMAIL_PATTERN;
 import static io.gravitee.am.service.validators.user.UserValidatorImpl.NAME_LAX_PATTERN;
 import static io.gravitee.am.service.validators.user.UserValidatorImpl.NAME_STRICT_PATTERN;
@@ -89,6 +99,9 @@ public class UserServiceTest {
 
     @Mock
     private CredentialService credentialService;
+
+    @Mock
+    private AuditService auditService;
 
     private final static String DOMAIN = "domain1";
 
@@ -218,6 +231,9 @@ public class UserServiceTest {
 
         verify(userRepository, times(1)).create(any(User.class));
         verify(eventService, times(1)).create(any());
+        verify(auditService, times(1)).report(argThat(
+            (ArgumentMatcher<AuditBuilder<Audit>>) audit -> USER_CREATED.equals(audit.build(new ObjectMapper()).getType())
+        ));
     }
 
     @Test
@@ -534,5 +550,80 @@ public class UserServiceTest {
         testObserver.assertNotComplete();
 
         verify(userRepository, never()).delete("my-user");
+    }
+
+    @Test
+    public void shouldUpsertFactor_SMS() {
+        final var userid = "userid";
+        final var enrolledFactor = new EnrolledFactor();
+        enrolledFactor.setFactorId("factorid");
+        enrolledFactor.setChannel(new EnrolledFactorChannel(EnrolledFactorChannel.Type.SMS, "+33606060606"));
+
+        when(userRepository.findById(userid)).thenReturn(Maybe.just(new User()));
+        when(userRepository.update(any())).thenReturn(Single.just(new User()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        final var observer = userService.upsertFactor(userid, enrolledFactor, new DefaultUser()).test();
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertNoErrors();
+
+        verify(eventService).create(any());
+        verify(userRepository).update(argThat(user -> user.getFactors() != null
+                && !user.getFactors().isEmpty()
+                && user.getFactors().get(0).getFactorId().equals(enrolledFactor.getFactorId()) ));
+    }
+
+    @Test
+    public void shouldUpsertFactor_Email() {
+        final var userid = "userid";
+        final var enrolledFactor = new EnrolledFactor();
+        enrolledFactor.setFactorId("factorid");
+        enrolledFactor.setChannel(new EnrolledFactorChannel(EnrolledFactorChannel.Type.EMAIL, "test@acme.com"));
+
+        when(userRepository.findById(userid)).thenReturn(Maybe.just(new User()));
+        when(userRepository.update(any())).thenReturn(Single.just(new User()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        final var observer = userService.upsertFactor(userid, enrolledFactor, new DefaultUser()).test();
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertNoErrors();
+
+        verify(eventService).create(any());
+        verify(userRepository).update(argThat(user -> user.getFactors() != null
+                && !user.getFactors().isEmpty()
+                && user.getFactors().get(0).getFactorId().equals(enrolledFactor.getFactorId()) ));
+    }
+
+    @Test
+    public void shouldNotUpsertFactor_MissingPhoneNumber() {
+        final var userid = "userid";
+        final var enrolledFactor = new EnrolledFactor();
+        enrolledFactor.setFactorId("factorid");
+        enrolledFactor.setChannel(new EnrolledFactorChannel(EnrolledFactorChannel.Type.SMS, null));
+
+        when(userRepository.findById(userid)).thenReturn(Maybe.just(new User()));
+
+        final var observer = userService.upsertFactor(userid, enrolledFactor, new DefaultUser()).test();
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertError(InvalidFactorAttributeException.class);
+
+        verify(eventService, never()).create(any());
+        verify(userRepository, never()).update(any());
+    }
+    @Test
+    public void shouldNotUpsertFactor_MissingEmail() {
+        final var userid = "userid";
+        final var enrolledFactor = new EnrolledFactor();
+        enrolledFactor.setFactorId("factorid");
+        enrolledFactor.setChannel(new EnrolledFactorChannel(EnrolledFactorChannel.Type.EMAIL, null));
+
+        when(userRepository.findById(userid)).thenReturn(Maybe.just(new User()));
+
+        final var observer = userService.upsertFactor(userid, enrolledFactor, new DefaultUser()).test();
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertError(InvalidFactorAttributeException.class);
+
+        verify(eventService, never()).create(any());
+        verify(userRepository, never()).update(any());
     }
 }

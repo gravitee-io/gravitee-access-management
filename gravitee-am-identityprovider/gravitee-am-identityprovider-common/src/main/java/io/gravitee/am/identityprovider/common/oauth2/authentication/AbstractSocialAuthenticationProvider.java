@@ -40,6 +40,7 @@ import static io.gravitee.am.common.oidc.Scope.SCOPE_DELIMITER;
 public abstract class AbstractSocialAuthenticationProvider<T extends SocialIdentityProviderConfiguration> implements SocialAuthenticationProvider {
 
     protected final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
+    public static final String ACCESS_TOKEN_PARAMETER = "access_token";
 
     protected abstract T getConfiguration();
     protected abstract IdentityProviderMapper getIdentityProviderMapper();

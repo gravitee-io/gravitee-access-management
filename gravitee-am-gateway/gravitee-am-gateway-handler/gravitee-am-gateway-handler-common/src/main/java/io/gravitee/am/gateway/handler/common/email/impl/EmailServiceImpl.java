@@ -55,7 +55,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import static io.gravitee.am.common.web.UriBuilder.encodeURIComponent;
 import static io.gravitee.am.service.utils.UserProfileUtils.preferredLanguage;
+import static org.springframework.ui.freemarker.FreeMarkerTemplateUtils.processTemplateIntoString;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -63,29 +65,13 @@ import static io.gravitee.am.service.utils.UserProfileUtils.preferredLanguage;
  */
 public class EmailServiceImpl implements EmailService {
 
-    @Value("${email.enabled:false}")
-    private boolean enabled;
-
-    @Value("${gateway.url:http://localhost:8092}")
-    private String gatewayUrl;
-
-    @Value("${user.resetPassword.email.subject:${msg('email.reset_password.subject')}}")
-    private String resetPasswordSubject;
-
-    @Value("${user.resetPassword.token.expire-after:300}")
-    private Integer resetPasswordExpireAfter;
-
-    @Value("${user.blockedAccount.email.subject:${msg('email.blocked_account.subject')}}")
-    private String blockedAccountSubject;
-
-    @Value("${user.blockedAccount.token.expire-after:86400}")
-    private Integer blockedAccountExpireAfter;
-
-    @Value("${user.mfaChallenge.email.subject:${msg('email.mfa_challenge.subject')}}")
-    private String mfaChallengeSubject;
-
-    @Value("${user.mfaChallenge.token.expire-after:300}")
-    private Integer mfaChallengeExpireAfter;
+    private final boolean enabled;
+    private final String resetPasswordSubject;
+    private final Integer resetPasswordExpireAfter;
+    private final String blockedAccountSubject;
+    private final Integer blockedAccountExpireAfter;
+    private final String mfaChallengeSubject;
+    private final Integer mfaChallengeExpireAfter;
 
     @Value("${user.mfaVerifyAttempt.email.subject:${msg('email.verify_attempt.subject')}}")
     private String mfaVerifyAttemptSubject;
@@ -112,6 +98,23 @@ public class EmailServiceImpl implements EmailService {
     @Autowired
     private DomainService domainService;
 
+    public EmailServiceImpl(
+            boolean enabled,
+            String resetPasswordSubject,
+            int resetPasswordExpireAfter,
+            String blockedAccountSubject,
+            int blockedAccountExpireAfter,
+            String mfaChallengeSubject,
+            int mfaChallengeExpireAfter) {
+        this.enabled = enabled;
+        this.resetPasswordSubject = resetPasswordSubject;
+        this.resetPasswordExpireAfter = resetPasswordExpireAfter;
+        this.blockedAccountSubject = blockedAccountSubject;
+        this.blockedAccountExpireAfter = blockedAccountExpireAfter;
+        this.mfaChallengeSubject = mfaChallengeSubject;
+        this.mfaChallengeExpireAfter = mfaChallengeExpireAfter;
+    }
+
     @Override
     public void send(io.gravitee.am.model.Template template, User user, Client client) {
         if (enabled) {
@@ -121,7 +124,6 @@ public class EmailServiceImpl implements EmailService {
             Email email = prepareEmail(template, emailTemplate, user, client);
             // send email
             sendEmail(email, user, client);
-
         }
     }
 
@@ -150,7 +152,7 @@ public class EmailServiceImpl implements EmailService {
                         new Template("from", new StringReader(email.getFrom()), freemarkerConfiguration),
                         params, language);
                 // compute email fromName
-                final String fromName = processTemplate(
+                final String fromName = Strings.isNullOrEmpty(email.getFromName()) ? null : processTemplate(
                         new Template("fromName", new StringReader(email.getFromName()), freemarkerConfiguration),
                         params, language);
                 // compute email subject
@@ -200,7 +202,7 @@ public class EmailServiceImpl implements EmailService {
 
     private Email prepareEmail(io.gravitee.am.model.Template template, io.gravitee.am.model.Email emailTemplate, User user, Client client) {
         Map<String, Object> params = prepareEmailParams(user, client, emailTemplate.getExpiresAfter(), template.redirectUri());
-        Email email = new EmailBuilder()
+        return new EmailBuilder()
                 .to(user.getEmail())
                 .from(emailTemplate.getFrom())
                 .fromName(emailTemplate.getFromName())
@@ -208,7 +210,6 @@ public class EmailServiceImpl implements EmailService {
                 .template(emailTemplate.getTemplate())
                 .params(params)
                 .build();
-        return email;
     }
 
     private Map<String, Object> prepareEmailParams(User user, Client client, Integer expiresAfter, String redirectUri) {
@@ -233,7 +234,7 @@ public class EmailServiceImpl implements EmailService {
 
         if (client != null) {
             params.put("client", new ClientProperties(client));
-            redirectUrl += "&client_id=" + client.getClientId();
+            redirectUrl += "&client_id=" + encodeURIComponent(client.getClientId());
         }
 
         params.put("url", redirectUrl);

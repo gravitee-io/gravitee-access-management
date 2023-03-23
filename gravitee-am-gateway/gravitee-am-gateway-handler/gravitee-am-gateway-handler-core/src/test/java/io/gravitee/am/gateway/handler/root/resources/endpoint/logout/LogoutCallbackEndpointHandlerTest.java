@@ -80,7 +80,7 @@ public class LogoutCallbackEndpointHandlerTest extends RxWebTestBase {
         state.put("p", "provider-id");
         state.put("c", "client-id");
         when(certificateManager.defaultCertificateProvider()).thenReturn(mock(CertificateProvider.class));
-        when(jwtService.decodeAndVerify(any(String.class), any(CertificateProvider.class))).thenReturn(Single.just(state));
+        when(jwtService.decodeAndVerify(any(String.class), any(CertificateProvider.class), any())).thenReturn(Single.just(state));
         when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(new Client()));
         when(userService.logout(any(), eq(false), any())).thenReturn(Completable.complete());
 
@@ -114,7 +114,7 @@ public class LogoutCallbackEndpointHandlerTest extends RxWebTestBase {
         state.put("p", "provider-id");
         state.put("c", "client-id");
         when(certificateManager.defaultCertificateProvider()).thenReturn(mock(CertificateProvider.class));
-        when(jwtService.decodeAndVerify(any(String.class), any(CertificateProvider.class))).thenReturn(Single.just(state));
+        when(jwtService.decodeAndVerify(any(String.class), any(CertificateProvider.class), any())).thenReturn(Single.just(state));
         when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
         when(userService.logout(any(), eq(false), any())).thenReturn(Completable.complete());
 

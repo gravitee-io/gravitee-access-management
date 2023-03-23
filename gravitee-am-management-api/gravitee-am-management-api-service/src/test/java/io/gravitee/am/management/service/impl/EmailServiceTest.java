@@ -59,7 +59,12 @@ import static org.mockito.Mockito.when;
 public class EmailServiceTest {
 
     @InjectMocks
-    private EmailServiceImpl cut;
+    private EmailServiceImpl cut = new EmailServiceImpl(
+            true,
+            "New user registration",
+            86400,
+            "Certificate will expire soon"
+    );
 
     @Mock
     private EmailManager emailManager;
@@ -81,9 +86,6 @@ public class EmailServiceTest {
 
     @Before
     public void init() throws Exception {
-        ReflectionTestUtils.setField(cut, "enabled", true);
-        ReflectionTestUtils.setField(cut, "registrationExpireAfter", 86400);
-
         freemarkerConfiguration.setLocalizedLookup(false);
         freemarkerConfiguration.setNewBuiltinClassResolver(TemplateClassResolver.SAFER_RESOLVER);
         TemplateConfiguration tcHTML = new TemplateConfiguration();

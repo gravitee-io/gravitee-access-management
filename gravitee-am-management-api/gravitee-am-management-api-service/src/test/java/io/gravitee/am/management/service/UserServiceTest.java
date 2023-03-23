@@ -163,8 +163,9 @@ public class UserServiceTest {
         verify(commonUserService, never()).create(any());
     }
 
+
     @Test
-    public void shouldNotCreateUser_unknown_client() {
+    public void shouldCreateUser_client_is_null() {
         String domainId = "domain";
         String clientId = "clientId";
 
@@ -177,16 +178,24 @@ public class UserServiceTest {
         newUser.setClient(clientId);
         newUser.setPassword("myPassword");
 
-        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(mock(UserProvider.class)));
+        UserProvider userProvider = mock(UserProvider.class);
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
         when(commonUserService.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
         when(applicationService.findById(newUser.getClient())).thenReturn(Maybe.empty());
         when(applicationService.findByDomainAndClientId(domainId, newUser.getClient())).thenReturn(Maybe.empty());
+        when(passwordService.isValid(anyString(), eq(null), any())).thenReturn(true);
+        io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.DefaultUser.class);
+        when(userProvider.create(any())).thenReturn(Single.just(idpUser));
+        when(commonUserService.create(any())).thenReturn(Single.just(new User()));
 
         userService.create(domain, newUser, null)
                 .test()
-                .assertNotComplete()
-                .assertError(ClientNotFoundException.class);
-        verify(commonUserService, never()).create(any());
+                .assertComplete()
+                .assertNoErrors();
+
+        verify(commonUserService, times(1)).create(any());
+        ArgumentCaptor<User> argument = ArgumentCaptor.forClass(User.class);
+        verify(commonUserService).create(argument.capture());
     }
 
     @Test
@@ -387,52 +396,6 @@ public class UserServiceTest {
 
         Assert.assertNotNull(argument.getValue().getRegistrationAccessToken());
         assertEquals("token", argument.getValue().getRegistrationAccessToken());
-    }
-
-    @Test
-    public void shouldNotUpdateUser_unknown_client() {
-        String domain = "domain";
-        String id = "id";
-
-        User user = new User();
-        user.setSource("idp");
-
-        UpdateUser updateUser = new UpdateUser();
-        updateUser.setClient("client");
-
-        when(commonUserService.findById(eq(DOMAIN), eq(domain), eq(id))).thenReturn(Single.just(user));
-        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(mock(UserProvider.class)));
-        when(applicationService.findById(updateUser.getClient())).thenReturn(Maybe.empty());
-        when(applicationService.findByDomainAndClientId(domain, updateUser.getClient())).thenReturn(Maybe.empty());
-
-        userService.update(domain, id, updateUser)
-                .test()
-                .assertNotComplete()
-                .assertError(ClientNotFoundException.class);
-    }
-
-    @Test
-    public void shouldNotUpdateUser_invalid_client() {
-        String domain = "domain";
-        String id = "id";
-
-        User user = new User();
-        user.setSource("idp");
-
-        UpdateUser updateUser = new UpdateUser();
-        updateUser.setClient("client");
-
-        Application application = new Application();
-        application.setDomain("other-domain");
-
-        when(commonUserService.findById(eq(DOMAIN), eq(domain), eq(id))).thenReturn(Single.just(user));
-        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(mock(UserProvider.class)));
-        when(applicationService.findById(updateUser.getClient())).thenReturn(Maybe.just(application));
-
-        userService.update(domain, id, updateUser)
-                .test()
-                .assertNotComplete()
-                .assertError(ClientNotFoundException.class);
     }
 
     @Test

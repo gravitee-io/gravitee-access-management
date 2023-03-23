@@ -381,7 +381,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(new LoginPostEndpoint());
 
         rootRouter.route(PATH_LOGIN)
-                .failureHandler(new LoginFailureHandler(authenticationFlowContextService));
+                .failureHandler(new LoginFailureHandler(authenticationFlowContextService, domain, identityProviderManager));
 
         // logout route
         rootRouter.route(PATH_LOGOUT)
@@ -439,7 +439,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         rootRouter.route(PATH_MFA_CHALLENGE_ALTERNATIVES)
                 .handler(clientRequestParseHandler)
                 .handler(localeHandler)
-                .handler(new MFAChallengeAlternativesEndpoint(thymeleafTemplateEngine, factorManager));
+                .handler(new MFAChallengeAlternativesEndpoint(thymeleafTemplateEngine, factorManager, domain));
         rootRouter.route(PATH_MFA_RECOVERY_CODE)
                 .handler(clientRequestParseHandler)
                 .handler(localeHandler)
@@ -479,7 +479,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(webAuthnRememberDeviceHandler)
                 .handler(new WebAuthnLoginPostEndpoint());
         rootRouter.route(PATH_WEBAUTHN_LOGIN)
-                .failureHandler(new LoginFailureHandler(authenticationFlowContextService));
+                .failureHandler(new LoginFailureHandler(authenticationFlowContextService, domain, identityProviderManager));
         rootRouter.route(PATH_WEBAUTHN_LOGIN_CREDENTIALS)
                 .handler(clientRequestParseHandler)
                 .handler(webAuthnAccessHandler)
@@ -780,5 +780,8 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         router.route(PATH_LOGOUT_CALLBACK).failureHandler(errorHandler);
         router.route(PATH_LOGIN).failureHandler(errorHandler);
         router.route(PATH_IDENTIFIER_FIRST_LOGIN).failureHandler(errorHandler);
+        router.route(PATH_WEBAUTHN_LOGIN).failureHandler(errorHandler);
+        router.route(PATH_WEBAUTHN_REGISTER).failureHandler(errorHandler);
+        router.route(PATH_WEBAUTHN_RESPONSE).failureHandler(errorHandler);
     }
 }

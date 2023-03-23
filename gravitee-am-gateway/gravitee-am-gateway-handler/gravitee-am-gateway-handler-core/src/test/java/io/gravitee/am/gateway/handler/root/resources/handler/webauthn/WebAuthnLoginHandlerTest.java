@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.root.resources.handler.webauthn;
 
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
@@ -82,6 +83,9 @@ public class WebAuthnLoginHandlerTest extends RxWebTestBase {
     @Mock
     private WebAuthn webAuthn;
 
+    @Mock
+    private IdentityProviderManager identityProviderManager;
+
     @Override
     public void setUp() throws Exception {
         super.setUp();
@@ -98,7 +102,7 @@ public class WebAuthnLoginHandlerTest extends RxWebTestBase {
         router.route(HttpMethod.POST, "/webauthn/login")
                 .handler(SessionHandler.create(LocalSessionStore.create(vertx)))
                 .handler(BodyHandler.create())
-                .failureHandler(new LoginFailureHandler(authenticationFlowContextService));
+                .failureHandler(new LoginFailureHandler(authenticationFlowContextService, domain, identityProviderManager));
     }
 
     @Test

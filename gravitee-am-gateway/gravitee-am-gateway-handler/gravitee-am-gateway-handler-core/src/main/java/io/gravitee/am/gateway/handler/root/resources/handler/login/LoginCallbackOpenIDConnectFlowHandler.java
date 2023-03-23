@@ -27,7 +27,7 @@ import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -90,7 +90,7 @@ public class LoginCallbackOpenIDConnectFlowHandler implements Handler<RoutingCon
         }
 
         // implicit flow, we need to retrieve hash url from the browser to get access_token, id_token, ...
-        engine.render(Collections.emptyMap(), "login_callback")
+        engine.render(new HashMap<>(), "login_callback")
                 .subscribe(
                         buffer -> {
                             context.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);

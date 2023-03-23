@@ -20,6 +20,7 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
@@ -36,9 +37,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 
 /**
@@ -49,11 +52,13 @@ public class MFAChallengeAlternativesEndpoint extends AbstractEndpoint implement
 
     private static final Logger logger = LoggerFactory.getLogger(MFAChallengeAlternativesEndpoint.class);
     private final FactorManager factorManager;
+    private final Domain domain;
 
     public MFAChallengeAlternativesEndpoint(TemplateEngine templateEngine,
-                                            FactorManager factorManager) {
+                                            FactorManager factorManager, Domain domain) {
         super(templateEngine);
         this.factorManager = factorManager;
+        this.domain = domain;
     }
 
     @Override
@@ -99,7 +104,8 @@ public class MFAChallengeAlternativesEndpoint extends AbstractEndpoint implement
         routingContext.put(ConstantKeys.ACTION_KEY, action);
 
         // render the mfa challenge alternatives page
-        this.renderPage(routingContext, routingContext.data(), client, logger, "Unable to render MFA challenge alternatives page");
+        final Map<String, Object> data = generateData(routingContext, domain, client);
+        this.renderPage(routingContext, data, client, logger, "Unable to render MFA challenge alternatives page");
     }
 
     private void post(RoutingContext routingContext) {

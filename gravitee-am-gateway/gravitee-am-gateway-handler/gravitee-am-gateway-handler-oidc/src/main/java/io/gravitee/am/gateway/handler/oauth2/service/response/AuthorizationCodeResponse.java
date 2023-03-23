@@ -53,7 +53,7 @@ public class AuthorizationCodeResponse extends AuthorizationResponse {
         UriBuilder uriBuilder = UriBuilder.fromURIString(getRedirectUri());
         uriBuilder.addParameter(Parameters.CODE, getCode());
         if (getState() != null) {
-            uriBuilder.addParameter(Parameters.STATE, getState());
+            uriBuilder.addParameter(Parameters.STATE, getURLEncodedState());
         }
         return uriBuilder.buildString();
     }

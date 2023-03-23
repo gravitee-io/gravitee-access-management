@@ -15,10 +15,12 @@
  */
 package io.gravitee.am.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.event.Event;
+import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.OrganizationUserRepository;
 import io.gravitee.am.service.exception.EmailFormatInvalidException;
@@ -29,6 +31,7 @@ import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.impl.OrganizationUserServiceImpl;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.validators.email.EmailValidatorImpl;
 import io.gravitee.am.service.validators.user.UserValidator;
 import io.gravitee.am.service.validators.user.UserValidatorImpl;
@@ -39,6 +42,7 @@ import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentMatcher;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -47,6 +51,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.concurrent.TimeUnit;
 
+import static io.gravitee.am.common.audit.EventType.USER_CREATED;
 import static io.gravitee.am.service.validators.email.EmailValidatorImpl.EMAIL_PATTERN;
 import static io.gravitee.am.service.validators.user.UserValidatorImpl.*;
 import static org.mockito.Mockito.any;
@@ -79,6 +84,9 @@ public class OrganizationUserServiceTest {
     @Mock
     private CredentialService credentialService;
 
+    @Mock
+    private AuditService auditService;
+
     private final static String ORG = "organization1";
 
     @Test
@@ -102,6 +110,9 @@ public class OrganizationUserServiceTest {
 
         verify(userRepository, times(1)).create(any(User.class));
         verify(eventService, times(1)).create(any());
+        verify(auditService, times(1)).report(argThat(
+            (ArgumentMatcher<AuditBuilder<Audit>>) audit -> USER_CREATED.equals(audit.build(new ObjectMapper()).getType())
+        ));
     }
 
     @Test

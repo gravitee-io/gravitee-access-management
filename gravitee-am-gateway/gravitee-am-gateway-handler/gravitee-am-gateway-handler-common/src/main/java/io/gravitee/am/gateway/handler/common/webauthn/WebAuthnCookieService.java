@@ -30,6 +30,8 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
+import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.SESSION;
+
 /**
  * WebAuthn cookie service used mainly to determine if the device is already enrolled or not,
  * and prompt the user for enrollment by using HTTP cookie
@@ -98,6 +100,6 @@ public class WebAuthnCookieService implements InitializingBean {
     }
 
     private Single<JWT> decodeAndVerify(String cookieValue) {
-        return jwtService.decodeAndVerify(cookieValue, certificateProvider);
+        return jwtService.decodeAndVerify(cookieValue, certificateProvider, SESSION);
     }
 }
