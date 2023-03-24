@@ -935,6 +935,7 @@ jobs:
             # 1./  Update maven dependencies versions from properties
             mvn -s /tmp/.gravitee.settings.xml -B -U versions:update-properties -Dmaven.version.rules.serverId=artifactory-gravitee-releases -Dincludes=io.gravitee.*:* -DallowMajorUpdates=false -DallowMinorUpdates=false -DallowIncrementalUpdates=false -DgenerateBackupPoms=false
             # 2./ Now  calculate the maven project verison with the maven exec plugin
+            sed -ri "s#<changelist>.*</changelist>#<changelist></changelist>#g" pom.xml
             export MVN_PRJ_VERSION=$(mvn -s /tmp/.gravitee.settings.xml -Dexec.executable='echo' -Dexec.args='${project.version}' --non-recursive exec:exec -q | tee -a /tmp/maven.logs; echo "$?" > /tmp/maven.exit.code)
     
             export MVN_PRJ_VERSION=$(echo "${MVN_PRJ_VERSION}" | awk -F '-SNAPSHOT' '{print $1}')
@@ -957,9 +958,6 @@ jobs:
               export MVN_PRJ_VERSION="${MVN_PRJ_VERSION_MAJOR}.${MVN_PRJ_VERSION_MINOR}.${MVN_PRJ_VERSION_PATCH}"
               echo "${MVN_PRJ_VERSION}" > /tmp/gio.maven.project.release.version
             fi;
-
-            # 2./ and then we can run the [mvn -s /tmp/.gravitee.settings.xml -B versions:set -DnewVersion=1.3.1 -DgenerateBackupPoms=false]
-            mvn -s /tmp/.gravitee.settings.xml -B versions:set -DnewVersion=${MVN_PRJ_VERSION} -DgenerateBackupPoms=false
 
       - mvn_git_commit_id
       - when:
@@ -1012,21 +1010,22 @@ jobs:
             git tag ${MVN_PRJ_VERSION}
 
             export MAINTENANCE_GIT_BRANCH="${MVN_PRJ_VERSION_MAJOR}.${MVN_PRJ_VERSION_MINOR}.x"
-    
+
             if [ "${RC_REQUESTED}" == "true" ]; then
               export NEXT_QUALIFIER=$((${MVN_PRJ_VERSION_QUALIFIER}+1))
-              export NEXT_PATCH_SNAPSHOT_VERSION="${MVN_PRJ_VERSION_MAJOR}.${MVN_PRJ_VERSION_MINOR}.${MVN_PRJ_VERSION_PATCH}-alpha.${NEXT_QUALIFIER}-SNAPSHOT"
+              export NEXT_FULL_PATCH_VERSION="${MVN_PRJ_VERSION_MAJOR}.${MVN_PRJ_VERSION_MINOR}.${MVN_PRJ_VERSION_PATCH}-alpha.${NEXT_QUALIFIER}"
             else
               export NEXT_PATCH_VERSION=$((${MVN_PRJ_VERSION_PATCH}+1))
-              export NEXT_PATCH_SNAPSHOT_VERSION="${MVN_PRJ_VERSION_MAJOR}.${MVN_PRJ_VERSION_MINOR}.${NEXT_PATCH_VERSION}-SNAPSHOT"
+              export NEXT_FULL_PATCH_VERSION="${MVN_PRJ_VERSION_MAJOR}.${MVN_PRJ_VERSION_MINOR}.${NEXT_PATCH_VERSION}"
             fi;
-    
+
             export GIT_BRANCH_FILTER=$(git branch -a | grep "${MAINTENANCE_GIT_BRANCH}")
 
             if [ "x${GIT_BRANCH_FILTER}" == "x" ]; then
               echo "# ---- git Maintenance branch [${MAINTENANCE_GIT_BRANCH}] does not exist, creating it"
               git checkout -b ${MAINTENANCE_GIT_BRANCH}
-              mvn -s /tmp/.gravitee.settings.xml -B versions:set -DnewVersion=${NEXT_PATCH_SNAPSHOT_VERSION} -DgenerateBackupPoms=false
+              sed -i "s#<revision>.*</revision>#<revision>${NEXT_FULL_PATCH_VERSION}</revision>#" pom.xml
+
               git add --update
               git commit -m 'chore: prepare next version'
 
@@ -1044,41 +1043,50 @@ jobs:
             else
               echo "git Maintenance branch [${MAINTENANCE_GIT_BRANCH}] does exist, no need to create it, also CURRENT_GIT_BRANCH=[${CURRENT_GIT_BRANCH}] and MAINTENANCE_GIT_BRANCH=[${MAINTENANCE_GIT_BRANCH}] are supposed to be equal."
             fi;
-           
+
             export NEXT_MINOR_VERSION=$((${MVN_PRJ_VERSION_MINOR}+1))
             export NEXT_QUALIFIER_VERSION=$((${MVN_PRJ_VERSION_QUALIFIER}+1))
             export NEXT_PATCH_VERSION=$((${MVN_PRJ_VERSION_PATCH}+1))
-    
-            export NEXT_SNAPSHOT_VERSION="${MVN_PRJ_VERSION_MAJOR}.${NEXT_MINOR_VERSION}.${MVN_PRJ_VERSION_PATCH}-SNAPSHOT"
-            export NEXT_SNAPSHOT_MAINT_VERSION="${MVN_PRJ_VERSION_MAJOR}.${MVN_PRJ_VERSION_MINOR}.${NEXT_PATCH_VERSION}-SNAPSHOT"
-            export NEXT_SNAPSHOT_RC_VERSION="${MVN_PRJ_VERSION_MAJOR}.${MVN_PRJ_VERSION_MINOR}.${MVN_PRJ_VERSION_PATCH}-alpha.${NEXT_QUALIFIER_VERSION}-SNAPSHOT"
-    
+
+            export NEXT_VERSION="${MVN_PRJ_VERSION_MAJOR}.${NEXT_MINOR_VERSION}.${MVN_PRJ_VERSION_PATCH}"
+            export NEXT_MAINT_VERSION="${MVN_PRJ_VERSION_MAJOR}.${MVN_PRJ_VERSION_MINOR}.${NEXT_PATCH_VERSION}"
+            export NEXT_RC_VERSION="${MVN_PRJ_VERSION_MAJOR}.${MVN_PRJ_VERSION_MINOR}.${MVN_PRJ_VERSION_PATCH}-alpha.${NEXT_QUALIFIER_VERSION}"
+
             if [ "${RC_REQUESTED}" == "true" -a "${MVN_PRJ_VERSION_PATCH}" == "0" -a "${MVN_PRJ_VERSION_QUALIFIER}" == "1" ]; then
-              
-              echo "# ---- [${MVN_PRJ_VERSION}] is not a maintenance release, so we increment MINOR VERSION from [${MVN_PRJ_VERSION_MINOR}] to [${NEXT_MINOR_VERSION}], and prepared next version will be [${NEXT_SNAPSHOT_VERSION}] "
-              mvn -s /tmp/.gravitee.settings.xml -B versions:set -DnewVersion=${NEXT_SNAPSHOT_VERSION} -DgenerateBackupPoms=false
-    
+
+              echo "# ---- [${MVN_PRJ_VERSION}] is not a maintenance release, so we increment MINOR VERSION from [${MVN_PRJ_VERSION_MINOR}] to [${NEXT_MINOR_VERSION}], and prepared next version will be [${NEXT_VERSION}] "
+              sed -i "s#<revision>.*</revision>#<revision>${NEXT_VERSION}</revision>#" pom.xml
+
             elif [ "${RC_REQUESTED}" == "true" -a "${MVN_PRJ_VERSION_QUALIFIER}x" != "x" ]; then
-              
-              echo "# ---- [${MVN_PRJ_VERSION}] is a RC maintenance release, so we increment QUALIFIER VERSION from [${MVN_PRJ_VERSION_QUALIFIER}] to [${NEXT_QUALIFIER_VERSION}], and prepared next version will be [${NEXT_PATCH_SNAPSHOT_VERSION}] "
-              echo "resetting version in [pom.xml] to [${NEXT_SNAPSHOT_RC_VERSION}]"
-              mvn -s /tmp/.gravitee.settings.xml -B versions:set -DnewVersion=${NEXT_SNAPSHOT_RC_VERSION} -DgenerateBackupPoms=false
-    
+
+              echo "# ---- [${MVN_PRJ_VERSION}] is a RC maintenance release, so we increment QUALIFIER VERSION from [${MVN_PRJ_VERSION_QUALIFIER}] to [${NEXT_QUALIFIER_VERSION}], and prepared next version will be [${NEXT_FULL_PATCH_VERSION}] "
+              echo "resetting version in [pom.xml] to [${NEXT_RC_VERSION}]"
+              sed -i "s#<revision>.*</revision>#<revision>${NEXT_RC_VERSION}</revision>#" pom.xml
+
             else
-    
+
               if [ "${MVN_PRJ_VERSION_QUALIFIER}x" != "x" ]; then
-                echo "# ---- [${MVN_PRJ_VERSION}] is a GA release, so we do not increment MINOR VERSION to bump next maintenance release [${NEXT_SNAPSHOT_MAINT_VERSION}] "
-                mvn -s /tmp/.gravitee.settings.xml -B versions:set -DnewVersion=${NEXT_SNAPSHOT_MAINT_VERSION} -DgenerateBackupPoms=false
+
+                echo "# ---- [${MVN_PRJ_VERSION}] is a GA release, so we do not increment MINOR VERSION to bump next maintenance release [${NEXT_MAINT_VERSION}] "
+                sed -i "s#<revision>.*</revision>#<revision>${NEXT_MAINT_VERSION}</revision>#" pom.xml
+
               elif [ "${MVN_PRJ_VERSION_PATCH}" == "0" && "${MAINTENANCE_GIT_BRANCH}" != "${CURRENT_GIT_BRANCH}" ]; then
-                echo "# ---- [${MVN_PRJ_VERSION}] is not a maintenance release, so we increment MINOR VERSION from [${MVN_PRJ_VERSION_MINOR}] to [${NEXT_MINOR_VERSION}], and prepared next version will be [${NEXT_SNAPSHOT_VERSION}] "
-                mvn -s /tmp/.gravitee.settings.xml -B versions:set -DnewVersion=${NEXT_SNAPSHOT_VERSION} -DgenerateBackupPoms=false
+
+                echo "# ---- [${MVN_PRJ_VERSION}] is not a maintenance release, so we increment MINOR VERSION from [${MVN_PRJ_VERSION_MINOR}] to [${NEXT_MINOR_VERSION}], and prepared next version will be [${NEXT_VERSION}] "
+                sed -i "s#<revision>.*</revision>#<revision>${NEXT_VERSION}</revision>#" pom.xml
+
               else
-                echo "# ---- [${MVN_PRJ_VERSION}] is a maintenance release, so we increment PATCH VERSION from [${MVN_PRJ_VERSION_PATCH}] to [${NEXT_PATCH_VERSION}], and prepared next version will be [${NEXT_PATCH_SNAPSHOT_VERSION}] "
-                echo "resetting version in [pom.xml] to [${NEXT_PATCH_SNAPSHOT_VERSION}]"
-                mvn -s /tmp/.gravitee.settings.xml -B versions:set -DnewVersion=${NEXT_PATCH_SNAPSHOT_VERSION} -DgenerateBackupPoms=false
+
+                echo "# ---- [${MVN_PRJ_VERSION}] is a maintenance release, so we increment PATCH VERSION from [${MVN_PRJ_VERSION_PATCH}] to [${NEXT_PATCH_VERSION}], and prepared next version will be [${NEXT_FULL_PATCH_VERSION}] "
+                echo "resetting version in [pom.xml] to [${NEXT_FULL_PATCH_VERSION}]"
+                sed -i "s#<revision>.*</revision>#<revision>${NEXT_FULL_PATCH_VERSION}</revision>#" pom.xml
+
               fi;
             fi;
-    
+
+            #We set back the SNAPSHOT changelist for the next version
+            sed -ri "s#<changelist>.*</changelist>#<changelist>-SNAPSHOT</changelist>#g" ./pom.xml
+
             git add --update
             git commit -m 'chore: prepare next version'
 
