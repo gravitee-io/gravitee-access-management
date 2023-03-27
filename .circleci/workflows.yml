@@ -204,6 +204,7 @@ commands:
             DRY_RUN: << parameters.dry_run >>
           name: "Gravitee AM Community Edition Package Bundle"
           command: |
+            sed -ri "s#<changelist>.*</changelist>#<changelist></changelist>#g" pom.xml
             export MVN_PRJ_VERSION=$(mvn -Dexec.executable='echo' -Dexec.args='${project.version}' --non-recursive exec:exec -q | tee -a /tmp/maven.logs; echo "$?" > /tmp/maven.exit.code)
             export RELEASE_VERSION_NUMBER=$(echo "${MVN_PRJ_VERSION}" | awk -F '-SNAPSHOT' '{print $1}')
 
@@ -1035,6 +1036,7 @@ jobs:
           command: |
             if [ "${DRY_RUN}" == "false" ]; then
               echo "# --->>> NO IT IS NOT A DRY RUN : so we maven deploy to nexus staging"
+              sed -ri "s#<changelist>.*</changelist>#<changelist></changelist>#g" pom.xml
               mvn -s /tmp/.gravitee.settings.xml -B -U -P gravitee-release deploy -DskipTests=true
             else
               echo "# --->>> THIS IS A DRY RUN: no deployment to nexus staging"
