@@ -20,7 +20,9 @@ import org.springframework.util.ObjectUtils;
 import org.thymeleaf.context.ITemplateContext;
 import org.thymeleaf.messageresolver.AbstractMessageResolver;
 
+import java.text.MessageFormat;
 import java.util.Locale;
+import java.util.Optional;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -47,8 +49,21 @@ public class GraviteeMessageResolver extends AbstractMessageResolver {
 
     @Override
     public String resolveMessage(ITemplateContext context, Class<?> origin, String key, Object[] messageParameters) {
-        return innerResolveMessage(context.getLocale(), key);
+        return innerResolveMessage(context.getLocale(), key, messageParameters);
     }
+
+    private String innerResolveMessage(Locale locale, String key, Object[] messageParameters) {
+        final String domainMessage = domainBasedDictionaryProvider.getDictionaryFor(locale).getProperty(key);
+        final String message = Optional.ofNullable(domainMessage).orElse(dictionaryProvider.getDictionaryFor(locale).getProperty(key));
+
+        if (!isFormatCandidate(message)) {
+            return message;
+        }
+
+        final MessageFormat messageFormat = new MessageFormat(message, locale);
+        return messageFormat.format(Optional.ofNullable(messageParameters).orElse(new Object[0]));
+    }
+
 
     protected String innerResolveMessage(Locale locale, String key) {
         // first we look into the domain custom messages
@@ -75,6 +90,21 @@ public class GraviteeMessageResolver extends AbstractMessageResolver {
 
     public void removeDictionary(String locale) {
         domainBasedDictionaryProvider.removeDictionary(locale);
+    }
+
+    /**
+     * This method is equivalent to org.thymeleaf.messageresolver.StandardMessageResolutionUtils#isFormatCandidate
+     */
+    private static boolean isFormatCandidate(final String message) {
+        char c;
+        int n = message.length();
+        while (n-- != 0) {
+            c = message.charAt(n);
+            if (c == '}' || c == '\'') {
+                return true;
+            }
+        }
+        return false;
     }
 
 }

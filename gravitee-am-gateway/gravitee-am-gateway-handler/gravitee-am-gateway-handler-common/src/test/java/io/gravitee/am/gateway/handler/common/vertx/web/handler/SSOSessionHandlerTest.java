@@ -22,10 +22,14 @@ import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieSessionHandler;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.LoginAttempt;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.AuthenticationFlowContextService;
+import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.UserService;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Completable;
@@ -42,7 +46,9 @@ import java.util.Date;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 /**
@@ -65,6 +71,12 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
     @Mock
     private AuthenticationFlowContextService authenticationFlowContextService;
 
+    @Mock
+    private LoginAttemptService loginAttemptService;
+
+    @Mock
+    private Domain domain;
+
     @Override
     public void setUp() throws Exception {
         super.setUp();
@@ -73,7 +85,7 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
 
         router.route("/login")
                 .handler(new CookieSessionHandler(jwtService, certificateManager, userService, "am-cookie", 30 * 60 * 60))
-                .handler(new SSOSessionHandler(clientSyncService, authenticationFlowContextService))
+                .handler(new SSOSessionHandler(clientSyncService, authenticationFlowContextService, loginAttemptService, domain))
                 .handler(rc -> {
                     if (rc.session().isDestroyed()) {
                         rc.response().setStatusCode(401).end();
@@ -215,6 +227,121 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
         requestedClient.setId("client-requested-id");
         requestedClient.setClientId("requested-client");
         requestedClient.setIdentityProviders(getApplicationIdentityProviders("idp-1"));
+
+        when(clientSyncService.findById(anyString())).thenReturn(Maybe.empty()).thenReturn(Maybe.empty());
+        when(clientSyncService.findByClientId(anyString())).thenAnswer(
+                invocation -> {
+                    String argument = invocation.getArgument(0);
+                    if (argument.equals("test-client")) {
+                        return Maybe.just(client);
+                    } else if (argument.equals("requested-client")) {
+                        return Maybe.just(requestedClient);
+                    }
+                    throw new InvalidUseOfMatchersException(
+                            String.format("Argument %s does not match", argument)
+                    );
+                }
+        );
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.setUser(new io.vertx.rxjava3.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+            routingContext.next();
+        });
+
+        testRequest(
+                HttpMethod.GET,
+                "/login?client_id=requested-client",
+                HttpStatusCode.OK_200, "OK");
+    }
+
+    @Test
+    public void shouldInvoke_differentClient_sameIdp_UserBlocked() throws Exception {
+        User user = new User();
+        user.setId("user-id");
+        user.setClient("test-client");
+        user.setSource("idp-1");
+
+        Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("test-client");
+
+        Client requestedClient = new Client();
+        requestedClient.setId("client-requested-id");
+        requestedClient.setClientId("requested-client");
+        ApplicationIdentityProvider identityProvider = new ApplicationIdentityProvider();
+        identityProvider.setIdentity("idp-1");
+        TreeSet<ApplicationIdentityProvider> idps = new TreeSet<>();
+        idps.add(identityProvider);
+        requestedClient.setIdentityProviders(idps);
+
+
+        final var accountSettings = new AccountSettings();
+        accountSettings.setMaxLoginAttempts(2);
+        accountSettings.setAccountBlockedDuration(360000);
+        accountSettings.setLoginAttemptsDetectionEnabled(true);
+
+        when(domain.getAccountSettings()).thenReturn(accountSettings);
+        final var attempts = new LoginAttempt();
+        attempts.setAttempts(2);
+        when(loginAttemptService.checkAccount(any(), any())).thenReturn(Maybe.just(attempts));
+
+        when(clientSyncService.findById(anyString())).thenReturn(Maybe.empty()).thenReturn(Maybe.empty());
+        when(clientSyncService.findByClientId(anyString())).thenAnswer(
+                invocation -> {
+                    String argument = invocation.getArgument(0);
+                    if (argument.equals("test-client")) {
+                        return Maybe.just(client);
+                    } else if (argument.equals("requested-client")) {
+                        return Maybe.just(requestedClient);
+                    }
+                    throw new InvalidUseOfMatchersException(
+                            String.format("Argument %s does not match", argument)
+                    );
+                }
+        );
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.setUser(new io.vertx.rxjava3.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+            routingContext.next();
+        });
+
+        testRequest(
+                HttpMethod.GET,
+                "/login?client_id=requested-client",
+                HttpStatusCode.UNAUTHORIZED_401, "Unauthorized");
+    }
+
+
+    @Test
+    public void shouldInvoke_differentClient_sameIdp_UserNotBlocked() throws Exception {
+        User user = new User();
+        user.setId("user-id");
+        user.setClient("test-client");
+        user.setSource("idp-1");
+
+        Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("test-client");
+
+        Client requestedClient = new Client();
+        requestedClient.setId("client-requested-id");
+        requestedClient.setClientId("requested-client");
+        TreeSet<ApplicationIdentityProvider> idps = new TreeSet<>();
+        ApplicationIdentityProvider identityProvider = new ApplicationIdentityProvider();
+        identityProvider.setIdentity("idp-1");
+        idps.add(identityProvider);
+        requestedClient.setIdentityProviders(idps);
+
+
+        final var accountSettings = new AccountSettings();
+        accountSettings.setMaxLoginAttempts(2);
+        accountSettings.setAccountBlockedDuration(360000);
+        accountSettings.setLoginAttemptsDetectionEnabled(true);
+
+        when(domain.getAccountSettings()).thenReturn(accountSettings);
+        final var attempts = new LoginAttempt();
+        attempts.setAttempts(1);
+        when(loginAttemptService.checkAccount(any(), any())).thenReturn(Maybe.just(attempts));
 
         when(clientSyncService.findById(anyString())).thenReturn(Maybe.empty()).thenReturn(Maybe.empty());
         when(clientSyncService.findByClientId(anyString())).thenAnswer(

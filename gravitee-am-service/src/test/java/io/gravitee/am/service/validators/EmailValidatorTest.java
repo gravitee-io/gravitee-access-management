@@ -38,7 +38,8 @@ public class EmailValidatorTest {
             "email@gravitee-io.com",
             "_______@gravitee.io",
             "firstname-lastname@gravitee.io",
-            "firstname-lastname@gravitee.io"
+            "firstname-lastname@gravitee.io",
+            "firstname-lastname@gravitee.americanexpress"
     };
 
     private static final String[] INVALID_EMAILS = {
@@ -52,7 +53,8 @@ public class EmailValidatorTest {
             "email..email@gravitee.io",
             "email@gravitee",
             "email@gravitee",
-            "email@gravitee..io"
+            "email@gravitee..io",
+            "firstname-lastname@gravitee.verylongextension"
     };
 
 

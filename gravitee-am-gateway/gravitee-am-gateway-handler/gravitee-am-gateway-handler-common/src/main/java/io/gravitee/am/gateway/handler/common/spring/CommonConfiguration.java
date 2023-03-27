@@ -60,6 +60,7 @@ import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.ext.web.client.WebClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -94,7 +95,7 @@ public class CommonConfiguration {
                 .setMaxPoolSize(Integer.valueOf(environment.getProperty("oidc.http.pool.maxTotalConnection", "200")))
                 .setTrustAll(Boolean.valueOf(environment.getProperty("oidc.http.client.trustAll", "true")));
 
-        return WebClient.create(vertx,options);
+        return WebClient.create(vertx, options);
     }
 
     @Bean
@@ -188,8 +189,24 @@ public class CommonConfiguration {
     }
 
     @Bean
-    public EmailService emailService() {
-        return new EmailServiceImpl();
+    public EmailService emailService(
+            @Value("${email.enabled:false}") boolean enabled,
+            @Value("${user.resetPassword.email.subject:Please reset your password}") String resetPasswordSubject,
+            @Value("${user.resetPassword.token.expire-after:300}") int resetPasswordExpireAfter,
+            @Value("${user.blockedAccount.email.subject:Account has been locked}") String blockedAccountSubject,
+            @Value("${user.blockedAccount.token.expire-after:86400}") int blockedAccountExpireAfter,
+            @Value("${user.mfaChallenge.email.subject:Verification Code}") String mfaChallengeSubject,
+            @Value("${user.mfaChallenge.token.expire-after:300}") int mfaChallengeExpireAfter
+    ) {
+        return new EmailServiceImpl(
+                enabled,
+                resetPasswordSubject,
+                resetPasswordExpireAfter,
+                blockedAccountSubject,
+                blockedAccountExpireAfter,
+                mfaChallengeSubject,
+                mfaChallengeExpireAfter
+        );
     }
 
     @Bean

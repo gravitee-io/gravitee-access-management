@@ -165,6 +165,11 @@ export interface UpdateOrganizationGroupRequest {
     group2: UpdateGroup;
 }
 
+export interface UpdateOrganizationGroupRequest {
+    organizationId: string;
+    group: string;
+}
+
 /**
  * 
  */
@@ -1074,6 +1079,46 @@ export class GroupApi extends runtime.BaseAPI {
      * Update a platform group
      */
     async updateOrganizationGroup(requestParameters: UpdateOrganizationGroupRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<User> {
+        const response = await this.updateOrganizationGroupRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * User must have the ORGANIZATION_GROUP[READ] permission on the specified organization
+     * Get a platform group
+     */
+    async updateOrganizationGroupRaw(requestParameters: UpdateOrganizationGroupRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Group>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling updateOrganizationGroup.');
+        }
+
+        if (requestParameters.group === null || requestParameters.group === undefined) {
+            throw new runtime.RequiredError('group','Required parameter requestParameters.group was null or undefined when calling updateOrganizationGroup.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/groups/{group}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"group"}}`, encodeURIComponent(String(requestParameters.group))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => GroupFromJSON(jsonValue));
+    }
+
+    /**
+     * User must have the ORGANIZATION_GROUP[READ] permission on the specified organization
+     * Get a platform group
+     */
+    async updateOrganizationGroup(requestParameters: UpdateOrganizationGroupRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Group> {
         const response = await this.updateOrganizationGroupRaw(requestParameters, initOverrides);
         return await response.value();
     }

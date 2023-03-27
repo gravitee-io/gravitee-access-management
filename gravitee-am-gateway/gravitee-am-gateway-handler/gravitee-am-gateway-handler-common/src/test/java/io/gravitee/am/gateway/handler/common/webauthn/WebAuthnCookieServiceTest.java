@@ -82,7 +82,7 @@ public class WebAuthnCookieServiceTest {
 
     @Test
     public void shouldVerifyRememberDeviceCookieValue_nominal_case() {
-        when(jwtService.decodeAndVerify(anyString(), eq(certificateProvider))).thenReturn(Single.just(new JWT()));
+        when(jwtService.decodeAndVerify(anyString(), eq(certificateProvider), any())).thenReturn(Single.just(new JWT()));
         TestObserver<Void> testObserver = webAuthnCookieService.verifyRememberDeviceCookieValue("cookieValue").test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
@@ -91,7 +91,7 @@ public class WebAuthnCookieServiceTest {
 
     @Test
     public void shouldVerifyRememberDeviceCookieValue_error() {
-        when(jwtService.decodeAndVerify(anyString(), eq(certificateProvider))).thenReturn(Single.error(new IllegalArgumentException("invalid-token")));
+        when(jwtService.decodeAndVerify(anyString(), eq(certificateProvider), any())).thenReturn(Single.error(new IllegalArgumentException("invalid-token")));
         TestObserver<Void> testObserver = webAuthnCookieService.verifyRememberDeviceCookieValue("cookieValue").test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNotComplete();
@@ -102,7 +102,7 @@ public class WebAuthnCookieServiceTest {
     public void shouldExtractUser_nominal_case() {
         JWT jwt = new JWT();
         jwt.put("userId", "user-id");
-        when(jwtService.decodeAndVerify(anyString(), eq(certificateProvider))).thenReturn(Single.just(jwt));
+        when(jwtService.decodeAndVerify(anyString(), eq(certificateProvider), any())).thenReturn(Single.just(jwt));
         when(userService.findById("user-id")).thenReturn(Maybe.just(new User()));
         TestObserver<User> testObserver = webAuthnCookieService.extractUserFromRememberDeviceCookieValue("cookieValue").test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -115,7 +115,7 @@ public class WebAuthnCookieServiceTest {
     public void shouldExtractUser_no_user() {
         JWT jwt = new JWT();
         jwt.put("userId", "user-id");
-        when(jwtService.decodeAndVerify(anyString(), eq(certificateProvider))).thenReturn(Single.just(jwt));
+        when(jwtService.decodeAndVerify(anyString(), eq(certificateProvider), any())).thenReturn(Single.just(jwt));
         when(userService.findById("user-id")).thenReturn(Maybe.empty());
         TestObserver<User> testObserver = webAuthnCookieService.extractUserFromRememberDeviceCookieValue("cookieValue").test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -125,7 +125,7 @@ public class WebAuthnCookieServiceTest {
 
     @Test
     public void shouldExtractUser_error() {
-        when(jwtService.decodeAndVerify(anyString(), eq(certificateProvider))).thenReturn(Single.error(new TechnicalException()));
+        when(jwtService.decodeAndVerify(anyString(), eq(certificateProvider), any())).thenReturn(Single.error(new TechnicalException()));
         TestObserver<User> testObserver = webAuthnCookieService.extractUserFromRememberDeviceCookieValue("cookieValue").test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNotComplete();

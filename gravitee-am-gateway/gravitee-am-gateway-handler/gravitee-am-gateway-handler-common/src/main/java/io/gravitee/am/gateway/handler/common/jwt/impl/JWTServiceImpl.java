@@ -92,29 +92,45 @@ public class JWTServiceImpl implements JWTService {
     }
 
     @Override
-    public Single<JWT> decodeAndVerify(String jwt, Client client) {
+    public Single<JWT> decodeAndVerify(String jwt, Client client, TokenType tokenType) {
         return certificateManager.get(client.getCertificate())
                 .defaultIfEmpty(certificateManager.defaultCertificateProvider())
-                .flatMap(certificateProvider -> decodeAndVerify(jwt, certificateProvider));
+                .flatMap(certificateProvider -> decodeAndVerify(jwt, certificateProvider, tokenType));
+
     }
 
     @Override
-    public Single<JWT> decodeAndVerify(String jwt, CertificateProvider certificateProvider) {
-        return decode(certificateProvider, jwt)
+    public Single<JWT> decodeAndVerify(String jwt, CertificateProvider certificateProvider, TokenType tokenType) {
+        return decode(certificateProvider, jwt, tokenType)
                 .map(JWT::new);
     }
 
     @Override
-    public Single<JWT> decode(String jwt) {
+    public Single<JWT> decode(String jwt, TokenType tokenType) {
         return Single.create(emitter -> {
             try {
                 String json = new String(Base64.getDecoder().decode(jwt.split("\\.")[1]), "UTF-8");
                 emitter.onSuccess(objectMapper.readValue(json, JWT.class));
             } catch (Exception ex) {
-                logger.debug("Failed to decode JWT", ex);
-                emitter.onError(new InvalidTokenException("The access token is invalid", ex));
+                logger.debug("Failed to decode {} JWT", tokenType, ex);
+                emitter.onError(buildInvalidTokenException(tokenType, ex));
             }
         });
+    }
+
+    private static InvalidTokenException buildInvalidTokenException(TokenType tokenType, Exception ex) {
+        switch (tokenType) {
+            case STATE:
+                return new InvalidTokenException("The state token is invalid", ex);
+            case ID_TOKEN:
+                return new InvalidTokenException("The id token is invalid", ex);
+            case REFRESH_TOKEN:
+                return new InvalidTokenException("The refresh token is invalid", ex);
+            case SESSION:
+                return new InvalidTokenException("The session token is invalid", ex);
+            default:
+                return new InvalidTokenException("The access token is invalid", ex);
+        }
     }
 
     private Single<String> sign(CertificateProvider certificateProvider, JWT jwt) {
@@ -129,14 +145,14 @@ public class JWTServiceImpl implements JWTService {
         });
     }
 
-    private Single<Map<String, Object>> decode(CertificateProvider certificateProvider, String payload) {
+    private Single<Map<String, Object>> decode(CertificateProvider certificateProvider, String payload, TokenType tokenType) {
         return Single.create(emitter -> {
             try {
                 Map<String, Object> decodedPayload = certificateProvider.getJwtParser().parse(payload);
                 emitter.onSuccess(decodedPayload);
             } catch (Exception ex) {
-                logger.error("Failed to decode JWT", ex);
-                emitter.onError(new InvalidTokenException("The access token is invalid", ex));
+                logger.error("Failed to decode {} JWT", tokenType, ex);
+                emitter.onError(buildInvalidTokenException(tokenType, ex));
             }
         });
     }

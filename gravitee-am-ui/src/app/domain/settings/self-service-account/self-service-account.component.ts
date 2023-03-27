@@ -18,6 +18,7 @@ import {SnackbarService} from "../../../services/snackbar.service";
 import {ActivatedRoute, Router} from "@angular/router";
 import {DomainService} from "../../../services/domain.service";
 import {AuthService} from "../../../services/auth.service";
+import internal from 'stream';
 
 @Component({
   selector: 'app-self-service-account',
@@ -26,8 +27,10 @@ import {AuthService} from "../../../services/auth.service";
 export class DomainSettingsSelfServiceAccountComponent implements OnInit {
   domainId: string;
   domain: any = {};
+  resetPassword: any = {};
   formChanged = false;
   editMode: boolean;
+  tokenAge: number;
 
   constructor(private domainService: DomainService,
               private snackbarService: SnackbarService,
@@ -39,11 +42,21 @@ export class DomainSettingsSelfServiceAccountComponent implements OnInit {
     this.domain = this.route.snapshot.data['domain'];
     this.domainId = this.domain.id;
     this.editMode = this.authService.hasPermissions(['domain_settings_update']);
+    if (this.isSelfServiceAccountEnabled() && this.domain.selfServiceAccountManagementSettings.resetPassword) {
+      this.tokenAge = this.domain.selfServiceAccountManagementSettings.resetPassword.tokenAge;
+      this.resetPassword = this.domain.selfServiceAccountManagementSettings.resetPassword || {};
+    }
   }
 
   save() {
-    let selfServiceAccountSettings: any = {};
+    const selfServiceAccountSettings: any = {};
     selfServiceAccountSettings.enabled = this.isSelfServiceAccountEnabled();
+    if (this.tokenAge < 0) {
+      this.snackbarService.open("Max age must be greater or equals to zero");
+      return;
+    }
+    this.resetPassword.tokenAge = this.tokenAge;
+    selfServiceAccountSettings.resetPassword = this.resetPassword;
     this.domainService.patch(this.domainId, { 'selfServiceAccountManagementSettings' : selfServiceAccountSettings }).subscribe(data => {
       this.domain = data;
       this.formChanged = false;
@@ -59,4 +72,18 @@ export class DomainSettingsSelfServiceAccountComponent implements OnInit {
   isSelfServiceAccountEnabled() {
     return this.domain.selfServiceAccountManagementSettings && this.domain.selfServiceAccountManagementSettings.enabled;
   }
+
+  oldPasswordRequired(event) {
+    this.resetPassword.oldPasswordRequired = event.checked;
+    this.formChanged = true;
+  }
+
+  isOldPasswordRequired() {
+    return this.domain.selfServiceAccountManagementSettings &&
+          this.resetPassword.oldPasswordRequired;
+  }
+
+  setTokenAge() {
+    this.formChanged = true;
+  } 
 }

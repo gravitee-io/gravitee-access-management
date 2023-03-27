@@ -15,12 +15,19 @@
  */
 package io.gravitee.am.service.model;
 
+import io.gravitee.am.service.validators.dictionary.ValidLocale;
+
+import javax.validation.constraints.NotBlank;
+
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class NewDictionary {
+    @NotBlank
     private String name;
+    @NotBlank
+    @ValidLocale
     private String locale;
 
     public String getName() {

@@ -46,6 +46,8 @@ import java.util.Optional;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
+import static io.gravitee.am.management.service.impl.utils.JsonNodeValidator.validateConfiguration;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -169,6 +171,7 @@ public class IdentityProviderServiceProxyImpl extends AbstractSensitiveProxy imp
                 .switchIfEmpty(Single.error(new IdentityProviderPluginSchemaNotFoundException(oldIdentityProvider.getType())))
                 .map(schema -> {
                     var updateConfig = objectMapper.readTree(updateIdentityProvider.getConfiguration());
+                    validateConfiguration(updateConfig);
                     var oldConfig = objectMapper.readTree(oldIdentityProvider.getConfiguration());
                     var schemaConfig = objectMapper.readTree(schema);
                     if (KERBEROS_AM_IDP.equals(oldIdentityProvider.getType())) {

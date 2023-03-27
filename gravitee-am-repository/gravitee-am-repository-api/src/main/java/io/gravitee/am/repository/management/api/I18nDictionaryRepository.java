@@ -22,7 +22,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 
 public interface I18nDictionaryRepository extends CrudRepository<I18nDictionary, String> {
-    Maybe<I18nDictionary> findByName(ReferenceType referenceType, String referenceId, String name);
+    Maybe<I18nDictionary> findByLocale(ReferenceType referenceType, String referenceId, String locale);
 
     Flowable<I18nDictionary> findAll(ReferenceType referenceType, String referenceId);
 

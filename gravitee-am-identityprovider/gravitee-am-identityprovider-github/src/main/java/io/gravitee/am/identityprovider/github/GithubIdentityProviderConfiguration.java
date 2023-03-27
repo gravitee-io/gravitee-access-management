@@ -36,6 +36,7 @@ public class GithubIdentityProviderConfiguration implements SocialIdentityProvid
     private Integer connectTimeout = 10000;
     private Integer idleTimeout = 10000;
     private Integer maxPoolSize = 200;
+    private boolean storeOriginalTokens = false;
 
     public String getClientId() {
         return clientId;
@@ -122,4 +123,12 @@ public class GithubIdentityProviderConfiguration implements SocialIdentityProvid
         return null;
     }
 
+    @Override
+    public boolean isStoreOriginalTokens() {
+        return storeOriginalTokens;
+    }
+
+    public void setStoreOriginalTokens(boolean storeOriginalTokens) {
+        this.storeOriginalTokens = storeOriginalTokens;
+    }
 }

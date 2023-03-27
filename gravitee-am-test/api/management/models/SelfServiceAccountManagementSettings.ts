@@ -12,6 +12,13 @@
  */
 
 import { exists, mapValues } from '../runtime';
+import {
+    ResetPasswordSettings,
+    ResetPasswordSettingsFromJSON,
+    ResetPasswordSettingsFromJSONTyped,
+    ResetPasswordSettingsToJSON,
+} from './ResetPasswordSettings';
+
 /**
  * 
  * @export
@@ -24,6 +31,12 @@ export interface SelfServiceAccountManagementSettings {
      * @memberof SelfServiceAccountManagementSettings
      */
     enabled?: boolean;
+    /**
+     * 
+     * @type {ResetPasswordSettings}
+     * @memberof SelfServiceAccountManagementSettings
+     */
+    resetPassword?: ResetPasswordSettings;
 }
 
 export function SelfServiceAccountManagementSettingsFromJSON(json: any): SelfServiceAccountManagementSettings {
@@ -37,6 +50,7 @@ export function SelfServiceAccountManagementSettingsFromJSONTyped(json: any, ign
     return {
         
         'enabled': !exists(json, 'enabled') ? undefined : json['enabled'],
+        'resetPassword': !exists(json, 'resetPassword') ? undefined : ResetPasswordSettingsFromJSON(json['resetPassword']),
     };
 }
 
@@ -50,6 +64,7 @@ export function SelfServiceAccountManagementSettingsToJSON(value?: SelfServiceAc
     return {
         
         'enabled': value.enabled,
+        'resetPassword': ResetPasswordSettingsToJSON(value.resetPassword),
     };
 }
 
