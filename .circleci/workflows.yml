@@ -967,6 +967,7 @@ jobs:
             - run:
                 name: "Maven Test, Package, and Deploy to Gravitee's private Artifactory"
                 command: |
+                  sed -ri "s#<changelist>.*</changelist>#<changelist></changelist>#g" pom.xml
                   mvn -s /tmp/.gravitee.settings.xml -B -U -P gio-artifactory-release,gio-release clean deploy
       - when:
           condition: << parameters.dry_run>>
@@ -974,6 +975,7 @@ jobs:
             - run:
                 name: "Maven Test, Package and install"
                 command: |
+                  sed -ri "s#<changelist>.*</changelist>#<changelist></changelist>#g" pom.xml
                   mvn -s /tmp/.gravitee.settings.xml -B -U -P gio-artifactory-release,gio-release clean install
       - save-maven-job-cache:
           jobName: release
