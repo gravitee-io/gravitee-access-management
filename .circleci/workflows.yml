@@ -989,6 +989,7 @@ jobs:
           command: |
             if [ "${DRY_RUN}" == "false" ]; then
               echo "# --->>> NO IT IS NOT A DRY RUN : so we maven deploy to nexus staging"
+              sed -ri "s#<changelist>.*</changelist>#<changelist></changelist>#g" pom.xml
               mvn -s /tmp/.gravitee.settings.xml -B -U -P gravitee-release deploy -DskipTests=true
             else
               echo "# --->>> THIS IS A DRY RUN: no deployment to nexus staging"
