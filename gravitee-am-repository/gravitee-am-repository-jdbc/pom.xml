@@ -47,8 +47,8 @@
 
         <maven-dependency-plugin.version>2.10</maven-dependency-plugin.version>
         <dozer-jaxb-runtime.version>2.4.0-b180830.0438</dozer-jaxb-runtime.version>
-        <reactor-adapter.version>3.4.9</reactor-adapter.version>
-        <reactor-core.version>3.4.13</reactor-core.version>
+        <reactor-adapter.version>3.4.10</reactor-adapter.version>
+        <reactor-core.version>3.4.28</reactor-core.version>
     </properties>
 
     <dependencyManagement>
