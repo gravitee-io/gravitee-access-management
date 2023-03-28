@@ -39,8 +39,8 @@
         <jdbc-mariadb.version>2.4.0</jdbc-mariadb.version>
 
         <skip-reporters-tests>true</skip-reporters-tests>
-        <reactor-core.version>3.4.13</reactor-core.version>
-        <reactor-adapter.version>3.4.9</reactor-adapter.version>
+        <reactor-core.version>3.4.28</reactor-core.version>
+        <reactor-adapter.version>3.4.10</reactor-adapter.version>
     </properties>
 
     <dependencyManagement>
