@@ -112,8 +112,8 @@
         <bouncycastle.version>1.69</bouncycastle.version>
         <wiremock.version>2.6.0</wiremock.version>
         <embedded-ldap-junit.version>0.7</embedded-ldap-junit.version>
-        <json-smart.version>2.4.7</json-smart.version>
-        <jackson-bom.version>2.10.5.20201202</jackson-bom.version>
+        <json-smart.version>2.4.10</json-smart.version>
+        <jackson-bom.version>2.12.7.20221012</jackson-bom.version>
         <reactor-netty.version>1.0.15</reactor-netty.version>
         <commons-io.version>2.11.0</commons-io.version>
         <hazelcast.version>4.1.10</hazelcast.version>
