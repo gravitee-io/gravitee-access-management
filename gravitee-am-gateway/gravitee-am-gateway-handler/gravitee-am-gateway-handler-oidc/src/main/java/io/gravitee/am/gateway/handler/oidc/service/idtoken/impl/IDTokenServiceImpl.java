@@ -57,6 +57,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static io.gravitee.am.common.oidc.Scope.FULL_PROFILE;
+import static io.gravitee.am.common.utils.ConstantKeys.ID_TOKEN_EXCLUDED_CLAIMS;
 import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.ID_TOKEN;
 
 /**
@@ -212,7 +213,7 @@ public class IDTokenServiceImpl implements IDTokenService {
             // 3. If no claims requested, grab all user claims
             if (!requestForSpecificClaims) {
                 userClaims.forEach((k, v) -> {
-                    if (!EXCLUDED_CLAIMS.contains(k)) {
+                    if (!ID_TOKEN_EXCLUDED_CLAIMS.contains(k)) {
                         idToken.addAdditionalClaim(k, v);
                     }
                 });
