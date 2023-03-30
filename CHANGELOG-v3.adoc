@@ -1,6 +1,17 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/640?closed=1[AM - 3.19.9 (2023-03-30)]
+
+=== Bug fixes
+
+*_General_*
+
+- AM console login fails when 'nbf' claim type is Date https://github.com/gravitee-io/issues/issues/8979[#8979]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/645?closed=1[AM - 3.18.17 (2023-03-30)]
 
 === Bug fixes
@@ -47,6 +58,7 @@
 
 - AM - Management - Incorrect locale 'name' displaying in response error message https://github.com/gravitee-io/issues/issues/8943[#8943]
 - Thymeleaf template engine is ignoring variables https://github.com/gravitee-io/issues/issues/8895[#8895]
+- AM - Users - User login count reset when we edit the users data https://github.com/gravitee-io/issues/issues/8880[#8880]
 
 *_Management_*
 
