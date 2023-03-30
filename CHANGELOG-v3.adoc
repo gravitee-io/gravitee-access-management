@@ -1,6 +1,32 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/645?closed=1[AM - 3.18.17 (2023-03-30)]
+
+=== Bug fixes
+
+*_General_*
+
+- Full exception raised as an ERROR in gateway logs when token is expired https://github.com/gravitee-io/issues/issues/8656[#8656]
+- REST API listIdentityProviders documents mismatch with return JSON object https://github.com/gravitee-io/issues/issues/8881[#8881]
+
+*_Mfa_*
+
+- [fido2] webAuthnCredentialId is not set in the session https://github.com/gravitee-io/issues/issues/8951[#8951]
+
+*_Node_*
+
+- License INFO logging arbitrarily enforced https://github.com/gravitee-io/issues/issues/8934[#8934]
+
+=== Improvements
+
+*_General_*
+
+- Full exception raised as an ERROR in gateway logs when token is expired https://github.com/gravitee-io/issues/issues/8656[#8656]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/648?closed=1[AM - 3.20.3 (2023-03-22)]
 
 === Bug fixes
