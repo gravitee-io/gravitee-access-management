@@ -41,6 +41,7 @@ import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.token.TokenEndpo
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.ExceptionHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestEndUserConsentHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestFailureHandler;
+import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestMFAPromptHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestParseClientHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestParseIdTokenHintHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestParseParametersHandler;
@@ -272,6 +273,7 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
                 .handler(authenticationFlowHandler.create())
                 .handler(new AuthorizationRequestResolveHandler(scopeManager))
                 .handler(new AuthorizationRequestEndUserConsentHandler(userConsentService))
+                .handler(new AuthorizationRequestMFAPromptHandler())
                 .handler(new AuthorizationEndpoint(flow, thymeleafTemplateEngine, parService))
                 .failureHandler(new AuthorizationRequestFailureHandler(openIDDiscoveryService, jwtService, jweService, environment));
 
