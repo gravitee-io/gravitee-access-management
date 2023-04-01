@@ -171,13 +171,22 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
         final String emailAddress = params.get(ConstantKeys.MFA_ENROLLMENT_EMAIL);
         final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
 
+        // if user has skipped the enrollment process, continue
         if (!acceptEnrollment) {
             final User endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
-            userService.setMfaEnrollmentSkippedTime(client, endUser).doFinally(() -> redirectToAuthorize(routingContext)).subscribe();
+            // set the last skipped time
+            // and update the session
+            userService.setMfaEnrollmentSkippedTime(client, endUser)
+                    .subscribe(() -> {
+                        // as the user has skipped the MFA enroll page
+                        // that means the user has also skipped the MFA challenge page
+                        routingContext.session().put(ConstantKeys.MFA_ENROLLMENT_COMPLETED_KEY, true);
+                        routingContext.session().put(ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY, true);
+                        redirectToAuthorize(routingContext);
+                    });
             return;
         }
 
-        // if user has skipped the enrollment process, continue
         if (factorId == null) {
             logger.warn("No factor id in form - did you forget to include factor id value ?");
             routingContext.fail(400);
@@ -206,6 +215,9 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
             if (emailAddress != null) {
                 routingContext.session().put(ConstantKeys.ENROLLED_FACTOR_EMAIL_ADDRESS, emailAddress);
             }
+            // update the session
+            routingContext.session().put(ConstantKeys.MFA_ENROLLMENT_COMPLETED_KEY, true);
+            // redirect to the original request
             redirectToAuthorize(routingContext);
         } else {
             // parameters are invalid

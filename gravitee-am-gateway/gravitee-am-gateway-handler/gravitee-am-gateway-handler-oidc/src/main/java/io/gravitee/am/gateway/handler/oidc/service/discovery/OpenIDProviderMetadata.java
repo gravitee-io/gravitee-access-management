@@ -81,6 +81,9 @@ public class OpenIDProviderMetadata {
     @JsonProperty("subject_types_supported")
     private List<String> subjectTypesSupported;
 
+    @JsonProperty("prompt_values_supported")
+    private List<String> promptValuesSupported;
+
     @JsonProperty("id_token_signing_alg_values_supported")
     private List<String> idTokenSigningAlgValuesSupported;
 
@@ -319,6 +322,14 @@ public class OpenIDProviderMetadata {
 
     public void setSubjectTypesSupported(List<String> subjectTypesSupported) {
         this.subjectTypesSupported = subjectTypesSupported;
+    }
+
+    public List<String> getPromptValuesSupported() {
+        return promptValuesSupported;
+    }
+
+    public void setPromptValuesSupported(List<String> promptValuesSupported) {
+        this.promptValuesSupported = promptValuesSupported;
     }
 
     public List<String> getIdTokenSigningAlgValuesSupported() {

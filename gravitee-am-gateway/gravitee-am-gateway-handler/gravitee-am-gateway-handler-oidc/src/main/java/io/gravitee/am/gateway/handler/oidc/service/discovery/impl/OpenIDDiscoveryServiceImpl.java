@@ -123,6 +123,7 @@ public class OpenIDDiscoveryServiceImpl implements OpenIDDiscoveryService, Initi
         openIDProviderMetadata.setGrantTypesSupported(GrantTypeUtils.getSupportedGrantTypes());
         openIDProviderMetadata.setClaimTypesSupported(ClaimType.supportedValues());
         openIDProviderMetadata.setSubjectTypesSupported(SubjectTypeUtils.getSupportedSubjectTypes());
+        openIDProviderMetadata.setPromptValuesSupported(Prompt.supportedValues());
 
         // id_token
         openIDProviderMetadata.setIdTokenSigningAlgValuesSupported(JWAlgorithmUtils.getSupportedIdTokenSigningAlg());
