@@ -32,14 +32,17 @@ import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.PasswordService;
+import io.gravitee.am.service.exception.CredentialNotFoundException;
 import io.gravitee.am.service.exception.InvalidPasswordException;
 import io.gravitee.am.service.validators.user.UserValidator;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -148,6 +151,73 @@ public class AccountServiceTest {
         verify(credentialService, times(1)).findById(credentialId);
         verify(credentialService, never()).delete(credentialId);
         verify(auditService, never()).report(any());
+    }
+
+    @Test
+    public void shouldNotUpdateWebAuthnCredentials_notFound() {
+        final String userId = "user-id";
+        final String credentialId = "credential-id";
+        final String deviceName = "device-name";
+        final User principal = new DefaultUser();
+
+        when(credentialService.findById(credentialId)).thenReturn(Maybe.empty());
+
+        TestObserver testObserver = accountService.updateWebAuthnCredential(userId, credentialId, deviceName, principal).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertNotComplete();
+        testObserver.assertError(CredentialNotFoundException.class);
+
+        verify(credentialService, times(1)).findById(credentialId);
+        verify(credentialService, never()).update(any());
+        verify(auditService, never()).report(any());
+    }
+
+    @Test
+    public void shouldNotUpdateWebAuthnCredentials_notTheSameUser() {
+        final String userId = "user-id";
+        final String credentialId = "credential-id";
+        final String deviceName = "device-name";
+        final User principal = new DefaultUser();
+
+        Credential credential = new Credential();
+        credential.setUserId("wrong-user-id");
+        when(credentialService.findById(credentialId)).thenReturn(Maybe.just(credential));
+
+        TestObserver testObserver = accountService.updateWebAuthnCredential(userId, credentialId, deviceName, principal).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(credentialService, times(1)).findById(credentialId);
+        // we do not update the credential
+        verify(credentialService, never()).update(any());
+        verify(auditService, never()).report(any());
+    }
+
+    @Test
+    public void shouldUpdateWebAuthnCredentials_nominalCase() {
+        final String userId = "user-id";
+        final String credentialId = "credential-id";
+        final String deviceName = "device-name";
+        final User principal = new DefaultUser();
+
+        Credential credential = new Credential();
+        credential.setUserId("user-id");
+        when(credentialService.findById(credentialId)).thenReturn(Maybe.just(credential));
+        ArgumentCaptor<Credential> argumentCaptor = ArgumentCaptor.forClass(Credential.class);
+        when(credentialService.update(argumentCaptor.capture())).thenReturn(Single.just(credential));
+
+        TestObserver testObserver = accountService.updateWebAuthnCredential(userId, credentialId, deviceName, principal).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(credentialService, times(1)).findById(credentialId);
+        verify(credentialService, times(1)).update(any());
+        verify(auditService, times(1)).report(any());
+
+        Credential updatedCredential = argumentCaptor.getValue();
+        Assert.assertEquals(deviceName, updatedCredential.getDeviceName());
     }
 
     @Test

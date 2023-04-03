@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>WebAuthn Register Success</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" th:href="@{../../assets/css/main.css}">
+
+    <!-- Favicon and touch icons -->
+    <link rel="shortcut icon" th:href="${theme.faviconUrl} ?: @{../../assets/ico/favicon.ico}">
+
+    <!-- Custom CSS -->
+    <style th:if="${theme.css}" th:text="${theme.css}"></style>
+    <style th:if="${theme.customCss}" th:text="${theme.customCss}"></style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <img class="logo" th:src="${theme.logoUrl} ?: @{../../assets/images/gravitee-logo.svg}">
+        <div class="title">
+            <span th:text="#{webauthn.register.success.title}"/>
+        </div>
+        <div class="header-description start">
+            <span th:text="#{webauthn.register.success.description}"/>
+        </div>
+    </div>
+    <div class="section">
+        <form class="form" role="form" id="form" method="post" th:action="${action}">
+            <div class="form-field">
+                <input class="input-field" type="text" id="deviceName" name="deviceName"
+                       th:placeholder="#{webauthn.register.success.label.deviceName}"
+                       th:value="${deviceName}"
+                       autofocus="autofocus"
+                       required />
+            </div>
+
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <div>
+                <button class="button primary" th:text="#{webauthn.register.success.button.submit}"></button>
+            </div>
+        </form>
+    </div>
+</div>
+</body>
+</html>

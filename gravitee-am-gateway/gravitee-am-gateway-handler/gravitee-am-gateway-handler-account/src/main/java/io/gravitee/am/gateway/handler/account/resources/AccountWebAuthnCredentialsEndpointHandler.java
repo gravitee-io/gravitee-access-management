@@ -15,11 +15,14 @@
  */
 package io.gravitee.am.gateway.handler.account.resources;
 
+import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.gateway.handler.account.services.AccountService;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.User;
+import io.vertx.core.json.DecodeException;
 import io.vertx.rxjava3.ext.web.RoutingContext;
+import org.springframework.util.StringUtils;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -76,5 +79,38 @@ public class AccountWebAuthnCredentialsEndpointHandler {
                         () -> AccountResponseHandler.handleNoBodyResponse(routingContext),
                         error -> routingContext.fail(error)
                 );
+    }
+
+    /**
+     * Update enrolled WebAuthn credential for the current user
+     *
+     * @param routingContext the routingContext holding the current user
+     */
+    public void updateEnrolledWebAuthnCredential(RoutingContext routingContext) {
+        final User user = routingContext.get(ConstantKeys.USER_CONTEXT_KEY);
+        final String credentialId = routingContext.request().getParam("credentialId");
+
+        try {
+            if (routingContext.body().asString() == null) {
+                routingContext.fail(new InvalidRequestException("Unable to parse body message"));
+                return;
+            }
+
+            final String deviceName = routingContext.body().asJsonObject().getString("deviceName");
+
+            // deviceName is required
+            if (StringUtils.isEmpty(deviceName)) {
+                routingContext.fail(new InvalidRequestException("Field [deviceName] is required"));
+                return;
+            }
+
+            accountService.updateWebAuthnCredential(user.getId(), credentialId, deviceName, new DefaultUser(user))
+                    .subscribe(
+                            credential -> AccountResponseHandler.handleDefaultResponse(routingContext, credential),
+                            error -> routingContext.fail(error)
+                    );
+        } catch (DecodeException ex) {
+            routingContext.fail(new InvalidRequestException("Unable to parse body message"));
+        }
     }
 }

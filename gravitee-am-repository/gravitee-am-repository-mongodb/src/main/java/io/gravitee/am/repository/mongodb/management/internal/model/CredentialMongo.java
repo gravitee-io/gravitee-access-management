@@ -39,6 +39,7 @@ public class CredentialMongo extends Auditable {
     private String attestationStatement;
     private String ipAddress;
     private String userAgent;
+    private String deviceName;
     private Date accessedAt;
     private Date lastCheckedAt;
 
@@ -144,6 +145,14 @@ public class CredentialMongo extends Auditable {
 
     public void setUserAgent(String userAgent) {
         this.userAgent = userAgent;
+    }
+
+    public String getDeviceName() {
+        return deviceName;
+    }
+
+    public void setDeviceName(String deviceName) {
+        this.deviceName = deviceName;
     }
 
     public Date getAccessedAt() {

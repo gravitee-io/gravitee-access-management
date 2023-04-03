@@ -209,6 +209,23 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
+    public Single<Credential> updateWebAuthnCredential(String userId, String id, String deviceName, io.gravitee.am.identityprovider.api.User principal) {
+        return credentialService.findById(id)
+                .switchIfEmpty(Single.error(new CredentialNotFoundException(id)))
+                .flatMap(credential -> {
+                    if (!userId.equals(credential.getUserId())) {
+                        LOGGER.debug("Webauthn credential ID {} does not belong to the user ID {}, skip update action", id, userId);
+                        return Single.just(credential);
+                    }
+                    credential.setDeviceName(deviceName);
+                    credential.setUpdatedAt(new Date());
+                    return credentialService.update(credential)
+                            .doOnSuccess(credential1 -> auditService.report(AuditBuilder.builder(CredentialAuditBuilder.class).principal(principal).type(EventType.CREDENTIAL_UPDATED).oldValue(credential).credential(credential1)))
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(CredentialAuditBuilder.class).principal(principal).type(EventType.CREDENTIAL_UPDATED).throwable(throwable)));
+                });
+    }
+
+    @Override
     public Single<List<ScopeApproval>> getConsentList(User user, Client client) {
         return scopeApprovalService.findByDomainAndUserAndClient(domain.getId(),  user.getId(), client.getClientId()).toList();
     }

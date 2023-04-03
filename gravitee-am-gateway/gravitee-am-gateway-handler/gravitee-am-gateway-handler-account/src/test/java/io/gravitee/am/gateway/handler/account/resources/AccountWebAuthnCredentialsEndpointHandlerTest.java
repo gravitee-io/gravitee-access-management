@@ -20,9 +20,12 @@ import io.gravitee.am.gateway.handler.account.resources.util.AccountRoutes;
 import io.gravitee.am.gateway.handler.account.services.AccountService;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.ErrorHandler;
+import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.User;
 import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.rxjava3.core.buffer.Buffer;
 import io.vertx.rxjava3.ext.web.handler.BodyHandler;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -78,5 +81,95 @@ public class AccountWebAuthnCredentialsEndpointHandlerTest extends RxWebTestBase
                 null,
                 204,
                 "No Content", null);
+    }
+
+    @Test
+    public void shouldNotUpdateWebAuthnCredentials_noBody() throws Exception {
+        router.put(AccountRoutes.WEBAUTHN_CREDENTIALS_BY_ID.getRoute())
+                .handler(accountWebAuthnCredentialsEndpointHandler::updateEnrolledWebAuthnCredential);
+
+        testRequest(HttpMethod.PUT, "/api/webauthn/credentials/credential-id",
+                null,
+                res -> {
+                    res.bodyHandler(h -> {
+                        assertEquals("{\n" +
+                                "  \"message\" : \"Unable to parse body message\",\n" +
+                                "  \"http_status\" : 400\n" +
+                                "}", h.toString());
+                    });
+                },
+                400,
+                "Bad Request", null);
+    }
+
+    @Test
+    public void shouldNotUpdateWebAuthnCredentials_noDeviceName() throws Exception {
+        router.put(AccountRoutes.WEBAUTHN_CREDENTIALS_BY_ID.getRoute())
+                .handler(accountWebAuthnCredentialsEndpointHandler::updateEnrolledWebAuthnCredential);
+
+        testRequest(HttpMethod.PUT, "/api/webauthn/credentials/credential-id",
+                req -> {
+                    Buffer buffer = Buffer.buffer();
+                    buffer.appendString("{}");
+                    req.headers().set("content-length", String.valueOf(buffer.length()));
+                    req.headers().set("content-type", "application/json");
+                    req.write(buffer);
+                },
+                res -> {
+                    res.bodyHandler(h -> {
+                        assertEquals("{\n" +
+                                "  \"message\" : \"Field [deviceName] is required\",\n" +
+                                "  \"http_status\" : 400\n" +
+                                "}", h.toString());
+                    });
+                },
+                400,
+                "Bad Request", null);
+    }
+
+    @Test
+    public void shouldUpdateWebAuthnCredentials() throws Exception {
+        router.put(AccountRoutes.WEBAUTHN_CREDENTIALS_BY_ID.getRoute())
+                .handler(accountWebAuthnCredentialsEndpointHandler::updateEnrolledWebAuthnCredential);
+
+        Credential credential = new Credential();
+        credential.setDeviceName("myDevice");
+        when(accountService.updateWebAuthnCredential(eq("user-id"), eq("credential-id"), eq("myDevice"), any())).thenReturn(Single.just(credential));
+
+        testRequest(HttpMethod.PUT, "/api/webauthn/credentials/credential-id",
+                req -> {
+
+                    Buffer buffer = Buffer.buffer();
+                    buffer.appendString("{\"deviceName\":\"myDevice\"}");
+                    req.headers().set("content-length", String.valueOf(buffer.length()));
+                    req.headers().set("content-type", "application/json");
+                    req.write(buffer);
+                },
+                res -> {
+                    res.bodyHandler(h -> {
+                        assertEquals("{\n" +
+                                "  \"id\" : null,\n" +
+                                "  \"referenceType\" : null,\n" +
+                                "  \"referenceId\" : null,\n" +
+                                "  \"userId\" : null,\n" +
+                                "  \"username\" : null,\n" +
+                                "  \"credentialId\" : null,\n" +
+                                "  \"publicKey\" : null,\n" +
+                                "  \"counter\" : null,\n" +
+                                "  \"aaguid\" : null,\n" +
+                                "  \"attestationStatementFormat\" : null,\n" +
+                                "  \"attestationStatement\" : null,\n" +
+                                "  \"ipAddress\" : null,\n" +
+                                "  \"userAgent\" : null,\n" +
+                                "  \"deviceName\" : \"myDevice\",\n" +
+                                "  \"createdAt\" : null,\n" +
+                                "  \"updatedAt\" : null,\n" +
+                                "  \"accessedAt\" : null,\n" +
+                                "  \"lastCheckedAt\" : null\n" +
+                                "}", h.toString());
+                    });
+                },
+                200,
+                "OK", null);
     }
 }

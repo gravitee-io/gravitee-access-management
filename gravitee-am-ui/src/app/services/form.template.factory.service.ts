@@ -44,6 +44,12 @@ export class FormTemplateFactoryService {
       'template': 'WEBAUTHN_REGISTER',
       'icon': 'fingerprint'
     },
+    "webauthn register success": {
+      'name': 'Webauthn Register Success',
+      'description': 'Passwordless page to finalize the registration (naming)',
+      'template': 'WEBAUTHN_REGISTER_SUCCESS',
+      'icon': 'fingerprint'
+    },
     "registration": {
       'name': 'Registration',
       'description': 'Registration page to create an account',

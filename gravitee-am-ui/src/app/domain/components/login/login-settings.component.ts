@@ -105,6 +105,15 @@ export class LoginSettingsComponent implements OnInit, OnChanges {
     return this.loginSettings && this.loginSettings.passwordlessEnforcePasswordEnabled;
   }
 
+  enablePasswordlessDeviceNaming(event) {
+    this.loginSettings.passwordlessDeviceNamingEnabled = event.checked;
+    this.formChanged = true;
+  }
+
+  isPasswordlessDeviceNamingEnabled() {
+    return this.loginSettings && this.loginSettings.passwordlessDeviceNamingEnabled;
+  }
+
   enableHideForm(event) {
     this.loginSettings.hideForm = event.checked;
     this.formChanged = true;
