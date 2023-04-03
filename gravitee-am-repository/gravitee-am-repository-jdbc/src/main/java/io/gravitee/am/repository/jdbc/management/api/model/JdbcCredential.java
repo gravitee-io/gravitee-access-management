@@ -51,6 +51,8 @@ public class JdbcCredential {
     private String attestationStatementFormat;
     @Column("att_stmt")
     private String attestationStatement;
+    @Column("device_name")
+    private String deviceName;
     @Column("created_at")
     private LocalDateTime createdAt;
     @Column("updated_at")
@@ -146,6 +148,14 @@ public class JdbcCredential {
 
     public void setAttestationStatement(String attestationStatement) {
         this.attestationStatement = attestationStatement;
+    }
+
+    public String getDeviceName() {
+        return deviceName;
+    }
+
+    public void setDeviceName(String deviceName) {
+        this.deviceName = deviceName;
     }
 
     public LocalDateTime getCreatedAt() {

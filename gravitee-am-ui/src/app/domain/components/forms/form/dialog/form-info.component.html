@@ -140,6 +140,25 @@
         </html>
       ]]>
     </pre>
+    <pre *ngIf="data.rawTemplate === 'WEBAUTHN_REGISTER_SUCCESS'">
+      <![CDATA[
+        <!DOCTYPE html>
+        <html xmlns:th="http://www.thymeleaf.org">
+        <head>
+            <title>WebAuthn register success custom</title>
+        </head>
+        <body>
+          <form id="form" th:action="${action}" method="post">
+            <input type="text" name="deviceName" th:value="${deviceName}" required/>
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <div>
+              <button>Next</button>
+            </div>
+          </form>
+        </body>
+        </html>
+      ]]>
+    </pre>
     <pre *ngIf="data.rawTemplate === 'REGISTRATION'">
       <![CDATA[
         <!DOCTYPE html>

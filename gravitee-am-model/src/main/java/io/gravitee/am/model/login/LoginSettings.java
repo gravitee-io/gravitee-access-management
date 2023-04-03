@@ -57,6 +57,10 @@ public class LoginSettings {
      */
     private Integer passwordlessEnforcePasswordMaxAge;
     /**
+     * Enable/Disable passwordless (WebAuthn) device naming feature
+     */
+    private boolean passwordlessDeviceNamingEnabled;
+    /**
      * Enable/Disable hide login form
      */
     private boolean hideForm;
@@ -77,6 +81,7 @@ public class LoginSettings {
         this.passwordlessRememberDeviceEnabled = other.passwordlessRememberDeviceEnabled;
         this.passwordlessEnforcePasswordEnabled = other.passwordlessEnforcePasswordEnabled;
         this.passwordlessEnforcePasswordMaxAge = other.passwordlessEnforcePasswordMaxAge;
+        this.passwordlessDeviceNamingEnabled = other.passwordlessDeviceNamingEnabled;
         this.hideForm = !other.identifierFirstEnabled && other.hideForm;
         this.identifierFirstEnabled = other.identifierFirstEnabled;
     }
@@ -143,6 +148,14 @@ public class LoginSettings {
 
     public void setPasswordlessEnforcePasswordMaxAge(Integer passwordlessEnforcePasswordMaxAge) {
         this.passwordlessEnforcePasswordMaxAge = passwordlessEnforcePasswordMaxAge;
+    }
+
+    public boolean isPasswordlessDeviceNamingEnabled() {
+        return passwordlessDeviceNamingEnabled;
+    }
+
+    public void setPasswordlessDeviceNamingEnabled(boolean passwordlessDeviceNamingEnabled) {
+        this.passwordlessDeviceNamingEnabled = passwordlessDeviceNamingEnabled;
     }
 
     public boolean isHideForm() {

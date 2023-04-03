@@ -106,6 +106,14 @@
           <mat-hint>Specifies the allowable elapsed time in seconds since the last time the End-User was actively authenticated with credentials.</mat-hint>
         </mat-form-field>
       </div>
+      <div fxLayout="column" style="margin-top: 10px;">
+        <mat-slide-toggle
+          (change)="enablePasswordlessDeviceNaming($event)"
+          [checked]="isPasswordlessDeviceNamingEnabled()" [disabled]="readonly || !isPasswordlessEnabled()">
+          Passwordless Device Naming
+        </mat-slide-toggle>
+        <mat-hint style="font-size: 75%;">Ask users to name their devices to later identify them.</mat-hint>
+      </div>
     </div>
   </div>
 

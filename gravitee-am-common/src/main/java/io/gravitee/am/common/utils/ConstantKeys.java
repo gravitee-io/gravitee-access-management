@@ -109,6 +109,7 @@ public interface ConstantKeys {
     String PASSWORDLESS_ORIGIN = "passwordlessOrigin";
     String PASSWORDLESS_ASSERTION = "passwordlessAssertion";
     String PASSWORDLESS_ENFORCE_PASSWORD = "passwordlessEnforcePassword";
+    String PASSWORDLESS_DEVICE_NAME = "deviceName";
 
     // Consent keys.
     String USER_CONSENT_COMPLETED_KEY = "userConsentCompleted";

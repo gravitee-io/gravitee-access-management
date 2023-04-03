@@ -17,19 +17,32 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn;
 
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
+import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Template;
+import io.gravitee.am.model.login.LoginSettings;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
 import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class WebAuthnRegisterPostEndpoint extends AbstractEndpoint implements Handler<RoutingContext>  {
+
+    private final Domain domain;
+
+    public WebAuthnRegisterPostEndpoint(Domain domain) {
+        this.domain = domain;
+    }
 
     @Override
     public void handle(RoutingContext ctx) {
@@ -54,11 +67,22 @@ public class WebAuthnRegisterPostEndpoint extends AbstractEndpoint implements Ha
 
     private void registerV1(RoutingContext ctx) {
         // at this stage the registration has been done
-        // redirect the user to the original request
-        final MultiMap queryParams = RequestUtils.getCleanedQueryParams(ctx.request());
-        final String redirectUri = getReturnUrl(ctx, queryParams);
+        // redirect the user to the original request or device naming if the option has been enabled
+        final Client client = ctx.get(ConstantKeys.CLIENT_CONTEXT_KEY);
+        final LoginSettings loginSettings = LoginSettings.getInstance(domain, client);
+        final HttpServerRequest request = ctx.request();
+        final MultiMap queryParams = RequestUtils.getCleanedQueryParams(request);
+        String redirectUri = getReturnUrl(ctx, queryParams);
 
-        ctx.response().putHeader(io.vertx.core.http.HttpHeaders.LOCATION, redirectUri)
+        if (loginSettings != null
+                && loginSettings.isPasswordlessEnabled()
+                && loginSettings.isPasswordlessDeviceNamingEnabled()) {
+            String path = ctx.get(UriBuilderRequest.CONTEXT_PATH) + Template.WEBAUTHN_REGISTER_SUCCESS.redirectUri();
+            redirectUri = UriBuilderRequest.resolveProxyRequest(request, path, queryParams, true);
+        }
+
+        ctx.response()
+                .putHeader(io.vertx.core.http.HttpHeaders.LOCATION, redirectUri)
                 .setStatusCode(302)
                 .end();
     }

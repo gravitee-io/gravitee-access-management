@@ -64,6 +64,7 @@ import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnL
 import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnRegisterCredentialsEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnRegisterEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnRegisterPostEndpoint;
+import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnRegisterSuccessEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnResponseEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.handler.LocaleHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.botdetection.BotDetectionHandler;
@@ -146,6 +147,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
     public static final String PATH_CONFIRM_REGISTRATION = "/confirmRegistration";
     public static final String PATH_RESET_PASSWORD = "/resetPassword";
     public static final String PATH_WEBAUTHN_REGISTER = "/webauthn/register";
+    public static final String PATH_WEBAUTHN_REGISTER_SUCCESS = "/webauthn/register/success";
     public static final String PATH_WEBAUTHN_REGISTER_CREDENTIALS = "/webauthn/register/credentials";
     public static final String PATH_VERIFY_REGISTRATION = "/verifyRegistration";
     public static final String PATH_WEBAUTHN_RESPONSE = "/webauthn/response";
@@ -452,11 +454,14 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(webAuthnAccessHandler)
                 .handler(new WebAuthnRegisterHandler(factorService, factorManager, domain, webAuthn, credentialService))
                 .handler(webAuthnRememberDeviceHandler)
-                .handler(new WebAuthnRegisterPostEndpoint());
+                .handler(new WebAuthnRegisterPostEndpoint(domain));
         rootRouter.route(PATH_WEBAUTHN_REGISTER_CREDENTIALS)
                 .handler(clientRequestParseHandler)
                 .handler(webAuthnAccessHandler)
                 .handler(new WebAuthnRegisterCredentialsEndpoint(domain, webAuthn));
+        rootRouter.route(PATH_WEBAUTHN_REGISTER_SUCCESS)
+                .handler(clientRequestParseHandler)
+                .handler(new WebAuthnRegisterSuccessEndpoint(thymeleafTemplateEngine, credentialService, domain));
         rootRouter.get(PATH_WEBAUTHN_LOGIN)
                 .handler(clientRequestParseHandler)
                 .handler(webAuthnAccessHandler)
@@ -643,6 +648,9 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .route(PATH_WEBAUTHN_REGISTER_CREDENTIALS)
                 .handler(sessionHandler);
         router
+                .route(PATH_WEBAUTHN_REGISTER_SUCCESS)
+                .handler(sessionHandler);
+        router
                 .route(PATH_WEBAUTHN_RESPONSE)
                 .handler(sessionHandler);
         router
@@ -684,6 +692,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
 
         // WebAuthn endpoint
         router.route(PATH_WEBAUTHN_REGISTER).handler(authenticationFlowContextHandler);
+        router.route(PATH_WEBAUTHN_REGISTER_SUCCESS).handler(authenticationFlowContextHandler);
         router.route(PATH_WEBAUTHN_RESPONSE).handler(authenticationFlowContextHandler);
         router.route(PATH_WEBAUTHN_LOGIN).handler(authenticationFlowContextHandler);
 
@@ -706,6 +715,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         router.route(PATH_CONFIRM_REGISTRATION).handler(csrfHandler);
         router.route(PATH_RESET_PASSWORD).handler(csrfHandler);
         router.route(PATH_VERIFY_REGISTRATION).handler(csrfHandler);
+        router.route(PATH_WEBAUTHN_REGISTER_SUCCESS).handler(csrfHandler);
     }
 
     private void cspHandler(Router router) {
@@ -725,6 +735,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         router.route(PATH_CONFIRM_REGISTRATION).handler(cspHandler);
         router.route(PATH_RESET_PASSWORD).handler(cspHandler);
         router.route(PATH_WEBAUTHN_REGISTER).handler(cspHandler);
+        router.route(PATH_WEBAUTHN_REGISTER_SUCCESS).handler(cspHandler);
         router.route(PATH_WEBAUTHN_RESPONSE).handler(cspHandler);
         router.route(PATH_WEBAUTHN_LOGIN).handler(cspHandler);
         router.route(PATH_FORGOT_PASSWORD).handler(cspHandler);
@@ -747,6 +758,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         router.route(PATH_CONFIRM_REGISTRATION).handler(xframeHandler);
         router.route(PATH_RESET_PASSWORD).handler(xframeHandler);
         router.route(PATH_WEBAUTHN_REGISTER).handler(xframeHandler);
+        router.route(PATH_WEBAUTHN_REGISTER_SUCCESS).handler(xframeHandler);
         router.route(PATH_WEBAUTHN_RESPONSE).handler(xframeHandler);
         router.route(PATH_WEBAUTHN_LOGIN).handler(xframeHandler);
         router.route(PATH_FORGOT_PASSWORD).handler(xframeHandler);
@@ -769,6 +781,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         router.route(PATH_CONFIRM_REGISTRATION).handler(xssHandler);
         router.route(PATH_RESET_PASSWORD).handler(xssHandler);
         router.route(PATH_WEBAUTHN_REGISTER).handler(xssHandler);
+        router.route(PATH_WEBAUTHN_REGISTER_SUCCESS).handler(xssHandler);
         router.route(PATH_WEBAUTHN_RESPONSE).handler(xssHandler);
         router.route(PATH_WEBAUTHN_LOGIN).handler(xssHandler);
         router.route(PATH_FORGOT_PASSWORD).handler(xssHandler);
@@ -794,6 +807,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         router.route(PATH_IDENTIFIER_FIRST_LOGIN).failureHandler(errorHandler);
         router.route(PATH_WEBAUTHN_LOGIN).failureHandler(errorHandler);
         router.route(PATH_WEBAUTHN_REGISTER).failureHandler(errorHandler);
+        router.route(PATH_WEBAUTHN_REGISTER_SUCCESS).failureHandler(errorHandler);
         router.route(PATH_WEBAUTHN_RESPONSE).failureHandler(errorHandler);
         router.route(PATH_VERIFY_REGISTRATION).failureHandler(errorHandler);
     }

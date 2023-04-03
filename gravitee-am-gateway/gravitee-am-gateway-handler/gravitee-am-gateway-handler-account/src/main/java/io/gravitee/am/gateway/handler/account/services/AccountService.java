@@ -60,6 +60,8 @@ public interface AccountService {
 
     Completable removeWebAuthnCredential(String userId, String id, io.gravitee.am.identityprovider.api.User principal);
 
+    Single<Credential> updateWebAuthnCredential(String userId, String id, String deviceName, io.gravitee.am.identityprovider.api.User principal);
+
     Single<List<ScopeApproval>> getConsentList(User user, Client client);
 
     Single<ScopeApproval> getConsent(String id);

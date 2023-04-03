@@ -40,6 +40,7 @@ public class Credential {
     private String attestationStatement;
     private String ipAddress;
     private String userAgent;
+    private String deviceName;
     @ApiModelProperty(dataType = "java.lang.Long")
     private Date createdAt;
     @ApiModelProperty(dataType = "java.lang.Long")
@@ -151,6 +152,14 @@ public class Credential {
 
     public void setUserAgent(String userAgent) {
         this.userAgent = userAgent;
+    }
+
+    public String getDeviceName() {
+        return deviceName;
+    }
+
+    public void setDeviceName(String deviceName) {
+        this.deviceName = deviceName;
     }
 
     public Date getCreatedAt() {

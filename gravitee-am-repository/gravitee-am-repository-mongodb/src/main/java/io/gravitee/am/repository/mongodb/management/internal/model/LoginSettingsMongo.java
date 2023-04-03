@@ -31,6 +31,7 @@ public class LoginSettingsMongo {
     private boolean passwordlessRememberDeviceEnabled;
     private boolean passwordlessEnforcePasswordEnabled;
     private Integer passwordlessEnforcePasswordMaxAge;
+    private boolean passwordlessDeviceNamingEnabled;
     private boolean hideForm;
     private boolean identifierFirstLoginEnabled;
 
@@ -98,6 +99,14 @@ public class LoginSettingsMongo {
         this.passwordlessEnforcePasswordMaxAge = passwordlessEnforcePasswordMaxAge;
     }
 
+    public boolean isPasswordlessDeviceNamingEnabled() {
+        return passwordlessDeviceNamingEnabled;
+    }
+
+    public void setPasswordlessDeviceNamingEnabled(boolean passwordlessDeviceNamingEnabled) {
+        this.passwordlessDeviceNamingEnabled = passwordlessDeviceNamingEnabled;
+    }
+
     public boolean isHideForm() {
         return hideForm;
     }
@@ -124,6 +133,7 @@ public class LoginSettingsMongo {
         loginSettings.setPasswordlessRememberDeviceEnabled(isPasswordlessRememberDeviceEnabled());
         loginSettings.setPasswordlessEnforcePasswordEnabled(isPasswordlessEnforcePasswordEnabled());
         loginSettings.setPasswordlessEnforcePasswordMaxAge(getPasswordlessEnforcePasswordMaxAge());
+        loginSettings.setPasswordlessDeviceNamingEnabled(isPasswordlessDeviceNamingEnabled());
         loginSettings.setHideForm(!isIdentifierFirstLoginEnabled() && isHideForm());
         loginSettings.setIdentifierFirstEnabled(isIdentifierFirstLoginEnabled());
 
@@ -144,6 +154,7 @@ public class LoginSettingsMongo {
         loginSettingsMongo.setPasswordlessRememberDeviceEnabled(loginSettings.isPasswordlessRememberDeviceEnabled());
         loginSettingsMongo.setPasswordlessEnforcePasswordEnabled(loginSettings.isPasswordlessEnforcePasswordEnabled());
         loginSettingsMongo.setPasswordlessEnforcePasswordMaxAge(loginSettings.getPasswordlessEnforcePasswordMaxAge());
+        loginSettingsMongo.setPasswordlessDeviceNamingEnabled(loginSettings.isPasswordlessDeviceNamingEnabled());
         loginSettingsMongo.setHideForm(!loginSettings.isIdentifierFirstEnabled() && loginSettings.isHideForm());
         loginSettingsMongo.setIdentifierFirstLoginEnabled(loginSettings.isIdentifierFirstEnabled());
 

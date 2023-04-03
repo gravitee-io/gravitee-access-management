@@ -39,6 +39,7 @@ public enum Template {
     BLOCKED_ACCOUNT("blocked_account", "/resetPassword"),
     COMPLETE_PROFILE("complete_profile", "/completeProfile"),
     WEBAUTHN_REGISTER("webauthn_register", "/webauthn/register"),
+    WEBAUTHN_REGISTER_SUCCESS("webauthn_register_success", "/webauthn/register/success"),
     WEBAUTHN_LOGIN("webauthn_login", "/webauthn/login"),
     IDENTIFIER_FIRST_LOGIN("identifier_first_login", "/login/identifier"),
     ERROR("error", "/error"),
