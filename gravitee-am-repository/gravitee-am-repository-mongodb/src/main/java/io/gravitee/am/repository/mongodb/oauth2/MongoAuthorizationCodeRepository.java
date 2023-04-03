@@ -44,18 +44,18 @@ public class MongoAuthorizationCodeRepository extends AbstractOAuth2MongoReposit
 
     private static final String FIELD_TRANSACTION_ID = "transactionId";
     private static final String FIELD_CODE = "code";
-    private static final String FIELD_RESET_TIME = "expire_at";
+    private static final String FIELD_EXPIRE_AT = "expire_at";
     private MongoCollection<AuthorizationCodeMongo> authorizationCodeCollection;
 
     @PostConstruct
     public void init() {
         authorizationCodeCollection = mongoOperations.getCollection("authorization_codes", AuthorizationCodeMongo.class);
         super.init(authorizationCodeCollection);
-        super.createIndex(authorizationCodeCollection, new Document(FIELD_CODE, 1));
-        super.createIndex(authorizationCodeCollection, new Document(FIELD_TRANSACTION_ID, 1));
+        super.createIndex(authorizationCodeCollection, new Document(FIELD_CODE, 1), new IndexOptions().name("c1"));
+        super.createIndex(authorizationCodeCollection, new Document(FIELD_TRANSACTION_ID, 1), new IndexOptions().name("t1"));
 
         // expire after index
-        super.createIndex(authorizationCodeCollection, new Document(FIELD_RESET_TIME, 1), new IndexOptions().expireAfter(0l, TimeUnit.SECONDS));
+        super.createIndex(authorizationCodeCollection, new Document(FIELD_EXPIRE_AT, 1), new IndexOptions().expireAfter(0l, TimeUnit.SECONDS).name("e1"));
     }
 
     private Maybe<AuthorizationCode> findById(String id) {

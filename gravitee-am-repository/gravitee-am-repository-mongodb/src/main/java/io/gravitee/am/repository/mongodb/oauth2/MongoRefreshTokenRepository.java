@@ -46,7 +46,7 @@ import static com.mongodb.client.model.Filters.eq;
 public class MongoRefreshTokenRepository extends AbstractOAuth2MongoRepository implements RefreshTokenRepository {
 
     private MongoCollection<RefreshTokenMongo> refreshTokenCollection;
-    private static final String FIELD_RESET_TIME = "expire_at";
+    private static final String FIELD_EXPIRE_AT = "expire_at";
     private static final String FIELD_TOKEN = "token";
     private static final String FIELD_SUBJECT = "subject";
 
@@ -54,12 +54,12 @@ public class MongoRefreshTokenRepository extends AbstractOAuth2MongoRepository i
     public void init() {
         refreshTokenCollection = mongoOperations.getCollection("refresh_tokens", RefreshTokenMongo.class);
         super.init(refreshTokenCollection);
-        super.createIndex(refreshTokenCollection, new Document(FIELD_TOKEN, 1));
-        super.createIndex(refreshTokenCollection, new Document(FIELD_SUBJECT, 1));
-        super.createIndex(refreshTokenCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT, 1).append(FIELD_SUBJECT, 1));
+        super.createIndex(refreshTokenCollection, new Document(FIELD_TOKEN, 1), new IndexOptions().name("t1"));
+        super.createIndex(refreshTokenCollection, new Document(FIELD_SUBJECT, 1), new IndexOptions().name("s1"));
+        super.createIndex(refreshTokenCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT, 1).append(FIELD_SUBJECT, 1), new IndexOptions().name("d1c1s1"));
 
         // expire after index
-        super.createIndex(refreshTokenCollection, new Document(FIELD_RESET_TIME, 1), new IndexOptions().expireAfter(0L, TimeUnit.SECONDS));
+        super.createIndex(refreshTokenCollection, new Document(FIELD_EXPIRE_AT, 1), new IndexOptions().name("e1").expireAfter(0L, TimeUnit.SECONDS));
     }
 
     private Maybe<RefreshToken> findById(String id) {

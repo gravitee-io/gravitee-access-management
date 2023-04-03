@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.mongodb.management;
 
 import com.mongodb.BasicDBObject;
+import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.common.Page;
@@ -47,10 +48,10 @@ public class MongoAccessPolicyRepository extends AbstractManagementMongoReposito
     public void init() {
         accessPoliciesCollection = mongoOperations.getCollection(COLLECTION_NAME, AccessPolicyMongo.class);
         super.init(accessPoliciesCollection);
-        super.createIndex(accessPoliciesCollection, new Document(FIELD_DOMAIN, 1));
-        super.createIndex(accessPoliciesCollection, new Document(FIELD_RESOURCE, 1));
-        super.createIndex(accessPoliciesCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_RESOURCE, 1));
-        super.createIndex(accessPoliciesCollection, new Document(FIELD_UPDATED_AT, -1));
+        super.createIndex(accessPoliciesCollection, new Document(FIELD_DOMAIN, 1), new IndexOptions().name("d1"));
+        super.createIndex(accessPoliciesCollection, new Document(FIELD_RESOURCE, 1), new IndexOptions().name("r1"));
+        super.createIndex(accessPoliciesCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_RESOURCE, 1), new IndexOptions().name("d1r1"));
+        super.createIndex(accessPoliciesCollection, new Document(FIELD_UPDATED_AT, -1), new IndexOptions().name("u_1"));
     }
 
     @Override

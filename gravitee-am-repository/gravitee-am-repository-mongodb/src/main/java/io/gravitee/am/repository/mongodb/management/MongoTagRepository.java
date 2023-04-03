@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Tag;
@@ -42,7 +43,7 @@ public class MongoTagRepository extends AbstractManagementMongoRepository implem
     public void init() {
         tagsCollection = mongoOperations.getCollection("tags", TagMongo.class);
         super.init(tagsCollection);
-        super.createIndex(tagsCollection, new Document(FIELD_ID, 1).append(FIELD_ORGANIZATION_ID, 1));
+        super.createIndex(tagsCollection, new Document(FIELD_ORGANIZATION_ID, 1), new IndexOptions().name("o1"));
     }
 
 

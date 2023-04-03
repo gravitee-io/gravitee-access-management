@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.model.I18nDictionary;
 import io.gravitee.am.model.ReferenceType;
@@ -46,9 +47,9 @@ public class MongoI18nDictionaryRepository extends AbstractManagementMongoReposi
     public void init() {
         mongoCollection = mongoOperations.getCollection("i18n_dictionaries", I18nDictionaryMongo.class);
         super.init(mongoCollection);
-        super.createIndex(mongoCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1));
+        super.createIndex(mongoCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1), new IndexOptions().name("rt1ri1"));
         super.createIndex(mongoCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1)
-                                                                                .append(FIELD_NAME, 1));
+                                                                                .append(FIELD_NAME, 1), new IndexOptions().name("rt1ri1n1"));
     }
 
     @Override

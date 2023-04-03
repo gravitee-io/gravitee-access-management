@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.model.PasswordHistory;
 import io.gravitee.am.model.ReferenceType;
@@ -44,9 +45,9 @@ public class MongoPasswordHistoryRepository extends AbstractManagementMongoRepos
     public void init() {
         mongoCollection = mongoOperations.getCollection("password_histories", PasswordHistoryMongo.class);
         super.init(mongoCollection);
-        super.createIndex(mongoCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1));
+        super.createIndex(mongoCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1), new IndexOptions().name("rt1ri1"));
         super.createIndex(mongoCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1)
-                .append(FIELD_USER_ID, 1));
+                .append(FIELD_USER_ID, 1), new IndexOptions().name("rt1ri1u1"));
     }
 
     @Override

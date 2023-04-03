@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Environment;
@@ -42,7 +43,7 @@ public class MongoEnvironmentRepository extends AbstractManagementMongoRepositor
     public void init() {
         collection = mongoOperations.getCollection("environments", EnvironmentMongo.class);
         super.init(collection);
-        super.createIndex(collection, new Document(FIELD_ID, 1).append(FIELD_ORGANIZATION_ID, 1));
+        super.createIndex(collection, new Document(FIELD_ORGANIZATION_ID, 1),new IndexOptions().name("o1"));
     }
 
     @Override

@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.mongodb.management;
 
 import com.mongodb.BasicDBObject;
+import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.common.utils.RandomString;
@@ -71,14 +72,14 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
     public void init() {
         applicationsCollection = mongoOperations.getCollection("applications", ApplicationMongo.class);
         super.init(applicationsCollection);
-        super.createIndex(applicationsCollection, new Document(FIELD_DOMAIN, 1));
-        super.createIndex(applicationsCollection, new Document(FIELD_UPDATED_AT, -1));
-        super.createIndex(applicationsCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1));
-        super.createIndex(applicationsCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_NAME, 1));
-        super.createIndex(applicationsCollection, new Document(FIELD_IDENTITIES, 1));
-        super.createIndex(applicationsCollection, new Document(FIELD_APPLICATION_IDENTITY_PROVIDERS + "." + FIELD_IDENTITY, 1));
-        super.createIndex(applicationsCollection, new Document(FIELD_CERTIFICATE, 1));
-        super.createIndex(applicationsCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_GRANT_TYPES, 1));
+        super.createIndex(applicationsCollection, new Document(FIELD_DOMAIN, 1), new IndexOptions().name("d1"));
+        super.createIndex(applicationsCollection, new Document(FIELD_UPDATED_AT, -1), new IndexOptions().name("u_1"));
+        super.createIndex(applicationsCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1), new IndexOptions().name("d1soc1"));
+        super.createIndex(applicationsCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_NAME, 1), new IndexOptions().name("d1n1"));
+        super.createIndex(applicationsCollection, new Document(FIELD_IDENTITIES, 1), new IndexOptions().name("i1"));
+        super.createIndex(applicationsCollection, new Document(FIELD_APPLICATION_IDENTITY_PROVIDERS + "." + FIELD_IDENTITY, 1), new IndexOptions().name("aidp1"));
+        super.createIndex(applicationsCollection, new Document(FIELD_CERTIFICATE, 1), new IndexOptions().name("c1"));
+        super.createIndex(applicationsCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_GRANT_TYPES, 1), new IndexOptions().name("d1sog1"));
     }
 
     @Override

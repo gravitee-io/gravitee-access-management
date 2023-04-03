@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Factor;
@@ -42,8 +43,8 @@ public class MongoFactorRepository extends AbstractManagementMongoRepository imp
     public void init() {
         factorsCollection = mongoOperations.getCollection("factors", FactorMongo.class);
         super.init(factorsCollection);
-        super.createIndex(factorsCollection,new Document(FIELD_DOMAIN, 1));
-        super.createIndex(factorsCollection,new Document(FIELD_DOMAIN, 1).append(FIELD_FACTOR_TYPE, 1));
+        super.createIndex(factorsCollection,new Document(FIELD_DOMAIN, 1), new IndexOptions().name("d1"));
+        super.createIndex(factorsCollection,new Document(FIELD_DOMAIN, 1).append(FIELD_FACTOR_TYPE, 1), new IndexOptions().name("d1f1"));
     }
 
     @Override

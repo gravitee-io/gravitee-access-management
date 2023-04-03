@@ -44,7 +44,7 @@ import static com.mongodb.client.model.Filters.eq;
 @Component
 public class MongoPermissionTicketRepository extends AbstractManagementMongoRepository implements PermissionTicketRepository {
 
-    private static final String FIELD_RESET_TIME = "expireAt";
+    private static final String FIELD_EXPIRE_AT = "expireAt";
     private static final String COLLECTION_NAME = "uma_permission_ticket";
     private MongoCollection<PermissionTicketMongo> permissionTicketCollection;
 
@@ -54,7 +54,7 @@ public class MongoPermissionTicketRepository extends AbstractManagementMongoRepo
         super.init(permissionTicketCollection);
 
         // expire after index
-        super.createIndex(permissionTicketCollection, new Document(FIELD_RESET_TIME, 1), new IndexOptions().expireAfter(0l, TimeUnit.SECONDS));
+        super.createIndex(permissionTicketCollection, new Document(FIELD_EXPIRE_AT, 1), new IndexOptions().expireAfter(0l, TimeUnit.SECONDS).name("e1"));
     }
 
     @Override

@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.repository.mongodb.management.internal.model.MonitoringMongo;
 import io.gravitee.node.api.Monitoring;
@@ -50,7 +51,7 @@ public class MongoNodeMonitoringRepository extends AbstractManagementMongoReposi
     public void init() {
         collection = mongoOperations.getCollection("node_monitoring", MonitoringMongo.class);
         super.init(collection);
-        super.createIndex(collection, new Document(FIELD_UPDATED_AT, 1));
+        super.createIndex(collection, new Document(FIELD_UPDATED_AT, 1), new IndexOptions().name("u1"));
     }
 
     @Override

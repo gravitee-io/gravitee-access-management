@@ -49,7 +49,7 @@ public class MongoRequestObjectRepository extends AbstractOAuth2MongoRepository 
         super.init(requestObjectCollection);
 
         // expire after index
-        super.createIndex(requestObjectCollection, new Document(FIELD_EXPIRE_AT, 1), new IndexOptions().expireAfter(0L, TimeUnit.SECONDS));
+        super.createIndex(requestObjectCollection, new Document(FIELD_EXPIRE_AT, 1), new IndexOptions().expireAfter(0L, TimeUnit.SECONDS).name("e1"));
     }
 
     @Override

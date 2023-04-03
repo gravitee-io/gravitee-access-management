@@ -47,7 +47,7 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
     private MongoCollection<AccessTokenMongo> accessTokenCollection;
 
     private static final String FIELD_TOKEN = "token";
-    private static final String FIELD_RESET_TIME = "expire_at";
+    private static final String FIELD_EXPIRE_AT = "expire_at";
     private static final String FIELD_SUBJECT = "subject";
     private static final String FIELD_AUTHORIZATION_CODE = "authorization_code";
 
@@ -55,14 +55,14 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
     public void init() {
         accessTokenCollection = mongoOperations.getCollection("access_tokens", AccessTokenMongo.class);
         super.init(accessTokenCollection);
-        super.createIndex(accessTokenCollection, new Document(FIELD_TOKEN, 1));
-        super.createIndex(accessTokenCollection, new Document(FIELD_CLIENT, 1));
-        super.createIndex(accessTokenCollection, new Document(FIELD_AUTHORIZATION_CODE, 1));
-        super.createIndex(accessTokenCollection, new Document(FIELD_SUBJECT, 1));
-        super.createIndex(accessTokenCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT, 1).append(FIELD_SUBJECT, 1));
+        super.createIndex(accessTokenCollection, new Document(FIELD_TOKEN, 1), new IndexOptions().name("t1"));
+        super.createIndex(accessTokenCollection, new Document(FIELD_CLIENT, 1), new IndexOptions().name("c1"));
+        super.createIndex(accessTokenCollection, new Document(FIELD_AUTHORIZATION_CODE, 1), new IndexOptions().name("ac1"));
+        super.createIndex(accessTokenCollection, new Document(FIELD_SUBJECT, 1), new IndexOptions().name("s1"));
+        super.createIndex(accessTokenCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT, 1).append(FIELD_SUBJECT, 1), new IndexOptions().name("d1c1s1"));
 
         // expire after index
-        super.createIndex(accessTokenCollection, new Document(FIELD_RESET_TIME, 1), new IndexOptions().expireAfter(0L, TimeUnit.SECONDS));
+        super.createIndex(accessTokenCollection, new Document(FIELD_EXPIRE_AT, 1), new IndexOptions().name("e1").expireAfter(0L, TimeUnit.SECONDS));
     }
 
     private Maybe<AccessToken> findById(String id) {

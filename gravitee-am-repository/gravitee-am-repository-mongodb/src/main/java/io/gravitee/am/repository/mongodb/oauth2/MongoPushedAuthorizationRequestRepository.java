@@ -53,7 +53,7 @@ public class MongoPushedAuthorizationRequestRepository extends AbstractOAuth2Mon
         super.init(parCollection);
 
         // expire after index
-        super.createIndex(parCollection, new Document(FIELD_EXPIRE_AT, 1), new IndexOptions().expireAfter(0L, TimeUnit.SECONDS));
+        super.createIndex(parCollection, new Document(FIELD_EXPIRE_AT, 1), new IndexOptions().name("e1").expireAfter(0L, TimeUnit.SECONDS));
     }
 
     @Override

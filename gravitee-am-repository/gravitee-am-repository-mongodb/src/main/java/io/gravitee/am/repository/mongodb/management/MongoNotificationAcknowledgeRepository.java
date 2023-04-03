@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.repository.mongodb.management.internal.model.NotificationAcknowledgeMongo;
@@ -49,7 +50,7 @@ public class MongoNotificationAcknowledgeRepository extends AbstractManagementMo
     @PostConstruct
     public void init() {
         collection = mongoOperations.getCollection("notification_acknowledgements", NotificationAcknowledgeMongo.class);
-        super.createIndex(collection, new Document(FIELD_RESOURCE_ID, 1).append(FIELD_TYPE, 1).append(FIELD_AUDIENCE_ID, 1));
+        super.createIndex(collection, new Document(FIELD_RESOURCE_ID, 1).append(FIELD_TYPE, 1).append(FIELD_AUDIENCE_ID, 1), new IndexOptions().name("ri1rt1a1"));
         super.init(collection);
     }
 
