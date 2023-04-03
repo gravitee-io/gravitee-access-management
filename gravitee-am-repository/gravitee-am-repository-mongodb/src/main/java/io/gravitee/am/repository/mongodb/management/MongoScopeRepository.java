@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.mongodb.management;
 
 import com.mongodb.BasicDBObject;
+import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.common.Page;
@@ -48,8 +49,8 @@ public class MongoScopeRepository extends AbstractManagementMongoRepository impl
     public void init() {
         scopesCollection = mongoOperations.getCollection("scopes", ScopeMongo.class);
         super.init(scopesCollection);
-        super.createIndex(scopesCollection, new Document(FIELD_DOMAIN, 1));
-        super.createIndex(scopesCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_KEY, 1));
+        super.createIndex(scopesCollection, new Document(FIELD_DOMAIN, 1), new IndexOptions().name("d1"));
+        super.createIndex(scopesCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_KEY, 1), new IndexOptions().name("d1k1"));
     }
 
     @Override

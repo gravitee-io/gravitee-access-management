@@ -54,8 +54,8 @@ public class MongoDeviceRepository extends AbstractManagementMongoRepository imp
         rememberDeviceMongoCollection = mongoOperations.getCollection(COLLECTION_NAME, DeviceMongo.class);
         super.init(rememberDeviceMongoCollection);
 
-        super.createIndex(rememberDeviceMongoCollection, new Document(FIELD_REFERENCE_ID, 1).append(FIELD_REFERENCE_TYPE, 1));
-        super.createIndex(rememberDeviceMongoCollection, new Document(FIELD_EXPIRES_AT, 1), new IndexOptions().expireAfter(0L, TimeUnit.SECONDS));
+        super.createIndex(rememberDeviceMongoCollection, new Document(FIELD_REFERENCE_ID, 1).append(FIELD_REFERENCE_TYPE, 1), new IndexOptions().name("ri1rt1"));
+        super.createIndex(rememberDeviceMongoCollection, new Document(FIELD_EXPIRES_AT, 1), new IndexOptions().expireAfter(0L, TimeUnit.SECONDS).name("e1"));
     }
 
     @Override

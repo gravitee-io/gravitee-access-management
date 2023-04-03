@@ -55,7 +55,7 @@ public class MongoCibaAuthRequestRepository extends AbstractOAuth2MongoRepositor
         super.init(cibaAuthRequestCollection);
 
         // expire after index
-        super.createIndex(cibaAuthRequestCollection, new Document(FIELD_EXPIRE_AT, 1), new IndexOptions().expireAfter(0L, TimeUnit.SECONDS));
+        super.createIndex(cibaAuthRequestCollection, new Document(FIELD_EXPIRE_AT, 1), new IndexOptions().expireAfter(0L, TimeUnit.SECONDS).name("e1"));
     }
 
     @Override

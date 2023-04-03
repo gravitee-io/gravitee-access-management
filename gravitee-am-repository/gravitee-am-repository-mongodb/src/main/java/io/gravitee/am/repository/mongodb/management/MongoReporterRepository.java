@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Reporter;
@@ -41,7 +42,7 @@ public class MongoReporterRepository extends AbstractManagementMongoRepository i
     public void init() {
         reportersCollection = mongoOperations.getCollection("reporters", ReporterMongo.class);
         super.init(reportersCollection);
-        super.createIndex(reportersCollection, new Document(FIELD_DOMAIN, 1));
+        super.createIndex(reportersCollection, new Document(FIELD_DOMAIN, 1), new IndexOptions().name("d1"));
     }
 
     @Override

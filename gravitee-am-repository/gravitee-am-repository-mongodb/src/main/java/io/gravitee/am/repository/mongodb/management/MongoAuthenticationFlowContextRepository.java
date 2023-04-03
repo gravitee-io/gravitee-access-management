@@ -40,7 +40,7 @@ public class MongoAuthenticationFlowContextRepository extends AbstractManagement
 
     private final static String FIELD_TRANSACTION_ID = "transactionId";
     private final static String FIELD_VERSION = "version";
-    private static final String FIELD_RESET_TIME = "expire_at";
+    private static final String FIELD_EXPIRES_AT = "expire_at";
 
     private MongoCollection<AuthenticationFlowContextMongo> authContextCollection;
 
@@ -48,8 +48,8 @@ public class MongoAuthenticationFlowContextRepository extends AbstractManagement
     public void init() {
         authContextCollection = mongoOperations.getCollection("auth_flow_ctx", AuthenticationFlowContextMongo.class);
         super.init(authContextCollection);
-        super.createIndex(authContextCollection, new Document(FIELD_TRANSACTION_ID, 1).append(FIELD_VERSION, -1));
-        super.createIndex(authContextCollection, new Document(FIELD_RESET_TIME, 1), new IndexOptions().expireAfter(0l, TimeUnit.SECONDS));
+        super.createIndex(authContextCollection, new Document(FIELD_TRANSACTION_ID, 1).append(FIELD_VERSION, -1), new IndexOptions().name("t1v_1"));
+        super.createIndex(authContextCollection, new Document(FIELD_EXPIRES_AT, 1), new IndexOptions().name("e1").expireAfter(0l, TimeUnit.SECONDS));
     }
 
     @Override
@@ -59,12 +59,12 @@ public class MongoAuthenticationFlowContextRepository extends AbstractManagement
 
     @Override
     public Maybe<AuthenticationFlowContext> findLastByTransactionId(String transactionId) {
-        return Observable.fromPublisher(authContextCollection.find(and(eq(FIELD_TRANSACTION_ID, transactionId), gt(FIELD_RESET_TIME, new Date()))).sort(new BasicDBObject(FIELD_VERSION, -1)).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(authContextCollection.find(and(eq(FIELD_TRANSACTION_ID, transactionId), gt(FIELD_EXPIRES_AT, new Date()))).sort(new BasicDBObject(FIELD_VERSION, -1)).first()).firstElement().map(this::convert);
     }
 
     @Override
     public Flowable<AuthenticationFlowContext> findByTransactionId(String transactionId) {
-        return Flowable.fromPublisher(authContextCollection.find(and(eq(FIELD_TRANSACTION_ID, transactionId), gt(FIELD_RESET_TIME, new Date()))).sort(new BasicDBObject(FIELD_VERSION, -1))).map(this::convert);
+        return Flowable.fromPublisher(authContextCollection.find(and(eq(FIELD_TRANSACTION_ID, transactionId), gt(FIELD_EXPIRES_AT, new Date()))).sort(new BasicDBObject(FIELD_VERSION, -1))).map(this::convert);
     }
 
     @Override

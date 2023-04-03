@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Form;
@@ -43,9 +44,9 @@ public class MongoFormRepository extends AbstractManagementMongoRepository imple
     public void init() {
         formsCollection = mongoOperations.getCollection("forms", FormMongo.class);
         super.init(formsCollection);
-        super.createIndex(formsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1));
-        super.createIndex(formsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_TEMPLATE, 1));
-        super.createIndex(formsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_CLIENT, 1).append(FIELD_TEMPLATE, 1));
+        super.createIndex(formsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1), new IndexOptions().name("rt1ri1"));
+        super.createIndex(formsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_TEMPLATE, 1), new IndexOptions().name("rt1ri1t1"));
+        super.createIndex(formsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_CLIENT, 1).append(FIELD_TEMPLATE, 1), new IndexOptions().name("rt1ri1c1t1"));
     }
 
     @Override

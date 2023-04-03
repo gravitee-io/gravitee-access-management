@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.mongodb.management;
 
 import com.mongodb.BasicDBObject;
+import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Group;
@@ -47,8 +48,8 @@ public class MongoGroupRepository extends AbstractManagementMongoRepository impl
     public void init() {
         groupsCollection = mongoOperations.getCollection("groups", GroupMongo.class);
         super.init(groupsCollection);
-        super.createIndex(groupsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1));
-        super.createIndex(groupsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_NAME, 1));
+        super.createIndex(groupsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1), new IndexOptions().name("rt1ri1"));
+        super.createIndex(groupsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_NAME, 1), new IndexOptions().name("rt1ri1n1"));
     }
 
     @Override

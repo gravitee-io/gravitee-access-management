@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.ReferenceType;
@@ -47,7 +48,7 @@ public class MongoDeviceIdentifierRepository extends AbstractManagementMongoRepo
     public void init() {
         deviceIdentifierMongoMongoCollection = mongoOperations.getCollection(COLLECTION_NAME, DeviceIdentifierMongo.class);
         super.init(deviceIdentifierMongoMongoCollection);
-        super.createIndex(deviceIdentifierMongoMongoCollection, new Document(FIELD_REFERENCE_ID, 1).append(FIELD_REFERENCE_TYPE, 1));
+        super.createIndex(deviceIdentifierMongoMongoCollection, new Document(FIELD_REFERENCE_ID, 1).append(FIELD_REFERENCE_TYPE, 1), new IndexOptions().name("ri1rt1"));
     }
 
     @Override

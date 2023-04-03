@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.notification.UserNotification;
@@ -53,7 +54,7 @@ public class MongoUserNotificationRepository extends AbstractManagementMongoRepo
     protected void init() {
         this.mongoCollection = mongoOperations.getCollection(COLLECTION_NAME, UserNotificationMongo.class);
         super.init(mongoCollection);
-        createIndex(this.mongoCollection, new Document(FIELD_AUDIENCE, 1).append(FIELD_TYPE, 1).append(FIELD_STATUS, 1));
+        createIndex(this.mongoCollection, new Document(FIELD_AUDIENCE, 1).append(FIELD_TYPE, 1).append(FIELD_STATUS, 1), new IndexOptions().name("a1t1s1"));
     }
 
     @Override

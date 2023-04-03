@@ -48,17 +48,17 @@ public class MongoLoginAttemptRepository extends AbstractManagementMongoReposito
 
     private static final String FIELD_IDP = "identityProvider";
     private static final String FIELD_USERNAME = "username";
-    private static final String FIELD_RESET_TIME = "expireAt";
+    private static final String FIELD_EXPIRE_AT = "expireAt";
     private MongoCollection<LoginAttemptMongo> loginAttemptsCollection;
 
     @PostConstruct
     public void init() {
         loginAttemptsCollection = mongoOperations.getCollection("login_attempts", LoginAttemptMongo.class);
         super.init(loginAttemptsCollection);
-        super.createIndex(loginAttemptsCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT, 1).append(FIELD_USERNAME, 1));
+        super.createIndex(loginAttemptsCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT, 1).append(FIELD_USERNAME, 1), new IndexOptions().name("d1c1u1"));
 
         // expire after index
-        super.createIndex(loginAttemptsCollection, new Document(FIELD_RESET_TIME, 1), new IndexOptions().expireAfter(0L, TimeUnit.SECONDS));
+        super.createIndex(loginAttemptsCollection, new Document(FIELD_EXPIRE_AT, 1), new IndexOptions().name("e1").expireAfter(0L, TimeUnit.SECONDS));
     }
 
     @Override

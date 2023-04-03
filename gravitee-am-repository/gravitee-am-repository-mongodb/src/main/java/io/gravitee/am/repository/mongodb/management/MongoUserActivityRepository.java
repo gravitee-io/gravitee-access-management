@@ -24,11 +24,16 @@ import io.gravitee.am.model.UserActivity;
 import io.gravitee.am.model.UserActivity.Type;
 import io.gravitee.am.repository.management.api.UserActivityRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.UserActivityMongo;
-import io.reactivex.rxjava3.core.*;
-import java.util.concurrent.TimeUnit;
-import javax.annotation.PostConstruct;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.Single;
 import org.bson.Document;
 import org.springframework.stereotype.Repository;
+
+import javax.annotation.PostConstruct;
+import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
@@ -53,14 +58,13 @@ public class MongoUserActivityRepository extends AbstractManagementMongoReposito
     public void init() {
         userActivityCollection = mongoOperations.getCollection("user_activities", UserActivityMongo.class);
         super.init(userActivityCollection);
-        super.createIndex(userActivityCollection, new Document(FIELD_ID, 1));
-        super.createIndex(userActivityCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1));
+        super.createIndex(userActivityCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1), new IndexOptions().name("rt1ri1"));
         super.createIndex(userActivityCollection, new Document(FIELD_REFERENCE_TYPE, 1)
                 .append(FIELD_REFERENCE_ID, 1)
                 .append(FIELD_USER_ACTIVITY_TYPE, 1)
-                .append(FIELD_USER_ACTIVITY_KEY, 1));
-        super.createIndex(userActivityCollection, new Document(FIELD_CREATED_AT, 1));
-        super.createIndex(userActivityCollection, new Document(FIELD_EXPIRE_AT, 1), new IndexOptions().expireAfter(0L, TimeUnit.SECONDS));
+                .append(FIELD_USER_ACTIVITY_KEY, 1), new IndexOptions().name("rt1ri1uat1uak1"));
+        super.createIndex(userActivityCollection, new Document(FIELD_CREATED_AT, 1), new IndexOptions().name("c1"));
+        super.createIndex(userActivityCollection, new Document(FIELD_EXPIRE_AT, 1), new IndexOptions().expireAfter(0L, TimeUnit.SECONDS).name("e1"));
     }
 
     @Override

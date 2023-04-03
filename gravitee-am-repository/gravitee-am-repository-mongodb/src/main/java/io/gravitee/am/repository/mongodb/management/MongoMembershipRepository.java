@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Membership;
@@ -48,9 +49,9 @@ public class MongoMembershipRepository extends AbstractManagementMongoRepository
     public void init() {
         membershipsCollection = mongoOperations.getCollection("memberships", MembershipMongo.class);
         super.init(membershipsCollection);
-        super.createIndex(membershipsCollection, new Document(FIELD_REFERENCE_ID, 1).append(FIELD_REFERENCE_TYPE, 1));
-        super.createIndex(membershipsCollection, new Document(FIELD_REFERENCE_ID, 1).append(FIELD_MEMBER_ID, 1));
-        super.createIndex(membershipsCollection, new Document(FIELD_MEMBER_ID, 1).append(FIELD_MEMBER_TYPE, 1));
+        super.createIndex(membershipsCollection, new Document(FIELD_REFERENCE_ID, 1).append(FIELD_REFERENCE_TYPE, 1), new IndexOptions().name("ri1rt1"));
+        super.createIndex(membershipsCollection, new Document(FIELD_REFERENCE_ID, 1).append(FIELD_MEMBER_ID, 1), new IndexOptions().name("ri1mi1"));
+        super.createIndex(membershipsCollection, new Document(FIELD_MEMBER_ID, 1).append(FIELD_MEMBER_TYPE, 1), new IndexOptions().name("mi1mt1"));
     }
 
     @Override

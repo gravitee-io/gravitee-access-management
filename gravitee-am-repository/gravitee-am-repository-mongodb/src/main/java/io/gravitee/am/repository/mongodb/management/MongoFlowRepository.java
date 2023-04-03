@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.ReferenceType;
@@ -45,9 +46,9 @@ public class MongoFlowRepository extends AbstractManagementMongoRepository imple
     public void init() {
         flowsCollection = mongoOperations.getCollection("flows", FlowMongo.class);
         super.init(flowsCollection);
-        super.createIndex(flowsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1));
-        super.createIndex(flowsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_APPLICATION, 1));
-        super.createIndex(flowsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_ID, 1));
+        super.createIndex(flowsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1), new IndexOptions().name("rt1ri1"));
+        super.createIndex(flowsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_APPLICATION, 1), new IndexOptions().name("rt1ri1a1"));
+        super.createIndex(flowsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_ID, 1), new IndexOptions().name("rt1ri1id1"));
     }
 
     @Override

@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.AuthenticationDeviceNotifier;
@@ -44,7 +45,7 @@ public class MongoAuthenticationDeviceNotifierRepository extends AbstractManagem
     public void init() {
         authDeviceNotifierCollection = mongoOperations.getCollection(COLLECTION_NAME, AuthenticationDeviceNotifierMongo.class);
         super.init(authDeviceNotifierCollection);
-        super.createIndex(authDeviceNotifierCollection,new Document(FIELD_REFERENCE_ID, 1).append(FIELD_REFERENCE_TYPE, 1));
+        super.createIndex(authDeviceNotifierCollection,new Document(FIELD_REFERENCE_ID, 1).append(FIELD_REFERENCE_TYPE, 1), new IndexOptions().name("ri1rt1"));
     }
 
     @Override

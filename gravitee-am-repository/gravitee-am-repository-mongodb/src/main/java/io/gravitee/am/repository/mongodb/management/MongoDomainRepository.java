@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.mongodb.management;
 
 import com.mongodb.BasicDBObject;
+import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.common.webauthn.AttestationConveyancePreference;
@@ -82,7 +83,8 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
     public void init() {
         domainsCollection = mongoOperations.getCollection("domains", DomainMongo.class);
         super.init(domainsCollection);
-        super.createIndex(domainsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_HRID, 1));
+        super.createIndex(domainsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1), new IndexOptions().name("ri1rt1"));
+        super.createIndex(domainsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_HRID, 1), new IndexOptions().name("ri1rt1h1"));
     }
 
     @Override
