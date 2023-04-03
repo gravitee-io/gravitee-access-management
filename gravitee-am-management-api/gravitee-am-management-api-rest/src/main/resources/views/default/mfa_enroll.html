@@ -156,7 +156,7 @@
                 </div>
                 <input type="hidden" id="sharedSecret" name="sharedSecret" value=""/>
                 <div>
-                    <button id="submit" type="submit" name="user_mfa_enrollment" value="true" class="button primary" th:text="#{mfa_enroll.button.submit}"></button>
+                    <button id="submitBtn" type="submit" name="user_mfa_enrollment" value="true" class="button primary" th:text="#{mfa_enroll.button.submit}"></button>
                 </div>
             </div>
             <!-- END OF STEP 2 -->
@@ -282,7 +282,7 @@
     }));
 
     // submit form function
-    const submitBtn = document.getElementById('submit');
+    const submitBtn = document.getElementById('submitBtn');
     submitBtn.addEventListener('click', function($event) {
         //do not submit the form on 'enter' key press if the following condition satisfied
         //rather call the next button handler functionality
