@@ -56,12 +56,12 @@ public class MongoCertificateRepository extends AbstractManagementMongoRepositor
 
     @Override
     public Flowable<Certificate> findByDomain(String domain) {
-        return Flowable.fromPublisher(certificatesCollection.find(eq(FIELD_DOMAIN, domain))).map(this::convert);
+        return Flowable.fromPublisher(withMaxTime(certificatesCollection.find(eq(FIELD_DOMAIN, domain)))).map(this::convert);
     }
 
     @Override
     public Flowable<Certificate> findAll() {
-        return Flowable.fromPublisher(certificatesCollection.find()).map(this::convert);
+        return Flowable.fromPublisher(withMaxTime(certificatesCollection.find())).map(this::convert);
     }
 
     @Override
