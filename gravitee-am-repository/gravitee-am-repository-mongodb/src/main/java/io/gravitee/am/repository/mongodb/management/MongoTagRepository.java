@@ -58,7 +58,7 @@ public class MongoTagRepository extends AbstractManagementMongoRepository implem
 
     @Override
     public Flowable<Tag> findAll(String organizationId) {
-        return Flowable.fromPublisher(tagsCollection.find(eq(FIELD_ORGANIZATION_ID, organizationId))).map(this::convert);
+        return Flowable.fromPublisher(withMaxTime(tagsCollection.find(eq(FIELD_ORGANIZATION_ID, organizationId)))).map(this::convert);
     }
 
     @Override

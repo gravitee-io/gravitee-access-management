@@ -41,7 +41,7 @@ public class MongoPolicyRepository extends AbstractManagementMongoRepository imp
     @Override
     public Flowable<Policy> findAll() {
         MongoCollection<PolicyMongo> policiesCollection = mongoOperations.getCollection(COLLECTION_NAME, PolicyMongo.class);
-        return Flowable.fromPublisher(policiesCollection.find()).map(this::convert);
+        return Flowable.fromPublisher(withMaxTime(policiesCollection.find())).map(this::convert);
     }
 
     @Override

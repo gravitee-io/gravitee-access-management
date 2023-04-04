@@ -59,13 +59,13 @@ public class MongoRoleRepository extends AbstractManagementMongoRepository imple
 
     @Override
     public Flowable<Role> findAll(ReferenceType referenceType, String referenceId) {
-        return Flowable.fromPublisher(rolesCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType == null ? null : referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))).map(this::convert);
+        return Flowable.fromPublisher(withMaxTime(rolesCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType == null ? null : referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId))))).map(this::convert);
     }
 
     @Override
     public Single<Page<Role>> findAll(ReferenceType referenceType, String referenceId, int page, int size) {
-        Single<Long> countOperation = Observable.fromPublisher(rolesCollection.countDocuments(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))).first(0l);
-        Single<List<Role>> rolesOperation = Observable.fromPublisher(rolesCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId))).sort(new BasicDBObject(FIELD_NAME, 1)).skip(size * page).limit(size)).map(this::convert).toList();
+        Single<Long> countOperation = Observable.fromPublisher(rolesCollection.countDocuments(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)), countOptions())).first(0l);
+        Single<List<Role>> rolesOperation = Observable.fromPublisher(withMaxTime(rolesCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))).sort(new BasicDBObject(FIELD_NAME, 1)).skip(size * page).limit(size)).map(this::convert).toList();
         return Single.zip(countOperation, rolesOperation, (count, roles) -> new Page<>(roles, page, count));
     }
 
@@ -86,14 +86,14 @@ public class MongoRoleRepository extends AbstractManagementMongoRepository imple
                 eq(FIELD_REFERENCE_ID, referenceId),
                 searchQuery);
 
-        Single<Long> countOperation = Observable.fromPublisher(rolesCollection.countDocuments(mongoQuery)).first(0l);
-        Single<List<Role>> rolesOperation = Observable.fromPublisher(rolesCollection.find(mongoQuery).skip(size * page).limit(size)).map(this::convert).toList();
+        Single<Long> countOperation = Observable.fromPublisher(rolesCollection.countDocuments(mongoQuery, countOptions())).first(0l);
+        Single<List<Role>> rolesOperation = Observable.fromPublisher(withMaxTime(rolesCollection.find(mongoQuery)).skip(size * page).limit(size)).map(this::convert).toList();
         return Single.zip(countOperation, rolesOperation, (count, roles) -> new Page<>(roles, 0, count));
     }
 
     @Override
     public Flowable<Role> findByIdIn(List<String> ids) {
-        return Flowable.fromPublisher(rolesCollection.find(in(FIELD_ID, ids))).map(this::convert);
+        return Flowable.fromPublisher(withMaxTime(rolesCollection.find(in(FIELD_ID, ids)))).map(this::convert);
     }
 
     @Override

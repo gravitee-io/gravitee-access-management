@@ -15,12 +15,14 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import com.mongodb.client.model.CountOptions;
 import com.mongodb.client.model.IndexOptions;
+import com.mongodb.reactivestreams.client.AggregatePublisher;
+import com.mongodb.reactivestreams.client.FindPublisher;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import com.mongodb.reactivestreams.client.MongoDatabase;
 import io.gravitee.am.repository.mongodb.common.AbstractMongoRepository;
 import io.reactivex.Maybe;
-import io.reactivex.Single;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +33,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -50,6 +53,9 @@ public abstract class AbstractManagementMongoRepository extends AbstractMongoRep
     @Value("${management.mongodb.ensureIndexOnStart:true}")
     private boolean ensureIndexOnStart;
 
+    @Value("${management.mongodb.cursorMaxTime:60000}")
+    private int cursorMaxTimeInMs;
+
     protected void createIndex(MongoCollection<?> collection, Document document) {
         super.createIndex(collection, document, new IndexOptions(), ensureIndexOnStart);
     }
@@ -57,6 +63,18 @@ public abstract class AbstractManagementMongoRepository extends AbstractMongoRep
     protected void createIndex(MongoCollection<?> collection, Document document, IndexOptions indexOptions) {
         // if we set an index options it means that we want to force the index creation
         super.createIndex(collection, document, indexOptions, true);
+    }
+
+    protected final <TResult> AggregatePublisher<TResult> withMaxTime(AggregatePublisher<TResult> query) {
+        return query.maxTime(this.cursorMaxTimeInMs, TimeUnit.MILLISECONDS);
+    }
+
+    protected final <TResult> FindPublisher<TResult> withMaxTime(FindPublisher<TResult> query) {
+        return query.maxTime(this.cursorMaxTimeInMs, TimeUnit.MILLISECONDS);
+    }
+
+    protected final CountOptions countOptions() {
+        return new CountOptions().maxTime(cursorMaxTimeInMs, TimeUnit.MILLISECONDS);
     }
 
     protected Bson toBsonFilter(String name, Optional<?> optional) {
