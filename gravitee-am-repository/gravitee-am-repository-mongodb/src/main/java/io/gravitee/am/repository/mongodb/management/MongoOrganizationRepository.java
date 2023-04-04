@@ -47,7 +47,7 @@ public class MongoOrganizationRepository extends AbstractManagementMongoReposito
 
     @Override
     public Flowable<Organization> findByHrids(List<String> hrids) {
-        return Flowable.fromPublisher(collection.find(in(HRID_KEY, hrids))).map(this::convert);
+        return Flowable.fromPublisher(withMaxTime(collection.find(in(HRID_KEY, hrids)))).map(this::convert);
     }
 
     @Override

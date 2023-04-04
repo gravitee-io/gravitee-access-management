@@ -55,13 +55,13 @@ public class MongoMembershipRepository extends AbstractManagementMongoRepository
 
     @Override
     public Flowable<Membership> findByReference(String referenceId, ReferenceType referenceType) {
-        return Flowable.fromPublisher(membershipsCollection.find(and(eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_REFERENCE_TYPE, referenceType.name()))))
+        return Flowable.fromPublisher(withMaxTime(membershipsCollection.find(and(eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_REFERENCE_TYPE, referenceType.name())))))
                 .map(this::convert);
     }
 
     @Override
     public Flowable<Membership> findByMember(String memberId, MemberType memberType) {
-        return Flowable.fromPublisher(membershipsCollection.find(and(eq(FIELD_MEMBER_ID, memberId), eq(FIELD_MEMBER_TYPE, memberType.name()))))
+        return Flowable.fromPublisher(withMaxTime(membershipsCollection.find(and(eq(FIELD_MEMBER_ID, memberId), eq(FIELD_MEMBER_TYPE, memberType.name())))))
                 .map(this::convert);
     }
 
@@ -87,7 +87,7 @@ public class MongoMembershipRepository extends AbstractManagementMongoRepository
         return toBsonFilter(criteria.isLogicalOR(), eqGroupId, eqUserId)
                 .map(filter -> and(eqReference, filter))
                 .switchIfEmpty(Single.just(eqReference))
-                .flatMapPublisher(filter -> Flowable.fromPublisher(membershipsCollection.find(filter))).map(this::convert);
+                .flatMapPublisher(filter -> Flowable.fromPublisher(withMaxTime(membershipsCollection.find(filter)))).map(this::convert);
     }
 
     @Override

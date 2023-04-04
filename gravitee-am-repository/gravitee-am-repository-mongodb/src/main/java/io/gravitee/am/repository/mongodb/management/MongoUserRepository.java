@@ -35,11 +35,19 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static com.mongodb.client.model.Filters.*;
+import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.or;
 import static io.gravitee.am.model.ReferenceType.DOMAIN;
 
 /**
@@ -86,12 +94,12 @@ public class MongoUserRepository extends AbstractUserRepository<UserMongo> imple
 
     @Override
     public Single<Long> countByReference(ReferenceType referenceType, String referenceId) {
-        return Observable.fromPublisher(usersCollection.countDocuments(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))).first(0l);
+        return Observable.fromPublisher(usersCollection.countDocuments(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)), countOptions())).first(0l);
     }
 
     @Override
     public Single<Long> countByApplication(String domain, String application) {
-        return Observable.fromPublisher(usersCollection.countDocuments(and(eq(FIELD_REFERENCE_TYPE, DOMAIN.name()), eq(FIELD_REFERENCE_ID, domain), eq(FIELD_CLIENT, application)))).first(0l);
+        return Observable.fromPublisher(usersCollection.countDocuments(and(eq(FIELD_REFERENCE_TYPE, DOMAIN.name()), eq(FIELD_REFERENCE_ID, domain), eq(FIELD_CLIENT, application)), countOptions())).first(0l);
     }
 
     @Override
@@ -112,7 +120,7 @@ public class MongoUserRepository extends AbstractUserRepository<UserMongo> imple
             filters.add(eq(FIELD_CLIENT, query.getApplication()));
         }
 
-        return Observable.fromPublisher(usersCollection.aggregate(
+        return Observable.fromPublisher(withMaxTime(usersCollection.aggregate(
                 Arrays.asList(
                         Aggregates.match(and(filters)),
                         Aggregates.group(
@@ -122,7 +130,7 @@ public class MongoUserRepository extends AbstractUserRepository<UserMongo> imple
                                 Accumulators.sum("locked", new BasicDBObject("$cond", Arrays.asList(new BasicDBObject("$and", Arrays.asList(new BasicDBObject("$eq", Arrays.asList("$accountNonLocked", false)), new BasicDBObject("$gte", Arrays.asList("$accountLockedUntil", new Date())))), 1, 0))),
                                 Accumulators.sum("inactive", new BasicDBObject("$cond", Arrays.asList(new BasicDBObject("$lte", Arrays.asList("$loggedAt", new Date(Instant.now().minus(90, ChronoUnit.DAYS).toEpochMilli()))), 1, 0)))
                         )
-                ), Document.class))
+                ), Document.class)))
                 .map(doc -> {
                     Long nonActiveUsers = ((Number) doc.get("disabled")).longValue() + ((Number) doc.get("locked")).longValue() + ((Number) doc.get("inactive")).longValue();
                     Long activeUsers = ((Number) doc.get("total")).longValue() - nonActiveUsers;
@@ -138,13 +146,13 @@ public class MongoUserRepository extends AbstractUserRepository<UserMongo> imple
     }
 
     private Single<Map<Object, Object>> registrationsStatusRepartition(AnalyticsQuery query) {
-        return Observable.fromPublisher(usersCollection.aggregate(
+        return Observable.fromPublisher(withMaxTime(usersCollection.aggregate(
                 Arrays.asList(
                         Aggregates.match(and(eq(FIELD_REFERENCE_TYPE, DOMAIN.name()), eq(FIELD_REFERENCE_ID, query.getDomain()), eq(FIELD_PRE_REGISTRATION, true))),
                         Aggregates.group(new BasicDBObject("_id", query.getField()),
                                 Accumulators.sum("total", 1),
                                 Accumulators.sum("completed", new BasicDBObject("$cond", Arrays.asList(new BasicDBObject("$eq", Arrays.asList("$registrationCompleted", true)), 1, 0))))
-                ), Document.class))
+                ), Document.class)))
                 .map(doc -> {
                     Map<Object, Object> registrations = new HashMap<>();
                     registrations.putAll(doc.entrySet()

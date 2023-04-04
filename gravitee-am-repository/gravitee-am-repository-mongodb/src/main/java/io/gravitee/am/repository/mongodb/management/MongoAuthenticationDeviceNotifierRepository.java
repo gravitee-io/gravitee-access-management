@@ -49,12 +49,12 @@ public class MongoAuthenticationDeviceNotifierRepository extends AbstractManagem
 
     @Override
     public Flowable<AuthenticationDeviceNotifier> findAll() {
-        return Flowable.fromPublisher(authDeviceNotifierCollection.find()).map(this::convert);
+        return Flowable.fromPublisher(withMaxTime(authDeviceNotifierCollection.find())).map(this::convert);
     }
 
     @Override
     public Flowable<AuthenticationDeviceNotifier> findByReference(ReferenceType referenceType, String referenceId) {
-        return Flowable.fromPublisher(authDeviceNotifierCollection.find(and(eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_REFERENCE_TYPE, referenceType.name())))).map(this::convert);
+        return Flowable.fromPublisher(withMaxTime(authDeviceNotifierCollection.find(and(eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_REFERENCE_TYPE, referenceType.name()))))).map(this::convert);
     }
 
     @Override

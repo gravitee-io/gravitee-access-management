@@ -46,7 +46,7 @@ public class MongoReporterRepository extends AbstractManagementMongoRepository i
 
     @Override
     public Flowable<Reporter> findAll() {
-        return Flowable.fromPublisher(reportersCollection.find()).map(this::convert);
+        return Flowable.fromPublisher(withMaxTime(reportersCollection.find())).map(this::convert);
     }
 
     @Override
