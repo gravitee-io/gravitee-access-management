@@ -87,7 +87,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
 
     @Override
     public Flowable<Domain> findAll() {
-        return Flowable.fromPublisher(domainsCollection.find()).map(MongoDomainRepository::convert);
+        return Flowable.fromPublisher(withMaxTime(domainsCollection.find())).map(MongoDomainRepository::convert);
     }
 
     @Override
@@ -109,7 +109,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
 
     @Override
     public Flowable<Domain> findByIdIn(Collection<String> ids) {
-        return Flowable.fromPublisher(domainsCollection.find(in(FIELD_ID, ids))).map(MongoDomainRepository::convert);
+        return Flowable.fromPublisher(withMaxTime(domainsCollection.find(in(FIELD_ID, ids)))).map(MongoDomainRepository::convert);
     }
 
     @Override
@@ -117,7 +117,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         Bson mongoQuery = and(
                 eq(FIELD_REFERENCE_TYPE, ReferenceType.ENVIRONMENT.name()),
                 eq(FIELD_REFERENCE_ID, environmentId));
-        return Flowable.fromPublisher(domainsCollection.find(mongoQuery)).map(MongoDomainRepository::convert);
+        return Flowable.fromPublisher(withMaxTime(domainsCollection.find(mongoQuery))).map(MongoDomainRepository::convert);
     }
 
     @Override
@@ -136,7 +136,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
                 eq(FIELD_REFERENCE_TYPE, ReferenceType.ENVIRONMENT.name()),
                 eq(FIELD_REFERENCE_ID, environmentId), searchQuery);
 
-        return Flowable.fromPublisher(domainsCollection.find(mongoQuery)).map(MongoDomainRepository::convert);
+        return Flowable.fromPublisher(withMaxTime(domainsCollection.find(mongoQuery))).map(MongoDomainRepository::convert);
     }
 
     @Override
@@ -146,7 +146,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
 
         return toBsonFilter(criteria.isLogicalOR(), eqAlertEnabled)
                 .switchIfEmpty(Single.just(new BsonDocument()))
-                .flatMapPublisher(filter -> Flowable.fromPublisher(domainsCollection.find(filter))).map(MongoDomainRepository::convert);
+                .flatMapPublisher(filter -> Flowable.fromPublisher(withMaxTime(domainsCollection.find(filter)))).map(MongoDomainRepository::convert);
     }
 
     @Override

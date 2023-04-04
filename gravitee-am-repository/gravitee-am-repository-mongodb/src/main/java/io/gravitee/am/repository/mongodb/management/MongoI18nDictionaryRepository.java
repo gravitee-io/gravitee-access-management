@@ -53,8 +53,8 @@ public class MongoI18nDictionaryRepository extends AbstractManagementMongoReposi
 
     @Override
     public Flowable<I18nDictionary> findAll(ReferenceType referenceType, String referenceId) {
-        return Flowable.fromPublisher(
-                mongoCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId))))
+        return Flowable.fromPublisher(withMaxTime(
+                mongoCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))))
                 .map(this::convert);
     }
 

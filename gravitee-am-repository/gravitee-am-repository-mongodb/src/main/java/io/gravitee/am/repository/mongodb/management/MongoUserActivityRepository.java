@@ -70,11 +70,11 @@ public class MongoUserActivityRepository extends AbstractManagementMongoReposito
 
     @Override
     public Flowable<UserActivity> findByReferenceAndTypeAndKeyAndLimit(ReferenceType referenceType, String referenceId, Type type, String key, int limit) {
-        return Flowable.fromPublisher(userActivityCollection.find(and(
+        return Flowable.fromPublisher(withMaxTime(userActivityCollection.find(and(
                 eq(FIELD_REFERENCE_TYPE, referenceType.name()),
                 eq(FIELD_REFERENCE_ID, referenceId),
                 eq(FIELD_USER_ACTIVITY_TYPE, type.name()),
-                eq(FIELD_USER_ACTIVITY_KEY, key))
+                eq(FIELD_USER_ACTIVITY_KEY, key)))
         ).sort(new Document(FIELD_CREATED_AT, -1)).limit(limit)).map(this::convert);
     }
 

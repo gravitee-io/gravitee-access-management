@@ -53,24 +53,24 @@ public class MongoGroupRepository extends AbstractManagementMongoRepository impl
 
     @Override
     public Flowable<Group> findByMember(String memberId) {
-        return Flowable.fromPublisher(groupsCollection.find(eq(FIELD_MEMBERS, memberId))).map(this::convert);
+        return Flowable.fromPublisher(withMaxTime(groupsCollection.find(eq(FIELD_MEMBERS, memberId)))).map(this::convert);
     }
 
     @Override
     public Flowable<Group> findAll(ReferenceType referenceType, String referenceId) {
-        return Flowable.fromPublisher(groupsCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))).map(this::convert);
+        return Flowable.fromPublisher(withMaxTime(groupsCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId))))).map(this::convert);
     }
 
     @Override
     public Single<Page<Group>> findAll(ReferenceType referenceType, String referenceId, int page, int size) {
-        Single<Long> countOperation = Observable.fromPublisher(groupsCollection.countDocuments(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))).first(0l);
-        Single<List<Group>> groupsOperation = Observable.fromPublisher(groupsCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId))).sort(new BasicDBObject(FIELD_NAME, 1)).skip(size * page).limit(size)).map(this::convert).collect(LinkedList::new, List::add);
+        Single<Long> countOperation = Observable.fromPublisher(groupsCollection.countDocuments(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)), countOptions())).first(0l);
+        Single<List<Group>> groupsOperation = Observable.fromPublisher(withMaxTime(groupsCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))).sort(new BasicDBObject(FIELD_NAME, 1)).skip(size * page).limit(size)).map(this::convert).collect(LinkedList::new, List::add);
         return Single.zip(countOperation, groupsOperation, (count, groups) -> new Page<>(groups, page, count));
     }
 
     @Override
     public Flowable<Group> findByIdIn(List<String> ids) {
-        return Flowable.fromPublisher(groupsCollection.find(in(FIELD_ID, ids))).map(this::convert);
+        return Flowable.fromPublisher(withMaxTime(groupsCollection.find(in(FIELD_ID, ids)))).map(this::convert);
     }
 
     @Override
