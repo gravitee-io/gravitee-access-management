@@ -58,7 +58,7 @@ public class MongoAlertNotifierRepository extends AbstractManagementMongoReposit
     public Flowable<AlertNotifier> findAll(ReferenceType referenceType, String referenceId) {
         Bson eqReference = and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId));
 
-        return Flowable.fromPublisher(collection.find(eqReference))
+        return Flowable.fromPublisher(withMaxTime(collection.find(eqReference)))
                 .map(this::convert);
     }
 
@@ -78,7 +78,7 @@ public class MongoAlertNotifierRepository extends AbstractManagementMongoReposit
         if (!filters.isEmpty()) {
             query = and(eqReference, criteria.isLogicalOR() ? or(filters) : and(filters));
         }
-        return Flowable.fromPublisher(collection.find(and(eqReference, query))).map(this::convert);
+        return Flowable.fromPublisher(withMaxTime(collection.find(and(eqReference, query)))).map(this::convert);
     }
 
     @Override

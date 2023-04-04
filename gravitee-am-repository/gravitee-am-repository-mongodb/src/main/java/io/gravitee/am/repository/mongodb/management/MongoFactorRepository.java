@@ -48,7 +48,7 @@ public class MongoFactorRepository extends AbstractManagementMongoRepository imp
 
     @Override
     public Flowable<Factor> findAll() {
-        return Flowable.fromPublisher(factorsCollection.find()).map(this::convert);
+        return Flowable.fromPublisher(withMaxTime(factorsCollection.find())).map(this::convert);
     }
 
     @Override
