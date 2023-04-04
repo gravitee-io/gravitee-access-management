@@ -165,7 +165,7 @@ public class EmailRepositoryTest extends AbstractManagementTest {
 
         testIdSubscriber.awaitDone(10, TimeUnit.SECONDS)
                 .assertNoErrors()
-                .assertValueCount(loop)
+                .assertValueCount(1)
                 .assertValue(result -> {
                     assertThat(result)
                             .hasSize(emails.size())
@@ -199,7 +199,7 @@ public class EmailRepositoryTest extends AbstractManagementTest {
 
         testIdSubscriber.awaitDone(10, TimeUnit.SECONDS)
                 .assertNoErrors()
-                .assertValueCount(loop)
+                .assertValueCount(1)
                 .assertValue(result -> {
                     assertThat(result)
                             .hasSize(emails.size())
@@ -237,7 +237,7 @@ public class EmailRepositoryTest extends AbstractManagementTest {
 
         testIdSubscriber.awaitDone(10, TimeUnit.SECONDS)
                 .assertNoErrors()
-                .assertValueCount(loop)
+                .assertValueCount(1)
                 .assertValue(result -> {
                     assertThat(result)
                             .hasSize(emails.size())
