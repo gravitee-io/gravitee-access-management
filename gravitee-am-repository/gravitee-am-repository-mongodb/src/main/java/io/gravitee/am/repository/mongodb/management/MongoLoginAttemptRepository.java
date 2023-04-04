@@ -68,7 +68,7 @@ public class MongoLoginAttemptRepository extends AbstractManagementMongoReposito
 
     @Override
     public Maybe<LoginAttempt> findByCriteria(LoginAttemptCriteria criteria) {
-        return Observable.fromPublisher(loginAttemptsCollection.find(query(criteria)).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(withMaxTime(loginAttemptsCollection.find(query(criteria))).first()).firstElement().map(this::convert);
     }
 
     @Override

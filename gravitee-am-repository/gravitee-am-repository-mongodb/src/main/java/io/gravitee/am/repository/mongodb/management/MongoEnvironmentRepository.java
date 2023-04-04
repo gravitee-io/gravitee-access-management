@@ -49,13 +49,13 @@ public class MongoEnvironmentRepository extends AbstractManagementMongoRepositor
     @Override
     public Flowable<Environment> findAll() {
 
-        return Flowable.fromPublisher(collection.find()).map(this::convert);
+        return Flowable.fromPublisher(withMaxTime(collection.find())).map(this::convert);
     }
 
     @Override
     public Flowable<Environment> findAll(String organizationId) {
 
-        return Flowable.fromPublisher(collection.find(eq(FIELD_ORGANIZATION_ID, organizationId)))
+        return Flowable.fromPublisher(withMaxTime(collection.find(eq(FIELD_ORGANIZATION_ID, organizationId))))
                 .map(this::convert);
     }
 

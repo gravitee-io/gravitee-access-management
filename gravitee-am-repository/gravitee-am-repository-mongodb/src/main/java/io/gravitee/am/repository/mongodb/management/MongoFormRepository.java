@@ -51,12 +51,12 @@ public class MongoFormRepository extends AbstractManagementMongoRepository imple
 
     @Override
     public Flowable<Form> findAll(ReferenceType referenceType, String referenceId) {
-        return Flowable.fromPublisher(formsCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))).map(this::convert);
+        return Flowable.fromPublisher(withMaxTime(formsCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId))))).map(this::convert);
     }
 
     @Override
     public Flowable<Form> findAll(ReferenceType referenceType) {
-        return Flowable.fromPublisher(formsCollection.find(eq(FIELD_REFERENCE_TYPE, referenceType.name()))).map(this::convert);
+        return Flowable.fromPublisher(withMaxTime(formsCollection.find(eq(FIELD_REFERENCE_TYPE, referenceType.name())))).map(this::convert);
     }
 
     @Override

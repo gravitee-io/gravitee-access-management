@@ -56,24 +56,24 @@ public class MongoAccessPolicyRepository extends AbstractManagementMongoReposito
 
     @Override
     public Single<Page<AccessPolicy>> findByDomain(String domain, int page, int size) {
-        Single<Long> countOperation = Observable.fromPublisher(accessPoliciesCollection.countDocuments(eq(FIELD_DOMAIN, domain))).first(0l);
-        Single<List<AccessPolicy>> accessPoliciesOperation = Observable.fromPublisher(accessPoliciesCollection.find(eq(FIELD_DOMAIN, domain)).sort(new BasicDBObject(FIELD_UPDATED_AT, -1)).skip(size * page).limit(size)).map(this::convert).toList();
+        Single<Long> countOperation = Observable.fromPublisher(accessPoliciesCollection.countDocuments(eq(FIELD_DOMAIN, domain), countOptions())).first(0l);
+        Single<List<AccessPolicy>> accessPoliciesOperation = Observable.fromPublisher(withMaxTime(accessPoliciesCollection.find(eq(FIELD_DOMAIN, domain))).sort(new BasicDBObject(FIELD_UPDATED_AT, -1)).skip(size * page).limit(size)).map(this::convert).toList();
         return Single.zip(countOperation, accessPoliciesOperation, (count, accessPolicies) -> new Page<>(accessPolicies, page, count));
     }
 
     @Override
     public Flowable<AccessPolicy> findByDomainAndResource(String domain, String resource) {
-        return Flowable.fromPublisher(accessPoliciesCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_RESOURCE, resource)))).map(this::convert);
+        return Flowable.fromPublisher(withMaxTime(accessPoliciesCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_RESOURCE, resource))))).map(this::convert);
     }
 
     @Override
     public Flowable<AccessPolicy> findByResources(List<String> resources) {
-        return Flowable.fromPublisher(accessPoliciesCollection.find(in(FIELD_RESOURCE, resources))).map(this::convert);
+        return Flowable.fromPublisher(withMaxTime(accessPoliciesCollection.find(in(FIELD_RESOURCE, resources)))).map(this::convert);
     }
 
     @Override
     public Single<Long> countByResource(String resource) {
-        return Observable.fromPublisher(accessPoliciesCollection.countDocuments(eq(FIELD_RESOURCE, resource))).first(0l);
+        return Observable.fromPublisher(accessPoliciesCollection.countDocuments(eq(FIELD_RESOURCE, resource), countOptions())).first(0l);
     }
 
     @Override

@@ -58,7 +58,7 @@ public class MongoEntrypointRepository extends AbstractManagementMongoRepository
 
     @Override
     public Flowable<Entrypoint> findAll(String organizationId) {
-        return Flowable.fromPublisher(collection.find(eq("organizationId", organizationId))).map(this::convert);
+        return Flowable.fromPublisher(withMaxTime(collection.find(eq("organizationId", organizationId)))).map(this::convert);
     }
 
     @Override

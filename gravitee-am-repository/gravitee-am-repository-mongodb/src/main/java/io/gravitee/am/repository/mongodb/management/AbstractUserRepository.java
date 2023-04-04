@@ -91,13 +91,14 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
 
     @Override
     public Flowable<User> findAll(ReferenceType referenceType, String referenceId) {
-        return Flowable.fromPublisher(usersCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))).map(this::convert);
+        return Flowable.fromPublisher(withMaxTime(usersCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))))
+                .map(this::convert);
     }
 
     @Override
     public Single<Page<User>> findAll(ReferenceType referenceType, String referenceId, int page, int size) {
-        Single<Long> countOperation = Observable.fromPublisher(usersCollection.countDocuments(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))).first(0l);
-        Single<Set<User>> usersOperation = Observable.fromPublisher(usersCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId))).sort(new BasicDBObject(FIELD_USERNAME, 1)).skip(size * page).limit(size)).map(this::convert).collect(LinkedHashSet::new, Set::add);
+        Single<Long> countOperation = Observable.fromPublisher(usersCollection.countDocuments(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)), countOptions())).first(0l);
+        Single<Set<User>> usersOperation = Observable.fromPublisher(withMaxTime(usersCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))).sort(new BasicDBObject(FIELD_USERNAME, 1)).skip(size * page).limit(size)).map(this::convert).collect(LinkedHashSet::new, Set::add);
         return Single.zip(countOperation, usersOperation, (count, users) -> new Page<>(users, page, count));
     }
 
@@ -130,8 +131,8 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
                 eq(FIELD_REFERENCE_ID, referenceId),
                 searchQuery);
 
-        Single<Long> countOperation = Observable.fromPublisher(usersCollection.countDocuments(mongoQuery)).first(0l);
-        Single<Set<User>> usersOperation = Observable.fromPublisher(usersCollection.find(mongoQuery).sort(new BasicDBObject(FIELD_USERNAME, 1)).skip(size * page).limit(size)).map(this::convert).collect(LinkedHashSet::new, Set::add);
+        Single<Long> countOperation = Observable.fromPublisher(usersCollection.countDocuments(mongoQuery, countOptions())).first(0l);
+        Single<Set<User>> usersOperation = Observable.fromPublisher(withMaxTime(usersCollection.find(mongoQuery)).sort(new BasicDBObject(FIELD_USERNAME, 1)).skip(size * page).limit(size)).map(this::convert).collect(LinkedHashSet::new, Set::add);
         return Single.zip(countOperation, usersOperation, (count, users) -> new Page<>(users, 0, count));
     }
 
@@ -145,8 +146,8 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
                     eq(FIELD_REFERENCE_ID, referenceId),
                     searchQuery);
 
-            Single<Long> countOperation = Observable.fromPublisher(usersCollection.countDocuments(mongoQuery)).first(0l);
-            Single<Set<User>> usersOperation = Observable.fromPublisher(usersCollection.find(mongoQuery).sort(new BasicDBObject(FIELD_USERNAME, 1)).skip(size * page).limit(size)).map(this::convert).collect(LinkedHashSet::new, Set::add);
+            Single<Long> countOperation = Observable.fromPublisher(usersCollection.countDocuments(mongoQuery, countOptions())).first(0l);
+            Single<Set<User>> usersOperation = Observable.fromPublisher(withMaxTime(usersCollection.find(mongoQuery)).sort(new BasicDBObject(FIELD_USERNAME, 1)).skip(size * page).limit(size)).map(this::convert).collect(LinkedHashSet::new, Set::add);
             return Single.zip(countOperation, usersOperation, (count, users) -> new Page<>(users, 0, count));
         } catch (Exception ex) {
             if (ex instanceof IllegalArgumentException) {
@@ -168,7 +169,7 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
                     eq(FIELD_REFERENCE_ID, referenceId),
                     searchQuery);
 
-            return Flowable.fromPublisher(usersCollection.find(mongoQuery).sort(new BasicDBObject(FIELD_USERNAME, 1))).map(this::convert);
+            return Flowable.fromPublisher(withMaxTime(usersCollection.find(mongoQuery)).sort(new BasicDBObject(FIELD_USERNAME, 1))).map(this::convert);
         } catch (Exception ex) {
             if (ex instanceof IllegalArgumentException) {
                 return Flowable.error(ex);
@@ -181,9 +182,9 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
 
     @Override
     public Maybe<User> findByUsernameAndSource(ReferenceType referenceType, String referenceId, String username, String source) {
-        return Observable.fromPublisher(
+        return Observable.fromPublisher(withMaxTime(
                         usersCollection
-                                .find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_USERNAME, username), eq(FIELD_SOURCE, source)))
+                                .find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_USERNAME, username), eq(FIELD_SOURCE, source))))
                                 .limit(1)
                                 .first())
                 .firstElement()
@@ -192,9 +193,9 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
 
     @Override
     public Maybe<User> findByExternalIdAndSource(ReferenceType referenceType, String referenceId, String externalId, String source) {
-        return Observable.fromPublisher(
+        return Observable.fromPublisher(withMaxTime(
                         usersCollection
-                                .find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_EXTERNAL_ID, externalId), eq(FIELD_SOURCE, source)))
+                                .find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_EXTERNAL_ID, externalId), eq(FIELD_SOURCE, source))))
                                 .limit(1)
                                 .first())
                 .firstElement()
@@ -203,7 +204,7 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
 
     @Override
     public Flowable<User> findByIdIn(List<String> ids) {
-        return Flowable.fromPublisher(usersCollection.find(in(FIELD_ID, ids))).map(this::convert);
+        return Flowable.fromPublisher(withMaxTime(usersCollection.find(in(FIELD_ID, ids)))).map(this::convert);
     }
 
     @Override

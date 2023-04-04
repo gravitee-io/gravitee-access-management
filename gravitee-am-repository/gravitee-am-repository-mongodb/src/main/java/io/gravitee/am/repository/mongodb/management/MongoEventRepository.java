@@ -67,7 +67,7 @@ public class MongoEventRepository extends AbstractManagementMongoRepository impl
         if (to > from) {
             filters.add(lte(FIELD_UPDATED_AT, new Date(to)));
         }
-        return Flowable.fromPublisher(eventsCollection.find(and(filters))).map(this::convert);
+        return Flowable.fromPublisher(withMaxTime(eventsCollection.find(and(filters)))).map(this::convert);
     }
 
     @Override
