@@ -21,6 +21,7 @@ import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.InsertOneModel;
 import com.mongodb.client.model.WriteModel;
+import com.mongodb.reactivestreams.client.FindPublisher;
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.analytics.Type;
@@ -114,7 +115,10 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
     private MongoReporterConfiguration configuration;
 
     @Value("${management.mongodb.ensureIndexOnStart:true}")
+
     private boolean ensureIndexOnStart;
+    @Value("${management.mongodb.cursorMaxTime:60000}")
+    private int cursorMaxTimeInMs;
 
     private ClientWrapper<MongoClient> clientWrapper;
 
@@ -123,6 +127,10 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
     private final PublishProcessor<Audit> bulkProcessor = PublishProcessor.create();
 
     private Disposable disposable;
+
+    protected final <TResult> FindPublisher<TResult> withMaxTimeout(FindPublisher<TResult> query) {
+        return query.maxTime(this.cursorMaxTimeInMs, TimeUnit.MILLISECONDS);
+    }
 
     @Override
     public boolean canSearch() {
@@ -135,7 +143,10 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
 
         // run search query
         Single<Long> countOperation = Observable.fromPublisher(reportableCollection.countDocuments(query)).first(0l);
-        Single<List<Audit>> auditsOperation = Observable.fromPublisher(reportableCollection.find(query).sort(new BasicDBObject(FIELD_TIMESTAMP, -1)).skip(size * page).limit(size)).map(this::convert).collect(LinkedList::new, List::add);
+        Single<List<Audit>> auditsOperation = Observable.fromPublisher(withMaxTimeout(reportableCollection.find(query))
+                .sort(new BasicDBObject(FIELD_TIMESTAMP, -1))
+                .skip(size * page).limit(size))
+                .map(this::convert).collect(LinkedList::new, List::add);
         return Single.zip(countOperation, auditsOperation, (count, audits) -> new Page<>(audits, page, count));
     }
 
