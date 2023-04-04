@@ -82,7 +82,7 @@ public class MongoNodeMonitoringRepository extends AbstractManagementMongoReposi
             filters.add(lte(FIELD_UPDATED_AT, new Date(to)));
         }
 
-        return Flowable.fromPublisher(collection.find(and(filters))).map(this::convert);
+        return Flowable.fromPublisher(withMaxTime(collection.find(and(filters)))).map(this::convert);
     }
 
     private Monitoring convert(MonitoringMongo monitoringMongo) {

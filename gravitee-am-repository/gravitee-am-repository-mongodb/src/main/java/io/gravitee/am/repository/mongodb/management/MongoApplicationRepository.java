@@ -89,19 +89,23 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
     @Override
     public Single<Page<Application>> findAll(int page, int size) {
         Single<Long> countOperation = Observable.fromPublisher(applicationsCollection.countDocuments()).first(0l);
-        Single<Set<Application>> applicationsOperation = Observable.fromPublisher(applicationsCollection.find().sort(new BasicDBObject(FIELD_UPDATED_AT, -1)).skip(size * page).limit(size)).map(MongoApplicationRepository::convert).collect(HashSet::new, Set::add);
+        Single<Set<Application>> applicationsOperation = Observable.fromPublisher(withMaxTime(applicationsCollection.find())
+                .sort(new BasicDBObject(FIELD_UPDATED_AT, -1))
+                .skip(size * page)
+                .limit(size))
+                .map(MongoApplicationRepository::convert).collect(HashSet::new, Set::add);
         return Single.zip(countOperation, applicationsOperation, (count, applications) -> new Page<>(applications, page, count));
     }
 
     @Override
     public Flowable<Application> findByDomain(String domain) {
-        return Flowable.fromPublisher(applicationsCollection.find(eq(FIELD_DOMAIN, domain))).map(MongoApplicationRepository::convert);
+        return Flowable.fromPublisher(withMaxTime(applicationsCollection.find(eq(FIELD_DOMAIN, domain)))).map(MongoApplicationRepository::convert);
     }
 
     @Override
     public Single<Page<Application>> findByDomain(String domain, int page, int size) {
-        Single<Long> countOperation = Observable.fromPublisher(applicationsCollection.countDocuments(eq(FIELD_DOMAIN, domain))).first(0l);
-        Single<Set<Application>> applicationsOperation = Observable.fromPublisher(applicationsCollection.find(eq(FIELD_DOMAIN, domain)).sort(new BasicDBObject(FIELD_UPDATED_AT, -1)).skip(size * page).limit(size)).map(MongoApplicationRepository::convert).collect(HashSet::new, Set::add);
+        Single<Long> countOperation = Observable.fromPublisher(applicationsCollection.countDocuments(eq(FIELD_DOMAIN, domain), countOptions())).first(0l);
+        Single<Set<Application>> applicationsOperation = Observable.fromPublisher(withMaxTime(applicationsCollection.find(eq(FIELD_DOMAIN, domain))).sort(new BasicDBObject(FIELD_UPDATED_AT, -1)).skip(size * page).limit(size)).map(MongoApplicationRepository::convert).collect(HashSet::new, Set::add);
         return Single.zip(countOperation, applicationsOperation, (count, applications) -> new Page<>(applications, page, count));
     }
 
@@ -121,8 +125,8 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
                 eq(FIELD_DOMAIN, domain),
                 searchQuery);
 
-        Single<Long> countOperation = Observable.fromPublisher(applicationsCollection.countDocuments(mongoQuery)).first(0l);
-        Single<Set<Application>> applicationsOperation = Observable.fromPublisher(applicationsCollection.find(mongoQuery).sort(new BasicDBObject(FIELD_UPDATED_AT, -1)).skip(size * page).limit(size)).map(MongoApplicationRepository::convert).collect(HashSet::new, Set::add);
+        Single<Long> countOperation = Observable.fromPublisher(applicationsCollection.countDocuments(mongoQuery, countOptions())).first(0l);
+        Single<Set<Application>> applicationsOperation = Observable.fromPublisher(withMaxTime(applicationsCollection.find(mongoQuery)).sort(new BasicDBObject(FIELD_UPDATED_AT, -1)).skip(size * page).limit(size)).map(MongoApplicationRepository::convert).collect(HashSet::new, Set::add);
         return Single.zip(countOperation, applicationsOperation, (count, applications) -> new Page<>(applications, page, count));
     }
 
@@ -161,7 +165,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
 
     @Override
     public Flowable<Application> findByIdIn(List<String> ids) {
-        return Flowable.fromPublisher(applicationsCollection.find(in(FIELD_ID, ids))).map(MongoApplicationRepository::convert);
+        return Flowable.fromPublisher(withMaxTime(applicationsCollection.find(in(FIELD_ID, ids)))).map(MongoApplicationRepository::convert);
     }
 
     @Override
@@ -193,7 +197,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
 
     @Override
     public Single<Long> countByDomain(String domain) {
-        return Single.fromPublisher(applicationsCollection.countDocuments(eq(FIELD_DOMAIN, domain)));
+        return Single.fromPublisher(applicationsCollection.countDocuments(eq(FIELD_DOMAIN, domain), countOptions()));
     }
 
     private ApplicationMongo convert(Application other) {

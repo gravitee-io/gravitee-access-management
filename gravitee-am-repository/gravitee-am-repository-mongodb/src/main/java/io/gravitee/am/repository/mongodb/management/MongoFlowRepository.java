@@ -52,26 +52,26 @@ public class MongoFlowRepository extends AbstractManagementMongoRepository imple
 
     @Override
     public Flowable<Flow> findAll(ReferenceType referenceType, String referenceId) {
-        return Flowable.fromPublisher(
+        return Flowable.fromPublisher(withMaxTime(
                 flowsCollection.find(
                         and(
                                 eq(FIELD_REFERENCE_TYPE, referenceType.name()),
                                 eq(FIELD_REFERENCE_ID, referenceId)
                         )
-                )
+                ))
         ).map(this::convert);
     }
 
     @Override
     public Flowable<Flow> findByApplication(ReferenceType referenceType, String referenceId, String application) {
-        return Flowable.fromPublisher(
+        return Flowable.fromPublisher(withMaxTime(
                 flowsCollection.find(
                         and(
                                 eq(FIELD_REFERENCE_TYPE, referenceType.name()),
                                 eq(FIELD_REFERENCE_ID, referenceId),
                                 eq(FIELD_APPLICATION, application)
                         )
-                )
+                ))
         ).map(this::convert);
     }
 

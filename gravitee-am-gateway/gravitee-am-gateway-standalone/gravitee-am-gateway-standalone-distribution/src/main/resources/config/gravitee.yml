@@ -148,6 +148,7 @@ management:
 #    threadsAllowedToBlockForConnectionMultiplier: 5
 #    cursorFinalizerEnabled: true
 #    ensureIndexOnStart: true
+#    cursorMaxTime: 60000
 #    keystore:
 #      path:                      # Path to the keystore (when sslEnabled is true, default null)
 #      type:                      # Type of the keystore, supports jks, pem, pkcs12 (when sslEnabled is true, default null)
