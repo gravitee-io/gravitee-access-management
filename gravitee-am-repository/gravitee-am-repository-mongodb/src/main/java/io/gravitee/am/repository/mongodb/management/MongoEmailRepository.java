@@ -51,7 +51,7 @@ public class MongoEmailRepository extends AbstractManagementMongoRepository impl
 
     @Override
     public Flowable<Email> findAll() {
-        return Flowable.fromPublisher(emailsCollection.find()).map(this::convert);
+        return Flowable.fromPublisher(withMaxTime(emailsCollection.find())).map(this::convert);
     }
 
     @Override

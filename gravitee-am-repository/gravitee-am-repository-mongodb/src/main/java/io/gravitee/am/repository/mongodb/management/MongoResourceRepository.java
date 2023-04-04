@@ -57,8 +57,8 @@ public class MongoResourceRepository extends AbstractManagementMongoRepository i
 
     @Override
     public Single<Page<Resource>> findByDomainAndClient(String domain, String client, int page, int size) {
-        Single<Long> countOperation = Observable.fromPublisher(resourceCollection.countDocuments(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT_ID, client)))).first(0l);
-        Single<List<Resource>> resourcesOperation = Observable.fromPublisher(resourceCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT_ID, client))).sort(new BasicDBObject(FIELD_UPDATED_AT, -1)).skip(size * page).limit(size)).map(this::convert).toList();
+        Single<Long> countOperation = Observable.fromPublisher(resourceCollection.countDocuments(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT_ID, client)), countOptions())).first(0l);
+        Single<List<Resource>> resourcesOperation = Observable.fromPublisher(withMaxTime(resourceCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT_ID, client)))).sort(new BasicDBObject(FIELD_UPDATED_AT, -1)).skip(size * page).limit(size)).map(this::convert).toList();
         return Single.zip(countOperation, resourcesOperation, (count, resourceSets) -> new Page<>(resourceSets, page, count));
     }
 

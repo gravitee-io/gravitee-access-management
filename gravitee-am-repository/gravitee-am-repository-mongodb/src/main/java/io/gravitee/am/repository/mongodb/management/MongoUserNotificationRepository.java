@@ -82,9 +82,9 @@ public class MongoUserNotificationRepository extends AbstractManagementMongoRepo
 
     @Override
     public Flowable<UserNotification> findAllByAudienceAndStatus(String audience, UserNotificationStatus status) {
-        return Flowable.fromPublisher(mongoCollection.find(and(
+        return Flowable.fromPublisher(withMaxTime(mongoCollection.find(and(
                                 eq(FIELD_AUDIENCE, audience),
-                                eq(FIELD_STATUS, status.name())))
+                                eq(FIELD_STATUS, status.name()))))
                         .limit(NOTIFICATION_LIMIT)
                         .sort(new Document(FIELD_CREATED_AT, 1))
                 )

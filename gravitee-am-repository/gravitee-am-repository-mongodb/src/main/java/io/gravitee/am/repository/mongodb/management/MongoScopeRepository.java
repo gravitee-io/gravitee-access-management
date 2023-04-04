@@ -79,8 +79,8 @@ public class MongoScopeRepository extends AbstractManagementMongoRepository impl
     @Override
     public Single<Page<Scope>> findByDomain(String domain, int page, int size) {
         Bson mongoQuery = eq(FIELD_DOMAIN, domain);
-        Single<Long> countOperation = Observable.fromPublisher(scopesCollection.countDocuments(mongoQuery)).first(0l);
-        Single<List<Scope>> scopesOperation = Observable.fromPublisher(scopesCollection.find(mongoQuery).skip(size * page).limit(size)).map(this::convert).toList();
+        Single<Long> countOperation = Observable.fromPublisher(scopesCollection.countDocuments(mongoQuery, countOptions())).first(0l);
+        Single<List<Scope>> scopesOperation = Observable.fromPublisher(withMaxTime(scopesCollection.find(mongoQuery)).skip(size * page).limit(size)).map(this::convert).toList();
         return Single.zip(countOperation, scopesOperation, (count, scope) -> new Page<Scope>(scope, page, count));
     }
 
@@ -99,8 +99,8 @@ public class MongoScopeRepository extends AbstractManagementMongoRepository impl
         Bson mongoQuery = and(
                 eq(FIELD_DOMAIN, domain), searchQuery);
 
-        Single<Long> countOperation = Observable.fromPublisher(scopesCollection.countDocuments(mongoQuery)).first(0l);
-        Single<List<Scope>> scopesOperation = Observable.fromPublisher(scopesCollection.find(mongoQuery).sort(new BasicDBObject(FIELD_KEY, 1)).skip(size * page).limit(size)).map(this::convert).toList();
+        Single<Long> countOperation = Observable.fromPublisher(scopesCollection.countDocuments(mongoQuery, countOptions())).first(0l);
+        Single<List<Scope>> scopesOperation = Observable.fromPublisher(withMaxTime(scopesCollection.find(mongoQuery)).sort(new BasicDBObject(FIELD_KEY, 1)).skip(size * page).limit(size)).map(this::convert).toList();
         return Single.zip(countOperation, scopesOperation, (count, scopes) -> new Page<>(scopes, page, count));
     }
 

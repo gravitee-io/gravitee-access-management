@@ -50,7 +50,7 @@ public class MongoBotDetectionRepository extends AbstractManagementMongoReposito
 
     @Override
     public Flowable<BotDetection> findAll() {
-        return Flowable.fromPublisher(botDetectionMongoCollection.find()).map(this::convert);
+        return Flowable.fromPublisher(withMaxTime(botDetectionMongoCollection.find())).map(this::convert);
     }
 
     @Override
