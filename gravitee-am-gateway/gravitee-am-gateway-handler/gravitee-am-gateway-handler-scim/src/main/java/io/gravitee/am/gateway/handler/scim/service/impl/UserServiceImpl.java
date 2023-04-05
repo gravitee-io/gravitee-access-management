@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.scim.service.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.scim.filter.Filter;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
@@ -59,13 +60,16 @@ import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.util.Objects.isNull;
@@ -79,6 +83,16 @@ public class UserServiceImpl implements UserService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UserServiceImpl.class);
     private static final String DEFAULT_IDP_PREFIX = "default-idp-";
+
+    private static final Set<String> SCIM_DECLARED_CLAIMS = Set.of(StandardClaims.SUB,
+            StandardClaims.GIVEN_NAME,
+            StandardClaims.FAMILY_NAME,
+            StandardClaims.MIDDLE_NAME,
+            StandardClaims.PROFILE,
+            StandardClaims.PICTURE,
+            StandardClaims.ZONEINFO,
+            StandardClaims.LOCALE);
+    public static final String FIELD_PASSWORD_IS_INVALID = "Field [password] is invalid";
 
     @Autowired
     private UserRepository userRepository;
@@ -173,7 +187,7 @@ public class UserServiceImpl implements UserService {
 
         // check password
         if (isInvalidUserPassword(user.getPassword(), userModel)) {
-            return Single.error(new InvalidValueException("Field [password] is invalid"));
+            return Single.error(new InvalidValueException(FIELD_PASSWORD_IS_INVALID));
         }
 
         // check if user is unique
@@ -264,6 +278,19 @@ public class UserServiceImpl implements UserService {
                                 userToUpdate.setUpdatedAt(new Date());
                                 userToUpdate.setFactors(existingUser.getFactors());
                                 userToUpdate.setDynamicRoles(existingUser.getDynamicRoles());
+                                if (Objects.nonNull(existingUser.getAdditionalInformation())) {
+                                    // retrieve additionalInformation from the existing user.
+                                    // as SCIM doesn't define additionalInformation attributes, we have to
+                                    // copy them to avoid data loss
+                                    existingUser.getAdditionalInformation().forEach((k,v) -> {
+                                        if (!SCIM_DECLARED_CLAIMS.contains(k)) {
+                                            // some claims are defined by SCIM
+                                            // we do not want to copy them
+                                            // as they may be explicitly removed by the user
+                                            userToUpdate.getAdditionalInformation().putIfAbsent(k,v);
+                                        }
+                                    });
+                                }
                                 // keep previous login attempts information
                                 userToUpdate.setLoggedAt(existingUser.getLoggedAt());
                                 userToUpdate.setLoginsCount(existingUser.getLoginsCount());
@@ -292,7 +319,7 @@ public class UserServiceImpl implements UserService {
 
                                 // check password
                                 if (isInvalidUserPassword(userToUpdate.getPassword(), userToUpdate)) {
-                                    return Single.error(new InvalidValueException("Field [password] is invalid"));
+                                    return Single.error(new InvalidValueException(FIELD_PASSWORD_IS_INVALID));
                                 }
 
                                 // set source
@@ -381,7 +408,7 @@ public class UserServiceImpl implements UserService {
 
                     // check password
                     if (isInvalidUserPassword(userToPatch.getPassword(), UserMapper.convert(userToPatch))) {
-                        return Single.error(new InvalidValueException("Field [password] is invalid"));
+                        return Single.error(new InvalidValueException(FIELD_PASSWORD_IS_INVALID));
                     }
 
                     return update(userId, userToPatch, idp, baseUrl, principal);
