@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.scim.service.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.scim.filter.Filter;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
@@ -25,7 +26,11 @@ import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
 import io.gravitee.am.gateway.handler.scim.exception.SCIMException;
 import io.gravitee.am.gateway.handler.scim.exception.UniquenessException;
 import io.gravitee.am.gateway.handler.scim.mapper.UserMapper;
-import io.gravitee.am.gateway.handler.scim.model.*;
+import io.gravitee.am.gateway.handler.scim.model.GraviteeUser;
+import io.gravitee.am.gateway.handler.scim.model.ListResponse;
+import io.gravitee.am.gateway.handler.scim.model.Member;
+import io.gravitee.am.gateway.handler.scim.model.PatchOp;
+import io.gravitee.am.gateway.handler.scim.model.User;
 import io.gravitee.am.gateway.handler.scim.service.GroupService;
 import io.gravitee.am.gateway.handler.scim.service.UserService;
 import io.gravitee.am.model.Domain;
@@ -39,7 +44,15 @@ import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.UserActivityService;
-import io.gravitee.am.service.exception.*;
+import io.gravitee.am.service.exception.AbstractManagementException;
+import io.gravitee.am.service.exception.AbstractNotFoundException;
+import io.gravitee.am.service.exception.IdentityProviderNotFoundException;
+import io.gravitee.am.service.exception.RoleNotFoundException;
+import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.exception.UserAlreadyExistsException;
+import io.gravitee.am.service.exception.UserInvalidException;
+import io.gravitee.am.service.exception.UserNotFoundException;
+import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
 import io.gravitee.am.service.utils.UserFactorUpdater;
@@ -55,6 +68,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
@@ -69,6 +84,16 @@ public class UserServiceImpl implements UserService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UserServiceImpl.class);
     private static final String DEFAULT_IDP_PREFIX = "default-idp-";
+
+    private static final Set<String> SCIM_DECLARED_CLAIMS = Set.of(StandardClaims.SUB,
+            StandardClaims.GIVEN_NAME,
+            StandardClaims.FAMILY_NAME,
+            StandardClaims.MIDDLE_NAME,
+            StandardClaims.PROFILE,
+            StandardClaims.PICTURE,
+            StandardClaims.ZONEINFO,
+            StandardClaims.LOCALE);
+    public static final String FIELD_PASSWORD_IS_INVALID = "Field [password] is invalid";
 
     @Autowired
     private UserRepository userRepository;
@@ -163,7 +188,7 @@ public class UserServiceImpl implements UserService {
 
         // check password
         if (isInvalidUserPassword(user.getPassword(), userModel)) {
-            return Single.error(new InvalidValueException("Field [password] is invalid"));
+            return Single.error(new InvalidValueException(FIELD_PASSWORD_IS_INVALID));
         }
 
         // check if user is unique
@@ -254,6 +279,19 @@ public class UserServiceImpl implements UserService {
                                 userToUpdate.setUpdatedAt(new Date());
                                 userToUpdate.setFactors(existingUser.getFactors());
                                 userToUpdate.setDynamicRoles(existingUser.getDynamicRoles());
+                                if (Objects.nonNull(existingUser.getAdditionalInformation())) {
+                                    // retrieve additionalInformation from the existing user.
+                                    // as SCIM doesn't define additionalInformation attributes, we have to
+                                    // copy them to avoid data loss
+                                    existingUser.getAdditionalInformation().forEach((k,v) -> {
+                                        if (!SCIM_DECLARED_CLAIMS.contains(k)) {
+                                            // some claims are defined by SCIM
+                                            // we do not want to copy them
+                                            // as they may be explicitly removed by the user
+                                            userToUpdate.getAdditionalInformation().putIfAbsent(k,v);
+                                        }
+                                    });
+                                }
                                 // keep previous login attempts information
                                 userToUpdate.setLoggedAt(existingUser.getLoggedAt());
                                 userToUpdate.setLoginsCount(existingUser.getLoginsCount());
@@ -282,7 +320,7 @@ public class UserServiceImpl implements UserService {
 
                                 // check password
                                 if (isInvalidUserPassword(userToUpdate.getPassword(), userToUpdate)) {
-                                    return Single.error(new InvalidValueException("Field [password] is invalid"));
+                                    return Single.error(new InvalidValueException(FIELD_PASSWORD_IS_INVALID));
                                 }
 
                                 // set source
@@ -374,7 +412,7 @@ public class UserServiceImpl implements UserService {
 
                     // check password
                     if (isInvalidUserPassword(userToPatch.getPassword(), UserMapper.convert(userToPatch))) {
-                        return Single.error(new InvalidValueException("Field [password] is invalid"));
+                        return Single.error(new InvalidValueException(FIELD_PASSWORD_IS_INVALID));
                     }
 
                     return update(userId, userToPatch, idp, baseUrl, principal);

@@ -16,7 +16,6 @@
 package io.gravitee.am.gateway.handler.scim.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import io.gravitee.am.common.scim.Schema;
@@ -45,9 +44,6 @@ import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
-
-import java.util.*;
-
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -57,13 +53,27 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 import static io.gravitee.am.service.validators.email.EmailValidatorImpl.EMAIL_PATTERN;
-import static io.gravitee.am.service.validators.user.UserValidatorImpl.*;
+import static io.gravitee.am.service.validators.user.UserValidatorImpl.NAME_LAX_PATTERN;
+import static io.gravitee.am.service.validators.user.UserValidatorImpl.NAME_STRICT_PATTERN;
+import static io.gravitee.am.service.validators.user.UserValidatorImpl.USERNAME_PATTERN;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -241,6 +251,7 @@ public class UserServiceTest {
         when(existingUser.getSource()).thenReturn("user-idp");
         when(existingUser.getExternalId()).thenReturn("user-extid");
         when(existingUser.getUsername()).thenReturn("username");
+        when(existingUser.getAdditionalInformation()).thenReturn(Map.of("attr1", "value-attr1"));
 
         User scimUser = mock(User.class);
         when(scimUser.getPassword()).thenReturn(PASSWORD);
@@ -277,6 +288,7 @@ public class UserServiceTest {
         verify(userProvider).update(anyString(), any());
         verify(userProvider).updatePassword(any(), eq(PASSWORD));
         assertTrue(userCaptor.getValue().isEnabled());
+        assertTrue(userCaptor.getValue().getAdditionalInformation().containsKey("attr1"));
     }
 
     @Test
@@ -367,6 +379,7 @@ public class UserServiceTest {
         when(patchedUser.getSource()).thenReturn("user-idp");
         when(patchedUser.getUsername()).thenReturn("username");
         when(patchedUser.getDisplayName()).thenReturn("my user 2");
+        when(patchedUser.getAdditionalInformation()).thenReturn(Map.of("attr1", "value-attr1"));
 
         io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.User.class);
         UserProvider userProvider = mock(UserProvider.class);
@@ -382,6 +395,7 @@ public class UserServiceTest {
         doAnswer(invocation -> {
             io.gravitee.am.model.User userToUpdate = invocation.getArgument(0);
             Assert.assertTrue(userToUpdate.getDisplayName().equals("my user 2"));
+            Assert.assertTrue(userToUpdate.getAdditionalInformation().containsKey("attr1"));
             return Single.just(userToUpdate);
         }).when(userRepository).update(any());
 
