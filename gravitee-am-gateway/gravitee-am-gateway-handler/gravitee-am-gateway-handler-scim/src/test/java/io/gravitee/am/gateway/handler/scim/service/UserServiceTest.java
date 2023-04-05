@@ -45,6 +45,7 @@ import io.reactivex.observers.TestObserver;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import org.junit.Assert;
 import org.junit.Test;
@@ -239,6 +240,7 @@ public class UserServiceTest {
         when(existingUser.getSource()).thenReturn("user-idp");
         when(existingUser.getExternalId()).thenReturn("user-extid");
         when(existingUser.getUsername()).thenReturn("username");
+        when(existingUser.getAdditionalInformation()).thenReturn(Map.of("attr1", "value-attr1"));
 
         User scimUser = mock(User.class);
         when(scimUser.getPassword()).thenReturn(PASSWORD);
@@ -275,6 +277,7 @@ public class UserServiceTest {
         verify(userProvider).update(anyString(), any());
         verify(userProvider).updatePassword(any(), eq(PASSWORD));
         assertTrue(userCaptor.getValue().isEnabled());
+        assertTrue(userCaptor.getValue().getAdditionalInformation().containsKey("attr1"));
     }
 
     @Test
@@ -341,7 +344,6 @@ public class UserServiceTest {
 
     @Test
     public void shouldPatchUser() throws Exception {
-        final String domainId = "domain";
         final String domainName = "domainName";
         final String userId = "userId";
 
@@ -366,6 +368,7 @@ public class UserServiceTest {
         when(patchedUser.getSource()).thenReturn("user-idp");
         when(patchedUser.getUsername()).thenReturn("username");
         when(patchedUser.getDisplayName()).thenReturn("my user 2");
+        when(patchedUser.getAdditionalInformation()).thenReturn(Map.of("attr1", "value-attr1"));
 
         io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.User.class);
         UserProvider userProvider = mock(UserProvider.class);
@@ -381,6 +384,7 @@ public class UserServiceTest {
         doAnswer(invocation -> {
             io.gravitee.am.model.User userToUpdate = invocation.getArgument(0);
             Assert.assertTrue(userToUpdate.getDisplayName().equals("my user 2"));
+            Assert.assertTrue(userToUpdate.getAdditionalInformation().containsKey("attr1"));
             return Single.just(userToUpdate);
         }).when(userRepository).update(any());
 
