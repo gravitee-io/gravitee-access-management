@@ -19,6 +19,7 @@ import io.gravitee.am.common.factor.FactorSecurityType;
 import io.gravitee.am.common.factor.FactorType;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.factor.api.FactorProvider;
+import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
@@ -31,8 +32,11 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.DeviceService;
 import io.gravitee.am.service.FactorService;
+import io.gravitee.am.service.RateLimiterService;
+import io.gravitee.am.service.VerifyAttemptService;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Completable;
+import io.reactivex.Maybe;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.Session;
 import io.vertx.reactivex.core.buffer.Buffer;
@@ -85,6 +89,15 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
     @Mock
     private FactorService factorService;
 
+    @Mock
+    private RateLimiterService rateLimiterService;
+
+    @Mock
+    private VerifyAttemptService verifyAttemptService;
+
+    @Mock
+    private EmailService emailService;
+
     private LocalSessionStore localSessionStore;
 
     @Override
@@ -109,7 +122,7 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
         when(factorManager.get("factorId")).thenReturn(factorProvider);
         when(factorManager.getFactor("factorId")).thenReturn(factor);
         when(credentialService.update(any(), any(), any(), any())).thenReturn(Completable.complete());
-
+        when(verifyAttemptService.checkVerifyAttempt(any(), any(), any(), any())).thenReturn(Maybe.empty());
         router.route(HttpMethod.POST, "/mfa/challenge")
                 .handler(ctx -> {
                     User user = new User();
@@ -126,7 +139,7 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
                     ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
                     ctx.next();
                 })
-                .handler(new MFAChallengeEndpoint(factorManager, userService, engine, deviceService, applicationContext, domain, credentialService, factorService));
+                .handler(new MFAChallengeEndpoint(factorManager, userService, engine, deviceService, applicationContext, domain, credentialService, factorService, rateLimiterService, verifyAttemptService, emailService));
 
         testRequest(
                 HttpMethod.POST,
