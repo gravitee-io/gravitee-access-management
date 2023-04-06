@@ -327,6 +327,8 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
             }
 
             updateStrongAuthStatus(routingContext);
+            // set the credentialId in session
+            routingContext.session().put(ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY, credentialId);
 
             if (userHasFido2Factor(endUser)) {
                 cleanSession(routingContext);
