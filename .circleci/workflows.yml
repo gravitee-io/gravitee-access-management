@@ -204,41 +204,42 @@ commands:
             DRY_RUN: << parameters.dry_run >>
           name: "Gravitee AM Community Edition Package Bundle"
           command: |
-                    export MVN_PRJ_VERSION=$(mvn -Dexec.executable='echo' -Dexec.args='${project.version}' --non-recursive exec:exec -q | tee -a /tmp/maven.logs; echo "$?" > /tmp/maven.exit.code)
-                    export RELEASE_VERSION_NUMBER=$(echo "${MVN_PRJ_VERSION}" | awk -F '-SNAPSHOT' '{print $1}')            
-
-                    mkdir -p ~/release/graviteeio-am/components/gravitee-am-management-api/
-                    cp -R ~/project/gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-management-api-standalone-distribution/gravitee-am-management-api-standalone-distribution-zip/target/gravitee-am-management-api-standalone-${RELEASE_VERSION_NUMBER}.zip ~/release/graviteeio-am/components/gravitee-am-management-api/
-                    cd ~/release/graviteeio-am/components/gravitee-am-management-api/
-                    md5sum gravitee-am-management-api-standalone-${RELEASE_VERSION_NUMBER}.zip > gravitee-am-management-api-standalone-${RELEASE_VERSION_NUMBER}.zip.md5
-                    sha512sum gravitee-am-management-api-standalone-${RELEASE_VERSION_NUMBER}.zip > gravitee-am-management-api-standalone-${RELEASE_VERSION_NUMBER}.zip.sha512sum
-                    sha1sum gravitee-am-management-api-standalone-${RELEASE_VERSION_NUMBER}.zip > gravitee-am-management-api-standalone-${RELEASE_VERSION_NUMBER}.zip.sha1
-                    mkdir -p ~/release/graviteeio-am/distributions/graviteeio-am-full-${RELEASE_VERSION_NUMBER}/graviteeio-am-management-api-${RELEASE_VERSION_NUMBER}/
-                    cp -R ~/project/gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-management-api-standalone-distribution/target/distribution/* ~/release/graviteeio-am/distributions/graviteeio-am-full-${RELEASE_VERSION_NUMBER}/graviteeio-am-management-api-${RELEASE_VERSION_NUMBER}/
-                    
-                    mkdir -p ~/release/graviteeio-am/components/gravitee-am-gateway/
-                    cp -R ~/project/gravitee-am-gateway/gravitee-am-gateway-standalone/gravitee-am-gateway-standalone-distribution/gravitee-am-gateway-standalone-distribution-zip/target/gravitee-am-gateway-standalone-${RELEASE_VERSION_NUMBER}.zip ~/release/graviteeio-am/components/gravitee-am-gateway/
-                    cd ~/release/graviteeio-am/components/gravitee-am-gateway/
-                    md5sum gravitee-am-gateway-standalone-${RELEASE_VERSION_NUMBER}.zip > gravitee-am-gateway-standalone-${RELEASE_VERSION_NUMBER}.zip.md5
-                    sha512sum gravitee-am-gateway-standalone-${RELEASE_VERSION_NUMBER}.zip > gravitee-am-gateway-standalone-${RELEASE_VERSION_NUMBER}.zip.sha512sum
-                    sha1sum gravitee-am-gateway-standalone-${RELEASE_VERSION_NUMBER}.zip > gravitee-am-gateway-standalone-${RELEASE_VERSION_NUMBER}.zip.sha1
-                    mkdir -p ~/release/graviteeio-am/distributions/graviteeio-am-full-${RELEASE_VERSION_NUMBER}/graviteeio-am-gateway-${RELEASE_VERSION_NUMBER}/
-                    cp -R ~/project/gravitee-am-gateway/gravitee-am-gateway-standalone/gravitee-am-gateway-standalone-distribution/target/distribution/* ~/release/graviteeio-am/distributions/graviteeio-am-full-${RELEASE_VERSION_NUMBER}/graviteeio-am-gateway-${RELEASE_VERSION_NUMBER}/
-
-                    mkdir -p ~/release/graviteeio-am/components/gravitee-am-webui/
-                    cp -R ~/project/gravitee-am-ui/target/gravitee-am-webui-${RELEASE_VERSION_NUMBER}.zip ~/release/graviteeio-am/components/gravitee-am-webui/
-                    cd ~/release/graviteeio-am/components/gravitee-am-webui/
-                    md5sum gravitee-am-webui-${RELEASE_VERSION_NUMBER}.zip > gravitee-am-webui-${RELEASE_VERSION_NUMBER}.zip.md5
-                    sha512sum gravitee-am-webui-${RELEASE_VERSION_NUMBER}.zip > gravitee-am-webui-${RELEASE_VERSION_NUMBER}.zip.sha512sum
-                    sha1sum gravitee-am-webui-${RELEASE_VERSION_NUMBER}.zip > gravitee-am-webui-${RELEASE_VERSION_NUMBER}.zip.sha1
-                    mkdir -p ~/release/graviteeio-am/distributions/graviteeio-am-full-${RELEASE_VERSION_NUMBER}/graviteeio-am-management-ui-${RELEASE_VERSION_NUMBER}/
-                    cp -R ~/project/gravitee-am-ui/dist/* ~/release/graviteeio-am/distributions/graviteeio-am-full-${RELEASE_VERSION_NUMBER}/graviteeio-am-management-ui-${RELEASE_VERSION_NUMBER}/
-                    
-                    cd ~/release/graviteeio-am/distributions/
-                    zip -rm graviteeio-am-full-${RELEASE_VERSION_NUMBER}.zip graviteeio-am-full-${RELEASE_VERSION_NUMBER}
-                    md5sum graviteeio-am-full-${RELEASE_VERSION_NUMBER}.zip > graviteeio-am-full-${RELEASE_VERSION_NUMBER}.zip.md5
-                    sha512sum graviteeio-am-full-${RELEASE_VERSION_NUMBER}.zip > graviteeio-am-full-${RELEASE_VERSION_NUMBER}.zip.sha512sum
-                    sha1sum graviteeio-am-full-${RELEASE_VERSION_NUMBER}.zip > graviteeio-am-full-${RELEASE_VERSION_NUMBER}.zip.sha1
+            sed -ri "s#<changelist>.*</changelist>#<changelist></changelist>#g" pom.xml
+            export MVN_PRJ_VERSION=$(mvn -Dexec.executable='echo' -Dexec.args='${project.version}' --non-recursive exec:exec -q | tee -a /tmp/maven.logs; echo "$?" > /tmp/maven.exit.code)
+            export RELEASE_VERSION_NUMBER=$(echo "${MVN_PRJ_VERSION}" | awk -F '-SNAPSHOT' '{print $1}')
+            
+            mkdir -p ~/release/graviteeio-am/components/gravitee-am-management-api/
+            cp -R ~/project/gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-management-api-standalone-distribution/gravitee-am-management-api-standalone-distribution-zip/target/gravitee-am-management-api-standalone-${RELEASE_VERSION_NUMBER}.zip ~/release/graviteeio-am/components/gravitee-am-management-api/
+            cd ~/release/graviteeio-am/components/gravitee-am-management-api/
+            md5sum gravitee-am-management-api-standalone-${RELEASE_VERSION_NUMBER}.zip > gravitee-am-management-api-standalone-${RELEASE_VERSION_NUMBER}.zip.md5
+            sha512sum gravitee-am-management-api-standalone-${RELEASE_VERSION_NUMBER}.zip > gravitee-am-management-api-standalone-${RELEASE_VERSION_NUMBER}.zip.sha512sum
+            sha1sum gravitee-am-management-api-standalone-${RELEASE_VERSION_NUMBER}.zip > gravitee-am-management-api-standalone-${RELEASE_VERSION_NUMBER}.zip.sha1
+            mkdir -p ~/release/graviteeio-am/distributions/graviteeio-am-full-${RELEASE_VERSION_NUMBER}/graviteeio-am-management-api-${RELEASE_VERSION_NUMBER}/
+            cp -R ~/project/gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-management-api-standalone-distribution/target/distribution/* ~/release/graviteeio-am/distributions/graviteeio-am-full-${RELEASE_VERSION_NUMBER}/graviteeio-am-management-api-${RELEASE_VERSION_NUMBER}/
+            
+            mkdir -p ~/release/graviteeio-am/components/gravitee-am-gateway/
+            cp -R ~/project/gravitee-am-gateway/gravitee-am-gateway-standalone/gravitee-am-gateway-standalone-distribution/gravitee-am-gateway-standalone-distribution-zip/target/gravitee-am-gateway-standalone-${RELEASE_VERSION_NUMBER}.zip ~/release/graviteeio-am/components/gravitee-am-gateway/
+            cd ~/release/graviteeio-am/components/gravitee-am-gateway/
+            md5sum gravitee-am-gateway-standalone-${RELEASE_VERSION_NUMBER}.zip > gravitee-am-gateway-standalone-${RELEASE_VERSION_NUMBER}.zip.md5
+            sha512sum gravitee-am-gateway-standalone-${RELEASE_VERSION_NUMBER}.zip > gravitee-am-gateway-standalone-${RELEASE_VERSION_NUMBER}.zip.sha512sum
+            sha1sum gravitee-am-gateway-standalone-${RELEASE_VERSION_NUMBER}.zip > gravitee-am-gateway-standalone-${RELEASE_VERSION_NUMBER}.zip.sha1
+            mkdir -p ~/release/graviteeio-am/distributions/graviteeio-am-full-${RELEASE_VERSION_NUMBER}/graviteeio-am-gateway-${RELEASE_VERSION_NUMBER}/
+            cp -R ~/project/gravitee-am-gateway/gravitee-am-gateway-standalone/gravitee-am-gateway-standalone-distribution/target/distribution/* ~/release/graviteeio-am/distributions/graviteeio-am-full-${RELEASE_VERSION_NUMBER}/graviteeio-am-gateway-${RELEASE_VERSION_NUMBER}/
+            
+            mkdir -p ~/release/graviteeio-am/components/gravitee-am-webui/
+            cp -R ~/project/gravitee-am-ui/target/gravitee-am-webui-${RELEASE_VERSION_NUMBER}.zip ~/release/graviteeio-am/components/gravitee-am-webui/
+            cd ~/release/graviteeio-am/components/gravitee-am-webui/
+            md5sum gravitee-am-webui-${RELEASE_VERSION_NUMBER}.zip > gravitee-am-webui-${RELEASE_VERSION_NUMBER}.zip.md5
+            sha512sum gravitee-am-webui-${RELEASE_VERSION_NUMBER}.zip > gravitee-am-webui-${RELEASE_VERSION_NUMBER}.zip.sha512sum
+            sha1sum gravitee-am-webui-${RELEASE_VERSION_NUMBER}.zip > gravitee-am-webui-${RELEASE_VERSION_NUMBER}.zip.sha1
+            mkdir -p ~/release/graviteeio-am/distributions/graviteeio-am-full-${RELEASE_VERSION_NUMBER}/graviteeio-am-management-ui-${RELEASE_VERSION_NUMBER}/
+            cp -R ~/project/gravitee-am-ui/dist/* ~/release/graviteeio-am/distributions/graviteeio-am-full-${RELEASE_VERSION_NUMBER}/graviteeio-am-management-ui-${RELEASE_VERSION_NUMBER}/
+            
+            cd ~/release/graviteeio-am/distributions/
+            zip -rm graviteeio-am-full-${RELEASE_VERSION_NUMBER}.zip graviteeio-am-full-${RELEASE_VERSION_NUMBER}
+            md5sum graviteeio-am-full-${RELEASE_VERSION_NUMBER}.zip > graviteeio-am-full-${RELEASE_VERSION_NUMBER}.zip.md5
+            sha512sum graviteeio-am-full-${RELEASE_VERSION_NUMBER}.zip > graviteeio-am-full-${RELEASE_VERSION_NUMBER}.zip.sha512sum
+            sha1sum graviteeio-am-full-${RELEASE_VERSION_NUMBER}.zip > graviteeio-am-full-${RELEASE_VERSION_NUMBER}.zip.sha1
       - save-maven-job-cache:
           jobName: package_bundle
       - publish_bundle:
@@ -954,7 +955,7 @@ jobs:
               export MVN_PRJ_VERSION="${MVN_PRJ_VERSION_MAJOR}.${MVN_PRJ_VERSION_MINOR}.${MVN_PRJ_VERSION_PATCH}-alpha.${MVN_PRJ_VERSION_QUALIFIER}"
               echo "${MVN_PRJ_VERSION}" > /tmp/gio.maven.project.release.version
             else
-    
+
               export MVN_PRJ_VERSION="${MVN_PRJ_VERSION_MAJOR}.${MVN_PRJ_VERSION_MINOR}.${MVN_PRJ_VERSION_PATCH}"
               echo "${MVN_PRJ_VERSION}" > /tmp/gio.maven.project.release.version
             fi;

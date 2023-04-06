@@ -17,6 +17,7 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.management.handlers.management.api.resources.model.FilteredIdentityProviderInfo;
 import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.management.service.IdentityProviderServiceProxy;
 import io.gravitee.am.model.Acl;
@@ -61,7 +62,7 @@ public class IdentityProvidersResource extends AbstractResource {
             notes = "User must have the ORGANIZATION_IDENTITY_PROVIDER[LIST] permission on the specified organization. " +
                     "Each returned identity provider is filtered and contains only basic information such as id, name, type and isExternal.")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "List registered identity providers of the organization", response = IdentityProvider.class, responseContainer = "Set"),
+            @ApiResponse(code = 200, message = "List registered identity providers of the organization", response = FilteredIdentityProviderInfo.class, responseContainer = "Set"),
             @ApiResponse(code = 500, message = "Internal server error")})
     public void list(
             @PathParam("organizationId") String organizationId,
@@ -115,13 +116,8 @@ public class IdentityProvidersResource extends AbstractResource {
         return resourceContext.getResource(IdentityProviderResource.class);
     }
 
-    private IdentityProvider filterIdentityProviderInfos(IdentityProvider identityProvider) {
-        IdentityProvider filteredIdentityProvider = new IdentityProvider();
-        filteredIdentityProvider.setId(identityProvider.getId());
-        filteredIdentityProvider.setName(identityProvider.getName());
-        filteredIdentityProvider.setType(identityProvider.getType());
-        filteredIdentityProvider.setExternal(identityProvider.isExternal());
-
-        return filteredIdentityProvider;
+    private FilteredIdentityProviderInfo filterIdentityProviderInfos(IdentityProvider identityProvider) {
+        return new FilteredIdentityProviderInfo(identityProvider.getId(),
+                identityProvider.getName(), identityProvider.getType(), identityProvider.isSystem(), identityProvider.isExternal());
     }
 }

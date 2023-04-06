@@ -49,6 +49,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static io.gravitee.am.common.utils.ConstantKeys.ID_TOKEN_EXCLUDED_CLAIMS;
 import static java.util.Optional.ofNullable;
 
 /**
@@ -163,7 +164,7 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
         }
 
         // remove technical claims that are useless for the calling app
-        IDTokenService.EXCLUDED_CLAIMS.forEach(key -> userClaims.remove(key));
+        ID_TOKEN_EXCLUDED_CLAIMS.forEach(userClaims::remove);
 
         // Exchange the sub claim from the identity provider to its technical id
         userClaims.put(StandardClaims.SUB, user.getId());
