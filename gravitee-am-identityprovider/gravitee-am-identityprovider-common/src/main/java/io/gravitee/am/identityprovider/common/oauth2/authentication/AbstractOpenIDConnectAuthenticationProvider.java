@@ -53,6 +53,7 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.vertx.core.json.JsonObject;
 import io.vertx.rxjava3.core.buffer.Buffer;
 import io.vertx.rxjava3.ext.web.client.HttpRequest;
+import java.util.function.Predicate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -67,7 +68,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static io.gravitee.am.common.oidc.Scope.SCOPE_DELIMITER;
+import static io.gravitee.am.common.utils.ConstantKeys.ID_TOKEN_EXCLUDED_CLAIMS;
 import static io.gravitee.am.common.web.UriBuilder.encodeURIComponent;
+import static java.util.function.Predicate.not;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -93,7 +96,8 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
         Map<String, Object> typedAttributes = attributes;
         return typedAttributes.keySet().stream()
                 .filter(claimName -> attributes.get(claimName) != null) // sometimes values is null that throws a NPE during the collect phase
-                .collect(Collectors.toMap(claimName -> claimName, claimName -> attributes.get(claimName)));
+                .filter(not(ID_TOKEN_EXCLUDED_CLAIMS::contains))
+                .collect(Collectors.toMap(claimName -> claimName, attributes::get));
     }
 
     protected Maybe<User> retrieveUserFromIdToken(AuthenticationContext authContext, String idToken) {
