@@ -25,7 +25,6 @@ import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Factor;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
@@ -95,6 +94,7 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
     @Mock
     private AuthenticationFlowContextService authenticationFlowContextService;
 
+
     private LocalSessionStore localSessionStore;
 
     @Override
@@ -153,8 +153,7 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
                     ctx.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
                     ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
                     ctx.next();
-                })
-                .handler(new MFAChallengeEndpoint(factorManager, userService, templateEngine, deviceService, applicationContext, domain, credentialService, factorService, rateLimiterService, verifyAttemptService, emailService));
+                });
 
         testRequest(
                 HttpMethod.POST,
@@ -179,6 +178,7 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
+
     @Test
     public void shouldNotVerifyCode_noUser() throws Exception {
         testRequest(HttpMethod.POST,
