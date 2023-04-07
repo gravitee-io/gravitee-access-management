@@ -21,6 +21,8 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
+import io.gravitee.am.gateway.handler.root.RootProvider;
+import io.gravitee.am.gateway.handler.root.resources.handler.error.AbstractErrorHandler;
 import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.core.MultiMap;
@@ -36,22 +38,21 @@ import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderReques
  * @author GraviteeSource Team
  */
 
-public class MFAChallengeFailureHandler implements Handler<RoutingContext> {
+public class MFAChallengeFailureHandler extends AbstractErrorHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(MFAChallengeFailureHandler.class);
     private static final String ERROR_CODE_VALUE = "send_challenge_failed";
 
     private final AuthenticationFlowContextService authenticationFlowContextService;
 
     public MFAChallengeFailureHandler(AuthenticationFlowContextService authenticationFlowContextService) {
+        super(RootProvider.PATH_ERROR);
         this.authenticationFlowContextService = authenticationFlowContextService;
     }
 
     @Override
-    public void handle(RoutingContext routingContext) {
-        if (routingContext.failed()) {
-            Throwable throwable = routingContext.failure();
-            handleException(routingContext, throwable == null ? "MFA Challenge failed for unexpected reason" : throwable.getMessage());
-        }
+    public void doHandle(RoutingContext routingContext) {
+        Throwable throwable = routingContext.failure();
+        handleException(routingContext, throwable == null ? "MFA Challenge failed for unexpected reason" : throwable.getMessage());
     }
 
     private void handleException(RoutingContext context, String errorDescription) {
@@ -70,7 +71,7 @@ public class MFAChallengeFailureHandler implements Handler<RoutingContext> {
 
         if (context.request().getParam(Parameters.LOGIN_HINT) != null) {
             // encode login_hint parameter (to not replace '+' sign by a space ' ')
-            queryParams.set(Parameters.LOGIN_HINT, UriBuilder.encodeURIComponent(context.request().getParam(ConstantKeys.USERNAME_PARAM_KEY)));
+            queryParams.set(Parameters.LOGIN_HINT, UriBuilder.encodeURIComponent(context.request().getParam(Parameters.LOGIN_HINT)));
         }
 
         return queryParams;
@@ -86,12 +87,5 @@ public class MFAChallengeFailureHandler implements Handler<RoutingContext> {
             context.clearUser();
             context.session().destroy();
         }
-    }
-
-    private void doRedirect(HttpServerResponse response, String url) {
-        response
-                .putHeader(HttpHeaders.LOCATION, url)
-                .setStatusCode(302)
-                .end();
     }
 }
