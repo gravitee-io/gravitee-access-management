@@ -18,9 +18,11 @@ package io.gravitee.am.reporter.mongodb.audit;
 import com.mongodb.BasicDBObject;
 import com.mongodb.client.model.Accumulators;
 import com.mongodb.client.model.Aggregates;
+import com.mongodb.client.model.CountOptions;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.InsertOneModel;
 import com.mongodb.client.model.WriteModel;
+import com.mongodb.reactivestreams.client.AggregatePublisher;
 import com.mongodb.reactivestreams.client.FindPublisher;
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoCollection;
@@ -132,6 +134,10 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
         return query.maxTime(this.cursorMaxTimeInMs, TimeUnit.MILLISECONDS);
     }
 
+    protected final <TResult> AggregatePublisher<TResult> withMaxTimeout(AggregatePublisher<TResult> query) {
+        return query.maxTime(this.cursorMaxTimeInMs, TimeUnit.MILLISECONDS);
+    }
+
     @Override
     public boolean canSearch() {
         return true;
@@ -142,7 +148,7 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
         Bson query = query(referenceType, referenceId, criteria);
 
         // run search query
-        Single<Long> countOperation = Observable.fromPublisher(reportableCollection.countDocuments(query)).first(0l);
+        Single<Long> countOperation = Observable.fromPublisher(reportableCollection.countDocuments(query, new CountOptions().maxTime(cursorMaxTimeInMs, TimeUnit.MILLISECONDS))).first(0l);
         Single<List<Audit>> auditsOperation = Observable.fromPublisher(withMaxTimeout(reportableCollection.find(query))
                 .sort(new BasicDBObject(FIELD_TIMESTAMP, -1))
                 .skip(size * page).limit(size))
@@ -268,7 +274,7 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
         Map<Long, Long> intervals = intervals(criteria);
         String fieldSuccess = (criteria.types().get(0) + "_" + Status.SUCCESS).toLowerCase();
         String fieldFailure = (criteria.types().get(0) + "_" + Status.FAILURE).toLowerCase();
-        return Observable.fromPublisher(reportableCollection.aggregate(Arrays.asList(
+        return Observable.fromPublisher(withMaxTimeout(reportableCollection.aggregate(Arrays.asList(
                 Aggregates.match(query),
                 Aggregates.group(
                         new BasicDBObject("_id",
@@ -279,7 +285,7 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
                                         ))),
                         Accumulators.sum(fieldSuccess, new BasicDBObject("$cond", Arrays.asList(new BasicDBObject("$eq", Arrays.asList("$outcome.status", Status.SUCCESS)), 1, 0))),
                         Accumulators.sum(fieldFailure, new BasicDBObject("$cond", Arrays.asList(new BasicDBObject("$eq", Arrays.asList("$outcome.status", Status.FAILURE)), 1, 0))))), Document.class))
-                .toList()
+                ).toList()
                 .map(docs -> {
                     Map<Long, Long> successResult = new HashMap<>();
                     Map<Long, Long> failureResult = new HashMap<>();
@@ -305,18 +311,18 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
     }
 
     private Single<Map<Object, Object>> executeGroupBy(AuditReportableCriteria criteria, Bson query) {
-        return Observable.fromPublisher(reportableCollection.aggregate(
+        return Observable.fromPublisher(withMaxTimeout(reportableCollection.aggregate(
                 Arrays.asList(
                         Aggregates.match(query),
                         Aggregates.group(new BasicDBObject("_id", "$" + criteria.field()), Accumulators.sum("count", 1)),
                         Aggregates.limit(criteria.size() != null ? criteria.size() : 50)), Document.class
-        ))
+        )))
                 .toList()
                 .map(docs -> docs.stream().collect(Collectors.toMap(d -> ((Document) d.get("_id")).get("_id"), d -> d.get("count"))));
     }
 
     private Single<Map<Object, Object>> executeCount(Bson query) {
-        return Observable.fromPublisher(reportableCollection.countDocuments(query)).first(0l).map(data -> Collections.singletonMap("data", data));
+        return Observable.fromPublisher(reportableCollection.countDocuments(query, new CountOptions().maxTime(cursorMaxTimeInMs, TimeUnit.MILLISECONDS))).first(0l).map(data -> Collections.singletonMap("data", data));
     }
 
     private Flowable bulk(List<Audit> audits) {
