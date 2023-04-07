@@ -39,6 +39,6 @@ public interface SpringI18nDictionaryRepository extends RxJava3CrudRepository<Jd
     @Query("select * from i18n_dictionaries f where f.reference_id = :refId and f.reference_type = :refType and f.id = :id")
     Maybe<JdbcI18nDictionary> findById(@Param("refType") String referenceType, @Param("refId") String referenceId, @Param("id") String id);
 
-    @Query("select * from i18n_dictionaries f where f.reference_id = :refId and f.reference_type = :refType and f.name = :name")
-    Maybe<JdbcI18nDictionary> findByName(@Param("refType") String referenceType, @Param("refId") String referenceId, @Param("name") String name);
+    @Query("select * from i18n_dictionaries f where f.reference_id = :refId and f.reference_type = :refType and f.locale = :locale")
+    Maybe<JdbcI18nDictionary> findByLocale(@Param("refType") String referenceType, @Param("refId") String referenceId, @Param("locale") String locale);
 }

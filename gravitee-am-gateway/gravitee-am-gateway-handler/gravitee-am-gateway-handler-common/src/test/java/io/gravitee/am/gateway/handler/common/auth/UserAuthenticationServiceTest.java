@@ -16,6 +16,8 @@
 package io.gravitee.am.gateway.handler.common.auth;
 
 import io.gravitee.am.common.exception.authentication.AccountDisabledException;
+import io.gravitee.am.common.exception.authentication.AccountEnforcePasswordException;
+import io.gravitee.am.common.exception.authentication.AccountIllegalStateException;
 import io.gravitee.am.common.exception.authentication.AccountLockedException;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationService;
@@ -25,6 +27,8 @@ import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.login.LoginSettings;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.gateway.api.Request;
 import io.reactivex.rxjava3.core.Maybe;
@@ -37,6 +41,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
@@ -543,5 +548,191 @@ public class UserAuthenticationServiceTest {
 
         testObserver.assertComplete();
         testObserver.assertValue(user1 -> user1.equals(existingUser));
+    }
+
+    @Test
+    public void shouldConnectWithPasswordless_nominalCase() {
+        final String userId = "userId";
+        final Client client = new Client();
+        final User user = new User();
+        when(userService.findById(userId)).thenReturn(Maybe.just(user));
+        when(userService.update(any())).thenReturn(Single.just(user));
+        when(userService.enhance(any())).thenReturn(Single.just(user));
+
+        TestObserver testObserver = userAuthenticationService.connectWithPasswordless(userId, client).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+    }
+
+    @Test
+    public void shouldConnectWithPasswordless_policyDisabled_1() {
+        final String userId = "userId";
+        final LoginSettings loginSettings = new LoginSettings();
+        loginSettings.setInherited(false);
+        loginSettings.setPasswordlessEnabled(false);
+        final Client client = new Client();
+        client.setLoginSettings(loginSettings);
+        final User user = new User();
+        final Date lastLogin = new Date(Instant.now().minus(90, ChronoUnit.DAYS).toEpochMilli());
+        user.setLastLoginWithCredentials(lastLogin);
+        when(userService.findById(userId)).thenReturn(Maybe.just(user));
+        when(userService.update(any())).thenReturn(Single.just(user));
+        when(userService.enhance(any())).thenReturn(Single.just(user));
+
+        TestObserver testObserver = userAuthenticationService.connectWithPasswordless(userId, client).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+    }
+
+    @Test
+    public void shouldConnectWithPasswordless_policyDisabled_2() {
+        final LoginSettings loginSettings = new LoginSettings();
+        loginSettings.setInherited(false);
+        loginSettings.setPasswordlessEnabled(true);
+        loginSettings.setPasswordlessEnforcePasswordEnabled(false);
+        final String userId = "userId";
+        final Client client = new Client();
+        client.setLoginSettings(loginSettings);
+        final User user = new User();
+        final Date lastLogin = new Date(Instant.now().minus(90, ChronoUnit.DAYS).toEpochMilli());
+        user.setLastLoginWithCredentials(lastLogin);
+        when(userService.findById(userId)).thenReturn(Maybe.just(user));
+        when(userService.update(any())).thenReturn(Single.just(user));
+        when(userService.enhance(any())).thenReturn(Single.just(user));
+
+        TestObserver testObserver = userAuthenticationService.connectWithPasswordless(userId, client).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+    }
+
+    @Test
+    public void shouldConnectWithPasswordless_policyDisabled_3() {
+        final LoginSettings loginSettings = new LoginSettings();
+        loginSettings.setInherited(false);
+        loginSettings.setPasswordlessEnabled(true);
+        loginSettings.setPasswordlessEnforcePasswordEnabled(true);
+        final String userId = "userId";
+        final Client client = new Client();
+        client.setLoginSettings(loginSettings);
+        final User user = new User();
+        final Date lastLogin = new Date(Instant.now().minus(90, ChronoUnit.DAYS).toEpochMilli());
+        user.setLastLoginWithCredentials(lastLogin);
+        when(userService.findById(userId)).thenReturn(Maybe.just(user));
+        when(userService.update(any())).thenReturn(Single.just(user));
+        when(userService.enhance(any())).thenReturn(Single.just(user));
+
+        TestObserver testObserver = userAuthenticationService.connectWithPasswordless(userId, client).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+    }
+
+    @Test
+    public void shouldConnectWithPasswordless_policyDisabled_4() {
+        final LoginSettings loginSettings = new LoginSettings();
+        loginSettings.setInherited(false);
+        loginSettings.setPasswordlessEnabled(false);
+        loginSettings.setPasswordlessEnforcePasswordEnabled(true);
+        loginSettings.setPasswordlessEnforcePasswordMaxAge(30);
+        final String userId = "userId";
+        final Client client = new Client();
+        client.setLoginSettings(loginSettings);
+        final User user = new User();
+        final Date lastLogin = new Date(Instant.now().minus(90, ChronoUnit.SECONDS).toEpochMilli());
+        user.setLastLoginWithCredentials(lastLogin);
+        when(userService.findById(userId)).thenReturn(Maybe.just(user));
+        when(userService.update(any())).thenReturn(Single.just(user));
+        when(userService.enhance(any())).thenReturn(Single.just(user));
+
+        TestObserver testObserver = userAuthenticationService.connectWithPasswordless(userId, client).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+    }
+
+    @Test
+    public void shouldConnectWithPasswordless_policyNotEvaluated() {
+        final LoginSettings loginSettings = new LoginSettings();
+        loginSettings.setInherited(false);
+        loginSettings.setPasswordlessEnabled(true);
+        loginSettings.setPasswordlessEnforcePasswordEnabled(true);
+        loginSettings.setPasswordlessEnforcePasswordMaxAge(30);
+        final String userId = "userId";
+        final Client client = new Client();
+        client.setLoginSettings(loginSettings);
+        final User user = new User();
+        final Date lastLogin = new Date(Instant.now().minus(15, ChronoUnit.SECONDS).toEpochMilli());
+        user.setLastLoginWithCredentials(lastLogin);
+        when(userService.findById(userId)).thenReturn(Maybe.just(user));
+        when(userService.update(any())).thenReturn(Single.just(user));
+        when(userService.enhance(any())).thenReturn(Single.just(user));
+
+        TestObserver testObserver = userAuthenticationService.connectWithPasswordless(userId, client).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+    }
+
+    @Test
+    public void shouldNotConnectWithPasswordless_userIndefinitelyLocked() {
+        final String userId = "userId";
+        final Client client = new Client();
+        final User user = new User();
+        user.setAccountNonLocked(false);
+
+        when(userService.findById(userId)).thenReturn(Maybe.just(user));
+
+        TestObserver testObserver = userAuthenticationService.connectWithPasswordless(userId, client).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertNotComplete();
+        testObserver.assertError(AccountLockedException.class);
+    }
+
+    @Test
+    public void shouldNotConnectWithPasswordless_userDisabled() {
+        final String userId = "userId";
+        final Client client = new Client();
+        final User user = new User();
+        user.setEnabled(false);
+
+        when(userService.findById(userId)).thenReturn(Maybe.just(user));
+
+        TestObserver testObserver = userAuthenticationService.connectWithPasswordless(userId, client).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertNotComplete();
+        testObserver.assertError(AccountDisabledException.class);
+    }
+
+    @Test
+    public void shouldNotConnectWithPasswordless_policyEvaluated() {
+        final LoginSettings loginSettings = new LoginSettings();
+        loginSettings.setInherited(false);
+        loginSettings.setPasswordlessEnabled(true);
+        loginSettings.setPasswordlessEnforcePasswordEnabled(true);
+        loginSettings.setPasswordlessEnforcePasswordMaxAge(30);
+        final String userId = "userId";
+        final Client client = new Client();
+        client.setLoginSettings(loginSettings);
+        final User user = new User();
+        final Date lastLogin = new Date(Instant.now().minus(45, ChronoUnit.SECONDS).toEpochMilli());
+        user.setLastLoginWithCredentials(lastLogin);
+        when(userService.findById(userId)).thenReturn(Maybe.just(user));
+
+        TestObserver testObserver = userAuthenticationService.connectWithPasswordless(userId, client).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertNotComplete();
+        testObserver.assertError(AccountEnforcePasswordException.class);
     }
 }

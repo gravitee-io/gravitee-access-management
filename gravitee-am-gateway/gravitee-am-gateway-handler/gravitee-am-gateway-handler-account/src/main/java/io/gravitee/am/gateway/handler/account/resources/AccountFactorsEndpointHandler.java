@@ -20,6 +20,7 @@ import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.factor.FactorDataKeys;
 import io.gravitee.am.common.factor.FactorType;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.common.utils.MovingFactorUtils;
 import io.gravitee.am.factor.api.Enrollment;
 import io.gravitee.am.factor.api.FactorContext;
 import io.gravitee.am.factor.api.FactorProvider;
@@ -29,7 +30,6 @@ import io.gravitee.am.gateway.handler.account.model.UpdateEnrolledFactor;
 import io.gravitee.am.gateway.handler.account.services.AccountService;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
-import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.User;
@@ -39,6 +39,7 @@ import io.gravitee.am.model.factor.EnrolledFactorChannel.Type;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.factor.FactorStatus;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.service.exception.FactorNotFoundException;
 import io.gravitee.am.service.exception.RateLimitException;
 import io.gravitee.common.util.Maps;
@@ -55,9 +56,6 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.springframework.context.ApplicationContext;
 
-import java.nio.charset.StandardCharsets;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -197,7 +195,9 @@ public class AccountFactorsEndpointHandler {
                 }
 
                 // enroll factor
-                enrollFactor(factor, factorProvider, account, user, eh -> {
+                final FactorContext factorContext = new FactorContext(applicationContext, new HashMap<>());
+                factorContext.registerData(KEY_USER, user);
+                enrollFactor(factor, factorProvider, account, factorContext, eh -> {
                     if (eh.failed()) {
                         if (eh.cause() instanceof InvalidFactorAttributeException) {
                             routingContext.fail(400, eh.cause());
@@ -589,11 +589,11 @@ public class AccountFactorsEndpointHandler {
     private void enrollFactor(Factor factor,
                               FactorProvider factorProvider,
                               EnrollmentAccount account,
-                              User endUser,
+                              FactorContext factorContext,
                               Handler<AsyncResult<EnrolledFactor>> handler) {
-        factorProvider.enroll(endUser.getUsername())
+        factorProvider.enroll(factorContext)
                 .map(enrollment -> {
-                    final EnrolledFactor enrolledFactor = buildEnrolledFactor(factor, enrollment, account, endUser);
+                    final EnrolledFactor enrolledFactor = buildEnrolledFactor(factor, factorProvider, enrollment, account, factorContext);
                     if (factorProvider.checkSecurityFactor(enrolledFactor)) {
                         return enrolledFactor;
                     }
@@ -666,9 +666,10 @@ public class AccountFactorsEndpointHandler {
     }
 
     private EnrolledFactor buildEnrolledFactor(Factor factor,
+                                               FactorProvider factorProvider,
                                                Enrollment enrollment,
                                                EnrollmentAccount account,
-                                               User user) {
+                                               FactorContext factorContext) {
         EnrolledFactor enrolledFactor = new EnrolledFactor();
         enrolledFactor.setFactorId(factor.getId());
         enrolledFactor.setStatus(FactorStatus.PENDING_ACTIVATION);
@@ -683,20 +684,24 @@ public class AccountFactorsEndpointHandler {
                 enrolledFactor.setChannel(new EnrolledFactorChannel(Type.CALL, account.getPhoneNumber()));
                 break;
             case EMAIL:
-                Map<String, Object> additionalData = new Maps.MapBuilder(new HashMap())
-                        .put(FactorDataKeys.KEY_MOVING_FACTOR, generateInitialMovingFactor(user))
-                        .build();
-                // For email even if the endUser will contain all relevant information, we extract only the Expiration Date of the code.
-                // this is done only to enforce the other parameter (shared secret and initialMovingFactor)
-                getEnrolledFactor(factor.getId(), user).ifPresent(ef -> {
-                    additionalData.put(FactorDataKeys.KEY_EXPIRE_AT, ef.getSecurity().getData(FactorDataKeys.KEY_EXPIRE_AT, Long.class));
-                });
-                enrolledFactor.setSecurity(new EnrolledFactorSecurity(SHARED_SECRET, enrollment.getKey(), additionalData));
                 enrolledFactor.setChannel(new EnrolledFactorChannel(Type.EMAIL, account.getEmail()));
                 break;
             default:
                 throw new IllegalStateException("Unexpected value: " + factor.getFactorType().getType());
         }
+
+        // add security information (shared secret and moving factor) for factor managed by AM to generate OTP
+        if (factorProvider.useVariableFactorSecurity(factorContext)) {
+            final User user = factorContext.getUser();
+            Map<String, Object> additionalData = new Maps.MapBuilder(new HashMap())
+                    .put(FactorDataKeys.KEY_MOVING_FACTOR, MovingFactorUtils.generateInitialMovingFactor(user.getId()))
+                    .build();
+            getEnrolledFactor(factor.getId(), user).ifPresent(ef -> {
+                additionalData.put(FactorDataKeys.KEY_EXPIRE_AT, ef.getSecurity().getData(FactorDataKeys.KEY_EXPIRE_AT, Long.class));
+            });
+            enrolledFactor.setSecurity(new EnrolledFactorSecurity(SHARED_SECRET, enrollment.getKey(), additionalData));
+        }
+
         enrolledFactor.setCreatedAt(new Date());
         enrolledFactor.setUpdatedAt(enrolledFactor.getCreatedAt());
         return enrolledFactor;
@@ -711,16 +716,6 @@ public class AccountFactorsEndpointHandler {
                 .stream()
                 .filter(factor -> Objects.equals(factorId, factor.getFactorId()))
                 .findFirst();
-    }
-
-    private int generateInitialMovingFactor(User endUser) {
-        try {
-            SecureRandom secureRandom = SecureRandom.getInstance("SHA1PRNG");
-            secureRandom.setSeed(endUser.getUsername().getBytes(StandardCharsets.UTF_8));
-            return secureRandom.nextInt(1000) + 1;
-        } catch (NoSuchAlgorithmException e) {
-            return 0;
-        }
     }
 
     /**

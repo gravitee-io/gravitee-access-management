@@ -156,8 +156,9 @@ public class OrganizationServiceTest {
 
         verify(organizationRepository, times(1)).count();
         verifyNoMoreInteractions(organizationRepository);
-        verifyZeroInteractions(auditService);
+        verify(auditService, times(0)).report(any());
     }
+
 
     @Test
     public void shouldNotCreateDefault_error() {

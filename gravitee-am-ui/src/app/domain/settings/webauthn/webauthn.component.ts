@@ -137,4 +137,9 @@ export class DomainSettingsWebAuthnComponent implements OnInit {
   updateFormState() {
     this.formChanged = true;
   }
+
+  changeMaxAge($event) {
+    this.domain.webAuthnSettings.enforceAuthenticatorIntegrityMaxAge = $event;
+    this.updateFormState();
+  }
 }

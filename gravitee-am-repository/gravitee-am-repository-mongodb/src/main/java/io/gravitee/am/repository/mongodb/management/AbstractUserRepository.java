@@ -276,8 +276,10 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
         user.setClient(userMongo.getClient());
         user.setLoginsCount(userMongo.getLoginsCount());
         user.setLoggedAt(userMongo.getLoggedAt());
+        user.setLastLoginWithCredentials(userMongo.getLastLoginWithCredentials());
         user.setMfaEnrollmentSkippedAt(userMongo.getMfaEnrollmentSkippedAt());
         user.setLastPasswordReset(userMongo.getLastPasswordReset());
+        user.setLastUsernameReset(userMongo.getLastUsernameReset());
         user.setLastLogoutAt(userMongo.getLastLogoutAt());
         user.setRoles(userMongo.getRoles());
         user.setDynamicRoles(userMongo.getDynamicRoles());
@@ -331,9 +333,11 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
         userMongo.setClient(user.getClient());
         userMongo.setLoginsCount(user.getLoginsCount());
         userMongo.setLoggedAt(user.getLoggedAt());
+        userMongo.setLastLoginWithCredentials(user.getLastLoginWithCredentials());
         userMongo.setMfaEnrollmentSkippedAt(user.getMfaEnrollmentSkippedAt());
         userMongo.setLastPasswordReset(user.getLastPasswordReset());
         userMongo.setLastLogoutAt(user.getLastLogoutAt());
+        userMongo.setLastUsernameReset(user.getLastUsernameReset());
         userMongo.setRoles(user.getRoles());
         userMongo.setDynamicRoles(user.getDynamicRoles());
         userMongo.setEmails(toMongoAttributes(user.getEmails()));

@@ -19,14 +19,18 @@ import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.certificate.CertificateProvider;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
+import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.model.User;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
+import io.gravitee.am.service.exception.UserNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+
+import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.SESSION;
 
 /**
  * WebAuthn cookie service used mainly to determine if the device is already enrolled or not,
@@ -54,6 +58,9 @@ public class WebAuthnCookieService implements InitializingBean {
     @Autowired
     private CertificateManager certificateManager;
 
+    @Autowired
+    private UserService userService;
+
     private CertificateProvider certificateProvider;
 
     @Override
@@ -78,7 +85,7 @@ public class WebAuthnCookieService implements InitializingBean {
     }
 
     public Completable verifyRememberDeviceCookieValue(String cookieValue) {
-        return jwtService.decodeAndVerify(cookieValue, certificateProvider)
+        return decodeAndVerify(cookieValue)
                 .ignoreElement()
                 .onErrorResumeNext(throwable -> {
                     LOGGER.error("An error has occurred when parsing WebAuthn cookie {}", cookieValue, throwable);
@@ -86,4 +93,13 @@ public class WebAuthnCookieService implements InitializingBean {
                 });
     }
 
+    public Single<User> extractUserFromRememberDeviceCookieValue(String cookieValue) {
+        return decodeAndVerify(cookieValue)
+                .flatMap(jwt -> userService.findById((String) jwt.get(USER_ID))
+                        .switchIfEmpty(Single.error(new UserNotFoundException((String) jwt.get(USER_ID)))));
+    }
+
+    private Single<JWT> decodeAndVerify(String cookieValue) {
+        return jwtService.decodeAndVerify(cookieValue, certificateProvider, SESSION);
+    }
 }

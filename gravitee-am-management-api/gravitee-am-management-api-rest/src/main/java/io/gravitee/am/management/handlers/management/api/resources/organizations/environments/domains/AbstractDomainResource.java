@@ -100,6 +100,7 @@ public class AbstractDomainResource extends AbstractResource {
             filteredDomain.setAccountSettings(domain.getAccountSettings());
             filteredDomain.setSelfServiceAccountManagementSettings(domain.getSelfServiceAccountManagementSettings());
             filteredDomain.setTags(domain.getTags());
+            filteredDomain.setCorsSettings(domain.getCorsSettings());
         }
 
         return filteredDomain;

@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.Map;
 
+import static io.gravitee.am.common.web.UriBuilder.encodeURIComponent;
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
 
 /**
@@ -91,20 +92,21 @@ public class RegisterConfirmationEndpoint extends UserRequestHandler {
             return;
         }
 
-        final Map<String, String> actionParams = (client != null) ? Map.of(Parameters.CLIENT_ID, client.getClientId()) : Map.of();
+        final Map<String, String> actionParams = (client != null) ? Map.of(Parameters.CLIENT_ID, encodeURIComponent(client.getClientId())) : Map.of();
         routingContext.put(ConstantKeys.ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), actionParams));
 
         // render the registration confirmation page
         engine.render(generateData(routingContext, domain, client), getTemplateFileName(client))
-                .doOnSuccess(buffer -> {
-                    routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
-                    routingContext.response().end(buffer);
-                })
-                .doOnError(throwable -> {
-                    logger.error("Unable to render registration confirmation page", throwable);
-                    routingContext.fail(throwable.getCause());
-                })
-                .subscribe();
+                .subscribe(
+                        buffer -> {
+                            routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
+                            routingContext.response().end(buffer);
+                        },
+                        throwable -> {
+                            logger.error("Unable to render registration confirmation page", throwable);
+                            routingContext.fail(throwable.getCause());
+                        }
+                );
     }
 
     private String getTemplateFileName(Client client) {

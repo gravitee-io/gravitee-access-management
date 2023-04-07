@@ -55,8 +55,8 @@ import org.springframework.core.env.Environment;
 
 import java.util.*;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.when;
 
 /**
@@ -676,7 +676,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
                 resp -> resp.bodyHandler(body -> {
                     final Map<String, Object> claims = Json.decodeValue(body.toString(), Map.class);
                     assertNotNull(claims);
-                    assertEquals(23, claims.size());
+                    assertEquals(22, claims.size());
                     assertTrue(claims.containsKey(CustomClaims.ROLES));
                     assertTrue(((List) claims.get(CustomClaims.ROLES)).containsAll(Arrays.asList("role-1", "role-2")));
                     assertTrue(claims.containsKey(CustomClaims.GROUPS));

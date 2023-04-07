@@ -84,6 +84,20 @@ public class WebAuthnSettings {
      */
     private Map<String, Object> certificates;
 
+    /**
+     * Enforce authenticator integrity.
+     * Check periodically that webauthn authenticators are still valid regarding certificate and FIDO2 Metadata Service.
+     * The authenticator's statement will be used to verify the certificate chain.
+     */
+    private boolean enforceAuthenticatorIntegrity;
+
+    /**
+     * Enforce authenticator integrity Max Age.
+     * Specifies the allowable elapsed time in seconds since the last time the End-User webauthn authenticator was actively checked.
+     * If the elapsed time is greater than this value, the End-User webauthn authenticator will be checked during the next passwordless login.
+     */
+    private Integer enforceAuthenticatorIntegrityMaxAge;
+
     public String getOrigin() {
         return origin;
     }
@@ -154,5 +168,21 @@ public class WebAuthnSettings {
 
     public void setCertificates(Map<String, Object> certificates) {
         this.certificates = certificates;
+    }
+
+    public boolean isEnforceAuthenticatorIntegrity() {
+        return enforceAuthenticatorIntegrity;
+    }
+
+    public void setEnforceAuthenticatorIntegrity(boolean enforceAuthenticatorIntegrity) {
+        this.enforceAuthenticatorIntegrity = enforceAuthenticatorIntegrity;
+    }
+
+    public Integer getEnforceAuthenticatorIntegrityMaxAge() {
+        return enforceAuthenticatorIntegrityMaxAge;
+    }
+
+    public void setEnforceAuthenticatorIntegrityMaxAge(Integer enforceAuthenticatorIntegrityMaxAge) {
+        this.enforceAuthenticatorIntegrityMaxAge = enforceAuthenticatorIntegrityMaxAge;
     }
 }

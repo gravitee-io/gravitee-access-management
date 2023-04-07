@@ -72,15 +72,16 @@ public abstract class AbstractEndpoint {
 
     protected void renderPage(RoutingContext routingContext, Map<String, Object> data, Client client, Logger logger, String errorMessage) {
         this.renderPage(data, client)
-                .doOnSuccess(buffer -> {
-                    routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
-                    routingContext.response().end(buffer);
-                })
-                .doOnError(throwable -> {
-                    logger.error(errorMessage, throwable);
-                    routingContext.fail(throwable.getCause());
-                })
-                .subscribe();
+                .subscribe(
+                        buffer -> {
+                            routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
+                            routingContext.response().end(buffer);
+                        },
+                        throwable -> {
+                            logger.error(errorMessage, throwable);
+                            routingContext.fail(throwable.getCause());
+                        }
+                );
     }
 
     protected Single<Buffer> renderPage(Map<String, Object> data, Client client) {

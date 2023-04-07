@@ -15,9 +15,11 @@
  */
 package io.gravitee.am.service.impl;
 
+import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Group;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
@@ -26,6 +28,7 @@ import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.repository.management.api.CommonUserRepository;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
+import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.CommonUserService;
 import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.EventService;
@@ -38,6 +41,9 @@ import io.gravitee.am.service.exception.UserAlreadyExistsException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
+import io.gravitee.am.service.reporter.AuditReporterService;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
 import io.gravitee.am.service.utils.UserFactorUpdater;
 import io.gravitee.am.service.validators.user.UserValidator;
 import io.reactivex.rxjava3.core.Completable;
@@ -74,6 +80,9 @@ public abstract class AbstractUserService<T extends CommonUserRepository> implem
 
     @Autowired
     protected EventService eventService;
+
+    @Autowired
+    private AuditService auditService;
 
     @Autowired
     protected CredentialService credentialService;
@@ -237,6 +246,7 @@ public abstract class AbstractUserService<T extends CommonUserRepository> implem
                     Event event = new Event(Type.USER, new Payload(user1.getId(), user1.getReferenceType(), user1.getReferenceId(), Action.CREATE));
                     return eventService.create(event).flatMap(__ -> Single.just(user1));
                 })
+                .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).type(EventType.USER_CREATED).user(user1)))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
@@ -271,8 +281,6 @@ public abstract class AbstractUserService<T extends CommonUserRepository> implem
                     }
                     oldUser.setEmail(updateUser.getEmail());
                     oldUser.setEnabled(updateUser.isEnabled());
-                    oldUser.setLoggedAt(updateUser.getLoggedAt());
-                    oldUser.setLoginsCount(updateUser.getLoginsCount());
                     if (!StringUtils.isEmpty(updateUser.getPreferredLanguage())) {
                         oldUser.setPreferredLanguage(updateUser.getPreferredLanguage());
                     }

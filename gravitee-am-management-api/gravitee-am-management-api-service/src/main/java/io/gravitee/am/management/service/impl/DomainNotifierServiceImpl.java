@@ -17,8 +17,6 @@ package io.gravitee.am.management.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
-import freemarker.template.TemplateException;
-import io.gravitee.am.common.email.Email;
 import io.gravitee.am.management.service.DomainNotifierService;
 import io.gravitee.am.management.service.EmailService;
 import io.gravitee.am.management.service.impl.notifications.CertificateNotificationCondition;
@@ -29,8 +27,8 @@ import io.gravitee.am.management.service.impl.notifications.NotificationDefiniti
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Environment;
-import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.Role;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.membership.MemberType;
@@ -61,7 +59,6 @@ import java.io.IOException;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static io.gravitee.am.management.service.impl.notifications.ManagementUINotifierConfiguration.CERTIFICATE_EXPIRY_TPL;
@@ -176,7 +173,7 @@ public class DomainNotifierServiceImpl implements DomainNotifierService, Initial
         return findEnvironment(domain).flatMapPublisher(env -> Maybe.concat(
                         roleService.findSystemRole(SystemRole.DOMAIN_PRIMARY_OWNER, ReferenceType.DOMAIN),
                         roleService.findDefaultRole(env.getOrganizationId(), DefaultRole.DOMAIN_OWNER, ReferenceType.DOMAIN)
-                ).map(role -> role.getId())
+                ).map(Role::getId)
                 .flatMap(roleId -> {
                     final MembershipCriteria criteria = new MembershipCriteria();
                     criteria.setRoleId(roleId);
@@ -185,7 +182,7 @@ public class DomainNotifierServiceImpl implements DomainNotifierService, Initial
                     if (membership.getMemberType() == MemberType.USER) {
                         return userService.findById(ReferenceType.ORGANIZATION, env.getOrganizationId(), membership.getMemberId()).toFlowable();
                     } else {
-                        return readUsersFromGroup(membership, 0, 10);
+                        return readUsersFromAnOrganizationGroup(env.getOrganizationId(), membership.getMemberId(), 0, 10);
                     }
                 }));
     }
@@ -199,13 +196,17 @@ public class DomainNotifierServiceImpl implements DomainNotifierService, Initial
                 .switchIfEmpty(Single.error(new DomainNotFoundException(domainId)));
     }
 
-    private Flowable<User> readUsersFromGroup(Membership membership, int pageIndex, int size) {
-        return groupService.findMembers(ReferenceType.DOMAIN, membership.getReferenceId(), membership.getMemberId(), pageIndex, size)
+    private Flowable<User> readUsersFromAnOrganizationGroup(String organizationId, String memberId, int pageIndex, int size) {
+        return groupService.findMembers(ReferenceType.ORGANIZATION, organizationId, memberId, pageIndex, size)
                 .flatMapPublisher(page -> {
+                    if (page.getTotalCount() == 0) {
+                        return Flowable.empty();
+                    }
+
                     if (page.getData().size() < 10) {
                         return Flowable.fromIterable(page.getData());
                     } else {
-                        return Flowable.concat(Flowable.fromIterable(page.getData()), readUsersFromGroup(membership, pageIndex + 1, size));
+                        return Flowable.concat(Flowable.fromIterable(page.getData()), readUsersFromAnOrganizationGroup(organizationId, memberId, pageIndex + 1, size));
                     }
                 });
     }

@@ -74,12 +74,16 @@ public class AbstractUser {
     private long loginsCount;
     @Column("logged_at")
     private LocalDateTime loggedAt;
+    @Column("last_login_with_credentials")
+    private LocalDateTime lastLoginWithCredentials;
     @Column("mfa_enrollment_skipped_at")
     private LocalDateTime mfaEnrollmentSkippedAt;
     @Column("last_password_reset")
     private LocalDateTime lastPasswordReset;
     @Column("last_logout_at")
     private LocalDateTime lastLogoutAt;
+    @Column("last_username_reset")
+    private LocalDateTime lastUsernameReset;
     @Column("created_at")
     private LocalDateTime createdAt;
     @Column("updated_at")
@@ -323,6 +327,14 @@ public class AbstractUser {
         this.loggedAt = loggedAt;
     }
 
+    public LocalDateTime getLastLoginWithCredentials() {
+        return lastLoginWithCredentials;
+    }
+
+    public void setLastLoginWithCredentials(LocalDateTime lastLoginWithCredentials) {
+        this.lastLoginWithCredentials = lastLoginWithCredentials;
+    }
+
     public LocalDateTime getMfaEnrollmentSkippedAt() {
         return mfaEnrollmentSkippedAt;
     }
@@ -345,6 +357,14 @@ public class AbstractUser {
 
     public void setLastLogoutAt(LocalDateTime lastLogoutAt) {
         this.lastLogoutAt = lastLogoutAt;
+    }
+
+    public LocalDateTime getLastUsernameReset() {
+        return lastUsernameReset;
+    }
+
+    public void setLastUsernameReset(LocalDateTime lastUsernameReset) {
+        this.lastUsernameReset = lastUsernameReset;
     }
 
     public LocalDateTime getCreatedAt() {

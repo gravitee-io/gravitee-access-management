@@ -51,16 +51,16 @@ public class UserCommandHandlerTest {
     @Mock
     private OrganizationUserService userService;
 
-    public UserCommandHandler cut;
+    public UserCommandHandler userCommandHandler;
 
     @Before
     public void before() {
-        cut = new UserCommandHandler(userService);
+        userCommandHandler = new UserCommandHandler(userService);
     }
 
     @Test
     public void handleType() {
-        assertEquals(Command.Type.USER_COMMAND, cut.handleType());
+        assertEquals(Command.Type.USER_COMMAND, userCommandHandler.handleType());
     }
 
     @Test
@@ -93,7 +93,7 @@ public class UserCommandHandlerTest {
                         && newUser.getAdditionalInformation().get(StandardClaims.PICTURE).equals(userPayload.getPicture()))))
                 .thenReturn(Single.just(new User()));
 
-        TestObserver<UserReply> obs = cut.handle(command).test();
+        TestObserver<UserReply> obs = userCommandHandler.handle(command).test();
 
         obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.SUCCEEDED));
@@ -107,11 +107,21 @@ public class UserCommandHandlerTest {
 
         userPayload.setId("user#1");
         userPayload.setOrganizationId("orga#1");
+        userPayload.setUsername("Username");
 
         when(userService.createOrUpdate(eq(ReferenceType.ORGANIZATION), eq("orga#1"), any(NewUser.class)))
                 .thenReturn(Single.error(new TechnicalException()));
 
-        TestObserver<UserReply> obs = cut.handle(command).test();
+        TestObserver<UserReply> obs = userCommandHandler.handle(command).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+    }
+
+    @Test
+    public void shouldReturnErrorWhenUsernameIsNullInPayload() {
+        var command = new UserCommand(new UserPayload());
+
+        TestObserver<UserReply> obs = userCommandHandler.handle(command).test();
 
         obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.ERROR));

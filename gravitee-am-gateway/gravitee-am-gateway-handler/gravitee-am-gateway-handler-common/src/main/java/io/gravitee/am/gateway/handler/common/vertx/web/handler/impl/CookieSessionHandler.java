@@ -38,6 +38,7 @@ import org.springframework.util.StringUtils;
 import static io.vertx.ext.web.handler.SessionHandler.DEFAULT_SESSION_TIMEOUT;
 import static java.util.Objects.nonNull;
 import static java.util.function.Predicate.not;
+import static java.util.stream.Stream.ofNullable;
 
 /**
  * Session handler based on minimalistic jwt Cookie.
@@ -96,7 +97,6 @@ public class CookieSessionHandler implements Handler<RoutingContext> {
 
         Cookie sessionCookie = context.getCookie(cookieName);
         CookieSession session = new CookieSession(jwtService, certificateManager.defaultCertificateProvider(), timeout);
-
 
         registerSession(context, session);
 

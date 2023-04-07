@@ -19,9 +19,15 @@ import {afterAll, beforeAll, expect, jest} from "@jest/globals";
 import {requestAdminAccessToken} from "@management-commands/token-management-commands";
 import {createDomain, deleteDomain, startDomain} from "@management-commands/domain-management-commands";
 import {createIdp} from "@management-commands/idp-management-commands";
-import {createUser, deleteUser} from "@management-commands/user-management-commands";
+import {createUser, deleteUser, updateUsername} from "@management-commands/user-management-commands";
 import {createApplication, updateApplication} from "@management-commands/application-management-commands";
-import {extractXsrfTokenAndActionResponse, getWellKnownOpenIdConfiguration, logoutUser, performFormPost, performGet} from "@gateway-commands/oauth-oidc-commands";
+import {
+    extractXsrfTokenAndActionResponse,
+    getWellKnownOpenIdConfiguration,
+    logoutUser,
+    performFormPost,
+    performGet
+} from "@gateway-commands/oauth-oidc-commands";
 
 global.fetch = fetch;
 
@@ -60,7 +66,7 @@ describe('multiple user', () => {
     const commonEmail = "common@test.com"
     let user3;  //user3 has same password as user2
     let user4;
-    const user4Password ="Qwe123!!"
+    const user4Password = "Qwe123!!"
     let user5;
     let user6;
     const secondCommonPassword = "Phd123!!";
@@ -113,6 +119,8 @@ describe('multiple user', () => {
             "preRegistration": false
         });
 
+        expect(user3).toBeDefined();
+
         user4 = await createUser(domain.id, accessToken, {
             "firstName": "some",
             "lastName": "user",
@@ -126,6 +134,8 @@ describe('multiple user', () => {
             },
             "preRegistration": false
         });
+
+        expect(user4).toBeDefined();
 
         user5 = await createUser(domain.id, accessToken, {
             "firstName": "alan",
@@ -141,6 +151,8 @@ describe('multiple user', () => {
             "preRegistration": false
         });
 
+        expect(user5).toBeDefined();
+
         user6 = await createUser(domain.id, accessToken, {
             "firstName": "james",
             "lastName": "hen",
@@ -155,7 +167,7 @@ describe('multiple user', () => {
             "preRegistration": false
         });
 
-        expect(user3).toBeDefined();
+        expect(user6).toBeDefined();
     });
 
     it("all users should be able to login using username and password", async () => {
@@ -173,13 +185,12 @@ describe('multiple user', () => {
         expect(user3TokenResponse.headers['location']).toContain('callback?code=');
         await logoutUser(openIdConfiguration.end_session_endpoint, user3TokenResponse);
 
-        //user3 has same password as user2
         const user4TokenResponse = await loginUserNameAndPassword(clientId, user4, user4Password);
         expect(user4TokenResponse.headers['location']).toContain('callback?code=');
         await logoutUser(openIdConfiguration.end_session_endpoint, user4TokenResponse);
     });
 
-    if(jdbc === 'jdbc') {
+    if (jdbc === 'jdbc') {
         console.log("executing jdbc specific test")
         it("jdbc: both users should be able to login using additional information (email) and password", async () => {
             const clientId = multiUserLoginApp.settings.oauth.clientId;
@@ -198,7 +209,6 @@ describe('multiple user', () => {
             const failedLoginResponse = await loginAdditionalInfoAndPassword(clientId, secondCommonEmail, secondCommonPassword);
             expect(failedLoginResponse.headers['location']).toContain(`error=login_failed&error_code=invalid_user&error_description=Invalid+or+unknown+user`);
         });
-
     } else {
         console.log("executing mongodb specific test")
         it("mongo: both users should be able to login using additional information (contract) and password", async () => {
@@ -220,6 +230,25 @@ describe('multiple user', () => {
             expect(failedLoginResponse.headers['location']).toContain(`error=login_failed&error_code=invalid_user&error_description=Invalid+or+unknown+user`);
         });
     }
+
+    it("user should have their username changed and have their session/token canceled", async () => {
+        const clientId = multiUserLoginApp.settings.oauth.clientId;
+        let user1TokenResponse = await loginUserNameAndPassword(clientId, user1, user1Password);
+        expect(user1TokenResponse.headers['location']).toContain('callback?code=');
+        await logoutUser(openIdConfiguration.end_session_endpoint, user1TokenResponse);
+
+        user1 = await updateUsername(domain.id, accessToken, user1.id, user1.username + "-changed");
+        const params = `?response_type=code&client_id=${clientId}&redirect_uri=https://auth-nightly.gravitee.io/myApp/callback`;
+
+        const authResponse = await performGet(openIdConfiguration.authorization_endpoint, params).expect(302);
+        const loginLocation = authResponse.headers['location'];
+        expect(loginLocation).not.toContain(`callback?code=`);
+        await logoutUser(openIdConfiguration.end_session_endpoint, user1TokenResponse);
+
+        user1TokenResponse = await loginUserNameAndPassword(clientId, user1, user1Password);
+        expect(user1TokenResponse.headers['location']).toContain('callback?code=');
+        await logoutUser(openIdConfiguration.end_session_endpoint, user1TokenResponse);
+    });
 
     it("should throw exception user name and wrong password", async () => {
         const wrongPassword = "WrongPassword";
@@ -290,7 +319,7 @@ const initiateLoginFlow = async (clientId, openIdConfiguration, domain) => {
     return authResponse;
 }
 
-const login = async (authResponse, userName, clientId, password ="SomeP@ssw0rd") => {
+const login = async (authResponse, userName, clientId, password = "SomeP@ssw0rd") => {
     const loginResult = await extractXsrfTokenAndActionResponse(authResponse);
     return await performFormPost(loginResult.action, '', {
             "X-XSRF-TOKEN": loginResult.token,
@@ -336,14 +365,14 @@ const loginUser = async (clientId, nameOrAdditionalInfo, userPassword) => {
     const authResponse = await initiateLoginFlow(clientId, openIdConfiguration, domain);
     const postLogin = await login(authResponse, nameOrAdditionalInfo, clientId, userPassword);
     //log in failed with error
-    if(postLogin.headers['location'].includes("error=login_failed&error_code=invalid_user&error_description=Invalid+or+unknown+user")){
+    if (postLogin.headers['location'].includes("error=login_failed&error_code=invalid_user&error_description=Invalid+or+unknown+user")) {
         return postLogin;
     }
     const authorize = await postLoginAuthentication(postLogin);
     expect(authorize.headers['location']).toBeDefined();
 
     //log in for the very first time
-    if(authorize.headers['location'].includes(`${process.env.AM_GATEWAY_URL}/${domain.hrid}/oauth/consent`)){
+    if (authorize.headers['location'].includes(`${process.env.AM_GATEWAY_URL}/${domain.hrid}/oauth/consent`)) {
         const consent = await performGet(authorize.headers['location'], '', {
             'Cookie': authorize.headers['set-cookie']
         }).expect(200);
@@ -366,11 +395,12 @@ const loginUser = async (clientId, nameOrAdditionalInfo, userPassword) => {
 const createMongoIdp = async (domainId, accessToken) => {
     console.log("creating mongodb  idp")
     return await createIdp(domainId, accessToken, {
-        "external":false,
-        "type":"mongo-am-idp",
-        "domainWhitelist":[],
-        "configuration":"{\"uri\":\"mongodb://localhost:27017\",\"host\":\"localhost\",\"port\":27017,\"enableCredentials\":false,\"databaseCredentials\":\"gravitee-am\",\"database\":\"gravitee-am\",\"usersCollection\":\"idp-test-users\",\"findUserByUsernameQuery\":\"{$or: [{username: ?}, {contract: ?}]}\",\"findUserByEmailQuery\":\"{email: ?}\",\"usernameField\":\"username\",\"passwordField\":\"password\",\"passwordEncoder\":\"None\",\"useDedicatedSalt\":false,\"passwordSaltLength\":32}",
-        "name":"another-idp"});
+        "external": false,
+        "type": "mongo-am-idp",
+        "domainWhitelist": [],
+        "configuration": "{\"uri\":\"mongodb://localhost:27017\",\"host\":\"localhost\",\"port\":27017,\"enableCredentials\":false,\"databaseCredentials\":\"gravitee-am\",\"database\":\"gravitee-am\",\"usersCollection\":\"idp-test-users\",\"findUserByUsernameQuery\":\"{$or: [{username: ?}, {contract: ?}]}\",\"findUserByEmailQuery\":\"{email: ?}\",\"usernameField\":\"username\",\"passwordField\":\"password\",\"passwordEncoder\":\"None\",\"useDedicatedSalt\":false,\"passwordSaltLength\":32}",
+        "name": "another-idp"
+    });
 }
 
 const createJdbcIdp = async (domainId, accessToken) => {
@@ -379,10 +409,10 @@ const createJdbcIdp = async (domainId, accessToken) => {
     const database = process.env.GRAVITEE_OAUTH2_JDBC_DATABASE ? process.env.GRAVITEE_OAUTH2_JDBC_DATABASE : "gravitee-am"
 
     return await createIdp(domainId, accessToken, {
-        "external":false,
-        "type":"jdbc-am-idp",
-        "domainWhitelist":[],
-        "configuration":`{\"host\":\"localhost\",\"port\":5432,\"protocol\":\"postgresql\",\"database\":\"${database}\",\"usersTable\":\"test_users\",\"user\":\"postgres\",\"password\":\"${password}\",\"autoProvisioning\":\"true\",\"selectUserByUsernameQuery\":\"SELECT * FROM test_users WHERE username = %s\",\"selectUserByMultipleFieldsQuery\":\"SELECT * FROM test_users WHERE username = %s or email = %s\",\"selectUserByEmailQuery\":\"SELECT * FROM test_users WHERE email = %s\",\"identifierAttribute\":\"id\",\"usernameAttribute\":\"username\",\"emailAttribute\":\"email\",\"passwordAttribute\":\"password\",\"passwordEncoder\":\"None\",\"useDedicatedSalt\":false,\"passwordSaltLength\":32}`,
-        "name":"other-jdbc-idp"
+        "external": false,
+        "type": "jdbc-am-idp",
+        "domainWhitelist": [],
+        "configuration": `{\"host\":\"localhost\",\"port\":5432,\"protocol\":\"postgresql\",\"database\":\"${database}\",\"usersTable\":\"test_users\",\"user\":\"postgres\",\"password\":\"${password}\",\"autoProvisioning\":\"true\",\"selectUserByUsernameQuery\":\"SELECT * FROM test_users WHERE username = %s\",\"selectUserByMultipleFieldsQuery\":\"SELECT * FROM test_users WHERE username = %s or email = %s\",\"selectUserByEmailQuery\":\"SELECT * FROM test_users WHERE email = %s\",\"identifierAttribute\":\"id\",\"usernameAttribute\":\"username\",\"emailAttribute\":\"email\",\"passwordAttribute\":\"password\",\"passwordEncoder\":\"None\",\"useDedicatedSalt\":false,\"passwordSaltLength\":32}`,
+        "name": "other-jdbc-idp"
     });
 }

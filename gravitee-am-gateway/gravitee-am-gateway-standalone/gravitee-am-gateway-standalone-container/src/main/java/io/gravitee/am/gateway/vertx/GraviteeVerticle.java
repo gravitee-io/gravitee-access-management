@@ -47,16 +47,17 @@ public class GraviteeVerticle extends AbstractVerticle {
         httpServer.requestHandler(reactor.route());
 
         httpServer.rxListen()
-                .doOnSuccess(httpServer1 -> {
-                    logger.info("HTTP Server is now listening for requests on port {}",
-                            httpServerConfiguration.getPort());
-                    startPromise.complete();
-                })
-                .doOnError(throwable -> {
-                    logger.error("Unable to start HTTP Server", throwable);
-                    startPromise.fail(throwable.getCause());
-                })
-                .subscribe();
+                .subscribe(
+                        httpServer1 -> {
+                            logger.info("HTTP Server is now listening for requests on port {}",
+                                    httpServerConfiguration.getPort());
+                            startPromise.complete();
+                        },
+                        throwable -> {
+                            logger.error("Unable to start HTTP Server", throwable);
+                            startPromise.fail(throwable.getCause());
+                        }
+                );
     }
 
     @Override

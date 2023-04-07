@@ -33,7 +33,7 @@ export interface AddOrUpdateMember2Request {
     body?: NewMembership;
 }
 
-export interface Get24Request {
+export interface Get28Request {
     organizationId: string;
 }
 
@@ -41,7 +41,7 @@ export interface GetMembers1Request {
     organizationId: string;
 }
 
-export interface List1Request {
+export interface ListRequest {
     organizationId: string;
 }
 
@@ -107,9 +107,10 @@ export class DefaultApi extends runtime.BaseAPI {
      * User must have the ORGANIZATION_SETTINGS[READ] permission on the specified organization
      * Get organization main settings
      */
-    async get24Raw(requestParameters: Get24Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Domain>> {
+
+    async get28Raw(requestParameters: Get28Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Domain>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get24.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get28.');
         }
 
         const queryParameters: any = {};
@@ -134,8 +135,8 @@ export class DefaultApi extends runtime.BaseAPI {
      * User must have the ORGANIZATION_SETTINGS[READ] permission on the specified organization
      * Get organization main settings
      */
-    async get24(requestParameters: Get24Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Domain> {
-        const response = await this.get24Raw(requestParameters, initOverrides);
+    async get28(requestParameters: Get28Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Domain> {
+        const response = await this.get28Raw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -179,9 +180,9 @@ export class DefaultApi extends runtime.BaseAPI {
      * User must have the ENVIRONMENT[LIST] permission on the specified organization AND either ENVIRONMENT[READ] permission on each environment or ENVIRONMENT[READ] permission on the specified organization.Each returned environment is filtered and contains only basic information such as id and name.
      * List all the environments
      */
-    async list1Raw(requestParameters: List1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<Environment>>> {
+    async listRaw(requestParameters: ListRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<Environment>>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list1.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list.');
         }
 
         const queryParameters: any = {};
@@ -206,8 +207,8 @@ export class DefaultApi extends runtime.BaseAPI {
      * User must have the ENVIRONMENT[LIST] permission on the specified organization AND either ENVIRONMENT[READ] permission on each environment or ENVIRONMENT[READ] permission on the specified organization.Each returned environment is filtered and contains only basic information such as id and name.
      * List all the environments
      */
-    async list1(requestParameters: List1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<Environment>> {
-        const response = await this.list1Raw(requestParameters, initOverrides);
+    async list(requestParameters: ListRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<Environment>> {
+        const response = await this.listRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

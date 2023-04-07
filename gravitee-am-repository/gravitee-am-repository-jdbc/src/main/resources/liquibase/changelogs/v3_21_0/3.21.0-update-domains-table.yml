@@ -1,0 +1,12 @@
+databaseChangeLog:
+  - changeSet:
+      id: 3.21.0-update-domain-table
+      author: GraviteeSource Team
+      changes:
+        #############################
+        # domains #
+        ############################
+        - addColumn:
+            tableName: domains
+            columns:
+              - column: { name: cors_settings, type: clob, constraints: { nullable: true } }

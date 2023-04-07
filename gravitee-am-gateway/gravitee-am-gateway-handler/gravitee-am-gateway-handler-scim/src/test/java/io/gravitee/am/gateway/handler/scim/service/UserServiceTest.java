@@ -16,7 +16,6 @@
 package io.gravitee.am.gateway.handler.scim.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import io.gravitee.am.common.scim.Schema;

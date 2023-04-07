@@ -59,15 +59,16 @@ public class LoginSSOPOSTEndpoint implements Handler<RoutingContext> {
         }
 
         // Render login SSO POST form.
-        engine.rxRender(routingContext.data(), "login_sso_post")
-                .doOnSuccess(buffer -> {
-                    routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
-                    routingContext.response().end(buffer);
-                })
-                .doOnError(throwable -> {
-                    logger.error("Unable to render Login SSO POST page", throwable);
-                    routingContext.fail(throwable.getCause());
-                })
-                .subscribe();
+        engine.render(routingContext.data(), "login_sso_post")
+                .subscribe(
+                        buffer -> {
+                            routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
+                            routingContext.response().end(buffer);
+                        },
+                        throwable -> {
+                            logger.error("Unable to render Login SSO POST page", throwable);
+                            routingContext.fail(throwable.getCause());
+                        }
+                );
     }
 }

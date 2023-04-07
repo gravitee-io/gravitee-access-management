@@ -21,17 +21,117 @@
   <div class="gv-page-content">
     <div fxLayout="column" fxFlex="70">
       <form (ngSubmit)="update()" #domainForm="ngForm" fxLayout="column">
-        <div class="gv-form-section" *ngIf="!domain.vhostMode">
-          <mat-form-field appearance="outline" floatLabel="always">
-            <mat-label>Domain entrypoint url</mat-label>
-            <input matInput type="text" name="url" [value]="entrypoint.url" disabled>
-            <mat-hint>The current base url to access the Gateway (globally defined).</mat-hint>
-          </mat-form-field>
-          <mat-form-field appearance="outline" floatLabel="always">
-            <mat-label>Domain context-path</mat-label>
-            <input matInput type="text" placeholder="Path" name="path" [(ngModel)]="domain.path" required [readonly]="readonly">
-            <mat-hint>Path where your security domain is exposed, must start with a '/' and must contain any letter, capitalize letter, number, dash or underscore.</mat-hint>
-          </mat-form-field>
+        <div *ngIf="!domain.vhostMode">
+          <div class="gv-form-section">
+            <mat-form-field appearance="outline" floatLabel="always">
+              <mat-label>Domain entrypoint url</mat-label>
+              <input matInput type="text" name="url" [value]="entrypoint.url" disabled>
+              <mat-hint>The current base url to access the Gateway (globally defined).</mat-hint>
+            </mat-form-field>
+            <mat-form-field appearance="outline" floatLabel="always">
+              <mat-label>Domain context-path</mat-label>
+              <input matInput type="text" placeholder="Path" name="path" [(ngModel)]="domain.path" (ngModelChange)="updateFormState()" required [readonly]="readonly">
+              <mat-hint>Path where your security domain is exposed, must start with a '/' and must contain any letter, capitalize letter, number, dash or underscore.</mat-hint>
+            </mat-form-field>
+          </div>
+
+          <div id="cors-settings" class="gv-form-section">
+            <div class="gv-form-section-title">
+              <h5>Configure cross-origin resource sharing (CORS)</h5>
+              <mat-divider></mat-divider>
+            </div>
+
+            <div fxLayout="column" style="margin-bottom: 15px;">
+              <mat-slide-toggle
+                (change)="enableCorsSettings($event)"
+                [checked]="isCorsSettingsEnabled()" [disabled]="readonly">
+                Enable CORS
+              </mat-slide-toggle>
+              <mat-hint style="font-size: 75%;">
+                CORS is a mechanism that allows restricted resources (e.g. fonts) on a web page to be requested from another domain. If you enable the try-it feature of a Swagger
+                page you will have to enable and configure CORS. If this setting is not enabled, the default values from the gravitee.yml file will be used.
+              </mat-hint>
+            </div>
+
+            <mat-form-field appearance="outline" floatLabel="always">
+              <mat-label>Allow-Origin</mat-label>
+              <mat-chip-list #origins aria-label="allowedOrigin" [disabled]="!isCorsSettingsEnabled()">
+                <mat-chip
+                  *ngFor="let dwPattern of domain.corsSettings.allowedOrigins"
+                  [removable]="true"
+                  (removed)="removeOrigin(dwPattern)">
+                  {{dwPattern}}
+                  <mat-icon matChipRemove>cancel</mat-icon>
+                </mat-chip>
+                <input matInput
+                       type="text" placeholder="*, https://mydomain.com, (http|https).*.mydomain.com, ..." name="allowedOrigin"
+                       [matChipInputFor]="origins"
+                       (keydown.enter)="addOrigin($event)"
+                       [value]="originValue || ''" (input)='originValue = $event.target.value'
+                />
+              </mat-chip-list>
+              <mat-hint>The origin parameter specifies a URI that may access the resource. Scheme, domain and port are part of the same-origin definition. If you want to allow all
+                origins, you can enter *. Regular Expressions are also supported.
+              </mat-hint>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" floatLabel="always">
+              <mat-label>Allow-Methods</mat-label>
+              <mat-select multiple
+                          [(value)]="domain.corsSettings.allowedMethods"
+                          (selectionChange)="updateAllowedMethod($event)" placeholder="GET, POST, PUT, DELETE, ..."
+                          [disabled]="!isCorsSettingsEnabled()">
+                <mat-option *ngFor="let httpMethod of httpMethods" [value]="httpMethod">
+                  {{httpMethod}}
+                </mat-option>
+              </mat-select>
+              <mat-hint>Specifies the method or methods allowed to access the resource. This is used in response to a preflight request.</mat-hint>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" floatLabel="always">
+              <mat-label>Allow-Headers</mat-label>
+              <mat-chip-list #headers aria-label="allowedHeaders" [disabled]="!isCorsSettingsEnabled()">
+                <mat-chip
+                  *ngFor="let dwPattern of domain.corsSettings.allowedHeaders"
+                  [removable]="true"
+                  (removed)="removeHeader(dwPattern)">
+                  {{dwPattern}}
+                  <mat-icon matChipRemove>cancel</mat-icon>
+                </mat-chip>
+                <input matInput
+                       type="text" placeholder="Content-Type, ..." name="allowedHeaders"
+                       [matChipInputFor]="headers"
+                       (keydown.enter)="addHeader($event)"
+                       [value]="headerValue || ''" (input)='headerValue = $event.target.value'
+                />
+              </mat-chip-list>
+              <mat-hint>The headers allowed in your requests. Typically, your request header will include ‘Access-Control-Request-Headers’, which relies on CORS configuration to
+                allow its values.
+              </mat-hint>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" floatLabel="always">
+              <mat-label>Max age (seconds)</mat-label>
+              <input matInput type="number" min="0" placeholder="86400 (1 Day)" name="maxAge"
+                     [(ngModel)]="domain.corsSettings.maxAge"
+                     (ngModelChange)="updateFormState()"
+                     [disabled]="!isCorsSettingsEnabled()"
+              />
+              <mat-hint>Indicates how long the results of a pre-flight request can be cached.</mat-hint>
+            </mat-form-field>
+
+            <div fxLayout="column" style="margin-bottom: 15px;">
+              <mat-slide-toggle
+                (change)="enableAllowCredentials($event)"
+                [checked]="isAllowCredentialsEnabled()" [disabled]="!isCorsSettingsEnabled()">
+                Allow use of credentials
+              </mat-slide-toggle>
+              <mat-hint style="font-size: 75%;">
+                Allows the use of credentials (cookies, authorization headers, or TLS client certificates) when performing requests.
+              </mat-hint>
+            </div>
+
+          </div>
         </div>
 
         <div class="gv-form-section" *ngIf="domain.vhostMode">
@@ -63,7 +163,10 @@
                 <mat-hint>Path where security domain is exposed, must start with a '/' and must contain any letter, capitalize letter, number, dash or underscore.</mat-hint>
               </mat-form-field>
               <div class="form-field">
-                <mat-radio-button name="overrideEntrypoint" [value]="vhost" [checked]="vhost.overrideEntrypoint" (change)="overrideEntrypointChange(vhost)" style="padding-top: 15px;padding-bottom: 20px;display: block;font-size: 12px; color: rgba(0, 0, 0, 0.6);" [disabled]="readonly">Override entrypoint</mat-radio-button>
+                <mat-radio-button name="overrideEntrypoint" [value]="vhost" [checked]="vhost.overrideEntrypoint" (change)="overrideEntrypointChange(vhost)"
+                                  style="padding-top: 15px;padding-bottom: 20px;display: block;font-size: 12px; color: rgba(0, 0, 0, 0.6);" [disabled]="readonly">Override
+                  entrypoint
+                </mat-radio-button>
                 <mat-hint class="hint">Useful to override entrypoint with the virtual host on the application overview page.</mat-hint>
               </div>
             </div>
@@ -71,7 +174,7 @@
         </div>
 
         <div *hasPermission="['domain_settings_update']">
-          <button mat-raised-button color="primary" [disabled]="(!domainForm.valid || domainForm.pristine) && !formChanged" type="submit">SAVE</button>
+          <button mat-raised-button color="primary" [disabled]="!domainForm.valid || !formChanged" type="submit">SAVE</button>
         </div>
       </form>
     </div>
@@ -89,7 +192,8 @@
         </p>
         <pre>{{ entrypoint.url}}{{domain.path}}</pre>
         <p>
-          Notice that, in context-path mode, you can't use <code>'/'</code> path. However, it is possible to use <code>'/'</code> if you <a (click)="switchMode()">Switch to {{ switchModeLabel }} mode</a>
+          Notice that, in context-path mode, you can't use <code>'/'</code> path. However, it is possible to use <code>'/'</code> if you <a (click)="switchMode()">Switch
+          to {{ switchModeLabel }} mode</a>
         </p>
         <p>
           <small><strong>Warning</strong>: changing the security domain's path involve to change endpoint URLs in your current applications.</small>
@@ -106,7 +210,8 @@
           You can define several virtual hosts depending on your needs but remember that you can't define a path which could overlap another security domain path.
         </p>
         <p>
-          Notice that you can't specify protocol, only the host (and optional port) can be defined. Protocol (http, https) is automatically determined from the entrypoint url defined in global settings.
+          Notice that you can't specify protocol, only the host (and optional port) can be defined. Protocol (http, https) is automatically determined from the entrypoint url
+          defined in global settings.
         </p>
         <p>
           <small><strong>Warning</strong>: changing the security domain's virtual host involve to change endpoint URLs in your current applications.</small>

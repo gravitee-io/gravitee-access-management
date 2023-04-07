@@ -45,7 +45,7 @@
                         </div>
                     </div>
 
-                    <div th:if="${factor.factorType == 'SMS' || factor.factorType == 'CALL'}" class="radio-card">
+                    <div th:if="${factor.factorType == 'SMS'}" class="radio-card">
                         <div class="card-content">
                             <span class="radio">
                                 <input type="radio" th:name="factorId" th:value="${factor.id}">
@@ -53,6 +53,18 @@
                             <span class="radio-detail">
                                 <span class="enroll-name" th:text="#{mfa.sms}"/>
                                 <span class="enroll-description" th:text="#{mfa_enroll.sms.description}"/>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div th:if="${factor.factorType == 'CALL'}" class="radio-card">
+                        <div class="card-content">
+                            <span class="radio">
+                                <input type="radio" th:name="factorId" th:value="${factor.id}">
+                            </span>
+                            <span class="radio-detail">
+                                <span class="enroll-name" th:text="#{mfa.call}"/>
+                                <span class="enroll-description" th:text="#{mfa_enroll.call.description}"/>
                             </span>
                         </div>
                     </div>
@@ -108,9 +120,17 @@
                     </div>
                 </div>
                 <!-- SMS|CALL FACTOR -->
-                <div id="sms-factor" class="section enrollment-item hide">
-                    <span class="enrollment-card-label" th:text="#{mfa.sms}"/>
-                    <span class="enrollment-card-description" th:text="#{mfa_enroll.sms}"/>
+                <div id="sms-call-factor" class="section enrollment-item hide">
+                    <div id="sms-factor">
+                        <span class="sms-call-enrollment-card-label" th:text="#{mfa.sms}"/>
+                        <span class="sms-call-enrollment-card-description" th:text="#{mfa_enroll.sms}"/>
+                    </div>
+
+                    <div id="call-factor">
+                        <span class="sms-call-enrollment-card-label" th:text="#{mfa.call}"/>
+                        <span class="sms-call-enrollment-card-description" th:text="#{mfa_enroll.call.description}"/>
+                    </div>
+
                     <input class="input-field" placeholder="Phone number" type="tel" id="phone" name="phone">
                     <div id="invalidPhoneNumber" class="item error-text hide">
                         <span>
@@ -118,6 +138,7 @@
                          </span>
                     </div>
                 </div>
+
                 <!-- EMAIL FACTOR -->
                 <div id="email-factor" class="section enrollment-item hide">
                     <span class="enrollment-card-label" th:text="#{mfa.email}"/>
@@ -136,7 +157,7 @@
                 </div>
                 <input type="hidden" id="sharedSecret" name="sharedSecret" value=""/>
                 <div>
-                    <button id="submit" type="submit" name="user_mfa_enrollment" value="true" class="button primary" th:text="#{mfa_enroll.button.submit}"></button>
+                    <button id="submitBtn" type="submit" name="user_mfa_enrollment" value="true" class="button primary" th:text="#{mfa_enroll.button.submit}"></button>
                 </div>
             </div>
             <!-- END OF STEP 2 -->
@@ -179,7 +200,6 @@
         let inputElement;
 
         if (selectedFactor.factorType === 'TOTP') {
-            document.getElementById('sharedSecret').value = selectedFactor.enrollment.key;
             document.getElementById('qrCode').src = selectedFactor.enrollment.barCode;
             document.getElementById('otp-factor').classList.remove('hide');
         }
@@ -187,8 +207,14 @@
         if (selectedFactor.factorType === 'SMS' || selectedFactor.factorType === 'CALL') {
             document.getElementById('phone').value = phoneNumber;
             initializeIntlTelInput(document.getElementById('phone'), selectedFactor.enrollment.countries);
-            const smsFactorDiv = document.getElementById('sms-factor');
+            const smsFactorDiv = document.getElementById('sms-call-factor');
+
             smsFactorDiv.classList.remove('hide');
+            if (selectedFactor.factorType === 'SMS'){
+                document.getElementById('call-factor').classList.add('hide')
+            } else {
+                document.getElementById('sms-factor').classList.add('hide')
+            }
             inputElement = smsFactorDiv.getElementsByTagName('INPUT')[0];
             // Hide the phoneNumber validation error just after the click on next button
             // to avoid a remaining error if the user go a first time on SMS factor
@@ -196,7 +222,6 @@
         }
 
         if (selectedFactor.factorType === 'EMAIL') {
-            document.getElementById('sharedSecret').value = selectedFactor.enrollment.key;
             document.getElementById('email').value = emailAddress;
             document.getElementById('email').setAttribute('required', '');
             const emailFactorDiv = document.getElementById('email-factor');
@@ -212,12 +237,16 @@
             document.getElementById('fido2-factor').classList.remove('hide');
         }
 
+        if (selectedFactor.enrollment.key) {
+            document.getElementById('sharedSecret').value = selectedFactor.enrollment.key;
+        }
+
         document.getElementById('enrollment-title').innerHTML = title;
         document.getElementById('enrollment-description').innerHTML = description;
         document.getElementById('mfa-enroll-step1').classList.add('hide');
         document.getElementById('mfa-enroll-step2').classList.remove('hide');
         document.getElementById('previous').classList.remove('hide');
-        if(inputElement){
+        if (inputElement) {
             inputElement.focus();
         }
     }
@@ -237,6 +266,8 @@
         [...document.querySelectorAll('.enrollment-item')].forEach(el => el.classList.add('hide'));
         document.getElementById('mfa-enroll-step1').classList.remove('hide');
         document.getElementById('mfa-enroll-step2').classList.add('hide');
+        document.getElementById('call-factor').classList.remove('hide')
+        document.getElementById('sms-factor').classList.remove('hide')
         document.getElementById('previous').classList.add('hide');
         document.getElementById('email').removeAttribute('required');
     });
@@ -254,7 +285,7 @@
     }));
 
     // submit form function
-    const submitBtn = document.getElementById('submit');
+    const submitBtn = document.getElementById('submitBtn');
     submitBtn.addEventListener('click', function($event) {
         //do not submit the form on 'enter' key press if the following condition satisfied
         //rather call the next button handler functionality

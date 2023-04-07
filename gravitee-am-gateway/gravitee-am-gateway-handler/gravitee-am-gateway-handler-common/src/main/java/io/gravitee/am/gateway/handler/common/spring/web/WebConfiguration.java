@@ -21,7 +21,6 @@ import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.AuthenticationFlowHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.CSPHandlerFactory;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.CSRFHandlerFactory;
-import io.gravitee.am.gateway.handler.common.vertx.web.handler.CorsHandlerFactory;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.PolicyChainHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.SSOSessionHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.XFrameHandlerFactory;
@@ -30,7 +29,9 @@ import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.Authenticati
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieSessionHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.PolicyChainHandlerImpl;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.AuthenticationFlowContextService;
+import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.UserService;
 import io.vertx.core.http.CookieSameSite;
 import org.springframework.beans.factory.annotation.Value;
@@ -44,11 +45,6 @@ import org.springframework.core.env.Environment;
  */
 @Configuration
 public class WebConfiguration {
-
-    @Bean
-    public CorsHandlerFactory corsHandler() {
-        return new CorsHandlerFactory();
-    }
 
     @Bean
     public CSPHandlerFactory cspHandlerFactory(Environment environment) {
@@ -71,8 +67,8 @@ public class WebConfiguration {
     }
 
     @Bean
-    public SSOSessionHandler ssoSessionHandler(ClientSyncService clientSyncService, AuthenticationFlowContextService authenticationFlowContextService) {
-        return new SSOSessionHandler(clientSyncService, authenticationFlowContextService);
+    public SSOSessionHandler ssoSessionHandler(ClientSyncService clientSyncService, AuthenticationFlowContextService authenticationFlowContextService, LoginAttemptService loginAttemptService, Domain domain) {
+        return new SSOSessionHandler(clientSyncService, authenticationFlowContextService, loginAttemptService, domain);
     }
 
     @Bean

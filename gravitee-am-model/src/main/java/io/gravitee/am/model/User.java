@@ -123,7 +123,13 @@ public class User implements IUser {
     private Date loggedAt;
 
     @ApiModelProperty(dataType = "java.lang.Long")
+    private Date lastLoginWithCredentials;
+
+    @ApiModelProperty(dataType = "java.lang.Long")
     private Date lastPasswordReset;
+
+    @ApiModelProperty(dataType = "java.lang.Long")
+    private Date lastUsernameReset;
 
     @ApiModelProperty(dataType = "java.lang.Long")
     private Date lastLogoutAt;
@@ -199,11 +205,13 @@ public class User implements IUser {
         this.factors = other.factors != null ? new ArrayList<>(other.factors) : null;
         this.additionalInformation = other.additionalInformation != null ? new HashMap<>(other.additionalInformation) : null;
         this.loggedAt = other.loggedAt;
+        this.lastLoginWithCredentials = other.lastLoginWithCredentials;
         this.lastPasswordReset = other.lastPasswordReset;
         this.lastLogoutAt = other.lastLogoutAt;
         this.mfaEnrollmentSkippedAt = other.mfaEnrollmentSkippedAt;
         this.createdAt = other.createdAt;
         this.updatedAt = other.updatedAt;
+        this.lastUsernameReset = other.lastUsernameReset;
     }
 
     public String getId() {
@@ -582,6 +590,14 @@ public class User implements IUser {
         this.loggedAt = loggedAt;
     }
 
+    public Date getLastLoginWithCredentials() {
+        return lastLoginWithCredentials;
+    }
+
+    public void setLastLoginWithCredentials(Date lastLoginWithCredentials) {
+        this.lastLoginWithCredentials = lastLoginWithCredentials;
+    }
+
     public List<String> getRoles() {
         return roles;
     }
@@ -650,6 +666,14 @@ public class User implements IUser {
 
     public void setLastPasswordReset(Date lastPasswordReset) {
         this.lastPasswordReset = lastPasswordReset;
+    }
+
+    public Date getLastUsernameReset() {
+        return lastUsernameReset;
+    }
+
+    public void setLastUsernameReset(Date lastUsernameReset) {
+        this.lastUsernameReset = lastUsernameReset;
     }
 
     public Date getLastLogoutAt() {
@@ -745,5 +769,17 @@ public class User implements IUser {
 
     public void setAddress(Map<String, Object> address) {
         putAdditionalInformation(StandardClaims.ADDRESS, address);
+    }
+
+    public void updateUsername(String username) {
+        setUsername(username);
+        setLastUsernameReset(new Date());
+        unlockUser();
+    }
+
+    public void unlockUser() {
+        setAccountNonLocked(true);
+        setAccountLockedAt(null);
+        setAccountLockedUntil(null);
     }
 }

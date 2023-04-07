@@ -69,7 +69,6 @@ export class LoginSettingsComponent implements OnInit, OnChanges {
     return this.loginSettings && this.loginSettings.registerEnabled;
   }
 
-
   enableForgotPassword(event) {
     this.loginSettings.forgotPasswordEnabled = event.checked;
     this.formChanged = true;
@@ -97,6 +96,15 @@ export class LoginSettingsComponent implements OnInit, OnChanges {
     return this.loginSettings && this.loginSettings.passwordlessRememberDeviceEnabled;
   }
 
+  enablePasswordlessEnforcePassword(event) {
+    this.loginSettings.passwordlessEnforcePasswordEnabled = event.checked;
+    this.formChanged = true;
+  }
+
+  isPasswordlessEnforcePasswordEnabled() {
+    return this.loginSettings && this.loginSettings.passwordlessEnforcePasswordEnabled;
+  }
+
   enableHideForm(event) {
     this.loginSettings.hideForm = event.checked;
     this.formChanged = true;
@@ -104,6 +112,11 @@ export class LoginSettingsComponent implements OnInit, OnChanges {
 
   isHideFormEnabled() {
     return this.loginSettings && this.loginSettings.hideForm;
+  }
+
+  setEnforcePasswordMaxAge(value) {
+    this.loginSettings.passwordlessEnforcePasswordMaxAge = value;
+    this.formChanged = true;
   }
 
   enableIdentifierFirstLogin(event) {
@@ -116,5 +129,9 @@ export class LoginSettingsComponent implements OnInit, OnChanges {
 
   isIdentifierFirstLoginEnabled() {
     return this.loginSettings && this.loginSettings.identifierFirstEnabled;
+  }
+
+  isFormValid() : boolean {
+    return this.form.disabled ? true : this.form.valid
   }
 }

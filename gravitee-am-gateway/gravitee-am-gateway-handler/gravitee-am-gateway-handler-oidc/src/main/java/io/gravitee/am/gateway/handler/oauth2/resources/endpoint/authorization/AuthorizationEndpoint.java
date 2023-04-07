@@ -122,18 +122,19 @@ public class AuthorizationEndpoint implements Handler<RoutingContext> {
 
             // Render Authorization form_post form.
             engine.render(context.data(), "login_sso_post")
-                    .doOnSuccess(buffer -> {
-                        context.response()
-                                .putHeader(HttpHeaders.CACHE_CONTROL, "no-cache, no-store")
-                                .putHeader(HttpHeaders.PRAGMA, "no-cache")
-                                .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML)
-                                .end(buffer);
-                    })
-                    .doOnError(throwable -> {
-                        logger.error("Unable to render Authorization form_post page", throwable);
-                        context.fail(throwable.getCause());
-                    })
-                    .subscribe();
+                    .subscribe(
+                            buffer -> {
+                                context.response()
+                                        .putHeader(HttpHeaders.CACHE_CONTROL, "no-cache, no-store")
+                                        .putHeader(HttpHeaders.PRAGMA, "no-cache")
+                                        .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML)
+                                        .end(buffer);
+                            },
+                            throwable -> {
+                                logger.error("Unable to render Authorization form_post page", throwable);
+                                context.fail(throwable.getCause());
+                            }
+                    );
         } catch (Exception e) {
             logger.error("Unable to redirect to client redirect_uri", e);
             context.fail(new ServerErrorException());

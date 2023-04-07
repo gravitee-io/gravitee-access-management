@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - changeSet:
+      id: 3.21.0-last-username-reset
+      author: GraviteeSource Team
+      changes:
+        - addColumn:
+            tableName: users
+            columns:
+              - column: { name: last_username_reset, type: timestamp(6), constraints: { nullable: true } }
+        - addColumn:
+            tableName: organization_users
+            columns:
+              - column: { name: last_username_reset, type: timestamp(6), constraints: { nullable: true } }

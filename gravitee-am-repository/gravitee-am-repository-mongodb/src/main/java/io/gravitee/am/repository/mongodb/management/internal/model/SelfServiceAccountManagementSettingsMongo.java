@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
 import io.gravitee.am.model.SelfServiceAccountManagementSettings;
+import io.gravitee.am.repository.mongodb.management.internal.model.selfaccount.ResetPasswordSettingsMongo;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -25,6 +26,8 @@ public class SelfServiceAccountManagementSettingsMongo {
 
     private boolean enabled;
 
+    private ResetPasswordSettingsMongo resetPassword;
+
     public boolean isEnabled() {
         return enabled;
     }
@@ -33,9 +36,20 @@ public class SelfServiceAccountManagementSettingsMongo {
         this.enabled = enabled;
     }
 
+    public ResetPasswordSettingsMongo getResetPassword() {
+        return resetPassword;
+    }
+
+    public void setResetPassword(ResetPasswordSettingsMongo resetPassword) {
+        this.resetPassword = resetPassword;
+    }
+
     public SelfServiceAccountManagementSettings convert() {
         SelfServiceAccountManagementSettings selfAccountManagementSettings = new SelfServiceAccountManagementSettings();
         selfAccountManagementSettings.setEnabled(isEnabled());
+        if (resetPassword != null) {
+            selfAccountManagementSettings.setResetPassword(resetPassword.convert());
+        }
         return selfAccountManagementSettings;
     }
 
@@ -45,6 +59,7 @@ public class SelfServiceAccountManagementSettingsMongo {
         }
         SelfServiceAccountManagementSettingsMongo selfAccountManagementSettings = new SelfServiceAccountManagementSettingsMongo();
         selfAccountManagementSettings.setEnabled(other.isEnabled());
+        selfAccountManagementSettings.setResetPassword(ResetPasswordSettingsMongo.convert(other.getResetPassword()));
         return selfAccountManagementSettings;
     }
 }

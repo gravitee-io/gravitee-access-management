@@ -41,6 +41,6 @@ public class GraviteeThymeleafTemplateEngine extends ThymeleafTemplateEngine {
     @Override
     public Single<Buffer> render(Map<String, Object> context, String templateFileName) {
         themeResolver.resolveTheme(context);
-        return super.rxRender(context, templateFileName);
+        return super.render(context, templateFileName);
     }
 }

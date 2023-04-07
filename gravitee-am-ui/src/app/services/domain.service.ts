@@ -95,7 +95,8 @@ export class DomainService {
     return this.http.patch<any>(this.domainsURL + id, {
       'path': domain.path,
       'vhostMode': domain.vhostMode,
-      'vhosts': domain.vhosts
+      'vhosts': domain.vhosts,
+      'corsSettings': domain.corsSettings
     });
   }
 
