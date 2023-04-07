@@ -23,17 +23,11 @@ import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.policy.PolicyChainException;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.exception.AbstractManagementException;
-import io.gravitee.common.http.HttpHeaders;
-import io.gravitee.common.http.HttpStatusCode;
-import io.vertx.core.Handler;
 import io.vertx.ext.auth.webauthn.impl.attestation.AttestationException;
 import io.vertx.ext.web.handler.HttpException;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerRequest;
-import io.vertx.reactivex.core.http.HttpServerResponse;
 import io.vertx.reactivex.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.TOKEN_CONTEXT_KEY;
@@ -44,17 +38,14 @@ import static java.util.Objects.isNull;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class ErrorHandler implements Handler<RoutingContext> {
-
-    private static final Logger logger = LoggerFactory.getLogger(ErrorHandler.class);
-    private final String errorPage;
+public class ErrorHandler extends AbstractErrorHandler {
 
     public ErrorHandler(String errorPage) {
-        this.errorPage = errorPage;
+        super(errorPage);
     }
 
     @Override
-    public void handle(RoutingContext routingContext) {
+    protected void doHandle(RoutingContext routingContext) {
         if (routingContext.failed()) {
             Throwable throwable = routingContext.failure();
             // management exception (resource not found, server error, ...)
@@ -75,17 +66,7 @@ public class ErrorHandler implements Handler<RoutingContext> {
                 handleException(routingContext, "technical_error", "Invalid WebAuthn attestation, make sure your device is compliant with the platform requirements");
             } else {
                 logger.error("An exception occurs while handling incoming request", throwable);
-                if (routingContext.statusCode() != -1) {
-                    routingContext
-                            .response()
-                            .setStatusCode(routingContext.statusCode())
-                            .end();
-                } else {
-                    routingContext
-                            .response()
-                            .setStatusCode(HttpStatusCode.INTERNAL_SERVER_ERROR_500)
-                            .end();
-                }
+                handleException(routingContext, "unexpected_error", "An unexpected error occurs");
             }
         }
     }
@@ -125,7 +106,4 @@ public class ErrorHandler implements Handler<RoutingContext> {
         }
     }
 
-    private void doRedirect(HttpServerResponse response, String url) {
-        response.putHeader(HttpHeaders.LOCATION, url).setStatusCode(302).end();
-    }
 }
