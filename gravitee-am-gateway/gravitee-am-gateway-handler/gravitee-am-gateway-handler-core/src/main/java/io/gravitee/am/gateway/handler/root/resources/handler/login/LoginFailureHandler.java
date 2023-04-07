@@ -38,14 +38,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import static io.gravitee.am.common.utils.ConstantKeys.PARAM_CONTEXT_KEY;
 import static io.gravitee.am.service.utils.ResponseTypeUtils.isHybridFlow;
 import static io.gravitee.am.service.utils.ResponseTypeUtils.isImplicitFlow;
+import static java.util.Objects.nonNull;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -168,7 +166,7 @@ public class LoginFailureHandler extends LoginAbstractHandler {
         if (errorDescription != null) {
             queryParams.set(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, errorDescription);
         }
-        if (context.request().getParam(Parameters.LOGIN_HINT) != null) {
+        if (nonNull(context.request().getParam(Parameters.LOGIN_HINT)) && nonNull(context.request().getParam(ConstantKeys.USERNAME_PARAM_KEY))) {
             // encode login_hint parameter (to not replace '+' sign by a space ' ')
             queryParams.set(Parameters.LOGIN_HINT, UriBuilder.encodeURIComponent(context.request().getParam(ConstantKeys.USERNAME_PARAM_KEY)));
         }
