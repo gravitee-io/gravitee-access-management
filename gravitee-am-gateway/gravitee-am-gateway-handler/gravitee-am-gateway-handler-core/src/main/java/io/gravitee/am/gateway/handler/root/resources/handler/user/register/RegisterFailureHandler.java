@@ -18,6 +18,8 @@ package io.gravitee.am.gateway.handler.root.resources.handler.user.register;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
+import io.gravitee.am.gateway.handler.root.RootProvider;
+import io.gravitee.am.gateway.handler.root.resources.handler.error.AbstractErrorHandler;
 import io.gravitee.am.service.exception.EmailFormatInvalidException;
 import io.gravitee.am.service.exception.InvalidUserException;
 import io.gravitee.common.http.HttpHeaders;
@@ -34,27 +36,27 @@ import static io.gravitee.am.common.utils.ConstantKeys.ERROR_PARAM_KEY;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class RegisterFailureHandler implements Handler<RoutingContext> {
+public class RegisterFailureHandler extends AbstractErrorHandler {
 
-    private static final Logger logger = LoggerFactory.getLogger(RegisterFailureHandler.class);
+    public RegisterFailureHandler() {
+        super(RootProvider.PATH_ERROR);
+    }
 
     @Override
-    public void handle(RoutingContext context) {
-        if (context.failed()) {
-            // prepare response
-            final MultiMap queryParams = RequestUtils.getCleanedQueryParams(context.request());
-            // if failure, return to the register page with an error
-            Throwable cause = context.failure();
-            if (cause instanceof InvalidUserException) {
-                queryParams.set(ConstantKeys.WARNING_PARAM_KEY, "invalid_user_information");
-            } else if (cause instanceof EmailFormatInvalidException) {
-                queryParams.set(ConstantKeys.WARNING_PARAM_KEY, "invalid_email");
-            } else {
-                logger.error("An error occurs while ending user registration", cause);
-                queryParams.set(ConstantKeys.ERROR_PARAM_KEY, "registration_failed");
-            }
-            redirectToPage(context, queryParams, cause);
+    protected void doHandle(RoutingContext context) {
+        // prepare response
+        final MultiMap queryParams = RequestUtils.getCleanedQueryParams(context.request());
+        // if failure, return to the register page with an error
+        Throwable cause = context.failure();
+        if (cause instanceof InvalidUserException) {
+            queryParams.set(ConstantKeys.WARNING_PARAM_KEY, "invalid_user_information");
+        } else if (cause instanceof EmailFormatInvalidException) {
+            queryParams.set(ConstantKeys.WARNING_PARAM_KEY, "invalid_email");
+        } else {
+            logger.error("An error occurs while ending user registration", cause);
+            queryParams.set(ConstantKeys.ERROR_PARAM_KEY, "registration_failed");
         }
+        redirectToPage(context, queryParams, cause);
     }
 
     private void redirectToPage(RoutingContext context, MultiMap queryParams, Throwable... exceptions) {
@@ -71,12 +73,5 @@ public class RegisterFailureHandler implements Handler<RoutingContext> {
                     .setStatusCode(503)
                     .end();
         }
-    }
-
-    private void doRedirect(HttpServerResponse response, String url) {
-        response
-                .putHeader(HttpHeaders.LOCATION, url)
-                .setStatusCode(302)
-                .end();
     }
 }
