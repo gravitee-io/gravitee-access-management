@@ -29,6 +29,7 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.DeviceService;
 import io.gravitee.am.service.FactorService;
@@ -98,6 +99,9 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
     @Mock
     private EmailService emailService;
 
+    @Mock
+    private AuthenticationFlowContextService authenticationFlowContextService;
+
     private LocalSessionStore localSessionStore;
 
     @Override
@@ -108,8 +112,7 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
         localSessionStore = LocalSessionStore.create(vertx);
         router.route("/mfa/challenge")
                 .handler(SessionHandler.create(localSessionStore))
-                .handler(BodyHandler.create())
-                .failureHandler(rc -> rc.response().setStatusCode(500).end());
+                .handler(BodyHandler.create());
     }
 
     @Test
@@ -161,6 +164,47 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
                     Map<String, Object> data = session.data();
                     Assert.assertNotNull(data.get(ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY));
                     Assert.assertEquals("credentialId", data.get(ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldRejectVerification() throws Exception {
+        when(factorManager.getFactor("factorId")).thenThrow(new NullPointerException());
+
+        router.route(HttpMethod.POST, "/mfa/challenge")
+                .handler(ctx -> {
+                    User user = new User();
+                    user.setId("userId");
+                    EnrolledFactor enrolledFactor = new EnrolledFactor();
+                    EnrolledFactorSecurity enrolledFactorSecurity = new EnrolledFactorSecurity();
+                    enrolledFactorSecurity.setType(FactorSecurityType.WEBAUTHN_CREDENTIAL);
+                    enrolledFactor.setFactorId("factorId");
+                    enrolledFactor.setSecurity(enrolledFactorSecurity);
+                    user.setFactors(Collections.singletonList(enrolledFactor));
+                    Client client = new Client();
+                    client.setFactors(Collections.singleton("factorId"));
+                    ctx.setUser(io.vertx.reactivex.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+                    ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+                    ctx.next();
+                })
+                .handler(new MFAChallengeEndpoint(factorManager, userService, engine, deviceService, applicationContext, domain, credentialService, factorService, rateLimiterService, verifyAttemptService, emailService))
+                .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService));
+
+        testRequest(
+                HttpMethod.POST,
+                "/mfa/challenge",
+                req -> {
+                    Buffer buffer = Buffer.buffer();
+                    buffer.appendString("code={\"id\":\"credentialId\"}&factorId=factorId");
+                    req.headers().set("content-length", String.valueOf(buffer.length()));
+                    req.headers().set("content-type", "application/x-www-form-urlencoded");
+                    req.write(buffer);
+                },
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.contains("/error"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
