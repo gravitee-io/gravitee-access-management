@@ -21,6 +21,7 @@ import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.oidc.idtoken.Claims;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
@@ -221,6 +222,76 @@ public class IDTokenServiceTest {
         JWT jwt = jwtCaptor.getValue();
         assertNotNull(jwt);
         assertTrue(jwt.get("iss") != null && "https://custom-iss".equals(jwt.get("iss")));
+
+        verify(certificateManager, times(1)).findByAlgorithm(any());
+        verify(certificateManager, times(1)).get(anyString());
+        verify(certificateManager, times(1)).defaultCertificateProvider();
+        verify(jwtService, times(1)).encode(any(), eq(defaultCert));
+    }
+
+    @Test
+    public void shouldCreateIDToken_customClaims_with_exisiting_user() {
+        OAuth2Request oAuth2Request = new OAuth2Request();
+        oAuth2Request.setClientId("client-id");
+        oAuth2Request.setScopes(Set.of("openid", "full_profile"));
+
+        TokenClaim customClaim = new TokenClaim();
+        customClaim.setTokenType(TokenTypeHint.ID_TOKEN);
+        customClaim.setClaimName("iss");
+        customClaim.setClaimValue("https://custom-iss");
+
+        Client client = new Client();
+        client.setCertificate("certificate-client");
+        client.setClientId("my-client-id");
+        client.setTokenCustomClaims(Arrays.asList(customClaim));
+
+        ExecutionContext executionContext = mock(ExecutionContext.class);
+        TemplateEngine templateEngine = mock(TemplateEngine.class);
+        when(templateEngine.getValue("https://custom-iss", Object.class)).thenReturn("https://custom-iss");
+        when(executionContext.getTemplateEngine()).thenReturn(templateEngine);
+
+        String idTokenPayload = "payload";
+        io.gravitee.am.gateway.certificate.CertificateProvider defaultCert = new io.gravitee.am.gateway.certificate.CertificateProvider(defaultCertificateProvider);
+
+        ArgumentCaptor<JWT> jwtCaptor = ArgumentCaptor.forClass(JWT.class);
+        when(jwtService.encode(jwtCaptor.capture(), any(io.gravitee.am.gateway.certificate.CertificateProvider.class))).thenReturn(Single.just(idTokenPayload));
+        when(certificateManager.findByAlgorithm(any())).thenReturn(Maybe.empty());
+        when(certificateManager.get(any())).thenReturn(Maybe.empty());
+        when(certificateManager.defaultCertificateProvider()).thenReturn(defaultCert);
+
+        var user = new User();
+        user.setId(UUID.randomUUID().toString());
+        user.setAdditionalInformation(
+            Map.of(
+                "userClaim", "Some that will exist",
+                Claims.nbf, "Some value that won't exist",
+                Claims.iat, "Some value that won't exist",
+                Claims.exp, "Some value that won't exist",
+                Claims.auth_time, "Some value that won't exist",
+                Claims.updated_at, "Some value that won't exist",
+                ConstantKeys.OIDC_PROVIDER_ID_ACCESS_TOKEN_KEY, "Some value that won't exist",
+                ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY, "Some value that won't exist"
+            )
+        );
+        oAuth2Request.setSubject(user.getId());
+
+        TestObserver<String> testObserver = idTokenService.create(oAuth2Request, client, user, executionContext).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        JWT jwt = jwtCaptor.getValue();
+
+        assertNotNull(jwt);
+        assertEquals("https://custom-iss", jwt.get("iss"));
+        assertEquals("Some that will exist", jwt.get("userClaim"));
+        assertNotEquals("Some value that won't exist", jwt.get(Claims.nbf));
+        assertNotEquals("Some value that won't exist", jwt.get(Claims.iat));
+        assertNotEquals("Some value that won't exist", jwt.get(Claims.exp));
+        assertNotEquals("Some value that won't exist", jwt.get(Claims.auth_time));
+        assertNotEquals("Some value that won't exist", jwt.get(Claims.updated_at));
+        assertNull(jwt.get(ConstantKeys.OIDC_PROVIDER_ID_ACCESS_TOKEN_KEY));
+        assertNull(jwt.get(ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY));
+
         verify(certificateManager, times(1)).findByAlgorithm(any());
         verify(certificateManager, times(1)).get(anyString());
         verify(certificateManager, times(1)).defaultCertificateProvider();

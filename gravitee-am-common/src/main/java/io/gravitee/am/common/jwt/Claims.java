@@ -102,8 +102,18 @@ public interface Claims {
      */
     String cnf = "cnf";
 
+    /**
+     * Time when the End-User authentication occurred.
+     */
+    String auth_time = "auth_time";
+
+    /**
+     * Time the End-User's information was last updated.
+     */
+    String updated_at = "updated_at";
+
     static List<String> claims() {
-        return Arrays.asList(iss, sub, aud, exp, nbf, iat,
+        return Arrays.asList(iss, sub, aud, exp, nbf, iat, auth_time, updated_at,
                 jti, domain, claims, ip_address, user_agent, scope, cnf);
     }
 
