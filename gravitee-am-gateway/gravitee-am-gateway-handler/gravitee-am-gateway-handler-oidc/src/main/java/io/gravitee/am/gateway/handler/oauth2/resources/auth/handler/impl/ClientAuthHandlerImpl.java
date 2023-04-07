@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
+import static io.gravitee.am.common.web.UriBuilder.decodeURIComponent;
 import static io.gravitee.am.gateway.handler.oauth2.resources.auth.provider.CertificateUtils.extractPeerCertificate;
 import static io.gravitee.am.gateway.handler.oauth2.resources.auth.provider.CertificateUtils.getThumbprint;
 
@@ -139,7 +140,7 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
             }
             // get client
             clientSyncService
-                    .findByClientId(clientId)
+                    .findByClientId(decodeURIComponent(clientId))
                     .subscribe(
                             client -> handler.handle(Future.succeededFuture(client)),
                             error -> handler.handle(Future.failedFuture(error)),

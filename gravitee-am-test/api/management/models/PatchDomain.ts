@@ -19,6 +19,12 @@ import {
     AccountSettingsToJSON,
 } from './AccountSettings';
 import {
+    CorsSettings,
+    CorsSettingsFromJSON,
+    CorsSettingsFromJSONTyped,
+    CorsSettingsToJSON,
+} from './CorsSettings';
+import {
     LoginSettings,
     LoginSettingsFromJSON,
     LoginSettingsFromJSONTyped,
@@ -189,6 +195,12 @@ export interface PatchDomain {
     saml?: PatchSAMLSettings;
     /**
      * 
+     * @type {CorsSettings}
+     * @memberof PatchDomain
+     */
+    corsSettings?: CorsSettings;
+    /**
+     * 
      * @type {Set<string>}
      * @memberof PatchDomain
      */
@@ -292,6 +304,7 @@ export function PatchDomainFromJSONTyped(json: any, ignoreDiscriminator: boolean
         'tags': !exists(json, 'tags') ? undefined : json['tags'],
         'master': !exists(json, 'master') ? undefined : json['master'],
         'saml': !exists(json, 'saml') ? undefined : PatchSAMLSettingsFromJSON(json['saml']),
+        'corsSettings': !exists(json, 'corsSettings') ? undefined : CorsSettingsFromJSON(json['corsSettings']),
         'requiredPermissions': !exists(json, 'requiredPermissions') ? undefined : json['requiredPermissions'],
     };
 }
@@ -323,6 +336,7 @@ export function PatchDomainToJSON(value?: PatchDomain | null): any {
         'tags': value.tags,
         'master': value.master,
         'saml': PatchSAMLSettingsToJSON(value.saml),
+        'corsSettings': CorsSettingsToJSON(value.corsSettings),
         'requiredPermissions': value.requiredPermissions,
     };
 }

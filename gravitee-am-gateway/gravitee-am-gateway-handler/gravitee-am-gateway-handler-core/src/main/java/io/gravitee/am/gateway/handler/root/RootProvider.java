@@ -74,6 +74,7 @@ import io.gravitee.am.gateway.handler.root.resources.handler.client.ClientReques
 import io.gravitee.am.gateway.handler.root.resources.handler.consent.DataConsentHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.error.ErrorHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.geoip.GeoIpHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginCallbackDeviceIdHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginCallbackFailureHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginCallbackOpenIDConnectFlowHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginCallbackParseHandler;
@@ -102,11 +103,7 @@ import io.gravitee.am.gateway.handler.root.resources.handler.user.register.Regis
 import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterFailureHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterProcessHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterSubmissionRequestParseHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnAccessHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnLoginHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnRegisterHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnRememberDeviceHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnResponseHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.*;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
@@ -384,7 +381,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(new LoginPostEndpoint());
 
         rootRouter.route(PATH_LOGIN)
-                .failureHandler(new LoginFailureHandler(authenticationFlowContextService));
+                .failureHandler(new LoginFailureHandler(authenticationFlowContextService, domain, identityProviderManager));
 
         // logout route
         rootRouter.route(PATH_LOGOUT)
@@ -396,12 +393,15 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         Handler<RoutingContext> socialAuthHandler = SocialAuthHandler.create(new SocialAuthenticationProvider(userAuthenticationManager, eventManager, identityProviderManager, domain, gatewayMetricProvider));
         Handler<RoutingContext> loginCallbackParseHandler = new LoginCallbackParseHandler(clientSyncService, identityProviderManager, jwtService, certificateManager);
         Handler<RoutingContext> loginCallbackOpenIDConnectFlowHandler = new LoginCallbackOpenIDConnectFlowHandler(thymeleafTemplateEngine);
+        Handler<RoutingContext> loginCallbackDeviceIdHandler = new LoginCallbackDeviceIdHandler(thymeleafTemplateEngine, deviceIdentifierManager);
         Handler<RoutingContext> loginCallbackFailureHandler = new LoginCallbackFailureHandler(domain, authenticationFlowContextService, identityProviderManager);
         Handler<RoutingContext> loginCallbackEndpoint = new LoginCallbackEndpoint();
         Handler<RoutingContext> loginSSOPOSTEndpoint = new LoginSSOPOSTEndpoint(thymeleafTemplateEngine);
         rootRouter.get(PATH_LOGIN_CALLBACK)
                 .handler(loginCallbackOpenIDConnectFlowHandler)
                 .handler(loginCallbackParseHandler)
+                .handler(rememberDeviceSettingsHandler)
+                .handler(loginCallbackDeviceIdHandler)
                 .handler(socialAuthHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.POST_LOGIN))
                 .handler(loginPostWebAuthnHandler)
@@ -411,6 +411,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(loginCallbackOpenIDConnectFlowHandler)
                 .handler(loginCallbackParseHandler)
                 .handler(socialAuthHandler)
+                .handler(deviceIdentifierHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.POST_LOGIN))
                 .handler(loginPostWebAuthnHandler)
                 .handler(loginCallbackEndpoint)
@@ -427,7 +428,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         rootRouter.route(PATH_MFA_ENROLL)
                 .handler(clientRequestParseHandler)
                 .handler(localeHandler)
-                .handler(new MFAEnrollEndpoint(factorManager, thymeleafTemplateEngine, userService, domain));
+                .handler(new MFAEnrollEndpoint(factorManager, thymeleafTemplateEngine, userService, domain, applicationContext));
         rootRouter.route(PATH_MFA_CHALLENGE)
                 .handler(clientRequestParseHandler)
                 .handler(rememberDeviceSettingsHandler)
@@ -438,7 +439,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         rootRouter.route(PATH_MFA_CHALLENGE_ALTERNATIVES)
                 .handler(clientRequestParseHandler)
                 .handler(localeHandler)
-                .handler(new MFAChallengeAlternativesEndpoint(thymeleafTemplateEngine, factorManager));
+                .handler(new MFAChallengeAlternativesEndpoint(thymeleafTemplateEngine, factorManager, domain));
         rootRouter.route(PATH_MFA_RECOVERY_CODE)
                 .handler(clientRequestParseHandler)
                 .handler(localeHandler)
@@ -467,6 +468,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(webAuthnAccessHandler)
                 .handler(new LoginSocialAuthenticationHandler(identityProviderManager, jwtService, certificateManager))
                 .handler(localeHandler)
+                .handler(new WebAuthnEnforcePasswordHandler(domain, webAuthnCookieService))
                 .handler(new WebAuthnLoginEndpoint(thymeleafTemplateEngine, domain, deviceIdentifierManager, userActivityService));
         rootRouter.post(PATH_WEBAUTHN_LOGIN)
                 .handler(clientRequestParseHandler)
@@ -474,8 +476,11 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(new WebAuthnLoginHandler(factorService, factorManager, domain, webAuthn, credentialService, userAuthenticationManager))
                 .handler(deviceIdentifierHandler)
                 .handler(userActivityHandler)
+                .handler(policyChainHandler.create(ExtensionPoint.POST_LOGIN))
                 .handler(webAuthnRememberDeviceHandler)
                 .handler(new WebAuthnLoginPostEndpoint());
+        rootRouter.route(PATH_WEBAUTHN_LOGIN)
+                .failureHandler(new LoginFailureHandler(authenticationFlowContextService, domain, identityProviderManager));
         rootRouter.route(PATH_WEBAUTHN_LOGIN_CREDENTIALS)
                 .handler(clientRequestParseHandler)
                 .handler(webAuthnAccessHandler)
@@ -776,5 +781,8 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         router.route(PATH_LOGOUT_CALLBACK).failureHandler(errorHandler);
         router.route(PATH_LOGIN).failureHandler(errorHandler);
         router.route(PATH_IDENTIFIER_FIRST_LOGIN).failureHandler(errorHandler);
+        router.route(PATH_WEBAUTHN_LOGIN).failureHandler(errorHandler);
+        router.route(PATH_WEBAUTHN_REGISTER).failureHandler(errorHandler);
+        router.route(PATH_WEBAUTHN_RESPONSE).failureHandler(errorHandler);
     }
 }

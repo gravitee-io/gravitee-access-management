@@ -19,13 +19,17 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.exception.mfa.InvalidCodeException;
 import io.gravitee.am.common.exception.mfa.SendChallengeException;
+import io.gravitee.am.common.factor.FactorType;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.factor.api.Enrollment;
+import io.gravitee.am.factor.api.FactorContext;
 import io.gravitee.am.factor.api.FactorProvider;
 import io.gravitee.am.gateway.handler.account.resources.util.AccountRoutes;
 import io.gravitee.am.gateway.handler.account.services.AccountService;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.ErrorHandler;
+import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.User;
@@ -38,8 +42,10 @@ import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.rxjava3.core.buffer.Buffer;
 import io.vertx.rxjava3.ext.web.handler.BodyHandler;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.context.ApplicationContext;
@@ -50,6 +56,7 @@ import java.util.List;
 import java.util.Map;
 
 import static io.gravitee.am.common.factor.FactorSecurityType.RECOVERY_CODE;
+import static io.gravitee.am.common.factor.FactorSecurityType.SHARED_SECRET;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -87,6 +94,8 @@ public class AccountFactorsEndpointHandlerTest extends RxWebTestBase {
         super.setUp();
         accountFactorsEndpointHandler = new AccountFactorsEndpointHandler(accountService, factorManager, applicationContext, rateLimiterService);
         user = new User();
+        user.setId("xxx-xxx-xxx");
+        user.setUsername("username");
 
         router.route()
                 .handler(ctx -> {
@@ -593,6 +602,151 @@ public class AccountFactorsEndpointHandlerTest extends RxWebTestBase {
                 },
                 200,
                 "OK", null);
+    }
+
+    @Test
+    public void shouldNotEnrollFactor_invalidRequest_noJson() throws Exception {
+        router.post(AccountRoutes.FACTORS.getRoute())
+                .handler(accountFactorsEndpointHandler::enrollFactor)
+                .handler(rc -> rc.response().end());
+
+        testRequest(HttpMethod.POST, "/api/factors",
+                req -> {
+                    Buffer buffer = Buffer.buffer();
+                    buffer.appendString("wrong-body");
+                    req.headers().set("content-length", String.valueOf(buffer.length()));
+                    req.headers().set("content-type", "application/json");
+                    req.write(buffer);
+                },
+                null,
+                400,
+                "Bad Request", null);
+    }
+
+    @Test
+    public void shouldNotEnrollFactor_invalidRequest_nullPayload() throws Exception {
+        router.post(AccountRoutes.FACTORS.getRoute())
+                .handler(accountFactorsEndpointHandler::enrollFactor)
+                .handler(rc -> rc.response().end());
+
+        testRequest(HttpMethod.POST, "/api/factors",
+               null,
+                null,
+                400,
+                "Bad Request", null);
+    }
+    @Test
+    public void shouldNotEnrollFactor_invalidRequest_missingFactorId() throws Exception {
+        router.post(AccountRoutes.FACTORS.getRoute())
+                .handler(accountFactorsEndpointHandler::enrollFactor)
+                .handler(rc -> rc.response().end());
+
+        testRequest(HttpMethod.POST, "/api/factors",
+                req -> {
+                    Buffer buffer = Buffer.buffer();
+                    buffer.appendString("{}");
+                    req.headers().set("content-length", String.valueOf(buffer.length()));
+                    req.headers().set("content-type", "application/json");
+                    req.write(buffer);
+                },
+                null,
+                400,
+                "Bad Request", null);
+    }
+
+    @Test
+    public void shouldNotEnrollFactor_invalidRequest_factorNotFound() throws Exception {
+        when(accountService.getFactor("factor-id")).thenReturn(Maybe.empty());
+
+        router.post(AccountRoutes.FACTORS.getRoute())
+                .handler(accountFactorsEndpointHandler::enrollFactor)
+                .handler(rc -> rc.response().end());
+
+        testRequest(HttpMethod.POST, "/api/factors",
+                req -> {
+                    Buffer buffer = Buffer.buffer();
+                    buffer.appendString("{\n" +
+                            "    \"factorId\": \"factor-id\",\n" +
+                            "    \"account\": {\n" +
+                            "        \"email\": \"mail@mail.com\"\n" +
+                            "    }\n" +
+                            "}");
+                    req.headers().set("content-length", String.valueOf(buffer.length()));
+                    req.headers().set("content-type", "application/json");
+                    req.write(buffer);
+                },
+                null,
+                404,
+                "Not Found", null);
+    }
+
+    @Test
+    public void shouldNotEnrollFactor_invalidRequest_factorProviderNotFound() throws Exception {
+        when(accountService.getFactor("factor-id")).thenReturn(Maybe.just(new Factor()));
+
+        router.post(AccountRoutes.FACTORS.getRoute())
+                .handler(accountFactorsEndpointHandler::enrollFactor)
+                .handler(rc -> rc.response().end());
+
+        testRequest(HttpMethod.POST, "/api/factors",
+                req -> {
+                    Buffer buffer = Buffer.buffer();
+                    buffer.appendString("{\n" +
+                            "    \"factorId\": \"factor-id\",\n" +
+                            "    \"account\": {\n" +
+                            "        \"email\": \"mail@mail.com\"\n" +
+                            "    }\n" +
+                            "}");
+                    req.headers().set("content-length", String.valueOf(buffer.length()));
+                    req.headers().set("content-type", "application/json");
+                    req.write(buffer);
+                },
+                null,
+                404,
+                "Not Found", null);
+    }
+
+    @Test
+    public void shouldEnrollFactor_nominalCase() throws Exception {
+        Enrollment enrollment = mock(Enrollment.class);
+        when(enrollment.getKey()).thenReturn(SHARED_SECRET);
+        Factor factor = mock(Factor.class);
+        when(factor.getFactorType()).thenReturn(FactorType.EMAIL);
+        FactorProvider factorProvider = mock(FactorProvider.class);
+        when(factorProvider.enroll(any(FactorContext.class))).thenReturn(Single.just(enrollment));
+        when(factorProvider.checkSecurityFactor(any())).thenReturn(true);
+        when(factorProvider.needChallengeSending()).thenReturn(true);
+        when(factorProvider.useVariableFactorSecurity(any())).thenReturn(true);
+        when(factorProvider.sendChallenge(any())).thenReturn(Completable.complete());
+        when(accountService.getFactor("factor-id")).thenReturn(Maybe.just(factor));
+        ArgumentCaptor<EnrolledFactor> enrolledFactorCaptor = ArgumentCaptor.forClass(EnrolledFactor.class);
+        when(accountService.upsertFactor(any(), enrolledFactorCaptor.capture(), any())).thenReturn(Single.just(new User()));
+        when(factorManager.get("factor-id")).thenReturn(factorProvider);
+
+        router.post(AccountRoutes.FACTORS.getRoute())
+                .handler(accountFactorsEndpointHandler::enrollFactor)
+                .handler(rc -> rc.response().end());
+
+        testRequest(HttpMethod.POST, "/api/factors",
+                req -> {
+                    Buffer buffer = Buffer.buffer();
+                    buffer.appendString("{\n" +
+                            "    \"factorId\": \"factor-id\",\n" +
+                            "    \"account\": {\n" +
+                            "        \"email\": \"mail@mail.com\"\n" +
+                            "    }\n" +
+                            "}");
+                    req.headers().set("content-length", String.valueOf(buffer.length()));
+                    req.headers().set("content-type", "application/json");
+                    req.write(buffer);
+                },
+                null,
+                200,
+                "OK", null);
+
+        EnrolledFactor enrolledFactorCaptorValue = enrolledFactorCaptor.getValue();
+        Assert.assertNotNull(enrolledFactorCaptorValue);
+        Assert.assertEquals(SHARED_SECRET, enrolledFactorCaptorValue.getSecurity().getValue());
     }
 
     private void addFactors(User user) {

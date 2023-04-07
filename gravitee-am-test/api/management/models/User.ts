@@ -318,7 +318,19 @@ export interface User {
      * @type {number}
      * @memberof User
      */
+    lastLoginWithCredentials?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof User
+     */
     lastPasswordReset?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof User
+     */
+    lastUsernameReset?: number;
     /**
      * 
      * @type {number}
@@ -363,6 +375,12 @@ export interface User {
     zoneInfo?: string;
     /**
      * 
+     * @type {string}
+     * @memberof User
+     */
+    middleName?: string;
+    /**
+     * 
      * @type {boolean}
      * @memberof User
      */
@@ -379,12 +397,6 @@ export interface User {
      * @memberof User
      */
     website?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof User
-     */
-    middleName?: string;
     /**
      * 
      * @type {string}
@@ -467,7 +479,9 @@ export function UserFromJSONTyped(json: any, ignoreDiscriminator: boolean): User
         'factors': !exists(json, 'factors') ? undefined : ((json['factors'] as Array<any>).map(EnrolledFactorFromJSON)),
         'additionalInformation': !exists(json, 'additionalInformation') ? undefined : json['additionalInformation'],
         'loggedAt': !exists(json, 'loggedAt') ? undefined : json['loggedAt'],
+        'lastLoginWithCredentials': !exists(json, 'lastLoginWithCredentials') ? undefined : json['lastLoginWithCredentials'],
         'lastPasswordReset': !exists(json, 'lastPasswordReset') ? undefined : json['lastPasswordReset'],
+        'lastUsernameReset': !exists(json, 'lastUsernameReset') ? undefined : json['lastUsernameReset'],
         'lastLogoutAt': !exists(json, 'lastLogoutAt') ? undefined : json['lastLogoutAt'],
         'mfaEnrollmentSkippedAt': !exists(json, 'mfaEnrollmentSkippedAt') ? undefined : json['mfaEnrollmentSkippedAt'],
         'createdAt': !exists(json, 'createdAt') ? undefined : json['createdAt'],
@@ -475,10 +489,10 @@ export function UserFromJSONTyped(json: any, ignoreDiscriminator: boolean): User
         'address': !exists(json, 'address') ? undefined : json['address'],
         'locale': !exists(json, 'locale') ? undefined : json['locale'],
         'zoneInfo': !exists(json, 'zoneInfo') ? undefined : json['zoneInfo'],
+        'middleName': !exists(json, 'middleName') ? undefined : json['middleName'],
         'inactive': !exists(json, 'inactive') ? undefined : json['inactive'],
         'profile': !exists(json, 'profile') ? undefined : json['profile'],
         'website': !exists(json, 'website') ? undefined : json['website'],
-        'middleName': !exists(json, 'middleName') ? undefined : json['middleName'],
         'birthdate': !exists(json, 'birthdate') ? undefined : json['birthdate'],
         'phoneNumber': !exists(json, 'phoneNumber') ? undefined : json['phoneNumber'],
     };
@@ -537,7 +551,9 @@ export function UserToJSON(value?: User | null): any {
         'factors': value.factors === undefined ? undefined : ((value.factors as Array<any>).map(EnrolledFactorToJSON)),
         'additionalInformation': value.additionalInformation,
         'loggedAt': value.loggedAt,
+        'lastLoginWithCredentials': value.lastLoginWithCredentials,
         'lastPasswordReset': value.lastPasswordReset,
+        'lastUsernameReset': value.lastUsernameReset,
         'lastLogoutAt': value.lastLogoutAt,
         'mfaEnrollmentSkippedAt': value.mfaEnrollmentSkippedAt,
         'createdAt': value.createdAt,
@@ -545,10 +561,10 @@ export function UserToJSON(value?: User | null): any {
         'address': value.address,
         'locale': value.locale,
         'zoneInfo': value.zoneInfo,
+        'middleName': value.middleName,
         'inactive': value.inactive,
         'profile': value.profile,
         'website': value.website,
-        'middleName': value.middleName,
         'birthdate': value.birthdate,
         'phoneNumber': value.phoneNumber,
     };

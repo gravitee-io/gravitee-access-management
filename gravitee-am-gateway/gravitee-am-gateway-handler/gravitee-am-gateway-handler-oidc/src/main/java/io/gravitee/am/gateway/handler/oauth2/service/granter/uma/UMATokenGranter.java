@@ -60,6 +60,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static io.gravitee.am.common.oauth2.Parameters.*;
+import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.ACCESS_TOKEN;
 
 /**
  * Implementation of the User Managed Access 2.0 Grant Flow.
@@ -169,7 +170,7 @@ public class UMATokenGranter extends AbstractTokenGranter {
             return Maybe.empty();
         }
 
-        return jwtService.decodeAndVerify(tokenRequest.getClaimToken(), client)
+        return jwtService.decodeAndVerify(tokenRequest.getClaimToken(), client, ACCESS_TOKEN)
                 .flatMapMaybe(jwt -> userAuthenticationManager.loadPreAuthenticatedUser(jwt.getSub(), tokenRequest))
                 .switchIfEmpty(Maybe.error(UserInvalidException::new))
                 .onErrorResumeNext(ex -> {
@@ -265,7 +266,7 @@ public class UMATokenGranter extends AbstractTokenGranter {
      */
     private Single<List<PermissionRequest>> extendPermissionWithRPT(TokenRequest tokenRequest, Client client, User endUser, List<PermissionRequest> requestedPermissions) {
         if(!StringUtils.isEmpty(tokenRequest.getRequestingPartyToken())) {
-            return jwtService.decodeAndVerify(tokenRequest.getRequestingPartyToken(), client)
+            return jwtService.decodeAndVerify(tokenRequest.getRequestingPartyToken(), client, ACCESS_TOKEN)
                     .flatMap(rpt -> this.checkRequestingPartyToken(rpt, client, endUser))
                     .map(rpt -> this.mergePermissions(rpt, requestedPermissions))
                     .onErrorResumeNext(throwable -> Single.error(new InvalidGrantException("Requesting Party Token (rpt) not valid")));

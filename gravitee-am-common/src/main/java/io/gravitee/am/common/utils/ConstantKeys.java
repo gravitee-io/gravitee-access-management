@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.common.utils;
 
+import io.gravitee.am.common.jwt.Claims;
+import java.util.Set;
+
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
@@ -105,6 +108,7 @@ public interface ConstantKeys {
     String PASSWORDLESS_CHALLENGE_USERNAME_KEY = "passwordlessUsername";
     String PASSWORDLESS_ORIGIN = "passwordlessOrigin";
     String PASSWORDLESS_ASSERTION = "passwordlessAssertion";
+    String PASSWORDLESS_ENFORCE_PASSWORD = "passwordlessEnforcePassword";
 
     // Consent keys.
     String USER_CONSENT_COMPLETED_KEY = "userConsentCompleted";
@@ -205,6 +209,14 @@ public interface ConstantKeys {
     String REGISTER_ACTION_KEY = "registerAction";
     String WEBAUTHN_ACTION_KEY = "passwordlessAction";
     String FORGOT_ACTION_KEY = "forgotPasswordAction";
-
     String REQUEST_CONTEXT_KEY = "request";
+    Set<String> ID_TOKEN_EXCLUDED_CLAIMS = Set.of(
+        ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY,
+        ConstantKeys.OIDC_PROVIDER_ID_ACCESS_TOKEN_KEY,
+        Claims.iat,
+        Claims.exp,
+        Claims.nbf,
+        Claims.auth_time,
+        Claims.updated_at
+    );
 }

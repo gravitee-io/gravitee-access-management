@@ -101,49 +101,50 @@ public class WebAuthnResponseHandler extends WebAuthnHandler {
                             .setChallenge(session.get(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY))
                             .setUsername(session.get(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY))
                             .setWebauthn(webauthnResp))
-                    .doOnSuccess(u -> {
-                        // create the authentication context
-                        final AuthenticationContext authenticationContext = createAuthenticationContext(ctx);
-                        // authenticate the user
-                        authenticateUser(client, authenticationContext, username, credentialId, h -> {
-                            if (h.failed()) {
-                                logger.error("An error has occurred while authenticating user {}", username, h.cause());
-                                ctx.fail(401);
-                                return;
-                            }
-                            final User user = h.result();
-                            // save the user into the context
-                            ctx.getDelegate().setUser(user);
-                            ctx.put(ConstantKeys.USER_CONTEXT_KEY, ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) user).getUser());
-                            // the user has upgraded from unauthenticated to authenticated
-                            // session should be upgraded as recommended by owasp
-                            session.regenerateId();
-                            final io.gravitee.am.model.User authenticatedUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) user).getUser();
-                            // update the credential
-                            updateCredential(authenticationContext, credentialId, authenticatedUser.getId(), credentialHandler -> {
-                                if (credentialHandler.failed()) {
-                                    logger.error("An error has occurred while authenticating user {}", username, credentialHandler.cause());
-                                    ctx.fail(401);
-                                    return;
-                                }
-                                if (isEnrollingFido2Factor(ctx)) {
-                                    enrollFido2Factor(ctx, authenticatedUser, createEnrolledFactor(session.get(ENROLLED_FACTOR_ID_KEY), credentialId));
-                                } else {
-                                    manageFido2FactorEnrollment(ctx, client, credentialId, authenticatedUser);
-                                }
-                            });
-                        });
-                    })
-                    .doOnError(throwable -> {
-                        logger.error("Unexpected exception", throwable);
-                        ctx.fail(throwable.getCause());
-                    })
                     .doFinally(() -> {
                         // invalidate the challenge
                         session.remove(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY);
                         session.remove(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY);
                     })
-                    .subscribe();
+                    .subscribe(
+                            u -> {
+                                // create the authentication context
+                                final AuthenticationContext authenticationContext = createAuthenticationContext(ctx);
+                                // authenticate the user
+                                authenticateUser(client, authenticationContext, username, credentialId, h -> {
+                                    if (h.failed()) {
+                                        logger.error("An error has occurred while authenticating user {}", username, h.cause());
+                                        ctx.fail(401);
+                                        return;
+                                    }
+                                    final User user = h.result();
+                                    // save the user into the context
+                                    ctx.getDelegate().setUser(user);
+                                    ctx.put(ConstantKeys.USER_CONTEXT_KEY, ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) user).getUser());
+                                    // the user has upgraded from unauthenticated to authenticated
+                                    // session should be upgraded as recommended by owasp
+                                    session.regenerateId();
+                                    final io.gravitee.am.model.User authenticatedUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) user).getUser();
+                                    // update the credential
+                                    updateCredential(authenticationContext, credentialId, authenticatedUser.getId(), credentialHandler -> {
+                                        if (credentialHandler.failed()) {
+                                            logger.error("An error has occurred while authenticating user {}", username, credentialHandler.cause());
+                                            ctx.fail(401);
+                                            return;
+                                        }
+                                        if (isEnrollingFido2Factor(ctx)) {
+                                            enrollFido2Factor(ctx, authenticatedUser, createEnrolledFactor(session.get(ENROLLED_FACTOR_ID_KEY), credentialId));
+                                        } else {
+                                            manageFido2FactorEnrollment(ctx, client, credentialId, authenticatedUser);
+                                        }
+                                    });
+                                });
+                            },
+                            throwable -> {
+                                logger.error("Unexpected exception", throwable);
+                                ctx.fail(throwable.getCause());
+                            }
+                    );
         } catch (IllegalArgumentException e) {
             logger.error("Unexpected exception", e);
             ctx.fail(400);

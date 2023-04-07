@@ -49,8 +49,6 @@ let totpApp;
 const mfaChallengeAttemptsResetTime = 1
 const validMFACode = '333333'
 const sharedSecret = "K546JFR2PK5CGQLLUTFG4W46IKDFWWUE";
-//this verificationCode is generated with the sharedSecret above. Do not change the value unless required
-const emailVerificationCode = "346147";
 
 jest.setTimeout(200000)
 
@@ -277,10 +275,11 @@ describe("MFA", () => {
 
             const email = await getLastEmail();
             expect(email).toBeDefined();
-            expect(email.contents[0].data).toContain(emailVerificationCode);
+            const verificationCode = email.contents[0].data.match(".*class=\"otp-code\".*<span[^>]*>.([0-9]{6}).<\\/span>")[1];
+            expect(verificationCode).toBeDefined();
             await clearEmails();
 
-            const successfulVerification = await verifyFactor(authorize2, emailVerificationCode, emailFactor);
+            const successfulVerification = await verifyFactor(authorize2, verificationCode, emailFactor);
             await logoutUser(openIdConfiguration.end_session_endpoint, successfulVerification);
         });
 

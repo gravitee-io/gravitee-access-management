@@ -16,7 +16,9 @@
 package io.gravitee.am.management.service.impl;
 
 import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.common.factor.FactorDataKeys;
 import io.gravitee.am.common.oidc.StandardClaims;
+import io.gravitee.am.common.utils.MovingFactorUtils;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.management.service.CommonUserService;
@@ -25,7 +27,10 @@ import io.gravitee.am.model.Application;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.membership.MemberType;
+import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.CredentialService;
+import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.RateLimiterService;
@@ -51,6 +56,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 
 import static io.gravitee.am.model.ReferenceType.DOMAIN;
@@ -90,6 +96,11 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
     @Autowired
     protected VerifyAttemptService verifyAttemptService;
 
+    @Autowired
+    protected CredentialService credentialService;
+
+    @Autowired
+    private LoginAttemptService loginAttemptService;
 
     protected abstract BiFunction<String, String, Maybe<Application>> checkClientFunction();
 
@@ -102,26 +113,14 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
 
     @Override
     public Single<User> update(ReferenceType referenceType, String referenceId, String id, UpdateUser updateUser, io.gravitee.am.identityprovider.api.User principal) {
-        return this.update(referenceType, referenceId, id, updateUser, principal, checkClientFunction());
+        return this.updateUser(referenceType, referenceId, id, updateUser, principal);
     }
 
-    private Single<User> update(ReferenceType referenceType, String referenceId, String id, UpdateUser updateUser, io.gravitee.am.identityprovider.api.User principal, BiFunction<String, String, Maybe<Application>> checkClient) {
+    private Single<User> updateUser(ReferenceType referenceType, String referenceId, String id, UpdateUser updateUser, io.gravitee.am.identityprovider.api.User principal) {
         return userValidator.validate(updateUser).andThen(
                 getUserService().findById(referenceType, referenceId, id)
                         .flatMap(user -> identityProviderManager.getUserProvider(user.getSource())
                                 .switchIfEmpty(Single.error(new UserProviderNotFoundException(user.getSource())))
-                                // check client
-                                .flatMap(userProvider -> {
-                                    String client = updateUser.getClient() != null ? updateUser.getClient() : user.getClient();
-                                    if (client != null && referenceType == DOMAIN) {
-                                        return checkClient.apply(referenceId, client)
-                                                .flatMapSingle(client1 -> {
-                                                    updateUser.setClient(client1.getId());
-                                                    return Single.just(userProvider);
-                                                }).toSingle();
-                                    }
-                                    return Single.just(userProvider);
-                                })
                                 // update the idp user
                                 .flatMap(userProvider -> userProvider.findByUsername(user.getUsername())
                                         .switchIfEmpty(Single.error(new UserNotFoundException(user.getUsername())))
@@ -156,6 +155,7 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
 
     @Override
     public Single<User> updateUsername(ReferenceType referenceType, String referenceId, String id, String username, io.gravitee.am.identityprovider.api.User principal) {
+        final AtomicReference<String> oldUsername = new AtomicReference<>();
         return userValidator.validateUsername(username).andThen(Single.defer(() ->
                 getUserService().findById(referenceType, referenceId, id).flatMap(user -> getUserService()
                                 .findByUsernameAndSource(referenceType, referenceId, username, user.getSource())
@@ -175,18 +175,36 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
                                         .switchIfEmpty(Single.error(new UserNotFoundException()))
                                         .flatMap(idpUser -> userProvider.updateUsername(idpUser, username))
                                         .flatMap(idpUser -> {
-                                            var oldUsername = user.getUsername();
-                                            user.setUsername(username);
+                                            oldUsername.set(user.getUsername());
+                                            return updateCredentialUsername(referenceType, referenceId, oldUsername.get(), idpUser);
+                                        })
+                                        .flatMap(idpUser -> {
+                                            user.updateUsername(username);
+
+                                            // Generate a new moving factor based on user id instead of username. Necessary
+                                            // since username can be changed.
+                                            generateNewMovingFactorBasedOnUserId(user);
+
                                             return getUserService().update(user).onErrorResumeNext(ex -> {
-                                                // In the case we cannot update on our side, we rollback the username on the iDP
-                                                user.setUsername(oldUsername);
-                                                ((DefaultUser) idpUser).setUsername(oldUsername);
+                                                // In the case we cannot update on our side, we rollback the username on the iDP and these credentials
+                                                ((DefaultUser) idpUser).setUsername(oldUsername.get());
                                                 return userProvider.updateUsername(idpUser, idpUser.getUsername())
+                                                        .flatMap(idpUser1 -> updateCredentialUsername(referenceType, referenceId, idpUser1.getUsername(), oldUsername.get()))
                                                         .flatMap(rolledBackUser -> Single.error(ex));
                                             });
                                         })
                                 ))
-                        .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USERNAME_UPDATED).user(user1)))
+                        .doOnSuccess(user1 -> {
+                            auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USERNAME_UPDATED).user(user1));
+                            if (DOMAIN.equals(referenceType)) {
+                                loginAttemptService.reset(createLoginAttemptCriteria(referenceId, oldUsername.get()))
+                                        .onErrorResumeNext(error -> {
+                                            logger.warn("Could not delete login attempt {}", error.getMessage());
+                                            return Completable.complete();
+                                        })
+                                        .subscribe();
+                            }
+                        })
                         .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USERNAME_UPDATED).throwable(throwable)))
         ));
     }
@@ -332,5 +350,50 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
         }
         idpUser.setAdditionalInformation(additionalInformation);
         return idpUser;
+    }
+
+    private LoginAttemptCriteria createLoginAttemptCriteria(String domainId, String username){
+        return new LoginAttemptCriteria.Builder()
+                .domain(domainId)
+                .username(username)
+                .build();
+    }
+
+    private Single<io.gravitee.am.identityprovider.api.User> updateCredentialUsername(ReferenceType referenceType, String referenceId, String oldUsername, io.gravitee.am.identityprovider.api.User user) {
+        return updateCredentialUsername(referenceType, referenceId, oldUsername, user.getUsername())
+                .flatMap(__ -> Single.just(user));
+    }
+
+    private Single<String> updateCredentialUsername(ReferenceType referenceType, String referenceId, String oldUsername, String newUsername) {
+        return credentialService.findByUsername(referenceType, referenceId, oldUsername)
+                .map(credential -> {
+                    credential.setUsername(newUsername);
+                    return credentialService.update(credential).subscribe();
+                })
+                .toList()
+                .flatMapMaybe(singles -> Maybe.just(newUsername))
+                .toSingle();
+    }
+
+    private void generateNewMovingFactorBasedOnUserId(User user) {
+
+        Optional.ofNullable(user.getFactors()).ifPresent(enrolledFactors ->
+
+            user.getFactors()
+                    .stream()
+                    .filter(enrolledFactor -> Optional.ofNullable(enrolledFactor.getSecurity()).isPresent())
+                    .forEach(enrolledFactor -> {
+
+                        final var additionalData = enrolledFactor.getSecurity().getAdditionalData();
+
+                        if (additionalData.containsKey(FactorDataKeys.KEY_MOVING_FACTOR)) {
+                            additionalData.put(
+                                    FactorDataKeys.KEY_MOVING_FACTOR,
+                                    MovingFactorUtils.generateInitialMovingFactor(user.getId())
+                            );
+                            enrolledFactor.setUpdatedAt(new Date());
+                        }
+                    })
+        );
     }
 }

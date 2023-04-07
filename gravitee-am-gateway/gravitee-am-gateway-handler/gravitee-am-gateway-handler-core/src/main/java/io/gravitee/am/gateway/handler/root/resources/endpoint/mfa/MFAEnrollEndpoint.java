@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.mfa;
 
 import io.gravitee.am.common.factor.FactorSecurityType;
 import io.gravitee.am.factor.api.Enrollment;
+import io.gravitee.am.factor.api.FactorContext;
 import io.gravitee.am.factor.api.FactorProvider;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.common.utils.ConstantKeys;
@@ -42,7 +43,9 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationContext;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -62,12 +65,18 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
     private final FactorManager factorManager;
     private final UserService userService;
     private final Domain domain;
+    private final ApplicationContext applicationContext;
 
-    public MFAEnrollEndpoint(FactorManager factorManager, TemplateEngine engine, UserService userService, Domain domain) {
+    public MFAEnrollEndpoint(FactorManager factorManager,
+                             TemplateEngine engine,
+                             UserService userService,
+                             Domain domain,
+                             ApplicationContext applicationContext) {
         super(engine);
         this.factorManager = factorManager;
         this.userService = userService;
         this.domain = domain;
+        this.applicationContext = applicationContext;
     }
 
     @Override
@@ -102,7 +111,9 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
             final String action = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams, true);
 
             // load factor providers
-            load(factors, endUser, h -> {
+            final FactorContext factorContext = new FactorContext(applicationContext, new HashMap<>());
+            factorContext.registerData(FactorContext.KEY_USER, endUser);
+            load(factors, factorContext, h -> {
                 if (h.failed()) {
                     logger.error("An error occurs while loading factor providers", h.cause());
                     routingContext.fail(503);
@@ -211,9 +222,6 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
     private EnrolledFactor getSecurityFactor(MultiMap params, io.gravitee.am.model.Factor factor) {
         EnrolledFactor enrolledFactor = new EnrolledFactor();
         switch (factor.getFactorType()) {
-            case OTP:
-                enrolledFactor.setSecurity(new EnrolledFactorSecurity(FactorSecurityType.SHARED_SECRET, params.get("sharedSecret")));
-                break;
             case SMS:
                 enrolledFactor.setChannel(new EnrolledFactorChannel(Type.SMS, params.get("phone")));
                 break;
@@ -221,16 +229,22 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
                 enrolledFactor.setChannel(new EnrolledFactorChannel(Type.CALL, params.get("phone")));
                 break;
             case EMAIL:
-                enrolledFactor.setSecurity(new EnrolledFactorSecurity(FactorSecurityType.SHARED_SECRET, params.get("sharedSecret")));
                 enrolledFactor.setChannel(new EnrolledFactorChannel(Type.EMAIL, params.get("email")));
                 break;
+        }
+        // set shared secret
+        final String sharedSecret = params.get("sharedSecret");
+        if (sharedSecret != null && !sharedSecret.isEmpty()) {
+            enrolledFactor.setSecurity(new EnrolledFactorSecurity(FactorSecurityType.SHARED_SECRET, sharedSecret));
         }
         return enrolledFactor;
     }
 
-    private void load(Map<io.gravitee.am.model.Factor, FactorProvider> providers, User user, Handler<AsyncResult<List<Factor>>> handler) {
+    private void load(Map<io.gravitee.am.model.Factor, FactorProvider> providers,
+                      FactorContext factorContext,
+                      Handler<AsyncResult<List<Factor>>> handler) {
         Observable.fromIterable(providers.entrySet())
-                .flatMapSingle(entry -> entry.getValue().enroll(user.getUsername())
+                .flatMapSingle(entry -> entry.getValue().enroll(factorContext)
                         .map(enrollment -> new Factor(entry.getKey(), enrollment))
                 )
                 .toList()

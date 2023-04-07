@@ -30,7 +30,13 @@ public interface FactorProvider {
 
     Completable verify(FactorContext context);
 
-    Single<Enrollment> enroll(String account);
+    default Single<Enrollment> enroll(String account) {
+        return Single.just(new Enrollment());
+    }
+
+    default Single<Enrollment> enroll(FactorContext factorContext) {
+        return enroll(factorContext.getUser().getUsername());
+    }
 
     boolean checkSecurityFactor(EnrolledFactor securityFactor);
 
@@ -40,6 +46,10 @@ public interface FactorProvider {
 
     default boolean useVariableFactorSecurity() {
         return false;
+    }
+
+    default boolean useVariableFactorSecurity(FactorContext factorContext) {
+        return useVariableFactorSecurity();
     }
 
     default Single<EnrolledFactor> changeVariableFactorSecurity(EnrolledFactor factor) {

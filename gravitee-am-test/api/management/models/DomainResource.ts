@@ -153,64 +153,16 @@ import {
 export interface DomainResource {
     /**
      * 
-     * @type {IdentityProvidersResource}
+     * @type {MembersResource}
      * @memberof DomainResource
      */
-    identityProvidersResource?: IdentityProvidersResource;
-    /**
-     * 
-     * @type {ServiceResourcesResource}
-     * @memberof DomainResource
-     */
-    serviceResourcesResource?: ServiceResourcesResource;
-    /**
-     * 
-     * @type {DeviceIdentifiersResource}
-     * @memberof DomainResource
-     */
-    deviceIdentifiersResource?: DeviceIdentifiersResource;
-    /**
-     * 
-     * @type {ThemesResource}
-     * @memberof DomainResource
-     */
-    themesResources?: ThemesResource;
-    /**
-     * 
-     * @type {BotDetectionsResource}
-     * @memberof DomainResource
-     */
-    botDetectionsResource?: BotDetectionsResource;
-    /**
-     * 
-     * @type {AuthenticationDeviceNotifiersResource}
-     * @memberof DomainResource
-     */
-    deviceNotifiersResource?: AuthenticationDeviceNotifiersResource;
-    /**
-     * 
-     * @type {AlertsResource}
-     * @memberof DomainResource
-     */
-    alertsResource?: AlertsResource;
-    /**
-     * 
-     * @type {FlowsResource}
-     * @memberof DomainResource
-     */
-    flowsResource?: FlowsResource;
+    membersResource?: MembersResource;
     /**
      * 
      * @type {AuditsResource}
      * @memberof DomainResource
      */
     auditsResource?: AuditsResource;
-    /**
-     * 
-     * @type {MembersResource}
-     * @memberof DomainResource
-     */
-    membersResource?: MembersResource;
     /**
      * 
      * @type {RolesResource}
@@ -225,28 +177,22 @@ export interface DomainResource {
     groupsResource?: GroupsResource;
     /**
      * 
+     * @type {IdentityProvidersResource}
+     * @memberof DomainResource
+     */
+    identityProvidersResource?: IdentityProvidersResource;
+    /**
+     * 
      * @type {UsersResource}
      * @memberof DomainResource
      */
     usersResource?: UsersResource;
     /**
      * 
-     * @type {ScopesResource}
+     * @type {ApplicationsResource}
      * @memberof DomainResource
      */
-    scopesResource?: ScopesResource;
-    /**
-     * 
-     * @type {I18nDictionariesResource}
-     * @memberof DomainResource
-     */
-    dictionariesResource?: I18nDictionariesResource;
-    /**
-     * 
-     * @type {FormsResource}
-     * @memberof DomainResource
-     */
-    pagesResource?: FormsResource;
+    applicationsResource?: ApplicationsResource;
     /**
      * 
      * @type {CertificatesResource}
@@ -261,22 +207,22 @@ export interface DomainResource {
     tokenGrantersResource?: ExtensionGrantsResource;
     /**
      * 
-     * @type {ApplicationsResource}
+     * @type {ScopesResource}
      * @memberof DomainResource
      */
-    applicationsResource?: ApplicationsResource;
+    scopesResource?: ScopesResource;
     /**
      * 
-     * @type {FactorsResource}
+     * @type {FormsResource}
      * @memberof DomainResource
      */
-    factorsResource?: FactorsResource;
+    pagesResource?: FormsResource;
     /**
      * 
-     * @type {ReportersResource}
+     * @type {I18nDictionariesResource}
      * @memberof DomainResource
      */
-    reportersResource?: ReportersResource;
+    dictionariesResource?: I18nDictionariesResource;
     /**
      * 
      * @type {EmailsResource}
@@ -285,10 +231,64 @@ export interface DomainResource {
     emailsResource?: EmailsResource;
     /**
      * 
+     * @type {ReportersResource}
+     * @memberof DomainResource
+     */
+    reportersResource?: ReportersResource;
+    /**
+     * 
      * @type {any}
      * @memberof DomainResource
      */
     analyticsResource?: any;
+    /**
+     * 
+     * @type {FactorsResource}
+     * @memberof DomainResource
+     */
+    factorsResource?: FactorsResource;
+    /**
+     * 
+     * @type {ServiceResourcesResource}
+     * @memberof DomainResource
+     */
+    serviceResourcesResource?: ServiceResourcesResource;
+    /**
+     * 
+     * @type {FlowsResource}
+     * @memberof DomainResource
+     */
+    flowsResource?: FlowsResource;
+    /**
+     * 
+     * @type {AlertsResource}
+     * @memberof DomainResource
+     */
+    alertsResource?: AlertsResource;
+    /**
+     * 
+     * @type {BotDetectionsResource}
+     * @memberof DomainResource
+     */
+    botDetectionsResource?: BotDetectionsResource;
+    /**
+     * 
+     * @type {DeviceIdentifiersResource}
+     * @memberof DomainResource
+     */
+    deviceIdentifiersResource?: DeviceIdentifiersResource;
+    /**
+     * 
+     * @type {AuthenticationDeviceNotifiersResource}
+     * @memberof DomainResource
+     */
+    deviceNotifiersResource?: AuthenticationDeviceNotifiersResource;
+    /**
+     * 
+     * @type {ThemesResource}
+     * @memberof DomainResource
+     */
+    themesResources?: ThemesResource;
 }
 
 export function DomainResourceFromJSON(json: any): DomainResource {
@@ -301,29 +301,29 @@ export function DomainResourceFromJSONTyped(json: any, ignoreDiscriminator: bool
     }
     return {
         
-        'identityProvidersResource': !exists(json, 'identityProvidersResource') ? undefined : IdentityProvidersResourceFromJSON(json['identityProvidersResource']),
-        'serviceResourcesResource': !exists(json, 'serviceResourcesResource') ? undefined : ServiceResourcesResourceFromJSON(json['serviceResourcesResource']),
-        'deviceIdentifiersResource': !exists(json, 'deviceIdentifiersResource') ? undefined : DeviceIdentifiersResourceFromJSON(json['deviceIdentifiersResource']),
-        'themesResources': !exists(json, 'themesResources') ? undefined : ThemesResourceFromJSON(json['themesResources']),
-        'botDetectionsResource': !exists(json, 'botDetectionsResource') ? undefined : BotDetectionsResourceFromJSON(json['botDetectionsResource']),
-        'deviceNotifiersResource': !exists(json, 'deviceNotifiersResource') ? undefined : AuthenticationDeviceNotifiersResourceFromJSON(json['deviceNotifiersResource']),
-        'alertsResource': !exists(json, 'alertsResource') ? undefined : AlertsResourceFromJSON(json['alertsResource']),
-        'flowsResource': !exists(json, 'flowsResource') ? undefined : FlowsResourceFromJSON(json['flowsResource']),
-        'auditsResource': !exists(json, 'auditsResource') ? undefined : AuditsResourceFromJSON(json['auditsResource']),
         'membersResource': !exists(json, 'membersResource') ? undefined : MembersResourceFromJSON(json['membersResource']),
+        'auditsResource': !exists(json, 'auditsResource') ? undefined : AuditsResourceFromJSON(json['auditsResource']),
         'rolesResource': !exists(json, 'rolesResource') ? undefined : RolesResourceFromJSON(json['rolesResource']),
         'groupsResource': !exists(json, 'groupsResource') ? undefined : GroupsResourceFromJSON(json['groupsResource']),
+        'identityProvidersResource': !exists(json, 'identityProvidersResource') ? undefined : IdentityProvidersResourceFromJSON(json['identityProvidersResource']),
         'usersResource': !exists(json, 'usersResource') ? undefined : UsersResourceFromJSON(json['usersResource']),
-        'scopesResource': !exists(json, 'scopesResource') ? undefined : ScopesResourceFromJSON(json['scopesResource']),
-        'dictionariesResource': !exists(json, 'dictionariesResource') ? undefined : I18nDictionariesResourceFromJSON(json['dictionariesResource']),
-        'pagesResource': !exists(json, 'pagesResource') ? undefined : FormsResourceFromJSON(json['pagesResource']),
+        'applicationsResource': !exists(json, 'applicationsResource') ? undefined : ApplicationsResourceFromJSON(json['applicationsResource']),
         'certificatesResource': !exists(json, 'certificatesResource') ? undefined : CertificatesResourceFromJSON(json['certificatesResource']),
         'tokenGrantersResource': !exists(json, 'tokenGrantersResource') ? undefined : ExtensionGrantsResourceFromJSON(json['tokenGrantersResource']),
-        'applicationsResource': !exists(json, 'applicationsResource') ? undefined : ApplicationsResourceFromJSON(json['applicationsResource']),
-        'factorsResource': !exists(json, 'factorsResource') ? undefined : FactorsResourceFromJSON(json['factorsResource']),
-        'reportersResource': !exists(json, 'reportersResource') ? undefined : ReportersResourceFromJSON(json['reportersResource']),
+        'scopesResource': !exists(json, 'scopesResource') ? undefined : ScopesResourceFromJSON(json['scopesResource']),
+        'pagesResource': !exists(json, 'pagesResource') ? undefined : FormsResourceFromJSON(json['pagesResource']),
+        'dictionariesResource': !exists(json, 'dictionariesResource') ? undefined : I18nDictionariesResourceFromJSON(json['dictionariesResource']),
         'emailsResource': !exists(json, 'emailsResource') ? undefined : EmailsResourceFromJSON(json['emailsResource']),
+        'reportersResource': !exists(json, 'reportersResource') ? undefined : ReportersResourceFromJSON(json['reportersResource']),
         'analyticsResource': !exists(json, 'analyticsResource') ? undefined : json['analyticsResource'],
+        'factorsResource': !exists(json, 'factorsResource') ? undefined : FactorsResourceFromJSON(json['factorsResource']),
+        'serviceResourcesResource': !exists(json, 'serviceResourcesResource') ? undefined : ServiceResourcesResourceFromJSON(json['serviceResourcesResource']),
+        'flowsResource': !exists(json, 'flowsResource') ? undefined : FlowsResourceFromJSON(json['flowsResource']),
+        'alertsResource': !exists(json, 'alertsResource') ? undefined : AlertsResourceFromJSON(json['alertsResource']),
+        'botDetectionsResource': !exists(json, 'botDetectionsResource') ? undefined : BotDetectionsResourceFromJSON(json['botDetectionsResource']),
+        'deviceIdentifiersResource': !exists(json, 'deviceIdentifiersResource') ? undefined : DeviceIdentifiersResourceFromJSON(json['deviceIdentifiersResource']),
+        'deviceNotifiersResource': !exists(json, 'deviceNotifiersResource') ? undefined : AuthenticationDeviceNotifiersResourceFromJSON(json['deviceNotifiersResource']),
+        'themesResources': !exists(json, 'themesResources') ? undefined : ThemesResourceFromJSON(json['themesResources']),
     };
 }
 
@@ -336,29 +336,29 @@ export function DomainResourceToJSON(value?: DomainResource | null): any {
     }
     return {
         
-        'identityProvidersResource': IdentityProvidersResourceToJSON(value.identityProvidersResource),
-        'serviceResourcesResource': ServiceResourcesResourceToJSON(value.serviceResourcesResource),
-        'deviceIdentifiersResource': DeviceIdentifiersResourceToJSON(value.deviceIdentifiersResource),
-        'themesResources': ThemesResourceToJSON(value.themesResources),
-        'botDetectionsResource': BotDetectionsResourceToJSON(value.botDetectionsResource),
-        'deviceNotifiersResource': AuthenticationDeviceNotifiersResourceToJSON(value.deviceNotifiersResource),
-        'alertsResource': AlertsResourceToJSON(value.alertsResource),
-        'flowsResource': FlowsResourceToJSON(value.flowsResource),
-        'auditsResource': AuditsResourceToJSON(value.auditsResource),
         'membersResource': MembersResourceToJSON(value.membersResource),
+        'auditsResource': AuditsResourceToJSON(value.auditsResource),
         'rolesResource': RolesResourceToJSON(value.rolesResource),
         'groupsResource': GroupsResourceToJSON(value.groupsResource),
+        'identityProvidersResource': IdentityProvidersResourceToJSON(value.identityProvidersResource),
         'usersResource': UsersResourceToJSON(value.usersResource),
-        'scopesResource': ScopesResourceToJSON(value.scopesResource),
-        'dictionariesResource': I18nDictionariesResourceToJSON(value.dictionariesResource),
-        'pagesResource': FormsResourceToJSON(value.pagesResource),
+        'applicationsResource': ApplicationsResourceToJSON(value.applicationsResource),
         'certificatesResource': CertificatesResourceToJSON(value.certificatesResource),
         'tokenGrantersResource': ExtensionGrantsResourceToJSON(value.tokenGrantersResource),
-        'applicationsResource': ApplicationsResourceToJSON(value.applicationsResource),
-        'factorsResource': FactorsResourceToJSON(value.factorsResource),
-        'reportersResource': ReportersResourceToJSON(value.reportersResource),
+        'scopesResource': ScopesResourceToJSON(value.scopesResource),
+        'pagesResource': FormsResourceToJSON(value.pagesResource),
+        'dictionariesResource': I18nDictionariesResourceToJSON(value.dictionariesResource),
         'emailsResource': EmailsResourceToJSON(value.emailsResource),
+        'reportersResource': ReportersResourceToJSON(value.reportersResource),
         'analyticsResource': value.analyticsResource,
+        'factorsResource': FactorsResourceToJSON(value.factorsResource),
+        'serviceResourcesResource': ServiceResourcesResourceToJSON(value.serviceResourcesResource),
+        'flowsResource': FlowsResourceToJSON(value.flowsResource),
+        'alertsResource': AlertsResourceToJSON(value.alertsResource),
+        'botDetectionsResource': BotDetectionsResourceToJSON(value.botDetectionsResource),
+        'deviceIdentifiersResource': DeviceIdentifiersResourceToJSON(value.deviceIdentifiersResource),
+        'deviceNotifiersResource': AuthenticationDeviceNotifiersResourceToJSON(value.deviceNotifiersResource),
+        'themesResources': ThemesResourceToJSON(value.themesResources),
     };
 }
 

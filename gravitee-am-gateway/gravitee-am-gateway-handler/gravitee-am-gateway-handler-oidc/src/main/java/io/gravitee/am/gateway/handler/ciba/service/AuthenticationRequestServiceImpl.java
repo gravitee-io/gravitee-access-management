@@ -49,6 +49,8 @@ import org.springframework.core.env.Environment;
 import java.time.Instant;
 import java.util.Date;
 
+import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.STATE;
+
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
@@ -168,7 +170,7 @@ public class AuthenticationRequestServiceImpl implements AuthenticationRequestSe
                 .map(opt -> opt.get())
                 .flatMap(userResponse -> {
                     final String status = userResponse.isValidated() ? AuthenticationRequestStatus.SUCCESS.name() : AuthenticationRequestStatus.REJECTED.name();
-                    return this.jwtService.decode(userResponse.getState())
+                    return this.jwtService.decode(userResponse.getState(), STATE)
                             .flatMap(jwtState -> verifyState(userResponse, jwtState.getAud())
                             ).flatMap(verifiedJwtState -> updateRequestStatus(verifiedJwtState.getJti(), status));
                 }).ignoreElement();
@@ -178,7 +180,7 @@ public class AuthenticationRequestServiceImpl implements AuthenticationRequestSe
         LOGGER.debug("Prepare verification of state '{}' with client id '{}'", userResponse.getState(), clientId);
         return this.clientService.findByClientId(clientId)
                 .switchIfEmpty(Single.error(new InvalidClientException()))
-                .flatMap(client -> Single.defer(() -> this.jwtService.decodeAndVerify(userResponse.getState(), client)))
+                .flatMap(client -> Single.defer(() -> this.jwtService.decodeAndVerify(userResponse.getState(), client, STATE)))
                 .filter(verifiedJwt -> userResponse.getTid().equals(verifiedJwt.getJti()))
                 .switchIfEmpty(Single.error(new InvalidRequestException("state parameter mismatch with the transaction id")))
                 .onErrorResumeNext((error) -> {

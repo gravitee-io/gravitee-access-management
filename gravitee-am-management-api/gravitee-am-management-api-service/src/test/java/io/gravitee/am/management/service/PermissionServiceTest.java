@@ -638,9 +638,9 @@ public class PermissionServiceTest {
         obs.assertComplete();
         obs.assertValue(true);
 
-        verifyZeroInteractions(applicationService);
-        verifyZeroInteractions(domainService);
-        verifyZeroInteractions(environmentService);
+        verify(applicationService, times(0)).findById(any());
+        verify(domainService, times(0)).findById(any());
+        verify(environmentService, times(0)).findById(any());
     }
 
     @Test

@@ -46,6 +46,8 @@ public class Credential {
     private Date updatedAt;
     @ApiModelProperty(dataType = "java.lang.Long")
     private Date accessedAt;
+    @ApiModelProperty(dataType = "java.lang.Long")
+    private Date lastCheckedAt;
 
     public String getId() {
         return id;
@@ -173,5 +175,13 @@ public class Credential {
 
     public void setAccessedAt(Date accessedAt) {
         this.accessedAt = accessedAt;
+    }
+
+    public Date getLastCheckedAt() {
+        return lastCheckedAt;
+    }
+
+    public void setLastCheckedAt(Date lastCheckedAt) {
+        this.lastCheckedAt = lastCheckedAt;
     }
 }

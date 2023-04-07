@@ -58,6 +58,10 @@
             <a>saml</a>
             <b>saml</b>
         </field>
+        <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.CorsSettingsConverter">
+            <a>corsSettings</a>
+            <b>corsSettings</b>
+        </field>
     </mapping>
 
     <mapping map-null="false">

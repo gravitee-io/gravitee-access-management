@@ -22,15 +22,15 @@ import {
     NotifierPluginToJSON,
 } from '../models';
 
-export interface Get35Request {
+export interface Get33Request {
     notifierId: string;
 }
 
-export interface GetSchema9Request {
+export interface GetSchema7Request {
     notifierId: string;
 }
 
-export interface List35Request {
+export interface List33Request {
     expand?: Array<string>;
 }
 
@@ -43,9 +43,9 @@ export class NotifierApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get a notifier
      */
-    async get35Raw(requestParameters: Get35Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<NotifierPlugin>> {
+    async get33Raw(requestParameters: Get33Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<NotifierPlugin>> {
         if (requestParameters.notifierId === null || requestParameters.notifierId === undefined) {
-            throw new runtime.RequiredError('notifierId','Required parameter requestParameters.notifierId was null or undefined when calling get35.');
+            throw new runtime.RequiredError('notifierId','Required parameter requestParameters.notifierId was null or undefined when calling get33.');
         }
 
         const queryParameters: any = {};
@@ -70,8 +70,8 @@ export class NotifierApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get a notifier
      */
-    async get35(requestParameters: Get35Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<NotifierPlugin> {
-        const response = await this.get35Raw(requestParameters, initOverrides);
+    async get33(requestParameters: Get33Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<NotifierPlugin> {
+        const response = await this.get33Raw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -79,9 +79,9 @@ export class NotifierApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get a notifier plugin\'s schema
      */
-    async getSchema9Raw(requestParameters: GetSchema9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<string>> {
+    async getSchema7Raw(requestParameters: GetSchema7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<string>> {
         if (requestParameters.notifierId === null || requestParameters.notifierId === undefined) {
-            throw new runtime.RequiredError('notifierId','Required parameter requestParameters.notifierId was null or undefined when calling getSchema9.');
+            throw new runtime.RequiredError('notifierId','Required parameter requestParameters.notifierId was null or undefined when calling getSchema7.');
         }
 
         const queryParameters: any = {};
@@ -106,8 +106,8 @@ export class NotifierApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get a notifier plugin\'s schema
      */
-    async getSchema9(requestParameters: GetSchema9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<string> {
-        const response = await this.getSchema9Raw(requestParameters, initOverrides);
+    async getSchema7(requestParameters: GetSchema7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<string> {
+        const response = await this.getSchema7Raw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -115,7 +115,7 @@ export class NotifierApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * List all available notifier plugins
      */
-    async list35Raw(requestParameters: List35Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<NotifierPlugin>>> {
+    async list33Raw(requestParameters: List33Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<NotifierPlugin>>> {
         const queryParameters: any = {};
 
         if (requestParameters.expand) {
@@ -142,8 +142,8 @@ export class NotifierApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * List all available notifier plugins
      */
-    async list35(requestParameters: List35Request = {}, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<NotifierPlugin>> {
-        const response = await this.list35Raw(requestParameters, initOverrides);
+    async list33(requestParameters: List33Request = {}, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<NotifierPlugin>> {
+        const response = await this.list33Raw(requestParameters, initOverrides);
         return await response.value();
     }
 

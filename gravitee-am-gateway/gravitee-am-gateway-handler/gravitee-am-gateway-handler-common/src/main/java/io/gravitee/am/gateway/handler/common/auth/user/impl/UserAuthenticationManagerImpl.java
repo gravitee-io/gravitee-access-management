@@ -198,8 +198,8 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
     }
 
     @Override
-    public Single<User> connectPreAuthenticatedUser(Client client, String subject, Authentication authentication) {
-        return userAuthenticationService.connectPreAuthenticatedUser(subject)
+    public Single<User> connectWithPasswordless(Client client, String subject, Authentication authentication) {
+        return userAuthenticationService.connectWithPasswordless(subject, client)
                 .doOnSuccess(user -> eventManager.publishEvent(AuthenticationEvent.SUCCESS, new AuthenticationDetails(authentication, domain, client, user)))
                 .doOnError(throwable -> eventManager.publishEvent(AuthenticationEvent.FAILURE, new AuthenticationDetails(authentication, domain, client, throwable)));
 

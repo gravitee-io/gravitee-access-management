@@ -38,6 +38,7 @@ import io.vertx.core.Handler;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.core.eventbus.EventBus;
 import io.vertx.rxjava3.core.eventbus.Message;
+import java.util.Objects;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -98,6 +99,7 @@ public class RiskAssessmentServiceTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
+        testObserver.assertNoValues();
 
         verify(eventBus, times(0)).request(
                 any(), anyString());
@@ -121,6 +123,7 @@ public class RiskAssessmentServiceTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
+        testObserver.assertValue(Objects::nonNull);
 
         verify(eventBus, times(1)).rxRequest(
                 any(), anyString());
@@ -160,6 +163,77 @@ public class RiskAssessmentServiceTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
+        testObserver.assertValue(Objects::nonNull);
+
+        verify(eventBus, times(1)).rxRequest(
+                any(), anyString());
+
+        verify(eventBus, times(1)).rxRequest(
+                any(), anyString());
+    }
+
+    @Test
+    public void must_test_return_nothing_due_to_event_bus_error() throws JsonProcessingException {
+        var settings = new RiskAssessmentSettings()
+                .setEnabled(true)
+                .setDeviceAssessment(new AssessmentSettings().setEnabled(true).setThresholds(Map.of(LOW, 1.0D)))
+                .setIpReputationAssessment(new AssessmentSettings().setEnabled(true).setThresholds(Map.of(LOW, 30D)))
+                .setGeoVelocityAssessment(new AssessmentSettings().setEnabled(true).setThresholds(Map.of(LOW, 5.0D / 18D)));
+
+
+        when(eventBus.<String>rxRequest(anyString(), any())).thenReturn(Single.error(new IllegalArgumentException()));
+
+        riskAssessmentService = new RiskAssessmentService(deviceService, userActivityService, objectMapper, settings, vertx);
+
+        //device
+        doReturn(Flowable.just(new Device().setDeviceId("1"), new Device().setDeviceId("2")))
+                .when(deviceService).findByDomainAndUser(anyString(), anyString());
+        //geo
+        doReturn(Flowable.just(
+                new UserActivity().setLatitude(50.34D).setLongitude(3.025D).setCreatedAt(new Date()),
+                new UserActivity().setLatitude(50.34D).setLongitude(3.025D).setCreatedAt(new Date())
+        )).when(userActivityService).findByDomainAndTypeAndUserAndLimit(anyString(), any(), anyString(), eq(2));
+
+        var testObserver = riskAssessmentService.computeRiskAssessment(authDetailsStub()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertNoValues();
+
+        verify(eventBus, times(1)).rxRequest(
+                any(), anyString());
+
+        verify(eventBus, times(1)).rxRequest(
+                any(), anyString());
+    }
+
+    @Test
+    public void must_test_return_nothing_due_to_message_parse_error() throws JsonProcessingException {
+        var settings = new RiskAssessmentSettings()
+                .setEnabled(true)
+                .setDeviceAssessment(new AssessmentSettings().setEnabled(true).setThresholds(Map.of(LOW, 1.0D)))
+                .setIpReputationAssessment(new AssessmentSettings().setEnabled(true).setThresholds(Map.of(LOW, 30D)))
+                .setGeoVelocityAssessment(new AssessmentSettings().setEnabled(true).setThresholds(Map.of(LOW, 5.0D / 18D)));
+
+        when(message.body()).thenReturn("{ wrong format }");
+        when(eventBus.<String>rxRequest(anyString(), any())).thenReturn(Single.just(message));
+
+        riskAssessmentService = new RiskAssessmentService(deviceService, userActivityService, objectMapper, settings, vertx);
+
+        //device
+        doReturn(Flowable.just(new Device().setDeviceId("1"), new Device().setDeviceId("2")))
+                .when(deviceService).findByDomainAndUser(anyString(), anyString());
+        //geo
+        doReturn(Flowable.just(
+                new UserActivity().setLatitude(50.34D).setLongitude(3.025D).setCreatedAt(new Date()),
+                new UserActivity().setLatitude(50.34D).setLongitude(3.025D).setCreatedAt(new Date())
+        )).when(userActivityService).findByDomainAndTypeAndUserAndLimit(anyString(), any(), anyString(), eq(2));
+
+        var testObserver = riskAssessmentService.computeRiskAssessment(authDetailsStub()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(Objects::nonNull);
 
         verify(eventBus, times(1)).rxRequest(
                 any(), anyString());

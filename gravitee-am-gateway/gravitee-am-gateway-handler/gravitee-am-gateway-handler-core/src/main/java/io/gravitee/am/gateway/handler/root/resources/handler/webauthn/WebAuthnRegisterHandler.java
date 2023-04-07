@@ -115,25 +115,26 @@ public class WebAuthnRegisterHandler extends WebAuthnHandler {
 
         // register credentials
         webAuthn.createCredentialsOptions(webauthnRegister)
-                .doOnSuccess(entries -> {
-                    // force user id with our own user id
-                    entries.getJsonObject("user").put("id", user.getId());
+                .subscribe(
+                        entries -> {
+                            // force user id with our own user id
+                            entries.getJsonObject("user").put("id", user.getId());
 
-                    // force registration if option is enabled
-                    if (domain.getWebAuthnSettings() != null && domain.getWebAuthnSettings().isForceRegistration()) {
-                        entries.remove("excludeCredentials");
-                    }
+                            // force registration if option is enabled
+                            if (domain.getWebAuthnSettings() != null && domain.getWebAuthnSettings().isForceRegistration()) {
+                                entries.remove("excludeCredentials");
+                            }
 
-                    // save challenge to the session
-                    ctx.session()
-                            .put(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY, entries.getString("challenge"))
-                            .put(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY, webauthnRegister.getString("name"));
+                            // save challenge to the session
+                            ctx.session()
+                                    .put(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY, entries.getString("challenge"))
+                                    .put(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY, webauthnRegister.getString("name"));
 
-                    ctx.put(ConstantKeys.PASSWORDLESS_ASSERTION, entries);
-                    ctx.next();
-                })
-                .doOnError(throwable -> ctx.fail(throwable.getCause()))
-                .subscribe();
+                            ctx.put(ConstantKeys.PASSWORDLESS_ASSERTION, entries);
+                            ctx.next();
+                        },
+                        throwable -> ctx.fail(throwable.getCause())
+                );
     }
 
     private void registerV1(RoutingContext ctx) {
@@ -183,32 +184,33 @@ public class WebAuthnRegisterHandler extends WebAuthnHandler {
                         .setChallenge(session.get(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY))
                         .setUsername(session.get(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY))
                         .setWebauthn(webauthnResp))
-                .doOnSuccess(user -> {
-                    // create the authentication context
-                    final AuthenticationContext authenticationContext = createAuthenticationContext(ctx);
-                    // update the credential
-                    updateCredential(authenticationContext, credentialId, authenticatedUser.getId(), credentialHandler -> {
-                        if (credentialHandler.failed()) {
-                            logger.error("An error has occurred while updating credential for user {}", username, credentialHandler.cause());
-                            ctx.fail(401);
-                            return;
-                        }
-                        if (isEnrollingFido2Factor(ctx)) {
-                            enrollFido2Factor(ctx, authenticatedUser, createEnrolledFactor(session.get(ENROLLED_FACTOR_ID_KEY), credentialId));
-                        } else {
-                            manageFido2FactorEnrollment(ctx, client, credentialId, authenticatedUser);
-                        }
-                    });
-                })
-                .doOnError(throwable -> {
-                    logger.error("Unexpected exception", throwable);
-                    ctx.fail(throwable.getCause());
-                })
                 .doFinally(() -> {
                     // invalidate the challenge
                     session.remove(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY);
                     session.remove(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY);
                 })
-                .subscribe();
+                .subscribe(
+                        user -> {
+                            // create the authentication context
+                            final AuthenticationContext authenticationContext = createAuthenticationContext(ctx);
+                            // update the credential
+                            updateCredential(authenticationContext, credentialId, authenticatedUser.getId(), credentialHandler -> {
+                                if (credentialHandler.failed()) {
+                                    logger.error("An error has occurred while updating credential for user {}", username, credentialHandler.cause());
+                                    ctx.fail(401);
+                                    return;
+                                }
+                                if (isEnrollingFido2Factor(ctx)) {
+                                    enrollFido2Factor(ctx, authenticatedUser, createEnrolledFactor(session.get(ENROLLED_FACTOR_ID_KEY), credentialId));
+                                } else {
+                                    manageFido2FactorEnrollment(ctx, client, credentialId, authenticatedUser);
+                                }
+                            });
+                        },
+                        throwable -> {
+                            logger.error("Unexpected exception", throwable);
+                            ctx.fail(throwable.getCause());
+                        }
+                );
     }
 }

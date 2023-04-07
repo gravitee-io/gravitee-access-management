@@ -569,6 +569,35 @@ div#passwordSettings > p {
     flex-grow: 0;
 }
 
+.sms-call-enrollment-card-label {
+    height: 36px;
+    font-weight: 700;
+    display: inline-flex;
+    justify-content: space-around;
+    font-size: 26px;
+    padding-bottom: 24px;
+    line-height: 36px;
+    text-align: center;
+    color: var(--font-dark-color);
+    flex: none;
+    flex-grow: 0;
+    width: 100%;
+}
+
+.sms-call-enrollment-card-description {
+    height: 36px;
+    width: 100%;
+    display: inline-flex;
+    text-align: left;
+    font-weight: 500;
+    font-size: 16px;
+    line-height: 24px;
+    color: var(--font-light-color);
+    flex: none;
+    flex-grow: 0;
+    width: 100%;
+}
+
 .hide {
     display: none;
 }

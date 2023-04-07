@@ -39,7 +39,7 @@ export interface DeleteFactorRequest {
     factor: string;
 }
 
-export interface Get33Request {
+export interface Get31Request {
     factor: string;
 }
 
@@ -50,7 +50,7 @@ export interface GetFactorRequest {
     factor: string;
 }
 
-export interface GetSchema7Request {
+export interface GetSchema5Request {
     factor: string;
 }
 
@@ -175,9 +175,9 @@ export class FactorApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get a factor plugin
      */
-    async get33Raw(requestParameters: Get33Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async get31Raw(requestParameters: Get31Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.factor === null || requestParameters.factor === undefined) {
-            throw new runtime.RequiredError('factor','Required parameter requestParameters.factor was null or undefined when calling get33.');
+            throw new runtime.RequiredError('factor','Required parameter requestParameters.factor was null or undefined when calling get31.');
         }
 
         const queryParameters: any = {};
@@ -202,8 +202,8 @@ export class FactorApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get a factor plugin
      */
-    async get33(requestParameters: Get33Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.get33Raw(requestParameters, initOverrides);
+    async get31(requestParameters: Get31Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.get31Raw(requestParameters, initOverrides);
     }
 
     /**
@@ -258,9 +258,9 @@ export class FactorApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get a factor plugin\'s schema
      */
-    async getSchema7Raw(requestParameters: GetSchema7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async getSchema5Raw(requestParameters: GetSchema5Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.factor === null || requestParameters.factor === undefined) {
-            throw new runtime.RequiredError('factor','Required parameter requestParameters.factor was null or undefined when calling getSchema7.');
+            throw new runtime.RequiredError('factor','Required parameter requestParameters.factor was null or undefined when calling getSchema5.');
         }
 
         const queryParameters: any = {};
@@ -285,15 +285,15 @@ export class FactorApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get a factor plugin\'s schema
      */
-    async getSchema7(requestParameters: GetSchema7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.getSchema7Raw(requestParameters, initOverrides);
+    async getSchema5(requestParameters: GetSchema5Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.getSchema5Raw(requestParameters, initOverrides);
     }
 
     /**
      * There is no particular permission needed. User must be authenticated.
      * List factor plugins
      */
-    async list33Raw(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async list31Raw(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -316,8 +316,8 @@ export class FactorApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * List factor plugins
      */
-    async list33(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.list33Raw(initOverrides);
+    async list31(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.list31Raw(initOverrides);
     }
 
     /**

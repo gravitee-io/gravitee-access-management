@@ -16,16 +16,22 @@
 package io.gravitee.am.gateway.handler.root.resources.handler.login;
 
 import com.google.common.net.HttpHeaders;
+import io.gravitee.am.common.exception.authentication.AccountDeviceIntegrityException;
+import io.gravitee.am.common.exception.authentication.AccountEnforcePasswordException;
 import io.gravitee.am.common.exception.authentication.AccountPasswordExpiredException;
 import io.gravitee.am.common.exception.authentication.AuthenticationException;
 import io.gravitee.am.common.oidc.Parameters;
-import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.common.web.UriBuilder;
+import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.policy.PolicyChainException;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.login.LoginSettings;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.AuthenticationFlowContextService;
-import io.vertx.core.Handler;
+import io.gravitee.common.http.HttpStatusCode;
 import io.vertx.rxjava3.core.MultiMap;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.core.http.HttpServerResponse;
@@ -33,17 +39,32 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.URI;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Optional;
+
+import static io.gravitee.am.common.utils.ConstantKeys.PARAM_CONTEXT_KEY;
+import static io.gravitee.am.service.utils.ResponseTypeUtils.isHybridFlow;
+import static io.gravitee.am.service.utils.ResponseTypeUtils.isImplicitFlow;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class LoginFailureHandler implements Handler<RoutingContext> {
+public class LoginFailureHandler extends LoginAbstractHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(LoginFailureHandler.class);
 
-    private AuthenticationFlowContextService authenticationFlowContextService;
+    private final AuthenticationFlowContextService authenticationFlowContextService;
+    private final Domain domain;
+    private final IdentityProviderManager identityProviderManager;
 
-    public LoginFailureHandler(AuthenticationFlowContextService authenticationFlowContextService) {
+    public LoginFailureHandler(AuthenticationFlowContextService authenticationFlowContextService,
+                               Domain domain, IdentityProviderManager identityProviderManager) {
         this.authenticationFlowContextService = authenticationFlowContextService;
+        this.domain = domain;
+        this.identityProviderManager = identityProviderManager;
     }
 
     @Override
@@ -52,9 +73,13 @@ public class LoginFailureHandler implements Handler<RoutingContext> {
             Throwable throwable = routingContext.failure();
             if (throwable instanceof PolicyChainException) {
                 PolicyChainException policyChainException = (PolicyChainException) throwable;
-                handleException(routingContext, policyChainException.key(), policyChainException.getMessage());
+                handlePolicyChainException(routingContext, policyChainException.key(), policyChainException.getMessage());
             } else if (throwable instanceof AccountPasswordExpiredException) {
                 handleException(routingContext, ((AccountPasswordExpiredException) throwable).getErrorCode(), throwable.getMessage());
+            } else if (throwable instanceof AccountEnforcePasswordException) {
+                handleException(routingContext, ((AccountEnforcePasswordException) throwable).getErrorCode(), throwable.getMessage());
+            } else if (throwable instanceof AccountDeviceIntegrityException) {
+                handleException(routingContext, ((AccountDeviceIntegrityException) throwable).getErrorCode(), throwable.getMessage());
             } else if (throwable instanceof AuthenticationException) {
                 handleException(routingContext, "invalid_user", "Invalid or unknown user");
             } else {
@@ -64,20 +89,80 @@ public class LoginFailureHandler implements Handler<RoutingContext> {
         }
     }
 
+    private void handlePolicyChainException(RoutingContext context, String errorCode, String errorDescription)  {
+        final Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
+        final long externalIdentities = Optional.ofNullable(client.getIdentityProviders()).stream()
+                .flatMap(Collection::stream)
+                .map(idp -> identityProviderManager.getIdentityProvider(idp.getIdentity()))
+                .filter(idp -> idp != null && idp.isExternal())
+                .count();
+
+        final LoginSettings loginSettings = LoginSettings.getInstance(domain, client);
+        if (loginSettings != null && loginSettings.isHideForm() && externalIdentities == 1) {
+            logoutUser(context);
+            final MultiMap originalParams = context.get(PARAM_CONTEXT_KEY);
+            redirectToCallbackUrl(originalParams, client, context, errorCode, errorDescription);
+        } else {
+            handleException(context, errorCode, errorDescription);
+        }
+    }
+
+    private void redirectToCallbackUrl(MultiMap originalParams, Client client, RoutingContext context,
+                                       String errorCode, String errorDescription) {
+        // Get the SP redirect_uri
+        final String clientRedirectUri = (originalParams != null && originalParams.get(io.gravitee.am.common.oauth2.Parameters.REDIRECT_URI) != null) ?
+                originalParams.get(io.gravitee.am.common.oauth2.Parameters.REDIRECT_URI) :
+                client.getRedirectUris().get(0);
+
+        // append error message
+        final Map<String, String> query = new LinkedHashMap<>();
+        query.put(ConstantKeys.ERROR_PARAM_KEY, "login_failed");
+        query.put(ConstantKeys.ERROR_CODE_PARAM_KEY, errorCode);
+        query.put(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, errorDescription);
+        if (originalParams != null && originalParams.get(io.gravitee.am.common.oauth2.Parameters.STATE) != null) {
+            query.put(io.gravitee.am.common.oauth2.Parameters.STATE, originalParams.get(io.gravitee.am.common.oauth2.Parameters.STATE));
+        }
+
+        final boolean fragment = originalParams != null &&
+                originalParams.get(io.gravitee.am.common.oauth2.Parameters.RESPONSE_TYPE) != null &&
+                (isImplicitFlow(originalParams.get(io.gravitee.am.common.oauth2.Parameters.RESPONSE_TYPE)) || isHybridFlow(originalParams.get(io.gravitee.am.common.oauth2.Parameters.RESPONSE_TYPE)));
+
+        // prepare final redirect uri
+        final UriBuilder template = UriBuilder.newInstance();
+
+        // get URI from the redirect_uri parameter
+        final UriBuilder builder = UriBuilder.fromURIString(clientRedirectUri);
+        try {
+            final URI redirectUri = builder.build();
+
+            // create final redirect uri
+            template.scheme(redirectUri.getScheme())
+                    .host(redirectUri.getHost())
+                    .port(redirectUri.getPort())
+                    .userInfo(redirectUri.getUserInfo())
+                    .path(redirectUri.getPath());
+
+            // append error parameters in "application/x-www-form-urlencoded" format
+            if (fragment) {
+                query.forEach((k, v) -> template.addFragmentParameter(k, UriBuilder.encodeURIComponent(v)));
+            } else {
+                query.forEach((k, v) -> template.addParameter(k, UriBuilder.encodeURIComponent(v)));
+            }
+            doRedirect(context, template.build().toString());
+        } catch (Exception ex) {
+            LOGGER.error("An error has occurred while redirecting to the login page", ex);
+            context
+                    .response()
+                    .setStatusCode(HttpStatusCode.SERVICE_UNAVAILABLE_503)
+                    .end();
+        }
+    }
+
     private void handleException(RoutingContext context, String errorCode, String errorDescription) {
         final HttpServerRequest req = context.request();
         final HttpServerResponse resp = context.response();
 
-        // logout user if exists
-        if (context.user() != null) {
-            // clear AuthenticationFlowContext. data of this context have a TTL so we can fire and forget in case on error.
-            authenticationFlowContextService.clearContext(context.session().get(ConstantKeys.TRANSACTION_ID_KEY))
-                    .doOnError((error) -> LOGGER.info("Deletion of some authentication flow data fails '{}'", error.getMessage()))
-                    .subscribe();
-
-            context.clearUser();
-            context.session().destroy();
-        }
+        logoutUser(context);
 
         // redirect to the login page with error message
         final MultiMap queryParams = RequestUtils.getCleanedQueryParams(req);
@@ -102,5 +187,17 @@ public class LoginFailureHandler implements Handler<RoutingContext> {
                 .putHeader(HttpHeaders.LOCATION, url)
                 .setStatusCode(302)
                 .end();
+    }
+
+    private void logoutUser(RoutingContext context){
+        if (context.user() != null) {
+            // clear AuthenticationFlowContext. data of this context have a TTL so we can fire and forget in case on error.
+            authenticationFlowContextService.clearContext(context.session().get(ConstantKeys.TRANSACTION_ID_KEY))
+                    .doOnError((error) -> LOGGER.info("Deletion of some authentication flow data fails '{}'", error.getMessage()))
+                    .subscribe();
+
+            context.clearUser();
+            context.session().destroy();
+        }
     }
 }

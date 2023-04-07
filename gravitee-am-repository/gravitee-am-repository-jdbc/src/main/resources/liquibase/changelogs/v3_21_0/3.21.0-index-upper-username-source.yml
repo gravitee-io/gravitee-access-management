@@ -1,0 +1,11 @@
+databaseChangeLog:
+  - changeSet:
+      id: 3.21.0-index-upper-username-source
+      author: GraviteeSource Team
+      changes:
+        #################################
+        # upper username source indices #
+        #################################
+        - sql:
+            dbms: postgresql
+            sql: "CREATE INDEX idx_users_reference_upper_username_source ON users USING btree(reference_id, reference_type, UPPER(username), source);"

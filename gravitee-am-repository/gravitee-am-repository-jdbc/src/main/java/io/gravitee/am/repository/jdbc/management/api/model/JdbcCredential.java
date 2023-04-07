@@ -57,6 +57,8 @@ public class JdbcCredential {
     private LocalDateTime updatedAt;
     @Column("accessed_at")
     private LocalDateTime accessedAt;
+    @Column("last_checked_at")
+    private LocalDateTime lastCheckedAt;
 
     public String getId() {
         return id;
@@ -186,5 +188,11 @@ public class JdbcCredential {
         this.accessedAt = accessedAt;
     }
 
+    public LocalDateTime getLastCheckedAt() {
+        return lastCheckedAt;
+    }
 
+    public void setLastCheckedAt(LocalDateTime lastCheckedAt) {
+        this.lastCheckedAt = lastCheckedAt;
+    }
 }

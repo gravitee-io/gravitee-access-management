@@ -60,6 +60,8 @@ public class JdbcDomain {
     @Column("reference_id")
     private String referenceId;
     private boolean master = false;
+    @Column("cors_settings")
+    private String corsSettings;
 
     public String getId() {
         return id;
@@ -235,6 +237,14 @@ public class JdbcDomain {
 
     public void setMaster(boolean master) {
         this.master = master;
+    }
+
+    public String getCorsSettings() {
+        return corsSettings;
+    }
+
+    public void setCorsSettings(String corsSettings) {
+        this.corsSettings = corsSettings;
     }
 
     /**

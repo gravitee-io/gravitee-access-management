@@ -15,14 +15,12 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx.web.endpoint;
 
-import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
-import io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.Template;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.exception.ClientNotFoundException;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
@@ -42,6 +40,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
+import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.JARM;
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
 
 /**
@@ -112,7 +111,7 @@ public class ErrorEndpoint implements Handler<RoutingContext> {
         final String jarm = request.getParam(io.gravitee.am.common.oidc.Parameters.RESPONSE);
         if (error == null && jarm != null) {
             // extract error details from the JWT provided as response parameter
-            singlePageRendering = this.jwtService.decode(jarm).map(jwt -> {
+            singlePageRendering = this.jwtService.decode(jarm, JARM).map(jwt -> {
                 Map<String, String> result = new HashMap<>();
                 result.put(ERROR_PARAM, (String) jwt.get(ERROR_PARAM));
                 result.put(ERROR_DESCRIPTION_PARAM, (String) jwt.get(ERROR_DESCRIPTION_PARAM));
@@ -132,13 +131,14 @@ public class ErrorEndpoint implements Handler<RoutingContext> {
         // put parameters in context (backward compatibility)
         routingContext.put(PARAM_CONTEXT_KEY, params);
 
-        engine.rxRender(generateData(routingContext, domain, client), getTemplateFileName(client))
-                .doOnSuccess(buffer -> {
-                    routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
-                    routingContext.response().end(buffer);
-                })
-                .doOnError(throwable -> routingContext.fail(throwable.getCause()))
-                .subscribe();
+        engine.render(generateData(routingContext, domain, client), getTemplateFileName(client))
+                .subscribe(
+                        buffer -> {
+                            routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
+                            routingContext.response().end(buffer);
+                        },
+                        throwable -> routingContext.fail(throwable.getCause())
+                );
     }
 
     private String getTemplateFileName(Client client) {

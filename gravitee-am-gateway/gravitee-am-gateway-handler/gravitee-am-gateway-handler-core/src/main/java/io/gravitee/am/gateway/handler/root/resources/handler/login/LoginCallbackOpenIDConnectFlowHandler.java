@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.root.resources.handler.login;
 
 import io.gravitee.am.common.exception.authentication.InternalAuthenticationServiceException;
+import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
@@ -26,7 +27,7 @@ import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -69,6 +70,12 @@ public class LoginCallbackOpenIDConnectFlowHandler implements Handler<RoutingCon
                 context.next();
                 return;
             }
+            // if OAuth 2.0 authorization_code flow is used, continue
+            final String code = request.getParam(Parameters.CODE);
+            if (code != null) {
+                context.next();
+                return;
+            }
             // else check OpenID Connect flow validity
             final String hashValue = request.getParam(HASH_VALUE_PARAMETER);
             if (hashValue == null) {
@@ -83,16 +90,17 @@ public class LoginCallbackOpenIDConnectFlowHandler implements Handler<RoutingCon
         }
 
         // implicit flow, we need to retrieve hash url from the browser to get access_token, id_token, ...
-        engine.render(Collections.emptyMap(), "login_callback")
-                .doOnSuccess(buffer -> {
-                    context.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
-                    context.response().end(buffer);
-                })
-                .doOnError(throwable -> {
-                    logger.error("Unable to render login callback page", throwable);
-                    context.fail(throwable.getCause());
-                })
-                .subscribe();
+        engine.render(new HashMap<>(), "login_callback")
+                .subscribe(
+                        buffer -> {
+                            context.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
+                            context.response().end(buffer);
+                        },
+                        throwable -> {
+                            logger.error("Unable to render login callback page", throwable);
+                            context.fail(throwable.getCause());
+                        }
+                );
     }
 
     private Map<String, String> getParams(String query) {

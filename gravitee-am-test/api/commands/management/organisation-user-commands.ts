@@ -43,3 +43,5 @@ export const deleteOrganisationUser = (accessToken, userId) =>
         organizationId: process.env.AM_DEF_ORG_ID,
         user: userId,
     });
+
+export const getCurrentUser = (accessToken) => getUserApi(accessToken).get();

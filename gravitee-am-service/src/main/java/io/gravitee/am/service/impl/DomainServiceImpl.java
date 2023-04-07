@@ -24,6 +24,7 @@ import io.gravitee.am.common.utils.PathUtils;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.model.CorsSettings;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Environment;
 import io.gravitee.am.model.Membership;
@@ -73,6 +74,7 @@ import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.exception.InvalidRedirectUriException;
 import io.gravitee.am.service.exception.InvalidRoleException;
 import io.gravitee.am.service.exception.InvalidTargetUrlException;
+import io.gravitee.am.service.exception.InvalidWebAuthnConfigurationException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewDomain;
 import io.gravitee.am.service.model.NewSystemScope;
@@ -88,6 +90,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -100,6 +103,7 @@ import static io.gravitee.am.model.ReferenceType.DOMAIN;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -110,6 +114,7 @@ import java.util.stream.Collectors;
 
 import static io.gravitee.am.common.web.UriBuilder.isHttp;
 import static java.util.Objects.nonNull;
+import static java.util.Optional.ofNullable;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -625,7 +630,7 @@ public class DomainServiceImpl implements DomainService {
         return "/" + IdGenerator.generate(domainName);
     }
 
-    private Completable validateDomain(Domain domain) {
+    private Completable validateDomain(Domain domain) throws URISyntaxException {
         if (domain.getReferenceType() != ReferenceType.ENVIRONMENT) {
             return Completable.error(new InvalidDomainException("Domain must be attached to an environment"));
         }
@@ -659,6 +664,25 @@ public class DomainServiceImpl implements DomainService {
             }
         }
 
+        if (hasAllowedOrigins(domain)) {
+            return Completable.error(new InvalidDomainException("CORS settings are invalid: allow origin is empty. Default value should be '*'"));
+        }
+
+        if (domain.getWebAuthnSettings() != null) {
+            final String origin = domain.getWebAuthnSettings().getOrigin();
+            if (origin == null || origin.isBlank()) {
+                return Completable.error(new InvalidWebAuthnConfigurationException("Error: Invalid origin. Please provide a valid origin."));
+            }
+
+            final URI uri = UriBuilder.fromURIString(origin).build();
+            final List<String> schemes = Arrays.asList("http", "https");
+
+            if (!schemes.contains(uri.getScheme())) {
+                throw new InvalidRequestUriException("origin : " + origin + " scheme is not https or http");
+            }
+
+        }
+
         // check the uniqueness of the domain
         return domainRepository.findByHrid(domain.getReferenceType(), domain.getReferenceId(), domain.getHrid())
                 .map(Optional::of)
@@ -672,6 +696,18 @@ public class DomainServiceImpl implements DomainService {
                                 .flatMapCompletable(environment -> validateDomain(domain, environment));
                     }
                 });
+    }
+
+    private boolean hasAllowedOrigins(Domain domain) {
+        var corsSettings = ofNullable(domain.getCorsSettings());
+        if (corsSettings.isPresent()){
+          return hasAllowedOrigins(corsSettings);
+        }
+        return false;
+    }
+
+    private boolean hasAllowedOrigins(Optional<CorsSettings> corsSettings) {
+        return corsSettings.map(CorsSettings::getAllowedOrigins).map(Set::isEmpty).orElse(false);
     }
 
     private void validatePostLogoutRedirectUris(Domain domain) throws Exception {

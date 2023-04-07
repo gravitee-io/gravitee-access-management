@@ -23,11 +23,53 @@ public class SelfServiceAccountManagementSettings {
 
     private boolean enabled;
 
+    private ResetPasswordSettings resetPassword;
+
     public boolean isEnabled() {
         return enabled;
     }
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public ResetPasswordSettings getResetPassword() {
+        return resetPassword;
+    }
+
+    public void setResetPassword(ResetPasswordSettings resetPassword) {
+        this.resetPassword = resetPassword;
+    }
+
+    public static class ResetPasswordSettings {
+        private boolean oldPasswordRequired;
+        /**
+         * Token age in second
+         */
+        private int tokenAge;
+
+        public boolean isOldPasswordRequired() {
+            return oldPasswordRequired;
+        }
+
+        public void setOldPasswordRequired(boolean oldPasswordRequired) {
+            this.oldPasswordRequired = oldPasswordRequired;
+        }
+
+        public int getTokenAge() {
+            return tokenAge;
+        }
+
+        public void setTokenAge(int tokenAge) {
+            this.tokenAge = tokenAge;
+        }
+    }
+
+    public boolean resetPasswordWithOldValue() {
+        return this.resetPassword != null && this.resetPassword.isOldPasswordRequired();
+    }
+
+    public boolean resetPasswordWithTokenAge() {
+        return this.resetPassword != null && this.resetPassword.getTokenAge() > 0;
     }
 }

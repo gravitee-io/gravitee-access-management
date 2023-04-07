@@ -23,5 +23,5 @@ public interface CertificateFormat {
 
     String SSH_RSA = "SSH-RSA";
     String PEM = "PEM";
-    String ECSDA = "ECSDA";
+    String ECDSA = "ECDSA";
 }

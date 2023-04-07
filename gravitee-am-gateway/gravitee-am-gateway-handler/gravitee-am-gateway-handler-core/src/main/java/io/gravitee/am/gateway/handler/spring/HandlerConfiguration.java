@@ -35,6 +35,7 @@ import io.gravitee.am.gateway.handler.manager.theme.ThemeManager;
 import io.gravitee.am.gateway.handler.root.spring.RootConfiguration;
 import io.gravitee.am.gateway.handler.vertx.auth.webauthn.WebAuthnFactory;
 import io.gravitee.am.gateway.handler.vertx.auth.webauthn.store.RepositoryCredentialStore;
+import io.gravitee.am.gateway.handler.vertx.cors.CorsHandlerFactory;
 import io.gravitee.am.gateway.handler.vertx.spring.SecurityDomainRouterConfiguration;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
 import io.gravitee.am.service.authentication.crypto.password.bcrypt.BCryptPasswordEncoder;
@@ -123,6 +124,11 @@ public class HandlerConfiguration {
     @Bean
     public ThemeManager themeManager() {
         return new ThemeManager();
+    }
+
+    @Bean
+    public CorsHandlerFactory corsHandler() {
+        return new CorsHandlerFactory();
     }
 
 }

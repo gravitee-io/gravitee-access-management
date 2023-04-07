@@ -80,6 +80,7 @@ models/CertificateKey.ts
 models/CertificatesResource.ts
 models/ClientRegistrationSettings.ts
 models/CookieSettings.ts
+models/CorsSettings.ts
 models/Credential.ts
 models/DeviceIdentifiersResource.ts
 models/DevicesResource.ts
@@ -180,6 +181,7 @@ models/PreviewResponse.ts
 models/RememberDeviceSettings.ts
 models/Reporter.ts
 models/ReportersResource.ts
+models/ResetPasswordSettings.ts
 models/Resource.ts
 models/ResourceEntity.ts
 models/ResourceListItem.ts

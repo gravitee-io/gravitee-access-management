@@ -162,6 +162,7 @@ public class MongoCredentialRepository extends AbstractManagementMongoRepository
         credential.setCreatedAt(credentialMongo.getCreatedAt());
         credential.setUpdatedAt(credentialMongo.getUpdatedAt());
         credential.setAccessedAt(credentialMongo.getAccessedAt());
+        credential.setLastCheckedAt(credentialMongo.getLastCheckedAt());
         return credential;
     }
 
@@ -189,6 +190,7 @@ public class MongoCredentialRepository extends AbstractManagementMongoRepository
         credentialMongo.setCreatedAt(credential.getCreatedAt());
         credentialMongo.setUpdatedAt(credential.getUpdatedAt());
         credentialMongo.setAccessedAt(credential.getAccessedAt());
+        credentialMongo.setLastCheckedAt(credential.getLastCheckedAt());
         return credentialMongo;
     }
 }

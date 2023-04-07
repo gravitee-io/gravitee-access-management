@@ -30,7 +30,6 @@ import org.bson.Document;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-
 import java.util.Objects;
 
 import static com.mongodb.client.model.Filters.and;
@@ -41,6 +40,7 @@ import static io.gravitee.am.model.ReferenceType.valueOf;
 @Component
 public class MongoI18nDictionaryRepository extends AbstractManagementMongoRepository implements I18nDictionaryRepository {
 
+    private static final String FIELD_LOCALE = "locale";
     private MongoCollection<I18nDictionaryMongo> mongoCollection;
 
     @PostConstruct
@@ -90,10 +90,10 @@ public class MongoI18nDictionaryRepository extends AbstractManagementMongoReposi
     }
 
     @Override
-    public Maybe<I18nDictionary> findByName(ReferenceType referenceType, String referenceId, String name) {
+    public Maybe<I18nDictionary> findByLocale(ReferenceType referenceType, String referenceId, String locale) {
         return Observable.fromPublisher(
                                  mongoCollection
-                                         .find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_NAME, name)))
+                                         .find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_LOCALE, locale)))
                                          .limit(1)
                                          .first())
                          .firstElement()

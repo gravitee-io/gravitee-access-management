@@ -17,6 +17,8 @@ package io.gravitee.am.gateway.handler.common.auth.user.impl;
 
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.exception.authentication.AccountDisabledException;
+import io.gravitee.am.common.exception.authentication.AccountEnforcePasswordException;
+import io.gravitee.am.common.exception.authentication.AccountIllegalStateException;
 import io.gravitee.am.common.exception.authentication.AccountLockedException;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oidc.StandardClaims;
@@ -34,6 +36,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
+import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.service.AuditService;
@@ -48,6 +51,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -94,7 +99,7 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
     }
 
     @Override
-    public Single<User> connectPreAuthenticatedUser(String subject) {
+    public Single<User> connectWithPasswordless(String subject, Client client) {
         return userService.findById(subject)
                 .switchIfEmpty(Single.error(new UserNotFoundException(subject)))
                 // check account status
@@ -107,10 +112,35 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
                     }
                     return Single.just(user);
                 })
+                // check passwordless enforce password policy
+                .flatMap(user -> {
+                    final LoginSettings loginSettings = LoginSettings.getInstance(domain, client);
+                    final Date lastLoginWithCredentials = user.getLastLoginWithCredentials();
+                    // no last login date, continue
+                    if (lastLoginWithCredentials == null) {
+                        return Single.just(user);
+                    }
+                    // feature disabled, continue
+                    if (loginSettings == null || !loginSettings.isEnforcePasswordPolicyEnabled()) {
+                        return Single.just(user);
+                    }
+                    // evaluate the condition
+                    final Integer maxAge = loginSettings.getPasswordlessEnforcePasswordMaxAge();
+                    final Instant expirationDate = lastLoginWithCredentials.toInstant().plusSeconds(maxAge);
+                    if (expirationDate.isBefore(Instant.now())) {
+                        return Single.error(new AccountEnforcePasswordException("User credentials are required"));
+                    }
+                    return Single.just(user);
+                })
                 // update login information
                 .flatMap(user -> {
                     user.setLoggedAt(new Date());
                     user.setLoginsCount(user.getLoginsCount() + 1);
+                    // initialize the last login with credentials date only if it's not set
+                    // useful if the enforce password for passwordless feature is enabled
+                    if (user.getLastLoginWithCredentials() == null) {
+                        user.setLastLoginWithCredentials(user.getLoggedAt());
+                    }
                     return userService.update(user)
                             .flatMap(user1 -> userService.enhance(user1));
                 });
@@ -242,6 +272,7 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
         existingUser.setExternalId(principal.getId());
         if (afterAuthentication) {
             existingUser.setLoggedAt(new Date());
+            existingUser.setLastLoginWithCredentials(existingUser.getLoggedAt());
             existingUser.setLoginsCount(existingUser.getLoginsCount() + 1);
             existingUser.setAccountNonLocked(true);
         }
@@ -290,6 +321,7 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
         newUser.setReferenceId(domain.getId());
         if (afterAuthentication) {
             newUser.setLoggedAt(new Date());
+            newUser.setLastLoginWithCredentials(newUser.getLoggedAt());
             newUser.setLoginsCount(1L);
         }
         newUser.setDynamicRoles(principal.getRoles());

@@ -208,9 +208,11 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
         authorizationRequest.setApproved(true);
         authorizationRequest.setResponseType(ResponseType.CODE);
         authorizationRequest.setRedirectUri("http://localhost:9999/callback");
+        authorizationRequest.setState("#statewithencodedvalue#");
 
         AuthorizationResponse authorizationResponse = new AuthorizationCodeResponse();
         authorizationResponse.setRedirectUri(authorizationRequest.getRedirectUri());
+        authorizationResponse.setState("#statewithencodedvalue#");
         ((AuthorizationCodeResponse) authorizationResponse).setCode("test-code");
 
         router.route().order(-1).handler(routingContext -> {
@@ -227,12 +229,12 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
         });
 
         testRequest(
-                HttpMethod.GET, "/oauth/authorize?response_type=code&client_id=client-id&redirect_uri=http://localhost:9999/callback&scope=",
+                HttpMethod.GET, "/oauth/authorize?response_type=code&client_id=client-id&state=%23statewithencodedvalue%23&redirect_uri=http://localhost:9999/callback&scope=",
                 null,
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertEquals("http://localhost:9999/callback?code=test-code", location);
+                    assertEquals("http://localhost:9999/callback?code=test-code&state=%23statewithencodedvalue%23", location);
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
@@ -1071,38 +1073,38 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
 
     @Test
     public void shouldInvokeAuthorizationEndpoint_hybridFlow_code_IDToken() throws Exception {
-        shouldInvokeAuthorizationEndpoint_hybridFlow(io.gravitee.am.common.oidc.ResponseType.CODE_ID_TOKEN, "code=test-code&id_token=test-id-token", null, "test-id-token");
+        shouldInvokeAuthorizationEndpoint_hybridFlow(io.gravitee.am.common.oidc.ResponseType.CODE_ID_TOKEN, "code=test-code&state=%23statewithencodedvalue%23&id_token=test-id-token", null, "test-id-token");
     }
 
     @Test
     public void shouldInvokeAuthorizationEndpoint_hybridFlow_code_token() throws Exception {
         Token accessToken = new AccessToken("token");
-        shouldInvokeAuthorizationEndpoint_hybridFlow(io.gravitee.am.common.oidc.ResponseType.CODE_TOKEN, "code=test-code&access_token=token&token_type=bearer&expires_in=0", accessToken, null);
+        shouldInvokeAuthorizationEndpoint_hybridFlow(io.gravitee.am.common.oidc.ResponseType.CODE_TOKEN, "code=test-code&state=%23statewithencodedvalue%23&access_token=token&token_type=bearer&expires_in=0", accessToken, null);
     }
 
     @Test
     public void shouldInvokeAuthorizationEndpoint_hybridFlow_code_IDToken_token() throws Exception {
         Token accessToken = new AccessToken("token");
         ((AccessToken) accessToken).setAdditionalInformation(Collections.singletonMap("id_token", "test-id-token"));
-        shouldInvokeAuthorizationEndpoint_hybridFlow(io.gravitee.am.common.oidc.ResponseType.CODE_ID_TOKEN_TOKEN, "code=test-code&access_token=token&token_type=bearer&expires_in=0&id_token=test-id-token", accessToken, null);
+        shouldInvokeAuthorizationEndpoint_hybridFlow(io.gravitee.am.common.oidc.ResponseType.CODE_ID_TOKEN_TOKEN, "code=test-code&state=%23statewithencodedvalue%23&access_token=token&token_type=bearer&expires_in=0&id_token=test-id-token", accessToken, null);
     }
 
     @Test
     public void shouldInvokeAuthorizationEndpoint_implicitFlow_IDToken() throws Exception {
-        shouldInvokeAuthorizationEndpoint_implicitFlow(io.gravitee.am.common.oidc.ResponseType.ID_TOKEN, "id_token=test-id-token", null, "test-id-token");
+        shouldInvokeAuthorizationEndpoint_implicitFlow(io.gravitee.am.common.oidc.ResponseType.ID_TOKEN, "id_token=test-id-token&state=%23statewithencodedvalue%23", null, "test-id-token");
     }
 
     @Test
     public void shouldInvokeAuthorizationEndpoint_implicitFlow_IDToken_token() throws Exception {
         Token accessToken = new AccessToken("token");
         ((AccessToken) accessToken).setAdditionalInformation(Collections.singletonMap("id_token", "test-id-token"));
-        shouldInvokeAuthorizationEndpoint_implicitFlow(io.gravitee.am.common.oidc.ResponseType.ID_TOKEN_TOKEN, "access_token=token&token_type=bearer&expires_in=0&id_token=test-id-token", accessToken, null);
+        shouldInvokeAuthorizationEndpoint_implicitFlow(io.gravitee.am.common.oidc.ResponseType.ID_TOKEN_TOKEN, "access_token=token&token_type=bearer&expires_in=0&state=%23statewithencodedvalue%23&id_token=test-id-token", accessToken, null);
     }
 
     @Test
     public void shouldInvokeAuthorizationEndpoint_implicitFlow_token() throws Exception {
         Token accessToken = new AccessToken("token");
-        shouldInvokeAuthorizationEndpoint_implicitFlow(ResponseType.TOKEN, "access_token=token&token_type=bearer&expires_in=0", accessToken, null);
+        shouldInvokeAuthorizationEndpoint_implicitFlow(ResponseType.TOKEN, "access_token=token&token_type=bearer&expires_in=0&state=%23statewithencodedvalue%23", accessToken, null);
     }
 
     private void shouldInvokeAuthorizationEndpoint_hybridFlow(String responseType, String expectedCallback, Token accessToken, String idToken) throws Exception {
@@ -1123,6 +1125,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
         AuthorizationResponse authorizationResponse = new HybridResponse();
         authorizationResponse.setRedirectUri(authorizationRequest.getRedirectUri());
         ((HybridResponse) authorizationResponse).setCode("test-code");
+        ((HybridResponse) authorizationResponse).setState("#statewithencodedvalue#");
         if (accessToken != null) {
             ((HybridResponse) authorizationResponse).setAccessToken(accessToken);
         }
@@ -1140,7 +1143,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
 
         testRequest(
                 HttpMethod.GET,
-                "/oauth/authorize?response_type=token&client_id=client-id&nonce=123&redirect_uri=http://localhost:9999/callback",
+                "/oauth/authorize?response_type=token&client_id=client-id&nonce=123&state=%23statewithencodedvalue%23&redirect_uri=http://localhost:9999/callback",
                 null,
                 resp -> {
                     String location = resp.headers().get("location");
@@ -1163,14 +1166,17 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
         authorizationRequest.setApproved(true);
         authorizationRequest.setResponseType(responseType);
         authorizationRequest.setRedirectUri("http://localhost:9999/callback");
+        authorizationRequest.setState("#statewithencodedvalue#");
 
         AuthorizationResponse authorizationResponse = null;
         if (accessToken != null) {
             authorizationResponse = new ImplicitResponse();
+            authorizationResponse.setState("#statewithencodedvalue#");
             ((ImplicitResponse) authorizationResponse).setAccessToken(accessToken);
         }
         if (idToken != null) {
             authorizationResponse = new IDTokenResponse();
+            authorizationResponse.setState("#statewithencodedvalue#");
             ((IDTokenResponse) authorizationResponse).setIdToken(idToken);
         }
         authorizationResponse.setRedirectUri(authorizationRequest.getRedirectUri());
@@ -1185,7 +1191,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
 
         testRequest(
                 HttpMethod.GET,
-                "/oauth/authorize?response_type="+responseType.replaceAll("\\s","%20")+"&client_id=client-id&nonce=123&redirect_uri=http://localhost:9999/callback",
+                "/oauth/authorize?response_type="+responseType.replaceAll("\\s","%20")+"&client_id=client-id&nonce=123&state=%23statewithencodedvalue%23&redirect_uri=http://localhost:9999/callback",
                 null,
                 resp -> {
                     String location = resp.headers().get("location");

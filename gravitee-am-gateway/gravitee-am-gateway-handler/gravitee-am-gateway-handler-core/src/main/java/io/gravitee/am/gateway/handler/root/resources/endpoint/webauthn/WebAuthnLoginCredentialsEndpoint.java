@@ -84,19 +84,21 @@ public class WebAuthnLoginCredentialsEndpoint extends WebAuthnHandler {
 
             // STEP 18 Generate assertion
             webAuthn.getCredentialsOptions(username)
-                    .doOnError(throwable -> {
-                        logger.error("Unexpected exception", throwable);
-                        ctx.fail(throwable.getCause());
-                    })
-                    .doOnSuccess(entries -> {
-                        session
-                                .put(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY, entries.getString("challenge"))
-                                .put(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY, username);
+                    .subscribe(
+                            entries -> {
+                                session
+                                        .put(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY, entries.getString("challenge"))
+                                        .put(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY, username);
 
-                        ctx.response()
-                                .putHeader(io.vertx.core.http.HttpHeaders.CONTENT_TYPE, "application/json; charset=utf-8")
-                                .end(Json.encodePrettily(entries));
-                    }).subscribe();
+                                ctx.response()
+                                        .putHeader(io.vertx.core.http.HttpHeaders.CONTENT_TYPE, "application/json; charset=utf-8")
+                                        .end(Json.encodePrettily(entries));
+                            },
+                            throwable -> {
+                                logger.error("Unexpected exception", throwable);
+                                ctx.fail(throwable.getCause());
+                            }
+                    );
         } catch (IllegalArgumentException e) {
             logger.error("Unexpected exception", e);
             ctx.fail(400);

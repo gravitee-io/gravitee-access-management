@@ -127,9 +127,7 @@ export class UserProfileComponent implements OnInit {
       .subscribe(res => {
         if (res) {
           this.userService.unlock(this.domainId, this.user.id).subscribe(() => {
-            this.user.accountNonLocked = true;
-            this.user.accountLockedAt = null;
-            this.user.accountLockedUntil = null;
+            this.unlockUser(this.user);
             this.snackbarService.open('User unlocked');
           });
         }
@@ -215,7 +213,7 @@ export class UserProfileComponent implements OnInit {
   }
 
   displayClientName() {
-    return this.user.applicationEntity != null ? this.user.applicationEntity.name : this.user.client;
+    return this.user.applicationEntity != null ? this.user.applicationEntity.name : "";
   }
 
   accountLocked(user) {
@@ -229,9 +227,16 @@ export class UserProfileComponent implements OnInit {
         if (res) {
           this.userService.updateUsername(this.domainId, this.user.id, this.organizationContext, this.user.username).subscribe(() => {
             this.usernameForm.resetForm({ username: this.user.username });
+            this.unlockUser(this.user);
             this.snackbarService.open('Username updated');
           })
         }
       });
+  }
+
+  private unlockUser(user) {
+    user.accountNonLocked = true;
+    user.accountLockedAt = null;
+    user.accountLockedUntil = null;
   }
 }

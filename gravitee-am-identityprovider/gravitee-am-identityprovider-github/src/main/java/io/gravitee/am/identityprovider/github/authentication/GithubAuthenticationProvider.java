@@ -42,6 +42,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static io.gravitee.gateway.api.http.HttpHeaderNames.AUTHORIZATION;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -110,18 +112,25 @@ public class GithubAuthenticationProvider extends AbstractSocialAuthenticationPr
                 .toMaybe()
                 .map(httpResponse -> {
                     if (httpResponse.statusCode() != 200) {
+                        LOGGER.error("HTTP error {} is thrown while exchanging code. The response body is: {} ", httpResponse.statusCode(), httpResponse.bodyAsString());
                         throw new BadCredentialsException(httpResponse.statusMessage());
                     }
 
                     Map<String, String> bodyResponse = URLEncodedUtils.format(httpResponse.bodyAsString());
-                    return new Token(bodyResponse.get("access_token"), TokenTypeHint.ACCESS_TOKEN);
+                    // Set original token if allowed
+                    final String tokenValue = bodyResponse.get(ACCESS_TOKEN_PARAMETER);
+                    if (configuration.isStoreOriginalTokens()) {
+                        authentication.getContext().set(ACCESS_TOKEN_PARAMETER, tokenValue);
+                    }
+                    return new Token(tokenValue, TokenTypeHint.ACCESS_TOKEN);
                 });
     }
 
     @Override
     protected Maybe<User> profile(Token accessToken, Authentication authentication) {
+        final String tokenValue = accessToken.getValue();
         return client.getAbs(configuration.getUserProfileUri())
-                .putHeader(HttpHeaders.AUTHORIZATION, "token " + accessToken.getValue())
+                .putHeader(AUTHORIZATION, "token " + tokenValue)
                 .rxSend()
                 .toMaybe()
                 .map(httpClientResponse -> {
@@ -134,8 +143,8 @@ public class GithubAuthenticationProvider extends AbstractSocialAuthenticationPr
     }
 
     private User createUser(AuthenticationContext authContext, Map<String, Object> attributes) {
-        User user = new DefaultUser(String.valueOf(attributes.get(GithubUser.LOGIN)));
-        ((DefaultUser) user).setId(String.valueOf(attributes.get(GithubUser.ID)));
+        var user = new DefaultUser(String.valueOf(attributes.get(GithubUser.LOGIN)));
+        user.setId(String.valueOf(attributes.get(GithubUser.ID)));
         // set additional information
         Map<String, Object> additionalInformation = new HashMap<>();
         // Standard claims
@@ -146,11 +155,11 @@ public class GithubAuthenticationProvider extends AbstractSocialAuthenticationPr
         additionalInformation.putAll(applyUserMapping(authContext, attributes));
         // update username if user mapping has been changed
         if (additionalInformation.containsKey(StandardClaims.PREFERRED_USERNAME)) {
-            ((DefaultUser) user).setUsername((String) additionalInformation.get(StandardClaims.PREFERRED_USERNAME));
+            user.setUsername((String) additionalInformation.get(StandardClaims.PREFERRED_USERNAME));
         }
-        ((DefaultUser) user).setAdditionalInformation(additionalInformation);
+        user.setAdditionalInformation(additionalInformation);
         // set user roles
-        ((DefaultUser) user).setRoles(applyRoleMapping(authContext, attributes));
+        user.setRoles(applyRoleMapping(authContext, attributes));
         return user;
     }
 

@@ -81,22 +81,10 @@ import {
 export interface OrganizationResource {
     /**
      * 
-     * @type {IdentityProvidersResource}
-     * @memberof OrganizationResource
-     */
-    identityProvidersResource?: IdentityProvidersResource;
-    /**
-     * 
      * @type {EnvironmentsResource}
      * @memberof OrganizationResource
      */
     environmentsResource?: EnvironmentsResource;
-    /**
-     * 
-     * @type {AuditsResource}
-     * @memberof OrganizationResource
-     */
-    auditsResource?: AuditsResource;
     /**
      * 
      * @type {MembersResource}
@@ -109,6 +97,12 @@ export interface OrganizationResource {
      * @memberof OrganizationResource
      */
     tagsResource?: TagsResource;
+    /**
+     * 
+     * @type {AuditsResource}
+     * @memberof OrganizationResource
+     */
+    auditsResource?: AuditsResource;
     /**
      * 
      * @type {EntrypointsResource}
@@ -127,6 +121,12 @@ export interface OrganizationResource {
      * @memberof OrganizationResource
      */
     groupsResource?: GroupsResource;
+    /**
+     * 
+     * @type {IdentityProvidersResource}
+     * @memberof OrganizationResource
+     */
+    identityProvidersResource?: IdentityProvidersResource;
     /**
      * 
      * @type {UsersResource}
@@ -157,14 +157,14 @@ export function OrganizationResourceFromJSONTyped(json: any, ignoreDiscriminator
     }
     return {
         
-        'identityProvidersResource': !exists(json, 'identityProvidersResource') ? undefined : IdentityProvidersResourceFromJSON(json['identityProvidersResource']),
         'environmentsResource': !exists(json, 'environmentsResource') ? undefined : EnvironmentsResourceFromJSON(json['environmentsResource']),
-        'auditsResource': !exists(json, 'auditsResource') ? undefined : AuditsResourceFromJSON(json['auditsResource']),
         'membersResource': !exists(json, 'membersResource') ? undefined : MembersResourceFromJSON(json['membersResource']),
         'tagsResource': !exists(json, 'tagsResource') ? undefined : TagsResourceFromJSON(json['tagsResource']),
+        'auditsResource': !exists(json, 'auditsResource') ? undefined : AuditsResourceFromJSON(json['auditsResource']),
         'entrypointsResource': !exists(json, 'entrypointsResource') ? undefined : EntrypointsResourceFromJSON(json['entrypointsResource']),
         'rolesResource': !exists(json, 'rolesResource') ? undefined : RolesResourceFromJSON(json['rolesResource']),
         'groupsResource': !exists(json, 'groupsResource') ? undefined : GroupsResourceFromJSON(json['groupsResource']),
+        'identityProvidersResource': !exists(json, 'identityProvidersResource') ? undefined : IdentityProvidersResourceFromJSON(json['identityProvidersResource']),
         'usersResource': !exists(json, 'usersResource') ? undefined : UsersResourceFromJSON(json['usersResource']),
         'settingsResource': !exists(json, 'settingsResource') ? undefined : json['settingsResource'],
         'formsResource': !exists(json, 'formsResource') ? undefined : FormsResourceFromJSON(json['formsResource']),
@@ -180,14 +180,14 @@ export function OrganizationResourceToJSON(value?: OrganizationResource | null):
     }
     return {
         
-        'identityProvidersResource': IdentityProvidersResourceToJSON(value.identityProvidersResource),
         'environmentsResource': EnvironmentsResourceToJSON(value.environmentsResource),
-        'auditsResource': AuditsResourceToJSON(value.auditsResource),
         'membersResource': MembersResourceToJSON(value.membersResource),
         'tagsResource': TagsResourceToJSON(value.tagsResource),
+        'auditsResource': AuditsResourceToJSON(value.auditsResource),
         'entrypointsResource': EntrypointsResourceToJSON(value.entrypointsResource),
         'rolesResource': RolesResourceToJSON(value.rolesResource),
         'groupsResource': GroupsResourceToJSON(value.groupsResource),
+        'identityProvidersResource': IdentityProvidersResourceToJSON(value.identityProvidersResource),
         'usersResource': UsersResourceToJSON(value.usersResource),
         'settingsResource': value.settingsResource,
         'formsResource': FormsResourceToJSON(value.formsResource),

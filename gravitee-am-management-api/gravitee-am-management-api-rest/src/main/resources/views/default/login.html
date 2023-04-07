@@ -74,7 +74,7 @@
                    th:name="${bot_detection_configuration.get('tokenParameterName')}"/>
 
             <div>
-                <button id="btnSubmit" class="button primary" th:text="#{login.button.submit}"></button>
+                <button id="submitBtn" class="button primary" th:text="#{login.button.submit}"></button>
             </div>
         </form>
     </div>
@@ -105,7 +105,7 @@
 <script th:inline="javascript" th:attr="nonce=${script_inline_nonce}">
     $(document).ready(function () {
 
-        $("#btnSubmit").on("click", function (event) {
+        $("#submitBtn").on("click", function (event) {
             /*[# th:if="${bot_detection_plugin == 'google-recaptcha-v3-am-bot-detection'}"]*/
             event.preventDefault();
             grecaptcha.ready(function () {
@@ -128,7 +128,7 @@
         $("#password").on("keyup", toggleSubmit);
 
         function toggleSubmit() {
-            const submitBtn = $("#btnSubmit");
+            const submitBtn = $("#submitBtn");
             if ($("#username").val() === "" || $("#password").val() === "") {
                 submitBtn.prop('disabled', true);
                 submitBtn.addClass("button-disabled");

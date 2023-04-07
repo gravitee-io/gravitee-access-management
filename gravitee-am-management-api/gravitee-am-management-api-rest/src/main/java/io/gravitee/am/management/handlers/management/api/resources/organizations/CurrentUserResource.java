@@ -58,7 +58,7 @@ public class CurrentUserResource extends AbstractResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Get the current user")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Current user successfully fetched", response = User.class),
+            @ApiResponse(code = 200, message = "Current user successfully fetched", response = Map.class),
             @ApiResponse(code = 500, message = "Internal server error")})
     public void get(@Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();

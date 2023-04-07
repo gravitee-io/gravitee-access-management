@@ -33,6 +33,12 @@ public class SMSFactorConfiguration implements FactorConfiguration {
 
     private String graviteeResource;
 
+    private int returnDigits = 6;
+
+    private String messageBody;
+
+    private int expiresAfter;
+
     public String getCountryCodes() {
         return countryCodes;
     }
@@ -47,6 +53,30 @@ public class SMSFactorConfiguration implements FactorConfiguration {
 
     public void setGraviteeResource(String graviteeResource) {
         this.graviteeResource = graviteeResource;
+    }
+
+    public int getReturnDigits() {
+        return returnDigits;
+    }
+
+    public void setReturnDigits(int returnDigits) {
+        this.returnDigits = returnDigits;
+    }
+
+    public String getMessageBody() {
+        return messageBody;
+    }
+
+    public void setMessageBody(String messageBody) {
+        this.messageBody = messageBody;
+    }
+
+    public int getExpiresAfter() {
+        return expiresAfter;
+    }
+
+    public void setExpiresAfter(int expiresAfter) {
+        this.expiresAfter = expiresAfter;
     }
 
     public List<String> countries() {

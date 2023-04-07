@@ -19,10 +19,10 @@ import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oidc.StandardClaims;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.account.resources.util.AccountRoutes;
 import io.gravitee.am.gateway.handler.account.resources.util.ContextPathParamUtil;
 import io.gravitee.am.gateway.handler.account.services.AccountService;
-import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.RedirectHandler;
 import io.gravitee.am.identityprovider.api.DefaultUser;
@@ -32,19 +32,27 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.reporter.api.audit.AuditReportableCriteria;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.exception.UserProviderNotFoundException;
+import io.gravitee.common.http.HttpStatusCode;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonObject;
 import io.vertx.rxjava3.ext.web.RoutingContext;
+import io.vertx.ext.web.handler.HttpException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
-import static io.gravitee.am.gateway.handler.account.resources.AccountResponseHandler.*;
+import static io.gravitee.am.gateway.handler.account.resources.AccountResponseHandler.handleGetProfileResponse;
+import static io.gravitee.am.gateway.handler.account.resources.AccountResponseHandler.handleNoBodyResponse;
+import static io.gravitee.am.gateway.handler.account.resources.AccountResponseHandler.handleUpdateUserResponse;
 import static io.gravitee.am.service.impl.user.activity.utils.ConsentUtils.canSaveIp;
 import static io.gravitee.am.service.impl.user.activity.utils.ConsentUtils.canSaveUserAgent;
+import static io.gravitee.am.service.utils.UserProfileUtils.buildDisplayName;
+import static io.gravitee.am.service.utils.UserProfileUtils.hasGeneratedDisplayName;
 import static io.gravitee.common.http.HttpStatusCode.FORBIDDEN_403;
 import static java.util.Objects.isNull;
 import static org.springframework.util.StringUtils.isEmpty;
@@ -57,6 +65,8 @@ import static org.springframework.util.StringUtils.isEmpty;
 public class AccountEndpointHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(AccountEndpointHandler.class);
     private static final String PASSWORD_KEY = "password";
+    private static final String OLD_PASSWORD_KEY = "oldPassword";
+    public static final String ERROR_MSG_ACCESS_TOKEN_TOO_OLD = "Access token does not conform with expiration period. Please generate a new token.";
     private final AccountService accountService;
     private final Domain domain;
 
@@ -109,6 +119,17 @@ public class AccountEndpointHandler {
             final User user = getUserFromContext(routingContext);
             final DefaultUser principal = convertUserToPrincipal(routingContext, user);
             final String password = bodyAsJson.getString(PASSWORD_KEY);
+            final Optional<String> oldPassword = Optional.ofNullable(bodyAsJson.getString(OLD_PASSWORD_KEY));
+
+            if (!tokenCanHandleResetPassword(routingContext)){
+                routingContext.fail(new HttpException(HttpStatusCode.UNAUTHORIZED_401, ERROR_MSG_ACCESS_TOKEN_TOO_OLD));
+                return;
+            }
+
+            if (domain.getSelfServiceAccountManagementSettings().resetPasswordWithOldValue() && oldPassword.isEmpty()) {
+                routingContext.fail(new InvalidRequestException("Field [oldPassword] is required"));
+                return;
+            }
 
             // user password is required
             if (isEmpty(password)) {
@@ -116,7 +137,7 @@ public class AccountEndpointHandler {
                 return;
             }
 
-            accountService.resetPassword(user, client, password, principal)
+            accountService.resetPassword(user, client, password, principal, oldPassword)
                     .subscribe(
                             __ -> handleNoBodyResponse(routingContext),
                             error -> {
@@ -130,6 +151,18 @@ public class AccountEndpointHandler {
         } catch (DecodeException ex) {
             routingContext.fail(new InvalidRequestException("Unable to parse body message"));
         }
+    }
+
+    private boolean tokenCanHandleResetPassword(RoutingContext routingContext) {
+        final var sefAccountSettings = domain.getSelfServiceAccountManagementSettings();
+        if (sefAccountSettings.resetPasswordWithTokenAge()) {
+            final JWT token = routingContext.get(ConstantKeys.TOKEN_CONTEXT_KEY);
+            final long iat = token.getIat();
+            if ((Instant.now().getEpochSecond() - iat) >= sefAccountSettings.getResetPassword().getTokenAge()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -153,6 +186,11 @@ public class AccountEndpointHandler {
     }
 
     public void redirectForgotPassword(RoutingContext routingContext) {
+        if (!tokenCanHandleResetPassword(routingContext)){
+            routingContext.fail(new HttpException(HttpStatusCode.UNAUTHORIZED_401, ERROR_MSG_ACCESS_TOKEN_TOO_OLD));
+            return;
+        }
+
         final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         final String path = AccountRoutes.CHANGE_PASSWORD_REDIRECT.getRoute() + "?client_id=" + client.getClientId();
         RedirectHandler.create(path).handle(routingContext);
@@ -173,6 +211,9 @@ public class AccountEndpointHandler {
 
     private User mapRequestToUser(User user, RoutingContext routingContext) {
         JsonObject bodyAsJson = routingContext.getBodyAsJson();
+
+        final var generatedDisplayName = hasGeneratedDisplayName(user);
+
         user.setFirstName(bodyAsJson.getString(StandardClaims.GIVEN_NAME));
         user.setLastName(bodyAsJson.getString(StandardClaims.FAMILY_NAME));
         user.setMiddleName(bodyAsJson.getString(StandardClaims.MIDDLE_NAME));
@@ -189,6 +230,9 @@ public class AccountEndpointHandler {
         final JsonObject address = bodyAsJson.getJsonObject(StandardClaims.ADDRESS);
         if (address != null) {
             user.setAddress(convertClaim(address));
+        }
+        if (generatedDisplayName) {
+            user.setDisplayName(buildDisplayName(user));
         }
         return user;
     }

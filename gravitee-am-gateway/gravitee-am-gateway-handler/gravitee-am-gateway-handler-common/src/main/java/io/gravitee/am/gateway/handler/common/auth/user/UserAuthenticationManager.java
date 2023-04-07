@@ -35,7 +35,7 @@ public interface UserAuthenticationManager {
 
     Single<User> connect(io.gravitee.am.identityprovider.api.User user, boolean afterAuthentication);
 
-    Single<User> connectPreAuthenticatedUser(Client client, String subject, Authentication authentication);
+    Single<User> connectWithPasswordless(Client client, String subject, Authentication authentication);
 
     default Single<User> authenticate(Client client, Authentication authentication) {
         return authenticate(client, authentication, false);

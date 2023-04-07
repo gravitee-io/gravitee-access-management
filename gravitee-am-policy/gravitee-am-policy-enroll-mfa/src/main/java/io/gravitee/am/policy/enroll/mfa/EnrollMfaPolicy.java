@@ -18,6 +18,7 @@ package io.gravitee.am.policy.enroll.mfa;
 import io.gravitee.am.common.factor.FactorDataKeys;
 import io.gravitee.am.common.factor.FactorType;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.common.utils.MovingFactorUtils;
 import io.gravitee.am.factor.api.FactorProvider;
 import io.gravitee.am.factor.utils.SharedSecret;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
@@ -42,9 +43,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.ObjectUtils;
 
-import java.nio.charset.StandardCharsets;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
@@ -155,7 +153,7 @@ public class EnrollMfaPolicy {
                         final String otpEnrollmentValue = enrollmentValue != null ? enrollmentValue : SharedSecret.generate();
                         Map<String, Object> otpAdditionalData = Collections.emptyMap();
                         if (factorProvider.useVariableFactorSecurity()) {
-                            otpAdditionalData = Collections.singletonMap(FactorDataKeys.KEY_MOVING_FACTOR, generateInitialMovingFactor(user));
+                            otpAdditionalData = Collections.singletonMap(FactorDataKeys.KEY_MOVING_FACTOR, MovingFactorUtils.generateInitialMovingFactor(user.getId()));
                         }
                         enrolledFactor.setSecurity(new EnrolledFactorSecurity(SHARED_SECRET, otpEnrollmentValue, otpAdditionalData));
                         break;
@@ -166,7 +164,7 @@ public class EnrollMfaPolicy {
                         enrolledFactor.setChannel(new EnrolledFactorChannel(EnrolledFactorChannel.Type.CALL, enrollmentValue));
                         break;
                     case EMAIL:
-                        Map<String, Object> additionalData = Collections.singletonMap(FactorDataKeys.KEY_MOVING_FACTOR, generateInitialMovingFactor(user));
+                        Map<String, Object> additionalData = Collections.singletonMap(FactorDataKeys.KEY_MOVING_FACTOR, MovingFactorUtils.generateInitialMovingFactor(user.getId()));
                         enrolledFactor.setSecurity(new EnrolledFactorSecurity(SHARED_SECRET, SharedSecret.generate(), additionalData));
                         enrolledFactor.setChannel(new EnrolledFactorChannel(EnrolledFactorChannel.Type.EMAIL, enrollmentValue));
                         break;
@@ -184,15 +182,5 @@ public class EnrollMfaPolicy {
                 return Single.error(ex);
             }
         });
-    }
-
-    private int generateInitialMovingFactor(User endUser) {
-        try {
-            SecureRandom secureRandom = SecureRandom.getInstance("SHA1PRNG");
-            secureRandom.setSeed(endUser.getUsername().getBytes(StandardCharsets.UTF_8));
-            return secureRandom.nextInt(1000) + 1;
-        } catch (NoSuchAlgorithmException e) {
-            return 0;
-        }
     }
 }
