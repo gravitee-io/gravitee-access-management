@@ -1,6 +1,20 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/646?closed=1[AM - 3.19.10 (2023-04-11)]
+
+=== Bug fixes
+
+*_General_*
+
+- AM - POST-login flow not executed when authenticating using WebAuthn https://github.com/gravitee-io/issues/issues/8918[#8918]
+- Mongodb: long running server side queries cause outage https://github.com/gravitee-io/issues/issues/8910[#8910]
+- AM should audit USER_CREATED when using delegated OIDC authentication https://github.com/gravitee-io/issues/issues/8920[#8920]
+- Merge 3.18.7 into 3.19.x https://github.com/gravitee-io/issues/issues/8986[#8986]
+- The same DOM element can have a different ID from one template to another https://github.com/gravitee-io/issues/issues/8884[#8884]
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/640?closed=1[AM - 3.19.9 (2023-03-30)]
 
 === Bug fixes
