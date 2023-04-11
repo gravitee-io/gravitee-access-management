@@ -7,7 +7,7 @@ server {
     charset utf-8;
 
     location / {
-        try_files $uri$args $uri$args/ $uri $uri/ /index.html =404;
+        try_files $uri $uri/ /index.html =404;
         root /usr/share/nginx/html;
         sub_filter '<base href="/"' '<base href="{{ getenv "MGMT_BASE_HREF" "/" }}"';
         sub_filter_once on;
