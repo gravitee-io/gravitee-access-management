@@ -75,7 +75,7 @@
     <properties>
         <revision>3.21.0-alpha.5</revision>
         <sha1 />
-        <changelist>-SNAPSHOT</changelist>
+        <changelist></changelist>
 
         <gravitee-bom.version>4.0.1</gravitee-bom.version>
         <gravitee-common.version>2.1.0</gravitee-common.version>
