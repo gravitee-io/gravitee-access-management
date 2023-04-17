@@ -80,6 +80,24 @@ import static com.mongodb.client.model.Filters.gte;
 import static com.mongodb.client.model.Filters.in;
 import static com.mongodb.client.model.Filters.lte;
 import static com.mongodb.client.model.Filters.or;
+import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporterConstants.FIELD_ACCESS_POINT_ID;
+import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporterConstants.FIELD_ACTOR;
+import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporterConstants.FIELD_ACTOR_ID;
+import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporterConstants.FIELD_ID;
+import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporterConstants.FIELD_REFERENCE_ID;
+import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporterConstants.FIELD_REFERENCE_TYPE;
+import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporterConstants.FIELD_STATUS;
+import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporterConstants.FIELD_TARGET;
+import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporterConstants.FIELD_TARGET_ID;
+import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporterConstants.FIELD_TIMESTAMP;
+import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporterConstants.FIELD_TYPE;
+import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporterConstants.INDEX_REFERENCE_ACTOR_ID_TARGET_ID_TIMESTAMP_NAME;
+import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporterConstants.INDEX_REFERENCE_ACTOR_TARGET_TIMESTAMP_NAME;
+import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporterConstants.INDEX_REFERENCE_ACTOR_TIMESTAMP_NAME;
+import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporterConstants.INDEX_REFERENCE_TARGET_TIMESTAMP_NAME;
+import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporterConstants.INDEX_REFERENCE_TIMESTAMP_NAME;
+import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporterConstants.INDEX_REFERENCE_TYPE_TIMESTAMP_NAME;
+import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporterConstants.OLD_INDICES;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -88,29 +106,6 @@ import static com.mongodb.client.model.Filters.or;
 public class MongoAuditReporter extends AbstractService<Reporter> implements AuditReporter, InitializingBean {
 
     private static final Logger logger = LoggerFactory.getLogger(MongoAuditReporter.class);
-    private static final String FIELD_ID = "_id";
-    private static final String FIELD_REFERENCE_TYPE = "referenceType";
-    private static final String FIELD_REFERENCE_ID = "referenceId";
-    private static final String FIELD_TIMESTAMP = "timestamp";
-    private static final String FIELD_TYPE = "type";
-    private static final String FIELD_STATUS = "outcome.status";
-    private static final String FIELD_TARGET = "target.alternativeId";
-    private static final String FIELD_TARGET_ID = "target.id";
-    private static final String FIELD_ACTOR = "actor.alternativeId";
-    private static final String FIELD_ACTOR_ID = "actor.id";
-    private static final String FIELD_ACCESS_POINT_ID = "accessPoint.id";
-    private static final String INDEX_REFERENCE_TIMESTAMP_NAME = "ref_1_time_-1";
-    private static final String INDEX_REFERENCE_TYPE_TIMESTAMP_NAME = "ref_1_type_1_time_-1";
-    private static final String INDEX_REFERENCE_ACTOR_TIMESTAMP_NAME = "ref_1_actor_1_time_-1";
-    private static final String INDEX_REFERENCE_TARGET_TIMESTAMP_NAME = "ref_1_target_1_time_-1";
-    private static final String INDEX_REFERENCE_ACTOR_TARGET_TIMESTAMP_NAME = "ref_1_actor_1_target_1_time_-1";
-    private static final String INDEX_REFERENCE_ACTOR_ID_TARGET_ID_TIMESTAMP_NAME = "ref_1_actorId_1_targetId_1_time_-1";
-    private static final String OLD_INDEX_REFERENCE_TIMESTAMP_NAME = "referenceType_1_referenceId_1_timestamp_-1";
-    private static final String OLD_INDEX_REFERENCE_TYPE_TIMESTAMP_NAME = "referenceType_1_referenceId_1_type_1_timestamp_-1";
-    private static final String OLD_INDEX_REFERENCE_ACTOR_TIMESTAMP_NAME = "referenceType_1_referenceId_1_actor.alternativeId_1_timestamp_-1";
-    private static final String OLD_INDEX_REFERENCE_TARGET_TIMESTAMP_NAME = "referenceType_1_referenceId_1_target.alternativeId_1_timestamp_-1";
-    private static final String OLD_INDEX_REFERENCE_ACTOR_TARGET_TIMESTAMP_NAME = "referenceType_1_referenceId_1_actor.alternativeId_1_target.alternativeId_1_timestamp_-1";
-
     @Autowired
     private ConnectionProvider connectionProvider;
 
@@ -230,23 +225,15 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
 
     private void initIndexes() {
         if (ensureIndexOnStart) {
-            List<String> oldIndexNames = Arrays.asList(
-                    OLD_INDEX_REFERENCE_TIMESTAMP_NAME,
-                    OLD_INDEX_REFERENCE_TYPE_TIMESTAMP_NAME,
-                    OLD_INDEX_REFERENCE_ACTOR_TIMESTAMP_NAME,
-                    OLD_INDEX_REFERENCE_TARGET_TIMESTAMP_NAME,
-                    OLD_INDEX_REFERENCE_ACTOR_TARGET_TIMESTAMP_NAME
-            );
             // drop old indexes
             // see : https://github.com/gravitee-io/issues/issues/7136
             Completable deleteOldIndexes = Observable.fromPublisher(reportableCollection.listIndexes())
                     .map(document -> document.getString("name"))
                     .flatMapCompletable(indexName -> {
-                        if (oldIndexNames.contains(indexName)) {
+                        if (OLD_INDICES.contains(indexName)) {
                             return Completable.fromPublisher(reportableCollection.dropIndex(indexName));
-                        } else {
-                            return Completable.complete();
                         }
+                        return Completable.complete();
                     });
 
             // create new indexes
