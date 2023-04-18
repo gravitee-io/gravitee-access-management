@@ -63,7 +63,6 @@ public class MongoAuthenticationProvider extends MongoAbstractProvider implement
     private static final String FIELD_CREATED_AT = "createdAt";
     private static final String FIELD_UPDATED_AT = "updatedAt";
 
-
     @Autowired
     private IdentityProviderMapper mapper;
 
@@ -145,9 +144,10 @@ public class MongoAuthenticationProvider extends MongoAbstractProvider implement
                 .map(document -> createUser(new SimpleAuthenticationContext(), document));
     }
 
-    private Maybe<Document> findUserByUsername(String username) {
-        MongoCollection<Document> usersCol = this.mongoClient.getDatabase(this.configuration.getDatabase()).getCollection(this.configuration.getUsersCollection());
-        String rawQuery = this.configuration.getFindUserByUsernameQuery().replaceAll("\\?", username);
+    private Maybe<Document> findUserByUsername(String encodedUsername) {
+        MongoCollection<Document> usersCol = this.mongoClient.getDatabase(this.configuration.getDatabase())
+            .getCollection(this.configuration.getUsersCollection());
+        String rawQuery = this.configuration.getFindUserByUsernameQuery().replaceAll("\\?", encodedUsername);
         String jsonQuery = convertToJsonString(rawQuery);
         BsonDocument query = BsonDocument.parse(jsonQuery);
         return Observable.fromPublisher(usersCol.find(query).first()).firstElement();
