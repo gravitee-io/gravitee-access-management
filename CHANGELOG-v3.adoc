@@ -9,7 +9,7 @@
 
 - AM - POST-login flow not executed when authenticating using WebAuthn https://github.com/gravitee-io/issues/issues/8918[#8918]
 - Do not display default "Internal Server Error" page https://github.com/gravitee-io/issues/issues/9000[#9000]
-- Mongodblong running server side queries cause outage https://github.com/gravitee-io/issues/issues/8910[#8910]
+- Mongodb - long running server side queries cause outage https://github.com/gravitee-io/issues/issues/8910[#8910]
 - SCIM - additionalInformation entries are lost when using PATCH method https://github.com/gravitee-io/issues/issues/8991[#8991]
 - The same DOM element can have a different ID from one template to another https://github.com/gravitee-io/issues/issues/8884[#8884]
 
