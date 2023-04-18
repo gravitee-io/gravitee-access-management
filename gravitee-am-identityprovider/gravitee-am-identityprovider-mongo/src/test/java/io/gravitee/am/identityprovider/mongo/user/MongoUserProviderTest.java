@@ -15,14 +15,20 @@
  */
 package io.gravitee.am.identityprovider.mongo.user;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.api.UserProvider;
+import io.gravitee.am.identityprovider.mongo.MongoIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.mongo.authentication.spring.MongoAuthenticationProviderConfiguration;
 import io.gravitee.common.util.Maps;
 import io.reactivex.observers.TestObserver;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,20 +43,55 @@ import java.util.HashMap;
  * @author GraviteeSource Team
  */
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = { MongoUserProviderTestConfiguration.class, MongoAuthenticationProviderConfiguration.class }, loader = AnnotationConfigContextLoader.class)
+@ContextConfiguration(classes = {
+    MongoUserProviderTestConfiguration.class,
+    MongoAuthenticationProviderConfiguration.class
+}, loader = AnnotationConfigContextLoader.class)
 public class MongoUserProviderTest {
 
     @Autowired
     private UserProvider userProvider;
 
+    @Autowired
+    private MongoIdentityProviderConfiguration configuration;
+
+    @Before
+    public void setup(){
+        configuration.setUsernameCaseSensitive(false);
+    }
+
     @Test
     public void shouldSelectUserByUsername() {
-        TestObserver<User> testObserver = userProvider.findByUsername("bob").test();
+        TestObserver<User> testObserver = userProvider.findByUsername("BoB").test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        testObserver.assertValue(u -> "bob".equals(u.getUsername()));
+        testObserver.assertValue(u -> "BoB".toLowerCase().equals(u.getUsername()));
+    }
+
+    @Test
+    public void shouldSelectUserByUsername_caseInsensitive() {
+        configuration.setUsernameCaseSensitive(true);
+
+        TestObserver<User> testObserver = userProvider.findByUsername("UserWithCase").test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(u -> "UserWithCase".equals(u.getUsername()));
+    }
+
+    @Test
+    public void shouldNotSelectUserByUsername_caseInsensitive() {
+        configuration.setUsernameCaseSensitive(true);
+
+        TestObserver<User> testObserver = userProvider.findByUsername("BoB").test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertNoValues();
     }
 
     @Test
@@ -75,6 +116,8 @@ public class MongoUserProviderTest {
 
     @Test
     public void shouldNotSelectUserByUsername_userNotFound() {
+        configuration.setUsernameCaseSensitive(false);
+
         TestObserver<User> testObserver = userProvider.findByUsername("unknown").test();
         testObserver.awaitTerminalEvent();
 
@@ -92,8 +135,9 @@ public class MongoUserProviderTest {
     }
 
     @Test
-    public void shouldCreateUser() {
-        DefaultUser user = createUserBean();
+    public void shouldCreateUser_insensitiveCase() {
+        final String usernameWithCase = "UsernameWithCase";
+        DefaultUser user = createUserBean(usernameWithCase);
         TestObserver<User> testObserver = userProvider.create(user).test();
 
         testObserver.awaitTerminalEvent();
@@ -101,6 +145,22 @@ public class MongoUserProviderTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(u -> assertUserMatch(user, u));
+        testObserver.assertValue(u -> u.getUsername().equals(usernameWithCase.toLowerCase()));
+    }
+
+    @Test
+    public void shouldCreateUser_sensitiveCase() {
+        configuration.setUsernameCaseSensitive(true);
+        final String usernameWithCase = "UsernameWithCase";
+        DefaultUser user = createUserBean(usernameWithCase);
+        TestObserver<User> testObserver = userProvider.create(user).test();
+
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(u -> assertUserMatch(user, u));
+        testObserver.assertValue(u -> u.getUsername().equals(usernameWithCase));
     }
 
     @Test
@@ -179,18 +239,23 @@ public class MongoUserProviderTest {
     }
 
     private boolean assertUserMatch(DefaultUser expectedUser, User testableUser) {
-        Assert.assertTrue(expectedUser.getUsername().equals(testableUser.getUsername()));
-        Assert.assertTrue(expectedUser.getEmail().equals(testableUser.getEmail()));
-        Assert.assertTrue(expectedUser.getFirstName().equals(testableUser.getFirstName()));
-        Assert.assertTrue(expectedUser.getLastName().equals(testableUser.getLastName()));
-        Assert.assertTrue(testableUser.getAdditionalInformation() != null);
-        Assert.assertTrue(testableUser.getAdditionalInformation().containsKey("key")
+        final String username = configuration.isUsernameCaseSensitive() ? expectedUser.getUsername()
+            : expectedUser.getUsername().toLowerCase();
+        assertEquals(username, testableUser.getUsername());
+        assertEquals(expectedUser.getEmail(), testableUser.getEmail());
+        assertEquals(expectedUser.getFirstName(), testableUser.getFirstName());
+        assertEquals(expectedUser.getLastName(), testableUser.getLastName());
+        assertNotNull(testableUser.getAdditionalInformation());
+        assertTrue(testableUser.getAdditionalInformation().containsKey("key")
                 && "value".equals(testableUser.getAdditionalInformation().get("key")));
         return true;
     }
 
     private DefaultUser createUserBean() {
-        final String username = RandomString.generate();
+       return createUserBean(RandomString.generate());
+    }
+
+    private DefaultUser createUserBean(String username) {
         DefaultUser user = new DefaultUser();
         user.setEmail(username+"@acme.com");
         user.setUsername(username);
@@ -198,9 +263,9 @@ public class MongoUserProviderTest {
         user.setLastName("L-"+username);
         user.setCredentials("T0pS3cret");
         user.setAdditionalInformation(new Maps.MapBuilder(new HashMap()).put("key", "value")
-                .put("email", user.getEmail())
-                .put("given_name", user.getFirstName())
-                .put("family_name", user.getLastName()).build()
+            .put("email", user.getEmail())
+            .put("given_name", user.getFirstName())
+            .put("family_name", user.getLastName()).build()
         );
         return user;
     }
