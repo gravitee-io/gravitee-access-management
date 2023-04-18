@@ -49,6 +49,8 @@ public class MongoIdentityProviderConfiguration implements IdentityProviderConfi
 
     private boolean userProvider = true;
 
+    private boolean usernameCaseSensitive = false;
+
     @Override
     public boolean userProvider() {
         return this.userProvider;
@@ -208,5 +210,13 @@ public class MongoIdentityProviderConfiguration implements IdentityProviderConfi
 
     public void setPasswordSaltLength(Integer passwordSaltLength) {
         this.passwordSaltLength = passwordSaltLength;
+    }
+
+    public boolean isUsernameCaseSensitive() {
+        return usernameCaseSensitive;
+    }
+
+    public void setUsernameCaseSensitive(boolean usernameCaseSensitive) {
+        this.usernameCaseSensitive = usernameCaseSensitive;
     }
 }

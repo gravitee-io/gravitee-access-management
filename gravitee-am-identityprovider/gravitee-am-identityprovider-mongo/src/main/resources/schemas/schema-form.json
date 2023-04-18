@@ -118,6 +118,12 @@
       "default": true,
       "title": "Allow CRUD operations",
       "description": "When enable, the user profile provided by the identity provider can be managed (CRUD operations)"
+    },
+    "usernameCaseSensitive" : {
+      "type" : "boolean",
+      "title": "Handle username with sensitive case",
+      "description": "The case of the username to create, authenticate and search for the user (applies both to findUserByUsername and findUserByMultipleFields). Default is false",
+      "default": false
     }
   },
   "required": [
