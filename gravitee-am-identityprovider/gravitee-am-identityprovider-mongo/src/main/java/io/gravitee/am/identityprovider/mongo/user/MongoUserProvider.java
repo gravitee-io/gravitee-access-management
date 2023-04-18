@@ -53,7 +53,6 @@ import static com.mongodb.client.model.Filters.eq;
  */
 @Import({MongoAuthenticationProviderConfiguration.class})
 public class MongoUserProvider extends MongoAbstractProvider implements UserProvider {
-    private static final Logger LOGGER = LoggerFactory.getLogger(MongoUserProvider.class);
     private static final String FIELD_ID = "_id";
     private static final String FIELD_CREATED_AT = "createdAt";
     private static final String FIELD_UPDATED_AT = "updatedAt";
@@ -89,8 +88,7 @@ public class MongoUserProvider extends MongoAbstractProvider implements UserProv
 
     @Override
     public Maybe<User> findByUsername(String username) {
-        // lowercase username since case-sensitivity feature
-        final String encodedUsername = username.toLowerCase();
+        final String encodedUsername = getEncodedUsername(username);
 
         String rawQuery = this.configuration.getFindUserByUsernameQuery().replaceAll("\\?", encodedUsername);
         String jsonQuery = convertToJsonString(rawQuery);
@@ -100,8 +98,7 @@ public class MongoUserProvider extends MongoAbstractProvider implements UserProv
 
     @Override
     public Single<User> create(User user) {
-        // lowercase username to avoid duplicate account
-        final String username = user.getUsername().toLowerCase();
+        final String username = getEncodedUsername(user.getUsername());
 
         return findByUsername(username)
                 .isEmpty()
@@ -240,7 +237,7 @@ public class MongoUserProvider extends MongoAbstractProvider implements UserProv
         document.remove(FIELD_ID);
         document.remove(configuration.getUsernameField());
         document.remove(configuration.getPasswordField());
-        document.entrySet().forEach(entry -> claims.put(entry.getKey(), entry.getValue()));
+        claims.putAll(document);
 
         if (filterSalt && configuration.isUseDedicatedSalt()) {
             claims.remove(configuration.getPasswordSaltAttribute());
