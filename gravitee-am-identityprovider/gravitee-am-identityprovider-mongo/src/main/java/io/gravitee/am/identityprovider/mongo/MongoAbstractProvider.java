@@ -63,4 +63,8 @@ public abstract class MongoAbstractProvider implements InitializingBean {
         }
         this.mongoClient = this.clientWrapper.getClient();
     }
+    protected String getEncodedUsername(String username) {
+        return this.configuration.isUsernameCaseSensitive() ? username : username.toLowerCase();
+    }
+
 }
