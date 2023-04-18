@@ -252,7 +252,7 @@ public class MongoUserProvider extends MongoAbstractProvider implements UserProv
         document.remove(FIELD_ID);
         document.remove(configuration.getUsernameField());
         document.remove(configuration.getPasswordField());
-        document.entrySet().forEach(entry -> claims.put(entry.getKey(), entry.getValue()));
+        claims.putAll(document);
 
         if (filterSalt && configuration.isUseDedicatedSalt()) {
             claims.remove(configuration.getPasswordSaltAttribute());
