@@ -190,6 +190,9 @@ public class MongoFactory implements FactoryBean<MongoClient> {
                 builder.credential(credentials);
             }
 
+            Boolean retryWritesPreference = readPropertyValue(propertyPrefix + "retryWrites", Boolean.class, true);
+            builder.retryWrites(retryWritesPreference);
+
             // clustering option
             List<ServerAddress> seeds;
             int serversCount = getServersCount();
@@ -231,6 +234,10 @@ public class MongoFactory implements FactoryBean<MongoClient> {
                 SSLContext sslContext = SSLContext.getInstance(tlsProtocol);
                 sslContext.init(getKeyManagers(), getTrustManagers(), null);
                 sslBuilder.context(sslContext);
+
+                boolean sslInvalidHostNameAllowed = readPropertyValue(propertyPrefix + "sslInvalidHostNameAllowed", Boolean.class, false);
+                sslBuilder.invalidHostNameAllowed(sslInvalidHostNameAllowed);
+
             } catch (NoSuchAlgorithmException | KeyManagementException e) {
                 throw new IllegalStateException("Error creating the SSLContext for mongodb", e);
             }

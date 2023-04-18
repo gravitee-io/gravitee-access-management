@@ -99,12 +99,12 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
     private static final String FIELD_ACTOR = "actor.alternativeId";
     private static final String FIELD_ACTOR_ID = "actor.id";
     private static final String FIELD_ACCESS_POINT_ID = "accessPoint.id";
-    private static final String INDEX_REFERENCE_TIMESTAMP_NAME = "ref_1_time_-1";
-    private static final String INDEX_REFERENCE_TYPE_TIMESTAMP_NAME = "ref_1_type_1_time_-1";
-    private static final String INDEX_REFERENCE_ACTOR_TIMESTAMP_NAME = "ref_1_actor_1_time_-1";
-    private static final String INDEX_REFERENCE_TARGET_TIMESTAMP_NAME = "ref_1_target_1_time_-1";
-    private static final String INDEX_REFERENCE_ACTOR_TARGET_TIMESTAMP_NAME = "ref_1_actor_1_target_1_time_-1";
-    private static final String INDEX_REFERENCE_ACTOR_ID_TARGET_ID_TIMESTAMP_NAME = "ref_1_actorId_1_targetId_1_time_-1";
+    private static final String INDEX_REFERENCE_TIMESTAMP_NAME = "r1t_1";
+    private static final String INDEX_REFERENCE_TYPE_TIMESTAMP_NAME = "r1ty1t_1";
+    private static final String INDEX_REFERENCE_ACTOR_TIMESTAMP_NAME = "r1a1t_1";
+    private static final String INDEX_REFERENCE_TARGET_TIMESTAMP_NAME = "r1ta1t_1";
+    private static final String INDEX_REFERENCE_ACTOR_TARGET_TIMESTAMP_NAME = "r1a1ta1t_1";
+    private static final String INDEX_REFERENCE_ACTOR_ID_TARGET_ID_TIMESTAMP_NAME = "r1aid1ta1t_1";
     private static final String OLD_INDEX_REFERENCE_TIMESTAMP_NAME = "referenceType_1_referenceId_1_timestamp_-1";
     private static final String OLD_INDEX_REFERENCE_TYPE_TIMESTAMP_NAME = "referenceType_1_referenceId_1_type_1_timestamp_-1";
     private static final String OLD_INDEX_REFERENCE_ACTOR_TIMESTAMP_NAME = "referenceType_1_referenceId_1_actor.alternativeId_1_timestamp_-1";
@@ -241,7 +241,7 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
             // see : https://github.com/gravitee-io/issues/issues/7136
             Completable deleteOldIndexes = Observable.fromPublisher(reportableCollection.listIndexes())
                     .map(document -> document.getString("name"))
-                    .flatMapCompletable(indexName -> {
+                    .concatMapCompletable(indexName -> {
                         if (oldIndexNames.contains(indexName)) {
                             return Completable.fromPublisher(reportableCollection.dropIndex(indexName));
                         } else {
@@ -260,13 +260,17 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
             Completable createNewIndexes = Observable.fromIterable(indexes.entrySet())
                     .flatMapCompletable(index -> Completable.fromPublisher(reportableCollection.createIndex(index.getKey(), index.getValue()))
                             .doOnComplete(() -> logger.debug("Created an index named: {}", index.getValue().getName()))
-                            .doOnError(throwable -> logger.error("An error has occurred during creation of index {}", index.getValue().getName(), throwable)));
+                            .doOnError(throwable -> logger.warn("An error has occurred during creation of index {}", index.getValue().getName(), throwable)));
 
             // process indexes
             deleteOldIndexes
                     .andThen(createNewIndexes)
-                    .subscribe();
-
+                    .subscribe(
+                            () -> logger.info("Indexes have been created successfully"),
+                            throwable -> logger.warn("An error has occurred during index management", throwable)
+                    );
+            reporter_audits_493f8ef8-bfeb-497c-bf8e-f8bfeb497cae$r1a1ta1t_1
+            reporter_audits_493f8ef8-bfeb-497c-bf8e-f8bfeb497cae$ref_1_actorId_1_targetId_1_time_-1
         }
     }
 
