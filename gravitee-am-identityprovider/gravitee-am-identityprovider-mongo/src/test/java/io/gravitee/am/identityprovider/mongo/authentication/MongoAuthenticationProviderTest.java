@@ -21,8 +21,10 @@ import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.identityprovider.mongo.MongoIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.mongo.authentication.spring.MongoAuthenticationProviderConfiguration;
 import io.reactivex.observers.TestObserver;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,6 +50,38 @@ public class MongoAuthenticationProviderTest {
     @Autowired
     private AuthenticationProvider authenticationProvider;
 
+    @Autowired
+    private MongoIdentityProviderConfiguration configuration;
+
+    @Before
+    public void setup(){
+        configuration.setUsernameCaseSensitive(false);
+        configuration.setFindUserByMultipleFieldsQuery(null);
+    }
+
+    @Test
+    public void shouldLoadUserByUsername_username_only() {
+        TestObserver<User> testObserver = authenticationProvider.loadUserByUsername("BoB").test();
+
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(u -> "bob".equals(u.getUsername()));
+    }
+
+    @Test
+    public void shouldLoadUserByUsername_username_only_sensitive() {
+        configuration.setUsernameCaseSensitive(true);
+        TestObserver<User> testObserver = authenticationProvider.loadUserByUsername("UserWithCase").test();
+
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(u -> "UserWithCase".equals(u.getUsername()));
+    }
+
     @Test
     public void shouldLoadUserByUsername_authentication() {
         TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
@@ -60,7 +94,7 @@ public class MongoAuthenticationProviderTest {
 
             @Override
             public Object getPrincipal() {
-                return "bob";
+                return "BoB";
             }
 
             @Override
@@ -79,7 +113,99 @@ public class MongoAuthenticationProviderTest {
     }
 
     @Test
+    public void shouldNotLoadUserByUsername_authentication_caseInsensitive() {
+        configuration.setUsernameCaseSensitive(true);
+        TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
+            private final AuthenticationContext authenticationContext = mock(AuthenticationContext.class);
+
+            @Override
+            public Object getCredentials() {
+                return "bobspassword";
+            }
+
+            @Override
+            public Object getPrincipal() {
+                return "BoB";
+            }
+
+            @Override
+            public AuthenticationContext getContext() {
+                doReturn(authenticationContext).when(authenticationContext).set(anyString(), anyString());
+                doReturn(getPrincipal().toString()).when(authenticationContext).get(getPrincipal().toString());
+                return authenticationContext;
+            }
+        }).test();
+
+        testObserver.awaitTerminalEvent();
+        testObserver.assertError(UsernameNotFoundException.class);
+    }
+
+    @Test
+    public void shouldLoadUserByUsername_authentication_insensitive() {
+        configuration.setUsernameCaseSensitive(true);
+        TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
+            private final AuthenticationContext authenticationContext = mock(AuthenticationContext.class);
+
+            @Override
+            public Object getCredentials() {
+                return "UserWithCase";
+            }
+
+            @Override
+            public Object getPrincipal() {
+                return "UserWithCase";
+            }
+
+            @Override
+            public AuthenticationContext getContext() {
+                doReturn(authenticationContext).when(authenticationContext).set(anyString(), anyString());
+                doReturn(getPrincipal().toString()).when(authenticationContext).get(getPrincipal().toString());
+                return authenticationContext;
+            }
+        }).test();
+
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(u -> "UserWithCase".equals(u.getUsername()));
+    }
+
+    @Test
     public void shouldLoadUserByUsername_authentication_multifield_username() {
+        configuration.setFindUserByMultipleFieldsQuery("{ $or : [{username: ?}, {email: ?}]}");
+        TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
+            private final AuthenticationContext authenticationContext = mock(AuthenticationContext.class);
+
+            @Override
+            public Object getCredentials() {
+                return "user01";
+            }
+
+            @Override
+            public Object getPrincipal() {
+                return "user01";
+            }
+
+            @Override
+            public AuthenticationContext getContext() {
+                doReturn(authenticationContext).when(authenticationContext).set(anyString(), anyString());
+                doReturn(getPrincipal().toString()).when(authenticationContext).get(getPrincipal().toString());
+                return authenticationContext;
+            }
+        }).test();
+
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(u -> "user01".equals(u.getUsername()));
+    }
+
+    @Test
+    public void shouldLoadUserByUsername_authentication_multifield_username_sensitive() {
+        configuration.setUsernameCaseSensitive(true);
+        configuration.setFindUserByMultipleFieldsQuery("{ $or : [{username: ?}, {email: ?}]}");
         TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
             private final AuthenticationContext authenticationContext = mock(AuthenticationContext.class);
 
@@ -110,6 +236,7 @@ public class MongoAuthenticationProviderTest {
 
     @Test
     public void shouldLoadUserByUsername_authentication_multifield_email() {
+        configuration.setFindUserByMultipleFieldsQuery("{ $or : [{username: ?}, {email: ?}]}");
         TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
             private final AuthenticationContext authenticationContext = mock(AuthenticationContext.class);
 
@@ -140,6 +267,8 @@ public class MongoAuthenticationProviderTest {
 
     @Test
     public void shouldLoadUserByUsername_authentication_multipleMatch_validPassword() {
+        configuration.setFindUserByMultipleFieldsQuery("{ $or : [{username: ?}, {email: ?}]}");
+
         connectUser("common@acme.com", "user02");
         connectUser("common@acme.com", "user03");
     }
@@ -175,6 +304,7 @@ public class MongoAuthenticationProviderTest {
 
     @Test
     public void shouldLoadUserByUsername_authentication_multipleMatch_invalidPassword() {
+        configuration.setFindUserByMultipleFieldsQuery("{ $or : [{username: ?}, {email: ?}]}");
         TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
             private final AuthenticationContext authenticationContext = mock(AuthenticationContext.class);
 
@@ -288,5 +418,4 @@ public class MongoAuthenticationProviderTest {
         testObserver.awaitTerminalEvent();
         testObserver.assertError(UsernameNotFoundException.class);
     }
-
 }

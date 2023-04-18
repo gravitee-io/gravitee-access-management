@@ -78,7 +78,7 @@ public class MongoAuthenticationProvider extends MongoAbstractProvider implement
     }
 
     public Maybe<User> loadUserByUsername(Authentication authentication) {
-        String username = ((String) authentication.getPrincipal()).toLowerCase();
+        String username = getEncodedUsername(((String) authentication.getPrincipal()));
         return findUserByMultipleField(username)
                 .toList()
                 .flatMapPublisher(users -> {
@@ -139,14 +139,15 @@ public class MongoAuthenticationProvider extends MongoAbstractProvider implement
     }
 
     public Maybe<User> loadUserByUsername(String username) {
-        final String encodedUsername = username.toLowerCase();
+        final String encodedUsername = getEncodedUsername(username);
         return findUserByUsername(encodedUsername)
                 .map(document -> createUser(new SimpleAuthenticationContext(), document));
     }
 
-    private Maybe<Document> findUserByUsername(String username) {
-        MongoCollection<Document> usersCol = this.mongoClient.getDatabase(this.configuration.getDatabase()).getCollection(this.configuration.getUsersCollection());
-        String rawQuery = this.configuration.getFindUserByUsernameQuery().replaceAll("\\?", username);
+    private Maybe<Document> findUserByUsername(String encodedUsername) {
+        MongoCollection<Document> usersCol = this.mongoClient.getDatabase(this.configuration.getDatabase())
+            .getCollection(this.configuration.getUsersCollection());
+        String rawQuery = this.configuration.getFindUserByUsernameQuery().replaceAll("\\?", encodedUsername);
         String jsonQuery = convertToJsonString(rawQuery);
         BsonDocument query = BsonDocument.parse(jsonQuery);
         return Observable.fromPublisher(usersCol.find(query).first()).firstElement();
