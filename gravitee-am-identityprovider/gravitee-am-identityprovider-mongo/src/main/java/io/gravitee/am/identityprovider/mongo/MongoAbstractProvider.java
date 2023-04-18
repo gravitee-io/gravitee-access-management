@@ -70,7 +70,10 @@ public abstract class MongoAbstractProvider implements InitializingBean {
     }
 
     protected String getSafeUsername(String username) {
-        // lowercase username since case-sensitivity feature
-        return username.toLowerCase().replaceAll(QUOTE, SAFE_QUOTE_REPLACEMENT);
+        return getEncodedUsername(username).replaceAll(QUOTE, SAFE_QUOTE_REPLACEMENT);
+    }
+
+    protected String getEncodedUsername(String username) {
+        return this.configuration.isUsernameCaseSensitive() ? username : username.toLowerCase();
     }
 }
