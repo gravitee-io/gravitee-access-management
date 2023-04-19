@@ -354,8 +354,8 @@ jobs:
       - run:
           name: Start FakeSMTP
           command: |
-            docker pull gessnerfl/fake-smtp-server
-            docker run -d --rm -p 5080:5080 -p 5025:5025 gessnerfl/fake-smtp-server
+            docker pull gessnerfl/fake-smtp-server:1.10.4
+            docker run -d --rm -p 5080:5080 -p 5025:5025 gessnerfl/fake-smtp-server:1.10.4
       - run:
           name: Wait services bootstrap
           command: |
@@ -431,8 +431,8 @@ jobs:
       - run:
           name: Start FakeSMTP
           command: |
-            docker pull gessnerfl/fake-smtp-server
-            docker run -d --rm -p 5080:5080 -p 5025:5025 gessnerfl/fake-smtp-server
+            docker pull gessnerfl/fake-smtp-server:1.10.4
+            docker run -d --rm -p 5080:5080 -p 5025:5025 gessnerfl/fake-smtp-server:1.10.4
       - run:
           name: Wait services bootstrap
           command: |
