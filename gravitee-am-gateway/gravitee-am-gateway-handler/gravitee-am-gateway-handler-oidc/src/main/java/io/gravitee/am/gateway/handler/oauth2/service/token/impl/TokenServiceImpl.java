@@ -370,9 +370,9 @@ public class TokenServiceImpl implements TokenService {
     private ExecutionContext createExecutionContext(OAuth2Request request, Client client, User user) {
         ExecutionContext simpleExecutionContext = new SimpleExecutionContext(request, null);
         ExecutionContext executionContext = executionContextFactory.create(simpleExecutionContext);
-        executionContext.setAttribute("client", new ClientProperties(client));
+        executionContext.setAttribute(ConstantKeys.CLIENT_CONTEXT_KEY, new ClientProperties(client));
         if (user != null) {
-            executionContext.setAttribute("user", new UserProperties(user));
+            executionContext.setAttribute(ConstantKeys.USER_CONTEXT_KEY, new UserProperties(user));
         }
         // put authorization request in context
         if (request.getResponseType() != null && !request.getResponseType().isEmpty()) {
@@ -380,13 +380,14 @@ public class TokenServiceImpl implements TokenService {
         } else {
             executionContext.setAttribute("tokenRequest", request);
         }
-
+        // put auth flow policy context attributes in context
         Object authFlowAttributes = request.getContext().get(ConstantKeys.AUTH_FLOW_CONTEXT_ATTRIBUTES_KEY);
         if (authFlowAttributes != null) {
             executionContext.setAttribute(ConstantKeys.AUTH_FLOW_CONTEXT_ATTRIBUTES_KEY, authFlowAttributes);
             request.getContext().remove(ConstantKeys.AUTH_FLOW_CONTEXT_ATTRIBUTES_KEY);
         }
-
+        // put oauth2 request execution context attributes in context
+        executionContext.getAttributes().putAll(request.getExecutionContext());
         return executionContext;
     }
 }

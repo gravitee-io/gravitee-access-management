@@ -20,6 +20,7 @@ import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
+import io.gravitee.am.gateway.handler.oauth2.policy.RulesEngine;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.AbstractTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
@@ -51,10 +52,14 @@ public class RefreshTokenGranter extends AbstractTokenGranter {
         super(GrantType.REFRESH_TOKEN);
     }
 
-    public RefreshTokenGranter(TokenRequestResolver tokenRequestResolver, TokenService tokenService, UserAuthenticationManager userAuthenticationManager) {
+    public RefreshTokenGranter(TokenRequestResolver tokenRequestResolver,
+                               TokenService tokenService,
+                               UserAuthenticationManager userAuthenticationManager,
+                               RulesEngine rulesEngine) {
         this();
         setTokenRequestResolver(tokenRequestResolver);
         setTokenService(tokenService);
+        setRulesEngine(rulesEngine);
         this.userAuthenticationManager = userAuthenticationManager;
     }
 

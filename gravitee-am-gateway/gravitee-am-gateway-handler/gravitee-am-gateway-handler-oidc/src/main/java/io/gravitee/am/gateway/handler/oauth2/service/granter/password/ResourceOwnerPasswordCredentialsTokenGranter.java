@@ -20,6 +20,7 @@ import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.gateway.handler.common.auth.user.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
+import io.gravitee.am.gateway.handler.oauth2.policy.RulesEngine;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.AbstractTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequestResolver;
@@ -50,11 +51,15 @@ public class ResourceOwnerPasswordCredentialsTokenGranter extends AbstractTokenG
         super(GrantType.PASSWORD);
     }
 
-    public ResourceOwnerPasswordCredentialsTokenGranter(TokenRequestResolver tokenRequestResolver, TokenService tokenService, UserAuthenticationManager userAuthenticationManager) {
+    public ResourceOwnerPasswordCredentialsTokenGranter(TokenRequestResolver tokenRequestResolver,
+                                                        TokenService tokenService,
+                                                        UserAuthenticationManager userAuthenticationManager,
+                                                        RulesEngine rulesEngine) {
         this();
         setTokenRequestResolver(tokenRequestResolver);
         setTokenService(tokenService);
         setUserAuthenticationManager(userAuthenticationManager);
+        setRulesEngine(rulesEngine);
     }
 
     @Override

@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.service.granter.password;
 
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
+import io.gravitee.am.gateway.handler.oauth2.policy.RulesEngine;
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequestResolver;
@@ -27,6 +28,7 @@ import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.util.LinkedMultiValueMap;
+import io.gravitee.gateway.api.ExecutionContext;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Before;
@@ -63,6 +65,12 @@ public class ResourceOwnerPasswordCredentialsTokenGranterTest {
     @Mock
     private TokenService tokenService;
 
+    @Mock
+    private RulesEngine rulesEngine;
+
+    @Mock
+    private ExecutionContext executionContext;
+
     @Before
     public void setUp() {
         granter.setUserAuthenticationManager(userAuthenticationManager);
@@ -86,7 +94,7 @@ public class ResourceOwnerPasswordCredentialsTokenGranterTest {
         when(tokenRequestResolver.resolve(any(), any(), any())).thenReturn(Single.just(tokenRequest));
         when(tokenService.create(any(), any(), any())).thenReturn(Single.just(accessToken));
         when(userAuthenticationManager.authenticate(any(Client.class), any(Authentication.class))).thenReturn(Single.just(new User()));
-
+        when(rulesEngine.fire(any(), any(), any(), any())).thenReturn(Single.just(executionContext));
         TestObserver<Token> testObserver = granter.grant(tokenRequest, client).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();

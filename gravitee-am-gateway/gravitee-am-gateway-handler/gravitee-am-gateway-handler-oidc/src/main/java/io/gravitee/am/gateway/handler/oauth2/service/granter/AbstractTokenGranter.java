@@ -16,14 +16,16 @@
 package io.gravitee.am.gateway.handler.oauth2.service.granter;
 
 import io.gravitee.am.common.oauth2.GrantType;
+import io.gravitee.am.common.policy.ExtensionPoint;
 import io.gravitee.am.gateway.handler.oauth2.exception.UnauthorizedClientException;
+import io.gravitee.am.gateway.handler.oauth2.policy.RulesEngine;
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequestResolver;
 import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 
@@ -42,6 +44,8 @@ public class AbstractTokenGranter implements TokenGranter {
     private TokenRequestResolver tokenRequestResolver;
 
     private TokenService tokenService;
+
+    private RulesEngine rulesEngine;
 
     private boolean supportRefreshToken = true;
 
@@ -132,10 +136,31 @@ public class AbstractTokenGranter implements TokenGranter {
         this.tokenService = tokenService;
     }
 
+    public RulesEngine getRulesEngine() {
+        return rulesEngine;
+    }
+
+    public void setRulesEngine(RulesEngine rulesEngine) {
+        this.rulesEngine = rulesEngine;
+    }
+
     private Single<Token> handleRequest(TokenRequest tokenRequest, Client client, User endUser) {
         return resolveRequest(tokenRequest, client, endUser)
                 .flatMap(tokenRequest1 -> createOAuth2Request(tokenRequest1, client, endUser))
-                .flatMap(oAuth2Request -> createAccessToken(oAuth2Request, client, endUser));
+                .flatMap(oAuth2Request -> {
+                    // fire PRE TOKEN flow
+                    return rulesEngine.fire(ExtensionPoint.PRE_TOKEN, oAuth2Request, client, endUser)
+                            // add the policy chain context values to the oauth2 request context
+                            .map(executionContext -> {
+                                oAuth2Request.getExecutionContext().putAll(executionContext.getAttributes());
+                                return oAuth2Request;
+                            })
+                            // create the access token
+                            .flatMap(oAuth2Request1 -> createAccessToken(oAuth2Request1, client, endUser))
+                            // fire POST TOKEN flow
+                            .flatMap(token -> rulesEngine.fire(ExtensionPoint.POST_TOKEN, oAuth2Request, client, endUser)
+                                    .map(executionContext -> token));
+                });
     }
 
     private Single<OAuth2Request> createOAuth2Request(TokenRequest tokenRequest, Client client, User endUser) {

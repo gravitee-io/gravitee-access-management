@@ -18,7 +18,8 @@
         "consent",
         "register",
         "registration_confirmation",
-        "reset_password"
+        "reset_password",
+        "token"
       ],
       "default": "root",
       "x-schema-form": {
@@ -29,7 +30,8 @@
           "consent": "CONSENT",
           "register": "REGISTER",
           "reset_password": "RESET PASSWORD",
-          "registration_confirmation": "REGISTRATION CONFIRMATION"
+          "registration_confirmation": "REGISTRATION CONFIRMATION",
+          "token": "TOKEN"
         },
         "disabled" : [
           {"$def":  "id"},

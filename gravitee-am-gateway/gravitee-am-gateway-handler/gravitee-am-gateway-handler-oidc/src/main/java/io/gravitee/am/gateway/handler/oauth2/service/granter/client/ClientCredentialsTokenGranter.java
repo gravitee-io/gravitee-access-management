@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.service.granter.client;
 
 import io.gravitee.am.common.oauth2.GrantType;
+import io.gravitee.am.gateway.handler.oauth2.policy.RulesEngine;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.AbstractTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequestResolver;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
@@ -36,9 +37,12 @@ public class ClientCredentialsTokenGranter extends AbstractTokenGranter {
         setSupportRefreshToken(false);
     }
 
-    public ClientCredentialsTokenGranter(TokenRequestResolver tokenRequestResolver, TokenService tokenService) {
+    public ClientCredentialsTokenGranter(TokenRequestResolver tokenRequestResolver,
+                                         TokenService tokenService,
+                                         RulesEngine rulesEngine) {
         this();
         setTokenRequestResolver(tokenRequestResolver);
         setTokenService(tokenService);
+        setRulesEngine(rulesEngine);
     }
 }

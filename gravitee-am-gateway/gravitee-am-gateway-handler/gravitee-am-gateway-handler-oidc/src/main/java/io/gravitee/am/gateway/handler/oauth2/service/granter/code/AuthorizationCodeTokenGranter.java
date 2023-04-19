@@ -22,6 +22,7 @@ import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
+import io.gravitee.am.gateway.handler.oauth2.policy.RulesEngine;
 import io.gravitee.am.gateway.handler.oauth2.service.code.AuthorizationCodeService;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.AbstractTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.pkce.PKCEUtils;
@@ -66,10 +67,17 @@ public class AuthorizationCodeTokenGranter extends AbstractTokenGranter {
         super(GrantType.AUTHORIZATION_CODE);
     }
 
-    public AuthorizationCodeTokenGranter(TokenRequestResolver tokenRequestResolver, TokenService tokenService, AuthorizationCodeService authorizationCodeService, UserAuthenticationManager userAuthenticationManager, AuthenticationFlowContextService authenticationFlowContextService, Environment env) {
+    public AuthorizationCodeTokenGranter(TokenRequestResolver tokenRequestResolver,
+                                         TokenService tokenService,
+                                         AuthorizationCodeService authorizationCodeService,
+                                         UserAuthenticationManager userAuthenticationManager,
+                                         AuthenticationFlowContextService authenticationFlowContextService,
+                                         Environment env,
+                                         RulesEngine rulesEngine) {
         this();
         setTokenRequestResolver(tokenRequestResolver);
         setTokenService(tokenService);
+        setRulesEngine(rulesEngine);
         this.authorizationCodeService = authorizationCodeService;
         this.userAuthenticationManager = userAuthenticationManager;
         this.authenticationFlowContextService = authenticationFlowContextService;

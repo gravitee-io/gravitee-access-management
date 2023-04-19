@@ -21,6 +21,7 @@ import io.gravitee.am.gateway.handler.ciba.exception.AuthenticationRequestNotFou
 import io.gravitee.am.gateway.handler.ciba.exception.SlowDownException;
 import io.gravitee.am.gateway.handler.ciba.service.AuthenticationRequestService;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
+import io.gravitee.am.gateway.handler.oauth2.policy.RulesEngine;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequestResolver;
 import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
@@ -67,12 +68,15 @@ public class CibaTokenGranterTest {
     @Mock
     private Domain domain;
 
+    @Mock
+    private RulesEngine rulesEngine;
+
     private CibaTokenGranter granter;
 
     @Before
     public void init() {
         reset(tokenRequestResolver, tokenService, userAuthenticationManager, tokenRequest, authenticationRequestService);
-        granter = new CibaTokenGranter(tokenRequestResolver, tokenService, userAuthenticationManager, authenticationRequestService, domain);
+        granter = new CibaTokenGranter(tokenRequestResolver, tokenService, userAuthenticationManager, authenticationRequestService, domain, rulesEngine);
     }
 
     @Test

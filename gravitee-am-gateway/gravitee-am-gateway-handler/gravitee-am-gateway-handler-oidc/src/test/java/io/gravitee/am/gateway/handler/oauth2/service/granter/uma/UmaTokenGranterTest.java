@@ -30,7 +30,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.gateway.handler.oauth2.service.token.impl.AccessToken;
-import io.gravitee.am.gateway.handler.uma.policy.RulesEngine;
+import io.gravitee.am.gateway.handler.oauth2.policy.RulesEngine;
 import io.gravitee.am.gateway.policy.PolicyChainException;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
@@ -120,7 +120,7 @@ public class UmaTokenGranterTest {
     private UMATokenGranter umaTokenGranter = new UMATokenGranter(
             tokenService, userAuthenticationManager,
             permissionTicketService, resourceService,
-            jwtService, domain, rulesEngine, executionContextFactory
+            jwtService, domain, executionContextFactory, rulesEngine
     );
 
     private TokenRequest tokenRequest;

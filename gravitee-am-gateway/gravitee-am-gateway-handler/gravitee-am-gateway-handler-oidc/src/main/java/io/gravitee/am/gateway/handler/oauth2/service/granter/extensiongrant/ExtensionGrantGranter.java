@@ -24,6 +24,7 @@ import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager
 import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.exception.UnauthorizedClientException;
+import io.gravitee.am.gateway.handler.oauth2.policy.RulesEngine;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.AbstractTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequestResolver;
@@ -68,11 +69,13 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
                                  TokenService tokenService,
                                  TokenRequestResolver tokenRequestResolver,
                                  IdentityProviderManager identityProviderManager,
-                                 UserService userService) {
+                                 UserService userService,
+                                 RulesEngine rulesEngine) {
         super(extensionGrant.getGrantType());
         setTokenService(tokenService);
         setTokenRequestResolver(tokenRequestResolver);
         setSupportRefreshToken(extensionGrant.isCreateUser() || extensionGrant.isUserExists());
+        setRulesEngine(rulesEngine);
         this.extensionGrantProvider = extensionGrantProvider;
         this.extensionGrant = extensionGrant;
         this.userAuthenticationManager = userAuthenticationManager;
