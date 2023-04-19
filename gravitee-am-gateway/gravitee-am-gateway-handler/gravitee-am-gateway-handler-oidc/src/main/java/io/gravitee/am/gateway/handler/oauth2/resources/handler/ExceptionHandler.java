@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.resources.handler;
 
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.common.exception.uma.UmaException;
+import io.gravitee.am.common.oauth2.ErrorCode;
 import io.gravitee.am.gateway.handler.oauth2.service.response.OAuth2ErrorResponse;
 import io.gravitee.am.gateway.handler.oauth2.service.response.UMAErrorResponse;
 import io.gravitee.am.gateway.handler.oauth2.service.response.UMARequiredClaimsError;
@@ -73,7 +74,7 @@ public class ExceptionHandler implements Handler<RoutingContext> {
                         .end(Json.encodePrettily(umaErrorResponse));
             } else if (throwable instanceof PolicyChainException) {
                 PolicyChainException policyChainException = (PolicyChainException) throwable;
-                OAuth2ErrorResponse oAuth2ErrorResponse = new OAuth2ErrorResponse(policyChainException.key());
+                OAuth2ErrorResponse oAuth2ErrorResponse = new OAuth2ErrorResponse(ErrorCode.INVALID_GRANT);
                 oAuth2ErrorResponse.setDescription(policyChainException.getMessage());
                 routingContext
                         .response()

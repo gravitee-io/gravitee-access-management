@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.oauth2.service.granter.refresh;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
+import io.gravitee.am.gateway.handler.oauth2.policy.RulesEngine;
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
@@ -26,6 +27,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.impl.AccessToken;
 import io.gravitee.am.gateway.handler.oauth2.service.token.impl.RefreshToken;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.util.LinkedMultiValueMap;
+import io.gravitee.gateway.api.ExecutionContext;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
@@ -58,6 +60,12 @@ public class RefreshTokenGranterTest {
     @Mock
     private TokenService tokenService;
 
+    @Mock
+    private RulesEngine rulesEngine;
+
+    @Mock
+    private ExecutionContext executionContext;
+
     @Test
     public void shouldGenerateAnAccessToken() {
         String refreshToken = "refresh-token";
@@ -80,6 +88,7 @@ public class RefreshTokenGranterTest {
 
         when(tokenService.create(any(), any(), any())).thenReturn(Single.just(accessToken));
         when(tokenService.refresh(refreshToken, tokenRequest, client)).thenReturn(Single.just(new RefreshToken(refreshToken)));
+        when(rulesEngine.fire(any(), any(), any(), any())).thenReturn(Single.just(executionContext));
 
         TestObserver<Token> testObserver = granter.grant(tokenRequest, client).test();
         testObserver.assertComplete();
@@ -140,6 +149,7 @@ public class RefreshTokenGranterTest {
         ArgumentCaptor<OAuth2Request> oAuth2RequestArgumentCaptor = ArgumentCaptor.forClass(OAuth2Request.class);
         when(tokenService.create(oAuth2RequestArgumentCaptor.capture(), any(), any())).thenReturn(Single.just(accessToken));
         when(tokenService.refresh(refreshToken, tokenRequest, client)).thenReturn(Single.just(new RefreshToken(refreshToken)));
+        when(rulesEngine.fire(any(), any(), any(), any())).thenReturn(Single.just(executionContext));
 
         TestObserver<Token> testObserver = granter.grant(tokenRequest, client).test();
         testObserver.assertComplete();

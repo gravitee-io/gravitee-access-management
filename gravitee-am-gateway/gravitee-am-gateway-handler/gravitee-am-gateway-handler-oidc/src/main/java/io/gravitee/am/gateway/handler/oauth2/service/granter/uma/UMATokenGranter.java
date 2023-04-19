@@ -21,6 +21,7 @@ import io.gravitee.am.common.exception.uma.UmaException;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.TokenType;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
@@ -33,9 +34,9 @@ import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
-import io.gravitee.am.gateway.handler.uma.policy.DefaultRule;
-import io.gravitee.am.gateway.handler.uma.policy.Rule;
-import io.gravitee.am.gateway.handler.uma.policy.RulesEngine;
+import io.gravitee.am.gateway.handler.oauth2.policy.DefaultRule;
+import io.gravitee.am.gateway.handler.oauth2.policy.Rule;
+import io.gravitee.am.gateway.handler.oauth2.policy.RulesEngine;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
@@ -79,7 +80,6 @@ public class UMATokenGranter extends AbstractTokenGranter {
     private ResourceService resourceService;
     private JWTService jwtService;
     private Domain domain;
-    private RulesEngine rulesEngine;
     private ExecutionContextFactory executionContextFactory;
 
     public UMATokenGranter() {
@@ -92,16 +92,16 @@ public class UMATokenGranter extends AbstractTokenGranter {
                            ResourceService resourceService,
                            JWTService jwtService,
                            Domain domain,
-                           RulesEngine rulesEngine,
-                           ExecutionContextFactory executionContextFactory) {
+                           ExecutionContextFactory executionContextFactory,
+                           RulesEngine rulesEngine) {
         this();
         setTokenService(tokenService);
+        setRulesEngine(rulesEngine);
         this.userAuthenticationManager = userAuthenticationManager;
         this.permissionTicketService = permissionTicketService;
         this.resourceService = resourceService;
         this.jwtService = jwtService;
         this.domain = domain;
-        this.rulesEngine = rulesEngine;
         this.executionContextFactory = executionContextFactory;
     }
 
@@ -386,12 +386,12 @@ public class UMATokenGranter extends AbstractTokenGranter {
                     // prepare the execution context
                     ExecutionContext simpleExecutionContext = new SimpleExecutionContext(oAuth2Request, oAuth2Request.getHttpResponse());
                     ExecutionContext executionContext = executionContextFactory.create(simpleExecutionContext);
-                    executionContext.setAttribute("client", new ClientProperties(client));
+                    executionContext.setAttribute(ConstantKeys.CLIENT_CONTEXT_KEY, new ClientProperties(client));
                     if (endUser != null) {
-                        executionContext.setAttribute("user", new UserProperties(endUser));
+                        executionContext.setAttribute(ConstantKeys.USER_CONTEXT_KEY, new UserProperties(endUser));
                     }
                     // execute the policies
-                    return rulesEngine.fire(rules, executionContext)
+                    return getRulesEngine().fire(rules, executionContext)
                             .toSingleDefault(oAuth2Request)
                             .onErrorResumeNext(ex -> Single.error(new InvalidGrantException("Policy conditions are not met for actual request parameters")));
                 });

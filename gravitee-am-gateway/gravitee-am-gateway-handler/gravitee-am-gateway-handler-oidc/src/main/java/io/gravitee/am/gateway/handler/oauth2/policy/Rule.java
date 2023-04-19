@@ -13,18 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.uma.policy;
+package io.gravitee.am.gateway.handler.oauth2.policy;
 
-import io.gravitee.gateway.api.ExecutionContext;
-import io.reactivex.rxjava3.core.Completable;
-
-import java.util.List;
+import java.util.Map;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface RulesEngine {
+public interface Rule {
 
-    Completable fire(List<Rule> rules, ExecutionContext executionContext);
+    String type();
+    String name();
+    String description();
+    boolean enabled();
+    String condition();
+    Map<String, Object> metadata();
 }

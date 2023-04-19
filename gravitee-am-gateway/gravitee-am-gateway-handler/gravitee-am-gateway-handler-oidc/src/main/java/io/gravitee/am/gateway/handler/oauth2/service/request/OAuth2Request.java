@@ -112,6 +112,11 @@ public class OAuth2Request extends BaseRequest {
     private int contextVersion;
 
     /**
+     * Gravitee execution context
+     */
+    private Map<String, Object> executionContext = new HashMap<>();
+
+    /**
      * UMA 2.0 permissions
      */
     private List<PermissionRequest> permissions;
@@ -197,6 +202,14 @@ public class OAuth2Request extends BaseRequest {
 
     public void setContextVersion(int contextVersion) {
         this.contextVersion = contextVersion;
+    }
+
+    public Map<String, Object> getExecutionContext() {
+        return executionContext;
+    }
+
+    public void setExecutionContext(Map<String, Object> executionContext) {
+        this.executionContext = executionContext;
     }
 
     public Map<String, Object> getRefreshToken() {

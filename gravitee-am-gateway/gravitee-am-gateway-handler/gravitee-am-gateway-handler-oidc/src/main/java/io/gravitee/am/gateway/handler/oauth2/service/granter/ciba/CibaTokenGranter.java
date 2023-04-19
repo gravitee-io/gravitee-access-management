@@ -22,6 +22,7 @@ import io.gravitee.am.gateway.handler.ciba.exception.AuthenticationRequestNotFou
 import io.gravitee.am.gateway.handler.ciba.service.AuthenticationRequestService;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
+import io.gravitee.am.gateway.handler.oauth2.policy.RulesEngine;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.AbstractTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequestResolver;
@@ -59,10 +60,16 @@ public class CibaTokenGranter extends AbstractTokenGranter {
         super(GrantType.CIBA_GRANT_TYPE);
     }
 
-    public CibaTokenGranter(TokenRequestResolver tokenRequestResolver, TokenService tokenService, UserAuthenticationManager userAuthenticationManager, AuthenticationRequestService authenticationRequestService, Domain domain) {
+    public CibaTokenGranter(TokenRequestResolver tokenRequestResolver,
+                            TokenService tokenService,
+                            UserAuthenticationManager userAuthenticationManager,
+                            AuthenticationRequestService authenticationRequestService,
+                            Domain domain,
+                            RulesEngine rulesEngine) {
         this();
         setTokenRequestResolver(tokenRequestResolver);
         setTokenService(tokenService);
+        setRulesEngine(rulesEngine);
         this.userAuthenticationManager = userAuthenticationManager;
         this.authenticationRequestService = authenticationRequestService;
         this.domain = domain;
