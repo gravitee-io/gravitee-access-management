@@ -13,19 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit, ViewChild } from '@angular/core';
-import { ActivatedRoute, Router } from "@angular/router";
-import { AppConfig } from "../../../../config/app.config";
-import { AuditService } from "../../../services/audit.service";
+import {Component, OnInit, ViewChild} from '@angular/core';
+import {ActivatedRoute, Router} from "@angular/router";
+import {AppConfig} from "../../../../config/app.config";
+import {AuditService} from "../../../services/audit.service";
 import moment from 'moment';
-import { OrganizationService } from "../../../services/organization.service";
-import { UserService } from "../../../services/user.service";
-import { FormControl } from "@angular/forms";
+import {OrganizationService} from "../../../services/organization.service";
+import {UserService} from "../../../services/user.service";
+import {FormControl} from "@angular/forms";
 import * as _ from 'lodash';
 import {AuthService} from "../../../services/auth.service";
-import { Observable } from 'rxjs';
-import { filter, map, switchMap } from 'rxjs/operators';
-import { availableTimeRanges, defaultTimeRangeId } from '../../../utils/time-range-utils';
+import {Observable} from 'rxjs';
+import {filter, map, switchMap} from 'rxjs/operators';
+import {availableTimeRanges, defaultTimeRangeId} from '../../../utils/time-range-utils';
 
 @Component({
   selector: 'app-audits',
@@ -37,7 +37,7 @@ export class AuditsComponent implements OnInit {
   private endDateChanged = false;
   organizationContext = false;
   requiredReadPermission: string;
-  @ViewChild('auditsTable', { static: true }) table: any;
+  @ViewChild('auditsTable', {static: true}) table: any;
   userCtrl = new FormControl();
   audits: any[];
   pagedAudits: any;
@@ -90,7 +90,7 @@ export class AuditsComponent implements OnInit {
     return !this.audits || this.audits.length === 0 && !this.displayReset;
   }
 
-  setPage(pageInfo){
+  setPage(pageInfo) {
     this.page.pageNumber = pageInfo.offset;
     this.searchAudits();
   }
@@ -112,7 +112,7 @@ export class AuditsComponent implements OnInit {
       routerLink.push('..');
     }
 
-    if(routerLink.length > 0) {
+    if (routerLink.length > 0) {
       routerLink.push('users');
       routerLink.push(row.actor.id);
     }
@@ -207,17 +207,42 @@ export class AuditsComponent implements OnInit {
   }
 
   searchAudits() {
-    let selectedTimeRange = _.find(this.timeRanges, { id : this.selectedTimeRange });
+    let selectedTimeRange = _.find(this.timeRanges, {id: this.selectedTimeRange});
     let from = this.startDateChanged ? moment(this.startDate).valueOf() : moment().subtract(selectedTimeRange.value, selectedTimeRange.unit).valueOf();
     let to = this.endDateChanged ? moment(this.endDate).valueOf() : moment().valueOf();
     let user = this.selectedUser || (this.userCtrl.value ? (typeof this.userCtrl.value === 'string' ? this.userCtrl.value : this.userCtrl.value.username) : null);
     this.loadingIndicator = true;
     this.auditService.search(this.domainId, this.page.pageNumber, this.page.size, this.eventType, this.eventStatus, user, from, to, this.organizationContext).subscribe(pagedAudits => {
       this.page.totalElements = pagedAudits.totalCount;
-      this.audits = pagedAudits.data;
+      this.audits = pagedAudits.data
+      .map(audit => this.createActorSortDisplayName(audit))
+      .map(audit => this.createTargetSortDisplayName(audit));
       this.selectedUser = null;
       this.loadingIndicator = false;
     });
+  }
+
+  private createTargetSortDisplayName(audit) {
+    if (audit.target) {
+      audit.target.sortDisplayName = audit.target.displayName;
+      if (audit.target.alternativeId) {
+        audit.target.sortDisplayName += ` | ${audit.target?.alertnativeId}`
+      }
+    }
+    return audit
+  }
+
+  private createActorSortDisplayName(audit) {
+    if (audit.actor) {
+      if (this.isUnknownActor(audit)) {
+        audit.actor.sortDisplayName = audit.actor.alternativeId;
+      } else if (this.hasActorUrl(audit)) {
+        audit.actor.sortDisplayName = `${audit.actor.displayName} | ${audit.actor?.displayName}`
+      } else {
+        audit.actor.sortDisplayName = audit.actor.displayName
+      }
+    }
+    return audit;
   }
 
   toggleExpandRow(row) {
