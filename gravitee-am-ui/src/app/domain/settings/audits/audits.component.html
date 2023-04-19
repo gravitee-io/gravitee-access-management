@@ -108,7 +108,7 @@
         </ng-template>
       </ngx-datatable-row-detail>
       <!-- Column Templates -->
-      <ngx-datatable-column *hasPermission="[requiredReadPermission]">
+      <ngx-datatable-column [sortable]='false' *hasPermission="[requiredReadPermission]">
         <ng-template let-row="row" let-expanded="expanded" ngx-datatable-cell-template>
           <a class="expanded"
             href="javascript:void(0)"
@@ -119,29 +119,29 @@
           </a>
         </ng-template>
       </ngx-datatable-column>
-      <ngx-datatable-column name="Date" [flexGrow]="2">
+      <ngx-datatable-column [sortable]='true' name="Date" [flexGrow]="2"  prop="timestamp">
         <ng-template let-row="row" ngx-datatable-cell-template>
           {{row.timestamp | date:'medium'}}
         </ng-template>
       </ngx-datatable-column>
-      <ngx-datatable-column name="Event" [flexGrow]="2">
+      <ngx-datatable-column [sortable]='true' name="Event" [flexGrow]="2" prop="type">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <pre style="margin: 0;">{{row.type}}</pre>
         </ng-template>
       </ngx-datatable-column>
-      <ngx-datatable-column name="Actor" [flexGrow]="2">
+      <ngx-datatable-column [sortable]='true' name="Actor" [flexGrow]="2" prop="actor.sortDisplayName">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <span *ngIf="isUnknownActor(row)">{{row.actor?.alternativeId}}</span>
           <a *ngIf="!isUnknownActor(row) && hasActorUrl(row)" [routerLink]="getActorUrl(row)">{{row.actor?.displayName}} | <small>{{row.actor?.alternativeId}}</small></a>
           <span *ngIf="!isUnknownActor(row) && !hasActorUrl(row)">{{row.actor?.displayName}} | <small>{{row.actor?.alternativeId}}</small></span>
         </ng-template>
       </ngx-datatable-column>
-      <ngx-datatable-column name="Target" [flexGrow]="2">
+      <ngx-datatable-column [sortable]='true' name="Target" [flexGrow]="2" prop="target.sortDisplayName">
         <ng-template let-row="row" ngx-datatable-cell-template>
-          <a *ngIf="row.target" [routerLink]="getTargetUrl(row)" [queryParams]="getTargetParams(row)">{{row.target?.displayName}} <span *ngIf="row.target.alternativeId">| <small>{{row.target?.alternativeId}}</small></span></a>
+          <a *ngIf="row.target" [routerLink]="getTargetUrl(row)" [queryParams]="getTargetParams(row)">{{row.target?.displayName}}<span *ngIf="row.target.alternativeId"> | <small>{{row.target?.alternativeId}}</small></span></a>
         </ng-template>
       </ngx-datatable-column>
-      <ngx-datatable-column name="Status" [flexGrow]="1">
+      <ngx-datatable-column [sortable]='true' name="Status" [flexGrow]="1" prop="outcome.status">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <mat-chip-list>
             <mat-chip style="font-size: 10px; line-height: 4px; margin: 0px;" [color]="row.outcome?.status === 'SUCCESS'? 'primary':'warn'" selected>
@@ -150,7 +150,7 @@
           </mat-chip-list>
         </ng-template>
       </ngx-datatable-column>
-      <ngx-datatable-column name="Actions" [flexGrow]="1" *hasPermission="[requiredReadPermission]">
+      <ngx-datatable-column [sortable]='false' name="Actions" [flexGrow]="1" *hasPermission="[requiredReadPermission]">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div fxLayout="row" class="gv-table-cell-actions">
             <a mat-icon-button [routerLink]="[row.id]"><mat-icon matTooltip="More info">more_horiz</mat-icon></a>
