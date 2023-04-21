@@ -1,0 +1,59 @@
+= Release process
+
+== 📝 Description
+
+This repo contains some https://github.com/google/zx[zx] scripts to execute the different release steps for AM.
+
+It will allow you to run these pipeline on CircleCI to:
+- Generate Changelog
+
+== 🛠 Requirement
+
+To run the scripts, you need to have:
+
+* Node.js >= 16.0.0 (configured in link:.nvmrc[.nvmrc] with v18.4.0)
+* https://github.com/google/zx[zx], to install it you just have to run:
+
+[source,shell]
+----
+npm i -g zx
+# Check everything is ok:
+zx -v
+----
+* A https://github.com/motdotla/dotenv#readme[dotenv] file containing the variable `CIRCLECI_TOKEN`, which is your personal token on CircleCI:
+ - Go to https://app.circleci.com/settings/user/tokens, create a token and copy it
+ - Run the following command in the `release` folder to create a `.env` file with the token:
+
+[source,shell]
+----
+touch .env && echo "CIRCLECI_TOKEN=[YOUR_TOKEN]" > .env
+----
+
+* Some dependencies to run the scripts, you can install them with:
+[source, shell]
+----
+# In the `release` folder
+npm install
+----
+
+== 🏁 Usage[[Usage]]
+
+Thanks to link:package.json[package.json], you can run those scripts as simple `npm` commands (do not forget to use `npm i` before starting).
+
+Each of the commands needs:
+
+* A `CIRCLECI_TOKEN` in `.env` file
+* the `--version` parameter
+
+Optional flag:
+
+* `--dry-run`: allow to run the pipeline in dry run mode
+
+
+Examples:
+
+Run the release note in dry run:
+- `npm run release_notes -- --version=3.21.0 --dry-run`
+
+Run the release note entirely:
+- `npm run release_notes -- --version=3.21.0`
