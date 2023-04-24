@@ -1,5 +1,25 @@
 # Change Log
 
+==  - 3.18.18 (2023-04-24)
+
+=== Gateway
+
+* Do not display default "Internal Server Error" page https://github.com/gravitee-io/issues/issues/9000[#9000]
+* SCIM - additionalInformation entries are lost when using PATCH method https://github.com/gravitee-io/issues/issues/null[#null]
+
+=== Management API
+
+
+
+=== Console
+
+* Audit Log sort is broken https://github.com/gravitee-io/issues/issues/null[#null]
+
+=== Other
+
+* Mongodb: long running server side queries cause outage https://github.com/gravitee-io/issues/issues/8910[#8910]
+
+
 
 == https://github.com/gravitee-io/issues/milestone/664?closed=1[AM - 3.20.4 (2023-04-17)]
 
