@@ -38,6 +38,7 @@ import java.util.Map;
 import static javax.ws.rs.HttpMethod.PATCH;
 import static org.glassfish.jersey.client.HttpUrlConnectorProvider.SET_METHOD_WORKAROUND;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
@@ -308,6 +309,35 @@ public class UserResourceTest extends JerseySpringTest {
     }
 
     @Test
+    public void shouldUpdateStatus_organization() {
+        final String referenceId = "DEFAULT";
+
+        final String userId = "userId";
+        final User mockUser = new User();
+        mockUser.setId(userId);
+        mockUser.setUsername("user-username");
+        mockUser.setPassword("password");
+        mockUser.setReferenceType(ReferenceType.ORGANIZATION);
+        mockUser.setReferenceId(referenceId);
+        mockUser.setEnabled(false);
+
+        var statusEntity = new StatusEntity();
+        statusEntity.setEnabled(false);
+        doReturn(Single.just(mockUser)).when(organizationUserService)
+            .updateStatus(eq(ReferenceType.ORGANIZATION), eq(referenceId), eq(userId), eq(statusEntity.isEnabled()), any());
+
+        final Response response = target("organizations").path(referenceId).path("users").path(userId).path("status").request().put(Entity.json(statusEntity));
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+
+        final User user = readEntity(response, User.class);
+        assertEquals(referenceId, user.getReferenceId());
+        assertEquals(userId, user.getId());
+        assertEquals(mockUser.getUsername(), user.getUsername());
+        assertNull(user.getPassword());
+        assertEquals(statusEntity.isEnabled(), user.isEnabled());
+    }
+
+    @Test
     public void shouldNotUpdateUser_domainNotFound() {
         final String domainId = "domain-id";
         final Domain mockDomain = new Domain();
@@ -358,6 +388,43 @@ public class UserResourceTest extends JerseySpringTest {
         final User user = readEntity(response, User.class);
         assertEquals(domainId, user.getReferenceId());
         assertEquals("firstname", user.getFirstName());
+    }
+
+    @Test
+    public void shouldUpdateUser_organization() {
+        final String organization = "DEFAULT";
+        final Domain mockDomain = new Domain();
+        mockDomain.setId(organization);
+
+        final String userId = "userId";
+        final User mockUser = new User();
+        mockUser.setId(userId);
+        mockUser.setUsername("username");
+        mockUser.setFirstName("firstname");
+        mockUser.setReferenceType(ReferenceType.ORGANIZATION);
+        mockUser.setReferenceId(organization);
+        mockUser.setEnabled(true);
+
+        final UpdateUser updateUser = new UpdateUser();
+        updateUser.setEmail("email@email.com");
+        updateUser.setFirstName("firstname");
+
+        doReturn(Single.just(mockUser)).when(organizationUserService).update(eq(ReferenceType.ORGANIZATION), eq(organization), eq(userId), any(), any());
+
+        final Response response = target("organizations")
+            .path(organization)
+            .path("users")
+            .path(userId)
+            .request()
+            .put(Entity.json(updateUser));
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+
+        final User user = readEntity(response, User.class);
+        assertEquals(organization, user.getReferenceId());
+        assertEquals("username", user.getUsername());
+        assertEquals("firstname", user.getFirstName());
+        assertEquals("userId", user.getId());
+        assertNull(user.getPassword());
     }
 
 }

@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.organizations.users;
 
+import io.gravitee.am.management.handlers.management.api.model.UserEntity;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractUsersResource;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ReferenceType;
@@ -114,7 +115,7 @@ public class UsersResource extends AbstractUsersResource {
                         .flatMap(organization -> organizationUserService.createGraviteeUser(organization, newUser, authenticatedUser))
                         .map(user -> Response
                                 .created(URI.create("/organizations/" + organizationId + "/users/" + user.getId()))
-                                .entity(user)
+                                .entity(new UserEntity(user))
                                 .build()))
                 .subscribe(response::resume, response::resume);
     }
@@ -130,7 +131,7 @@ public class UsersResource extends AbstractUsersResource {
 
         if (hasPermission(organizationPermissions, Permission.ORGANIZATION_USER, Acl.READ)) {
             // Current user has read permission, copy all information.
-            filteredUser = new User(user);
+            filteredUser = new UserEntity(user);
             if (user.getSource() != null) {
                 return identityProviderService.findById(user.getSource())
                         .map(idP -> {
@@ -140,14 +141,13 @@ public class UsersResource extends AbstractUsersResource {
                         .defaultIfEmpty(filteredUser);
             }
         } else {
-            // Current user doesn't have read permission, select only few information and remove default values that could be inexact.
+            // Current user doesn't have read permission, select only little information and remove default values that could be inexact.
             filteredUser = new User(false);
             filteredUser.setId(user.getId());
             filteredUser.setUsername(user.getUsername());
             filteredUser.setDisplayName(user.getDisplayName());
             filteredUser.setPicture(user.getPicture());
         }
-
         return Single.just(filteredUser);
     }
 }
