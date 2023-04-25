@@ -16,6 +16,7 @@
 package io.gravitee.am.model.common;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -25,6 +26,10 @@ public class Page<T> {
     private final Collection<T> data;
     private final int currentPage;
     private final long totalCount;
+
+    public Page(){
+        this(List.of(), 0, 0);
+    }
 
     public Page(Collection<T> data, int currentPage, long totalCount) {
         this.data = data;
