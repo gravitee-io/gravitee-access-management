@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.management.handlers.management.api;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
@@ -568,6 +570,15 @@ public abstract class JerseySpringTest {
                 return (T) response.readEntity(String.class);
             }
 
+            return objectMapper.readValue(response.readEntity(String.class), clazz);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    protected <T> T readEntity(Response response, TypeReference<T> clazz) {
+
+        try {
             return objectMapper.readValue(response.readEntity(String.class), clazz);
         } catch (IOException e) {
             throw new RuntimeException(e);
