@@ -15,8 +15,10 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.Sets;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
+import io.gravitee.am.management.handlers.management.api.model.UserEntity;
 import io.gravitee.am.model.*;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.permissions.Permission;
@@ -25,9 +27,20 @@ import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.util.Maps;
+<<<<<<< HEAD
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+=======
+import io.reactivex.Completable;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+>>>>>>> 6145335a3 (fix: wrap user entity correctly)
 import org.junit.Before;
 import org.junit.Test;
 
@@ -39,7 +52,11 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import static io.gravitee.am.model.ReferenceType.ORGANIZATION;
+import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.*;
@@ -99,21 +116,23 @@ public class UsersResourceTest extends JerseySpringTest {
         final User mockUser = new User();
         mockUser.setId("user-id-1");
         mockUser.setUsername("username-1");
-        mockUser.setReferenceType(ReferenceType.ORGANIZATION);
+        mockUser.setPassword("SomePassWord-1");
+        mockUser.setReferenceType(ORGANIZATION);
         mockUser.setReferenceId(organizationId);
 
         final User mockUser2 = new User();
         mockUser2.setId("domain-id-2");
         mockUser2.setUsername("username-2");
-        mockUser2.setReferenceType(ReferenceType.ORGANIZATION);
+        mockUser2.setPassword("SomePassWord-2");
+        mockUser2.setReferenceType(ORGANIZATION);
         mockUser2.setReferenceId(organizationId);
 
         final Set<User> users = new HashSet<>(Arrays.asList(mockUser, mockUser2));
         final Page<User> pagedUsers = new Page<>(users, 0, 2);
 
         final Map<Permission, Set<Acl>> permissions = Maps.<Permission, Set<Acl>>builder().put(Permission.ORGANIZATION_USER, Sets.newHashSet(Acl.LIST)).build();
-        when(permissionService.findAllPermissions(any(), eq(ReferenceType.ORGANIZATION), eq(organizationId))).thenReturn(Single.just(permissions));
-        doReturn(Single.just(pagedUsers)).when(organizationUserService).findAll(ReferenceType.ORGANIZATION, organizationId, 0, 10);
+        when(permissionService.findAllPermissions(any(), eq(ORGANIZATION), eq(organizationId))).thenReturn(Single.just(permissions));
+        doReturn(Single.just(pagedUsers)).when(organizationUserService).findAll(ORGANIZATION, organizationId, 0, 10);
 
         final Response response = target("organizations")
                 .path("DEFAULT")
@@ -124,6 +143,21 @@ public class UsersResourceTest extends JerseySpringTest {
                 .get();
 
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
+
+        Page<User> values = readEntity(response, new TypeReference<>() {
+        });
+
+        assertEquals(values.getCurrentPage(), 0);
+        assertEquals(values.getTotalCount(), 2);
+        final Collection<User> data = values.getData();
+
+        assertTrue(getFilteredElements(data, User::getId).containsAll(List.of("user-id-1", "domain-id-2")));
+        assertTrue(getFilteredElements(data, User::getUsername).containsAll(List.of("username-1", "username-2")));
+        assertTrue(getFilteredElements(data, User::getPassword).isEmpty());
+    }
+
+    private static <T> List<T> getFilteredElements(Collection<User> data, Function<User, T> mapper) {
+        return data.stream().map(mapper).filter(Objects::nonNull).distinct().collect(toList());
     }
 
     @Test
@@ -176,12 +210,19 @@ public class UsersResourceTest extends JerseySpringTest {
                 .request().post(Entity.json(newUser));
         assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
     }
-
     @Test
     public void shouldCreateOrganizationUser() {
         when(permissionService.hasPermission(any(), any())).thenReturn(Single.just(true));
         when(organizationService.findById(ORGANIZATION_DEFAULT)).thenReturn(Single.just(new Organization()));
-        when(organizationUserService.createGraviteeUser(any(), any(), any())).thenReturn(Single.just(new User()));
+
+        final User mockUser = new User();
+        mockUser.setId("user-id-1");
+        mockUser.setUsername("username-1");
+        mockUser.setPassword("SomePassWord-1");
+        mockUser.setReferenceType(ORGANIZATION);
+        mockUser.setReferenceId("DEFAULT");
+
+        when(organizationUserService.createGraviteeUser(any(), any(), any())).thenReturn(Single.just(mockUser));
 
         final NewUser entity = new NewUser();
         entity.setUsername("test");
@@ -195,5 +236,11 @@ public class UsersResourceTest extends JerseySpringTest {
 
         assertEquals(HttpStatusCode.CREATED_201, response.getStatus());
         verify(organizationUserService).createGraviteeUser(any(), any(), any());
+
+        User user = readEntity(response, User.class);
+        assertEquals(user.getId(), mockUser.getId());
+        assertEquals(user.getUsername(), mockUser.getUsername());
+        assertNull(user.getPassword());
+        assertEquals(user.getReferenceId(), mockUser.getReferenceId());
     }
 }
