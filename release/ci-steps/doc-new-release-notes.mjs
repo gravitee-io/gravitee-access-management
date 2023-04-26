@@ -24,24 +24,34 @@ echo(chalk.blue(`# Write changelog to ${docAmChangelogFile}`));
 const version = await getJiraVersion(releasingVersion);
 const issues = await getJiraIssuesOfVersion(version.name);
 
+const features = issues
+.filter((issue) => issue.fields.issuetype.name === 'Story');
+
 const gatewayIssues = issues.filter((issue) => issue.fields.components.some((cmp) => cmp.name === 'Gateway'));
 
 const managementAPIIssues = issues
+  .filter((issue) => !features.includes(issue))
   .filter((issue) => !gatewayIssues.includes(issue))
   .filter((issue) => issue.fields.components.some((cmp) => cmp.name === 'Management API'));
 
 const consoleIssues = issues
+  .filter((issue) => !features.includes(issue))
   .filter((issue) => !managementAPIIssues.includes(issue))
   .filter((issue) => !gatewayIssues.includes(issue))
   .filter((issue) => issue.fields.components.some((cmp) => cmp.name === 'Console'));
 
 const otherIssues = issues
+  .filter((issue) => !features.includes(issue))
   .filter((issue) => !managementAPIIssues.includes(issue))
   .filter((issue) => !gatewayIssues.includes(issue))
   .filter((issue) => !consoleIssues.includes(issue));
 
 let changelogPatchTemplate = `
 ==  - ${releasingVersion} (${new Date().toISOString().slice(0, 10)})
+
+== What's new !
+
+${getChangelogFor(features)}
 
 === Gateway
 
