@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.root.resources.endpoint.mfa;
 
 import com.google.common.net.HttpHeaders;
+import io.gravitee.am.common.exception.mfa.SendChallengeException;
 import io.gravitee.am.common.oidc.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.common.web.UriBuilder;
@@ -51,14 +52,19 @@ public class MFAChallengeFailureHandler extends AbstractErrorHandler {
 
     @Override
     public void doHandle(RoutingContext routingContext) {
-        Throwable throwable = routingContext.failure();
-        handleException(routingContext, throwable == null ? "MFA Challenge failed for unexpected reason" : throwable.getMessage());
+        handleException(routingContext, routingContext.failure());
     }
 
-    private void handleException(RoutingContext context, String errorDescription) {
-        logoutUser(context);
+    private void handleException(RoutingContext context, Throwable throwable) {
+        String errorDescription = throwable == null ? "MFA Challenge failed for unexpected reason" : throwable.getMessage();
         final MultiMap queryParams = updateQueryParams(context, errorDescription);
-        final String uri = UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH) + "/login", queryParams, true);
+        String uri;
+        if (throwable instanceof SendChallengeException) {
+            uri =  UriBuilderRequest.resolveProxyRequest(context.request(), context.request().uri(), queryParams, true);
+        } else {
+            logoutUser(context);
+            uri = UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH) + "/login", queryParams, true);
+        }
 
         doRedirect(context.response(), uri);
     }
