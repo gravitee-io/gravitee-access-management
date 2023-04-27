@@ -27,7 +27,9 @@ const issues = await getJiraIssuesOfVersion(version.name);
 const features = issues
 .filter((issue) => issue.fields.issuetype.name === 'Story');
 
-const gatewayIssues = issues.filter((issue) => issue.fields.components.some((cmp) => cmp.name === 'Gateway'));
+const gatewayIssues = issues
+  .filter((issue) => !features.includes(issue))
+  .filter((issue) => issue.fields.components.some((cmp) => cmp.name === 'Gateway'));
 
 const managementAPIIssues = issues
   .filter((issue) => !features.includes(issue))
