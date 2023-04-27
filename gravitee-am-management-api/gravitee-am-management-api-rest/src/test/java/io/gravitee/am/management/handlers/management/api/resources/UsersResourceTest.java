@@ -18,7 +18,6 @@ package io.gravitee.am.management.handlers.management.api.resources;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.Sets;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
-import io.gravitee.am.management.handlers.management.api.model.UserEntity;
 import io.gravitee.am.model.*;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.permissions.Permission;
@@ -27,20 +26,13 @@ import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.util.Maps;
-<<<<<<< HEAD
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-=======
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
-import java.util.stream.Collectors;
->>>>>>> 6145335a3 (fix: wrap user entity correctly)
 import org.junit.Before;
 import org.junit.Test;
 
