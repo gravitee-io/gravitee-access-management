@@ -229,7 +229,8 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
               ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
               ctx.next();
           })
-          .handler(new MFAChallengeEndpoint(factorManager, userService, engine, deviceService, applicationContext, domain, credentialService, factorService))
+          .handler(new MFAChallengeEndpoint(factorManager, userService, engine, deviceService, applicationContext, domain, credentialService,
+                  factorService, rateLimiterService, verifyAttemptService, emailService))
           .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService));
 
       testRequest(
@@ -264,7 +265,8 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
           ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
           ctx.next();
         })
-        .handler(new MFAChallengeEndpoint(factorManager, userService, engine, deviceService, applicationContext, domain, credentialService, factorService))
+        .handler(new MFAChallengeEndpoint(factorManager, userService, engine, deviceService, applicationContext, domain, credentialService,
+                factorService, rateLimiterService, verifyAttemptService, emailService))
         .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService));
 
     testRequest(
@@ -288,7 +290,8 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
           ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
           ctx.next();
         })
-        .handler(new MFAChallengeEndpoint(factorManager, userService, engine, deviceService, applicationContext, domain, credentialService, factorService))
+        .handler(new MFAChallengeEndpoint(factorManager, userService, engine, deviceService, applicationContext, domain, credentialService,
+                factorService, rateLimiterService, verifyAttemptService, emailService))
         .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService));
 
     testRequest(
