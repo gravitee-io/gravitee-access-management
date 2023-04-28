@@ -172,13 +172,10 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
             final io.gravitee.am.model.User endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
             final Factor factor = getFactor(routingContext, client, endUser);
             final String error = routingContext.request().getParam(ConstantKeys.ERROR_PARAM_KEY);
-<<<<<<< HEAD
             final String rateLimitError = routingContext.request().getParam(RATE_LIMIT_ERROR_PARAM_KEY);
             final String verifyAttemptsError = routingContext.request().getParam(VERIFY_ATTEMPT_ERROR_PARAM_KEY);
-=======
             final String errorDescription = routingContext.request().getParam(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY);
             final String errorCode = routingContext.request().getParam(ConstantKeys.ERROR_CODE_PARAM_KEY);
->>>>>>> 8888e9c0d (fix: propagate error when it is SendChallengeException)
 
             // prepare context
             final MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
@@ -195,13 +192,11 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
 
             routingContext.put(ConstantKeys.ACTION_KEY, action);
             routingContext.put(ConstantKeys.ERROR_PARAM_KEY, error);
-<<<<<<< HEAD
             routingContext.put(RATE_LIMIT_ERROR_PARAM_KEY, rateLimitError);
             routingContext.put(VERIFY_ATTEMPT_ERROR_PARAM_KEY, verifyAttemptsError);
-=======
             routingContext.put(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, errorDescription);
             routingContext.put(ConstantKeys.ERROR_CODE_PARAM_KEY, errorCode);
->>>>>>> 8888e9c0d (fix: propagate error when it is SendChallengeException)
+
             //Include deviceId, so we can show/hide the "save my device" checkbox
             var deviceId = routingContext.session().get(ConstantKeys.DEVICE_ID);
             if (deviceId != null) {
@@ -424,7 +419,6 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
             return;
         }
 
-<<<<<<< HEAD
         // create factor context
         final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         final FactorContext factorContext = new FactorContext(applicationContext, new HashMap<>());
@@ -434,15 +428,6 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
         factorContext.registerData(KEY_USER, endUser);
         factorContext.registerData(FactorContext.KEY_REQUEST, new EvaluableRequest(new VertxHttpServerRequest(routingContext.request().getDelegate())));
         factorContext.registerData(FactorContext.KEY_ENROLLED_FACTOR, enrolledFactor);
-=======
-        EnrolledFactor enrolledFactor = getEnrolledFactor(routingContext, factorProvider, factor, endUser);
-        Map<String, Object> factorData = new HashMap<>(getEvaluableAttributes(routingContext));
-        factorData.put(FactorContext.KEY_CLIENT, routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY));
-        factorData.put(KEY_USER, endUser);
-        factorData.put(FactorContext.KEY_REQUEST, new EvaluableRequest(new VertxHttpServerRequest(routingContext.request().getDelegate())));
-        factorData.put(FactorContext.KEY_ENROLLED_FACTOR, enrolledFactor);
-        FactorContext factorContext = new FactorContext(applicationContext, factorData);
->>>>>>> 8888e9c0d (fix: propagate error when it is SendChallengeException)
 
         if(rateLimiterService.isRateLimitEnabled()) {
             rateLimiterService.tryConsume(endUser.getId(), factor.getId(), endUser.getClient(), client.getDomain())

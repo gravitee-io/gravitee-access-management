@@ -287,16 +287,17 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
         when(factorManager.getFactor("factorId")).thenReturn(factor);
         when(factorProvider.sendChallenge(any())).thenReturn(Completable.error(new SendChallengeException("Could not send code")));
 
-      router.route(HttpMethod.GET, "/mfa/challenge")
+      router.route(HttpMethod.GET, "/mfa/challenge").order(-1)
           .handler(ctx -> {
               User user = createUser();
               Client client = new Client();
               client.setFactors(Collections.singleton("factorId"));
-              ctx.setUser(io.vertx.reactivex.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+              ctx.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
               ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
               ctx.next();
-          })
-          .handler(new MFAChallengeEndpoint(factorManager, userService, engine, deviceService, applicationContext, domain, credentialService, factorService))
+          }).handler(SessionHandler.create(localSessionStore))
+          .handler(new MFAChallengeEndpoint(factorManager, userService, templateEngine, deviceService, applicationContext, domain, credentialService,
+                  factorService, rateLimiterService, verifyAttemptService, emailService))
           .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService));
 
       testRequest(
@@ -313,25 +314,17 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
 
   @Test
   public void shouldRedirectToError_unexpectedError() throws Exception {
-    FactorProvider factorProvider = mock(FactorProvider.class);
-    when(factorProvider.needChallengeSending()).thenReturn(true);
-    Factor factor = mock(Factor.class);
-    when(factor.getId()).thenReturn("factorId");
-    when(factor.is(FactorType.FIDO2)).thenReturn(false);
-    when(factorManager.get("factorId")).thenReturn(factorProvider);
-    when(factorManager.getFactor("factorId")).thenReturn(factor);
-    when(factorProvider.sendChallenge(any())).thenReturn(Completable.error(new IllegalArgumentException("Unexpected Error")));
-
-    router.route(HttpMethod.GET, "/mfa/challenge")
+    router.route(HttpMethod.GET, "/mfa/challenge").order(-1)
         .handler(ctx -> {
           User user = createUser();
           Client client = new Client();
           client.setFactors(Collections.singleton("factorId"));
-          ctx.setUser(io.vertx.reactivex.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+          ctx.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
           ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
           ctx.next();
         })
-        .handler(new MFAChallengeEndpoint(factorManager, userService, engine, deviceService, applicationContext, domain, credentialService, factorService))
+            .handler(new MFAChallengeEndpoint(factorManager, userService, templateEngine, deviceService, applicationContext, domain, credentialService,
+                    factorService, rateLimiterService, verifyAttemptService, emailService))
         .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService));
 
     testRequest(
@@ -355,7 +348,8 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
           ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
           ctx.next();
         })
-        .handler(new MFAChallengeEndpoint(factorManager, userService, engine, deviceService, applicationContext, domain, credentialService, factorService))
+        .handler(new MFAChallengeEndpoint(factorManager, userService, templateEngine, deviceService, applicationContext, domain, credentialService,
+                factorService, rateLimiterService, verifyAttemptService,emailService))
         .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService));
 
     testRequest(
