@@ -174,6 +174,8 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
             final String error = routingContext.request().getParam(ConstantKeys.ERROR_PARAM_KEY);
             final String rateLimitError = routingContext.request().getParam(RATE_LIMIT_ERROR_PARAM_KEY);
             final String verifyAttemptsError = routingContext.request().getParam(VERIFY_ATTEMPT_ERROR_PARAM_KEY);
+            final String errorDescription = routingContext.request().getParam(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY);
+            final String errorCode = routingContext.request().getParam(ConstantKeys.ERROR_CODE_PARAM_KEY);
 
             // prepare context
             final MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
@@ -192,6 +194,9 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
             routingContext.put(ConstantKeys.ERROR_PARAM_KEY, error);
             routingContext.put(RATE_LIMIT_ERROR_PARAM_KEY, rateLimitError);
             routingContext.put(VERIFY_ATTEMPT_ERROR_PARAM_KEY, verifyAttemptsError);
+            routingContext.put(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, errorDescription);
+            routingContext.put(ConstantKeys.ERROR_CODE_PARAM_KEY, errorCode);
+
             //Include deviceId, so we can show/hide the "save my device" checkbox
             var deviceId = routingContext.session().get(ConstantKeys.DEVICE_ID);
             if (deviceId != null) {
@@ -205,7 +210,7 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
             final FactorProvider factorProvider = factorManager.get(factor.getId());
             // send challenge
             sendChallenge(factorProvider, routingContext, factor, endUser, resChallenge -> {
-                if (resChallenge.failed()) {
+                if (resChallenge.failed() && error == null) {
                     logger.error("An error has occurred when sending MFA challenge", resChallenge.cause());
                     routingContext.fail(resChallenge.cause());
                     return;
@@ -677,17 +682,15 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
     private boolean enableAlternateMFAOptions(Client client, io.gravitee.am.model.User endUser) {
         if (endUser.getFactors() == null || endUser.getFactors().size() <= 1) {
             return false;
-        } else if (client.getFactors() == null || client.getFactors().size() <= 1) {
-            return false;
-        } else {
-            final Set<String> clientFactorIds = client.getFactors();
-            final List<EnrolledFactor> activeEnrolledFactors = endUser.getFactors()
-                    .stream()
-                    .filter(enrolledFactor -> factorManager.get(enrolledFactor.getFactorId()) != null)
-                    .filter(enrolledFactor -> clientFactorIds.contains(enrolledFactor.getFactorId()))
-                    .collect(Collectors.toList());
-
-            return activeEnrolledFactors.size() > 1;
         }
+        if (client.getFactors() == null || client.getFactors().size() <= 1) {
+            return false;
+        }
+        final Set<String> clientFactorIds = client.getFactors();
+        return endUser.getFactors()
+                .stream()
+                .filter(enrolledFactor -> factorManager.get(enrolledFactor.getFactorId()) != null)
+                .filter(enrolledFactor -> clientFactorIds.contains(enrolledFactor.getFactorId()))
+                .count() > 1L;
     }
 }
