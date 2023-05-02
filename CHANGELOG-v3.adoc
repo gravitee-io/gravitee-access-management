@@ -1,5 +1,28 @@
 # Change Log
 
+==  - 3.20.5 (2023-05-02)
+
+== What's new !
+
+
+
+=== Gateway
+
+
+
+=== Management API
+
+* Create account with uppercase username https://github.com/gravitee-io/issues/issues/8966[#8966]
+
+=== Console
+
+* Audit Log sort is broken https://github.com/gravitee-io/issues/issues/8662[#8662]
+
+=== Other
+
+* MFA : Invalid Factor Preventing User Logon  https://github.com/gravitee-io/issues/issues/9019[#9019]
+
+
 == AM - 3.19.11 (2023-05-02)
 
 === Gateway
