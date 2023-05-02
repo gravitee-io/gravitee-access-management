@@ -1,14 +1,6 @@
 # Change Log
 
-==  - 3.20.5 (2023-05-02)
-
-== What's new !
-
-
-
-=== Gateway
-
-
+== AM - 3.20.5 (2023-05-02)
 
 === Management API
 
