@@ -300,7 +300,27 @@ commands:
             ./build.sh -v << parameters.graviteeio_version >>
             
             docker run --rm -v "${GIT_GRAVITEE_PACKAGES_REPO}/am/${MAJOR_VERSION_NUMBER}.x:/packages" -e PACKAGECLOUD_TOKEN=${GIO_PACKAGECLOUD_TOKEN} digitalocean/packagecloud push --yes --skip-errors --verbose graviteeio/rpms/el/7 /packages/*.rpm
-
+  add-docker-image-in-snyk:
+    parameters:
+      docker-image-name:
+        type: string
+      version:
+        type: string
+    steps:
+      - run:
+          name: Add << parameters.docker-image-name >> << parameters.version >> to Snyk
+          command: |
+            curl --fail \
+                 --include \
+                 --request POST \
+                 --header "Content-Type: application/json; charset=utf-8" \
+                 --header "Authorization: token ${SNYK_API_TOKEN}" \
+                 --data-binary "{
+              \"target\": {
+                \"name\": \"<< parameters.docker-image-name >>:<< parameters.version >>\"
+              }
+            }" \
+            "https://api.snyk.io/api/v1/org/6a75be52-cf2f-40d4-8673-1d9c426f3bdb/integrations/${SNYK_INTEGRATION_ID}/import"
 
 jobs:
   setup:
@@ -714,6 +734,19 @@ jobs:
             
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
             docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/management-api/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} -t ${IMAGE_TAG_LATEST} /tmp
+      - when:
+          condition:
+            matches: { pattern: "^(\\d+\\.\\d+\\.x)|master$", value: << pipeline.git.branch >> }
+          steps:
+            - keeper/env-export:
+                secret-url: keeper://s83JmReKpBZWjHdud6ZAlg/custom_field/gravitee_am_org_api_token
+                var-name: SNYK_API_TOKEN
+            - keeper/env-export:
+                secret-url: keeper://s83JmReKpBZWjHdud6ZAlg/custom_field/gravitee_am_acr_integration_id
+                var-name: SNYK_INTEGRATION_ID
+            - add-docker-image-in-snyk:
+                docker-image-name: am-management-api
+                version: ${TAG_LATEST}
       - run:
           name: Build Gateway Docker Image to Azure Registry
           when: always
@@ -724,6 +757,19 @@ jobs:
             
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
             docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/gateway/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} -t ${IMAGE_TAG_LATEST} /tmp
+      - when:
+          condition:
+            matches: { pattern: "^(\\d+\\.\\d+\\.x)|master$", value: << pipeline.git.branch >> }
+          steps:
+            - keeper/env-export:
+                secret-url: keeper://s83JmReKpBZWjHdud6ZAlg/custom_field/gravitee_am_org_api_token
+                var-name: SNYK_API_TOKEN
+            - keeper/env-export:
+                secret-url: keeper://s83JmReKpBZWjHdud6ZAlg/custom_field/gravitee_am_acr_integration_id
+                var-name: SNYK_INTEGRATION_ID
+            - add-docker-image-in-snyk:
+                docker-image-name: am-gateway
+                version: ${TAG_LATEST}
       - run:
           name: Build Web UI Docker Image to Azure Registry
           when: always
@@ -735,6 +781,19 @@ jobs:
             
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
             docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/management-ui/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} -t ${IMAGE_TAG_LATEST} /tmp
+      - when:
+          condition:
+            matches: { pattern: "^(\\d+\\.\\d+\\.x)|master$", value: << pipeline.git.branch >> }
+          steps:
+            - keeper/env-export:
+                secret-url: keeper://s83JmReKpBZWjHdud6ZAlg/custom_field/gravitee_am_org_api_token
+                var-name: SNYK_API_TOKEN
+            - keeper/env-export:
+                secret-url: keeper://s83JmReKpBZWjHdud6ZAlg/custom_field/gravitee_am_acr_integration_id
+                var-name: SNYK_INTEGRATION_ID
+            - add-docker-image-in-snyk:
+                docker-image-name: am-management-ui
+                version: ${TAG_LATEST}
       - persist_to_workspace:
           root: /tmp
           paths:
@@ -1366,6 +1425,27 @@ jobs:
                     ]
                   }
 
+  add-docker-images-in-snyk:
+    docker:
+      - image: cimg/base:stable
+    resource_class: small
+    steps:
+      - keeper/env-export:
+          secret-url: keeper://s83JmReKpBZWjHdud6ZAlg/custom_field/gravitee_am_org_api_token
+          var-name: SNYK_API_TOKEN
+      - keeper/env-export:
+          secret-url: keeper://s83JmReKpBZWjHdud6ZAlg/custom_field/gravitee_am_dockerhub_integration_id
+          var-name: SNYK_INTEGRATION_ID
+      - add-docker-image-in-snyk:
+          docker-image-name: graviteeio/am-gateway
+          version: << pipeline.parameters.graviteeio_version >>
+      - add-docker-image-in-snyk:
+          docker-image-name: graviteeio/am-management-api
+          version: << pipeline.parameters.graviteeio_version >>
+      - add-docker-image-in-snyk:
+          docker-image-name: graviteeio/am-management-ui
+          version: << pipeline.parameters.graviteeio_version >>
+
 workflows:
   version: 2.1
   # -- typically this workflow is executed on pull requests events for Community Edition Gravitee Repositories
@@ -1524,6 +1604,10 @@ workflows:
           dry_run: << pipeline.parameters.dry_run >>
           tag_latest: << pipeline.parameters.tag_latest >>
           tag_latest_support: << pipeline.parameters.tag_latest_support >>
+      - add-docker-images-in-snyk:
+          context: cicd-orchestrator
+          requires:
+            - build_n_push_am_ce_job
 
   daily-purge-azure-registry:
     triggers:
