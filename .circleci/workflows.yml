@@ -317,7 +317,7 @@ commands:
                  --header "Authorization: token ${SNYK_API_TOKEN}" \
                  --data-binary "{
               \"target\": {
-                \"name\": \"graviteeio/<< parameters.docker-image-name >>:<< parameters.version >>\"
+                \"name\": \"<< parameters.docker-image-name >>:<< parameters.version >>\"
               }
             }" \
             "https://api.snyk.io/api/v1/org/6a75be52-cf2f-40d4-8673-1d9c426f3bdb/integrations/${SNYK_INTEGRATION_ID}/import"
@@ -746,7 +746,7 @@ jobs:
                 var-name: SNYK_INTEGRATION_ID
             - add-docker-image-in-snyk:
                 docker-image-name: graviteeio.azurecr.io/am-management-api
-                version: $TAG_LATEST
+                version: ${TAG_LATEST}
       - run:
           name: Build Gateway Docker Image to Azure Registry
           when: always
@@ -769,7 +769,7 @@ jobs:
                 var-name: SNYK_INTEGRATION_ID
             - add-docker-image-in-snyk:
                 docker-image-name: graviteeio.azurecr.io/am-gateway
-                version: $TAG_LATEST
+                version: ${TAG_LATEST}
       - run:
           name: Build Web UI Docker Image to Azure Registry
           when: always
@@ -793,7 +793,7 @@ jobs:
                 var-name: SNYK_INTEGRATION_ID
             - add-docker-image-in-snyk:
                 docker-image-name: graviteeio.azurecr.io/am-management-ui
-                version: $TAG_LATEST
+                version: ${TAG_LATEST}
       - persist_to_workspace:
           root: /tmp
           paths:
