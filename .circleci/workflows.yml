@@ -745,7 +745,7 @@ jobs:
                 secret-url: keeper://s83JmReKpBZWjHdud6ZAlg/custom_field/gravitee_am_acr_integration_id
                 var-name: SNYK_INTEGRATION_ID
             - add-docker-image-in-snyk:
-                docker-image-name: graviteeio.azurecr.io/am-management-api
+                docker-image-name: am-management-api
                 version: ${TAG_LATEST}
       - run:
           name: Build Gateway Docker Image to Azure Registry
@@ -768,7 +768,7 @@ jobs:
                 secret-url: keeper://s83JmReKpBZWjHdud6ZAlg/custom_field/gravitee_am_acr_integration_id
                 var-name: SNYK_INTEGRATION_ID
             - add-docker-image-in-snyk:
-                docker-image-name: graviteeio.azurecr.io/am-gateway
+                docker-image-name: am-gateway
                 version: ${TAG_LATEST}
       - run:
           name: Build Web UI Docker Image to Azure Registry
@@ -792,7 +792,7 @@ jobs:
                 secret-url: keeper://s83JmReKpBZWjHdud6ZAlg/custom_field/gravitee_am_acr_integration_id
                 var-name: SNYK_INTEGRATION_ID
             - add-docker-image-in-snyk:
-                docker-image-name: graviteeio.azurecr.io/am-management-ui
+                docker-image-name: am-management-ui
                 version: ${TAG_LATEST}
       - persist_to_workspace:
           root: /tmp
