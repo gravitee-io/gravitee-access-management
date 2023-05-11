@@ -2,6 +2,12 @@
   "type" : "object",
   "id" : "urn:jsonschema:io:gravitee:policy:am:enrich:profile:EnrichProfilePolicyConfiguration",
   "properties" : {
+      "enableObjectClaimSupport": {
+        "title": "Enable object claim support",
+        "description": "When enabled the value EL can return an Object.",
+        "type": "boolean",
+        "default": false
+      },
       "properties" : {
       "type" : "array",
       "title": "Context properties",

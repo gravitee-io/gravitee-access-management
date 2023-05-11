@@ -31,9 +31,12 @@ import io.gravitee.gateway.api.Response;
 import io.gravitee.policy.api.PolicyChain;
 import io.gravitee.policy.api.PolicyResult;
 import io.reactivex.Single;
+import java.util.List;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -43,6 +46,10 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -194,6 +201,45 @@ public class EnrichProfilePolicyTest {
                 "myclaimValue".equals(u.getAdditionalInformation().get("myclaim")) &&
                 u.getAdditionalInformation().containsKey("myclaim-tpl") &&
                 PARAM_VALUE.equals(u.getAdditionalInformation().get("myclaim-tpl"))));
+    }
+
+
+    @Test
+    public void shouldUpdateUserWithJsonObjectClaim() throws Exception {
+        final CountDownLatch lock = new CountDownLatch(1);
+        this.policyChain = spy(new CountDownPolicyChain(lock));
+        this.executionContext.getTemplateEngine().getTemplateContext()
+            .setVariable("calloutResponseContent", "{\"property\":\"value\",\"number\": 17}");
+
+        when(configuration.isEnableObjectClaimSupport()).thenReturn(true);
+        when(configuration.getProperties()).thenReturn(List.of(
+            new Property("myJsonClaim", "{#jsonPath(#calloutResponseContent, '$')}"),
+            new Property("myclaim-tpl", "{#request.params['"+REQUEST_PARAM+"']}")));
+
+        User user = mock(User.class);
+        Map<String, Object> additionalInformation = new HashMap<>();
+        when(user.getAdditionalInformation()).thenReturn(additionalInformation);
+        when(executionContext.getAttribute("user")).thenReturn(user);
+
+        when(userRepository.update(any())).thenReturn(Single.just(user));
+
+        EnrichProfilePolicy enrichProfilePolicy = new EnrichProfilePolicy(configuration);
+        enrichProfilePolicy.onRequest(request, response, executionContext, policyChain);
+
+        lock.await(1, TimeUnit.SECONDS);
+        verify(policyChain, never()).failWith(any());
+        verify(policyChain).doNext(any(), any());
+        var captor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).update(captor.capture());
+        var updatedUser = captor.getValue();
+        assertNotNull(updatedUser.getAdditionalInformation());
+        assertTrue("Missing claim myclaim-tpl", updatedUser.getAdditionalInformation().containsKey("myclaim-tpl"));
+        assertEquals(List.of("Error Content"), updatedUser.getAdditionalInformation().get("myclaim-tpl"));
+        assertTrue("Missing claim myJsonClaim", updatedUser.getAdditionalInformation().containsKey("myJsonClaim"));
+        assertEquals(Map.of(
+            "property", "value",
+            "number", 17),
+            updatedUser.getAdditionalInformation().get("myJsonClaim"));
     }
 
     class CountDownPolicyChain implements PolicyChain {
