@@ -55,6 +55,7 @@ object ManagementAPICalls {
       .body(StringBody(s"""{"name":"${domain}"}""")).asJson
       .check(status.is(201))
       .check(jsonPath("$.id").saveAs("domainId"))
+      .check(jsonPath("$.hrid").saveAs("domainHrId"))
   }
 
   def enableCurrentIDPToApp(appName: String) = {
@@ -93,6 +94,18 @@ object ManagementAPICalls {
       .check(status.is(200))
   }
 
+  def configureScim = {
+    http("Configure SCIM")
+      .patch(MANAGEMENT_BASE_URL + "/management/organizations/DEFAULT/environments/DEFAULT/domains/${domainId}")
+      .header("Authorization", "Bearer ${auth-token}")
+      .body(StringBody(s"""{
+                          |  "scim": {
+                          |    "enabled": true
+                          |  }
+                          |}""".stripMargin)).asJson
+      .check(status.is(200))
+  }
+
   def createUser = {
     http("Create User")
       .post(MANAGEMENT_BASE_URL + "/management/organizations/DEFAULT/environments/DEFAULT/domains/${domainId}/users")
@@ -106,5 +119,73 @@ object ManagementAPICalls {
           |"source":"${identityId}",
           |"preRegistration":false}""".stripMargin)).asJson
       .check(status.is(201))
+  }
+
+  def generateAccessToken(clientId: String, clientSecret: String)= {
+    http("Generate Access Token")
+      .post(GATEWAY_BASE_URL + "/gatling-scim-test/oauth/token")
+      .basicAuth(clientId, clientSecret)
+      .formParam("grant_type", "client_credentials")
+      .check(jsonPath("$.access_token").saveAs("access-token"))
+      .check(status.is(200))
+  }
+
+  def createScimUser() = {
+
+    http("Create Scim User")
+      .post(GATEWAY_BASE_URL + "/gatling-scim-test/scim/Users")
+      .header("Authorization", "Bearer ${access-token}")
+      .body(StringBody(
+        """{
+          |  "schemas": ["urn:ietf:params:scim:schemas:core:2.0:User"],
+          |  "externalId": "${index}",
+          |  "userName": "${username}@example.com",
+          |  "name": {
+          |    "formatted": "Ms. ${firstname}.${lastname}",
+          |    "familyName": "${firstname}",
+          |    "givenName": "${lastname}"
+          |  },
+          |  "emails": [
+          |    {
+          |      "value": "${username}@example.com",
+          |      "type": "work",
+          |      "primary": true
+          |    },
+          |    {
+          |      "value": "${firstname}@${lastname}.org",
+          |      "type": "home"
+          |    }
+          |  ],
+          |  "displayName": "${firstname} - ${lastname}",
+          |  "nickName": "Babs ${firstname}",
+          |  "active":true
+          |}""".stripMargin)).asJson
+      .check(status.is(201))
+      .check(jsonPath("$.id").saveAs("userIdAA"))
+  }
+
+  def patchScimUser() = {
+
+    http("Patch Scim User")
+      .patch(GATEWAY_BASE_URL + "/gatling-scim-test/scim/Users/${userIdAA}")
+      .header("Authorization", "Bearer ${access-token}")
+      .body(StringBody(
+        s"""{
+          |     "schemas":["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
+          |     "Operations": [{
+          |        "op":"Add",
+          |        "value" : {
+          |            "emails": [
+          |                {
+          |                    "value": "update@example.com",
+          |                    "type": "work",
+          |                    "primary": true
+          |                }
+          |            ]
+          |        }
+          |     }]
+          |
+          |}""".stripMargin)).asJson
+      .check(status.is(200))
   }
 }
