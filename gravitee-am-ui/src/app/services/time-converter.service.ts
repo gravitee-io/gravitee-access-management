@@ -38,4 +38,8 @@ export class TimeConverterService {
     }
     return 'seconds'
   }
+
+  getHumanTime(value: DurationInputArg1, unit: DurationInputArg2 = 'seconds') {
+    return moment.duration(value, unit).humanize();
+  }
 }

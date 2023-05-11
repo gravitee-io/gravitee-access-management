@@ -20,6 +20,7 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.gateway.handler.root.service.user.model.UserToken;
+import io.reactivex.rxjava3.core.Maybe;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -32,7 +33,7 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
  */
 public class UserTokenRequestParseHandler extends UserRequestHandler {
 
-    private final UserService userService;
+    protected final UserService userService;
 
     public UserTokenRequestParseHandler(UserService userService) {
         this.userService = userService;
@@ -73,7 +74,15 @@ public class UserTokenRequestParseHandler extends UserRequestHandler {
             return;
         }
 
-        parseToken(token, handler -> {
+        var handler = getResultHandler(context, queryParams);
+        parseToken(token).subscribe(
+                userToken -> handler.handle(Future.succeededFuture(userToken)),
+                errorResult -> handler.handle(Future.failedFuture(errorResult)),
+                () -> handler.handle(Future.failedFuture(new InvalidTokenException("The JWT token is invalid"))));
+    }
+
+    protected Handler<AsyncResult<UserToken>> getResultHandler(RoutingContext context, MultiMap queryParams) {
+        return handler -> {
             if (handler.failed()) {
                 queryParams.set(ConstantKeys.ERROR_PARAM_KEY, "invalid_token");
                 redirectToPage(context, queryParams);
@@ -86,14 +95,10 @@ public class UserTokenRequestParseHandler extends UserRequestHandler {
             context.put(ConstantKeys.CLIENT_CONTEXT_KEY, userToken.getClient());
             context.put(ConstantKeys.TOKEN_CONTEXT_KEY, userToken.getToken());
             context.next();
-        });
+        };
     }
 
-    private void parseToken(String token, Handler<AsyncResult<UserToken>> handler) {
-        userService.verifyToken(token)
-                .subscribe(
-                        userToken -> handler.handle(Future.succeededFuture(userToken)),
-                        error -> handler.handle(Future.failedFuture(error)),
-                        () -> handler.handle(Future.failedFuture(new InvalidTokenException("The JWT token is invalid"))));
+    protected Maybe<UserToken> parseToken(String token) {
+        return userService.verifyToken(token);
     }
 }

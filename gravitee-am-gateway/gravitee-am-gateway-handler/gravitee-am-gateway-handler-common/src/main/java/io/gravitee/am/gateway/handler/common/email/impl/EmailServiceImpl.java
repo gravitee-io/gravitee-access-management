@@ -41,7 +41,6 @@ import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.EmailAuditBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -49,7 +48,6 @@ import java.io.StringWriter;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -57,7 +55,6 @@ import java.util.Map;
 
 import static io.gravitee.am.common.web.UriBuilder.encodeURIComponent;
 import static io.gravitee.am.service.utils.UserProfileUtils.preferredLanguage;
-import static org.springframework.ui.freemarker.FreeMarkerTemplateUtils.processTemplateIntoString;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -72,10 +69,9 @@ public class EmailServiceImpl implements EmailService {
     private final Integer blockedAccountExpireAfter;
     private final String mfaChallengeSubject;
     private final Integer mfaChallengeExpireAfter;
-
-    @Value("${user.mfaVerifyAttempt.email.subject:${msg('email.verify_attempt.subject')}}")
-    private String mfaVerifyAttemptSubject;
-
+    private final String mfaVerifyAttemptSubject;
+    private final String registrationVerifySubject;
+    private final int userRegistrationExpireAfter;
     @Autowired
     private EmailManager emailManager;
 
@@ -105,7 +101,10 @@ public class EmailServiceImpl implements EmailService {
             String blockedAccountSubject,
             int blockedAccountExpireAfter,
             String mfaChallengeSubject,
-            int mfaChallengeExpireAfter) {
+            int mfaChallengeExpireAfter,
+            String mfaVerifyAttemptSubject,
+            String registrationVerifySubject,
+            int userRegistrationExpiresAfter) {
         this.enabled = enabled;
         this.resetPasswordSubject = resetPasswordSubject;
         this.resetPasswordExpireAfter = resetPasswordExpireAfter;
@@ -113,6 +112,9 @@ public class EmailServiceImpl implements EmailService {
         this.blockedAccountExpireAfter = blockedAccountExpireAfter;
         this.mfaChallengeSubject = mfaChallengeSubject;
         this.mfaChallengeExpireAfter = mfaChallengeExpireAfter;
+        this.mfaVerifyAttemptSubject = mfaVerifyAttemptSubject;
+        this.registrationVerifySubject = registrationVerifySubject;
+        this.userRegistrationExpireAfter = userRegistrationExpiresAfter;
     }
 
     @Override
@@ -300,6 +302,8 @@ public class EmailServiceImpl implements EmailService {
                 return mfaChallengeSubject;
             case VERIFY_ATTEMPT:
                 return mfaVerifyAttemptSubject;
+            case REGISTRATION_VERIFY:
+                return registrationVerifySubject;
             default:
                 throw new IllegalArgumentException(template.template() + " not found");
         }
@@ -315,6 +319,8 @@ public class EmailServiceImpl implements EmailService {
                 return mfaChallengeExpireAfter;
             case VERIFY_ATTEMPT:
                 return 0;
+            case REGISTRATION_VERIFY:
+                return userRegistrationExpireAfter;
             default:
                 throw new IllegalArgumentException(template.template() + " not found");
         }

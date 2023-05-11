@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 import { Component } from '@angular/core';
-import {ActivatedRoute} from "@angular/router";
+import { ActivatedRoute } from "@angular/router";
+import { EmailTemplateFactoryService } from "../../../../../services/email.template.factory.service";
 
 @Component({
   selector: 'app-application-emails',
@@ -25,46 +26,24 @@ export class ApplicationEmailsComponent {
   emails: any[];
   application: any;
   domain: any;
+  private emailTemplateFactoryService: EmailTemplateFactoryService;
 
-  constructor(private route: ActivatedRoute) { }
+  constructor(private route: ActivatedRoute, emailTemplateFactoryService: EmailTemplateFactoryService) {
+    this.emailTemplateFactoryService = emailTemplateFactoryService;
+  }
 
   ngOnInit() {
     this.domain = this.route.snapshot.data['domain'];
     this.application = this.route.snapshot.data['application'];
-    this.emails = this.getEmails();
   }
 
   getEmails() {
-    return [
-      {
-        'name': 'Registration confirmation',
-        'description': 'Registration email to confirm user account',
-        'template': 'REGISTRATION_CONFIRMATION',
-        'icon' : 'how_to_reg',
-        'enabled': this.applicationSettingsValid()
-      },
-      {
-        'name': 'Reset password',
-        'description': 'Reset password email to ask for a new one',
-        'template': 'RESET_PASSWORD',
-        'icon': 'lock_open',
-        'enabled': this.applicationSettingsValid() && this.allowResetPassword()
-      },
-      {
-        'name': 'Blocked account',
-        'description': 'Recover account after it has been blocked',
-        'template': 'BLOCKED_ACCOUNT',
-        'icon': 'person_add_disabled',
-        'enabled': this.applicationSettingsValid()
-      },
-      {
-        'name': 'MFA Challenge',
-        'description': 'Multi-factor authentication verification code',
-        'template': 'MFA_CHALLENGE',
-        'icon': 'check_circle_outline',
-        'enabled': this.applicationSettingsValid()
-      }
-    ]
+    return this.emailTemplateFactoryService
+      .findBy( email => email.template !== "CERTIFICATE_EXPIRATION")
+      .map(email => {
+        email.enabled = email.template === "RESET_PASSWORD" ? this.allowResetPassword() : this.applicationSettingsValid();
+        return email;
+      });
   }
 
   applicationSettingsValid() {

@@ -37,11 +37,11 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.*;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.File;
 import java.util.Map;
 
+import static java.util.concurrent.TimeUnit.DAYS;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -61,8 +61,10 @@ public class EmailServiceTest {
             "Account has been locked",
             86400,
             "Verification Code",
-            300
-    );
+            300,
+            "Verify your MFA attempt",
+            "Complete your registration",
+            Long.valueOf(DAYS.toSeconds(7)).intValue());
 
     @Mock
     private EmailService emailService;

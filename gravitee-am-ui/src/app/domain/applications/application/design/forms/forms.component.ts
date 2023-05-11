@@ -15,6 +15,7 @@
  */
 import {Component, OnInit} from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import {FormTemplateFactoryService} from "../../../../../services/form.template.factory.service";
 
 @Component({
   selector: 'app-application-forms',
@@ -22,123 +23,27 @@ import { ActivatedRoute } from '@angular/router';
   styleUrls: ['./forms.component.scss']
 })
 export class ApplicationFormsComponent implements OnInit {
-  forms: any[];
   domain: any;
   application: any;
 
-  constructor(private route: ActivatedRoute) {
+  constructor(
+    private route: ActivatedRoute,
+    private formTemplateFactoryService: FormTemplateFactoryService) {
   }
 
   ngOnInit() {
     this.domain = this.route.snapshot.data['domain'];
     this.application = this.route.snapshot.data['application'];
-    this.forms = this.getForms();
   }
 
   getForms() {
-    return [
-      {
-        'name': 'Login',
-        'description': 'Login page to authenticate users',
-        'template': 'LOGIN',
-        'icon': 'account_box',
-        'enabled': this.applicationSettingsValid()
-      },
-      {
-        'name': 'Identifier-first Login',
-        'description': 'Identifier-first login page to authenticate users',
-        'template': 'IDENTIFIER_FIRST_LOGIN',
-        'icon': 'account_box',
-        'enabled': this.applicationSettingsValid()
-      },
-      {
-        'name': 'WebAuthn Register',
-        'description': 'Passwordless page to register authenticators (devices)',
-        'template': 'WEBAUTHN_REGISTER',
-        'icon': 'fingerprint',
-        'enabled': this.applicationSettingsValid()
-      },
-      {
-        'name': 'WebAuthn Login',
-        'description': 'Passwordless page to authenticate users',
-        'template': 'WEBAUTHN_LOGIN',
-        'icon': 'fingerprint',
-        'enabled': this.applicationSettingsValid()
-      },
-      {
-        'name': 'Registration',
-        'description': 'Registration page to create an account',
-        'template': 'REGISTRATION',
-        'icon': 'person_add',
-        'enabled': this.applicationSettingsValid()
-      },
-      {
-        'name': 'Registration confirmation',
-        'description': 'Register page to confirm user account',
-        'template': 'REGISTRATION_CONFIRMATION',
-        'icon': 'how_to_reg',
-        'enabled': this.applicationSettingsValid()
-      },
-      {
-        'name': 'Forgot password',
-        'description': 'Forgot password to recover account',
-        'template': 'FORGOT_PASSWORD',
-        'icon': 'lock',
-        'enabled': this.applicationSettingsValid()
-      },
-      {
-        'name': 'Reset password',
-        'description': 'Reset password page to make a new password',
-        'template': 'RESET_PASSWORD',
-        'icon': 'lock_open',
-        'enabled': this.applicationSettingsValid()
-      },
-      {
-        'name': 'User consent',
-        'description': 'User consent to acknowledge and accept data access',
-        'template': 'OAUTH2_USER_CONSENT',
-        'icon': 'playlist_add_check',
-        'enabled': this.applicationSettingsValid()
-      },
-      {
-        'name': 'MFA Enroll',
-        'description': 'Multi-factor authentication settings page',
-        'template': 'MFA_ENROLL',
-        'icon': 'rotate_right',
-        'enabled': this.applicationSettingsValid()
-      },
-      {
-        'name': 'MFA Challenge',
-        'description': 'Multi-factor authentication verify page',
-        'template': 'MFA_CHALLENGE',
-        'icon': 'check_circle_outline',
-        'enabled': this.applicationSettingsValid()
-      },
-      {
-        'name': 'MFA Challenge alternatives',
-        'description': 'Multi-factor authentication alternatives page',
-        'template': 'MFA_CHALLENGE_ALTERNATIVES',
-        'icon': 'swap_horiz',
-        'enabled': this.applicationSettingsValid()
-      },
-      {
-        'name': 'Recovery Codes',
-        'description': 'Multi-factor authentication recovery code page',
-        'template': 'MFA_RECOVERY_CODE',
-        'icon': 'autorenew',
-        'enabled': this.applicationSettingsValid()
-      },
-      {
-        'name': 'Error',
-        'description': 'Error page to display a message describing the problem',
-        'template': 'ERROR',
-        'icon': 'error_outline',
-        'enabled': true
-      }
-    ]
+    return this.formTemplateFactoryService.findAll().map(form => {
+      form.enabled = form.template === "ERROR" || this.applicationSettingsValid();
+      return form;
+    })
   }
 
-  applicationSettingsValid() {
+  private applicationSettingsValid() {
     if (this.application.type) {
       return this.application.type !== 'service';
     }

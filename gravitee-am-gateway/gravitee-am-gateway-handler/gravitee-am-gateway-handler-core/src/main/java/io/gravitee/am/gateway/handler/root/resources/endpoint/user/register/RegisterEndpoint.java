@@ -22,6 +22,7 @@ import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.PasswordSettings;
+import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.Handler;
@@ -34,14 +35,13 @@ import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
 
+import static io.gravitee.am.common.utils.ConstantKeys.PASSWORD_SETTINGS_PARAM_KEY;
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.resolveProxyRequest;
-import static io.gravitee.am.model.Template.LOGIN;
-import static io.gravitee.am.model.Template.IDENTIFIER_FIRST_LOGIN;
+import static io.gravitee.am.model.Template.*;
+import static java.util.Optional.ofNullable;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -50,6 +50,7 @@ import static io.gravitee.am.model.Template.IDENTIFIER_FIRST_LOGIN;
 public class RegisterEndpoint extends AbstractEndpoint implements Handler<RoutingContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(RegisterEndpoint.class);
+    private static final String TEMPLATE_ERROR_MESSAGE = "Unable to render registration page";
 
     private final Domain domain;
     private final BotDetectionManager botDetectionManager;
@@ -66,7 +67,12 @@ public class RegisterEndpoint extends AbstractEndpoint implements Handler<Routin
         copyValue(request, routingContext, ConstantKeys.SUCCESS_PARAM_KEY);
         copyValue(request, routingContext, ConstantKeys.WARNING_PARAM_KEY);
         Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
-        PasswordSettings.getInstance(client, domain).ifPresent(v -> routingContext.put(ConstantKeys.PASSWORD_SETTINGS_PARAM_KEY, v));
+
+        PasswordSettings.getInstance(client, domain).ifPresent(v -> routingContext.put(PASSWORD_SETTINGS_PARAM_KEY, v));
+
+        AccountSettings.getInstance(client, domain).ifPresent(accountSettings ->
+                routingContext.put(ConstantKeys.TEMPLATE_VERIFY_REGISTRATION_ACCOUNT_KEY, accountSettings.isSendVerifyRegistrationAccountEmail())
+        );
 
         String error = request.getParam(ConstantKeys.ERROR_PARAM_KEY);
         String errorDescription = request.getParam(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY);
@@ -77,13 +83,13 @@ public class RegisterEndpoint extends AbstractEndpoint implements Handler<Routin
         routingContext.put(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, errorDescription);
 
         // put parameters in context (backward compatibility)
-        Map<String, String> params = new HashMap<>();
+        var params = new HashMap<String, String>();
         params.computeIfAbsent(Parameters.CLIENT_ID, val -> clientId);
         params.computeIfAbsent(ConstantKeys.ERROR_PARAM_KEY, val -> error);
         params.computeIfAbsent(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, val -> errorDescription);
         routingContext.put(ConstantKeys.PARAM_CONTEXT_KEY, params);
 
-        var optionalSettings = Optional.ofNullable(LoginSettings.getInstance(domain, client)).filter(Objects::nonNull);
+        var optionalSettings = ofNullable(LoginSettings.getInstance(domain, client));
         var isIdentifierFirstEnabled = optionalSettings.map(LoginSettings::isIdentifierFirstEnabled).orElse(false);
 
         MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
@@ -95,11 +101,11 @@ public class RegisterEndpoint extends AbstractEndpoint implements Handler<Routin
         data.putAll(botDetectionManager.getTemplateVariables(domain, client));
 
         // render the registration confirmation page
-        this.renderPage(routingContext, data, client, logger, "Unable to render registration page");
+        this.renderPage(routingContext, data, client, logger, TEMPLATE_ERROR_MESSAGE);
     }
 
     @Override
     public String getTemplateSuffix() {
-        return "registration";
+        return REGISTRATION.template();
     }
 }

@@ -84,7 +84,6 @@
                 <span th:case="invalid_email" th:text="#{registration.error.invalid.email}"/>
                 <span th:case="*" th:text="#{registration.error.information.missing}"/>
             </div>
-
             <button type="submit" id="submitBtn" class="button primary" th:text="#{registration.button.submit}"></button>
         </form>
     </div>
@@ -94,14 +93,17 @@
     <div class="header">
         <img class="logo" th:src="${theme.logoUrl} ?: @{assets/images/gravitee-logo.svg}">
         <div class="title">
-            <span th:text="#{registration.success.title}"/>
+            <span th:if="${verifyRegistrationAccount}" th:text="#{registration.success.verify.title}"/>
+            <span th:unless="${verifyRegistrationAccount}" th:text="#{registration.success.title}"/>
         </div>
         <div class="header-description">
-            <label th:text="#{registration.success.description}"/>
+            <label th:if="${verifyRegistrationAccount}" th:text="#{registration.success.verify.description}"/>
+            <label th:unless="${verifyRegistrationAccount}" th:text="#{registration.success.description}"/>
         </div>
     </div>
     <div class="section">
-        <a th:href="${loginAction}"><span class="icons">arrow_back</span><span th:text="#{common.back.to.sign.in}"/></a>
+        <a th:if="${verifyRegistrationAccount}" class="button primary" th:href="${loginAction}"><span th:text="#{common.back.to.sign.in}"/></a>
+        <a th:unless="${verifyRegistrationAccount}" th:href="${loginAction}"><span th:text="#{common.back.to.sign.in}"/></a>
     </div>
 </div>
 

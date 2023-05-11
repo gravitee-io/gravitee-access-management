@@ -16,9 +16,12 @@
 package io.gravitee.am.service.reporter.builder.management;
 
 import io.gravitee.am.common.audit.EntityType;
-import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.model.User;
+import java.util.Set;
+
+import static io.gravitee.am.common.audit.EventType.*;
+import static java.util.Optional.ofNullable;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -26,15 +29,20 @@ import io.gravitee.am.model.User;
  */
 public class UserAuditBuilder extends ManagementAuditBuilder<UserAuditBuilder> {
 
+    private final Set<String> SENSITIVE_DATA_USER_EVENTS = Set.of(
+            USER_CREATED,
+            USER_UPDATED,
+            USER_ROLES_ASSIGNED,
+            REGISTRATION_VERIFY_ACCOUNT
+    );
+
     public UserAuditBuilder() {
         super();
     }
 
     public UserAuditBuilder user(User user) {
         if (user != null) {
-            if (EventType.USER_CREATED.equals(getType())
-                    || EventType.USER_UPDATED.equals(getType())
-                    || EventType.USER_ROLES_ASSIGNED.equals(getType())) {
+            if (isSensitiveEventType()) {
                 setNewValue(user);
             }
 
@@ -44,6 +52,10 @@ public class UserAuditBuilder extends ManagementAuditBuilder<UserAuditBuilder> {
             setTarget(user.getId(), EntityType.USER, user.getUsername(), getDisplayName(user), user.getReferenceType(), user.getReferenceId());
         }
         return this;
+    }
+
+    private boolean isSensitiveEventType() {
+        return ofNullable(getType()).filter(SENSITIVE_DATA_USER_EVENTS::contains).isPresent();
     }
 
     private String getDisplayName(User user) {

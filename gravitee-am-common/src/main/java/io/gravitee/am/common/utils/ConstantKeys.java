@@ -196,6 +196,7 @@ public interface ConstantKeys {
     String TEMPLATE_KEY_RECOVERY_CODES_KEY = "recoveryCodes";
     String TEMPLATE_KEY_RECOVERY_CODES_URL_KEY = "recoveryCodeURL";
 
+    String TEMPLATE_VERIFY_REGISTRATION_ACCOUNT_KEY = "verifyRegistrationAccount";
 
 
     // entry into the io.gravitee.am.model.AuthenticationFlowContext to get access to the
@@ -219,4 +220,5 @@ public interface ConstantKeys {
         Claims.auth_time,
         Claims.updated_at
     );
+    String REGISTRATION_VERIFY_SUCCESS = "registration_verify_success";
 }

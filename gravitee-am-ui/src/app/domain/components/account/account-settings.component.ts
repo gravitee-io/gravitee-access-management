@@ -176,6 +176,15 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
     this.formChanged = true;
   }
 
+  isSendVerifyRegistrationAccountEmail() {
+    return this.accountSettings && this.accountSettings.sendVerifyRegistrationAccountEmail;
+  }
+
+  enableSendVerifyRegistrationAccountEmail(event) {
+    this.accountSettings.sendVerifyRegistrationAccountEmail = event.checked;
+    this.formChanged = true;
+  }
+
   isCompleteRegistrationEnabled() {
     return this.accountSettings && this.accountSettings.completeRegistrationWhenResetPassword;
   }

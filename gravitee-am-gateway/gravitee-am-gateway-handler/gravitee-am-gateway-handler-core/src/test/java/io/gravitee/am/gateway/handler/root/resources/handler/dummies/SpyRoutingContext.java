@@ -20,6 +20,7 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 import io.vertx.rxjava3.core.buffer.Buffer;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
+import io.vertx.rxjava3.core.http.HttpServerResponse;
 import io.vertx.rxjava3.ext.auth.User;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
@@ -33,22 +34,36 @@ import java.util.*;
 public class SpyRoutingContext extends RoutingContext {
 
     Map<String, Object> data = new HashMap<>();
-    private final DummyHttpRequest dummyHttpRequest = new DummyHttpRequest();
-    private final HttpServerRequest httpServerRequest = new HttpServerRequest(dummyHttpRequest);
+    private final DummyHttpRequest dummyHttpRequest;
+    private final HttpServerRequest httpServerRequest;
     private final DummySession dummySession = new DummySession();
+    private final DummyHttpResponse response = new DummyHttpResponse();
+
     private int next = 0;
     private Buffer body;
     private User user;
     private int statusCode;
+    private boolean failed;
 
     public SpyRoutingContext() {
+        this(null);
+    }
+
+    public SpyRoutingContext(String path) {
         super(null);
+        dummyHttpRequest = new DummyHttpRequest(path);
+        httpServerRequest = new HttpServerRequest(dummyHttpRequest);
     }
 
     @Override
     public RoutingContext put(String key, Object obj) {
         data.put(key, obj);
         return this;
+    }
+
+    @Override
+    public <T> T remove(String key) {
+        return (T) data.remove(key);
     }
 
     @Override
@@ -85,6 +100,10 @@ public class SpyRoutingContext extends RoutingContext {
         return next == expected;
     }
 
+    public boolean ended(){
+        return response.ended();
+    }
+
     @Override
     public User user() {
         return user;
@@ -103,11 +122,27 @@ public class SpyRoutingContext extends RoutingContext {
     @Override
     public void fail(int statusCode) {
         this.statusCode = statusCode;
+        this.failed = true;
+    }
+
+    @Override
+    public boolean failed() {
+        return failed;
+    }
+
+    @Override
+    public void fail(Throwable throwable) {
+        this.failed = true;
     }
 
     @Override
     public int statusCode() {
         return statusCode;
+    }
+
+    @Override
+    public HttpServerResponse response() {
+        return new DummyReactiveHttpRequest(response);
     }
 
     public void putParam(String key, Object value) {

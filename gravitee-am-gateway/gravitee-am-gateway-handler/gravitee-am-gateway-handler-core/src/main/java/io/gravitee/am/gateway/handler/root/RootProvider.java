@@ -57,10 +57,7 @@ import io.gravitee.am.gateway.handler.root.resources.endpoint.user.password.Forg
 import io.gravitee.am.gateway.handler.root.resources.endpoint.user.password.ForgotPasswordSubmissionEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.user.password.ResetPasswordEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.user.password.ResetPasswordSubmissionEndpoint;
-import io.gravitee.am.gateway.handler.root.resources.endpoint.user.register.RegisterConfirmationEndpoint;
-import io.gravitee.am.gateway.handler.root.resources.endpoint.user.register.RegisterConfirmationSubmissionEndpoint;
-import io.gravitee.am.gateway.handler.root.resources.endpoint.user.register.RegisterEndpoint;
-import io.gravitee.am.gateway.handler.root.resources.endpoint.user.register.RegisterSubmissionEndpoint;
+import io.gravitee.am.gateway.handler.root.resources.endpoint.user.register.*;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnLoginCredentialsEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnLoginEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnLoginPostEndpoint;
@@ -97,12 +94,7 @@ import io.gravitee.am.gateway.handler.root.resources.handler.user.password.Passw
 import io.gravitee.am.gateway.handler.root.resources.handler.user.password.ResetPasswordOneTimeTokenHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.password.ResetPasswordRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.password.ResetPasswordSubmissionRequestParseHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterAccessHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterConfirmationRequestParseHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterConfirmationSubmissionRequestParseHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterFailureHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterProcessHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterSubmissionRequestParseHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.user.register.*;
 import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.*;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.model.Domain;
@@ -155,12 +147,14 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
     public static final String PATH_RESET_PASSWORD = "/resetPassword";
     public static final String PATH_WEBAUTHN_REGISTER = "/webauthn/register";
     public static final String PATH_WEBAUTHN_REGISTER_CREDENTIALS = "/webauthn/register/credentials";
+    public static final String PATH_VERIFY_REGISTRATION = "/verifyRegistration";
     public static final String PATH_WEBAUTHN_RESPONSE = "/webauthn/response";
     public static final String PATH_WEBAUTHN_LOGIN = "/webauthn/login";
     public static final String PATH_WEBAUTHN_LOGIN_CREDENTIALS = "/webauthn/login/credentials";
     public static final String PATH_FORGOT_PASSWORD = "/forgotPassword";
     public static final String PATH_IDENTIFIER_FIRST_LOGIN = "/login/identifier";
     public static final String PATH_ERROR = "/error";
+    private static final String PASSWORD_HISTORY = "/passwordHistory";
 
     @Autowired
     private Vertx vertx;
@@ -527,6 +521,15 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(policyChainHandler.create(ExtensionPoint.POST_REGISTRATION_CONFIRMATION))
                 .handler(new RegisterConfirmationSubmissionEndpoint(userService, environment));
 
+        // Registration Verify
+        rootRouter.route(HttpMethod.GET, PATH_VERIFY_REGISTRATION)
+                .handler(new RegisterVerifyRequestParseHandler(domain, userService))
+                .handler(clientRequestParseHandlerOptional)
+                .handler(localeHandler)
+                .handler(new RegisterVerifyEndpoint(domain, thymeleafTemplateEngine));
+        rootRouter.route(PATH_VERIFY_REGISTRATION)
+                .handler(new ErrorHandler(PATH_VERIFY_REGISTRATION));
+
         // Forgot password route
         final var forgotPasswordAccessHandler = new ForgotPasswordAccessHandler(domain);
         final var resetPasswordFailureHandler = new ErrorHandler(PATH_RESET_PASSWORD);
@@ -559,7 +562,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         rootRouter.route(PATH_RESET_PASSWORD)
                 .failureHandler(resetPasswordFailureHandler);
 
-        rootRouter.route(HttpMethod.POST, "/passwordHistory")
+        rootRouter.route(HttpMethod.POST, PASSWORD_HISTORY)
                   .handler(clientRequestParseHandlerOptional)
                   .handler(new PasswordHistoryHandler(passwordHistoryService, userService, domain));
 
@@ -653,6 +656,10 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         router
                 .route(PATH_IDENTIFIER_FIRST_LOGIN)
                 .handler(sessionHandler);
+
+        // Registration Verify confirmation
+        router.route(PATH_VERIFY_REGISTRATION)
+                .handler(sessionHandler);
     }
 
     private void authFlowContextHandler(Router router) {
@@ -698,6 +705,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         router.route(PATH_REGISTER).handler(csrfHandler);
         router.route(PATH_CONFIRM_REGISTRATION).handler(csrfHandler);
         router.route(PATH_RESET_PASSWORD).handler(csrfHandler);
+        router.route(PATH_VERIFY_REGISTRATION).handler(csrfHandler);
     }
 
     private void cspHandler(Router router) {
@@ -721,6 +729,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         router.route(PATH_WEBAUTHN_LOGIN).handler(cspHandler);
         router.route(PATH_FORGOT_PASSWORD).handler(cspHandler);
         router.route(PATH_IDENTIFIER_FIRST_LOGIN).handler(cspHandler);
+        router.route(PATH_VERIFY_REGISTRATION).handler(cspHandler);
         router.route(PATH_ERROR).handler(cspHandler);
     }
 
@@ -742,6 +751,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         router.route(PATH_WEBAUTHN_LOGIN).handler(xframeHandler);
         router.route(PATH_FORGOT_PASSWORD).handler(xframeHandler);
         router.route(PATH_IDENTIFIER_FIRST_LOGIN).handler(xframeHandler);
+        router.route(PATH_VERIFY_REGISTRATION).handler(xframeHandler);
         router.route(PATH_ERROR).handler(xframeHandler);
     }
 
@@ -763,6 +773,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         router.route(PATH_WEBAUTHN_LOGIN).handler(xssHandler);
         router.route(PATH_FORGOT_PASSWORD).handler(xssHandler);
         router.route(PATH_IDENTIFIER_FIRST_LOGIN).handler(xssHandler);
+        router.route(PATH_VERIFY_REGISTRATION).handler(xssHandler);
         router.route(PATH_ERROR).handler(xssHandler);
     }
 
@@ -784,5 +795,6 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         router.route(PATH_WEBAUTHN_LOGIN).failureHandler(errorHandler);
         router.route(PATH_WEBAUTHN_REGISTER).failureHandler(errorHandler);
         router.route(PATH_WEBAUTHN_RESPONSE).failureHandler(errorHandler);
+        router.route(PATH_VERIFY_REGISTRATION).failureHandler(errorHandler);
     }
 }

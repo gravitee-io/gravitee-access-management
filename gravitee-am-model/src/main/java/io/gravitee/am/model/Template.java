@@ -28,6 +28,7 @@ public enum Template {
     LOGIN("login", "/login"),
     REGISTRATION("registration", "/register"),
     REGISTRATION_CONFIRMATION("registration_confirmation", "/confirmRegistration"),
+    REGISTRATION_VERIFY("registration_verify", "/verifyRegistration"),
     FORGOT_PASSWORD("forgot_password", "/forgotPassword"),
     RESET_PASSWORD("reset_password", "/resetPassword"),
     OAUTH2_USER_CONSENT("oauth2_user_consent", "/oauth/confirm_access"),
@@ -43,6 +44,7 @@ public enum Template {
     ERROR("error", "/error"),
     CERTIFICATE_EXPIRATION("certificate_expiration", null),
     VERIFY_ATTEMPT("verify_attempt",null);
+
 
     private final String template;
     private final String redirectUri;
