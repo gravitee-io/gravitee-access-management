@@ -437,6 +437,8 @@ import {
     GioTopBarMenuModule,
     GioTopBarModule
 } from "@gravitee/ui-particles-angular";
+import {EmailTemplateFactoryService} from "./services/email.template.factory.service";
+import {FormTemplateFactoryService} from "./services/form.template.factory.service";
 
 @NgModule({
   declarations: [
@@ -749,11 +751,13 @@ import {
     ScopeService,
     FormService,
     FormResolver,
+    FormTemplateFactoryService,
     GroupService,
     GroupsResolver,
     GroupResolver,
     GroupRolesResolver,
     GroupMembersResolver,
+    EmailTemplateFactoryService,
     EmailService,
     EmailResolver,
     DictionariesResolver,

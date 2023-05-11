@@ -47,6 +47,15 @@ public class DummyHttpRequest implements HttpServerRequest {
     private final MultiMap params = MultiMap.caseInsensitiveMultiMap();
     private HttpMethod method;
 
+    private final String path;
+
+    public DummyHttpRequest() {
+        this(null);
+    }
+    public DummyHttpRequest(String path) {
+        this.path = path;
+    }
+
     @Override
     public HttpServerRequest exceptionHandler(Handler<Throwable> handler) {
         return null;
@@ -123,7 +132,7 @@ public class DummyHttpRequest implements HttpServerRequest {
 
     @Override
     public @Nullable String path() {
-        return null;
+        return path;
     }
 
     @Override

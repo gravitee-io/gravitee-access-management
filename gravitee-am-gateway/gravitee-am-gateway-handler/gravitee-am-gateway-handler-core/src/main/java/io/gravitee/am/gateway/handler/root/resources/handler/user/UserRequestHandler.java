@@ -88,7 +88,8 @@ public abstract class UserRequestHandler implements Handler<RoutingContext> {
     }
 
     private void doRedirect(HttpServerResponse response, String url) {
-        response.putHeader(HttpHeaders.LOCATION, url).setStatusCode(302).end();
+        final HttpServerResponse httpServerResponse = response.putHeader(HttpHeaders.LOCATION, url).setStatusCode(302);
+        httpServerResponse.end();
     }
 
     protected io.gravitee.am.model.User convert(MultiMap params) {

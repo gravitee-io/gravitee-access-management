@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component } from '@angular/core';
+import {Component} from '@angular/core';
 import {ActivatedRoute} from "@angular/router";
+import {EmailTemplateFactoryService} from "../../../services/email.template.factory.service";
 
 @Component({
   selector: 'app-domain-emails',
@@ -23,56 +24,24 @@ import {ActivatedRoute} from "@angular/router";
 })
 export class DomainSettingsEmailsComponent {
   domain: any;
-  emails: any[];
+  private emailTemplateFactoryService: EmailTemplateFactoryService;
 
-  constructor(private route: ActivatedRoute) { }
+  constructor(private route: ActivatedRoute, emailTemplateFactoryService: EmailTemplateFactoryService) {
+    this.emailTemplateFactoryService = emailTemplateFactoryService;
+  }
 
   ngOnInit() {
     this.domain = this.route.snapshot.data['domain'];
-    this.emails = this.getEmails();
   }
 
   getEmails() {
-    return [
-      {
-        'name': 'Registration confirmation',
-        'description': 'Registration email to confirm user account',
-        'template': 'REGISTRATION_CONFIRMATION',
-        'icon' : 'how_to_reg',
-        'enabled': true
-      },
-      {
-        'name': 'Reset password',
-        'description': 'Reset password email to ask for a new one',
-        'template': 'RESET_PASSWORD',
-        'icon': 'lock_open',
-        'enabled': this.allowResetPassword()
-      },
-      {
-        'name': 'Blocked account',
-        'description': 'Recover account after it has been blocked',
-        'template': 'BLOCKED_ACCOUNT',
-        'icon': 'person_add_disabled',
-        'enabled': true
-      },
-      {
-        'name': 'MFA Challenge',
-        'description': 'Multi-factor authentication verification code',
-        'template': 'MFA_CHALLENGE',
-        'icon': 'check_circle_outline',
-        'enabled': true
-      },
-      {
-        'name': 'Certificate Expiration',
-        'description': 'Email notification about Certificate expiration',
-        'template': 'CERTIFICATE_EXPIRATION',
-        'icon': 'notifications',
-        'enabled': true
-      }
-    ]
+    return this.emailTemplateFactoryService.findAll().map(email => {
+      email.enabled = email.template !== "RESET_PASSWORD" || this.allowResetPassword();
+      return email;
+    });
   }
 
-  allowResetPassword() {
+  private allowResetPassword() {
     return this.domain.loginSettings && this.domain.loginSettings.forgotPasswordEnabled;
   }
 }

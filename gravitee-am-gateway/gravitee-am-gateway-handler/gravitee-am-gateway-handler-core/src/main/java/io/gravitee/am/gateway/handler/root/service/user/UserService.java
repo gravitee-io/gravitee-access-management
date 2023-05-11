@@ -33,8 +33,8 @@ import io.reactivex.rxjava3.core.Single;
 public interface UserService {
 
     Maybe<UserToken> verifyToken(String token);
-
     Single<UserToken> extractSessionFromIdToken(String idToken);
+    Maybe<UserToken> confirmVerifyRegistration(String token);
 
     Single<RegistrationResponse> register(Client client, User user, io.gravitee.am.identityprovider.api.User principal);
 

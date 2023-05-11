@@ -17,10 +17,8 @@
 package io.gravitee.am.gateway.handler.common.email;
 
 import freemarker.cache.TemplateLoader;
-import freemarker.core.Environment;
 import freemarker.template.Configuration;
 import freemarker.template.DefaultObjectWrapperBuilder;
-import freemarker.template.TemplateException;
 import io.gravitee.am.gateway.handler.common.email.impl.EmailServiceImpl;
 import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.model.Domain;
@@ -43,6 +41,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 
 import static freemarker.template.Configuration.AUTO_DETECT_NAMING_CONVENTION;
 import static freemarker.template.Configuration.DEFAULT_INCOMPATIBLE_IMPROVEMENTS;
+import static java.util.concurrent.TimeUnit.DAYS;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.anyInt;
@@ -91,8 +90,10 @@ public class EmailServiceImplTest {
                 "Account has been locked",
                 86400,
                 "Verification Code",
-                300
-        );
+                300,
+                "Please verify Attempt",
+                "Complete your registration",
+                Long.valueOf(DAYS.toSeconds(7)).intValue());
 
         emailServiceSpy = Mockito.spy(emailService);
         MockitoAnnotations.openMocks(this);
@@ -106,7 +107,7 @@ public class EmailServiceImplTest {
     }
 
     @Test
-    public void must_send_email() throws IOException, TemplateException {
+    public void must_send_email() throws IOException {
         var emailService = new EmailServiceImpl(
                 true,
                 "Please reset your password",
@@ -114,8 +115,10 @@ public class EmailServiceImplTest {
                 "Account has been locked",
                 86400,
                 "Verification Code",
-                300
-        );
+                300,
+                "Please verify Attempt",
+                "Complete your registration",
+                Long.valueOf(DAYS.toSeconds(7)).intValue());
         emailServiceSpy = Mockito.spy(emailService);
         MockitoAnnotations.openMocks(this);
 

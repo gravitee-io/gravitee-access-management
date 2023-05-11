@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Registration confirmation</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" th:href="@{assets/css/main.css}">
+
+    <!-- Favicon and touch icons -->
+    <link rel="shortcut icon" th:href="${theme.faviconUrl} ?: @{assets/ico/favicon.ico}">
+
+    <!-- Custom CSS -->
+    <style th:if="${theme.css}" th:text="${theme.css}"></style>
+    <style th:if="${theme.customCss}" th:text="${theme.customCss}"></style>
+</head>
+
+<body>
+    <!-- <div class="container th:if="${success}" -->
+    <div class="container">
+        <div class="header">
+            <img class="logo" th:src="${theme.logoUrl} ?: @{assets/images/gravitee-logo.svg}">
+            <div class="title">
+                <span th:text="#{registration_verify.success.title}"/>
+            </div>
+            <div class="header-description">
+                <label th:text="#{registration_verify.success.description}"/>
+            </div>
+            <div class="section">
+                <a class="button primary" th:href="${loginAction}"><span th:text="#{common.back.to.sign.in}"/></a>
+            </div>
+        </div>
+    </div>
+
+    <div class="container" th:if="${error}">
+        <div class="header">
+            <img class="logo" th:src="${theme.logoUrl} ?: @{assets/images/gravitee-logo.svg}">
+            <div class="title">
+                <span th:if="${error == 'registration_verify_link_expired'}" th:text="#{registration_verify.link.expired.title}"/>
+                <span th:unless="${error == 'registration_verify_link_expired'}" th:text="#{registration_verify.error.title}"/>
+            </div>
+            <div class="header-description">
+                <span th:if="${error == 'registration_verify_link_expired'}" class="medium-font grey regular" th:text="#{registration_verify.link.expired.description}"></span>
+                <span th:unless="${error == 'registration_verify_link_expired'}"  class="medium-font grey regular" th:text="#{registration_verify.error.description}"/>
+            </div>
+        </div>
+        <div th:unless="${error == 'registration_verify_link_expired'}" class="item error-text">
+            <span>
+                <small th:text="*{error_description}?: ${error}"></small>
+            </span>
+        </div>
+        <div class="section">
+            <a class="button primary" th:href="${loginAction}"><span th:text="#{common.back.to.sign.in}"/></a>
+        </div>
+    </div>
+</body>
+</html>

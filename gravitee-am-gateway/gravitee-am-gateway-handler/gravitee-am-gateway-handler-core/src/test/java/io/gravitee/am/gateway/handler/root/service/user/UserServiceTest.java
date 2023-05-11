@@ -20,14 +20,17 @@ import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.common.exception.authentication.AccountInactiveException;
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
+import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.EndUserAuthentication;
+import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.gateway.handler.root.service.user.impl.UserServiceImpl;
 import io.gravitee.am.gateway.handler.root.service.user.model.ForgotPasswordParameters;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.UserProvider;
+import io.gravitee.am.jwt.JWTParser;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.EnrollmentSettings;
 import io.gravitee.am.model.IdentityProvider;
@@ -39,21 +42,16 @@ import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
-import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.CredentialService;
-import io.gravitee.am.service.LoginAttemptService;
-import io.gravitee.am.service.TokenService;
-import io.gravitee.am.service.exception.EnforceUserIdentityException;
-import io.gravitee.am.service.exception.PasswordHistoryException;
-import io.gravitee.am.service.exception.UserInvalidException;
-import io.gravitee.am.service.exception.UserNotFoundException;
+import io.gravitee.am.service.*;
+import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.impl.PasswordHistoryService;
-import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.validators.email.EmailValidator;
+import io.gravitee.am.service.validators.user.UserValidator;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
+import java.util.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -61,11 +59,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.SortedSet;
-import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -120,11 +113,22 @@ public class UserServiceTest {
     @Mock
     private PasswordHistoryService passwordHistoryService;
 
-    @Before
-    public void before(){
-        doReturn(true).when(emailValidator).validate(anyString());
-        when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any() , any(), any())).thenReturn(Maybe.just(new PasswordHistory()));
+    @Mock
+    private JWTParser jwtParser;
 
+    @Mock
+    private ClientSyncService clientSyncService;
+
+    @Mock
+    private UserValidator userValidator;
+
+    @Mock
+    private DomainService domainService;
+
+    @Before
+    public void before() {
+        doReturn(true).when(emailValidator).validate(anyString());
+        when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any(), any(), any())).thenReturn(Maybe.just(new PasswordHistory()));
     }
 
     @Test
@@ -144,7 +148,7 @@ public class UserServiceTest {
 
         when(domain.getAccountSettings()).thenReturn(accountSettings);
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
-        when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any() , any(), any())).thenReturn(Maybe.error(PasswordHistoryException::passwordAlreadyInHistory));
+        when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any(), any(), any())).thenReturn(Maybe.error(PasswordHistoryException::passwordAlreadyInHistory));
 
         var testObserver = userService.resetPassword(mock(Client.class), user).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -626,7 +630,7 @@ public class UserServiceTest {
         when(user.isEnabled()).thenReturn(true);
 
         when(domain.getId()).thenReturn("domain-id");
-        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()),any(FilterCriteria.class))).thenReturn(Single.just(Arrays.asList(user, user2)));
+        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Arrays.asList(user, user2)));
 
         UserProvider userProvider = mock(UserProvider.class);
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
@@ -664,7 +668,7 @@ public class UserServiceTest {
         when(user2.getSource()).thenReturn("other-idp-client-id");
 
         when(domain.getId()).thenReturn("domain-id");
-        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()),any(FilterCriteria.class))).thenReturn(Single.just(Arrays.asList(user, user2, user)));
+        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Arrays.asList(user, user2, user)));
 
         TestObserver testObserver = userService.forgotPassword(
                 new ForgotPasswordParameters(user.getEmail(), true, true),
@@ -807,6 +811,16 @@ public class UserServiceTest {
         testObserver.assertError(UserNotFoundException.class);
         verify(tokenService, never()).deleteByUserId(any());
 
+    }
+
+    private SortedSet<ApplicationIdentityProvider> getApplicationIdentityProviders(String... identities) {
+        var set = new TreeSet<ApplicationIdentityProvider>();
+        Arrays.stream(identities).forEach(identity -> {
+            var patchAppIdp = new ApplicationIdentityProvider();
+            patchAppIdp.setIdentity(identity);
+            set.add(patchAppIdp);
+        });
+        return set;
     }
 
     @Test
@@ -1110,6 +1124,7 @@ public class UserServiceTest {
 
         verify(provider).loadUserByUsername(any(EndUserAuthentication.class));
     }
+
     @Test
     public void shouldCheckPassword_InvalidPassword() {
         final var provider = mock(AuthenticationProvider.class);
@@ -1138,13 +1153,225 @@ public class UserServiceTest {
         verify(provider, never()).loadUserByUsername(any(EndUserAuthentication.class));
     }
 
-    private SortedSet<ApplicationIdentityProvider> getApplicationIdentityProviders(String... identities) {
-        var set = new TreeSet<ApplicationIdentityProvider>();
-        Arrays.stream(identities).forEach(identity -> {
-            var patchAppIdp = new ApplicationIdentityProvider();
-            patchAppIdp.setIdentity(identity);
-            set.add(patchAppIdp);
+    @Test
+    public void must_comfirm_registration() {
+        final User user = new User();
+        user.setId("user-id");
+        user.setPreRegistration(true);
+
+        final Client client = new Client();
+        client.setId("clientId");
+
+        final JWT jwt = new JWT(Map.of(
+                "sub", user.getId(),
+                "aud", client.getId()
+        ));
+
+        when(jwtParser.parse("someToken")).thenReturn(jwt);
+        when(commonUserService.findById(jwt.getSub())).thenReturn(Maybe.just(user));
+        when(clientSyncService.findById(jwt.getAud())).thenReturn(Maybe.just(client));
+        when(commonUserService.update(user)).thenReturn(Single.just(user));
+
+        var testObserver = userService.confirmVerifyRegistration("someToken").test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(userToken -> userToken.getUser().equals(user) && userToken.getClient().equals(client));
+
+        verify(auditService, times(1)).report(any());
+    }
+
+    @Test
+    public void must_raise_UserAlreadyVerifiedException_when_user_is_registered() {
+        final User user = new User();
+        user.setId("user-id");
+        user.setUsername("username");
+        user.setPreRegistration(true);
+        user.setRegistrationCompleted(true);
+
+        final Client client = new Client();
+        client.setId("clientId");
+
+        final JWT jwt = new JWT(Map.of(
+                "sub", user.getId(),
+                "aud", client.getId()
+        ));
+
+        when(jwtParser.parse("someToken")).thenReturn(jwt);
+        when(commonUserService.findById(jwt.getSub())).thenReturn(Maybe.just(user));
+        when(clientSyncService.findById(jwt.getAud())).thenReturn(Maybe.just(client));
+
+        var testObserver = userService.confirmVerifyRegistration("someToken").test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertError(UserAlreadyVerifiedException.class);
+
+        verify(auditService, times(1)).report(any());
+    }
+
+    @Test
+    public void must_raise_UserAlreadyVerifiedException_when_user_is_not_in_prerigistration() {
+        final User user = new User();
+        user.setId("user-id");
+        user.setUsername("username");
+        user.setPreRegistration(false);
+        user.setRegistrationCompleted(true);
+
+        final Client client = new Client();
+        client.setId("clientId");
+
+        final JWT jwt = new JWT(Map.of(
+                "sub", user.getId(),
+                "aud", client.getId()
+        ));
+
+        when(jwtParser.parse("someToken")).thenReturn(jwt);
+        when(commonUserService.findById(jwt.getSub())).thenReturn(Maybe.just(user));
+        when(clientSyncService.findById(jwt.getAud())).thenReturn(Maybe.just(client));
+
+        var testObserver = userService.confirmVerifyRegistration("someToken").test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertError(UserAlreadyVerifiedException.class);
+
+        verify(auditService, times(1)).report(any());
+    }
+
+
+    @Test
+    public void must_not_register_user_since_not_valid() {
+        when(userValidator.validate(any())).thenReturn(
+                Completable.defer(() -> Completable.error(new IllegalArgumentException("User is not valid")))
+        );
+
+        when(commonUserService.findByDomainAndUsernameAndSource(any(), anyString(), anyString())).thenReturn(
+                Maybe.empty()
+        );
+
+        final User user = new User();
+        user.setUsername("username");
+        user.setPreRegistration(false);
+        user.setRegistrationCompleted(true);
+
+        final Client client = new Client();
+        client.setId("clientId");
+
+        var testObserver = userService.register(client, user, null).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertError(IllegalArgumentException.class);
+    }
+
+    @Test
+    public void must_not_register_user_since_user_already_exist() {
+        when(userValidator.validate(any())).thenReturn(Completable.complete());
+
+        final User user = new User();
+        user.setId("user-id");
+        user.setUsername("username");
+        user.setPreRegistration(false);
+        user.setRegistrationCompleted(true);
+
+        when(commonUserService.findByDomainAndUsernameAndSource(any(), anyString(), anyString())).thenReturn(
+                Maybe.just(user)
+        );
+
+        final Client client = new Client();
+        client.setId("clientId");
+
+        var testObserver = userService.register(client, user, null).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertError(UserAlreadyExistsException.class);
+
+        verify(auditService, times(1)).report(any());
+    }
+
+    @Test
+    public void must_not_register_user_since_no_user_provider_exist() {
+        when(userValidator.validate(any())).thenReturn(Completable.complete());
+
+        final User user = new User();
+        user.setId("user-id");
+        user.setUsername("username");
+        user.setPreRegistration(false);
+        user.setRegistrationCompleted(true);
+
+        when(commonUserService.findByDomainAndUsernameAndSource(any(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.empty());
+
+        final Client client = new Client();
+        client.setId("clientId");
+
+        var testObserver = userService.register(client, user, null).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertError(UserProviderNotFoundException.class);
+
+        verify(auditService, times(1)).report(any());
+    }
+
+    @Test
+    public void must_register_user() {
+        when(userValidator.validate(any())).thenReturn(Completable.complete());
+
+        final User user = new User();
+        user.setId("user-id");
+        user.setUsername("username");
+        user.setPreRegistration(false);
+        user.setRegistrationCompleted(true);
+        final DefaultUser idpUser = new DefaultUser(user.getUsername());
+        idpUser.setId(user.getId());
+
+        when(commonUserService.findByDomainAndUsernameAndSource(any(), anyString(), anyString())).thenReturn(Maybe.empty());
+
+        UserProvider userProvider = mock(UserProvider.class);
+        when(userProvider.create(any())).thenReturn(Single.just(idpUser));
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
+        when(commonUserService.create(any())).thenReturn(Single.just(user));
+        when(commonUserService.enhance(any())).thenReturn(Single.just(user));
+        final Client client = new Client();
+        client.setId("clientId");
+
+        var testObserver = userService.register(client, user, null).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertValue(registrationResponse -> {
+            return !registrationResponse.isAutoLogin() && registrationResponse.getUser().equals(user);
         });
-        return set;
+
+        verify(auditService, times(1)).report(any());
+    }
+
+    @Test
+    public void must_register_user_with_email_registration() {
+        when(userValidator.validate(any())).thenReturn(Completable.complete());
+
+        AccountSettings accountSettings = mock(AccountSettings.class);
+        when(accountSettings.isSendVerifyRegistrationAccountEmail()).thenReturn(true);
+        when(domain.getAccountSettings()).thenReturn(accountSettings);
+
+        final User user = new User();
+        user.setId("user-id");
+        user.setUsername("username");
+        user.setPreRegistration(false);
+        user.setRegistrationCompleted(true);
+        final DefaultUser idpUser = new DefaultUser(user.getUsername());
+        idpUser.setId(user.getId());
+
+        when(commonUserService.findByDomainAndUsernameAndSource(any(), anyString(), anyString())).thenReturn(Maybe.empty());
+
+        UserProvider userProvider = mock(UserProvider.class);
+        when(userProvider.create(any())).thenReturn(Single.just(idpUser));
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
+        when(commonUserService.create(any())).thenReturn(Single.just(user));
+        when(commonUserService.enhance(any())).thenReturn(Single.just(user));
+        final Client client = new Client();
+        client.setId("clientId");
+
+        var testObserver = userService.register(client, user, null).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertValue(registrationResponse -> {
+            return !registrationResponse.isAutoLogin() && registrationResponse.getUser().equals(user);
+        });
+
+        verify(emailService, times(1)).send(any(), any(), any());
+        verify(auditService, times(2)).report(any());
     }
 }

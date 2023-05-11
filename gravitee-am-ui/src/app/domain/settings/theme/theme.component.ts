@@ -22,6 +22,7 @@ import {DialogService} from '../../../services/dialog.service';
 import {FormService} from '../../../services/form.service';
 import * as _ from 'lodash';
 import {forkJoin, of} from 'rxjs';
+import {FormTemplateFactoryService} from "../../../services/form.template.factory.service";
 
 @Component({
   selector: 'app-theme',
@@ -34,6 +35,7 @@ export class DomainSettingsThemeComponent implements OnInit {
   readonly = false;
   themes: any[];
   theme: any;
+  forms: any[];
   colorPalettes: any[] = [
     { 'name': 'light-blue', 'primaryButtonColorHex': '#2AA7E3', 'primaryTextColorHex': '#000000', 'secondaryButtonColorHex': '#CAE9F8', 'secondaryTextColorHex': '#000000' },
     { 'name': 'blue', 'primaryButtonColorHex': '#3F71F4', 'primaryTextColorHex': '#000000', 'secondaryButtonColorHex': '#CFDCFC', 'secondaryTextColorHex': '#000000' },
@@ -51,106 +53,6 @@ export class DomainSettingsThemeComponent implements OnInit {
     { 'name': 'teal', 'primaryButtonColorHex': '#66C2AC', 'primaryTextColorHex': '#000000', 'secondaryButtonColorHex': '#D9F0EA', 'secondaryTextColorHex': '#000000' },
     { 'name': 'grey', 'primaryButtonColorHex': '#8A979E', 'primaryTextColorHex': '#000000', 'secondaryButtonColorHex': '#E2E5E7', 'secondaryTextColorHex': '#000000' },
     { 'name': 'deep-grey', 'primaryButtonColorHex': '#252829', 'primaryTextColorHex': '#FFFFFF', 'secondaryButtonColorHex': '#C8C9C9', 'secondaryTextColorHex': '#000000' }
-  ];
-  forms: any[] = [
-    {
-      'name': 'Login',
-      'description': 'Login page to authenticate users',
-      'template': 'LOGIN',
-      'icon': 'account_box',
-      'enabled': true
-    },
-    {
-      'name': 'Identifier-first login',
-      'description': 'Identifier-first login page to authenticate users',
-      'template': 'IDENTIFIER_FIRST_LOGIN',
-      'icon': 'account_box',
-      'enabled': true
-    },
-    {
-      'name': 'WebAuthn Login',
-      'description': 'Passwordless page to authenticate users',
-      'template': 'WEBAUTHN_LOGIN',
-      'icon': 'fingerprint',
-      'enabled': true
-    },
-    {
-      'name': 'WebAuthn Register',
-      'description': 'Passwordless page to register authenticators (devices)',
-      'template': 'WEBAUTHN_REGISTER',
-      'icon': 'fingerprint',
-      'enabled': true
-    },
-    {
-      'name': 'Registration',
-      'description': 'Registration page to create an account',
-      'template': 'REGISTRATION',
-      'icon': 'person_add',
-      'enabled': true
-    },
-    {
-      'name': 'Registration confirmation',
-      'description': 'Register page to confirm user account',
-      'template': 'REGISTRATION_CONFIRMATION',
-      'icon': 'how_to_reg',
-      'enabled': true
-    },
-    {
-      'name': 'Forgot password',
-      'description': 'Forgot password to recover account',
-      'template': 'FORGOT_PASSWORD',
-      'icon': 'lock',
-      'enabled': true
-    },
-    {
-      'name': 'Reset password',
-      'description': 'Reset password page to make a new password',
-      'template': 'RESET_PASSWORD',
-      'icon': 'lock_open',
-      'enabled': true
-    },
-    {
-      'name': 'User consent',
-      'description': 'User consent to acknowledge and accept data access',
-      'template': 'OAUTH2_USER_CONSENT',
-      'icon': 'playlist_add_check',
-      'enabled': true
-    },
-    {
-      'name': 'MFA Enroll',
-      'description': 'Multi-factor authentication settings page',
-      'template': 'MFA_ENROLL',
-      'icon': 'rotate_right',
-      'enabled': true
-    },
-    {
-      'name': 'MFA Challenge',
-      'description': 'Multi-factor authentication verify page',
-      'template': 'MFA_CHALLENGE',
-      'icon': 'check_circle_outline',
-      'enabled': true
-    },
-    {
-      'name': 'MFA Challenge alternatives',
-      'description': 'Multi-factor authentication alternatives page',
-      'template': 'MFA_CHALLENGE_ALTERNATIVES',
-      'icon': 'swap_horiz',
-      'enabled': true
-    },
-    {
-      'name': 'Recovery Codes',
-      'description': 'Multi-factor authentication recovery code page',
-      'template': 'MFA_RECOVERY_CODE',
-      'icon': 'autorenew',
-      'enabled': true
-    },
-    {
-      'name': 'Error',
-      'description': 'Error page to display a message describing the problem',
-      'template': 'ERROR',
-      'icon': 'error_outline',
-      'enabled': true
-    }
   ];
   selectedColorPalette: string;
   selectedTemplate = 'LOGIN';
@@ -182,7 +84,8 @@ export class DomainSettingsThemeComponent implements OnInit {
               private authService: AuthService,
               private themeService: ThemeService,
               private dialogService: DialogService,
-              private formService: FormService) {
+              private formService: FormService,
+              private formTemplateFactoryService: FormTemplateFactoryService) {
   }
 
   ngOnInit() {
@@ -190,6 +93,11 @@ export class DomainSettingsThemeComponent implements OnInit {
     this.domain = this.route.snapshot.data['domain'];
     this.themes = this.route.snapshot.data['themes'] || [];
     this.theme = this.themes[0] || {};
+    this.forms = this.formTemplateFactoryService.findAll()
+      .map(form => {
+        form.enabled = true;
+        return form;
+      });
     if (this.theme.id && this.theme.primaryButtonColorHex) {
       const filteredObj = _.find(this.colorPalettes, {'primaryButtonColorHex': this.theme.primaryButtonColorHex});
       if (filteredObj) {

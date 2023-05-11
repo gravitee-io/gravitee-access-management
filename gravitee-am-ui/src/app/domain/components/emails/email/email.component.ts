@@ -20,6 +20,8 @@ import { DialogService } from "../../../../services/dialog.service";
 import { EmailService } from "../../../../services/email.service";
 import { NgForm } from "@angular/forms";
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from "@angular/material/dialog";
+import {EmailTemplateFactoryService} from "../../../../services/email.template.factory.service";
+import {TimeConverterService} from "../../../../services/time-converter.service";
 
 export interface DialogData {
   rawTemplate: string;
@@ -36,14 +38,15 @@ export class EmailComponent implements OnInit, AfterViewInit {
   private appId: string;
   private defaultEmailContent = `// Custom email...`;
   template: string;
-  rawTemplate: string;
   email: any;
+  rawTemplate: string;
   emailName: string;
   emailContent: string = (' ' + this.defaultEmailContent).slice(1);
   originalEmailContent: string = (' ' + this.emailContent).slice(1);
   emailFound = false;
   formChanged = false;
   config: any = { lineNumbers: true, readOnly: true};
+  defaultExpirationSeconds: number;
   @ViewChild('editor', { static: true }) editor: any;
   @ViewChild('preview', { static: true }) preview: ElementRef;
   @ViewChild('emailForm', { static: true }) public emailForm: NgForm;
@@ -56,12 +59,19 @@ export class EmailComponent implements OnInit, AfterViewInit {
               private emailService: EmailService,
               private snackbarService: SnackbarService,
               private dialogService: DialogService,
+              private emailTemplateFactoryService: EmailTemplateFactoryService,
+              private timeConverterService: TimeConverterService,
               public dialog: MatDialog) { }
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
     this.appId = this.route.snapshot.params['appId'];
-    this.rawTemplate = this.route.snapshot.queryParams['template'];
+
+    const rawTemplate = this.route.snapshot.queryParams['template'];
+    const emailTemplate = this.emailTemplateFactoryService.findByName(rawTemplate);
+
+    this.rawTemplate = emailTemplate.template;
+
     this.email = this.route.snapshot.data['email']
 
     if (this.email && this.email.content) {
@@ -70,11 +80,12 @@ export class EmailComponent implements OnInit, AfterViewInit {
       this.emailFound = true;
     } else {
       this.email = {};
-      this.email.template = this.rawTemplate
-      this.email.expiresAfter = (this.email.template === 'MFA_CHALLENGE' ? 600 : 86400);
+      this.email.template = emailTemplate.template;
+      this.email.expiresAfter = emailTemplate.defaultExpirationSeconds;
     }
     this.template = this.rawTemplate.toLowerCase().replace(/_/g, ' ');
-    this.emailName = this.template.charAt(0).toUpperCase() + this.template.slice(1);
+    this.defaultExpirationSeconds = emailTemplate.defaultExpirationSeconds;
+    this.emailName = emailTemplate.name;
   }
 
   ngAfterViewInit(): void {
@@ -181,6 +192,10 @@ export class EmailComponent implements OnInit, AfterViewInit {
 
   private enableCodeMirror(): void {
     this.editor.instance.setOption('readOnly', !this.email.enabled);
+  }
+
+  getHumanTime(defaultExpirationSeconds: number) {
+    return this.timeConverterService.getHumanTime(defaultExpirationSeconds);
   }
 }
 

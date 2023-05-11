@@ -146,6 +146,11 @@ public class AccountSettings {
      */
     private boolean mfaChallengeSendVerifyAlertEmail;
 
+    /**
+     * Enable/Disable email after user self registration
+     */
+    private boolean sendVerifyRegistrationAccountEmail;
+
 
     public AccountSettings() {
     }
@@ -175,6 +180,7 @@ public class AccountSettings {
         this.mfaChallengeMaxAttempts = other.mfaChallengeMaxAttempts;
         this.mfaChallengeAttemptsResetTime = other.mfaChallengeAttemptsResetTime;
         this.mfaChallengeSendVerifyAlertEmail = other.mfaChallengeSendVerifyAlertEmail;
+        this.sendVerifyRegistrationAccountEmail = other.sendVerifyRegistrationAccountEmail;
     }
 
     public boolean isInherited() {
@@ -367,6 +373,18 @@ public class AccountSettings {
 
     public void setMfaChallengeSendVerifyAlertEmail(boolean mfaChallengeSendVerifyAlertEmail) {
         this.mfaChallengeSendVerifyAlertEmail = mfaChallengeSendVerifyAlertEmail;
+    }
+
+    public boolean isSendVerifyRegistrationAccountEmail() {
+        return sendVerifyRegistrationAccountEmail;
+    }
+
+    public void setSendVerifyRegistrationAccountEmail(boolean sendVerifyRegistrationAccountEmail) {
+        this.sendVerifyRegistrationAccountEmail = sendVerifyRegistrationAccountEmail;
+    }
+
+    public static Optional<AccountSettings> getInstance(Client client, Domain domain) {
+        return Optional.ofNullable(getInstance(domain, client));
     }
 
     public static AccountSettings getInstance(Domain domain, Client client) {

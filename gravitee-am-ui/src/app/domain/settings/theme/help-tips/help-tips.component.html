@@ -588,4 +588,38 @@
         </html>
       ]]>
     </pre>
+    <pre *ngIf="data.rawTemplate === 'REGISTRATION_VERIFY'">
+      <![CDATA[
+        <!DOCTYPE html>
+        <html lang="en" xmlns:th="http://www.thymeleaf.org">
+        <head>
+            <title>Registration verification</title>
+        </head>
+        <body>
+          <div class="container" th:if="${success}">
+             <h1 th:text="#{registration_verify.success.title}" />
+             <span th:text="#{registration_verify.success.description}"/>
+             <a class="button primary" th:href="${loginAction}"><span th:text="#{common.back.to.sign.in}"/></a>
+          </div>
+          <div class="container" th:if="${error}">
+            <div class="header">
+              <h1>
+                <span th:if="${error == 'registration_verify_link_expired'}" th:text="#{registration_verify.link.expired.title}"/>
+                <span th:unless="${error == 'registration_verify_link_expired'}" th:text="#{registration_verify.error.title}"/>
+              </h1>
+
+              <span th:if="${error == 'registration_verify_link_expired'}" th:text="#{registration_verify.link.expired.description}"></span>
+              <span th:unless="${error == 'registration_verify_link_expired'}" th:text="#{registration_verify.error.description}"/>
+            </div>
+
+            <div th:unless="${error == 'registration_verify_link_expired'}">
+              <span th:text="*{error_description}?: ${error}"></span>
+            </div>
+
+            <a class="button primary" th:href="${loginAction}"><span th:text="#{common.back.to.sign.in}"/></a>
+          </div>
+        </body>
+        </html>
+      ]]>
+    </pre>
 </div>

@@ -58,6 +58,7 @@ import io.gravitee.am.gateway.policy.spring.PolicyConfiguration;
 import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.ext.web.client.WebClient;
+import java.util.concurrent.TimeUnit;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -196,7 +197,11 @@ public class CommonConfiguration {
             @Value("${user.blockedAccount.email.subject:Account has been locked}") String blockedAccountSubject,
             @Value("${user.blockedAccount.token.expire-after:86400}") int blockedAccountExpireAfter,
             @Value("${user.mfaChallenge.email.subject:Verification Code}") String mfaChallengeSubject,
-            @Value("${user.mfaChallenge.token.expire-after:300}") int mfaChallengeExpireAfter
+            @Value("${user.mfaChallenge.token.expire-after:300}") int mfaChallengeExpireAfter,
+            @Value("${user.mfaVerifyAttempt.email.subject:${msg('email.verify_attempt.subject')}}") String mfaVerifyAttemptSubject,
+            @Value("${user.registration.verify.email.subject:${msg('email.registration_verify.subject')}}") String registrationVerifySubject,
+            @Value("${user.registration.verify.time.value:7}") int userRegistrationVerifyTimeValue,
+            @Value("${user.registration.verify.time.unit:DAYS}") TimeUnit userRegistrationVerifyTimeUnit
     ) {
         return new EmailServiceImpl(
                 enabled,
@@ -205,7 +210,10 @@ public class CommonConfiguration {
                 blockedAccountSubject,
                 blockedAccountExpireAfter,
                 mfaChallengeSubject,
-                mfaChallengeExpireAfter
+                mfaChallengeExpireAfter,
+                mfaVerifyAttemptSubject,
+                registrationVerifySubject,
+                Math.toIntExact(userRegistrationVerifyTimeUnit.toSeconds(userRegistrationVerifyTimeValue))
         );
     }
 

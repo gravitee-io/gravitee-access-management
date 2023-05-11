@@ -20,6 +20,9 @@ import io.gravitee.am.model.account.AccountSettings;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static java.util.Optional.ofNullable;
+import static java.util.stream.Collectors.toList;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -50,6 +53,7 @@ public class AccountSettingsMongo {
     private Integer mfaChallengeMaxAttempts;
     private Integer mfaChallengeAttemptsResetTime;
     private boolean mfaChallengeSendRecoverAccountEmail;
+    private boolean sendVerifyRegistrationAccountEmail;
 
     public boolean isInherited() {
         return inherited;
@@ -243,6 +247,14 @@ public class AccountSettingsMongo {
         this.mfaChallengeSendRecoverAccountEmail = mfaChallengeSendRecoverAccountEmail;
     }
 
+    public boolean isSendVerifyRegistrationAccountEmail() {
+        return sendVerifyRegistrationAccountEmail;
+    }
+
+    public void setSendVerifyRegistrationAccountEmail(boolean sendVerifyRegistrationAccountEmail) {
+        this.sendVerifyRegistrationAccountEmail = sendVerifyRegistrationAccountEmail;
+    }
+
     public AccountSettings convert() {
         AccountSettings accountSettings = new AccountSettings();
         accountSettings.setInherited(isInherited());
@@ -263,17 +275,15 @@ public class AccountSettingsMongo {
         accountSettings.setUseBotDetection(isUseBotDetection());
         accountSettings.setResetPasswordConfirmIdentity(isResetPasswordConfirmIdentity());
         accountSettings.setResetPasswordCustomForm(isResetPasswordCustomForm());
-        if (this.resetPasswordCustomFormFields != null) {
-            accountSettings.setResetPasswordCustomFormFields(this.resetPasswordCustomFormFields.stream().map(FormFieldMongo::convert).collect(Collectors.toList()));
-        } else {
-            accountSettings.setResetPasswordCustomFormFields(null);
-        }
+        ofNullable(getResetPasswordCustomFormFields())
+                .map(customFormFields -> customFormFields.stream().map(FormFieldMongo::convert).collect(toList()))
+                .ifPresent(accountSettings::setResetPasswordCustomFormFields);
         accountSettings.setResetPasswordInvalidateTokens(isResetPasswordInvalidateTokens());
         accountSettings.setMfaChallengeAttemptsDetectionEnabled(isMfaChallengeAttemptsDetectionEnabled());
         accountSettings.setMfaChallengeMaxAttempts(getMfaChallengeMaxAttempts());
         accountSettings.setMfaChallengeAttemptsResetTime(getMfaChallengeAttemptsResetTime());
         accountSettings.setMfaChallengeSendVerifyAlertEmail(isMfaChallengeSendRecoverAccountEmail());
-
+        accountSettings.setSendVerifyRegistrationAccountEmail(isSendVerifyRegistrationAccountEmail());
         return accountSettings;
     }
 
@@ -300,16 +310,15 @@ public class AccountSettingsMongo {
         accountSettingsMongo.setUseBotDetection(accountSettings.isUseBotDetection());
         accountSettingsMongo.setResetPasswordConfirmIdentity(accountSettings.isResetPasswordConfirmIdentity());
         accountSettingsMongo.setResetPasswordCustomForm(accountSettings.isResetPasswordCustomForm());
-        if (accountSettings.getResetPasswordCustomFormFields() != null) {
-            accountSettingsMongo.setResetPasswordCustomFormFields(accountSettings.getResetPasswordCustomFormFields().stream().map(FormFieldMongo::convert).collect(Collectors.toList()));
-        } else {
-            accountSettingsMongo.setResetPasswordCustomFormFields(null);
-        }
+        ofNullable(accountSettings.getResetPasswordCustomFormFields())
+                .map(customFormFields -> customFormFields.stream().map(FormFieldMongo::convert).collect(toList()))
+                .ifPresent(accountSettingsMongo::setResetPasswordCustomFormFields);
         accountSettingsMongo.setResetPasswordInvalidateTokens(accountSettings.isResetPasswordInvalidateTokens());
         accountSettingsMongo.setMfaChallengeAttemptsDetectionEnabled(accountSettings.isMfaChallengeAttemptsDetectionEnabled());
         accountSettingsMongo.setMfaChallengeMaxAttempts(accountSettings.getMfaChallengeMaxAttempts());
         accountSettingsMongo.setMfaChallengeAttemptsResetTime(accountSettings.getMfaChallengeAttemptsResetTime());
         accountSettingsMongo.setMfaChallengeSendRecoverAccountEmail(accountSettings.isMfaChallengeSendVerifyAlertEmail());
+        accountSettingsMongo.setSendVerifyRegistrationAccountEmail(accountSettings.isSendVerifyRegistrationAccountEmail());
         return accountSettingsMongo;
     }
 }

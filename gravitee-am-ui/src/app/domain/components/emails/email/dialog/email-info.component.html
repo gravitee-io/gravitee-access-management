@@ -104,6 +104,29 @@
         </html>
       ]]>
     </pre>
+    <pre *ngIf="data.rawTemplate === 'REGISTRATION_VERIFY'">
+      <![CDATA[
+      <!DOCTYPE html>
+      <html>
+        <head>
+            <title>Verify Account Registration</title>
+        </head>
+        <body style="text-align: center;">
+          <header>
+            <#include "header.html" />
+          </header>
+          <div style="margin-top: 50px; color: #424e5a;">
+            <h3>${msg('email.registration_verify.header.title', user.firstName, client.clientName)}</h3>
+            <p>${msg('email.registration_verify.header.description')}</p>
+            <a href="${url}">${msg('email.registration_verify.button')}</a>
+            <small>
+<#if expireAfterSeconds gte 86400> ${msg('email.registration_verify.description', expireAfterSeconds / 86400 , msg('email.common.unit.days'))} <#elseif expireAfterSeconds gte 3600> ${msg('email.registration_verify.description', expireAfterSeconds / 3600 , msg('email.common.unit.hours'))} <#else> ${msg('email.registration_verify.description', expireAfterSeconds / 60 , msg('email.common.unit.minutes'))} </#if>
+            </small>
+          </div>
+        </body>
+      </html>
+      ]]>
+    </pre>
   </mat-dialog-content>
   <mat-dialog-actions>
     <span fxFlex></span>
