@@ -83,8 +83,9 @@ export class ProviderService {
         provider.configuration.passwordEncoder === 'BCrypt') {
         // hash password if not already hashed
         if (provider.configuration.users) {
+          const hashedPassword = '********'
           provider.configuration.users.forEach(user => {
-            if (!user.password.startsWith('$2a$')) {
+            if (!user.password.startsWith('$2a$') && hashedPassword !== user.password) {
               user.password = bcrypt.hashSync(user.password, bcrypt.genSaltSync(10))
             }
           });
