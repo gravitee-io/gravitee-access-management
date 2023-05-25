@@ -73,9 +73,9 @@
     </modules>
 
     <properties>
-        <revision>3.21.0</revision>
+        <revision>3.21.1</revision>
         <sha1 />
-        <changelist></changelist>
+        <changelist>-SNAPSHOT</changelist>
 
         <gravitee-bom.version>4.0.3</gravitee-bom.version>
         <gravitee-common.version>2.1.0</gravitee-common.version>
