@@ -9,11 +9,7 @@
 * Passwordless - enforce webauthn devices control
 * Passwordless - enforce password usage
 * Manage MFA factors that use username as SEED
-* Delete loginAttempts for brute force when username is changed
-* Provide option to logout/make all tokens/sessions invalid when username is changed
-* Update username in view for Group Members
-* [console] Change username UI
-* [management] Change username Management API
+* Management - Change Username
 * CORS configuration on Security Domain level
 * [management-ui] [menu unification] integrate the gio-sub-menu component
 
