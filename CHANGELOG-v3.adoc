@@ -1,5 +1,47 @@
 # Change Log
 
+==  - 3.21.0 (2023-05-25)
+
+== What's new !
+
+* MFA - manage remember device with external IDP
+* MFA - support Orange Contact Everyone service to send SMS 
+* Passwordless - enforce webauthn devices control
+* Passwordless - enforce password usage
+* Manage MFA factors that use username as SEED
+* Delete loginAttempts for brute force when username is changed
+* Provide option to logout/make all tokens/sessions invalid when username is changed
+* Update username in view for Group Members
+* [console] Change username UI
+* [management] Change username Management API
+* CORS configuration on Security Domain level
+* [management-ui] [menu unification] integrate the gio-sub-menu component
+
+=== Gateway
+
+* The same DOM element can have a different ID from one template to another https://github.com/gravitee-io/issues/issues/8884[#8884]
+* AM - POST-login flow not executed when authenticating using WebAuthn https://github.com/gravitee-io/issues/issues/8918[#8918]
+* SCIM - additionalInformation entries are lost when using PATCH method https://github.com/gravitee-io/issues/issues/8991[#8991]
+
+=== Management API
+
+* Create account with uppercase username https://github.com/gravitee-io/issues/issues/8966[#8966]
+* [jdbc][liquibase]  password history character not updated to the correct value
+
+=== Console
+
+* Audit Log sort is broken https://github.com/gravitee-io/issues/issues/8662[#8662]
+
+=== Other
+
+* Mongodb: long running server side queries cause outage https://github.com/gravitee-io/issues/issues/8910[#8910]
+* AM should audit USER_CREATED when using delegated OIDC authentication https://github.com/gravitee-io/issues/issues/8920[#8920]
+* MFA : Invalid Factor Preventing User Logon  https://github.com/gravitee-io/issues/issues/9019[#9019]
+* update org.yaml:snakeyaml
+* Upgrade Snakeyaml dependency
+* Merge 3.20.3 to 3.21.x
+
+
 == AM - 3.20.5 (2023-05-02)
 
 === Management API
