@@ -1,5 +1,12 @@
 # Change Log
 
+== AM - 3.19.12 (2023-05-26)
+
+=== Management API
+
+* Users can't logged in after inline-idp update
+
+
 == AM - 3.18.19 (2023-05-26)
 
 === Management API
