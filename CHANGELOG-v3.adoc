@@ -1,5 +1,13 @@
 # Change Log
 
+== AM - 3.20.6 (2023-05-26)
+
+=== Management API
+
+* [jdbc][liquibase]  password history character not updated to the correct value
+* Users can't logged in after inline-idp update
+
+
 == AM - 3.19.12 (2023-05-26)
 
 === Management API
