@@ -37,7 +37,6 @@ import static io.gravitee.am.factor.otp.utils.TOTP.TIME_STEP;
 import static io.gravitee.am.factor.otp.utils.TOTP.generateTOTP;
 import static io.gravitee.am.factor.utils.SharedSecret.base32Str2Hex;
 import static java.lang.System.currentTimeMillis;
-import static java.util.stream.LongStream.of;
 import static java.util.stream.LongStream.range;
 
 /**
