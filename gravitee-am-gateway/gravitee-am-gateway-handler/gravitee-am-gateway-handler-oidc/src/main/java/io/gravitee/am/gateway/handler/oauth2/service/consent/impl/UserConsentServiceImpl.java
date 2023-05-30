@@ -27,7 +27,6 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.ScopeApprovalService;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 
 import java.util.*;
 import java.util.function.Function;
@@ -35,6 +34,8 @@ import java.util.stream.Collectors;
 
 import static io.gravitee.am.gateway.handler.oauth2.service.utils.ParameterizedScopeUtils.getScopeBase;
 import static io.gravitee.am.gateway.handler.oauth2.service.utils.ParameterizedScopeUtils.isParameterizedScope;
+import static io.gravitee.am.model.oauth2.ScopeApproval.ApprovalStatus.APPROVED;
+import static java.util.Objects.nonNull;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -42,6 +43,7 @@ import static io.gravitee.am.gateway.handler.oauth2.service.utils.ParameterizedS
  */
 public class UserConsentServiceImpl implements UserConsentService {
 
+    private final int approvalExpirySeconds;
     @Autowired
     private ScopeApprovalService scopeApprovalService;
 
@@ -54,15 +56,16 @@ public class UserConsentServiceImpl implements UserConsentService {
     @Autowired
     private Domain domain;
 
-    @Value("${oauth2.approval.expiry:-1}")
-    private int approvalExpirySeconds;
+    public UserConsentServiceImpl(int approvalExpirySeconds) {
+        this.approvalExpirySeconds = approvalExpirySeconds;
+    }
 
     @Override
     public Single<Set<String>> checkConsent(Client client, io.gravitee.am.model.User user) {
         return scopeApprovalService.findByDomainAndUserAndClient(domain.getId(), user.getId(), client.getClientId())
                 .filter(approval -> {
                     Date today = new Date();
-                    return (approval.getExpiresAt().after(today) && approval.getStatus() == ScopeApproval.ApprovalStatus.APPROVED);
+                    return approval.getExpiresAt().after(today) && APPROVED.equals(approval.getStatus());
                 })
                 .map(ScopeApproval::getScope)
                 .collect(HashSet::new, Set::add);
@@ -71,15 +74,16 @@ public class UserConsentServiceImpl implements UserConsentService {
     @Override
     public Single<List<ScopeApproval>> saveConsent(Client client, List<ScopeApproval> approvals, User principal) {
         // compute expiry date for each approval
-        final Map<String, ApplicationScopeSettings> scopeApprovals = client.getScopeSettings()
-                .stream()
-                .filter(s -> s.getScopeApproval() != null)
+        var scopeApprovals = client.getScopeSettings().stream()
+                .filter(s -> nonNull(s.getScopeApproval()))
                 .collect(Collectors.toMap(ApplicationScopeSettings::getScope, Function.identity()));
-        final List<String> parameterizedScopes = client.getScopeSettings().stream().map(ApplicationScopeSettings::getScope).filter(scopeManager::isParameterizedScope).collect(Collectors.toList());
+        var parameterizedScopes = client.getScopeSettings().stream().map(ApplicationScopeSettings::getScope)
+                .filter(scopeManager::isParameterizedScope)
+                .collect(Collectors.toList());
 
         approvals.forEach(a -> a.setExpiresAt(computeExpiry(scopeApprovals, a.getScope(), parameterizedScopes)));
         // save consent
-        return scopeApprovalService.saveConsent(domain.getId(), client, approvals);
+        return scopeApprovalService.saveConsent(domain.getId(), client, approvals, principal);
     }
 
     @Override
@@ -116,7 +120,7 @@ public class UserConsentServiceImpl implements UserConsentService {
             if (isParameterizedScope) {
                 final String parameterizedScope = getScopeBase(scope);
                 if (scopeApprovals.containsKey(parameterizedScope) &&
-                                scopeManager.isParameterizedScope(parameterizedScope)) {
+                        scopeManager.isParameterizedScope(parameterizedScope)) {
                     expiresAt.add(Calendar.SECOND, scopeApprovals.get(parameterizedScope).getScopeApproval());
                     return expiresAt.getTime();
                 }
