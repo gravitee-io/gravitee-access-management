@@ -13,27 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.identityprovider.jdbc.utils;
+package io.gravitee.am.identityprovider.jdbc.user;
+
+import io.gravitee.am.identityprovider.jdbc.configuration.JdbcAuthenticationProviderConfigurationTest_Oracle;
+import io.gravitee.am.identityprovider.jdbc.user.spring.JdbcUserProviderConfiguration;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.support.AnnotationConfigContextLoader;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public final class ParametersUtils {
-
-    public static String getIndexParameter(String database, int index, String field) {
-        switch (database) {
-            case "mysql":
-            case "mariadb":
-                return "?";
-            case "postgresql":
-                return "$" + index;
-            case "sqlserver":
-                return "@" + field;
-            case "oracle":
-                return ":" + field;
-            default:
-                return "" + index;
-        }
-    }
-}
+@ContextConfiguration(classes = { JdbcAuthenticationProviderConfigurationTest_Oracle.class, JdbcUserProviderConfiguration.class }, loader = AnnotationConfigContextLoader.class)
+public class JdbcUserProvider_OracleTest extends JdbcUserProvider_Test { }

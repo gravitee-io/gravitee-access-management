@@ -24,6 +24,7 @@ import io.gravitee.node.monitoring.metrics.Metrics;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.r2dbc.pool.ConnectionPool;
+import io.r2dbc.pool.ConnectionPoolConfiguration;
 import io.r2dbc.pool.PoolingConnectionFactoryProvider;
 import io.r2dbc.spi.ConnectionFactories;
 import io.r2dbc.spi.ConnectionFactory;
@@ -91,8 +92,8 @@ public class ConnectionFactoryProvider {
                 .option(PoolingConnectionFactoryProvider.MAX_SIZE, 10)
                 .option(PoolingConnectionFactoryProvider.MAX_IDLE_TIME, Duration.of(30000l, ChronoUnit.MILLIS))
                 .option(PoolingConnectionFactoryProvider.MAX_LIFE_TIME, Duration.of(30000l, ChronoUnit.MILLIS))
-                .option(PoolingConnectionFactoryProvider.MAX_ACQUIRE_TIME, Duration.of(0, ChronoUnit.MILLIS))
-                .option(PoolingConnectionFactoryProvider.MAX_CREATE_CONNECTION_TIME, Duration.of(0, ChronoUnit.MILLIS))
+                .option(PoolingConnectionFactoryProvider.MAX_ACQUIRE_TIME, ConnectionPoolConfiguration.NO_TIMEOUT)
+                .option(PoolingConnectionFactoryProvider.MAX_CREATE_CONNECTION_TIME, ConnectionPoolConfiguration.NO_TIMEOUT)
                 .option(PoolingConnectionFactoryProvider.VALIDATION_DEPTH, ValidationDepth.LOCAL);
 
         List<Map<String, String>> options = configuration.getOptions();
@@ -104,7 +105,16 @@ public class ConnectionFactoryProvider {
             });
         }
 
-        ConnectionPool connectionPool = (ConnectionPool) ConnectionFactories.get(builder.build());
+        ConnectionPool connectionPool;
+        // TCCL has been introduced to support mix database configuration (Mongodb repository / JDBC IdP)
+        ClassLoader origLoader = Thread.currentThread().getContextClassLoader();
+        try {
+            ClassLoader goldenLoader = R2DBCConnectionProvider.class.getClassLoader();
+            Thread.currentThread().setContextClassLoader(goldenLoader);
+            connectionPool = (ConnectionPool) ConnectionFactories.get(builder.build());
+        } finally {
+            Thread.currentThread().setContextClassLoader(origLoader);
+        }
         LOGGER.info("Connection pool created for database server {} on host {}", configuration.getProtocol(), configuration.getHost());
 
         final Tags tags = Tags.of(
@@ -149,8 +159,8 @@ public class ConnectionFactoryProvider {
                     .option(PoolingConnectionFactoryProvider.MAX_SIZE, Integer.parseInt(environment.getProperty(prefix+"maxSize", "10")))
                     .option(PoolingConnectionFactoryProvider.MAX_IDLE_TIME, Duration.of(Long.parseLong(environment.getProperty(prefix+"maxIdleTime", "30000")), ChronoUnit.MILLIS))
                     .option(PoolingConnectionFactoryProvider.MAX_LIFE_TIME, Duration.of(Long.parseLong(environment.getProperty(prefix+"maxLifeTime", "30000")), ChronoUnit.MILLIS))
-                    .option(PoolingConnectionFactoryProvider.MAX_ACQUIRE_TIME, Duration.of(Long.parseLong(environment.getProperty(prefix+"maxAcquireTime", "0")), ChronoUnit.MILLIS))
-                    .option(PoolingConnectionFactoryProvider.MAX_CREATE_CONNECTION_TIME, Duration.of(Long.parseLong(environment.getProperty(prefix+"maxCreateConnectionTime", "0")), ChronoUnit.MILLIS));
+                    .option(PoolingConnectionFactoryProvider.MAX_ACQUIRE_TIME, Duration.of(Long.parseLong(environment.getProperty(prefix+"maxAcquireTime", "-1")), ChronoUnit.MILLIS))
+                    .option(PoolingConnectionFactoryProvider.MAX_CREATE_CONNECTION_TIME, Duration.of(Long.parseLong(environment.getProperty(prefix+"maxCreateConnectionTime", "-1")), ChronoUnit.MILLIS));
 
             if (port != null) {
                 builder.option(PORT, Integer.parseInt(port));

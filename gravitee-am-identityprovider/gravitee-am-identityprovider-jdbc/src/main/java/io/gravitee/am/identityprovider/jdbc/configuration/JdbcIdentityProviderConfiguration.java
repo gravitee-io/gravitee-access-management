@@ -45,6 +45,7 @@ public class JdbcIdentityProviderConfiguration implements IdentityProviderConfig
     private String selectUserByEmailQuery;
     private String identifierAttribute = FIELD_ID;
     private String emailAttribute = FIELD_EMAIL;
+    private String metadataAttribute = FIELD_METADATA;
     private String usernameAttribute = FIELD_USERNAME;
     private String passwordAttribute = FIELD_PASSWORD;
     private String passwordEncoder = PasswordEncoder.BCRYPT;
@@ -227,7 +228,11 @@ public class JdbcIdentityProviderConfiguration implements IdentityProviderConfig
     }
 
     public String getMetadataAttribute() {
-        return FIELD_METADATA;
+        return metadataAttribute;
+    }
+
+    public void setMetadataAttribute(String metadataAttribute) {
+        this.metadataAttribute = metadataAttribute;
     }
 
     public boolean getAutoProvisioning() {
