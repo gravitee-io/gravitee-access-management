@@ -42,6 +42,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.gateway.handler.oauth2.service.token.impl.TokenEnhancerImpl;
 import io.gravitee.am.gateway.handler.oauth2.service.token.impl.TokenManagerImpl;
 import io.gravitee.am.gateway.handler.oauth2.service.token.impl.TokenServiceImpl;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -73,8 +74,10 @@ public class OAuth2Configuration implements ProtocolConfiguration {
     }
 
     @Bean
-    public UserConsentService userConsentService() {
-        return new UserConsentServiceImpl();
+    public UserConsentService userConsentService(
+            @Value("${oauth2.approval.expiry:-1}") int approvalExpirySeconds
+    ) {
+        return new UserConsentServiceImpl(approvalExpirySeconds);
     }
 
     @Bean
