@@ -36,6 +36,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.thymeleaf.util.StringUtils;
 
+import static io.gravitee.am.common.utils.ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -181,9 +183,10 @@ public class WebAuthnLoginHandler extends WebAuthnHandler {
                                 return;
                             }
                             final User user = h.result();
-                            // save the user into the context
+                            // save the user and credential id into the context
                             ctx.getDelegate().setUser(user);
                             ctx.put(ConstantKeys.USER_CONTEXT_KEY, ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) user).getUser());
+                            ctx.put(WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY, credentialId);
                             // the user has upgraded from unauthenticated to authenticated
                             // session should be upgraded as recommended by owasp
                             session.regenerateId();
