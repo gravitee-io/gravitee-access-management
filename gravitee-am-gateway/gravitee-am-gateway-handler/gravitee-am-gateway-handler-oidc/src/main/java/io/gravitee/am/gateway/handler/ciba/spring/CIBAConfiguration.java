@@ -24,8 +24,6 @@ import io.gravitee.am.gateway.handler.ciba.service.AuthenticationRequestService;
 import io.gravitee.am.gateway.handler.ciba.service.AuthenticationRequestServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.service.assertion.ClientAssertionService;
 import io.gravitee.am.gateway.handler.oauth2.service.assertion.impl.ClientAssertionServiceImpl;
-import io.gravitee.am.gateway.handler.oauth2.service.consent.UserConsentService;
-import io.gravitee.am.gateway.handler.oauth2.service.consent.impl.UserConsentServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeService;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.impl.ScopeServiceImpl;
 import org.springframework.context.annotation.Bean;
