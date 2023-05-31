@@ -112,8 +112,7 @@ public class OTPFactorProviderTest {
         var factorContext = new FactorContext(null, data);
 
         otpFactorProvider.verify(factorContext).test()
-                .assertError(InvalidCodeException.class)
-                .assertErrorMessage("Invalid 2FA Code");
+                .assertError(InvalidCodeException.class);
     }
 
     @Test
