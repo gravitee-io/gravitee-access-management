@@ -25,16 +25,10 @@ import io.gravitee.am.factor.utils.SharedSecret;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
-<<<<<<< HEAD
 import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.CompletableEmitter;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-=======
-import io.reactivex.Completable;
-import io.reactivex.CompletableEmitter;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
->>>>>>> b10dbc76e (fix: handle clock drift in MFA OTP)
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
