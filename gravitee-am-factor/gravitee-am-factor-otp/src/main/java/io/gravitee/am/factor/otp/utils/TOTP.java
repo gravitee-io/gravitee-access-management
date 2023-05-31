@@ -48,6 +48,10 @@ public final class TOTP {
             // 0 1  2   3    4     5      6       7        8
             = {1,10,100,1000,10000,100000,1000000,10000000,100000000 };
 
+    public static final String RETURN_DIGITS = "6";
+
+    public static final int TIME_STEP = 30000;
+
     private TOTP() {}
 
     /**
@@ -99,10 +103,10 @@ public final class TOTP {
      *
      * @return: a numeric String in base 10 that includes digits
      */
-    public static String generateTOTP(String key) {
+    public static String generateTOTP(String key, long time) {
         // 30 seconds StepSize (ID TOTP)
         // 6 digits to return
-        return generateTOTP(key, Long.toHexString(System.currentTimeMillis() / 30000).toUpperCase(), "6");
+        return generateTOTP(key, Long.toHexString(time).toUpperCase(), RETURN_DIGITS);
     }
 
     /**
@@ -130,7 +134,7 @@ public final class TOTP {
      * @param time: a value that reflects a time
      * @param returnDigits: number of digits to return
      *
-     * @return: a numeric String in base 10 that includes digits
+     * @return a numeric String in base 10 that includes digits
      */
     public static String generateTOTP256(String key,
                                          String time,
