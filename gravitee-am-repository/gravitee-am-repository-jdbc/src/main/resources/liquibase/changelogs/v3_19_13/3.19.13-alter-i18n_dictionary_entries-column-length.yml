@@ -1,0 +1,12 @@
+databaseChangeLog:
+  - changeSet:
+      id: 3.19.13-alter-i18n_dictionary_entries-column-length
+      author: GraviteeSource Team
+      changes:
+        #############################
+        # i18n_dictionary_entries Table, message column length#
+        ############################
+        - modifyDataType:
+            tableName: i18n_dictionary_entries
+            columnName: message
+            newDataType: nvarchar(255)
