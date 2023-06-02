@@ -28,6 +28,7 @@ public class EnrichProfilePolicyConfiguration implements PolicyConfiguration {
 
     private List<Property> properties = new ArrayList<>();
 
+    private boolean enableObjectClaimSupport = false;
     private boolean exitOnError;
 
     public List<Property> getProperties() {
@@ -46,4 +47,11 @@ public class EnrichProfilePolicyConfiguration implements PolicyConfiguration {
         this.exitOnError = exitOnError;
     }
 
+    public boolean isEnableObjectClaimSupport() {
+        return enableObjectClaimSupport;
+    }
+
+    public void setEnableObjectClaimSupport(boolean enableObjectClaimSupport) {
+        this.enableObjectClaimSupport = enableObjectClaimSupport;
+    }
 }

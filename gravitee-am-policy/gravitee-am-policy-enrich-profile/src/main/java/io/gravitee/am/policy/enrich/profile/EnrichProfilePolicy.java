@@ -104,8 +104,14 @@ public class EnrichProfilePolicy {
 
                 TemplateEngine tplEngine = context.getTemplateEngine();
                 for (Property property : configuration.getProperties()) {
-                    String additionalInfo = tplEngine.getValue(property.getClaimValue(), String.class);
-                    additionalInformation.put(property.getClaim(), additionalInfo);
+                    if(configuration.isEnableObjectClaimSupport()) {
+                        Object additionalInfo = tplEngine.getValue(property.getClaimValue(), Object.class);
+                        additionalInformation.put(property.getClaim(), additionalInfo);
+                    } else {
+                        String additionalInfo = tplEngine.getValue(property.getClaimValue(), String.class);
+                        additionalInformation.put(property.getClaim(), additionalInfo);
+                    }
+
                 }
 
                 needUpdate = true;
