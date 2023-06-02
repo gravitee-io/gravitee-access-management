@@ -2,6 +2,12 @@
   "type" : "object",
   "id" : "urn:jsonschema:io:gravitee:policy:am:enrich:profile:EnrichProfilePolicyConfiguration",
   "properties" : {
+      "enableObjectClaimSupport": {
+        "title": "Enable Object claim parsing",
+        "description": "When enabled, the parsed Expression Language returns an Object. Returns a String otherwise",
+        "type": "boolean",
+        "default": false
+      },
       "properties" : {
       "type" : "array",
       "title": "Context properties",
