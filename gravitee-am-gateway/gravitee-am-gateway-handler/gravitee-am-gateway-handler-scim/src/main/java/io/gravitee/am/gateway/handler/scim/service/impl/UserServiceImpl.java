@@ -353,14 +353,7 @@ public class UserServiceImpl implements UserService {
                                                                 } else {
                                                                     return createPasswordHistory(domain, userToUpdate, rawPassword, principal, client)
                                                                             .switchIfEmpty(Single.just(new PasswordHistory()))
-                                                                            .flatMap(ph -> userProvider.update(userToUpdate.getExternalId(), UserMapper.convert(userToUpdate)))
-                                                                            .flatMap(updatedUser -> {
-                                                                                         if (!isNullOrEmpty(user.getPassword())) {
-                                                                                             return userProvider.updatePassword(updatedUser, user.getPassword());
-                                                                                         }
-                                                                                         return Single.just(updatedUser);
-                                                                                     }
-                                                                            );
+                                                                            .flatMap(ph -> userProvider.update(userToUpdate.getExternalId(), UserMapper.convert(userToUpdate)));
                                                                 }
                                                             });
                                                 })

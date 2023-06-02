@@ -281,7 +281,6 @@ public class UserServiceTest {
 
         UserProvider userProvider = mock(UserProvider.class);
         when(userProvider.update(anyString(), any())).thenReturn(Single.just(idpUser));
-        when(userProvider.updatePassword(any(), anyString())).thenReturn(Single.just(idpUser));
 
         Set<Role> roles = new HashSet<>();
         Role role1 = new Role();
@@ -306,7 +305,7 @@ public class UserServiceTest {
         verify(userRepository, times(1)).update(userCaptor.capture());
         verify(userProvider, never()).create(any());
         verify(userProvider).update(anyString(), any());
-        verify(userProvider).updatePassword(any(), eq(PASSWORD));
+        verify(userProvider, never()).updatePassword(any(), eq(PASSWORD));
         assertTrue(userCaptor.getValue().isEnabled());
         assertTrue(userCaptor.getValue().getAdditionalInformation().containsKey("attr1"));
     }
