@@ -45,8 +45,6 @@ public abstract class Event {
                 return ReporterEvent.actionOf(action);
             case POLICY:
                 return PolicyEvent.actionOf(action);
-            case USER:
-                return UserEvent.actionOf(action);
             case GROUP:
                 return GroupEvent.actionOf(action);
             case MEMBERSHIP:

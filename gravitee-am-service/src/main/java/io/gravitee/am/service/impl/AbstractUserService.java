@@ -16,22 +16,16 @@
 package io.gravitee.am.service.impl;
 
 import io.gravitee.am.common.audit.EventType;
-import io.gravitee.am.common.event.Action;
-import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.RandomString;
-import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Group;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
-import io.gravitee.am.model.common.event.Event;
-import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.repository.management.api.CommonUserRepository;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.CommonUserService;
 import io.gravitee.am.service.CredentialService;
-import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.GroupService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.AbstractManagementException;
@@ -41,7 +35,6 @@ import io.gravitee.am.service.exception.UserAlreadyExistsException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
-import io.gravitee.am.service.reporter.AuditReporterService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
 import io.gravitee.am.service.utils.UserFactorUpdater;
@@ -77,9 +70,6 @@ public abstract class AbstractUserService<T extends CommonUserRepository> implem
 
     @Autowired
     protected UserValidator userValidator;
-
-    @Autowired
-    protected EventService eventService;
 
     @Autowired
     private AuditService auditService;
@@ -241,11 +231,6 @@ public abstract class AbstractUserService<T extends CommonUserRepository> implem
 
         return userValidator.validate(user)
                 .andThen(getUserRepository().create(user))
-                .flatMap(user1 -> {
-                    // create event for sync process
-                    Event event = new Event(Type.USER, new Payload(user1.getId(), user1.getReferenceType(), user1.getReferenceId(), Action.CREATE));
-                    return eventService.create(event).flatMap(__ -> Single.just(user1));
-                })
                 .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).type(EventType.USER_CREATED).user(user1)))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -306,13 +291,10 @@ public abstract class AbstractUserService<T extends CommonUserRepository> implem
         return getUserRepository().findById(userId)
                 .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
                 .flatMapCompletable(user -> {
-                    // create event for sync process
-                    Event event = new Event(Type.USER, new Payload(user.getId(), user.getReferenceType(), user.getReferenceId(), Action.DELETE));
                     /// delete WebAuthn credentials
                     return credentialService.findByUserId(user.getReferenceType(), user.getReferenceId(), user.getId())
                             .flatMapCompletable(credential -> credentialService.delete(credential.getId(), false))
-                            .andThen(getUserRepository().delete(userId))
-                            .andThen(eventService.create(event).ignoreElement());
+                            .andThen(getUserRepository().delete(userId));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
