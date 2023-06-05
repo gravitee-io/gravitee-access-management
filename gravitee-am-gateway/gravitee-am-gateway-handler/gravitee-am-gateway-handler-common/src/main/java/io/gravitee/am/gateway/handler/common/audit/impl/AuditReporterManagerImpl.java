@@ -220,6 +220,7 @@ public class AuditReporterManagerImpl extends AbstractService implements AuditRe
                         eventBusReporter.start();
                         reporters.put(reporter.getId(), reporter);
                         reporterPlugins.put(reporter.getId(), eventBusReporter);
+                        AuditReporterVerticle.incrementActiveReporter();
                     } catch (Exception ex) {
                         logger.error("Unexpected error while starting reporter", ex);
                     }
@@ -237,6 +238,7 @@ public class AuditReporterManagerImpl extends AbstractService implements AuditRe
         if (reporter != null) {
             try {
                 reporter.stop();
+                AuditReporterVerticle.decrementActiveReporter();
             } catch (Exception ex) {
                 logger.error("Unable to stop reporter: {}", reporterId, ex);
             }
