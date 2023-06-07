@@ -31,6 +31,9 @@ import io.gravitee.am.jwt.JWTParser;
 import io.gravitee.am.repository.oauth2.model.request.TokenRequest;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
+import java.io.ByteArrayOutputStream;
+import java.security.*;
+import java.security.spec.ECGenParameterSpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -40,8 +43,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
-import java.security.KeyFactory;
-import java.security.PublicKey;
 import java.security.interfaces.ECPublicKey;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.RSAPublicKeySpec;
@@ -54,6 +55,9 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static java.util.Arrays.copyOfRange;
+import static java.util.Objects.nonNull;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -63,7 +67,14 @@ public class JWTBearerExtensionGrantProvider implements ExtensionGrantProvider, 
     private static final Logger LOGGER = LoggerFactory.getLogger(JWTBearerExtensionGrantProvider.class);
     private static final String ASSERTION_QUERY_PARAM = "assertion";
     static final Pattern SSH_PUB_KEY = Pattern.compile("((ecdsa)(.*)|ssh-(rsa|dsa)) ([A-Za-z0-9/+]+=*)( .*)?");
+    private static final int OPENSSH_KEY_HEADER_LENGTH = 39;
     private JWTParser jwtParser;
+
+    private static final Map<Integer, String> OPENSSH_KEY_LENGHTS = Map.of(
+            104, "secp256r1",
+            136, "secp384r1",
+            172, "secp521r1"
+    );
 
     @Autowired
     private JWTBearerExtensionGrantConfiguration jwtBearerTokenGranterConfiguration;
@@ -153,7 +164,7 @@ public class JWTBearerExtensionGrantProvider implements ExtensionGrantProvider, 
      * @return RSAPublicKey
      */
     private static PublicKey parseSshRSAPublicKey(String encKey) {
-        final byte[] PREFIX = new byte[] {0,0,0,7, 's','s','h','-','r','s','a'};
+        final byte[] PREFIX = new byte[]{0, 0, 0, 7, 's', 's', 'h', '-', 'r', 's', 'a'};
         ByteArrayInputStream in = new ByteArrayInputStream(Base64.getDecoder().decode(StandardCharsets.UTF_8.encode(encKey)).array());
 
         byte[] prefix = new byte[11];
@@ -175,20 +186,43 @@ public class JWTBearerExtensionGrantProvider implements ExtensionGrantProvider, 
     static RSAPublicKey createPublicKey(BigInteger n, BigInteger e) {
         try {
             return (RSAPublicKey) KeyFactory.getInstance("RSA").generatePublic(new RSAPublicKeySpec(n, e));
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
     }
+
     static ECPublicKey parseEcPublicKey(String publicKey) {
         try {
-            X509EncodedKeySpec x509KeySpec = new X509EncodedKeySpec(Base64.getDecoder().decode(publicKey));
-            KeyFactory keyFactory = KeyFactory.getInstance("EC");
+            X509EncodedKeySpec x509KeySpec = getX509EncodedKeySpec(publicKey);
+            var keyFactory = KeyFactory.getInstance("EC");
             return (ECPublicKey) keyFactory.generatePublic(x509KeySpec);
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
+    }
+
+    /**
+     * Since Java follows the ASN.1-based encoding also specified in ANSI X9.62 and
+     * OpenSSH the <a href="https://www.rfc-editor.org/rfc/rfc5656#section-3.1">RFC 5656, section 3.1.</a>
+     * The only difference is that the size of the headers differs. OpenSSH uses a header of 39 in length.
+     * Since the encoding of X and Y are similar in size in both conventions, in order to comply with the standard
+     * we switch the header size to obtain the desired public key.
+     * */
+    private static X509EncodedKeySpec getX509EncodedKeySpec(String publicKey) throws InvalidAlgorithmParameterException, NoSuchAlgorithmException {
+        final byte[] decodedPubKey = Base64.getDecoder().decode(publicKey);
+        if (nonNull(resolveAlgorithm(decodedPubKey.length))) {
+            return getOpenSSHX509EncodedKeySpec(decodedPubKey);
+        }
+        return new X509EncodedKeySpec(decodedPubKey);
+    }
+
+    private static X509EncodedKeySpec getOpenSSHX509EncodedKeySpec(byte[] decodedPubKey) throws InvalidAlgorithmParameterException, NoSuchAlgorithmException {
+        final byte[] suffix = copyOfRange(decodedPubKey, OPENSSH_KEY_HEADER_LENGTH, decodedPubKey.length);
+        final byte[] prefix = generateEcDSAJavaHeader(decodedPubKey.length, suffix.length);
+        final byte[] transformedPublickey = new byte[prefix.length + suffix.length];
+        System.arraycopy(prefix, 0, transformedPublickey, 0, prefix.length);
+        System.arraycopy(suffix, 0, transformedPublickey, prefix.length, suffix.length);
+        return new X509EncodedKeySpec(transformedPublickey);
     }
 
     /**
@@ -214,5 +248,16 @@ public class JWTBearerExtensionGrantProvider implements ExtensionGrantProvider, 
         }
 
         return b;
+    }
+
+    public static byte[] generateEcDSAJavaHeader(int keySize, int suffixSize) throws InvalidAlgorithmParameterException, NoSuchAlgorithmException {
+        KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC");
+        kpg.initialize(new ECGenParameterSpec(resolveAlgorithm(keySize)));
+        final byte[] encodedKey = kpg.genKeyPair().getPublic().getEncoded();
+        return Arrays.copyOfRange(encodedKey, 0, encodedKey.length - suffixSize);
+    }
+
+    private static String resolveAlgorithm(int keySize) {
+        return OPENSSH_KEY_LENGHTS.get(keySize);
     }
 }
