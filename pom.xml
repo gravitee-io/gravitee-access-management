@@ -73,7 +73,7 @@
     <properties>
         <revision>3.18.20</revision>
         <sha1 />
-        <changelist>-SNAPSHOT</changelist>
+        <changelist></changelist>
 
         <gravitee-bom.version>2.5</gravitee-bom.version>
         <gravitee-common.version>1.25.0</gravitee-common.version>
