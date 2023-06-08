@@ -1,5 +1,18 @@
 # Change Log
 
+== AM - 3.18.20 (2023-06-08)
+
+
+=== Gateway
+
+* [gateway][mfa] Allow OTP factor to handle clock drift issues https://github.com/gravitee-io/issues/issues/9074[#9074]
+
+
+=== Other
+
+* [gateway][audit] It is impossible to see the user that consented the user consent in the audit log https://github.com/gravitee-io/issues/issues/9049[#9049]
+
+
 == AM - 3.20.6 (2023-05-26)
 
 === Management API
