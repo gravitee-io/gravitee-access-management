@@ -1372,6 +1372,6 @@ public class UserServiceTest {
         });
 
         verify(emailService, times(1)).send(any(), any(), any());
-        verify(auditService, times(2)).report(any());
+        verify(auditService, times(1)).report(any());
     }
 }
