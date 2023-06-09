@@ -1,17 +1,31 @@
 # Change Log
 
+== AM - 3.21.1 (2023-06-09)
+
+=== Gateway
+
+* [gateway][mfa] Allow OTP factor to handle clock drift issues https://github.com/gravitee-io/issues/issues/9074[#9074]
+* [gateway][audit] It is impossible to see the user that consented the user consent in the audit log https://github.com/gravitee-io/issues/issues/9049[#9049]
+* WebAuthn post login flow does not contain webAuthnCredentialId https://github.com/gravitee-io/issues/issues/8918[#8918]
+
+=== Other
+
+* [policies] allow Enrich User Profile policy to accept objects as new claims https://github.com/gravitee-io/issues/issues/9078[#9078]
+* Column messages in i18n_dictionary_entries  table has too little characters https://github.com/gravitee-io/issues/issues/9046[#9046]
+
+
 == AM - 3.20.7 (2023-06-08)
 
 === Gateway
 
 * [gateway][mfa] Allow OTP factor to handle clock drift issues https://github.com/gravitee-io/issues/issues/9074[#9074]
 * [gateway][audit] It is impossible to see the user that consented the user consent in the audit log https://github.com/gravitee-io/issues/issues/9049[#9049]
-* WebAuthn post login flow does not contain webAuthnCredentialId
+* WebAuthn post login flow does not contain webAuthnCredentialId https://github.com/gravitee-io/issues/issues/8918[#8918]
 
 === Other
 
-* [policies] allow Enrich User Profile policy to accept objects as new claims
-* Column messages in i18n_dictionary_entries  table has too little characters
+* [policies] allow Enrich User Profile policy to accept objects as new claims https://github.com/gravitee-io/issues/issues/9078[#9078]
+* Column messages in i18n_dictionary_entries  table has too little characters https://github.com/gravitee-io/issues/issues/9046[#9046]
 
 
 == AM - 3.19.13 (2023-06-08)
@@ -20,25 +34,19 @@
 
 * [gateway][mfa] Allow OTP factor to handle clock drift issues https://github.com/gravitee-io/issues/issues/9074[#9074]
 * [gateway][audit] It is impossible to see the user that consented the user consent in the audit log https://github.com/gravitee-io/issues/issues/9049[#9049]
-* WebAuthn post login flow does not contain webAuthnCredentialId
+* WebAuthn post login flow does not contain webAuthnCredentialId https://github.com/gravitee-io/issues/issues/8918[#8918]
 
 === Other
 
-* Column messages in i18n_dictionary_entries  table has too little characters
+* Column messages in i18n_dictionary_entries  table has too little characters https://github.com/gravitee-io/issues/issues/9046[#9046]
 
 
 == AM - 3.18.20 (2023-06-08)
 
-
 === Gateway
 
 * [gateway][mfa] Allow OTP factor to handle clock drift issues https://github.com/gravitee-io/issues/issues/9074[#9074]
-
-
-=== Other
-
 * [gateway][audit] It is impossible to see the user that consented the user consent in the audit log https://github.com/gravitee-io/issues/issues/9049[#9049]
-
 
 == AM - 3.20.6 (2023-05-26)
 
