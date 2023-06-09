@@ -59,7 +59,7 @@ public class FlowResourceTest extends JerseySpringTest {
                 .get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
-        final Flow flow = readEntity(response, Flow.class);
+        final FlowEntity flow = readEntity(response, FlowEntity.class);
         assertEquals(mockFlow.getId(), flow.getId());
         assertEquals(mockFlow.getName(), flow.getName());
     }
