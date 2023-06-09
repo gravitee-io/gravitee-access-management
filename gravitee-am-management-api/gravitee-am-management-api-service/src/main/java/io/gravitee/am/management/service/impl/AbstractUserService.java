@@ -120,10 +120,10 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
         return userValidator.validate(updateUser).andThen(
                 getUserService().findById(referenceType, referenceId, id)
                         .flatMap(user -> identityProviderManager.getUserProvider(user.getSource())
-                                .switchIfEmpty(Single.error(new UserProviderNotFoundException(user.getSource())))
+                                .switchIfEmpty(Single.error(() -> new UserProviderNotFoundException(user.getSource())))
                                 // update the idp user
                                 .flatMap(userProvider -> userProvider.findByUsername(user.getUsername())
-                                        .switchIfEmpty(Single.error(new UserNotFoundException(user.getUsername())))
+                                        .switchIfEmpty(Single.error(() -> new UserNotFoundException(user.getUsername())))
                                         .flatMap(idpUser -> userProvider.update(idpUser.getId(), convert(user.getUsername(), updateUser))))
                                 .flatMap(idpUser -> {
                                     // set external id
@@ -160,7 +160,7 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
                 getUserService().findById(referenceType, referenceId, id).flatMap(user -> getUserService()
                                 .findByUsernameAndSource(referenceType, referenceId, username, user.getSource())
                                 //If the user is empty we throw a UserNotFoundException to allow the update
-                                .switchIfEmpty(Single.error(new UserNotFoundException(referenceId, username)))
+                                .switchIfEmpty(Single.error(() -> new UserNotFoundException(referenceId, username)))
                                 //If the user is not empty we throw a InvalidUserException to prevent username update
                                 .flatMap(existingUser -> Single.<User>error(new InvalidUserException(String.format("User with username [%s] and idp [%s] already exists", username, user.getSource()))))
                                 .onErrorResumeNext(ex -> {
@@ -170,9 +170,9 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
                                     return Single.error(ex);
                                 })
                         ).flatMap(user -> identityProviderManager.getUserProvider(user.getSource())
-                                .switchIfEmpty(Single.error(new UserProviderNotFoundException(user.getSource())))
+                                .switchIfEmpty(Single.error(() -> new UserProviderNotFoundException(user.getSource())))
                                 .flatMap(userProvider -> userProvider.findByUsername(user.getUsername())
-                                        .switchIfEmpty(Single.error(new UserNotFoundException()))
+                                        .switchIfEmpty(Single.error(() -> new UserNotFoundException()))
                                         .flatMap(idpUser -> userProvider.updateUsername(idpUser, username))
                                         .flatMap(idpUser -> {
                                             oldUsername.set(user.getUsername());

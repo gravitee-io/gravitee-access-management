@@ -96,7 +96,7 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
         Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         String subject = accessToken.getSub();
         userService.findById(subject)
-                .switchIfEmpty(Single.error(new InvalidTokenException("No user found for this token")))
+                .switchIfEmpty(Single.error(() -> new InvalidTokenException("No user found for this token")))
                 // enhance user information
                 .flatMap(user -> enhance(user, accessToken))
                 // process user claims

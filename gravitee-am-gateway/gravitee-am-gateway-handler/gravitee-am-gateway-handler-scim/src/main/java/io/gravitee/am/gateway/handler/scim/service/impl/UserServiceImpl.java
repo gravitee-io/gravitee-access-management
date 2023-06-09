@@ -224,7 +224,7 @@ public class UserServiceImpl implements UserService {
                                             return Single.error(new IdentityProviderNotFoundException(source));
                                         }
                                         return identityProviderManager.getUserProvider(source)
-                                                .switchIfEmpty(Single.error(new UserProviderNotFoundException(source)))
+                                                .switchIfEmpty(Single.error(() -> new UserProviderNotFoundException(source)))
                                                 .flatMap(userProvider -> userProvider.create(UserMapper.convert(userModel)));
                                     })
                                     .flatMap(idpUser -> {
@@ -277,7 +277,7 @@ public class UserServiceImpl implements UserService {
         LOGGER.debug("Update a user {} for domain {}", user.getUserName(), domain.getName());
 
         return userRepository.findById(userId)
-                .switchIfEmpty(Single.error(new UserNotFoundException(userId)))
+                .switchIfEmpty(Single.error(() ->new UserNotFoundException(userId)))
                 .flatMap(existingUser -> innerUpdate(existingUser, user, idp, baseUrl, principal, client));
     }
 
@@ -356,7 +356,7 @@ public class UserServiceImpl implements UserService {
                                                         return Single.error(new IdentityProviderNotFoundException(source));
                                                     }
                                                     return identityProviderManager.getUserProvider(userToUpdate.getSource())
-                                                            .switchIfEmpty(Single.error(new UserProviderNotFoundException(userToUpdate.getSource())))
+                                                            .switchIfEmpty(Single.error(() -> new UserProviderNotFoundException(userToUpdate.getSource())))
                                                             .flatMap(userProvider -> {
                                                                 // no idp user check if we need to create it
                                                                 if (userToUpdate.getExternalId() == null) {
@@ -420,7 +420,7 @@ public class UserServiceImpl implements UserService {
     public Single<User> patch(String userId, PatchOp patchOp, String idp, String baseUrl, io.gravitee.am.identityprovider.api.User principal, Client client) {
         LOGGER.debug("Patch user {}", userId);
         return innerGet(userId, baseUrl)
-                .switchIfEmpty(Single.error(new UserNotFoundException(userId)))
+                .switchIfEmpty(Single.error(() -> new UserNotFoundException(userId)))
                 .flatMap(userContainer -> {
                     ObjectNode node = objectMapper.convertValue(userContainer.getScimUser(), ObjectNode.class);
                     patchOp.getOperations().forEach(operation -> operation.apply(node));
@@ -451,10 +451,10 @@ public class UserServiceImpl implements UserService {
     public Completable delete(String userId, io.gravitee.am.identityprovider.api.User principal) {
         LOGGER.debug("Delete user {}", userId);
         return userRepository.findById(userId)
-                .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
+                .switchIfEmpty(Maybe.error(() -> new UserNotFoundException(userId)))
                 .flatMapCompletable(user -> {
                     return identityProviderManager.getUserProvider(user.getSource())
-                            .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(user.getSource())))
+                            .switchIfEmpty(Maybe.error(() -> new UserProviderNotFoundException(user.getSource())))
                             .flatMapCompletable(userProvider -> userProvider.delete(user.getExternalId()))
                             .onErrorResumeNext(ex -> {
                                 if (ex instanceof UserNotFoundException || ex instanceof UserProviderNotFoundException) {
