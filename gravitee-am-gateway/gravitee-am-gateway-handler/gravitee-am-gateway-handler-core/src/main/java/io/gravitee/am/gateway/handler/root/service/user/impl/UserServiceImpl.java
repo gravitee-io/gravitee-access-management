@@ -269,19 +269,7 @@ public class UserServiceImpl implements UserService {
 
     private void sendVerifyAccountEmail(Client client, User amUser, Optional<AccountSettings> accountSettings) {
         accountSettings.filter(AccountSettings::isSendVerifyRegistrationAccountEmail).ifPresent(sendEmail ->
-                fromRunnable(() -> emailService.send(REGISTRATION_VERIFY, amUser, client)).subscribe(
-                        () -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class)
-                                .type(EventType.REGISTRATION_VERIFY_ACCOUNT_EMAIL_SENT)
-                                .domain(domain.getId())
-                                .client(client)
-                                .user(amUser)),
-                        throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class)
-                                .type(EventType.REGISTRATION_VERIFY_ACCOUNT_EMAIL_SENT)
-                                .domain(domain.getId())
-                                .client(client)
-                                .user(amUser)
-                                .throwable(throwable))
-                )
+                fromRunnable(() -> emailService.send(REGISTRATION_VERIFY, amUser, client)).subscribe()
         );
     }
 
