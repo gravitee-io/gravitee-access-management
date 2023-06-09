@@ -51,6 +51,11 @@
       "x-schema-form": {
         "expression-language": true
       }
+    },
+    "icon": {
+      "title": "Icon",
+      "description": "The icon of flow.",
+      "type": "string"
     }
   },
   "required": ["name"]

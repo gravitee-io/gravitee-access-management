@@ -36,6 +36,7 @@ public class FlowEntity {
     private boolean enabled;
     private Type type;
     private String condition;
+    private String icon;
     @ApiModelProperty(dataType = "java.lang.Long")
     private Date createdAt;
     @ApiModelProperty(dataType = "java.lang.Long")
@@ -50,6 +51,7 @@ public class FlowEntity {
         this.post = other.getPost();
         this.enabled = other.isEnabled();
         this.type = other.getType();
+        this.icon = getIcon(other.getType());
         this.condition = other.getCondition();
         this.createdAt = other.getCreatedAt();
         this.updatedAt = other.getUpdatedAt();
@@ -111,6 +113,14 @@ public class FlowEntity {
         this.condition = condition;
     }
 
+    public String getIcon() {
+        return icon;
+    }
+
+    public void setIcon(String icon) {
+        this.icon = icon;
+    }
+
     public Date getCreatedAt() {
         return createdAt;
     }
@@ -125,5 +135,32 @@ public class FlowEntity {
 
     public void setUpdatedAt(Date updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    private static String getIcon(Type type) {
+        if (type == null) {
+            return "communication:shield-thunder";
+        }
+
+        switch (type) {
+            case ROOT:
+                return "home:earth";
+            case LOGIN_IDENTIFIER:
+                return "code:right-circle";
+            case LOGIN:
+                return "finance:file";
+            case CONSENT:
+                return "general:shield-check";
+            case REGISTER:
+                return "communication:shield-user";
+            case RESET_PASSWORD:
+                return "finance:protected-file";
+            case REGISTRATION_CONFIRMATION:
+                return "communication:clipboard-check";
+            case TOKEN:
+                return "shopping:ticket";
+            default:
+                return "communication:shield-thunder";
+        }
     }
 }
