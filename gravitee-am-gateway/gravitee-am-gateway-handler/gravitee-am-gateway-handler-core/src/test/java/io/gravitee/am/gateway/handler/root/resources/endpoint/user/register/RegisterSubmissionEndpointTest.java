@@ -80,7 +80,7 @@ public class RegisterSubmissionEndpointTest extends RxWebTestBase {
             routingContext.next();
         });
 
-        when(userService.register(eq(client), any(), any())).thenReturn(Single.just(new RegistrationResponse()));
+        when(userService.register(eq(client), any(), any(), any())).thenReturn(Single.just(new RegistrationResponse()));
 
         testRequest(
                 HttpMethod.POST, "/register?client_id=client-id",
@@ -109,7 +109,7 @@ public class RegisterSubmissionEndpointTest extends RxWebTestBase {
             routingContext.next();
         });
 
-        when(userService.register(eq(client), any(), any())).thenReturn(Single.just(registrationResponse));
+        when(userService.register(eq(client), any(), any(), any())).thenReturn(Single.just(registrationResponse));
 
         testRequest(
                 HttpMethod.POST, "/register?client_id=client-id",
@@ -134,7 +134,7 @@ public class RegisterSubmissionEndpointTest extends RxWebTestBase {
             routingContext.next();
         });
 
-        when(userService.register(eq(client), any(), any())).thenReturn(Single.error(new UserAlreadyExistsException("test")));
+        when(userService.register(eq(client), any(), any(), any())).thenReturn(Single.error(new UserAlreadyExistsException("test")));
 
         testRequest(
                 HttpMethod.POST, "/register?client_id=client-id",
@@ -159,7 +159,7 @@ public class RegisterSubmissionEndpointTest extends RxWebTestBase {
             routingContext.next();
         });
 
-        when(userService.register(eq(client), any(), any())).thenReturn(Single.error(new InvalidUserException("Username invalid")));
+        when(userService.register(eq(client), any(), any(), any())).thenReturn(Single.error(new InvalidUserException("Username invalid")));
 
         testRequest(
                 HttpMethod.POST, "/register?client_id=client-id",
@@ -184,7 +184,7 @@ public class RegisterSubmissionEndpointTest extends RxWebTestBase {
             routingContext.next();
         });
 
-        when(userService.register(eq(client), any(), any())).thenReturn(Single.error(new EmailFormatInvalidException("test")));
+        when(userService.register(eq(client), any(), any(), any())).thenReturn(Single.error(new EmailFormatInvalidException("test")));
 
         testRequest(
                 HttpMethod.POST, "/register?client_id=client-id",
@@ -214,7 +214,7 @@ public class RegisterSubmissionEndpointTest extends RxWebTestBase {
             routingContext.next();
         });
 
-        when(userService.register(eq(client), any(), any())).thenReturn(Single.just(registrationResponse));
+        when(userService.register(eq(client), any(), any(), any())).thenReturn(Single.just(registrationResponse));
 
         testRequest(
                 HttpMethod.POST, "/register?client_id=client-id&some-param=some-value",

@@ -82,6 +82,8 @@ public class RegisterVerifyEndpoint extends AbstractEndpoint implements Handler<
 
         Client client = routingContext.get(CLIENT_CONTEXT_KEY);
         var queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
+        queryParams.remove(TOKEN_PARAM_KEY);
+
         var loginAction = getLoginPath(routingContext, client);
         routingContext.put(LOGIN_ACTION_KEY, resolveProxyRequest(routingContext.request(), loginAction, queryParams, true));
 

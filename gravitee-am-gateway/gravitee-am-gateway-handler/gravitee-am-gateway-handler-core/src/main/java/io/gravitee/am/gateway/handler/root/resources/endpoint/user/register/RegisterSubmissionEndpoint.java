@@ -34,8 +34,6 @@ import org.springframework.core.env.Environment;
  * @author GraviteeSource Team
  */
 public class RegisterSubmissionEndpoint implements Handler<RoutingContext> {
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
-
     public static final String GATEWAY_ENDPOINT_REGISTRATION_KEEP_PARAMS = "legacy.registration.keepParams";
 
     private final boolean keepParams;

@@ -39,6 +39,10 @@ import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.i18n.FreemarkerMessageResolver;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.EmailAuditBuilder;
+import io.vertx.rxjava3.core.MultiMap;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 
@@ -47,14 +51,11 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import org.springframework.util.StreamUtils;
 
 import static io.gravitee.am.common.web.UriBuilder.encodeURIComponent;
 import static io.gravitee.am.service.utils.UserProfileUtils.preferredLanguage;
+import static java.util.function.Predicate.not;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -118,12 +119,12 @@ public class EmailServiceImpl implements EmailService {
     }
 
     @Override
-    public void send(io.gravitee.am.model.Template template, User user, Client client) {
+    public void send(io.gravitee.am.model.Template template, User user, Client client, MultiMap queryParams) {
         if (enabled) {
             // get raw email template
             io.gravitee.am.model.Email emailTemplate = getEmailTemplate(template, client);
             // prepare email
-            Email email = prepareEmail(template, emailTemplate, user, client);
+            Email email = prepareEmail(template, emailTemplate, user, client, queryParams);
             // send email
             sendEmail(email, user, client);
         }
@@ -144,7 +145,7 @@ public class EmailServiceImpl implements EmailService {
 
                 // compute email to
                 final List<String> to = new ArrayList<>();
-                for (String emailTo: email.getTo()) {
+                for (String emailTo : email.getTo()) {
                     to.add(processTemplate(
                             new Template("to", new StringReader(emailTo), freemarkerConfiguration),
                             params, language));
@@ -202,8 +203,8 @@ public class EmailServiceImpl implements EmailService {
         }
     }
 
-    private Email prepareEmail(io.gravitee.am.model.Template template, io.gravitee.am.model.Email emailTemplate, User user, Client client) {
-        Map<String, Object> params = prepareEmailParams(user, client, emailTemplate.getExpiresAfter(), template.redirectUri());
+    private Email prepareEmail(io.gravitee.am.model.Template template, io.gravitee.am.model.Email emailTemplate, User user, Client client, MultiMap queryParams) {
+        Map<String, Object> params = prepareEmailParams(user, client, emailTemplate.getExpiresAfter(), template.redirectUri(), queryParams);
         return new EmailBuilder()
                 .to(user.getEmail())
                 .from(emailTemplate.getFrom())
@@ -214,7 +215,7 @@ public class EmailServiceImpl implements EmailService {
                 .build();
     }
 
-    private Map<String, Object> prepareEmailParams(User user, Client client, Integer expiresAfter, String redirectUri) {
+    private Map<String, Object> prepareEmailParams(User user, Client client, Integer expiresAfter, String redirectUri, MultiMap queryParams) {
         // generate a JWT to store user's information and for security purpose
         final Map<String, Object> claims = new HashMap<>();
         Instant now = Instant.now();
@@ -226,7 +227,7 @@ public class EmailServiceImpl implements EmailService {
         }
 
         String token = jwtBuilder.sign(new JWT(claims));
-        String redirectUrl =  domainService.buildUrl(domain, redirectUri + "?token=" + token);
+        String redirectUrl = domainService.buildUrl(domain, redirectUri + "?token=" + token);
 
         Map<String, Object> params = new HashMap<>();
         params.put("user", new UserProperties(user));
@@ -239,9 +240,20 @@ public class EmailServiceImpl implements EmailService {
             redirectUrl += "&client_id=" + encodeURIComponent(client.getClientId());
         }
 
+        if (!queryParams.isEmpty()) {
+            redirectUrl += "&" + extractQueryString(queryParams);
+        }
+
         params.put("url", redirectUrl);
 
         return params;
+    }
+
+    private static String extractQueryString(MultiMap queryParams) {
+        return StreamSupport.stream(queryParams.spliterator(),false)
+                .filter(not(e -> "client_id".equals(e.getKey())))
+                .map(e -> e.getKey() + "=" + encodeURIComponent(e.getValue()))
+                .collect(Collectors.joining("&"));
     }
 
     protected io.gravitee.am.model.Email getEmailTemplate(io.gravitee.am.model.Template template, Client client) {
@@ -289,7 +301,7 @@ public class EmailServiceImpl implements EmailService {
     }
 
     private String getTemplateName(io.gravitee.am.model.Template template, Client client) {
-        return template.template() + ((client != null) ? EmailManager.TEMPLATE_NAME_SEPARATOR +  client.getId() : "");
+        return template.template() + ((client != null) ? EmailManager.TEMPLATE_NAME_SEPARATOR + client.getId() : "");
     }
 
     private String getDefaultSubject(io.gravitee.am.model.Template template) {

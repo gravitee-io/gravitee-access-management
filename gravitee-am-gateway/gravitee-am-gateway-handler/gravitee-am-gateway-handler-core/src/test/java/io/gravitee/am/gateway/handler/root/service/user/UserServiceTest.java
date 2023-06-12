@@ -1254,7 +1254,7 @@ public class UserServiceTest {
         final Client client = new Client();
         client.setId("clientId");
 
-        var testObserver = userService.register(client, user, null).test();
+        var testObserver = userService.register(client, user).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(IllegalArgumentException.class);
     }
@@ -1276,7 +1276,7 @@ public class UserServiceTest {
         final Client client = new Client();
         client.setId("clientId");
 
-        var testObserver = userService.register(client, user, null).test();
+        var testObserver = userService.register(client, user).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(UserAlreadyExistsException.class);
 
@@ -1299,7 +1299,7 @@ public class UserServiceTest {
         final Client client = new Client();
         client.setId("clientId");
 
-        var testObserver = userService.register(client, user, null).test();
+        var testObserver = userService.register(client, user).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(UserProviderNotFoundException.class);
 
@@ -1328,7 +1328,7 @@ public class UserServiceTest {
         final Client client = new Client();
         client.setId("clientId");
 
-        var testObserver = userService.register(client, user, null).test();
+        var testObserver = userService.register(client, user).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertValue(registrationResponse -> {
@@ -1364,14 +1364,14 @@ public class UserServiceTest {
         final Client client = new Client();
         client.setId("clientId");
 
-        var testObserver = userService.register(client, user, null).test();
+        var testObserver = userService.register(client, user).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertValue(registrationResponse -> {
             return !registrationResponse.isAutoLogin() && registrationResponse.getUser().equals(user);
         });
 
-        verify(emailService, times(1)).send(any(), any(), any());
+        verify(emailService, times(1)).send(any(), any(), any(), any());
         verify(auditService, times(1)).report(any());
     }
 }
