@@ -15,10 +15,11 @@
  */
 
 import {getDomainApi, getDomainManagerUrl} from "./service/utils";
+import {Domain} from "../../management/models";
 
 const request = require('supertest');
 
-export const createDomain = (accessToken, name, description) =>
+export const createDomain = (accessToken, name, description): Promise<Domain> =>
     getDomainApi(accessToken).createDomain({
         organizationId: process.env.AM_DEF_ORG_ID,
         environmentId: process.env.AM_DEF_ENV_ID,
@@ -29,14 +30,14 @@ export const createDomain = (accessToken, name, description) =>
     });
 
 
-export const deleteDomain = (domainId, accessToken) =>
+export const deleteDomain = (domainId, accessToken): Promise<void> =>
     getDomainApi(accessToken).deleteDomain({
         organizationId: process.env.AM_DEF_ORG_ID,
         environmentId: process.env.AM_DEF_ENV_ID,
         domain: domainId
     });
 
-export const patchDomain = (domainId, accessToken, body) =>
+export const patchDomain = (domainId, accessToken, body): Promise<Domain> =>
     getDomainApi(accessToken).patchDomain({
         organizationId: process.env.AM_DEF_ORG_ID,
         environmentId: process.env.AM_DEF_ENV_ID,
@@ -46,9 +47,10 @@ export const patchDomain = (domainId, accessToken, body) =>
         domain2: body
     });
 
-export const startDomain = (domainId, accessToken) => patchDomain(domainId, accessToken, {enabled: true})
+export const startDomain = (domainId, accessToken):Promise<Domain> =>
+    patchDomain(domainId, accessToken, {enabled: true})
 
-export const getDomain = (domainId, accessToken) =>
+export const getDomain = (domainId, accessToken): Promise<Domain> =>
     getDomainApi(accessToken).findDomain({
         organizationId: process.env.AM_DEF_ORG_ID,
         environmentId: process.env.AM_DEF_ENV_ID,
@@ -78,13 +80,13 @@ export const getDomainFlows = (domainId, accessToken) =>
     })
 
 export const updateDomainFlows = (domainId, accessToken, flows) =>
-getDomainApi(accessToken).defineDomainFlows({
-    organizationId: process.env.AM_DEF_ORG_ID,
-    environmentId: process.env.AM_DEF_ENV_ID,
-    // domain in path param
-    domain: domainId,
-    flows
-})
+    getDomainApi(accessToken).defineDomainFlows({
+        organizationId: process.env.AM_DEF_ORG_ID,
+        environmentId: process.env.AM_DEF_ENV_ID,
+        // domain in path param
+        domain: domainId,
+        flows
+    })
 
 export const waitForDomainSync = (duration = 6000) => waitFor(duration)
 export const waitFor = (duration) => new Promise((r) => setTimeout(r, duration))
