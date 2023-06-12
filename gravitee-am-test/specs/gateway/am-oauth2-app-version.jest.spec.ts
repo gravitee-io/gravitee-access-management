@@ -16,20 +16,42 @@
 import fetch from "cross-fetch";
 import {afterAll, beforeAll, expect, jest} from "@jest/globals";
 import {requestAdminAccessToken} from "@management-commands/token-management-commands";
-import {createDomain, deleteDomain, patchDomain, startDomain, waitFor, waitForDomainSync} from "@management-commands/domain-management-commands";
+import {
+    createDomain,
+    deleteDomain,
+    patchDomain,
+    startDomain,
+    waitFor,
+    waitForDomainSync
+} from "@management-commands/domain-management-commands";
 import {createIdp, deleteIdp, getAllIdps} from "@management-commands/idp-management-commands";
 import {createScope} from "@management-commands/scope-management-commands";
 import {createCertificate} from "@management-commands/certificate-management-commands";
 import {buildCertificate} from "@api-fixtures/certificates";
-import {createApplication, deleteApplication, patchApplication, renewApplicationSecrets, updateApplication} from "@management-commands/application-management-commands";
-import {extractXsrfTokenAndActionResponse, getWellKnownOpenIdConfiguration, logoutUser, performFormPost, performGet, performPost} from "@gateway-commands/oauth-oidc-commands";
+import {
+    createApplication,
+    deleteApplication,
+    patchApplication,
+    renewApplicationSecrets,
+    updateApplication
+} from "@management-commands/application-management-commands";
+import {
+    extractXsrfTokenAndActionResponse,
+    getWellKnownOpenIdConfiguration,
+    logoutUser,
+    performFormPost,
+    performGet,
+    performPost
+} from "@gateway-commands/oauth-oidc-commands";
 import {applicationBase64Token, getBase64BasicAuth} from "@gateway-commands/utils";
+import {Domain} from "../../api/management/models";
+import * as domain from "domain";
 
 global.fetch = fetch;
 
-let domain;
-let accessToken;
-let idp;
+let masterDomain: Domain;
+let accessToken: string;
+let defaultInlineIdp;
 let scope;
 let certificate;
 let application1;
@@ -43,153 +65,25 @@ beforeAll(async () => {
     const adminTokenResponse = await requestAdminAccessToken();
     accessToken = adminTokenResponse.body.access_token;
     expect(accessToken).toBeDefined();
-    const createdDomain = await createDomain(accessToken, "oauth2-app-version", "test oauth2 authorization framework specifications");
-    expect(createdDomain).toBeDefined();
-    expect(createdDomain.id).toBeDefined();
-    domain = createdDomain;
+
+    masterDomain = await createDomain(accessToken, "oauth2-app-version", "test oauth2 authorization framework specifications");
+    expect(masterDomain).toBeDefined();
+    expect(masterDomain.id).toBeDefined();
+
+    masterDomain = await mustMakeDomainMaster(masterDomain, accessToken);
+    defaultInlineIdp = await createNewIdp(masterDomain, accessToken);
+    scope = await createApplicationScope(masterDomain, accessToken, "scope1");
+    certificate = await createDomainCertificate(masterDomain, accessToken);
+    application1 = await createApp1(masterDomain, accessToken, scope.key, defaultInlineIdp.id);
+    application2 = await createApp2(masterDomain, accessToken, scope.key, defaultInlineIdp.id);
+    application3 = await createApp3(masterDomain, accessToken, scope.key);
+
+    masterDomain = await getStartedDomain(masterDomain);
+    await waitForDomainSync(10000);
+    openIdConfiguration = await getOpenIDConfiguration(masterDomain);
 });
 
 describe("OAuth2 - App version", () => {
-    describe("Prepare", () => {
-        it('must make the domain master', async () => {
-            const patchedDomain = await patchDomain(domain.id, accessToken, {
-                "master": true,
-                "oidc": {
-                    "clientRegistrationSettings": {
-                        "allowLocalhostRedirectUri": true,
-                        "allowHttpSchemeRedirectUri": true,
-                        "allowWildCardRedirectUri": true,
-                        "isDynamicClientRegistrationEnabled": false,
-                        "isOpenDynamicClientRegistrationEnabled": false
-                    }
-                }
-            });
-            expect(patchedDomain).toBeDefined();
-            expect(patchedDomain.id).toEqual(domain.id);
-            expect(patchedDomain.master).toBeTruthy();
-            expect(patchedDomain.oidc.clientRegistrationSettings).toBeDefined();
-            expect(patchedDomain.oidc.clientRegistrationSettings.allowLocalhostRedirectUri).toBeTruthy();
-            expect(patchedDomain.oidc.clientRegistrationSettings.allowHttpSchemeRedirectUri).toBeTruthy();
-            expect(patchedDomain.oidc.clientRegistrationSettings.allowWildCardRedirectUri).toBeTruthy();
-            expect(patchedDomain.oidc.clientRegistrationSettings.dynamicClientRegistrationEnabled).toBeFalsy();
-            expect(patchedDomain.oidc.clientRegistrationSettings.openDynamicClientRegistrationEnabled).toBeFalsy();
-
-            domain = patchedDomain;
-        });
-
-        it('must delete the default idp', async () => {
-            await deleteIdp(domain.id, accessToken, "default-idp-" + domain.id);
-            const idpSet = await getAllIdps(domain.id, accessToken);
-
-            expect(idpSet.size).toEqual(0);
-        });
-
-        it('must create a new idp', async () => {
-            idp = await createIdp(domain.id, accessToken, {
-                "external": false,
-                "type": "inline-am-idp",
-                "domainWhitelist": [],
-                "configuration": "{\"users\":[{\"firstname\":\"my-user\",\"lastname\":\"my-user-lastname\",\"username\":\"user\",\"password\":\"#CoMpL3X-P@SsW0Rd\"},{\"firstname\":\"Jensen\",\"lastname\":\"Barbara\",\"username\":\"jensen.barbara\",\"email\":\"jensen.barbara@mail.com\",\"password\":\"#CoMpL3X-P@SsW0Rd\"}]}",
-                "name": "inmemory"
-            });
-            expect(idp).toBeDefined()
-        });
-
-        it('must create a new scope', async () => {
-            scope = await createScope(domain.id, accessToken, {
-                "key": "scope1",
-                "name": "scope1",
-                "description": "scope1"
-            });
-            expect(scope).toBeDefined()
-        });
-
-        it('must create a new certificate', async () => {
-            certificate = await createCertificate(domain.id, accessToken, buildCertificate("rs256"));
-            expect(certificate).toBeDefined()
-        });
-
-        it('must create a new application 1', async () => {
-            application1 = await createApplication(domain.id, accessToken, {
-                "name": "my-client 1",
-                "type": "WEB",
-                "clientId": "clientId-test-1"
-            }).then(app => updateApplication(domain.id, accessToken, {
-                "settings": {
-                    "oauth": {
-                        "redirectUris": [],
-                        "grantTypes": ["authorization_code", "password", "refresh_token"],
-                        "scopeSettings": [{"scope": scope.key, "defaultScope": true}, {
-                            "scope": "openid",
-                            "defaultScope": true
-                        }]
-                    }
-                },
-                "identityProviders": [
-                    {"identity": idp.id, "priority": -1}
-                ]
-            }, app.id));
-
-            expect(application1).toBeDefined()
-        });
-
-        it('must create a new application 2', async () => {
-            application2 = await createApplication(domain.id, accessToken, {
-                "name": "my-client 2",
-                "type": "WEB",
-                "clientId": "client-test-2"
-            }).then(app => updateApplication(domain.id, accessToken, {
-                "settings": {
-                    "oauth": {
-                        "redirectUris": ["http://localhost:4000/"],
-                        "scopeSettings": [{"scope": "scope1", "defaultScope": true}]
-                    }
-                },
-                "identityProviders": [
-                    {"identity": idp.id, "priority": -1}
-                ]
-            }, app.id));
-            expect(application2).toBeDefined()
-        });
-
-        it('renew client - must create a new application 3', async () => {
-            application3 = await createApplication(domain.id, accessToken, {
-                "name": "my-client 3",
-                "type": "WEB"
-            }).then(app => updateApplication(domain.id, accessToken, {
-                "settings": {
-                    "oauth": {
-                        "grantTypes": ["client_credentials"],
-                        "scopeSettings": [{"scope": "scope1", "defaultScope": true}]
-                    }
-                }
-            }, app.id));
-
-            expect(application3).toBeDefined()
-        });
-
-        it('must start a domain', async () => {
-            const domainStarted = await startDomain(domain.id, accessToken);
-            expect(domainStarted).toBeDefined();
-            expect(domainStarted.id).toEqual(domain.id);
-            domain = domainStarted;
-            await waitForDomainSync();
-        });
-
-        it('must reach well-known endpoint', async () => {
-            const result = await getWellKnownOpenIdConfiguration(domain.hrid).expect(200);
-
-            openIdConfiguration = result.body
-            expect(openIdConfiguration.authorization_endpoint).toBeDefined();
-            expect(openIdConfiguration.token_endpoint).toBeDefined();
-            expect(openIdConfiguration.revocation_endpoint).toBeDefined();
-            expect(openIdConfiguration.userinfo_endpoint).toBeDefined();
-            expect(openIdConfiguration.registration_endpoint).toBeDefined();
-            expect(openIdConfiguration.end_session_endpoint).toBeDefined();
-            expect(openIdConfiguration.introspection_endpoint).toBeDefined();
-        });
-    });
-
     describe("OAuth2 - RFC 6746", () => {
         describe("Invalid Request", () => {
             it('must perform an invalid grant type token request', async () => {
@@ -303,7 +197,7 @@ describe("OAuth2 - App version", () => {
             });
 
             it('renew client - must renew secrets and test token', async () => {
-                application3 = await renewApplicationSecrets(domain.id, accessToken, application3.id)
+                application3 = await renewApplicationSecrets(masterDomain.id, accessToken, application3.id)
                     .then(async app => {
                         await waitFor(5000);
                         await performPost(openIdConfiguration.token_endpoint, '',
@@ -373,7 +267,7 @@ describe("OAuth2 - App version", () => {
                 const authResponse = await performGet(openIdConfiguration.authorization_endpoint, params).expect(302);
 
                 expect(authResponse.headers['location']).toBeDefined();
-                expect(authResponse.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${domain.hrid}/login`);
+                expect(authResponse.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${masterDomain.hrid}/login`);
                 expect(authResponse.headers['location']).toContain(`client_id=${clientId}`);
 
                 const {headers, token, action} = await extractXsrfTokenAndActionResponse(authResponse);
@@ -397,7 +291,7 @@ describe("OAuth2 - App version", () => {
                 expect(errorRedirect.headers['location']).toContain(`error_description=Invalid+scope%2528s%2529%253A+unknown-scope`);
 
                 await logoutUser(openIdConfiguration.end_session_endpoint, postLogin)
-                    .then(_ => deleteApplication(domain.id, accessToken, application3.id))
+                    .then(_ => deleteApplication(masterDomain.id, accessToken, application3.id))
                     .then(_ => {
                         application3 = null
                     });
@@ -413,7 +307,7 @@ describe("OAuth2 - App version", () => {
                 const loginLocation = authResponse.headers['location'];
 
                 expect(loginLocation).toBeDefined();
-                expect(loginLocation).toContain(`${process.env.AM_GATEWAY_URL}/${domain.hrid}/login`);
+                expect(loginLocation).toContain(`${process.env.AM_GATEWAY_URL}/${masterDomain.hrid}/login`);
                 expect(loginLocation).toContain(`client_id=${clientId}`);
 
                 // Redirect to /login
@@ -436,7 +330,7 @@ describe("OAuth2 - App version", () => {
                 }).expect(302);
 
                 expect(postLoginRedirect.headers['location']).toBeDefined();
-                expect(postLoginRedirect.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${domain.hrid}/oauth/consent`);
+                expect(postLoginRedirect.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${masterDomain.hrid}/oauth/consent`);
 
                 // Redirect to /oauth/consent
                 const consentResult = await extractXsrfTokenAndActionResponse(postLoginRedirect);
@@ -470,12 +364,12 @@ describe("OAuth2 - App version", () => {
                 const params = `?response_type=code&client_id=${clientId}&redirect_uri=http://localhost:4000/`;
 
                 // Initiate the Login Flow
-                const authResponse = await createScope(domain.id, accessToken, {
+                const authResponse = await createScope(masterDomain.id, accessToken, {
                     "key": "test",
                     "name": "Test",
                     "description": "Scope test description",
                     "expiresIn": 2
-                }).then(_ => patchApplication(domain.id, accessToken, {
+                }).then(_ => patchApplication(masterDomain.id, accessToken, {
                     "settings": {
                         "oauth": {
                             "scopeSettings": [{"scope": "scope1", "defaultScope": true}, {
@@ -490,7 +384,7 @@ describe("OAuth2 - App version", () => {
                     .then(_ => performGet(openIdConfiguration.authorization_endpoint, params).expect(302));
 
                 expect(authResponse.headers['location']).toBeDefined();
-                expect(authResponse.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${domain.hrid}/login`);
+                expect(authResponse.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${masterDomain.hrid}/login`);
                 expect(authResponse.headers['location']).toContain(`client_id=${clientId}`);
 
                 // Redirect to /login
@@ -514,7 +408,7 @@ describe("OAuth2 - App version", () => {
                 }).expect(302);
 
                 expect(postLoginRedirect.headers['location']).toBeDefined();
-                expect(postLoginRedirect.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${domain.hrid}/oauth/consent`);
+                expect(postLoginRedirect.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${masterDomain.hrid}/oauth/consent`);
 
                 // Redirect to /oauth/consent
                 const consentResult = await extractXsrfTokenAndActionResponse(postLoginRedirect);
@@ -547,10 +441,10 @@ describe("OAuth2 - App version", () => {
                     }).expect(302));
 
                 expect(authResponse2.headers['location']).toBeDefined();
-                expect(authResponse2.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${domain.hrid}/oauth/consent`);
+                expect(authResponse2.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${masterDomain.hrid}/oauth/consent`);
 
                 await logoutUser(openIdConfiguration.end_session_endpoint, postConsentRedirect)
-                    .then(_ => patchApplication(domain.id, accessToken, {"settings": application2.settings}, application2.id))
+                    .then(_ => patchApplication(masterDomain.id, accessToken, {"settings": application2.settings}, application2.id))
                     .then(_ => waitFor(6000));
             });
 
@@ -563,7 +457,7 @@ describe("OAuth2 - App version", () => {
                 const authResponse = await performGet(openIdConfiguration.authorization_endpoint, params).expect(302);
 
                 expect(authResponse.headers['location']).toBeDefined();
-                expect(authResponse.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${domain.hrid}/login`);
+                expect(authResponse.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${masterDomain.hrid}/login`);
                 expect(authResponse.headers['location']).toContain(`client_id=${clientId}`);
 
                 // Redirect to /login
@@ -618,7 +512,7 @@ describe("OAuth2 - App version", () => {
                 const loginLocation = authResponse.headers['location'];
 
                 expect(loginLocation).toBeDefined();
-                expect(loginLocation).toContain(`${process.env.AM_GATEWAY_URL}/${domain.hrid}/login`);
+                expect(loginLocation).toContain(`${process.env.AM_GATEWAY_URL}/${masterDomain.hrid}/login`);
                 expect(loginLocation).toContain(`client_id=${clientId}`);
 
                 // Redirect to /login
@@ -671,7 +565,7 @@ describe("OAuth2 - App version", () => {
                 const authResponse = await performGet(openIdConfiguration.authorization_endpoint, params).expect(302);
 
                 expect(authResponse.headers['location']).toBeDefined();
-                expect(authResponse.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${domain.hrid}/login`);
+                expect(authResponse.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${masterDomain.hrid}/login`);
                 expect(authResponse.headers['location']).toContain(`client_id=${clientId}`);
 
                 // Redirect to /login
@@ -731,7 +625,7 @@ describe("OAuth2 - App version", () => {
                     const authResponse = await performGet(openIdConfiguration.authorization_endpoint, params).expect(302);
 
                     expect(authResponse.headers['location']).toBeDefined();
-                    expect(authResponse.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${domain.hrid}/login`);
+                    expect(authResponse.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${masterDomain.hrid}/login`);
                     expect(authResponse.headers['location']).toContain(`client_id=${clientId}`);
 
                     const loginResult = await extractXsrfTokenAndActionResponse(authResponse);
@@ -785,7 +679,7 @@ describe("OAuth2 - App version", () => {
                     const authResponse = await performGet(openIdConfiguration.authorization_endpoint, params).expect(302);
 
                     expect(authResponse.headers['location']).toBeDefined();
-                    expect(authResponse.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${domain.hrid}/login`);
+                    expect(authResponse.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${masterDomain.hrid}/login`);
                     expect(authResponse.headers['location']).toContain(`client_id=${clientId}`);
 
                     const loginResult = await extractXsrfTokenAndActionResponse(authResponse);
@@ -845,7 +739,7 @@ describe("OAuth2 - App version", () => {
                     const authResponse = await performGet(openIdConfiguration.authorization_endpoint, params).expect(302);
 
                     expect(authResponse.headers['location']).toBeDefined();
-                    expect(authResponse.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${domain.hrid}/login`);
+                    expect(authResponse.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${masterDomain.hrid}/login`);
                     expect(authResponse.headers['location']).toContain(`client_id=${clientId}`);
 
                     const loginResult = await extractXsrfTokenAndActionResponse(authResponse);
@@ -895,7 +789,7 @@ describe("OAuth2 - App version", () => {
                         // Initiate the Login Flow
                         let authResponse;
                         if (actual.patchDomain) {
-                            authResponse = await patchDomain(domain.id, accessToken, {
+                            authResponse = await patchDomain(masterDomain.id, accessToken, {
                                 "oidc": {
                                     "redirectUriStrictMatching": true
                                 }
@@ -907,7 +801,7 @@ describe("OAuth2 - App version", () => {
                         }
 
                         expect(authResponse.header["location"]).toBeDefined();
-                        expect(authResponse.header["location"]).toContain(`${process.env.AM_GATEWAY_URL}/${domain.hrid}${actual.uri}`);
+                        expect(authResponse.header["location"]).toContain(`${process.env.AM_GATEWAY_URL}/${masterDomain.hrid}${actual.uri}`);
 
                         if (actual.error && actual.error_description) {
                             const error = authResponse.header["location"].match(/error=([^&]+)&?/)[1];
@@ -928,10 +822,9 @@ describe("OAuth2 - App version", () => {
     });
 });
 
-
 afterAll(async () => {
-    if (domain && domain.id) {
-        await deleteDomain(domain.id, accessToken);
+    if (masterDomain && masterDomain.id) {
+        await deleteDomain(masterDomain.id, accessToken);
     }
 });
 
@@ -946,6 +839,154 @@ function assertGeneratedToken(data, scopes) {
     } else {
         expect(data.scope).not.toBeDefined();
     }
+}
+
+async function mustMakeDomainMaster(createdDomain: Domain, accessToken: string): Promise<Domain> {
+    const patchedDomain = await patchDomain(createdDomain.id, accessToken, {
+        "master": true,
+        "oidc": {
+            "clientRegistrationSettings": {
+                "allowLocalhostRedirectUri": true,
+                "allowHttpSchemeRedirectUri": true,
+                "allowWildCardRedirectUri": true,
+                "isDynamicClientRegistrationEnabled": false,
+                "isOpenDynamicClientRegistrationEnabled": false
+            }
+        }
+    });
+    expect(patchedDomain).toBeDefined();
+    expect(patchedDomain.id).toEqual(masterDomain.id);
+    expect(patchedDomain.master).toBeTruthy();
+    expect(patchedDomain.oidc.clientRegistrationSettings).toBeDefined();
+    expect(patchedDomain.oidc.clientRegistrationSettings.allowLocalhostRedirectUri).toBeTruthy();
+    expect(patchedDomain.oidc.clientRegistrationSettings.allowHttpSchemeRedirectUri).toBeTruthy();
+    expect(patchedDomain.oidc.clientRegistrationSettings.allowWildCardRedirectUri).toBeTruthy();
+    expect(patchedDomain.oidc.clientRegistrationSettings.dynamicClientRegistrationEnabled).toBeFalsy();
+    expect(patchedDomain.oidc.clientRegistrationSettings.openDynamicClientRegistrationEnabled).toBeFalsy();
+
+    return patchedDomain;
+}
+
+async function mustDeleteDefaultIdp(domain: Domain, accessToken: string) {
+    await deleteIdp(domain.id, accessToken, "default-idp-" + domain.id);
+    const idpSet = await getAllIdps(domain.id, accessToken);
+    expect(idpSet.size).toEqual(0);
+}
+
+async function createNewIdp(domain: Domain, accessToken: string) {
+    await mustDeleteDefaultIdp(domain, accessToken);
+    const newIdp = await createIdp(domain.id, accessToken, {
+        "external": false,
+        "type": "inline-am-idp",
+        "domainWhitelist": [],
+        "configuration": "{\"users\":[{\"firstname\":\"my-user\",\"lastname\":\"my-user-lastname\",\"username\":\"user\",\"password\":\"#CoMpL3X-P@SsW0Rd\"},{\"firstname\":\"Jensen\",\"lastname\":\"Barbara\",\"username\":\"jensen.barbara\",\"email\":\"jensen.barbara@mail.com\",\"password\":\"#CoMpL3X-P@SsW0Rd\"}]}",
+        "name": "inmemory"
+    });
+    expect(newIdp).toBeDefined()
+    return newIdp;
+}
+
+async function createApplicationScope(domain: Domain, accessToken: string, scopeName: string) {
+    const newScope = await createScope(domain.id, accessToken, {
+        "key": scopeName,
+        "name": scopeName,
+        "description": scopeName
+    });
+    expect(newScope).toBeDefined();
+
+    return newScope;
+}
+
+
+async function createDomainCertificate(domain: Domain, accessToken: string) {
+    const newCertificate = await createCertificate(domain.id, accessToken, buildCertificate("rs256"));
+    expect(newCertificate).toBeDefined()
+    return newCertificate;
+}
+
+async function createApp1(domain: Domain, accessToken: string, scopeKey: string, idpId: string) {
+    const application = await createApplication(domain.id, accessToken, {
+        "name": "my-client 1",
+        "type": "WEB",
+        "clientId": "clientId-test-1"
+    }).then(app => updateApplication(domain.id, accessToken, {
+            "settings": {
+                "oauth": {
+                    "redirectUris": [],
+                    "grantTypes": ["authorization_code", "password", "refresh_token"],
+                    "scopeSettings": [{"scope": scopeKey, "defaultScope": true}, {
+                        "scope": "openid",
+                        "defaultScope": true
+                    }]
+                }
+            },
+            "identityProviders": [
+                {"identity": idpId, "priority": -1}
+            ]
+        }, app.id)
+    );
+
+    expect(application).toBeDefined()
+    return application;
+}
+
+async function createApp2(domain: Domain, accessToken: string, scopeKey: string, idpId: string) {
+    const application = await createApplication(domain.id, accessToken, {
+        "name": "my-client 2",
+        "type": "WEB",
+        "clientId": "client-test-2"
+    }).then(app => updateApplication(domain.id, accessToken, {
+        "settings": {
+            "oauth": {
+                "redirectUris": ["http://localhost:4000/"],
+                "scopeSettings": [{"scope": "scope1", "defaultScope": true}]
+            }
+        },
+        "identityProviders": [
+            {"identity": idpId, "priority": -1}
+        ]
+    }, app.id));
+    expect(application).toBeDefined()
+    return application;
+}
+
+async function createApp3(domain: Domain, accessToken: string, scopeKey: string) {
+    const application = await createApplication(domain.id, accessToken, {
+        "name": "my-client 3",
+        "type": "WEB"
+    }).then(app => updateApplication(domain.id, accessToken, {
+        "settings": {
+            "oauth": {
+                "grantTypes": ["client_credentials"],
+                "scopeSettings": [{"scope": scopeKey, "defaultScope": true}]
+            }
+        }
+    }, app.id));
+
+    expect(application).toBeDefined()
+    return application;
+}
+
+async function getStartedDomain(domain: Domain): Promise<Domain> {
+    const domainStarted = await startDomain(domain.id, accessToken);
+    expect(domainStarted).toBeDefined();
+    expect(domainStarted.id).toEqual(domain.id);
+    return domainStarted;
+}
+
+async function getOpenIDConfiguration(domain: Domain) {
+    const result = await getWellKnownOpenIdConfiguration(domain.hrid).expect(200);
+
+    const openIdConfiguration = result.body;
+    expect(openIdConfiguration.authorization_endpoint).toBeDefined();
+    expect(openIdConfiguration.token_endpoint).toBeDefined();
+    expect(openIdConfiguration.revocation_endpoint).toBeDefined();
+    expect(openIdConfiguration.userinfo_endpoint).toBeDefined();
+    expect(openIdConfiguration.registration_endpoint).toBeDefined();
+    expect(openIdConfiguration.end_session_endpoint).toBeDefined();
+    expect(openIdConfiguration.introspection_endpoint).toBeDefined();
+
+    return openIdConfiguration;
 }
 
 function getParamsInvalidAuthorizeRequests() {
