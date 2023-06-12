@@ -16,7 +16,8 @@
 
 
 import {expect} from "@jest/globals";
-import { applicationBase64Token, assertGeneratedTokenAndGet } from "@gateway-commands/utils";
+import {applicationBase64Token, assertGeneratedTokenAndGet} from "@gateway-commands/utils";
+import {awaitExpression} from "@babel/types";
 
 const supertest = require('supertest');
 const cheerio = require('cheerio');
@@ -57,9 +58,8 @@ export const performOptions = (baseUrl, uri = '', headers = null) => {
     return request.send();
 }
 
-export const getWellKnownOpenIdConfiguration = (domainHrid) =>
-    performGet(process.env.AM_GATEWAY_URL, `/${domainHrid}/${URLS.WELL_KNOWN_OPENID_CONFIG}`)
-
+export const getWellKnownOpenIdConfiguration = (domainHrid: string) =>
+    performGet(process.env.AM_GATEWAY_URL, `/${domainHrid}${URLS.WELL_KNOWN_OPENID_CONFIG}`)
 
 export const extractXsrfTokenAndActionResponse = async (response) => {
     const headers = response.headers['set-cookie'] ? {'Cookie': response.headers['set-cookie']} : {};
@@ -83,7 +83,7 @@ export const extractXsrfToken = async (url, parameters) => {
     return {'headers': result.headers, 'token': xsrfToken};
 }
 
-export const logoutUser = async (uri, postLogin: any,targetUri = null) =>
+export const logoutUser = async (uri, postLogin: any, targetUri = null) =>
     performGet(uri, targetUri ? `?post_logout_redirect_uri=${targetUri}` : '', {'Cookie': postLogin.headers['set-cookie']})
         .expect(302)
 
@@ -107,14 +107,14 @@ export async function signInUser(domain, application: any, user: any, openIdConf
     const loginResult = await extractXsrfTokenAndActionResponse(authResponse);
     // Authentication
     const postLogin = await performFormPost(loginResult.action, '', {
-        "X-XSRF-TOKEN": loginResult.token,
-        "username": user.username,
-        "password": user.password,
-        "client_id": clientId
-    }, {
-        'Cookie': loginResult.headers['set-cookie'],
-        'Content-type': 'application/x-www-form-urlencoded'
-    }
+            "X-XSRF-TOKEN": loginResult.token,
+            "username": user.username,
+            "password": user.password,
+            "client_id": clientId
+        }, {
+            'Cookie': loginResult.headers['set-cookie'],
+            'Content-type': 'application/x-www-form-urlencoded'
+        }
     ).expect(302);
 
     // Post authentication
@@ -131,7 +131,7 @@ export async function signInUser(domain, application: any, user: any, openIdConf
 
     return postLoginRedirect;
 }
-    
+
 export async function requestToken(application: any, openIdConfiguration: any, postLogin: any) {
     const redirectUri = postLogin.headers['location'];
     const codePattern = /code=([-_a-zA-Z0-9]+)&?/;
@@ -145,7 +145,7 @@ export async function requestToken(application: any, openIdConfiguration: any, p
         openIdConfiguration.token_endpoint,
         `?grant_type=authorization_code&code=${authorizationCode}&redirect_uri=${redirect_uri}`,
         null, {
-                "Authorization": "Basic " + applicationBase64Token(application)
+            "Authorization": "Basic " + applicationBase64Token(application)
         }
     ).expect(200);
 }
