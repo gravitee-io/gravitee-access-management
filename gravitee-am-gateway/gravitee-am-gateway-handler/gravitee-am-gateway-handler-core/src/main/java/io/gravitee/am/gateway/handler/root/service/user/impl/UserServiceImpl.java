@@ -48,10 +48,12 @@ import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
 import io.gravitee.am.service.validators.email.EmailValidator;
 import io.gravitee.am.service.validators.user.UserValidator;
+import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.*;
 import io.reactivex.rxjava3.functions.Function;
 import io.reactivex.rxjava3.functions.Predicate;
+import io.vertx.rxjava3.core.MultiMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -187,7 +189,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Single<RegistrationResponse> register(Client client, User user, io.gravitee.am.identityprovider.api.User principal) {
+    public Single<RegistrationResponse> register(Client client, User user, io.gravitee.am.identityprovider.api.User principal, MultiMap queryParams) {
         // set user idp source
         var accountSettings = AccountSettings.getInstance(client, domain);
         final String source = accountSettings.map(AccountSettings::getDefaultIdentityProviderForRegistration)
@@ -200,7 +202,9 @@ public class UserServiceImpl implements UserService {
                         .switchIfEmpty(Single.error(new UserProviderNotFoundException(source)))
                         .flatMap(userProvider -> userProvider.create(convert(user)))
                         .flatMap(idpUser -> registerUser(user, accountSettings, source, idpUser))
-                        .flatMap(amUser -> enhanceRegisteredUser(client, principal, accountSettings, rawPassword, amUser))
+                        .flatMap(amUser -> sendVerifyAccountEmail(client, amUser, accountSettings, queryParams))
+                        .flatMap(amUser -> createPasswordHistory(client, amUser, rawPassword, principal))
+                        .flatMap(userService::enhance)
                         .map(enhancedUser -> buildRegistrationResponse(accountSettings, enhancedUser))
                         .doOnSuccess(registrationResponse -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class)
                                 .domain(domain.getId())
@@ -217,13 +221,6 @@ public class UserServiceImpl implements UserService {
         final String redirectUri = noSendVerifyRegistration.map(AccountSettings::getRedirectUriAfterRegistration).orElse(null);
         return new RegistrationResponse(user, redirectUri, isAutoLogin);
     }
-
-    private Single<User> enhanceRegisteredUser(Client client, io.gravitee.am.identityprovider.api.User principal, Optional<AccountSettings> accountSettings, String rawPassword, User amUser) {
-        sendVerifyAccountEmail(client, amUser, accountSettings);
-        createPasswordHistory(client, amUser, rawPassword, principal);
-        return userService.enhance(amUser);
-    }
-
     private Single<User> registerUser(User user, Optional<AccountSettings> accountSettings, String source, io.gravitee.am.identityprovider.api.User idpUser) {
         // AM 'users' collection is not made for authentication (but only management stuff)
         // clear password
@@ -267,10 +264,11 @@ public class UserServiceImpl implements UserService {
         };
     }
 
-    private void sendVerifyAccountEmail(Client client, User amUser, Optional<AccountSettings> accountSettings) {
+    private @NonNull Single<User> sendVerifyAccountEmail(Client client, User amUser, Optional<AccountSettings> accountSettings, MultiMap queryParams) {
         accountSettings.filter(AccountSettings::isSendVerifyRegistrationAccountEmail).ifPresent(sendEmail ->
-                fromRunnable(() -> emailService.send(REGISTRATION_VERIFY, amUser, client)).subscribe()
+                fromRunnable(() -> emailService.send(REGISTRATION_VERIFY, amUser, client, queryParams)).subscribe()
         );
+        return Single.just(amUser);
     }
 
     @Override
@@ -308,10 +306,8 @@ public class UserServiceImpl implements UserService {
                     }
                     return userService.update(user);
                 })
-                .flatMap(amUser -> {
-                    createPasswordHistory(client, amUser, rawPassword, principal);
-                    return userService.enhance(amUser);
-                })
+                .flatMap(amUser -> createPasswordHistory(client, amUser, rawPassword, principal))
+                .flatMap(userService::enhance)
                 .map(user1 -> {
                     AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
                     return new RegistrationResponse(user1, accountSettings != null ? accountSettings.getRedirectUriAfterRegistration() : null, accountSettings != null ? accountSettings.isAutoLoginAfterRegistration() : false);
@@ -730,11 +726,12 @@ public class UserServiceImpl implements UserService {
     }
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
-    private void createPasswordHistory(Client client, User user, String rawPassword, io.gravitee.am.identityprovider.api.User principal) {
+    private Single<User> createPasswordHistory(Client client, User user, String rawPassword, io.gravitee.am.identityprovider.api.User principal) {
         passwordHistoryService
                 .addPasswordToHistory(DOMAIN, domain.getId(), user, rawPassword, principal, getPasswordSettings(client))
                 .subscribe(passwordHistory -> logger.debug("Created password history for user {}", user.getUsername()),
                         throwable -> logger.debug("Failed to create password history", throwable));
+        return Single.just(user);
     }
 
     private PasswordSettings getPasswordSettings(Client client) {

@@ -29,6 +29,7 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.i18n.DictionaryProvider;
+import io.vertx.rxjava3.core.MultiMap;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.Properties;
@@ -146,6 +147,59 @@ public class EmailServiceImplTest {
         final Client client = new Client();
         client.setClientId(email.getClient());
         emailServiceSpy.send(Template.RESET_PASSWORD, Mockito.mock(User.class), client);
+
+        verify(freemarkerConfiguration, times(1)).getTemplate(eq(email.getTemplate() + ".html"));
+        verify(emailManager, times(1)).getEmail(any(), any(), anyInt());
+        verify(auditService, times(1)).report(any());
+        verify(this.emailService, times(1)).send(any());
+    }
+
+    @Test
+    public void must_send_email_with_query_params_in_url() throws IOException {
+        var emailService = new EmailServiceImpl(
+                true,
+                "Please reset your password",
+                300,
+                "Account has been locked",
+                86400,
+                "Verification Code",
+                300,
+                "Please verify Attempt",
+                "Complete your registration",
+                Long.valueOf(DAYS.toSeconds(7)).intValue());
+        emailServiceSpy = Mockito.spy(emailService);
+        MockitoAnnotations.openMocks(this);
+
+        final Email email = buildEmail();
+
+        var templateLoader = Mockito.mock(TemplateLoader.class);
+
+        final DictionaryProvider mockDictionaryProvider = Mockito.mock(DictionaryProvider.class);
+        when(this.emailService.getDefaultDictionaryProvider()).thenReturn(mockDictionaryProvider);
+        when(mockDictionaryProvider.getDictionaryFor(any())).thenReturn(new Properties());
+
+        when(freemarkerConfiguration.getIncompatibleImprovements()).thenReturn(DEFAULT_INCOMPATIBLE_IMPROVEMENTS);
+        when(freemarkerConfiguration.getNamingConvention()).thenReturn(AUTO_DETECT_NAMING_CONVENTION);
+        when(freemarkerConfiguration.getObjectWrapper()).thenReturn(new DefaultObjectWrapperBuilder(DEFAULT_INCOMPATIBLE_IMPROVEMENTS).build());
+
+        var templateMock = new freemarker.template.Template("content", new StringReader(email.getTemplate()), freemarkerConfiguration);
+        when(templateLoader.findTemplateSource(anyString())).thenReturn(templateMock);
+
+        when(this.freemarkerConfiguration.getTemplateLoader()).thenReturn(templateLoader);
+        when(freemarkerConfiguration.getTemplate(anyString())).thenReturn(templateMock);
+
+
+        when(emailManager.getEmail(anyString(), any(), anyInt())).thenReturn(email);
+
+        final Client client = new Client();
+        client.setClientId(email.getClient());
+
+        final MultiMap queryParams = MultiMap.caseInsensitiveMultiMap();
+        queryParams.add("key","value");
+        queryParams.add("key2","value2");
+        queryParams.add("client_id", client.getClientId());
+
+        emailServiceSpy.send(Template.RESET_PASSWORD, Mockito.mock(User.class), client, queryParams);
 
         verify(freemarkerConfiguration, times(1)).getTemplate(eq(email.getTemplate() + ".html"));
         verify(emailManager, times(1)).getEmail(any(), any(), anyInt());

@@ -69,6 +69,7 @@ public class RegisterVerifyRequestParseHandler extends UserTokenRequestParseHand
                 UserToken userToken = handler.result();
                 context.put(ConstantKeys.USER_CONTEXT_KEY, userToken.getUser());
                 context.put(ConstantKeys.CLIENT_CONTEXT_KEY, userToken.getClient());
+                queryParams.remove(ConstantKeys.TOKEN_PARAM_KEY);
                 var accountSettings = AccountSettings.getInstance(userToken.getClient(), domain);
 
                 var redirectUri = accountSettings

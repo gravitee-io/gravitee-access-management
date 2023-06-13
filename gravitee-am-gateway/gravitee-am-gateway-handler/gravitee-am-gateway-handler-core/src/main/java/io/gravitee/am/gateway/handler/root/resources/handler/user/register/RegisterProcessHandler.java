@@ -59,9 +59,9 @@ public class RegisterProcessHandler extends UserRequestHandler {
         // create the user
         MultiMap params = context.request().formAttributes();
         User user = convert(params);
-
+        MultiMap queryParams = RequestUtils.getCleanedQueryParams(context.request());
         // register the user
-        register(client, user, getAuthenticatedUser(context), h -> {
+        register(client, user, getAuthenticatedUser(context), queryParams, h -> {
             // if failure, return to the register page with an error
             if (h.failed()) {
                 context.fail(h.cause());
@@ -80,11 +80,11 @@ public class RegisterProcessHandler extends UserRequestHandler {
         });
     }
 
-    private void register(Client client, User user, io.gravitee.am.identityprovider.api.User principal, Handler<AsyncResult<RegistrationResponse>> handler) {
-        userService.register(client, user, principal)
-                .subscribe(
-                        response -> handler.handle(Future.succeededFuture(response)),
-                        error -> handler.handle(Future.failedFuture(error)));
+    private void register(Client client, User user, io.gravitee.am.identityprovider.api.User principal, MultiMap queryParams, Handler<AsyncResult<RegistrationResponse>> handler) {
+        userService.register(client, user, principal, queryParams).subscribe(
+                response -> handler.handle(Future.succeededFuture(response)),
+                error -> handler.handle(Future.failedFuture(error))
+        );
     }
 
     @Override
@@ -92,10 +92,10 @@ public class RegisterProcessHandler extends UserRequestHandler {
         // override principal user
         DefaultUser principal = new DefaultUser(routingContext.request().getParam("username"));
         Map<String, Object> additionalInformation = new HashMap<>();
-        if(canSaveIp(routingContext)){
+        if (canSaveIp(routingContext)) {
             additionalInformation.put(Claims.ip_address, RequestUtils.remoteAddress(routingContext.request()));
         }
-        if(canSaveUserAgent(routingContext)){
+        if (canSaveUserAgent(routingContext)) {
             additionalInformation.put(Claims.user_agent, RequestUtils.userAgent(routingContext.request()));
         }
         additionalInformation.put(Claims.domain, domain.getId());

@@ -25,6 +25,7 @@ import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.vertx.rxjava3.core.MultiMap;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -36,7 +37,7 @@ public interface UserService {
     Single<UserToken> extractSessionFromIdToken(String idToken);
     Maybe<UserToken> confirmVerifyRegistration(String token);
 
-    Single<RegistrationResponse> register(Client client, User user, io.gravitee.am.identityprovider.api.User principal);
+    Single<RegistrationResponse> register(Client client, User user, io.gravitee.am.identityprovider.api.User principal, MultiMap queryParams);
 
     Single<RegistrationResponse> confirmRegistration(Client client, User user, io.gravitee.am.identityprovider.api.User principal);
 
@@ -54,7 +55,7 @@ public interface UserService {
     Completable setMfaEnrollmentSkippedTime(Client client, User user);
 
     default Single<RegistrationResponse> register(Client client, User user) {
-        return register(client, user, null);
+        return register(client, user, null, MultiMap.caseInsensitiveMultiMap());
     }
 
     default Single<ResetPasswordResponse> resetPassword(Client client, User user) {
