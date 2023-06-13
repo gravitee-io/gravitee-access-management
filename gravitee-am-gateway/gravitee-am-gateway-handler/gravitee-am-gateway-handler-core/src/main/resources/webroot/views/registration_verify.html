@@ -42,8 +42,8 @@
                 <span th:unless="${error == 'registration_verify_link_expired'}" th:text="#{registration_verify.error.title}"/>
             </div>
             <div class="header-description">
-                <span th:if="${error == 'registration_verify_link_expired'}" class="medium-font grey regular" th:text="#{registration_verify.link.expired.description}"></span>
-                <span th:unless="${error == 'registration_verify_link_expired'}"  class="medium-font grey regular" th:text="#{registration_verify.error.description}"/>
+                <span th:if="${error == 'registration_verify_link_expired'}" class="grey regular" th:text="#{registration_verify.link.expired.description}"></span>
+                <span th:unless="${error == 'registration_verify_link_expired'}"  class="grey regular" th:text="#{registration_verify.error.description}"/>
             </div>
         </div>
         <div th:unless="${error == 'registration_verify_link_expired'}" class="item error-text">
