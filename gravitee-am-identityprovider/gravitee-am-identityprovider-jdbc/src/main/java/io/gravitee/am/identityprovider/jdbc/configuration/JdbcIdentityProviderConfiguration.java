@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.identityprovider.jdbc.configuration;
 
+import io.gravitee.am.common.password.PasswordSaltFormat;
 import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.jdbc.utils.PasswordEncoder;
 import io.gravitee.am.repository.jdbc.provider.R2DBCConnectionConfiguration;
@@ -52,6 +53,7 @@ public class JdbcIdentityProviderConfiguration implements IdentityProviderConfig
     private boolean useDedicatedSalt;
     private String passwordSaltAttribute = "salt";
     private Integer passwordSaltLength = 32;
+    private String passwordSaltFormat = PasswordSaltFormat.DIGEST;
     private List<Map<String, String>> options;
     private boolean autoProvisioning = false;
 
@@ -208,6 +210,14 @@ public class JdbcIdentityProviderConfiguration implements IdentityProviderConfig
 
     public void setPasswordSaltLength(Integer passwordSaltLength) {
         this.passwordSaltLength = passwordSaltLength;
+    }
+
+    public String getPasswordSaltFormat() {
+        return passwordSaltFormat;
+    }
+
+    public void setPasswordSaltFormat(String passwordSaltFormat) {
+        this.passwordSaltFormat = passwordSaltFormat;
     }
 
     public List<Map<String, String>> getOptions() {

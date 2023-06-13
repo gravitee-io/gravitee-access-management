@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.identityprovider.mongo;
 
+import io.gravitee.am.common.password.PasswordSaltFormat;
 import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.mongo.utils.PasswordEncoder;
 import io.gravitee.am.repository.mongodb.provider.MongoConnectionConfiguration;
@@ -46,6 +47,7 @@ public class MongoIdentityProviderConfiguration implements IdentityProviderConfi
     private boolean useDedicatedSalt;
     private String passwordSaltAttribute = "salt";
     private Integer passwordSaltLength = 32;
+    private String passwordSaltFormat = PasswordSaltFormat.DIGEST;
 
     private boolean userProvider = true;
 
@@ -210,6 +212,14 @@ public class MongoIdentityProviderConfiguration implements IdentityProviderConfi
 
     public void setPasswordSaltLength(Integer passwordSaltLength) {
         this.passwordSaltLength = passwordSaltLength;
+    }
+
+    public String getPasswordSaltFormat() {
+        return passwordSaltFormat;
+    }
+
+    public void setPasswordSaltFormat(String passwordSaltFormat) {
+        this.passwordSaltFormat = passwordSaltFormat;
     }
 
     public boolean isUsernameCaseSensitive() {

@@ -15,46 +15,13 @@
  */
 package io.gravitee.am.service.authentication.crypto.password;
 
-import org.junit.Assert;
-import org.junit.Test;
-
-import java.security.SecureRandom;
-
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class MD5PasswordEncoderTest {
+public class MD5PasswordEncoderTest extends MessageDigestPasswordEncoderTest {
 
-    private MessageDigestPasswordEncoder messageDigestPasswordEncoder = new MD5PasswordEncoder();
-
-    @Test
-    public void testPassword_match_not_equals() {
-        String encodedPassword = messageDigestPasswordEncoder.encode("myPassword");
-        Assert.assertFalse(messageDigestPasswordEncoder.matches("wrongPassword", encodedPassword));
-    }
-
-    @Test
-    public void testPassword_match_equals() {
-        String encodedPassword = messageDigestPasswordEncoder.encode("myPassword");
-        Assert.assertTrue(messageDigestPasswordEncoder.matches("myPassword", encodedPassword));
-    }
-
-    @Test
-    public void testPassword_match_not_equals_dedicated_salt() {
-        byte[] salt = new byte[32];
-        SecureRandom secureRandom = new SecureRandom();
-        secureRandom.nextBytes(salt);
-        String encodedPassword = messageDigestPasswordEncoder.encode("myPassword", salt);
-        Assert.assertFalse(messageDigestPasswordEncoder.matches("wrongPassword", encodedPassword, salt));
-    }
-
-    @Test
-    public void testPassword_match_equals_dedicated_salt() {
-        byte[] salt = new byte[32];
-        SecureRandom secureRandom = new SecureRandom();
-        secureRandom.nextBytes(salt);
-        String encodedPassword = messageDigestPasswordEncoder.encode("myPassword", salt);
-        Assert.assertTrue(messageDigestPasswordEncoder.matches("myPassword", encodedPassword, salt));
+    public MD5PasswordEncoderTest() {
+        super(new MD5PasswordEncoder());
     }
 }
