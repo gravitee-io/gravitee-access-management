@@ -33,7 +33,7 @@ import java.util.Map;
  */
 public interface EmailService {
 
-    default void send(Template template, User user, Client client){
+    default void send(Template template, User user, Client client) {
         this.send(template, user, client, MultiMap.caseInsensitiveMultiMap());
     }
 
