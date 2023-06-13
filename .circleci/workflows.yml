@@ -1180,7 +1180,7 @@ jobs:
 
             elif [ "${RC_REQUESTED}" == "true" -a "${MVN_PRJ_VERSION_QUALIFIER}x" != "x" ]; then
 
-              echo "# ---- [${MVN_PRJ_VERSION}] is a RC maintenance release, so we increment QUALIFIER VERSION from [${MVN_PRJ_VERSION_QUALIFIER}] to [${NEXT_QUALIFIER_VERSION}], and prepared next version will be [${NEXT_RC_VERSION}] "
+              echo "# ---- [${MVN_PRJ_VERSION}] is a RC maintenance release, so we increment QUALIFIER VERSION from [${MVN_PRJ_VERSION_QUALIFIER}] to [${NEXT_QUALIFIER_VERSION}], and prepared next version will be [${NEXT_FULL_PATCH_VERSION}] "
               echo "resetting version in [pom.xml] to [${NEXT_RC_VERSION}]"
               sed -i "s#<revision>.*</revision>#<revision>${NEXT_RC_VERSION}</revision>#" pom.xml
 
