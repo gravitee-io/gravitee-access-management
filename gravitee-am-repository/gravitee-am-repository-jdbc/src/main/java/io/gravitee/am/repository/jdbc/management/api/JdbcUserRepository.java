@@ -669,7 +669,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         insertAction = persistChildEntities(insertAction, item);
 
         return monoToSingle(insertAction.as(trx::transactional))
-                .flatMap((i) -> this.findById(item.getId()).toSingle());
+                .flatMap((i) -> Single.just(item));
     }
 
     @Override
@@ -726,7 +726,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         action = persistChildEntities(action, item);
 */
         return monoToSingle(action.as(trx::transactional))
-                .flatMap((i) -> this.findById(item.getId()).toSingle());
+                .flatMap((i) -> Single.just(item));
     }
 
     @Override
