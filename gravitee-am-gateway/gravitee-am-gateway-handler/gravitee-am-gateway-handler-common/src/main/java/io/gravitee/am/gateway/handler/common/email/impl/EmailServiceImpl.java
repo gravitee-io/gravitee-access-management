@@ -250,7 +250,7 @@ public class EmailServiceImpl implements EmailService {
     }
 
     private static String extractQueryString(MultiMap queryParams) {
-        return StreamSupport.stream(queryParams.spliterator(),false)
+        return StreamSupport.stream(queryParams.spliterator(), false)
                 .filter(not(e -> "client_id".equals(e.getKey())))
                 .map(e -> e.getKey() + "=" + encodeURIComponent(e.getValue()))
                 .collect(Collectors.joining("&"));
