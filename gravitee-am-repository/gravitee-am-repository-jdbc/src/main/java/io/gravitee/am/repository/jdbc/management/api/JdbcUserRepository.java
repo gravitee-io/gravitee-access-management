@@ -721,10 +721,10 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         update = databaseDialectHelper.addJsonField(update, USER_COL_ADDITIONAL_INFORMATION, item.getAdditionalInformation());
 
         Mono<Integer> action = update.fetch().rowsUpdated();
-/*
+
         action = deleteChildEntities(item.getId()).then(action);
         action = persistChildEntities(action, item);
-*/
+
         return monoToSingle(action.as(trx::transactional))
                 .flatMap((i) -> Single.just(item));
     }

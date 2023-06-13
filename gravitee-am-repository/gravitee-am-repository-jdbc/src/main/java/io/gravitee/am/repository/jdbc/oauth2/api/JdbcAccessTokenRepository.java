@@ -30,8 +30,10 @@ import org.springframework.data.relational.core.query.Query;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 
 import static java.time.ZoneOffset.UTC;
+import static java.time.ZoneOffset.ofHours;
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static reactor.adapter.rxjava.RxJava3Adapter.monoToCompletable;
 import static reactor.adapter.rxjava.RxJava3Adapter.monoToMaybe;
@@ -47,11 +49,39 @@ public class JdbcAccessTokenRepository extends AbstractJdbcRepository implements
     private SpringAccessTokenRepository accessTokenRepository;
 
     protected AccessToken toEntity(JdbcAccessToken entity) {
-        return mapper.map(entity, AccessToken.class);
+        var result = new AccessToken();
+        result.setAuthorizationCode(entity.getAuthorizationCode());
+        result.setToken(entity.getToken());
+        result.setRefreshToken(entity.getRefreshToken());
+        result.setId(entity.getId());
+        result.setClient(entity.getClient());
+        result.setDomain(entity.getDomain());
+        result.setSubject(entity.getSubject());
+        if (entity.getCreatedAt() != null) {
+            result.setCreatedAt(Date.from(entity.getCreatedAt().atZone(UTC).toInstant()));
+        }
+        if (entity.getExpireAt() != null) {
+            result.setExpireAt(Date.from(entity.getExpireAt().atZone(UTC).toInstant()));
+        }
+        return result;
     }
 
     protected JdbcAccessToken toJdbcEntity(AccessToken entity) {
-        return mapper.map(entity, JdbcAccessToken.class);
+        var result = new JdbcAccessToken();
+        result.setAuthorizationCode(entity.getAuthorizationCode());
+        result.setToken(entity.getToken());
+        result.setRefreshToken(entity.getRefreshToken());
+        result.setId(entity.getId());
+        result.setClient(entity.getClient());
+        result.setDomain(entity.getDomain());
+        result.setSubject(entity.getSubject());
+        if (entity.getCreatedAt() != null) {
+            result.setCreatedAt(LocalDateTime.ofInstant(entity.getCreatedAt().toInstant(), UTC));
+        }
+        if (entity.getExpireAt() != null) {
+            result.setExpireAt(LocalDateTime.ofInstant(entity.getExpireAt().toInstant(), UTC));
+        }
+        return result;
     }
 
     @Override

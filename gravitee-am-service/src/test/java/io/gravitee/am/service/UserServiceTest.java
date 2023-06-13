@@ -535,13 +535,11 @@ public class UserServiceTest {
 
         when(userRepository.findById(userid)).thenReturn(Maybe.just(new User()));
         when(userRepository.update(any())).thenReturn(Single.just(new User()));
-   //     when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         final var observer = userService.upsertFactor(userid, enrolledFactor, new DefaultUser()).test();
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertNoErrors();
 
-//        verify(eventService).create(any());
         verify(userRepository).update(argThat(user -> user.getFactors() != null
                 && !user.getFactors().isEmpty()
                 && user.getFactors().get(0).getFactorId().equals(enrolledFactor.getFactorId()) ));
@@ -556,13 +554,11 @@ public class UserServiceTest {
 
         when(userRepository.findById(userid)).thenReturn(Maybe.just(new User()));
         when(userRepository.update(any())).thenReturn(Single.just(new User()));
-     //   when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         final var observer = userService.upsertFactor(userid, enrolledFactor, new DefaultUser()).test();
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertNoErrors();
 
-//        verify(eventService).create(any());
         verify(userRepository).update(argThat(user -> user.getFactors() != null
                 && !user.getFactors().isEmpty()
                 && user.getFactors().get(0).getFactorId().equals(enrolledFactor.getFactorId()) ));
