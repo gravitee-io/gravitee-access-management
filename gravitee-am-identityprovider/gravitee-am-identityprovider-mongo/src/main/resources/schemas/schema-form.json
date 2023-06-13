@@ -113,6 +113,13 @@
       "title": "User password salt length in bytes",
       "description": "Password salt length in bytes"
     },
+    "passwordSaltFormat" : {
+      "type" : "string",
+      "default" : "DIGEST",
+      "enum": ["DIGEST", "APPENDING", "PREPENDING"],
+      "title": "How is salt added to password ?",
+      "description": "Password + salt format"
+    },
     "userProvider" : {
       "type" : "boolean",
       "default": true,

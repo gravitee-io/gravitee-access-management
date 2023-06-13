@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service.authentication.crypto.password;
+package io.gravitee.am.common.password;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class SHAPasswordEncoderTest extends MessageDigestPasswordEncoderTest{
+public interface PasswordSaltFormat {
 
-    public SHAPasswordEncoderTest() {
-        super(new SHAPasswordEncoder("SHA-512"));
-    }
+    String DIGEST = "DIGEST";
+    String APPENDING = "APPENDING";
+    String PREPENDING = "PREPENDING";
 }

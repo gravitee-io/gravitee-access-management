@@ -15,12 +15,14 @@
  */
 package io.gravitee.am.service.authentication.crypto.password;
 
+import io.gravitee.am.common.password.PasswordSaltFormat;
 import org.apache.commons.codec.binary.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Base64;
 
@@ -35,13 +37,20 @@ public abstract class MessageDigestPasswordEncoder implements PasswordEncoder {
     private static final String SUFFIX = "}";
     private final Base64.Encoder b64enc = Base64.getEncoder();
     private final Base64.Decoder b64dec = Base64.getDecoder();
+    private MessageDigest messageDigest;
     private String algorithm;
     private boolean encodeSaltAsBase64 = true;
     private int saltLength = 32;
-
+    private String passwordSaltFormat = PasswordSaltFormat.DIGEST;
 
     public MessageDigestPasswordEncoder(String algorithm) {
         this.algorithm = algorithm;
+        try {
+            messageDigest = MessageDigest.getInstance(algorithm);
+        }
+        catch (NoSuchAlgorithmException ex) {
+            throw new IllegalStateException("No such hashing algorithm", ex);
+        }
     }
 
     @Override
@@ -55,7 +64,7 @@ public abstract class MessageDigestPasswordEncoder implements PasswordEncoder {
                 salt = PREFIX + (encodeSaltAsBase64 ? b64enc.encodeToString(bytes) : Hex.encodeHexString(bytes)) + SUFFIX;
             }
             final String saltedPassword = rawPassword + salt;
-            final byte[] digest = MessageDigest.getInstance(algorithm).digest(saltedPassword.getBytes(StandardCharsets.UTF_8));
+            final byte[] digest = messageDigest.digest(saltedPassword.getBytes(StandardCharsets.UTF_8));
             final String rawPasswordEncoded = salt + (encodeSaltAsBase64 ? b64enc.encodeToString(digest) : Hex.encodeHexString(digest));
             return rawPasswordEncoded;
         } catch (Exception ex) {
@@ -66,9 +75,20 @@ public abstract class MessageDigestPasswordEncoder implements PasswordEncoder {
     @Override
     public String encode(CharSequence rawPassword, byte[] salt) {
         try {
-            MessageDigest md = MessageDigest.getInstance(algorithm);
-            md.update(salt);
-            byte[] hashedPassword = md.digest(rawPassword.toString().getBytes(StandardCharsets.UTF_8));
+            byte[] hashedPassword;
+            if (PasswordSaltFormat.DIGEST.equals(passwordSaltFormat)) {
+                MessageDigest md = MessageDigest.getInstance(algorithm);
+                md.update(salt);
+                hashedPassword = md.digest(rawPassword.toString().getBytes(StandardCharsets.UTF_8));
+            } else {
+                final String encodedSalt = (encodeSaltAsBase64) ?
+                        b64enc.encodeToString(salt) : Hex.encodeHexString(salt);
+                final String saltedPassword =
+                        PasswordSaltFormat.APPENDING.equals(passwordSaltFormat)
+                                ? (rawPassword + encodedSalt)
+                                : (encodedSalt + rawPassword);
+                hashedPassword = messageDigest.digest(saltedPassword.getBytes(StandardCharsets.UTF_8));
+            }
             return (encodeSaltAsBase64) ? b64enc.encodeToString(hashedPassword) : Hex.encodeHexString(hashedPassword);
         } catch(Exception ex) {
             throw new IllegalStateException("Unable to encode raw password", ex);
@@ -83,7 +103,7 @@ public abstract class MessageDigestPasswordEncoder implements PasswordEncoder {
         try {
             final String salt = extractSalt(encodedPassword);
             final String saltedPassword = rawPassword + salt;
-            final byte[] digest = MessageDigest.getInstance(algorithm).digest(saltedPassword.getBytes(StandardCharsets.UTF_8));
+            final byte[] digest = messageDigest.digest(saltedPassword.getBytes(StandardCharsets.UTF_8));
             final String rawPasswordEncoded = salt + (encodeSaltAsBase64 ? b64enc.encodeToString(digest) : Hex.encodeHexString(digest));
             return encodedPassword.equals(rawPasswordEncoded);
         } catch (Exception ex) {
@@ -98,12 +118,7 @@ public abstract class MessageDigestPasswordEncoder implements PasswordEncoder {
             return false;
         }
         try {
-            MessageDigest md = MessageDigest.getInstance(this.algorithm);
-            md.update(salt);
-
-            byte[] digest = md.digest(rawPassword.toString().getBytes(StandardCharsets.UTF_8));
-            String presentedPassword = encodeSaltAsBase64 ? b64enc.encodeToString(digest) : Hex.encodeHexString(digest);
-
+            final String presentedPassword = encode(rawPassword, salt);
             return encodedPassword.equals(presentedPassword);
         } catch (Exception ex) {
             LOGGER.error("An error has occurred when performing password match operation", ex);
@@ -114,7 +129,17 @@ public abstract class MessageDigestPasswordEncoder implements PasswordEncoder {
     @Override
     public boolean matches(CharSequence rawPassword, String encodedPassword, String salt) {
         try {
-            return matches(rawPassword, encodedPassword, encodeSaltAsBase64 ? b64dec.decode(salt) : Hex.decodeHex(salt));
+            if (PasswordSaltFormat.DIGEST.equals(passwordSaltFormat)) {
+                return matches(rawPassword, encodedPassword, encodeSaltAsBase64 ? b64dec.decode(salt) : Hex.decodeHex(salt));
+            }
+
+            final String saltedPassword =
+                    PasswordSaltFormat.APPENDING.equals(passwordSaltFormat)
+                            ? (rawPassword + salt)
+                            : (salt + rawPassword);
+            final byte[] digest = messageDigest.digest(saltedPassword.getBytes(StandardCharsets.UTF_8));
+            final String rawPasswordEncoded = encodeSaltAsBase64 ? b64enc.encodeToString(digest) : Hex.encodeHexString(digest);
+            return encodedPassword.equals(rawPasswordEncoded);
         } catch (Exception ex) {
             LOGGER.error("An error has occurred when performing password match operation", ex);
             return false;
@@ -131,6 +156,10 @@ public abstract class MessageDigestPasswordEncoder implements PasswordEncoder {
 
     public void setSaltLength(int saltLength) {
         this.saltLength = saltLength;
+    }
+
+    public void setPasswordSaltFormat(String passwordSaltFormat) {
+        this.passwordSaltFormat = passwordSaltFormat;
     }
 
     private static String extractSalt(String prefixEncodedPassword) {

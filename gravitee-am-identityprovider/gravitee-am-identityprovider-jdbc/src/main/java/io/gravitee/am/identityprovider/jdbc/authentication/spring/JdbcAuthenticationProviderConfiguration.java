@@ -54,6 +54,7 @@ public class JdbcAuthenticationProviderConfiguration {
             MessageDigestPasswordEncoder passwordEncoder = new MD5PasswordEncoder();
             passwordEncoder.setEncodeSaltAsBase64("Base64".equals(configuration.getPasswordEncoding()));
             passwordEncoder.setSaltLength(configuration.getPasswordSaltLength());
+            passwordEncoder.setPasswordSaltFormat(configuration.getPasswordSaltFormat());
             return passwordEncoder;
         }
 
@@ -66,6 +67,7 @@ public class JdbcAuthenticationProviderConfiguration {
             }
             passwordEncoder.setEncodeSaltAsBase64("Base64".equals(configuration.getPasswordEncoding()));
             passwordEncoder.setSaltLength(configuration.getPasswordSaltLength());
+            passwordEncoder.setPasswordSaltFormat(configuration.getPasswordSaltFormat());
             return passwordEncoder;
         }
 
