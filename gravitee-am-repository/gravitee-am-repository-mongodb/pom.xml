@@ -24,7 +24,7 @@
     <parent>
         <groupId>io.gravitee.am.repository</groupId>
         <artifactId>gravitee-am-repository</artifactId>
-        <version>${revision}${sha1}${changelist}</version>
+        <version>3.19.9-SNAPSHOT</version>
     </parent>
 
     <artifactId>gravitee-am-repository-mongodb</artifactId>
