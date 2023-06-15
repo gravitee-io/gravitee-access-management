@@ -74,6 +74,7 @@ export class DomainSettingsFlowsComponent implements OnInit {
   onSave({definition}) {
 
     const flows = definition.flows.map((flow) => {
+      delete flow.icon;
       delete flow.createdAt;
       delete flow.updatedAt;
       flow.pre = flow.pre.map(this._stringifyConfiguration);
