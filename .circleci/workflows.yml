@@ -1152,7 +1152,7 @@ jobs:
             fi;
     
             git add --update
-            git commit -m 'chore: prepare next version'
+            git commit -m 'chore: prepare next version [skip ci]'
 
             if [ "${DRY_RUN}" == "false" ]; then
               echo "# --->>> NO IT IS NOT A DRY RUN"
