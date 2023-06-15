@@ -22,7 +22,7 @@
     <parent>
         <artifactId>gravitee-am-resource</artifactId>
         <groupId>io.gravitee.am.resource</groupId>
-        <version>${revision}${sha1}${changelist}</version>
+        <version>4.0.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 

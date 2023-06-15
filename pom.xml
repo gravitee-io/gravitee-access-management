@@ -31,7 +31,7 @@
     <artifactId>gravitee-am-parent</artifactId>
     <packaging>pom</packaging>
 
-    <version>${revision}${sha1}${changelist}</version>
+    <version>4.0.0-SNAPSHOT</version>
     <name>Gravitee IO - Access Management</name>
 
     <scm>
@@ -73,10 +73,6 @@
     </modules>
 
     <properties>
-        <revision>4.0.0</revision>
-        <sha1 />
-        <changelist>-SNAPSHOT</changelist>
-
         <awaitility.version>4.2.0</awaitility.version>
         <gravitee-bom.version>4.0.3</gravitee-bom.version>
         <gravitee-common.version>2.1.0</gravitee-common.version>
