@@ -337,9 +337,14 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
                             return checkClientFunction().apply(user.getReferenceId(), user.getClient())
                                     .map(Optional::of)
                                     .defaultIfEmpty(Optional.empty())
-                                    .doOnSuccess(optClient -> new Thread(() -> emailService.send(domain1, optClient.orElse(null), Template.REGISTRATION_CONFIRMATION, user).subscribe()).start())
-                                    .doOnSuccess(__ -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.REGISTRATION_CONFIRMATION_REQUESTED).user(user)))
-                                    .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.REGISTRATION_CONFIRMATION_REQUESTED).throwable(throwable)))
+                                    .doOnSuccess(optClient -> {
+                                        var template = getTemplate(domain1, optClient);
+                                        emailService.send(domain1, optClient.orElse(null), template, user)
+                                                .doOnSuccess(__ -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(resoleEventType(template)).user(user)))
+                                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(resoleEventType(template)).throwable(throwable)))
+                                                .subscribe();
+                                    })
+                                    .onErrorComplete()
                                     .ignoreElement();
                         }));
     }
@@ -505,4 +510,29 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
                 .subscribe(passwordHistory -> logger.debug("Created password history for user with ID {}", user),
                            throwable -> logger.debug("Failed to create password history", throwable));
     }
+
+    private static Template getTemplate(Domain domain, Optional<Application> optClient) {
+        if (isSendVerifyRegistrationEmailEnabled(domain, optClient)) {
+            return Template.REGISTRATION_VERIFY;
+        }
+
+        return Template.REGISTRATION_CONFIRMATION;
+    }
+
+    private static boolean isSendVerifyRegistrationEmailEnabled(Domain domain, Optional<Application> optClient) {
+        return optClient.map(application -> AccountSettings.getInstance(domain, application).isSendVerifyRegistrationAccountEmail())
+                .orElseGet(() -> domain.getAccountSettings() != null && domain.getAccountSettings().isSendVerifyRegistrationAccountEmail());
+
+    }
+
+    private String resoleEventType(Template template) {
+        if (template == Template.REGISTRATION_VERIFY) {
+            return EventType.REGISTRATION_VERIFY_REQUESTED;
+        } else if (template == Template.REGISTRATION_CONFIRMATION) {
+            return EventType.REGISTRATION_CONFIRMATION_REQUESTED;
+        }
+
+        return null;
+    }
+
 }

@@ -101,7 +101,7 @@ public class DomainServiceTest {
     private static final String AUTH_DEVICE_ID = "authdevice-Notifier#1";
 
     @InjectMocks
-    private DomainService domainService = new DomainServiceImpl();
+    private DomainService domainService = new DomainServiceImpl("http://localhost:8092");
 
     @Mock
     private DomainValidator domainValidator;
@@ -756,19 +756,14 @@ public class DomainServiceTest {
     public void shouldNotDeleteBecauseDoesntExist() {
         when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.empty());
 
-        TestObserver testObserver = domainService.delete(DOMAIN_ID).test();
-        testObserver.assertError(DomainNotFoundException.class);
-        testObserver.assertNotComplete();
+        domainService.delete(DOMAIN_ID).test().assertError(DomainNotFoundException.class).assertNotComplete();
     }
 
     @Test
     public void shouldDelete_technicalException() {
         when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.error(TechnicalException::new));
 
-        TestObserver testObserver = domainService.delete(DOMAIN_ID).test();
-
-        testObserver.assertError(TechnicalManagementException.class);
-        testObserver.assertNotComplete();
+        domainService.delete(DOMAIN_ID).test().assertError(TechnicalManagementException.class).assertNotComplete();
     }
 
     @Test
@@ -776,16 +771,11 @@ public class DomainServiceTest {
         when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(domain));
         when(applicationService.findByDomain(DOMAIN_ID)).thenReturn(Single.error(TechnicalException::new));
 
-        TestObserver testObserver = domainService.delete(DOMAIN_ID).test();
-
-        testObserver.assertError(TechnicalManagementException.class);
-        testObserver.assertNotComplete();
+        domainService.delete(DOMAIN_ID).test().assertError(TechnicalManagementException.class).assertNotComplete();
     }
 
     @Test
     public void shouldBuildUrl_contextPathMode() {
-
-        ReflectionTestUtils.setField(domainService, "gatewayUrl", "http://localhost:8092");
 
         Domain domain = new Domain();
         domain.setPath("/testPath");
@@ -798,8 +788,6 @@ public class DomainServiceTest {
 
     @Test
     public void shouldBuildUrl_vhostMode() {
-
-        ReflectionTestUtils.setField(domainService, "gatewayUrl", "http://localhost:8092");
 
         Domain domain = new Domain();
         domain.setPath("/testPath");
@@ -854,11 +842,7 @@ public class DomainServiceTest {
 
         when(domainRepository.findAllByCriteria(eq(criteria))).thenReturn(Flowable.just(domain));
 
-        final TestSubscriber<Domain> obs = domainService.findAllByCriteria(criteria).test();
-
-        obs.awaitDone(10, TimeUnit.SECONDS);
-        obs.assertComplete();
-        obs.assertValue(domain);
+        domainService.findAllByCriteria(criteria).test().awaitDone(10, TimeUnit.SECONDS).assertComplete().assertValue(domain);
     }
 
     @Test
@@ -890,17 +874,14 @@ public class DomainServiceTest {
         doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
         doReturn(true).when(accountSettingsValidator).validate(any());
 
-        TestObserver testObserver = domainService.patch("my-domain", patchDomain).test();
-        testObserver.awaitDone(10, TimeUnit.SECONDS);
-
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
+        domainService.patch("my-domain", patchDomain).test().awaitDone(10, TimeUnit.SECONDS).assertComplete().assertNoErrors();
 
         verify(domainRepository, times(1)).findById(anyString());
         verify(domainRepository, times(1)).update(any(Domain.class));
         verify(eventService, times(1)).create(any());
     }
 
+    @Test
     public void should_InvalidWebAuthnConfigurationException_origin_null() {
         Domain domain = new Domain();
         domain.setReferenceType(ReferenceType.ENVIRONMENT);
@@ -909,10 +890,7 @@ public class DomainServiceTest {
         when(domainRepository.findById(anyString())).thenReturn(Maybe.just(domain));
 
         domain.setWebAuthnSettings(webAuthnSettings);
-        TestObserver<Domain> testObserver = domainService.update("any-id", domain).test();
-
-        testObserver.assertError(InvalidWebAuthnConfigurationException.class);
-        testObserver.assertNotComplete();
+        domainService.update("any-id", domain).test().assertError(InvalidWebAuthnConfigurationException.class).assertNotComplete();
     }
 
     @Test
@@ -926,10 +904,7 @@ public class DomainServiceTest {
         when(domainRepository.findById(anyString())).thenReturn(Maybe.just(domain));
 
         domain.setWebAuthnSettings(webAuthnSettings);
-        TestObserver<Domain> testObserver = domainService.update("any-id", domain).test();
-
-        testObserver.assertError(InvalidWebAuthnConfigurationException.class);
-        testObserver.assertNotComplete();
+        domainService.update("any-id", domain).test().assertError(InvalidWebAuthnConfigurationException.class).assertNotComplete();
     }
 
     @Test
@@ -949,9 +924,7 @@ public class DomainServiceTest {
         doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
         when(domainRepository.findAll()).thenReturn(Flowable.just(domain));
 
-        TestObserver<Domain> testObserver = domainService.update("any-id", domain).test();
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
+        domainService.update("any-id", domain).test().assertComplete().assertNoErrors();
 
         verify(domainRepository, times(1)).update(any(Domain.class));
     }

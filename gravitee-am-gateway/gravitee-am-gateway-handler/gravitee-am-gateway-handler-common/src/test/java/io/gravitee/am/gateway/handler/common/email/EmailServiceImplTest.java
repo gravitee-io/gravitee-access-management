@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.gravitee.am.gateway.handler.common.email;
 
 import freemarker.cache.TemplateLoader;
@@ -30,9 +29,6 @@ import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.i18n.DictionaryProvider;
 import io.vertx.rxjava3.core.MultiMap;
-import java.io.IOException;
-import java.io.StringReader;
-import java.util.Properties;
 import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -40,16 +36,16 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Qualifier;
 
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.Properties;
+
 import static freemarker.template.Configuration.AUTO_DETECT_NAMING_CONVENTION;
 import static freemarker.template.Configuration.DEFAULT_INCOMPATIBLE_IMPROVEMENTS;
 import static java.util.concurrent.TimeUnit.DAYS;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.anyInt;
-import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
@@ -141,8 +137,9 @@ public class EmailServiceImplTest {
         when(this.freemarkerConfiguration.getTemplateLoader()).thenReturn(templateLoader);
         when(freemarkerConfiguration.getTemplate(anyString())).thenReturn(templateMock);
 
-
         when(emailManager.getEmail(anyString(), any(), anyInt())).thenReturn(email);
+
+        when(jwtBuilder.sign(any())).thenReturn("TOKEN");
 
         final Client client = new Client();
         client.setClientId(email.getClient());
@@ -188,15 +185,16 @@ public class EmailServiceImplTest {
         when(this.freemarkerConfiguration.getTemplateLoader()).thenReturn(templateLoader);
         when(freemarkerConfiguration.getTemplate(anyString())).thenReturn(templateMock);
 
-
         when(emailManager.getEmail(anyString(), any(), anyInt())).thenReturn(email);
+
+        when(jwtBuilder.sign(any())).thenReturn("TOKEN");
 
         final Client client = new Client();
         client.setClientId(email.getClient());
 
         final MultiMap queryParams = MultiMap.caseInsensitiveMultiMap();
-        queryParams.add("key","value");
-        queryParams.add("key2","value2");
+        queryParams.add("key", "value");
+        queryParams.add("key2", "value2");
         queryParams.add("client_id", client.getClientId());
 
         emailServiceSpy.send(Template.RESET_PASSWORD, Mockito.mock(User.class), client, queryParams);

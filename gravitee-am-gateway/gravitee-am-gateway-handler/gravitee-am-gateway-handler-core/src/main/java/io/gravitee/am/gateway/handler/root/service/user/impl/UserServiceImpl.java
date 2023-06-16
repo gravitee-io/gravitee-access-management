@@ -201,7 +201,7 @@ public class UserServiceImpl implements UserService {
                         .flatMapMaybe(checkUserPresence(user, source))
                         .switchIfEmpty(Single.error(new UserProviderNotFoundException(source)))
                         .flatMap(userProvider -> userProvider.create(convert(user)))
-                        .flatMap(idpUser -> registerUser(user, accountSettings, source, idpUser))
+                        .flatMap(idpUser -> registerUser(user, accountSettings, source, idpUser, queryParams))
                         .flatMap(amUser -> sendVerifyAccountEmail(client, amUser, accountSettings, queryParams))
                         .flatMap(amUser -> createPasswordHistory(client, amUser, rawPassword, principal))
                         .flatMap(userService::enhance)
@@ -221,7 +221,7 @@ public class UserServiceImpl implements UserService {
         final String redirectUri = noSendVerifyRegistration.map(AccountSettings::getRedirectUriAfterRegistration).orElse(null);
         return new RegistrationResponse(user, redirectUri, isAutoLogin);
     }
-    private Single<User> registerUser(User user, Optional<AccountSettings> accountSettings, String source, io.gravitee.am.identityprovider.api.User idpUser) {
+    private Single<User> registerUser(User user, Optional<AccountSettings> accountSettings, String source, io.gravitee.am.identityprovider.api.User idpUser, MultiMap queryParams) {
         // AM 'users' collection is not made for authentication (but only management stuff)
         // clear password
         user.setPassword(null);
@@ -247,7 +247,7 @@ public class UserServiceImpl implements UserService {
             if (settings.isSendVerifyRegistrationAccountEmail()) {
                 user.setPreRegistration(true);
                 user.setRegistrationCompleted(false);
-                user.setRegistrationUserUri(domainService.buildUrl(domain, REGISTRATION_VERIFY.redirectUri()));
+                user.setRegistrationUserUri(domainService.buildUrl(domain, REGISTRATION_VERIFY.redirectUri(), queryParams));
             }
         });
         return userService.create(user);

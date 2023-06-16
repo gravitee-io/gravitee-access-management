@@ -24,10 +24,10 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.vertx.rxjava3.core.MultiMap;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -70,5 +70,9 @@ public interface DomainService {
         return delete(domain, null);
     }
 
-    String buildUrl(Domain domain, String path);
+    String buildUrl(Domain domain, String path, MultiMap queryParams);
+
+    default String buildUrl(Domain domain, String path) {
+        return buildUrl(domain, path, MultiMap.caseInsensitiveMultiMap());
+    }
 }

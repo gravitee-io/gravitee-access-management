@@ -13,150 +13,194 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.gravitee.am.management.service.impl;
 
-import freemarker.cache.TemplateLoader;
+import com.icegreen.greenmail.junit5.GreenMailExtension;
+import com.icegreen.greenmail.util.ServerSetupTest;
+import freemarker.cache.ConditionalTemplateConfigurationFactory;
+import freemarker.cache.FileExtensionMatcher;
+import freemarker.cache.FileTemplateLoader;
+import freemarker.core.HTMLOutputFormat;
+import freemarker.core.TemplateClassResolver;
+import freemarker.core.TemplateConfiguration;
 import freemarker.template.Configuration;
-import freemarker.template.DefaultObjectWrapperBuilder;
 import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.management.service.EmailManager;
 import io.gravitee.am.management.service.EmailService;
+import io.gravitee.am.management.service.assertions.MimeMessageParserAssert;
 import io.gravitee.am.model.*;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.DomainService;
-import io.gravitee.am.service.i18n.DictionaryProvider;
+import io.gravitee.am.service.impl.DomainServiceImpl;
 import io.reactivex.rxjava3.core.Maybe;
-import java.io.IOException;
-import java.io.StringReader;
-import java.util.Properties;
-import org.junit.Test;
-import org.mockito.InjectMocks;
+import org.apache.commons.mail.util.MimeMessageParser;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
-import org.springframework.beans.factory.annotation.Qualifier;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mail.javamail.JavaMailSenderImpl;
 
-import static freemarker.template.Configuration.AUTO_DETECT_NAMING_CONVENTION;
-import static freemarker.template.Configuration.DEFAULT_INCOMPATIBLE_IMPROVEMENTS;
-import static org.mockito.ArgumentMatchers.*;
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.times;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.when;
 
 /**
- * @author Rémi SULTAN (remi.sultan at graviteesource.com)
+ * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@ExtendWith(MockitoExtension.class)
 public class EmailServiceImplTest {
+
+    public static final String TEMPLATES_PATH = "../../gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-management-api-standalone-distribution/src/main/resources/templates";
+    @RegisterExtension
+    static GreenMailExtension greenMail = new GreenMailExtension(ServerSetupTest.SMTP.dynamicPort());
 
     @Mock
     private EmailManager emailManager;
 
-    @Mock
-    private io.gravitee.am.service.EmailService emailService;
+    private io.gravitee.am.service.impl.EmailServiceImpl emailService;
+
+    private final Configuration freemarkerConfiguration = new freemarker.template.Configuration(freemarker.template.Configuration.VERSION_2_3_22);
 
     @Mock
-    private Configuration freemarkerConfiguration;
+    private JWTBuilder jwtBuilder;
 
     @Mock
     private AuditService auditService;
 
-    @Mock
-    @Qualifier("managementJwtBuilder")
-    private JWTBuilder jwtBuilder;
+    JavaMailSenderImpl mailSender;
 
-    @Mock
-    private DomainService domainService;
+    @BeforeEach
+    public void init() throws Exception {
 
-    @InjectMocks
-    private EmailService emailServiceSpy;
+        mailSender = new JavaMailSenderImpl();
+        mailSender.setJavaMailProperties(greenMail.getSmtp().getServerSetup().configureJavaMailSessionProperties(null, false));
 
-    @Test
-    public void must_not_send_email_due_to_not_enabled() throws IOException {
-        var emailService = new EmailServiceImpl(
-                false,
-                "New user registration",
-                86400,
-                "Certificate will expire soon"
-        );
+        emailService = new io.gravitee.am.service.impl.EmailServiceImpl(mailSender, TEMPLATES_PATH);
+        emailService.afterPropertiesSet();
 
-        emailServiceSpy = Mockito.spy(emailService);
-        MockitoAnnotations.openMocks(this);
-
-        emailServiceSpy.send(mock(Domain.class), mock(Application.class), Template.REGISTRATION_CONFIRMATION, mock(User.class))
-                .blockingAwait();
-
-        verify(freemarkerConfiguration, times(0)).getTemplate(anyString());
-        verify(emailManager, times(0)).getEmail(any(), any(), any(), anyInt());
-        verify(auditService, times(0)).report(any());
-        verify(this.emailService, times(0)).send(any());
+        freemarkerConfiguration.setLocalizedLookup(false);
+        freemarkerConfiguration.setNewBuiltinClassResolver(TemplateClassResolver.SAFER_RESOLVER);
+        TemplateConfiguration tcHTML = new TemplateConfiguration();
+        tcHTML.setOutputFormat(HTMLOutputFormat.INSTANCE);
+        freemarkerConfiguration.setTemplateConfigurations(
+                new ConditionalTemplateConfigurationFactory(new FileExtensionMatcher("html"), tcHTML));
+        freemarkerConfiguration.setTemplateLoader(new FileTemplateLoader(new File(TEMPLATES_PATH)));
     }
 
-    @Test
-    public void must_send_email() throws IOException {
-        var emailService = new EmailServiceImpl(
+    @ParameterizedTest
+    @CsvSource({
+            "REGISTRATION_CONFIRMATION,Nouvel enregistrement d'utilisateur,,fr",
+            "REGISTRATION_CONFIRMATION,New user registration,,en",
+            "REGISTRATION_VERIFY,Vérifiez votre compte,http://localhost:1234/unittest/verifyRegistration?param1=PARAM_1&param2=PARAM_2,fr",
+            "REGISTRATION_VERIFY,New user registration,http://localhost:1234/unittest/verifyRegistration?param3=PARAM_3&param4=PARAM_4,en",
+    })
+    public void validate_send_registration_confirmation_email(Template template, String subject, String registrationUrl, String lang) throws Exception {
+
+        when(jwtBuilder.sign(any())).thenReturn("TOKEN");
+
+        var cut = new EmailServiceImpl(
+                emailManager,
+                emailService,
+                freemarkerConfiguration,
+                auditService,
+                jwtBuilder,
+                new DomainServiceImpl("http://localhost:1234/unittest/"),
                 true,
                 "New user registration",
                 86400,
+                "New user registration",
+                604800,
                 "Certificate will expire soon"
         );
 
-        final Email email = buildEmail();
 
-        emailServiceSpy = Mockito.spy(emailService);
-        MockitoAnnotations.openMocks(this);
-
-        final DictionaryProvider mockDictionaryProvider = Mockito.mock(DictionaryProvider.class);
-        when(this.emailService.getDefaultDictionaryProvider()).thenReturn(mockDictionaryProvider);
-        when(mockDictionaryProvider.getDictionaryFor(any())).thenReturn(new Properties());
-
-        when(freemarkerConfiguration.getIncompatibleImprovements()).thenReturn(DEFAULT_INCOMPATIBLE_IMPROVEMENTS);
-        when(freemarkerConfiguration.getNamingConvention()).thenReturn(AUTO_DETECT_NAMING_CONVENTION);
-        when(freemarkerConfiguration.getObjectWrapper()).thenReturn(new DefaultObjectWrapperBuilder(DEFAULT_INCOMPATIBLE_IMPROVEMENTS).build());
-
-        var templateLoader = mock(TemplateLoader.class);
-        var templateMock = new freemarker.template.Template("content", new StringReader(email.getTemplate()), freemarkerConfiguration);
-        when(templateLoader.findTemplateSource(anyString())).thenReturn(templateMock);
-        when(this.freemarkerConfiguration.getTemplateLoader()).thenReturn(templateLoader);
-        when(freemarkerConfiguration.getTemplate(anyString())).thenReturn(templateMock);
-
+        final var registrationTpl = template;
+        final var email = new Email();
+        email.setFrom("no-reply@gravitee.io");
+        email.setSubject(String.format("${msg('email.%s.subject')}", template.template()));
+        email.setTemplate(registrationTpl.template());
         when(emailManager.getEmail(any(), any(), any(), anyInt())).thenReturn(Maybe.just(email));
 
-        var client = new Application();
-        client.setId(email.getClient());
-        var oauth = new ApplicationOAuthSettings();
-        oauth.setClientId(email.getClient());
-        var settings = new ApplicationSettings();
-        settings.setOauth(oauth);
-        client.setSettings(settings);
+        var user = createUser(lang);
+        user.setRegistrationUserUri(registrationUrl);
 
-        var domain = new Domain();
-        domain.setName("domain");
-        domain.setPath("/domain");
+        var application = new Application();
+        application.setName("name");
+        application.setSettings(new ApplicationSettings());
+        application.getSettings().setOauth(new ApplicationOAuthSettings());
+        application.getSettings().getOauth().setClientId("CLIENT_ID");
+        application.getSettings().getOauth().setClientName("app");
 
-        emailServiceSpy.send(domain, client, Template.REGISTRATION_CONFIRMATION, mock(User.class)).test()
-                .assertNoErrors()
-                .assertComplete();
+        cut.send(createDomain(), application, registrationTpl, user).test().await().assertComplete();
 
-        verify(freemarkerConfiguration, times(1)).getTemplate(eq(email.getTemplate() + ".html"));
-        verify(emailManager, times(1)).getEmail(any(), any(), any(), anyInt());
-        verify(auditService, times(1)).report(any());
-        verify(this.emailService, times(1)).send(any());
+        org.assertj.core.api.Assertions.assertThat(greenMail.getReceivedMessages())
+                .hasSize(1)
+                .extracting(x -> new MimeMessageParser(x).parse())
+                .allSatisfy(message ->
+                                MimeMessageParserAssert
+                                        .assertThat(message)
+                                        .hasFrom("no-reply@gravitee.io")
+                                        .hasTo("john.doe@unittest.com")
+                                        .hasSubject(subject)
+                                        .hasHtmlContent(Files.readString(Path.of(String.format("src/test/resources/templates/%s_%s.html", registrationTpl.template(), lang))))
+                );
     }
 
-    private Email buildEmail() {
-        final Email email = new Email();
-        email.setEnabled(true);
-        email.setFrom("from@gravitee.io");
-        email.setExpiresAfter(300);
-        email.setTemplate("some_template");
-        email.setSubject("subject");
-        email.setFromName("Gravitee.io");
-        email.setContent("Reset password content");
-        email.setClient("some # client");
-        return email;
+    @Test
+    public void must_not_send_email_when_feature_is_disabled() throws Exception {
+
+        var cut = new EmailServiceImpl(
+                emailManager,
+                emailService,
+                freemarkerConfiguration,
+                auditService,
+                jwtBuilder,
+                new DomainServiceImpl("http://localhost:1234/unittest/"),
+                false,
+                "New user registration",
+                86400,
+                "New user registration",
+                604800,
+                "Certificate will expire soon"
+        );
+
+        cut.send(createDomain(), null, Template.REGISTRATION_CONFIRMATION, createUser("en")).test().await().assertComplete();
+        org.assertj.core.api.Assertions.assertThat(greenMail.getReceivedMessages()).isEmpty();
+    }
+
+    @Test
+    public void must_not_send_email_when_error_occurred() throws Exception {
+
+        var cut = Mockito.mock(EmailService.class);
+        when(cut.send(any(), any(), any(), any())).thenReturn(Maybe.error(new IllegalStateException("Error")));
+
+        cut.send(createDomain(), null, Template.REGISTRATION_CONFIRMATION, createUser("en")).test().await().assertError(IllegalStateException.class);
+        org.assertj.core.api.Assertions.assertThat(greenMail.getReceivedMessages()).isEmpty();
+    }
+
+    private static Domain createDomain() {
+        var domain = new Domain();
+        domain.setId("id");
+        return domain;
+    }
+
+    private static User createUser(String en) {
+        final User user = new User();
+        user.setFirstName("John");
+        user.setLastName("Doe");
+        user.setPreferredLanguage(en);
+        user.setEmail("john.doe@unittest.com");
+        return user;
     }
 }
