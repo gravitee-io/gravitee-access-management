@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static io.gravitee.am.common.utils.ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.RISK_ASSESSMENT_KEY;
 
 /**
@@ -50,8 +51,13 @@ public class RoutingContextHelper {
             contextData.put(ConstantKeys.USER_CONTEXT_KEY, ((User) routingContext.user().getDelegate()).getUser());
         }
 
-        if (routingContext.session() != null && routingContext.session().get(RISK_ASSESSMENT_KEY) != null) {
-            contextData.put(RISK_ASSESSMENT_KEY, routingContext.session().get(RISK_ASSESSMENT_KEY));
+        if (routingContext.session() != null) {
+            if (routingContext.session().get(RISK_ASSESSMENT_KEY) != null) {
+                contextData.put(RISK_ASSESSMENT_KEY, routingContext.session().get(RISK_ASSESSMENT_KEY));
+            }
+            if (routingContext.session().get(MFA_CHALLENGE_COMPLETED_KEY) != null) {
+                contextData.put(MFA_CHALLENGE_COMPLETED_KEY, routingContext.session().get(MFA_CHALLENGE_COMPLETED_KEY));
+            }
         }
 
         // remove technical attributes

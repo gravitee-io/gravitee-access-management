@@ -25,7 +25,6 @@ import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
-import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Credential;
@@ -111,7 +110,7 @@ import static java.util.Optional.ofNullable;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<RoutingContext> {
+public class MFAChallengeEndpoint extends MFAEndpoint {
 
     private static final Logger logger = LoggerFactory.getLogger(MFAChallengeEndpoint.class);
 
@@ -129,10 +128,17 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
     private final VerifyAttemptService verifyAttemptService;
     private final EmailService emailService;
 
-    public MFAChallengeEndpoint(FactorManager factorManager, UserService userService, TemplateEngine engine, DeviceService deviceService,
-                                ApplicationContext applicationContext, Domain domain, CredentialService credentialService,
-                                FactorService factorService, RateLimiterService rateLimiterService,
-                                VerifyAttemptService verifyAttemptService, EmailService emailService) {
+    public MFAChallengeEndpoint(FactorManager factorManager,
+                                UserService userService,
+                                TemplateEngine engine,
+                                DeviceService deviceService,
+                                ApplicationContext applicationContext,
+                                Domain domain,
+                                CredentialService credentialService,
+                                FactorService factorService,
+                                RateLimiterService rateLimiterService,
+                                VerifyAttemptService verifyAttemptService,
+                                EmailService emailService) {
         super(engine);
         this.applicationContext = applicationContext;
         this.factorManager = factorManager;
@@ -164,12 +170,12 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
     private void renderMFAPage(RoutingContext routingContext) {
         try {
             final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
-            if (routingContext.user() == null) {
+            final User endUser = user(routingContext);
+            if (endUser == null) {
                 logger.warn("User must be authenticated to request MFA challenge.");
                 routingContext.fail(401);
                 return;
             }
-            final io.gravitee.am.model.User endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
             final Factor factor = getFactor(routingContext, client, endUser);
             final String error = routingContext.request().getParam(ConstantKeys.ERROR_PARAM_KEY);
             final String rateLimitError = routingContext.request().getParam(RATE_LIMIT_ERROR_PARAM_KEY);
@@ -225,7 +231,9 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
     }
 
     private void verifyCode(RoutingContext routingContext) {
-        if (routingContext.user() == null) {
+        final User endUser = user(routingContext);
+
+        if (endUser == null) {
             logger.warn("User must be authenticated to submit MFA challenge.");
             routingContext.fail(401);
             return;
@@ -248,7 +256,6 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
 
         // create factor context
         final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
-        final io.gravitee.am.model.User endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
         final Factor factor = getFactor(routingContext, client, endUser);
         final FactorProvider factorProvider = factorManager.get(factorId);
         final FactorContext factorCtx = new FactorContext(applicationContext, new HashMap<>());
@@ -314,11 +321,11 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
 
                     cleanSession(routingContext);
                     updateStrongAuthStatus(routingContext);
-                    redirectToAuthorize(routingContext, client);
+                    redirectToAuthorize(routingContext, client, endUser);
                 });
             } else {
                 updateStrongAuthStatus(routingContext);
-                redirectToAuthorize(routingContext, client);
+                redirectToAuthorize(routingContext, client, endUser);
             }
         };
     }
@@ -342,7 +349,7 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
 
             if (userHasFido2Factor(endUser)) {
                 cleanSession(routingContext);
-                redirectToAuthorize(routingContext, client);
+                redirectToAuthorize(routingContext, client, endUser);
             } else {
                 final String fidoFactorId = routingContext.session().get(ENROLLED_FACTOR_ID_KEY);
                 factorService.enrollFactor(endUser, createEnrolledFactor(fidoFactorId, credentialId))
@@ -350,7 +357,7 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
                         .subscribe(
                                 () -> {
                                     cleanSession(routingContext);
-                                    redirectToAuthorize(routingContext, client);
+                                    redirectToAuthorize(routingContext, client, endUser);
                                 },
                                 error -> {
                                     logger.error("Could not update user profile with FIDO2 factor detail", error);
@@ -362,15 +369,14 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
         return;
     }
 
-    private void redirectToAuthorize(RoutingContext routingContext, Client client) {
+    private void redirectToAuthorize(RoutingContext routingContext, Client client, User user) {
         final MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
         final String returnURL = getReturnUrl(routingContext, queryParams);
         //Register device if the device is active
         var rememberDeviceSettings = getRememberDeviceSettings(client);
         boolean rememberDeviceConsent = REMEMBER_DEVICE_CONSENT_ON.equalsIgnoreCase(routingContext.request().getParam(REMEMBER_DEVICE_CONSENT));
         if (rememberDeviceSettings.isActive() && rememberDeviceConsent) {
-            var user = routingContext.user().principal();
-            saveDeviceAndRedirect(routingContext, client, user.getString("id"), rememberDeviceSettings, returnURL);
+            saveDeviceAndRedirect(routingContext, client, user.getId(), rememberDeviceSettings, returnURL);
         } else {
             doRedirect(routingContext.request().response(), returnURL);
         }

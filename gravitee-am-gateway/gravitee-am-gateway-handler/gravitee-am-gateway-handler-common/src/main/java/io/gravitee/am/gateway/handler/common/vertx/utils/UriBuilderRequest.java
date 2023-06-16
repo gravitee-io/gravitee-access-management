@@ -16,7 +16,9 @@
 package io.gravitee.am.gateway.handler.common.vertx.utils;
 
 import io.gravitee.am.common.web.UriBuilder;
+import io.gravitee.am.gateway.handler.common.vertx.core.http.GraviteeVertxHttpServerRequest;
 import io.gravitee.common.http.HttpHeaders;
+import io.gravitee.gateway.api.Request;
 import io.vertx.rxjava3.core.MultiMap;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
@@ -44,17 +46,19 @@ public class UriBuilderRequest {
     private static final String X_FORWARDED_PREFIX = "X-Forwarded-Prefix";
 
     public static String resolveProxyRequest(final RoutingContext context) {
-
         return resolveProxyRequest(context.request(), context.get(CONTEXT_PATH));
     }
 
-    /**
-     * Resolve proxy request
-     * @param request original request
-     * @param path request path
-     * @param parameters request query params
-     * @return request uri representation
-     */
+    public static String resolveProxyRequest(final Request request) {
+        HttpServerRequest httpServerRequest = new HttpServerRequest(new GraviteeVertxHttpServerRequest(request));
+        return resolve(httpServerRequest, httpServerRequest.path(), httpServerRequest.params(), false);
+    }
+
+    public static String resolveProxyRequest(final Request request, final String path, final Map<String, String> parameters, boolean encoded) {
+        HttpServerRequest httpServerRequest = new HttpServerRequest(new GraviteeVertxHttpServerRequest(request));
+        return resolveProxyRequest(httpServerRequest, path, parameters, encoded);
+    }
+
     public static String resolveProxyRequest(final HttpServerRequest request, final String path, final Map<String, String> parameters) {
         return resolveProxyRequest(request, path, parameters, false);
     }
@@ -63,14 +67,6 @@ public class UriBuilderRequest {
         return resolveProxyRequest(request, path, (MultiMap) null, false);
     }
 
-    /**
-     * Resolve proxy request
-     * @param request original request
-     * @param path request path
-     * @param parameters request query params
-     * @param encoded if request query params should be encoded
-     * @return request uri representation
-     */
     public static String resolveProxyRequest(final HttpServerRequest request, final String path, final Map<String, String> parameters, boolean encoded) {
 
         final MultiMap queryParameters;
@@ -83,12 +79,6 @@ public class UriBuilderRequest {
         }
 
         return resolveProxyRequest(request, path, queryParameters, encoded);
-    }
-
-    private static Map<String, String> getSafeParameters(Map<String, String> parameters) {
-        return parameters.entrySet()
-                .stream().filter(entry -> nonNull(entry.getValue()))
-                .collect(toMap(Entry::getKey, Entry::getValue));
     }
 
     public static String resolveProxyRequest(final HttpServerRequest request, final String path, final MultiMap parameters) {
@@ -140,6 +130,12 @@ public class UriBuilderRequest {
             }
         }
         return builder.buildString();
+    }
+
+    private static Map<String, String> getSafeParameters(Map<String, String> parameters) {
+        return parameters.entrySet()
+                .stream().filter(entry -> nonNull(entry.getValue()))
+                .collect(toMap(Entry::getKey, Entry::getValue));
     }
 
     private static boolean useNonStandardPort(HttpServerRequest request, String scheme) {
