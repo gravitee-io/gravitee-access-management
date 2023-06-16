@@ -40,9 +40,6 @@ import io.gravitee.am.service.i18n.FreemarkerMessageResolver;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.EmailAuditBuilder;
 import io.vertx.rxjava3.core.MultiMap;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 
@@ -51,11 +48,10 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import org.springframework.util.StreamUtils;
+import java.util.*;
 
 import static io.gravitee.am.common.web.UriBuilder.encodeURIComponent;
 import static io.gravitee.am.service.utils.UserProfileUtils.preferredLanguage;
-import static java.util.function.Predicate.not;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -226,8 +222,12 @@ public class EmailServiceImpl implements EmailService {
             claims.put(Claims.aud, client.getId());
         }
 
+        if (client != null) {
+            queryParams.add("client_id", encodeURIComponent(client.getClientId()));
+        }
+
         String token = jwtBuilder.sign(new JWT(claims));
-        String redirectUrl = domainService.buildUrl(domain, redirectUri + "?token=" + token);
+        queryParams.add("token", token);
 
         Map<String, Object> params = new HashMap<>();
         params.put("user", new UserProperties(user));
@@ -237,23 +237,11 @@ public class EmailServiceImpl implements EmailService {
 
         if (client != null) {
             params.put("client", new ClientProperties(client));
-            redirectUrl += "&client_id=" + encodeURIComponent(client.getClientId());
         }
 
-        if (!queryParams.isEmpty()) {
-            redirectUrl += "&" + extractQueryString(queryParams);
-        }
-
-        params.put("url", redirectUrl);
+        params.put("url", domainService.buildUrl(domain, redirectUri, queryParams));
 
         return params;
-    }
-
-    private static String extractQueryString(MultiMap queryParams) {
-        return StreamSupport.stream(queryParams.spliterator(), false)
-                .filter(not(e -> "client_id".equals(e.getKey())))
-                .map(e -> e.getKey() + "=" + encodeURIComponent(e.getValue()))
-                .collect(Collectors.joining("&"));
     }
 
     protected io.gravitee.am.model.Email getEmailTemplate(io.gravitee.am.model.Template template, Client client) {

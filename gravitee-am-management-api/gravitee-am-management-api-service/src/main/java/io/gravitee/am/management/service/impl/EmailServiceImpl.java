@@ -15,11 +15,7 @@
  */
 package io.gravitee.am.management.service.impl;
 
-import freemarker.template.Configuration;
-import freemarker.template.DefaultObjectWrapperBuilder;
-import freemarker.template.SimpleHash;
-import freemarker.template.Template;
-import freemarker.template.TemplateException;
+import freemarker.template.*;
 import io.gravitee.am.common.email.Email;
 import io.gravitee.am.common.email.EmailBuilder;
 import io.gravitee.am.common.jwt.Claims;
@@ -39,9 +35,10 @@ import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.i18n.FreemarkerMessageResolver;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.EmailAuditBuilder;
-import io.reactivex.rxjava3.core.Completable;
+import io.netty.handler.codec.http.QueryStringDecoder;
 import io.reactivex.rxjava3.core.Maybe;
-import org.springframework.beans.factory.annotation.Autowired;
+import io.vertx.rxjava3.core.MultiMap;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -56,7 +53,6 @@ import java.util.Map;
 
 import static io.gravitee.am.common.web.UriBuilder.encodeURIComponent;
 import static io.gravitee.am.service.utils.UserProfileUtils.preferredLanguage;
-import static org.springframework.ui.freemarker.FreeMarkerTemplateUtils.processTemplateIntoString;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -70,40 +66,51 @@ public class EmailServiceImpl implements EmailService {
     private final boolean enabled;
     private final String registrationSubject;
     private final Integer registrationExpireAfter;
+    private final String registrationVerifySubject;
+    private final Integer registrationVerifyExpireAfter;
     private final String certificateExpirySubject;
 
-    @Autowired
     private EmailManager emailManager;
 
-    @Autowired
     private io.gravitee.am.service.EmailService emailService;
 
-    @Autowired
     private Configuration freemarkerConfiguration;
 
-    @Autowired
     private AuditService auditService;
 
-    @Autowired
-    @Qualifier("managementJwtBuilder")
     private JWTBuilder jwtBuilder;
 
-    @Autowired
     private DomainService domainService;
 
     public EmailServiceImpl(
+            EmailManager emailManager,
+            io.gravitee.am.service.EmailService emailService,
+            Configuration freemarkerConfiguration,
+            AuditService auditService,
+            @Qualifier("managementJwtBuilder") JWTBuilder jwtBuilder,
+            DomainService domainService,
             @Value("${email.enabled:false}") boolean enabled,
             @Value("${user.registration.email.subject:New user registration}") String registrationSubject,
             @Value("${user.registration.token.expire-after:86400}")  Integer registrationExpireAfter,
+            @Value("${user.registration.verify.email.subject:New user registration}") String registrationVerifySubject,
+            @Value("${user.registration.verify.token.expire-after:604800}")  Integer registrationVerifyExpireAfter,
             @Value("${services.certificate.expiryEmailSubject:Certificate will expire soon}") String certificateExpirySubject) {
+        this.emailManager = emailManager;
+        this.emailService = emailService;
+        this.freemarkerConfiguration = freemarkerConfiguration;
+        this.auditService = auditService;
+        this.jwtBuilder = jwtBuilder;
+        this.domainService = domainService;
         this.enabled = enabled;
         this.registrationSubject = registrationSubject;
         this.registrationExpireAfter = registrationExpireAfter;
+        this.registrationVerifySubject = registrationVerifySubject;
+        this.registrationVerifyExpireAfter = registrationVerifyExpireAfter;
         this.certificateExpirySubject = certificateExpirySubject;
     }
 
     @Override
-    public Completable send(Domain domain, Application client, io.gravitee.am.model.Template template, User user) {
+    public Maybe<Email> send(Domain domain, Application client, io.gravitee.am.model.Template template, User user) {
         if (enabled) {
             // get raw email template
             return getEmailTemplate(template, user).map(emailTemplate -> {
@@ -113,9 +120,9 @@ public class EmailServiceImpl implements EmailService {
                 sendEmail(email, user);
 
                 return email;
-            }).ignoreElement();
+            });
         }
-        return Completable.complete();
+        return Maybe.empty();
     }
 
     @Override
@@ -206,15 +213,22 @@ public class EmailServiceImpl implements EmailService {
         }
 
         String token = jwtBuilder.sign(new JWT(claims));
-        String redirectUrl = domainService.buildUrl(domain, redirectUri + "?token=" + token);
+        var queryParam = MultiMap.caseInsensitiveMultiMap();
+        queryParam.add("token", token);
 
         if (client != null) {
-            redirectUrl += "&client_id=" + encodeURIComponent(client.getSettings().getOauth().getClientId());
+            queryParam.add("client_id", encodeURIComponent(client.getSettings().getOauth().getClientId()));
         }
 
         Map<String, Object> params = new HashMap<>();
+
+        if (StringUtils.isNoneBlank(user.getRegistrationUserUri())) {
+            queryParam.addAll(getQueryMap(user.getRegistrationUserUri()));
+        }
+
+        params.put("url", domainService.buildUrl(domain, redirectUri, queryParam));
+
         params.put("user", new UserProperties(user));
-        params.put("url", redirectUrl);
         params.put("token", token);
         params.put("expireAfterSeconds", expiresAfter);
         params.put("domain", new DomainProperties(domain));
@@ -225,10 +239,22 @@ public class EmailServiceImpl implements EmailService {
         return params;
     }
 
+    public static MultiMap getQueryMap(String query) {
+
+        var queryParams = MultiMap.caseInsensitiveMultiMap();
+
+        QueryStringDecoder queryStringDecoder = new QueryStringDecoder(query, true);
+        queryStringDecoder.parameters().forEach(queryParams::add);
+
+        return queryParams;
+    }
+
     private String getDefaultSubject(io.gravitee.am.model.Template template) {
         switch (template) {
             case REGISTRATION_CONFIRMATION:
                 return registrationSubject;
+            case REGISTRATION_VERIFY:
+                return registrationVerifySubject;
             case CERTIFICATE_EXPIRATION:
                 return certificateExpirySubject;
             default:
@@ -240,6 +266,8 @@ public class EmailServiceImpl implements EmailService {
         switch (template) {
             case REGISTRATION_CONFIRMATION:
                 return registrationExpireAfter;
+            case REGISTRATION_VERIFY:
+                return registrationVerifyExpireAfter;
             case CERTIFICATE_EXPIRATION:
                 return -1;
             default:

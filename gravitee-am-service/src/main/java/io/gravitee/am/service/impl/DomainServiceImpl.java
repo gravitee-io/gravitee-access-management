@@ -24,12 +24,7 @@ import io.gravitee.am.common.utils.PathUtils;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.model.CorsSettings;
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.Environment;
-import io.gravitee.am.model.Membership;
-import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.VirtualHost;
+import io.gravitee.am.model.*;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
@@ -40,42 +35,8 @@ import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.repository.management.api.search.AlertNotifierCriteria;
 import io.gravitee.am.repository.management.api.search.AlertTriggerCriteria;
 import io.gravitee.am.repository.management.api.search.DomainCriteria;
-import io.gravitee.am.service.AlertNotifierService;
-import io.gravitee.am.service.AlertTriggerService;
-import io.gravitee.am.service.ApplicationService;
-import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.AuthenticationDeviceNotifierService;
-import io.gravitee.am.service.CertificateService;
-import io.gravitee.am.service.DomainService;
-import io.gravitee.am.service.EmailTemplateService;
-import io.gravitee.am.service.EnvironmentService;
-import io.gravitee.am.service.EventService;
-import io.gravitee.am.service.ExtensionGrantService;
-import io.gravitee.am.service.FactorService;
-import io.gravitee.am.service.FlowService;
-import io.gravitee.am.service.FormService;
-import io.gravitee.am.service.GroupService;
-import io.gravitee.am.service.IdentityProviderService;
-import io.gravitee.am.service.MembershipService;
-import io.gravitee.am.service.RateLimiterService;
-import io.gravitee.am.service.ReporterService;
-import io.gravitee.am.service.ResourceService;
-import io.gravitee.am.service.RoleService;
-import io.gravitee.am.service.ScopeService;
-import io.gravitee.am.service.ThemeService;
-import io.gravitee.am.service.UserActivityService;
-import io.gravitee.am.service.UserService;
-import io.gravitee.am.service.VerifyAttemptService;
-import io.gravitee.am.service.exception.AbstractManagementException;
-import io.gravitee.am.service.exception.DomainAlreadyExistsException;
-import io.gravitee.am.service.exception.DomainNotFoundException;
-import io.gravitee.am.service.exception.InvalidDomainException;
-import io.gravitee.am.service.exception.InvalidParameterException;
-import io.gravitee.am.service.exception.InvalidRedirectUriException;
-import io.gravitee.am.service.exception.InvalidRoleException;
-import io.gravitee.am.service.exception.InvalidTargetUrlException;
-import io.gravitee.am.service.exception.InvalidWebAuthnConfigurationException;
-import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.*;
+import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.model.NewDomain;
 import io.gravitee.am.service.model.NewSystemScope;
 import io.gravitee.am.service.model.PatchDomain;
@@ -85,12 +46,9 @@ import io.gravitee.am.service.validators.accountsettings.AccountSettingsValidato
 import io.gravitee.am.service.validators.domain.DomainValidator;
 import io.gravitee.am.service.validators.virtualhost.VirtualHostValidator;
 import io.gravitee.common.utils.IdGenerator;
-import io.reactivex.rxjava3.core.Completable;
-import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
-import io.reactivex.rxjava3.core.Single;
-import java.util.Set;
+import io.reactivex.rxjava3.core.*;
+import io.vertx.rxjava3.core.MultiMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -99,20 +57,15 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
-import static io.gravitee.am.model.ReferenceType.DOMAIN;
-
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static io.gravitee.am.common.web.UriBuilder.isHttp;
+import static io.gravitee.am.model.ReferenceType.DOMAIN;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
 
@@ -134,7 +87,6 @@ public class DomainServiceImpl implements DomainService {
 
     private static final Pattern SCHEME_PATTERN = Pattern.compile("^(https?://).*$");
 
-    @Value("${gateway.url:http://localhost:8092}")
     private String gatewayUrl;
 
     @Lazy
@@ -231,6 +183,9 @@ public class DomainServiceImpl implements DomainService {
     @Autowired
     private VerifyAttemptService verifyAttemptService;
 
+    public DomainServiceImpl(@Value("${gateway.url:http://localhost:8092}") String gatewayUrl) {
+        this.gatewayUrl = gatewayUrl;
+    }
 
     @Override
     public Maybe<Domain> findById(String id) {
@@ -587,7 +542,7 @@ public class DomainServiceImpl implements DomainService {
     }
 
     @Override
-    public String buildUrl(Domain domain, String path) {
+    public String buildUrl(Domain domain, String path, MultiMap queryParams) {
         String entryPoint = gatewayUrl;
 
         if (entryPoint != null && entryPoint.endsWith("/")) {
@@ -614,6 +569,10 @@ public class DomainServiceImpl implements DomainService {
 
         if (uri == null) {
             uri = entryPoint + PathUtils.sanitize(domain.getPath() + path);
+        }
+
+        if (queryParams != null && !queryParams.isEmpty()) {
+            uri = UriBuilder.fromURIString(uri).parameters(queryParams).buildString();
         }
 
         return uri;

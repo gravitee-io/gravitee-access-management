@@ -32,7 +32,6 @@ import io.gravitee.am.service.*;
 import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.gravitee.am.service.model.NewUser;
-import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.am.service.validators.email.EmailValidatorImpl;
 import io.gravitee.am.service.validators.user.UserValidator;
 import io.gravitee.am.service.validators.user.UserValidatorImpl;
@@ -41,27 +40,27 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import static io.gravitee.am.model.ReferenceType.DOMAIN;
 import static io.gravitee.am.service.validators.email.EmailValidatorImpl.EMAIL_PATTERN;
 import static io.gravitee.am.service.validators.user.UserValidatorImpl.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.*;
 
 /**
@@ -69,7 +68,7 @@ import static org.mockito.Mockito.*;
  * @author GraviteeSource Team
  */
 @SuppressWarnings("ReactiveStreamsUnusedPublisher")
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class UserServiceTest {
 
     public static final String DOMAIN_ID = "domain#1";
@@ -133,10 +132,10 @@ public class UserServiceTest {
             new EmailValidatorImpl(EMAIL_PATTERN)
     );
 
-    @Before
+    @BeforeEach
     public void setUp() {
         ((UserServiceImpl) userService).setExpireAfter(24 * 3600);
-        when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any(), any(), any())).thenReturn(Maybe.never());
+        lenient().when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any(), any(), any())).thenReturn(Maybe.never());
     }
 
     @Test
@@ -340,7 +339,7 @@ public class UserServiceTest {
         ArgumentCaptor<User> argument = ArgumentCaptor.forClass(User.class);
         verify(commonUserService).create(argument.capture());
 
-        Assert.assertNotNull(argument.getValue().getRegistrationUserUri());
+        assertNotNull(argument.getValue().getRegistrationUserUri());
         assertEquals("http://localhost:8092/test/confirmRegistration", argument.getValue().getRegistrationUserUri());
 
         Assert.assertNotNull(argument.getValue().getRegistrationAccessToken());
@@ -603,7 +602,7 @@ public class UserServiceTest {
         when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any(), any(), any())).thenReturn(Maybe.error(PasswordHistoryException::passwordAlreadyInHistory));
 
         var observer = userService.resetPassword(domain, user.getId(), PASSWORD, null)
-                   .test();
+                .test();
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(PasswordHistoryException.class);
     }
@@ -989,5 +988,141 @@ public class UserServiceTest {
         }));
         verify(userProvider, times(1)).updateUsername(any(), anyString());
         verify(loginAttemptService, times(1)).reset(any());
+    }
+
+    @Test
+    public void must_not_send_registration_confirmation_domain_not_found() {
+        var domain = new Domain();
+        domain.setId("domain");
+
+        var user = new User();
+        user.setId("user-id");
+        user.setSource("idp-id");
+        user.setUsername(USERNAME);
+        user.setPreRegistration(true);
+        user.setRegistrationCompleted(false);
+
+        when(domainService.findById(domain.getId())).thenReturn(Maybe.empty());
+
+        userService.sendRegistrationConfirmation(domain.getId(), user.getId(), null)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(DomainNotFoundException.class);
+    }
+
+    @Test
+    public void must_not_send_registration_confirmation_pre_registration_disabled() {
+        var domain = new Domain();
+        domain.setId("domain");
+
+        var user = new User();
+        user.setId("user-id");
+        user.setSource("idp-id");
+        user.setUsername(USERNAME);
+        user.setPreRegistration(false);
+        user.setRegistrationCompleted(false);
+
+        when(domainService.findById(domain.getId())).thenReturn(Maybe.just(domain));
+        when(userService.findById(ReferenceType.DOMAIN, domain.getId(), user.getId())).thenReturn(Single.just(user));
+
+        userService.sendRegistrationConfirmation(domain.getId(), user.getId(), null)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(UserInvalidException.class)
+                .assertError(throwable -> "Pre-registration is disabled for the user user-id".equals(throwable.getMessage()));;
+    }
+
+    @Test
+    public void must_not_send_registration_confirmation_user_already_registered() {
+        var domain = new Domain();
+        domain.setId("domain");
+
+        var user = new User();
+        user.setId("user-id");
+        user.setSource("idp-id");
+        user.setUsername(USERNAME);
+        user.setPreRegistration(true);
+        user.setRegistrationCompleted(true);
+
+        when(domainService.findById(domain.getId())).thenReturn(Maybe.just(domain));
+        when(userService.findById(ReferenceType.DOMAIN, domain.getId(), user.getId())).thenReturn(Single.just(user));
+
+        userService.sendRegistrationConfirmation(domain.getId(), user.getId(), null)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(UserInvalidException.class)
+                .assertError(throwable -> "Registration is completed for the user user-id".equals(throwable.getMessage()));
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    public void must_send_the_good_template_based_on_configuration(Domain domain, Application application, Template template) {
+
+        var user = new User();
+        user.setId("user-id");
+        user.setSource("idp-id");
+        user.setClient("client-id");
+        user.setReferenceType(DOMAIN);
+        user.setReferenceId(domain.getId());
+        user.setUsername(USERNAME);
+        user.setPreRegistration(true);
+        user.setRegistrationCompleted(false);
+
+        when(domainService.findById(domain.getId())).thenReturn(Maybe.just(domain));
+        when(userService.findById(ReferenceType.DOMAIN, domain.getId(), user.getId())).thenReturn(Single.just(user));
+        when(applicationService.findById(user.getClient())).thenReturn(Maybe.just(application));
+
+        userService.sendRegistrationConfirmation(domain.getId(), user.getId(), null)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete();
+
+        verify(emailService, times(1)).send(domain, application, template, user);
+    }
+
+    private static Stream<Arguments> must_send_the_good_template_based_on_configuration() {
+
+        var domainId = "domain-id";
+        var applicationId = "application-id";
+
+        return Stream.of(
+                Arguments.of(createDomain(domainId, new AccountSettings()), createApplication(domainId, applicationId, null), Template.REGISTRATION_CONFIRMATION),
+                Arguments.of(createDomain(domainId, createAccountSetting(false, true)), createApplication(domainId, applicationId, null), Template.REGISTRATION_VERIFY),
+                Arguments.of(createDomain(domainId, createAccountSetting(false, true)), createApplication(domainId, applicationId, createAccountSetting(false, true)), Template.REGISTRATION_VERIFY),
+                Arguments.of(createDomain(domainId, new AccountSettings()), createApplication(domainId, applicationId, createAccountSetting(false, true)), Template.REGISTRATION_VERIFY),
+                Arguments.of(createDomain(domainId, createAccountSetting(false, true)), createApplication(domainId, applicationId, createAccountSetting(false, false)), Template.REGISTRATION_CONFIRMATION)
+        );
+    }
+
+    private static Domain createDomain(String domainId, AccountSettings accountSettings) {
+        var domain = new Domain();
+
+        domain.setId(domainId);
+        domain.setAccountSettings(accountSettings);
+
+        return domain;
+    }
+
+    private static Application createApplication(String domainId, String applicationId, AccountSettings accountSettings) {
+
+        var applicationSettings = new ApplicationSettings();
+        applicationSettings.setAccount(accountSettings);
+
+        var application = new Application();
+
+        application.setId(applicationId);
+        application.setDomain(domainId);
+        application.setSettings(applicationSettings);
+
+        return application;
+    }
+
+    private static AccountSettings createAccountSetting(boolean inherited, boolean sendVerifyRegistrationAccountEmail) {
+        var accountSettings = new AccountSettings();
+
+        accountSettings.setInherited(inherited);
+        accountSettings.setSendVerifyRegistrationAccountEmail(sendVerifyRegistrationAccountEmail);
+
+        return accountSettings;
     }
 }

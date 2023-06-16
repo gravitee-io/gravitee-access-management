@@ -20,10 +20,7 @@ import io.gravitee.am.service.EmailService;
 import io.gravitee.am.service.i18n.DictionaryProvider;
 import io.gravitee.am.service.i18n.FileSystemDictionaryProvider;
 import io.gravitee.am.service.utils.EmailSender;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Component;
@@ -37,17 +34,18 @@ import java.nio.file.Paths;
 @Component
 public class EmailServiceImpl implements EmailService, InitializingBean {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(EmailServiceImpl.class);
-
-    @Value("${templates.path:${gravitee.home}/templates}")
     private String templatesPath;
 
-    @Autowired
-    private JavaMailSender mailSender;
+    private final JavaMailSender mailSender;
 
     private EmailSender emailSender;
 
     private DictionaryProvider defaultDictionaryProvider;
+
+    public EmailServiceImpl(JavaMailSender mailSender, @Value("${templates.path:${gravitee.home}/templates}") String templatesPath) {
+        this.mailSender = mailSender;
+        this.templatesPath = templatesPath;
+    }
 
     @Override
     public void afterPropertiesSet() throws Exception {

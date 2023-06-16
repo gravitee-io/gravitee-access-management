@@ -20,7 +20,6 @@ import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
-import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 
 import java.util.Map;
@@ -31,12 +30,12 @@ import java.util.Map;
  */
 public interface EmailService {
 
-    Completable send(Domain domain, Application client, Template template, User user);
+    Maybe<Email> send(Domain domain, Application client, Template template, User user);
 
     Maybe<io.gravitee.am.model.Email> getEmailTemplate(Template template, User user);
 
-    default void send(Domain domain, Template template, User user) {
-        send(domain, null, template, user).subscribe();
+    default Maybe<Email> send(Domain domain, Template template, User user) {
+        return send(domain, null, template, user);
     }
 
     Maybe<Email> getFinalEmail(Domain domain, Application client, io.gravitee.am.model.Template template, User user, Map<String, Object> params);

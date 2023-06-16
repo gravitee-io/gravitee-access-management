@@ -18,10 +18,8 @@ package io.gravitee.am.management.service;
 import freemarker.cache.StringTemplateLoader;
 import freemarker.template.Configuration;
 import io.gravitee.am.management.service.impl.EmailManagerImpl;
-import io.gravitee.am.model.Email;
-import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.Template;
-import io.gravitee.am.model.User;
+import io.gravitee.am.model.*;
+import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.EmailTemplateService;
 import io.reactivex.rxjava3.core.Maybe;
 import org.junit.Assert;
@@ -46,8 +44,10 @@ public class EmailManagerTest {
 
     public static final String REFERENCE_ID = "domain1";
     public static final String CLIENT = "client1";
+    public static final String APPLICATION_ID = "application1";
+
     @InjectMocks
-    private EmailManager emailManager = new EmailManagerImpl();
+    private EmailManagerImpl emailManager = new EmailManagerImpl();
 
     @Mock
     private StringTemplateLoader templateLoader;
@@ -58,16 +58,19 @@ public class EmailManagerTest {
     @Mock
     private EmailTemplateService emailTemplateService;
 
+    @Mock
+    private ApplicationService applicationService;
+
     @Before
     public void setUp() {
-        ((EmailManagerImpl) emailManager).setSubject("defaultSubject");
-        ((EmailManagerImpl) emailManager).setDefaultFrom("defaultFrom");
+        emailManager.setSubject("defaultSubject");
+        emailManager.setDefaultFrom("defaultFrom");
     }
 
     @Test
     public void shouldGetTemplate() {
         when(emailTemplateService.findByTemplate(eq(ReferenceType.DOMAIN), eq(REFERENCE_ID), eq(Template.REGISTRATION_CONFIRMATION.template()))).thenReturn(Maybe.empty());
-        when(emailTemplateService.findByClientAndTemplate(eq(ReferenceType.DOMAIN), eq(REFERENCE_ID), eq(CLIENT), eq(Template.REGISTRATION_CONFIRMATION.template()))).thenReturn(Maybe.empty());
+        when(applicationService.findByDomainAndClientId(eq(REFERENCE_ID), eq(CLIENT))).thenReturn(Maybe.empty());
 
         final User user = new User();
         user.setReferenceType(ReferenceType.DOMAIN);
@@ -93,10 +96,10 @@ public class EmailManagerTest {
         domainEmail.setSubject("Domain subject");
         domainEmail.setUpdatedAt(new Date());
 
-        ((EmailManagerImpl) emailManager).loadEmail(domainEmail);
+        emailManager.loadEmail(domainEmail);
 
         when(emailTemplateService.findByTemplate(eq(ReferenceType.DOMAIN), eq(REFERENCE_ID), eq(Template.REGISTRATION_CONFIRMATION.template()))).thenReturn(Maybe.just(domainEmail));
-        when(emailTemplateService.findByClientAndTemplate(eq(ReferenceType.DOMAIN), eq(REFERENCE_ID), eq(CLIENT), eq(Template.REGISTRATION_CONFIRMATION.template()))).thenReturn(Maybe.empty());
+        when(applicationService.findByDomainAndClientId(eq(REFERENCE_ID), eq(CLIENT))).thenReturn(Maybe.empty());
 
         final User user = new User();
         user.setReferenceType(ReferenceType.DOMAIN);
@@ -118,7 +121,7 @@ public class EmailManagerTest {
         domainEmail.setEnabled(true);
         domainEmail.setExpiresAfter(10000);
         domainEmail.setUpdatedAt(new Date());
-        domainEmail.setTemplate(Template.RESET_PASSWORD.template());
+        domainEmail.setTemplate(Template.REGISTRATION_CONFIRMATION.template());
         domainEmail.setReferenceType(ReferenceType.DOMAIN);
         domainEmail.setReferenceId(REFERENCE_ID);
         domainEmail.setSubject("Domain subject");
@@ -127,25 +130,31 @@ public class EmailManagerTest {
         clientEmail.setEnabled(true);
         clientEmail.setUpdatedAt(new Date());
         clientEmail.setExpiresAfter(10001);
-        clientEmail.setTemplate(Template.RESET_PASSWORD.template());
+        clientEmail.setTemplate(Template.REGISTRATION_CONFIRMATION.template());
         clientEmail.setReferenceType(ReferenceType.DOMAIN);
         clientEmail.setReferenceId(REFERENCE_ID);
-        clientEmail.setClient(CLIENT);
+        clientEmail.setClient(APPLICATION_ID);
         clientEmail.setSubject("Client subject");
 
-        ((EmailManagerImpl) emailManager).loadEmail(domainEmail);
-        ((EmailManagerImpl) emailManager).loadEmail(clientEmail);
+        var application = new Application();
+        application.setName("Application 1");
+        application.setId(APPLICATION_ID);
 
-        when(emailTemplateService.findByClientAndTemplate(eq(ReferenceType.DOMAIN), eq(REFERENCE_ID), eq(CLIENT), eq(Template.RESET_PASSWORD.template()))).thenReturn(Maybe.just(clientEmail));
+        emailManager.loadEmail(domainEmail);
+        emailManager.loadEmail(clientEmail);
+
+        when(emailTemplateService.findByClientAndTemplate(eq(ReferenceType.DOMAIN), eq(REFERENCE_ID), eq(APPLICATION_ID), eq(Template.REGISTRATION_CONFIRMATION.template()))).thenReturn(Maybe.just(clientEmail));
+        when(applicationService.findByDomainAndClientId(eq(REFERENCE_ID), eq(CLIENT))).thenReturn(Maybe.just(application));
 
         final User user = new User();
         user.setReferenceType(ReferenceType.DOMAIN);
         user.setReferenceId(REFERENCE_ID);
         user.setClient(CLIENT);
-        String templateKey = Template.RESET_PASSWORD.template() + EmailManager.TEMPLATE_NAME_SEPARATOR + ReferenceType.DOMAIN + REFERENCE_ID;
-        String templateClientKey = templateKey + EmailManager.TEMPLATE_NAME_SEPARATOR + CLIENT;
 
-        Email email = emailManager.getEmail(Template.RESET_PASSWORD, user, "subject", 1000).blockingGet();
+        String templateKey = Template.REGISTRATION_CONFIRMATION.template() + EmailManager.TEMPLATE_NAME_SEPARATOR + ReferenceType.DOMAIN + REFERENCE_ID;
+        String templateClientKey = templateKey + EmailManager.TEMPLATE_NAME_SEPARATOR + APPLICATION_ID;
+
+        Email email = emailManager.getEmail(Template.REGISTRATION_CONFIRMATION, user, "subject", 1000).blockingGet();
 
         Assert.assertNotNull(email);
         Assert.assertEquals(templateClientKey, email.getTemplate());
