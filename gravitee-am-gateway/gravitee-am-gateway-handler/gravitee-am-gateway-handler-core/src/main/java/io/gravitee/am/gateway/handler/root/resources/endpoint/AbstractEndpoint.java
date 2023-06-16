@@ -89,9 +89,16 @@ public abstract class AbstractEndpoint {
     }
 
     protected final String getReturnUrl(RoutingContext context, MultiMap queryParams) {
-        return context.session().get(ConstantKeys.RETURN_URL_KEY) != null ?
-                context.session().get(ConstantKeys.RETURN_URL_KEY) :
-                UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH) + "/oauth/authorize", queryParams, true);
+        // look into the session
+        if (context.session().get(ConstantKeys.RETURN_URL_KEY) != null) {
+            return context.session().get(ConstantKeys.RETURN_URL_KEY);
+        }
+        // look into the request parameters
+        if (context.request().getParam(ConstantKeys.RETURN_URL_KEY) != null) {
+            return context.request().getParam(ConstantKeys.RETURN_URL_KEY);
+        }
+        // fallback to the OAuth 2.0 authorize endpoint
+        return UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH) + "/oauth/authorize", queryParams, true);
     }
 
 

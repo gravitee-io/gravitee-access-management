@@ -122,6 +122,10 @@ public class PolicyChainHandlerImpl implements Handler<RoutingContext> {
                                 context.session().put(ConstantKeys.AUTH_FLOW_CONTEXT_VERSION_KEY, authFlowContext.getVersion());
                             }
                         }
+                        // add the MFA Factor ID in session for later use
+                        if (ConstantKeys.ALTERNATIVE_FACTOR_ID_KEY.equals(k)) {
+                            context.session().put(ConstantKeys.ALTERNATIVE_FACTOR_ID_KEY, v);
+                        }
                         context.put(k, v);
                     });
                     // continue

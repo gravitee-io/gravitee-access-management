@@ -84,6 +84,7 @@ import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginPostWebA
 import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginSelectionRuleHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginSocialAuthenticationHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.loginattempt.LoginAttemptHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.mfa.MFAChallengeUserHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.rememberdevice.DeviceIdentifierHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.rememberdevice.RememberDeviceSettingsHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.PasswordPolicyRequestParseHandler;
@@ -421,6 +422,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(new LoginPostEndpoint());
 
         // MFA route
+        Handler<RoutingContext> mfaChallengeUserHandler = new MFAChallengeUserHandler(userService);
         rootRouter.route(PATH_MFA_ENROLL)
                 .handler(clientRequestParseHandler)
                 .handler(localeHandler)
@@ -429,12 +431,14 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(clientRequestParseHandler)
                 .handler(rememberDeviceSettingsHandler)
                 .handler(localeHandler)
+                .handler(mfaChallengeUserHandler)
                 .handler(new MFAChallengeEndpoint(factorManager, userService, thymeleafTemplateEngine, deviceService, applicationContext,
                         domain, credentialService, factorService, rateLimiterService, verifyAttemptService, emailService))
                 .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService));
         rootRouter.route(PATH_MFA_CHALLENGE_ALTERNATIVES)
                 .handler(clientRequestParseHandler)
                 .handler(localeHandler)
+                .handler(mfaChallengeUserHandler)
                 .handler(new MFAChallengeAlternativesEndpoint(thymeleafTemplateEngine, factorManager, domain));
         rootRouter.route(PATH_MFA_RECOVERY_CODE)
                 .handler(clientRequestParseHandler)

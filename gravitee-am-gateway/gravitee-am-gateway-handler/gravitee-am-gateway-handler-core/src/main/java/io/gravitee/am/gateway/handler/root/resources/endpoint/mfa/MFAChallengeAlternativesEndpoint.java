@@ -19,14 +19,12 @@ import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
-import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
-import io.vertx.core.Handler;
 import io.vertx.ext.web.handler.HttpException;
 import io.vertx.rxjava3.core.MultiMap;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
@@ -48,7 +46,7 @@ import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderReques
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class MFAChallengeAlternativesEndpoint extends AbstractEndpoint implements Handler<RoutingContext>  {
+public class MFAChallengeAlternativesEndpoint extends MFAEndpoint {
 
     private static final Logger logger = LoggerFactory.getLogger(MFAChallengeAlternativesEndpoint.class);
     private final FactorManager factorManager;
@@ -82,13 +80,13 @@ public class MFAChallengeAlternativesEndpoint extends AbstractEndpoint implement
     }
 
     private void get(RoutingContext routingContext) {
-        if (routingContext.user() == null) {
+        final User endUser = user(routingContext);
+        if (endUser == null) {
             logger.warn("User must be authenticated to access MFA challenge alternatives page.");
             routingContext.fail(new HttpException(401, "User must be authenticated to access MFA challenge alternatives page."));
             return;
         }
 
-        final User endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
         if (endUser.getFactors() == null || endUser.getFactors().size() <= 1) {
             logger.warn("User must have at least two enrolled factors to access MFA challenge alternatives page.");
             routingContext.fail(new HttpException(400, "User must have at least two enrolled factors to access MFA challenge alternatives page."));
@@ -109,7 +107,9 @@ public class MFAChallengeAlternativesEndpoint extends AbstractEndpoint implement
     }
 
     private void post(RoutingContext routingContext) {
-        if (routingContext.user() == null) {
+        final User endUser = user(routingContext);
+
+        if (endUser == null) {
             logger.warn("User must be authenticated to submit MFA challenge alternate choice.");
             routingContext.fail(new HttpException(401, "User must be authenticated to submit MFA challenge alternate choice."));
             return;

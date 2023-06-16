@@ -58,7 +58,11 @@ public class ErrorHandler extends AbstractErrorHandler {
                 handleException(routingContext, oAuth2Exception.getOAuth2ErrorCode(), oAuth2Exception.getMessage());
             } else if (throwable instanceof PolicyChainException) {
                 PolicyChainException policyChainException = (PolicyChainException) throwable;
-                handleException(routingContext, policyChainException.key(), policyChainException.getMessage());
+                if (policyChainException.statusCode() == 302) {
+                    doRedirect(routingContext.response(), (String) policyChainException.parameters().get(ConstantKeys.RETURN_URL_KEY));
+                } else {
+                    handleException(routingContext, policyChainException.key(), policyChainException.getMessage());
+                }
             } else if (throwable instanceof HttpException) {
                 HttpException httpStatusException = (HttpException) throwable;
                 handleException(routingContext, httpStatusException.getMessage(), httpStatusException.getPayload());
