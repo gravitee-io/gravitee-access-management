@@ -16,23 +16,22 @@
 package io.gravitee.am.gateway.handler.root;
 
 import io.gravitee.am.gateway.handler.api.Protocol;
-import io.gravitee.am.gateway.handler.api.ProtocolConfiguration;
-import io.gravitee.am.gateway.handler.api.ProtocolProvider;
 import io.gravitee.am.gateway.handler.root.spring.RootConfiguration;
+import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class RootProtocol implements Protocol {
+public class RootProtocol extends Protocol<RootConfiguration, RootProvider> {
 
     @Override
-    public Class<? extends ProtocolConfiguration> configuration() {
+    public Class<RootConfiguration> configuration() {
         return RootConfiguration.class;
     }
 
     @Override
-    public Class<? extends ProtocolProvider> protocolProvider() {
+    public Class<RootProvider> provider() {
         return RootProvider.class;
     }
 }

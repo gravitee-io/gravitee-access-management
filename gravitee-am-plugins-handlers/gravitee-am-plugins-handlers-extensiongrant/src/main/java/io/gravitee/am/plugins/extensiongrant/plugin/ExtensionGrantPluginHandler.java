@@ -26,18 +26,13 @@ import org.slf4j.LoggerFactory;
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class ExtensionGrantPluginHandler extends AmPluginHandler<ExtensionGrant> {
+public class ExtensionGrantPluginHandler extends AmPluginHandler<ExtensionGrant<?, ?>> {
 
     private final Logger LOGGER = LoggerFactory.getLogger(ExtensionGrantPluginHandler.class);
 
     @Override
     protected Logger getLogger() {
         return LOGGER;
-    }
-
-    @Override
-    protected Class<ExtensionGrant> getClazz() {
-        return ExtensionGrant.class;
     }
 
     @Override

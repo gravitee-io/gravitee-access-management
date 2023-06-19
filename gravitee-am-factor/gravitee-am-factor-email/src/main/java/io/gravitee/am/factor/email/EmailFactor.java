@@ -19,19 +19,21 @@ import io.gravitee.am.factor.api.Factor;
 import io.gravitee.am.factor.api.FactorConfiguration;
 import io.gravitee.am.factor.api.FactorProvider;
 import io.gravitee.am.factor.email.provider.EmailFactorProvider;
+import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class EmailFactor implements Factor {
+public class EmailFactor extends Factor<EmailFactorConfiguration, EmailFactorProvider> {
+
     @Override
-    public Class<? extends FactorConfiguration> configuration() {
+    public Class<EmailFactorConfiguration> configuration() {
         return EmailFactorConfiguration.class;
     }
 
     @Override
-    public Class<? extends FactorProvider> factorProvider() {
+    public Class<EmailFactorProvider> provider() {
         return EmailFactorProvider.class;
     }
 }

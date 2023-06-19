@@ -45,7 +45,7 @@ public class AuthenticationDeviceNotifierPluginServiceImpl implements Authentica
     @Override
     public Single<List<AuthenticationDeviceNotifierPlugin>> findAll(List<String> expand) {
         LOGGER.debug("List all authentication device notifier plugins");
-        return Observable.fromIterable(pluginManager.getAll())
+        return Observable.fromIterable(pluginManager.findAll(true))
                 .map(plugin -> convert(plugin, expand))
                 .toList();
     }
@@ -108,17 +108,18 @@ public class AuthenticationDeviceNotifierPluginServiceImpl implements Authentica
         return convert(authDeviceNotifierPlugin, null);
     }
 
-    private AuthenticationDeviceNotifierPlugin convert(Plugin authDeviceNotifierPlugin, List<String> expand) {
-        AuthenticationDeviceNotifierPlugin plugin = new AuthenticationDeviceNotifierPlugin();
-        plugin.setId(authDeviceNotifierPlugin.manifest().id());
-        plugin.setName(authDeviceNotifierPlugin.manifest().name());
-        plugin.setDescription(authDeviceNotifierPlugin.manifest().description());
-        plugin.setVersion(authDeviceNotifierPlugin.manifest().version());
+    private AuthenticationDeviceNotifierPlugin convert(Plugin plugin, List<String> expand) {
+        var authenticationDeviceNotifierPlugin = new AuthenticationDeviceNotifierPlugin();
+        authenticationDeviceNotifierPlugin.setId(plugin.manifest().id());
+        authenticationDeviceNotifierPlugin.setName(plugin.manifest().name());
+        authenticationDeviceNotifierPlugin.setDescription(plugin.manifest().description());
+        authenticationDeviceNotifierPlugin.setVersion(plugin.manifest().version());
+        authenticationDeviceNotifierPlugin.setDeployed(plugin.deployed());
         if (expand != null) {
             if (expand.contains(AuthenticationDeviceNotifierPluginService.EXPAND_ICON)) {
-                this.getIcon(plugin.getId()).subscribe(plugin::setIcon);
+                this.getIcon(authenticationDeviceNotifierPlugin.getId()).subscribe(authenticationDeviceNotifierPlugin::setIcon);
             }
         }
-        return plugin;
+        return authenticationDeviceNotifierPlugin;
     }
 }

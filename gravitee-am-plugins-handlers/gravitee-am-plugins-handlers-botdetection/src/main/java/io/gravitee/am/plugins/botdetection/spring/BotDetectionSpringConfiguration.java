@@ -33,7 +33,7 @@ import org.springframework.context.annotation.Configuration;
 public class BotDetectionSpringConfiguration {
 
     @Bean
-    public AmPluginManager<BotDetection> botDetectionPluginManager(
+    public BotDetectionPluginManager botDetectionPluginManager(
             PluginContextFactory pluginContextFactory,
             ConfigurationFactory<io.gravitee.am.botdetection.api.BotDetectionConfiguration> botDetectionConfigurationFactory
     ) {

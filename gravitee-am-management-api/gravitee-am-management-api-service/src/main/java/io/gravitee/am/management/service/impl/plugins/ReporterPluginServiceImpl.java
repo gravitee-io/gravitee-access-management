@@ -45,7 +45,7 @@ public class ReporterPluginServiceImpl implements ReporterPluginService {
     @Override
     public Single<List<ReporterPlugin>> findAll() {
         LOGGER.debug("List all reporter plugins");
-        return Observable.fromIterable(reporterPluginManager.getAll())
+        return Observable.fromIterable(reporterPluginManager.findAll(true))
                 .map(this::convert)
                 .toList();
     }
@@ -86,12 +86,13 @@ public class ReporterPluginServiceImpl implements ReporterPluginService {
         });
     }
 
-    private ReporterPlugin convert(Plugin reporterPlugin) {
-        ReporterPlugin plugin = new ReporterPlugin();
-        plugin.setId(reporterPlugin.manifest().id());
-        plugin.setName(reporterPlugin.manifest().name());
-        plugin.setDescription(reporterPlugin.manifest().description());
-        plugin.setVersion(reporterPlugin.manifest().version());
-        return plugin;
+    private ReporterPlugin convert(Plugin plugin) {
+        var reporterPlugin = new ReporterPlugin();
+        reporterPlugin.setId(plugin.manifest().id());
+        reporterPlugin.setName(plugin.manifest().name());
+        reporterPlugin.setDescription(plugin.manifest().description());
+        reporterPlugin.setVersion(plugin.manifest().version());
+        reporterPlugin.setDeployed(plugin.deployed());
+        return reporterPlugin;
     }
 }

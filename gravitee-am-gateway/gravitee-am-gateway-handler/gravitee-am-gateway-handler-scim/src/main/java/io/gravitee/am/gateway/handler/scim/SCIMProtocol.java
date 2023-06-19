@@ -16,23 +16,23 @@
 package io.gravitee.am.gateway.handler.scim;
 
 import io.gravitee.am.gateway.handler.api.Protocol;
-import io.gravitee.am.gateway.handler.api.ProtocolConfiguration;
 import io.gravitee.am.gateway.handler.api.ProtocolProvider;
 import io.gravitee.am.gateway.handler.scim.spring.SCIMConfiguration;
+import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class SCIMProtocol implements Protocol {
+public class SCIMProtocol extends Protocol<SCIMConfiguration, SCIMProvider> {
 
     @Override
-    public Class<? extends ProtocolConfiguration> configuration() {
+    public Class<SCIMConfiguration> configuration() {
         return SCIMConfiguration.class;
     }
 
     @Override
-    public Class<? extends ProtocolProvider> protocolProvider() {
+    public Class<SCIMProvider> provider() {
         return SCIMProvider.class;
     }
 }

@@ -15,13 +15,15 @@
  */
 package io.gravitee.am.botdetection.api;
 
+import io.gravitee.am.common.plugin.AmPlugin;
+import io.gravitee.plugin.core.api.Plugin;
+
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface BotDetection {
+public abstract class BotDetection<
+        C extends BotDetectionConfiguration,
+        P extends BotDetectionProvider> extends AmPlugin<C, P> {
 
-    Class<? extends BotDetectionConfiguration> configuration();
-
-    Class<? extends BotDetectionProvider> botDetectionProvider();
 }

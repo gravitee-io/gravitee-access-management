@@ -15,25 +15,23 @@
  */
 package io.gravitee.am.identityprovider.salesforce;
 
-import io.gravitee.am.identityprovider.api.AuthenticationProvider;
-import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.api.social.SocialIdentityProvider;
 import io.gravitee.am.identityprovider.salesforce.authentication.SalesForceAuthenticationProvider;
+import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class SalesForceIdentityProvider implements SocialIdentityProvider {
+public class SalesForceIdentityProvider extends SocialIdentityProvider<SalesForceIdentityProviderConfiguration, SalesForceAuthenticationProvider> {
 
     @Override
-    public Class<? extends IdentityProviderConfiguration> configuration() {
+    public Class<SalesForceIdentityProviderConfiguration> configuration() {
         return SalesForceIdentityProviderConfiguration.class;
     }
 
     @Override
-    public Class<? extends AuthenticationProvider> authenticationProvider() {
+    public Class<SalesForceAuthenticationProvider> provider() {
         return SalesForceAuthenticationProvider.class;
     }
-
 }

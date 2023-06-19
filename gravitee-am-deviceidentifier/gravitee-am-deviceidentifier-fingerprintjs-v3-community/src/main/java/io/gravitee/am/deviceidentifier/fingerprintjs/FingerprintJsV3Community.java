@@ -16,23 +16,22 @@
 package io.gravitee.am.deviceidentifier.fingerprintjs;
 
 import io.gravitee.am.deviceidentifier.api.DeviceIdentifier;
-import io.gravitee.am.deviceidentifier.api.DeviceIdentifierConfiguration;
-import io.gravitee.am.deviceidentifier.api.DeviceIdentifierProvider;
 import io.gravitee.am.deviceidentifier.fingerprintjs.impl.FingerprintJsV3CommunityProvider;
+import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class FingerprintJsV3Community implements DeviceIdentifier {
+public  class FingerprintJsV3Community extends DeviceIdentifier<FingerprintJsV3CommunityConfiguration, FingerprintJsV3CommunityProvider> {
 
     @Override
-    public Class<? extends DeviceIdentifierConfiguration> configuration() {
+    public Class<FingerprintJsV3CommunityConfiguration> configuration() {
         return FingerprintJsV3CommunityConfiguration.class;
     }
 
     @Override
-    public Class<? extends DeviceIdentifierProvider> deviceIdentifierProvider() {
+    public Class<FingerprintJsV3CommunityProvider> provider() {
         return FingerprintJsV3CommunityProvider.class;
     }
 }

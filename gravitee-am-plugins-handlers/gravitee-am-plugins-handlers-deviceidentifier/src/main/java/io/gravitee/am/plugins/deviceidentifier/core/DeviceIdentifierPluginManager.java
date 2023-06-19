@@ -18,13 +18,10 @@ package io.gravitee.am.plugins.deviceidentifier.core;
 import io.gravitee.am.deviceidentifier.api.DeviceIdentifier;
 import io.gravitee.am.deviceidentifier.api.DeviceIdentifierConfiguration;
 import io.gravitee.am.deviceidentifier.api.DeviceIdentifierProvider;
-import io.gravitee.am.plugins.handlers.api.core.AmPluginManager;
-import io.gravitee.am.plugins.handlers.api.core.ConfigurationFactory;
-import io.gravitee.am.plugins.handlers.api.core.NamedBeanFactoryPostProcessor;
-import io.gravitee.am.plugins.handlers.api.core.ProviderPluginManager;
+import io.gravitee.am.plugins.handlers.api.core.*;
 import io.gravitee.am.plugins.handlers.api.provider.ProviderConfiguration;
 import io.gravitee.plugin.core.api.PluginContextFactory;
-import java.util.List;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,41 +30,32 @@ import org.slf4j.LoggerFactory;
  * @author GraviteeSource Team
  */
 public class DeviceIdentifierPluginManager
-        extends ProviderPluginManager<DeviceIdentifier, DeviceIdentifierProvider, ProviderConfiguration>
-        implements AmPluginManager<DeviceIdentifier> {
+        extends ProviderPluginManager<DeviceIdentifier<?, DeviceIdentifierProvider>, DeviceIdentifierProvider, ProviderConfiguration>
+        implements AmPluginManager<DeviceIdentifier<?, DeviceIdentifierProvider>> {
 
     private final static Logger logger = LoggerFactory.getLogger(DeviceIdentifierPluginManager.class);
-    private final ConfigurationFactory<DeviceIdentifierConfiguration> deviceIdentifierConfigurationFactory;
+    private final ConfigurationFactory<DeviceIdentifierConfiguration> configurationFactory;
 
     public DeviceIdentifierPluginManager(
             PluginContextFactory pluginContextFactory,
-            ConfigurationFactory<DeviceIdentifierConfiguration> deviceIdentifierConfigurationFactory) {
+            ConfigurationFactory<DeviceIdentifierConfiguration> configurationFactory) {
         super(pluginContextFactory);
-        this.deviceIdentifierConfigurationFactory = deviceIdentifierConfigurationFactory;
+        this.configurationFactory = configurationFactory;
     }
 
     @Override
-    public DeviceIdentifierProvider create(ProviderConfiguration providerConfiguration) {
-        logger.debug("Looking for a device identifier for [{}]", providerConfiguration.getType());
-        var deviceIdentifier = instances.get(providerConfiguration.getType());
+    public DeviceIdentifierProvider create(ProviderConfiguration providerConfig) {
+        logger.debug("Looking for a device identifier for [{}]", providerConfig.getType());
+        var deviceIdentifier = Optional.ofNullable(get(providerConfig.getType())).orElseGet(() -> {
+            logger.error("No device identifier is registered for type {}", providerConfig.getType());
+            throw new IllegalStateException("No device identifier is registered for type " + providerConfig.getType());
+        });
 
-        if (deviceIdentifier != null) {
-            Class<? extends DeviceIdentifierConfiguration> configurationClass = deviceIdentifier.configuration();
-            var deviceIdentifierConfiguration = deviceIdentifierConfigurationFactory.create(configurationClass, providerConfiguration.getConfiguration());
-
-            return createProvider(
-                    plugins.get(deviceIdentifier),
-                    deviceIdentifier.deviceIdentifierProvider(),
-                    List.of(
-                            new DeviceIdentifierConfigurationBeanFactoryPostProcessor(deviceIdentifierConfiguration)
-                    ));
-        } else {
-            logger.error("No device identifier is registered for type {}", providerConfiguration.getType());
-            throw new IllegalStateException("No device identifier is registered for type " + providerConfiguration.getType());
-        }
+        var configuration = configurationFactory.create(deviceIdentifier.configuration(), providerConfig.getConfiguration());
+        return createProvider(deviceIdentifier, new DeviceIdentifierConfigurationBeanFactoryPostProcessor(configuration));
     }
 
-    private class DeviceIdentifierConfigurationBeanFactoryPostProcessor extends NamedBeanFactoryPostProcessor<DeviceIdentifierConfiguration> {
+    private static class DeviceIdentifierConfigurationBeanFactoryPostProcessor extends NamedBeanFactoryPostProcessor<DeviceIdentifierConfiguration> {
         private DeviceIdentifierConfigurationBeanFactoryPostProcessor(DeviceIdentifierConfiguration configuration) {
             super("configuration", configuration);
         }

@@ -15,26 +15,23 @@
  */
 package io.gravitee.am.identityprovider.oauth2;
 
-import io.gravitee.am.identityprovider.api.AuthenticationProvider;
-import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
-import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
-import io.gravitee.am.identityprovider.api.IdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.api.social.SocialIdentityProvider;
 import io.gravitee.am.identityprovider.oauth2.authentication.OAuth2GenericAuthenticationProvider;
+import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class OAuth2GenericIdentityProvider implements SocialIdentityProvider {
+public class OAuth2GenericIdentityProvider extends SocialIdentityProvider<OAuth2GenericIdentityProviderConfiguration, OAuth2GenericAuthenticationProvider> {
 
     @Override
-    public Class<? extends IdentityProviderConfiguration> configuration() {
+    public Class<OAuth2GenericIdentityProviderConfiguration> configuration() {
         return OAuth2GenericIdentityProviderConfiguration.class;
     }
 
     @Override
-    public Class<? extends AuthenticationProvider> authenticationProvider() {
+    public Class<OAuth2GenericAuthenticationProvider> provider() {
         return OAuth2GenericAuthenticationProvider.class;
     }
 }

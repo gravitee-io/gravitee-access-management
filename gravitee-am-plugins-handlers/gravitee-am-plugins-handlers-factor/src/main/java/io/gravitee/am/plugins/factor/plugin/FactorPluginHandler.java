@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class FactorPluginHandler extends AmPluginHandler<Factor> {
+public class FactorPluginHandler extends AmPluginHandler<Factor<?, ?>> {
 
     private final Logger LOGGER = LoggerFactory.getLogger(FactorPluginHandler.class);
 
@@ -39,11 +39,6 @@ public class FactorPluginHandler extends AmPluginHandler<Factor> {
     @Override
     protected Logger getLogger() {
         return LOGGER;
-    }
-
-    @Override
-    protected Class<Factor> getClazz() {
-        return Factor.class;
     }
 
     @Override

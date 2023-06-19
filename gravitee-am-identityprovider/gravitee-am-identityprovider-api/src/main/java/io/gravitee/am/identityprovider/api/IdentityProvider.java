@@ -15,27 +15,28 @@
  */
 package io.gravitee.am.identityprovider.api;
 
+import io.gravitee.am.common.plugin.AmPlugin;
+import io.gravitee.plugin.core.api.Plugin;
+
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface IdentityProvider {
+public abstract class IdentityProvider<
+        C extends IdentityProviderConfiguration,
+        P extends AuthenticationProvider> extends AmPlugin<C, P> {
 
-    default boolean external() {
+    public boolean external() {
         return false;
     }
 
-    Class<? extends IdentityProviderConfiguration> configuration();
+    public Class<? extends UserProvider> userProvider() { return null; }
 
-    Class<? extends AuthenticationProvider> authenticationProvider();
-
-    default Class<? extends UserProvider> userProvider() { return null; }
-
-    default Class<? extends IdentityProviderMapper> mapper() {
+    public Class<? extends IdentityProviderMapper> mapper() {
         return DefaultIdentityProviderMapper.class;
     }
 
-    default Class<? extends IdentityProviderRoleMapper> roleMapper() {
+    public Class<? extends IdentityProviderRoleMapper> roleMapper() {
         return DefaultIdentityProviderRoleMapper.class;
     }
 }

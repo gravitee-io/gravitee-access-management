@@ -19,19 +19,21 @@ import io.gravitee.am.factor.api.Factor;
 import io.gravitee.am.factor.api.FactorConfiguration;
 import io.gravitee.am.factor.api.FactorProvider;
 import io.gravitee.am.factor.sms.provider.SMSFactorProvider;
+import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class SMSFactor implements Factor {
+public class SMSFactor extends Factor<SMSFactorConfiguration, SMSFactorProvider> {
+
     @Override
-    public Class<? extends FactorConfiguration> configuration() {
+    public Class<SMSFactorConfiguration> configuration() {
         return SMSFactorConfiguration.class;
     }
 
     @Override
-    public Class<? extends FactorProvider> factorProvider() {
+    public Class<SMSFactorProvider> provider() {
         return SMSFactorProvider.class;
     }
 }

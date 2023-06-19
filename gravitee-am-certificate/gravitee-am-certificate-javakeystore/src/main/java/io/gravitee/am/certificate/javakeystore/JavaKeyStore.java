@@ -16,22 +16,22 @@
 package io.gravitee.am.certificate.javakeystore;
 
 import io.gravitee.am.certificate.api.Certificate;
-import io.gravitee.am.certificate.api.CertificateConfiguration;
-import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.am.certificate.javakeystore.provider.JavaKeyStoreProvider;
+import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class JavaKeyStore implements Certificate {
+public class JavaKeyStore extends Certificate<JavaKeyStoreConfiguration, JavaKeyStoreProvider> {
+
     @Override
-    public Class<? extends CertificateConfiguration> configuration() {
+    public Class<JavaKeyStoreConfiguration> configuration() {
         return JavaKeyStoreConfiguration.class;
     }
 
     @Override
-    public Class<? extends CertificateProvider> certificateProvider() {
+    public Class<JavaKeyStoreProvider> provider() {
         return JavaKeyStoreProvider.class;
     }
 }

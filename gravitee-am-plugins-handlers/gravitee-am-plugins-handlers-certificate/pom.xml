@@ -42,5 +42,11 @@
             <artifactId>gravitee-am-certificate-api</artifactId>
             <version>${project.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>io.gravitee.plugin</groupId>
+            <artifactId>gravitee-plugin-core</artifactId>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 </project>

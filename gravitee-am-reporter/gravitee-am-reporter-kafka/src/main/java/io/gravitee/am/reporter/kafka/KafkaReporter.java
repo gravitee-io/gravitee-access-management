@@ -19,20 +19,21 @@ import io.gravitee.am.reporter.api.Reporter;
 import io.gravitee.am.reporter.api.ReporterConfiguration;
 import io.gravitee.am.reporter.api.audit.AuditReporter;
 import io.gravitee.am.reporter.kafka.audit.KafkaAuditReporter;
+import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Florent Amaridon
  * @author Visiativ
  */
-public class KafkaReporter implements Reporter {
+public class KafkaReporter extends Reporter<KafkaReporterConfiguration, KafkaAuditReporter> {
 
     @Override
-    public Class<? extends ReporterConfiguration> configuration() {
+    public Class<KafkaReporterConfiguration> configuration() {
         return KafkaReporterConfiguration.class;
     }
 
     @Override
-    public Class<? extends AuditReporter> auditReporter() {
+    public Class<KafkaAuditReporter> provider() {
         return KafkaAuditReporter.class;
     }
 }

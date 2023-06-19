@@ -16,25 +16,26 @@
 package io.gravitee.am.plugins.reporter.core;
 
 import io.gravitee.am.common.utils.GraviteeContext;
-import io.gravitee.am.plugins.handlers.api.core.AmPluginManager;
-import io.gravitee.am.plugins.handlers.api.core.ConfigurationFactory;
-import io.gravitee.am.plugins.handlers.api.core.NamedBeanFactoryPostProcessor;
-import io.gravitee.am.plugins.handlers.api.core.ProviderPluginManager;
+import io.gravitee.am.plugins.handlers.api.core.*;
 import io.gravitee.am.reporter.api.Reporter;
 import io.gravitee.am.reporter.api.ReporterConfiguration;
+import io.gravitee.am.reporter.api.audit.AuditReporter;
 import io.gravitee.plugin.core.api.PluginContextFactory;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+
+import static java.util.Optional.ofNullable;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class ReporterPluginManager
-        extends ProviderPluginManager<Reporter, io.gravitee.am.reporter.api.provider.Reporter, ReporterProviderConfiguration>
-        implements AmPluginManager<Reporter> {
+        extends ProviderPluginManager<Reporter<?, AuditReporter>, AuditReporter, ReporterProviderConfiguration>
+        implements AmPluginManager<Reporter<?, AuditReporter>> {
 
     private final Logger logger = LoggerFactory.getLogger(ReporterPluginManager.class);
 
@@ -49,27 +50,21 @@ public class ReporterPluginManager
     }
 
     @Override
-    public io.gravitee.am.reporter.api.provider.Reporter create(ReporterProviderConfiguration providerConfiguration) {
-        logger.debug("Looking for an reporter provider for [{}]", providerConfiguration.getType());
-        Reporter reporter = instances.get(providerConfiguration.getType());
+    public AuditReporter create(ReporterProviderConfiguration providerConfig) {
+        logger.debug("Looking for an reporter provider for [{}]", providerConfig.getType());
+        Reporter<?, AuditReporter> reporter = ofNullable(get(providerConfig.getType())).orElseGet(() -> {
+            logger.error("No reporter provider is registered for type {}", providerConfig.getType());
+            throw new IllegalStateException("No reporter provider is registered for type " + providerConfig.getType());
+        });
 
-        if (reporter != null) {
-            Class<? extends ReporterConfiguration> configurationClass = reporter.configuration();
-            var reporterConfiguration = reporterConfigurationFactory.create(configurationClass, providerConfiguration.getConfiguration());
-            if (providerConfiguration.getGraviteeContext() != null) {
-                return createProvider(plugins.get(reporter), reporter.auditReporter(), List.of(
-                                new ReporterConfigurationBeanFactoryPostProcessor(reporterConfiguration),
-                                new GraviteeContextBeanFactoryPostProcessor(providerConfiguration.getGraviteeContext())
-                        )
-                );
-            }
-            return createProvider(plugins.get(reporter), reporter.auditReporter(),
-                    List.of(new ReporterConfigurationBeanFactoryPostProcessor(reporterConfiguration))
-            );
-        } else {
-            logger.error("No reporter provider is registered for type {}", providerConfiguration.getType());
-            throw new IllegalStateException("No reporter provider is registered for type " + providerConfiguration.getType());
-        }
+        var reporterConfiguration = reporterConfigurationFactory.create(reporter.configuration(), providerConfig.getConfiguration());
+        var context = providerConfig.getGraviteeContext();
+        var postProcessors = ofNullable(context).map(ctx -> List.of(
+                new ReporterConfigurationBeanFactoryPostProcessor(reporterConfiguration),
+                new GraviteeContextBeanFactoryPostProcessor(context)
+        )).orElse(List.of(new ReporterConfigurationBeanFactoryPostProcessor(reporterConfiguration)));
+
+        return createProvider(reporter, postProcessors);
     }
 
 

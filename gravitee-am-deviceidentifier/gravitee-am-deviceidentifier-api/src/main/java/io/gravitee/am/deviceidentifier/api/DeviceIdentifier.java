@@ -15,13 +15,14 @@
  */
 package io.gravitee.am.deviceidentifier.api;
 
+import io.gravitee.am.common.plugin.AmPlugin;
+import io.gravitee.plugin.core.api.Plugin;
+
 /**
  * @author Rémi Sultan (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface DeviceIdentifier {
-
-    Class<? extends DeviceIdentifierConfiguration> configuration();
-
-    Class<? extends DeviceIdentifierProvider> deviceIdentifierProvider();
+public abstract class DeviceIdentifier<
+        C extends DeviceIdentifierConfiguration,
+        P extends DeviceIdentifierProvider> extends AmPlugin<C, P> {
 }

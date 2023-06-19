@@ -18,19 +18,19 @@ package io.gravitee.am.reporter.mongodb;
 import io.gravitee.am.reporter.api.Reporter;
 import io.gravitee.am.reporter.api.audit.AuditReporter;
 import io.gravitee.am.reporter.mongodb.audit.MongoAuditReporter;
+import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class MongoReporter implements Reporter {
+public class MongoReporter extends Reporter<MongoReporterConfiguration, MongoAuditReporter> {
 
-    public Class<? extends MongoReporterConfiguration> configuration() {
+    public Class<MongoReporterConfiguration> configuration() {
         return MongoReporterConfiguration.class;
     }
 
-    public Class<? extends AuditReporter> auditReporter() {
+    public Class<MongoAuditReporter> provider() {
         return MongoAuditReporter.class;
     }
-
 }

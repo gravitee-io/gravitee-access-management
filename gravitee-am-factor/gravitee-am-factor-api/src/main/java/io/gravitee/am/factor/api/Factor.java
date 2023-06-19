@@ -15,13 +15,13 @@
  */
 package io.gravitee.am.factor.api;
 
+
+import io.gravitee.am.common.plugin.AmPlugin;
+import io.gravitee.plugin.core.api.Plugin;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface Factor {
-
-    Class<? extends FactorConfiguration> configuration();
-
-    Class<? extends FactorProvider> factorProvider();
+public abstract class Factor<C extends FactorConfiguration, P extends FactorProvider> extends AmPlugin<C, P> {
 }

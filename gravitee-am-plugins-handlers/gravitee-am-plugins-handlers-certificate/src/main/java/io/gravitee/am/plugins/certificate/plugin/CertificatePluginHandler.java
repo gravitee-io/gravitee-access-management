@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class CertificatePluginHandler extends AmPluginHandler<Certificate> {
+public class CertificatePluginHandler extends AmPluginHandler<Certificate<?, ?>> {
 
     private final Logger LOGGER = LoggerFactory.getLogger(CertificatePluginHandler.class);
 
@@ -39,11 +39,6 @@ public class CertificatePluginHandler extends AmPluginHandler<Certificate> {
     @Override
     protected Logger getLogger() {
         return LOGGER;
-    }
-
-    @Override
-    protected Class<Certificate> getClazz() {
-        return Certificate.class;
     }
 
     @Override

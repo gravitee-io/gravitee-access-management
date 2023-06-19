@@ -15,24 +15,23 @@
  */
 package io.gravitee.am.identityprovider.linkedin;
 
-import io.gravitee.am.identityprovider.api.AuthenticationProvider;
-import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.api.social.SocialIdentityProvider;
 import io.gravitee.am.identityprovider.linkedin.authentication.LinkedinAuthenticationProvider;
+import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class LinkedinIdentityProvider implements SocialIdentityProvider {
+public class LinkedinIdentityProvider extends SocialIdentityProvider<LinkedinIdentityProviderConfiguration, LinkedinAuthenticationProvider> {
 
     @Override
-    public Class<? extends IdentityProviderConfiguration> configuration() {
+    public Class<LinkedinIdentityProviderConfiguration> configuration() {
         return LinkedinIdentityProviderConfiguration.class;
     }
 
     @Override
-    public Class<? extends AuthenticationProvider> authenticationProvider() {
+    public Class<LinkedinAuthenticationProvider> provider() {
         return LinkedinAuthenticationProvider.class;
     }
 }

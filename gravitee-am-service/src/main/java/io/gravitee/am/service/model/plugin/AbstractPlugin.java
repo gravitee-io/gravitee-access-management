@@ -21,25 +21,15 @@ package io.gravitee.am.service.model.plugin;
  */
 public abstract class AbstractPlugin {
 
-    /**
-     * The plugin identifier
-     */
     private String id;
 
-    /**
-     * The plugin name
-     */
     private String name;
 
-    /**
-     * The plugin description
-     */
     private String description;
 
-    /**
-     * The plugin version
-     */
     private String version;
+
+    private boolean deployed;
 
     public String getId() {
         return id;
@@ -71,5 +61,13 @@ public abstract class AbstractPlugin {
 
     public void setVersion(String version) {
         this.version = version;
+    }
+
+    public boolean isDeployed() {
+        return deployed;
+    }
+
+    public void setDeployed(boolean deployed) {
+        this.deployed = deployed;
     }
 }

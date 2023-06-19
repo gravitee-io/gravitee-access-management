@@ -15,24 +15,23 @@
  */
 package io.gravitee.am.identityprovider.github;
 
-import io.gravitee.am.identityprovider.api.AuthenticationProvider;
-import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.api.social.SocialIdentityProvider;
 import io.gravitee.am.identityprovider.github.authentication.GithubAuthenticationProvider;
+import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class GithubIdentityProvider implements SocialIdentityProvider {
+public class GithubIdentityProvider extends SocialIdentityProvider<GithubIdentityProviderConfiguration, GithubAuthenticationProvider> {
 
     @Override
-    public Class<? extends IdentityProviderConfiguration> configuration() {
+    public Class<GithubIdentityProviderConfiguration> configuration() {
         return GithubIdentityProviderConfiguration.class;
     }
 
     @Override
-    public Class<? extends AuthenticationProvider> authenticationProvider() {
+    public Class<GithubAuthenticationProvider> provider() {
         return GithubAuthenticationProvider.class;
     }
 }

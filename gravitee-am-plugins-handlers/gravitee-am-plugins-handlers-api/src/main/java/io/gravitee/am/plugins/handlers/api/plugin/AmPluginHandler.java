@@ -15,25 +15,35 @@
  */
 package io.gravitee.am.plugins.handlers.api.plugin;
 
+import com.google.common.reflect.TypeToken;
+import io.gravitee.am.common.plugin.AmPlugin;
 import io.gravitee.am.plugins.handlers.api.core.AmPluginManager;
 import io.gravitee.plugin.core.api.AbstractPluginHandler;
+import io.gravitee.plugin.core.api.ConfigurablePlugin;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginClassLoaderFactory;
+import java.lang.reflect.ParameterizedType;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Configurable;
 import org.springframework.util.Assert;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public abstract class AmPluginHandler<T> extends AbstractPluginHandler {
+public abstract class AmPluginHandler<T extends AmPlugin<?, ?>> extends AbstractPluginHandler {
 
     @Autowired
     protected PluginClassLoaderFactory<Plugin> pluginClassLoaderFactory;
 
     @Autowired
     private AmPluginManager<T> pluginManager;
+    private final Class<T> actualTypeArgument;
+
+    protected AmPluginHandler() {
+        actualTypeArgument = (Class<T>) TypeToken.of(new TypeToken<T>(getClass()){}.getType()).getRawType();
+    }
 
     @Override
     public boolean canHandle(Plugin plugin) {
@@ -42,7 +52,9 @@ public abstract class AmPluginHandler<T> extends AbstractPluginHandler {
 
     protected abstract Logger getLogger();
 
-    protected abstract Class<T> getClazz();
+    protected Class<T> getClazz() {
+        return actualTypeArgument;
+    }
 
     @Override
     protected void handle(Plugin plugin, Class<?> pluginClass) {
@@ -50,10 +62,7 @@ public abstract class AmPluginHandler<T> extends AbstractPluginHandler {
             getLogger().info("Register a new plugin: {} [{}]", plugin.id(), plugin.clazz());
 
             Assert.isAssignable(getClazz(), pluginClass);
-
-            var instanceType = createInstance(pluginClass);
-
-            pluginManager.register(instanceType, plugin);
+            pluginManager.register(createInstance(pluginClass, plugin));
         } catch (Exception iae) {
             getLogger().error("Unexpected error while create bot detection instance", iae);
         }
@@ -64,9 +73,11 @@ public abstract class AmPluginHandler<T> extends AbstractPluginHandler {
         return pluginClassLoaderFactory.getOrCreateClassLoader(plugin, this.getClass().getClassLoader());
     }
 
-    protected T createInstance(Class<?> pluginClass) throws Exception {
+    protected T createInstance(Class<?> pluginClass, Plugin plugin) throws Exception {
         try {
-            return (T) pluginClass.getDeclaredConstructor().newInstance();
+            final T amPlugin = (T) pluginClass.getDeclaredConstructor().newInstance();
+            amPlugin.setDelegate(plugin);
+            return amPlugin;
         } catch (InstantiationException | IllegalAccessException ex) {
             getLogger().error("Unable to instantiate class: {}", pluginClass.getName(), ex);
             throw ex;

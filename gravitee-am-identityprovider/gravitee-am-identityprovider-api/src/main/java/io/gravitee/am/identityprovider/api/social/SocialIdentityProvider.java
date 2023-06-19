@@ -15,16 +15,21 @@
  */
 package io.gravitee.am.identityprovider.api.social;
 
+import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.IdentityProvider;
+import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
+import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface SocialIdentityProvider extends IdentityProvider {
+public abstract class SocialIdentityProvider<
+        C extends IdentityProviderConfiguration,
+        P extends AuthenticationProvider
+        > extends IdentityProvider<C, P> {
 
-    @Override
-    default boolean external() {
+    public boolean external() {
         return true;
     }
 

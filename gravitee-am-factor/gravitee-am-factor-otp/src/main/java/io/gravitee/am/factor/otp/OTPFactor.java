@@ -19,20 +19,21 @@ import io.gravitee.am.factor.api.Factor;
 import io.gravitee.am.factor.api.FactorConfiguration;
 import io.gravitee.am.factor.api.FactorProvider;
 import io.gravitee.am.factor.otp.provider.OTPFactorProvider;
+import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class OTPFactor implements Factor {
+public class OTPFactor extends Factor<OTPFactorConfiguration, OTPFactorProvider> {
 
     @Override
-    public Class<? extends FactorConfiguration> configuration() {
+    public Class<OTPFactorConfiguration> configuration() {
         return OTPFactorConfiguration.class;
     }
 
     @Override
-    public Class<? extends FactorProvider> factorProvider() {
+    public Class<OTPFactorProvider> provider() {
         return OTPFactorProvider.class;
     }
 }

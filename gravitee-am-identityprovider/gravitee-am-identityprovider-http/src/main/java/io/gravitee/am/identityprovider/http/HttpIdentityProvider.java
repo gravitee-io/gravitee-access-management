@@ -15,27 +15,26 @@
  */
 package io.gravitee.am.identityprovider.http;
 
-import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.IdentityProvider;
-import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.identityprovider.http.authentication.HttpAuthenticationProvider;
 import io.gravitee.am.identityprovider.http.configuration.HttpIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.http.user.HttpUserProvider;
+import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class HttpIdentityProvider implements IdentityProvider {
+public class HttpIdentityProvider extends IdentityProvider<HttpIdentityProviderConfiguration, HttpAuthenticationProvider> {
 
     @Override
-    public Class<? extends IdentityProviderConfiguration> configuration() {
+    public Class<HttpIdentityProviderConfiguration> configuration() {
         return HttpIdentityProviderConfiguration.class;
     }
 
     @Override
-    public Class<? extends AuthenticationProvider> authenticationProvider() {
+    public Class<HttpAuthenticationProvider> provider() {
         return HttpAuthenticationProvider.class;
     }
 

@@ -40,6 +40,12 @@
             <version>${project.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>io.gravitee.plugin</groupId>
+            <artifactId>gravitee-plugin-core</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
         <!-- reactive dependencies -->
         <dependency>
             <groupId>io.reactivex.rxjava3</groupId>

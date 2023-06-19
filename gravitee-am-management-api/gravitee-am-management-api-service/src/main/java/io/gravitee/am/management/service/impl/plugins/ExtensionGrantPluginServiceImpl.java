@@ -50,7 +50,7 @@ public class ExtensionGrantPluginServiceImpl implements ExtensionGrantPluginServ
         LOGGER.debug("List all extension grant plugins");
         return Single.create(emitter -> {
             try {
-                emitter.onSuccess(extensionGrantPluginManager.getAll()
+                emitter.onSuccess(extensionGrantPluginManager.findAll(true)
                         .stream()
                         .map(this::convert)
                         .collect(Collectors.toSet()));
@@ -97,12 +97,13 @@ public class ExtensionGrantPluginServiceImpl implements ExtensionGrantPluginServ
         });
     }
 
-    private ExtensionGrantPlugin convert(Plugin extensionGrantPlugin) {
-        ExtensionGrantPlugin plugin = new ExtensionGrantPlugin();
-        plugin.setId(extensionGrantPlugin.manifest().id());
-        plugin.setName(extensionGrantPlugin.manifest().name());
-        plugin.setDescription(extensionGrantPlugin.manifest().description());
-        plugin.setVersion(extensionGrantPlugin.manifest().version());
-        return plugin;
+    private ExtensionGrantPlugin convert(Plugin plugin) {
+        var extensionGrantPlugin = new ExtensionGrantPlugin();
+        extensionGrantPlugin.setId(plugin.manifest().id());
+        extensionGrantPlugin.setName(plugin.manifest().name());
+        extensionGrantPlugin.setDescription(plugin.manifest().description());
+        extensionGrantPlugin.setVersion(plugin.manifest().version());
+        extensionGrantPlugin.setDeployed(plugin.deployed());
+        return extensionGrantPlugin;
     }
 }

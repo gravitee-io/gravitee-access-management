@@ -36,4 +36,12 @@
         <module>gravitee-am-botdetection-api</module>
         <module>gravitee-am-botdetection-recaptcha-v3</module>
     </modules>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.gravitee.plugin</groupId>
+            <artifactId>gravitee-plugin-core</artifactId>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
 </project>

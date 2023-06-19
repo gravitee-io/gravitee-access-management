@@ -15,23 +15,26 @@
  */
 package io.gravitee.am.gateway.handler.account;
 
+import io.gravitee.am.common.plugin.AmPlugin;
 import io.gravitee.am.gateway.handler.account.spring.AccountConfiguration;
 import io.gravitee.am.gateway.handler.api.Protocol;
 import io.gravitee.am.gateway.handler.api.ProtocolConfiguration;
 import io.gravitee.am.gateway.handler.api.ProtocolProvider;
+import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Donald Courtney (donald.courtney at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class AccountProtocol implements Protocol {
+public class AccountProtocol extends Protocol<AccountConfiguration, AccountProvider> {
+
     @Override
-    public Class<? extends ProtocolConfiguration> configuration() {
-        return AccountConfiguration.class;
+    public Class<AccountProvider> provider() {
+        return AccountProvider.class;
     }
 
     @Override
-    public Class<? extends ProtocolProvider> protocolProvider() {
-        return AccountProvider.class;
+    public Class<AccountConfiguration> configuration() {
+        return AccountConfiguration.class;
     }
 }

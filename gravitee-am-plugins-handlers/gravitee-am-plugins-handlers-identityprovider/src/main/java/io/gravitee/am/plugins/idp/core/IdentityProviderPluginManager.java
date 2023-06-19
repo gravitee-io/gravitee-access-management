@@ -22,29 +22,16 @@ import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
 import io.gravitee.am.identityprovider.api.IdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.api.UserProvider;
+import io.gravitee.am.plugins.handlers.api.core.AmPluginContextConfigurer;
 import io.gravitee.am.plugins.handlers.api.core.AmPluginManager;
 import io.gravitee.am.plugins.handlers.api.core.NamedBeanFactoryPostProcessor;
 import io.gravitee.am.plugins.handlers.api.core.ProviderPluginManager;
-import io.gravitee.common.service.Service;
-import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginContextFactory;
-import io.gravitee.plugin.core.internal.AnnotationBasedPluginContextConfigurer;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.rxjava3.core.Vertx;
+import java.util.*;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.annotation.Import;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Properties;
-import java.util.Set;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -53,47 +40,24 @@ import java.util.Set;
  * @author GraviteeSource Team
  */
 public abstract class IdentityProviderPluginManager extends
-        ProviderPluginManager<IdentityProvider, AuthenticationProvider, AuthenticationProviderConfiguration>
-        implements AmPluginManager<IdentityProvider> {
+        ProviderPluginManager<IdentityProvider<?, AuthenticationProvider>, AuthenticationProvider, AuthenticationProviderConfiguration>
+        implements AmPluginManager<IdentityProvider<?, AuthenticationProvider>> {
 
     protected IdentityProviderPluginManager(PluginContextFactory pluginContextFactory) {
         super(pluginContextFactory);
-    }
-
-    public Map<IdentityProvider, Plugin> getAllEntries() {
-        return this.plugins;
     }
 
     public abstract boolean hasUserProvider(String pluginType);
 
     public abstract Single<Optional<UserProvider>> create(String type, String configuration, io.gravitee.am.model.IdentityProvider identityProvider);
 
-    protected Single<UserProvider> createUserProvider(
-            Plugin plugin,
-            Class<? extends UserProvider> providerClass,
-            List<BeanFactoryPostProcessor> beanFactoryPostProcessors) throws Exception {
-        if (providerClass == null) {
+    protected Single<UserProvider> createUserProvider(AmPluginContextConfigurer<? extends UserProvider> amPluginContextConfigurer) throws Exception {
+        if (amPluginContextConfigurer.getProviderClass() == null) {
             return null;
         }
 
-        UserProvider provider = createInstance(providerClass);
-        final Import annImport = providerClass.getAnnotation(Import.class);
-        Set<Class<?>> configurations = (annImport != null) ?
-                new HashSet<>(Arrays.asList(annImport.value())) : Collections.emptySet();
-
-        ApplicationContext pluginApplicationContext = pluginContextFactory.create(new AnnotationBasedPluginContextConfigurer(plugin) {
-            @Override
-            public Set<Class<?>> configurations() {
-                return configurations;
-            }
-
-            @Override
-            public ConfigurableApplicationContext applicationContext() {
-                ConfigurableApplicationContext configurableApplicationContext = super.applicationContext();
-                beanFactoryPostProcessors.forEach(configurableApplicationContext::addBeanFactoryPostProcessor);
-                return configurableApplicationContext;
-            }
-        });
+        UserProvider provider = createInstance(amPluginContextConfigurer.getProviderClass());
+        ApplicationContext pluginApplicationContext = pluginContextFactory.create(amPluginContextConfigurer);
 
         pluginApplicationContext.getAutowireCapableBeanFactory().autowireBean(provider);
 

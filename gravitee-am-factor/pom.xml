@@ -40,4 +40,12 @@
         <module>gravitee-am-factor-call</module>
         <module>gravitee-am-factor-recovery-code</module>
     </modules>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.gravitee.plugin</groupId>
+            <artifactId>gravitee-plugin-core</artifactId>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
 </project>

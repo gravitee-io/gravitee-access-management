@@ -16,23 +16,25 @@
 package io.gravitee.am.authdevice.notifier.http;
 
 import io.gravitee.am.authdevice.notifier.api.AuthenticationDeviceNotifier;
-import io.gravitee.am.authdevice.notifier.api.AuthenticationDeviceNotifierConfiguration;
 import io.gravitee.am.authdevice.notifier.api.AuthenticationDeviceNotifierProvider;
 import io.gravitee.am.authdevice.notifier.http.provider.HttpAuthenticationDeviceNotifierProvider;
+import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class HttpAuthenticationDeviceNotifier implements AuthenticationDeviceNotifier {
+public class HttpAuthenticationDeviceNotifier extends AuthenticationDeviceNotifier<
+        HttpAuthenticationDeviceNotifierConfiguration,
+        HttpAuthenticationDeviceNotifierProvider> {
 
     @Override
-    public Class<? extends AuthenticationDeviceNotifierConfiguration> configuration() {
+    public Class<HttpAuthenticationDeviceNotifierConfiguration> configuration() {
         return HttpAuthenticationDeviceNotifierConfiguration.class;
     }
 
     @Override
-    public Class<? extends AuthenticationDeviceNotifierProvider> notificationProvider() {
+    public Class<HttpAuthenticationDeviceNotifierProvider> provider() {
         return HttpAuthenticationDeviceNotifierProvider.class;
     }
 }

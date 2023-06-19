@@ -19,20 +19,21 @@ import io.gravitee.am.reporter.api.Reporter;
 import io.gravitee.am.reporter.api.ReporterConfiguration;
 import io.gravitee.am.reporter.api.audit.AuditReporter;
 import io.gravitee.am.reporter.jdbc.audit.JdbcAuditReporter;
+import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class JdbcReporter implements Reporter {
+public class JdbcReporter extends Reporter<JdbcReporterConfiguration, JdbcAuditReporter> {
 
     @Override
-    public Class<? extends ReporterConfiguration> configuration() {
+    public Class<JdbcReporterConfiguration> configuration() {
         return JdbcReporterConfiguration.class;
     }
 
     @Override
-    public Class<? extends AuditReporter> auditReporter() {
+    public Class<JdbcAuditReporter> provider() {
         return JdbcAuditReporter.class;
     }
 }

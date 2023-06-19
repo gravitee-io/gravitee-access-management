@@ -15,24 +15,23 @@
  */
 package io.gravitee.am.identityprovider.google;
 
-import io.gravitee.am.identityprovider.api.AuthenticationProvider;
-import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.api.social.SocialIdentityProvider;
 import io.gravitee.am.identityprovider.google.authentication.GoogleAuthenticationProvider;
+import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class GoogleIdentityProvider implements SocialIdentityProvider {
+public class GoogleIdentityProvider extends SocialIdentityProvider<GoogleIdentityProviderConfiguration, GoogleAuthenticationProvider> {
 
     @Override
-    public Class<? extends IdentityProviderConfiguration> configuration() {
+    public Class<GoogleIdentityProviderConfiguration> configuration() {
         return GoogleIdentityProviderConfiguration.class;
     }
 
     @Override
-    public Class<? extends AuthenticationProvider> authenticationProvider() {
+    public Class<GoogleAuthenticationProvider> provider() {
         return GoogleAuthenticationProvider.class;
     }
 

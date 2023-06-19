@@ -15,13 +15,16 @@
  */
 package io.gravitee.am.certificate.api;
 
+
+import io.gravitee.am.common.plugin.AmPlugin;
+import io.gravitee.plugin.core.api.Plugin;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface Certificate {
+public abstract class Certificate<
+        C extends CertificateConfiguration,
+        P extends CertificateProvider> extends AmPlugin<C, P> {
 
-    Class<? extends CertificateConfiguration> configuration();
-
-    Class<? extends CertificateProvider> certificateProvider();
 }

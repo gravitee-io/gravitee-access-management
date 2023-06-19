@@ -19,19 +19,21 @@ import io.gravitee.am.resource.api.Resource;
 import io.gravitee.am.resource.api.ResourceConfiguration;
 import io.gravitee.am.resource.api.ResourceProvider;
 import io.gravitee.am.resource.smtp.provider.SmtpResourceProvider;
+import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class SmtpResource implements Resource {
+public class SmtpResource extends Resource<SmtpResourceConfiguration, SmtpResourceProvider> {
+
     @Override
-    public Class<? extends ResourceConfiguration> configuration() {
+    public Class<SmtpResourceConfiguration> configuration() {
         return SmtpResourceConfiguration.class;
     }
 
     @Override
-    public Class<? extends ResourceProvider> resourceProvider() {
+    public Class<SmtpResourceProvider> provider() {
         return SmtpResourceProvider.class;
     }
 }

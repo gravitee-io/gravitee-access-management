@@ -19,20 +19,21 @@ import io.gravitee.am.gateway.handler.api.Protocol;
 import io.gravitee.am.gateway.handler.api.ProtocolConfiguration;
 import io.gravitee.am.gateway.handler.api.ProtocolProvider;
 import io.gravitee.am.gateway.handler.users.spring.UsersConfiguration;
+import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class UsersProtocol implements Protocol {
+public class UsersProtocol extends Protocol<UsersConfiguration, UsersProvider> {
 
     @Override
-    public Class<? extends ProtocolConfiguration> configuration() {
+    public Class<UsersConfiguration> configuration() {
         return UsersConfiguration.class;
     }
 
     @Override
-    public Class<? extends ProtocolProvider> protocolProvider() {
+    public Class<UsersProvider> provider() {
         return UsersProvider.class;
     }
 }

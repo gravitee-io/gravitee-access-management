@@ -19,19 +19,21 @@ import io.gravitee.am.gateway.handler.api.Protocol;
 import io.gravitee.am.gateway.handler.api.ProtocolConfiguration;
 import io.gravitee.am.gateway.handler.api.ProtocolProvider;
 import io.gravitee.am.gateway.handler.uma.spring.UMAConfiguration;
+import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
-public class UMAProtocol implements Protocol {
+public class UMAProtocol extends Protocol<UMAConfiguration, UMAProvider> {
+
     @Override
-    public Class<? extends ProtocolConfiguration> configuration() {
+    public Class<UMAConfiguration> configuration() {
         return UMAConfiguration.class;
     }
 
     @Override
-    public Class<? extends ProtocolProvider> protocolProvider() {
+    public Class<UMAProvider> provider() {
         return UMAProvider.class;
     }
 }

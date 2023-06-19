@@ -19,20 +19,21 @@ import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.api.social.SocialIdentityProvider;
 import io.gravitee.am.identityprovider.facebook.authentication.FacebookAuthenticationProvider;
+import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class FacebookIdentityProvider implements SocialIdentityProvider {
+public class FacebookIdentityProvider extends SocialIdentityProvider<FacebookIdentityProviderConfiguration, FacebookAuthenticationProvider> {
 
     @Override
-    public Class<? extends IdentityProviderConfiguration> configuration() {
+    public Class<FacebookIdentityProviderConfiguration> configuration() {
         return FacebookIdentityProviderConfiguration.class;
     }
 
     @Override
-    public Class<? extends AuthenticationProvider> authenticationProvider() {
+    public Class<FacebookAuthenticationProvider> provider() {
         return FacebookAuthenticationProvider.class;
     }
 

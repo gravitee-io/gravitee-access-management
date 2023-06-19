@@ -46,7 +46,7 @@ public class ResourcePluginServiceImpl implements ResourcePluginService {
     @Override
     public Single<List<ResourcePlugin>> findAll(List<String> expand) {
         LOGGER.debug("List all resource plugins");
-        return Observable.fromIterable(resourcePluginManager.getAll())
+        return Observable.fromIterable(resourcePluginManager.findAll(true))
                 .map(plugin -> convert(plugin, expand))
                 .toList();
     }
@@ -109,23 +109,24 @@ public class ResourcePluginServiceImpl implements ResourcePluginService {
         return convert(resourcePlugin, null);
     }
 
-    private ResourcePlugin convert(Plugin resourcePlugin, List<String> expand) {
-        ResourcePlugin plugin = new ResourcePlugin();
-        plugin.setId(resourcePlugin.manifest().id());
-        plugin.setName(resourcePlugin.manifest().name());
-        plugin.setDescription(resourcePlugin.manifest().description());
-        plugin.setVersion(resourcePlugin.manifest().version());
-        String tags = resourcePlugin.manifest().properties().get(MANIFEST_KEY_CATEGORIES);
+    private ResourcePlugin convert(Plugin plugin, List<String> expand) {
+        ResourcePlugin resourcePlugin = new ResourcePlugin();
+        resourcePlugin.setId(plugin.manifest().id());
+        resourcePlugin.setName(plugin.manifest().name());
+        resourcePlugin.setDescription(plugin.manifest().description());
+        resourcePlugin.setVersion(plugin.manifest().version());
+        resourcePlugin.setDeployed(plugin.deployed());
+        String tags = plugin.manifest().properties().get(MANIFEST_KEY_CATEGORIES);
         if (tags != null) {
-            plugin.setCategories(tags.split(MANIFEST_KEY_CATEGORIES_SEPARATOR));
+            resourcePlugin.setCategories(tags.split(MANIFEST_KEY_CATEGORIES_SEPARATOR));
         } else {
-            plugin.setCategories(new String[0]);
+            resourcePlugin.setCategories(new String[0]);
         }
         if (expand != null) {
             if (expand.contains(ResourcePluginService.EXPAND_ICON)) {
-                this.getIcon(plugin.getId()).subscribe(plugin::setIcon);
+                this.getIcon(resourcePlugin.getId()).subscribe(resourcePlugin::setIcon);
             }
         }
-        return plugin;
+        return resourcePlugin;
     }
 }

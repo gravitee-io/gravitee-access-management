@@ -15,24 +15,23 @@
  */
 package io.gravitee.am.identityprovider.twitter;
 
-import io.gravitee.am.identityprovider.api.AuthenticationProvider;
-import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.api.social.SocialIdentityProvider;
 import io.gravitee.am.identityprovider.twitter.authentication.TwitterAuthenticationProvider;
+import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class TwitterIdentityProvider implements SocialIdentityProvider {
+public class TwitterIdentityProvider extends SocialIdentityProvider<TwitterIdentityProviderConfiguration, TwitterAuthenticationProvider> {
 
     @Override
-    public Class<? extends IdentityProviderConfiguration> configuration() {
+    public Class<TwitterIdentityProviderConfiguration> configuration() {
         return TwitterIdentityProviderConfiguration.class;
     }
 
     @Override
-    public Class<? extends AuthenticationProvider> authenticationProvider() {
+    public Class<TwitterAuthenticationProvider> provider() {
         return TwitterAuthenticationProvider.class;
     }
 }

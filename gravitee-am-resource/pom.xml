@@ -40,4 +40,12 @@
         <module>gravitee-am-resource-smtp</module>
         <module>gravitee-am-resource-infobip</module>
     </modules>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.gravitee.plugin</groupId>
+            <artifactId>gravitee-plugin-core</artifactId>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
 </project>

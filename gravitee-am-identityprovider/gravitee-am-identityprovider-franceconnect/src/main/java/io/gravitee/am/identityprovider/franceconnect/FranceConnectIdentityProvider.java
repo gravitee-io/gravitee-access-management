@@ -15,24 +15,23 @@
  */
 package io.gravitee.am.identityprovider.franceconnect;
 
-import io.gravitee.am.identityprovider.api.AuthenticationProvider;
-import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.api.social.SocialIdentityProvider;
 import io.gravitee.am.identityprovider.franceconnect.authentication.FranceConnectAuthenticationProvider;
+import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class FranceConnectIdentityProvider implements SocialIdentityProvider {
+public class FranceConnectIdentityProvider extends SocialIdentityProvider<FranceConnectIdentityProviderConfiguration, FranceConnectAuthenticationProvider> {
 
     @Override
-    public Class<? extends IdentityProviderConfiguration> configuration() {
+    public Class<FranceConnectIdentityProviderConfiguration> configuration() {
         return FranceConnectIdentityProviderConfiguration.class;
     }
 
     @Override
-    public Class<? extends AuthenticationProvider> authenticationProvider() {
+    public Class<FranceConnectAuthenticationProvider> provider() {
         return FranceConnectAuthenticationProvider.class;
     }
 }

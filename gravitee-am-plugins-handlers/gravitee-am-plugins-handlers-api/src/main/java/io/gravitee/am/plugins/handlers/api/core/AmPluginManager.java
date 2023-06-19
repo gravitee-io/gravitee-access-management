@@ -25,9 +25,9 @@ import java.util.Collection;
  */
 public interface AmPluginManager<TYPE> {
 
-    void register(TYPE definition, Plugin plugin);
+    void register(TYPE definition);
 
-    Collection<Plugin> getAll();
+    Collection<TYPE> findAll();
 
     Plugin findById(String pluginId);
 

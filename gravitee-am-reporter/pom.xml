@@ -41,4 +41,11 @@
         <module>gravitee-am-reporter-file</module>
         <module>gravitee-am-reporter-kafka</module>
     </modules>
+    <dependencies>
+        <dependency>
+            <groupId>io.gravitee.plugin</groupId>
+            <artifactId>gravitee-plugin-core</artifactId>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
 </project>

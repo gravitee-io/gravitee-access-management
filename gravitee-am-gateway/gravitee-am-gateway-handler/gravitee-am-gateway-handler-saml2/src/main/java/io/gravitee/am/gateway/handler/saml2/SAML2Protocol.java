@@ -19,20 +19,21 @@ import io.gravitee.am.gateway.handler.api.Protocol;
 import io.gravitee.am.gateway.handler.api.ProtocolConfiguration;
 import io.gravitee.am.gateway.handler.api.ProtocolProvider;
 import io.gravitee.am.gateway.handler.saml2.spring.SAMLConfiguration;
+import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class SAML2Protocol implements Protocol {
+public class SAML2Protocol extends Protocol<SAMLConfiguration, SAML2Provider> {
 
     @Override
-    public Class<? extends ProtocolConfiguration> configuration() {
+    public Class<SAMLConfiguration> configuration() {
         return SAMLConfiguration.class;
     }
 
     @Override
-    public Class<? extends ProtocolProvider> protocolProvider() {
+    public Class<SAML2Provider> provider() {
         return SAML2Provider.class;
     }
 }

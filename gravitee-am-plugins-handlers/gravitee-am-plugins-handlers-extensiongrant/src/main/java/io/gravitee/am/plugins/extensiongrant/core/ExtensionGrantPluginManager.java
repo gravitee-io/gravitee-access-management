@@ -20,11 +20,9 @@ import io.gravitee.am.extensiongrant.api.ExtensionGrantConfiguration;
 import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.NoAuthenticationProvider;
-import io.gravitee.am.plugins.handlers.api.core.AmPluginManager;
-import io.gravitee.am.plugins.handlers.api.core.ConfigurationFactory;
-import io.gravitee.am.plugins.handlers.api.core.NamedBeanFactoryPostProcessor;
-import io.gravitee.am.plugins.handlers.api.core.ProviderPluginManager;
+import io.gravitee.am.plugins.handlers.api.core.*;
 import io.gravitee.plugin.core.api.PluginContextFactory;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,37 +36,36 @@ import static java.util.Optional.ofNullable;
  * @author GraviteeSource Team
  */
 public class ExtensionGrantPluginManager
-        extends ProviderPluginManager<ExtensionGrant, ExtensionGrantProvider, ExtensionGrantProviderConfiguration>
-        implements AmPluginManager<ExtensionGrant> {
+        extends ProviderPluginManager<ExtensionGrant<?, ExtensionGrantProvider>, ExtensionGrantProvider, ExtensionGrantProviderConfiguration>
+        implements AmPluginManager<ExtensionGrant<?, ExtensionGrantProvider>> {
 
     private final Logger logger = LoggerFactory.getLogger(ExtensionGrantPluginManager.class);
-    private final ConfigurationFactory<ExtensionGrantConfiguration> extensionGrantConfigurationFactory;
+    private final ConfigurationFactory<ExtensionGrantConfiguration> configurationFactory;
 
     public ExtensionGrantPluginManager(PluginContextFactory pluginContextFactory,
                                        ConfigurationFactory<ExtensionGrantConfiguration> extensionGrantConfigurationFactory) {
         super(pluginContextFactory);
-        this.extensionGrantConfigurationFactory = extensionGrantConfigurationFactory;
+        this.configurationFactory = extensionGrantConfigurationFactory;
     }
 
     @Override
     public ExtensionGrantProvider create(ExtensionGrantProviderConfiguration providerConfig) {
         logger.debug("Looking for an extension grant provider for [{}]", providerConfig.getType());
-        ExtensionGrant extensionGrant = instances.get(providerConfig.getType());
-
-        if (extensionGrant != null) {
-            Class<? extends ExtensionGrantConfiguration> configurationClass = extensionGrant.configuration();
-            var extensionGrantConfiguration = extensionGrantConfigurationFactory.create(configurationClass, providerConfig.getConfiguration());
-
-            return createProvider(plugins.get(extensionGrant), extensionGrant.provider(),
-                    List.of(
-                            new ExtensionGrantConfigurationBeanFactoryPostProcessor(extensionGrantConfiguration),
-                            new ExtensionGrantIdentityProviderFactoryPostProcessor(ofNullable(providerConfig.getAuthenticationProvider()).orElse(new NoAuthenticationProvider()))
-                    )
-            );
-        } else {
+        var extensionGrant = Optional.ofNullable(get(providerConfig.getType())).orElseGet(() -> {
             logger.error("No extension grant provider is registered for type {}", providerConfig.getType());
             throw new IllegalStateException("No extension grant provider is registered for type " + providerConfig.getType());
-        }
+        });
+
+        var extensionGrantConfiguration = configurationFactory.create(extensionGrant.configuration(), providerConfig.getConfiguration());
+        return createProvider(extensionGrant, List.of(
+                        new ExtensionGrantConfigurationBeanFactoryPostProcessor(extensionGrantConfiguration),
+                        new ExtensionGrantIdentityProviderFactoryPostProcessor(getAuthenticationProvider(providerConfig))
+                )
+        );
+    }
+
+    private static AuthenticationProvider getAuthenticationProvider(ExtensionGrantProviderConfiguration providerConfig) {
+        return ofNullable(providerConfig.getAuthenticationProvider()).orElse(new NoAuthenticationProvider());
     }
 
     private static class ExtensionGrantConfigurationBeanFactoryPostProcessor extends NamedBeanFactoryPostProcessor<ExtensionGrantConfiguration> {

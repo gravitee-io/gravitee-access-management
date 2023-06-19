@@ -58,9 +58,9 @@ public class IdentityProviderPluginServiceImpl implements IdentityProviderPlugin
     @Override
     public Single<List<IdentityProviderPlugin>> findAll(Boolean external, List<String> expand) {
         LOGGER.debug("List all identity provider plugins");
-        return Observable.fromIterable(identityProviderPluginManager.getAllEntries().entrySet())
-            .filter(entry -> (external != null && external) ? entry.getKey().external() : !entry.getKey().external())
-            .map(entry -> convert(entry.getValue(), expand))
+        return Observable.fromIterable(identityProviderPluginManager.findAll(true))
+            .filter(idp -> (external != null && external) == idp.external())
+            .map(idp -> convert(idp, expand))
             .toList()
             .onErrorResumeNext(ex -> {
                 LOGGER.error("An error occurs while trying to list all identity provider plugins", ex);
@@ -122,31 +122,32 @@ public class IdentityProviderPluginServiceImpl implements IdentityProviderPlugin
         });
     }
 
-    private IdentityProviderPlugin convert(Plugin identityProviderPlugin) {
-        return this.convert(identityProviderPlugin, null);
+    private IdentityProviderPlugin convert(Plugin plugin) {
+        return this.convert(plugin, null);
     }
 
-    private IdentityProviderPlugin convert(Plugin identityProviderPlugin, List<String> expand) {
-        IdentityProviderPlugin plugin = new IdentityProviderPlugin();
-        plugin.setId(identityProviderPlugin.manifest().id());
-        plugin.setName(identityProviderPlugin.manifest().name());
+    private IdentityProviderPlugin convert(Plugin plugin, List<String> expand) {
+        var idpPlugin = new IdentityProviderPlugin();
+        idpPlugin.setId(plugin.manifest().id());
+        idpPlugin.setName(plugin.manifest().name());
 
-        plugin.setDescription(identityProviderPlugin.manifest().description());
-        plugin.setVersion(identityProviderPlugin.manifest().version());
+        idpPlugin.setDescription(plugin.manifest().description());
+        idpPlugin.setVersion(plugin.manifest().version());
+        idpPlugin.setDeployed(plugin.deployed());
         if (expand != null) {
             if (expand.contains(IdentityProviderPluginService.EXPAND_ICON)) {
-                this.getIcon(plugin.getId()).subscribe(plugin::setIcon);
+                this.getIcon(idpPlugin.getId()).subscribe(idpPlugin::setIcon);
             }
             if (expand.contains(IdentityProviderPluginService.EXPAND_DISPLAY_NAME)) {
-                plugin.setDisplayName(identityProviderPlugin.manifest().properties().get(IdentityProviderPluginService.EXPAND_DISPLAY_NAME));
+                idpPlugin.setDisplayName(plugin.manifest().properties().get(IdentityProviderPluginService.EXPAND_DISPLAY_NAME));
             }
             if (expand.contains(IdentityProviderPluginService.EXPAND_LABELS)) {
-                String tags = identityProviderPlugin.manifest().properties().get(IdentityProviderPluginService.EXPAND_LABELS);
+                String tags = plugin.manifest().properties().get(IdentityProviderPluginService.EXPAND_LABELS);
                 if (tags != null) {
-                    plugin.setLabels(tags.split(","));
+                    idpPlugin.setLabels(tags.split(","));
                 }
             }
         }
-        return plugin;
+        return idpPlugin;
     }
 }

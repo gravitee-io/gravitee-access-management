@@ -16,22 +16,23 @@
 package io.gravitee.am.botdetection.google.recaptcha;
 
 import io.gravitee.am.botdetection.api.BotDetection;
-import io.gravitee.am.botdetection.api.BotDetectionConfiguration;
-import io.gravitee.am.botdetection.api.BotDetectionProvider;
 import io.gravitee.am.botdetection.google.recaptcha.provider.GoogleReCaptchaV3Provider;
+import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class GoogleReCaptchaV3 implements BotDetection {
+public class GoogleReCaptchaV3 extends BotDetection<GoogleReCaptchaV3Configuration, GoogleReCaptchaV3Provider> {
+
     @Override
-    public Class<? extends BotDetectionConfiguration> configuration() {
+    public Class<GoogleReCaptchaV3Configuration> configuration() {
         return GoogleReCaptchaV3Configuration.class;
     }
 
     @Override
-    public Class<? extends BotDetectionProvider> botDetectionProvider() {
+    public Class<GoogleReCaptchaV3Provider> provider() {
         return GoogleReCaptchaV3Provider.class;
     }
+
 }

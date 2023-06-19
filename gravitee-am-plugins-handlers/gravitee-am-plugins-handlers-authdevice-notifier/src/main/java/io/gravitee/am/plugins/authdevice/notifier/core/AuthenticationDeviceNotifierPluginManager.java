@@ -18,13 +18,10 @@ package io.gravitee.am.plugins.authdevice.notifier.core;
 import io.gravitee.am.authdevice.notifier.api.AuthenticationDeviceNotifier;
 import io.gravitee.am.authdevice.notifier.api.AuthenticationDeviceNotifierConfiguration;
 import io.gravitee.am.authdevice.notifier.api.AuthenticationDeviceNotifierProvider;
-import io.gravitee.am.plugins.handlers.api.core.AmPluginManager;
-import io.gravitee.am.plugins.handlers.api.core.ConfigurationFactory;
-import io.gravitee.am.plugins.handlers.api.core.NamedBeanFactoryPostProcessor;
-import io.gravitee.am.plugins.handlers.api.core.ProviderPluginManager;
+import io.gravitee.am.plugins.handlers.api.core.*;
 import io.gravitee.am.plugins.handlers.api.provider.ProviderConfiguration;
 import io.gravitee.plugin.core.api.PluginContextFactory;
-import java.util.List;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,45 +31,40 @@ import org.slf4j.LoggerFactory;
  * @author GraviteeSource Team
  */
 public class AuthenticationDeviceNotifierPluginManager
-        extends ProviderPluginManager<AuthenticationDeviceNotifier, AuthenticationDeviceNotifierProvider, ProviderConfiguration>
-        implements AmPluginManager<AuthenticationDeviceNotifier> {
+        extends ProviderPluginManager<AuthenticationDeviceNotifier<?, AuthenticationDeviceNotifierProvider>, AuthenticationDeviceNotifierProvider, ProviderConfiguration>
+        implements AmPluginManager<AuthenticationDeviceNotifier<?, AuthenticationDeviceNotifierProvider>> {
 
     private final static Logger logger = LoggerFactory.getLogger(AuthenticationDeviceNotifierPluginManager.class);
-    private final ConfigurationFactory<AuthenticationDeviceNotifierConfiguration> authDeviceNotifierConfigurationFactory;
+    private final ConfigurationFactory<AuthenticationDeviceNotifierConfiguration> configurationFactory;
 
     public AuthenticationDeviceNotifierPluginManager(
             PluginContextFactory pluginContextFactory,
-            ConfigurationFactory<AuthenticationDeviceNotifierConfiguration> authDeviceNotifierConfigurationFactory
+            ConfigurationFactory<AuthenticationDeviceNotifierConfiguration> configurationFactory
     ) {
         super(pluginContextFactory);
-        this.authDeviceNotifierConfigurationFactory = authDeviceNotifierConfigurationFactory;
+        this.configurationFactory = configurationFactory;
     }
 
     @Override
     public AuthenticationDeviceNotifierProvider create(ProviderConfiguration providerConfig) {
         logger.debug("Looking for an authentication device notifier for [{}]", providerConfig.getType());
-        var authDeviceNotifier = instances.get(providerConfig.getType());
 
-        if (authDeviceNotifier != null) {
-            var configurationClass = authDeviceNotifier.configuration();
-            var botDetectionConfiguration = authDeviceNotifierConfigurationFactory.create(configurationClass, providerConfig.getConfiguration());
-
-            return createProvider(
-                    plugins.get(authDeviceNotifier),
-                    authDeviceNotifier.notificationProvider(),
-                    List.of(
-                            new AuthenticationDeviceNotifierConfigurationBeanFactoryPostProcessor(botDetectionConfiguration)
-                    ));
-        } else {
+        var authDeviceNotifier = Optional.ofNullable(get(providerConfig.getType())).orElseGet(() -> {
             logger.error("No authentication device notifier is registered for type {}", providerConfig.getType());
             throw new IllegalStateException("No authentication device notifier is registered for type " + providerConfig.getType());
-        }
+        });
+
+        var configuration = configurationFactory.create(authDeviceNotifier.configuration(), providerConfig.getConfiguration());
+        return createProvider(
+                authDeviceNotifier,
+                new AuthDeviceNotifierConfigBeanFactoryPostProcessor(configuration)
+        );
     }
 
-    private static class AuthenticationDeviceNotifierConfigurationBeanFactoryPostProcessor
+    private static class AuthDeviceNotifierConfigBeanFactoryPostProcessor
             extends NamedBeanFactoryPostProcessor<AuthenticationDeviceNotifierConfiguration> {
 
-        private AuthenticationDeviceNotifierConfigurationBeanFactoryPostProcessor(AuthenticationDeviceNotifierConfiguration configuration) {
+        private AuthDeviceNotifierConfigBeanFactoryPostProcessor(AuthenticationDeviceNotifierConfiguration configuration) {
             super("configuration", configuration);
         }
     }

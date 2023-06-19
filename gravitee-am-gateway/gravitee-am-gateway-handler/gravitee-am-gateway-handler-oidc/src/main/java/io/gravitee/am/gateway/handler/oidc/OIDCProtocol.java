@@ -19,20 +19,21 @@ import io.gravitee.am.gateway.handler.api.Protocol;
 import io.gravitee.am.gateway.handler.api.ProtocolConfiguration;
 import io.gravitee.am.gateway.handler.api.ProtocolProvider;
 import io.gravitee.am.gateway.handler.oidc.spring.OIDCConfiguration;
+import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class OIDCProtocol implements Protocol {
+public class OIDCProtocol extends Protocol<OIDCConfiguration, OIDCProvider> {
 
     @Override
-    public Class<? extends ProtocolConfiguration> configuration() {
+    public Class<OIDCConfiguration> configuration() {
         return OIDCConfiguration.class;
     }
 
     @Override
-    public Class<? extends ProtocolProvider> protocolProvider() {
+    public Class<OIDCProvider> provider() {
         return OIDCProvider.class;
     }
 }

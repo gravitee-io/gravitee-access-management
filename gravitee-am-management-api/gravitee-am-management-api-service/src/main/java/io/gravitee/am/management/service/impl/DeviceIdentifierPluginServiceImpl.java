@@ -47,7 +47,7 @@ public class DeviceIdentifierPluginServiceImpl implements DeviceIdentifierPlugin
     @Override
     public Single<List<DeviceIdentifierPlugin>> findAll() {
         LOGGER.debug("List all Device Identifier plugins");
-        return Observable.fromIterable(deviceIdentifierPluginManager.getAll())
+        return Observable.fromIterable(deviceIdentifierPluginManager.findAll(true))
                 .map(this::convert)
                 .toList();
     }
@@ -87,13 +87,14 @@ public class DeviceIdentifierPluginServiceImpl implements DeviceIdentifierPlugin
     }
 
 
-    private DeviceIdentifierPlugin convert(Plugin deviceIdentifier) {
-        var plugin = new DeviceIdentifierPlugin();
-        plugin.setId(deviceIdentifier.manifest().id());
-        plugin.setName(deviceIdentifier.manifest().name());
-        plugin.setDescription(deviceIdentifier.manifest().description());
-        plugin.setVersion(deviceIdentifier.manifest().version());
-        plugin.setCategory(deviceIdentifier.manifest().category());
-        return plugin;
+    private DeviceIdentifierPlugin convert(Plugin plugin) {
+        var deviceIdentifierPlugin = new DeviceIdentifierPlugin();
+        deviceIdentifierPlugin.setId(plugin.manifest().id());
+        deviceIdentifierPlugin.setName(plugin.manifest().name());
+        deviceIdentifierPlugin.setDescription(plugin.manifest().description());
+        deviceIdentifierPlugin.setVersion(plugin.manifest().version());
+        deviceIdentifierPlugin.setCategory(plugin.manifest().category());
+        deviceIdentifierPlugin.setDeployed(plugin.deployed());
+        return deviceIdentifierPlugin;
     }
 }

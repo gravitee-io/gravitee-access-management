@@ -45,7 +45,7 @@ public class FactorPluginServiceImpl implements FactorPluginService {
     @Override
     public Single<List<FactorPlugin>> findAll() {
         LOGGER.debug("List all factor plugins");
-        return Observable.fromIterable(factorPluginManager.getAll())
+        return Observable.fromIterable(factorPluginManager.findAll(true))
                 .map(this::convert)
                 .toList();
     }
@@ -86,13 +86,14 @@ public class FactorPluginServiceImpl implements FactorPluginService {
         });
     }
 
-    private FactorPlugin convert(Plugin factorPlugin) {
-        FactorPlugin plugin = new FactorPlugin();
-        plugin.setId(factorPlugin.manifest().id());
-        plugin.setName(factorPlugin.manifest().name());
-        plugin.setDescription(factorPlugin.manifest().description());
-        plugin.setVersion(factorPlugin.manifest().version());
-        plugin.setCategory(factorPlugin.manifest().category());
-        return plugin;
+    private FactorPlugin convert(Plugin plugin) {
+        var factorPlugin = new FactorPlugin();
+        factorPlugin.setId(plugin.manifest().id());
+        factorPlugin.setName(plugin.manifest().name());
+        factorPlugin.setDescription(plugin.manifest().description());
+        factorPlugin.setVersion(plugin.manifest().version());
+        factorPlugin.setCategory(plugin.manifest().category());
+        factorPlugin.setDeployed(plugin.deployed());
+        return factorPlugin;
     }
 }

@@ -18,23 +18,24 @@ package io.gravitee.am.identityprovider.mongo;
 import io.gravitee.am.identityprovider.api.*;
 import io.gravitee.am.identityprovider.mongo.authentication.MongoAuthenticationProvider;
 import io.gravitee.am.identityprovider.mongo.user.MongoUserProvider;
+import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class MongoIdentityProvider implements IdentityProvider {
-    public Class<? extends IdentityProviderConfiguration> configuration() {
+public class MongoIdentityProvider extends IdentityProvider<MongoIdentityProviderConfiguration, MongoAuthenticationProvider> {
+
+    public Class<MongoIdentityProviderConfiguration> configuration() {
         return MongoIdentityProviderConfiguration.class;
     }
 
-    public Class<? extends AuthenticationProvider> authenticationProvider() {
+    public Class<MongoAuthenticationProvider> provider() {
         return MongoAuthenticationProvider.class;
     }
 
     public Class<? extends UserProvider> userProvider() {
         return MongoUserProvider.class;
     }
-
 }

@@ -24,15 +24,17 @@ import io.gravitee.am.resource.api.Resource;
 import io.gravitee.am.resource.api.ResourceConfiguration;
 import io.gravitee.am.resource.api.ResourceProvider;
 import io.gravitee.am.resource.infobip.provider.InfobipResourceProvider;
+import io.gravitee.plugin.core.api.Plugin;
 
-public class InfobipResource implements Resource {
+public class InfobipResource extends Resource<InfobipResourceConfiguration, InfobipResourceProvider> {
+
     @Override
-    public Class<? extends ResourceConfiguration> configuration() {
-        return InfobipResourceConfiguration.class;
+    public Class<InfobipResourceProvider> provider() {
+        return InfobipResourceProvider.class;
     }
 
     @Override
-    public Class<? extends ResourceProvider> resourceProvider() {
-        return InfobipResourceProvider.class;
+    public Class<InfobipResourceConfiguration> configuration() {
+        return InfobipResourceConfiguration.class;
     }
 }

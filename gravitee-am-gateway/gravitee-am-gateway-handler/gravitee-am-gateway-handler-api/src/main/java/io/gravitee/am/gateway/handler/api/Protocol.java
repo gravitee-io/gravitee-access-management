@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 package io.gravitee.am.gateway.handler.api;
+
+import io.gravitee.am.common.plugin.AmPlugin;
+import io.gravitee.plugin.core.api.Plugin;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface Protocol {
-
-    Class<? extends ProtocolConfiguration> configuration();
-
-    Class<? extends ProtocolProvider> protocolProvider();
+public abstract class Protocol<C extends ProtocolConfiguration, P extends ProtocolProvider> extends AmPlugin<C, P> {
 
 }
