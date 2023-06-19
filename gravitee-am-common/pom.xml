@@ -42,5 +42,10 @@
             <artifactId>gravitee-node-api</artifactId>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>io.gravitee.plugin</groupId>
+            <artifactId>gravitee-plugin-core</artifactId>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 </project>

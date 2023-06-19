@@ -46,4 +46,13 @@
         <module>gravitee-am-plugins-handlers-deviceidentifier</module>
         <module>gravitee-am-plugins-handlers-authdevice-notifier</module>
     </modules>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.gravitee.am.common</groupId>
+            <artifactId>gravitee-am-common</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
 </project>

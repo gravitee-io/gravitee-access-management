@@ -20,19 +20,21 @@ import io.gravitee.am.factor.api.Factor;
 import io.gravitee.am.factor.api.FactorConfiguration;
 import io.gravitee.am.factor.api.FactorProvider;
 import io.gravitee.am.factor.recovery.code.provider.RecoveryCodeFactorProvider;
+import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Ashraful Hasan (ashraful.hasan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class RecoveryCodeFactor implements Factor {
+public class RecoveryCodeFactor extends Factor<RecoveryCodeFactorConfiguration, RecoveryCodeFactorProvider> {
+
     @Override
-    public Class<? extends FactorConfiguration> configuration() {
+    public Class<RecoveryCodeFactorConfiguration> configuration() {
         return RecoveryCodeFactorConfiguration.class;
     }
 
     @Override
-    public Class<? extends FactorProvider> factorProvider() {
+    public Class<RecoveryCodeFactorProvider> provider() {
         return RecoveryCodeFactorProvider.class;
     }
 }

@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class AuthenticationDeviceNotifierPluginHandler extends AmPluginHandler<AuthenticationDeviceNotifier> {
+public class AuthenticationDeviceNotifierPluginHandler extends AmPluginHandler<AuthenticationDeviceNotifier<?, ?>> {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(AuthenticationDeviceNotifierPluginHandler.class);
     public static final String PLUGIN_TYPE_AUTHDEVICE_NOTIFIER = "authdevice-notifier";
@@ -41,8 +41,4 @@ public class AuthenticationDeviceNotifierPluginHandler extends AmPluginHandler<A
         return LOGGER;
     }
 
-    @Override
-    protected Class<AuthenticationDeviceNotifier> getClazz() {
-        return AuthenticationDeviceNotifier.class;
-    }
 }

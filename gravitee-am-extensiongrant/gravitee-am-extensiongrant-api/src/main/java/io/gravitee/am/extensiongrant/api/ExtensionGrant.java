@@ -15,13 +15,14 @@
  */
 package io.gravitee.am.extensiongrant.api;
 
+import io.gravitee.am.common.plugin.AmPlugin;
+import io.gravitee.plugin.core.api.Plugin;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface ExtensionGrant {
-
-    Class<? extends ExtensionGrantConfiguration> configuration();
-
-    Class<? extends ExtensionGrantProvider> provider();
+public abstract class ExtensionGrant<
+        C extends ExtensionGrantConfiguration,
+        P extends ExtensionGrantProvider> extends AmPlugin<C, P> {
 }

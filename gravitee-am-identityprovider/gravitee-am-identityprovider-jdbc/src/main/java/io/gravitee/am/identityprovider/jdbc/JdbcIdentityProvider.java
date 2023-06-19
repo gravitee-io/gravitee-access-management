@@ -22,20 +22,21 @@ import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.identityprovider.jdbc.authentication.JdbcAuthenticationProvider;
 import io.gravitee.am.identityprovider.jdbc.configuration.JdbcIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.jdbc.user.JdbcUserProvider;
+import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class JdbcIdentityProvider implements IdentityProvider {
+public class JdbcIdentityProvider extends IdentityProvider<JdbcIdentityProviderConfiguration, JdbcAuthenticationProvider> {
 
     @Override
-    public Class<? extends IdentityProviderConfiguration> configuration() {
+    public Class<JdbcIdentityProviderConfiguration> configuration() {
         return JdbcIdentityProviderConfiguration.class;
     }
 
     @Override
-    public Class<? extends AuthenticationProvider> authenticationProvider() {
+    public Class<JdbcAuthenticationProvider> provider() {
         return JdbcAuthenticationProvider.class;
     }
 

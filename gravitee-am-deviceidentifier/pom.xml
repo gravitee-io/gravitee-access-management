@@ -37,4 +37,12 @@
         <module>gravitee-am-deviceidentifier-fingerprintjs-v3-community</module>
         <module>gravitee-am-deviceidentifier-fingerprintjs-v3-pro</module>
     </modules>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.gravitee.plugin</groupId>
+            <artifactId>gravitee-plugin-core</artifactId>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
 </project>

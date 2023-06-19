@@ -22,20 +22,21 @@ import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.identityprovider.gravitee.authentication.GraviteeAuthenticationProvider;
 import io.gravitee.am.identityprovider.gravitee.user.GraviteeUserProvider;
+import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class GraviteeIdentityProvider implements IdentityProvider {
+public class GraviteeIdentityProvider extends IdentityProvider<GraviteeIdentityProviderConfiguration, GraviteeAuthenticationProvider> {
 
     @Override
-    public Class<? extends IdentityProviderConfiguration> configuration() {
+    public Class<GraviteeIdentityProviderConfiguration> configuration() {
         return GraviteeIdentityProviderConfiguration.class;
     }
 
     @Override
-    public Class<? extends AuthenticationProvider> authenticationProvider() {
+    public Class<GraviteeAuthenticationProvider> provider() {
         return GraviteeAuthenticationProvider.class;
     }
 

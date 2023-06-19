@@ -146,7 +146,8 @@ public class IdentityProviderManagerImpl implements IdentityProviderManager, Ini
                     authenticationProvider.start();
                     providers.put(identityProvider.getId(), authenticationProvider);
                     identities.put(identityProvider.getId(), identityProvider);
-                }    identities.put(identityProvider.getId(), identityProvider);
+                }
+                identities.put(identityProvider.getId(), identityProvider);
             } else {
                 logger.info("\tIdentity provider already initialized: {} for organization {} [{}]", identityProvider.getName(), identityProvider.getReferenceId(), identityProvider.getType());
             }

@@ -16,23 +16,23 @@
 package io.gravitee.am.factor.call;
 
 import io.gravitee.am.factor.api.Factor;
-import io.gravitee.am.factor.api.FactorConfiguration;
 import io.gravitee.am.factor.api.FactorProvider;
 import io.gravitee.am.factor.call.provider.CallFactorProvider;
+import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class CallFactor implements Factor {
-    
+public class CallFactor extends Factor<CallFactorConfiguration, CallFactorProvider> {
+
     @Override
-    public Class<? extends FactorConfiguration> configuration() {
+    public Class<CallFactorConfiguration> configuration() {
         return CallFactorConfiguration.class;
     }
 
     @Override
-    public Class<? extends FactorProvider> factorProvider() {
+    public Class<CallFactorProvider> provider() {
         return CallFactorProvider.class;
     }
 }

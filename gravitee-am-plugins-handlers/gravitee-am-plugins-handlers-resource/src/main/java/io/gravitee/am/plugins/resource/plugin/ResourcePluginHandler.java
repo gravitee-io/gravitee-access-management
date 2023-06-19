@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class ResourcePluginHandler extends AmPluginHandler<Resource> {
+public class ResourcePluginHandler extends AmPluginHandler<Resource<?, ?>> {
 
     private final Logger LOGGER = LoggerFactory.getLogger(ResourcePluginHandler.class);
 
@@ -39,11 +39,6 @@ public class ResourcePluginHandler extends AmPluginHandler<Resource> {
     @Override
     protected Logger getLogger() {
         return LOGGER;
-    }
-
-    @Override
-    protected Class<Resource> getClazz() {
-        return Resource.class;
     }
 
     @Override

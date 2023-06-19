@@ -28,7 +28,7 @@ import org.springframework.context.ApplicationContext;
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class ReporterPluginHandler extends AmPluginHandler<Reporter> {
+public class ReporterPluginHandler extends AmPluginHandler<Reporter<?, ?>> {
 
     private static final String AM_REPORTER_PLUGIN_TYPE = "am-reporter";
     private final Logger LOGGER = LoggerFactory.getLogger(ReporterPluginHandler.class);
@@ -39,11 +39,6 @@ public class ReporterPluginHandler extends AmPluginHandler<Reporter> {
     @Override
     protected Logger getLogger() {
         return LOGGER;
-    }
-
-    @Override
-    protected Class<Reporter> getClazz() {
-        return Reporter.class;
     }
 
     @Override

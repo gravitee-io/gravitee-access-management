@@ -32,6 +32,13 @@
     <name>Gravitee IO - Access Management - Plugins Handlers - Api</name>
 
     <dependencies>
+
+        <dependency>
+            <groupId>io.gravitee.plugin</groupId>
+            <artifactId>gravitee-plugin-core</artifactId>
+            <version>${gravitee-plugin.version}</version>
+        </dependency>
+
         <!-- Gravitee.io -->
         <dependency>
             <groupId>io.gravitee.plugin</groupId>

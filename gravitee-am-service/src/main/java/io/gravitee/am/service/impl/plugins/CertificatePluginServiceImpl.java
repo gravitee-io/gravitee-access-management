@@ -52,7 +52,7 @@ public class CertificatePluginServiceImpl implements CertificatePluginService {
         LOGGER.debug("List all certificate plugins");
         return Single.create(emitter -> {
             try {
-                emitter.onSuccess(certificatePluginManager.getAll()
+                emitter.onSuccess(certificatePluginManager.findAll(true)
                         .stream()
                         .map(this::convert)
                         .collect(Collectors.toSet()));
@@ -99,12 +99,13 @@ public class CertificatePluginServiceImpl implements CertificatePluginService {
         });
     }
 
-    private CertificatePlugin convert(Plugin certificatePlugin) {
-        CertificatePlugin plugin = new CertificatePlugin();
-        plugin.setId(certificatePlugin.manifest().id());
-        plugin.setName(certificatePlugin.manifest().name());
-        plugin.setDescription(certificatePlugin.manifest().description());
-        plugin.setVersion(certificatePlugin.manifest().version());
-        return plugin;
+    private CertificatePlugin convert(Plugin plugin) {
+        var certificatePlugin = new CertificatePlugin();
+        certificatePlugin.setId(plugin.manifest().id());
+        certificatePlugin.setName(plugin.manifest().name());
+        certificatePlugin.setDescription(plugin.manifest().description());
+        certificatePlugin.setVersion(plugin.manifest().version());
+        certificatePlugin.setDeployed(plugin.deployed());
+        return certificatePlugin;
     }
 }

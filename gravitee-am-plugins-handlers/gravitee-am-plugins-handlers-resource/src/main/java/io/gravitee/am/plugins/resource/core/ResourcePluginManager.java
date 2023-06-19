@@ -15,16 +15,13 @@
  */
 package io.gravitee.am.plugins.resource.core;
 
-import io.gravitee.am.plugins.handlers.api.core.AmPluginManager;
-import io.gravitee.am.plugins.handlers.api.core.ConfigurationFactory;
-import io.gravitee.am.plugins.handlers.api.core.NamedBeanFactoryPostProcessor;
-import io.gravitee.am.plugins.handlers.api.core.ProviderPluginManager;
+import io.gravitee.am.plugins.handlers.api.core.*;
 import io.gravitee.am.plugins.handlers.api.provider.ProviderConfiguration;
 import io.gravitee.am.resource.api.Resource;
 import io.gravitee.am.resource.api.ResourceConfiguration;
 import io.gravitee.am.resource.api.ResourceProvider;
 import io.gravitee.plugin.core.api.PluginContextFactory;
-import java.util.List;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,39 +31,32 @@ import org.slf4j.LoggerFactory;
  * @author GraviteeSource Team
  */
 public class ResourcePluginManager
-        extends ProviderPluginManager<Resource, ResourceProvider, ProviderConfiguration>
-        implements AmPluginManager<Resource> {
+        extends ProviderPluginManager<Resource<?, ResourceProvider>, ResourceProvider, ProviderConfiguration>
+        implements AmPluginManager<Resource<?, ResourceProvider>> {
 
     private final Logger logger = LoggerFactory.getLogger(ResourcePluginManager.class);
 
-    private final ConfigurationFactory<ResourceConfiguration> resourceConfigurationFactory;
+    private final ConfigurationFactory<ResourceConfiguration> configurationFactory;
 
     public ResourcePluginManager(PluginContextFactory pluginContextFactory,
                                  ConfigurationFactory<ResourceConfiguration> resourceConfigurationFactory) {
         super(pluginContextFactory);
-        this.resourceConfigurationFactory = resourceConfigurationFactory;
+        this.configurationFactory = resourceConfigurationFactory;
     }
 
     @Override
-    public ResourceProvider create(ProviderConfiguration providerConfiguration) {
-        logger.debug("Looking for a resource for [{}]", providerConfiguration.getType());
-        Resource resource = instances.get(providerConfiguration.getType());
+    public ResourceProvider create(ProviderConfiguration providerConfig) {
+        logger.debug("Looking for a resource for [{}]", providerConfig.getType());
+        var resource = Optional.ofNullable(get(providerConfig.getType())).orElseGet(() -> {
+            logger.error("No resource is registered for type {}", providerConfig.getType());
+            throw new IllegalStateException("No resource is registered for type " + providerConfig.getType());
+        });
 
-        if (resource != null) {
-            Class<? extends ResourceConfiguration> configurationClass = resource.configuration();
-            ResourceConfiguration resourceConfiguration = resourceConfigurationFactory.create(configurationClass, providerConfiguration.getConfiguration());
-            return createProvider(
-                    plugins.get(resource),
-                    resource.resourceProvider(),
-                    List.of(new ResourceConfigurationBeanFactoryPostProcessor(resourceConfiguration))
-            );
-        } else {
-            logger.error("No resource is registered for type {}", providerConfiguration.getType());
-            throw new IllegalStateException("No resource is registered for type " + providerConfiguration.getType());
-        }
+        var resourceConfiguration = configurationFactory.create(resource.configuration(), providerConfig.getConfiguration());
+        return createProvider(resource, new ResourceConfigurationBeanFactoryPostProcessor(resourceConfiguration));
     }
 
-    private class ResourceConfigurationBeanFactoryPostProcessor extends NamedBeanFactoryPostProcessor<ResourceConfiguration> {
+    private static class ResourceConfigurationBeanFactoryPostProcessor extends NamedBeanFactoryPostProcessor<ResourceConfiguration> {
         private ResourceConfigurationBeanFactoryPostProcessor(ResourceConfiguration configuration) {
             super("configuration", configuration);
         }

@@ -19,20 +19,21 @@ import io.gravitee.am.extensiongrant.api.ExtensionGrant;
 import io.gravitee.am.extensiongrant.api.ExtensionGrantConfiguration;
 import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
 import io.gravitee.am.extensiongrant.jwtbearer.provider.JWTBearerExtensionGrantProvider;
+import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class JWTBearerExtensionGrant implements ExtensionGrant {
+public class JWTBearerExtensionGrant extends ExtensionGrant<JWTBearerExtensionGrantConfiguration, JWTBearerExtensionGrantProvider> {
 
     @Override
-    public Class<? extends ExtensionGrantConfiguration> configuration() {
+    public Class<JWTBearerExtensionGrantConfiguration> configuration() {
         return JWTBearerExtensionGrantConfiguration.class;
     }
 
     @Override
-    public Class<? extends ExtensionGrantProvider> provider() {
+    public Class<JWTBearerExtensionGrantProvider> provider() {
         return JWTBearerExtensionGrantProvider.class;
     }
 }

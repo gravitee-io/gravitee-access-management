@@ -17,20 +17,21 @@ package io.gravitee.am.identityprovider.inline;
 
 import io.gravitee.am.identityprovider.api.*;
 import io.gravitee.am.identityprovider.inline.authentication.InlineAuthenticationProvider;
+import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class InlineIdentityProvider implements IdentityProvider {
+public class InlineIdentityProvider extends IdentityProvider<InlineIdentityProviderConfiguration, InlineAuthenticationProvider> {
 
     @Override
-    public Class<? extends IdentityProviderConfiguration> configuration() {
+    public Class<InlineIdentityProviderConfiguration> configuration() {
         return InlineIdentityProviderConfiguration.class;
     }
 
     @Override
-    public Class<? extends AuthenticationProvider> authenticationProvider() {
+    public Class<InlineAuthenticationProvider> provider() {
         return InlineAuthenticationProvider.class;
     }
 

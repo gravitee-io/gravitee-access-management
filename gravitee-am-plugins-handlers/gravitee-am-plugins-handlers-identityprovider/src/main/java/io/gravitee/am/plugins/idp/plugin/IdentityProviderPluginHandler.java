@@ -29,7 +29,7 @@ import org.springframework.context.ApplicationContext;
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class IdentityProviderPluginHandler extends AmPluginHandler<IdentityProvider> {
+public class IdentityProviderPluginHandler extends AmPluginHandler<IdentityProvider<?, ?>> {
 
     private final Logger LOGGER = LoggerFactory.getLogger(IdentityProviderPluginHandler.class);
 
@@ -44,11 +44,6 @@ public class IdentityProviderPluginHandler extends AmPluginHandler<IdentityProvi
     @Override
     protected Logger getLogger() {
         return LOGGER;
-    }
-
-    @Override
-    protected Class<IdentityProvider> getClazz() {
-        return IdentityProvider.class;
     }
 
     @Override

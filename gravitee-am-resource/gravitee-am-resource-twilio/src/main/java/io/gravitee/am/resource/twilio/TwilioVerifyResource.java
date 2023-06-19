@@ -19,20 +19,21 @@ import io.gravitee.am.resource.api.Resource;
 import io.gravitee.am.resource.api.ResourceConfiguration;
 import io.gravitee.am.resource.api.ResourceProvider;
 import io.gravitee.am.resource.twilio.provider.TwilioVerifyResourceProvider;
+import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class TwilioVerifyResource implements Resource {
+public class TwilioVerifyResource extends Resource<TwilioVerifyResourceConfiguration, TwilioVerifyResourceProvider> {
 
     @Override
-    public Class<? extends ResourceConfiguration> configuration() {
+    public Class<TwilioVerifyResourceConfiguration> configuration() {
         return TwilioVerifyResourceConfiguration.class;
     }
 
     @Override
-    public Class<? extends ResourceProvider> resourceProvider() {
+    public Class<TwilioVerifyResourceProvider> provider() {
         return TwilioVerifyResourceProvider.class;
     }
 }

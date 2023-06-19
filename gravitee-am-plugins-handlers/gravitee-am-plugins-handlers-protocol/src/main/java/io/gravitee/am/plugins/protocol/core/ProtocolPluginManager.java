@@ -16,6 +16,7 @@
 package io.gravitee.am.plugins.protocol.core;
 
 import io.gravitee.am.gateway.handler.api.Protocol;
+import io.gravitee.am.gateway.handler.api.ProtocolConfiguration;
 import io.gravitee.am.gateway.handler.api.ProtocolProvider;
 import io.gravitee.am.plugins.handlers.api.core.AmPluginManager;
 import io.gravitee.am.plugins.handlers.api.core.ProviderPluginManager;
@@ -38,8 +39,8 @@ import org.springframework.core.env.Environment;
  * @author GraviteeSource Team
  */
 public class ProtocolPluginManager extends
-        ProviderPluginManager<Protocol, ProtocolProvider, ProtocolProviderConfiguration>
-        implements AmPluginManager<Protocol> {
+        ProviderPluginManager<Protocol<?, ProtocolProvider>, ProtocolProvider, ProtocolProviderConfiguration>
+        implements AmPluginManager<Protocol<?, ProtocolProvider>> {
 
     private static final Logger logger = LoggerFactory.getLogger(ProtocolPluginManager.class);
     private final PluginClassLoaderFactory<Plugin> pluginClassLoaderFactory;
@@ -53,20 +54,19 @@ public class ProtocolPluginManager extends
     }
 
     @Override
-    public ProtocolProvider create(ProtocolProviderConfiguration providerConfiguration) {
-        logger.debug("Looking for an protocol provider for [{}]", providerConfiguration.getType());
-        Protocol protocol = instances.get(providerConfiguration.getType());
+    public ProtocolProvider create(ProtocolProviderConfiguration providerConfig) {
+        logger.debug("Looking for an protocol provider for [{}]", providerConfig.getType());
+        var protocol = get(providerConfig.getType());
         if (protocol != null) {
             try {
-                ProtocolProvider protocolProvider = createInstance(protocol.protocolProvider());
-                Plugin plugin = plugins.get(protocol);
+                var protocolProvider = createInstance(protocol.provider());
 
-                final ApplicationContext parentContext = providerConfiguration.getApplicationContext();
+                final ApplicationContext parentContext = providerConfig.getApplicationContext();
                 final Environment environment = parentContext.getEnvironment();
 
                 AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
                 context.setParent(parentContext);
-                context.setClassLoader(pluginClassLoaderFactory.getOrCreateClassLoader(plugin));
+                context.setClassLoader(pluginClassLoaderFactory.getOrCreateClassLoader(protocol));
                 context.setEnvironment((ConfigurableEnvironment) environment);
 
                 PropertySourcesPlaceholderConfigurer configurer = new PropertySourcesPlaceholderConfigurer();
@@ -75,7 +75,7 @@ public class ProtocolPluginManager extends
                 context.addBeanFactoryPostProcessor(configurer);
 
                 context.register(protocol.configuration());
-                context.registerBeanDefinition(plugin.clazz(), BeanDefinitionBuilder.rootBeanDefinition(plugin.clazz()).getBeanDefinition());
+                context.registerBeanDefinition(protocol.clazz(), BeanDefinitionBuilder.rootBeanDefinition(protocol.clazz()).getBeanDefinition());
                 context.refresh();
 
                 context.getAutowireCapableBeanFactory().autowireBean(protocolProvider);
@@ -86,11 +86,10 @@ public class ProtocolPluginManager extends
                 return protocolProvider;
             } catch (Exception ex) {
                 logger.error("An unexpected error occurs while loading protocol", ex);
-                return null;
             }
         } else {
-            logger.info("No protocol provider is registered for type {}", providerConfiguration.getType());
-            return null;
+            logger.info("No protocol provider is registered for type {}", providerConfig.getType());
         }
+        return null;
     }
 }

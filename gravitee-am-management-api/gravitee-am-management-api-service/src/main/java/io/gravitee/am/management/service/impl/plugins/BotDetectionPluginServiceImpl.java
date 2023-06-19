@@ -15,9 +15,8 @@
  */
 package io.gravitee.am.management.service.impl.plugins;
 
-import io.gravitee.am.botdetection.api.BotDetection;
 import io.gravitee.am.management.service.BotDetectionPluginService;
-import io.gravitee.am.plugins.handlers.api.core.AmPluginManager;
+import io.gravitee.am.plugins.botdetection.core.BotDetectionPluginManager;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.plugin.BotDetectionPlugin;
 import io.gravitee.plugin.core.api.Plugin;
@@ -39,17 +38,17 @@ public class BotDetectionPluginServiceImpl implements BotDetectionPluginService 
 
     private final Logger LOGGER = LoggerFactory.getLogger(BotDetectionPluginServiceImpl.class);
 
-    private final AmPluginManager<BotDetection> pluginManager;
+    private final BotDetectionPluginManager pluginManager;
 
     @Autowired
-    public BotDetectionPluginServiceImpl(AmPluginManager<BotDetection> pluginManager) {
+    public BotDetectionPluginServiceImpl(BotDetectionPluginManager pluginManager) {
         this.pluginManager = pluginManager;
     }
 
     @Override
     public Single<List<BotDetectionPlugin>> findAll() {
         LOGGER.debug("List all bot detection plugins");
-        return Observable.fromIterable(pluginManager.getAll())
+        return Observable.fromIterable(pluginManager.findAll(true))
                 .map(this::convert)
                 .toList();
     }
@@ -90,13 +89,14 @@ public class BotDetectionPluginServiceImpl implements BotDetectionPluginService 
         });
     }
 
-    private BotDetectionPlugin convert(Plugin botDetectionPlugin) {
-        BotDetectionPlugin plugin = new BotDetectionPlugin();
-        plugin.setId(botDetectionPlugin.manifest().id());
-        plugin.setName(botDetectionPlugin.manifest().name());
-        plugin.setDescription(botDetectionPlugin.manifest().description());
-        plugin.setVersion(botDetectionPlugin.manifest().version());
-        plugin.setCategory(botDetectionPlugin.manifest().category());
-        return plugin;
+    private BotDetectionPlugin convert(Plugin plugin) {
+        var botDetectionPlugin = new BotDetectionPlugin();
+        botDetectionPlugin.setId(plugin.manifest().id());
+        botDetectionPlugin.setName(plugin.manifest().name());
+        botDetectionPlugin.setDescription(plugin.manifest().description());
+        botDetectionPlugin.setVersion(plugin.manifest().version());
+        botDetectionPlugin.setCategory(plugin.manifest().category());
+        botDetectionPlugin.setDeployed(plugin.deployed());
+        return botDetectionPlugin;
     }
 }

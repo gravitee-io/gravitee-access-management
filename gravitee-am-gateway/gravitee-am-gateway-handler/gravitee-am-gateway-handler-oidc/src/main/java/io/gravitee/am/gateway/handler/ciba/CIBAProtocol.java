@@ -19,20 +19,21 @@ import io.gravitee.am.gateway.handler.api.Protocol;
 import io.gravitee.am.gateway.handler.api.ProtocolConfiguration;
 import io.gravitee.am.gateway.handler.api.ProtocolProvider;
 import io.gravitee.am.gateway.handler.ciba.spring.CIBAConfiguration;
+import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class CIBAProtocol implements Protocol {
+public class CIBAProtocol extends Protocol<CIBAConfiguration, CIBAProvider> {
 
     @Override
-    public Class<? extends ProtocolConfiguration> configuration() {
+    public Class<CIBAConfiguration> configuration() {
         return CIBAConfiguration.class;
     }
 
     @Override
-    public Class<? extends ProtocolProvider> protocolProvider() {
+    public Class<CIBAProvider> provider() {
         return CIBAProvider.class;
     }
 }

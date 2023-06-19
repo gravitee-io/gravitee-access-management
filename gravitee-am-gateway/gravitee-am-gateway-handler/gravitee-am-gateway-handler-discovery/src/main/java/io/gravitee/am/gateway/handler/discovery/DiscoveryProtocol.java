@@ -19,19 +19,21 @@ import io.gravitee.am.gateway.handler.api.Protocol;
 import io.gravitee.am.gateway.handler.api.ProtocolConfiguration;
 import io.gravitee.am.gateway.handler.api.ProtocolProvider;
 import io.gravitee.am.gateway.handler.discovery.spring.DiscoveryConfiguration;
+import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
-public class DiscoveryProtocol implements Protocol {
+public class DiscoveryProtocol extends Protocol<DiscoveryConfiguration, DiscoveryProvider> {
+
     @Override
-    public Class<? extends ProtocolConfiguration> configuration() {
+    public Class<DiscoveryConfiguration> configuration() {
         return DiscoveryConfiguration.class;
     }
 
     @Override
-    public Class<? extends ProtocolProvider> protocolProvider() {
+    public Class<DiscoveryProvider> provider() {
         return DiscoveryProvider.class;
     }
 }

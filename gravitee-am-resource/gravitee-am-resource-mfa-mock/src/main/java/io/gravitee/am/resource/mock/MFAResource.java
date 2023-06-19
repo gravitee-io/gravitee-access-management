@@ -19,19 +19,21 @@ import io.gravitee.am.resource.api.Resource;
 import io.gravitee.am.resource.api.ResourceConfiguration;
 import io.gravitee.am.resource.api.ResourceProvider;
 import io.gravitee.am.resource.mock.provider.MFAMockProvider;
+import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class MFAResource implements Resource {
+public class MFAResource extends Resource<MFAResourceConfiguration, MFAMockProvider> {
+
     @Override
-    public Class<? extends ResourceConfiguration> configuration() {
+    public Class<MFAResourceConfiguration> configuration() {
         return MFAResourceConfiguration.class;
     }
 
     @Override
-    public Class<? extends ResourceProvider> resourceProvider() {
+    public Class<MFAMockProvider> provider() {
         return MFAMockProvider.class;
     }
 }

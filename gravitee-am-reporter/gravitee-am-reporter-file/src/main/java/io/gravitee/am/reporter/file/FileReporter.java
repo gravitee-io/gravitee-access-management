@@ -19,20 +19,21 @@ import io.gravitee.am.reporter.api.Reporter;
 import io.gravitee.am.reporter.api.ReporterConfiguration;
 import io.gravitee.am.reporter.api.audit.AuditReporter;
 import io.gravitee.am.reporter.file.audit.FileAuditReporter;
+import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class FileReporter implements Reporter {
+public class FileReporter extends Reporter<FileReporterConfiguration, FileAuditReporter> {
 
     @Override
-    public Class<? extends ReporterConfiguration> configuration() {
+    public Class<FileReporterConfiguration> configuration() {
         return FileReporterConfiguration.class;
     }
 
     @Override
-    public Class<? extends AuditReporter> auditReporter() {
+    public Class<FileAuditReporter> provider() {
         return FileAuditReporter.class;
     }
 }

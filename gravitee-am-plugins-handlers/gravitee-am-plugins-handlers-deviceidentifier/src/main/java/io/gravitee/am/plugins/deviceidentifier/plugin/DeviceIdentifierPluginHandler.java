@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
  * @author Rémi Sultan  (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class DeviceIdentifierPluginHandler extends AmPluginHandler<DeviceIdentifier> {
+public class DeviceIdentifierPluginHandler extends AmPluginHandler<DeviceIdentifier<?, ?>> {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(DeviceIdentifierPluginHandler.class);
     public static final String PLUGIN_TYPE_DEVICE_IDENTIFIER = "DEVICE_IDENTIFIER";
@@ -38,11 +38,6 @@ public class DeviceIdentifierPluginHandler extends AmPluginHandler<DeviceIdentif
     @Override
     protected Logger getLogger() {
         return LOGGER;
-    }
-
-    @Override
-    protected Class<DeviceIdentifier> getClazz() {
-        return DeviceIdentifier.class;
     }
 
     @Override

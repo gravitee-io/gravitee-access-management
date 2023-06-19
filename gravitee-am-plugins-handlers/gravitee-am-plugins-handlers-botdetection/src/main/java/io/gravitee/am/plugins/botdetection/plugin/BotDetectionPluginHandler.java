@@ -16,6 +16,7 @@
 package io.gravitee.am.plugins.botdetection.plugin;
 
 import io.gravitee.am.botdetection.api.BotDetection;
+import io.gravitee.am.botdetection.api.BotDetectionConfiguration;
 import io.gravitee.am.plugins.handlers.api.plugin.AmPluginHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +26,7 @@ import org.slf4j.LoggerFactory;
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class BotDetectionPluginHandler extends AmPluginHandler<BotDetection> {
+public class BotDetectionPluginHandler extends AmPluginHandler<BotDetection<?, ?>> {
 
     private final Logger LOGGER = LoggerFactory.getLogger(BotDetectionPluginHandler.class);
 
@@ -34,11 +35,6 @@ public class BotDetectionPluginHandler extends AmPluginHandler<BotDetection> {
     @Override
     protected Logger getLogger() {
         return LOGGER;
-    }
-
-    @Override
-    protected Class<BotDetection> getClazz() {
-        return BotDetection.class;
     }
 
     @Override

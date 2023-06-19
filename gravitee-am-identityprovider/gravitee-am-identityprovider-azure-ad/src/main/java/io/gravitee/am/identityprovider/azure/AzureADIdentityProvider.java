@@ -15,26 +15,23 @@
  */
 package io.gravitee.am.identityprovider.azure;
 
-import io.gravitee.am.identityprovider.api.AuthenticationProvider;
-import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
-import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
-import io.gravitee.am.identityprovider.api.IdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.api.social.SocialIdentityProvider;
 import io.gravitee.am.identityprovider.azure.authentication.AzureADAuthenticationProvider;
+import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class AzureADIdentityProvider implements SocialIdentityProvider {
+public class AzureADIdentityProvider extends SocialIdentityProvider<AzureADIdentityProviderConfiguration, AzureADAuthenticationProvider> {
 
     @Override
-    public Class<? extends IdentityProviderConfiguration> configuration() {
+    public Class<AzureADIdentityProviderConfiguration> configuration() {
         return AzureADIdentityProviderConfiguration.class;
     }
 
     @Override
-    public Class<? extends AuthenticationProvider> authenticationProvider() {
+    public Class<AzureADAuthenticationProvider> provider() {
         return AzureADAuthenticationProvider.class;
     }
 

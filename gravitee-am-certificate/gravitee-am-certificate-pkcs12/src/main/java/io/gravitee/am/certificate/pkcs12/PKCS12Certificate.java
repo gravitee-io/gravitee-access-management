@@ -19,20 +19,21 @@ import io.gravitee.am.certificate.api.Certificate;
 import io.gravitee.am.certificate.api.CertificateConfiguration;
 import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.am.certificate.pkcs12.provider.PKCS12Provider;
+import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class PKCS12Certificate implements Certificate {
+public class PKCS12Certificate extends Certificate<PKCS12Configuration, PKCS12Provider> {
 
     @Override
-    public Class<? extends CertificateConfiguration> configuration() {
+    public Class<PKCS12Configuration> configuration() {
         return PKCS12Configuration.class;
     }
 
     @Override
-    public Class<? extends CertificateProvider> certificateProvider() {
+    public Class<PKCS12Provider> provider() {
         return PKCS12Provider.class;
     }
 }
