@@ -137,7 +137,7 @@
 
         <!-- Sonar - Jacoco -->
         <jacoco-maven-plugin.version>0.8.7</jacoco-maven-plugin.version>
-        <protobuf-java.version>3.19.6</protobuf-java.version>
+        <protobuf-java.version>3.23.3</protobuf-java.version>
     </properties>
 
     <dependencyManagement>
