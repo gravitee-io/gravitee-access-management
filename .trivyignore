@@ -1,0 +1,13 @@
+# am-gateway:3.18
+# snakeyaml-1.31.jar - didn't upgrade until 3.20 for compatibility
+CVE-2022-1471
+
+# am-management-api:3.18
+# spring-web-5.3.26.jar - false positiver as we exclude vulnerable HttpInvokerServiceExporter class
+CVE-2016-1000027
+
+# am-management-ui:3.18
+# golang.org/x/net : not impacted as we don't use it at runtime
+CVE-2022-41721
+CVE-2022-41723
+

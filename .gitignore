@@ -36,3 +36,7 @@ gravitee-am-test/cypress/screenshots/
 .dccache
 cypress.env.json
 gravitee-am-test/api/config/development.json
+
+# local data when running docker compose
+docker/compose/data/
+
