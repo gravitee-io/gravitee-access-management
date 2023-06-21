@@ -62,7 +62,7 @@ executors:
 parameters:
   gio_action:
     type: enum
-    enum: [ release, publish_rpms, publish_docker_images, pull_requests, release_notes_am ]
+    enum: [ release, publish_nexus, publish_rpms, publish_docker_images, pull_requests, release_notes_am ]
     default: pull_requests
   gio_product:
     type: enum
@@ -215,9 +215,8 @@ commands:
             DRY_RUN: << parameters.dry_run >>
           name: "Gravitee AM Community Edition Package Bundle"
           command: |
-            sed -ri "s#<changelist>.*</changelist>#<changelist></changelist>#g" pom.xml
             export MVN_PRJ_VERSION=$(mvn -Dexec.executable='echo' -Dexec.args='${project.version}' --non-recursive exec:exec -q | tee -a /tmp/maven.logs; echo "$?" > /tmp/maven.exit.code)
-            export RELEASE_VERSION_NUMBER=$(echo "${MVN_PRJ_VERSION}" | awk -F '-SNAPSHOT' '{print $1}')            
+            export RELEASE_VERSION_NUMBER=$(echo "${MVN_PRJ_VERSION}" | awk -F '-SNAPSHOT' '{print $1}')
 
             mkdir -p ~/release/graviteeio-am/components/gravitee-am-management-api/
             cp -R ~/project/gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-management-api-standalone-distribution/gravitee-am-management-api-standalone-distribution-zip/target/gravitee-am-management-api-standalone-${RELEASE_VERSION_NUMBER}.zip ~/release/graviteeio-am/components/gravitee-am-management-api/
@@ -1087,7 +1086,6 @@ jobs:
             - run:
                 name: "Maven Test, Package, and Deploy to Gravitee's private Artifactory"
                 command: |
-                  sed -ri "s#<changelist>.*</changelist>#<changelist></changelist>#g" pom.xml
                   mvn -s /tmp/.gravitee.settings.xml -B -U -P gio-artifactory-release,gio-release clean deploy
       - when:
           condition: << parameters.dry_run>>
@@ -1095,7 +1093,6 @@ jobs:
             - run:
                 name: "Maven Test, Package and install"
                 command: |
-                  sed -ri "s#<changelist>.*</changelist>#<changelist></changelist>#g" pom.xml
                   mvn -s /tmp/.gravitee.settings.xml -B -U -P gio-artifactory-release,gio-release clean install
       - save-maven-job-cache:
           jobName: release
@@ -1104,17 +1101,6 @@ jobs:
       # Package Bundle Must succeed, before nexus staging is done : Package bundle is idempotnent and non immutable, whereas NExus staging and Git release are immutable
       - package_bundle:
           dry_run: << parameters.dry_run >>
-      - run:
-          name: Maven Test, Package, and Deploy to Nexus Staging
-          command: |
-            if [ "${DRY_RUN}" == "false" ]; then
-              echo "# --->>> NO IT IS NOT A DRY RUN : so we maven deploy to nexus staging"
-              sed -ri "s#<changelist>.*</changelist>#<changelist></changelist>#g" pom.xml
-              mvn -s /tmp/.gravitee.settings.xml -B -U -P gravitee-release deploy -DskipTests=true
-            else
-              echo "# --->>> THIS IS A DRY RUN: no deployment to nexus staging"
-              exit 0
-            fi;
       - git_config
       - run:
           name: Git release
@@ -1235,6 +1221,26 @@ jobs:
                       }
                     ]
                   }
+
+  publish_maven_packages_to_nexus:
+    executor:
+      name: openjdk
+      class: small
+      version: "11.0.16"
+    steps:
+      - checkout
+      - restore-maven-job-cache:
+          jobName: release
+      - attach_workspace:
+          at: /tmp
+      - prepare-gpg
+      - run:
+          name: Maven Test, Package, and Deploy to Nexus Staging
+          command: |
+            mvn -s /tmp/.gravitee.settings.xml -B -U -P gravitee-release deploy -DskipTests=true
+      - notify-on-failure
+      - notify-on-success
+
   build_n_push_am_ce_job:
     description: This Orb Job performs the docker build and publish for the am_ce dockerfile
     parameters:
@@ -1577,6 +1583,18 @@ workflows:
             - setup
           dry_run: << pipeline.parameters.dry_run >>
           rc_requested: << pipeline.parameters.rc_requested >>
+
+  publish_nexus:
+    when:
+      equal: [ publish_nexus, << pipeline.parameters.gio_action >> ]
+    jobs:
+      - setup:
+          context: cicd-orchestrator
+      - publish_maven_packages_to_nexus:
+          context: cicd-orchestrator
+          name: publish maven packages to nexus
+          requires:
+            - setup
 
   publish_rpms:
     when:
