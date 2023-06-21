@@ -62,7 +62,7 @@ executors:
 parameters:
   gio_action:
     type: enum
-    enum: [ release, publish_rpms, publish_docker_images, pull_requests, release_notes_am ]
+    enum: [ release, publish_maven_central, publish_rpms, publish_docker_images, pull_requests, release_notes_am ]
     default: pull_requests
   gio_product:
     type: enum
@@ -1055,16 +1055,6 @@ jobs:
       # Package Bundle Must succeed, before nexus staging is done : Package bundle is idempotnent and non immutable, whereas NExus staging and Git release are immutable
       - package_bundle:
           dry_run: << parameters.dry_run >>
-      - run:
-          name: Maven Test, Package, and Deploy to Nexus Staging
-          command: |
-            if [ "${DRY_RUN}" == "false" ]; then
-              echo "# --->>> NO IT IS NOT A DRY RUN : so we maven deploy to nexus staging"
-              mvn -s /tmp/.gravitee.settings.xml -B -U -P gravitee-release deploy -DskipTests=true
-            else
-              echo "# --->>> THIS IS A DRY RUN: no deployment to nexus staging"
-              exit 0
-            fi;
       - git_config
       - run:
           name: Git release
@@ -1185,6 +1175,40 @@ jobs:
                       }
                     ]
                   }
+
+  publish_maven_packages_to_maven_central:
+    description: Publish maven artifacts to maven central (Sonatype Nexus)
+    parameters:
+      dry_run:
+        type: boolean
+        default: true
+        description: "Running in dry run mode means no docker push (Defaults to true)"
+    executor:
+      name: openjdk
+      class: small
+      version: "11.0.16"
+    environment:
+      DRY_RUN: << parameters.dry_run >>
+    steps:
+      - checkout
+      - restore-maven-job-cache:
+          jobName: release
+      - attach_workspace:
+          at: /tmp
+      - prepare-gpg
+      - run:
+          name: Maven Test, Package, and Deploy to Nexus Staging
+          command: |
+            if [ "${DRY_RUN}" == "false" ]; then
+              echo "# --->>> NO IT IS NOT A DRY RUN => deploy"
+            mvn -s /tmp/.gravitee.settings.xml -B -U -P gravitee-release deploy -DskipTests=true
+            else
+              echo "# --->>> THIS IS A DRY RUN => install only"
+              mvn -s /tmp/.gravitee.settings.xml -B -U -P gravitee-release install -DskipTests=true
+            fi;
+      - notify-on-failure
+      - notify-on-success
+
   build_n_push_am_ce_job:
     description: This Orb Job performs the docker build and publish for the am_ce dockerfile
     parameters:
@@ -1510,6 +1534,19 @@ workflows:
             - setup
           dry_run: << pipeline.parameters.dry_run >>
           rc_requested: << pipeline.parameters.rc_requested >>
+
+  publish_maven_central:
+    when:
+      equal: [ publish_maven_central, << pipeline.parameters.gio_action >> ]
+    jobs:
+      - setup:
+          context: cicd-orchestrator
+      - publish_maven_packages_to_maven_central:
+          context: cicd-orchestrator
+          name: publish maven packages to nexus
+          requires:
+            - setup
+          dry_run: << pipeline.parameters.dry_run >>
 
   publish_rpms:
     when:
