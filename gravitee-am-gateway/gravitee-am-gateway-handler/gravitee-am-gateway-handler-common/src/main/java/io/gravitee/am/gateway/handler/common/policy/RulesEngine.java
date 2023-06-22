@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.oauth2.policy;
+package io.gravitee.am.gateway.handler.common.policy;
 
 import io.gravitee.am.common.policy.ExtensionPoint;
-import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.gateway.api.ExecutionContext;
+import io.gravitee.gateway.api.Request;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 
@@ -33,5 +33,5 @@ public interface RulesEngine {
 
     Completable fire(List<Rule> rules, ExecutionContext executionContext);
 
-    Single<ExecutionContext> fire(ExtensionPoint extensionPoint, OAuth2Request oAuth2Request, Client client, User user);
+    Single<ExecutionContext> fire(ExtensionPoint extensionPoint, Request request, Client client, User user);
 }

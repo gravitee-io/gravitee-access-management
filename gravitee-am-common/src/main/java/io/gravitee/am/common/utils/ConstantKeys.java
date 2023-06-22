@@ -225,4 +225,5 @@ public interface ConstantKeys {
     String REGISTRATION_VERIFY_SUCCESS = "registration_verify_success";
 
     String POLICY_CHAIN_ERROR_KEY_MFA_CHALLENGE_ERROR = "GATEWAY_POLICY_MFA_CHALLENGE_ERROR";
+    String LINKED_ACCOUNT_ID_CONTEXT_KEY = "linkedAccountId";
 }

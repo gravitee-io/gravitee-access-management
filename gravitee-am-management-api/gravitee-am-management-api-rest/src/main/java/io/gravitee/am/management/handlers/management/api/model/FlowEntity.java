@@ -159,6 +159,8 @@ public class FlowEntity {
                 return "communication:clipboard-check";
             case TOKEN:
                 return "shopping:ticket";
+            case CONNECT:
+                return "general:scale";
             default:
                 return "communication:shield-thunder";
         }

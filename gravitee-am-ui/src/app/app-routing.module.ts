@@ -238,6 +238,8 @@ import { DomainSettingsThemeComponent } from './domain/settings/theme/theme.comp
 import { ThemesResolver } from './resolvers/themes.resolver';
 import { LicenseGuard } from './guards/license-guard.service';
 import { AmFeature } from './components/gio-license/gio-license-data';
+import { UserIdentitiesComponent } from './domain/settings/users/user/identities/identities.component';
+import { UserIdentitiesResolver } from './resolvers/user-identities.resolver';
 
 const applyOnLabel = (label) => label.toLowerCase().replace(/_/g, ' ');
 
@@ -2187,6 +2189,13 @@ export const routes: Routes = [
                                   devices: UserDevicesResolver,
                                   deviceIdentifiers: DeviceIdentifiersResolver,
                                   consents: ConsentsResolver,
+                                },
+                              },
+                              {
+                                path: 'identities',
+                                component: UserIdentitiesComponent,
+                                resolve: {
+                                  identities: UserIdentitiesResolver,
                                 },
                               },
                             ],

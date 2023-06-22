@@ -1,0 +1,22 @@
+a {
+  text-decoration: none;
+  mat-icon {
+    color: grey;
+  }
+}
+a.expanded {
+  text-decoration: none;
+  color: grey;
+  &:hover {
+    color: grey;
+    text-decoration: none;
+  }
+}
+
+:host {
+  ::ng-deep.ngx-datatable.fixed-header .datatable-header .datatable-header-inner .datatable-header-cell {
+    &:first-child {
+      padding-left: 32px;
+    }
+  }
+}

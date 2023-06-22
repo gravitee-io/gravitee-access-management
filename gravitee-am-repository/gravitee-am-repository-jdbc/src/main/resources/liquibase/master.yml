@@ -107,3 +107,5 @@ databaseChangeLog:
       - file: liquibase/changelogs/v3_21_0/3.21.0-update-domains-table.yml
   - include:
       - file: liquibase/changelogs/v4_0_0/4.0.0-update-webauthn_credentials-table.yml
+  - include:
+      - file: liquibase/changelogs/v4_1_0/4.1.0-update-users-table.yml

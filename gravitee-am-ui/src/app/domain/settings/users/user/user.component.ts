@@ -52,6 +52,7 @@ export class UserComponent implements OnInit {
       this.navLinks.push({ href: 'credentials', label: 'Credentials' });
       this.navLinks.push({ href: 'roles', label: 'Roles' });
       this.navLinks.push({ href: 'devices', label: 'Devices' });
+      this.navLinks.push({ href: 'identities', label: 'Identities' });
     }
   }
 }

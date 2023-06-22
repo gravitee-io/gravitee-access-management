@@ -420,6 +420,26 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
                 });
     }
 
+    @Override
+    public Single<User> unlinkIdentity(String userId, String identityId, io.gravitee.am.identityprovider.api.User principal) {
+        return userService.findById(userId)
+                .switchIfEmpty(Single.error(() -> new UserNotFoundException(userId)))
+                .flatMap(oldUser -> {
+                    if (oldUser.getIdentities() == null) {
+                        return Single.just(oldUser);
+                    }
+                    User userToUpdate = new User(oldUser);
+                    List<UserIdentity> linkedIdentities = userToUpdate.getIdentities()
+                            .stream()
+                            .filter(linkedIdentity -> !identityId.equals(linkedIdentity.getUserId()))
+                            .collect(Collectors.toList());
+                    userToUpdate.setIdentities(linkedIdentities);
+                    return userService.update(userToUpdate)
+                            .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UPDATED).user(user1).oldValue(oldUser)))
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UPDATED).throwable(throwable)));
+                });
+    }
+
     public void setExpireAfter(Integer expireAfter) {
         this.expireAfter = expireAfter;
     }

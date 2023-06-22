@@ -18,6 +18,8 @@ package io.gravitee.am.repository.jdbc.management.api.model;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
+import java.time.LocalDateTime;
+
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
@@ -214,6 +216,60 @@ public class JdbcUser extends AbstractUser {
 
         public void setPrimary(Boolean primary) {
             this.primary = primary;
+        }
+    }
+
+    @Table("user_identities")
+    public static class Identity {
+        @Column("user_id")
+        private String userId;
+        @Column("identity_id")
+        private String identityId;
+        @Column("provider_id")
+        private String providerId;
+        @Column("linked_at")
+        private LocalDateTime linkedAt;
+        @Column("additional_information")
+        private String additionalInformation;
+
+        public String getUserId() {
+            return userId;
+        }
+
+        public void setUserId(String userId) {
+            this.userId = userId;
+        }
+
+        public String getIdentityId() {
+            return identityId;
+        }
+
+        public void setIdentityId(String identityId) {
+            this.identityId = identityId;
+        }
+
+        public String getProviderId() {
+            return providerId;
+        }
+
+        public void setProviderId(String providerId) {
+            this.providerId = providerId;
+        }
+
+        public LocalDateTime getLinkedAt() {
+            return linkedAt;
+        }
+
+        public void setLinkedAt(LocalDateTime linkedAt) {
+            this.linkedAt = linkedAt;
+        }
+
+        public String getAdditionalInformation() {
+            return additionalInformation;
+        }
+
+        public void setAdditionalInformation(String additionalInformation) {
+            this.additionalInformation = additionalInformation;
         }
     }
 }

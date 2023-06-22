@@ -51,21 +51,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Stream;
 
-import static io.gravitee.am.common.policy.ExtensionPoint.POST_CONSENT;
-import static io.gravitee.am.common.policy.ExtensionPoint.POST_LOGIN;
-import static io.gravitee.am.common.policy.ExtensionPoint.POST_LOGIN_IDENTIFIER;
-import static io.gravitee.am.common.policy.ExtensionPoint.POST_REGISTER;
-import static io.gravitee.am.common.policy.ExtensionPoint.POST_REGISTRATION_CONFIRMATION;
-import static io.gravitee.am.common.policy.ExtensionPoint.POST_RESET_PASSWORD;
-import static io.gravitee.am.common.policy.ExtensionPoint.POST_TOKEN;
-import static io.gravitee.am.common.policy.ExtensionPoint.PRE_CONSENT;
-import static io.gravitee.am.common.policy.ExtensionPoint.PRE_LOGIN;
-import static io.gravitee.am.common.policy.ExtensionPoint.PRE_LOGIN_IDENTIFIER;
-import static io.gravitee.am.common.policy.ExtensionPoint.PRE_REGISTER;
-import static io.gravitee.am.common.policy.ExtensionPoint.PRE_REGISTRATION_CONFIRMATION;
-import static io.gravitee.am.common.policy.ExtensionPoint.PRE_RESET_PASSWORD;
-import static io.gravitee.am.common.policy.ExtensionPoint.PRE_TOKEN;
-import static io.gravitee.am.common.policy.ExtensionPoint.ROOT;
+import static io.gravitee.am.common.policy.ExtensionPoint.*;
 import static io.gravitee.am.gateway.handler.common.flow.ExecutionPredicate.alwaysTrue;
 import static java.util.Objects.isNull;
 import static java.util.stream.Collectors.toList;
@@ -259,6 +245,10 @@ public class FlowManagerImpl extends AbstractService implements FlowManager, Ini
             case TOKEN:
                 addExecutionFlow(PRE_TOKEN, flow, prePolicies);
                 addExecutionFlow(POST_TOKEN, flow, postPolicies);
+                break;
+            case CONNECT:
+                addExecutionFlow(PRE_CONNECT, flow, prePolicies);
+                addExecutionFlow(POST_CONNECT, flow, postPolicies);
                 break;
             default:
                 throw new IllegalArgumentException("No suitable flow type found for : " + flow.getType());

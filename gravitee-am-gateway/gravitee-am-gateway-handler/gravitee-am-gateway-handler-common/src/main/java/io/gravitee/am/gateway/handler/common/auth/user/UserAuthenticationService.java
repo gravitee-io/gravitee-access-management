@@ -34,10 +34,12 @@ public interface UserAuthenticationService {
      * Method called when a user has been authenticated by any means (login, extension-grant, token ...)
      *
      * @param principal Authenticated user
+     * @param client OAuth 2.O client
+     * @param request Http request
      * @param afterAuthentication if authentication has been done by login action
      * @return user fetch or create from the repository
      */
-    Single<User> connect(io.gravitee.am.identityprovider.api.User principal, boolean afterAuthentication);
+    Single<User> connect(io.gravitee.am.identityprovider.api.User principal, Client client, Request request, boolean afterAuthentication);
 
     /**
      * Method called when a user has been authenticated via passwordless
@@ -78,7 +80,11 @@ public interface UserAuthenticationService {
      */
     Completable lockAccount(LoginAttemptCriteria criteria, AccountSettings accountSettings, Client client, User user);
 
+    default Single<User> connect(io.gravitee.am.identityprovider.api.User principal, boolean afterAuthentication) {
+        return connect(principal, null, null, afterAuthentication);
+    }
+
     default Single<User> connect(io.gravitee.am.identityprovider.api.User principal) {
-        return connect(principal, true);
+        return connect(principal, null, null, true);
     }
 }

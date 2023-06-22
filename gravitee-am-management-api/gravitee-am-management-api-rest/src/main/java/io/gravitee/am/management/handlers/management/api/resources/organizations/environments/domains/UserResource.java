@@ -101,12 +101,13 @@ public class UserResource extends AbstractResource {
                         .flatMap(user1 -> {
                             if (user1.getReferenceType() == ReferenceType.DOMAIN
                                     && !user1.getReferenceId().equalsIgnoreCase(domain)) {
-                                throw new BadRequestException("User does not belong to domain");
+                                return Maybe.error(new BadRequestException("User does not belong to domain"));
                             }
 
                             return Maybe.just(new UserEntity(user1));
                         })
-                        .flatMap(this::enhanceIdentityProvider)
+                        .flatMap(this::enhanceSourceIdentity)
+                        .flatMap(this::enhanceLastIdentityUsed)
                         .flatMap(this::enhanceClient))
                 .subscribe(response::resume, response::resume);
     }
@@ -362,25 +363,50 @@ public class UserResource extends AbstractResource {
         return resourceContext.getResource(UserAuditsResource.class);
     }
 
-    private Maybe<UserEntity> enhanceIdentityProvider(UserEntity userEntity) {
-        if (userEntity.getSource() != null) {
-            return identityProviderService.findById(userEntity.getSource())
-                    .flatMap(idP -> {
-                        userEntity.setSource(idP.getName());
-                        userEntity.setInternal(false);
-                        // try to load the UserProvider to mark the user as internal or not
-                        // Since Github issue #8695, the UserProvider maybe disabled for MongoDB & JDBC implementation
-                        return identityProviderManager.getUserProvider(userEntity.getSourceId())
-                                .map(up -> {
-                                    userEntity.setInternal(true);
-                                    return userEntity;
-                                }).defaultIfEmpty(userEntity)
-                                .toMaybe();
-                    })
-                    .defaultIfEmpty(userEntity)
-                    .toMaybe();
+    @Path("identities")
+    public UserIdentitiesResource getUserIdentitiesResource() {
+        return resourceContext.getResource(UserIdentitiesResource.class);
+    }
+
+    private Maybe<UserEntity> enhanceSourceIdentity(UserEntity userEntity) {
+        if (userEntity.getSource() == null) {
+            return Maybe.just(userEntity);
         }
-        return Maybe.just(userEntity);
+
+        return identityProviderService.findById(userEntity.getSource())
+                .flatMap(idP -> {
+                    userEntity.setSource(idP.getName());
+                    userEntity.setInternal(false);
+                    // try to load the UserProvider to mark the user as internal or not
+                    // Since Github issue #8695, the UserProvider maybe disabled for MongoDB & JDBC implementation
+                    return identityProviderManager.getUserProvider(userEntity.getSourceId())
+                            .map(up -> {
+                                userEntity.setInternal(true);
+                                return userEntity;
+                            }).defaultIfEmpty(userEntity)
+                            .toMaybe();
+                })
+                .defaultIfEmpty(userEntity)
+                .toMaybe();
+    }
+
+    private Maybe<UserEntity> enhanceLastIdentityUsed(UserEntity userEntity) {
+        if (userEntity.getLastIdentityUsed() == null) {
+            return Maybe.just(userEntity);
+        }
+
+        if (userEntity.getLastIdentityUsed().equals(userEntity.getSourceId())) {
+            userEntity.setLastIdentityUsed(userEntity.getSource());
+            return Maybe.just(userEntity);
+        }
+
+        return identityProviderService.findById(userEntity.getLastIdentityUsed())
+                .map(idP -> {
+                    userEntity.setLastIdentityUsed(idP.getName());
+                    return userEntity;
+                })
+                .defaultIfEmpty(userEntity)
+                .toMaybe();
     }
 
     private Maybe<UserEntity> enhanceClient(UserEntity userEntity) {

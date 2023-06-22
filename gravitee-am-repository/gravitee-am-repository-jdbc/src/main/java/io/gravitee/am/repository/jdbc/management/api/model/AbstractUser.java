@@ -92,6 +92,8 @@ public class AbstractUser {
     @Column("x509_certificates")
     private String x509Certificates;
     private String factors;
+    @Column("last_identity_used")
+    private String lastIdentityUsed;
     @Column("additional_information")
     private String additionalInformation;
 
@@ -397,6 +399,14 @@ public class AbstractUser {
 
     public void setFactors(String factors) {
         this.factors = factors;
+    }
+
+    public String getLastIdentityUsed() {
+        return lastIdentityUsed;
+    }
+
+    public void setLastIdentityUsed(String lastIdentityUsed) {
+        this.lastIdentityUsed = lastIdentityUsed;
     }
 
     public String getAdditionalInformation() {

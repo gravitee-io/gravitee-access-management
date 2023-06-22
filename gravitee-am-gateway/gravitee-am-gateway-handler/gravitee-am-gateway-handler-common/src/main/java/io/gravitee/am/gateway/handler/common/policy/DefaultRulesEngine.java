@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.oauth2.policy;
+package io.gravitee.am.gateway.handler.common.policy;
 
 import io.gravitee.am.common.policy.ExtensionPoint;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.flow.ExecutionPredicate;
 import io.gravitee.am.gateway.handler.common.flow.FlowManager;
+import io.gravitee.am.gateway.handler.common.http.NoOpResponse;
 import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
-import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import io.gravitee.am.gateway.policy.Policy;
 import io.gravitee.am.gateway.policy.PolicyChainException;
 import io.gravitee.am.gateway.policy.PolicyChainProcessorFactory;
@@ -28,6 +28,7 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.plugins.policy.core.PolicyPluginManager;
 import io.gravitee.gateway.api.ExecutionContext;
+import io.gravitee.gateway.api.Request;
 import io.gravitee.gateway.api.context.SimpleExecutionContext;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
@@ -77,10 +78,10 @@ public class DefaultRulesEngine implements RulesEngine {
 
     @Override
     public Single<ExecutionContext> fire(ExtensionPoint extensionPoint,
-                                      OAuth2Request oAuth2Request,
-                                      Client client,
-                                      User user) {
-        return prepareContext(oAuth2Request, client, user)
+                                         Request request,
+                                         Client client,
+                                         User user) {
+        return prepareContext(request, client, user)
                 .flatMap(executionContext -> {
                     return flowManager.findByExtensionPoint(extensionPoint, client, ExecutionPredicate.from(executionContext))
                             .flatMap(policies -> {
@@ -93,11 +94,11 @@ public class DefaultRulesEngine implements RulesEngine {
                 });
     }
 
-    private Single<ExecutionContext> prepareContext(OAuth2Request oAuth2Request,
+    private Single<ExecutionContext> prepareContext(Request request,
                                                     Client client,
                                                     User user) {
         return Single.fromCallable(() -> {
-            ExecutionContext simpleExecutionContext = new SimpleExecutionContext(oAuth2Request, oAuth2Request.getHttpResponse());
+            ExecutionContext simpleExecutionContext = new SimpleExecutionContext(request, new NoOpResponse());
             ExecutionContext executionContext = executionContextFactory.create(simpleExecutionContext);
             // add current context attributes
             executionContext.getAttributes().put(ConstantKeys.CLIENT_CONTEXT_KEY, client);

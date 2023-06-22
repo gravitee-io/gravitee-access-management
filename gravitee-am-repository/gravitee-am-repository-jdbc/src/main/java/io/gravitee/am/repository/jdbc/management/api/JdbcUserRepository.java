@@ -19,6 +19,7 @@ import io.gravitee.am.common.analytics.Field;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.UserIdentity;
 import io.gravitee.am.model.analytics.AnalyticsQuery;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.scim.Address;
@@ -30,12 +31,7 @@ import io.gravitee.am.repository.jdbc.management.api.model.JdbcUser.AbstractRole
 import io.gravitee.am.repository.jdbc.management.api.model.mapper.EnrolledFactorsConverter;
 import io.gravitee.am.repository.jdbc.management.api.model.mapper.MapToStringConverter;
 import io.gravitee.am.repository.jdbc.management.api.model.mapper.X509Converter;
-import io.gravitee.am.repository.jdbc.management.api.spring.user.SpringDynamicUserRoleRepository;
-import io.gravitee.am.repository.jdbc.management.api.spring.user.SpringUserAddressesRepository;
-import io.gravitee.am.repository.jdbc.management.api.spring.user.SpringUserAttributesRepository;
-import io.gravitee.am.repository.jdbc.management.api.spring.user.SpringUserEntitlementRepository;
-import io.gravitee.am.repository.jdbc.management.api.spring.user.SpringUserRepository;
-import io.gravitee.am.repository.jdbc.management.api.spring.user.SpringUserRoleRepository;
+import io.gravitee.am.repository.jdbc.management.api.spring.user.*;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.reactivex.rxjava3.core.Completable;
@@ -139,6 +135,10 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
     public static final String USER_COL_LAST_PASSWORD_RESET = "last_password_reset";
     public static final String USER_COL_LAST_USERNAME_RESET = "last_username_reset";
     public static final String USER_COL_LAST_LOGOUT_AT = "last_logout_at";
+    public static final String USER_COL_LAST_IDENTITY_USED = "last_identity_used";
+    public static final String USER_COL_IDENTITY_ID = "identity_id";
+    public static final String USER_COL_PROVIDER_ID = "provider_id";
+    public static final String USER_COL_LINKED_AT = "linked_at";
     private static final List<String> USER_COLUMNS = List.of(
             USER_COL_ID,
             USER_COL_EXTERNAL_ID,
@@ -178,6 +178,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
             USER_COL_UPDATED_AT,
             USER_COL_X_509_CERTIFICATES,
             USER_COL_FACTORS,
+            USER_COL_LAST_IDENTITY_USED,
             USER_COL_ADDITIONAL_INFORMATION
     );
 
@@ -202,6 +203,14 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
             ATTR_COL_PRIMARY
     );
 
+    private static final List<String> IDENTITIES_COLUMNS = List.of(
+            FK_USER_ID,
+            USER_COL_IDENTITY_ID,
+            USER_COL_PROVIDER_ID,
+            USER_COL_LINKED_AT,
+            USER_COL_ADDITIONAL_INFORMATION
+    );
+
 
     private static short CONCURRENT_FLATMAP = 1;
 
@@ -209,6 +218,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
     private String INSERT_USER_STATEMENT;
     private String INSERT_ADDRESS_STATEMENT;
     private String INSERT_ATTRIBUTES_STATEMENT;
+    private String INSERT_IDENTITIES_STATEMENT;
 
     @Autowired
     protected SpringUserRepository userRepository;
@@ -227,6 +237,9 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
 
     @Autowired
     protected SpringUserEntitlementRepository entitlementRepository;
+
+    @Autowired
+    protected SpringUserIdentitiesRepository identitiesRepository;
 
     private EnrolledFactorsConverter enrolledFactorsConverter = new EnrolledFactorsConverter();
     private MapToStringConverter mapToStringConverter = new MapToStringConverter();
@@ -260,6 +273,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         result.setCredentialsNonExpired(entity.isCredentialsNonExpired());
         result.setAccountNonExpired(entity.isAccountNonExpired());
         result.setAccountNonLocked(entity.isAccountNonLocked());
+        result.setLastIdentityUsed(entity.getLastIdentityUsed());
 
         if (entity.getAccountLockedAt() != null) {
             result.setAccountLockedAt(Date.from(entity.getAccountLockedAt().atZone(UTC).toInstant()));
@@ -328,6 +342,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         result.setCredentialsNonExpired(entity.isCredentialsNonExpired());
         result.setAccountNonExpired(entity.isAccountNonExpired());
         result.setAccountNonLocked(entity.isAccountNonLocked());
+        result.setLastIdentityUsed(entity.getLastIdentityUsed());
 
         if (entity.getAccountLockedAt() != null) {
             result.setAccountLockedAt(LocalDateTime.ofInstant(entity.getAccountLockedAt().toInstant(), UTC));
@@ -373,6 +388,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         this.UPDATE_USER_STATEMENT = createUpdateStatement("users", USER_COLUMNS, List.of(USER_COL_ID));
         this.INSERT_ADDRESS_STATEMENT = createInsertStatement("user_addresses", ADDRESS_COLUMNS);
         this.INSERT_ATTRIBUTES_STATEMENT = createInsertStatement("user_attributes", ATTRIBUTES_COLUMNS);
+        this.INSERT_IDENTITIES_STATEMENT = createInsertStatement("user_identities", IDENTITIES_COLUMNS);
     }
 
     @Override
@@ -658,6 +674,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         insertSpec = addQuotedField(insertSpec, USER_COL_LAST_USERNAME_RESET, dateConverter.convertTo(item.getLastUsernameReset(), null), LocalDateTime.class);
         insertSpec = addQuotedField(insertSpec, USER_COL_LAST_LOGOUT_AT, dateConverter.convertTo(item.getLastLogoutAt(), null), LocalDateTime.class);
         insertSpec = addQuotedField(insertSpec, USER_COL_MFA_ENROLLMENT_SKIPPED_AT, dateConverter.convertTo(item.getMfaEnrollmentSkippedAt(), null), LocalDateTime.class);
+        insertSpec = addQuotedField(insertSpec, USER_COL_LAST_IDENTITY_USED, item.getLastIdentityUsed(), String.class);
         insertSpec = addQuotedField(insertSpec, USER_COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
         insertSpec = addQuotedField(insertSpec, USER_COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
         insertSpec = databaseDialectHelper.addJsonField(insertSpec, USER_COL_X_509_CERTIFICATES, item.getX509Certificates());
@@ -718,6 +735,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         update = addQuotedField(update, USER_COL_LAST_USERNAME_RESET, dateConverter.convertTo(item.getLastUsernameReset(), null), LocalDateTime.class);
         update = addQuotedField(update, USER_COL_LAST_LOGOUT_AT, dateConverter.convertTo(item.getLastLogoutAt(), null), LocalDateTime.class);
         update = addQuotedField(update, USER_COL_MFA_ENROLLMENT_SKIPPED_AT, dateConverter.convertTo(item.getMfaEnrollmentSkippedAt(), null), LocalDateTime.class);
+        update = addQuotedField(update, USER_COL_LAST_IDENTITY_USED, item.getLastIdentityUsed(), String.class);
         update = addQuotedField(update, USER_COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
         update = addQuotedField(update, USER_COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
         update = databaseDialectHelper.addJsonField(update, USER_COL_X_509_CERTIFICATES, item.getX509Certificates());
@@ -757,7 +775,12 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         Mono<Long> deleteAddresses = getTemplate().getDatabaseClient().sql("DELETE FROM user_addresses WHERE user_id IN (SELECT id FROM users u WHERE u.reference_type = :refType AND u.reference_id = :refId)").bind("refType", refType).bind("refId", refId).fetch().rowsUpdated();
         Mono<Long> deleteAttributes = getTemplate().getDatabaseClient().sql("DELETE FROM user_attributes WHERE user_id IN (SELECT id FROM users u WHERE u.reference_type = :refType AND u.reference_id = :refId)").bind("refType", refType).bind("refId", refId).fetch().rowsUpdated();
         Mono<Long> deleteEntitlements = getTemplate().getDatabaseClient().sql("DELETE FROM user_entitlements WHERE user_id IN (SELECT id FROM users u WHERE u.reference_type = :refType AND u.reference_id = :refId)").bind("refType", refType).bind("refId", refId).fetch().rowsUpdated();
-        return deleteRoles.then(deleteAddresses).then(deleteAttributes).then(deleteEntitlements);
+        Mono<Long> deleteIdentities = getTemplate().getDatabaseClient().sql("DELETE FROM user_identities WHERE user_id IN (SELECT id FROM users u WHERE u.reference_type = :refType AND u.reference_id = :refId)").bind("refType", refType).bind("refId", refId).fetch().rowsUpdated();
+        return deleteRoles
+                .then(deleteAddresses)
+                .then(deleteAttributes)
+                .then(deleteEntitlements)
+                .then(deleteIdentities);
     }
 
     private Mono<Long> persistChildEntities(Mono<Long> actionFlow, User item, UpdateActions updateActions) {
@@ -812,6 +835,19 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
             if (attributes.isPresent()) {
                 actionFlow = actionFlow.then(attributes.get());
             }
+        }
+
+        // TODO manage updateActions
+        final List<UserIdentity> identities = item.getIdentities();
+        if (identities != null && !identities.isEmpty()) {
+            actionFlow = actionFlow.then(Flux.fromIterable(identities).concatMap(identity -> {
+                DatabaseClient.GenericExecuteSpec insert = getTemplate().getDatabaseClient().sql(INSERT_IDENTITIES_STATEMENT).bind(FK_USER_ID, item.getId());
+                insert = identity.getUserId() != null ? insert.bind(USER_COL_IDENTITY_ID, identity.getUserId()) : insert.bindNull(USER_COL_IDENTITY_ID, String.class);
+                insert = identity.getProviderId() != null ? insert.bind(USER_COL_PROVIDER_ID, identity.getProviderId()) : insert.bindNull(USER_COL_PROVIDER_ID, String.class);
+                insert = addQuotedField(insert, USER_COL_LINKED_AT, dateConverter.convertTo(identity.getLinkedAt(), null), LocalDateTime.class);
+                insert = identity.getAdditionalInformation() != null ? databaseDialectHelper.addJsonField(insert, USER_COL_ADDITIONAL_INFORMATION, identity.getAdditionalInformation()) : insert.bindNull(USER_COL_ADDITIONAL_INFORMATION, String.class);
+                return insert.fetch().rowsUpdated();
+            }).reduce(Long::sum));
         }
 
         return actionFlow;
@@ -870,6 +906,9 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
             Mono<Long> deleteEntitlements = getTemplate().delete(JdbcUser.Entitlements.class).matching(criteria).all();
             result = result.then(deleteEntitlements);
         }
+        // TODO manage update actions
+        Mono<Long> deleteIdentities = getTemplate().delete(JdbcUser.Identity.class).matching(criteria).all();
+        result = result.then(deleteIdentities);
         return result;
     }
 
@@ -915,6 +954,14 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
                                         user.setIms(map.get(ATTRIBUTE_USER_FIELD_IM));
                                     }
                                     return user;
+                                }))
+                .flatMap(user ->
+                        identitiesRepository.findByUserId(user.getId())
+                                .map(this::convertIdentity)
+                                .toList()
+                                .map(identities -> {
+                                    user.setIdentities(identities);
+                                    return user;
                                 })
                 );
     }
@@ -945,6 +992,15 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         result.setPostalCode(address.getPostalCode());
         result.setRegion(address.getRegion());
         result.setStreetAddress(address.getStreetAddress());
+        return result;
+    }
+
+    private UserIdentity convertIdentity(JdbcUser.Identity userIdentity) {
+        var result = new UserIdentity();
+        result.setUserId(userIdentity.getIdentityId());
+        result.setProviderId(userIdentity.getProviderId());
+        result.setLinkedAt(dateConverter.convertFrom(userIdentity.getLinkedAt(), null));
+        result.setAdditionalInformation(mapToStringConverter.convertFrom(userIdentity.getAdditionalInformation(), null));
         return result;
     }
 

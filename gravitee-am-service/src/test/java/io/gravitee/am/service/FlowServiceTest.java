@@ -73,7 +73,7 @@ public class FlowServiceTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        testObserver.assertValueCount(8);
+        testObserver.assertValueCount(9);
     }
 
     @Test
@@ -83,7 +83,7 @@ public class FlowServiceTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        testObserver.assertValueCount(8);
+        testObserver.assertValueCount(9);
     }
 
     @Test
@@ -95,7 +95,7 @@ public class FlowServiceTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        testObserver.assertValueCount(8);
+        testObserver.assertValueCount(9);
     }
 
     @Test
@@ -115,7 +115,7 @@ public class FlowServiceTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        testObserver.assertValueCount(9);
+        testObserver.assertValueCount(10);
     }
 
     @Test
@@ -125,7 +125,7 @@ public class FlowServiceTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        testObserver.assertValueCount(8);
+        testObserver.assertValueCount(9);
     }
 
     @Test
@@ -149,7 +149,7 @@ public class FlowServiceTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        testObserver.assertValueCount(10);
+        testObserver.assertValueCount(11);
     }
 
     @Test
@@ -172,7 +172,7 @@ public class FlowServiceTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        testObserver.assertValueCount(9);
+        testObserver.assertValueCount(10);
     }
 
     @Test

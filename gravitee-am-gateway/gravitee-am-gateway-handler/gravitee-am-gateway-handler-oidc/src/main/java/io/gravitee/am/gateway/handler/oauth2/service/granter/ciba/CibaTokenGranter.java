@@ -21,8 +21,8 @@ import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.gateway.handler.ciba.exception.AuthenticationRequestNotFoundException;
 import io.gravitee.am.gateway.handler.ciba.service.AuthenticationRequestService;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
+import io.gravitee.am.gateway.handler.common.policy.RulesEngine;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
-import io.gravitee.am.gateway.handler.oauth2.policy.RulesEngine;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.AbstractTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequestResolver;
@@ -39,6 +39,7 @@ import org.slf4j.LoggerFactory;
 import static java.util.Collections.emptyMap;
 import static org.springframework.util.StringUtils.isEmpty;
 import static io.gravitee.am.common.utils.ConstantKeys.*;
+
 /**
  * Implementation of the CIBA Grant Flow
  * See <a href="https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html#rfc.section.10"></a>

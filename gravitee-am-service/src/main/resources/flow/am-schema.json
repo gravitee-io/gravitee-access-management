@@ -19,7 +19,8 @@
         "register",
         "registration_confirmation",
         "reset_password",
-        "token"
+        "token",
+        "connect"
       ],
       "default": "root",
       "x-schema-form": {
@@ -27,6 +28,7 @@
           "root": "ALL",
           "login_identifier": "LOGIN IDENTIFIER",
           "login": "LOGIN",
+          "connect": "CONNECT",
           "consent": "CONSENT",
           "register": "REGISTER",
           "reset_password": "RESET PASSWORD",

@@ -100,7 +100,7 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
     public Single<User> authenticate(Client client, Authentication authentication, boolean preAuthenticated) {
         logger.debug("Trying to authenticate [{}]", authentication);
 
-        var applicationIdentityProviders = getApplicationIdentityProviders(client, authentication);
+        var applicationIdentityProviders = getApplicationIdentityProviders(client);
         if (isNull(applicationIdentityProviders) || applicationIdentityProviders.isEmpty()) {
             return Single.error(() -> getInternalAuthenticationServiceException(client));
         }
@@ -135,7 +135,8 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
                         }
                     } else {
                         // complete user connection
-                        return connect(user).flatMap(connectedUser -> checkAccountPasswordExpiry(client, connectedUser));
+                        return connect(user, client, authentication.getContext().request())
+                                .flatMap(connectedUser -> checkAccountPasswordExpiry(client, connectedUser));
                     }
                 })
                 .doOnSuccess(user -> {
@@ -148,53 +149,14 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
                 });
     }
 
-    private Single<User> checkAccountPasswordExpiry(Client client, User connectedUser) {
-        if (passwordService.checkAccountPasswordExpiry(connectedUser, client, domain)) {
-            return Single.error(new AccountPasswordExpiredException("Account's password is expired "));
-        }
-        return Single.just(connectedUser);
-    }
-
-    private List<ApplicationIdentityProvider> getApplicationIdentityProviders(Client client, Authentication authentication) {
-        // Get identity providers associated to a client
-        // For each idp, try to authenticate a user
-        // Try to authenticate while the user can not be authenticated
-        // If user can't be authenticated, send an exception
-
-        // Skip external identity provider for authentication with credentials.
-        if (isNull(client.getIdentityProviders())) {
-            return List.of();
-        }
-        return client.getIdentityProviders().stream().filter(appIdp -> {
-                    var identityProvider = identityProviderManager.getIdentityProvider(appIdp.getIdentity());
-                    return nonNull(identityProvider) && !identityProvider.isExternal();
-                })
-                .collect(toList());
-    }
-
-    private boolean selectionRuleMatches(String rule, Authentication authentication) {
-        try {
-            // We keep the idp if the rule is not present to keep the same behaviour
-            // The priority will define the order of the identity providers to match the rule first
-            if (Strings.isNullOrEmpty(rule) || rule.isBlank()) {
-                return true;
-            }
-            var templateEngine = authentication.getContext().getTemplateEngine();
-            return templateEngine != null && templateEngine.getValue(rule.trim(), Boolean.class);
-        } catch (Exception e) {
-            logger.warn("Cannot evaluate the expression [{}] as boolean", rule);
-            return false;
-        }
-    }
-
     @Override
     public Maybe<User> loadPreAuthenticatedUser(String subject, Request request) {
         return userAuthenticationService.loadPreAuthenticatedUser(subject, request);
     }
 
     @Override
-    public Single<User> connect(io.gravitee.am.identityprovider.api.User user, boolean afterAuthentication) {
-        return userAuthenticationService.connect(user, afterAuthentication);
+    public Single<User> connect(io.gravitee.am.identityprovider.api.User user, Client client, Request request, boolean afterAuthentication) {
+        return userAuthenticationService.connect(user, client, request, afterAuthentication);
     }
 
     @Override
@@ -245,10 +207,6 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
                     logger.debug("Unable to authenticate [{}] with authentication provider [{}]", authentication.getPrincipal(), authProvider, error);
                     return Maybe.just(new UserAuthentication(null, error));
                 });
-    }
-
-    private InternalAuthenticationServiceException getInternalAuthenticationServiceException(Client client) {
-        return new InternalAuthenticationServiceException("No identity provider found for client : " + client.getClientId());
     }
 
     private Completable postAuthentication(Client client, Authentication authentication, String source, UserAuthentication userAuthentication) {
@@ -312,6 +270,49 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
                     }
                     return Completable.complete();
                 });
+    }
+
+    private Single<User> checkAccountPasswordExpiry(Client client, User connectedUser) {
+        if (passwordService.checkAccountPasswordExpiry(connectedUser, client, domain)) {
+            return Single.error(new AccountPasswordExpiredException("Account's password is expired "));
+        }
+        return Single.just(connectedUser);
+    }
+
+    private List<ApplicationIdentityProvider> getApplicationIdentityProviders(Client client) {
+        // Get identity providers associated to a client
+        // For each idp, try to authenticate a user
+        // Try to authenticate while the user can not be authenticated
+        // If user can't be authenticated, send an exception
+
+        // Skip external identity provider for authentication with credentials.
+        if (isNull(client.getIdentityProviders())) {
+            return List.of();
+        }
+        return client.getIdentityProviders().stream().filter(appIdp -> {
+                    var identityProvider = identityProviderManager.getIdentityProvider(appIdp.getIdentity());
+                    return nonNull(identityProvider) && !identityProvider.isExternal();
+                })
+                .collect(toList());
+    }
+
+    private boolean selectionRuleMatches(String rule, Authentication authentication) {
+        try {
+            // We keep the idp if the rule is not present to keep the same behaviour
+            // The priority will define the order of the identity providers to match the rule first
+            if (Strings.isNullOrEmpty(rule) || rule.isBlank()) {
+                return true;
+            }
+            var templateEngine = authentication.getContext().getTemplateEngine();
+            return templateEngine != null && templateEngine.getValue(rule.trim(), Boolean.class);
+        } catch (Exception e) {
+            logger.warn("Cannot evaluate the expression [{}] as boolean", rule);
+            return false;
+        }
+    }
+
+    private InternalAuthenticationServiceException getInternalAuthenticationServiceException(Client client) {
+        return new InternalAuthenticationServiceException("No identity provider found for client : " + client.getClientId());
     }
 
     private class UserAuthentication {
