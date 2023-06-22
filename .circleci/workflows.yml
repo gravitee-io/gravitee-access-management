@@ -62,7 +62,7 @@ executors:
 parameters:
   gio_action:
     type: enum
-    enum: [ release, publish_nexus, publish_rpms, publish_docker_images, pull_requests, release_notes_am ]
+    enum: [ release, publish_maven_central, publish_rpms, publish_docker_images, pull_requests, release_notes_am ]
     default: pull_requests
   gio_product:
     type: enum
@@ -1222,11 +1222,19 @@ jobs:
                     ]
                   }
 
-  publish_maven_packages_to_nexus:
+  publish_maven_packages_to_maven_central:
+    description: Publish maven artifacts to maven central (Sonatype Nexus)
+    parameters:
+      dry_run:
+        type: boolean
+        default: true
+        description: "Running in dry run mode means no docker push (Defaults to true)"
     executor:
       name: openjdk
       class: small
       version: "11.0.16"
+    environment:
+      DRY_RUN: << parameters.dry_run >>
     steps:
       - checkout
       - restore-maven-job-cache:
@@ -1237,7 +1245,13 @@ jobs:
       - run:
           name: Maven Test, Package, and Deploy to Nexus Staging
           command: |
-            mvn -s /tmp/.gravitee.settings.xml -B -U -P gravitee-release deploy -DskipTests=true
+            if [ "${DRY_RUN}" == "false" ]; then
+              echo "# --->>> NO IT IS NOT A DRY RUN => deploy"
+              mvn -s /tmp/.gravitee.settings.xml -B -U -P gravitee-release deploy -DskipTests=true
+            else
+              echo "# --->>> THIS IS A DRY RUN => install only"
+              mvn -s /tmp/.gravitee.settings.xml -B -U -P gravitee-release install -DskipTests=true
+            fi;
       - notify-on-failure
       - notify-on-success
 
@@ -1584,17 +1598,18 @@ workflows:
           dry_run: << pipeline.parameters.dry_run >>
           rc_requested: << pipeline.parameters.rc_requested >>
 
-  publish_nexus:
+  publish_maven_central:
     when:
-      equal: [ publish_nexus, << pipeline.parameters.gio_action >> ]
+      equal: [ publish_maven_central, << pipeline.parameters.gio_action >> ]
     jobs:
       - setup:
           context: cicd-orchestrator
-      - publish_maven_packages_to_nexus:
+      - publish_maven_packages_to_maven_central:
           context: cicd-orchestrator
           name: publish maven packages to nexus
           requires:
             - setup
+          dry_run: << pipeline.parameters.dry_run >>
 
   publish_rpms:
     when:
