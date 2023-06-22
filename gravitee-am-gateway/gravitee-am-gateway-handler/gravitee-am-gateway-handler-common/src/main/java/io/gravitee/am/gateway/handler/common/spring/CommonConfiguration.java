@@ -41,6 +41,8 @@ import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.jwt.impl.JWTServiceImpl;
 import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionTokenService;
 import io.gravitee.am.gateway.handler.common.oauth2.impl.IntrospectionTokenServiceImpl;
+import io.gravitee.am.gateway.handler.common.policy.DefaultRulesEngine;
+import io.gravitee.am.gateway.handler.common.policy.RulesEngine;
 import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
 import io.gravitee.am.gateway.handler.common.ruleengine.SpELRuleEngine;
 import io.gravitee.am.gateway.handler.common.spring.web.WebConfiguration;
@@ -225,5 +227,10 @@ public class CommonConfiguration {
     @Bean
     public WebAuthnCookieService webAuthnCookieService() {
         return new WebAuthnCookieService();
+    }
+
+    @Bean
+    public RulesEngine rulesEngine() {
+        return new DefaultRulesEngine();
     }
 }

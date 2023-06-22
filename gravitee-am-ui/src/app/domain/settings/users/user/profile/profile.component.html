@@ -312,8 +312,13 @@
             <p matLine>{{ displayClientName() }}</p>
           </mat-list-item>
           <mat-list-item>
+            <mat-icon mat-list-icon>link</mat-icon>
+            <h4 matLine>Last identity provider</h4>
+            <p matLine>{{ user.lastIdentityUsed }}</p>
+          </mat-list-item>
+          <mat-list-item>
             <mat-icon mat-list-icon>device_hub</mat-icon>
-            <h4 matLine>Identity provider</h4>
+            <h4 matLine>Source</h4>
             <p matLine>{{ user.source }}</p>
           </mat-list-item>
           <mat-list-item *ngIf="accountLocked(user)">

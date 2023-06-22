@@ -23,6 +23,7 @@ public enum Type {
     ROOT,
     LOGIN_IDENTIFIER,
     LOGIN,
+    CONNECT,
     CONSENT,
     REGISTER,
     RESET_PASSWORD,

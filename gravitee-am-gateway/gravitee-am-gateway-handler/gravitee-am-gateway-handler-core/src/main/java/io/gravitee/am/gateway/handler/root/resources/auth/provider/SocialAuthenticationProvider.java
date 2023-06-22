@@ -146,7 +146,7 @@ public class SocialAuthenticationProvider implements UserAuthProvider {
                     }
 
                     ((DefaultUser) user).setAdditionalInformation(additionalInformation);
-                    return userAuthenticationManager.connect(user);
+                    return userAuthenticationManager.connect(user, client, authenticationContext.request());
                 })
                 .subscribe(user -> {
                     gatewayMetricProvider.incrementSuccessfulAuth(true);

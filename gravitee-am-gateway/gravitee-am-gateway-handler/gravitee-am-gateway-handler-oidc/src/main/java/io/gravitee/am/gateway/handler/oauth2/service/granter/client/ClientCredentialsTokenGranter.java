@@ -16,7 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.service.granter.client;
 
 import io.gravitee.am.common.oauth2.GrantType;
-import io.gravitee.am.gateway.handler.oauth2.policy.RulesEngine;
+import io.gravitee.am.gateway.handler.common.policy.RulesEngine;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.AbstractTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequestResolver;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;

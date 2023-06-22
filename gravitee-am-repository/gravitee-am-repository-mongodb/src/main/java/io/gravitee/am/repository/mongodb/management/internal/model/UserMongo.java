@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
+import io.gravitee.am.model.UserIdentity;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.repository.mongodb.common.model.Auditable;
 import io.gravitee.am.repository.mongodb.management.internal.model.scim.AddressMongo;
@@ -77,6 +78,8 @@ public class UserMongo extends Auditable {
     private List<EnrolledFactor> factors;
     private List<String> roles;
     private List<String> dynamicRoles;
+    private List<UserIdentity> identities;
+    private String lastIdentityUsed;
     /**
      * Map codec support is planned for version 3.7 jira.mongodb.org issue: JAVA-2695
      */
@@ -424,6 +427,22 @@ public class UserMongo extends Auditable {
 
     public void setDynamicRoles(List<String> dynamicRoles) {
         this.dynamicRoles = dynamicRoles;
+    }
+
+    public List<UserIdentity> getIdentities() {
+        return identities;
+    }
+
+    public void setIdentities(List<UserIdentity> identities) {
+        this.identities = identities;
+    }
+
+    public String getLastIdentityUsed() {
+        return lastIdentityUsed;
+    }
+
+    public void setLastIdentityUsed(String lastIdentityUsed) {
+        this.lastIdentityUsed = lastIdentityUsed;
     }
 
     public Document getAdditionalInformation() {

@@ -177,4 +177,12 @@ export class UserService {
       username: username,
     });
   }
+
+  identities(domainId, userId): Observable<any> {
+    return this.http.get<any>(this.usersURL + domainId + '/users/' + userId + '/identities');
+  }
+
+  removeIdentity(domainId, userId, identityId): Observable<any> {
+    return this.http.delete<any>(this.usersURL + domainId + '/users/' + userId + '/identities/' + identityId);
+  }
 }

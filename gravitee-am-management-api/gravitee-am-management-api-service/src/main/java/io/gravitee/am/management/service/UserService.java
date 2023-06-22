@@ -58,6 +58,8 @@ public interface UserService extends CommonUserService {
 
     Single<User> enrollFactors(String userId, List<EnrolledFactor> factors, io.gravitee.am.identityprovider.api.User principal);
 
+    Single<User> unlinkIdentity(String userId, String identityId, io.gravitee.am.identityprovider.api.User principal);
+
     default Single<User> update(String domain, String id, UpdateUser updateUser) {
         return update(domain, id, updateUser, null);
     }

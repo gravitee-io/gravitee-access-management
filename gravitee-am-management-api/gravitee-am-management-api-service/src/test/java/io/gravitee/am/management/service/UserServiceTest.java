@@ -1033,6 +1033,49 @@ public class UserServiceTest {
     }
 
     @Test
+    public void shouldUnlinkIdentity_nominalCase() {
+        String extraUserId = "user-id-2";
+        UserIdentity userIdentity = new UserIdentity();
+        userIdentity.setUserId(extraUserId);
+        List<UserIdentity> userIdentities = Arrays.asList(userIdentity);
+
+        User user = new User();
+        user.setId("user-id");
+        user.setSource("idp-id");
+        user.setIdentities(userIdentities);
+
+        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+        when(commonUserService.findById(eq("user-id"))).thenReturn(Maybe.just(user));
+        when(commonUserService.update(userCaptor.capture())).thenReturn(Single.just(user));
+        userService.unlinkIdentity(user.getId(), extraUserId, null)
+                .test()
+                .assertComplete()
+                .assertNoErrors();
+        verify(commonUserService, times(1)).update(any());
+        User expectedUser = userCaptor.getValue();
+        Assert.assertTrue(expectedUser.getIdentities().isEmpty());
+    }
+
+    @Test
+    public void shouldUnlinkIdentity_noLinkedAccount() {
+        String extraUserId = "user-id-2";
+        UserIdentity userIdentity = new UserIdentity();
+        userIdentity.setUserId(extraUserId);
+
+        User user = new User();
+        user.setId("user-id");
+        user.setSource("idp-id");
+        user.setIdentities(null);
+
+        when(commonUserService.findById(eq("user-id"))).thenReturn(Maybe.just(user));
+        userService.unlinkIdentity(user.getId(), extraUserId, null)
+                .test()
+                .assertComplete()
+                .assertNoErrors();
+        verify(commonUserService, never()).update(any());
+    }
+
+    @Test
     public void must_not_send_registration_confirmation_user_already_registered() {
         var domain = new Domain();
         domain.setId("domain");

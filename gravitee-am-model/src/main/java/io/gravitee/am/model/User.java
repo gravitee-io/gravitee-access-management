@@ -117,6 +117,10 @@ public class User implements IUser {
 
     private List<EnrolledFactor> factors;
 
+    private List<UserIdentity> identities;
+
+    private String lastIdentityUsed;
+
     private Map<String, Object> additionalInformation;
 
     @Schema(type = "java.lang.Long")
@@ -203,6 +207,8 @@ public class User implements IUser {
         this.client = other.client;
         this.loginsCount = other.loginsCount;
         this.factors = other.factors != null ? new ArrayList<>(other.factors) : null;
+        this.identities = other.identities != null ? new ArrayList<>(other.identities) : null;
+        this.lastIdentityUsed = other.lastIdentityUsed;
         this.additionalInformation = other.additionalInformation != null ? new HashMap<>(other.additionalInformation) : null;
         this.loggedAt = other.loggedAt;
         this.lastLoginWithCredentials = other.lastLoginWithCredentials;
@@ -580,6 +586,22 @@ public class User implements IUser {
 
     public void setFactors(List<EnrolledFactor> factors) {
         this.factors = factors;
+    }
+
+    public List<UserIdentity> getIdentities() {
+        return identities;
+    }
+
+    public void setIdentities(List<UserIdentity> identities) {
+        this.identities = identities;
+    }
+
+    public String getLastIdentityUsed() {
+        return lastIdentityUsed != null ? lastIdentityUsed : source;
+    }
+
+    public void setLastIdentityUsed(String lastIdentityUsed) {
+        this.lastIdentityUsed = lastIdentityUsed;
     }
 
     public Date getLoggedAt() {

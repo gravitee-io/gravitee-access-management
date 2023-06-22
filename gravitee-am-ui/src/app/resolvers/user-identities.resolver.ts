@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,20 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.oauth2.policy;
+import { Injectable } from '@angular/core';
+import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
+import { Observable } from 'rxjs';
 
-import java.util.Map;
+import { UserService } from '../services/user.service';
 
-/**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
- * @author GraviteeSource Team
- */
-public interface Rule {
+@Injectable()
+export class UserIdentitiesResolver implements Resolve<any> {
+  constructor(private userService: UserService) {}
 
-    String type();
-    String name();
-    String description();
-    boolean enabled();
-    String condition();
-    Map<String, Object> metadata();
+  resolve(route: ActivatedRouteSnapshot): Observable<any> | Promise<any> | any {
+    const userId = route.paramMap.get('userId');
+    const domainId = route.parent.data['domain'].id;
+    return this.userService.identities(domainId, userId);
+  }
 }

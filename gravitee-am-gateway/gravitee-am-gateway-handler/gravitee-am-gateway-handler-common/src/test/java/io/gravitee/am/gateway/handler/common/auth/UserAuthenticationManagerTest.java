@@ -124,7 +124,7 @@ public class UserAuthenticationManagerTest {
 
         when(passwordService.checkAccountPasswordExpiry(any(), any(), any())).thenReturn(false);
 
-        when(userAuthenticationService.connect(any(), eq(true))).then(invocation -> {
+        when(userAuthenticationService.connect(any(), any(), any(), eq(true))).then(invocation -> {
             io.gravitee.am.identityprovider.api.User idpUser = invocation.getArgument(0);
             User user = new User();
             user.setUsername(idpUser.getUsername());
@@ -156,7 +156,7 @@ public class UserAuthenticationManagerTest {
 
             @Override
             public AuthenticationContext getContext() {
-                return null;
+                return new SimpleAuthenticationContext();
             }
         }).test();
 
@@ -178,7 +178,7 @@ public class UserAuthenticationManagerTest {
 
         when(passwordService.checkAccountPasswordExpiry(any(), any(), any())).thenReturn(true);
 
-        when(userAuthenticationService.connect(any(), eq(true))).then(invocation -> {
+        when(userAuthenticationService.connect(any(), any(), any(), eq(true))).then(invocation -> {
             io.gravitee.am.identityprovider.api.User idpUser = invocation.getArgument(0);
             User user = new User();
             user.setUsername(idpUser.getUsername());
@@ -210,7 +210,7 @@ public class UserAuthenticationManagerTest {
 
             @Override
             public AuthenticationContext getContext() {
-                return null;
+                return new SimpleAuthenticationContext();
             }
         }).test();
 
@@ -279,7 +279,7 @@ public class UserAuthenticationManagerTest {
         identityProvider2.setId("idp-2");
 
         when(passwordService.checkAccountPasswordExpiry(any(), any(), any())).thenReturn(false);
-        when(userAuthenticationService.connect(any(), eq(true))).then(invocation -> {
+        when(userAuthenticationService.connect(any(), any(), any(), eq(true))).then(invocation -> {
             io.gravitee.am.identityprovider.api.User idpUser = invocation.getArgument(0);
             User user = new User();
             user.setUsername(idpUser.getUsername());
@@ -325,7 +325,7 @@ public class UserAuthenticationManagerTest {
 
             @Override
             public AuthenticationContext getContext() {
-                return null;
+                return new SimpleAuthenticationContext();
             }
         }).test();
 
@@ -357,7 +357,7 @@ public class UserAuthenticationManagerTest {
         IdentityProvider identityProvider2 = new IdentityProvider();
         identityProvider2.setId("idp-2");
 
-        when(userAuthenticationService.connect(any(), eq(true))).then(invocation -> {
+        when(userAuthenticationService.connect(any(), any(), any(), eq(true))).then(invocation -> {
             io.gravitee.am.identityprovider.api.User idpUser = invocation.getArgument(0);
             User user = new User();
             user.setUsername(idpUser.getUsername());
@@ -385,7 +385,7 @@ public class UserAuthenticationManagerTest {
 
             @Override
             public AuthenticationContext getContext() {
-                return null;
+                return new SimpleAuthenticationContext();
             }
         }).test();
 
@@ -410,7 +410,7 @@ public class UserAuthenticationManagerTest {
         identityProvider2.setId("idp-2");
 
         when(passwordService.checkAccountPasswordExpiry(any(), any(), any())).thenReturn(false);
-        when(userAuthenticationService.connect(any(), eq(true))).then(invocation -> {
+        when(userAuthenticationService.connect(any(), any(), any(), eq(true))).then(invocation -> {
             io.gravitee.am.identityprovider.api.User idpUser = invocation.getArgument(0);
             User user = new User();
             user.setUsername(idpUser.getUsername());
@@ -513,7 +513,7 @@ public class UserAuthenticationManagerTest {
         identityProvider.setId("idp-1");
         when(identityProviderManager.getIdentityProvider("idp-1")).thenReturn(identityProvider);
 
-        when(userAuthenticationService.connect(any(), eq(true))).then(invocation -> {
+        when(userAuthenticationService.connect(any(), any(), any(), eq(true))).then(invocation -> {
             io.gravitee.am.identityprovider.api.User idpUser = invocation.getArgument(0);
             return Single.error(new AccountDisabledException(idpUser.getUsername()));
         });
@@ -543,7 +543,7 @@ public class UserAuthenticationManagerTest {
 
             @Override
             public AuthenticationContext getContext() {
-                return null;
+                return new SimpleAuthenticationContext();
             }
         }).test();
 

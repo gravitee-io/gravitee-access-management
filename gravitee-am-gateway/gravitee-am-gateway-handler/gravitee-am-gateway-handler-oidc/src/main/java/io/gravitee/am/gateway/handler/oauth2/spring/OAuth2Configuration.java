@@ -18,8 +18,6 @@ package io.gravitee.am.gateway.handler.oauth2.spring;
 import io.gravitee.am.gateway.handler.api.ProtocolConfiguration;
 import io.gravitee.am.gateway.handler.api.ProtocolProvider;
 import io.gravitee.am.gateway.handler.oauth2.OAuth2Provider;
-import io.gravitee.am.gateway.handler.oauth2.policy.DefaultRulesEngine;
-import io.gravitee.am.gateway.handler.oauth2.policy.RulesEngine;
 import io.gravitee.am.gateway.handler.oauth2.service.assertion.ClientAssertionService;
 import io.gravitee.am.gateway.handler.oauth2.service.assertion.impl.ClientAssertionServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.service.code.AuthorizationCodeService;
@@ -120,10 +118,5 @@ public class OAuth2Configuration implements ProtocolConfiguration {
     @Bean
     public TokenManager tokenManager() {
         return new TokenManagerImpl();
-    }
-
-    @Bean
-    public RulesEngine rulesEngine() {
-        return new DefaultRulesEngine();
     }
 }

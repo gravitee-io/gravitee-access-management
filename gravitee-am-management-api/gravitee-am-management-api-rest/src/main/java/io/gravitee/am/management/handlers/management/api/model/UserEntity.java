@@ -62,6 +62,7 @@ public class UserEntity extends User {
         setCreatedAt(user.getCreatedAt());
         setUpdatedAt(user.getUpdatedAt());
         setLastPasswordReset(user.getLastPasswordReset());
+        setLastIdentityUsed(user.getLastIdentityUsed());
         this.sourceId = user.getSource();
     }
 

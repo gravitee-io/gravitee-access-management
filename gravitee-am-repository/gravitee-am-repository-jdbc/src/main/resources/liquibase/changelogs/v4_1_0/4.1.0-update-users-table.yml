@@ -1,0 +1,42 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.1.0-update-users-table
+      author: GraviteeSource Team
+      changes:
+        #############################
+        # Users #
+        ############################
+        - addColumn:
+            tableName: users
+            columns:
+              - column: { name: last_identity_used, type: nvarchar(255), constraints: { nullable: true } }
+
+        - addColumn:
+            tableName: organization_users
+            columns:
+              - column: { name: last_identity_used, type: nvarchar(255), constraints: { nullable: true } }
+
+        - createTable:
+            tableName: user_identities
+            columns:
+              - column: { name: user_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: identity_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: provider_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: linked_at, type: timestamp(6), constraints: { nullable: false } }
+              - column: { name: additional_information, type: clob, constraints: { nullable: true } }
+
+        - createIndex:
+            columns:
+              - column:
+                  name: user_id
+            indexName: idx_user_identities_user
+            tableName: user_identities
+            unique: false
+
+        - sql:
+            dbms: postgresql
+            sql: ALTER TABLE user_identities ALTER additional_information TYPE JSON USING additional_information::json
+
+        - sql:
+            dbms: mysql
+            sql: ALTER TABLE user_identities MODIFY additional_information JSON;

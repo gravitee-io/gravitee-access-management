@@ -33,7 +33,7 @@ public interface UserAuthenticationManager {
 
     Maybe<User> loadPreAuthenticatedUser(String subject, Request request);
 
-    Single<User> connect(io.gravitee.am.identityprovider.api.User user, boolean afterAuthentication);
+    Single<User> connect(io.gravitee.am.identityprovider.api.User user, Client client, Request request, boolean afterAuthentication);
 
     Single<User> connectWithPasswordless(Client client, String subject, Authentication authentication);
 
@@ -45,7 +45,15 @@ public interface UserAuthenticationManager {
         return loadPreAuthenticatedUser(subject, null);
     }
 
+    default Single<User> connect(io.gravitee.am.identityprovider.api.User user, Client client, Request request) {
+        return connect(user, client, request, true);
+    }
+
+    default Single<User> connect(io.gravitee.am.identityprovider.api.User user, boolean afterAuthentication) {
+        return connect(user, null, null, afterAuthentication);
+    }
+
     default Single<User> connect(io.gravitee.am.identityprovider.api.User user) {
-        return connect(user, true);
+        return connect(user, null, null, true);
     }
 }

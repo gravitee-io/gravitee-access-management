@@ -13,31 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.common.policy;
+package io.gravitee.am.management.handlers.management.api.model;
+
+import io.gravitee.am.model.UserIdentity;
+
 
 /**
- * Policy extension point, stage when the policy code will be executed.
- *
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public enum ExtensionPoint {
+public class UserIdentityEntity extends UserIdentity {
 
-    ROOT,
-    PRE_LOGIN_IDENTIFIER,
-    POST_LOGIN_IDENTIFIER,
-    PRE_LOGIN,
-    POST_LOGIN,
-    PRE_CONSENT,
-    POST_CONSENT,
-    PRE_REGISTER,
-    POST_REGISTER,
-    PRE_RESET_PASSWORD,
-    POST_RESET_PASSWORD,
-    PRE_REGISTRATION_CONFIRMATION,
-    POST_REGISTRATION_CONFIRMATION,
-    PRE_TOKEN,
-    POST_TOKEN,
-    PRE_CONNECT,
-    POST_CONNECT
+    private String providerName;
+
+    public UserIdentityEntity(UserIdentity userIdentity) {
+        setUserId(userIdentity.getUserId());
+        setProviderId(userIdentity.getProviderId());
+        setLinkedAt(userIdentity.getLinkedAt());
+        setAdditionalInformation(userIdentity.getAdditionalInformation());
+    }
+
+    public String getProviderName() {
+        return providerName;
+    }
+
+    public void setProviderName(String providerName) {
+        this.providerName = providerName;
+    }
 }

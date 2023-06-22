@@ -19,6 +19,7 @@ import io.gravitee.am.common.analytics.Field;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.UserIdentity;
 import io.gravitee.am.model.analytics.AnalyticsQuery;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.factor.EnrolledFactor;
@@ -469,6 +470,28 @@ public class UserRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
+    public void testCreate_withIdentities() throws TechnicalException {
+        UserIdentity userIdentity = new UserIdentity();
+        userIdentity.setUserId("userId");
+        userIdentity.setProviderId("providerId");
+        userIdentity.setLinkedAt(new Date());
+        userIdentity.setAdditionalInformation(Collections.singletonMap("key", "value"));
+
+        User user = buildUser();
+        user.setIdentities(Collections.singletonList(userIdentity));
+        User userCreated = userRepository.create(user).blockingGet();
+        // fetch user
+        TestObserver<User> testObserver = userRepository.findById(userCreated.getId()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(u -> u.getIdentities() != null);
+        testObserver.assertValue(u -> userIdentity.getUserId().equals(u.getIdentities().get(0).getUserId()));
+        testObserver.assertValue(u -> "value".equals(u.getIdentities().get(0).getAdditionalInformation().get("key")));
+    }
+
+    @Test
     public void testUpdate() throws TechnicalException {
         // create user
         User user = new User();
@@ -490,6 +513,38 @@ public class UserRepositoryTest extends AbstractManagementTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(u -> u.getUsername().equals(updatedUser.getUsername()));
+    }
+
+    @Test
+    public void testUpdate_withIdentities() throws TechnicalException {
+        User user = new User();
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId("domainId");
+        user.setUsername("testUsername");
+        User userCreated = userRepository.create(user).blockingGet();
+
+        UserIdentity userIdentity = new UserIdentity();
+        userIdentity.setUserId("userId");
+        userIdentity.setProviderId("providerId");
+        userIdentity.setLinkedAt(new Date());
+        userIdentity.setAdditionalInformation(Collections.singletonMap("key", "value"));
+
+        User updatedUser = new User();
+        updatedUser.setReferenceType(ReferenceType.DOMAIN);
+        updatedUser.setReferenceId("domainId");
+        updatedUser.setId(userCreated.getId());
+        updatedUser.setUsername("testUsername");
+        updatedUser.setIdentities(Collections.singletonList(userIdentity));
+        User userUpdated = userRepository.update(updatedUser).blockingGet();
+        // fetch user
+        TestObserver<User> testObserver = userRepository.findById(userCreated.getId()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(u -> u.getIdentities() != null);
+        testObserver.assertValue(u -> userIdentity.getUserId().equals(u.getIdentities().get(0).getUserId()));
+        testObserver.assertValue(u -> "value".equals(u.getIdentities().get(0).getAdditionalInformation().get("key")));
     }
 
     @Test

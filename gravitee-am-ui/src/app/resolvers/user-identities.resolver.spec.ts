@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,31 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.common.policy;
+import { TestBed, inject } from '@angular/core/testing';
 
-/**
- * Policy extension point, stage when the policy code will be executed.
- *
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
- * @author GraviteeSource Team
- */
-public enum ExtensionPoint {
+import { UserIdentitiesResolver } from './user-identities.resolver';
 
-    ROOT,
-    PRE_LOGIN_IDENTIFIER,
-    POST_LOGIN_IDENTIFIER,
-    PRE_LOGIN,
-    POST_LOGIN,
-    PRE_CONSENT,
-    POST_CONSENT,
-    PRE_REGISTER,
-    POST_REGISTER,
-    PRE_RESET_PASSWORD,
-    POST_RESET_PASSWORD,
-    PRE_REGISTRATION_CONFIRMATION,
-    POST_REGISTRATION_CONFIRMATION,
-    PRE_TOKEN,
-    POST_TOKEN,
-    PRE_CONNECT,
-    POST_CONNECT
-}
+describe('UserIdentitiesResolver', () => {
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [UserIdentitiesResolver],
+      teardown: { destroyAfterEach: false },
+    });
+  });
+
+  it('should ...', inject([UserIdentitiesResolver], (service: UserIdentitiesResolver) => {
+    expect(service).toBeTruthy();
+  }));
+});

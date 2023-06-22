@@ -18,17 +18,21 @@ package io.gravitee.am.gateway.handler.common.auth;
 import io.gravitee.am.common.exception.authentication.AccountDisabledException;
 import io.gravitee.am.common.exception.authentication.AccountEnforcePasswordException;
 import io.gravitee.am.common.exception.authentication.AccountLockedException;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationService;
 import io.gravitee.am.gateway.handler.common.auth.user.impl.UserAuthenticationServiceImpl;
+import io.gravitee.am.gateway.handler.common.policy.RulesEngine;
 import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.UserIdentity;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.exception.UserNotFoundException;
+import io.gravitee.gateway.api.ExecutionContext;
 import io.gravitee.gateway.api.Request;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -41,10 +45,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -69,6 +70,9 @@ public class UserAuthenticationServiceTest {
     @Mock
     private IdentityProviderManager identityProviderManager;
 
+    @Mock
+    private RulesEngine rulesEngine;
+
     @Test
     public void shouldConnect_unknownUser() {
         String domainId = "Domain";
@@ -85,12 +89,13 @@ public class UserAuthenticationServiceTest {
 
         User createdUser = mock(User.class);
         when(createdUser.isEnabled()).thenReturn(true);
-
+        ExecutionContext executionContext = mock(ExecutionContext.class);
         when(domain.getId()).thenReturn(domainId);
         when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.empty());
         when(userService.findByDomainAndUsernameAndSource(domainId, username, source)).thenReturn(Maybe.empty());
         when(userService.create(any())).thenReturn(Single.just(createdUser));
         when(userService.enhance(createdUser)).thenReturn(Single.just(createdUser));
+        when(rulesEngine.fire(any(), any(), any(), any())).thenReturn(Single.just(executionContext));
 
         TestObserver testObserver = userAuthenticationService.connect(user).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -118,10 +123,11 @@ public class UserAuthenticationServiceTest {
         when(domain.getId()).thenReturn(domainId);
         final User foundUser = new User();
         foundUser.setAccountNonLocked(true);
-
+        ExecutionContext executionContext = mock(ExecutionContext.class);
         when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(foundUser));
         when(userService.update(any(), any())).thenReturn(Single.just(updatedUser));
         when(userService.enhance(updatedUser)).thenReturn(Single.just(updatedUser));
+        when(rulesEngine.fire(any(), any(), any(), any())).thenReturn(Single.just(executionContext));
 
         TestObserver testObserver = userAuthenticationService.connect(user).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -131,7 +137,6 @@ public class UserAuthenticationServiceTest {
         verify(userService, never()).create(any());
         verify(userService, times(1)).update(argThat(u -> u.isAccountNonLocked()), any());
     }
-
 
     @Test
     public void shouldConnect_knownUser_NotLockedAnymore() {
@@ -151,10 +156,11 @@ public class UserAuthenticationServiceTest {
         final User foundUser = new User();
         foundUser.setAccountNonLocked(false);
         foundUser.setAccountLockedUntil(new Date(Instant.now().minusSeconds(60).toEpochMilli()));
-
+        ExecutionContext executionContext = mock(ExecutionContext.class);
         when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(foundUser));
         when(userService.update(any(), any())).thenReturn(Single.just(updatedUser));
         when(userService.enhance(updatedUser)).thenReturn(Single.just(updatedUser));
+        when(rulesEngine.fire(any(), any(), any(), any())).thenReturn(Single.just(executionContext));
 
         TestObserver testObserver = userAuthenticationService.connect(user).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -179,7 +185,9 @@ public class UserAuthenticationServiceTest {
         when(domain.getId()).thenReturn(domainId);
         final User foundUser = mock(User.class);
         when(foundUser.isAccountNonLocked()).thenReturn(false);
+        ExecutionContext executionContext = mock(ExecutionContext.class);
         when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(foundUser));
+        when(rulesEngine.fire(any(), any(), any(), any())).thenReturn(Single.just(executionContext));
 
         TestObserver testObserver = userAuthenticationService.connect(user).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -205,8 +213,10 @@ public class UserAuthenticationServiceTest {
         when(domain.getId()).thenReturn(domainId);
         final User foundUser = mock(User.class);
         when(foundUser.isAccountNonLocked()).thenReturn(true);
+        ExecutionContext executionContext = mock(ExecutionContext.class);
         when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(foundUser));
         when(userService.update(any(), any())).thenReturn(Single.just(updatedUser));
+        when(rulesEngine.fire(any(), any(), any(), any())).thenReturn(Single.just(executionContext));
 
         TestObserver testObserver = userAuthenticationService.connect(user).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -233,12 +243,13 @@ public class UserAuthenticationServiceTest {
         User createdUser = mock(User.class);
         when(createdUser.isEnabled()).thenReturn(true);
         when(createdUser.getRoles()).thenReturn(Arrays.asList("idp-role", "idp2-role"));
-
+        ExecutionContext executionContext = mock(ExecutionContext.class);
         when(domain.getId()).thenReturn(domainId);
         when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.empty());
         when(userService.findByDomainAndUsernameAndSource(domainId, username, source)).thenReturn(Maybe.empty());
         when(userService.create(any())).thenReturn(Single.just(createdUser));
         when(userService.enhance(createdUser)).thenReturn(Single.just(createdUser));
+        when(rulesEngine.fire(any(), any(), any(), any())).thenReturn(Single.just(executionContext));
 
         TestObserver<User> testObserver = userAuthenticationService.connect(user).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -266,9 +277,11 @@ public class UserAuthenticationServiceTest {
         when(domain.getId()).thenReturn(domainId);
         final User foundUser = spy(new User());
         when(foundUser.isAccountNonLocked()).thenReturn(true);
+        ExecutionContext executionContext = mock(ExecutionContext.class);
         when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(foundUser));
         when(userService.update(any(), any())).thenAnswer(i -> Single.just(i.getArguments()[0]));
         when(userService.enhance(any())).thenAnswer(i -> Single.just(i.getArguments()[0]));
+        when(rulesEngine.fire(any(), any(), any(), any())).thenReturn(Single.just(executionContext));
 
         TestObserver<User> testObserver = userAuthenticationService.connect(user).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -299,9 +312,11 @@ public class UserAuthenticationServiceTest {
         final User foundUser = spy(new User());
         foundUser.setAccountNonLocked(true);
         foundUser.setDynamicRoles(Arrays.asList("idp-role", "idp2-role"));
+        ExecutionContext executionContext = mock(ExecutionContext.class);
         when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(foundUser));
         when(userService.update(any(), any())).thenAnswer(i -> Single.just(i.getArguments()[0]));
         when(userService.enhance(any())).thenAnswer(i -> Single.just(i.getArguments()[0]));
+        when(rulesEngine.fire(any(), any(), any(), any())).thenReturn(Single.just(executionContext));
 
         TestObserver<User> testObserver = userAuthenticationService.connect(user).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -336,9 +351,11 @@ public class UserAuthenticationServiceTest {
 
         final User foundUser = mock(User.class);
         when(foundUser.isAccountNonLocked()).thenReturn(true);
+        ExecutionContext executionContext = mock(ExecutionContext.class);
         when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(foundUser));
         when(userService.update(any(), any())).thenReturn(Single.just(updatedUser));
         when(userService.enhance(updatedUser)).thenReturn(Single.just(updatedUser));
+        when(rulesEngine.fire(any(), any(), any(), any())).thenReturn(Single.just(executionContext));
 
         TestObserver<User> testObserver = userAuthenticationService.connect(user).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -376,10 +393,11 @@ public class UserAuthenticationServiceTest {
         existingAdditionalInformation.put("op_id_token", "token1");
         existingUser.setAdditionalInformation(existingAdditionalInformation);
         existingUser.setAccountNonLocked(true);
-
+        ExecutionContext executionContext = mock(ExecutionContext.class);
         when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(existingUser));
         when(userService.update(any(), any())).thenReturn(Single.just(updatedUser));
         when(userService.enhance(updatedUser)).thenReturn(Single.just(updatedUser));
+        when(rulesEngine.fire(any(), any(), any(), any())).thenReturn(Single.just(executionContext));
 
         TestObserver<User> testObserver = userAuthenticationService.connect(user).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -413,9 +431,11 @@ public class UserAuthenticationServiceTest {
         existingAdditionalInformation.put("op_id_token", "token1");
         existingUser.setAdditionalInformation(existingAdditionalInformation);
         existingUser.setAccountNonLocked(true);
+        ExecutionContext executionContext = mock(ExecutionContext.class);
         when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(existingUser));
         when(userService.update(any(), any())).thenReturn(Single.just(updatedUser));
         when(userService.enhance(updatedUser)).thenReturn(Single.just(updatedUser));
+        when(rulesEngine.fire(any(), any(), any(), any())).thenReturn(Single.just(executionContext));
 
         TestObserver<User> testObserver = userAuthenticationService.connect(user).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -424,6 +444,132 @@ public class UserAuthenticationServiceTest {
         testObserver.assertNoErrors();
 
         verify(userService).update(argThat(user1 -> !user1.getAdditionalInformation().containsKey("op_id_token")), any());
+    }
+
+    @Test
+    public void shouldConnect_accountLinking() {
+        String domainId = "Domain";
+        String source = "SRC";
+        String id = "id";
+        String linkedAccount = "linkedAccountId";
+        io.gravitee.am.identityprovider.api.User user = mock(io.gravitee.am.identityprovider.api.User.class);
+        when(user.getId()).thenReturn(id);
+        HashMap<String, Object> additionalInformation = new HashMap<>();
+        additionalInformation.put("source", source);
+        when(user.getAdditionalInformation()).thenReturn(additionalInformation);
+
+        User updatedUser = mock(User.class);
+        when(updatedUser.isEnabled()).thenReturn(true);
+
+        when(domain.getId()).thenReturn(domainId);
+        final User foundUser = new User();
+        foundUser.setId(linkedAccount);
+        foundUser.setAccountNonLocked(true);
+        ExecutionContext executionContext = mock(ExecutionContext.class);
+        when(executionContext.getAttribute(ConstantKeys.LINKED_ACCOUNT_ID_CONTEXT_KEY)).thenReturn(linkedAccount);
+        when(userService.findById(linkedAccount)).thenReturn(Maybe.just(foundUser));
+        when(userService.update(any(), any())).thenReturn(Single.just(updatedUser));
+        when(userService.enhance(updatedUser)).thenReturn(Single.just(updatedUser));
+        when(rulesEngine.fire(any(), any(), any(), any())).thenReturn(Single.just(executionContext));
+
+        TestObserver testObserver = userAuthenticationService.connect(user).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(userService, never()).create(any());
+        verify(userService, times(1)).update(argThat(u -> {
+            return u.getIdentities() != null &&
+                    id.equals(u.getIdentities().get(0).getUserId()) &&
+                    source.equals(u.getIdentities().get(0).getProviderId());
+        }), any());
+    }
+
+    @Test
+    public void shouldConnect_accountLinking_multipleIdentities() {
+        String domainId = "Domain";
+        String source = "SRC2";
+        String id = "id2";
+        String linkedAccount = "linkedAccountId";
+        io.gravitee.am.identityprovider.api.User user = mock(io.gravitee.am.identityprovider.api.User.class);
+        when(user.getId()).thenReturn(id);
+        HashMap<String, Object> additionalInformation = new HashMap<>();
+        additionalInformation.put("source", source);
+        when(user.getAdditionalInformation()).thenReturn(additionalInformation);
+        User updatedUser = mock(User.class);
+        when(updatedUser.isEnabled()).thenReturn(true);
+        when(domain.getId()).thenReturn(domainId);
+
+        final UserIdentity userIdentity = new UserIdentity();
+        userIdentity.setUserId("id1");
+        userIdentity.setProviderId("SRC1");
+
+        final User foundUser = new User();
+        foundUser.setId(linkedAccount);
+        foundUser.setAccountNonLocked(true);
+        foundUser.setIdentities(List.of(userIdentity));
+
+        ExecutionContext executionContext = mock(ExecutionContext.class);
+        when(executionContext.getAttribute(ConstantKeys.LINKED_ACCOUNT_ID_CONTEXT_KEY)).thenReturn(linkedAccount);
+        when(userService.findById(linkedAccount)).thenReturn(Maybe.just(foundUser));
+        when(userService.update(any(), any())).thenReturn(Single.just(updatedUser));
+        when(userService.enhance(updatedUser)).thenReturn(Single.just(updatedUser));
+        when(rulesEngine.fire(any(), any(), any(), any())).thenReturn(Single.just(executionContext));
+
+        TestObserver testObserver = userAuthenticationService.connect(user).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(userService, never()).create(any());
+        verify(userService, times(1)).update(argThat(u -> {
+            return u.getIdentities() != null && u.getIdentities().size() == 2;
+        }), any());
+    }
+
+    @Test
+    public void shouldConnect_accountLinking_existingIdentity() {
+        String domainId = "Domain";
+        String source = "SRC1";
+        String id = "id1";
+        String linkedAccount = "linkedAccountId";
+        io.gravitee.am.identityprovider.api.User user = mock(io.gravitee.am.identityprovider.api.User.class);
+        when(user.getId()).thenReturn(id);
+        HashMap<String, Object> additionalInformation = new HashMap<>();
+        additionalInformation.put("source", source);
+        additionalInformation.put("newKey", "newValue");
+        when(user.getAdditionalInformation()).thenReturn(additionalInformation);
+        User updatedUser = mock(User.class);
+        when(updatedUser.isEnabled()).thenReturn(true);
+        when(domain.getId()).thenReturn(domainId);
+
+        final UserIdentity userIdentity = new UserIdentity();
+        userIdentity.setUserId(id);
+        userIdentity.setProviderId(source);
+
+        final User foundUser = new User();
+        foundUser.setId(linkedAccount);
+        foundUser.setAccountNonLocked(true);
+        foundUser.setIdentities(List.of(userIdentity));
+
+        ExecutionContext executionContext = mock(ExecutionContext.class);
+        when(executionContext.getAttribute(ConstantKeys.LINKED_ACCOUNT_ID_CONTEXT_KEY)).thenReturn(linkedAccount);
+        when(userService.findById(linkedAccount)).thenReturn(Maybe.just(foundUser));
+        when(userService.update(any(), any())).thenReturn(Single.just(updatedUser));
+        when(userService.enhance(updatedUser)).thenReturn(Single.just(updatedUser));
+        when(rulesEngine.fire(any(), any(), any(), any())).thenReturn(Single.just(executionContext));
+
+        TestObserver testObserver = userAuthenticationService.connect(user).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(userService, never()).create(any());
+        verify(userService, times(1)).update(argThat(u -> {
+            return u.getIdentities() != null &&
+                    u.getIdentities().size() == 1 &&
+                    "newValue".equals(u.getIdentities().get(0).getAdditionalInformation().get("newKey"));
+        }), any());
     }
 
     @Test

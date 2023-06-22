@@ -22,19 +22,20 @@ import io.gravitee.am.common.exception.authentication.AccountLockedException;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.oidc.idtoken.Claims;
+import io.gravitee.am.common.policy.ExtensionPoint;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationService;
 import io.gravitee.am.gateway.handler.common.email.EmailService;
+import io.gravitee.am.gateway.handler.common.policy.RulesEngine;
 import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.Template;
-import io.gravitee.am.model.User;
+import io.gravitee.am.model.*;
 import io.gravitee.am.model.account.AccountSettings;
+import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.management.api.CommonUserRepository;
@@ -43,6 +44,7 @@ import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
+import io.gravitee.gateway.api.ExecutionContext;
 import io.gravitee.gateway.api.Request;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -52,10 +54,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.Instant;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static io.gravitee.am.common.utils.ConstantKeys.OIDC_PROVIDER_ID_ACCESS_TOKEN_KEY;
@@ -88,14 +87,27 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
     @Autowired
     private EmailService emailService;
 
+    @Autowired
+    private RulesEngine rulesEngine;
+
     @Override
-    public Single<User> connect(io.gravitee.am.identityprovider.api.User principal, boolean afterAuthentication) {
-        // save or update the user
-        return saveOrUpdate(principal, afterAuthentication)
-                // check account status
-                .flatMap(user -> checkAccountStatus(user)
-                        // and enhance user information
-                        .andThen(Single.defer(() -> userService.enhance(user))));
+    public Single<User> connect(io.gravitee.am.identityprovider.api.User principal,
+                                Client client,
+                                Request request,
+                                boolean afterAuthentication) {
+
+        // fire PRE_CONNECT flow
+        final User preConnectedUser = create0(principal, afterAuthentication);
+        return rulesEngine.fire(ExtensionPoint.PRE_CONNECT, request, client, preConnectedUser)
+                .flatMap(executionContext -> {
+                    return saveOrUpdate(preConnectedUser, executionContext, afterAuthentication)
+                            // check account status
+                            .flatMap(user -> checkAccountStatus(user)
+                                    // and enhance user information
+                                    .andThen(Single.defer(() -> userService.enhance(user))));
+                })
+                // fire POST_CONNECT flow
+                .flatMap(endUser -> rulesEngine.fire(ExtensionPoint.POST_TOKEN, request, client, endUser).map(__ -> endUser));
     }
 
     @Override
@@ -156,7 +168,7 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
                         Maybe.error(new AccountLockedException("User " + user.getUsername() + " is locked")) :
                         Maybe.just(user)
                 )
-                .flatMap(user -> identityProviderManager.get(user.getSource())
+                .flatMap(user -> identityProviderManager.get(user.getLastIdentityUsed())
                         // if the user has been found, try to load user information from its latest identity provider
                         .flatMap(authenticationProvider -> {
                             SimpleAuthenticationContext authenticationContext = new SimpleAuthenticationContext(request);
@@ -169,7 +181,8 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
                             additionalInformation.put(SOURCE_FIELD, user.getSource());
                             additionalInformation.put(Parameters.CLIENT_ID, user.getClient());
                             ((DefaultUser) idpUser).setAdditionalInformation(additionalInformation);
-                            return update(user, idpUser, false)
+                            final User preConnectedUser = create0(idpUser, false);
+                            return update(user, preConnectedUser, false)
                                     .flatMap(userService::enhance).toMaybe();
                         })
                         // no user has been found in the identity provider, just enhance user information
@@ -210,19 +223,27 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
                 .ignoreElement();
     }
 
-    private Single<User> saveOrUpdate(io.gravitee.am.identityprovider.api.User principal, boolean afterAuthentication) {
-        String source = (String) principal.getAdditionalInformation().get(SOURCE_FIELD);
-        return userService.findByDomainAndExternalIdAndSource(domain.getId(), principal.getId(), source)
-                .switchIfEmpty(Maybe.defer(() -> userService.findByDomainAndUsernameAndSource(domain.getId(), principal.getUsername(), source)))
-                .switchIfEmpty(Single.error(() -> new UserNotFoundException(principal.getUsername())))
+    private Single<User> saveOrUpdate(User preConnectedUser, ExecutionContext executionContext, boolean afterAuthentication) {
+        final String source = preConnectedUser.getSource();
+        final String externalId = preConnectedUser.getExternalId();
+        final String username = preConnectedUser.getUsername();
+        final String linkedAccount = (String) executionContext.getAttribute(ConstantKeys.LINKED_ACCOUNT_ID_CONTEXT_KEY);
+        final boolean accountLinkingMode = linkedAccount != null;
+        final Maybe<User> findExistingUser =
+                accountLinkingMode ? userService.findById(linkedAccount) :
+                        userService.findByDomainAndExternalIdAndSource(domain.getId(), externalId, source)
+                                .switchIfEmpty(Maybe.defer(() -> userService.findByDomainAndUsernameAndSource(domain.getId(), username, source)));
+
+        return findExistingUser
+                .switchIfEmpty(Single.error(() -> new UserNotFoundException(username)))
                 .flatMap(user -> isIndefinitelyLocked(user) ?
                         Single.error(new AccountLockedException("User " + user.getUsername() + " is locked")) :
                         Single.just(user)
                 )
-                .flatMap(existingUser -> update(existingUser, principal, afterAuthentication))
+                .flatMap(existingUser -> update(existingUser, preConnectedUser, afterAuthentication, accountLinkingMode))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof UserNotFoundException) {
-                        return create(principal, afterAuthentication);
+                        return create(preConnectedUser);
                     }
                     return Single.error(ex);
                 });
@@ -247,48 +268,81 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
     /**
      * Update user information with data from the identity provider user
      * @param existingUser existing user in the repository
-     * @param principal user from the identity provider
+     * @param preConnectedUser user from the identity provider
      * @param afterAuthentication if update operation is called after a sign in operation
      * @return updated user
      */
-    private Single<User> update(User existingUser, io.gravitee.am.identityprovider.api.User principal, boolean afterAuthentication) {
-        LOGGER.debug("Updating user: username[{}]", principal.getUsername());
+    private Single<User> update(User existingUser,
+                                User preConnectedUser,
+                                boolean afterAuthentication) {
+        return update(existingUser, preConnectedUser, afterAuthentication, null);
+    }
 
-        final boolean updateDisplayName = hasGeneratedDisplayName(existingUser);
-        if (!isNullOrEmpty(principal.getEmail())) {
-            existingUser.setEmail(principal.getEmail());
-        }
-        if (!isNullOrEmpty(principal.getLastName())) {
-            existingUser.setLastName(principal.getLastName());
-        }
-        if (!isNullOrEmpty(principal.getFirstName())) {
-            existingUser.setFirstName(principal.getFirstName());
-        }
-        if (existingUser.getFirstName() != null && updateDisplayName) {
-            existingUser.setDisplayName(buildDisplayName(existingUser));
-        }
+    /**
+     * Update user information with data from the identity provider user
+     * @param existingUser existing user in the repository
+     * @param preConnectedUser user from the identity provider
+     * @param afterAuthentication if update operation is called after a sign in operation
+     * @param accountLinking if update operation is called on a linked account
+     * @return updated user
+     */
+    private Single<User> update(User existingUser,
+                                User preConnectedUser,
+                                boolean afterAuthentication,
+                                Boolean accountLinking) {
+        LOGGER.debug("Updating user: username[{}]", preConnectedUser.getUsername());
 
-        // set external id
-        existingUser.setExternalId(principal.getId());
+        var updateActions = CommonUserRepository.UpdateActions.none();
+
+        // update authentication information
         if (afterAuthentication) {
+            existingUser.setLastIdentityUsed(preConnectedUser.getSource());
             existingUser.setLoggedAt(new Date());
             existingUser.setLastLoginWithCredentials(existingUser.getLoggedAt());
             existingUser.setLoginsCount(existingUser.getLoginsCount() + 1);
             existingUser.setAccountNonLocked(true);
         }
 
-        // set roles
-        var updateActions = CommonUserRepository.UpdateActions.none();
-        updateActions.updateDynamicRole(!Objects.equals(existingUser.getDynamicRoles(), principal.getRoles()));
-        existingUser.setDynamicRoles(principal.getRoles());
-
-        if (existingUser.getLastPasswordReset() == null) {
-            existingUser.setLastPasswordReset(existingUser.getUpdatedAt() == null ? new Date() : existingUser.getUpdatedAt());
+        // set client
+        if (preConnectedUser.getClient() !=  null) {
+            existingUser.setClient(preConnectedUser.getClient());
         }
 
-        Map<String, Object> additionalInformation = ofNullable(principal.getAdditionalInformation()).orElse(Map.of());
-        removeOriginalProviderOidcTokensIfNecessary(existingUser, afterAuthentication, additionalInformation);
-        extractAdditionalInformation(existingUser, additionalInformation);
+        // check if it's a linked account
+        if (isAccountLinked(accountLinking, existingUser, preConnectedUser)) {
+            upsertLinkedIdentities(existingUser, preConnectedUser);
+        } else {
+            // set external id
+            existingUser.setExternalId(preConnectedUser.getExternalId());
+
+            // set profile name information
+            if (!isNullOrEmpty(preConnectedUser.getEmail())) {
+                existingUser.setEmail(preConnectedUser.getEmail());
+            }
+            if (!isNullOrEmpty(preConnectedUser.getLastName())) {
+                existingUser.setLastName(preConnectedUser.getLastName());
+            }
+            if (!isNullOrEmpty(preConnectedUser.getFirstName())) {
+                existingUser.setFirstName(preConnectedUser.getFirstName());
+            }
+            if (existingUser.getFirstName() != null && hasGeneratedDisplayName(existingUser)) {
+                existingUser.setDisplayName(buildDisplayName(existingUser));
+            }
+
+            // set roles
+            updateActions.updateDynamicRole(!Objects.equals(existingUser.getDynamicRoles(), preConnectedUser.getDynamicRoles()));
+            existingUser.setDynamicRoles(preConnectedUser.getDynamicRoles());
+
+            // set last password reset
+            if (existingUser.getLastPasswordReset() == null) {
+                existingUser.setLastPasswordReset(existingUser.getUpdatedAt() == null ? new Date() : existingUser.getUpdatedAt());
+            }
+
+            // set additional information
+            Map<String, Object> additionalInformation = ofNullable(preConnectedUser.getAdditionalInformation()).orElse(Map.of());
+            removeOriginalProviderOidcTokensIfNecessary(existingUser, afterAuthentication, additionalInformation);
+            extractAdditionalInformation(existingUser, additionalInformation);
+        }
 
         return userService.update(existingUser, updateActions);
     }
@@ -308,31 +362,35 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
 
     /**
      * Create user with data from the identity provider user
-     * @param principal user from the identity provider
-     * @param afterAuthentication if create operation is called after a sign in operation
+     * @param preConnectedUser user from the identity provider
      * @return created user
      */
-    private Single<User> create(io.gravitee.am.identityprovider.api.User principal, boolean afterAuthentication) {
-        LOGGER.debug("Creating a new user: username[%s]", principal.getUsername());
-        final User newUser = new User();
-        // set external id
-        newUser.setExternalId(principal.getId());
-        newUser.setUsername(principal.getUsername());
-        newUser.setEmail(principal.getEmail());
-        newUser.setFirstName(principal.getFirstName());
-        newUser.setLastName(principal.getLastName());
-        newUser.setReferenceType(ReferenceType.DOMAIN);
-        newUser.setReferenceId(domain.getId());
+    private Single<User> create(User preConnectedUser) {
+        LOGGER.debug("Creating a new user: username[%s]", preConnectedUser.getUsername());
+        return userService.create(preConnectedUser);
+    }
+
+    private User create0(io.gravitee.am.identityprovider.api.User principal, boolean afterAuthentication) {
+        final User preConnectedUser = new User();
+        preConnectedUser.setExternalId(principal.getId());
+        preConnectedUser.setUsername(principal.getUsername());
+        preConnectedUser.setEmail(principal.getEmail());
+        preConnectedUser.setFirstName(principal.getFirstName());
+        preConnectedUser.setLastName(principal.getLastName());
+        preConnectedUser.setReferenceType(ReferenceType.DOMAIN);
+        preConnectedUser.setReferenceId(domain.getId());
+        preConnectedUser.setSource((String) principal.getAdditionalInformation().get(SOURCE_FIELD));
         if (afterAuthentication) {
-            newUser.setLoggedAt(new Date());
-            newUser.setLastLoginWithCredentials(newUser.getLoggedAt());
-            newUser.setLoginsCount(1L);
+            preConnectedUser.setLastIdentityUsed(preConnectedUser.getSource());
+            preConnectedUser.setLoggedAt(new Date());
+            preConnectedUser.setLastLoginWithCredentials(preConnectedUser.getLoggedAt());
+            preConnectedUser.setLoginsCount(1L);
         }
-        newUser.setDynamicRoles(principal.getRoles());
+        preConnectedUser.setDynamicRoles(principal.getRoles());
 
         Map<String, Object> additionalInformation = principal.getAdditionalInformation();
-        extractAdditionalInformation(newUser, additionalInformation);
-        return userService.create(newUser);
+        extractAdditionalInformation(preConnectedUser, additionalInformation);
+        return preConnectedUser;
     }
 
     private void extractAdditionalInformation(User user, Map<String, Object> additionalInformation) {
@@ -342,10 +400,60 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
             if (user.getLoggedAt() != null) {
                 extraInformation.put(Claims.auth_time, user.getLoggedAt().getTime() / 1000);
             }
-            extraInformation.put(StandardClaims.PREFERRED_USERNAME, user.getUsername());
-            user.setSource((String) extraInformation.remove(SOURCE_FIELD));
-            user.setClient((String) extraInformation.remove(Parameters.CLIENT_ID));
+            if (user.getUsername() != null) {
+                extraInformation.put(StandardClaims.PREFERRED_USERNAME, user.getUsername());
+            }
+            if (extraInformation.get(SOURCE_FIELD) != null) {
+                user.setSource((String) extraInformation.remove(SOURCE_FIELD));
+            }
+            if (extraInformation.get(Parameters.CLIENT_ID) != null) {
+                user.setClient((String) extraInformation.remove(Parameters.CLIENT_ID));
+            }
             user.setAdditionalInformation(extraInformation);
         }
+    }
+
+    private boolean isAccountLinked(Boolean accountLinking,
+                                    User existingUser,
+                                    User preConnectedUser) {
+        if (Boolean.TRUE.equals(accountLinking)) {
+            return true;
+        }
+
+        return ofNullable(existingUser.getIdentities())
+                .orElse(List.of())
+                .stream()
+                .anyMatch(u -> u.getUserId().equals(preConnectedUser.getExternalId()));
+    }
+
+    private void upsertLinkedIdentities(User existingUser, User preConnectedUser) {
+        List<UserIdentity> userIdentities =
+                existingUser.getIdentities() != null ? new ArrayList<>(existingUser.getIdentities()) : null;
+        if (userIdentities == null || userIdentities.isEmpty()) {
+            userIdentities = Collections.singletonList(userIdentity(preConnectedUser));
+        } else {
+            var linkedAccount = userIdentities.stream()
+                    .filter(u -> u.getUserId().equals(preConnectedUser.getExternalId()))
+                    .findFirst();
+            if (linkedAccount.isPresent()) {
+                // only update the additionalInformation
+                var userIdentity = new UserIdentity(linkedAccount.get());
+                userIdentity.setAdditionalInformation(preConnectedUser.getAdditionalInformation());
+                userIdentities.removeIf(u -> u.getUserId().equals(userIdentity.getUserId()));
+                userIdentities.add(userIdentity);
+            } else {
+                userIdentities.add(userIdentity(preConnectedUser));
+            }
+        }
+        existingUser.setIdentities(userIdentities);
+    }
+
+    private UserIdentity userIdentity(User preConnectedUser) {
+        UserIdentity userIdentity = new UserIdentity();
+        userIdentity.setUserId(preConnectedUser.getExternalId());
+        userIdentity.setProviderId(preConnectedUser.getSource());
+        userIdentity.setAdditionalInformation(preConnectedUser.getAdditionalInformation());
+        userIdentity.setLinkedAt(new Date());
+        return userIdentity;
     }
 }

@@ -268,6 +268,7 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
         updateFields.add(Updates.set("referenceType", item.getReferenceType().name()));
         updateFields.add(Updates.set("referenceId", item.getReferenceId()));
         updateFields.add(Updates.set("source", item.getSource()));
+        updateFields.add(Updates.set("lastIdentityUsed", item.getLastIdentityUsed()));
         updateFields.add(Updates.set("client", item.getClient()));
         updateFields.add(Updates.set("loginsCount", item.getLoginsCount()));
         updateFields.add(Updates.set("loggedAt", item.getLoggedAt()));
@@ -304,6 +305,8 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
         if (actions.updateEntitlements()) {
             updateFields.add(Updates.set("entitlements", item.getEntitlements()));
         }
+        // TODO manage update Actions
+        updateFields.add(Updates.set("identities", item.getIdentities()));
         return updateFields;
     }
 
@@ -367,6 +370,8 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
         user.setType(userMongo.getType());
         user.setTitle(userMongo.getTitle());
         user.setPreferredLanguage(userMongo.getPreferredLanguage());
+        user.setIdentities(userMongo.getIdentities());
+        user.setLastIdentityUsed(userMongo.getLastIdentityUsed());
         user.setAdditionalInformation(userMongo.getAdditionalInformation());
         user.setCreatedAt(userMongo.getCreatedAt());
         user.setUpdatedAt(userMongo.getUpdatedAt());
@@ -424,6 +429,8 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
         userMongo.setType(user.getType());
         userMongo.setTitle(user.getTitle());
         userMongo.setPreferredLanguage(user.getPreferredLanguage());
+        userMongo.setIdentities(user.getIdentities());
+        userMongo.setLastIdentityUsed(user.getLastIdentityUsed());
         userMongo.setAdditionalInformation(user.getAdditionalInformation() != null ? new Document(user.getAdditionalInformation()) : new Document());
         userMongo.setCreatedAt(user.getCreatedAt());
         userMongo.setUpdatedAt(user.getUpdatedAt());
