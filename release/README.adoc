@@ -5,34 +5,47 @@
 This repo contains some https://github.com/google/zx[zx] scripts to execute the different release steps for AM.
 
 It will allow you to run these pipeline on CircleCI to:
-- Generate Changelog
+
+* Launch git release and maven artifact deployment to our local artifactory
+* Launch deploy maven artifact to maven central (sonatype)
+* Launche the build and publish of docker images
+* Launch the build and publish the RPM of AM
+* Launch the helm release and publish
+* Launch the changelog generation (open a PR pre-filled)
 
 == 🛠 Requirement
 
 To run the scripts, you need to have:
 
 * Node.js >= 16.0.0 (configured in link:.nvmrc[.nvmrc] with v18.4.0)
-* https://github.com/google/zx[zx], to install it you just have to run:
-
+* (optional) https://github.com/google/zx[zx], to install it you just have to run:
++
 [source,shell]
 ----
 npm i -g zx
 # Check everything is ok:
 zx -v
 ----
-* A https://github.com/motdotla/dotenv#readme[dotenv] file containing the variable `CIRCLECI_TOKEN`, which is your personal token on CircleCI:
- - Go to https://app.circleci.com/settings/user/tokens, create a token and copy it
- - Run the following command in the `release` folder to create a `.env` file with the token:
 
+* Get your own CircleCI token to be able to trigger build
+** Go to https://app.circleci.com/settings/user/tokens, create a token and copy it. It is your personal token on CircleCI
+** You can create an `.env` file with your key on `CIRCLECI_TOKEN` variable. We use https://github.com/motdotla/dotenv#readme[dotenv] read it. The following command in the `release` folder will create a `.env` file with the token:
++
 [source,shell]
 ----
 touch .env && echo "CIRCLECI_TOKEN=[YOUR_TOKEN]" > .env
 ----
+** Or you can just export this variable (maybe add it in your `.bashrc` / `.zshrc`)
++
+[source,shell]
+----
+export CIRCLECI_TOKEN="[YOUR_TOKEN]"
+----
 
-* Some dependencies to run the scripts, you can install them with:
+* The scripts need some dependencies, you can install them from the `release` folder with:
++
 [source, shell]
 ----
-# In the `release` folder
 npm install
 ----
 
@@ -40,20 +53,74 @@ npm install
 
 Thanks to link:package.json[package.json], you can run those scripts as simple `npm` commands (do not forget to use `npm i` before starting).
 
-Each of the commands needs:
+Each of the commands needs a `CIRCLECI_TOKEN`.
 
-* A `CIRCLECI_TOKEN` in `.env` file
-* the `--version` parameter
+You can see help and example by running:
 
-Optional flag:
-
-* `--dry-run`: allow to run the pipeline in dry run mode
-
+[source, shell]
+----
+npm run am-release -- help
+----
 
 Examples:
 
-Run the release note in dry run:
-- `npm run release_notes -- --version=3.21.0 --dry-run`
+* Run the git release in dry run:
++
+[source, shell]
+----
+npm run am-release -- --branch master --gio-version 4.3.0 --dry-run release-git
+----
 
-Run the release note entirely:
-- `npm run release_notes -- --version=3.21.0`
+* Run all release step:
++
+[source, shell]
+----
+npm run am-release -- \
+  --branch master --gio-version 4.3.0 \
+  --dry-run \
+  release-git
+
+npm run am-release -- \
+  --branch master --gio-version 4.3.0 \
+  --dry-run \
+  publish-maven-central
+
+npm run am-release -- \
+  --branch master --gio-version 4.3.0 \
+  --dry-run \
+  publish-docker-images \
+  --tag-latest --no-tag-latest-support
+
+npm run am-release -- \
+  --branch master --gio-version 4.3.0 \
+  --dry-run \
+  publish-rpms
+
+npm run am-release -- \
+  --branch master --gio-version 4.3.0 \
+  --dry-run \
+  release-helm
+
+npm run am-release -- \
+  --branch master --gio-version 4.3.0 \
+  --dry-run \
+  release-notes
+----
+
+
+== 💡 Functional overview
+
+This is the functional dependencies between each step:
+
+[mermaid]
+----
+flowchart LR
+    A[release-git]
+    A -->B[publish-maven-central]
+    A -->C[publish-docker-images]
+    A -->D[publish-rpms]
+    A -->E[release-helm]
+    A -->F[release-notes]
+----
+
+Note that the configuration of CircleCI *disallow* multiple build on the same branch (a new build cancel the previous one). It means that we have to run one step at a time.
