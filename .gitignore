@@ -43,3 +43,5 @@ gravitee-am-test/api/config/development.json
 # ignore charts downloaded for helm build
 helm/charts/
 
+# docker compose local volume
+docker/compose/data/
