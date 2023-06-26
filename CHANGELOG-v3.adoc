@@ -1,5 +1,12 @@
 # Change Log
 
+== AM - 3.21.2 (2023-06-26)
+
+=== Other
+
+*  Error on ECDSA token exchange https://github.com/gravitee-io/issues/issues/8990[#8990]
+
+
 == AM - 3.21.1 (2023-06-09)
 
 === Gateway
