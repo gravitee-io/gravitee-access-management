@@ -36,8 +36,10 @@ import io.gravitee.common.event.EventManager;
 import io.gravitee.common.event.impl.EventManagerImpl;
 import io.gravitee.el.ExpressionLanguageInitializer;
 import io.gravitee.node.api.NodeMetadataResolver;
+import io.gravitee.node.api.cluster.ClusterManager;
 import io.gravitee.node.certificates.spring.NodeCertificatesConfiguration;
 import io.gravitee.node.container.NodeFactory;
+import io.gravitee.node.plugin.cluster.standalone.StandaloneClusterManager;
 import io.gravitee.node.vertx.spring.VertxConfiguration;
 import io.gravitee.platform.repository.api.RepositoryScopeProvider;
 import io.gravitee.plugin.alert.spring.AlertPluginConfiguration;
@@ -111,5 +113,10 @@ public class StandaloneConfiguration {
     @Bean
     public NodeMetadataResolver nodeMetadataResolver() {
         return new ManagementNodeMetadataResolver();
+    }
+
+    @Bean
+    public ClusterManager clusterManager(Vertx vertx) {
+        return new StandaloneClusterManager(vertx.getDelegate());
     }
 }

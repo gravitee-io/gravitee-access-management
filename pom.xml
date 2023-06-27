@@ -76,8 +76,8 @@
         <awaitility.version>4.2.0</awaitility.version>
         <gravitee-bom.version>4.0.3</gravitee-bom.version>
         <gravitee-common.version>2.1.0</gravitee-common.version>
-        <gravitee-plugin.version>2.0.0-alpha.1</gravitee-plugin.version>
-        <gravitee-node.version>3.0.9</gravitee-node.version>
+        <gravitee-plugin.version>2.0.0-alpha.3</gravitee-plugin.version>
+        <gravitee-node.version>4.0.0-alpha.1</gravitee-node.version>
         <gravitee-reporter.version>1.17.1</gravitee-reporter.version>
         <gravitee-gateway-api.version>1.31.2</gravitee-gateway-api.version>
         <gravitee-expression-language.version>1.5.0</gravitee-expression-language.version>
@@ -232,6 +232,17 @@
                 <groupId>io.gravitee.node</groupId>
                 <version>${gravitee-node.version}</version>
             </dependency>
+            <dependency>
+                <groupId>io.gravitee.node</groupId>
+                <artifactId>gravitee-node-cluster-plugin-handler</artifactId>
+                <version>${gravitee-node.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.gravitee.node</groupId>
+                <artifactId>gravitee-node-cluster-plugin-standalone</artifactId>
+                <version>${gravitee-node.version}</version>
+            </dependency>
+
             <dependency>
                 <groupId>io.gravitee.gateway</groupId>
                 <artifactId>gravitee-gateway-api</artifactId>
