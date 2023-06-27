@@ -71,11 +71,9 @@ public class PolicyPluginManagerImpl implements PolicyPluginManager {
     @Autowired
     private PluginClassLoaderFactory pluginClassLoaderFactory;
 
-
-
     @Override
-    public Collection<PolicyPlugin> getAll() {
-        return pluginManager.findAll();
+    public Collection<PolicyPlugin> getAll(boolean includeNotDeployed) {
+        return pluginManager.findAll(includeNotDeployed);
     }
 
     @Override

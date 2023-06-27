@@ -34,7 +34,11 @@ public interface PolicyPluginManager {
         return create(type, null, configuration);
     }
 
-    Collection<PolicyPlugin> getAll();
+    default Collection<PolicyPlugin> getAll(){
+        return getAll(false);
+    }
+    
+    Collection<PolicyPlugin> getAll(boolean includeNotDeployed);
 
     PolicyPlugin get(String policyId);
 
