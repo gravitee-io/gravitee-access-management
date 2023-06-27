@@ -27,8 +27,6 @@ import java.util.List;
  */
 public interface PolicyPluginService {
 
-    Single<List<PolicyPlugin>> findAll();
-
     Single<List<PolicyPlugin>> findAll(List<String> expand);
 
     Maybe<PolicyPlugin> findById(String policyId);

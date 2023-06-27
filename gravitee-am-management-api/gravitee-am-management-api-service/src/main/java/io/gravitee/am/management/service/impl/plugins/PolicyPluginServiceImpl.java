@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.service.impl.plugins;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -33,6 +34,9 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+import static java.util.Objects.nonNull;
+import static java.util.Optional.ofNullable;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -40,25 +44,22 @@ import java.util.List;
 @Component
 public class PolicyPluginServiceImpl implements PolicyPluginService {
 
-    private final Logger LOGGER = LoggerFactory.getLogger(PolicyPluginServiceImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(PolicyPluginServiceImpl.class);
 
-    @Autowired
-    private PolicyPluginManager policyPluginManager;
+    private final PolicyPluginManager policyPluginManager;
+    private final ObjectMapper objectMapper;
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    @Override
-    public Single<List<PolicyPlugin>> findAll() {
-        return findAll(null);
+    public PolicyPluginServiceImpl(PolicyPluginManager policyPluginManager, ObjectMapper objectMapper) {
+        this.policyPluginManager = policyPluginManager;
+        this.objectMapper = objectMapper;
     }
 
     @Override
     public Single<List<PolicyPlugin>> findAll(List<String> expand) {
         LOGGER.debug("List all policy plugins");
-        return Observable.fromIterable(policyPluginManager.getAll())
-            .map(policyPlugin -> convert(policyPlugin, expand))
-            .toList();
+        return Observable.fromIterable(policyPluginManager.getAll(true))
+                .map(policyPlugin -> convert(policyPlugin, expand))
+                .toList();
     }
 
     @Override
@@ -66,12 +67,10 @@ public class PolicyPluginServiceImpl implements PolicyPluginService {
         LOGGER.debug("Find policy plugin by ID: {}", policyId);
         return Maybe.create(emitter -> {
             try {
-                PolicyPlugin policy = convert(policyPluginManager.get(policyId));
-                if (policy != null) {
-                    emitter.onSuccess(policy);
-                } else {
-                    emitter.onComplete();
-                }
+                ofNullable(convert(policyPluginManager.get(policyId))).ifPresentOrElse(
+                        emitter::onSuccess,
+                        emitter::onComplete
+                );
             } catch (Exception ex) {
                 LOGGER.error("An error occurs while trying to get policy plugin : {}", policyId, ex);
                 emitter.onError(new TechnicalManagementException("An error occurs while trying to get policy plugin : " + policyId, ex));
@@ -84,20 +83,11 @@ public class PolicyPluginServiceImpl implements PolicyPluginService {
         LOGGER.debug("Find policy plugin schema by ID: {}", policyId);
         return Maybe.create(emitter -> {
             try {
-                String schema = policyPluginManager.getSchema(policyId);
-                if (schema != null) {
-                    JsonNode schemaNode = objectMapper.readTree(schema);
-                    if (schemaNode.has("properties")) {
-                        ObjectNode properties = (ObjectNode) schemaNode.get("properties");
-                        properties.remove("scope");
-                        properties.remove("onResponseScript");
-                        properties.remove("onRequestContentScript");
-                        properties.remove("onResponseContentScript");
-                    }
-                    emitter.onSuccess(objectMapper.writeValueAsString(schemaNode));
-                } else {
-                    emitter.onComplete();
-                }
+                final String schema = policyPluginManager.getSchema(policyId);
+                ofNullable(removeUnwantedProperties(schema)).ifPresentOrElse(
+                        emitter::onSuccess,
+                        emitter::onComplete
+                );
             } catch (Exception e) {
                 LOGGER.error("An error occurs while trying to get schema for policy plugin {}", policyId, e);
                 emitter.onError(new TechnicalManagementException("An error occurs while trying to get schema for policy plugin " + policyId, e));
@@ -105,17 +95,31 @@ public class PolicyPluginServiceImpl implements PolicyPluginService {
         });
     }
 
+    private String removeUnwantedProperties(String schema) throws JsonProcessingException {
+        if (schema == null) {
+            return null;
+        }
+        JsonNode schemaNode = objectMapper.readTree(schema);
+        if (schemaNode.has("properties")) {
+            ObjectNode properties = (ObjectNode) schemaNode.get("properties");
+            properties.remove("scope");
+            properties.remove("onResponseScript");
+            properties.remove("onRequestContentScript");
+            properties.remove("onResponseContentScript");
+        }
+        return objectMapper.writeValueAsString(schemaNode);
+    }
+
     @Override
     public Maybe<String> getIcon(String policyId) {
         LOGGER.debug("Find policy plugin icon by ID: {}", policyId);
         return Maybe.create(emitter -> {
             try {
-                String icon = policyPluginManager.getIcon(policyId);
-                if (icon != null) {
-                    emitter.onSuccess(icon);
-                } else {
-                    emitter.onComplete();
-                }
+                final String icon = policyPluginManager.getIcon(policyId);
+                ofNullable(icon).ifPresentOrElse(
+                        emitter::onSuccess,
+                        emitter::onComplete
+                );
             } catch (Exception e) {
                 LOGGER.error("An error occurs while trying to get icon for policy plugin {}", policyId, e);
                 emitter.onError(new TechnicalManagementException("An error occurs while trying to get icon for policy plugin " + policyId, e));
@@ -128,12 +132,11 @@ public class PolicyPluginServiceImpl implements PolicyPluginService {
         LOGGER.debug("Find policy plugin documentation by ID: {}", policyId);
         return Maybe.create(emitter -> {
             try {
-                String documentation = policyPluginManager.getDocumentation(policyId);
-                if (documentation != null) {
-                    emitter.onSuccess(documentation);
-                } else {
-                    emitter.onComplete();
-                }
+                final String documentation = policyPluginManager.getDocumentation(policyId);
+                ofNullable(documentation).ifPresentOrElse(
+                        emitter::onSuccess,
+                        emitter::onComplete
+                );
             } catch (Exception e) {
                 LOGGER.error("An error occurs while trying to get documentation for policy plugin {}", policyId, e);
                 emitter.onError(new TechnicalManagementException("An error occurs while trying to get documentation for policy plugin " + policyId, e));
@@ -145,24 +148,30 @@ public class PolicyPluginServiceImpl implements PolicyPluginService {
         return this.convert(policyPlugin, null);
     }
 
-    private PolicyPlugin convert(Plugin policyPlugin, List<String> expand) {
-        PolicyPlugin plugin = new PolicyPlugin();
-        plugin.setId(policyPlugin.manifest().id());
-        plugin.setName(policyPlugin.manifest().name());
-        plugin.setDescription(policyPlugin.manifest().description());
-        plugin.setVersion(policyPlugin.manifest().version());
-        if (expand != null && !expand.isEmpty()) {
+    private PolicyPlugin convert(Plugin plugin, List<String> expand) {
+        if (plugin == null) {
+            return null;
+        }
+        var policyPlugin = new PolicyPlugin();
+        policyPlugin.setId(plugin.manifest().id());
+        policyPlugin.setName(plugin.manifest().name());
+        policyPlugin.setDescription(plugin.manifest().description());
+        policyPlugin.setVersion(plugin.manifest().version());
+        policyPlugin.setDeployed(plugin.deployed());
+        if (nonNull(expand) && !expand.isEmpty()) {
             for (String s : expand) {
                 switch (s) {
                     case "schema":
-                        getSchema(plugin.getId()).subscribe(plugin::setSchema);
+                        getSchema(policyPlugin.getId()).subscribe(policyPlugin::setSchema);
+                        break;
                     case "icon":
-                        getIcon(plugin.getId()).subscribe(plugin::setIcon);
+                        getIcon(policyPlugin.getId()).subscribe(policyPlugin::setIcon);
+                        break;
                     default:
                         break;
                 }
             }
         }
-        return plugin;
+        return policyPlugin;
     }
 }
