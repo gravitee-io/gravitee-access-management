@@ -68,6 +68,11 @@ public class DummyManifest implements PluginManifest {
     }
 
     @Override
+    public String feature() {
+        return null;
+    }
+
+    @Override
     public int priority() {
         return PluginManifest.super.priority();
     }

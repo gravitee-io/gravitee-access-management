@@ -54,14 +54,6 @@
 
         <dependency>
             <groupId>io.gravitee.am.identityprovider</groupId>
-            <artifactId>gravitee-am-identityprovider-ldap</artifactId>
-            <version>${project.version}</version>
-            <type>zip</type>
-            <scope>runtime</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>io.gravitee.am.identityprovider</groupId>
             <artifactId>gravitee-am-identityprovider-mongo</artifactId>
             <version>${project.version}</version>
             <type>zip</type>
@@ -102,22 +94,6 @@
 
         <dependency>
             <groupId>io.gravitee.am.identityprovider</groupId>
-            <artifactId>gravitee-am-identityprovider-azure-ad</artifactId>
-            <version>${project.version}</version>
-            <type>zip</type>
-            <scope>runtime</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>io.gravitee.am.identityprovider</groupId>
-            <artifactId>gravitee-am-identityprovider-salesforce</artifactId>
-            <version>${project.version}</version>
-            <type>zip</type>
-            <scope>runtime</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>io.gravitee.am.identityprovider</groupId>
             <artifactId>gravitee-am-identityprovider-google</artifactId>
             <version>${project.version}</version>
             <type>zip</type>
@@ -127,14 +103,6 @@
         <dependency>
             <groupId>io.gravitee.am.identityprovider</groupId>
             <artifactId>gravitee-am-identityprovider-http</artifactId>
-            <version>${project.version}</version>
-            <type>zip</type>
-            <scope>runtime</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>io.gravitee.am.identityprovider</groupId>
-            <artifactId>gravitee-am-identityprovider-franceconnect</artifactId>
             <version>${project.version}</version>
             <type>zip</type>
             <scope>runtime</scope>
@@ -260,21 +228,6 @@
             <scope>runtime</scope>
         </dependency>
 
-        <dependency>
-            <groupId>io.gravitee.am.factor</groupId>
-            <artifactId>gravitee-am-factor-sms</artifactId>
-            <version>${project.version}</version>
-            <type>zip</type>
-            <scope>runtime</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>io.gravitee.am.factor</groupId>
-            <artifactId>gravitee-am-factor-call</artifactId>
-            <version>${project.version}</version>
-            <type>zip</type>
-            <scope>runtime</scope>
-        </dependency>
 
         <dependency>
             <groupId>io.gravitee.am.factor</groupId>
@@ -315,13 +268,6 @@
         </dependency>
 
         <!-- AM Resources -->
-        <dependency>
-            <groupId>io.gravitee.am.resource</groupId>
-            <artifactId>gravitee-am-resource-twilio</artifactId>
-            <version>${project.version}</version>
-            <type>zip</type>
-            <scope>runtime</scope>
-        </dependency>
         <dependency>
             <groupId>io.gravitee.am.resource</groupId>
             <artifactId>gravitee-am-resource-smtp</artifactId>
@@ -471,12 +417,6 @@
                                 </artifactItem>
                                 <artifactItem>
                                     <groupId>io.gravitee.am.identityprovider</groupId>
-                                    <artifactId>gravitee-am-identityprovider-ldap</artifactId>
-                                    <version>${project.version}</version>
-                                    <type>zip</type>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>io.gravitee.am.identityprovider</groupId>
                                     <artifactId>gravitee-am-identityprovider-mongo</artifactId>
                                     <version>${project.version}</version>
                                     <type>zip</type>
@@ -490,18 +430,6 @@
                                 <artifactItem>
                                     <groupId>io.gravitee.am.identityprovider</groupId>
                                     <artifactId>gravitee-am-identityprovider-oauth2-generic</artifactId>
-                                    <version>${project.version}</version>
-                                    <type>zip</type>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>io.gravitee.am.identityprovider</groupId>
-                                    <artifactId>gravitee-am-identityprovider-azure-ad</artifactId>
-                                    <version>${project.version}</version>
-                                    <type>zip</type>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>io.gravitee.am.identityprovider</groupId>
-                                    <artifactId>gravitee-am-identityprovider-salesforce</artifactId>
                                     <version>${project.version}</version>
                                     <type>zip</type>
                                 </artifactItem>
@@ -526,12 +454,6 @@
                                 <artifactItem>
                                     <groupId>io.gravitee.am.identityprovider</groupId>
                                     <artifactId>gravitee-am-identityprovider-http</artifactId>
-                                    <version>${project.version}</version>
-                                    <type>zip</type>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>io.gravitee.am.identityprovider</groupId>
-                                    <artifactId>gravitee-am-identityprovider-franceconnect</artifactId>
                                     <version>${project.version}</version>
                                     <type>zip</type>
                                 </artifactItem>
@@ -645,28 +567,7 @@
 
                                 <artifactItem>
                                     <groupId>io.gravitee.am.factor</groupId>
-                                    <artifactId>gravitee-am-factor-sms</artifactId>
-                                    <version>${project.version}</version>
-                                    <type>zip</type>
-                                </artifactItem>
-
-                                <artifactItem>
-                                    <groupId>io.gravitee.am.factor</groupId>
-                                    <artifactId>gravitee-am-factor-call</artifactId>
-                                    <version>${project.version}</version>
-                                    <type>zip</type>
-                                </artifactItem>
-
-                                <artifactItem>
-                                    <groupId>io.gravitee.am.factor</groupId>
                                     <artifactId>gravitee-am-factor-email</artifactId>
-                                    <version>${project.version}</version>
-                                    <type>zip</type>
-                                </artifactItem>
-
-                                <artifactItem>
-                                    <groupId>io.gravitee.am.factor</groupId>
-                                    <artifactId>gravitee-am-factor-recovery-code</artifactId>
                                     <version>${project.version}</version>
                                     <type>zip</type>
                                 </artifactItem>
@@ -698,12 +599,6 @@
                                 </artifactItem>
 
                                 <!-- AM Resources -->
-                                <artifactItem>
-                                    <groupId>io.gravitee.am.resource</groupId>
-                                    <artifactId>gravitee-am-resource-twilio</artifactId>
-                                    <version>${project.version}</version>
-                                    <type>zip</type>
-                                </artifactItem>
                                 <artifactItem>
                                     <groupId>io.gravitee.am.resource</groupId>
                                     <artifactId>gravitee-am-resource-smtp</artifactId>

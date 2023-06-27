@@ -16,7 +16,9 @@
 package io.gravitee.am.gateway.vertx;
 
 import io.gravitee.am.gateway.reactor.Reactor;
-import io.gravitee.node.vertx.configuration.HttpServerConfiguration;
+import io.gravitee.node.management.http.vertx.configuration.HttpServerConfiguration;
+import io.gravitee.node.vertx.server.http.VertxHttpServer;
+import io.gravitee.node.vertx.server.http.VertxHttpServerOptions;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.rxjava3.core.http.HttpServer;
@@ -32,20 +34,22 @@ public class GraviteeVerticle extends AbstractVerticle {
 
     private final Logger logger = LoggerFactory.getLogger(GraviteeVerticle.class);
 
-    private final HttpServer httpServer;
+    private final VertxHttpServer vertxHttpServer;
     private final Reactor reactor;
-    private final HttpServerConfiguration httpServerConfiguration;
+    private final VertxHttpServerOptions httpServerConfiguration;
+    private HttpServer httpServer;
 
-    public GraviteeVerticle(HttpServer httpServer, Reactor reactor, HttpServerConfiguration httpServerConfiguration) {
-        this.httpServer = httpServer;
+    public GraviteeVerticle(VertxHttpServer vertxHttpServer, Reactor reactor, VertxHttpServerOptions httpServerConfiguration) {
+        this.vertxHttpServer = vertxHttpServer;
         this.reactor = reactor;
         this.httpServerConfiguration = httpServerConfiguration;
     }
 
     @Override
     public void start(Promise<Void> startPromise) {
-        httpServer.requestHandler(reactor.route());
+        httpServer = vertxHttpServer.newInstance();
 
+        httpServer.requestHandler(reactor.route());
         httpServer.rxListen()
                 .subscribe(
                         httpServer1 -> {

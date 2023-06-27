@@ -36,20 +36,15 @@
         <module>gravitee-am-identityprovider-api</module>
         <module>gravitee-am-identityprovider-common</module>
         <module>gravitee-am-identityprovider-inline</module>
-        <module>gravitee-am-identityprovider-ldap</module>
         <module>gravitee-am-identityprovider-github</module>
         <module>gravitee-am-identityprovider-mongo</module>
         <module>gravitee-am-identityprovider-oauth2-generic</module>
         <module>gravitee-am-identityprovider-http</module>
-        <module>gravitee-am-identityprovider-azure-ad</module>
         <module>gravitee-am-identityprovider-facebook</module>
         <module>gravitee-am-identityprovider-twitter</module>
-        <module>gravitee-am-identityprovider-franceconnect</module>
         <module>gravitee-am-identityprovider-jdbc</module>
         <module>gravitee-am-identityprovider-google</module>
         <module>gravitee-am-identityprovider-linkedin</module>
-        <module>gravitee-am-identityprovider-salesforce</module>
-        <module>gravitee-am-identityprovider-ldap-common</module>
         <module>gravitee-am-identityprovider-gravitee</module>
     </modules>
 

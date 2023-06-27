@@ -17,10 +17,10 @@ package io.gravitee.am.gateway.vertx;
 
 import io.gravitee.am.gateway.reactor.Reactor;
 import io.gravitee.node.certificates.KeyStoreLoaderManager;
-import io.gravitee.node.vertx.ReactivexVertxHttpServerFactory;
-import io.gravitee.node.vertx.configuration.HttpServerConfiguration;
+import io.gravitee.node.vertx.server.http.VertxHttpServer;
+import io.gravitee.node.vertx.server.http.VertxHttpServerFactory;
+import io.gravitee.node.vertx.server.http.VertxHttpServerOptions;
 import io.vertx.rxjava3.core.Vertx;
-import io.vertx.rxjava3.core.http.HttpServer;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Bean;
@@ -35,31 +35,35 @@ import org.springframework.core.env.Environment;
 @Configuration
 public class VertxServerConfiguration {
 
-    @Bean("httpServerConfiguration")
-    public HttpServerConfiguration httpServerConfiguration(Environment environment) {
-        return HttpServerConfiguration.builder().withEnvironment(environment)
-                .withDefaultPort(8092)
-                .withDefaultMaxFormAttributeSize(2048)
+    private static final String HTTP_PREFIX = "http";
+
+    @Bean
+    public VertxHttpServerOptions httpServerConfiguration(
+            Environment environment,
+            KeyStoreLoaderManager keyStoreLoaderManager
+    ) {
+        return VertxHttpServerOptions.builder()
+                .prefix(HTTP_PREFIX)
+                .environment(environment)
+                .port(8092)
+                .keyStoreLoaderManager(keyStoreLoaderManager)
+                .maxFormAttributeSize(2048)
+                .id(HTTP_PREFIX)
                 .build();
     }
 
     @Bean("gatewayHttpServer")
     @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
-    public ReactivexVertxHttpServerFactory vertxHttpServerFactory(
-            Vertx vertx,
-            @Qualifier("httpServerConfiguration")
-            HttpServerConfiguration httpServerConfiguration,
-            KeyStoreLoaderManager keyStoreLoaderManager
-    ) {
-        return new ReactivexVertxHttpServerFactory(vertx, httpServerConfiguration, keyStoreLoaderManager);
+    public VertxHttpServer vertxHttpServerFactory(Vertx vertx, VertxHttpServerOptions options) {
+        return new VertxHttpServerFactory(vertx).create(options);
     }
 
     @Bean
     @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
     public GraviteeVerticle graviteeVerticle(
-            @Qualifier("gatewayHttpServer") HttpServer httpServer,
+            @Qualifier("gatewayHttpServer") VertxHttpServer httpServer,
             Reactor reactor,
-            HttpServerConfiguration httpServerConfiguration) {
+            VertxHttpServerOptions httpServerConfiguration) {
         return new GraviteeVerticle(httpServer, reactor, httpServerConfiguration);
     }
 
