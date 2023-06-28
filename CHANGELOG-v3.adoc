@@ -1,5 +1,29 @@
 # Change Log
 
+==  - 3.19.4 (2023-06-28)
+
+== What's new !
+
+* [gateway] [management] add SSL options for httpClient connections
+* [gateway] [oauth2] add an option to not rotate refresh tokens
+
+=== Gateway
+
+
+
+=== Management API
+
+
+
+=== Console
+
+
+
+=== Other
+
+
+
+
 == AM - 3.20.8 (2023-06-27)
 
 === Other
