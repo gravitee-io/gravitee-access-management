@@ -1,5 +1,12 @@
 # Change Log
 
+== AM - 3.18.21 (2023-06-28)
+
+=== Other
+
+*  Error on ECDSA token exchange https://github.com/gravitee-io/issues/issues/8990[#8990]
+
+
 == AM - 3.19.14 (2023-06-28)
 
 === Other
