@@ -1229,12 +1229,17 @@ jobs:
         type: boolean
         default: true
         description: "Running in dry run mode means no docker push (Defaults to true)"
+      graviteeio_version:
+        type: string
+        default: ''
+        description: "Gravitee.io Release version number (semver) ?"
     executor:
       name: openjdk
-      class: small
+      class: xlarge
       version: "11.0.16"
     environment:
       DRY_RUN: << parameters.dry_run >>
+      GRAVITEEIO_VERSION: << parameters.graviteeio_version >>
     steps:
       - checkout
       - restore-maven-job-cache:
@@ -1245,6 +1250,8 @@ jobs:
       - run:
           name: Maven Test, Package, and Deploy to Nexus Staging
           command: |
+            git checkout "${GRAVITEEIO_VERSION}"
+            
             if [ "${DRY_RUN}" == "false" ]; then
               echo "# --->>> NO IT IS NOT A DRY RUN => deploy"
               mvn -s /tmp/.gravitee.settings.xml -B -U -P gravitee-release deploy -DskipTests=true
@@ -1610,6 +1617,7 @@ workflows:
           requires:
             - setup
           dry_run: << pipeline.parameters.dry_run >>
+          graviteeio_version: << pipeline.parameters.graviteeio_version >>
 
   publish_rpms:
     when:
