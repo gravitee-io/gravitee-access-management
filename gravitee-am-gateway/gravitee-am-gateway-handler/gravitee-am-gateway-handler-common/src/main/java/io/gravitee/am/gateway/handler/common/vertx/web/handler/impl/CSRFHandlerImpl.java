@@ -25,6 +25,7 @@ import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.auth.VertxContextPRNG;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.Session;
 import io.vertx.ext.web.handler.CSRFHandler;
 import io.vertx.ext.web.handler.SessionHandler;
 import io.vertx.rxjava3.core.MultiMap;
@@ -35,11 +36,9 @@ import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Random;
 
 /**
  * Override default Vert.x CSRFHandler to enhance routing context with CSRF values to fill in the right value for the form fields.
@@ -196,10 +195,48 @@ public class CSRFHandlerImpl implements CSRFHandler {
 
         switch (method.name()) {
             case "GET":
-                final String token = generateToken();
+                final String token;
+                Session session = ctx.session();
+                // if there's no session to store values, tokens are issued on every request
+                if (session == null) {
+                    token = generateToken();
+                } else {
+                    // get the token from the session
+                    String sessionToken = session.get(headerName);
+                    // when there's no token in the session, then we behave just like when there is no session
+                    // create a new token, but we also store it in the session for the next runs
+                    if (sessionToken == null) {
+                        token = generateToken();
+                        // storing will include the session id too. The reason is that if a session is upgraded
+                        // we don't want to allow the token to be valid anymore
+                        session.put(headerName, session.id() + "/" + token);
+                    } else {
+                        // attempt to parse the value
+                        int idx = sessionToken.indexOf('/');
+                        if (idx != -1) {
+                            String sid = sessionToken.substring(0, idx);
+                            if (sid.equals(session.id())) {
+                                // we're still on the same session, no need to regenerate the token
+                                token = sessionToken.substring(idx + 1);
+                                // in this case specifically we don't issue the token as it is unchanged
+                                // the user agent still has it from the previous interaction.
+                            } else {
+                                // session has been upgraded, don't trust the token and regenerate
+                                token = generateToken();
+                                session.put(headerName, session.id() + "/" + token);
+                            }
+                        } else {
+                            // cannot parse the value from the session
+                            token = generateToken();
+                            session.put(headerName, session.id() + "/" + token);
+                       }
+                    }
+                }
+
+                ctx.response().addCookie(Cookie.cookie(cookieName, token).setPath(cookiePath));
+
                 // put the token in the context for users who prefer to render the token directly on the HTML
                 ctx.put(headerName, token);
-                ctx.addCookie(Cookie.cookie(cookieName, token));
                 enhanceContext(ctx);
                 ctx.next();
                 break;
@@ -208,7 +245,7 @@ public class CSRFHandlerImpl implements CSRFHandler {
             case "DELETE":
             case "PATCH":
                 final String header = ctx.request().getHeader(headerName);
-                final Cookie cookie = ctx.getCookie(cookieName);
+                final Cookie cookie = ctx.request().getCookie(cookieName);
                 if (validateToken(header == null ? ctx.request().getFormAttribute(headerName) : header, cookie)) {
                     ctx.next();
                 } else {

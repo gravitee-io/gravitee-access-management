@@ -16,9 +16,15 @@
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl;
 
 import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.certificate.CertificateProvider;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
+<<<<<<< HEAD
 import io.reactivex.rxjava3.core.Single;
+=======
+import io.reactivex.Single;
+import io.vertx.ext.auth.VertxContextPRNG;
+>>>>>>> 730cbd3247 (fix: add an id to the cookieSession to be able to retrieve this session)
 import io.vertx.ext.web.Session;
 import io.vertx.ext.web.sstore.AbstractSession;
 import org.springframework.util.StringUtils;
@@ -27,6 +33,7 @@ import java.util.Date;
 import java.util.HashMap;
 
 import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.SESSION;
+import static io.vertx.reactivex.ext.web.sstore.cookie.CookieSessionStore.DEFAULT_SESSIONID_LENGTH;
 
 /**
  * Manage the session data using JWT cookie.
@@ -41,6 +48,7 @@ public class CookieSession extends AbstractSession {
     private Date lastLogin;
 
     public CookieSession(JWTService jwtService, CertificateProvider certificateProvider, long timeout) {
+        super(VertxContextPRNG.current(), timeout, DEFAULT_SESSIONID_LENGTH);
         this.jwtService = jwtService;
         this.certificateProvider = certificateProvider;
         this.setTimeout(timeout);
@@ -88,6 +96,11 @@ public class CookieSession extends AbstractSession {
                 .doOnSuccess(jwt -> {
                     this.lastLogin = new Date(jwt.getExp() * 1000 - this.timeout());
                     this.setData(jwt);
+                    var jwtXsrfToken = jwt.get(ConstantKeys.X_XSRF_TOKEN);
+                    if (jwtXsrfToken != null) {
+                        var xsrfToken = jwtXsrfToken.toString();
+                        this.setId(xsrfToken.substring(0, xsrfToken.indexOf('/')));
+                    }
                 })
                 .map(jwt -> this);
     }
