@@ -32,9 +32,9 @@ public interface ClientSyncService {
 
     Maybe<Client> findByClientId(String clientId);
 
-    Maybe<Client> findByEntityId(String entityId);
-
     Maybe<Client> findByDomainAndClientId(String domain, String clientId);
+
+    Maybe<Client> findByEntityId(String entityId);
 
     Maybe<Client> findByDomainAndEntityId(String domain, String entityId);
 

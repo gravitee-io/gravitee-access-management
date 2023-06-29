@@ -1170,6 +1170,7 @@ public class UserServiceTest {
         when(jwtParser.parse("someToken")).thenReturn(jwt);
         when(commonUserService.findById(jwt.getSub())).thenReturn(Maybe.just(user));
         when(clientSyncService.findById(jwt.getAud())).thenReturn(Maybe.just(client));
+        when(clientSyncService.findByClientId(jwt.getAud())).thenReturn(Maybe.empty());
         when(commonUserService.update(user)).thenReturn(Single.just(user));
 
         var testObserver = userService.confirmVerifyRegistration("someToken").test();
@@ -1200,6 +1201,7 @@ public class UserServiceTest {
         when(jwtParser.parse("someToken")).thenReturn(jwt);
         when(commonUserService.findById(jwt.getSub())).thenReturn(Maybe.just(user));
         when(clientSyncService.findById(jwt.getAud())).thenReturn(Maybe.just(client));
+        when(clientSyncService.findByClientId(jwt.getAud())).thenReturn(Maybe.empty());
 
         var testObserver = userService.confirmVerifyRegistration("someToken").test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -1227,6 +1229,7 @@ public class UserServiceTest {
         when(jwtParser.parse("someToken")).thenReturn(jwt);
         when(commonUserService.findById(jwt.getSub())).thenReturn(Maybe.just(user));
         when(clientSyncService.findById(jwt.getAud())).thenReturn(Maybe.just(client));
+        when(clientSyncService.findByClientId(jwt.getAud())).thenReturn(Maybe.empty());
 
         var testObserver = userService.confirmVerifyRegistration("someToken").test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
