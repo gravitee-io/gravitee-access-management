@@ -25,5 +25,5 @@ import org.checkerframework.checker.units.qual.C;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public abstract class Reporter<C extends ReporterConfiguration, P extends AuditReporter> extends AmPlugin<C, P> {
+public abstract class Reporter<C extends ReporterConfiguration, P extends io.gravitee.reporter.api.Reporter> extends AmPlugin<C, P> {
 }

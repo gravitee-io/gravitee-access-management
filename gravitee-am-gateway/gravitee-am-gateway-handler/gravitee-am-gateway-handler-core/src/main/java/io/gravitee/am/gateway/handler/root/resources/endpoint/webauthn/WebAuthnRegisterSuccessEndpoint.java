@@ -19,10 +19,7 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnHandler;
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.Template;
-import io.gravitee.am.model.User;
+import io.gravitee.am.model.*;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.exception.CredentialNotFoundException;
@@ -32,9 +29,10 @@ import io.vertx.rxjava3.core.MultiMap;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
+import java.util.Arrays;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.thymeleaf.util.StringUtils;
 
 import java.util.Date;
 import java.util.Map;
@@ -111,8 +109,14 @@ public class WebAuthnRegisterSuccessEndpoint extends WebAuthnHandler {
             routingContext.fail(400);
             return;
         }
-        if (StringUtils.isEmpty(deviceName)) {
+        if (StringUtils.isBlank(deviceName)) {
             logger.debug("Request missing deviceName field");
+            routingContext.fail(400);
+            return;
+        }
+
+        if (deviceName.length() > 64) {
+            logger.debug("deviceName must be below 64 characters");
             routingContext.fail(400);
             return;
         }
@@ -125,8 +129,7 @@ public class WebAuthnRegisterSuccessEndpoint extends WebAuthnHandler {
                     credential.setUpdatedAt(new Date());
                     return credentialService.update(credential);
                 })
-                .subscribe(
-                        __ -> {
+                .subscribe(__ -> {
                             // at this stage the registration has been done
                             // redirect the user to the original request
                             final MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
@@ -148,20 +151,33 @@ public class WebAuthnRegisterSuccessEndpoint extends WebAuthnHandler {
     }
 
     private static String getClientOS(HttpServerRequest request) {
-        final String browserDetails = Optional.ofNullable(request.getHeader(HttpHeaders.USER_AGENT)).orElse("Unknown");
-        final String lowerCaseBrowser = browserDetails.toLowerCase();
-        if (lowerCaseBrowser.contains("windows")) {
-            return "Windows";
-        } else if (lowerCaseBrowser.contains("mac")) {
-            return "Mac";
-        } else if (lowerCaseBrowser.contains("x11")) {
-            return "Unix";
-        } else if (lowerCaseBrowser.contains("android")) {
-            return "Android";
-        } else if (lowerCaseBrowser.contains("iphone")) {
-            return "IPhone";
-        } else {
-            return "Device";
+        final String userAgent = Optional.ofNullable(request.getHeader(HttpHeaders.USER_AGENT)).orElse("Unknown");
+        return DeviceBrowser.getFromUserAgent(userAgent).capitalize();
+    }
+
+    public enum DeviceBrowser {
+        ANDROID("android"),
+        IPHONE("iphone"),
+        MAC("mac"),
+        UNIX("x11"),
+        WINDOWS("windows"),
+        DEVICE("device");
+
+        private final String device;
+
+        DeviceBrowser(String device) {
+            this.device = device;
+        }
+
+        public static DeviceBrowser getFromUserAgent(String userAgent) {
+            var lowerCaseUserAgent = userAgent.toLowerCase();
+            return Arrays.stream(DeviceBrowser.values()).filter(deviceBrowser ->
+                    lowerCaseUserAgent.contains(deviceBrowser.device)
+            ).findFirst().orElse(DEVICE);
+        }
+
+        public String capitalize() {
+            return IPHONE.equals(this) ? "iPhone" : StringUtils.capitalize(name().toLowerCase());
         }
     }
 }
