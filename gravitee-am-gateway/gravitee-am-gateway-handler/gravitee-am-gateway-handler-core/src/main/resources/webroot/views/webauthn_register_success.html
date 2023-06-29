@@ -33,6 +33,8 @@
                 <input class="input-field" type="text" id="deviceName" name="deviceName"
                        th:placeholder="#{webauthn.register.success.label.deviceName}"
                        th:value="${deviceName}"
+                       minlength="1"
+                       maxlength="64"
                        autofocus="autofocus"
                        required />
             </div>

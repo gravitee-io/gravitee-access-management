@@ -19,7 +19,6 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.CredentialService;
@@ -36,6 +35,7 @@ import io.vertx.rxjava3.ext.web.sstore.LocalSessionStore;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized.Parameters;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -45,6 +45,7 @@ import java.util.Map;
 import static io.vertx.core.http.HttpHeaders.APPLICATION_X_WWW_FORM_URLENCODED;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.Mockito.when;
 
 /**
@@ -53,7 +54,6 @@ import static org.mockito.Mockito.when;
  */
 @RunWith(MockitoJUnitRunner.class)
 public class WebAuthnRegisterSuccessEndpointTest extends RxWebTestBase {
-
 
     @Mock
     private TemplateEngine templateEngine;
@@ -90,6 +90,28 @@ public class WebAuthnRegisterSuccessEndpointTest extends RxWebTestBase {
     }
 
     @Test
+    public void shouldNotRenderPage_templateNotRendering() throws Exception {
+        router.route(HttpMethod.GET, "/webauthn/register/success")
+                .handler(rc -> {
+                    rc.session().put(ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY, "credentialId");
+                    User endUser = new User();
+                    endUser.setUsername("username");
+                    rc.getDelegate().setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
+                    rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, new Client());
+                    rc.next();
+                })
+                .handler(webAuthnRegisterSuccessEndpoint);
+
+        when(templateEngine.render(anyMap(), any())).thenThrow(new RuntimeException("Cannot render template"));
+        testRequest(
+                HttpMethod.GET, "/webauthn/register/success",
+                null,
+                null,
+                HttpStatusCode.SERVICE_UNAVAILABLE_503, "Service Unavailable", null);
+
+    }
+
+    @Test
     public void shouldRenderPage_nominalCase() throws Exception {
         router.route(HttpMethod.GET, "/webauthn/register/success")
                 .handler(rc -> {
@@ -117,6 +139,34 @@ public class WebAuthnRegisterSuccessEndpointTest extends RxWebTestBase {
     }
 
     @Test
+    @Parameters
+    public void shouldRenderPage_nominalCase_iphone() throws Exception {
+        router.route(HttpMethod.GET, "/webauthn/register/success")
+                .handler(rc -> {
+                    rc.session().put(ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY, "credentialId");
+                    User endUser = new User();
+                    endUser.setUsername("username");
+                    rc.getDelegate().setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
+                    rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, new Client());
+                    rc.next();
+                })
+                .handler(webAuthnRegisterSuccessEndpoint);
+
+        ArgumentCaptor<Map> argument = ArgumentCaptor.forClass(Map.class);
+        when(templateEngine.render(argument.capture(), any())).thenReturn(Single.just(Buffer.buffer()));
+        testRequest(
+                HttpMethod.GET, "/webauthn/register/success",
+                req -> {
+                    req.headers().add(HttpHeaders.USER_AGENT, "Mozilla/5.0 (iPhone; U; CPU iPhone OS 4_1 like Mac OS X; en-us) AppleWebKit/532.9 (KHTML, like Gecko) Version/4.0.5 Mobile/8B117 Safari/6531.22.7 (compatible; Googlebot-Mobile/2.1; +http://www.google.com/bot.html)");
+                },
+                null,
+                HttpStatusCode.OK_200, "OK", null);
+
+        Map map = argument.getValue();
+        Assert.assertEquals("username's iPhone", map.get(ConstantKeys.PASSWORDLESS_DEVICE_NAME));
+    }
+
+    @Test
     public void shouldNotRegister_noCredential() throws Exception {
         router.route(HttpMethod.POST, "/webauthn/register/success")
                 .handler(webAuthnRegisterSuccessEndpoint);
@@ -140,6 +190,46 @@ public class WebAuthnRegisterSuccessEndpointTest extends RxWebTestBase {
         testRequest(
                 HttpMethod.POST, "/webauthn/register/success",
                 null,
+                null,
+                HttpStatusCode.BAD_REQUEST_400, "Bad Request", null);
+    }
+
+    @Test
+    public void shouldNotRegister_noDevice_empty() throws Exception {
+        router.route(HttpMethod.POST, "/webauthn/register/success")
+                .handler(rc -> {
+                    rc.session().put(ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY, "credentialId");
+                    rc.next();
+                })
+                .handler(webAuthnRegisterSuccessEndpoint);
+
+        testRequest(
+                HttpMethod.POST, "/webauthn/register/success",
+                req -> {
+                    req.setChunked(true);
+                    req.putHeader(CONTENT_TYPE, APPLICATION_X_WWW_FORM_URLENCODED);
+                    req.write(Buffer.buffer("deviceName="));
+                },
+                null,
+                HttpStatusCode.BAD_REQUEST_400, "Bad Request", null);
+    }
+
+    @Test
+    public void shouldNotRegister_noDevice_above_64() throws Exception {
+        router.route(HttpMethod.POST, "/webauthn/register/success")
+                .handler(rc -> {
+                    rc.session().put(ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY, "credentialId");
+                    rc.next();
+                })
+                .handler(webAuthnRegisterSuccessEndpoint);
+
+        testRequest(
+                HttpMethod.POST, "/webauthn/register/success",
+                req -> {
+                    req.setChunked(true);
+                    req.putHeader(CONTENT_TYPE, APPLICATION_X_WWW_FORM_URLENCODED);
+                    req.write(Buffer.buffer("deviceName=fuuikdjhbcvzcrpjbvzpxrpjfshgoagrasttjzmrywmcjmftenlhbiwkgbdjlxxfuiggqsshgntdxwafttzyourxctahemkgzpcsnmosuhurele"));
+                },
                 null,
                 HttpStatusCode.BAD_REQUEST_400, "Bad Request", null);
     }
