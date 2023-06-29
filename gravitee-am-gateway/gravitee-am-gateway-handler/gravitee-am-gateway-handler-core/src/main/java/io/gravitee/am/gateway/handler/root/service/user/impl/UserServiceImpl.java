@@ -626,12 +626,13 @@ public class UserServiceImpl implements UserService {
                 .orElse(new EnrollmentSettings());
     }
 
-    private MaybeSource<Optional<Client>> clientSource(String audience) {
+    private Maybe<Optional<Client>> clientSource(String audience) {
         if (audience == null) {
             return Maybe.just(Optional.empty());
         }
 
         return clientSyncService.findById(audience)
+                .switchIfEmpty(clientSyncService.findByClientId(audience))
                 .map(Optional::of)
                 .switchIfEmpty(Maybe.just(Optional.empty()));
     }

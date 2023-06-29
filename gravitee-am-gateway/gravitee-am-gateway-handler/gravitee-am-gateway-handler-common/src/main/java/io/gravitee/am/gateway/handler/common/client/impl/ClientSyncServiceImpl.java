@@ -24,8 +24,9 @@ import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
+
+import static io.reactivex.rxjava3.core.Observable.fromIterable;
+import static java.util.Optional.ofNullable;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -43,13 +44,21 @@ public class ClientSyncServiceImpl implements ClientSyncService {
 
     @Override
     public Maybe<Client> findById(String id) {
-        final Client client = clientManager.get(id);
-        return client != null ? Maybe.just(client) : Maybe.empty();
+        return ofNullable(clientManager.get(id)).map(Maybe::just).orElseGet(Maybe::empty);
     }
+
 
     @Override
     public Maybe<Client> findByClientId(String clientId) {
         return findByDomainAndClientId(domain.getId(), clientId);
+    }
+
+    @Override
+    public Maybe<Client> findByDomainAndClientId(String domain, String clientId) {
+        return fromIterable(clientManager.entities())
+                .filter(client -> !client.isTemplate())
+                .filter(client -> client.getClientId().equals(clientId) && client.getDomain().equals(domain))
+                .firstElement();
     }
 
     @Override
@@ -58,30 +67,18 @@ public class ClientSyncServiceImpl implements ClientSyncService {
     }
 
     @Override
-    public Maybe<Client> findByDomainAndClientId(String domain, String clientId) {
-        final Optional<Client> optClient = clientManager.entities()
-                .stream()
-                .filter(client -> !client.isTemplate() && client.getDomain().equals(domain) && client.getClientId().equals(clientId))
-                .findFirst();
-        return optClient.isPresent() ? Maybe.just(optClient.get()) : Maybe.empty();
-    }
-
-    @Override
     public Maybe<Client> findByDomainAndEntityId(String domain, String entityId) {
-        final Optional<Client> optClient = clientManager.entities()
-                .stream()
-                .filter(client -> !client.isTemplate() && domain.equals(client.getDomain()) && entityId.equals(client.getEntityId()))
-                .findFirst();
-        return optClient.isPresent() ? Maybe.just(optClient.get()) : Maybe.empty();
+        return fromIterable(clientManager.entities())
+                .filter(client -> !client.isTemplate())
+                .filter(client -> domain.equals(client.getDomain()) && entityId.equals(client.getEntityId()))
+                .firstElement();
     }
 
     @Override
     public Single<List<Client>> findTemplates() {
-        final List<Client> templates = clientManager.entities()
-                .stream()
+        return fromIterable(clientManager.entities())
                 .filter(client -> client.isTemplate() && client.getDomain().equals(domain.getId()))
-                .collect(Collectors.toList());
-        return Single.just(templates);
+                .toList();
     }
 
     @Override

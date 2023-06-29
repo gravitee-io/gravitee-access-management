@@ -58,6 +58,7 @@ public class ClientSyncServiceTest {
 
         Client domainAClientA = new Client();
         domainAClientA.setId("aa");
+        domainAClientA.setEntityId("entityAa");
         domainAClientA.setDomain("domainA");
         domainAClientA.setClientId("domainAClientA");
 
@@ -135,7 +136,7 @@ public class ClientSyncServiceTest {
     public void findTemplates() {
         TestObserver<List<Client>> test = clientSyncService.findTemplates().test();
         test.assertComplete().assertNoErrors();
-        test.assertValue(clients -> clients!=null && clients.size()==2);
+        test.assertValue(clients -> clients != null && clients.size() == 2);
     }
 
     @Test
@@ -174,5 +175,18 @@ public class ClientSyncServiceTest {
         doNothing().when(clientManager).undeploy(client.getId());
         clientSyncService.removeDynamicClientRegistred(client);
         verify(clientManager, times(1)).undeploy(client.getId());
+    }
+
+    @Test
+    public void findById_entityId_found() {
+        TestObserver<Client> test = clientSyncService.findByEntityId("entityAa").test();
+        test.assertComplete().assertNoErrors();
+        test.assertValue(client -> client.getClientId().equals("domainAClientA"));
+    }
+
+    @Test
+    public void findById_entityId_notfound() {
+        TestObserver<Client> test = clientSyncService.findByEntityId("unknownEntity").test();
+        test.assertComplete().assertNoErrors().assertNoValues();
     }
 }
