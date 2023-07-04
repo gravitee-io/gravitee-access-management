@@ -93,7 +93,7 @@ public class PushedAuthorizationRequestServiceImpl implements PushedAuthorizatio
             String identifier = requestUri.substring(PAR_URN_PREFIX.length());
 
             return parRepository.findById(identifier)
-                    .switchIfEmpty(Single.error(new InvalidRequestUriException()))
+                    .switchIfEmpty(Single.error(() -> new InvalidRequestUriException()))
                     .flatMap((Function<PushedAuthorizationRequest, Single<JWT>>) req -> {
                         if (req.getParameters() != null &&
                                 req.getExpireAt() != null &&

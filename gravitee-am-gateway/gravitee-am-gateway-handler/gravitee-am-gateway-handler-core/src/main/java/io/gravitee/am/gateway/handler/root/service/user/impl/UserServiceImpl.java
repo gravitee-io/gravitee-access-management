@@ -170,13 +170,13 @@ public class UserServiceImpl implements UserService {
         return jwtService.decode(idToken, ID_TOKEN)
                 .flatMap(jwt -> {
                     return clientSyncService.findByClientId(jwt.getAud())
-                            .switchIfEmpty(Single.error(new ClientNotFoundException(jwt.getAud())))
+                            .switchIfEmpty(Single.error(() -> new ClientNotFoundException(jwt.getAud())))
                             .flatMap(client -> {
                                 return jwtService.decodeAndVerify(idToken, client, ID_TOKEN)
                                         .onErrorResumeNext(ex -> (ex instanceof ExpiredJWTException) ? Single.just(jwt) : Single.error(ex))
                                         .flatMap(jwt1 -> {
                                             return userService.findById(jwt1.getSub())
-                                                    .switchIfEmpty(Single.error(new UserNotFoundException(jwt.getSub())))
+                                                    .switchIfEmpty(Single.error(() -> new UserNotFoundException(jwt.getSub())))
                                                     .map(user -> {
                                                         if (!user.getReferenceId().equals(domain.getId())) {
                                                             throw new UserNotFoundException(jwt.getSub());
@@ -199,7 +199,7 @@ public class UserServiceImpl implements UserService {
         return userValidator.validate(user)
                 .andThen(userService.findByDomainAndUsernameAndSource(domain.getId(), user.getUsername(), source).isEmpty()
                         .flatMapMaybe(checkUserPresence(user, source))
-                        .switchIfEmpty(Single.error(new UserProviderNotFoundException(source)))
+                        .switchIfEmpty(Single.error(() -> new UserProviderNotFoundException(source)))
                         .flatMap(userProvider -> userProvider.create(convert(user)))
                         .flatMap(idpUser -> registerUser(user, accountSettings, source, idpUser, queryParams))
                         .flatMap(amUser -> sendVerifyAccountEmail(client, amUser, accountSettings, queryParams))
@@ -277,10 +277,10 @@ public class UserServiceImpl implements UserService {
         final var rawPassword = user.getPassword();
         // user has completed his account, add it to the idp
         return identityProviderManager.getUserProvider(user.getSource())
-                .switchIfEmpty(Single.error(new UserProviderNotFoundException(user.getSource())))
+                .switchIfEmpty(Single.error(() -> new UserProviderNotFoundException(user.getSource())))
                 // update the idp user
                 .flatMap(userProvider -> userProvider.findByUsername(user.getUsername())
-                        .switchIfEmpty(Single.error(new UserNotFoundException(user.getUsername())))
+                        .switchIfEmpty(Single.error(() -> new UserNotFoundException(user.getUsername())))
                         .flatMap(idpUser -> userProvider.update(idpUser.getId(), convert(user)))
                         .onErrorResumeNext(ex -> {
                             if (ex instanceof UserNotFoundException) {
@@ -320,7 +320,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public Completable checkPassword(User user, String password, io.gravitee.am.identityprovider.api.User principal) {
         return identityProviderManager.getUserProvider(user.getSource())
-                .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(user.getSource())))
+                .switchIfEmpty(Maybe.error(() -> new UserProviderNotFoundException(user.getSource())))
                 .flatMap(userProvider -> identityProviderManager.get(user.getSource())
                         .flatMap(provider -> provider.loadUserByUsername(new EndUserAuthentication(user.getUsername(), password, new SimpleAuthenticationContext(new DummyRequest())))))
                 .ignoreElement();
@@ -339,14 +339,14 @@ public class UserServiceImpl implements UserService {
 
         // only idp manage password, find user idp and update its password
         return identityProviderManager.getUserProvider(user.getSource())
-                .switchIfEmpty(Single.error(new UserProviderNotFoundException(user.getSource())))
+                .switchIfEmpty(Single.error(() -> new UserProviderNotFoundException(user.getSource())))
                 // update the idp user
                 .flatMap(userProvider -> {
                     // retrieve its technical from the idp and then update the password
                     // we can't rely on the external_id since the value can be different from IdP user ID
                     // see https://github.com/gravitee-io/issues/issues/8407
                     return userProvider.findByUsername(user.getUsername())
-                            .switchIfEmpty(Single.error(new UserNotFoundException(user.getUsername())))
+                            .switchIfEmpty(Single.error(() -> new UserNotFoundException(user.getUsername())))
                             .flatMap(idpUser -> passwordHistoryService
                                     .addPasswordToHistory(DOMAIN, domain.getId(), user, user.getPassword(), principal, getPasswordSettings(client))
                                     .switchIfEmpty(Single.just(new PasswordHistory()))
@@ -472,7 +472,7 @@ public class UserServiceImpl implements UserService {
 
                         // check if user can update its password according to its identity provider type
                         return identityProviderManager.getUserProvider(user.getSource())
-                                .switchIfEmpty(Single.error(new UserInvalidException("User [ " + user.getUsername() + " ] cannot be updated because its identity provider does not support user provisioning")))
+                                .switchIfEmpty(Single.error(() -> new UserInvalidException("User [ " + user.getUsername() + " ] cannot be updated because its identity provider does not support user provisioning")))
                                 .flatMap(userProvider -> {
                                     // if user registration is not completed and force registration option is disabled throw invalid account exception
                                     AccountSettings accountSettings = AccountSettings.getInstance(domain, client);

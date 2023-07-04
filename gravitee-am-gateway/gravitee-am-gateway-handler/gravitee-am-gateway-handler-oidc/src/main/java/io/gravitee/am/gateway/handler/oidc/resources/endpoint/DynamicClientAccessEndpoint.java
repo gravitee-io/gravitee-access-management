@@ -166,7 +166,7 @@ public class DynamicClientAccessEndpoint extends DynamicClientRegistrationEndpoi
         String clientId = context.request().getParam("client_id");
 
         return this.clientSyncService.findByClientId(clientId)
-                .switchIfEmpty(Maybe.error(new ResourceNotFoundException("client not found")))
+                .switchIfEmpty(Maybe.error(() -> new ResourceNotFoundException("client not found")))
                 .map(Client::clone);
     }
 }

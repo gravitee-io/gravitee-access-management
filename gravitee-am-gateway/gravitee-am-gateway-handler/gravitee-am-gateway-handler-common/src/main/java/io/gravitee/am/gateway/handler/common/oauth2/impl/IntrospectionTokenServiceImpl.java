@@ -57,7 +57,7 @@ public class IntrospectionTokenServiceImpl implements IntrospectionTokenService 
     public Single<JWT> introspect(String token, boolean offlineVerification) {
         return jwtService.decode(token, ACCESS_TOKEN)
                 .flatMapMaybe(jwt -> clientService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud()))
-                .switchIfEmpty(Single.error(new InvalidTokenException("Invalid or unknown client for this token")))
+                .switchIfEmpty(Single.error(() -> new InvalidTokenException("Invalid or unknown client for this token")))
                 .flatMap(client -> jwtService.decodeAndVerify(token, client, ACCESS_TOKEN))
                 .flatMap(jwt -> {
                     // Just check the JWT signature and JWT validity if offline verification option is enabled
@@ -68,7 +68,7 @@ public class IntrospectionTokenServiceImpl implements IntrospectionTokenService 
 
                     // check if token is not revoked
                     return accessTokenRepository.findByToken(jwt.getJti())
-                            .switchIfEmpty(Single.error(new InvalidTokenException("The token is invalid", "Token with JTI [" + jwt.getJti() + "] not found in the database", jwt)))
+                            .switchIfEmpty(Single.error(() -> new InvalidTokenException("The token is invalid", "Token with JTI [" + jwt.getJti() + "] not found in the database", jwt)))
                             .map(accessToken -> {
                                 if (accessToken.getExpireAt().before(new Date())) {
                                     throw new InvalidTokenException("The token expired", "Token with JTI [" + jwt.getJti() + "] is expired", jwt);

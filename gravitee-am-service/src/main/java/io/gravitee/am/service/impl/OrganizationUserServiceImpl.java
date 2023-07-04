@@ -15,11 +15,11 @@
  */
 package io.gravitee.am.service.impl;
 
-import io.gravitee.am.common.event.Action;
-import io.gravitee.am.common.event.Type;
-import io.gravitee.am.model.*;
-import io.gravitee.am.model.common.event.Event;
-import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.model.Membership;
+import io.gravitee.am.model.Platform;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.Role;
+import io.gravitee.am.model.User;
 import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.model.permissions.DefaultRole;
 import io.gravitee.am.repository.management.api.OrganizationUserRepository;
@@ -133,11 +133,6 @@ public class OrganizationUserServiceImpl extends AbstractUserService implements 
                         }
 
                         return getUserRepository().update(user);
-                })
-                .flatMap(user1 -> {
-                    // create event for sync process
-                    Event event = new Event(Type.USER, new Payload(user1.getId(), user1.getReferenceType(), user1.getReferenceId(), Action.UPDATE));
-                    return eventService.create(event).flatMap(__ -> Single.just(user1));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {

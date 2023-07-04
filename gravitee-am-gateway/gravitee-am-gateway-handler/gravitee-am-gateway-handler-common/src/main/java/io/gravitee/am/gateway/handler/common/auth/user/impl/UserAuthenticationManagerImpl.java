@@ -214,7 +214,7 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
 
     private Maybe<UserAuthentication> loadUserByUsername0(Client client, Authentication authentication, String authProvider, boolean preAuthenticated) {
         return identityProviderManager.get(authProvider)
-                .switchIfEmpty(Maybe.error(new BadCredentialsException("Unable to load authentication provider " + authProvider + ", an error occurred during the initialization stage")))
+                .switchIfEmpty(Maybe.error(() -> new BadCredentialsException("Unable to load authentication provider " + authProvider + ", an error occurred during the initialization stage")))
                 .flatMap(authenticationProvider -> {
                     logger.debug("Authentication attempt using identity provider {} ({})", authenticationProvider, authenticationProvider.getClass().getName());
                     return Maybe.just(preAuthenticated)
@@ -222,7 +222,7 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
                                 if (preAuth) {
                                     final String username = authentication.getPrincipal().toString();
                                     return userService.findByDomainAndUsernameAndSource(domain.getId(), username, authProvider)
-                                            .switchIfEmpty(Maybe.error(new UsernameNotFoundException(username)))
+                                            .switchIfEmpty(Maybe.error(() -> new UsernameNotFoundException(username)))
                                             .flatMap(user -> {
                                                 final Authentication enhanceAuthentication = new EndUserAuthentication(user, null, authentication.getContext());
                                                 return authenticationProvider.loadPreAuthenticatedUser(enhanceAuthentication);
@@ -231,7 +231,7 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
                                     return authenticationProvider.loadUserByUsername(authentication);
                                 }
                             })
-                            .switchIfEmpty(Maybe.error(new UsernameNotFoundException(authentication.getPrincipal().toString())));
+                            .switchIfEmpty(Maybe.error(() -> new UsernameNotFoundException(authentication.getPrincipal().toString())));
                 })
                 .map(user -> {
                     logger.debug("Successfully Authenticated: " + authentication.getPrincipal() + " with provider authentication provider " + authProvider);

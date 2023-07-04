@@ -75,7 +75,7 @@ public class AuditServiceImpl implements AuditService {
     public Single<Audit> findById(ReferenceType referenceType, String referenceId, String auditId) {
         try {
             return getReporter(referenceType, referenceId).findById(referenceType, referenceId, auditId)
-                    .switchIfEmpty(Single.error(new AuditNotFoundException(auditId)));
+                    .switchIfEmpty(Single.error(() -> new AuditNotFoundException(auditId)));
         } catch (Exception ex) {
             logger.error("An error occurs while trying to find audit by id: {} and for the {}}: {}", auditId, referenceType, referenceId, ex);
             return Single.error(ex);

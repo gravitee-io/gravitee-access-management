@@ -16,14 +16,12 @@
 package io.gravitee.am.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.exception.mfa.InvalidFactorAttributeException;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
-import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorChannel;
 import io.gravitee.am.reporter.api.audit.model.Audit;
@@ -93,9 +91,6 @@ public class UserServiceTest {
 
     @Mock
     private UserRepository userRepository;
-
-    @Mock
-    private EventService eventService;
 
     @Mock
     private CredentialService credentialService;
@@ -221,7 +216,6 @@ public class UserServiceTest {
         when(newUser.getSource()).thenReturn("source");
         when(userRepository.create(any(User.class))).thenReturn(Single.just(user));
         when(userRepository.findByUsernameAndSource(ReferenceType.DOMAIN, DOMAIN, newUser.getUsername(), newUser.getSource())).thenReturn(Maybe.empty());
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = userService.create(DOMAIN, newUser).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -230,7 +224,6 @@ public class UserServiceTest {
         testObserver.assertNoErrors();
 
         verify(userRepository, times(1)).create(any(User.class));
-        verify(eventService, times(1)).create(any());
         verify(auditService, times(1)).report(argThat(
             (ArgumentMatcher<AuditBuilder<Audit>>) audit -> USER_CREATED.equals(audit.build(new ObjectMapper()).getType())
         ));
@@ -251,7 +244,6 @@ public class UserServiceTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(EmailFormatInvalidException.class);
-        verify(eventService, times(0)).create(any());
     }
 
     @Test
@@ -270,8 +262,6 @@ public class UserServiceTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(InvalidUserException.class);
-
-        verify(eventService, times(0)).create(any());
     }
 
     @Test
@@ -312,7 +302,6 @@ public class UserServiceTest {
 
         when(userRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-user"))).thenReturn(Maybe.just(user));
         when(userRepository.update(any(User.class))).thenReturn(Single.just(user));
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = userService.update(DOMAIN, "my-user", updateUser).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -322,7 +311,6 @@ public class UserServiceTest {
 
         verify(userRepository, times(1)).findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-user"));
         verify(userRepository, times(1)).update(any(User.class));
-        verify(eventService, times(1)).create(any());
     }
 
     @Test
@@ -341,7 +329,6 @@ public class UserServiceTest {
 
         when(userRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-user"))).thenReturn(Maybe.just(user));
         when(userRepository.update(any(User.class))).thenReturn(Single.just(user));
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = userService.update(DOMAIN, "my-user", updateUser).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -351,7 +338,6 @@ public class UserServiceTest {
 
         verify(userRepository, times(1)).findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-user"));
         verify(userRepository, times(1)).update(argThat(entity -> "Johanna Doe".equals(entity.getDisplayName())));
-        verify(eventService, times(1)).create(any());
     }
 
     @Test
@@ -371,7 +357,6 @@ public class UserServiceTest {
 
         when(userRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-user"))).thenReturn(Maybe.just(user));
         when(userRepository.update(any(User.class))).thenReturn(Single.just(user));
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = userService.update(DOMAIN, "my-user", updateUser).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -381,7 +366,6 @@ public class UserServiceTest {
 
         verify(userRepository, times(1)).findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-user"));
         verify(userRepository, times(1)).update(argThat(entity -> DISPLAYNAME.equals(entity.getDisplayName())));
-        verify(eventService, times(1)).create(any());
     }
 
     @Test
@@ -401,7 +385,6 @@ public class UserServiceTest {
 
         when(userRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-user"))).thenReturn(Maybe.just(user));
         when(userRepository.update(any(User.class))).thenReturn(Single.just(user));
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = userService.update(DOMAIN, "my-user", updateUser).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -411,7 +394,6 @@ public class UserServiceTest {
 
         verify(userRepository, times(1)).findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-user"));
         verify(userRepository, times(1)).update(argThat(entity -> DISPLAYNAME.equals(entity.getDisplayName())));
-        verify(eventService, times(1)).create(any());
     }
 
     @Test
@@ -430,8 +412,6 @@ public class UserServiceTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(EmailFormatInvalidException.class);
-
-        verify(eventService, times(0)).create(any());
     }
 
     @Test
@@ -449,8 +429,6 @@ public class UserServiceTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(InvalidUserException.class);
-
-        verify(eventService, times(0)).create(any());
     }
 
     @Test
@@ -487,7 +465,6 @@ public class UserServiceTest {
 
         when(userRepository.findById("my-user")).thenReturn(Maybe.just(user));
         when(userRepository.delete("my-user")).thenReturn(Completable.complete());
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(credentialService.findByUserId(user.getReferenceType(), user.getReferenceId(), user.getId())).thenReturn(Flowable.empty());
 
         TestObserver testObserver = userService.delete("my-user").test();
@@ -497,7 +474,6 @@ public class UserServiceTest {
         testObserver.assertNoErrors();
 
         verify(userRepository, times(1)).delete("my-user");
-        verify(eventService, times(1)).create(any());
         verify(credentialService, never()).delete(anyString());
     }
 
@@ -513,7 +489,6 @@ public class UserServiceTest {
 
         when(userRepository.findById("my-user")).thenReturn(Maybe.just(user));
         when(userRepository.delete("my-user")).thenReturn(Completable.complete());
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(credentialService.findByUserId(user.getReferenceType(), user.getReferenceId(), user.getId())).thenReturn(Flowable.just(credential));
         when(credentialService.delete(credential.getId(), false)).thenReturn(Completable.complete());
 
@@ -524,7 +499,6 @@ public class UserServiceTest {
         testObserver.assertNoErrors();
 
         verify(userRepository, times(1)).delete("my-user");
-        verify(eventService, times(1)).create(any());
         verify(credentialService, times(1)).delete("credential-id", false);
     }
 
@@ -561,13 +535,11 @@ public class UserServiceTest {
 
         when(userRepository.findById(userid)).thenReturn(Maybe.just(new User()));
         when(userRepository.update(any())).thenReturn(Single.just(new User()));
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         final var observer = userService.upsertFactor(userid, enrolledFactor, new DefaultUser()).test();
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertNoErrors();
 
-        verify(eventService).create(any());
         verify(userRepository).update(argThat(user -> user.getFactors() != null
                 && !user.getFactors().isEmpty()
                 && user.getFactors().get(0).getFactorId().equals(enrolledFactor.getFactorId()) ));
@@ -582,13 +554,11 @@ public class UserServiceTest {
 
         when(userRepository.findById(userid)).thenReturn(Maybe.just(new User()));
         when(userRepository.update(any())).thenReturn(Single.just(new User()));
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         final var observer = userService.upsertFactor(userid, enrolledFactor, new DefaultUser()).test();
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertNoErrors();
 
-        verify(eventService).create(any());
         verify(userRepository).update(argThat(user -> user.getFactors() != null
                 && !user.getFactors().isEmpty()
                 && user.getFactors().get(0).getFactorId().equals(enrolledFactor.getFactorId()) ));
@@ -607,7 +577,6 @@ public class UserServiceTest {
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(InvalidFactorAttributeException.class);
 
-        verify(eventService, never()).create(any());
         verify(userRepository, never()).update(any());
     }
     @Test
@@ -622,8 +591,6 @@ public class UserServiceTest {
         final var observer = userService.upsertFactor(userid, enrolledFactor, new DefaultUser()).test();
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(InvalidFactorAttributeException.class);
-
-        verify(eventService, never()).create(any());
         verify(userRepository, never()).update(any());
     }
 }

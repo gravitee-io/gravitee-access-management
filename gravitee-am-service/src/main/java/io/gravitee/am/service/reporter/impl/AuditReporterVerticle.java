@@ -25,6 +25,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -35,6 +37,19 @@ public class AuditReporterVerticle extends AbstractVerticle implements AuditRepo
     public static final Logger LOGGER = LoggerFactory.getLogger(AuditReporterVerticle.class);
     private static final String EVENT_BUS_ADDRESS = "node:audits";
     private MessageProducer<Reportable> producer;
+
+    private static AtomicInteger activeReporter = new AtomicInteger(0);
+
+    public static void incrementActiveReporter() {
+        activeReporter.incrementAndGet();
+    }
+
+    public static void decrementActiveReporter() {
+        final int remaingReporters = activeReporter.decrementAndGet();
+        if (remaingReporters < 0) {
+            activeReporter.compareAndSet(remaingReporters, 0);
+        }
+    }
 
     @Override
     public void start() throws Exception {
@@ -53,7 +68,7 @@ public class AuditReporterVerticle extends AbstractVerticle implements AuditRepo
     }
 
     public void report(Reportable reportable) {
-        if (producer != null) {
+        if (producer != null && activeReporter.get() > 0) {
             producer.write(reportable)
                     .doOnError(throwable -> LOGGER.error("Unexpected error while sending a reportable element", throwable))
                     .subscribe();
