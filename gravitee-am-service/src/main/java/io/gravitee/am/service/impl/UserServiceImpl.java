@@ -136,11 +136,6 @@ public class UserServiceImpl extends AbstractUserService implements UserService 
         // updated date
         user.setUpdatedAt(new Date());
         return userValidator.validate(user).andThen(getUserRepository().update(user)
-                .flatMap(user1 -> {
-                    // create event for sync process
-                    Event event = new Event(Type.USER, new Payload(user1.getId(), user1.getReferenceType(), user1.getReferenceId(), Action.UPDATE));
-                    return eventService.create(event).flatMap(__ -> Single.just(user1));
-                })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);

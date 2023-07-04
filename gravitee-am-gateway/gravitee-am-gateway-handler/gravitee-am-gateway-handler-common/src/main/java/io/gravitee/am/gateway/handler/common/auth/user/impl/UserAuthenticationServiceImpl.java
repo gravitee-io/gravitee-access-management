@@ -101,7 +101,7 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
     @Override
     public Single<User> connectWithPasswordless(String subject, Client client) {
         return userService.findById(subject)
-                .switchIfEmpty(Single.error(new UserNotFoundException(subject)))
+                .switchIfEmpty(Single.error(() -> new UserNotFoundException(subject)))
                 // check account status
                 .flatMap(user -> {
                     if (isIndefinitelyLocked(user)) {
@@ -151,7 +151,7 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
         // find user by its technical id
         return userService
                 .findById(subject)
-                .switchIfEmpty(Maybe.error(new UserNotFoundException(subject)))
+                .switchIfEmpty(Maybe.error(() -> new UserNotFoundException(subject)))
                 .flatMap(user -> isIndefinitelyLocked(user) ?
                         Maybe.error(new AccountLockedException("User " + user.getUsername() + " is locked")) :
                         Maybe.just(user)
@@ -214,7 +214,7 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
         String source = (String) principal.getAdditionalInformation().get(SOURCE_FIELD);
         return userService.findByDomainAndExternalIdAndSource(domain.getId(), principal.getId(), source)
                 .switchIfEmpty(Maybe.defer(() -> userService.findByDomainAndUsernameAndSource(domain.getId(), principal.getUsername(), source)))
-                .switchIfEmpty(Single.error(new UserNotFoundException(principal.getUsername())))
+                .switchIfEmpty(Single.error(() -> new UserNotFoundException(principal.getUsername())))
                 .flatMap(user -> isIndefinitelyLocked(user) ?
                         Single.error(new AccountLockedException("User " + user.getUsername() + " is locked")) :
                         Single.just(user)

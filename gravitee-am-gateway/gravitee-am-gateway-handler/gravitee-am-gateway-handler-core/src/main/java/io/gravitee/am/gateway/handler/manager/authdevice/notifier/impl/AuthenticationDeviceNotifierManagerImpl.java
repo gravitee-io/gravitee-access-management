@@ -130,7 +130,7 @@ public class AuthenticationDeviceNotifierManagerImpl extends AbstractService imp
 
     private void reloadDeviceNotifierProvider(String notifierId) {
         deviceNotifierService.findById(notifierId)
-                .switchIfEmpty(Maybe.error(new AuthenticationDeviceNotifierNotFoundException("Authentication Device Notifier " + notifierId + " not found")))
+                .switchIfEmpty(Maybe.error(() -> new AuthenticationDeviceNotifierNotFoundException("Authentication Device Notifier " + notifierId + " not found")))
                 .map(notifier -> {
                     if (needDeployment(notifier)) {
                         unloadDeviceNotifierProvider(notifierId);

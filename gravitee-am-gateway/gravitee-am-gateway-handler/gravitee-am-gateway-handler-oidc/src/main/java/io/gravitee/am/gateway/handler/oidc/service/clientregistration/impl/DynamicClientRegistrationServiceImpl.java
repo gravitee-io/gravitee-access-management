@@ -193,7 +193,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
      */
     private Single<Client> createClientFromTemplate(DynamicClientRegistrationRequest request, String basePath) {
         return clientService.findById(request.getSoftwareId().get())
-                .switchIfEmpty(Single.error(new InvalidClientMetadataException("No template found for software_id " + request.getSoftwareId().get())))
+                .switchIfEmpty(Single.error(() -> new InvalidClientMetadataException("No template found for software_id " + request.getSoftwareId().get())))
                 .flatMap(this::sanitizeTemplate)
                 .map(request::patch)
                 .flatMap(app -> this.applyRegistrationAccessToken(basePath, app))

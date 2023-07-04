@@ -19,7 +19,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
-import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.OrganizationUserRepository;
@@ -53,9 +52,17 @@ import java.util.concurrent.TimeUnit;
 
 import static io.gravitee.am.common.audit.EventType.USER_CREATED;
 import static io.gravitee.am.service.validators.email.EmailValidatorImpl.EMAIL_PATTERN;
-import static io.gravitee.am.service.validators.user.UserValidatorImpl.*;
+import static io.gravitee.am.service.validators.user.UserValidatorImpl.NAME_LAX_PATTERN;
+import static io.gravitee.am.service.validators.user.UserValidatorImpl.NAME_STRICT_PATTERN;
+import static io.gravitee.am.service.validators.user.UserValidatorImpl.USERNAME_PATTERN;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -77,10 +84,6 @@ public class OrganizationUserServiceTest {
 
     @Mock
     private OrganizationUserRepository userRepository;
-
-    @Mock
-    private EventService eventService;
-
     @Mock
     private CredentialService credentialService;
 
@@ -100,7 +103,6 @@ public class OrganizationUserServiceTest {
         when(newUser.getSource()).thenReturn("source");
         when(userRepository.create(any(User.class))).thenReturn(Single.just(user));
         when(userRepository.findByUsernameAndSource(ReferenceType.ORGANIZATION, ORG, newUser.getUsername(), newUser.getSource())).thenReturn(Maybe.empty());
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = userService.create(ReferenceType.ORGANIZATION, ORG, newUser).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -109,7 +111,6 @@ public class OrganizationUserServiceTest {
         testObserver.assertNoErrors();
 
         verify(userRepository, times(1)).create(any(User.class));
-        verify(eventService, times(1)).create(any());
         verify(auditService, times(1)).report(argThat(
             (ArgumentMatcher<AuditBuilder<Audit>>) audit -> USER_CREATED.equals(audit.build(new ObjectMapper()).getType())
         ));
@@ -130,8 +131,6 @@ public class OrganizationUserServiceTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(EmailFormatInvalidException.class);
-
-        verify(eventService, times(0)).create(any());
     }
 
     @Test
@@ -149,8 +148,6 @@ public class OrganizationUserServiceTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(InvalidUserException.class);
-
-        verify(eventService, times(0)).create(any());
     }
 
     @Test
@@ -193,7 +190,6 @@ public class OrganizationUserServiceTest {
         when(userRepository.findById(ReferenceType.ORGANIZATION, ORG, user.getId())).thenReturn(Maybe.just(user));
         when(userRepository.findByUsernameAndSource(eq(ReferenceType.ORGANIZATION), eq(ORG), any(), any())).thenReturn(Maybe.just(user));
         when(userRepository.update(any(User.class))).thenReturn(Single.just(user));
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         var testObserver = userService.update(ReferenceType.ORGANIZATION, ORG, "my-user", updateUser).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -203,7 +199,6 @@ public class OrganizationUserServiceTest {
 
         verify(userRepository, times(2)).findById(ReferenceType.ORGANIZATION, ORG, user.getId());
         verify(userRepository, times(1)).update(any(User.class));
-        verify(eventService, times(1)).create(any());
     }
 
     @Test
@@ -222,8 +217,6 @@ public class OrganizationUserServiceTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(EmailFormatInvalidException.class);
-
-        verify(eventService, times(0)).create(any());
     }
 
     @Test
@@ -242,8 +235,6 @@ public class OrganizationUserServiceTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(InvalidUserException.class);
-
-        verify(eventService, times(0)).create(any());
     }
 
     @Test
@@ -279,7 +270,6 @@ public class OrganizationUserServiceTest {
 
         when(userRepository.findById("my-user")).thenReturn(Maybe.just(user));
         when(userRepository.delete("my-user")).thenReturn(Completable.complete());
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(credentialService.findByUserId(user.getReferenceType(), user.getReferenceId(), user.getId())).thenReturn(Flowable.empty());
 
         TestObserver testObserver = userService.delete("my-user").test();
@@ -289,7 +279,6 @@ public class OrganizationUserServiceTest {
         testObserver.assertNoErrors();
 
         verify(userRepository, times(1)).delete("my-user");
-        verify(eventService, times(1)).create(any());
         verify(credentialService, never()).delete(anyString());
     }
 
@@ -305,7 +294,6 @@ public class OrganizationUserServiceTest {
 
         when(userRepository.findById("my-user")).thenReturn(Maybe.just(user));
         when(userRepository.delete("my-user")).thenReturn(Completable.complete());
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(credentialService.findByUserId(user.getReferenceType(), user.getReferenceId(), user.getId())).thenReturn(Flowable.just(credential));
         when(credentialService.delete(credential.getId(),false)).thenReturn(Completable.complete());
 
@@ -316,7 +304,6 @@ public class OrganizationUserServiceTest {
         testObserver.assertNoErrors();
 
         verify(userRepository, times(1)).delete("my-user");
-        verify(eventService, times(1)).create(any());
         verify(credentialService, times(1)).delete("credential-id", false);
     }
 

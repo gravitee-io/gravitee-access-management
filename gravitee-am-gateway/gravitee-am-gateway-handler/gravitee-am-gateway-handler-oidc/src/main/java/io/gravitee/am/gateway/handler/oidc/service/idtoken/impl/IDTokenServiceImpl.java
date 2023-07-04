@@ -140,7 +140,7 @@ public class IDTokenServiceImpl implements IDTokenService {
     public Single<User> extractUser(String idToken, Client client) {
         return jwtService.decodeAndVerify(idToken, client, ID_TOKEN)
                 .flatMap(jwt -> userService.findById(jwt.getSub())
-                        .switchIfEmpty(Single.error(new UserNotFoundException(jwt.getSub())))
+                        .switchIfEmpty(Single.error(() -> new UserNotFoundException(jwt.getSub())))
                         .map(user -> {
                             if (!user.getReferenceId().equals(domain.getId())) {
                                 throw new UserNotFoundException(jwt.getSub());

@@ -112,7 +112,7 @@ public class AuthenticationRequestServiceImpl implements AuthenticationRequestSe
     public Single<CibaAuthRequest> retrieve(Domain domain, String authReqId) {
         LOGGER.debug("Search for authentication request with id '{}'", authReqId);
         return this.authRequestRepository.findById(authReqId)
-                .switchIfEmpty(Single.error(new AuthenticationRequestNotFoundException(authReqId)))
+                .switchIfEmpty(Single.error(() -> new AuthenticationRequestNotFoundException(authReqId)))
                 .flatMap(request -> {
                     if ((request.getExpireAt().getTime() - (requestRetentionInSec * 1000)) < Instant.now().toEpochMilli()) {
                         return Single.error(new AuthenticationRequestExpiredException());
@@ -140,7 +140,7 @@ public class AuthenticationRequestServiceImpl implements AuthenticationRequestSe
     public Single<CibaAuthRequest> updateAuthDeviceInformation(CibaAuthRequest request) {
         LOGGER.debug("Update authentication request '{}' with AuthenticationDeviceNotifier information", request.getId());
         return this.authRequestRepository.findById(request.getId())
-                .switchIfEmpty(Single.error(new AuthenticationRequestNotFoundException(request.getId())))
+                .switchIfEmpty(Single.error(() -> new AuthenticationRequestNotFoundException(request.getId())))
                 .flatMap(existingReq -> {
                     // update only information provided by the AD notifier
                     existingReq.setExternalTrxId(request.getExternalTrxId());
@@ -179,10 +179,10 @@ public class AuthenticationRequestServiceImpl implements AuthenticationRequestSe
     private Single<JWT> verifyState(ADUserResponse userResponse, String clientId) {
         LOGGER.debug("Prepare verification of state '{}' with client id '{}'", userResponse.getState(), clientId);
         return this.clientService.findByClientId(clientId)
-                .switchIfEmpty(Single.error(new InvalidClientException()))
+                .switchIfEmpty(Single.error(() -> new InvalidClientException()))
                 .flatMap(client -> Single.defer(() -> this.jwtService.decodeAndVerify(userResponse.getState(), client, STATE)))
                 .filter(verifiedJwt -> userResponse.getTid().equals(verifiedJwt.getJti()))
-                .switchIfEmpty(Single.error(new InvalidRequestException("state parameter mismatch with the transaction id")))
+                .switchIfEmpty(Single.error(() -> new InvalidRequestException("state parameter mismatch with the transaction id")))
                 .onErrorResumeNext((error) -> {
                     LOGGER.debug("Verification of state '{}' fails on CIBA callback with client id '{}'", userResponse.getState(), clientId, error);
                     return Single.error(new InvalidRequestException("Invalid CIBA State"));
@@ -191,7 +191,7 @@ public class AuthenticationRequestServiceImpl implements AuthenticationRequestSe
 
     private Single<CibaAuthRequest> updateRequestStatus(String reqExtId, String status) {
         return this.authRequestRepository.findByExternalId(reqExtId)
-                .switchIfEmpty(Single.error(new InvalidRequestException("Invalid CIBA State")))
+                .switchIfEmpty(Single.error(() -> new InvalidRequestException("Invalid CIBA State")))
                 .flatMap(cibaRequest -> this.authRequestRepository.updateStatus(cibaRequest.getId(), status));
     }
 }

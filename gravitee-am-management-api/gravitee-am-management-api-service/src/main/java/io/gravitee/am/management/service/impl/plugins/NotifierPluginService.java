@@ -72,7 +72,7 @@ public class NotifierPluginService {
                 .onErrorResumeNext(throwable -> {
                     return Maybe.error(new TechnicalManagementException("An error occurs while trying to get notifier plugin " + notifierId, throwable));
                 })
-                .switchIfEmpty(Single.defer(() -> Single.error(new NotifierPluginNotFoundException(notifierId))));
+                .switchIfEmpty(Single.error(() -> new NotifierPluginNotFoundException(notifierId)));
     }
 
     public Single<String> getSchema(String notifierId) {

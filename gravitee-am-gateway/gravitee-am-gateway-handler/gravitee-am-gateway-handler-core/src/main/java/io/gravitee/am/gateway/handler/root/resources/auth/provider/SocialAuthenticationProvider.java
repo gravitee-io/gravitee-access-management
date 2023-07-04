@@ -115,7 +115,7 @@ public class SocialAuthenticationProvider implements UserAuthProvider {
 
         // authenticate the user via the social provider
         authenticationProvider.loadUserByUsername(endUserAuthentication)
-                .switchIfEmpty(Single.error(new BadCredentialsException("Unable to authenticate social provider, authentication provider has returned empty value")))
+                .switchIfEmpty(Single.error(() -> new BadCredentialsException("Unable to authenticate social provider, authentication provider has returned empty value")))
                 .flatMap(user -> checkDomainWhitelist(user, authProvider))
                 .flatMap(user -> {
                     // set source and client for the current authenticated end-user

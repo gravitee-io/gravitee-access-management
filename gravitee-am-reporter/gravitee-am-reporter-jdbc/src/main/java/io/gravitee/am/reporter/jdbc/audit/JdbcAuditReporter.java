@@ -451,8 +451,69 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
             return Flowable.empty();
         }
 
-        return Flowable.fromPublisher(Flux.fromIterable(audits).flatMap(this::insertReport, 2))
+        return Flowable.fromPublisher(Flux.just(audits).concatMap(this::bulkInsertReport))
                 .doOnError(error -> LOGGER.error("Error during bulk loading", error));
+    }
+
+
+
+    private Mono bulkInsertReport(List<Audit> audits) {
+        TransactionalOperator trx = TransactionalOperator.create(tm);
+
+        Mono<Integer> insertAction = null;
+        for (Audit audit: audits) {
+            DatabaseClient.GenericExecuteSpec insertSpec = template.getDatabaseClient().sql(INSERT_AUDIT_STATEMENT);
+            insertSpec = addQuotedField(insertSpec, COL_ID, audit.getId(), String.class);
+            insertSpec = addQuotedField(insertSpec, COL_TRANSACTION_ID, audit.getTransactionId(), String.class);
+            insertSpec = addQuotedField(insertSpec, COL_TYPE, audit.getType(), String.class);
+            insertSpec = addQuotedField(insertSpec, COL_REFERENCE_TYPE, audit.getReferenceType() == null ? null : audit.getReferenceType().name(), String.class);
+            insertSpec = addQuotedField(insertSpec, COL_REFERENCE_ID, audit.getReferenceId(), String.class);
+            insertSpec = addQuotedField(insertSpec, COL_TIMESTAMP, LocalDateTime.ofInstant(audit.timestamp(), ZoneId.of(ZoneOffset.UTC.getId())), LocalDateTime.class);
+
+            if (insertAction == null)
+            {
+                insertAction = insertSpec.fetch().rowsUpdated();
+            } else {
+                insertAction = insertAction.then(insertSpec.fetch().rowsUpdated());
+            }
+
+            AuditEntity actor = audit.getActor();
+            if (actor != null) {
+                insertAction = insertAction.then(prepateInsertEntity(audit, actor, AUDIT_FIELD_ACTOR));
+            }
+
+            AuditEntity target = audit.getTarget();
+            if (target != null) {
+                insertAction = insertAction.then(prepateInsertEntity(audit, target, AUDIT_FIELD_TARGET));
+            }
+
+            AuditOutcome outcome = audit.getOutcome();
+            if (outcome != null) {
+                DatabaseClient.GenericExecuteSpec insertOutcomeSpec = template.getDatabaseClient().sql(INSERT_OUTCOMES_STATEMENT);
+
+                insertOutcomeSpec = addQuotedField(insertOutcomeSpec, COL_AUDIT_ID, audit.getId(), String.class);
+                insertOutcomeSpec = addQuotedField(insertOutcomeSpec, COL_STATUS, outcome.getStatus(), String.class);
+                insertOutcomeSpec = addQuotedField(insertOutcomeSpec, COL_MESSAGE, outcome.getMessage(), String.class);
+
+                insertAction = insertAction.then(insertOutcomeSpec.fetch().rowsUpdated());
+            }
+
+            AuditAccessPoint accessPoint = audit.getAccessPoint();
+            if (accessPoint != null) {
+                DatabaseClient.GenericExecuteSpec insertAccessPointSpec = template.getDatabaseClient().sql(INSERT_ACCESSPOINT_STATEMENT);
+
+                insertAccessPointSpec = addQuotedField(insertAccessPointSpec, COL_AUDIT_ID, audit.getId(), String.class);
+                insertAccessPointSpec = addQuotedField(insertAccessPointSpec, COL_ID, accessPoint.getId(), String.class);
+                insertAccessPointSpec = addQuotedField(insertAccessPointSpec, COL_ALTERNATIVE_ID, accessPoint.getAlternativeId(), String.class);
+                insertAccessPointSpec = addQuotedField(insertAccessPointSpec, COL_DISPLAY_NAME, accessPoint.getDisplayName(), String.class);
+                insertAccessPointSpec = addQuotedField(insertAccessPointSpec, COL_IP_ADDRESS, accessPoint.getIpAddress(), String.class);
+                insertAccessPointSpec = addQuotedField(insertAccessPointSpec, COL_USER_AGENT, accessPoint.getUserAgent(), String.class);
+
+                insertAction = insertAction.then(insertAccessPointSpec.fetch().rowsUpdated());
+            }
+        }
+
+        return insertAction.as(trx::transactional);
     }
 
     private Mono insertReport(Audit audit) {
@@ -606,6 +667,7 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
                     .flatMap(JdbcAuditReporter.this::bulk)
                     .doOnError(error -> LOGGER.error("An error occurs while indexing data into report_audits_{} table of {} database",
                             configuration.getTableSuffix(), configuration.getDatabase(), error))
+                    .onErrorResumeNext(err -> bulkProcessor)
                     .subscribe();
 
             ready = true;

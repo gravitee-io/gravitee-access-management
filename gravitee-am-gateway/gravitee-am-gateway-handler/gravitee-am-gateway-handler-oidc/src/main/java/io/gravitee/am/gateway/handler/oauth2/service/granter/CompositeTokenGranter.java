@@ -105,7 +105,7 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
                 .fromIterable(tokenGranters.values())
                 .filter(tokenGranter -> tokenGranter.handle(tokenRequest.getGrantType(), client))
                 .firstElement()
-                .switchIfEmpty(Single.error(new UnsupportedGrantTypeException("Unsupported grant type: " + tokenRequest.getGrantType())))
+                .switchIfEmpty(Single.error(() -> new UnsupportedGrantTypeException("Unsupported grant type: " + tokenRequest.getGrantType())))
                 .flatMap(tokenGranter -> tokenGranter.grant(tokenRequest, client));
     }
 
