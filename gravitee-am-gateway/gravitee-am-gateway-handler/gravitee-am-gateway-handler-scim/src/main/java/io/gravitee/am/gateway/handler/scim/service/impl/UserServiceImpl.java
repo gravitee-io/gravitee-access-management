@@ -162,9 +162,14 @@ public class UserServiceImpl implements UserService {
     @Override
     public Maybe<User> get(String userId, String baseUrl) {
         LOGGER.debug("Find user by id : {}", userId);
+        return innerGet(userId, baseUrl).map(UserContainer::getScimUser);
+    }
+
+    public Maybe<UserContainer> innerGet(String userId, String baseUrl) {
+        LOGGER.debug("Find user by id : {}", userId);
         return userRepository.findById(userId)
-                .map(user1 -> UserMapper.convert(user1, baseUrl, false))
-                .flatMap(scimUser -> setGroups(scimUser).toMaybe())
+                .map(user1 -> new UserContainer(UserMapper.convert(user1, baseUrl, false), user1))
+                .flatMap(containerUser -> setGroups(containerUser.getScimUser()).map(containerUser::replaceScimUserWith).toMaybe())
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find a user using its ID {}", userId, ex);
                     return Maybe.error(new TechnicalManagementException(
@@ -219,7 +224,7 @@ public class UserServiceImpl implements UserService {
                                             return Single.error(new IdentityProviderNotFoundException(source));
                                         }
                                         return identityProviderManager.getUserProvider(source)
-                                                .switchIfEmpty(Single.error(new UserProviderNotFoundException(source)))
+                                                .switchIfEmpty(Single.error(() -> new UserProviderNotFoundException(source)))
                                                 .flatMap(userProvider -> userProvider.create(UserMapper.convert(userModel)));
                                     })
                                     .flatMap(idpUser -> {
@@ -271,15 +276,21 @@ public class UserServiceImpl implements UserService {
     public Single<User> update(String userId, User user, String idp, String baseUrl, io.gravitee.am.identityprovider.api.User principal, Client client) {
         LOGGER.debug("Update a user {} for domain {}", user.getUserName(), domain.getName());
 
-        final var rawPassword = user.getPassword();
         return userRepository.findById(userId)
-                .switchIfEmpty(Single.error(new UserNotFoundException(userId)))
-                .flatMap(existingUser -> {
+                .switchIfEmpty(Single.error(() ->new UserNotFoundException(userId)))
+                .flatMap(existingUser -> innerUpdate(existingUser, user, idp, baseUrl, principal, client));
+    }
+
+    public Single<User> innerUpdate(io.gravitee.am.model.User userIntoDb, User scimUser, String idp, String baseUrl, io.gravitee.am.identityprovider.api.User principal, Client client) {
+        LOGGER.debug("Update a user {} for domain {}", scimUser.getUserName(), domain.getName());
+
+        final var rawPassword = scimUser.getPassword();
+        return Single.just(userIntoDb).flatMap( existingUser -> {
                     // check roles
-                    return checkRoles(user.getRoles())
+                    return checkRoles(scimUser.getRoles())
                             // and update the user
                             .andThen(Single.defer(() -> {
-                                io.gravitee.am.model.User userToUpdate = UserMapper.convert(user);
+                                io.gravitee.am.model.User userToUpdate = UserMapper.convert(scimUser);
                                 // set immutable attribute
                                 userToUpdate.setId(existingUser.getId());
                                 userToUpdate.setExternalId(existingUser.getExternalId());
@@ -335,7 +346,7 @@ public class UserServiceImpl implements UserService {
                                 }
 
                                 // set source
-                                String source = user.getSource() != null ? user.getSource() : (idp != null ? idp : existingUser.getSource());
+                                String source = scimUser.getSource() != null ? scimUser.getSource() : (idp != null ? idp : existingUser.getSource());
                                 userToUpdate.setSource(source);
 
                                 return userValidator.validate(userToUpdate)
@@ -345,7 +356,7 @@ public class UserServiceImpl implements UserService {
                                                         return Single.error(new IdentityProviderNotFoundException(source));
                                                     }
                                                     return identityProviderManager.getUserProvider(userToUpdate.getSource())
-                                                            .switchIfEmpty(Single.error(new UserProviderNotFoundException(userToUpdate.getSource())))
+                                                            .switchIfEmpty(Single.error(() -> new UserProviderNotFoundException(userToUpdate.getSource())))
                                                             .flatMap(userProvider -> {
                                                                 // no idp user check if we need to create it
                                                                 if (userToUpdate.getExternalId() == null) {
@@ -353,42 +364,35 @@ public class UserServiceImpl implements UserService {
                                                                 } else {
                                                                     return createPasswordHistory(domain, userToUpdate, rawPassword, principal, client)
                                                                             .switchIfEmpty(Single.just(new PasswordHistory()))
-                                                                            .flatMap(ph -> userProvider.update(userToUpdate.getExternalId(), UserMapper.convert(userToUpdate)))
-                                                                            .flatMap(updatedUser -> {
-                                                                                         if (!isNullOrEmpty(user.getPassword())) {
-                                                                                             return userProvider.updatePassword(updatedUser, user.getPassword());
-                                                                                         }
-                                                                                         return Single.just(updatedUser);
-                                                                                     }
-                                                                            );
+                                                                            .flatMap(ph -> userProvider.update(userToUpdate.getExternalId(), UserMapper.convert(userToUpdate)));
                                                                 }
                                                             });
                                                 })
-                                        .flatMap(idpUser -> {
-                                            // AM 'users' collection is not made for authentication (but only management stuff)
-                                            // clear password
-                                            userToUpdate.setPassword(null);
-                                            // set external id
-                                            userToUpdate.setExternalId(idpUser.getId());
-                                            // if password has been changed, update last update date
-                                            if (user.getPassword() != null) {
-                                                userToUpdate.setLastPasswordReset(new Date());
-                                            }
-                                            return userRepository.update(userToUpdate);
-                                        })
-                                        .onErrorResumeNext(ex -> {
-                                            if (ex instanceof UserNotFoundException ||
-                                            ex instanceof UserInvalidException ||
-                                            ex instanceof UserProviderNotFoundException) {
-                                                // idp user does not exist, only update AM user
-                                                // clear password
-                                                userToUpdate.setPassword(null);
-                                                return userRepository.update(userToUpdate);
-                                            }
-                                            return Single.error(ex);
-                                        })
-                                        .doOnSuccess(updatedUser -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).oldValue(existingUser).type(EventType.USER_UPDATED).user(updatedUser)))
-                                        .doOnError(error -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).user(existingUser).type(EventType.USER_UPDATED).throwable(error))));
+                                                .flatMap(idpUser -> {
+                                                    // AM 'users' collection is not made for authentication (but only management stuff)
+                                                    // clear password
+                                                    userToUpdate.setPassword(null);
+                                                    // set external id
+                                                    userToUpdate.setExternalId(idpUser.getId());
+                                                    // if password has been changed, update last update date
+                                                    if (scimUser.getPassword() != null) {
+                                                        userToUpdate.setLastPasswordReset(new Date());
+                                                    }
+                                                    return userRepository.update(userToUpdate);
+                                                })
+                                                .onErrorResumeNext(ex -> {
+                                                    if (ex instanceof UserNotFoundException ||
+                                                            ex instanceof UserInvalidException ||
+                                                            ex instanceof UserProviderNotFoundException) {
+                                                        // idp user does not exist, only update AM user
+                                                        // clear password
+                                                        userToUpdate.setPassword(null);
+                                                        return userRepository.update(userToUpdate);
+                                                    }
+                                                    return Single.error(ex);
+                                                })
+                                                .doOnSuccess(updatedUser -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).oldValue(existingUser).type(EventType.USER_UPDATED).user(updatedUser)))
+                                                .doOnError(error -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).user(existingUser).type(EventType.USER_UPDATED).throwable(error))));
                             }));
                 })
                 .map(user1 -> UserMapper.convert(user1, baseUrl, false))
@@ -415,10 +419,10 @@ public class UserServiceImpl implements UserService {
     @Override
     public Single<User> patch(String userId, PatchOp patchOp, String idp, String baseUrl, io.gravitee.am.identityprovider.api.User principal, Client client) {
         LOGGER.debug("Patch user {}", userId);
-        return get(userId, baseUrl)
-                .switchIfEmpty(Single.error(new UserNotFoundException(userId)))
-                .flatMap(user -> {
-                    ObjectNode node = objectMapper.convertValue(user, ObjectNode.class);
+        return innerGet(userId, baseUrl)
+                .switchIfEmpty(Single.error(() -> new UserNotFoundException(userId)))
+                .flatMap(userContainer -> {
+                    ObjectNode node = objectMapper.convertValue(userContainer.getScimUser(), ObjectNode.class);
                     patchOp.getOperations().forEach(operation -> operation.apply(node));
                     boolean isCustomGraviteeUser = GraviteeUser.SCHEMAS.stream().anyMatch(schema -> node.has(schema));
                     User userToPatch = isCustomGraviteeUser ?
@@ -430,7 +434,7 @@ public class UserServiceImpl implements UserService {
                         return Single.error(new InvalidValueException(FIELD_PASSWORD_IS_INVALID));
                     }
 
-                    return update(userId, userToPatch, idp, baseUrl, principal, client);
+                    return innerUpdate(userContainer.getAmUser(), userToPatch, idp, baseUrl, principal, client);
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -447,10 +451,10 @@ public class UserServiceImpl implements UserService {
     public Completable delete(String userId, io.gravitee.am.identityprovider.api.User principal) {
         LOGGER.debug("Delete user {}", userId);
         return userRepository.findById(userId)
-                .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
+                .switchIfEmpty(Maybe.error(() -> new UserNotFoundException(userId)))
                 .flatMapCompletable(user -> {
                     return identityProviderManager.getUserProvider(user.getSource())
-                            .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(user.getSource())))
+                            .switchIfEmpty(Maybe.error(() -> new UserProviderNotFoundException(user.getSource())))
                             .flatMapCompletable(userProvider -> userProvider.delete(user.getExternalId()))
                             .onErrorResumeNext(ex -> {
                                 if (ex instanceof UserNotFoundException || ex instanceof UserProviderNotFoundException) {
@@ -520,5 +524,28 @@ public class UserServiceImpl implements UserService {
     private Maybe<PasswordHistory> createPasswordHistory(Domain domain, io.gravitee.am.model.User user, String rawPassword, io.gravitee.am.identityprovider.api.User principal, Client client) {
         return passwordHistoryService
                 .addPasswordToHistory(DOMAIN, domain.getId(), user, rawPassword , principal, PasswordSettings.getInstance(client, domain).orElse(null));
+    }
+
+    private static class UserContainer {
+        private User scimUser;
+        private io.gravitee.am.model.User amUser;
+
+        public UserContainer(User scimUser, io.gravitee.am.model.User amUser) {
+            this.scimUser = scimUser;
+            this.amUser = amUser;
+        }
+
+        public User getScimUser() {
+            return scimUser;
+        }
+
+        public io.gravitee.am.model.User getAmUser() {
+            return amUser;
+        }
+
+        public UserContainer replaceScimUserWith(User scimUser) {
+            this.scimUser = scimUser;
+            return this;
+        }
     }
 }

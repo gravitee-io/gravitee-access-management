@@ -94,7 +94,7 @@ public class CertificateServiceProxyImpl extends AbstractSensitiveProxy implemen
     @Override
     public Single<Certificate> update(String domain, String id, UpdateCertificate updateCertificate, User principal) {
         return certificateService.findById(id)
-                .switchIfEmpty(Single.error(new CertificateNotFoundException(id)))
+                .switchIfEmpty(Single.error(() -> new CertificateNotFoundException(id)))
                 .flatMap(oldCertificate -> filterSensitiveData(oldCertificate)
                         .flatMap(safeOldCert -> updateSensitiveData(updateCertificate, oldCertificate)
                                 .flatMap(certificateToUpdate -> certificateService.update(domain, id, certificateToUpdate, principal))
@@ -121,7 +121,7 @@ public class CertificateServiceProxyImpl extends AbstractSensitiveProxy implemen
 
     private Single<Certificate> filterSensitiveData(Certificate cert) {
         return certificatePluginService.getSchema(cert.getType())
-                .switchIfEmpty(Single.error(new CertificatePluginSchemaNotFoundException(cert.getType())))
+                .switchIfEmpty(Single.error(() -> new CertificatePluginSchemaNotFoundException(cert.getType())))
                 .map(schema -> {
                     // Duplicate the object to avoid side effect
                     var filteredEntity = new Certificate(cert);
@@ -134,7 +134,7 @@ public class CertificateServiceProxyImpl extends AbstractSensitiveProxy implemen
 
     private Single<UpdateCertificate> updateSensitiveData(UpdateCertificate updateCertificate, Certificate oldCertificate) {
         return certificatePluginService.getSchema(oldCertificate.getType())
-                .switchIfEmpty(Single.error(new CertificatePluginSchemaNotFoundException(oldCertificate.getType())))
+                .switchIfEmpty(Single.error(() -> new CertificatePluginSchemaNotFoundException(oldCertificate.getType())))
                 .map(schema -> {
                     var updateConfig = objectMapper.readTree(updateCertificate.getConfiguration());
                     var oldConfig = objectMapper.readTree(oldCertificate.getConfiguration());

@@ -122,7 +122,7 @@ public class ResourceManagerImpl extends AbstractService implements ResourceMana
 
     private void reloadResource(String resourceId) {
         resourceService.findById(resourceId)
-                .switchIfEmpty(Maybe.error(new ResourceNotFoundException("Resource " + resourceId + " not found")))
+                .switchIfEmpty(Maybe.error(() -> new ResourceNotFoundException("Resource " + resourceId + " not found")))
                 .map(res -> {
                     if (needDeployment(res)) {
                         unloadResource(res.getId());

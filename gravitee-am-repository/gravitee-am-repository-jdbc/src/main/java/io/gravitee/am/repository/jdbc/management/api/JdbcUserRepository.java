@@ -669,7 +669,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         insertAction = persistChildEntities(insertAction, item);
 
         return monoToSingle(insertAction.as(trx::transactional))
-                .flatMap((i) -> this.findById(item.getId()).toSingle());
+                .flatMap((i) -> Single.just(item));
     }
 
     @Override
@@ -726,7 +726,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         action = persistChildEntities(action, item);
 
         return monoToSingle(action.as(trx::transactional))
-                .flatMap((i) -> this.findById(item.getId()).toSingle());
+                .flatMap((i) -> Single.just(item));
     }
 
     @Override
@@ -826,7 +826,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
     private Stream<JdbcUser.Attribute> convertAttributes(User item, List<Attribute> attributes, String field) {
         if (attributes != null && !attributes.isEmpty()) {
             return attributes.stream().map(attr -> {
-                JdbcUser.Attribute jdbcAttr = mapper.map(attr, JdbcUser.Attribute.class);
+                JdbcUser.Attribute jdbcAttr = convertAttribute(attr);
                 jdbcAttr.setUserId(item.getId());
                 jdbcAttr.setUserField(field);
                 return jdbcAttr;
@@ -863,7 +863,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
                         }))
                 .flatMap(user ->
                         addressesRepository.findByUserId(user.getId())
-                                .map(jdbcAddr -> mapper.map(jdbcAddr, Address.class))
+                                .map(this::convertAddress)
                                 .toList().map(addresses -> {
                                     user.setAddresses(addresses);
                                     return user;
@@ -872,7 +872,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
                         attributesRepository.findByUserId(user.getId())
                                 .toList()
                                 .map(attributes -> {
-                                    Map<String, List<Attribute>> map = attributes.stream().collect(StreamUtils.toMultiMap(JdbcUser.Attribute::getUserField, attr -> mapper.map(attr, Attribute.class)));
+                                    Map<String, List<Attribute>> map = attributes.stream().collect(StreamUtils.toMultiMap(JdbcUser.Attribute::getUserField, attr -> convertAttribute(attr)));
                                     if (map.containsKey(ATTRIBUTE_USER_FIELD_EMAIL)) {
                                         user.setEmails(map.get(ATTRIBUTE_USER_FIELD_EMAIL));
                                     }
@@ -888,6 +888,35 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
                                     return user;
                                 })
                 );
+    }
+
+    private JdbcUser.Attribute convertAttribute(Attribute attribute) {
+        var result = new JdbcUser.Attribute();
+        result.setType(attribute.getType());
+        result.setPrimary(attribute.isPrimary());
+        result.setValue(attribute.getValue());
+        return result;
+    }
+
+    private Attribute convertAttribute(JdbcUser.Attribute attribute) {
+        var result = new Attribute();
+        result.setType(attribute.getType());
+        result.setPrimary(attribute.getPrimary());
+        result.setValue(attribute.getValue());
+        return result;
+    }
+
+    private Address convertAddress(JdbcUser.Address address) {
+        var result = new Address();
+        result.setType(address.getType());
+        result.setCountry(address.getCountry());
+        result.setPrimary(address.getPrimary());
+        result.setFormatted(address.getFormatted());
+        result.setLocality(address.getLocality());
+        result.setPostalCode(address.getPostalCode());
+        result.setRegion(address.getRegion());
+        result.setStreetAddress(address.getStreetAddress());
+        return result;
     }
 
 }

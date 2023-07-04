@@ -286,7 +286,7 @@ public class JWEServiceImpl implements JWEService {
     private Single<String> encrypt(JWEObject jwe, Client client, Predicate<JWK> filter, JWEEncrypterFunction<JWK, JWEEncrypter> function) {
         return jwkService.getKeys(client)
                 .flatMap(jwkSet -> jwkService.filter(jwkSet, filter))
-                .switchIfEmpty(Single.error(new InvalidClientMetadataException("no matching key found to encrypt")))
+                .switchIfEmpty(Single.error(() -> new InvalidClientMetadataException("no matching key found to encrypt")))
                 .flatMap(jwk -> Single.just(function.apply(jwk)))
                 .map(encrypter -> {
                     jwe.encrypt(encrypter);
