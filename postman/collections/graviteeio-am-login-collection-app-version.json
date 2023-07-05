@@ -1,8 +1,9 @@
 {
 	"info": {
-		"_postman_id": "fc729fe1-7ca7-41fa-88da-411de4cc9d27",
+		"_postman_id": "060853b0-ec64-4e88-a1d5-94531aaa1a24",
 		"name": "Gravitee.io - AM - Login - app version",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "7568294"
 	},
 	"item": [
 		{
@@ -3212,7 +3213,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"type\": \"sms-am-factor\",\n    \"factorType\": \"SMS\",\n    \"configuration\": \"{\\\"countryCodes\\\":\\\"fr\\\",\\\"graviteeResource\\\":\\\"{{mfaResourceId}}\\\"}\",\n    \"name\": \"Sms Factor\"\n}",
+									"raw": "{\n    \"type\": \"mock-am-factor\",\n    \"factorType\": \"MOCK\",\n    \"configuration\": \"{\\\"graviteeResource\\\":\\\"{{mfaResourceId}}\\\"}\",\n    \"name\": \"Mock Factor\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -3635,16 +3636,6 @@
 										{
 											"key": "factorId",
 											"value": "{{mfaFactorId}}",
-											"type": "text"
-										},
-										{
-											"key": "phoneFact0",
-											"value": "0600000000",
-											"type": "text"
-										},
-										{
-											"key": "phone",
-											"value": "+33600000000",
 											"type": "text"
 										},
 										{
@@ -4227,16 +4218,6 @@
 										{
 											"key": "factorId",
 											"value": "{{mfaFactorId}}",
-											"type": "text"
-										},
-										{
-											"key": "phoneFact0",
-											"value": "0600000000",
-											"type": "text"
-										},
-										{
-											"key": "phone",
-											"value": "+33600000000",
 											"type": "text"
 										},
 										{
@@ -4892,16 +4873,6 @@
 										{
 											"key": "factorId",
 											"value": "{{mfaFactorId}}",
-											"type": "text"
-										},
-										{
-											"key": "phoneFact0",
-											"value": "0600000000",
-											"type": "text"
-										},
-										{
-											"key": "phone",
-											"value": "+33600000000",
 											"type": "text"
 										},
 										{

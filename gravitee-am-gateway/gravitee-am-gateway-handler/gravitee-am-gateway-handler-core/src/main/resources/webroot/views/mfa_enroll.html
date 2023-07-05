@@ -104,8 +104,21 @@
                             </span>
                         </div>
                     </div>
+
+                    <div th:if="${factor.factorType == 'MOCK'}" class="radio-card">
+                        <div class="card-content">
+                            <span class="radio">
+                                <input type="radio" th:name="factorId" th:value="${factor.id}">
+                            </span>
+                            <span class="radio-detail">
+                                <span class="enroll-name">Mock factor</span>
+                                <span class="enroll-description">This is just a mock factor, please go next</span>
+                            </span>
+                        </div>
+                    </div>
                 </div>
                 <button id="next" type="button" class="button primary" th:text="#{mfa_enroll.button.submit}"></button>
+
             </div>
             <!-- END OF STEP 1 -->
 
@@ -154,6 +167,11 @@
                 <div id="fido2-factor" class="section enrollment-item hide">
                     <span class="enrollment-card-label" th:text="#{mfa.fido}"/>
                     <span class="enrollment-card-description" th:text="#{mfa_enroll.fido}"/>
+                </div>
+                <!-- MOCK FACTOR -->
+                <div id="mock-factor" class="section enrollment-item hide">
+                    <span class="enrollment-card-label" th:text="'Mfa Mock'"/>
+                    <span class="enrollment-card-description" th:text="'No further action needed, submit.'"/>
                 </div>
                 <input type="hidden" id="sharedSecret" name="sharedSecret" value=""/>
                 <div>
@@ -237,6 +255,10 @@
             document.getElementById('fido2-factor').classList.remove('hide');
         }
 
+        if (selectedFactor.factorType === 'MOCK') {
+            document.getElementById('mock-factor').classList.remove('hide');
+        }
+
         if (selectedFactor.enrollment.key) {
             document.getElementById('sharedSecret').value = selectedFactor.enrollment.key;
         }
@@ -268,6 +290,7 @@
         document.getElementById('mfa-enroll-step2').classList.add('hide');
         document.getElementById('call-factor').classList.remove('hide')
         document.getElementById('sms-factor').classList.remove('hide')
+        document.getElementById('mock-factor').classList.remove('hide')
         document.getElementById('previous').classList.add('hide');
         document.getElementById('email').removeAttribute('required');
     });
@@ -287,6 +310,7 @@
     // submit form function
     const submitBtn = document.getElementById('submitBtn');
     submitBtn.addEventListener('click', function($event) {
+
         //do not submit the form on 'enter' key press if the following condition satisfied
         //rather call the next button handler functionality
         if(document.getElementById('mfa-enroll-step2').classList.contains("hide")){
@@ -299,6 +323,7 @@
         const factors = /*[[${factors}]]*/ [];
         const factorId = document.querySelector('input[name="factorId"]:checked').value;
         const selectedFactor = factors.find(factor => factor.id === factorId);
+
         if (selectedFactor.factorType === 'SMS' || selectedFactor.factorType === 'CALL') {
             const phoneInput = intlTelInput;
             const phoneNumber = phoneInput.getNumber();
