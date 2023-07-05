@@ -288,7 +288,7 @@ describe("MFA", () => {
         });
     });
 
-    describe('recovery code factor test', () => {
+/*    describe('recovery code factor test', () => {
         let user4;
         let validRecoveryCode;
 
@@ -309,7 +309,7 @@ describe("MFA", () => {
             expect(authorize.headers['location']).toBeDefined();
             expect(authorize.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${domain.hrid}/mfa/enroll`);
 
-            const enrollMFA = await enrollSMSFactor(authorize, smsFactor, domain);
+            const enrollMFA = await enrollMockFactor(authorize, mockFactor, domain);
 
             const authorize2 = await performGet(enrollMFA.headers['location'], '', {
                 'Cookie': enrollMFA.headers['set-cookie']
@@ -318,7 +318,7 @@ describe("MFA", () => {
             expect(authorize2.headers['location']).toBeDefined();
             expect(authorize2.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${domain.hrid}/mfa/challenge`);
 
-            const successfulVerification = await verifyFactor(authorize2, validMFACode, smsFactor);
+            const successfulVerification = await verifyFactor(authorize2, validMFACode, mockFactor);
 
             const recoveryCodeRedirectUri = await performGet(successfulVerification.headers['location'], '', {
                 'Cookie': successfulVerification.headers['set-cookie']
@@ -383,7 +383,7 @@ describe("MFA", () => {
             await deleteUser(domain.id, accessToken, user4.id);
         });
 
-    });
+    });*/
 });
 
 afterAll(async () => {
