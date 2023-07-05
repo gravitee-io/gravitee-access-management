@@ -33,7 +33,7 @@ global.fetch = fetch;
 
 let domain;
 let accessToken;
-let smsFactor;
+let mockFactor;
 let smsResource;
 let smtpResource;
 let emailFactor;
@@ -59,7 +59,7 @@ beforeAll(async () => {
     domain = await createDomain(accessToken, "mfa-test-domain", "test mfa");
 
     smsResource = await createSMSResource(validMFACode, domain, accessToken);
-    smsFactor = await createSMSFactor(smsResource, domain, accessToken);
+    mockFactor = await createMockFactor(smsResource, domain, accessToken);
 
     smtpResource = await createSMTPResource(domain, accessToken);
     emailFactor = await createEmailFactor(smtpResource, domain, accessToken);
@@ -68,10 +68,10 @@ beforeAll(async () => {
 
     domain = await startDomain(domain.id, accessToken);
 
-    smsTestApp = await createMfaApp(domain, accessToken, [smsFactor.id]);
-    bruteForceTestApp = await createBruteForceTestApp(smsFactor, domain, accessToken, mfaChallengeAttemptsResetTime);
+    smsTestApp = await createMfaApp(domain, accessToken, [mockFactor.id]);
+    bruteForceTestApp = await createBruteForceTestApp(mockFactor, domain, accessToken, mfaChallengeAttemptsResetTime);
     emailTestApp = await createMfaApp(domain, accessToken, [emailFactor.id]);
-    recoveryCodeTestApp = await createMfaApp(domain, accessToken, [smsFactor.id, recoveryCodeFactor.id]);
+    recoveryCodeTestApp = await createMfaApp(domain, accessToken, [mockFactor.id, recoveryCodeFactor.id]);
 
     totpFactor = await createOtpFactor();
     totpApp = await createMfaApp(domain, accessToken, [totpFactor.id]);
@@ -106,7 +106,7 @@ describe("MFA", () => {
             expect(authorize.headers['location']).toBeDefined();
             expect(authorize.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${domain.hrid}/mfa/enroll`);
 
-            const enrollMFA = await enrollSMSFactor(authorize, smsFactor, domain);
+            const enrollMFA = await enrollMockFactor(authorize, mockFactor, domain);
             const authorize2 = await performGet(enrollMFA.headers['location'], '', {
                 'Cookie': enrollMFA.headers['set-cookie']
             }).expect(302);
@@ -153,7 +153,7 @@ describe("MFA", () => {
             expect(authorize.headers['location']).toBeDefined();
             expect(authorize.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${domain.hrid}/mfa/enroll`);
 
-            const enrollMFA = await enrollSMSFactor(authorize, smsFactor, domain);
+            const enrollMFA = await enrollMockFactor(authorize, mockFactor, domain);
 
             const authorize2 = await performGet(enrollMFA.headers['location'], '', {
                 'Cookie': enrollMFA.headers['set-cookie']
@@ -176,7 +176,7 @@ describe("MFA", () => {
             const authResult2 = await extractXsrfTokenAndActionResponse(authorize2);
             const invalidCode = 999;
             for (let i = 0; i < expectedErrorMessage.length; i++) {
-                const failedVerification = await verifySMSFactor(authResult2, invalidCode);
+                const failedVerification = await verifyMockFactor(authResult2, invalidCode);
                 expect(failedVerification.headers['location']).toBeDefined();
                 expect(failedVerification.headers['location']).toContain(expectedErrorMessage[i].expected);
             }
@@ -184,7 +184,7 @@ describe("MFA", () => {
             //now wait 1 second as per the configuration
             await waitFor(mfaChallengeAttemptsResetTime * 1000);
 
-            const successfulVerification = await verifySMSFactor(authResult2, validMFACode);
+            const successfulVerification = await verifyMockFactor(authResult2, validMFACode);
             await logoutUser(openIdConfiguration.end_session_endpoint, successfulVerification);
         });
 
@@ -419,11 +419,10 @@ const login = async (authResponse, user, clientId) => {
     ).expect(302);
 }
 
-const enrollSMSFactor = async (authorize, factor, domain) => {
+const enrollMockFactor = async (authorize, factor, domain) => {
     const authResult = await extractXsrfTokenAndActionResponse(authorize);
     const enrollMFA = await performPost(authResult.action, '', {
             "factorId": factor.id,
-            "phone": "+4401234567890",
             "user_mfa_enrollment": true,
             "X-XSRF-TOKEN": authResult.token
         },
@@ -535,12 +534,12 @@ const createSMSResource = async (validMFACode, domain, accessToken) => {
     return smsResource;
 }
 
-const createSMSFactor = async (smsResource, domain, accessToken) => {
+const createMockFactor = async (smsResource, domain, accessToken) => {
     const factor = await createFactor(domain.id, accessToken, {
-        "type": "sms-am-factor",
-        "factorType": "SMS",
-        "configuration": `{\"countryCodes\":\"gb\",\"graviteeResource\":\"${smsResource.id}\"}`,
-        "name": "Sms Factor"
+        "type": "mock-am-factor",
+        "factorType": "MOCK",
+        "configuration": `{\"graviteeResource\":\"${smsResource.id}\"}`,
+        "name": "Mock Factor"
     });
 
     expect(factor).toBeDefined();
@@ -705,9 +704,9 @@ const verifyFactorFailure = async (challenge, factor) => {
     return failedVerification;
 }
 
-const verifySMSFactor = async (authResult, code) => {
+const verifyMockFactor = async (authResult, code) => {
     return await performPost(authResult.action, '', {
-            "factorId": smsFactor.id,
+            "factorId": mockFactor.id,
             "code": code,
             "X-XSRF-TOKEN": authResult.token
         },

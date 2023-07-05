@@ -29,7 +29,8 @@ public enum FactorType {
     CALL("CALL"),
     HTTP("HTTP"),
     RECOVERY_CODE("RECOVERY CODE"),
-    FIDO2("FIDO2");
+    FIDO2("FIDO2"),
+    MOCK("MOCK");
 
     FactorType(String type) {
         this.type = type;

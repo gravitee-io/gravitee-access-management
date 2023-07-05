@@ -404,6 +404,9 @@ jobs:
             cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
             cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/
             
+            cp /tmp/workspace/gravitee-am-factor-mock-*.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
+            cp /tmp/workspace/gravitee-am-factor-mock-*.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/
+            
             # EXPORT env var to start AM using SMTP Server
             export GRAVITEE_EMAIL_ENABLED=true
             export GRAVITEE_EMAIL_HOST=localhost
@@ -480,6 +483,9 @@ jobs:
             
             cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
             cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/
+            
+            cp /tmp/workspace/gravitee-am-factor-mock-*.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
+            cp /tmp/workspace/gravitee-am-factor-mock-*.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/
             
             # copy r2dbc & jdbc drivers
             curl https://jdbc.postgresql.org/download/postgresql-42.3.3.jar -o postgresql-42.3.3.jar
@@ -575,6 +581,9 @@ jobs:
             cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
             cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/
             
+            cp /tmp/workspace/gravitee-am-factor-mock-*.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
+            cp /tmp/workspace/gravitee-am-factor-mock-*.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/
+            
             # Start AM Management
             gravitee-am-management-api-standalone-${AM_VERSION}/bin/gravitee &
             # Start AM Gateway
@@ -628,6 +637,9 @@ jobs:
             
             cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
             cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/
+            
+            cp /tmp/workspace/gravitee-am-factor-mock-*.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
+            cp /tmp/workspace/gravitee-am-factor-mock-*.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/
             
             # copy r2dbc & jdbc drivers
             curl https://jdbc.postgresql.org/download/postgresql-42.3.3.jar -o postgresql-42.3.3.jar
@@ -1014,6 +1026,7 @@ jobs:
             cp ./gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-management-api-standalone-distribution/gravitee-am-management-api-standalone-distribution-zip/target/*.zip ~/
             cp ./gravitee-am-ui/target/*.zip ~/
             cp ./gravitee-am-resource/gravitee-am-resource-mfa-mock/target/*.zip ~/
+            cp ./gravitee-am-factor/gravitee-am-factor-mock/target/*.zip ~/
       - persist_to_workspace:
           root: ~/
           paths:
@@ -1021,6 +1034,7 @@ jobs:
             - ./gravitee-am-management-api-standalone-*.zip
             - ./gravitee-am-webui-*.zip
             - ./gravitee-am-resource-mfa-mock-*.zip
+            - ./gravitee-am-factor-mock-*.zip
 
   release:
     parameters:

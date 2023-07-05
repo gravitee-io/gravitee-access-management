@@ -36,6 +36,7 @@
         <module>gravitee-am-factor-api</module>
         <module>gravitee-am-factor-otp</module>
         <module>gravitee-am-factor-email</module>
+        <module>gravitee-am-factor-mock</module>
     </modules>
 
     <dependencies>
