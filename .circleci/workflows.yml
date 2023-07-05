@@ -863,7 +863,7 @@ jobs:
             # create namespace if not exist (dry-run will generate YAML manifest and apply will create or update the ns using the manifest)
             kubectl create namespace am-${CIRCLE_BRANCH//./-}-dev --dry-run=client -o yaml | kubectl apply -f -
             # replace verison Pattern into generic maint configuration
-            sed -i 's#__BRANCH_NAME_SANITIZED__#'${CIRCLE_BRANCH//./-}'#g' ./cloud-am/devs-preprod/values-maint.yaml
+            sed -i 's#__BRANCH_NAME_SANITIZED__#'${CIRCLE_BRANCH//./-}'#g' ./cloud-am/devs-preprod/values-maint-3.21.x.yaml
             helm upgrade --repo https://helm.gravitee.io \
                                     --install am-${CIRCLE_BRANCH//./-} \
                                     -n am-${CIRCLE_BRANCH//./-}-dev \
