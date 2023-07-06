@@ -867,7 +867,7 @@ jobs:
             helm upgrade --repo https://helm.gravitee.io \
                                     --install am-${CIRCLE_BRANCH//./-} \
                                     -n am-${CIRCLE_BRANCH//./-}-dev \
-                                    -f ./cloud-am/devs-preprod/values-maint.yaml am \
+                                    -f ./cloud-am/devs-preprod/values-maint-3.21.x.yaml am \
                                     --set "api.image.repository=graviteeio.azurecr.io/am-management-api" \
                                     --set "api.image.tag=${TAG}" \
                                     --set "gateway.image.repository=graviteeio.azurecr.io/am-gateway" \
