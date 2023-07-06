@@ -17,109 +17,115 @@ import {Injectable} from '@angular/core';
 
 const featureMoreInformationData = {
   'am-mfa-sms': {
-    image: 'assets/gio-ee-unlock-dialog/am-mfa-sms.png',
+    image: 'assets/gio-ee-unlock-dialog/am-mfa-sms.svg',
     description:
       'The SMS factor is part of Gravitee Enterprise. Multi-factor authentication is an additional step during login to enforce access control.',
   },
   'am-mfa-call': {
-    image: 'assets/gio-ee-unlock-dialog/am-mfa-call.png',
+    image: 'assets/gio-ee-unlock-dialog/am-mfa-call.svg',
     description:
       'The Call factor is part of Gravitee Enterprise. Multi-factor authentication is an additional step during login to enforce access control.',
   },
   'am-mfa-fido2': {
-    image: 'assets/gio-ee-unlock-dialog/am-mfa-fido2.png',
+    image: 'assets/gio-ee-unlock-dialog/am-mfa-fido2.svg',
     description:
       'The FIDO2 factor is part of Gravitee Enterprise. Multi-factor authentication is an additional step during login to enforce access control.',
   },
   'am-mfa-resource-http-factor': {
-    image: 'assets/gio-ee-unlock-dialog/dcr-providers.png',
+    image: 'assets/gio-ee-unlock-dialog/dcr-providers.svg',
     description:
       'Dynamic Client Registration (DCR) Provider is part of Gravitee Enterprise. DCR enhances your API\'s security by seamlessly integrating OAuth 2.0 and OpenID Connect.',
   },
   'am-mfa-http': {
-    image: 'assets/gio-ee-unlock-dialog/am-mfa-http.png.png',
+    image: 'assets/gio-ee-unlock-dialog/am-mfa-http.svg',
     description:
       'The HTTP factor is part of Gravitee Enterprise. Multi-factor authentication is an additional step during login to enforce access control.',
   },
   'am-mfa-recovery-code': {
-    image: 'assets/gio-ee-unlock-dialog/am-mfa-recovery-code.png',
+    image: 'assets/gio-ee-unlock-dialog/am-mfa-recovery-code.svg',
     description:
       'The Recovery code factor is part of Gravitee Enterprise. Multi-factor authentication is an additional step during login to enforce access control.',
   },
   // todo: Missing images and description
   'am-resource-http-factor': {
-    image: 'assets/gio-ee-unlock-dialog/am-mfa-recovery-code.png',
+    image: 'assets/gio-ee-unlock-dialog/am-mfa-recovery-code.svg',
     description:
       'The HTTP factor is part of Gravitee Enterprise. Multi-factor authentication is an additional step during login to enforce access control.',
   },
   'am-mfa-otp-sender': {
-    image: 'assets/gio-ee-unlock-dialog/am-mfa-recovery-code.png',
+    image: 'assets/gio-ee-unlock-dialog/am-mfa-recovery-code.svg',
     description:
       'The OTO Sender is part of Gravitee Enterprise. Multi-factor authentication is an additional step during login to enforce access control.',
   },
   'am-resource-twilio': {
-    image: 'assets/gio-ee-unlock-dialog/am-mfa-recovery-code.png',
+    image: 'assets/gio-ee-unlock-dialog/am-mfa-recovery-code.svg',
     description:
       'The Twilio resource is part of Gravitee Enterprise. Multi-factor authentication is an additional step during login to enforce access control.',
   },
   // IDPs
   'am-idp-salesforce': {
-    image: 'assets/gio-ee-unlock-dialog/am-idp-salesforce.png',
+    image: 'assets/gio-ee-unlock-dialog/am-idp-salesforce.svg',
     description:
       'The Salesforce identity provider is part of Gravitee Enterprise. Identity providers allow you to configure authentication methods familiar to your users and comply with your security requirement.',
   },
   'am-idp-saml': {
-    image: 'assets/gio-ee-unlock-dialog/am-idp-saml.png',
+    image: 'assets/gio-ee-unlock-dialog/am-idp-saml.svg',
     description:
       'The SAML 2.0 identity provider is part of Gravitee Enterprise. Identity providers allow you to configure authentication methods familiar to your users and comply with your security requirement.',
   },
   'am-idp-ldap': {
-    image: 'assets/gio-ee-unlock-dialog/am-idp-ldap.png',
+    image: 'assets/gio-ee-unlock-dialog/am-idp-ldap.svg',
     description:
       'The LDAP identity provider is part of Gravitee Enterprise. Identity providers allow you to configure authentication methods familiar to your users and comply with your security requirement.',
   },
   'am-idp-kerberos': {
-    image: 'assets/gio-ee-unlock-dialog/am-idp-kerberos.png',
+    image: 'assets/gio-ee-unlock-dialog/am-idp-kerberos.svg',
     description:
       'The Kerberos identity provider is part of Gravitee Enterprise. Identity providers allow you to configure authentication methods familiar to your users and comply with your security requirement.',
   },
   'am-idp-azure-ad': {
-    image: 'assets/gio-ee-unlock-dialog/am-idp-azure-ad.png',
+    image: 'assets/gio-ee-unlock-dialog/am-idp-azure-ad.svg',
     description:
       'The Azure AD identity provider is part of Gravitee Enterprise. Identity providers allow you to configure authentication methods familiar to your users and comply with your security requirement.',
   },
   'am-idp-france-connect': {
-    image: 'assets/gio-ee-unlock-dialog/am-idp-france-connect.png',
+    image: 'assets/gio-ee-unlock-dialog/am-idp-france-connect.svg',
     description:
       'The France Connect identity provider is part of Gravitee Enterprise. Identity providers allow you to configure authentication methods familiar to your users and comply with your security requirement.',
   },
   'am-idp-cas': {
-    image: 'assets/gio-ee-unlock-dialog/am-idp-cas.png',
+    image: 'assets/gio-ee-unlock-dialog/am-idp-cas.svg',
     description:
       'The CAS provider is part of Gravitee Enterprise. Identity providers allow you to configure authentication methods familiar to your users and comply with your security requirement.',
   },
   // todo: Missing information
   'am-idp-gateway-handler-saml': {
-    image: 'assets/gio-ee-unlock-dialog/am-mfa-recovery-code.png',
+    image: 'assets/gio-ee-unlock-dialog/am-mfa-recovery-code.svg',
     description:
       'The Twilio resource is part of Gravitee Enterprise. Multi-factor authentication is an additional step during login to enforce access control.',
   },
   'am-idp-http-flow': {
-    image: 'assets/gio-ee-unlock-dialog/am-mfa-recovery-code.png',
+    image: 'assets/gio-ee-unlock-dialog/am-mfa-recovery-code.svg',
     description:
       'The HTTP Flow identity provider is part of Gravitee Enterprise. Identity providers allow you to configure authentication methods familiar to your users and comply with your security requirement.',
   },
   // Resources
   'am-smtp': { // todo: This resource is missing
-    image: 'assets/gio-ee-unlock-dialog/am-smtp.png',
+    image: 'assets/gio-ee-unlock-dialog/am-smtp.svg',
     description:
       'The SMTP resource is part of Gravitee Enterprise. Resources allow you to easily reuse some settings.',
   },
   // MFA
   'gravitee-risk-assessment': {
-    image: 'assets/gio-ee-unlock-dialog/gravitee-risk-assessment.png',
+    image: 'assets/gio-ee-unlock-dialog/gravitee-risk-assessment.svg',
     description:
       'Risk-based Multi-factor authentication is part of Gravitee Enterprise. MFA allows you to prompt end-users to process MFA verification after they have been authenticated.',
+  },
+  // SAML2 support
+  'am-idp-saml2': {
+    image: 'assets/gio-ee-unlock-dialog/am-idp-saml2.svg',
+    description:
+      'SAML 2.0 IdP support is part of Gravitee Enterprise. SAML 2.0 allows you to exchange security information between online business partners.',
   },
 };
 

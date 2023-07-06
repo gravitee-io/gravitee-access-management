@@ -2544,7 +2544,8 @@ export const routes: Routes = [
                           }
                         },
                         resolve: {
-                          certificates: CertificatesResolver
+                          certificates: CertificatesResolver,
+                          identities: IdentitiesResolver
                         }
                       }
                     ]

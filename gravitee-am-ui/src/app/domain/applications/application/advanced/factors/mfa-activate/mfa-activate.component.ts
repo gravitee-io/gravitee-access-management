@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, EventEmitter, Input, OnInit, Output} from "@angular/core";
+import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {OrganizationService} from '../../../../../../services/organization.service';
 
 @Component({
@@ -38,7 +38,6 @@ export class MfaActivateComponent implements OnInit {
       'label': 'Optional',
       'message': 'Choose the period of time users can skip MFA. Default time is 10 hours.',
       'ee': false,
-      'deployed': true
     },
     REQUIRED: {
       'label': 'Required',
@@ -106,7 +105,7 @@ export class MfaActivateComponent implements OnInit {
   updateOptional(enrollment) {
     this.settingsChangeEmitter.emit({
       'enrollment': enrollment,
-      'adaptiveMfaRule': "",
+      'adaptiveMfaRule': '',
       'riskAssessment': this.getRiskAssessment(this.riskAssessment, false)
     })
   }
@@ -114,7 +113,7 @@ export class MfaActivateComponent implements OnInit {
   updateRequired(enrollment) {
     this.settingsChangeEmitter.emit({
       'enrollment': {'forceEnrollment': true, 'skipTimeSeconds': enrollment.skipTimeSeconds},
-      'adaptiveMfaRule': "",
+      'adaptiveMfaRule': '',
       'riskAssessment': this.getRiskAssessment(this.riskAssessment, false)
     })
   }
@@ -138,24 +137,24 @@ export class MfaActivateComponent implements OnInit {
     this.settingsChangeEmitter.emit(value)
   }
 
-  private static readonly RISK_ASSESSMENT_PREFIX = "#context.attributes['risk_assessment'].";
-  private static readonly RISK_ASSESSMENT_SUFFIX = ".assessment.name() == 'SAFE'";
+  private static readonly RISK_ASSESSMENT_PREFIX = '#context.attributes[\'risk_assessment\'].';
+  private static readonly RISK_ASSESSMENT_SUFFIX = '.assessment.name() == \'SAFE\'';
 
   private static computeRiskAssessmentRule(riskAssessment) {
-    let rule = "{";
+    let rule = '{';
     const devices = riskAssessment.deviceAssessment;
     if (devices && devices.enabled) {
-      rule += this.RISK_ASSESSMENT_PREFIX + "devices" + this.RISK_ASSESSMENT_SUFFIX
+      rule += this.RISK_ASSESSMENT_PREFIX + 'devices' + this.RISK_ASSESSMENT_SUFFIX
     }
     const ipReputation = riskAssessment.ipReputationAssessment;
     if (ipReputation && ipReputation.enabled) {
-      rule += (rule.length == 1 ? ' ' : " && ") + this.RISK_ASSESSMENT_PREFIX + "ipReputation" + this.RISK_ASSESSMENT_SUFFIX
+      rule += (rule.length == 1 ? ' ' : ' && ') + this.RISK_ASSESSMENT_PREFIX + 'ipReputation' + this.RISK_ASSESSMENT_SUFFIX
     }
     const geoVelocity = riskAssessment.geoVelocityAssessment;
     if (geoVelocity && geoVelocity.enabled) {
-      rule += (rule.length == 1 ? ' ' : " && ") + this.RISK_ASSESSMENT_PREFIX + "geoVelocity" + this.RISK_ASSESSMENT_SUFFIX
+      rule += (rule.length == 1 ? ' ' : ' && ') + this.RISK_ASSESSMENT_PREFIX + 'geoVelocity' + this.RISK_ASSESSMENT_SUFFIX
     }
-    rule += "}";
+    rule += '}';
     return rule
   }
 
@@ -171,27 +170,24 @@ export class MfaActivateComponent implements OnInit {
   private getAssessment(riskAssessment, assessmentName: string) {
     return riskAssessment && riskAssessment[assessmentName] ?
       riskAssessment[assessmentName] :
-      {"enabled": false, thresholds: {}};
+      {'enabled': false, thresholds: {}};
   }
 
   modeLicenseMetadata(mode): any {
+    const response = {'deployed': true, 'feature': ''}
     if (mode.label === 'Risk-based') {
-      const factor = this.factors['gravitee-risk-assessment'] != null ? this.factors['gravitee-risk-assessment'] : this.factors['risk-assessment'];
-      if (factor != null) {
-        return {
-          'deployed': factor.deployed,
-          'feature': factor.feature
-        }
-      } else {
-        return {
-          'deployed': false,
-          'feature': 'gravitee-risk-assessment'
+      response.deployed = false;
+      response.feature = 'gravitee-risk-assessment';
+
+      if (this.factors != null) {
+        const factor = this.factors['gravitee-risk-assessment'] ?? this.factors['risk-assessment'];
+        if (factor != null) {
+          response.deployed = factor.deployed;
+          response.feature = factor.feature;
         }
       }
     }
 
-    return {
-      'deployed': true
-    }
+    return response;
   }
 }
