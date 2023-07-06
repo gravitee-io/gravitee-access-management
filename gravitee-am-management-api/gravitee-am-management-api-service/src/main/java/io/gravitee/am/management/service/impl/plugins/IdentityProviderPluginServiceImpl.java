@@ -148,6 +148,7 @@ public class IdentityProviderPluginServiceImpl implements IdentityProviderPlugin
                 }
             }
         }
+        idpPlugin.setFeature(plugin.manifest().feature());
         return idpPlugin;
     }
 }

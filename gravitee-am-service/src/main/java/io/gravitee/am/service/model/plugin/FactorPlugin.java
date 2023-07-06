@@ -29,4 +29,5 @@ public class FactorPlugin extends AbstractPlugin {
     public void setCategory(String category) {
         this.category = category;
     }
+
 }

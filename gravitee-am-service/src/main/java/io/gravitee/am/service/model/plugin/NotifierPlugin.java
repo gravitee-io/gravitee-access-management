@@ -24,6 +24,7 @@ public class NotifierPlugin extends AbstractPlugin {
     private String displayName;
 
     private String icon;
+    private String feature;
 
 
     public String getDisplayName() {
@@ -40,5 +41,13 @@ public class NotifierPlugin extends AbstractPlugin {
 
     public void setIcon(String icon) {
         this.icon = icon;
+    }
+
+    public String getFeature() {
+        return feature;
+    }
+
+    public void setFeature(String feature) {
+        this.feature = feature;
     }
 }

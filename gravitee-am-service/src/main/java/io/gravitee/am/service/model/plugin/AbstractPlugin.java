@@ -30,6 +30,7 @@ public abstract class AbstractPlugin {
     private String version;
 
     private boolean deployed;
+    private String feature;
 
     public String getId() {
         return id;
@@ -69,5 +70,13 @@ public abstract class AbstractPlugin {
 
     public void setDeployed(boolean deployed) {
         this.deployed = deployed;
+    }
+
+    public String getFeature() {
+        return feature;
+    }
+
+    public void setFeature(String feature) {
+        this.feature = feature;
     }
 }

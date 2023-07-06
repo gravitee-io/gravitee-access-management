@@ -29,6 +29,7 @@ public class ResourcePlugin extends AbstractPlugin {
      * The plugin icon
      */
     private String icon;
+    private String feature;
 
     public String[] getCategories() {
         return categories;
@@ -44,5 +45,13 @@ public class ResourcePlugin extends AbstractPlugin {
 
     public void setIcon(String icon) {
         this.icon = icon;
+    }
+
+    public String getFeature() {
+        return feature;
+    }
+
+    public void setFeature(String feature) {
+        this.feature = feature;
     }
 }

@@ -97,6 +97,7 @@ public class BotDetectionPluginServiceImpl implements BotDetectionPluginService 
         botDetectionPlugin.setVersion(plugin.manifest().version());
         botDetectionPlugin.setCategory(plugin.manifest().category());
         botDetectionPlugin.setDeployed(plugin.deployed());
+        botDetectionPlugin.setFeature(plugin.manifest().feature());
         return botDetectionPlugin;
     }
 }

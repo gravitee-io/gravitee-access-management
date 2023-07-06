@@ -95,6 +95,7 @@ public class DeviceIdentifierPluginServiceImpl implements DeviceIdentifierPlugin
         deviceIdentifierPlugin.setVersion(plugin.manifest().version());
         deviceIdentifierPlugin.setCategory(plugin.manifest().category());
         deviceIdentifierPlugin.setDeployed(plugin.deployed());
+        deviceIdentifierPlugin.setFeature(plugin.manifest().feature());
         return deviceIdentifierPlugin;
     }
 }

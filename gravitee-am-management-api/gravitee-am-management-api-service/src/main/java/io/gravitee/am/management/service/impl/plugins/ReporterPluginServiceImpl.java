@@ -93,6 +93,7 @@ public class ReporterPluginServiceImpl implements ReporterPluginService {
         reporterPlugin.setDescription(plugin.manifest().description());
         reporterPlugin.setVersion(plugin.manifest().version());
         reporterPlugin.setDeployed(plugin.deployed());
+        reporterPlugin.setFeature(plugin.manifest().feature());
         return reporterPlugin;
     }
 }

@@ -134,6 +134,7 @@ public class NotifierPluginService {
             }
         }
 
+        notifierPlugin.setFeature(plugin.manifest().feature());
         return Single.just(notifierPlugin);
     }
 }
