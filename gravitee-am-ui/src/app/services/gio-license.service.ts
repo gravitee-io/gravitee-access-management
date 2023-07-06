@@ -115,6 +115,12 @@ const featureMoreInformationData = {
     description:
       'The SMTP resource is part of Gravitee Enterprise. Resources allow you to easily reuse some settings.',
   },
+  // MFA
+  'gravitee-risk-assessment': {
+    image: 'assets/gio-ee-unlock-dialog/gravitee-risk-assessment.png',
+    description:
+      'Risk-based Multi-factor authentication is part of Gravitee Enterprise. MFA allows you to prompt end-users to process MFA verification after they have been authenticated.',
+  },
 };
 
 @Injectable({

@@ -33,7 +33,10 @@
     <form>
       <mat-form-field appearance="outline" floatLabel="always" fxFlex="40" style="margin-left: 5px;">
         <mat-select placeholder="Mode" name="mode" [(ngModel)]="this.currentMode" (selectionChange)="applyModeChange($event)">
-          <mat-option *ngFor="let mode of modes" [value]="mode">{{ mode.label }}</mat-option>
+          <mat-option *ngFor="let mode of modes" [value]="mode" [gioLicense]="modeLicenseMetadata(mode)">
+            {{ mode.label }}
+            <mat-icon *ngIf="mode.ee" svgIcon="gio:lock"></mat-icon>
+          </mat-option>
         </mat-select>
       </mat-form-field>
     </form>
