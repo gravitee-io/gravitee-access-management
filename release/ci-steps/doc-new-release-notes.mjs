@@ -1,4 +1,4 @@
-import { computeVersion, extractVersion } from '../helpers/version-helper.mjs';
+import { extractVersion } from '../helpers/version-helper.mjs';
 import { getJiraIssuesOfVersion, getJiraVersion } from '../helpers/jira-helper.mjs';
 import { getChangelogFor } from '../helpers/changelog-helper.mjs';
 import { isDryRun } from '../helpers/option-helper.mjs';
@@ -24,8 +24,7 @@ echo(chalk.blue(`# Write changelog to ${docAmChangelogFile}`));
 const version = await getJiraVersion(releasingVersion);
 const issues = await getJiraIssuesOfVersion(version.name);
 
-const features = issues
-.filter((issue) => issue.fields.issuetype.name === 'Story');
+const features = issues.filter((issue) => issue.fields.issuetype.name === 'Story');
 
 const gatewayIssues = issues
   .filter((issue) => !features.includes(issue))
@@ -49,27 +48,17 @@ const otherIssues = issues
   .filter((issue) => !consoleIssues.includes(issue));
 
 let changelogPatchTemplate = `
-==  - ${releasingVersion} (${new Date().toISOString().slice(0, 10)})
+== AM - ${releasingVersion} (${new Date().toISOString().slice(0, 10)})
 
-== What's new !
+${getChangelogFor("== What's new !", features)}
 
-${getChangelogFor(features)}
+${getChangelogFor('=== Gateway', gatewayIssues)}
 
-=== Gateway
+${getChangelogFor('=== Management API', managementAPIIssues)}
 
-${getChangelogFor(gatewayIssues)}
+${getChangelogFor('=== Console', consoleIssues)}
 
-=== Management API
-
-${getChangelogFor(managementAPIIssues)}
-
-=== Console
-
-${getChangelogFor(consoleIssues)}
-
-=== Other
-
-${getChangelogFor(otherIssues)}
+${getChangelogFor('=== Other', otherIssues)}
 `;
 
 echo(changelogPatchTemplate);
