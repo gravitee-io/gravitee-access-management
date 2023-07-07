@@ -1,14 +1,15 @@
 /**
  * Get the Ascii doc formatted changelog for input issues
  *
+ * @param title {string}
  * @param issues {Array<{id: string, fields: Array<{customfield_10115: string, summary: string}>}>}
  */
-export function getChangelogFor(issues) {
-  const authorizedIssueTypes = ['Public Bug', 'Story']
-  return issues
+export function getChangelogFor(title, issues) {
+  const authorizedIssueTypes = ['Public Bug', 'Story'];
+
+  const filteredIssues = issues
     .filter((issue) => {
-      return  !!issue.fields.issuetype.name &&
-          authorizedIssueTypes.includes(issue.fields.issuetype.name);
+      return !!issue.fields.issuetype.name && authorizedIssueTypes.includes(issue.fields.issuetype.name);
     })
     .filter((issue) => {
       return issue.fields.status.name === 'Done';
@@ -27,12 +28,20 @@ export function getChangelogFor(issues) {
     })
     .map((issue) => {
       const githubIssue = issue.fields.customfield_10115;
-      let publicIssueContent = "";
-      if (githubIssue){
+      let publicIssueContent = '';
+      if (githubIssue) {
         const githubLink = `https://github.com/gravitee-io/issues/issues/${githubIssue}`;
-        publicIssueContent = ` ${githubLink}[#${githubIssue}]`
+        publicIssueContent = ` ${githubLink}[#${githubIssue}]`;
       }
       return `* ${issue.fields.summary}${publicIssueContent}`;
     })
     .join('\n');
+
+  if (filteredIssues.length > 0) {
+    return '';
+  }
+
+  return `${title}
+
+${filteredIssues}`;
 }
