@@ -22,6 +22,7 @@ import {Subject} from 'rxjs';
 
 import {GioEeUnlockDialogComponent, GioEeUnlockDialogData} from '../components/gio-ee-unlock-dialog/gio-ee-unlock-dialog.component';
 import {GioLicenseService} from '../services/gio-license.service';
+import {UTM} from "../utils/license/gio-license-utm";
 
 @Directive({
   selector: '[gioLicense]',
@@ -31,6 +32,7 @@ export class GioLicenseDirective implements OnInit, OnDestroy {
   public gioLicense: any = {};
 
   private featureMoreInformation: any;
+  private trialURL: string;
   private unsubscribe$: Subject<boolean> = new Subject<boolean>();
   private onClick = this.click.bind(this);
 
@@ -40,6 +42,7 @@ export class GioLicenseDirective implements OnInit, OnDestroy {
     if (!this.gioLicense.deployed) {
       this.elRef.nativeElement.removeEventListener('click', this.onClick, true);
       this.featureMoreInformation = this.licenseService.getFeatureMoreInformation(this.gioLicense.feature);
+      this.trialURL = UTM.ossEnterpriseV4(this.featureMoreInformation.utm).buildURL();
       this.elRef.nativeElement.addEventListener('click', this.onClick, true);
     }
   }
@@ -57,6 +60,7 @@ export class GioLicenseDirective implements OnInit, OnDestroy {
       .open<GioEeUnlockDialogComponent, GioEeUnlockDialogData, boolean>(GioEeUnlockDialogComponent, {
         data: {
           featureMoreInformation: this.featureMoreInformation,
+          trialURL: this.trialURL,
         },
         role: 'alertdialog',
         id: 'gioLicenseDialog',

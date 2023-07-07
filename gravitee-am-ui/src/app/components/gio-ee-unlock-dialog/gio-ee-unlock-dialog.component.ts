@@ -18,6 +18,7 @@ import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 
 export interface GioEeUnlockDialogData {
   featureMoreInformation: any;
+  trialURL: string;
 }
 
 @Component({
@@ -27,9 +28,11 @@ export interface GioEeUnlockDialogData {
 })
 export class GioEeUnlockDialogComponent {
   public featureMoreInformation: any;
+  public trialURL: string;
 
   constructor(private readonly dialogRef: MatDialogRef<GioEeUnlockDialogData>, @Inject(MAT_DIALOG_DATA) dialogData: GioEeUnlockDialogData) {
     this.featureMoreInformation = dialogData?.featureMoreInformation;
+    this.trialURL = dialogData?.trialURL;
   }
 
   onClose() {
