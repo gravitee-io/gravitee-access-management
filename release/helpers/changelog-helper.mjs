@@ -37,7 +37,7 @@ export function getChangelogFor(title, issues) {
     })
     .join('\n');
 
-  if (filteredIssues.length > 0) {
+  if (filteredIssues.length === 0) {
     return '';
   }
 
