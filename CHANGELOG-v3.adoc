@@ -1,5 +1,12 @@
 # Change Log
 
+== AM - 3.21.3 (2023-07-07)
+
+=== Other
+
+* Gravitee AM : session expired https://github.com/gravitee-io/issues/issues/9063[#9063]
+
+
 == AM - 3.18.21 (2023-06-28)
 
 === Other
