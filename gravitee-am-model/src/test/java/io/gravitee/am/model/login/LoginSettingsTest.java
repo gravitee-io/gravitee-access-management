@@ -16,9 +16,12 @@
 
 package io.gravitee.am.model.login;
 
-import org.junit.Test;
 
-import static junit.framework.TestCase.assertEquals;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)

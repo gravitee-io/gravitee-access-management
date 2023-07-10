@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *         http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,35 +15,49 @@
  */
 package io.gravitee.am.model.jose;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import java.util.stream.Stream;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.*;
+
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
-@RunWith(MockitoJUnitRunner.class)
 public class KeyTypeTest {
 
-    @Test
-    public void parse() {
-        Assert.assertTrue("Unable to parse RSA key", KeyType.parse("RSA").getName()!=null);
-        Assert.assertTrue("Unable to parse EC key", KeyType.parse("EC").getName()!=null);
-        Assert.assertTrue("Unable to parse OCT key", KeyType.parse("oct").getName()!=null);
-        Assert.assertTrue("Unable to parse OKP key", KeyType.parse("OKP").getName()!=null);
+    @ParameterizedTest
+    @MethodSource("params_that_must_parse")
+    public void parse(String keyType, KeyType expected) {
+        assertEquals(expected, KeyType.parse(keyType));
     }
 
-    @Test(expected = NullPointerException.class)
-    public void parse_null() {
-        KeyType.parse(null);
+    private static Stream<Arguments> params_that_must_parse() {
+        return Stream.of(
+                Arguments.of("RSA", KeyType.RSA),
+                Arguments.of("EC", KeyType.EC),
+                Arguments.of("OCT", KeyType.OCT),
+                Arguments.of("OKP", KeyType.OKP),
+                Arguments.of("rsa", KeyType.RSA),
+                Arguments.of("ec", KeyType.EC),
+                Arguments.of("oct", KeyType.OCT),
+                Arguments.of("okp", KeyType.OKP)
+        );
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void parse_exception() {
-        KeyType.parse("unknown");
+    @ParameterizedTest
+    @MethodSource("params_that_must_not_parse")
+    public void must_not_parse(String keyType, Class<? extends Throwable> expected) {
+        assertThrows(expected, () -> KeyType.parse(keyType));
+    }
+
+    private static Stream<Arguments> params_that_must_not_parse() {
+        return Stream.of(
+                Arguments.of(null, NullPointerException.class),
+                Arguments.of("unknown", IllegalArgumentException.class)
+        );
     }
 }

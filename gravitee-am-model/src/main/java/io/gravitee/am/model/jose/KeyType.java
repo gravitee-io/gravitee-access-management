@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *         http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,6 +14,11 @@
  * limitations under the License.
  */
 package io.gravitee.am.model.jose;
+
+import java.util.Arrays;
+import java.util.Optional;
+
+import static java.util.Arrays.stream;
 
 /**
  *
@@ -30,41 +35,36 @@ package io.gravitee.am.model.jose;
  */
 public enum KeyType {
 
-    EC("EC","Elliptic Curve"),
-    RSA("RSA","RSA"),
-    OCT("oct","Octet sequence"),
-    OKP("OKP","Octet key pair");
+    EC("EC", "Elliptic Curve"),
+    RSA("RSA", "RSA"),
+    OCT("OCT", "Octet sequence"),
+    OKP("OKP", "Octet key pair");
 
-    private String keyType;
-    private String name;
+    private final String keyType;
+    private final String name;
 
     KeyType(String keyType, String name) {
         this.keyType = keyType;
         this.name = name;
     }
 
-    public String getKeyType() { return keyType; }
-    public String getName() { return name;}
+    public String getKeyType() {
+        return keyType;
+    }
+
+    public String getName() {
+        return name;
+    }
 
     public static KeyType parse(String keyType) {
         if (keyType == null) {
             throw new NullPointerException("KeyType name is null");
         }
 
-        if(keyType.equals(RSA.getKeyType())) {
-            return RSA;
-        }
-        else if(keyType.equals(EC.getKeyType())) {
-            return EC;
-        }
-        else if(keyType.equals(OCT.getKeyType())) {
-            return OCT;
-        }
-        else if(keyType.equals(OKP.getKeyType())) {
-            return OKP;
-        }
-
-        throw new IllegalArgumentException("No enum constant with key type" + keyType);
+        return stream(KeyType.values())
+                .filter(value -> value.keyType.equalsIgnoreCase(keyType))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("No enum constant with key type" + keyType));
     }
 
     @Override
