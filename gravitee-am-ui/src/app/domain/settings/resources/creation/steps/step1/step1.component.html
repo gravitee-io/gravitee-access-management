@@ -23,7 +23,8 @@
     <mat-card *ngFor="let res of resources" fxFlex="30" [class.selected]="resource.type === res.id"
               (click)="selectResourceType(res.id)"
               (keyup.enter)="selectResourceType(res.id)"
-              tabIndex="0">
+              tabIndex="0"
+              [gioLicense]="res">
       <mat-card-content>
         <div class="identity-provider__icon" [innerHTML]="getIcon(res) | safe:'html'"></div>
         {{displayName(res)}}

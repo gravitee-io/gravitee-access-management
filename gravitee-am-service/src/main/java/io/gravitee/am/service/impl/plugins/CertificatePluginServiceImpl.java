@@ -106,6 +106,7 @@ public class CertificatePluginServiceImpl implements CertificatePluginService {
         certificatePlugin.setDescription(plugin.manifest().description());
         certificatePlugin.setVersion(plugin.manifest().version());
         certificatePlugin.setDeployed(plugin.deployed());
+        certificatePlugin.setFeature(plugin.manifest().feature());
         return certificatePlugin;
     }
 }

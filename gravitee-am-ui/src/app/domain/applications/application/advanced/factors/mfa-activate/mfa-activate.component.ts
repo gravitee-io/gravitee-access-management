@@ -13,7 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, EventEmitter, Input, OnInit, Output} from "@angular/core";
+import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
+import {OrganizationService} from '../../../../../../services/organization.service';
 
 @Component({
   selector: 'mfa-activate',
@@ -22,31 +23,38 @@ import {Component, EventEmitter, Input, OnInit, Output} from "@angular/core";
 })
 export class MfaActivateComponent implements OnInit {
 
+  constructor(private organizationService: OrganizationService) {
+  }
+
   @Input() enrollment: any;
   @Input() adaptiveMfaRule: string;
   @Input() riskAssessment: any;
-  @Output("settings-change") settingsChangeEmitter: EventEmitter<any> = new EventEmitter<any>();
-
+  @Output('settings-change') settingsChangeEmitter: EventEmitter<any> = new EventEmitter<any>();
   currentMode: any;
+  factors: any[];
 
   private static modeOptions = {
     OPTIONAL: {
-      "label": "Optional",
-      "message": "Choose the period of time users can skip MFA. Default time is 10 hours."
+      'label': 'Optional',
+      'message': 'Choose the period of time users can skip MFA. Default time is 10 hours.',
+      'ee': false,
     },
     REQUIRED: {
-      "label": "Required",
-      "message": "MFA will always be displayed."
+      'label': 'Required',
+      'message': 'MFA will always be displayed.',
+      'ee': false,
     },
     CONDITIONAL: {
-      "label": "Conditional",
-      "message": "Set conditions that will display MFA based on the user’s information",
-      "warning": "You need to install the <b> GeoIP service </b> plugin to use the geoip based variables"
+      'label': 'Conditional',
+      'message': 'Set conditions that will display MFA based on the user’s information',
+      'warning': 'You need to install the <b> GeoIP service </b> plugin to use the geoip based variables',
+      'ee': false,
     },
     INTELLIGENT: {
-      "label": "Risk-based",
-      "message": "Configure the thresholds that will display MFA based on risks.",
-      "warning": "You need to install the <b> GeoIP service </b> and <b> Risk Assessment </b> plugins to use Risk-based MFA"
+      'label': 'Risk-based',
+      'message': 'Configure the thresholds that will display MFA based on risks.',
+      'warning': 'You need to install the <b> GeoIP service </b> and <b> Risk Assessment </b> plugins to use Risk-based MFA',
+      'ee': true,
     },
   };
 
@@ -54,9 +62,13 @@ export class MfaActivateComponent implements OnInit {
     .map(key => MfaActivateComponent.modeOptions[key])
 
   ngOnInit(): void {
+    this.organizationService.factors().subscribe(data => {
+      this.factors = data
+    });
+
     if (this.riskAssessment && this.riskAssessment.enabled) {
       this.currentMode = MfaActivateComponent.modeOptions.INTELLIGENT;
-    } else if (this.adaptiveMfaRule && this.adaptiveMfaRule !== "") {
+    } else if (this.adaptiveMfaRule && this.adaptiveMfaRule !== '') {
       this.currentMode = MfaActivateComponent.modeOptions.CONDITIONAL;
     } else if (this.enrollment && this.enrollment.forceEnrollment) {
       this.currentMode = MfaActivateComponent.modeOptions.REQUIRED;
@@ -76,7 +88,7 @@ export class MfaActivateComponent implements OnInit {
   applyModeChange($event) {
     switch ($event.value) {
       case MfaActivateComponent.modeOptions.OPTIONAL:
-        this.updateOptional({"forceEnrollment": false, "skipTimeSeconds": this.enrollment.skipTimeSeconds});
+        this.updateOptional({'forceEnrollment': false, 'skipTimeSeconds': this.enrollment.skipTimeSeconds});
         break;
       case MfaActivateComponent.modeOptions.REQUIRED:
         this.updateRequired(this.enrollment);
@@ -93,7 +105,7 @@ export class MfaActivateComponent implements OnInit {
   updateOptional(enrollment) {
     this.settingsChangeEmitter.emit({
       'enrollment': enrollment,
-      'adaptiveMfaRule': "",
+      'adaptiveMfaRule': '',
       'riskAssessment': this.getRiskAssessment(this.riskAssessment, false)
     })
   }
@@ -101,14 +113,14 @@ export class MfaActivateComponent implements OnInit {
   updateRequired(enrollment) {
     this.settingsChangeEmitter.emit({
       'enrollment': {'forceEnrollment': true, 'skipTimeSeconds': enrollment.skipTimeSeconds},
-      'adaptiveMfaRule': "",
+      'adaptiveMfaRule': '',
       'riskAssessment': this.getRiskAssessment(this.riskAssessment, false)
     })
   }
 
   updateAdaptiveMfaRule(adaptiveMfaRule) {
     this.settingsChangeEmitter.emit({
-        'enrollment': {"forceEnrollment": true, "skipTimeSeconds": this.enrollment.skipTimeSeconds},
+        'enrollment': {'forceEnrollment': true, 'skipTimeSeconds': this.enrollment.skipTimeSeconds},
         'adaptiveMfaRule': adaptiveMfaRule,
         'riskAssessment': this.getRiskAssessment(this.riskAssessment, false)
       }
@@ -117,32 +129,32 @@ export class MfaActivateComponent implements OnInit {
 
   updateRiskAssessment(assessments) {
     const safeRiskAssessment = this.getRiskAssessment(assessments, true);
-    let value = {
-      'enrollment': {"forceEnrollment": true, "skipTimeSeconds": this.enrollment.skipTimeSeconds},
+    const value = {
+      'enrollment': {'forceEnrollment': true, 'skipTimeSeconds': this.enrollment.skipTimeSeconds},
       'adaptiveMfaRule': MfaActivateComponent.computeRiskAssessmentRule(safeRiskAssessment),
       'riskAssessment': safeRiskAssessment
     };
     this.settingsChangeEmitter.emit(value)
   }
 
-  private static readonly RISK_ASSESSMENT_PREFIX = "#context.attributes['risk_assessment'].";
-  private static readonly RISK_ASSESSMENT_SUFFIX = ".assessment.name() == 'SAFE'";
+  private static readonly RISK_ASSESSMENT_PREFIX = '#context.attributes[\'risk_assessment\'].';
+  private static readonly RISK_ASSESSMENT_SUFFIX = '.assessment.name() == \'SAFE\'';
 
   private static computeRiskAssessmentRule(riskAssessment) {
-    let rule = "{";
+    let rule = '{';
     const devices = riskAssessment.deviceAssessment;
     if (devices && devices.enabled) {
-      rule += this.RISK_ASSESSMENT_PREFIX + "devices" + this.RISK_ASSESSMENT_SUFFIX
+      rule += this.RISK_ASSESSMENT_PREFIX + 'devices' + this.RISK_ASSESSMENT_SUFFIX
     }
     const ipReputation = riskAssessment.ipReputationAssessment;
     if (ipReputation && ipReputation.enabled) {
-      rule += (rule.length == 1 ? ' ' : " && ") + this.RISK_ASSESSMENT_PREFIX + "ipReputation" + this.RISK_ASSESSMENT_SUFFIX
+      rule += (rule.length == 1 ? ' ' : ' && ') + this.RISK_ASSESSMENT_PREFIX + 'ipReputation' + this.RISK_ASSESSMENT_SUFFIX
     }
     const geoVelocity = riskAssessment.geoVelocityAssessment;
     if (geoVelocity && geoVelocity.enabled) {
-      rule += (rule.length == 1 ? ' ' : " && ") + this.RISK_ASSESSMENT_PREFIX + "geoVelocity" + this.RISK_ASSESSMENT_SUFFIX
+      rule += (rule.length == 1 ? ' ' : ' && ') + this.RISK_ASSESSMENT_PREFIX + 'geoVelocity' + this.RISK_ASSESSMENT_SUFFIX
     }
-    rule += "}";
+    rule += '}';
     return rule
   }
 
@@ -158,6 +170,24 @@ export class MfaActivateComponent implements OnInit {
   private getAssessment(riskAssessment, assessmentName: string) {
     return riskAssessment && riskAssessment[assessmentName] ?
       riskAssessment[assessmentName] :
-      {"enabled": false, thresholds: {}};
+      {'enabled': false, thresholds: {}};
+  }
+
+  modeLicenseMetadata(mode): any {
+    const response = {'deployed': true, 'feature': ''}
+    if (mode.label === 'Risk-based') {
+      response.deployed = false;
+      response.feature = 'gravitee-risk-assessment';
+
+      if (this.factors != null) {
+        const factor = this.factors['gravitee-risk-assessment'] ?? this.factors['risk-assessment'];
+        if (factor != null) {
+          response.deployed = factor.deployed;
+          response.feature = factor.feature;
+        }
+      }
+    }
+
+    return response;
   }
 }

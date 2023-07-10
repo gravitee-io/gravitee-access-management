@@ -439,6 +439,10 @@ import {
 } from "@gravitee/ui-particles-angular";
 import {EmailTemplateFactoryService} from "./services/email.template.factory.service";
 import {FormTemplateFactoryService} from "./services/form.template.factory.service";
+import {GioEeUnlockDialogComponent} from './components/gio-ee-unlock-dialog/gio-ee-unlock-dialog.component';
+import {GioLicenseService} from './services/gio-license.service';
+import {GioLicenseDirective} from './directives/gio-license.directive';
+import {GioEeUnlockDialogStoryComponent} from './components/gio-ee-unlock-dialog/gio-ee-unlock-dialog.stories';
 
 @NgModule({
   declarations: [
@@ -686,7 +690,10 @@ import {FormTemplateFactoryService} from "./services/form.template.factory.servi
     MfaIntelligentComponent,
     AssessmentComponent,
     HelpTipsThemeComponent,
-    DisplayableItemPipe
+    DisplayableItemPipe,
+    GioEeUnlockDialogComponent,
+    GioLicenseDirective,
+    GioEeUnlockDialogStoryComponent
   ],
   imports: [
     BrowserModule,
@@ -824,6 +831,7 @@ import {FormTemplateFactoryService} from "./services/form.template.factory.servi
     I18nDictionaryService,
     ThemesResolver,
     ThemeService,
+    GioLicenseService,
     {
       provide: HTTP_INTERCEPTORS,
       useClass: HttpRequestInterceptor,

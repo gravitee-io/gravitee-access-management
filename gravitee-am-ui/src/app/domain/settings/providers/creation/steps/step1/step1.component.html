@@ -37,7 +37,8 @@
     <mat-card *ngFor="let idp of getFilteredIdentities()" fxFlex="30" [class.selected]="provider.type === idp.id"
               (click)="selectProviderType(idp)"
               (keyup.enter)="selectProviderType(idp)"
-              tabIndex="0">
+              tabIndex="0"
+              [gioLicense]="idp">
       <mat-card-content>
         <div class="identity-provider__icon" [innerHTML]="getIcon(idp) | safe:'html'"></div>
         {{displayName(idp)}}

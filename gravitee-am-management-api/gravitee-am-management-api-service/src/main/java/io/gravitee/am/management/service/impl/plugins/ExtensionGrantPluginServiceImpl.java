@@ -104,6 +104,7 @@ public class ExtensionGrantPluginServiceImpl implements ExtensionGrantPluginServ
         extensionGrantPlugin.setDescription(plugin.manifest().description());
         extensionGrantPlugin.setVersion(plugin.manifest().version());
         extensionGrantPlugin.setDeployed(plugin.deployed());
+        extensionGrantPlugin.setFeature(plugin.manifest().feature());
         return extensionGrantPlugin;
     }
 }

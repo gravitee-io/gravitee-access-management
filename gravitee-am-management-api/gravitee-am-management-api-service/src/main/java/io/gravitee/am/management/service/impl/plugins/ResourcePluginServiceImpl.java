@@ -127,6 +127,7 @@ public class ResourcePluginServiceImpl implements ResourcePluginService {
                 this.getIcon(resourcePlugin.getId()).subscribe(resourcePlugin::setIcon);
             }
         }
+        resourcePlugin.setFeature(plugin.manifest().feature());
         return resourcePlugin;
     }
 }

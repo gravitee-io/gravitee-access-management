@@ -120,6 +120,7 @@ public class AuthenticationDeviceNotifierPluginServiceImpl implements Authentica
                 this.getIcon(authenticationDeviceNotifierPlugin.getId()).subscribe(authenticationDeviceNotifierPlugin::setIcon);
             }
         }
+        authenticationDeviceNotifierPlugin.setFeature(plugin.manifest().feature());
         return authenticationDeviceNotifierPlugin;
     }
 }

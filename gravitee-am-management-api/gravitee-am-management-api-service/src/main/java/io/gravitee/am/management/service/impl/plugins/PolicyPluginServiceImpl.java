@@ -172,6 +172,7 @@ public class PolicyPluginServiceImpl implements PolicyPluginService {
                 }
             }
         }
+        policyPlugin.setFeature(plugin.manifest().feature());
         return policyPlugin;
     }
 }

@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 import {Component, OnInit, ViewChild} from '@angular/core';
-import {SnackbarService} from "../../../services/snackbar.service";
-import {ActivatedRoute} from "@angular/router";
-import {DomainService} from "../../../services/domain.service";
-import {AuthService} from "../../../services/auth.service";
-import {MatDialog, MatDialogRef} from "@angular/material/dialog";
-import {CertificateService} from "../../../services/certificate.service";
+import {SnackbarService} from '../../../services/snackbar.service';
+import {ActivatedRoute} from '@angular/router';
+import {DomainService} from '../../../services/domain.service';
+import {AuthService} from '../../../services/auth.service';
+import {MatDialog} from '@angular/material/dialog';
+import {CertificateService} from '../../../services/certificate.service';
 
 @Component({
   selector: 'app-saml2',
@@ -27,7 +27,7 @@ import {CertificateService} from "../../../services/certificate.service";
   styleUrls: ['./saml2.component.scss']
 })
 export class Saml2Component implements OnInit {
-  @ViewChild('samlSettingsForm', { static: true }) form: any;
+  @ViewChild('samlSettingsForm', {static: true}) form: any;
   domainId: string;
   domain: any = {};
   domainSamlSettings: any;
@@ -35,6 +35,7 @@ export class Saml2Component implements OnInit {
   editMode: boolean;
   certificates: any[] = [];
   certificatePublicKeys: any[] = [];
+  pluginMetadata: any;
 
   constructor(private domainService: DomainService,
               private snackbarService: SnackbarService,
@@ -53,11 +54,17 @@ export class Saml2Component implements OnInit {
     if (this.domainSamlSettings.certificate) {
       this.publicKeys(this.domainSamlSettings.certificate);
     }
+
+    this.pluginMetadata = {'deployed': false, 'feature': 'am-idp-saml2'};
+    const samlPlugin = this.route.snapshot.data['identities']['am-idp-saml'];
+    if (samlPlugin != null) {
+      this.pluginMetadata.deployed = samlPlugin.deployed;
+    }
   }
 
   save() {
     this.domainSamlSettings.certificate = (this.domainSamlSettings.certificate) ? this.domainSamlSettings.certificate : null;
-    this.domainService.patch(this.domainId, {'saml' : this.domainSamlSettings}).subscribe(data => {
+    this.domainService.patch(this.domainId, {'saml': this.domainSamlSettings}).subscribe(data => {
       this.domain['saml'] = data.saml;
       this.formChanged = false;
       this.form.reset(this.domain.saml);
