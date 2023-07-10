@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *         http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,73 +15,61 @@
  */
 package io.gravitee.am.common.web;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import java.util.stream.Stream;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
-import java.util.Arrays;
-import java.util.Collection;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import static org.junit.runners.Parameterized.Parameters;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
-@RunWith(Parameterized.class)
 public class UriBuilderLocalhostTest {
 
-    private String hostType;
-    private String host;
-    private boolean result;
-
-    public UriBuilderLocalhostTest(String hostType, String host, boolean result) {
-        this.hostType = hostType;
-        this.host = host;
-        this.result = result;
-    }
-
-    @Parameters(name="Test host type={0} expecting to be a localhost={2} : {1}")
-    public static Collection<Object[]> data() {
-        return Arrays.asList(new Object[][] {
+    public static Stream<Arguments> params_that_must_test_host() {
+        return Stream.of(
                 //named localhost test case
-                {"name","localhost",true},
-                {"name","LOCALHOST",true},
-                {"name","gravitee.io",false},
+                Arguments.of("localhost", true),
+                Arguments.of("LOCALHOST", true),
+                Arguments.of("gravitee.io", false),
                 //ipv4 localhost test case
-                {"ipv4","127.0.0.1",true},
-                {"ipv4","127.0.0.001",true},
-                {"ipv4","127.0.00.1",true},
-                {"ipv4","127.00.0.1",true},
-                {"ipv4","127.000.000.001",true},
-                {"ipv4","127.0000.0000.1",true},
-                {"ipv4","127.0.01",true},
-                {"ipv4","127.1",true},
-                {"ipv4","127.001",true},
-                {"ipv4","127.0.0.254",true},
-                {"ipv4","127.63.31.15",true},
-                {"ipv4","127.255.255.254",true},
-                {"ipv4","192.168.0.1",false},
-                {"ipv4","10.1.2.3",false},
+                Arguments.of("127.0.0.1", true),
+                Arguments.of("127.0.0.001", true),
+                Arguments.of("127.0.00.1", true),
+                Arguments.of("127.00.0.1", true),
+                Arguments.of("127.000.000.001", true),
+                Arguments.of("127.0000.0000.1", true),
+                Arguments.of("127.0.01", true),
+                Arguments.of("127.1", true),
+                Arguments.of("127.001", true),
+                Arguments.of("127.0.0.254", true),
+                Arguments.of("127.63.31.15", true),
+                Arguments.of("127.255.255.254", true),
+                Arguments.of("192.168.0.1", false),
+                Arguments.of("10.1.2.3", false),
                 //ipv6 localhost test case
-                {"ipv6","0:0:0:0:0:0:0:1",true},
-                {"ipv6","0:0:0:0:0:0:0:1",true},
-                {"ipv6","::1",true},
-                {"ipv6","0::1",true},
-                {"ipv6","0:0:0::1",true},
-                {"ipv6","0000::0001",true},
-                {"ipv6","0000:0:0000::0001",true},
-                {"ipv6","0000:0:0000::1",true},
-                {"ipv6","0::0:1",true},
-                {"ipv6","0001::1",false},
-                {"ipv6","dead:beef::1",false},
-                {"ipv6","::dead:beef:1",false}
-        });
+                Arguments.of("0:0:0:0:0:0:0:1", true),
+                Arguments.of("0:0:0:0:0:0:0:1", true),
+                Arguments.of("::1", true),
+                Arguments.of("0::1", true),
+                Arguments.of("0:0:0::1", true),
+                Arguments.of("0000::0001", true),
+                Arguments.of("0000:0:0000::0001", true),
+                Arguments.of("0000:0:0000::1", true),
+                Arguments.of("0::0:1", true),
+                Arguments.of("0001::1", false),
+                Arguments.of("dead:beef::1", false),
+                Arguments.of("::dead:beef:1", false)
+        );
     }
 
-    @Test
-    public void test() {
-        Assert.assertEquals(this.result, UriBuilder.isLocalhost(this.host));
+    @ParameterizedTest(name = "Test host expecting to be a localhost={1} : {0}")
+    @MethodSource("params_that_must_test_host")
+    public void must_test_host(String host, boolean expected) {
+        assertEquals(expected, UriBuilder.isLocalhost(host));
     }
 }

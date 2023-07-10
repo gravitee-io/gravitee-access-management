@@ -16,9 +16,12 @@
 package io.gravitee.am.common.web;
 
 import io.gravitee.am.common.utils.PathUtils;
-import org.junit.Test;
+import java.util.stream.Stream;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -26,33 +29,25 @@ import static org.junit.Assert.assertEquals;
  */
 public class PathUtilsTest {
 
-    @Test
-    public void sanitize() {
+    @ParameterizedTest(name = "Must sanitize [{0}] into [{1}]")
+    @MethodSource("params_that_must_sanitize")
+    public void must_sanitize(String input, String expected){
+        assertEquals(expected, PathUtils.sanitize(input));
 
-        assertEquals("/test", PathUtils.sanitize("/test"));
     }
 
-    @Test
-    public void sanitize_emptyPath() {
-
-        assertEquals("/", PathUtils.sanitize(""));
-    }
-
-    @Test
-    public void sanitize_nullPath() {
-
-        assertEquals("/", PathUtils.sanitize(null));
-    }
-
-    @Test
-    public void sanitize_multipleSlashesPath() {
-
-        assertEquals("/test", PathUtils.sanitize("////test/////"));
-    }
-
-    @Test
-    public void sanitize_slashPath() {
-
-        assertEquals("/", PathUtils.sanitize("/"));
+    public static Stream<Arguments> params_that_must_sanitize(){
+        return Stream.of(
+                Arguments.of(null, "/"),
+                Arguments.of("", "/"),
+                Arguments.of("              ", "/"),
+                Arguments.of("\t\t\t", "/"),
+                Arguments.of("\n", "/"),
+                Arguments.of("\r\n", "/"),
+                Arguments.of("/", "/"),
+                Arguments.of("/test", "/test"),
+                Arguments.of("////test/////", "/test"),
+                Arguments.of("test", "/test")
+        );
     }
 }

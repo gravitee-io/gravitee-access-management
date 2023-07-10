@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *         http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,54 +15,55 @@
  */
 package io.gravitee.am.common.factor;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
-
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.NoSuchElementException;
+import java.util.stream.Stream;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import static io.gravitee.am.common.factor.FactorType.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@RunWith(value = Parameterized.class)
 public class FactorTypeTest {
 
-    private final String factor;
-    private final FactorType expected;
-    private final boolean threwNseException;
 
-    public FactorTypeTest(String factor, FactorType factorType, boolean threwException) {
-        this.factor = factor;
-        this.expected = factorType;
-        this.threwNseException = threwException;
+    public static Stream<Arguments> params_that_must_not_find_factor_type_from_string() {
+        return Stream.of(
+                Arguments.of("nein", NoSuchElementException.class),
+                Arguments.of("nej", NoSuchElementException.class),
+                Arguments.of("no", NoSuchElementException.class),
+                Arguments.of("non", NoSuchElementException.class)
+        );
     }
 
-    @Parameters
-    public static Collection<Object []> params() {
-        return Arrays.asList(new Object[][]{
-                {"TOTP", OTP, false},
-                {"HTTP", HTTP, false},
-                {"SMS", SMS, false},
-                {"EMAIL", EMAIL, false},
-                {"CALL", CALL, false},
-                {"nein", null, true},
-                {"nej", null, true},
-                {"no", null, true},
-                {"non", null, true},
-        });
+    public static Stream<Arguments> params_that_must_find_factor_type_from_string() {
+        return Stream.of(
+                Arguments.of("TOTP", OTP),
+                Arguments.of("HTTP", HTTP),
+                Arguments.of("SMS", SMS),
+                Arguments.of("EMAIL", EMAIL),
+                Arguments.of("CALL", CALL),
+                Arguments.of("MOCK", MOCK),
+                Arguments.of("totp", OTP),
+                Arguments.of("http", HTTP),
+                Arguments.of("sms", SMS),
+                Arguments.of("email", EMAIL),
+                Arguments.of("call", CALL),
+                Arguments.of("mock", MOCK)
+        );
     }
 
-    @Test
-    public void getFactorTypeFromString() {
-        try {
-            FactorType actual = FactorType.getFactorTypeFromString(factor);
-            assertEquals(actual, expected);
-        } catch (NoSuchElementException e) {
-            assertTrue(threwNseException);
-        }
+    @ParameterizedTest
+    @MethodSource("params_that_must_find_factor_type_from_string")
+    public void must_find_factor_type_from_string(String input, FactorType expected) {
+        assertEquals(expected, getFactorTypeFromString(input));
+    }
+
+    @ParameterizedTest
+    @MethodSource("params_that_must_not_find_factor_type_from_string")
+    public void must_not_find_factor_type_from_string(String input, Class<? extends Throwable> expected) {
+        assertThrows(expected, () -> getFactorTypeFromString(input));
     }
 }

@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *         http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,7 +15,10 @@
  */
 package io.gravitee.am.common.utils;
 
+import java.util.Optional;
 import java.util.regex.Pattern;
+
+import static java.util.Optional.ofNullable;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -27,7 +30,7 @@ public class PathUtils {
 
     public static String sanitize(String path) {
 
-        if (path == null || "".equals(path)) {
+        if (isNullOrEmptyPath(path)) {
             return "/";
         }
 
@@ -46,5 +49,9 @@ public class PathUtils {
         }
 
         return pathBuilder.toString();
+    }
+
+    private static boolean isNullOrEmptyPath(String path) {
+        return path == null || path.isBlank();
     }
 }
