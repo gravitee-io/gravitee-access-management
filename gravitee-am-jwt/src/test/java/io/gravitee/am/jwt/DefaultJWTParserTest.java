@@ -26,7 +26,6 @@ import io.gravitee.am.common.exception.jwt.PrematureJWTException;
 import io.gravitee.am.common.exception.jwt.SignatureException;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.jwt.SignatureAlgorithm;
-import org.junit.Test;
 
 import javax.crypto.spec.SecretKeySpec;
 import java.security.SecureRandom;
@@ -38,10 +37,10 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 import java.util.Date;
+import org.junit.jupiter.api.Test;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -75,7 +74,7 @@ public class DefaultJWTParserTest {
         assertJwt(jwtBuilder, jwtParser, algorithm);
     }
 
-    @Test(expected = SignatureException.class)
+    @Test
     public void shouldNotParse_rsa_wrongSignature() throws Exception {
         RSAKey rsaJWK = new RSAKeyGenerator(2048)
                 .keyID("123")
@@ -97,10 +96,10 @@ public class DefaultJWTParserTest {
         jwt.setExp(Instant.now().plus(60, ChronoUnit.MINUTES).getEpochSecond());
         String signedJWT = jwtBuilder.sign(jwt);
 
-        jwtParser.parse(signedJWT);
+        assertThrows(SignatureException.class, () -> jwtParser.parse(signedJWT));
     }
 
-    @Test(expected = PrematureJWTException.class)
+    @Test
     public void shouldNotParse_rsa_prematureToken() throws Exception {
         RSAKey rsaJWK = new RSAKeyGenerator(2048)
                 .keyID("123")
@@ -117,10 +116,10 @@ public class DefaultJWTParserTest {
         jwt.setExp(Instant.now().plus(60, ChronoUnit.MINUTES).getEpochSecond());
         String signedJWT = jwtBuilder.sign(jwt);
 
-        jwtParser.parse(signedJWT);
+        assertThrows(PrematureJWTException.class, () -> jwtParser.parse(signedJWT));
     }
 
-    @Test(expected = ExpiredJWTException.class)
+    @Test
     public void shouldNotParse_rsa_expiredToken() throws Exception {
         RSAKey rsaJWK = new RSAKeyGenerator(2048)
                 .keyID("123")
@@ -137,10 +136,10 @@ public class DefaultJWTParserTest {
         jwt.setExp(Instant.now().minus(60, ChronoUnit.MINUTES).getEpochSecond());
         String signedJWT = jwtBuilder.sign(jwt);
 
-        jwtParser.parse(signedJWT);
+        assertThrows(ExpiredJWTException.class, () -> jwtParser.parse(signedJWT));
     }
 
-    @Test(expected = MalformedJWTException.class)
+    @Test
     public void shouldNotParse_rsa_malformedToken() throws Exception {
         RSAKey rsaJWK = new RSAKeyGenerator(2048)
                 .keyID("123")
@@ -148,7 +147,7 @@ public class DefaultJWTParserTest {
         RSAPublicKey rsaPublicKey = rsaJWK.toRSAPublicKey();
         JWTParser jwtParser = new DefaultJWTParser(rsaPublicKey);
 
-        jwtParser.parse("malformed-token");
+        assertThrows(MalformedJWTException.class, () -> jwtParser.parse("malformed-token"));
     }
 
     @Test
@@ -177,7 +176,7 @@ public class DefaultJWTParserTest {
         assertTrue(new Date().before(new Date(parsedJWT.getExp() * 1000)));
     }
 
-    @Test(expected = SignatureException.class)
+    @Test
     public void shouldNotParse_hmac_wrongSignature() throws Exception {
         SecureRandom random = new SecureRandom();
         byte[] sharedSecret = new byte[32];
@@ -199,10 +198,10 @@ public class DefaultJWTParserTest {
         jwt.setExp(Instant.now().plus(60, ChronoUnit.MINUTES).getEpochSecond());
         String signedJWT = jwtBuilder.sign(jwt);
 
-        jwtParser.parse(signedJWT);
+        assertThrows(SignatureException.class, () -> jwtParser.parse(signedJWT));
     }
 
-    @Test(expected = PrematureJWTException.class)
+    @Test
     public void shouldNotParse_hmac_prematureToken() throws Exception {
         SecureRandom random = new SecureRandom();
         byte[] sharedSecret = new byte[32];
@@ -218,10 +217,10 @@ public class DefaultJWTParserTest {
         jwt.setExp(Instant.now().plus(60, ChronoUnit.MINUTES).getEpochSecond());
         String signedJWT = jwtBuilder.sign(jwt);
 
-        jwtParser.parse(signedJWT);
+        assertThrows(PrematureJWTException.class, () -> jwtParser.parse(signedJWT));
     }
 
-    @Test(expected = ExpiredJWTException.class)
+    @Test
     public void shouldNotParse_hmac_expiredToken() throws Exception {
         SecureRandom random = new SecureRandom();
         byte[] sharedSecret = new byte[32];
@@ -237,10 +236,10 @@ public class DefaultJWTParserTest {
         jwt.setExp(Instant.now().minus(60, ChronoUnit.MINUTES).getEpochSecond());
         String signedJWT = jwtBuilder.sign(jwt);
 
-        jwtParser.parse(signedJWT);
+        assertThrows(ExpiredJWTException.class, () -> jwtParser.parse(signedJWT));
     }
 
-    @Test(expected = MalformedJWTException.class)
+    @Test
     public void shouldNotParse_hmac_malformedToken() throws Exception {
         SecureRandom random = new SecureRandom();
         byte[] sharedSecret = new byte[32];
@@ -248,7 +247,7 @@ public class DefaultJWTParserTest {
         SecretKeySpec secretKeySpec = new SecretKeySpec(sharedSecret, SignatureAlgorithm.HS256.getJcaName());
         JWTParser jwtParser = new DefaultJWTParser(secretKeySpec);
 
-        jwtParser.parse("malformed-token");
+        assertThrows(MalformedJWTException.class, () -> jwtParser.parse("malformed-token"));
     }
 
     private void assertJwt(JWTBuilder jwtBuilder, JWTParser jwtParser, String algorithm) {
