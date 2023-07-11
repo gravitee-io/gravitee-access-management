@@ -40,19 +40,14 @@ export class AppComponent implements OnInit {
   }
 
   displaySidenav(): boolean {
-    return this.router.url !== '/login' && this.router.url !== '/newsletter';
+    return this.router.url !== '/login' &&
+      this.router.url !== '/newsletter' &&
+      !this.router.url.startsWith('/settings');
   }
 
   displayNavbar(): boolean {
-    return this.router.url !== '/login' && this.router.url !== '/newsletter';
-  }
-
-  displayBreadcrumb(): boolean {
-    return (
-      !this.router.url.startsWith('/domains/new') &&
-      !this.router.url.startsWith('/login') &&
-      !this.router.url.startsWith('/logout') &&
-      !this.router.url.startsWith('/404')
-    );
+    return this.router.url !== '/login' &&
+      this.router.url !== '/newsletter' &&
+      !this.router.url.startsWith('/settings');
   }
 }

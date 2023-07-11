@@ -31,6 +31,10 @@ export class SubmenuComponent implements OnInit, OnDestroy {
   @Input('templateTooltip') templateTooltip: string;
   @Input('componentType') componentType: string;
   @Input('componentName') componentName: string;
+  @Input('theme') theme: string;
+  @Input('hasGoBackButton') hasGoBackButton = false;
+  @Input('reduced') reduced = true;
+  @Input('static') static = false;
   subMenuItems: any;
   subscription: Subscription;
 
@@ -49,6 +53,10 @@ export class SubmenuComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.subscription.unsubscribe();
+  }
+
+  goBack(): void {
+    this.router.navigate([''] );
   }
 }
 

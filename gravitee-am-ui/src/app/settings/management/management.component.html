@@ -15,13 +15,13 @@
     limitations under the License.
 
 -->
-<mat-sidenav-container fxLayout="row" fxFlex>
-  <mat-sidenav mode="side" opened="true">
-    <gv-sidenav-settings></gv-sidenav-settings>
-  </mat-sidenav>
-  <mat-sidenav-content>
-    <div class="domain-settings-main-content">
-      <router-outlet></router-outlet>
-    </div>
-  </mat-sidenav-content>
-</mat-sidenav-container>
+<div fxLayout="row">
+  <gv-submenu [theme]="'light'"
+              [hasGoBackButton]="true"
+              [reduced]="false"
+              [static]="true">
+  </gv-submenu>
+  <div class="organization-settings-content">
+    <router-outlet></router-outlet>
+  </div>
+</div>

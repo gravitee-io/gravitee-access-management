@@ -196,7 +196,6 @@ mat-sidenav-container {
 
 .main-content {
   overflow: auto;
-  height: calc(100vh - 68px);
   width: 100%;
   background-color: #ffffff !important;
 }
@@ -242,24 +241,6 @@ mat-form-field {
 .gio-side-nav {
   .mat-form-field-underline {
     display: none !important;
-  }
-}
-
-.gio-submenu {
-  a {
-    text-decoration: none;
-  }
-  &__loaded {
-    height: calc(100vh - 68px) !important;
-    overflow: auto;
-  }
-  &__overlay {
-    max-height: calc(100vh - 68px) !important;
-  }
-  &__reduced {
-    height: auto !important;
-    max-height: calc(100vh - 218px) !important;
-    z-index: 70;
   }
 }
 

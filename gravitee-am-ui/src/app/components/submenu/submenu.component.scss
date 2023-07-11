@@ -1,6 +1,32 @@
 @use 'sass:map';
 @use '@gravitee/ui-particles-angular' as gio;
 
+:host {
+  ::ng-deep.gio-submenu {
+    a {
+      text-decoration: none;
+    }
+
+    &__loaded {
+      overflow: auto;
+    }
+
+    &__reduced {
+      height: auto !important;
+      max-height: calc(100vh - 218px) !important;
+      z-index: 70;
+    }
+  }
+}
+
+.gv-submenu {
+  height: 100vh;
+
+  &.reduced {
+    height: calc(100vh - 68px);
+  }
+}
+
 .submenu__title {
   display: flex;
   align-items: center;
@@ -27,3 +53,4 @@
     white-space: nowrap;
   }
 }
+

@@ -275,8 +275,9 @@ export const routes: Routes = [
             },
             data: {
               menu: {
-                label: 'General',
-                section: 'Settings',
+                label: 'Authentication',
+                section: 'Console',
+                level: 'level2'
               },
               perms: {
                 only: ['organization_settings_read'],
@@ -293,7 +294,8 @@ export const routes: Routes = [
             data: {
               menu: {
                 label: 'Administrative roles',
-                section: 'Settings',
+                section: 'Console',
+                level: 'level2',
               },
               perms: {
                 only: ['organization_member_list'],
@@ -306,7 +308,8 @@ export const routes: Routes = [
             data: {
               menu: {
                 label: 'Forms',
-                section: 'Design',
+                section: 'Console',
+                level: 'level2',
               },
               perms: {
                 only: ['organization_form_list'],
@@ -341,8 +344,9 @@ export const routes: Routes = [
             canActivate: [AuthGuard],
             data: {
               menu: {
-                label: 'Providers',
-                section: 'Identities',
+                label: 'Identity providers',
+                section: 'Console',
+                level: 'level2'
               },
               perms: {
                 only: ['organization_identity_provider_list'],
@@ -396,48 +400,13 @@ export const routes: Routes = [
             ],
           },
           {
-            path: 'audits',
-            canActivate: [AuthGuard],
-            data: {
-              menu: {
-                label: 'Audit Log',
-                section: 'Security',
-              },
-              perms: {
-                only: ['organization_audit_list'],
-              },
-            },
-            children: [
-              {
-                path: '',
-                pathMatch: 'full',
-                component: AuditsComponent,
-              },
-              {
-                path: ':auditId',
-                component: AuditComponent,
-                canActivate: [AuthGuard],
-                resolve: {
-                  audit: AuditResolver,
-                },
-                data: {
-                  breadcrumb: {
-                    label: 'audit.id',
-                  },
-                  perms: {
-                    only: ['organization_audit_read'],
-                  },
-                },
-              },
-            ],
-          },
-          {
             path: 'users',
             canActivate: [AuthGuard],
             data: {
               menu: {
                 label: 'Users',
                 section: 'User Management',
+                level: 'level2'
               },
               perms: {
                 only: ['organization_user_list'],
@@ -495,6 +464,7 @@ export const routes: Routes = [
               menu: {
                 label: 'Groups',
                 section: 'User Management',
+                level: 'level2'
               },
               perms: {
                 only: ['organization_group_list'],
@@ -549,6 +519,7 @@ export const routes: Routes = [
               menu: {
                 label: 'Roles',
                 section: 'User Management',
+                level: 'level2'
               },
               perms: {
                 only: ['organization_role_list'],
@@ -597,7 +568,8 @@ export const routes: Routes = [
             data: {
               menu: {
                 label: 'Sharding tags',
-                section: 'Deployment',
+                section: 'Gateway',
+                level: 'level2'
               },
               perms: {
                 only: ['organization_tag_list'],
@@ -646,7 +618,8 @@ export const routes: Routes = [
             data: {
               menu: {
                 label: 'Entrypoints',
-                section: 'Deployment',
+                section: 'Gateway',
+                level: 'level2'
               },
               perms: {
                 only: ['organization_entrypoint_list'],
@@ -684,34 +657,70 @@ export const routes: Routes = [
                     label: 'entrypoint.name',
                   },
                   perms: {
-                    only: ['organization_entrypoint_read'],
-                  },
-                },
+                    only: ['organization_entrypoint_read']
+                  }
+                }
+              }
+            ]
+          },
+          {
+            path: 'audits',
+            canActivate: [AuthGuard],
+            data: {
+              menu: {
+                label: 'Audit',
+                section: 'Audit',
+                level: 'level2'
               },
-            ],
+              perms: {
+                only: ['organization_audit_list']
+              }
+            },
+            children: [
+              {
+                path: '',
+                pathMatch: 'full',
+                component: AuditsComponent,
+              },
+              {
+                path: ':auditId',
+                component: AuditComponent,
+                canActivate: [AuthGuard],
+                resolve: {
+                  audit: AuditResolver
+                },
+                data: {
+                  breadcrumb: {
+                    label: 'audit.id'
+                  },
+                  perms: {
+                    only: ['organization_audit_read']
+                  }
+                }
+              }
+            ]
           },
-        ],
-      },
-      {
-        path: 'cockpit',
-        component: CockpitComponent,
-        canActivate: [AuthGuard],
-        resolve: {
-          installation: InstallationResolver,
-        },
-        data: {
-          menu: {
-            level: 'top',
-            label: 'Cockpit',
-            icon: 'gio:compass',
-            beta: true,
-          },
-          perms: {
-            only: ['installation_read'],
-          },
-        },
-      },
-    ],
+          {
+            path: 'cockpit',
+            component: CockpitComponent,
+            canActivate: [AuthGuard],
+            resolve: {
+              installation: InstallationResolver
+            },
+            data: {
+              menu: {
+                label: 'Discover cockpit',
+                section: 'Cockpit',
+                level: 'level2'
+              },
+              perms: {
+                only: ['installation_read']
+              }
+            }
+          }
+        ]
+      }
+    ]
   },
   {
     path: 'environments',
@@ -2556,11 +2565,10 @@ export const routes: Routes = [
                           },
                         },
                         resolve: {
-                          certificates: CertificatesResolver,
-                          identities: IdentitiesResolver,
-                        },
-                      },
-                    ],
+                          certificates: CertificatesResolver
+                        }
+                      }
+                    ]
                   },
                   {
                     path: 'alerts',

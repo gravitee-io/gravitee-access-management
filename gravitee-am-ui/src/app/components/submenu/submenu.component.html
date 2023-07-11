@@ -15,22 +15,26 @@
     limitations under the License.
 
 -->
-<gio-submenu class="mat">
-  <div class="submenu__title" *ngIf="hasTitle">
-    <mat-icon
-      *ngIf="isTemplate"
-      matTooltip="{{ templateTooltip }}"
-      class="submenu__title__icon submenu__title__icon__template"
-      svgIcon="gio:edit-pencil"
-    >
-    </mat-icon>
-    <span class="submenu__title__type">{{ componentType }}</span>
-    <span class="submenu__title__name">{{ componentName }}</span>
-  </div>
-  <ng-container *ngFor="let itemGroup of subMenuItems | mapToIterable">
-    <gio-submenu-group [title]="itemGroup.key" *ngIf="displaySections">
-      <gv-submenu-items [items]="itemGroup.value"></gv-submenu-items>
-    </gio-submenu-group>
-    <gv-submenu-items [items]="itemGroup.value" *ngIf="!displaySections"></gv-submenu-items>
-  </ng-container>
-</gio-submenu>
+<div class="gv-submenu" [ngClass]="{'reduced': reduced}">
+  <gio-submenu class="mat" theme="{{theme}}" static="{{static}}">
+    <button gioSubmenuTitle mat-button aria-label="Organization" *ngIf="hasGoBackButton" (click)="goBack()">
+      <mat-icon svgIcon="gio:arrow-left"></mat-icon>Organization
+    </button>
+    <div class="submenu__title" *ngIf="hasTitle">
+      <mat-icon *ngIf="isTemplate"
+                matTooltip="{{templateTooltip}}"
+                class="submenu__title__icon submenu__title__icon__template"
+                svgIcon="gio:edit-pencil"
+      >
+      </mat-icon>
+      <span class="submenu__title__type">{{componentType}}</span>
+      <span class="submenu__title__name">{{componentName}}</span>
+    </div>
+    <ng-container *ngFor="let itemGroup of subMenuItems | mapToIterable">
+      <gio-submenu-group [title]="itemGroup.key" *ngIf="displaySections">
+        <gv-submenu-items [items]="itemGroup.value"></gv-submenu-items>
+      </gio-submenu-group>
+      <gv-submenu-items [items]="itemGroup.value" *ngIf="!displaySections"></gv-submenu-items>
+    </ng-container>
+  </gio-submenu>
+</div>
