@@ -21,11 +21,15 @@
   <div class="audit-content" fxLayout="row">
     <form fxLayout="column" fxFlex="70">
       <div class="gv-form-section">
-        <mat-chip-list #chipList style="position: absolute; margin-top: -35px; margin-left: -10px">
-          <mat-chip [color]="audit.outcome?.status === 'SUCCESS' ? 'accent' : 'warn'" selected>
-            {{ audit.outcome?.status }}
-          </mat-chip>
-        </mat-chip-list>
+        <mat-form-field *ngIf="audit.timestamp" appearance="outline" floatLabel="always">
+          <mat-label>Status</mat-label>
+          <mat-chip-list disabled="true">
+            <mat-chip [color]="audit.outcome?.status === 'SUCCESS'? 'accent':'warn'" selected>
+              {{audit.outcome?.status}}
+            </mat-chip>
+          </mat-chip-list>
+          <mat-hint>Status of the event</mat-hint>
+        </mat-form-field>
         <mat-form-field *ngIf="audit.timestamp" appearance="outline" floatLabel="always">
           <mat-label>Timestamp</mat-label>
           <input matInput placeholder="Timestamp" disabled [value]="audit.timestamp | date : 'dd/MM/yyyy HH:mm:ss.sss'" />
