@@ -28,19 +28,19 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.internal.operators.flowable.FlowableRange;
 import io.reactivex.rxjava3.observers.TestObserver;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -48,7 +48,7 @@ import static org.mockito.Mockito.*;
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class PermissionTicketServiceTest {
 
     @Mock
@@ -212,7 +212,7 @@ public class PermissionTicketServiceTest {
         verify(repository, times(1)).create(any());
 
         //Ensure resource_id have been merged
-        Assert.assertTrue(assertMerged(permissionTicketArgumentCaptor.getValue()));
+        assertTrue(assertMerged(permissionTicketArgumentCaptor.getValue()));
 
     }
 

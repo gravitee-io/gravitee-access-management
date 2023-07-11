@@ -15,77 +15,71 @@
  */
 package io.gravitee.am.service.i18n;
 
-import org.junit.Assert;
-import org.junit.Assume;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import java.util.stream.Stream;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Locale;
 import java.util.Properties;
+import org.junit.jupiter.params.provider.MethodSource;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@RunWith(Parameterized.class)
 public class FileSystemDictionaryProviderTest {
 
-    @Parameterized.Parameters
-    public static Collection<Object[]> params() {
-        return Arrays.asList(
-                new Object[] { "src/test/resources/i18n_default"},
-                new Object[] { "src/test/resources/i18n_default_no_en"},
-                new Object[] { "src/test/resources/i18n_no_default"}
+    public static Stream<Arguments> params() {
+        return Stream.of(
+                Arguments.of("src/test/resources/i18n_default"),
+                Arguments.of("src/test/resources/i18n_default_no_en"),
+                Arguments.of("src/test/resources/i18n_no_default")
         );
     }
 
-    private final String directory;
-
-    private DictionaryProvider directoryProvider;
-
-    public FileSystemDictionaryProviderTest(final String dir) {
-        this.directory = dir;
+    @ParameterizedTest(name = "Must fallback to default")
+    @MethodSource("params")
+    public void should_Fallback_ToDefault(String directory) {
+        assumeTrue(directory.endsWith("i18n_default_no_en"));
+        var directoryProvider = new FileSystemDictionaryProvider(directory);
+        Properties prop = directoryProvider.getDictionaryFor(new Locale("it"));
+        assertEquals("value-default", prop.getProperty("key"));
     }
 
-    @Before
-    public void initProvider() {
-        this.directoryProvider = new FileSystemDictionaryProvider(this.directory);
-    }
-
-    @Test
-    public void should_Fallback_ToDefault() {
-        Assume.assumeTrue(this.directory.endsWith("i18n_default_no_en"));
-        Properties prop = this.directoryProvider.getDictionaryFor(new Locale("it"));
-        Assert.assertEquals("Should contains the default message", "value-default", prop.getProperty("key"));
-    }
-
-    @Test
-    public void should_Match_Most_Specific_Locale_enGB() {
-        Assume.assumeFalse(this.directory.endsWith("i18n_default_no_en"));
-        Properties prop = this.directoryProvider.getDictionaryFor(new Locale("en", "GB"));
-        Assert.assertEquals("Should contains the en-GB message", "value-en-GB", prop.getProperty("key"));
-        Assert.assertTrue("Should contains the en-GB multiline message", prop.getProperty("key.multi.lines").contains("lines")
+    @ParameterizedTest(name = "Must match most specific locale en_GB")
+    @MethodSource("params")
+    public void should_Match_Most_Specific_Locale_enGB(String directory) {
+        assumeFalse(directory.endsWith("i18n_default_no_en"));
+        var directoryProvider = new FileSystemDictionaryProvider(directory);
+        Properties prop = directoryProvider.getDictionaryFor(new Locale("en", "GB"));
+        assertEquals("Should contains the en-GB message", "value-en-GB", prop.getProperty("key"));
+        assertTrue(prop.getProperty("key.multi.lines").contains("lines")
                 && prop.getProperty("key.multi.lines").contains("en-GB"));
     }
 
-    @Test
-    public void should_Match_Most_Specific_Locale_frFR() {
-        Properties prop = this.directoryProvider.getDictionaryFor(new Locale("fr", "FR"));
-        Assert.assertEquals("Should contains the fr-FR message", "value-fr-FR", prop.getProperty("key"));
-        Assert.assertTrue("Should contains the fr-FR multiline message", prop.getProperty("key.multi.lines").contains("lines")
+    @ParameterizedTest(name = "Must match most specific locale en_FR")
+    @MethodSource("params")
+    public void should_Match_Most_Specific_Locale_frFR(String directory) {
+        var directoryProvider = new FileSystemDictionaryProvider(directory);
+        Properties prop = directoryProvider.getDictionaryFor(new Locale("fr", "FR"));
+        assertEquals("value-fr-FR", prop.getProperty("key"));
+        assertTrue(prop.getProperty("key.multi.lines").contains("lines")
                 && prop.getProperty("key.multi.lines").contains("fr-FR"));
     }
 
-    @Test
-    public void should_Fallback_to_language() {
+    @ParameterizedTest(name = "Must fallback to language")
+    @MethodSource("params")
+    public void should_Fallback_to_language(String directory) {
         // fr-CA is not define, fallback to fr
-        Properties prop = this.directoryProvider.getDictionaryFor(new Locale("fr", "CA"));
-        Assert.assertEquals("Should contains the fr message", "value-fr", prop.getProperty("key"));
-        Assert.assertTrue("Should contains the fr multiline message", prop.getProperty("key.multi.lines").contains("lines")
+        var directoryProvider = new FileSystemDictionaryProvider(directory);
+        Properties prop = directoryProvider.getDictionaryFor(new Locale("fr", "CA"));
+        assertEquals("Should contains the fr message", "value-fr", prop.getProperty("key"));
+        assertTrue(prop.getProperty("key.multi.lines").contains("lines")
                 && prop.getProperty("key.multi.lines").contains("fr")
                 && !prop.getProperty("key.multi.lines").contains("fr-FR"));
     }

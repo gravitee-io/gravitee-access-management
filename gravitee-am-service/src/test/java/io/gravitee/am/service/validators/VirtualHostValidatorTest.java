@@ -21,16 +21,15 @@ import io.gravitee.am.service.exception.InvalidVirtualHostException;
 import io.gravitee.am.service.validators.path.PathValidatorImpl;
 import io.gravitee.am.service.validators.virtualhost.VirtualHostValidator;
 import io.gravitee.am.service.validators.virtualhost.VirtualHostValidatorImpl;
-import org.junit.Before;
-import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
-import static org.junit.Assert.*;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -40,7 +39,7 @@ public class VirtualHostValidatorTest {
 
     private VirtualHostValidator virtualHostValidator;
 
-    @Before
+    @BeforeEach
     public void before(){
         virtualHostValidator = new VirtualHostValidatorImpl(new PathValidatorImpl());
     }

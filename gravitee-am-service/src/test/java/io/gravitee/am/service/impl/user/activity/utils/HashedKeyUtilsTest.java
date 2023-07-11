@@ -17,9 +17,10 @@
 package io.gravitee.am.service.impl.user.activity.utils;
 
 import io.gravitee.am.service.impl.user.activity.configuration.UserActivityConfiguration.Algorithm;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
+
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)

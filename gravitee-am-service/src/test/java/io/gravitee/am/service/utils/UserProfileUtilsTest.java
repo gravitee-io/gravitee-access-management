@@ -15,16 +15,14 @@
  */
 package io.gravitee.am.service.utils;
 
-import io.gravitee.am.common.oidc.ClaimType;
 import io.gravitee.am.common.oidc.StandardClaims;
-import io.gravitee.am.common.oidc.idtoken.Claims;
 import io.gravitee.am.model.User;
-import org.junit.Test;
 
 import java.util.Locale;
+import org.junit.jupiter.api.Test;
 
 import static io.gravitee.am.service.utils.UserProfileUtils.preferredLanguage;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)

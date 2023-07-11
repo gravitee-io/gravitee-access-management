@@ -22,12 +22,12 @@ import io.gravitee.am.gateway.handler.common.jwt.impl.JWTServiceImpl;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.observers.TestObserver;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -36,7 +36,7 @@ import static org.mockito.Mockito.*;
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class JWTServiceTest {
 
     @InjectMocks
@@ -45,7 +45,7 @@ public class JWTServiceTest {
     @Mock
     private CertificateManager certificateManager;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         JWTBuilder rs256JWTBuilder = mock(JWTBuilder.class);
         JWTBuilder rs512JWTBuilder = mock(JWTBuilder.class);

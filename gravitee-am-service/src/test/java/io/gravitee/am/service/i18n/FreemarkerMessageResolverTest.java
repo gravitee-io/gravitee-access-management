@@ -15,12 +15,14 @@
  */
 package io.gravitee.am.service.i18n;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
 
 import java.util.List;
 import java.util.Locale;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -28,11 +30,11 @@ import java.util.Locale;
  */
 public class FreemarkerMessageResolverTest {
 
-    private DictionaryProvider directoryProvider = new FileSystemDictionaryProvider("src/test/resources/i18n_default");
+    private static final DictionaryProvider directoryProvider = new FileSystemDictionaryProvider("src/test/resources/i18n_default");
 
     private FreemarkerMessageResolver cut;
 
-    @Before
+    @BeforeEach
     public void init() {
         this.cut = new FreemarkerMessageResolver(directoryProvider.getDictionaryFor(new Locale("en")));
     }
@@ -40,22 +42,22 @@ public class FreemarkerMessageResolverTest {
     @Test
     public void shouldTranslateMessage() throws Exception {
         final var message = this.cut.exec(List.of("key.multi.lines"));
-        Assert.assertNotNull(message);
-        Assert.assertTrue(message instanceof String && ((String) message).contains("lines"));
+        assertNotNull(message);
+        assertTrue(message instanceof String && ((String) message).contains("lines"));
     }
 
     @Test
     public void shouldTranslateMessage_WithParam() throws Exception {
         final var message = this.cut.exec(List.of("key.param", "myparam"));
-        Assert.assertNotNull(message);
-        Assert.assertTrue(message instanceof String && ((String) message).equals("value-en myparam"));
+        assertNotNull(message);
+        assertTrue(message instanceof String && ((String) message).equals("value-en myparam"));
     }
 
     @Test
     public void shouldNoTranslateUnkownMessage() throws Exception {
         final var message = this.cut.exec(List.of("key.unknown"));
-        Assert.assertNotNull(message);
-        Assert.assertTrue(message instanceof String && ((String) message).equals("key.unknown"));
+        assertNotNull(message);
+        assertTrue(message instanceof String && message.equals("key.unknown"));
     }
 
 }

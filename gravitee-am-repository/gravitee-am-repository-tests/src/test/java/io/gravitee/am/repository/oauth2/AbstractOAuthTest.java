@@ -17,12 +17,12 @@ package io.gravitee.am.repository.oauth2;
 
 import io.gravitee.am.repository.RepositoriesTestInitializer;
 import io.gravitee.am.repository.oauth2.test.config.OAuthTestConfigurationLoader;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
 
 /**
@@ -30,22 +30,21 @@ import org.springframework.test.context.support.AnnotationConfigContextLoader;
  * @author GraviteeSource Team
  */
 
-@RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = {OAuthTestConfigurationLoader.class},
-        loader = AnnotationConfigContextLoader.class)
+@ExtendWith(SpringExtension.class)
+@ContextConfiguration(classes = {OAuthTestConfigurationLoader.class}, loader = AnnotationConfigContextLoader.class)
 public abstract class AbstractOAuthTest {
 
     @Autowired
     protected RepositoriesTestInitializer repositoriesInitializers;
 
-    @Before
+    @BeforeEach
     public void init() throws Exception {
         if (repositoriesInitializers != null) {
             repositoriesInitializers.before(this.getClass());
         }
     }
 
-    @After
+    @AfterEach
     public void clear() throws Exception {
         if (repositoriesInitializers != null) {
             repositoriesInitializers.after(this.getClass());

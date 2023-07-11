@@ -16,11 +16,13 @@
 package io.gravitee.am.service.authentication.crypto.password;
 
 import io.gravitee.am.common.password.PasswordSaltFormat;
-import org.junit.Assert;
-import org.junit.Test;
 
 import java.security.SecureRandom;
 import java.util.Base64;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -38,49 +40,49 @@ public abstract class MessageDigestPasswordEncoderTest {
     @Test
     public void testPassword_match_not_equals() {
         String encodedPassword = digester.encode("myPassword");
-        Assert.assertFalse(digester.matches("wrongPassword", encodedPassword));
+        assertFalse(digester.matches("wrongPassword", encodedPassword));
     }
 
     @Test
     public void testPassword_match_equals() {
         String encodedPassword = digester.encode("myPassword");
-        Assert.assertTrue(digester.matches("myPassword", encodedPassword));
+        assertTrue(digester.matches("myPassword", encodedPassword));
     }
 
     @Test
     public void testPassword_match_not_equals_dedicated_salt() {
-        Assert.assertTrue(match_equals_dedicated_salt("myPassword", "myPassword", PasswordSaltFormat.DIGEST, false));
-        Assert.assertTrue(match_equals_dedicated_salt("myPassword", "myPassword", PasswordSaltFormat.DIGEST, true));
+        assertTrue(match_equals_dedicated_salt("myPassword", "myPassword", PasswordSaltFormat.DIGEST, false));
+        assertTrue(match_equals_dedicated_salt("myPassword", "myPassword", PasswordSaltFormat.DIGEST, true));
     }
 
     @Test
     public void testPassword_match_equals_dedicated_salt() {
-        Assert.assertTrue(match_equals_dedicated_salt("myPassword", "myPassword", PasswordSaltFormat.DIGEST, false));
-        Assert.assertTrue(match_equals_dedicated_salt("myPassword", "myPassword", PasswordSaltFormat.DIGEST, true));
+        assertTrue(match_equals_dedicated_salt("myPassword", "myPassword", PasswordSaltFormat.DIGEST, false));
+        assertTrue(match_equals_dedicated_salt("myPassword", "myPassword", PasswordSaltFormat.DIGEST, true));
     }
 
     @Test
     public void testPassword_match_not_equals_dedicated_salt_appending_format() {
-        Assert.assertFalse(match_equals_dedicated_salt("myPassword", "wrongPassword", PasswordSaltFormat.APPENDING, false));
-        Assert.assertFalse(match_equals_dedicated_salt("myPassword", "wrongPassword", PasswordSaltFormat.APPENDING, true));
+        assertFalse(match_equals_dedicated_salt("myPassword", "wrongPassword", PasswordSaltFormat.APPENDING, false));
+        assertFalse(match_equals_dedicated_salt("myPassword", "wrongPassword", PasswordSaltFormat.APPENDING, true));
     }
 
     @Test
     public void testPassword_match_equals_dedicated_salt_appending_format() {
-        Assert.assertTrue(match_equals_dedicated_salt("myPassword", "myPassword", PasswordSaltFormat.APPENDING, false));
-        Assert.assertTrue(match_equals_dedicated_salt("myPassword", "myPassword", PasswordSaltFormat.APPENDING, true));
+        assertTrue(match_equals_dedicated_salt("myPassword", "myPassword", PasswordSaltFormat.APPENDING, false));
+        assertTrue(match_equals_dedicated_salt("myPassword", "myPassword", PasswordSaltFormat.APPENDING, true));
     }
 
     @Test
     public void testPassword_match_not_equals_dedicated_salt_prepending_format() {
-        Assert.assertFalse(match_equals_dedicated_salt("myPassword", "wrongPassword", PasswordSaltFormat.PREPENDING, false));
-        Assert.assertFalse(match_equals_dedicated_salt("myPassword", "wrongPassword", PasswordSaltFormat.PREPENDING, true));
+        assertFalse(match_equals_dedicated_salt("myPassword", "wrongPassword", PasswordSaltFormat.PREPENDING, false));
+        assertFalse(match_equals_dedicated_salt("myPassword", "wrongPassword", PasswordSaltFormat.PREPENDING, true));
     }
 
     @Test
     public void testPassword_match_equals_dedicated_salt_prepending_format() {
-        Assert.assertTrue(match_equals_dedicated_salt("myPassword", "myPassword", PasswordSaltFormat.PREPENDING, false));
-        Assert.assertTrue(match_equals_dedicated_salt("myPassword", "myPassword", PasswordSaltFormat.PREPENDING, true));
+        assertTrue(match_equals_dedicated_salt("myPassword", "myPassword", PasswordSaltFormat.PREPENDING, false));
+        assertTrue(match_equals_dedicated_salt("myPassword", "myPassword", PasswordSaltFormat.PREPENDING, true));
     }
 
     private boolean match_equals_dedicated_salt(String p1, String p2, String format, boolean encodingAsString) {

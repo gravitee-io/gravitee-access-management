@@ -27,22 +27,23 @@ import io.gravitee.am.model.uma.UMASettings;
 import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.model.openid.PatchClientRegistrationSettings;
 import io.gravitee.am.service.model.openid.PatchOIDCSettings;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
+
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
-@RunWith(JUnit4.class)
+@ExtendWith(MockitoExtension.class)
 public class PatchDomainTest {
 
     @Test
@@ -61,11 +62,10 @@ public class PatchDomainTest {
         //apply patch
         Domain result = patch.patch(toPatch);
 
-        //check.
-        assertNotNull("was expecting a domain", result);
-        assertEquals("description should have been updated", "expectedDescription", result.getDescription());
-        assertNull("name should have been set to null", result.getName());
-        assertEquals("path should not be updated", "/expectedPath", result.getPath());
+        assertNotNull(result);
+        assertEquals("expectedDescription", result.getDescription());
+        assertNull( result.getName());
+        assertEquals("/expectedPath", result.getPath());
     }
 
     @Test
@@ -86,11 +86,10 @@ public class PatchDomainTest {
         //apply patch
         Domain result = patch.patch(toPatch);
 
-        //check.
-        assertNotNull("was expecting a domain", result);
+        assertNotNull(result);
         assertNotNull(result.getOidc());
         assertNotNull(result.getOidc().getClientRegistrationSettings());
-        assertFalse("should have been disabled", result.getOidc().getClientRegistrationSettings().isDynamicClientRegistrationEnabled());
+        assertFalse(result.getOidc().getClientRegistrationSettings().isDynamicClientRegistrationEnabled());
     }
 
     @Test
@@ -111,10 +110,10 @@ public class PatchDomainTest {
         Domain result = patch.patch(toPatch);
 
         //check.
-        assertNotNull("was expecting a domain", result);
+        assertNotNull(result);
         assertNotNull(result.getOidc());
         assertNotNull(result.getOidc().getClientRegistrationSettings());
-        assertTrue("should have been enabled", result.getOidc().getClientRegistrationSettings().isDynamicClientRegistrationEnabled());
+        assertTrue(result.getOidc().getClientRegistrationSettings().isDynamicClientRegistrationEnabled());
     }
 
     @Test
@@ -134,65 +133,70 @@ public class PatchDomainTest {
         Domain result = patch.patch(toPatch);
 
         //check.
-        assertNotNull("was expecting a domain", result);
+        assertNotNull(result);
         assertNotNull(result.getPasswordSettings());
         assertTrue(result.getPasswordSettings().isPasswordHistoryEnabled());
         assertEquals(24, result.getPasswordSettings().getOldPasswords().shortValue());
     }
 
-    @Test(expected = InvalidParameterException.class)
+    @Test
     public void testPatchWithPasswordPolicy_missingOldPassword() {
-        //Build patcher
-        PatchPasswordSettings pwdPolicyPatcher = new PatchPasswordSettings();
-        pwdPolicyPatcher.setPasswordHistoryEnabled(Optional.of(true));
+        assertThrows(InvalidParameterException.class, () -> {
+            //Build patcher
+            PatchPasswordSettings pwdPolicyPatcher = new PatchPasswordSettings();
+            pwdPolicyPatcher.setPasswordHistoryEnabled(Optional.of(true));
 
-        PatchDomain patch = new PatchDomain();
-        patch.setPasswordSettings(Optional.of(pwdPolicyPatcher));
+            PatchDomain patch = new PatchDomain();
+            patch.setPasswordSettings(Optional.of(pwdPolicyPatcher));
 
-        Domain toPatch = new Domain();
-        toPatch.setPasswordSettings(new PasswordSettings());
+            Domain toPatch = new Domain();
+            toPatch.setPasswordSettings(new PasswordSettings());
 
-        //apply patch
-        patch.patch(toPatch);
+            //apply patch
+            patch.patch(toPatch);
+        });
     }
 
-    @Test(expected = InvalidParameterException.class)
+    @Test
     public void testPatchWithPasswordPolicy_outOfRange_min_OldPassword() {
-        //Build patcher
-        PatchPasswordSettings pwdPolicyPatcher = new PatchPasswordSettings();
-        pwdPolicyPatcher.setOldPasswords(Optional.of((short) -5));
-        pwdPolicyPatcher.setPasswordHistoryEnabled(Optional.of(true));
+        assertThrows(InvalidParameterException.class, () -> {
+            //Build patcher
+            PatchPasswordSettings pwdPolicyPatcher = new PatchPasswordSettings();
+            pwdPolicyPatcher.setOldPasswords(Optional.of((short) -5));
+            pwdPolicyPatcher.setPasswordHistoryEnabled(Optional.of(true));
 
-        PatchDomain patch = new PatchDomain();
-        patch.setPasswordSettings(Optional.of(pwdPolicyPatcher));
+            PatchDomain patch = new PatchDomain();
+            patch.setPasswordSettings(Optional.of(pwdPolicyPatcher));
 
-        Domain toPatch = new Domain();
-        toPatch.setPasswordSettings(new PasswordSettings());
+            Domain toPatch = new Domain();
+            toPatch.setPasswordSettings(new PasswordSettings());
 
-        //apply patch
-        patch.patch(toPatch);
+            //apply patch
+            patch.patch(toPatch);
+        });
     }
 
-    @Test(expected = InvalidParameterException.class)
+    @Test
     public void testPatchWithPasswordPolicy_outOfRange_max_OldPassword() {
-        //Build patcher
-        PatchPasswordSettings pwdPolicyPatcher = new PatchPasswordSettings();
-        pwdPolicyPatcher.setOldPasswords(Optional.of((short) 25));
-        pwdPolicyPatcher.setPasswordHistoryEnabled(Optional.of(true));
+        assertThrows(InvalidParameterException.class, () -> {
+            //Build patcher
+            PatchPasswordSettings pwdPolicyPatcher = new PatchPasswordSettings();
+            pwdPolicyPatcher.setOldPasswords(Optional.of((short) 25));
+            pwdPolicyPatcher.setPasswordHistoryEnabled(Optional.of(true));
 
-        PatchDomain patch = new PatchDomain();
-        patch.setPasswordSettings(Optional.of(pwdPolicyPatcher));
+            PatchDomain patch = new PatchDomain();
+            patch.setPasswordSettings(Optional.of(pwdPolicyPatcher));
 
-        Domain toPatch = new Domain();
-        toPatch.setPasswordSettings(new PasswordSettings());
+            Domain toPatch = new Domain();
+            toPatch.setPasswordSettings(new PasswordSettings());
 
-        //apply patch
-        patch.patch(toPatch);
+            //apply patch
+            patch.patch(toPatch);
+        });
     }
 
     @Test
     public void testGetRequiredPermissions() {
-
         PatchDomain patchDomain = new PatchDomain();
         assertEquals(Collections.emptySet(), patchDomain.getRequiredPermissions());
 

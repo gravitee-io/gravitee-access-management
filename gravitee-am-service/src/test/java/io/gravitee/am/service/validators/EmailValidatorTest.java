@@ -16,11 +16,11 @@
 package io.gravitee.am.service.validators;
 
 import io.gravitee.am.service.validators.email.EmailValidatorImpl;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static io.gravitee.am.service.validators.email.EmailValidatorImpl.EMAIL_PATTERN;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.springframework.test.util.AssertionErrors.assertFalse;
+import static org.springframework.test.util.AssertionErrors.assertTrue;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)

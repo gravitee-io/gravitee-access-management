@@ -32,11 +32,11 @@ import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.doReturn;
 
@@ -49,7 +49,7 @@ public class UserActivityServiceTest {
     private UserActivityRepository userActivityRepository;
     private UserActivityService userActivityService;
 
-    @Before
+    @BeforeEach
     public void before() {
         var configuration = new UserActivityConfiguration(true,
                 Algorithm.NONE,

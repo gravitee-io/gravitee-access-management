@@ -31,15 +31,17 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -51,7 +53,7 @@ import static org.mockito.Mockito.when;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class ThemeServiceTest {
 
     public static final String DOMAIN_ID_1 = "DomainID1";
@@ -127,7 +129,7 @@ public class ThemeServiceTest {
         verify(eventService, never()).create(any());
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testUpdate_ThemeWithoutId() {
         final Domain domain = new Domain();
         domain.setId(DOMAIN_ID_1);
@@ -136,8 +138,10 @@ public class ThemeServiceTest {
         updatedTheme.setReferenceId(DOMAIN_ID_1);
         updatedTheme.setReferenceType(ReferenceType.DOMAIN);
 
-        final TestObserver<Theme> test = cut.update(domain, updatedTheme, new DefaultUser()).test();
-        test.awaitDone(10, TimeUnit.SECONDS);
+        assertThrows(NullPointerException.class, () -> {
+            final TestObserver<Theme> test = cut.update(domain, updatedTheme, new DefaultUser()).test();
+            test.awaitDone(10, TimeUnit.SECONDS);
+        });
 
         verify(repository, never()).update(any());
         verify(auditService, never()).report(any());

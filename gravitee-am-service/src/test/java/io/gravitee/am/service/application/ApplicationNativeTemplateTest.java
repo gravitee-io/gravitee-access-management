@@ -22,14 +22,14 @@ import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.service.impl.application.ApplicationNativeTemplate;
-import org.junit.Assert;
-import org.junit.Test;
 
 import java.util.*;
+import org.junit.jupiter.api.Test;
 
 import static io.gravitee.am.common.oauth2.ResponseType.CODE;
 import static io.gravitee.am.common.oauth2.ResponseType.TOKEN;
 import static io.gravitee.am.common.oidc.ResponseType.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -47,17 +47,17 @@ public class ApplicationNativeTemplateTest {
 
         applicationServiceTemplate.handle(application);
 
-        Assert.assertNotNull(application);
-        Assert.assertNotNull(application.getSettings());
-        Assert.assertNotNull(application.getSettings().getOauth());
+        assertNotNull(application);
+        assertNotNull(application.getSettings());
+        assertNotNull(application.getSettings().getOauth());
 
         ApplicationOAuthSettings oAuthSettings = application.getSettings().getOauth();
-        Assert.assertTrue(oAuthSettings.getClientId() != null && !oAuthSettings.getClientId().isEmpty());
-        Assert.assertTrue(oAuthSettings.getClientSecret() != null && !oAuthSettings.getClientSecret().isEmpty());
-        Assert.assertTrue(oAuthSettings.getGrantTypes().containsAll(Arrays.asList(GrantType.AUTHORIZATION_CODE)));
-        Assert.assertTrue(oAuthSettings.isForcePKCE());
-        Assert.assertTrue(oAuthSettings.getTokenEndpointAuthMethod().equals(ClientAuthenticationMethod.NONE));
-        Assert.assertTrue(oAuthSettings.getResponseTypes().containsAll(new ArrayList<>(defaultAuthorizationCodeResponseTypes())));
+        assertTrue(oAuthSettings.getClientId() != null && !oAuthSettings.getClientId().isEmpty());
+        assertTrue(oAuthSettings.getClientSecret() != null && !oAuthSettings.getClientSecret().isEmpty());
+        assertTrue(oAuthSettings.getGrantTypes().containsAll(Arrays.asList(GrantType.AUTHORIZATION_CODE)));
+        assertTrue(oAuthSettings.isForcePKCE());
+        assertTrue(oAuthSettings.getTokenEndpointAuthMethod().equals(ClientAuthenticationMethod.NONE));
+        assertTrue(oAuthSettings.getResponseTypes().containsAll(new ArrayList<>(defaultAuthorizationCodeResponseTypes())));
     }
 
     @Test
@@ -74,17 +74,17 @@ public class ApplicationNativeTemplateTest {
 
         applicationServiceTemplate.handle(application);
 
-        Assert.assertNotNull(application);
-        Assert.assertNotNull(application.getSettings());
-        Assert.assertNotNull(application.getSettings().getOauth());
+        assertNotNull(application);
+        assertNotNull(application.getSettings());
+        assertNotNull(application.getSettings().getOauth());
 
         ApplicationOAuthSettings oAuthSettings1 = application.getSettings().getOauth();
-        Assert.assertTrue(oAuthSettings1.getClientId() != null && !oAuthSettings.getClientId().isEmpty());
-        Assert.assertTrue(oAuthSettings1.getClientSecret() != null && !oAuthSettings.getClientSecret().isEmpty());
-        Assert.assertTrue(oAuthSettings1.getGrantTypes().size() == 3 && oAuthSettings1.getGrantTypes().containsAll(Arrays.asList(GrantType.AUTHORIZATION_CODE, GrantType.IMPLICIT, GrantType.REFRESH_TOKEN)));
+        assertTrue(oAuthSettings1.getClientId() != null && !oAuthSettings.getClientId().isEmpty());
+        assertTrue(oAuthSettings1.getClientSecret() != null && !oAuthSettings.getClientSecret().isEmpty());
+        assertTrue(oAuthSettings1.getGrantTypes().size() == 3 && oAuthSettings1.getGrantTypes().containsAll(Arrays.asList(GrantType.AUTHORIZATION_CODE, GrantType.IMPLICIT, GrantType.REFRESH_TOKEN)));
         List<String> responseTypes = new ArrayList<>(defaultAuthorizationCodeResponseTypes());
         responseTypes.addAll(defaultImplicitResponseTypes());
-        Assert.assertTrue(oAuthSettings1.getResponseTypes().containsAll(responseTypes));
+        assertTrue(oAuthSettings1.getResponseTypes().containsAll(responseTypes));
     }
 
     @Test
@@ -101,18 +101,18 @@ public class ApplicationNativeTemplateTest {
 
         applicationServiceTemplate.changeType(application);
 
-        Assert.assertNotNull(application);
-        Assert.assertNotNull(application.getSettings());
-        Assert.assertNotNull(application.getSettings().getOauth());
+        assertNotNull(application);
+        assertNotNull(application.getSettings());
+        assertNotNull(application.getSettings().getOauth());
 
         ApplicationOAuthSettings oAuthSettings = application.getSettings().getOauth();
-        Assert.assertTrue(oAuthSettings.getClientId() != null && !oAuthSettings.getClientId().isEmpty());
-        Assert.assertTrue(oAuthSettings.getClientSecret() != null && !oAuthSettings.getClientSecret().isEmpty());
-        Assert.assertTrue(!oAuthSettings.getGrantTypes().contains(GrantType.CLIENT_CREDENTIALS));
-        Assert.assertTrue(oAuthSettings.getGrantTypes().containsAll(Arrays.asList(GrantType.AUTHORIZATION_CODE)));
-        Assert.assertTrue(oAuthSettings.isForcePKCE());
-        Assert.assertTrue(oAuthSettings.getTokenEndpointAuthMethod().equals(ClientAuthenticationMethod.NONE));
-        Assert.assertTrue(oAuthSettings.getResponseTypes().containsAll(new ArrayList<>(defaultAuthorizationCodeResponseTypes())));
+        assertTrue(oAuthSettings.getClientId() != null && !oAuthSettings.getClientId().isEmpty());
+        assertTrue(oAuthSettings.getClientSecret() != null && !oAuthSettings.getClientSecret().isEmpty());
+        assertFalse(oAuthSettings.getGrantTypes().contains(GrantType.CLIENT_CREDENTIALS));
+        assertTrue(oAuthSettings.getGrantTypes().containsAll(Arrays.asList(GrantType.AUTHORIZATION_CODE)));
+        assertTrue(oAuthSettings.isForcePKCE());
+        assertTrue(oAuthSettings.getTokenEndpointAuthMethod().equals(ClientAuthenticationMethod.NONE));
+        assertTrue(oAuthSettings.getResponseTypes().containsAll(new ArrayList<>(defaultAuthorizationCodeResponseTypes())));
     }
 
     private static Set<String> defaultAuthorizationCodeResponseTypes() {

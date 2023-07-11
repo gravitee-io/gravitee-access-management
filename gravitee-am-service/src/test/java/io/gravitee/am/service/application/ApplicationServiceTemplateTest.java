@@ -22,11 +22,12 @@ import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.service.impl.application.ApplicationServiceTemplate;
-import org.junit.Assert;
-import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -44,15 +45,15 @@ public class ApplicationServiceTemplateTest {
 
         applicationServiceTemplate.handle(application);
 
-        Assert.assertNotNull(application);
-        Assert.assertNotNull(application.getSettings());
-        Assert.assertNotNull(application.getSettings().getOauth());
+        assertNotNull(application);
+        assertNotNull(application.getSettings());
+        assertNotNull(application.getSettings().getOauth());
 
         ApplicationOAuthSettings oAuthSettings = application.getSettings().getOauth();
-        Assert.assertTrue(oAuthSettings.getClientId() != null && !oAuthSettings.getClientId().isEmpty());
-        Assert.assertTrue(oAuthSettings.getClientSecret() != null && !oAuthSettings.getClientSecret().isEmpty());
-        Assert.assertTrue(oAuthSettings.getGrantTypes().contains(GrantType.CLIENT_CREDENTIALS));
-        Assert.assertTrue(oAuthSettings.getResponseTypes().isEmpty());
+        assertTrue(oAuthSettings.getClientId() != null && !oAuthSettings.getClientId().isEmpty());
+        assertTrue(oAuthSettings.getClientSecret() != null && !oAuthSettings.getClientSecret().isEmpty());
+        assertTrue(oAuthSettings.getGrantTypes().contains(GrantType.CLIENT_CREDENTIALS));
+        assertTrue(oAuthSettings.getResponseTypes().isEmpty());
     }
 
     @Test
@@ -69,14 +70,14 @@ public class ApplicationServiceTemplateTest {
 
         applicationServiceTemplate.handle(application);
 
-        Assert.assertNotNull(application);
-        Assert.assertNotNull(application.getSettings());
-        Assert.assertNotNull(application.getSettings().getOauth());
+        assertNotNull(application);
+        assertNotNull(application.getSettings());
+        assertNotNull(application.getSettings().getOauth());
 
         ApplicationOAuthSettings oAuthSettings1 = application.getSettings().getOauth();
-        Assert.assertTrue(oAuthSettings1.getClientId() != null && !oAuthSettings.getClientId().isEmpty());
-        Assert.assertTrue(oAuthSettings1.getClientSecret() != null && !oAuthSettings.getClientSecret().isEmpty());
-        Assert.assertTrue(oAuthSettings1.getGrantTypes().size() == 1 && oAuthSettings1.getGrantTypes().contains(GrantType.PASSWORD));
+        assertTrue(oAuthSettings1.getClientId() != null && !oAuthSettings.getClientId().isEmpty());
+        assertTrue(oAuthSettings1.getClientSecret() != null && !oAuthSettings.getClientSecret().isEmpty());
+        assertTrue(oAuthSettings1.getGrantTypes().size() == 1 && oAuthSettings1.getGrantTypes().contains(GrantType.PASSWORD));
     }
 
     @Test
@@ -94,15 +95,15 @@ public class ApplicationServiceTemplateTest {
 
         applicationServiceTemplate.changeType(application);
 
-        Assert.assertNotNull(application);
-        Assert.assertNotNull(application.getSettings());
-        Assert.assertNotNull(application.getSettings().getOauth());
+        assertNotNull(application);
+        assertNotNull(application.getSettings());
+        assertNotNull(application.getSettings().getOauth());
 
         ApplicationOAuthSettings oAuthSettings = application.getSettings().getOauth();
-        Assert.assertTrue(oAuthSettings.getClientId() != null && !oAuthSettings.getClientId().isEmpty());
-        Assert.assertTrue(oAuthSettings.getClientSecret() != null && !oAuthSettings.getClientSecret().isEmpty());
-        Assert.assertTrue((oAuthSettings.getGrantTypes().size() == 1 && oAuthSettings.getGrantTypes().contains(GrantType.CLIENT_CREDENTIALS)));
-        Assert.assertTrue(oAuthSettings.getClientType().equals(ClientType.CONFIDENTIAL));
-        Assert.assertTrue(oAuthSettings.getResponseTypes().isEmpty());
+        assertTrue(oAuthSettings.getClientId() != null && !oAuthSettings.getClientId().isEmpty());
+        assertTrue(oAuthSettings.getClientSecret() != null && !oAuthSettings.getClientSecret().isEmpty());
+        assertTrue((oAuthSettings.getGrantTypes().size() == 1 && oAuthSettings.getGrantTypes().contains(GrantType.CLIENT_CREDENTIALS)));
+        assertEquals(ClientType.CONFIDENTIAL, oAuthSettings.getClientType());
+        assertTrue(oAuthSettings.getResponseTypes().isEmpty());
     }
 }

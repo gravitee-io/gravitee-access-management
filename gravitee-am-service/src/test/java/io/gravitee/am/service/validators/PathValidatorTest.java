@@ -18,8 +18,8 @@ package io.gravitee.am.service.validators;
 import io.gravitee.am.service.exception.InvalidPathException;
 import io.gravitee.am.service.validators.path.PathValidator;
 import io.gravitee.am.service.validators.path.PathValidatorImpl;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -29,7 +29,7 @@ public class PathValidatorTest {
 
     private PathValidator pathValidator;
 
-    @Before
+    @BeforeEach
     public void before(){
         pathValidator = new PathValidatorImpl();
     }

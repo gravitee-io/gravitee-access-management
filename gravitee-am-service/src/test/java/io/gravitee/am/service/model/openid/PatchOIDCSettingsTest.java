@@ -18,19 +18,19 @@ package io.gravitee.am.service.model.openid;
 import io.gravitee.am.model.oidc.CIBASettings;
 import io.gravitee.am.model.oidc.ClientRegistrationSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
-
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import java.util.Optional;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
+
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
-@RunWith(JUnit4.class)
+@ExtendWith(MockitoExtension.class)
 public class PatchOIDCSettingsTest {
 
     @Test
@@ -43,7 +43,7 @@ public class PatchOIDCSettingsTest {
 
         assertNotNull(result);
         assertNotNull(result.getClientRegistrationSettings());
-        assertFalse("should be disabled by default", result.getClientRegistrationSettings().isDynamicClientRegistrationEnabled());
+        assertFalse(result.getClientRegistrationSettings().isDynamicClientRegistrationEnabled());
     }
 
     @Test
@@ -59,14 +59,14 @@ public class PatchOIDCSettingsTest {
         final CIBASettings cibaSettings = new CIBASettings();
         cibaSettings.setEnabled(false);
         settings.setCibaSettings(cibaSettings);
-        assertFalse("CIBA settings shall be false before update", settings.getCibaSettings().isEnabled());
+        assertFalse(settings.getCibaSettings().isEnabled());
 
         //apply patch on null object
         OIDCSettings result = patchOIDCSettings.patch(settings);
 
         assertNotNull(result);
         assertNotNull(result.getCibaSettings());
-        assertTrue("CIBA settings shall be true after update", result.getCibaSettings().isEnabled());
+        assertTrue(result.getCibaSettings().isEnabled());
     }
 
     @Test
@@ -80,7 +80,7 @@ public class PatchOIDCSettingsTest {
 
         assertNotNull(result);
         assertNotNull(result.getClientRegistrationSettings());
-        assertFalse("should be disabled by default", result.getClientRegistrationSettings().isDynamicClientRegistrationEnabled());
+        assertFalse(result.getClientRegistrationSettings().isDynamicClientRegistrationEnabled());
     }
 
     @Test
@@ -97,9 +97,9 @@ public class PatchOIDCSettingsTest {
 
         assertNotNull(result);
         assertNotNull(result.getClientRegistrationSettings());
-        assertTrue("should be enabled",result.getClientRegistrationSettings().isDynamicClientRegistrationEnabled());
-        assertTrue("should be enabled",result.getClientRegistrationSettings().isAllowLocalhostRedirectUri());
-        assertFalse("should be disabled by default", result.getClientRegistrationSettings().isOpenDynamicClientRegistrationEnabled());
+        assertTrue(result.getClientRegistrationSettings().isDynamicClientRegistrationEnabled());
+        assertTrue(result.getClientRegistrationSettings().isAllowLocalhostRedirectUri());
+        assertFalse(result.getClientRegistrationSettings().isOpenDynamicClientRegistrationEnabled());
     }
 
     @Test

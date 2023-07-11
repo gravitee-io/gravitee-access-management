@@ -33,18 +33,18 @@ import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import io.vertx.core.json.JsonObject;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -53,7 +53,7 @@ import static org.mockito.Mockito.*;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class ResourceServiceTest {
 
     @Mock
@@ -80,7 +80,7 @@ public class ResourceServiceTest {
     private static final String RESOURCE_ID = "resourceId";
     private static final String POLICY_ID = "policyId";
 
-    @Before
+    @BeforeEach
     public void setUp() {
         when(repository.findByDomainAndClientAndUser(DOMAIN_ID, CLIENT_ID, USER_ID)).thenReturn(Flowable.just(new Resource().setId(RESOURCE_ID)));
         when(repository.findByDomainAndClientAndUserAndResource(DOMAIN_ID, CLIENT_ID, USER_ID, RESOURCE_ID)).thenReturn(Maybe.just(new Resource().setId(RESOURCE_ID)));
@@ -160,7 +160,7 @@ public class ResourceServiceTest {
         ArgumentCaptor<Resource> rsCaptor = ArgumentCaptor.forClass(Resource.class);
         verify(repository, times(1)).create(rsCaptor.capture());
         verify(accessPolicyRepository, times(1)).create(any());
-        Assert.assertTrue(this.assertResourceValues(rsCaptor.getValue()));
+        assertTrue(this.assertResourceValues(rsCaptor.getValue()));
     }
 
     @Test
@@ -249,7 +249,7 @@ public class ResourceServiceTest {
         testObserver.assertComplete().assertNoErrors();
         ArgumentCaptor<Resource> rsCaptor = ArgumentCaptor.forClass(Resource.class);
         verify(repository, times(1)).update(rsCaptor.capture());
-        Assert.assertTrue(rsCaptor.getValue().getUpdatedAt().after(now));
+        assertTrue(rsCaptor.getValue().getUpdatedAt().after(now));
     }
 
     @Test

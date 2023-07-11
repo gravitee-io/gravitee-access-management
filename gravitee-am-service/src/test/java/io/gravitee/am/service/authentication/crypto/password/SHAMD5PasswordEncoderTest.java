@@ -15,10 +15,12 @@
  */
 package io.gravitee.am.service.authentication.crypto.password;
 
-import org.junit.Assert;
-import org.junit.Test;
 
 import java.security.SecureRandom;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @@author Eric LELEU (eric.leleu at graviteesource.com)
@@ -31,13 +33,13 @@ public class SHAMD5PasswordEncoderTest {
     @Test
     public void testPassword_match_not_equals() {
         String encodedPassword = messageDigestPasswordEncoder.encode("myPassword");
-        Assert.assertFalse(messageDigestPasswordEncoder.matches("wrongPassword", encodedPassword));
+        assertFalse(messageDigestPasswordEncoder.matches("wrongPassword", encodedPassword));
     }
 
     @Test
     public void testPassword_match_equals() {
         String encodedPassword = messageDigestPasswordEncoder.encode("myPassword");
-        Assert.assertTrue(messageDigestPasswordEncoder.matches("myPassword", encodedPassword));
+        assertTrue(messageDigestPasswordEncoder.matches("myPassword", encodedPassword));
     }
 
     @Test
@@ -46,7 +48,7 @@ public class SHAMD5PasswordEncoderTest {
         SecureRandom secureRandom = new SecureRandom();
         secureRandom.nextBytes(salt);
         String encodedPassword = messageDigestPasswordEncoder.encode("myPassword", salt);
-        Assert.assertFalse(messageDigestPasswordEncoder.matches("wrongPassword", encodedPassword, salt));
+        assertFalse(messageDigestPasswordEncoder.matches("wrongPassword", encodedPassword, salt));
     }
 
     @Test
@@ -55,7 +57,7 @@ public class SHAMD5PasswordEncoderTest {
         SecureRandom secureRandom = new SecureRandom();
         secureRandom.nextBytes(salt);
         String encodedPassword = messageDigestPasswordEncoder.encode("myPassword", salt);
-        Assert.assertTrue(messageDigestPasswordEncoder.matches("myPassword", encodedPassword, salt));
+        assertTrue(messageDigestPasswordEncoder.matches("myPassword", encodedPassword, salt));
     }
 
     @Test
@@ -63,6 +65,6 @@ public class SHAMD5PasswordEncoderTest {
         String b64EncodedSalt = "Da11RaXXUaGQ39oI/f8WyXxYJ3AWDg9UECmURKKQ1vE=";
         String b64EncodedPassword = "M/sMmBh2AH+S5jkaMvhab/akUQFGHwxG+Qi7AiC9kIU=";
         String rawPassword = "Test123!";
-        Assert.assertTrue(messageDigestPasswordEncoder.matches(rawPassword, b64EncodedPassword, b64EncodedSalt));
+        assertTrue(messageDigestPasswordEncoder.matches(rawPassword, b64EncodedPassword, b64EncodedSalt));
     }
 }

@@ -19,15 +19,14 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorChannel;
 import io.gravitee.am.model.scim.Attribute;
-import org.junit.Assume;
-import org.junit.Test;
 
 import java.util.Arrays;
-import java.util.Collections;
+import org.junit.jupiter.api.Test;
 
 import static java.util.Collections.singletonList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -38,7 +37,7 @@ public class UserFactorUpdaterTest {
     @Test
     public void shouldNotUpdateFactors_NoChannel () {
         EnrolledFactor factor = new EnrolledFactor();
-        Assume.assumeTrue(factor.getChannel() == null);
+        assumeTrue(factor.getChannel() == null);
 
         User existingUser = new User();
         existingUser.setEmail("email@domain.org");
@@ -80,7 +79,7 @@ public class UserFactorUpdaterTest {
 
         UserFactorUpdater.updateFactors(singletonList(factor), existingUser, updatedUser);
 
-        assertEquals("Email should not be updated", existingUser.getEmail(), factor.getChannel().getTarget());
+        assertEquals(existingUser.getEmail(), factor.getChannel().getTarget());
     }
 
     @Test

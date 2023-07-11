@@ -17,19 +17,19 @@ package io.gravitee.am.repository.management;
 
 import io.gravitee.am.repository.RepositoriesTestInitializer;
 import io.gravitee.am.repository.management.test.config.ManagementTestConfigurationLoader;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@RunWith(SpringJUnit4ClassRunner.class)
+@ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = {ManagementTestConfigurationLoader.class},
         loader = AnnotationConfigContextLoader.class)
 public abstract class AbstractManagementTest {
@@ -37,14 +37,14 @@ public abstract class AbstractManagementTest {
     @Autowired
     protected RepositoriesTestInitializer repositoriesInitializers;
 
-    @Before
+    @BeforeEach
     public void init() throws Exception {
         if (repositoriesInitializers != null) {
             repositoriesInitializers.before(this.getClass());
         }
     }
 
-    @After
+    @AfterEach
     public void clear() throws Exception {
         if (repositoriesInitializers != null) {
             repositoriesInitializers.after(this.getClass());

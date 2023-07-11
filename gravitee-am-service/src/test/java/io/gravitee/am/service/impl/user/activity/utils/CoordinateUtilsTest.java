@@ -17,12 +17,10 @@
 package io.gravitee.am.service.impl.user.activity.utils;
 
 import java.util.Map;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static io.gravitee.am.service.impl.user.activity.utils.CoordinateUtils.computeCoordinate;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)

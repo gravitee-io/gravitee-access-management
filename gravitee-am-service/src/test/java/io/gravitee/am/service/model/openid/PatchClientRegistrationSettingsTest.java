@@ -16,20 +16,18 @@
 package io.gravitee.am.service.model.openid;
 
 import io.gravitee.am.model.oidc.ClientRegistrationSettings;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 import java.util.Optional;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
-@RunWith(JUnit4.class)
 public class PatchClientRegistrationSettingsTest {
 
     @Test
@@ -37,11 +35,11 @@ public class PatchClientRegistrationSettingsTest {
         PatchClientRegistrationSettings emptySettings = new PatchClientRegistrationSettings();
         ClientRegistrationSettings result = emptySettings.patch(null);
 
-        assertFalse("should be disabled by default", result.isDynamicClientRegistrationEnabled());
-        assertFalse("should be disabled by default", result.isOpenDynamicClientRegistrationEnabled());
-        assertFalse("should be disabled by default", result.isAllowLocalhostRedirectUri());
-        assertFalse("should be disabled by default", result.isAllowLocalhostRedirectUri());
-        assertFalse("should be disabled by default", result.isAllowWildCardRedirectUri());
+        assertFalse(result.isDynamicClientRegistrationEnabled());
+        assertFalse(result.isOpenDynamicClientRegistrationEnabled());
+        assertFalse(result.isAllowLocalhostRedirectUri());
+        assertFalse(result.isAllowLocalhostRedirectUri());
+        assertFalse(result.isAllowWildCardRedirectUri());
     }
 
     @Test
@@ -57,8 +55,8 @@ public class PatchClientRegistrationSettingsTest {
 
         ClientRegistrationSettings result = patcher.patch(toPatch);
 
-        assertFalse("should be disabled by default", result.isDynamicClientRegistrationEnabled());
-        assertFalse("should be disabled by default", result.isOpenDynamicClientRegistrationEnabled());
-        assertTrue("should be disabled by default", result.isAllowLocalhostRedirectUri());
+        assertFalse(result.isDynamicClientRegistrationEnabled());
+        assertFalse(result.isOpenDynamicClientRegistrationEnabled());
+        assertTrue(result.isAllowLocalhostRedirectUri());
     }
 }

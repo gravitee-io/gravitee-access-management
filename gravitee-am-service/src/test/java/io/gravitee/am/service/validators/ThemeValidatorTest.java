@@ -20,10 +20,10 @@ import io.gravitee.am.service.exception.ThemeInvalidException;
 import io.gravitee.am.service.validators.theme.ThemeValidator;
 import io.gravitee.am.service.validators.theme.impl.ThemeValidatorImpl;
 import io.reactivex.rxjava3.observers.TestObserver;
-import org.junit.Before;
-import org.junit.Test;
 
 import java.util.concurrent.TimeUnit;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -33,7 +33,7 @@ public class ThemeValidatorTest {
 
     private ThemeValidator themeValidator;
 
-    @Before
+    @BeforeEach
     public void before(){
         themeValidator = new ThemeValidatorImpl();
     }

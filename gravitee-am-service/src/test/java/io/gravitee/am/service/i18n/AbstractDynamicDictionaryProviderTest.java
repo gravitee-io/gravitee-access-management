@@ -16,13 +16,14 @@
 package io.gravitee.am.service.i18n;
 
 import io.gravitee.am.model.I18nDictionary;
-import org.junit.Test;
 
 import java.util.Collections;
 import java.util.Locale;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)

@@ -15,17 +15,17 @@
  */
 package io.gravitee.am.service.i18n;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.thymeleaf.context.ITemplateContext;
 
 import java.util.Locale;
 import java.util.Properties;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -33,7 +33,7 @@ import static org.mockito.Mockito.when;
  * @author Ashraful Hasan (ashraful.hasan at graviteesource.com)
  * @author GraviteeSource Team
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class GraviteeMessageResolverTest {
     @Mock
     DynamicDictionaryProvider domainBasedDictionaryProvider;
@@ -50,7 +50,7 @@ public class GraviteeMessageResolverTest {
 
     private GraviteeMessageResolver messageResolver;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         Properties properties = new Properties();
         properties.setProperty(MSG_WITHOUT_PARAM, "hello world");
@@ -72,14 +72,14 @@ public class GraviteeMessageResolverTest {
     public void shouldResolveMessage_withoutParameter() {
         String message = messageResolver.resolveMessage(context, null, MSG_WITHOUT_PARAM, null);
 
-        assertEquals("hello world",message);
+        assertEquals("hello world", message);
     }
 
     @Test
     public void shouldResolveMessage_with_One_Parameter_noParamValue() {
         String message = messageResolver.resolveMessage(context, null, MSG_WITH_PARAM, null);
 
-        assertEquals("hello user: {0}",message);
+        assertEquals("hello user: {0}", message);
     }
 
     @Test
@@ -87,7 +87,7 @@ public class GraviteeMessageResolverTest {
         Object[] msgParams = {"Bob"};
         String message = messageResolver.resolveMessage(context, null, MSG_WITH_PARAM, msgParams);
 
-        assertEquals("hello user: Bob",message);
+        assertEquals("hello user: Bob", message);
     }
 
     @Test
@@ -95,6 +95,6 @@ public class GraviteeMessageResolverTest {
         Object[] msgParams = {"Alice", "Bob"};
         String message = messageResolver.resolveMessage(context, null, MSG_WITH_MULTI_PARAM, msgParams);
 
-        assertEquals("Don't have an account user: Alice ? Use temporary name: Bob.",message);
+        assertEquals("Don't have an account user: Alice ? Use temporary name: Bob.", message);
     }
 }

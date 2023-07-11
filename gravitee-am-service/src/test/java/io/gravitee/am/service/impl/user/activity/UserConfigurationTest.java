@@ -20,10 +20,10 @@ import io.gravitee.am.service.impl.user.activity.configuration.UserActivityConfi
 import io.gravitee.am.service.impl.user.activity.configuration.UserActivityConfiguration.Algorithm;
 import java.time.temporal.ChronoUnit;
 import java.util.function.Supplier;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)

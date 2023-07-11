@@ -16,19 +16,16 @@
 package io.gravitee.am.service.i18n;
 
 import io.gravitee.am.model.I18nDictionary;
-import org.junit.Test;
-import org.springframework.core.task.support.ExecutorServiceAdapter;
 
 import java.util.Collections;
 import java.util.Locale;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
+
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
