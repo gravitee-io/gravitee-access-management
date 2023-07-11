@@ -28,7 +28,6 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.IdentityProviderService;
-import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.common.http.MediaType;
@@ -154,6 +153,7 @@ public class UserResource extends AbstractResource {
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_USER, Acl.UPDATE)
                 .andThen(organizationUserService.updateUsername(ReferenceType.ORGANIZATION, organizationId, userId, username.getUsername(), authenticatedUser))
+                .map(UserEntity::new)
                 .subscribe(response::resume, response::resume);
     }
 
