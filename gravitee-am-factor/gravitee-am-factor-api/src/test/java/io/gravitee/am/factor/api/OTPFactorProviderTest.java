@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *         http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,11 +21,16 @@ import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.observers.TestObserver;
-import org.junit.Assert;
-import org.junit.Test;
 
 import java.time.Instant;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -39,89 +44,65 @@ public class OTPFactorProviderTest {
     @Test
     public void shouldUseVariableFactorSecurity() {
         OTPFactorProvider otpFactorProvider = new DummyOTPFactorProvider();
-        Assert.assertTrue(otpFactorProvider.useVariableFactorSecurity());
+        assertTrue(otpFactorProvider.useVariableFactorSecurity());
     }
+
     @Test
     public void shouldChangeVariableFactorSecurity() {
-        EnrolledFactor enrolledFactor = new EnrolledFactor();
-        EnrolledFactorSecurity enrolledFactorSecurity = new EnrolledFactorSecurity();
-        enrolledFactorSecurity.putData(FactorDataKeys.KEY_MOVING_FACTOR, 1);
-        enrolledFactorSecurity.putData(FactorDataKeys.KEY_EXPIRE_AT, Instant.now().toEpochMilli());
-        enrolledFactor.setSecurity(enrolledFactorSecurity);
+        EnrolledFactor enrolledFactor = getEnrolledFactor(Instant.now().toEpochMilli(), null, 1);
         OTPFactorProvider otpFactorProvider = new DummyOTPFactorProvider();
         TestObserver<EnrolledFactor> testObserver = otpFactorProvider.changeVariableFactorSecurity(enrolledFactor).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         testObserver.assertComplete();
         testObserver.assertValue(eL -> eL.getSecurity().getData(FactorDataKeys.KEY_EXPIRE_AT, Number.class) == null);
-        testObserver.assertValue(eL -> eL.getSecurity().getData(FactorDataKeys.KEY_MOVING_FACTOR, Number.class).longValue() == 2l);
+        testObserver.assertValue(eL -> eL.getSecurity().getData(FactorDataKeys.KEY_MOVING_FACTOR, Number.class).longValue() == 2L);
     }
 
     @Test
     public void shouldVerifyOTPCode_nominalCase() {
-        EnrolledFactor enrolledFactor = new EnrolledFactor();
-        EnrolledFactorSecurity enrolledFactorSecurity = new EnrolledFactorSecurity();
-        enrolledFactorSecurity.setValue(SHARED_SECRET);
-        enrolledFactorSecurity.putData(FactorDataKeys.KEY_MOVING_FACTOR, 0);
-        enrolledFactorSecurity.putData(FactorDataKeys.KEY_EXPIRE_AT, Instant.now().plusSeconds(60).toEpochMilli());
-        enrolledFactor.setSecurity(enrolledFactorSecurity);
-
+        final long expirationTime = Instant.now().plusSeconds(60).toEpochMilli();
+        EnrolledFactor enrolledFactor = getEnrolledFactor(expirationTime, SHARED_SECRET, 0);
         OTPFactorProvider otpFactorProvider = new DummyOTPFactorProvider();
-        TestObserver testObserver = otpFactorProvider.verifyOTP(enrolledFactor, 6, CODE).test();
+
+        var testObserver = otpFactorProvider.verifyOTP(enrolledFactor, 6, CODE).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         testObserver.assertComplete();
     }
 
-    @Test
-    public void shouldNotVerifyOTPCode_wrongCode() {
-        EnrolledFactor enrolledFactor = new EnrolledFactor();
-        EnrolledFactorSecurity enrolledFactorSecurity = new EnrolledFactorSecurity();
-        enrolledFactorSecurity.setValue(SHARED_SECRET);
-        enrolledFactorSecurity.putData(FactorDataKeys.KEY_MOVING_FACTOR, 0);
-        enrolledFactorSecurity.putData(FactorDataKeys.KEY_EXPIRE_AT, Instant.now().plusSeconds(60).toEpochMilli());
-        enrolledFactor.setSecurity(enrolledFactorSecurity);
+    @ParameterizedTest(name = "Must not verify code")
+    @MethodSource("params_that_must_not_verify_code")
+    public void must_not_verify_code(long expirationTime, String code, String secret, Class<? extends Throwable> expected) {
+        EnrolledFactor enrolledFactor = getEnrolledFactor(expirationTime, secret, 0);
 
         OTPFactorProvider otpFactorProvider = new DummyOTPFactorProvider();
-        TestObserver testObserver = otpFactorProvider.verifyOTP(enrolledFactor, 6, "123456").test();
+        var testObserver = otpFactorProvider.verifyOTP(enrolledFactor, 6, code).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
-        testObserver.assertError(InvalidCodeException.class);
+        testObserver.assertError(expected);
         testObserver.assertNotComplete();
     }
 
-    @Test
-    public void shouldNotVerifyOTPCode_expiredCode() {
-        EnrolledFactor enrolledFactor = new EnrolledFactor();
+    private static EnrolledFactor getEnrolledFactor(long expirationTime, String secret, int keyMovingFactor) {
+        var enrolledFactor = new EnrolledFactor();
         EnrolledFactorSecurity enrolledFactorSecurity = new EnrolledFactorSecurity();
-        enrolledFactorSecurity.setValue(SHARED_SECRET);
-        enrolledFactorSecurity.putData(FactorDataKeys.KEY_MOVING_FACTOR, 0);
-        enrolledFactorSecurity.putData(FactorDataKeys.KEY_EXPIRE_AT, Instant.now().minusSeconds(60).toEpochMilli());
+        enrolledFactorSecurity.setValue(secret);
+        enrolledFactorSecurity.putData(FactorDataKeys.KEY_MOVING_FACTOR, keyMovingFactor);
+        enrolledFactorSecurity.putData(FactorDataKeys.KEY_EXPIRE_AT, expirationTime);
         enrolledFactor.setSecurity(enrolledFactorSecurity);
-
-        OTPFactorProvider otpFactorProvider = new DummyOTPFactorProvider();
-        TestObserver testObserver = otpFactorProvider.verifyOTP(enrolledFactor, 6, CODE).test();
-        testObserver.awaitDone(10, TimeUnit.SECONDS);
-        testObserver.assertError(InvalidCodeException.class);
-        testObserver.assertNotComplete();
+        return enrolledFactor;
     }
 
-    @Test
-    public void shouldNotVerifyOTPCode_wrongSecret() {
-        EnrolledFactor enrolledFactor = new EnrolledFactor();
-        EnrolledFactorSecurity enrolledFactorSecurity = new EnrolledFactorSecurity();
-        enrolledFactorSecurity.setValue("wrong-secret");
-        enrolledFactorSecurity.putData(FactorDataKeys.KEY_MOVING_FACTOR, 0);
-        enrolledFactorSecurity.putData(FactorDataKeys.KEY_EXPIRE_AT, Instant.now().plusSeconds(60).toEpochMilli());
-        enrolledFactor.setSecurity(enrolledFactorSecurity);
-
-        OTPFactorProvider otpFactorProvider = new DummyOTPFactorProvider();
-        TestObserver testObserver = otpFactorProvider.verifyOTP(enrolledFactor, 6, CODE).test();
-        testObserver.awaitDone(10, TimeUnit.SECONDS);
-        testObserver.assertError(InvalidCodeException.class);
-        testObserver.assertNotComplete();
+    private static Stream<Arguments> params_that_must_not_verify_code() {
+        final Instant now = Instant.now();
+        return Stream.of(
+                Arguments.of(now.plusSeconds(60).toEpochMilli(), "123456", SHARED_SECRET, InvalidCodeException.class),
+                Arguments.of(now.minusSeconds(60).toEpochMilli(), CODE, SHARED_SECRET, InvalidCodeException.class),
+                Arguments.of(now.plusSeconds(60).toEpochMilli(), CODE, "wrong-secret",InvalidCodeException.class)
+        );
     }
 
-    private class DummyOTPFactorProvider extends OTPFactorProvider {
+    private static class DummyOTPFactorProvider extends OTPFactorProvider {
 
         @Override
         public Completable verify(FactorContext context) {

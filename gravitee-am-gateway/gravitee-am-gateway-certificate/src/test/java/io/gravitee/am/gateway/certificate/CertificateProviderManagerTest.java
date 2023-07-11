@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *         http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,19 +18,23 @@ package io.gravitee.am.gateway.certificate;
 import io.gravitee.am.certificate.api.CertificateMetadata;
 import io.gravitee.am.certificate.api.DefaultKey;
 import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.gateway.certificate.dummy.DefaultProvider;
+import io.gravitee.am.gateway.certificate.dummy.KeyPairProvider;
+import io.gravitee.am.gateway.certificate.dummy.NoneProvider;
 import io.gravitee.am.gateway.certificate.impl.CertificateProviderManagerImpl;
-import io.gravitee.am.model.jose.JWK;
-import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.core.Single;
-import org.junit.Test;
 
+import java.security.*;
+import java.security.spec.*;
+import java.util.stream.Stream;
 import javax.crypto.spec.SecretKeySpec;
-import java.security.Key;
 import java.util.Collections;
-import java.util.Date;
-import java.util.Optional;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
@@ -43,87 +47,56 @@ public class CertificateProviderManagerTest {
     private static final String signingKeyId = "default-gravitee-AM-key";
     private static final String defaultDigestAlgorithm = "SHA-256";
 
-    private CertificateProviderManager certificateProviderManager = new CertificateProviderManagerImpl();
+    private static final CertificateProviderManager certificateProviderManager = new CertificateProviderManagerImpl();
+    private static final String NONE_SIGNED_JWT = "eyJhbGciOiJub25lIn0.eyJzdWIiOiJzdWIiLCJpc3MiOiJpc3MifQ.";
+    private static final String DEFAULT_SIGNED_JWT = "eyJraWQiOiJkZWZhdWx0LWdyYXZpdGVlLUFNLWtleSIsInR5cCI6IkpXVCIsImFsZyI6IkhTMjU2In0.eyJzdWIiOiJzdWIiLCJpc3MiOiJpc3MifQ.Ti366cJSMVSnvFW1wHYFMdc63zTdIpa42O6AOTWyGKk";
+    private static final String KEYPAIR_SIGNED_JWT = "eyJraWQiOiJkZWZhdWx0LWdyYXZpdGVlLUFNLWtleSIsInR5cCI6IkpXVCIsImFsZyI6IkVTMjU2In0.";
 
-    @Test
-    public void noneAlgorithmCertificateProvider_nominalCase() {
-        CertificateProvider certificateProvider = certificateProviderManager.create(noneProvider());
+
+    @ParameterizedTest(name = "Must sign jwt with [{1}]")
+    @MethodSource("params_that_must_sign_jwt")
+    public void must_sign_jwt(JWT jwt, io.gravitee.am.certificate.api.CertificateProvider certificateProvider, String expected) {
+        CertificateProvider provider = certificateProviderManager.create(certificateProvider);
+
+        final String signed = provider.getJwtBuilder().sign(jwt);
+        assertTrue(signed.contains(expected));
+    }
+
+    private static Stream<Arguments> params_that_must_sign_jwt() throws InvalidAlgorithmParameterException, NoSuchAlgorithmException, InvalidKeySpecException {
         JWT jwt = new JWT();
         jwt.setIss("iss");
         jwt.setSub("sub");
-
-        assertEquals(
-                "non matching jwt with none algorithm",
-                "eyJhbGciOiJub25lIn0.eyJzdWIiOiJzdWIiLCJpc3MiOiJpc3MifQ.", certificateProvider.getJwtBuilder().sign(jwt)
+        return Stream.of(
+                Arguments.of(jwt, noneProvider(), NONE_SIGNED_JWT),
+                Arguments.of(jwt, defaultProvider(), DEFAULT_SIGNED_JWT),
+                Arguments.of(jwt, keyPairProvider(), KEYPAIR_SIGNED_JWT)
         );
     }
 
-    @Test
-    public void noneAlgorithmCertificateProvider_accessToProviderProperty() {
-        CertificateProvider certificateProvider = certificateProviderManager.create(noneProvider());
-        assertEquals("none", certificateProvider.getProvider().signatureAlgorithm());
-        assertEquals("none", certificateProvider.getProvider().certificateMetadata().getMetadata().get("digestAlgorithmName"));
+    @ParameterizedTest(name = "Must access provider properties of [{1}]")
+    @MethodSource("params_that_must_access_to_provider_properties")
+    public void must_access_to_provider_properties(io.gravitee.am.certificate.api.CertificateProvider certificateProvider, String signature, String digestAlg) {
+        CertificateProvider provider = certificateProviderManager.create(certificateProvider);
+
+        assertEquals(signature, provider.getProvider().signatureAlgorithm());
+        assertEquals(digestAlg, provider.getProvider().certificateMetadata().getMetadata().get("digestAlgorithmName"));
     }
 
-    @Test
-    public void defaultCertificateProvider_nominalCase() {
-        CertificateProvider certificateProvider = certificateProviderManager.create(defaultProvider());
-
-        JWT jwt = new JWT();
-        jwt.setIss("iss");
-        jwt.setSub("sub");
-
-        assertEquals(
-                "non matching jwt with default certificateProvider",
-                "eyJraWQiOiJkZWZhdWx0LWdyYXZpdGVlLUFNLWtleSIsInR5cCI6IkpXVCIsImFsZyI6IkhTMjU2In0.eyJzdWIiOiJzdWIiLCJpc3MiOiJpc3MifQ.Ti366cJSMVSnvFW1wHYFMdc63zTdIpa42O6AOTWyGKk",
-                certificateProvider.getJwtBuilder().sign(jwt)
+    private static Stream<Arguments> params_that_must_access_to_provider_properties() throws InvalidAlgorithmParameterException, NoSuchAlgorithmException, InvalidKeySpecException {
+        return Stream.of(
+                Arguments.of(noneProvider(), "none", "none"),
+                Arguments.of(defaultProvider(), "HS256", "SHA-256"),
+                Arguments.of(keyPairProvider(), "ES256", "SunEC")
         );
     }
 
-    private io.gravitee.am.certificate.api.CertificateProvider noneProvider() {
+    private static io.gravitee.am.certificate.api.CertificateProvider noneProvider() {
         CertificateMetadata certificateMetadata = new CertificateMetadata();
         certificateMetadata.setMetadata(Collections.singletonMap(CertificateMetadata.DIGEST_ALGORITHM_NAME, "none"));
-
-        io.gravitee.am.certificate.api.CertificateProvider noneProvider = new io.gravitee.am.certificate.api.CertificateProvider() {
-            @Override
-            public Optional<Date> getExpirationDate() {
-                return Optional.empty();
-            }
-
-            @Override
-            public Flowable<JWK> privateKey() {
-                throw new UnsupportedOperationException("No private key for \"none\" algorithm");
-            }
-
-            @Override
-            public Single<io.gravitee.am.certificate.api.Key> key() {
-                throw new UnsupportedOperationException("No key for \"none\" algorithm");
-            }
-
-            @Override
-            public Single<String> publicKey() {
-                throw new UnsupportedOperationException("No public key for \"none\" algorithm");
-            }
-
-            @Override
-            public Flowable<JWK> keys() {
-                throw new UnsupportedOperationException("No keys for \"none\" algorithm");
-            }
-
-            @Override
-            public String signatureAlgorithm() {
-                return "none";
-            }
-
-            @Override
-            public CertificateMetadata certificateMetadata() {
-                return certificateMetadata;
-            }
-        };
-        return noneProvider;
+        return new NoneProvider(certificateMetadata);
     }
 
-    private io.gravitee.am.certificate.api.CertificateProvider defaultProvider() {
+    private static io.gravitee.am.certificate.api.CertificateProvider defaultProvider() {
         // create default signing HMAC key
         Key key = new SecretKeySpec(signingKeySecret.getBytes(), "HmacSHA256");
         io.gravitee.am.certificate.api.Key certificateKey = new DefaultKey(signingKeyId, key);
@@ -131,42 +104,19 @@ public class CertificateProviderManagerTest {
         CertificateMetadata certificateMetadata = new CertificateMetadata();
         certificateMetadata.setMetadata(Collections.singletonMap(CertificateMetadata.DIGEST_ALGORITHM_NAME, defaultDigestAlgorithm));
 
-        io.gravitee.am.certificate.api.CertificateProvider defaultProvider = new io.gravitee.am.certificate.api.CertificateProvider() {
-            @Override
-            public Optional<Date> getExpirationDate() {
-                return Optional.empty();
-            }
+        return new DefaultProvider(certificateMetadata, certificateKey);
+    }
 
-            @Override
-            public Flowable<JWK> privateKey() {
-               return null;
-            }
+    private static io.gravitee.am.certificate.api.CertificateProvider keyPairProvider() throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeySpecException {
+        // create default signing HMAC key
+        KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC");
+        kpg.initialize(new ECGenParameterSpec("secp256r1"));
 
-            @Override
-            public Single<io.gravitee.am.certificate.api.Key> key() {
-                return Single.just(certificateKey);
-            }
+        io.gravitee.am.certificate.api.Key certificateKey = new DefaultKey(signingKeyId, kpg.generateKeyPair());
 
-            @Override
-            public Single<String> publicKey() {
-                return null;
-            }
+        CertificateMetadata certificateMetadata = new CertificateMetadata();
+        certificateMetadata.setMetadata(Collections.singletonMap(CertificateMetadata.DIGEST_ALGORITHM_NAME, kpg.getProvider().getName()));
 
-            @Override
-            public Flowable<JWK> keys() {
-                return null;
-            }
-
-            @Override
-            public String signatureAlgorithm() {
-                return "HS256";
-            }
-
-            @Override
-            public CertificateMetadata certificateMetadata() {
-                return certificateMetadata;
-            }
-        };
-        return defaultProvider;
+        return new KeyPairProvider(certificateMetadata, certificateKey);
     }
 }

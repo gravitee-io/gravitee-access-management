@@ -31,21 +31,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  */
 public class UriBuilderTest {
 
-/*
-    @Parameters(name = "Testing {0}")
-    public static Collection<Object[]> data() {
-        return Arrays.asList(new Object[][]{
-                {"http://localhost:8080/callback", 8080, Arrays.asList("http", "localhost", null, "/callback", null, null).toArray(new String[6]), true},
-                {"https://admin:password@localhost/callback", -1, Arrays.asList("https", "localhost", "admin:password", "/callback", null, null).toArray(new String[6]), true},
-                {"https://gravitee.is?the=best", -1, Arrays.asList("https", "gravitee.is", null, "", "the=best", null).toArray(new String[6]), true},
-                {"myapp://callback#token=fragment", -1, Arrays.asList("myapp", "callback", null, "", null, "token=fragment").toArray(new String[6]), false},
-                {"https://op-test:60001/requests/something?the=best#fragment", 60001,
-                        Arrays.asList("https", "op-test", null, "/requests/something", "the=best", "fragment").toArray(new String[6]), true},
-                {"com.google.app:/callback", -1, Arrays.asList("com.google.app", null, null, "/callback", null, null).toArray(new String[6]), false}
-        });
-    }
-*/
-
     public static Stream<Arguments> param_that_must_test_from_uri() {
         return Stream.of(Arguments.of("http://localhost:8080/callback", 8080, "http", "localhost", null, "/callback", null, null, true),
                 Arguments.of("https://admin:password@localhost/callback", -1, "https", "localhost", "admin:password", "/callback", null, null, true),
