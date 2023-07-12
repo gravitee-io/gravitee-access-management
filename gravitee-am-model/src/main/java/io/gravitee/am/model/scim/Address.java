@@ -15,7 +15,12 @@
  */
 package io.gravitee.am.model.scim;
 
+import java.util.Objects;
+
 /**
+ * !!! WARNING
+ * !!! remember to update hasCode & equals if new field is added
+ *
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
@@ -96,5 +101,36 @@ public class Address {
 
     public void setPrimary(Boolean primary) {
         this.primary = primary;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Address)) return false;
+
+        Address address = (Address) o;
+
+        if (!Objects.equals(type, address.type)) return false;
+        if (!Objects.equals(formatted, address.formatted)) return false;
+        if (!Objects.equals(streetAddress, address.streetAddress))
+            return false;
+        if (!Objects.equals(locality, address.locality)) return false;
+        if (!Objects.equals(region, address.region)) return false;
+        if (!Objects.equals(postalCode, address.postalCode)) return false;
+        if (!Objects.equals(country, address.country)) return false;
+        return Objects.equals(primary, address.primary);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = type != null ? type.hashCode() : 0;
+        result = 31 * result + (formatted != null ? formatted.hashCode() : 0);
+        result = 31 * result + (streetAddress != null ? streetAddress.hashCode() : 0);
+        result = 31 * result + (locality != null ? locality.hashCode() : 0);
+        result = 31 * result + (region != null ? region.hashCode() : 0);
+        result = 31 * result + (postalCode != null ? postalCode.hashCode() : 0);
+        result = 31 * result + (country != null ? country.hashCode() : 0);
+        result = 31 * result + (primary != null ? primary.hashCode() : 0);
+        return result;
     }
 }

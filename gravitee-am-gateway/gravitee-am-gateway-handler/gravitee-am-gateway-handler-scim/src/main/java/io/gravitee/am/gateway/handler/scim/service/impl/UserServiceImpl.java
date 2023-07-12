@@ -26,7 +26,11 @@ import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
 import io.gravitee.am.gateway.handler.scim.exception.SCIMException;
 import io.gravitee.am.gateway.handler.scim.exception.UniquenessException;
 import io.gravitee.am.gateway.handler.scim.mapper.UserMapper;
-import io.gravitee.am.gateway.handler.scim.model.*;
+import io.gravitee.am.gateway.handler.scim.model.GraviteeUser;
+import io.gravitee.am.gateway.handler.scim.model.ListResponse;
+import io.gravitee.am.gateway.handler.scim.model.Member;
+import io.gravitee.am.gateway.handler.scim.model.PatchOp;
+import io.gravitee.am.gateway.handler.scim.model.User;
 import io.gravitee.am.gateway.handler.scim.service.GroupService;
 import io.gravitee.am.gateway.handler.scim.service.UserService;
 import io.gravitee.am.model.Domain;
@@ -44,8 +48,16 @@ import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.UserActivityService;
-import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.VerifyAttemptService;
+import io.gravitee.am.service.exception.AbstractManagementException;
+import io.gravitee.am.service.exception.AbstractNotFoundException;
+import io.gravitee.am.service.exception.IdentityProviderNotFoundException;
+import io.gravitee.am.service.exception.RoleNotFoundException;
+import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.exception.UserAlreadyExistsException;
+import io.gravitee.am.service.exception.UserInvalidException;
+import io.gravitee.am.service.exception.UserNotFoundException;
+import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
@@ -68,6 +80,7 @@ import java.util.stream.Collectors;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static io.gravitee.am.model.ReferenceType.DOMAIN;
+import static io.gravitee.am.repository.management.api.CommonUserRepository.UpdateActions;
 import static java.lang.Boolean.FALSE;
 import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
@@ -378,7 +391,8 @@ public class UserServiceImpl implements UserService {
                                                     if (scimUser.getPassword() != null) {
                                                         userToUpdate.setLastPasswordReset(new Date());
                                                     }
-                                                    return userRepository.update(userToUpdate);
+
+                                                    return userRepository.update(userToUpdate, UpdateActions.build(existingUser, userToUpdate));
                                                 })
                                                 .onErrorResumeNext(ex -> {
                                                     if (ex instanceof UserNotFoundException ||
@@ -387,7 +401,7 @@ public class UserServiceImpl implements UserService {
                                                         // idp user does not exist, only update AM user
                                                         // clear password
                                                         userToUpdate.setPassword(null);
-                                                        return userRepository.update(userToUpdate);
+                                                        return userRepository.update(userToUpdate, UpdateActions.build(existingUser, userToUpdate));
                                                     }
                                                     return Single.error(ex);
                                                 })

@@ -666,7 +666,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
 
         Mono<Integer> insertAction = insertSpec.fetch().rowsUpdated();
 
-        insertAction = persistChildEntities(insertAction, item);
+        insertAction = persistChildEntities(insertAction, item, UpdateActions.updateAll());
 
         return monoToSingle(insertAction.as(trx::transactional))
                 .flatMap((i) -> Single.just(item));
@@ -674,8 +674,12 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
 
     @Override
     public Single<User> update(User item) {
-        LOGGER.debug("Update User with id {}", item.getId());
+        return update(item, UpdateActions.updateAll());
+    }
 
+    @Override
+    public Single<User> update(User item, UpdateActions updateActions) {
+        LOGGER.debug("Update User with id {}", item.getId());
         TransactionalOperator trx = TransactionalOperator.create(tm);
 
         DatabaseClient.GenericExecuteSpec update = template.getDatabaseClient().sql(UPDATE_USER_STATEMENT);
@@ -722,8 +726,10 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
 
         Mono<Integer> action = update.fetch().rowsUpdated();
 
-        action = deleteChildEntities(item.getId()).then(action);
-        action = persistChildEntities(action, item);
+        if (updateActions.updateRequire()) {
+            action = deleteChildEntities(item.getId(), updateActions).then(action);
+            action = persistChildEntities(action, item, updateActions);
+        }
 
         return monoToSingle(action.as(trx::transactional))
                 .flatMap((i) -> Single.just(item));
@@ -735,7 +741,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         TransactionalOperator trx = TransactionalOperator.create(tm);
         Mono<Integer> delete = template.delete(JdbcUser.class).matching(Query.query(where("id").is(id))).all();
 
-        return monoToCompletable(delete.then(deleteChildEntities(id)).as(trx::transactional));
+        return monoToCompletable(delete.then(deleteChildEntities(id, UpdateActions.updateAll())).as(trx::transactional));
     }
 
     @Override
@@ -754,9 +760,9 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         return deleteRoles.then(deleteAddresses).then(deleteAttributes).then(deleteEntitlements);
     }
 
-    private Mono<Integer> persistChildEntities(Mono<Integer> actionFlow, User item) {
+    private Mono<Integer> persistChildEntities(Mono<Integer> actionFlow, User item, UpdateActions updateActions) {
         final List<Address> addresses = item.getAddresses();
-        if (addresses != null && !addresses.isEmpty()) {
+        if (addresses != null && !addresses.isEmpty() && updateActions.updateAddresses()) {
             actionFlow = actionFlow.then(Flux.fromIterable(addresses).concatMap(address -> {
                 DatabaseClient.GenericExecuteSpec insert = template.getDatabaseClient().sql(INSERT_ADDRESS_STATEMENT).bind(FK_USER_ID, item.getId());
                 insert = address.getType() != null ? insert.bind(ADDR_COL_TYPE, address.getType()) : insert.bindNull(ADDR_COL_TYPE, String.class);
@@ -771,11 +777,15 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
             }).reduce(Integer::sum));
         }
 
-        actionFlow = addJdbcRoles(actionFlow, item, item.getRoles(), "user_roles");
-        actionFlow = addJdbcRoles(actionFlow, item, item.getDynamicRoles(), "dynamic_user_roles");
+        if (updateActions.updateRole()) {
+            actionFlow = addJdbcRoles(actionFlow, item, item.getRoles(), "user_roles");
+        }
+        if (updateActions.updateDynamicRole()) {
+            actionFlow = addJdbcRoles(actionFlow, item, item.getDynamicRoles(), "dynamic_user_roles");
+        }
 
         final List<String> entitlements = item.getEntitlements();
-        if (entitlements != null && !entitlements.isEmpty()) {
+        if (entitlements != null && !entitlements.isEmpty() && updateActions.updateEntitlements()) {
             actionFlow = actionFlow.then(Flux.fromIterable(entitlements).concatMap(entitlement ->
                             template.getDatabaseClient().sql("INSERT INTO user_entitlements(user_id, entitlement) VALUES(:user, :entitlement)")
                                     .bind("user", item.getId())
@@ -784,22 +794,24 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
                     .reduce(Integer::sum));
         }
 
-        Optional<Mono<Integer>> attributes = concat(concat(concat(convertAttributes(item, item.getEmails(), ATTRIBUTE_USER_FIELD_EMAIL),
-                                convertAttributes(item, item.getPhoneNumbers(), ATTRIBUTE_USER_FIELD_PHONE)),
-                        convertAttributes(item, item.getIms(), ATTRIBUTE_USER_FIELD_IM)),
-                convertAttributes(item, item.getPhotos(), ATTRIBUTE_USER_FIELD_PHOTO))
-                .map(jdbcAttr -> {
-                    DatabaseClient.GenericExecuteSpec insert = template.getDatabaseClient().sql(INSERT_ATTRIBUTES_STATEMENT)
-                            .bind(FK_USER_ID, item.getId())
-                            .bind(ATTR_COL_USER_FIELD, jdbcAttr.getUserField());
-                    insert = jdbcAttr.getValue() != null ? insert.bind(ATTR_COL_VALUE, jdbcAttr.getValue()) : insert.bindNull(ATTR_COL_VALUE, String.class);
-                    insert = jdbcAttr.getType() != null ? insert.bind(ATTR_COL_TYPE, jdbcAttr.getType()) : insert.bindNull(ATTR_COL_TYPE, String.class);
-                    insert = jdbcAttr.getPrimary() != null ? insert.bind(ATTR_COL_PRIMARY, jdbcAttr.getPrimary()) : insert.bindNull(ATTR_COL_PRIMARY, Boolean.class);
-                    return insert.fetch().rowsUpdated();
-                })
-                .reduce(Mono::then);
-        if (attributes.isPresent()) {
-            actionFlow = actionFlow.then(attributes.get());
+        if (updateActions.updateAttributes()) {
+            Optional<Mono<Integer>> attributes = concat(concat(concat(convertAttributes(item, item.getEmails(), ATTRIBUTE_USER_FIELD_EMAIL),
+                                    convertAttributes(item, item.getPhoneNumbers(), ATTRIBUTE_USER_FIELD_PHONE)),
+                            convertAttributes(item, item.getIms(), ATTRIBUTE_USER_FIELD_IM)),
+                    convertAttributes(item, item.getPhotos(), ATTRIBUTE_USER_FIELD_PHOTO))
+                    .map(jdbcAttr -> {
+                        DatabaseClient.GenericExecuteSpec insert = template.getDatabaseClient().sql(INSERT_ATTRIBUTES_STATEMENT)
+                                .bind(FK_USER_ID, item.getId())
+                                .bind(ATTR_COL_USER_FIELD, jdbcAttr.getUserField());
+                        insert = jdbcAttr.getValue() != null ? insert.bind(ATTR_COL_VALUE, jdbcAttr.getValue()) : insert.bindNull(ATTR_COL_VALUE, String.class);
+                        insert = jdbcAttr.getType() != null ? insert.bind(ATTR_COL_TYPE, jdbcAttr.getType()) : insert.bindNull(ATTR_COL_TYPE, String.class);
+                        insert = jdbcAttr.getPrimary() != null ? insert.bind(ATTR_COL_PRIMARY, jdbcAttr.getPrimary()) : insert.bindNull(ATTR_COL_PRIMARY, Boolean.class);
+                        return insert.fetch().rowsUpdated();
+                    })
+                    .reduce(Mono::then);
+            if (attributes.isPresent()) {
+                actionFlow = actionFlow.then(attributes.get());
+            }
         }
 
         return actionFlow;
@@ -835,13 +847,29 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         return Stream.empty();
     }
 
-    private Mono<Integer> deleteChildEntities(String userId) {
-        Mono<Integer> deleteRoles = template.delete(JdbcUser.Role.class).matching(Query.query(where("user_id").is(userId))).all();
-        Mono<Integer> deleteDynamicRoles = template.delete(JdbcUser.DynamicRole.class).matching(Query.query(where("user_id").is(userId))).all();
-        Mono<Integer> deleteAddresses = template.delete(JdbcUser.Address.class).matching(Query.query(where("user_id").is(userId))).all();
-        Mono<Integer> deleteAttributes = template.delete(JdbcUser.Attribute.class).matching(Query.query(where("user_id").is(userId))).all();
-        Mono<Integer> deleteEntitlements = template.delete(JdbcUser.Entitlements.class).matching(Query.query(where("user_id").is(userId))).all();
-        return deleteRoles.then(deleteDynamicRoles).then(deleteAddresses).then(deleteAttributes).then(deleteEntitlements);
+    private Mono<Integer> deleteChildEntities(String userId, UpdateActions actions) {
+        var result = Mono.<Integer>empty();
+        if (actions.updateRole()) {
+            Mono<Integer> deleteRoles = template.delete(JdbcUser.Role.class).matching(Query.query(where("user_id").is(userId))).all();
+            result = result.then(deleteRoles);
+        }
+        if (actions.updateDynamicRole()) {
+            Mono<Integer> deleteDynamicRoles = template.delete(JdbcUser.DynamicRole.class).matching(Query.query(where("user_id").is(userId))).all();
+            result = result.then(deleteDynamicRoles);
+        }
+        if (actions.updateAddresses()) {
+            Mono<Integer> deleteAddresses = template.delete(JdbcUser.Address.class).matching(Query.query(where("user_id").is(userId))).all();
+            result = result.then(deleteAddresses);
+        }
+        if (actions.updateAttributes()) {
+            Mono<Integer> deleteAttributes = template.delete(JdbcUser.Attribute.class).matching(Query.query(where("user_id").is(userId))).all();
+            result = result.then(deleteAttributes);
+        }
+        if (actions.updateEntitlements()) {
+            Mono<Integer> deleteEntitlements = template.delete(JdbcUser.Entitlements.class).matching(Query.query(where("user_id").is(userId))).all();
+            result = result.then(deleteEntitlements);
+        }
+        return result;
     }
 
     private Single<User> completeUser(User userToComplete) {

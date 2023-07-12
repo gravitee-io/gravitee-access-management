@@ -18,7 +18,6 @@ package io.gravitee.am.gateway.handler.common.auth.user.impl;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.exception.authentication.AccountDisabledException;
 import io.gravitee.am.common.exception.authentication.AccountEnforcePasswordException;
-import io.gravitee.am.common.exception.authentication.AccountIllegalStateException;
 import io.gravitee.am.common.exception.authentication.AccountLockedException;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oidc.StandardClaims;
@@ -38,6 +37,7 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.repository.management.api.CommonUserRepository;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.exception.UserNotFoundException;
@@ -52,10 +52,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static io.gravitee.am.common.utils.ConstantKeys.OIDC_PROVIDER_ID_ACCESS_TOKEN_KEY;
@@ -276,8 +276,12 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
             existingUser.setLoginsCount(existingUser.getLoginsCount() + 1);
             existingUser.setAccountNonLocked(true);
         }
+
         // set roles
+        var updateActions = CommonUserRepository.UpdateActions.none();
+        updateActions.updateDynamicRole(!Objects.equals(existingUser.getDynamicRoles(), principal.getRoles()));
         existingUser.setDynamicRoles(principal.getRoles());
+
         if (existingUser.getLastPasswordReset() == null) {
             existingUser.setLastPasswordReset(existingUser.getUpdatedAt() == null ? new Date() : existingUser.getUpdatedAt());
         }
@@ -286,7 +290,7 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
         removeOriginalProviderOidcTokensIfNecessary(existingUser, afterAuthentication, additionalInformation);
         extractAdditionalInformation(existingUser, additionalInformation);
 
-        return userService.update(existingUser);
+        return userService.update(existingUser, updateActions);
     }
 
     private void removeOriginalProviderOidcTokensIfNecessary(User existingUser, boolean afterAuthentication, Map<String, Object> additionalInformation) {
