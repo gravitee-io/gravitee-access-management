@@ -16,19 +16,16 @@
 package io.gravitee.am.service.impl;
 
 import io.gravitee.am.common.audit.EventType;
-import io.gravitee.am.common.event.Action;
-import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.exception.mfa.InvalidFactorAttributeException;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.analytics.AnalyticsQuery;
 import io.gravitee.am.model.common.Page;
-import io.gravitee.am.model.common.event.Event;
-import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorChannel;
 import io.gravitee.am.model.factor.FactorStatus;
 import io.gravitee.am.model.scim.Attribute;
+import io.gravitee.am.repository.management.api.CommonUserRepository.UpdateActions;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.UserService;
@@ -132,10 +129,15 @@ public class UserServiceImpl extends AbstractUserService implements UserService 
 
     @Override
     public Single<User> update(User user) {
+        return update(user, UpdateActions.updateAll());
+    }
+
+    @Override
+    public Single<User> update(User user, UpdateActions updateActions) {
         LOGGER.debug("Update a user {}", user);
         // updated date
         user.setUpdatedAt(new Date());
-        return userValidator.validate(user).andThen(getUserRepository().update(user)
+        return userValidator.validate(user).andThen(getUserRepository().update(user, updateActions)
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);

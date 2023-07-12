@@ -17,7 +17,6 @@ package io.gravitee.am.gateway.handler.common.auth;
 
 import io.gravitee.am.common.exception.authentication.AccountDisabledException;
 import io.gravitee.am.common.exception.authentication.AccountEnforcePasswordException;
-import io.gravitee.am.common.exception.authentication.AccountIllegalStateException;
 import io.gravitee.am.common.exception.authentication.AccountLockedException;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationService;
@@ -121,7 +120,7 @@ public class UserAuthenticationServiceTest {
         foundUser.setAccountNonLocked(true);
 
         when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(foundUser));
-        when(userService.update(any())).thenReturn(Single.just(updatedUser));
+        when(userService.update(any(), any())).thenReturn(Single.just(updatedUser));
         when(userService.enhance(updatedUser)).thenReturn(Single.just(updatedUser));
 
         TestObserver testObserver = userAuthenticationService.connect(user).test();
@@ -130,7 +129,7 @@ public class UserAuthenticationServiceTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         verify(userService, never()).create(any());
-        verify(userService, times(1)).update(argThat(u -> u.isAccountNonLocked()));
+        verify(userService, times(1)).update(argThat(u -> u.isAccountNonLocked()), any());
     }
 
 
@@ -154,7 +153,7 @@ public class UserAuthenticationServiceTest {
         foundUser.setAccountLockedUntil(new Date(Instant.now().minusSeconds(60).toEpochMilli()));
 
         when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(foundUser));
-        when(userService.update(any())).thenReturn(Single.just(updatedUser));
+        when(userService.update(any(), any())).thenReturn(Single.just(updatedUser));
         when(userService.enhance(updatedUser)).thenReturn(Single.just(updatedUser));
 
         TestObserver testObserver = userAuthenticationService.connect(user).test();
@@ -163,7 +162,7 @@ public class UserAuthenticationServiceTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         verify(userService, never()).create(any());
-        verify(userService, times(1)).update(argThat(u -> u.isAccountNonLocked()));
+        verify(userService, times(1)).update(argThat(u -> u.isAccountNonLocked()), any());
     }
 
     @Test
@@ -207,7 +206,7 @@ public class UserAuthenticationServiceTest {
         final User foundUser = mock(User.class);
         when(foundUser.isAccountNonLocked()).thenReturn(true);
         when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(foundUser));
-        when(userService.update(any())).thenReturn(Single.just(updatedUser));
+        when(userService.update(any(), any())).thenReturn(Single.just(updatedUser));
 
         TestObserver testObserver = userAuthenticationService.connect(user).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -250,7 +249,7 @@ public class UserAuthenticationServiceTest {
     }
 
     @Test
-    public void shouldConnect_knownUser_withRoles() {
+    public void shouldConnect_user_withDynaicRoles_update() {
         String domainId = "Domain";
         String username = "foo";
         String source = "SRC";
@@ -264,23 +263,54 @@ public class UserAuthenticationServiceTest {
         additionalInformation.put("source", source);
         when(user.getAdditionalInformation()).thenReturn(additionalInformation);
 
-        User updatedUser = mock(User.class);
-        when(updatedUser.isEnabled()).thenReturn(true);
-        when(updatedUser.getRoles()).thenReturn(Arrays.asList("idp-role", "idp2-role"));
-
         when(domain.getId()).thenReturn(domainId);
-        final User foundUser = mock(User.class);
+        final User foundUser = spy(new User());
         when(foundUser.isAccountNonLocked()).thenReturn(true);
         when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(foundUser));
-        when(userService.update(any())).thenReturn(Single.just(updatedUser));
-        when(userService.enhance(updatedUser)).thenReturn(Single.just(updatedUser));
+        when(userService.update(any(), any())).thenAnswer(i -> Single.just(i.getArguments()[0]));
+        when(userService.enhance(any())).thenAnswer(i -> Single.just(i.getArguments()[0]));
 
         TestObserver<User> testObserver = userAuthenticationService.connect(user).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        testObserver.assertValue(user1 -> user1.getRoles().size() == 2);
+        testObserver.assertValue(user1 -> user1.getDynamicRoles().size() == 2);
+        verify(userService).update(any(), argThat(actions -> actions.updateDynamicRole()
+                && !(actions.updateAddresses() || actions.updateRole() || actions.updateEntitlements() || actions.updateAttributes())));
+    }
+
+    @Test
+    public void shouldConnect_user_withDynamicRoles_unchanged() {
+        String domainId = "Domain";
+        String username = "foo";
+        String source = "SRC";
+        String id = "id";
+
+        io.gravitee.am.identityprovider.api.User user = mock(io.gravitee.am.identityprovider.api.User.class);
+        when(user.getUsername()).thenReturn(username);
+        when(user.getId()).thenReturn(id);
+        when(user.getRoles()).thenReturn(Arrays.asList("idp-role", "idp2-role"));
+        HashMap<String, Object> additionalInformation = new HashMap<>();
+        additionalInformation.put("source", source);
+        when(user.getAdditionalInformation()).thenReturn(additionalInformation);
+
+        when(domain.getId()).thenReturn(domainId);
+        final User foundUser = spy(new User());
+        foundUser.setAccountNonLocked(true);
+        foundUser.setDynamicRoles(Arrays.asList("idp-role", "idp2-role"));
+        when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(foundUser));
+        when(userService.update(any(), any())).thenAnswer(i -> Single.just(i.getArguments()[0]));
+        when(userService.enhance(any())).thenAnswer(i -> Single.just(i.getArguments()[0]));
+
+        TestObserver<User> testObserver = userAuthenticationService.connect(user).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(user1 -> user1.getDynamicRoles().size() == 2);
+        verify(userService).update(any(), argThat(actions -> !actions.updateDynamicRole()
+                && !(actions.updateAddresses() || actions.updateRole() || actions.updateEntitlements() || actions.updateAttributes())));
     }
 
     @Test
@@ -307,7 +337,7 @@ public class UserAuthenticationServiceTest {
         final User foundUser = mock(User.class);
         when(foundUser.isAccountNonLocked()).thenReturn(true);
         when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(foundUser));
-        when(userService.update(any())).thenReturn(Single.just(updatedUser));
+        when(userService.update(any(), any())).thenReturn(Single.just(updatedUser));
         when(userService.enhance(updatedUser)).thenReturn(Single.just(updatedUser));
 
         TestObserver<User> testObserver = userAuthenticationService.connect(user).test();
@@ -316,6 +346,9 @@ public class UserAuthenticationServiceTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(user1 -> user1.getRoles().size() == 2);
+        verify(userService).update(any(), argThat(actions -> !(actions.updateDynamicRole() || actions.updateAddresses() || actions.updateRole()
+                || actions.updateEntitlements() || actions.updateAttributes())));
+
     }
 
     @Test
@@ -345,7 +378,7 @@ public class UserAuthenticationServiceTest {
         existingUser.setAccountNonLocked(true);
 
         when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(existingUser));
-        when(userService.update(any())).thenReturn(Single.just(updatedUser));
+        when(userService.update(any(), any())).thenReturn(Single.just(updatedUser));
         when(userService.enhance(updatedUser)).thenReturn(Single.just(updatedUser));
 
         TestObserver<User> testObserver = userAuthenticationService.connect(user).test();
@@ -353,7 +386,7 @@ public class UserAuthenticationServiceTest {
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        verify(userService).update(argThat(user1 -> "token2".equals(user1.getAdditionalInformation().get("op_id_token"))));
+        verify(userService).update(argThat(user1 -> "token2".equals(user1.getAdditionalInformation().get("op_id_token"))), any());
     }
 
     @Test
@@ -381,7 +414,7 @@ public class UserAuthenticationServiceTest {
         existingUser.setAdditionalInformation(existingAdditionalInformation);
         existingUser.setAccountNonLocked(true);
         when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(existingUser));
-        when(userService.update(any())).thenReturn(Single.just(updatedUser));
+        when(userService.update(any(), any())).thenReturn(Single.just(updatedUser));
         when(userService.enhance(updatedUser)).thenReturn(Single.just(updatedUser));
 
         TestObserver<User> testObserver = userAuthenticationService.connect(user).test();
@@ -390,7 +423,7 @@ public class UserAuthenticationServiceTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(userService).update(argThat(user1 -> !user1.getAdditionalInformation().containsKey("op_id_token")));
+        verify(userService).update(argThat(user1 -> !user1.getAdditionalInformation().containsKey("op_id_token")), any());
     }
 
     @Test
@@ -541,7 +574,7 @@ public class UserAuthenticationServiceTest {
             }
         }));
         when(userService.enhance(existingUser)).thenReturn(Single.just(existingUser));
-        when(userService.update(existingUser)).thenReturn(Single.just(existingUser));
+        when(userService.update(eq(existingUser), any())).thenReturn(Single.just(existingUser));
 
         TestObserver<User> testObserver = userAuthenticationService.loadPreAuthenticatedUser(existingUser.getId(), request).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
