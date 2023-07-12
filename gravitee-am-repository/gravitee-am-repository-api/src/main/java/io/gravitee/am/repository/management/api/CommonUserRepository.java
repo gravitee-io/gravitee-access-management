@@ -26,12 +26,23 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
 public interface CommonUserRepository extends CrudRepository<User, String> {
+
+    /**
+     * Update the user profile information.
+     * According to the actions provided, secondary information can be updated too (SCIM emails, SCIM PhoneNumbers, roles...)
+     *
+     * @param user
+     * @param actions
+     * @return
+     */
+    Single<User> update(User user, UpdateActions actions);
 
     Flowable<User> findAll(ReferenceType referenceType, String referenceId);
 
@@ -52,4 +63,101 @@ public interface CommonUserRepository extends CrudRepository<User, String> {
     Maybe<User> findById(ReferenceType referenceType, String referenceId, String userId);
 
     Completable deleteByReference(ReferenceType referenceType, String referenceId);
+
+    /**
+     * Used to specify if some user information need to be updated
+     * in addition of the main User Profile information.
+     */
+    class UpdateActions {
+        private boolean role = true;
+        private boolean dynamicRole = true;
+        private boolean attributes = true;
+        private boolean entitlements = true;
+        private boolean addresses = true;
+
+        UpdateActions() {}
+
+        public boolean updateRole() {
+            return role;
+        }
+
+        public UpdateActions updateRole(boolean role) {
+            this.role = role;
+            return this;
+        }
+
+        public boolean updateDynamicRole() {
+            return dynamicRole;
+        }
+
+        public UpdateActions updateDynamicRole(boolean dynamicRole) {
+            this.dynamicRole = dynamicRole;
+            return this;
+        }
+
+        public boolean updateAttributes() {
+            return attributes;
+        }
+
+        public UpdateActions updateAttributes(boolean attributes) {
+            this.attributes = attributes;
+            return this;
+        }
+
+        public boolean updateEntitlements() {
+            return entitlements;
+        }
+
+        public UpdateActions updateEntitlements(boolean entitlements) {
+            this.entitlements = entitlements;
+            return this;
+        }
+
+        public boolean updateAddresses() {
+            return addresses;
+        }
+
+        public UpdateActions updateAddresses(boolean addresses) {
+            this.addresses = addresses;
+            return this;
+        }
+
+        public boolean updateRequire() {
+            return (addresses || attributes || entitlements || role || dynamicRole);
+        }
+
+        public static UpdateActions updateAll() {
+            return new UpdateActions();
+        }
+
+        public static UpdateActions none() {
+            return new UpdateActions()
+                    .updateRole(false)
+                    .updateDynamicRole(false)
+                    .updateEntitlements(false)
+                    .updateAttributes(false)
+                    .updateAddresses(false);
+        }
+
+        public static UpdateActions build(io.gravitee.am.model.User existingUser, io.gravitee.am.model.User updatedUser) {
+            UpdateActions actions = new UpdateActions();
+            actions.updateEntitlements(needUpdate(existingUser.getEntitlements(), updatedUser.getEntitlements()));
+
+            actions.updateAttributes((needUpdate(existingUser.getEmails(), updatedUser.getEmails()) ||
+                    needUpdate(existingUser.getPhoneNumbers(), updatedUser.getPhoneNumbers()) ||
+                    needUpdate(existingUser.getIms(), updatedUser.getIms()) ||
+                    needUpdate(existingUser.getPhotos(), updatedUser.getPhotos())));
+
+            actions.updateAddresses(needUpdate(existingUser.getAddresses(), updatedUser.getAddresses()));
+            actions.updateRole(needUpdate(existingUser.getRoles(), updatedUser.getRoles()));
+            actions.updateDynamicRole(needUpdate(existingUser.getDynamicRoles(), updatedUser.getDynamicRoles()));
+
+            return actions;
+        }
+        private static boolean needUpdate(List existing, List update) {
+            return !(((existing == null || existing.isEmpty()) && (update == null || update.isEmpty()))
+                    || Objects.equals(existing, update));
+        }
+    }
+
 }

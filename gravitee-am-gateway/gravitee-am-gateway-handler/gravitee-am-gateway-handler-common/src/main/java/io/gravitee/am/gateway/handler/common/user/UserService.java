@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.common.user;
 
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
+import io.gravitee.am.repository.management.api.CommonUserRepository.UpdateActions;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -74,7 +75,11 @@ public interface UserService {
      * @param user user to update
      * @return updated user
      */
-    Single<User> update(User user);
+    default Single<User> update(User user) {
+        return update(user, UpdateActions.updateAll());
+    };
+
+    Single<User> update(User user, UpdateActions updateActions);
 
     /**
      * Fetch additional data such as groups/roles to enhance user profile information

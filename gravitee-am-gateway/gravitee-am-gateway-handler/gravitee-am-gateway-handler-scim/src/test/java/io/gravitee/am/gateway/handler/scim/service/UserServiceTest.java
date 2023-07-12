@@ -73,6 +73,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
@@ -249,7 +250,7 @@ public class UserServiceTest {
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
         when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(new IdentityProvider());
         ArgumentCaptor<io.gravitee.am.model.User> userCaptor = ArgumentCaptor.forClass(io.gravitee.am.model.User.class);
-        when(userRepository.update(any())).thenReturn(Single.just(existingUser));
+        when(userRepository.update(any(), any())).thenReturn(Single.just(existingUser));
         when(groupService.findByMember(existingUser.getId())).thenReturn(Flowable.empty());
         when(passwordService.isValid(eq(PASSWORD), any(), any())).thenReturn(true);
 
@@ -257,7 +258,53 @@ public class UserServiceTest {
         testObserver.assertNoErrors();
         testObserver.assertComplete();
 
-        verify(userRepository, times(1)).update(userCaptor.capture());
+        verify(userRepository, times(1)).update(userCaptor.capture(), any());
+        verify(userProvider).create(any());
+        verify(userProvider, never()).update(anyString(), any());
+        verify(userProvider, never()).updatePassword(any(), eq(PASSWORD));
+        assertTrue(userCaptor.getValue().isEnabled());
+    }
+
+    @Test
+    public void shouldUpdateUser_roles_entitlements() {
+        io.gravitee.am.model.User existingUser = mock(io.gravitee.am.model.User.class);
+        when(existingUser.getId()).thenReturn("user-id");
+        when(existingUser.getSource()).thenReturn("user-idp");
+        when(existingUser.getRoles()).thenReturn(Arrays.asList("r1"));
+        when(existingUser.getEntitlements()).thenReturn(Arrays.asList("e1"));
+        when(existingUser.getSource()).thenReturn("user-idp");
+
+        when(existingUser.getUsername()).thenReturn("username");
+
+        User scimUser = mock(User.class);
+        when(scimUser.getPassword()).thenReturn(PASSWORD);
+        when(scimUser.isActive()).thenReturn(true);
+        when(scimUser.getRoles()).thenReturn(Arrays.asList("r2"));
+        when(scimUser.getEntitlements()).thenReturn(Arrays.asList("e1", "e2"));
+
+        io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.User.class);
+
+        UserProvider userProvider = mock(UserProvider.class);
+        when(userProvider.create(any())).thenReturn(Single.just(idpUser));
+
+        final Role r2 = new Role();
+        r2.setId("r2");
+        when(roleService.findByIdIn(any())).thenReturn(Single.just(Set.of(r2)));
+        when(userRepository.findById(existingUser.getId())).thenReturn(Maybe.just(existingUser));
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
+        when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(new IdentityProvider());
+        ArgumentCaptor<io.gravitee.am.model.User> userCaptor = ArgumentCaptor.forClass(io.gravitee.am.model.User.class);
+        when(userRepository.update(any(), any())).thenReturn(Single.just(existingUser));
+        when(groupService.findByMember(existingUser.getId())).thenReturn(Flowable.empty());
+        when(passwordService.isValid(eq(PASSWORD), any(), any())).thenReturn(true);
+
+        TestObserver<User> testObserver = userService.update(existingUser.getId(), scimUser, null, "/", null, null).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+
+        verify(userRepository, times(1)).update(userCaptor.capture(), argThat(actions -> actions.updateRole()
+                && actions.updateEntitlements()
+                && !(actions.updateDynamicRole() || actions.updateAddresses() || actions.updateAttributes())));
         verify(userProvider).create(any());
         verify(userProvider, never()).update(anyString(), any());
         verify(userProvider, never()).updatePassword(any(), eq(PASSWORD));
@@ -294,7 +341,7 @@ public class UserServiceTest {
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
         when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(new IdentityProvider());
         ArgumentCaptor<io.gravitee.am.model.User> userCaptor = ArgumentCaptor.forClass(io.gravitee.am.model.User.class);
-        when(userRepository.update(any())).thenReturn(Single.just(existingUser));
+        when(userRepository.update(any(), any())).thenReturn(Single.just(existingUser));
         when(groupService.findByMember(existingUser.getId())).thenReturn(Flowable.empty());
         when(passwordService.isValid(eq(PASSWORD), any(), any())).thenReturn(true);
 
@@ -302,7 +349,7 @@ public class UserServiceTest {
         testObserver.assertNoErrors();
         testObserver.assertComplete();
 
-        verify(userRepository, times(1)).update(userCaptor.capture());
+        verify(userRepository, times(1)).update(userCaptor.capture(), any());
         verify(userProvider, never()).create(any());
         verify(userProvider).update(anyString(), any());
         verify(userProvider, never()).updatePassword(any(), eq(PASSWORD));
@@ -338,14 +385,14 @@ public class UserServiceTest {
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
         when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(new IdentityProvider());
         ArgumentCaptor<io.gravitee.am.model.User> userCaptor = ArgumentCaptor.forClass(io.gravitee.am.model.User.class);
-        when(userRepository.update(any())).thenReturn(Single.just(existingUser));
+        when(userRepository.update(any(), any())).thenReturn(Single.just(existingUser));
         when(groupService.findByMember(existingUser.getId())).thenReturn(Flowable.empty());
 
         TestObserver<User> testObserver = userService.update(existingUser.getId(), scimUser, null, "/", null, null).test();
         testObserver.assertNoErrors();
         testObserver.assertComplete();
 
-        verify(userRepository, times(1)).update(userCaptor.capture());
+        verify(userRepository, times(1)).update(userCaptor.capture(), any());
         verify(userProvider, never()).create(any());
         verify(userProvider).update(anyString(), any());
         verify(userProvider, never()).updatePassword(any(), eq(PASSWORD));
@@ -416,7 +463,7 @@ public class UserServiceTest {
             Assert.assertTrue(userToUpdate.getDisplayName().equals("my user 2"));
             Assert.assertTrue(userToUpdate.getAdditionalInformation().containsKey("attr1"));
             return Single.just(userToUpdate);
-        }).when(userRepository).update(any());
+        }).when(userRepository).update(any(), any());
 
         TestObserver<User> testObserver = userService.patch(userId, patchOp, null, "/", null, null).test();
         testObserver.assertNoErrors();
@@ -468,7 +515,7 @@ public class UserServiceTest {
             io.gravitee.am.model.User userToUpdate = invocation.getArgument(0);
             Assert.assertTrue(userToUpdate.getAdditionalInformation().containsKey("customClaim"));
             return Single.just(userToUpdate);
-        }).when(userRepository).update(any());
+        }).when(userRepository).update(any(), any());
 
         TestObserver<User> testObserver = userService.patch(userId, patchOp, null, "/", null, null).test();
         testObserver.assertNoErrors();

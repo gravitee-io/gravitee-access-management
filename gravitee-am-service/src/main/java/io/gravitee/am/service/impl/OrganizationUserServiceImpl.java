@@ -38,6 +38,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
+import io.gravitee.am.repository.management.api.CommonUserRepository.UpdateActions;
 import java.util.Date;
 
 import static io.gravitee.am.model.ReferenceType.ORGANIZATION;

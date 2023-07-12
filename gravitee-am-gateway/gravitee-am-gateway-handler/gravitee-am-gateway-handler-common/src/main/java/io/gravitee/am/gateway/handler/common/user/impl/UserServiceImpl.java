@@ -19,6 +19,7 @@ import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
+import io.gravitee.am.repository.management.api.CommonUserRepository.UpdateActions;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -61,8 +62,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Single<User> update(User user) {
-        return userService.update(user);
+    public Single<User> update(User user, UpdateActions updateActions) {
+        return userService.update(user, updateActions);
     }
 
     @Override
