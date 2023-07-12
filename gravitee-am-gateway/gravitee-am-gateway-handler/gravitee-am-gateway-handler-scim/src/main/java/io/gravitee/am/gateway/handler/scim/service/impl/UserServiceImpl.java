@@ -80,6 +80,7 @@ import java.util.stream.Collectors;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static io.gravitee.am.model.ReferenceType.DOMAIN;
+import static io.gravitee.am.repository.management.api.CommonUserRepository.UpdateActions;
 import static java.lang.Boolean.FALSE;
 import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
@@ -390,7 +391,8 @@ public class UserServiceImpl implements UserService {
                                                     if (scimUser.getPassword() != null) {
                                                         userToUpdate.setLastPasswordReset(new Date());
                                                     }
-                                                    return userRepository.update(userToUpdate);
+
+                                                    return userRepository.update(userToUpdate, UpdateActions.build(existingUser, userToUpdate));
                                                 })
                                                 .onErrorResumeNext(ex -> {
                                                     if (ex instanceof UserNotFoundException ||
@@ -399,7 +401,7 @@ public class UserServiceImpl implements UserService {
                                                         // idp user does not exist, only update AM user
                                                         // clear password
                                                         userToUpdate.setPassword(null);
-                                                        return userRepository.update(userToUpdate);
+                                                        return userRepository.update(userToUpdate, UpdateActions.build(existingUser, userToUpdate));
                                                     }
                                                     return Single.error(ex);
                                                 })

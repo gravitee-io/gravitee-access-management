@@ -33,6 +33,8 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.Map;
 
+import static io.gravitee.am.repository.management.api.CommonUserRepository.UpdateActions.none;
+
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
@@ -127,7 +129,7 @@ public class EnrichProfilePolicy {
     protected Single<User> enrichProfile(ExecutionContext context) {
         UserRepository userRepository = context.getComponent(UserRepository.class);
         User user = (User)context.getAttribute("user");
-        return userRepository.update(user);
+        return userRepository.update(user, none());
     }
 
 }

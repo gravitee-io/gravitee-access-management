@@ -15,12 +15,16 @@
  */
 package io.gravitee.am.model.scim;
 
+import java.util.Objects;
+
 /**
+ * !!! WARNING
+ * !!! remember to update hasCode & equals if new field is added
+ *
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class Attribute {
-
     private String value;
     private String type;
     private Boolean primary;
@@ -51,5 +55,25 @@ public class Attribute {
 
     public void setPrimary(Boolean primary) {
         this.primary = primary;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Attribute)) return false;
+
+        Attribute attribute = (Attribute) o;
+
+        if (!Objects.equals(value, attribute.value)) return false;
+        if (!Objects.equals(type, attribute.type)) return false;
+        return Objects.equals(primary, attribute.primary);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = value != null ? value.hashCode() : 0;
+        result = 31 * result + (type != null ? type.hashCode() : 0);
+        result = 31 * result + (primary != null ? primary.hashCode() : 0);
+        return result;
     }
 }
