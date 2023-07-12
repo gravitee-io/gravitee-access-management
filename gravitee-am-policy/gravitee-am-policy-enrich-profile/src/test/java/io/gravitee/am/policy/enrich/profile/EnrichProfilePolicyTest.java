@@ -32,7 +32,7 @@ import io.gravitee.policy.api.PolicyChain;
 import io.gravitee.policy.api.PolicyResult;
 import io.reactivex.rxjava3.core.Single;
 import java.util.List;
-import org.junit.Assert;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -145,7 +145,7 @@ public class EnrichProfilePolicyTest {
         User user = mock(User.class);
         when(executionContext.getAttribute("user")).thenReturn(user);
 
-        when(userRepository.update(any())).thenReturn(Single.error(new RuntimeException("Exception thrown for test")));
+        when(userRepository.update(any(), any())).thenReturn(Single.error(new RuntimeException("Exception thrown for test")));
 
 
         new EnrichProfilePolicy(configuration){
@@ -187,7 +187,7 @@ public class EnrichProfilePolicyTest {
         when(user.getAdditionalInformation()).thenReturn(additionalInformation);
         when(executionContext.getAttribute("user")).thenReturn(user);
 
-        when(userRepository.update(any())).thenReturn(Single.just(user));
+        when(userRepository.update(any(), any())).thenReturn(Single.just(user));
 
         EnrichProfilePolicy enrichProfilePolicy = new EnrichProfilePolicy(configuration);
         enrichProfilePolicy.onRequest(request, response, executionContext, policyChain);
@@ -200,7 +200,8 @@ public class EnrichProfilePolicyTest {
                 u.getAdditionalInformation().containsKey("myclaim") &&
                 "myclaimValue".equals(u.getAdditionalInformation().get("myclaim")) &&
                 u.getAdditionalInformation().containsKey("myclaim-tpl") &&
-                PARAM_VALUE.equals(u.getAdditionalInformation().get("myclaim-tpl"))));
+                PARAM_VALUE.equals(u.getAdditionalInformation().get("myclaim-tpl"))),
+                argThat(actions -> !actions.updateRequire()));
     }
 
 
@@ -221,7 +222,7 @@ public class EnrichProfilePolicyTest {
         when(user.getAdditionalInformation()).thenReturn(additionalInformation);
         when(executionContext.getAttribute("user")).thenReturn(user);
 
-        when(userRepository.update(any())).thenReturn(Single.just(user));
+        when(userRepository.update(any(), any())).thenReturn(Single.just(user));
 
         EnrichProfilePolicy enrichProfilePolicy = new EnrichProfilePolicy(configuration);
         enrichProfilePolicy.onRequest(request, response, executionContext, policyChain);
@@ -230,7 +231,8 @@ public class EnrichProfilePolicyTest {
         verify(policyChain, never()).failWith(any());
         verify(policyChain).doNext(any(), any());
         var captor = ArgumentCaptor.forClass(User.class);
-        verify(userRepository).update(captor.capture());
+        verify(userRepository).update(captor.capture(),
+                argThat(actions -> !actions.updateRequire()));
         var updatedUser = captor.getValue();
         assertNotNull(updatedUser.getAdditionalInformation());
         assertTrue("Missing claim myclaim-tpl", updatedUser.getAdditionalInformation().containsKey("myclaim-tpl"));

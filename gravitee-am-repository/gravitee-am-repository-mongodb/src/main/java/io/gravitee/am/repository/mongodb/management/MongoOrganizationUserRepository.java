@@ -15,12 +15,15 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import com.mongodb.client.model.Updates;
 import io.gravitee.am.model.User;
 import io.gravitee.am.repository.management.api.OrganizationUserRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.OrganizationUserMongo;
+import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import java.util.ArrayList;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -62,5 +65,14 @@ public class MongoOrganizationUserRepository extends AbstractUserRepository<Orga
             userMongo.setPassword(user.getPassword());
         }
         return convert(user, userMongo);
+    }
+
+    @Override
+    protected ArrayList<Bson> generateUserUpdates(User item, UpdateActions actions) {
+        var updates = super.generateUserUpdates(item, actions);
+        if (IDP_GRAVITEE.equals(item.getSource())) {
+            updates.add(Updates.set("password", item.getPassword()));
+        }
+        return updates;
     }
 }

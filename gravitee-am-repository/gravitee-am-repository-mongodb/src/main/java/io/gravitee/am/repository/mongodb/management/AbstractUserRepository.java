@@ -17,6 +17,7 @@ package io.gravitee.am.repository.mongodb.management;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.client.model.IndexOptions;
+import com.mongodb.client.model.Updates;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.ReferenceType;
@@ -43,6 +44,7 @@ import org.bson.conversions.Bson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -233,6 +235,76 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
         UserMongo user = convert(item);
         return Single.fromPublisher(usersCollection.replaceOne(eq(FIELD_ID, user.getId()), (T) user))
                 .flatMap(updateResult -> Single.just(item));
+    }
+
+    @Override
+    public Single<User> update(User item, UpdateActions actions) {
+        ArrayList<Bson> updateFields = generateUserUpdates(item, actions);
+        Bson updates = Updates.combine(updateFields);
+        return Single.fromPublisher(usersCollection.updateOne(eq(FIELD_ID, item.getId()), updates))
+                .flatMap(updateResult -> Single.just(item));
+    }
+
+    protected ArrayList<Bson> generateUserUpdates(User item, UpdateActions actions) {
+        var updateFields = new ArrayList<Bson>();
+        updateFields.add(Updates.set("externalId", item.getExternalId()));
+        updateFields.add(Updates.set("username", item.getUsername()));
+        updateFields.add(Updates.set("email", item.getEmail()));
+        updateFields.add(Updates.set("displayName", item.getDisplayName()));
+        updateFields.add(Updates.set("nickName", item.getNickName()));
+        updateFields.add(Updates.set("firstName", item.getFirstName()));
+        updateFields.add(Updates.set("lastName", item.getLastName()));
+        updateFields.add(Updates.set("accountNonExpired", item.isAccountNonExpired()));
+        updateFields.add(Updates.set("accountLockedAt", item.getAccountLockedAt()));
+        updateFields.add(Updates.set("accountLockedUntil", item.getAccountLockedUntil()));
+        updateFields.add(Updates.set("accountNonLocked", item.isAccountNonLocked()));
+        updateFields.add(Updates.set("credentialsNonExpired", item.isCredentialsNonExpired()));
+        updateFields.add(Updates.set("enabled", item.isEnabled()));
+        updateFields.add(Updates.set("internal", item.isInternal()));
+        updateFields.add(Updates.set("preRegistration", item.isPreRegistration()));
+        updateFields.add(Updates.set("newsletter", item.isNewsletter()));
+        updateFields.add(Updates.set("registrationUserUri", item.getRegistrationUserUri()));
+        updateFields.add(Updates.set("registrationAccessToken", item.getRegistrationAccessToken()));
+        updateFields.add(Updates.set("referenceType", item.getReferenceType().name()));
+        updateFields.add(Updates.set("referenceId", item.getReferenceId()));
+        updateFields.add(Updates.set("source", item.getSource()));
+        updateFields.add(Updates.set("client", item.getClient()));
+        updateFields.add(Updates.set("loginsCount", item.getLoginsCount()));
+        updateFields.add(Updates.set("loggedAt", item.getLoggedAt()));
+        updateFields.add(Updates.set("lastLoginWithCredentials", item.getLastLoginWithCredentials()));
+        updateFields.add(Updates.set("mfaEnrollmentSkippedAt", item.getMfaEnrollmentSkippedAt()));
+        updateFields.add(Updates.set("lastPasswordReset", item.getLastPasswordReset()));
+        updateFields.add(Updates.set("lastLogoutAt", item.getLastLogoutAt()));
+        updateFields.add(Updates.set("lastUsernameReset", item.getLastUsernameReset()));
+        updateFields.add(Updates.set("lastUsernameReset", item.getLastUsernameReset()));
+        updateFields.add(Updates.set("x509Certificates", toMongoCertificates(item.getX509Certificates())));
+        updateFields.add(Updates.set("factors", item.getFactors()));
+        updateFields.add(Updates.set("type", item.getType()));
+        updateFields.add(Updates.set("title", item.getTitle()));
+        updateFields.add(Updates.set("preferredLanguage", item.getPreferredLanguage()));
+        updateFields.add(Updates.set("additionalInformation", item.getAdditionalInformation() != null ? new Document(item.getAdditionalInformation()) : new Document()));
+        updateFields.add(Updates.set("createdAt", item.getCreatedAt()));
+        updateFields.add(Updates.set("updatedAt", item.getUpdatedAt()));
+        // TODO password for OrgUsers
+        if (actions.updateRole()) {
+            updateFields.add(Updates.set("roles", item.getRoles()));
+        }
+        if (actions.updateDynamicRole()) {
+            updateFields.add(Updates.set("dynamicRoles", item.getDynamicRoles()));
+        }
+        if (actions.updateAddresses()) {
+            updateFields.add(Updates.set("addresses", toMongoAddresses(item.getAddresses())));
+        }
+        if (actions.updateAttributes()) {
+            updateFields.add(Updates.set("emails", toMongoAttributes(item.getEmails())));
+            updateFields.add(Updates.set("phoneNumbers", toMongoAttributes(item.getPhoneNumbers())));
+            updateFields.add(Updates.set("ims", toMongoAttributes(item.getIms())));
+            updateFields.add(Updates.set("photos", toMongoAttributes(item.getPhotos())));
+        }
+        if (actions.updateEntitlements()) {
+            updateFields.add(Updates.set("entitlements", item.getEntitlements()));
+        }
+        return updateFields;
     }
 
     @Override
