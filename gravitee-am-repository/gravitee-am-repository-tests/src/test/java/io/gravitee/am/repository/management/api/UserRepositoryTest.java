@@ -225,10 +225,147 @@ public class UserRepositoryTest extends AbstractManagementTest {
         testObserver.assertNoValues();
     }
 
+    @Test
+    public void shouldUpdate_AllProfile() throws TechnicalException {
+        // create user
+        User user = buildUser();
+        User userCreated = userRepository.create(user).blockingGet();
+
+        User userUpdated = buildUser();
+        userUpdated.setId(user.getId());
+
+
+        Address addr = new Address();
+        addr.setCountry("gb");
+        userUpdated.setAddresses(Arrays.asList(addr));
+
+        Attribute attribute = new Attribute();
+        attribute.setPrimary(true);
+        attribute.setType("attrType");
+        attribute.setValue("updated_val");
+        userUpdated.setEmails(Arrays.asList(attribute));
+        userUpdated.setPhotos(Arrays.asList(attribute));
+        userUpdated.setPhoneNumbers(Arrays.asList(attribute));
+        userUpdated.setIms(Arrays.asList(attribute));
+
+        userUpdated.setEntitlements(Arrays.asList("updated_ent"));
+        userUpdated.setRoles(Arrays.asList("updated_role"));
+        userUpdated.setDynamicRoles(Arrays.asList("updated_dynamic_role"));
+
+        final CommonUserRepository.UpdateActions actions = CommonUserRepository.UpdateActions.build(userCreated, userUpdated);
+        Assert.assertTrue(actions.updateAddresses());
+        Assert.assertTrue(actions.updateAttributes());
+        Assert.assertTrue(actions.updateEntitlements());
+        Assert.assertTrue(actions.updateRole());
+        Assert.assertTrue(actions.updateDynamicRole());
+
+        TestObserver<User> testObserver = userRepository.update(userUpdated, actions).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        // perform a find to check the DB content
+        testObserver = userRepository.findById(user.getId()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        testObserver.assertValue(u -> u.getUsername().equals(userUpdated.getUsername()));
+        testObserver.assertValue(u -> u.getDisplayName().equals(userUpdated.getDisplayName()));
+        testObserver.assertValue(u -> u.getNickName().equals(userUpdated.getNickName()));
+        testObserver.assertValue(u -> u.getFirstName().equals(userUpdated.getFirstName()));
+        testObserver.assertValue(u -> u.getEmail().equals(userUpdated.getEmail()));
+        testObserver.assertValue(u -> u.getExternalId().equals(userUpdated.getExternalId()));
+        testObserver.assertValue(u -> u.getX509Certificates().size() == 1);
+        testObserver.assertValue(u -> u.getAdditionalInformation().size() == 3);
+        testObserver.assertValue(u -> u.getAdditionalInformation().get(StandardClaims.EMAIL).equals(userUpdated.getAdditionalInformation().get(StandardClaims.EMAIL)));
+        testObserver.assertValue(u -> u.getFactors().size() == 1);
+        testObserver.assertValue(u -> u.getFactors().get(0).getAppId().equals(userUpdated.getFactors().get(0).getAppId()));
+        testObserver.assertValue(u -> u.getLastPasswordReset() != null);
+        // Should have changed too
+        testObserver.assertValue(u -> Objects.equals(u.getRoles(), userUpdated.getRoles()));
+        testObserver.assertValue(u -> Objects.equals(u.getDynamicRoles(), userUpdated.getDynamicRoles()));
+        testObserver.assertValue(u -> Objects.equals(u.getEntitlements(), userUpdated.getEntitlements()));
+        testObserver.assertValue(u -> Objects.equals(u.getEmails(), userUpdated.getEmails()));
+        testObserver.assertValue(u -> Objects.equals(u.getPhoneNumbers(), userUpdated.getPhoneNumbers()));
+        testObserver.assertValue(u -> Objects.equals(u.getPhotos(), userUpdated.getPhotos()));
+        testObserver.assertValue(u -> Objects.equals(u.getIms(), userUpdated.getIms()));
+        testObserver.assertValue(u -> Objects.equals(u.getAddresses(), userUpdated.getAddresses()));
+    }
+
+    @Test
+    public void shouldUpdate_ProfileOnly() throws TechnicalException {
+        // create user
+        User user = buildUser();
+        userRepository.create(user).blockingGet();
+
+        User userUpdated = buildUser();
+        userUpdated.setId(user.getId());
+
+
+        Address addr = new Address();
+        addr.setCountry("gb");
+        userUpdated.setAddresses(Arrays.asList(addr));
+
+        Attribute attribute = new Attribute();
+        attribute.setPrimary(true);
+        attribute.setType("attrType");
+        attribute.setValue("updated_val");
+        userUpdated.setEmails(Arrays.asList(attribute));
+        userUpdated.setPhotos(Arrays.asList(attribute));
+        userUpdated.setPhoneNumbers(Arrays.asList(attribute));
+        userUpdated.setIms(Arrays.asList(attribute));
+
+        userUpdated.setEntitlements(Arrays.asList("updated_ent"));
+        userUpdated.setRoles(Arrays.asList("updated_role"));
+        userUpdated.setDynamicRoles(Arrays.asList("updated_dynamic_role"));
+
+        // compare with same object to consider addr, attr, roles... sa unchanged
+        final CommonUserRepository.UpdateActions actions = CommonUserRepository.UpdateActions.none();
+        Assert.assertFalse(actions.updateAddresses());
+        Assert.assertFalse(actions.updateAttributes());
+        Assert.assertFalse(actions.updateEntitlements());
+        Assert.assertFalse(actions.updateRole());
+        Assert.assertFalse(actions.updateDynamicRole());
+
+
+        TestObserver<User> testObserver = userRepository.update(userUpdated, actions).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        // perform a find to check the DB content
+        testObserver = userRepository.findById(user.getId()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        testObserver.assertValue(u -> u.getUsername().equals(userUpdated.getUsername()));
+        testObserver.assertValue(u -> u.getDisplayName().equals(userUpdated.getDisplayName()));
+        testObserver.assertValue(u -> u.getNickName().equals(userUpdated.getNickName()));
+        testObserver.assertValue(u -> u.getFirstName().equals(userUpdated.getFirstName()));
+        testObserver.assertValue(u -> u.getEmail().equals(userUpdated.getEmail()));
+        testObserver.assertValue(u -> u.getExternalId().equals(userUpdated.getExternalId()));
+        testObserver.assertValue(u -> u.getX509Certificates().size() == 1);
+        testObserver.assertValue(u -> u.getAdditionalInformation().size() == 3);
+        testObserver.assertValue(u -> u.getAdditionalInformation().get(StandardClaims.EMAIL).equals(userUpdated.getAdditionalInformation().get(StandardClaims.EMAIL)));
+        testObserver.assertValue(u -> u.getFactors().size() == 1);
+        testObserver.assertValue(u -> u.getFactors().get(0).getAppId().equals(userUpdated.getFactors().get(0).getAppId()));
+        testObserver.assertValue(u -> u.getLastPasswordReset() != null);
+        // Shouldn't have changed
+        testObserver.assertValue(u -> Objects.equals(u.getRoles(), user.getRoles()));
+        testObserver.assertValue(u -> Objects.equals(u.getDynamicRoles(), user.getDynamicRoles()));
+        testObserver.assertValue(u -> Objects.equals(u.getEntitlements(), user.getEntitlements()));
+        testObserver.assertValue(u -> Objects.equals(u.getEmails(), user.getEmails()));
+        testObserver.assertValue(u -> Objects.equals(u.getPhoneNumbers(), user.getPhoneNumbers()));
+        testObserver.assertValue(u -> Objects.equals(u.getPhotos(), user.getPhotos()));
+        testObserver.assertValue(u -> Objects.equals(u.getIms(), user.getIms()));
+        testObserver.assertValue(u -> Objects.equals(u.getAddresses(), user.getAddresses()));
+    }
 
     private User buildUser() {
         User user = new User();
-        String random = UUID.randomUUID().toString();
+        final String random = UUID.randomUUID().toString();
         user.setReferenceType(ReferenceType.DOMAIN);
         user.setReferenceId("domain"+random);
         user.setUsername("username"+random);
