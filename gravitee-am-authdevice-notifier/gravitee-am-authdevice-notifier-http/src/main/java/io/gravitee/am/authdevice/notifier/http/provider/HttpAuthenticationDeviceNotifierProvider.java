@@ -72,6 +72,7 @@ public class HttpAuthenticationDeviceNotifierProvider implements AuthenticationD
 
     @Override
     public Single<ADNotificationResponse> notify(ADNotificationRequest request) {
+        LOGGER.debug("Call notifier service '{}' (tid: {}) ", this.configuration.getEndpoint(), request.getTransactionId());
         final MultiMap formData = MultiMap.caseInsensitiveMultiMap();
 
         formData.set(TRANSACTION_ID, request.getTransactionId());
@@ -99,14 +100,32 @@ public class HttpAuthenticationDeviceNotifierProvider implements AuthenticationD
                 .doOnError((error) -> LOGGER.warn("Unexpected error during device notification : {}", error.getMessage(), error))
                 .onErrorResumeNext(exception -> Single.error(new DeviceNotificationException("Unexpected error during device notification")))
                 .flatMap(response -> {
-                    if (response.statusCode() != HttpStatusCode.OK_200) {
-                        LOGGER.info("Device notification fails for tid '{}' with status '{}'", request.getTransactionId(), response.statusCode());
+                    final int status = response.statusCode();
+                    if (status != HttpStatusCode.OK_200) {
+                        if (LOGGER.isDebugEnabled()) {
+                            LOGGER.debug("Device notification fails on '{}' for tid '{}' with status '{}': {}",
+                                    this.configuration.getEndpoint(),
+                                    request.getTransactionId(),
+                                    status,
+                                    response.bodyAsString());
+                        } else {
+                            LOGGER.info("Device notification fails for tid '{}' with status '{}'", request.getTransactionId(), status);
+                        }
+                        
                         return Single.error(new DeviceNotificationException("Device notification fails"));
                     }
 
                     final JsonObject result = response.bodyAsJsonObject();
+                    if (LOGGER.isDebugEnabled()) {
+                        LOGGER.debug("Notifier '{}' respond with status '{}' for tid '{}': {}",
+                                this.configuration.getEndpoint(),
+                                status,
+                                request.getTransactionId(),
+                                result);
+                    }
+
                     if ( !request.getTransactionId().equals(result.getString(TRANSACTION_ID)) || !request.getState().equals(result.getString(STATE))) {
-                        LOGGER.warn("Device notification response contains invalid tid or state", request.getTransactionId(), response.statusCode());
+                        LOGGER.warn("Device notification response contains invalid tid or state", request.getTransactionId(), status);
                         return Single.error(new DeviceNotificationException("Invalid device notification response"));
                     }
 
@@ -124,6 +143,7 @@ public class HttpAuthenticationDeviceNotifierProvider implements AuthenticationD
         final String state = callbackContext.getParam(STATE);
         final String tid = callbackContext.getParam(TRANSACTION_ID);
         final String validated = callbackContext.getParam(CALLBACK_VALIDATE);
+        LOGGER.debug("User response received: state={}, tid={}, validated={}", state, tid, validated);
         if (isEmpty(state) || isEmpty(tid) || isEmpty(validated)) {
             return Single.just(Optional.empty());
         } else {

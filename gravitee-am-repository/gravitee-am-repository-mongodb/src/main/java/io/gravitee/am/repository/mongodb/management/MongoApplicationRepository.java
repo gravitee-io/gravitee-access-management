@@ -630,16 +630,18 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
                 // @formatter:on
         }
 
-        result.setAlg(jwkMongo.getAlg());
-        result.setKeyOps(jwkMongo.getKeyOps() != null ? jwkMongo.getKeyOps().stream().collect(toSet()) : null);
-        result.setKid(jwkMongo.getKid());
-        result.setKty(jwkMongo.getKty());
-        result.setUse(jwkMongo.getUse());
-        result.setX5c(jwkMongo.getX5c() != null ? jwkMongo.getX5c().stream().collect(toSet()) : null);
-        result.setX5t(jwkMongo.getX5t());
-        result.setX5tS256(jwkMongo.getX5tS256());
-        result.setX5u(jwkMongo.getX5u());
-
+        if (result != null) {
+            result.setAlg(jwkMongo.getAlg());
+            result.setKeyOps(jwkMongo.getKeyOps() != null ? jwkMongo.getKeyOps().stream().collect(toSet()) : null);
+            result.setKid(jwkMongo.getKid());
+            result.setKty(jwkMongo.getKty());
+            result.setUse(jwkMongo.getUse());
+            result.setX5c(jwkMongo.getX5c() != null ? jwkMongo.getX5c().stream().collect(toSet()) : null);
+            result.setX5t(jwkMongo.getX5t());
+            result.setX5tS256(jwkMongo.getX5tS256());
+            result.setX5u(jwkMongo.getX5u());
+        }
+        
         return result;
     }
 
