@@ -89,7 +89,7 @@ public class JdbcPasswordHistoryRepository extends AbstractJdbcRepository implem
         sql = addQuotedField(sql, USER_ID, item.getUserId(), String.class);
         sql = addQuotedField(sql, PASSWORD, item.getPassword(), String.class);
 
-        Mono<Integer> insertAction = sql.fetch().rowsUpdated();
+        Mono<Long> insertAction = sql.fetch().rowsUpdated();
 
         return monoToSingle(insertAction.as(mono -> TransactionalOperator.create(tm).transactional(mono)))
                 .flatMap(i -> this.findById(item.getId()).toSingle());
@@ -109,7 +109,7 @@ public class JdbcPasswordHistoryRepository extends AbstractJdbcRepository implem
         sql = addQuotedField(sql, USER_ID, item.getUserId(), String.class);
         sql = addQuotedField(sql, PASSWORD, item.getPassword(), String.class);
 
-        Mono<Integer> updateAction = sql.fetch().rowsUpdated();
+        Mono<Long> updateAction = sql.fetch().rowsUpdated();
 
         return monoToSingle(updateAction.as(trx::transactional)).flatMap(i -> this.findById(item.getId()).toSingle())
                 .doOnError(error -> LOGGER.error("unable to update password history with id {}", item.getId(), error));

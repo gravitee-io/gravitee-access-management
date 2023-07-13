@@ -31,7 +31,7 @@
     <name>Gravitee IO - Access Management - Repository JDBC</name>
 
     <properties>
-        <r2dbc-releasetrain.version>Arabba-SR13</r2dbc-releasetrain.version>
+        <r2dbc-releasetrain.version>Borca-SR2</r2dbc-releasetrain.version>
 
         <jdbc-postgresql.version>42.2.25</jdbc-postgresql.version>
         <jdbc-mssql.version>7.4.1.jre8</jdbc-mssql.version>
@@ -47,8 +47,9 @@
 
         <maven-dependency-plugin.version>2.10</maven-dependency-plugin.version>
         <dozer-jaxb-runtime.version>2.4.0-b180830.0438</dozer-jaxb-runtime.version>
-        <reactor-adapter.version>3.4.10</reactor-adapter.version>
-        <reactor-core.version>3.4.28</reactor-core.version>
+        <reactor-adapter.version>3.5.1</reactor-adapter.version>
+        <reactor-core.version>3.5.8</reactor-core.version>
+        <r2dbc-mysql.version>0.9.3</r2dbc-mysql.version>
     </properties>
 
     <dependencyManagement>
@@ -130,16 +131,12 @@
 
         <!-- R2DBC -->
         <dependency>
-            <groupId>io.r2dbc</groupId>
+            <groupId>org.postgresql</groupId>
             <artifactId>r2dbc-postgresql</artifactId>
             <exclusions>
                 <exclusion>
                     <artifactId>reactor-core</artifactId>
                     <groupId>io.projectreactor</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>r2dbc-spi</artifactId>
-                    <groupId>io.r2dbc</groupId>
                 </exclusion>
             </exclusions>
             <scope>provided</scope>
@@ -153,24 +150,17 @@
                     <artifactId>reactor-core</artifactId>
                     <groupId>io.projectreactor</groupId>
                 </exclusion>
-                <exclusion>
-                    <artifactId>r2dbc-spi</artifactId>
-                    <groupId>io.r2dbc</groupId>
-                </exclusion>
             </exclusions>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>dev.miku</groupId>
+            <groupId>io.asyncer</groupId>
             <artifactId>r2dbc-mysql</artifactId>
+            <version>${r2dbc-mysql.version}</version>
             <exclusions>
                 <exclusion>
                     <artifactId>reactor-core</artifactId>
                     <groupId>io.projectreactor</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>r2dbc-spi</artifactId>
-                    <groupId>io.r2dbc</groupId>
                 </exclusion>
             </exclusions>
             <scope>provided</scope>
@@ -295,12 +285,24 @@
             <artifactId>postgresql</artifactId>
             <version>${test-container.version}</version>
             <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <artifactId>r2dbc-spi</artifactId>
+                    <groupId>io.r2dbc</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>mysql</artifactId>
             <version>${test-container.version}</version>
             <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <artifactId>r2dbc-spi</artifactId>
+                    <groupId>io.r2dbc</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>
@@ -308,6 +310,12 @@
             <artifactId>mariadb</artifactId>
             <version>${test-container.version}</version>
             <scope>test</scope>
+            <exclusions>
+            <exclusion>
+                <artifactId>r2dbc-spi</artifactId>
+                <groupId>io.r2dbc</groupId>
+            </exclusion>
+        </exclusions>
         </dependency>
 
         <dependency>
@@ -315,6 +323,12 @@
             <artifactId>mssqlserver</artifactId>
             <version>${test-container.version}</version>
             <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <artifactId>r2dbc-spi</artifactId>
+                    <groupId>io.r2dbc</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>

@@ -158,7 +158,7 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
         insertSpec = databaseDialectHelper.addJsonField(insertSpec, COL_MAPPERS, item.getMappers());
         insertSpec = databaseDialectHelper.addJsonField(insertSpec, COL_ROLE_MAPPER, item.getRoleMapper());
 
-        Mono<Integer> action = insertSpec.fetch().rowsUpdated();
+        Mono<Long> action = insertSpec.fetch().rowsUpdated();
 
         return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle());
     }
@@ -183,7 +183,7 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
         update = databaseDialectHelper.addJsonField(update, COL_MAPPERS, item.getMappers());
         update = databaseDialectHelper.addJsonField(update, COL_ROLE_MAPPER, item.getRoleMapper());
 
-        Mono<Integer> action = update.fetch().rowsUpdated();
+        Mono<Long> action = update.fetch().rowsUpdated();
 
         return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle());
     }

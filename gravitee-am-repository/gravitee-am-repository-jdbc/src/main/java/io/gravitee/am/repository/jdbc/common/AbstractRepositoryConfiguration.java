@@ -32,12 +32,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.core.env.Environment;
 import org.springframework.data.r2dbc.config.AbstractR2dbcConfiguration;
-import org.springframework.data.r2dbc.connectionfactory.R2dbcTransactionManager;
-import org.springframework.data.r2dbc.dialect.DialectResolver;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
+import org.springframework.r2dbc.connection.R2dbcTransactionManager;
 import org.springframework.transaction.ReactiveTransactionManager;
 
-import javax.net.ssl.SSLSocketFactory;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;

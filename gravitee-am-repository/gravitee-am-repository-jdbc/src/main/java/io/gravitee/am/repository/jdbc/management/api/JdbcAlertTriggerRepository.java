@@ -181,7 +181,7 @@ public class JdbcAlertTriggerRepository extends AbstractJdbcRepository implement
         }
 
         return fluxToFlowable(execute
-                .map(x -> x.get(0, String.class)).all())
+                .map((row, rowMetadata) -> row.get(0, String.class)).all())
                 .flatMapMaybe(this::findById)
                 .doOnError(error -> LOGGER.error("Unable to retrieve AlertTrigger with referenceId {}, referenceType {} and criteria {}",
                         referenceId, referenceType, criteria, error));

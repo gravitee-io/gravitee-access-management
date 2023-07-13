@@ -131,7 +131,7 @@ public class JdbcAuthenticationFlowContextRepository extends AbstractJdbcReposit
         insertSpec = addQuotedField(insertSpec,COL_EXPIRE_AT, dateConverter.convertTo(context.getExpireAt(), null), LocalDateTime.class);
         insertSpec = databaseDialectHelper.addJsonField(insertSpec,COL_DATA, context.getData());
 
-        Mono<Integer> insertAction = insertSpec.fetch().rowsUpdated();
+        Mono<Long> insertAction = insertSpec.fetch().rowsUpdated();
         return monoToSingle(insertAction)
                 .flatMap((i) -> this.findById(id).toSingle());
     }

@@ -25,11 +25,11 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 
 import javax.inject.Inject;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.container.AsyncResponse;
-import javax.ws.rs.container.Suspended;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.container.AsyncResponse;
+import jakarta.ws.rs.container.Suspended;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -48,7 +48,7 @@ public class ConfigurationResource {
 
     @GET
     @Path("/flow/schema")
-    @Produces(javax.ws.rs.core.MediaType.APPLICATION_JSON)
+    @Produces(jakarta.ws.rs.core.MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Get the Policy Studio flow schema",
             notes = "There is no particular permission needed. User must be authenticated.")
     public void list(@Suspended final AsyncResponse response) {
@@ -73,7 +73,7 @@ public class ConfigurationResource {
 
     @GET
     @Path("spel/grammar")
-    @Produces(javax.ws.rs.core.MediaType.APPLICATION_JSON)
+    @Produces(jakarta.ws.rs.core.MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Get the spel grammar",
         notes = "There is no particular permission needed. User must be authenticated.")
     public void getSpelGrammar(@Suspended final AsyncResponse response) {

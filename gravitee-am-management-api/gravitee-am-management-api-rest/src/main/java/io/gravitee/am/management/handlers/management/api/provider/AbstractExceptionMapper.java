@@ -19,7 +19,7 @@ import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.management.handlers.management.api.model.ErrorEntity;
 import io.gravitee.am.service.exception.AbstractManagementException;
 
-import javax.ws.rs.ext.ExceptionMapper;
+import jakarta.ws.rs.ext.ExceptionMapper;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)

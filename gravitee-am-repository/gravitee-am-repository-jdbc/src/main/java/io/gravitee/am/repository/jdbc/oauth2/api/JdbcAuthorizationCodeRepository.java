@@ -107,7 +107,7 @@ public class JdbcAuthorizationCodeRepository extends AbstractJdbcRepository impl
         insertSpec = databaseDialectHelper.addJsonField(insertSpec, COL_SCOPES, authorizationCode.getScopes());
         insertSpec = databaseDialectHelper.addJsonField(insertSpec, COL_REQUEST_PARAMETERS, authorizationCode.getRequestParameters());
 
-        Mono<Integer> insertAction = insertSpec.fetch().rowsUpdated();
+        Mono<Long> insertAction = insertSpec.fetch().rowsUpdated();
 
         return monoToSingle(insertAction).flatMap((i) -> authorizationCodeRepository.findById(authorizationCode.getId()).map(this::toEntity).toSingle())
                 .doOnError((error) -> LOGGER.error("Unable to create authorizationCode with id {}", authorizationCode.getId(), error));

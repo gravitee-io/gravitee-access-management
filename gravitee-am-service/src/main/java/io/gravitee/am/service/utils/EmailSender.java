@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *         http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -47,9 +47,9 @@ public class EmailSender {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EmailSender.class);
 
-    private JavaMailSender mailSender;
+    private final JavaMailSender mailSender;
 
-    private String templatesPath;
+    private final String templatesPath;
 
     public EmailSender(JavaMailSender mailSender, String templatesPath) {
         this.mailSender = mailSender;
@@ -124,7 +124,8 @@ public class EmailSender {
     private String getContentTypeByFileName(final String fileName) {
         if (fileName == null) {
             return "";
-        } else if (fileName.endsWith(".png")) {
+        }
+        if (fileName.endsWith(".png")) {
             return "image/png";
         }
         return MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(fileName);
@@ -138,8 +139,6 @@ public class EmailSender {
     private static String extractMimeType(final String encoded) {
         final Pattern mime = Pattern.compile("^data:([a-zA-Z0-9]+/[a-zA-Z0-9]+).*,.*");
         final Matcher matcher = mime.matcher(encoded);
-        if (!matcher.find())
-            return "";
-        return matcher.group(1).toLowerCase();
+        return matcher.find() ? matcher.group(1).toLowerCase() : "";
     }
 }

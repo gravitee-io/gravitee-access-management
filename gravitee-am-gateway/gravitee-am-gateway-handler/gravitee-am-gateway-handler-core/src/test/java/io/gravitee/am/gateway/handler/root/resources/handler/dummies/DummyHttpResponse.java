@@ -187,6 +187,16 @@ public class DummyHttpResponse implements HttpServerResponse {
     }
 
     @Override
+    public Future<Void> writeEarlyHints(MultiMap multiMap) {
+        return null;
+    }
+
+    @Override
+    public void writeEarlyHints(MultiMap multiMap, Handler<AsyncResult<Void>> handler) {
+
+    }
+
+    @Override
     public Future<Void> end(String chunk) {
         this.ended = true;
         return Future.succeededFuture();

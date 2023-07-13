@@ -22,7 +22,7 @@ import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Single;
 import org.junit.Test;
 
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response;
 import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;

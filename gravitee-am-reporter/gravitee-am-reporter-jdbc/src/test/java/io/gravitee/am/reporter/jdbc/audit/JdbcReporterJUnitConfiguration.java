@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *         http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -70,10 +70,10 @@ public class JdbcReporterJUnitConfiguration extends JdbcReporterSpringConfigurat
             options = ConnectionFactoryOptions.builder()
                     .from(options)
                     .option(DRIVER, "pool")
-                    .option(PROTOCOL, options.getValue(DRIVER))
+                    .option(PROTOCOL, (String) options.getValue(DRIVER))
                     .build();
             this.connectionFactory = ConnectionFactories.get(options);
-    }
+        }
         return this.connectionFactory;
     }
 
@@ -81,12 +81,12 @@ public class JdbcReporterJUnitConfiguration extends JdbcReporterSpringConfigurat
     public JdbcReporterConfiguration reporterConfiguration(R2dbcDatabaseContainer dbContainer) {
         ConnectionFactoryOptions options = dbContainer.getOptions();
         JdbcReporterConfiguration config = new JdbcReporterConfiguration();
-        config.setDriver(options.getValue(DRIVER));
-        config.setDatabase(options.getValue(DATABASE));
-        config.setHost(options.getValue(HOST));
-        config.setPort(options.getValue(PORT));
-        config.setUsername(options.getValue(USER));
-        CharSequence value = options.getValue(PASSWORD);
+        config.setDriver((String) options.getValue(DRIVER));
+        config.setDatabase((String) options.getValue(DATABASE));
+        config.setHost((String) options.getValue(HOST));
+        config.setPort((Integer) options.getValue(PORT));
+        config.setUsername((String) options.getValue(USER));
+        CharSequence value = (CharSequence) options.getValue(PASSWORD);
         config.setPassword(String.join("", value));
 
         config.setTableSuffix("junit");

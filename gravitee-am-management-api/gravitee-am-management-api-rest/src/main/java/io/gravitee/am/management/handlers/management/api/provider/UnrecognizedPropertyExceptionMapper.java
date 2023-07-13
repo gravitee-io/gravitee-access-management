@@ -19,10 +19,10 @@ import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import io.gravitee.am.management.handlers.management.api.model.ErrorEntity;
 import io.gravitee.common.http.HttpStatusCode;
 
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
-import javax.ws.rs.ext.Provider;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.ExceptionMapper;
+import jakarta.ws.rs.ext.Provider;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)

@@ -32,6 +32,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.relational.core.query.CriteriaDefinition;
 import org.springframework.data.relational.core.query.Query;
+import org.springframework.data.relational.core.sql.In;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
@@ -149,13 +150,13 @@ public class JdbcResourceRepository extends AbstractJdbcRepository implements Re
         LOGGER.debug("create Resource with id {}", item.getId());
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        Mono<Integer> insertResult = template.insert(toJdbcEntity(item)).map(__ -> 1);
+        Mono<Long> insertResult = template.insert(toJdbcEntity(item)).map(__ -> 1L);
 
         final List<String> resourceScopes = item.getResourceScopes();
         if (resourceScopes != null && !resourceScopes.isEmpty()) {
             insertResult = insertResult.then(Flux.fromIterable(resourceScopes)
                     .concatMap(scope -> insertScope(item, scope))
-                    .reduce(Integer::sum));
+                    .reduce(Long::sum));
         }
 
         return monoToSingle(insertResult.as(trx::transactional))
@@ -167,23 +168,22 @@ public class JdbcResourceRepository extends AbstractJdbcRepository implements Re
         LOGGER.debug("update Resource with id {}", item.getId());
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        Mono<Integer> deleteScopes = template.delete(JdbcResource.Scope.class)
-                .matching(Query.query(where("resource_id").is(item.getId()))).all();
+        Mono<Long> deleteScopes = template.delete(JdbcResource.Scope.class)
+                .matching(Query.query(where("resource_id").is(item.getId()))).all().map(Integer::longValue);
 
-        Mono<Integer> updateResource = template.update(toJdbcEntity(item)).map(__ -> 1);
-
+        Mono<Long> updateResource = template.update(toJdbcEntity(item)).map(__ -> 1L);
         final List<String> resourceScopes = item.getResourceScopes();
         if (resourceScopes != null && !resourceScopes.isEmpty()) {
             updateResource = updateResource.then(Flux.fromIterable(resourceScopes)
                     .concatMap(scope -> insertScope(item, scope))
-                    .reduce(Integer::sum));
+                    .reduce(Long::sum));
         }
 
         return monoToSingle(deleteScopes.then(updateResource).as(trx::transactional))
                 .flatMap((i) -> this.findById(item.getId()).toSingle());
     }
 
-    private Mono<Integer> insertScope(Resource item, String scope) {
+    private Mono<Long> insertScope(Resource item, String scope) {
         return template.getDatabaseClient()
                 .sql("INSERT INTO uma_resource_scopes(resource_id, scope) VALUES (:resource_id, :scope)")
                 .bind("resource_id", item.getId())
@@ -196,11 +196,11 @@ public class JdbcResourceRepository extends AbstractJdbcRepository implements Re
         LOGGER.debug("Delete Resource with id {}", id);
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        Mono<Integer> deleteScopes = template.delete(JdbcResource.Scope.class)
-                .matching(Query.query(where("resource_id").is(id))).all();
+        Mono<Long> deleteScopes = template.delete(JdbcResource.Scope.class)
+                .matching(Query.query(where("resource_id").is(id))).all().map(Integer::longValue);
 
-        Mono<Integer> delete = template.delete(JdbcResource.class)
-                .matching(Query.query(where("id").is(id))).all();
+        Mono<Long> delete = template.delete(JdbcResource.class)
+                .matching(Query.query(where("id").is(id))).all().map(Integer::longValue);
 
         return monoToCompletable(delete.then(deleteScopes).as(trx::transactional));
     }

@@ -27,9 +27,9 @@ import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 
-import javax.ws.rs.ForbiddenException;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.SecurityContext;
+import jakarta.ws.rs.ForbiddenException;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.SecurityContext;
 import java.util.*;
 
 import static io.gravitee.am.management.service.permissions.Permissions.of;

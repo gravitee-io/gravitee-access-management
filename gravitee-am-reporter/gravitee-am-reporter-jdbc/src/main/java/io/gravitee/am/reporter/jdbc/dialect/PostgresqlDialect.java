@@ -17,8 +17,6 @@ package io.gravitee.am.reporter.jdbc.dialect;
 
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.reporter.api.audit.AuditReportableCriteria;
-import io.reactivex.rxjava3.core.Single;
-import org.springframework.data.r2dbc.core.DatabaseClient;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -30,7 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static reactor.adapter.rxjava.RxJava3Adapter.fluxToFlowable;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)

@@ -126,7 +126,7 @@ public class JdbcReporterRepository extends AbstractJdbcRepository implements Re
         insertSpec = addQuotedField(insertSpec, COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
         insertSpec = addQuotedField(insertSpec, COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
 
-        Mono<Integer> action = insertSpec.fetch().rowsUpdated();
+        Mono<Long> action = insertSpec.fetch().rowsUpdated();
         return monoToSingle(action.as(trx::transactional))
                 .flatMap((i) -> this.findById(item.getId()).toSingle());
     }
@@ -149,7 +149,7 @@ public class JdbcReporterRepository extends AbstractJdbcRepository implements Re
         updateSpec = addQuotedField(updateSpec, COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
         updateSpec = addQuotedField(updateSpec, COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
 
-        Mono<Integer> action = updateSpec.fetch().rowsUpdated();
+        Mono<Long> action = updateSpec.fetch().rowsUpdated();
         return monoToSingle(action.as(trx::transactional))
                 .flatMap((i) -> this.findById(item.getId()).toSingle());
     }

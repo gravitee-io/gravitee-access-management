@@ -204,7 +204,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         return fluxToFlowable(template.getDatabaseClient().sql(search)
                 .bind(COL_DOMAIN, domain)
                 .bind("value", wildcardMatch ? wildcardQuery.toUpperCase() : query.toUpperCase())
-                .map(row -> rowMapper.read(JdbcApplication.class, row))
+                .map((row, rowMetadata) -> rowMapper.read(JdbcApplication.class, row))
                 .all())
                 .map(this::toEntity)
                 .flatMap(app -> completeApplication(app).toFlowable())
@@ -212,7 +212,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
                 .flatMap(data -> monoToSingle(template.getDatabaseClient().sql(count)
                         .bind(COL_DOMAIN, domain)
                         .bind("value", wildcardMatch ? wildcardQuery.toUpperCase() : query.toUpperCase())
-                        .map(row -> row.get(0, Long.class)).first())
+                        .map((row, rowMetadata) -> row.get(0, Long.class)).first())
                         .map(total -> new Page<Application>(data, page, total)))
                 .doOnError((error) -> LOGGER.error("Unable to retrieve all applications with domain {} (page={}/size={})", domain, page, size, error));
     }
@@ -234,7 +234,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         return fluxToFlowable(template.getDatabaseClient()
                 .sql("SELECT a.* FROM applications a INNER JOIN application_identities i ON a.id = i.application_id AND i." + identity + " = :identity")
                 .bind("identity", identityProvider)
-                .map(row -> rowMapper.read(JdbcApplication.class, row)).all())
+                .map((row, rowMetadata) -> rowMapper.read(JdbcApplication.class, row)).all())
                 .map(this::toEntity)
                 .flatMap(app -> completeApplication(app).toFlowable());
     }
@@ -282,7 +282,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         return fluxToFlowable(template.getDatabaseClient().sql(databaseDialectHelper.buildFindApplicationByDomainAndClient())
                 .bind(COL_DOMAIN, domain)
                 .bind("clientId", clientId)
-                .map(row -> rowMapper.read(JdbcApplication.class, row))
+                .map((row, rowMetadata) -> rowMapper.read(JdbcApplication.class, row))
                 .all())
                 .map(this::toEntity)
                 .flatMap(app -> completeApplication(app).toFlowable())
@@ -318,7 +318,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         sql = databaseDialectHelper.addJsonField(sql, COL_METADATA, item.getMetadata());
         sql = databaseDialectHelper.addJsonField(sql, COL_SETTINGS, item.getSettings());
 
-        Mono<Integer> insertAction = sql.fetch().rowsUpdated();
+        Mono<Long> insertAction = sql.fetch().rowsUpdated();
         insertAction = persistChildEntities(insertAction, item);
 
         return monoToSingle(insertAction.as(trx::transactional))
@@ -345,7 +345,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         sql = databaseDialectHelper.addJsonField(sql, COL_METADATA, item.getMetadata());
         sql = databaseDialectHelper.addJsonField(sql, COL_SETTINGS, item.getSettings());
 
-        Mono<Integer> updateAction = sql.fetch().rowsUpdated();
+        Mono<Long> updateAction = sql.fetch().rowsUpdated();
         updateAction = deleteChildEntities(item.getId()).then(updateAction);
         updateAction = persistChildEntities(updateAction, item);
 
@@ -362,15 +362,15 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
                 .andThen(applicationRepository.deleteById(id));
     }
 
-    private Mono<Integer> deleteChildEntities(String appId) {
+    private Mono<Long> deleteChildEntities(String appId) {
         Mono<Integer> identities = template.delete(JdbcApplication.Identity.class).matching(query(where("application_id").is(appId))).all();
         Mono<Integer> factors = template.delete(JdbcApplication.Factor.class).matching(query(where("application_id").is(appId))).all();
         Mono<Integer> grants = template.delete(JdbcApplication.Grant.class).matching(query(where("application_id").is(appId))).all();
         Mono<Integer> scopeSettings = template.delete(JdbcApplication.ScopeSettings.class).matching(query(where("application_id").is(appId))).all();
-        return factors.then(identities).then(grants).then(scopeSettings);
+        return factors.then(identities).then(grants).then(scopeSettings).map(Integer::longValue);
     }
 
-    private Mono<Integer> persistChildEntities(Mono<Integer> actionFlow, Application app) {
+    private Mono<Long> persistChildEntities(Mono<Long> actionFlow, Application app) {
         var identities = app.getIdentityProviders();
         if (identities != null && !identities.isEmpty()) {
             actionFlow = actionFlow.then(Flux.fromIterable(identities).concatMap(idp -> {
@@ -387,7 +387,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
                         .bind("selection_rule", idp.getSelectionRule() == null ? "" : idp.getSelectionRule())
                         .bind("priority", idp.getPriority());
                 return sql.fetch().rowsUpdated();
-            }).reduce(Integer::sum));
+            }).reduce(Long::sum));
         }
 
         final Set<String> factors = app.getFactors();
@@ -399,7 +399,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
                         .bind("app", app.getId())
                         .bind("factor", value);
                 return sql.fetch().rowsUpdated();
-            }).reduce(Integer::sum));
+            }).reduce(Long::sum));
         }
 
         final List<String> grants = Optional.ofNullable(app.getSettings()).map(ApplicationSettings::getOauth).map(ApplicationOAuthSettings::getGrantTypes).orElse(Collections.emptyList());
@@ -411,7 +411,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
                         .bind("app", app.getId())
                         .bind("grant", value);
                 return sql.fetch().rowsUpdated();
-            }).reduce(Integer::sum));
+            }).reduce(Long::sum));
         }
 
         final List<ApplicationScopeSettings> scopeSettings = Optional.ofNullable(app.getSettings()).map(ApplicationSettings::getOauth).map(ApplicationOAuthSettings::getScopeSettings).orElse(Collections.emptyList());
@@ -425,7 +425,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
                 sql = value.getScope() == null ? sql.bindNull("scope", String.class) : sql.bind("scope", value.getScope());
                 sql = value.getScopeApproval() == null ? sql.bindNull("approval", Integer.class) : sql.bind("approval", value.getScopeApproval());
                 return sql.fetch().rowsUpdated();
-            }).reduce(Integer::sum));
+            }).reduce(Long::sum));
         }
 
         return actionFlow;

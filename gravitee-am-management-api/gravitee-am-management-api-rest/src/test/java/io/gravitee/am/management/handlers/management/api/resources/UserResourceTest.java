@@ -30,12 +30,12 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.junit.Test;
 
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.Response;
 import java.util.HashMap;
 import java.util.Map;
 
-import static javax.ws.rs.HttpMethod.PATCH;
+import static jakarta.ws.rs.HttpMethod.PATCH;
 import static org.glassfish.jersey.client.HttpUrlConnectorProvider.SET_METHOD_WORKAROUND;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;

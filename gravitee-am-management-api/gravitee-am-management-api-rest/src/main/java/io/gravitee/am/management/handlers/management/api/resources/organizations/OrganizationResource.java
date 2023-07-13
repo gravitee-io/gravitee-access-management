@@ -31,9 +31,9 @@ import io.gravitee.am.management.handlers.management.api.resources.platform.plug
 import io.gravitee.am.service.OrganizationService;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import javax.ws.rs.Path;
-import javax.ws.rs.container.ResourceContext;
-import javax.ws.rs.core.Context;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.container.ResourceContext;
+import jakarta.ws.rs.core.Context;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
