@@ -49,13 +49,24 @@
         <dependency>
             <groupId>com.infobip</groupId>
             <artifactId>infobip-api-java-client</artifactId>
-            <version>3.0.1</version>
+            <version>3.2.0</version>
             <exclusions>
                 <exclusion>
                     <artifactId>gson</artifactId>
                     <groupId>com.google.code.gson</groupId>
                 </exclusion>
+                <exclusion>
+                    <artifactId>org.json</artifactId>
+                    <groupId>json</groupId>
+                </exclusion>
             </exclusions>
+        </dependency>
+
+        <!-- import JSON to fix vuln in org.json:json dep -->
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>${json-version}</version>
         </dependency>
 
         <!-- import GSON to fix vuln in gson dep -->
