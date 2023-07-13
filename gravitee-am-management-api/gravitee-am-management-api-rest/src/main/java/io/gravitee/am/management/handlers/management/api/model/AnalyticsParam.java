@@ -20,9 +20,9 @@ import io.gravitee.am.common.analytics.Type;
 import io.gravitee.am.common.audit.EventType;
 import io.swagger.annotations.ApiParam;
 
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Response;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

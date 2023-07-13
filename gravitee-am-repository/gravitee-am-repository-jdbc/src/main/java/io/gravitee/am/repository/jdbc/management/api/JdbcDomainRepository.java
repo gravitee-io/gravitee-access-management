@@ -146,7 +146,7 @@ public class JdbcDomainRepository extends AbstractJdbcRepository implements Doma
         LOGGER.debug("create Domain with id {}", item.getId());
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        Mono<Integer> insertAction = template.insert(toJdbcDomain(item)).map(__ -> 1); // TODO
+        Mono<Long> insertAction = template.insert(toJdbcDomain(item)).map(__ -> 1L); // TODO
         insertAction = persistChildEntities(insertAction, item);
 
         return monoToSingle(insertAction
@@ -159,7 +159,7 @@ public class JdbcDomainRepository extends AbstractJdbcRepository implements Doma
         LOGGER.debug("update Domain with id {}", item.getId());
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        Mono<Integer> updateAction = template.update(toJdbcDomain(item)).map(__ -> 1); // TODO
+        Mono<Long> updateAction = template.update(toJdbcDomain(item)).map(__ -> 1L); // TODO
 
         updateAction = updateAction.then(deleteChildEntities(item.getId()));
         updateAction = persistChildEntities(updateAction, item);
@@ -199,7 +199,7 @@ public class JdbcDomainRepository extends AbstractJdbcRepository implements Doma
                 .bind("refType", ReferenceType.ENVIRONMENT.name())
                 .bind("refId", environmentId)
                 .bind("value", wildcardMatch ? wildcardQuery.toUpperCase() : query.toUpperCase())
-                .map(row -> rowMapper.read(JdbcDomain.class, row))
+                .map((row, rowMetadata) -> rowMapper.read(JdbcDomain.class, row))
                 .all())
                 .map(this::toDomain)
                 .flatMap(this::completeDomain);
@@ -224,7 +224,7 @@ public class JdbcDomainRepository extends AbstractJdbcRepository implements Doma
          );
     }
 
-    private Mono<Integer> persistChildEntities(Mono<Integer> actionFlow, Domain item) {
+    private Mono<Long> persistChildEntities(Mono<Long> actionFlow, Domain item) {
         final Set<String> identities = item.getIdentities();
         if (identities != null && !identities.isEmpty()) {
             actionFlow = actionFlow.then(Flux.fromIterable(identities).concatMap(idp ->
@@ -232,7 +232,7 @@ public class JdbcDomainRepository extends AbstractJdbcRepository implements Doma
                                     .bind("domain", item.getId())
                                     .bind("idp", idp)
                                     .fetch().rowsUpdated())
-                    .reduce(Integer::sum));
+                    .reduce(Long::sum));
         }
 
         final Set<String> tags = item.getTags();
@@ -242,7 +242,7 @@ public class JdbcDomainRepository extends AbstractJdbcRepository implements Doma
                                     .bind("domain", item.getId())
                                     .bind("tag", tagValue)
                                     .fetch().rowsUpdated())
-                    .reduce(Integer::sum));
+                    .reduce(Long::sum));
         }
 
         final List<VirtualHost> virtualHosts = item.getVhosts();
@@ -255,16 +255,16 @@ public class JdbcDomainRepository extends AbstractJdbcRepository implements Doma
                 insert = jdbcVHost.getPath() != null ? insert.bind("path", jdbcVHost.getPath()) : insert.bindNull("path", String.class);
                 return insert.bind("override", jdbcVHost.isOverrideEntrypoint())
                         .fetch().rowsUpdated();
-            }).reduce(Integer::sum));
+            }).reduce(Long::sum));
         }
 
         return actionFlow;
     }
 
-    private Mono<Integer> deleteChildEntities(String domainId) {
+    private Mono<Long> deleteChildEntities(String domainId) {
         Mono<Integer> deleteVirtualHosts = template.delete(JdbcDomain.Vhost.class).matching(Query.query(where("domain_id").is(domainId))).all();
         Mono<Integer> deleteIdentities = template.delete(JdbcDomain.Identity.class).matching(Query.query(where("domain_id").is(domainId))).all();
         Mono<Integer> deleteTags = template.delete(JdbcDomain.Tag.class).matching(Query.query(where("domain_id").is(domainId))).all();
-        return deleteVirtualHosts.then(deleteIdentities).then(deleteTags);
+        return deleteVirtualHosts.then(deleteIdentities).then(deleteTags).map(Integer::longValue);
     }
 }

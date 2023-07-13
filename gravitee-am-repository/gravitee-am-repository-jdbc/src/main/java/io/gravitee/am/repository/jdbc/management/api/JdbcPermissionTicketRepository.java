@@ -108,7 +108,7 @@ public class JdbcPermissionTicketRepository extends AbstractJdbcRepository imple
         insertSpec = addQuotedField(insertSpec, COL_EXPIRE_AT, dateConverter.convertTo(item.getExpireAt(), null), LocalDateTime.class);
         insertSpec = databaseDialectHelper.addJsonField(insertSpec, COL_PERMISSION_REQUEST, item.getPermissionRequest());
 
-        Mono<Integer> action = insertSpec.fetch().rowsUpdated();
+        Mono<Long> action = insertSpec.fetch().rowsUpdated();
 
         return monoToSingle(action).flatMap((i) -> permissionTicketRepository.findById(item.getId()).map(this::toEntity).toSingle());
     }
@@ -128,7 +128,7 @@ public class JdbcPermissionTicketRepository extends AbstractJdbcRepository imple
         update = addQuotedField(update, COL_EXPIRE_AT, dateConverter.convertTo(item.getExpireAt(), null), LocalDateTime.class);
         update = databaseDialectHelper.addJsonField(update, COL_PERMISSION_REQUEST, item.getPermissionRequest());
 
-        Mono<Integer> action = update.fetch().rowsUpdated();
+        Mono<Long> action = update.fetch().rowsUpdated();
         return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle());
     }
 

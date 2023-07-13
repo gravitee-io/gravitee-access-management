@@ -19,11 +19,11 @@ import io.gravitee.am.service.exception.AbstractManagementException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.Provider;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.Provider;
 
-import static javax.ws.rs.core.Response.Status.Family.familyOf;
+import static jakarta.ws.rs.core.Response.Status.Family.familyOf;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)

@@ -22,13 +22,13 @@ import io.gravitee.am.management.handlers.management.api.resources.platform.role
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.container.AsyncResponse;
-import javax.ws.rs.container.ResourceContext;
-import javax.ws.rs.container.Suspended;
-import javax.ws.rs.core.Context;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.container.AsyncResponse;
+import jakarta.ws.rs.container.ResourceContext;
+import jakarta.ws.rs.container.Suspended;
+import jakarta.ws.rs.core.Context;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -44,7 +44,7 @@ public class PlatformResource {
 
     @GET
     @Path("/audits/events")
-    @Produces(javax.ws.rs.core.MediaType.APPLICATION_JSON)
+    @Produces(jakarta.ws.rs.core.MediaType.APPLICATION_JSON)
     @ApiOperation(value = "List audit event types",
             notes = "There is no particular permission needed. User must be authenticated.")
     public void list(@Suspended final AsyncResponse response) {

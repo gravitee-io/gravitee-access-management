@@ -138,7 +138,7 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
                 .bind("value", wildcardSearch ? wildcardValue : query)
                 .bind("refId", referenceId)
                 .bind("refType", referenceType.name())
-                .map(row -> rowMapper.read(JdbcRole.class, row)).all())
+                .map((row, rowMetadata) -> rowMapper.read(JdbcRole.class, row)).all())
                 .map(this::toEntity)
                 .flatMap(role -> completeWithScopes(Maybe.just(role), role.getId()).toFlowable())
                 .toList()
@@ -146,7 +146,7 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
                         .bind("value", wildcardSearch ? wildcardValue : query)
                         .bind("refId", referenceId)
                         .bind("refType", referenceType.name())
-                        .map(row -> row.get(0, Long.class))
+                        .map((row, rowMetadata) -> row.get(0, Long.class))
                         .first())
                         .map(total -> new Page<Role>(data, page, total)));
     }
@@ -214,12 +214,12 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
 
         insertSpec = databaseDialectHelper.addJsonField(insertSpec, COL_PERMISSION_ACLS, item.getPermissionAcls());
 
-        Mono<Integer> action = insertSpec.fetch().rowsUpdated();
+        Mono<Long> action = insertSpec.fetch().rowsUpdated();
 
         final List<String> resourceScopes = item.getOauthScopes();
         if (resourceScopes != null && !resourceScopes.isEmpty()) {
             action = action.then(Flux.fromIterable(resourceScopes).concatMap(insertScopr(item)
-            ).reduce(Integer::sum));
+            ).reduce(Long::sum));
         }
 
         return monoToSingle(action.as(trx::transactional))
@@ -248,19 +248,19 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
         update = addQuotedField(update, COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
         update = databaseDialectHelper.addJsonField(update, COL_PERMISSION_ACLS, item.getPermissionAcls());
 
-        Mono<Integer> action = update.fetch().rowsUpdated();
+        Mono<Long> action = update.fetch().rowsUpdated();
 
         final List<String> resourceScopes = item.getOauthScopes();
         if (resourceScopes != null && !resourceScopes.isEmpty()) {
             action = action.then(Flux.fromIterable(resourceScopes).concatMap(insertScopr(item))
-                    .reduce(Integer::sum));
+                    .reduce(Long::sum));
         }
 
         return monoToSingle(deleteScopes.then(action).as(trx::transactional))
                 .flatMap((i) -> this.findById(item.getId()).toSingle());
     }
 
-    private Function<String, Publisher<? extends Integer>> insertScopr(Role item) {
+    private Function<String, Publisher<? extends Long>> insertScopr(Role item) {
         return scope ->
                 template.getDatabaseClient().sql("INSERT INTO role_oauth_scopes(role_id, scope) VALUES(:role_id, :scope)")
                         .bind("role_id", item.getId())

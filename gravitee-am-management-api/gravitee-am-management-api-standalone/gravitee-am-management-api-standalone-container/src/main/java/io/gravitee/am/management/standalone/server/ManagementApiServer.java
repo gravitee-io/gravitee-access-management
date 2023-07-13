@@ -58,7 +58,7 @@ public class ManagementApiServer extends JettyHttpServer {
 
         // REST configuration
         final ServletHolder servletHolder = new ServletHolder(ServletContainer.class);
-        servletHolder.setInitParameter("javax.ws.rs.Application", ManagementApplication.class.getName());
+        servletHolder.setInitParameter("jakarta.ws.rs.Application", ManagementApplication.class.getName());
         servletHolder.setInitOrder(1);
         servletHolder.setAsyncSupported(true);
 

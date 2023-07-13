@@ -41,6 +41,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.relational.core.query.Query;
+import org.springframework.data.relational.core.sql.In;
 import org.springframework.data.util.StreamUtils;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Repository;
@@ -266,7 +267,7 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
                 .bind(ATTR_COL_VALUE, wildcardSearch ? wildcardValue : query)
                 .bind("refId", referenceId)
                 .bind("refType", referenceType.name())
-                .map(row -> rowMapper.read(JdbcOrganizationUser.class, row))
+                .map((row, rowMetadata) -> rowMapper.read(JdbcOrganizationUser.class, row))
                 .all())
                 .map(this::toEntity)
                 .flatMap(app -> completeUser(app).toFlowable(), CONCURRENT_FLATMAP) // single thread to keep order
@@ -275,7 +276,7 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
                         .bind(ATTR_COL_VALUE, wildcardSearch ? wildcardValue : query)
                         .bind("refId", referenceId)
                         .bind("refType", referenceType.name())
-                        .map(row -> row.get(0, Long.class)).first())
+                        .map((row, rowMetadat) -> row.get(0, Long.class)).first())
                         .map(total -> new Page<>(data, page, total)));
     }
 
@@ -292,7 +293,7 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
         for (Map.Entry<String, Object> entry : search.getBinding().entrySet()) {
             executeSelect = executeSelect.bind(entry.getKey(), entry.getValue());
         }
-        Flux<JdbcOrganizationUser> userFlux = executeSelect.map(row -> rowMapper.read(JdbcOrganizationUser.class, row)).all();
+        Flux<JdbcOrganizationUser> userFlux = executeSelect.map((row, rowMetadat) -> rowMapper.read(JdbcOrganizationUser.class, row)).all();
 
         // execute count to provide total in the Page
         org.springframework.r2dbc.core.DatabaseClient.GenericExecuteSpec executeCount = template.getDatabaseClient().sql(search.getCountQuery());
@@ -300,7 +301,7 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
         for (Map.Entry<String, Object> entry : search.getBinding().entrySet()) {
             executeCount = executeCount.bind(entry.getKey(), entry.getValue());
         }
-        Mono<Long> userCount = executeCount.map(row -> row.get(0, Long.class)).first();
+        Mono<Long> userCount = executeCount.map((row, rowMetadat) -> row.get(0, Long.class)).first();
 
         return fluxToFlowable(userFlux)
                 .map(this::toEntity)
@@ -322,7 +323,7 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
         for (Map.Entry<String, Object> entry : search.getBinding().entrySet()) {
             executeSelect = executeSelect.bind(entry.getKey(), entry.getValue());
         }
-        Flux<JdbcOrganizationUser> userFlux = executeSelect.map(row -> rowMapper.read(JdbcOrganizationUser.class, row)).all();
+        Flux<JdbcOrganizationUser> userFlux = executeSelect.map((row, rowMetadat) -> rowMapper.read(JdbcOrganizationUser.class, row)).all();
 
         return fluxToFlowable(userFlux)
                 .map(this::toEntity)
@@ -419,7 +420,7 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
         insertSpec = databaseDialectHelper.addJsonField(insertSpec, USER_COL_FACTORS, item.getFactors());
         insertSpec = databaseDialectHelper.addJsonField(insertSpec, USER_COL_ADDITIONAL_INFORMATION, item.getAdditionalInformation());
 
-        Mono<Integer> insertAction = insertSpec.fetch().rowsUpdated();
+        Mono<Long> insertAction = insertSpec.fetch().rowsUpdated();
         insertAction = persistChildEntities(insertAction, item, UpdateActions.updateAll());
 
         return monoToSingle(insertAction.as(trx::transactional))
@@ -477,7 +478,7 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
         update = databaseDialectHelper.addJsonField(update, USER_COL_FACTORS, item.getFactors());
         update = databaseDialectHelper.addJsonField(update, USER_COL_ADDITIONAL_INFORMATION, item.getAdditionalInformation());
 
-        Mono<Integer> action = update.fetch().rowsUpdated();
+        Mono<Long> action = update.fetch().rowsUpdated();
 
         if (updateActions.updateRequire()) {
             action = deleteChildEntities(item.getId(), updateActions).then(action);
@@ -501,19 +502,19 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
     public Completable deleteByReference(ReferenceType referenceType, String referenceId) {
         LOGGER.debug("deleteByReference({}, {})", referenceType, referenceId);
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        Mono<Integer> delete = template.getDatabaseClient().sql("DELETE FROM organization_users WHERE reference_type = :refType AND reference_id = :refId").bind("refType", referenceType.name()).bind("refId", referenceId).fetch().rowsUpdated();
+        Mono<Long> delete = template.getDatabaseClient().sql("DELETE FROM organization_users WHERE reference_type = :refType AND reference_id = :refId").bind("refType", referenceType.name()).bind("refId", referenceId).fetch().rowsUpdated();
         return monoToCompletable(deleteChildEntitiesByRef(referenceType.name(), referenceId).then(delete).as(trx::transactional));
     }
 
-    private Mono<Integer> deleteChildEntitiesByRef(String refType, String refId) {
-        Mono<Integer> deleteRoles = template.getDatabaseClient().sql("DELETE FROM organization_user_roles WHERE user_id IN (SELECT id FROM organization_users u WHERE u.reference_type = :refType AND u.reference_id = :refId)").bind("refType", refType).bind("refId", refId).fetch().rowsUpdated();
-        Mono<Integer> deleteAddresses =template.getDatabaseClient().sql("DELETE FROM organization_user_addresses WHERE user_id IN (SELECT id FROM organization_users u WHERE u.reference_type = :refType AND u.reference_id = :refId)").bind("refType", refType).bind("refId", refId).fetch().rowsUpdated();
-        Mono<Integer> deleteAttributes = template.getDatabaseClient().sql("DELETE FROM organization_user_attributes WHERE user_id IN (SELECT id FROM organization_users u WHERE u.reference_type = :refType AND u.reference_id = :refId)").bind("refType", refType).bind("refId", refId).fetch().rowsUpdated();
-        Mono<Integer> deleteEntitlements = template.getDatabaseClient().sql("DELETE FROM organization_user_entitlements WHERE user_id IN (SELECT id FROM organization_users u WHERE u.reference_type = :refType AND u.reference_id = :refId)").bind("refType", refType).bind("refId", refId).fetch().rowsUpdated();
-        return deleteRoles.then(deleteAddresses).then(deleteAttributes).then(deleteEntitlements);
+    private Mono<Long> deleteChildEntitiesByRef(String refType, String refId) {
+        Mono<Long> deleteRoles = template.getDatabaseClient().sql("DELETE FROM organization_user_roles WHERE user_id IN (SELECT id FROM organization_users u WHERE u.reference_type = :refType AND u.reference_id = :refId)").bind("refType", refType).bind("refId", refId).fetch().rowsUpdated();
+        Mono<Long> deleteAddresses =template.getDatabaseClient().sql("DELETE FROM organization_user_addresses WHERE user_id IN (SELECT id FROM organization_users u WHERE u.reference_type = :refType AND u.reference_id = :refId)").bind("refType", refType).bind("refId", refId).fetch().rowsUpdated();
+        Mono<Long> deleteAttributes = template.getDatabaseClient().sql("DELETE FROM organization_user_attributes WHERE user_id IN (SELECT id FROM organization_users u WHERE u.reference_type = :refType AND u.reference_id = :refId)").bind("refType", refType).bind("refId", refId).fetch().rowsUpdated();
+        Mono<Long> deleteEntitlements = template.getDatabaseClient().sql("DELETE FROM organization_user_entitlements WHERE user_id IN (SELECT id FROM organization_users u WHERE u.reference_type = :refType AND u.reference_id = :refId)").bind("refType", refType).bind("refId", refId).fetch().rowsUpdated();
+        return deleteRoles.then(deleteAddresses).then(deleteAttributes).then(deleteEntitlements).map(Long::longValue);
     }
 
-    private Mono<Integer> persistChildEntities(Mono<Integer> actionFlow, User item, UpdateActions updateActions) {
+    private Mono<Long> persistChildEntities(Mono<Long> actionFlow, User item, UpdateActions updateActions) {
         final List<Address> addresses = item.getAddresses();
         if (addresses != null && !addresses.isEmpty() && updateActions.updateAddresses()) {
             actionFlow = actionFlow.then(Flux.fromIterable(addresses).concatMap(address -> {
@@ -527,7 +528,7 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
                 insert = address.getCountry() != null ? insert.bind(ADDR_COL_COUNTRY, address.getCountry()) : insert.bindNull(ADDR_COL_COUNTRY, String.class);
                 insert = address.isPrimary() != null ? insert.bind(ADDR_COL_PRIMARY, address.isPrimary()) : insert.bindNull(ADDR_COL_PRIMARY, Boolean.class);
                 return insert.fetch().rowsUpdated();
-            }).reduce(Integer::sum));
+            }).reduce(Long::sum));
         }
 
         if (updateActions.updateRole()) {
@@ -544,11 +545,11 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
                                     .bind("user", item.getId())
                                     .bind("entitlement", entitlement)
                                     .fetch().rowsUpdated())
-                    .reduce(Integer::sum));
+                    .reduce(Long::sum));
         }
 
         if (updateActions.updateAttributes()) {
-            Optional<Mono<Integer>> attributes = concat(concat(concat(convertAttributes(item, item.getEmails(), ATTRIBUTE_USER_FIELD_EMAIL),
+            Optional<Mono<Long>> attributes = concat(concat(concat(convertAttributes(item, item.getEmails(), ATTRIBUTE_USER_FIELD_EMAIL),
                                     convertAttributes(item, item.getPhoneNumbers(), ATTRIBUTE_USER_FIELD_PHONE)),
                             convertAttributes(item, item.getIms(), ATTRIBUTE_USER_FIELD_IM)),
                     convertAttributes(item, item.getPhotos(), ATTRIBUTE_USER_FIELD_PHOTO))
@@ -569,8 +570,8 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
         return actionFlow;
     }
 
-    private <T extends JdbcOrganizationUser.AbstractRole> Mono<Integer> addJdbcRoles(
-            Mono<Integer> actionFlow, User item, List<String> roles, String roleTable) {
+    private <T extends JdbcOrganizationUser.AbstractRole> Mono<Long> addJdbcRoles(
+            Mono<Long> actionFlow, User item, List<String> roles, String roleTable) {
         if (roles != null && !roles.isEmpty()) {
             return actionFlow.then(Flux.fromIterable(roles).concatMap(role -> {
                 try {
@@ -580,9 +581,9 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
                             .fetch().rowsUpdated();
                 } catch (Exception e) {
                     LOGGER.error("An unexpected error has occurred", e);
-                    return Mono.just(0);
+                    return Mono.just(0L);
                 }
-            }).reduce(Integer::sum));
+            }).reduce(Long::sum));
         }
         return actionFlow;
     }

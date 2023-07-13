@@ -212,9 +212,9 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
             count = count.bind(bind.getKey(), bind.getValue());
         }
 
-        Mono<Long> total = count.map(row -> row.get(0, Long.class)).first();
+        Mono<Long> total = count.map((row, rowMetadata) -> row.get(0, Long.class)).first();
 
-        return fluxToFlowable(query.map(row -> rowMapper.read(AuditJdbc.class, row)).all()
+        return fluxToFlowable(query.map((row, rowMetadata) -> rowMapper.read(AuditJdbc.class, row)).all()
                 .map(this::convert)
                 .concatMap(this::fillWithActor)
                 .concatMap(this::fillWithTarget)
@@ -298,7 +298,7 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
         for (Map.Entry<String, Object> bind : searchQuery.getBindings().entrySet()) {
             count = count.bind(bind.getKey(), bind.getValue());
         }
-        return monoToSingle(count.map(row -> row.get(0, Long.class)).first().switchIfEmpty(Mono.just(0l)))
+        return monoToSingle(count.map((row, rowMetadata) -> row.get(0, Long.class)).first().switchIfEmpty(Mono.just(0l)))
                 .map(data -> Collections.singletonMap("data", data));
     }
 
@@ -318,7 +318,7 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
         for (Map.Entry<String, Object> bind : searchQuery.getBindings().entrySet()) {
             groupBy = groupBy.bind(bind.getKey(), bind.getValue());
         }
-        return monoToSingle(groupBy.map(row -> Map.of(row.get(convertFieldName(criteria)), row.get("counter"))).all().reduce(new HashMap<>(), (acc, value) -> {
+        return monoToSingle(groupBy.map((row, rowMetadata) -> Map.of(row.get(convertFieldName(criteria)), row.get("counter"))).all().reduce(new HashMap<>(), (acc, value) -> {
             acc.putAll(value);
             return acc;
         }));
@@ -457,10 +457,10 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
 
 
 
-    private Mono bulkInsertReport(List<Audit> audits) {
+    private Mono<Long> bulkInsertReport(List<Audit> audits) {
         TransactionalOperator trx = TransactionalOperator.create(tm);
 
-        Mono<Integer> insertAction = null;
+        Mono<Long> insertAction = null;
         for (Audit audit: audits) {
             DatabaseClient.GenericExecuteSpec insertSpec = template.getDatabaseClient().sql(INSERT_AUDIT_STATEMENT);
             insertSpec = addQuotedField(insertSpec, COL_ID, audit.getId(), String.class);
@@ -516,7 +516,7 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
         return insertAction.as(trx::transactional);
     }
 
-    private Mono insertReport(Audit audit) {
+    private Mono<Long> insertReport(Audit audit) {
         TransactionalOperator trx = TransactionalOperator.create(tm);
 
         DatabaseClient.GenericExecuteSpec insertSpec = template.getDatabaseClient().sql(INSERT_AUDIT_STATEMENT);
@@ -527,7 +527,7 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
         insertSpec = addQuotedField(insertSpec, COL_REFERENCE_ID, audit.getReferenceId(), String.class);
         insertSpec = addQuotedField(insertSpec, COL_TIMESTAMP, LocalDateTime.ofInstant(audit.timestamp(), ZoneId.of(ZoneOffset.UTC.getId())), LocalDateTime.class);
 
-        Mono<Integer> insertAction = insertSpec.fetch().rowsUpdated();
+        Mono<Long> insertAction = insertSpec.fetch().rowsUpdated();
 
         AuditEntity actor = audit.getActor();
         if (actor != null) {
@@ -567,7 +567,7 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
         return insertAction.as(trx::transactional);
     }
 
-    private Mono<Integer> prepateInsertEntity(Audit audit, AuditEntity entity, String field) {
+    private Mono<Long> prepateInsertEntity(Audit audit, AuditEntity entity, String field) {
         DatabaseClient.GenericExecuteSpec insertEntitySpec = template.getDatabaseClient().sql(INSERT_ENTITY_STATEMENT);
         insertEntitySpec = addQuotedField(insertEntitySpec, COL_AUDIT_ID, audit.getId(), String.class);
         insertEntitySpec = addQuotedField(insertEntitySpec, COL_AUDIT_FIELD, field, String.class);
@@ -646,12 +646,11 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
                         })).reduce(Integer::sum);
             };
 
+            // init bulk processor
             template.getDatabaseClient().inConnection(resultFunction)
                     .doOnError(error -> LOGGER.error("Unable to initialize Database", error))
-                    .doOnTerminate(() -> {
-                        // init bulk processor
-                        initializeBulkProcessor();
-                    }).subscribe();
+                    .doOnTerminate(this::initializeBulkProcessor)
+                    .subscribe();
 
         } else {
             initializeBulkProcessor();

@@ -177,7 +177,7 @@ public class JdbcEmailRepository extends AbstractJdbcRepository implements Email
         insertSpec = addQuotedField(insertSpec, COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
         insertSpec = addQuotedField(insertSpec, COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
 
-        Mono<Integer> action = insertSpec.fetch().rowsUpdated();
+        Mono<Long> action = insertSpec.fetch().rowsUpdated();
         return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle());
     }
 
@@ -201,7 +201,7 @@ public class JdbcEmailRepository extends AbstractJdbcRepository implements Email
         update = addQuotedField(update, COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
         update = addQuotedField(update, COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
 
-        Mono<Integer> action = update.fetch().rowsUpdated();
+        Mono<Long> action = update.fetch().rowsUpdated();
         return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle());
     }
 

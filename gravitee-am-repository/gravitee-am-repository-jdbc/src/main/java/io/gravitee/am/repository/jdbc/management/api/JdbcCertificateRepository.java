@@ -139,7 +139,7 @@ public class JdbcCertificateRepository extends AbstractJdbcRepository implements
         insertSpec = addQuotedField(insertSpec,COL_EXPIRES_AT, dateConverter.convertTo(item.getExpiresAt(), null), LocalDateTime.class);
         insertSpec = addQuotedField(insertSpec,COL_SYSTEM, item.isSystem(), boolean.class);
 
-        Mono<Integer> action = insertSpec.fetch().rowsUpdated();
+        Mono<Long> action = insertSpec.fetch().rowsUpdated();
 
         return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle())
                 .doOnError((error) -> LOGGER.error("unable to create certificate with id {}", item.getId(), error));
@@ -162,7 +162,7 @@ public class JdbcCertificateRepository extends AbstractJdbcRepository implements
         update = addQuotedField(update,COL_EXPIRES_AT, dateConverter.convertTo(item.getExpiresAt(), null), LocalDateTime.class);
         update = addQuotedField(update,COL_SYSTEM, item.isSystem(), boolean.class);
 
-        Mono<Integer> updateAction = update.fetch().rowsUpdated();
+        Mono<Long> updateAction = update.fetch().rowsUpdated();
 
         return monoToSingle(updateAction).flatMap((i) -> this.findById(item.getId()).toSingle())
                 .doOnError((error) -> LOGGER.error("unable to update certificate with id {}", item.getId(), error));
@@ -176,8 +176,7 @@ public class JdbcCertificateRepository extends AbstractJdbcRepository implements
         update = addQuotedField(update,COL_ID, certificateId, String.class);
         update = addQuotedField(update, COL_EXPIRES_AT, dateConverter.convertTo(expiresAt, null), LocalDateTime.class);
 
-        Mono<Integer> updateAction = update.fetch().rowsUpdated();
-        return monoToCompletable(updateAction);
+        return monoToCompletable(update.fetch().rowsUpdated());
     }
 
     @Override

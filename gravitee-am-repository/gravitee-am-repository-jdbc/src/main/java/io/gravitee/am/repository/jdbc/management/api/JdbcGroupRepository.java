@@ -103,7 +103,7 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
                 databaseDialectHelper.toSql(quoted("groups")) +
                 " g INNER JOIN group_members m ON g.id = m.group_id where m.member = :mid")
                 .bind("mid", memberId)
-                .map(row -> rowMapper.read(JdbcGroup.class, row))
+                .map((row, rowMetadata) ->rowMapper.read(JdbcGroup.class, row))
                 .all());
 
         return flow.map(this::toEntity)
@@ -118,7 +118,7 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
                 " g WHERE g.reference_id = :refId AND g.reference_type = :refType")
                 .bind("refId", referenceId)
                 .bind("refType", referenceType.name())
-                .map(row -> rowMapper.read(JdbcGroup.class, row))
+                .map((row, rowMetadata) ->rowMapper.read(JdbcGroup.class, row))
                 .all());
 
         return flow.map(this::toEntity)
@@ -134,7 +134,7 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
                 " g WHERE g.reference_id = :refId AND g.reference_type = :refType")
                 .bind("refId", referenceId)
                 .bind("refType", referenceType.name())
-                .map(row -> row.get(0, Long.class))
+                .map((row, rowMetadata) ->row.get(0, Long.class))
                 .first());
 
         return fluxToFlowable(template.getDatabaseClient().sql("SELECT * FROM " +
@@ -142,7 +142,7 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
                         " g WHERE g.reference_id = :refId AND g.reference_type = :refType " + databaseDialectHelper.buildPagingClause(page, size))
                         .bind("refId", referenceId)
                         .bind("refType", referenceType.name())
-                .map(row -> rowMapper.read(JdbcGroup.class, row))
+                .map((row, rowMetadata) ->rowMapper.read(JdbcGroup.class, row))
                 .all())
                 .map(this::toEntity)
                 .flatMap(group -> completeWithMembersAndRole(Maybe.just(group), group.getId()).toFlowable(), CONCURRENT_FLATMAP)
@@ -161,7 +161,7 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
                 databaseDialectHelper.toSql(quoted("groups")) +
                 " g WHERE g.id IN (:ids)")
                 .bind("ids", ids)
-                .map(row -> rowMapper.read(JdbcGroup.class, row))
+                .map((row, rowMetadata) ->rowMapper.read(JdbcGroup.class, row))
                 .all());
 
         return flow.map(this::toEntity).flatMap(group -> completeWithMembersAndRole(Maybe.just(group), group.getId()).toFlowable(), CONCURRENT_FLATMAP);
@@ -176,7 +176,7 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
                 .bind("refId", referenceId)
                 .bind("refType", referenceType.name())
                 .bind("name", groupName)
-                .map(row -> rowMapper.read(JdbcGroup.class, row))
+                .map((row, rowMetadata) ->rowMapper.read(JdbcGroup.class, row))
                 .first());
 
         return maybe.map(this::toEntity)
@@ -192,7 +192,7 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
                 .bind("refId", referenceId)
                 .bind("refType", referenceType.name())
                 .bind("id", id)
-                .map(row -> rowMapper.read(JdbcGroup.class, row))
+                .map((row, rowMetadata) ->rowMapper.read(JdbcGroup.class, row))
                 .first());
 
         return completeWithMembersAndRole(maybe.map(this::toEntity), id);
@@ -205,7 +205,7 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
                 databaseDialectHelper.toSql(quoted("groups")) +
                 " g WHERE g.id = :id")
                 .bind("id", id)
-                .map(row -> rowMapper.read(JdbcGroup.class, row))
+                .map((row, rowMetadata) ->rowMapper.read(JdbcGroup.class, row))
                 .first());
 
         return completeWithMembersAndRole(maybe.map(this::toEntity), id);
@@ -250,7 +250,7 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
         insertSpec = addQuotedField(insertSpec, COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
         insertSpec = addQuotedField(insertSpec, COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
 
-        Mono<Integer> action = insertSpec.fetch().rowsUpdated();
+        Mono<Long> action = insertSpec.fetch().rowsUpdated();
 
         action = persistChildEntities(action, item);
 
@@ -258,7 +258,7 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
                 .flatMap((i) -> this.findById(item.getId()).toSingle());
     }
 
-    private Mono<Integer> persistChildEntities(Mono<Integer> actionFlow, Group item) {
+    private Mono<Long> persistChildEntities(Mono<Long> actionFlow, Group item) {
         final List<String> roles = item.getRoles();
         if (roles != null && !roles.isEmpty()) {
             actionFlow = actionFlow.then(Flux.fromIterable(roles).concatMap(roleValue ->
@@ -266,7 +266,7 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
                             .sql("INSERT INTO group_roles(group_id, role) VALUES (:gid, :role)")
                             .bind("gid", item.getId())
                             .bind("role", roleValue).fetch().rowsUpdated()
-            ).reduce(Integer::sum));
+            ).reduce(Long::sum));
         }
 
         final List<String> members = item.getMembers();
@@ -276,7 +276,7 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
                             .sql("INSERT INTO group_members(group_id, member) VALUES (:gid, :member)")
                             .bind("gid", item.getId())
                             .bind("member", memberValue).fetch().rowsUpdated()
-            ).reduce(Integer::sum));
+            ).reduce(Long::sum));
         }
 
         return actionFlow;
@@ -298,7 +298,7 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
         update = addQuotedField(update, COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
         update = addQuotedField(update, COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
 
-        Mono<Integer> action = update.fetch().rowsUpdated();
+        Mono<Long> action = update.fetch().rowsUpdated();
         action = deleteChildEntities(item.getId()).then(action);
         action = persistChildEntities(action, item);
 
@@ -306,17 +306,17 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
                 .flatMap((i) -> this.findById(item.getId()).toSingle());
     }
 
-    private Mono<Integer> deleteChildEntities(String groupId) {
+    private Mono<Long> deleteChildEntities(String groupId) {
         Mono<Integer> deleteRoles = template.delete(JdbcGroup.JdbcRole.class).matching(Query.query(where("group_id").is(groupId))).all();
         Mono<Integer> deleteMembers = template.delete(JdbcGroup.JdbcMember.class).matching(Query.query(where("group_id").is(groupId))).all();
-        return deleteRoles.then(deleteMembers);
+        return deleteRoles.then(deleteMembers).map(Integer::longValue);
     }
 
     @Override
     public Completable delete(String id) {
         LOGGER.debug("delete Group with id {}", id);
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        Mono<Integer> delete = template.getDatabaseClient().sql("DELETE FROM " + databaseDialectHelper.toSql(quoted("groups")) + " WHERE id = :id").bind(COL_ID, id).fetch().rowsUpdated();
+        Mono<Long> delete = template.getDatabaseClient().sql("DELETE FROM " + databaseDialectHelper.toSql(quoted("groups")) + " WHERE id = :id").bind(COL_ID, id).fetch().rowsUpdated();
         return monoToCompletable(delete.then(deleteChildEntities(id)).as(trx::transactional));
     }
 }

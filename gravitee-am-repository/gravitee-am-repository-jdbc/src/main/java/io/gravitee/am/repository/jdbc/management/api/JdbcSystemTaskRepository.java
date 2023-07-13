@@ -107,7 +107,7 @@ public class JdbcSystemTaskRepository extends AbstractJdbcRepository implements 
         insertSpec = addQuotedField(insertSpec, COL_CONFIGURATION, item.getConfiguration(), String.class);
         insertSpec = addQuotedField(insertSpec, COL_KIND, item.getKind(), String.class);
 
-        Mono<Integer> action = insertSpec.fetch().rowsUpdated();
+        Mono<Long> action = insertSpec.fetch().rowsUpdated();
         return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle());
     }
 
@@ -132,7 +132,7 @@ public class JdbcSystemTaskRepository extends AbstractJdbcRepository implements 
         updateSpec = addQuotedField(updateSpec, COL_KIND, item.getKind(), String.class);
         updateSpec = addQuotedField(updateSpec, COL_OPERATION_ID + WHERE_SUFFIX, operationId, String.class);
 
-        Mono<Integer> action = updateSpec.fetch().rowsUpdated();
+        Mono<Long> action = updateSpec.fetch().rowsUpdated();
         return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle());
     }
 

@@ -121,7 +121,7 @@ public class JdbcScopeRepository extends AbstractJdbcRepository implements Scope
     private Single<Long> countByDomain(String domain) {
         return monoToSingle(template.getDatabaseClient().sql("select count(s."+databaseDialectHelper.toSql(SqlIdentifier.quoted(COL_KEY))+") from scopes s where s.domain = :domain")
                 .bind(COL_DOMAIN, domain)
-                .map(row -> row.get(0, Long.class))
+                .map((row, rowMetadata) -> row.get(0, Long.class))
                 .first());
     }
 
@@ -138,7 +138,7 @@ public class JdbcScopeRepository extends AbstractJdbcRepository implements Scope
         return fluxToFlowable(template.getDatabaseClient().sql(search)
                 .bind(COL_DOMAIN, domain)
                 .bind("value", wildcardSearch ? wildcardQuery.toUpperCase() : query.toUpperCase())
-                .map(row -> rowMapper.read(JdbcScope.class, row))
+                .map((row, rowMetadata) -> rowMapper.read(JdbcScope.class, row))
                 .all())
                 .map(this::toEntity)
                 .flatMap(scope -> completeWithClaims(Maybe.just(scope), scope.getId()).toFlowable())
@@ -146,7 +146,7 @@ public class JdbcScopeRepository extends AbstractJdbcRepository implements Scope
                 .flatMap(data -> monoToSingle(template.getDatabaseClient().sql(count)
                         .bind(COL_DOMAIN, domain)
                         .bind("value", wildcardSearch ? wildcardQuery.toUpperCase() : query.toUpperCase())
-                        .map(row -> row.get(0, Long.class))
+                        .map((row, rowMetadata) -> row.get(0, Long.class))
                         .first())
                         .map(total -> new Page<>(data, page, total)));
     }
@@ -213,17 +213,17 @@ public class JdbcScopeRepository extends AbstractJdbcRepository implements Scope
         insertSpec = addQuotedField(insertSpec, COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
         insertSpec = addQuotedField(insertSpec, COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
 
-        Mono<Integer> action = insertSpec.fetch().rowsUpdated();
+        Mono<Long> action = insertSpec.fetch().rowsUpdated();
 
         final List<String> scopeClaims = item.getClaims();
         if (scopeClaims != null && !scopeClaims.isEmpty()) {
-            action = action.then(Flux.fromIterable(scopeClaims).concatMap(claim -> insertClaim(claim, item)).reduce(Integer::sum));
+            action = action.then(Flux.fromIterable(scopeClaims).concatMap(claim -> insertClaim(claim, item)).reduce(Long::sum));
         }
 
         return monoToSingle(action.as(trx::transactional)).flatMap((i) -> this.findById(item.getId()).toSingle());
     }
 
-    private Mono<Integer> insertClaim(String claim, Scope item) {
+    private Mono<Long> insertClaim(String claim, Scope item) {
         return template.getDatabaseClient().sql("INSERT INTO scope_claims(scope_id, claim) VALUES(:scope_id, :claim)")
                 .bind("scope_id", item.getId())
                 .bind("claim", claim)
@@ -253,11 +253,11 @@ public class JdbcScopeRepository extends AbstractJdbcRepository implements Scope
         update = addQuotedField(update, COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
         update = addQuotedField(update, COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
 
-        Mono<Integer> action = update.fetch().rowsUpdated();
+        Mono<Long> action = update.fetch().rowsUpdated();
 
         final List<String> scopeClaims = item.getClaims();
         if (scopeClaims != null && !scopeClaims.isEmpty()) {
-            action = action.then(Flux.fromIterable(scopeClaims).concatMap(claim -> insertClaim(claim, item)).reduce(Integer::sum));
+            action = action.then(Flux.fromIterable(scopeClaims).concatMap(claim -> insertClaim(claim, item)).reduce(Long::sum));
         }
 
         return monoToSingle(deleteClaims.then(action).as(trx::transactional))

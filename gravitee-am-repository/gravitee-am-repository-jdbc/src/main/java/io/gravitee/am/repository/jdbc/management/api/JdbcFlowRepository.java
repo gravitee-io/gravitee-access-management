@@ -150,14 +150,14 @@ public class JdbcFlowRepository extends AbstractJdbcRepository implements FlowRe
         insertSpec = addQuotedField(insertSpec, COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
         insertSpec = addQuotedField(insertSpec, COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
 
-        Mono<Integer> insertAction = insertSpec.fetch().rowsUpdated();
+        Mono<Long> insertAction = insertSpec.fetch().rowsUpdated();
         insertAction = persistChildEntities(insertAction, item);
 
         return monoToSingle(insertAction.as(trx::transactional))
                 .flatMap((i) -> this.findById(item.getId()).toSingle());
     }
 
-    private Mono<Integer> persistChildEntities(Mono<Integer> actionFlow, Flow item) {
+    private Mono<Long> persistChildEntities(Mono<Long> actionFlow, Flow item) {
         final List<Step> preStep = item.getPre();
         final List<Step> postStep = item.getPost();
 
@@ -172,7 +172,7 @@ public class JdbcFlowRepository extends AbstractJdbcRepository implements FlowRe
         return actionFlow;
     }
 
-    private Mono<Integer> persistFlowSteps(Flow item, List<Step> steps, JdbcFlow.StepType type) {
+    private Mono<Long> persistFlowSteps(Flow item, List<Step> steps, JdbcFlow.StepType type) {
         List<JdbcFlow.JdbcStep> jdbcPostSteps = new ArrayList<>();
         for (int i = 0; i < steps.size(); ++i) {
             JdbcFlow.JdbcStep bean = convertToJdbcStep(item, steps.get(i), type);
@@ -191,7 +191,7 @@ public class JdbcFlowRepository extends AbstractJdbcRepository implements FlowRe
             insert = insert.bind(COL_STEP_ENABLED, step.isEnabled());
             insert = step.getCondition() != null ? insert.bind(COL_STEP_CONDITION, step.getCondition()) : insert.bindNull(COL_STEP_CONDITION, String.class);
             return insert.fetch().rowsUpdated();
-        }).reduce(Integer::sum);
+        }).reduce(Long::sum);
     }
 
     private JdbcFlow.JdbcStep convertToJdbcStep(Flow item, Step step, JdbcFlow.StepType post) {
@@ -238,7 +238,7 @@ public class JdbcFlowRepository extends AbstractJdbcRepository implements FlowRe
         update = addQuotedField(update, COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
         update = addQuotedField(update, COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
 
-        Mono<Integer> updateAction = update.fetch().rowsUpdated();
+        Mono<Long> updateAction = update.fetch().rowsUpdated();
 
         updateAction = updateAction.then(deleteChildEntities(item.getId()));
         updateAction = persistChildEntities(updateAction, item);
@@ -246,8 +246,8 @@ public class JdbcFlowRepository extends AbstractJdbcRepository implements FlowRe
         return monoToSingle(updateAction.as(trx::transactional)).flatMap((i) -> this.findById(item.getId()).toSingle());
     }
 
-    private Mono<Integer> deleteChildEntities(String flowId) {
-        return template.delete(JdbcFlow.JdbcStep.class).matching(Query.query(where(COL_STEP_ID).is(flowId))).all();
+    private Mono<Long> deleteChildEntities(String flowId) {
+        return template.delete(JdbcFlow.JdbcStep.class).matching(Query.query(where(COL_STEP_ID).is(flowId))).all().map(Integer::longValue);
     }
 
     @Override

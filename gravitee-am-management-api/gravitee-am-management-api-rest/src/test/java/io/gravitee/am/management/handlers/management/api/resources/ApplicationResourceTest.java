@@ -34,7 +34,7 @@ import io.gravitee.risk.assessment.api.assessment.settings.RiskAssessmentSetting
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import java.util.*;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response;
 import org.junit.Test;
 
 import static org.junit.Assert.*;

@@ -28,7 +28,7 @@ import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.inject.Named;
-import javax.ws.rs.BadRequestException;
+import jakarta.ws.rs.BadRequestException;
 
 /**
  * @author Titouan COMPIEGNE (titouuan.compiegne at graviteesource.com)

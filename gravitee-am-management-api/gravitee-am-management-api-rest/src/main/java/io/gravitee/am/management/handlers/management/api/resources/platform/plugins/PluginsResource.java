@@ -17,9 +17,9 @@ package io.gravitee.am.management.handlers.management.api.resources.platform.plu
 
 import io.swagger.annotations.Api;
 
-import javax.ws.rs.Path;
-import javax.ws.rs.container.ResourceContext;
-import javax.ws.rs.core.Context;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.container.ResourceContext;
+import jakarta.ws.rs.core.Context;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)

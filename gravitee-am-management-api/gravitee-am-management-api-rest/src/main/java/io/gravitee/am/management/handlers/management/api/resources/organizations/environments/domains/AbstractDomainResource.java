@@ -23,8 +23,8 @@ import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.DomainService;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import javax.ws.rs.container.ResourceContext;
-import javax.ws.rs.core.Context;
+import jakarta.ws.rs.container.ResourceContext;
+import jakarta.ws.rs.core.Context;
 import java.util.Map;
 import java.util.Set;
 

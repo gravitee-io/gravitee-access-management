@@ -17,7 +17,7 @@ package io.gravitee.am.management.handlers.management.api.model;
 
 import io.gravitee.am.common.analytics.Type;
 
-import javax.ws.rs.WebApplicationException;
+import jakarta.ws.rs.WebApplicationException;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

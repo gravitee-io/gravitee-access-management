@@ -99,7 +99,7 @@ public class JdbcI18nDictionaryRepository extends AbstractJdbcRepository impleme
         sql = addQuotedField(sql, REFERENCE_TYPE, item.getReferenceType().toString(), String.class);
         sql = addQuotedField(sql, CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
         sql = addQuotedField(sql, UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
-        Mono<Integer> insertAction = sql.fetch().rowsUpdated();
+        Mono<Long> insertAction = sql.fetch().rowsUpdated();
 
         return monoToSingle(insertAction.as(mono -> TransactionalOperator.create(tm).transactional(mono)))
                 .flatMap(i -> this.findById(item.getId()).toSingle());
@@ -120,7 +120,7 @@ public class JdbcI18nDictionaryRepository extends AbstractJdbcRepository impleme
         sql = addQuotedField(sql, CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
         sql = addQuotedField(sql, UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
 
-        Mono<Integer> updateAction = sql.fetch().rowsUpdated();
+        Mono<? extends Number> updateAction = sql.fetch().rowsUpdated();
         updateAction = updateAction.then(deleteEntries(item.getId()));
         updateAction = persistEntries(updateAction, item);
 
@@ -132,8 +132,8 @@ public class JdbcI18nDictionaryRepository extends AbstractJdbcRepository impleme
         return template.delete(JdbcI18nDictionary.Entry.class).matching(Query.query(where(ENTRY_ID).is(dictionaryId))).all();
     }
 
-    private Mono<Integer> persistEntries(Mono<Integer> insertAction, I18nDictionary item) {
-        Mono<Integer> entries;
+    private Mono<? extends Number> persistEntries(Mono<? extends Number> insertAction, I18nDictionary item) {
+        Mono<? extends Number> entries;
         if (!item.getEntries().isEmpty()) {
             List<JdbcI18nDictionary.Entry> jdbcEntries = new ArrayList<>();
             item.getEntries().forEach((key, message) -> {
@@ -149,7 +149,7 @@ public class JdbcI18nDictionaryRepository extends AbstractJdbcRepository impleme
                 insert = insert.bind(ENTRY_KEY, entry.getKey());
                 insert = insert.bind(ENTRY_MESSAGE, entry.getMessage());
                 return insert.fetch().rowsUpdated();
-            }).reduce(Integer::sum);
+            }).reduce(Long::sum);
             insertAction = insertAction.then(entries);
         }
         return insertAction;

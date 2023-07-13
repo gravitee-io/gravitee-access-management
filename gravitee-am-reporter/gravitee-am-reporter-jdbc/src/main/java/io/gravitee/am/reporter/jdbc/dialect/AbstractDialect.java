@@ -19,6 +19,7 @@ import com.google.common.base.CaseFormat;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.reporter.api.audit.AuditReportableCriteria;
 import io.r2dbc.spi.Row;
+import io.r2dbc.spi.RowMetadata;
 import io.reactivex.rxjava3.core.Single;
 import org.springframework.r2dbc.core.DatabaseClient;
 
@@ -253,7 +254,7 @@ public abstract class AbstractDialect implements DialectHelper {
         return fluxToFlowable(histogram.map(this::toHistogramSlotValue).all()).toList();
     }
 
-    protected Map<String, Object> toHistogramSlotValue(Row row) {
+    protected Map<String, Object> toHistogramSlotValue(Row row, RowMetadata rowMetadata) {
         return Map.of("slot", row.get("slot"), "status", row.get("status"), "attempts", row.get("attempts"));
     }
 
