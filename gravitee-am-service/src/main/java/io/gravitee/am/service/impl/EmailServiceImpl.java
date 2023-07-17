@@ -17,11 +17,10 @@ package io.gravitee.am.service.impl;
 
 import io.gravitee.am.common.email.Email;
 import io.gravitee.am.service.EmailService;
+import io.gravitee.am.service.i18n.CompositeDictionaryProvider;
 import io.gravitee.am.service.i18n.DictionaryProvider;
 import io.gravitee.am.service.i18n.FileSystemDictionaryProvider;
 import io.gravitee.am.service.utils.EmailSender;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,8 +36,6 @@ import java.nio.file.Paths;
 @Component
 public class EmailServiceImpl implements EmailService, InitializingBean {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(EmailServiceImpl.class);
-
     @Value("${templates.path:${gravitee.home}/templates}")
     private String templatesPath;
 
@@ -48,6 +45,7 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
     private EmailSender emailSender;
 
     private DictionaryProvider defaultDictionaryProvider;
+    private DictionaryProvider dictionaryProvider;
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -58,6 +56,20 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
     @Override
     public void send(Email email) {
         this.emailSender.send(email);
+    }
+
+    @Override
+    public DictionaryProvider getDictionaryProvider() {
+        if (this.dictionaryProvider != null) {
+            return this.dictionaryProvider;
+        } else {
+            return this.getDefaultDictionaryProvider();
+        }
+    }
+
+    @Override
+    public void setDictionaryProvider(DictionaryProvider provider) {
+        this.dictionaryProvider = new CompositeDictionaryProvider(provider, this.getDefaultDictionaryProvider());
     }
 
     @Override
