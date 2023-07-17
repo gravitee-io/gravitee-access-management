@@ -1,4 +1,4 @@
-import { computeVersion, extractVersion } from '../helpers/version-helper.mjs';
+import { extractVersion } from '../helpers/version-helper.mjs';
 import { getJiraIssuesOfVersion, getJiraVersion } from '../helpers/jira-helper.mjs';
 import { getChangelogFor } from '../helpers/changelog-helper.mjs';
 import { isDryRun } from '../helpers/option-helper.mjs';
@@ -24,52 +24,41 @@ echo(chalk.blue(`# Write changelog to ${docAmChangelogFile}`));
 const version = await getJiraVersion(releasingVersion);
 const issues = await getJiraIssuesOfVersion(version.name);
 
-const features = issues
-.filter((issue) => issue.fields.issuetype.name === 'Story');
+const features = issues.filter((issue) => issue.fields.issuetype.name === 'Story');
 
 const gatewayIssues = issues
-  .filter((issue) => !features.includes(issue))
-  .filter((issue) => issue.fields.components.some((cmp) => cmp.name === 'Gateway'));
+    .filter((issue) => !features.includes(issue))
+    .filter((issue) => issue.fields.components.some((cmp) => cmp.name === 'Gateway'));
 
 const managementAPIIssues = issues
-  .filter((issue) => !features.includes(issue))
-  .filter((issue) => !gatewayIssues.includes(issue))
-  .filter((issue) => issue.fields.components.some((cmp) => cmp.name === 'Management API'));
+    .filter((issue) => !features.includes(issue))
+    .filter((issue) => !gatewayIssues.includes(issue))
+    .filter((issue) => issue.fields.components.some((cmp) => cmp.name === 'Management API'));
 
 const consoleIssues = issues
-  .filter((issue) => !features.includes(issue))
-  .filter((issue) => !managementAPIIssues.includes(issue))
-  .filter((issue) => !gatewayIssues.includes(issue))
-  .filter((issue) => issue.fields.components.some((cmp) => cmp.name === 'Console'));
+    .filter((issue) => !features.includes(issue))
+    .filter((issue) => !managementAPIIssues.includes(issue))
+    .filter((issue) => !gatewayIssues.includes(issue))
+    .filter((issue) => issue.fields.components.some((cmp) => cmp.name === 'Console'));
 
 const otherIssues = issues
-  .filter((issue) => !features.includes(issue))
-  .filter((issue) => !managementAPIIssues.includes(issue))
-  .filter((issue) => !gatewayIssues.includes(issue))
-  .filter((issue) => !consoleIssues.includes(issue));
+    .filter((issue) => !features.includes(issue))
+    .filter((issue) => !managementAPIIssues.includes(issue))
+    .filter((issue) => !gatewayIssues.includes(issue))
+    .filter((issue) => !consoleIssues.includes(issue));
 
 let changelogPatchTemplate = `
-==  - ${releasingVersion} (${new Date().toISOString().slice(0, 10)})
+== AM - ${releasingVersion} (${new Date().toISOString().slice(0, 10)})
 
-== What's new !
+${getChangelogFor("== What's new !", features)}
 
-${getChangelogFor(features)}
+${getChangelogFor('=== Gateway', gatewayIssues)}
 
-=== Gateway
+${getChangelogFor('=== Management API', managementAPIIssues)}
 
-${getChangelogFor(gatewayIssues)}
+${getChangelogFor('=== Console', consoleIssues)}
 
-=== Management API
-
-${getChangelogFor(managementAPIIssues)}
-
-=== Console
-
-${getChangelogFor(consoleIssues)}
-
-=== Other
-
-${getChangelogFor(otherIssues)}
+${getChangelogFor('=== Other', otherIssues)}
 `;
 
 echo(changelogPatchTemplate);
@@ -77,8 +66,8 @@ echo(changelogPatchTemplate);
 // write after anchor
 const changelogFileContent = fs.readFileSync(docAmChangelogFile, 'utf8');
 const changelogFileContentWithPatch = changelogFileContent.replace(
-  '# Change Log',
-  `# Change Log
+    '# Change Log',
+    `# Change Log
 ${changelogPatchTemplate}`,
 );
 fs.writeFileSync(`${docAmChangelogFile}`, changelogFileContentWithPatch);
@@ -114,6 +103,6 @@ process.env.PR_BODY = prBody;
 
 if (!dryRun) {
   const releaseNotesPrUrl =
-    await $`gh pr create --title "chore: Add changelog for new ${releasingVersion} release" --body "$PR_BODY" --base master --head ${gitBranch}`;
+      await $`gh pr create --title "chore: Add changelog for new ${releasingVersion} release" --body "$PR_BODY" --base master --head ${gitBranch}`;
   $`echo ${releaseNotesPrUrl.stdout} > /tmp/releaseNotesPrUrl.txt`;
 }
