@@ -17,6 +17,7 @@ package io.gravitee.am.service.impl;
 
 import io.gravitee.am.common.email.Email;
 import io.gravitee.am.service.EmailService;
+import io.gravitee.am.service.i18n.CompositeDictionaryProvider;
 import io.gravitee.am.service.i18n.DictionaryProvider;
 import io.gravitee.am.service.i18n.FileSystemDictionaryProvider;
 import io.gravitee.am.service.utils.EmailSender;
@@ -41,6 +42,7 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
     private EmailSender emailSender;
 
     private DictionaryProvider defaultDictionaryProvider;
+    private DictionaryProvider dictionaryProvider;
 
     public EmailServiceImpl(JavaMailSender mailSender, @Value("${templates.path:${gravitee.home}/templates}") String templatesPath) {
         this.mailSender = mailSender;
@@ -56,6 +58,20 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
     @Override
     public void send(Email email) {
         this.emailSender.send(email);
+    }
+
+    @Override
+    public DictionaryProvider getDictionaryProvider() {
+        if (this.dictionaryProvider != null) {
+            return this.dictionaryProvider;
+        } else {
+            return this.getDefaultDictionaryProvider();
+        }
+    }
+
+    @Override
+    public void setDictionaryProvider(DictionaryProvider provider) {
+        this.dictionaryProvider = new CompositeDictionaryProvider(provider, this.getDefaultDictionaryProvider());
     }
 
     @Override
