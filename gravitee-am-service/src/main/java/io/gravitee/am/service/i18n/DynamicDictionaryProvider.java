@@ -24,4 +24,5 @@ import io.gravitee.am.model.I18nDictionary;
 public interface DynamicDictionaryProvider extends DictionaryProvider {
     void loadDictionary(I18nDictionary i18nDictionary);
     void removeDictionary(String locale);
+    void resetDictionaries();
 }

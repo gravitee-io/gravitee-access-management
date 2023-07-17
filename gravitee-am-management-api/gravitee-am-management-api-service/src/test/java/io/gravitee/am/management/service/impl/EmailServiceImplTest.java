@@ -28,10 +28,14 @@ import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.i18n.DictionaryProvider;
+import io.gravitee.am.service.impl.I18nDictionaryService;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.Properties;
+
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -74,6 +78,14 @@ public class EmailServiceImplTest {
     @InjectMocks
     private EmailService emailServiceSpy;
 
+    private I18nDictionaryService i18nDictionaryService;
+
+    @Before
+    public void init() {
+        this.i18nDictionaryService = mock(I18nDictionaryService.class);
+        when(i18nDictionaryService.findAll(any(), any())).thenReturn(Flowable.empty());
+    }
+
     @Test
     public void must_not_send_email_due_to_not_enabled() throws IOException {
         var emailService = new EmailServiceImpl(
@@ -110,7 +122,7 @@ public class EmailServiceImplTest {
         MockitoAnnotations.openMocks(this);
 
         final DictionaryProvider mockDictionaryProvider = Mockito.mock(DictionaryProvider.class);
-        when(this.emailService.getDefaultDictionaryProvider()).thenReturn(mockDictionaryProvider);
+        when(this.emailService.getDictionaryProvider()).thenReturn(mockDictionaryProvider);
         when(mockDictionaryProvider.getDictionaryFor(any())).thenReturn(new Properties());
 
         when(freemarkerConfiguration.getIncompatibleImprovements()).thenReturn(DEFAULT_INCOMPATIBLE_IMPROVEMENTS);
