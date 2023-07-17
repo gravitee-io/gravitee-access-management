@@ -17,7 +17,6 @@
 package io.gravitee.am.gateway.handler.common.email;
 
 import freemarker.cache.TemplateLoader;
-import freemarker.core.Environment;
 import freemarker.template.Configuration;
 import freemarker.template.DefaultObjectWrapperBuilder;
 import freemarker.template.TemplateException;
@@ -31,15 +30,16 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.i18n.DictionaryProvider;
-import java.io.IOException;
-import java.io.StringReader;
-import java.util.Properties;
 import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Qualifier;
+
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.Properties;
 
 import static freemarker.template.Configuration.AUTO_DETECT_NAMING_CONVENTION;
 import static freemarker.template.Configuration.DEFAULT_INCOMPATIBLE_IMPROVEMENTS;
@@ -124,7 +124,7 @@ public class EmailServiceImplTest {
         var templateLoader = Mockito.mock(TemplateLoader.class);
 
         final DictionaryProvider mockDictionaryProvider = Mockito.mock(DictionaryProvider.class);
-        when(this.emailService.getDefaultDictionaryProvider()).thenReturn(mockDictionaryProvider);
+        when(this.emailService.getDictionaryProvider()).thenReturn(mockDictionaryProvider);
         when(mockDictionaryProvider.getDictionaryFor(any())).thenReturn(new Properties());
 
         when(freemarkerConfiguration.getIncompatibleImprovements()).thenReturn(DEFAULT_INCOMPATIBLE_IMPROVEMENTS);
