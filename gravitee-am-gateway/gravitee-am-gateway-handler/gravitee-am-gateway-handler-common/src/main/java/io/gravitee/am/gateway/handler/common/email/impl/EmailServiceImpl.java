@@ -37,8 +37,10 @@ import io.gravitee.am.model.safe.UserProperties;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.i18n.FreemarkerMessageResolver;
+import io.gravitee.am.service.i18n.GraviteeMessageResolver;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.EmailAuditBuilder;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -49,7 +51,6 @@ import java.io.StringWriter;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -57,13 +58,12 @@ import java.util.Map;
 
 import static io.gravitee.am.common.web.UriBuilder.encodeURIComponent;
 import static io.gravitee.am.service.utils.UserProfileUtils.preferredLanguage;
-import static org.springframework.ui.freemarker.FreeMarkerTemplateUtils.processTemplateIntoString;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class EmailServiceImpl implements EmailService {
+public class EmailServiceImpl implements EmailService, InitializingBean {
 
     private final boolean enabled;
     private final String resetPasswordSubject;
@@ -98,6 +98,9 @@ public class EmailServiceImpl implements EmailService {
     @Autowired
     private DomainService domainService;
 
+    @Autowired
+    private GraviteeMessageResolver graviteeMessageResolver;
+
     public EmailServiceImpl(
             boolean enabled,
             String resetPasswordSubject,
@@ -113,6 +116,11 @@ public class EmailServiceImpl implements EmailService {
         this.blockedAccountExpireAfter = blockedAccountExpireAfter;
         this.mfaChallengeSubject = mfaChallengeSubject;
         this.mfaChallengeExpireAfter = mfaChallengeExpireAfter;
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        this.emailService.setDictionaryProvider(this.graviteeMessageResolver.getDynamicDictionaryProvider());
     }
 
     @Override
@@ -278,7 +286,7 @@ public class EmailServiceImpl implements EmailService {
         var result = new StringWriter(1024);
 
         var dataModel = new HashMap<>(params);
-        dataModel.put(FreemarkerMessageResolver.METHOD_NAME, new FreemarkerMessageResolver(this.emailService.getDefaultDictionaryProvider().getDictionaryFor(preferredLanguage)));
+        dataModel.put(FreemarkerMessageResolver.METHOD_NAME, new FreemarkerMessageResolver(this.emailService.getDictionaryProvider().getDictionaryFor(preferredLanguage)));
 
         var env = plainTextTemplate.createProcessingEnvironment(dataModel, result);
         env.process();

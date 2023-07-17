@@ -17,6 +17,7 @@ package io.gravitee.am.service.i18n;
 
 import io.gravitee.am.model.I18nDictionary;
 
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
@@ -32,7 +33,7 @@ import static java.util.Optional.ofNullable;
  */
 public class ThreadLocalDomainDictionaryProvider implements DynamicDictionaryProvider {
 
-    private ThreadLocal<Map<String, Properties>> propertiesMap = new ThreadLocal<>();
+    private ThreadLocal<Map<String, Properties>> propertiesMap = ThreadLocal.withInitial(ThreadLocalDomainDictionaryProvider::initMapOfDictionaries);
 
     @Override
     public Properties getDictionaryFor(Locale locale) {
@@ -55,10 +56,19 @@ public class ThreadLocalDomainDictionaryProvider implements DynamicDictionaryPro
         final String locale = i18nDictionary.getLocale();
         Properties properties = new Properties();
         properties.putAll(i18nDictionary.getEntries());
-        propertiesMap.set(Map.of(locale, properties));
+        propertiesMap.get().put(locale, properties);
     }
 
     public void removeDictionary(String locale) {
         propertiesMap.remove();
+    }
+
+    @Override
+    public void resetDictionaries() {
+        propertiesMap.set(initMapOfDictionaries());
+    }
+
+    private static HashMap<String, Properties> initMapOfDictionaries() {
+        return new HashMap<>();
     }
 }

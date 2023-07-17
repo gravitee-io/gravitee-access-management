@@ -37,10 +37,13 @@ import io.gravitee.am.model.safe.UserProperties;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.i18n.FreemarkerMessageResolver;
+import io.gravitee.am.service.i18n.ThreadLocalDomainDictionaryProvider;
+import io.gravitee.am.service.impl.I18nDictionaryService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.EmailAuditBuilder;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -63,7 +66,7 @@ import static org.springframework.ui.freemarker.FreeMarkerTemplateUtils.processT
  * @author GraviteeSource Team
  */
 @Component("managementEmailService")
-public class EmailServiceImpl implements EmailService {
+public class EmailServiceImpl implements EmailService, InitializingBean {
 
     private static final String ADMIN_CLIENT = "admin";
 
@@ -91,6 +94,11 @@ public class EmailServiceImpl implements EmailService {
     @Autowired
     private DomainService domainService;
 
+    @Autowired
+    private I18nDictionaryService i18nDictionaryService;
+
+    private final ThreadLocalDomainDictionaryProvider dictionaryProvider;
+
     public EmailServiceImpl(
             @Value("${email.enabled:false}") boolean enabled,
             @Value("${user.registration.email.subject:New user registration}") String registrationSubject,
@@ -100,22 +108,42 @@ public class EmailServiceImpl implements EmailService {
         this.registrationSubject = registrationSubject;
         this.registrationExpireAfter = registrationExpireAfter;
         this.certificateExpirySubject = certificateExpirySubject;
+        this.dictionaryProvider = new ThreadLocalDomainDictionaryProvider();
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        this.emailService.setDictionaryProvider(dictionaryProvider);
     }
 
     @Override
     public Completable send(Domain domain, Application client, io.gravitee.am.model.Template template, User user) {
         if (enabled) {
-            // get raw email template
-            return getEmailTemplate(template, user).map(emailTemplate -> {
-                // prepare email
-                Email email = prepareEmail(domain, client, template, emailTemplate, user);
-                // send email
-                sendEmail(email, user);
-
-                return email;
-            }).ignoreElement();
+            return refreshDomainDictionaries(domain)
+                    .andThen(prepareAndSend(domain, client, template, user));
         }
         return Completable.complete();
+    }
+
+    private Completable prepareAndSend(Domain domain, Application client, io.gravitee.am.model.Template template, User user) {
+        // get raw email template
+        return getEmailTemplate(template, user).map(emailTemplate -> {
+            // prepare email
+            Email email = prepareEmail(domain, client, template, emailTemplate, user);
+            // send email
+            sendEmail(email, user);
+
+            return email;
+        }).ignoreElement();
+    }
+
+    private Completable refreshDomainDictionaries(Domain domain) {
+        return Completable.fromAction(() -> this.dictionaryProvider.resetDictionaries())
+                .andThen(this.i18nDictionaryService.findAll(ReferenceType.DOMAIN, domain.getId())
+                .map(dict -> {
+                    this.dictionaryProvider.loadDictionary(dict);
+                    return dict;
+                }).ignoreElements().onErrorComplete());
     }
 
     @Override
@@ -173,7 +201,7 @@ public class EmailServiceImpl implements EmailService {
         var result = new StringWriter(1024);
 
         var dataModel = new HashMap<>(params);
-        dataModel.put(FreemarkerMessageResolver.METHOD_NAME, new FreemarkerMessageResolver(this.emailService.getDefaultDictionaryProvider().getDictionaryFor(preferredLanguage)));
+        dataModel.put(FreemarkerMessageResolver.METHOD_NAME, new FreemarkerMessageResolver(this.emailService.getDictionaryProvider().getDictionaryFor(preferredLanguage)));
 
         var env = plainTextTemplate.createProcessingEnvironment(new SimpleHash(dataModel,
                 new DefaultObjectWrapperBuilder(Configuration.VERSION_2_3_22).build()), result);

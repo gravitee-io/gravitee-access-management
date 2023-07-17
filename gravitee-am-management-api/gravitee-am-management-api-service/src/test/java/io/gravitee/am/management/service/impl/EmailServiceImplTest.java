@@ -22,16 +22,20 @@ import freemarker.template.DefaultObjectWrapperBuilder;
 import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.management.service.EmailManager;
 import io.gravitee.am.management.service.EmailService;
-import io.gravitee.am.model.*;
+import io.gravitee.am.model.Application;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Email;
+import io.gravitee.am.model.Template;
+import io.gravitee.am.model.User;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.i18n.DictionaryProvider;
+import io.gravitee.am.service.impl.I18nDictionaryService;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
-import java.io.IOException;
-import java.io.StringReader;
-import java.util.Properties;
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -39,12 +43,20 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Qualifier;
 
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.Properties;
+
 import static freemarker.template.Configuration.AUTO_DETECT_NAMING_CONVENTION;
 import static freemarker.template.Configuration.DEFAULT_INCOMPATIBLE_IMPROVEMENTS;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
@@ -73,6 +85,14 @@ public class EmailServiceImplTest {
 
     @InjectMocks
     private EmailService emailServiceSpy;
+
+    private I18nDictionaryService i18nDictionaryService;
+
+    @Before
+    public void init() {
+        this.i18nDictionaryService = mock(I18nDictionaryService.class);
+        when(i18nDictionaryService.findAll(any(), any())).thenReturn(Flowable.empty());
+    }
 
     @Test
     public void must_not_send_email_due_to_not_enabled() throws IOException {
@@ -110,7 +130,7 @@ public class EmailServiceImplTest {
         MockitoAnnotations.openMocks(this);
 
         final DictionaryProvider mockDictionaryProvider = Mockito.mock(DictionaryProvider.class);
-        when(this.emailService.getDefaultDictionaryProvider()).thenReturn(mockDictionaryProvider);
+        when(this.emailService.getDictionaryProvider()).thenReturn(mockDictionaryProvider);
         when(mockDictionaryProvider.getDictionaryFor(any())).thenReturn(new Properties());
 
         when(freemarkerConfiguration.getIncompatibleImprovements()).thenReturn(DEFAULT_INCOMPATIBLE_IMPROVEMENTS);
