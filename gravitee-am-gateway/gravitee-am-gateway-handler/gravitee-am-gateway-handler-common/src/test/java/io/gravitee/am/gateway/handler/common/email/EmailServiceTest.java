@@ -31,18 +31,27 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.EmailService;
+import io.gravitee.am.service.i18n.CompositeDictionaryProvider;
+import io.gravitee.am.service.i18n.DictionaryProvider;
+import io.gravitee.am.service.i18n.DomainBasedDictionaryProvider;
 import io.gravitee.am.service.i18n.FileSystemDictionaryProvider;
+import io.gravitee.am.service.i18n.GraviteeMessageResolver;
+import io.gravitee.am.service.impl.I18nDictionaryService;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.*;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.File;
 import java.util.Map;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -82,6 +91,15 @@ public class EmailServiceTest {
     @Mock
     private Domain domain;
 
+    @Mock
+    private I18nDictionaryService i18nDictionaryService;
+
+    @Mock
+    private GraviteeMessageResolver graviteeMessageResolver;
+
+    @Spy
+    private DomainBasedDictionaryProvider domainBasedDictionaryProvider = new DomainBasedDictionaryProvider();
+
     @Before
     public void init() throws Exception {
         freemarkerConfiguration.setLocalizedLookup(false);
@@ -93,6 +111,12 @@ public class EmailServiceTest {
         freemarkerConfiguration.setTemplateLoader(new FileTemplateLoader(new File("src/test/resources/templates")));
 
         when(this.emailService.getDefaultDictionaryProvider()).thenReturn(new FileSystemDictionaryProvider("src/test/resources/templates/i18n"));
+
+        when(this.graviteeMessageResolver.getDynamicDictionaryProvider()).thenReturn(this.domainBasedDictionaryProvider);
+
+        cut.afterPropertiesSet();
+
+        doReturn(new CompositeDictionaryProvider(this.graviteeMessageResolver.getDynamicDictionaryProvider(), emailService.getDefaultDictionaryProvider())).when(emailService).getDictionaryProvider();
     }
 
     @Test
@@ -113,6 +137,7 @@ public class EmailServiceTest {
 
         cut.send(email);
 
+        verify(domainBasedDictionaryProvider, times(5)).getDictionaryFor(any());
         verify(emailService).send(argThat(msg -> msg.getSubject().equals("Veuillez reinitialiser votre mot de passe") &&
                 msg.getContent().contains("Bonjour John Doe,")));
     }
@@ -135,6 +160,7 @@ public class EmailServiceTest {
 
         cut.send(email);
 
+        verify(domainBasedDictionaryProvider, times(5)).getDictionaryFor(any());
         verify(emailService).send(argThat(msg -> msg.getSubject().equals("Please reset your password") &&
                 msg.getContent().contains("Hi John Doe,")));
     }

@@ -59,4 +59,9 @@ public class DomainBasedDictionaryProvider implements DynamicDictionaryProvider 
     public void removeDictionary(String locale) {
         propertiesMap.remove(locale);
     }
+
+    @Override
+    public void resetDictionaries() {
+        this.propertiesMap.clear();
+    }
 }

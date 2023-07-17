@@ -43,6 +43,10 @@ public class GraviteeMessageResolver extends AbstractMessageResolver {
         this.setOrder(0);
     }
 
+    public DynamicDictionaryProvider getDynamicDictionaryProvider() {
+        return domainBasedDictionaryProvider;
+    }
+
     public boolean isSupported(Locale locale) {
         return this.dictionaryProvider.hasDictionaryFor(locale) || this.domainBasedDictionaryProvider.hasDictionaryFor(locale);
     }

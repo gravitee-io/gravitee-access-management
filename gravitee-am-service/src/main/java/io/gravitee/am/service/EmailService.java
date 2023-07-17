@@ -28,4 +28,7 @@ public interface EmailService {
 
     DictionaryProvider getDefaultDictionaryProvider();
 
+    DictionaryProvider getDictionaryProvider();
+
+    void setDictionaryProvider(DictionaryProvider provider);
 }

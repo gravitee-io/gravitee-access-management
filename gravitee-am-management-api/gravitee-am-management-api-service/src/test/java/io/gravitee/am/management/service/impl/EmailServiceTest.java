@@ -26,15 +26,23 @@ import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.management.service.EmailManager;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Email;
+import io.gravitee.am.model.I18nDictionary;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.EmailService;
+import io.gravitee.am.service.exception.DictionaryNotFoundException;
+import io.gravitee.am.service.i18n.CompositeDictionaryProvider;
+import io.gravitee.am.service.i18n.DictionaryProvider;
 import io.gravitee.am.service.i18n.FileSystemDictionaryProvider;
+import io.gravitee.am.service.impl.I18nDictionaryService;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
@@ -42,10 +50,12 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.File;
+import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -79,6 +89,11 @@ public class EmailServiceTest {
     @Mock
     private DomainService domainService;
 
+    @Mock
+    private I18nDictionaryService i18nDictionaryService;
+    @Captor
+    private ArgumentCaptor<DictionaryProvider> dictionaryProvider;
+
     @Before
     public void init() throws Exception {
         freemarkerConfiguration.setLocalizedLookup(false);
@@ -91,10 +106,18 @@ public class EmailServiceTest {
 
         when(emailService.getDefaultDictionaryProvider()).thenReturn(new FileSystemDictionaryProvider("src/test/resources/templates/i18n"));
         when(domainService.buildUrl(any(), any())).thenReturn("http://url");
+
+        cut.afterPropertiesSet();
+
+        verify(emailService).setDictionaryProvider(dictionaryProvider.capture());
+        doReturn(new CompositeDictionaryProvider(dictionaryProvider.getValue(), emailService.getDefaultDictionaryProvider())).when(emailService).getDictionaryProvider();
+
     }
 
     @Test
     public void sendEmail_i18n_fr() throws Exception {
+        when(i18nDictionaryService.findAll(any(), any())).thenReturn(Flowable.empty());
+
         final var registrationTpl = Template.REGISTRATION_CONFIRMATION;
         final var email = new Email();
         email.setFrom("no-reply@gravitee.io");
@@ -114,6 +137,8 @@ public class EmailServiceTest {
 
     @Test
     public void sendEmail_i18n_en() throws Exception {
+        when(i18nDictionaryService.findAll(any(), any())).thenReturn(Flowable.empty());
+
         final var registrationTpl = Template.REGISTRATION_CONFIRMATION;
         final var email = new Email();
         email.setFrom("no-reply@gravitee.io");
@@ -130,5 +155,52 @@ public class EmailServiceTest {
         verify(emailService).send(argThat(msg -> msg.getSubject().equals("New user registration") &&
                 msg.getContent().contains("You have been") &&
                 msg.getContent().contains("Hi John Doe,")));
+    }
+
+    @Test
+    public void sendEmail_i18n_en_after_i18n_loading_error() throws Exception {
+        when(i18nDictionaryService.findAll(any(), any())).thenReturn(Flowable.error(new DictionaryNotFoundException("unknown")));
+
+        final var registrationTpl = Template.REGISTRATION_CONFIRMATION;
+        final var email = new Email();
+        email.setFrom("no-reply@gravitee.io");
+        email.setSubject("${msg('registration.confirmation.email.subject')}");
+        email.setTemplate(registrationTpl.template());
+        when(emailManager.getEmail(any(), any(), any(), anyInt())).thenReturn(Maybe.just(email));
+
+        final User user = new User();
+        user.setFirstName("John");
+        user.setLastName("Doe");
+        user.setPreferredLanguage("en");
+        cut.send(new Domain(), null, registrationTpl, user).blockingGet();
+
+        verify(emailService).send(argThat(msg -> msg.getSubject().equals("New user registration") &&
+                msg.getContent().contains("You have been") &&
+                msg.getContent().contains("Hi John Doe,")));
+    }
+
+    @Test
+    public void sendEmail_i18n_en_with_domain_i18n_value() throws Exception {
+        final I18nDictionary dictionary = new I18nDictionary();
+        dictionary.setLocale("en");
+        dictionary.setEntries(Map.of("registration.confirmation.email.say.hello", "Custom Hello message for {0} {1},"));
+        when(i18nDictionaryService.findAll(any(), any())).thenReturn(Flowable.just(dictionary));
+
+        final var registrationTpl = Template.REGISTRATION_CONFIRMATION;
+        final var email = new Email();
+        email.setFrom("no-reply@gravitee.io");
+        email.setSubject("${msg('registration.confirmation.email.subject')}");
+        email.setTemplate(registrationTpl.template());
+        when(emailManager.getEmail(any(), any(), any(), anyInt())).thenReturn(Maybe.just(email));
+
+        final User user = new User();
+        user.setFirstName("John");
+        user.setLastName("Doe");
+        user.setPreferredLanguage("en");
+        cut.send(new Domain(), null, registrationTpl, user).blockingGet();
+
+        verify(emailService).send(argThat(msg -> msg.getSubject().equals("New user registration") &&
+                msg.getContent().contains("You have been") &&
+                msg.getContent().contains("Custom Hello message for John Doe,")));
     }
 }
