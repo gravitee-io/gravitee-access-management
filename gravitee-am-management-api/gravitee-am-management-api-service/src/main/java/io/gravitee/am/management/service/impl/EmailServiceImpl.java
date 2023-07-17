@@ -33,12 +33,17 @@ import io.gravitee.am.model.safe.UserProperties;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.i18n.FreemarkerMessageResolver;
+import io.gravitee.am.service.i18n.ThreadLocalDomainDictionaryProvider;
+import io.gravitee.am.service.impl.I18nDictionaryService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.EmailAuditBuilder;
 import io.netty.handler.codec.http.QueryStringDecoder;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.vertx.rxjava3.core.MultiMap;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -59,7 +64,7 @@ import static io.gravitee.am.service.utils.UserProfileUtils.preferredLanguage;
  * @author GraviteeSource Team
  */
 @Component("managementEmailService")
-public class EmailServiceImpl implements EmailService {
+public class EmailServiceImpl implements EmailService, InitializingBean {
 
     private static final String ADMIN_CLIENT = "admin";
 
@@ -82,6 +87,10 @@ public class EmailServiceImpl implements EmailService {
 
     private DomainService domainService;
 
+    private I18nDictionaryService i18nDictionaryService;
+
+    private final ThreadLocalDomainDictionaryProvider dictionaryProvider;
+
     public EmailServiceImpl(
             EmailManager emailManager,
             io.gravitee.am.service.EmailService emailService,
@@ -89,6 +98,7 @@ public class EmailServiceImpl implements EmailService {
             AuditService auditService,
             @Qualifier("managementJwtBuilder") JWTBuilder jwtBuilder,
             DomainService domainService,
+            I18nDictionaryService i18nDictionaryService,
             @Value("${email.enabled:false}") boolean enabled,
             @Value("${user.registration.email.subject:New user registration}") String registrationSubject,
             @Value("${user.registration.token.expire-after:86400}")  Integer registrationExpireAfter,
@@ -107,22 +117,43 @@ public class EmailServiceImpl implements EmailService {
         this.registrationVerifySubject = registrationVerifySubject;
         this.registrationVerifyExpireAfter = registrationVerifyExpireAfter;
         this.certificateExpirySubject = certificateExpirySubject;
+        this.dictionaryProvider = new ThreadLocalDomainDictionaryProvider();
+        this.i18nDictionaryService = i18nDictionaryService;
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        this.emailService.setDictionaryProvider(dictionaryProvider);
     }
 
     @Override
     public Maybe<Email> send(Domain domain, Application client, io.gravitee.am.model.Template template, User user) {
         if (enabled) {
-            // get raw email template
-            return getEmailTemplate(template, user).map(emailTemplate -> {
-                // prepare email
-                Email email = prepareEmail(domain, client, template, emailTemplate, user);
-                // send email
-                sendEmail(email, user);
+            return refreshDomainDictionaries(domain)
+                    .andThen(prepareAndSend(domain, client, template, user));
+        }
+        return Maybe.empty();
+    }
+
+    private Maybe<Email> prepareAndSend(Domain domain, Application client, io.gravitee.am.model.Template template, User user) {
+        // get raw email template
+        return getEmailTemplate(template, user).map(emailTemplate -> {
+            // prepare email
+            Email email = prepareEmail(domain, client, template, emailTemplate, user);
+            // send email
+            sendEmail(email, user);
 
                 return email;
             });
-        }
-        return Maybe.empty();
+    }
+
+    private Completable refreshDomainDictionaries(Domain domain) {
+        return Completable.fromAction(() -> this.dictionaryProvider.resetDictionaries())
+                .andThen(this.i18nDictionaryService.findAll(ReferenceType.DOMAIN, domain.getId())
+                .map(dict -> {
+                    this.dictionaryProvider.loadDictionary(dict);
+                    return dict;
+                }).ignoreElements().onErrorComplete());
     }
 
     @Override
@@ -180,7 +211,7 @@ public class EmailServiceImpl implements EmailService {
         var result = new StringWriter(1024);
 
         var dataModel = new HashMap<>(params);
-        dataModel.put(FreemarkerMessageResolver.METHOD_NAME, new FreemarkerMessageResolver(this.emailService.getDefaultDictionaryProvider().getDictionaryFor(preferredLanguage)));
+        dataModel.put(FreemarkerMessageResolver.METHOD_NAME, new FreemarkerMessageResolver(this.emailService.getDictionaryProvider().getDictionaryFor(preferredLanguage)));
 
         var env = plainTextTemplate.createProcessingEnvironment(new SimpleHash(dataModel,
                 new DefaultObjectWrapperBuilder(Configuration.VERSION_2_3_22).build()), result);
