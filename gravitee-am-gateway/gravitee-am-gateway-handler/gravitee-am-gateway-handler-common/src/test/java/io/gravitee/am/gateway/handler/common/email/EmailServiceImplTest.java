@@ -124,7 +124,7 @@ public class EmailServiceImplTest {
         var templateLoader = Mockito.mock(TemplateLoader.class);
 
         final DictionaryProvider mockDictionaryProvider = Mockito.mock(DictionaryProvider.class);
-        when(this.emailService.getDefaultDictionaryProvider()).thenReturn(mockDictionaryProvider);
+        when(this.emailService.getDictionaryProvider()).thenReturn(mockDictionaryProvider);
         when(mockDictionaryProvider.getDictionaryFor(any())).thenReturn(new Properties());
 
         when(freemarkerConfiguration.getIncompatibleImprovements()).thenReturn(DEFAULT_INCOMPATIBLE_IMPROVEMENTS);
@@ -172,7 +172,7 @@ public class EmailServiceImplTest {
         var templateLoader = Mockito.mock(TemplateLoader.class);
 
         final DictionaryProvider mockDictionaryProvider = Mockito.mock(DictionaryProvider.class);
-        when(this.emailService.getDefaultDictionaryProvider()).thenReturn(mockDictionaryProvider);
+        when(this.emailService.getDictionaryProvider()).thenReturn(mockDictionaryProvider);
         when(mockDictionaryProvider.getDictionaryFor(any())).thenReturn(new Properties());
 
         when(freemarkerConfiguration.getIncompatibleImprovements()).thenReturn(DEFAULT_INCOMPATIBLE_IMPROVEMENTS);

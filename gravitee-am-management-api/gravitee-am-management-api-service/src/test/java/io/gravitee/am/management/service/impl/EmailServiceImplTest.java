@@ -28,11 +28,18 @@ import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.management.service.EmailManager;
 import io.gravitee.am.management.service.EmailService;
 import io.gravitee.am.management.service.assertions.MimeMessageParserAssert;
-import io.gravitee.am.model.*;
+import io.gravitee.am.model.Application;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Email;
+import io.gravitee.am.model.Template;
+import io.gravitee.am.model.User;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.i18n.DictionaryProvider;
 import io.gravitee.am.service.impl.DomainServiceImpl;
+import io.gravitee.am.service.impl.I18nDictionaryService;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import org.apache.commons.mail.util.MimeMessageParser;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,9 +56,11 @@ import org.springframework.mail.javamail.JavaMailSenderImpl;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Properties;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
@@ -79,6 +88,8 @@ public class EmailServiceImplTest {
     private AuditService auditService;
 
     JavaMailSenderImpl mailSender;
+
+    I18nDictionaryService i18nDictionaryService;
 
     @BeforeEach
     public void init() throws Exception {
@@ -109,6 +120,9 @@ public class EmailServiceImplTest {
 
         when(jwtBuilder.sign(any())).thenReturn("TOKEN");
 
+        this.i18nDictionaryService = mock(I18nDictionaryService.class);
+        when(i18nDictionaryService.findAll(any(), any())).thenReturn(Flowable.empty());
+        
         var cut = new EmailServiceImpl(
                 emailManager,
                 emailService,
@@ -116,6 +130,7 @@ public class EmailServiceImplTest {
                 auditService,
                 jwtBuilder,
                 new DomainServiceImpl("http://localhost:1234/unittest/"),
+                i18nDictionaryService,
                 true,
                 "New user registration",
                 86400,
@@ -167,6 +182,7 @@ public class EmailServiceImplTest {
                 auditService,
                 jwtBuilder,
                 new DomainServiceImpl("http://localhost:1234/unittest/"),
+                i18nDictionaryService,
                 false,
                 "New user registration",
                 86400,
