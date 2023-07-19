@@ -58,7 +58,7 @@ public class JdbcDeviceRepository extends AbstractJdbcRepository implements Devi
     public Flowable<Device> findByReferenceAndUser(ReferenceType referenceType, String referenceId, String user) {
         LOGGER.debug("findByReferenceAndApplicationAndUser({}, {})", referenceType, referenceId);
         LocalDateTime now = LocalDateTime.now(UTC);
-        return fluxToFlowable(template.select(JdbcDevice.class)
+        return fluxToFlowable(getTemplate().select(JdbcDevice.class)
                 .matching(Query.query(
                         where(REFERENCE_ID_FIELD).is(referenceId)
                                 .and(where(REF_TYPE_FIELD).is(referenceType.name()))
@@ -73,7 +73,7 @@ public class JdbcDeviceRepository extends AbstractJdbcRepository implements Devi
     public Maybe<Device> findByReferenceAndClientAndUserAndDeviceIdentifierAndDeviceId(
             ReferenceType referenceType, String referenceId, String client, String user, String rememberDevice, String deviceId) {
         LocalDateTime now = LocalDateTime.now(UTC);
-        return monoToMaybe(template.select(JdbcDevice.class)
+        return monoToMaybe(getTemplate().select(JdbcDevice.class)
                 .matching(Query.query(where(REFERENCE_ID_FIELD).is(referenceId)
                         .and(where(REF_TYPE_FIELD).is(referenceType.name()))
                         .and(where(CLIENT_FIELD).is(client))
@@ -94,7 +94,7 @@ public class JdbcDeviceRepository extends AbstractJdbcRepository implements Devi
     public Maybe<Device> findById(String id) {
         LOGGER.debug("findById({})", id);
         LocalDateTime now = LocalDateTime.now(UTC);
-        return monoToMaybe(template.select(JdbcDevice.class)
+        return monoToMaybe(getTemplate().select(JdbcDevice.class)
                 .matching(Query.query(where(ID_FIELD).is(id).and(where(EXPIRES_AT_FIELD).greaterThanOrEquals(now))))
                 .first())
                 .map(this::toEntity);
@@ -105,19 +105,19 @@ public class JdbcDeviceRepository extends AbstractJdbcRepository implements Devi
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("create remember device with id {}", item.getId());
 
-        return monoToSingle(template.insert(toJdbcEntity(item))).map(this::toEntity);
+        return monoToSingle(getTemplate().insert(toJdbcEntity(item))).map(this::toEntity);
     }
 
     @Override
     public Single<Device> update(Device item) {
         LOGGER.debug("update remember device with id {}", item.getId());
-        return monoToSingle(template.update(toJdbcEntity(item))).map(this::toEntity);
+        return monoToSingle(getTemplate().update(toJdbcEntity(item))).map(this::toEntity);
     }
 
     @Override
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
-        return monoToCompletable(template.delete(JdbcDevice.class)
+        return monoToCompletable(getTemplate().delete(JdbcDevice.class)
                 .matching(Query.query(where(ID_FIELD).is(id))).all());
     }
 
@@ -126,7 +126,7 @@ public class JdbcDeviceRepository extends AbstractJdbcRepository implements Devi
         LOGGER.debug("purgeExpiredData()");
         LocalDateTime now = LocalDateTime.now(UTC);
         return monoToCompletable(
-                template.delete(JdbcDevice.class).matching(Query.query(where(EXPIRES_AT_FIELD).lessThan(now))).all()
+                getTemplate().delete(JdbcDevice.class).matching(Query.query(where(EXPIRES_AT_FIELD).lessThan(now))).all()
         ).doOnError(error -> LOGGER.error("Unable to purge Devices", error));
     }
 }

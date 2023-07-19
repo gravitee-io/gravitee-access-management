@@ -91,7 +91,7 @@ public class JdbcMembershipRepository extends AbstractJdbcRepository implements 
 
         whereClause = whereClause.and(referenceClause.and(criteria.isLogicalOR() ? userClause.or(groupClause) : userClause.and(groupClause)));
 
-        return fluxToFlowable(template.select(Query.query(whereClause), JdbcMembership.class))
+        return fluxToFlowable(getTemplate().select(Query.query(whereClause), JdbcMembership.class))
                 .map(this::toEntity);
     }
 
@@ -113,7 +113,7 @@ public class JdbcMembershipRepository extends AbstractJdbcRepository implements 
     public Single<Membership> create(Membership item) {
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("create Membership with id {}", item.getId());
-        return monoToSingle(template.insert(toJdbcEntity(item))).map(this::toEntity);
+        return monoToSingle(getTemplate().insert(toJdbcEntity(item))).map(this::toEntity);
     }
 
     @Override

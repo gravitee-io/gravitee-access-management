@@ -99,7 +99,7 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
     public Flowable<Group> findByMember(String memberId) {
         LOGGER.debug("findByMember({})", memberId);
 
-        Flowable<JdbcGroup> flow = fluxToFlowable(template.getDatabaseClient().sql("SELECT * FROM " +
+        Flowable<JdbcGroup> flow = fluxToFlowable(getTemplate().getDatabaseClient().sql("SELECT * FROM " +
                 databaseDialectHelper.toSql(quoted("groups")) +
                 " g INNER JOIN group_members m ON g.id = m.group_id where m.member = :mid")
                 .bind("mid", memberId)
@@ -113,7 +113,7 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
     @Override
     public Flowable<Group> findAll(ReferenceType referenceType, String referenceId) {
         LOGGER.debug("findAll({}, {})", referenceType, referenceId);
-        Flowable<JdbcGroup> flow = fluxToFlowable(template.getDatabaseClient().sql("SELECT * FROM " +
+        Flowable<JdbcGroup> flow = fluxToFlowable(getTemplate().getDatabaseClient().sql("SELECT * FROM " +
                 databaseDialectHelper.toSql(quoted("groups")) +
                 " g WHERE g.reference_id = :refId AND g.reference_type = :refType")
                 .bind("refId", referenceId)
@@ -129,7 +129,7 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
     public Single<Page<Group>> findAll(ReferenceType referenceType, String referenceId, int page, int size) {
         LOGGER.debug("findAll({}, {}, {}, {})", referenceType, referenceId, page, size);
 
-        Single<Long> counter = monoToSingle(template.getDatabaseClient().sql("SELECT count(*) FROM " +
+        Single<Long> counter = monoToSingle(getTemplate().getDatabaseClient().sql("SELECT count(*) FROM " +
                 databaseDialectHelper.toSql(quoted("groups")) +
                 " g WHERE g.reference_id = :refId AND g.reference_type = :refType")
                 .bind("refId", referenceId)
@@ -137,7 +137,7 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
                 .map((row, rowMetadata) ->row.get(0, Long.class))
                 .first());
 
-        return fluxToFlowable(template.getDatabaseClient().sql("SELECT * FROM " +
+        return fluxToFlowable(getTemplate().getDatabaseClient().sql("SELECT * FROM " +
                         databaseDialectHelper.toSql(quoted("groups")) +
                         " g WHERE g.reference_id = :refId AND g.reference_type = :refType " + databaseDialectHelper.buildPagingClause(page, size))
                         .bind("refId", referenceId)
@@ -157,7 +157,7 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
             return Flowable.empty();
         }
 
-        Flowable<JdbcGroup> flow = fluxToFlowable(template.getDatabaseClient().sql("SELECT * FROM " +
+        Flowable<JdbcGroup> flow = fluxToFlowable(getTemplate().getDatabaseClient().sql("SELECT * FROM " +
                 databaseDialectHelper.toSql(quoted("groups")) +
                 " g WHERE g.id IN (:ids)")
                 .bind("ids", ids)
@@ -170,7 +170,7 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
     @Override
     public Maybe<Group> findByName(ReferenceType referenceType, String referenceId, String groupName) {
         LOGGER.debug("findByName({}, {}, {})", referenceType, referenceId, groupName);
-        Maybe<JdbcGroup> maybe = monoToMaybe(template.getDatabaseClient().sql("SELECT * FROM " +
+        Maybe<JdbcGroup> maybe = monoToMaybe(getTemplate().getDatabaseClient().sql("SELECT * FROM " +
                 databaseDialectHelper.toSql(quoted("groups")) +
                 " g WHERE g.reference_id = :refId AND g.reference_type = :refType AND g.name = :name")
                 .bind("refId", referenceId)
@@ -186,7 +186,7 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
     @Override
     public Maybe<Group> findById(ReferenceType referenceType, String referenceId, String id) {
         LOGGER.debug("findById({}, {}, {})", referenceType, referenceId, id);
-        Maybe<JdbcGroup> maybe = monoToMaybe(template.getDatabaseClient().sql("SELECT * FROM " +
+        Maybe<JdbcGroup> maybe = monoToMaybe(getTemplate().getDatabaseClient().sql("SELECT * FROM " +
                 databaseDialectHelper.toSql(quoted("groups")) +
                 " g WHERE g.reference_id = :refId AND g.reference_type = :refType AND g.id = :id")
                 .bind("refId", referenceId)
@@ -201,7 +201,7 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
     @Override
     public Maybe<Group> findById(String id) {
         LOGGER.debug("findById({})", id);
-        Maybe<JdbcGroup> maybe = monoToMaybe(template.getDatabaseClient().sql("SELECT * FROM " +
+        Maybe<JdbcGroup> maybe = monoToMaybe(getTemplate().getDatabaseClient().sql("SELECT * FROM " +
                 databaseDialectHelper.toSql(quoted("groups")) +
                 " g WHERE g.id = :id")
                 .bind("id", id)
@@ -240,7 +240,7 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
         LOGGER.debug("create Group with id {}", item.getId());
         TransactionalOperator trx = TransactionalOperator.create(tm);
 
-        DatabaseClient.GenericExecuteSpec insertSpec = template.getDatabaseClient().sql(INSERT_STATEMENT);
+        DatabaseClient.GenericExecuteSpec insertSpec = getTemplate().getDatabaseClient().sql(INSERT_STATEMENT);
 
         insertSpec = addQuotedField(insertSpec, COL_ID, item.getId(), String.class);
         insertSpec = addQuotedField(insertSpec, COL_REFERENCE_ID, item.getReferenceId(), String.class);
@@ -262,7 +262,7 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
         final List<String> roles = item.getRoles();
         if (roles != null && !roles.isEmpty()) {
             actionFlow = actionFlow.then(Flux.fromIterable(roles).concatMap(roleValue ->
-                    template.getDatabaseClient()
+                    getTemplate().getDatabaseClient()
                             .sql("INSERT INTO group_roles(group_id, role) VALUES (:gid, :role)")
                             .bind("gid", item.getId())
                             .bind("role", roleValue).fetch().rowsUpdated()
@@ -272,7 +272,7 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
         final List<String> members = item.getMembers();
         if (members != null && !members.isEmpty()) {
             actionFlow = actionFlow.then(Flux.fromIterable(members).concatMap(memberValue ->
-                    template.getDatabaseClient()
+                    getTemplate().getDatabaseClient()
                             .sql("INSERT INTO group_members(group_id, member) VALUES (:gid, :member)")
                             .bind("gid", item.getId())
                             .bind("member", memberValue).fetch().rowsUpdated()
@@ -288,7 +288,7 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
 
-        DatabaseClient.GenericExecuteSpec update = template.getDatabaseClient().sql(UPDATE_STATEMENT);
+        DatabaseClient.GenericExecuteSpec update = getTemplate().getDatabaseClient().sql(UPDATE_STATEMENT);
 
         update = addQuotedField(update, COL_ID, item.getId(), String.class);
         update = addQuotedField(update, COL_REFERENCE_ID, item.getReferenceId(), String.class);
@@ -307,8 +307,9 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
     }
 
     private Mono<Long> deleteChildEntities(String groupId) {
-        Mono<Integer> deleteRoles = template.delete(JdbcGroup.JdbcRole.class).matching(Query.query(where("group_id").is(groupId))).all();
-        Mono<Integer> deleteMembers = template.delete(JdbcGroup.JdbcMember.class).matching(Query.query(where("group_id").is(groupId))).all();
+        final Query criteria = Query.query(where("group_id").is(groupId));
+        Mono<Integer> deleteRoles = getTemplate().delete(criteria, JdbcGroup.JdbcRole.class);
+        Mono<Integer> deleteMembers = getTemplate().delete(criteria, JdbcGroup.JdbcMember.class);
         return deleteRoles.then(deleteMembers).map(Integer::longValue);
     }
 
@@ -316,7 +317,7 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
     public Completable delete(String id) {
         LOGGER.debug("delete Group with id {}", id);
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        Mono<Long> delete = template.getDatabaseClient().sql("DELETE FROM " + databaseDialectHelper.toSql(quoted("groups")) + " WHERE id = :id").bind(COL_ID, id).fetch().rowsUpdated();
+        Mono<Long> delete = getTemplate().getDatabaseClient().sql("DELETE FROM " + databaseDialectHelper.toSql(quoted("groups")) + " WHERE id = :id").bind(COL_ID, id).fetch().rowsUpdated();
         return monoToCompletable(delete.then(deleteChildEntities(id)).as(trx::transactional));
     }
 }

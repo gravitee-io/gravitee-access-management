@@ -136,7 +136,7 @@ public class JdbcFlowRepository extends AbstractJdbcRepository implements FlowRe
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
 
-        DatabaseClient.GenericExecuteSpec insertSpec = template.getDatabaseClient().sql(INSERT_STATEMENT);
+        DatabaseClient.GenericExecuteSpec insertSpec = getTemplate().getDatabaseClient().sql(INSERT_STATEMENT);
 
         insertSpec = addQuotedField(insertSpec, COL_ID, item.getId(), String.class);
         insertSpec = addQuotedField(insertSpec, COL_NAME, item.getName(), String.class);
@@ -180,7 +180,7 @@ public class JdbcFlowRepository extends AbstractJdbcRepository implements FlowRe
             jdbcPostSteps.add(bean);
         }
         return Flux.fromIterable(jdbcPostSteps).concatMap(step -> {
-            DatabaseClient.GenericExecuteSpec insert = template.getDatabaseClient().sql(INSERT_STEP_STATEMENT);
+            DatabaseClient.GenericExecuteSpec insert = getTemplate().getDatabaseClient().sql(INSERT_STEP_STATEMENT);
             insert = step.getFlowId() != null ? insert.bind(COL_STEP_ID, step.getFlowId()) : insert.bindNull(COL_STEP_ID, String.class);
             insert = step.getStage() != null ? insert.bind(COL_STEP_STAGE, step.getStage()) : insert.bindNull(COL_STEP_STAGE, String.class);
             insert = step.getName() != null ? insert.bind(COL_STEP_NAME, step.getName()) : insert.bindNull(COL_STEP_NAME, String.class);
@@ -224,7 +224,7 @@ public class JdbcFlowRepository extends AbstractJdbcRepository implements FlowRe
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
 
-        DatabaseClient.GenericExecuteSpec update = template.getDatabaseClient().sql(UPDATE_STATEMENT);
+        DatabaseClient.GenericExecuteSpec update = getTemplate().getDatabaseClient().sql(UPDATE_STATEMENT);
 
         update = addQuotedField(update, COL_ID, item.getId(), String.class);
         update = addQuotedField(update, COL_NAME, item.getName(), String.class);
@@ -247,14 +247,14 @@ public class JdbcFlowRepository extends AbstractJdbcRepository implements FlowRe
     }
 
     private Mono<Long> deleteChildEntities(String flowId) {
-        return template.delete(JdbcFlow.JdbcStep.class).matching(Query.query(where(COL_STEP_ID).is(flowId))).all().map(Integer::longValue);
+        return getTemplate().delete(Query.query(where(COL_STEP_ID).is(flowId)), JdbcFlow.JdbcStep.class).map(Integer::longValue);
     }
 
     @Override
     public Completable delete(String id) {
         LOGGER.debug("delete Flow with id {}", id);
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        return monoToCompletable(template.delete(JdbcFlow.class)
+        return monoToCompletable(getTemplate().delete(JdbcFlow.class)
                 .matching(Query.query(where(COL_ID).is(id)))
                 .all()
                 .then(deleteChildEntities(id))
@@ -286,7 +286,7 @@ public class JdbcFlowRepository extends AbstractJdbcRepository implements FlowRe
     }
 
     protected Single<Flow> completeFlow(Flow flow) {
-        return fluxToFlowable(template.select(JdbcFlow.JdbcStep.class)
+        return fluxToFlowable(getTemplate().select(JdbcFlow.JdbcStep.class)
                 .matching(Query.query(where(COL_STEP_ID).is(flow.getId())).sort(Sort.by(COL_STEP_STAGE_ORDER).ascending()))
                 .all()).toList().map(steps -> {
             if (steps != null && !steps.isEmpty()) {

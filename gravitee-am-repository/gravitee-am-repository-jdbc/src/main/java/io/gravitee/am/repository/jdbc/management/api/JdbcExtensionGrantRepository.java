@@ -75,7 +75,7 @@ public class JdbcExtensionGrantRepository extends AbstractJdbcRepository impleme
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("create extension grants  with id {}", item.getId());
 
-        return monoToSingle(template.insert(toJdbcEntity(item))).map(this::toEntity);
+        return monoToSingle(getTemplate().insert(toJdbcEntity(item))).map(this::toEntity);
     }
 
     @Override

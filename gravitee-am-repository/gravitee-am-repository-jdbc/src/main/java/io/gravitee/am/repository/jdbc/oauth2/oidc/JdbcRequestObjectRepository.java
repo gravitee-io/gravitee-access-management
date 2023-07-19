@@ -68,7 +68,7 @@ public class JdbcRequestObjectRepository extends AbstractJdbcRepository implemen
     public Single<RequestObject> create(RequestObject requestObject) {
         requestObject.setId(requestObject.getId() == null ? RandomString.generate() : requestObject.getId());
         LOGGER.debug("Create requestObject with id {}", requestObject.getId());
-        return monoToSingle(template.insert(toJdbcEntity(requestObject))).map(this::toEntity);
+        return monoToSingle(getTemplate().insert(toJdbcEntity(requestObject))).map(this::toEntity);
     }
 
     @Override
@@ -81,6 +81,6 @@ public class JdbcRequestObjectRepository extends AbstractJdbcRepository implemen
     public Completable purgeExpiredData() {
         LOGGER.debug("purgeExpiredData()");
         LocalDateTime now = LocalDateTime.now(UTC);
-        return monoToCompletable(template.delete(JdbcRequestObject.class).matching(Query.query(where("expire_at").lessThan(now))).all()).doOnError(error -> LOGGER.error("Unable to purge RequestObjects", error));
+        return monoToCompletable(getTemplate().delete(JdbcRequestObject.class).matching(Query.query(where("expire_at").lessThan(now))).all()).doOnError(error -> LOGGER.error("Unable to purge RequestObjects", error));
     }
 }

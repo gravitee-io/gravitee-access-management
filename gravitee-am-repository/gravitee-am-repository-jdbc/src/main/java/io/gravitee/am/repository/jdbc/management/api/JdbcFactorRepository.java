@@ -73,7 +73,7 @@ public class JdbcFactorRepository extends AbstractJdbcRepository implements Fact
     public Single<Factor> create(Factor item) {
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("create factor with id {}", item.getId());
-        return monoToSingle(template.insert(toJdbcEntity(item))).map(this::toEntity);
+        return monoToSingle(getTemplate().insert(toJdbcEntity(item))).map(this::toEntity);
     }
 
     @Override

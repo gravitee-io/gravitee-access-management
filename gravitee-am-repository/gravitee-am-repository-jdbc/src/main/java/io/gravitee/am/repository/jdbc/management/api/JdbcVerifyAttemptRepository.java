@@ -67,7 +67,7 @@ public class JdbcVerifyAttemptRepository extends AbstractJdbcRepository implemen
     @Override
     public Maybe<VerifyAttempt> findByCriteria(VerifyAttemptCriteria criteria) {
         Criteria whereClause = buildWhereClause(criteria);
-        return monoToMaybe(template.select(Query.query(whereClause).with(PageRequest.of(0,1, Sort.by("id"))), JdbcVerifyAttempt.class)
+        return monoToMaybe(getTemplate().select(Query.query(whereClause).with(PageRequest.of(0,1, Sort.by("id"))), JdbcVerifyAttempt.class)
                 .singleOrEmpty()).map(this::toEntity);
     }
 
@@ -75,7 +75,7 @@ public class JdbcVerifyAttemptRepository extends AbstractJdbcRepository implemen
     public Single<VerifyAttempt> create(VerifyAttempt item) {
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("create VerifyAttempt with id {}", item.getId());
-        return monoToSingle(template.insert(toJdbcEntity(item))).map(this::toEntity);
+        return monoToSingle(getTemplate().insert(toJdbcEntity(item))).map(this::toEntity);
     }
 
     @Override
@@ -97,7 +97,7 @@ public class JdbcVerifyAttemptRepository extends AbstractJdbcRepository implemen
         Criteria whereClause = buildWhereClause(criteria);
 
         if (!whereClause.isEmpty()) {
-            return monoToCompletable(template.delete(JdbcVerifyAttempt.class).matching(Query.query(whereClause)).all());
+            return monoToCompletable(getTemplate().delete(JdbcVerifyAttempt.class).matching(Query.query(whereClause)).all());
         }
 
         throw new RepositoryIllegalQueryException("Unable to delete from VerifyAttempt with criteria");
@@ -113,7 +113,7 @@ public class JdbcVerifyAttemptRepository extends AbstractJdbcRepository implemen
         }
 
         if (!whereClause.isEmpty()) {
-            return monoToCompletable(template.delete(JdbcVerifyAttempt.class).matching(Query.query(whereClause)).all());
+            return monoToCompletable(getTemplate().delete(JdbcVerifyAttempt.class).matching(Query.query(whereClause)).all());
         }
 
         throw new RepositoryIllegalQueryException("Unable to delete from VerifyAttempt with userId");
@@ -129,7 +129,7 @@ public class JdbcVerifyAttemptRepository extends AbstractJdbcRepository implemen
         }
 
         if (!whereClause.isEmpty()) {
-            return monoToCompletable(template.delete(JdbcVerifyAttempt.class).matching(Query.query(whereClause)).all());
+            return monoToCompletable(getTemplate().delete(JdbcVerifyAttempt.class).matching(Query.query(whereClause)).all());
         }
 
         throw new RepositoryIllegalQueryException("Unable to delete from VerifyAttempt with domainId");

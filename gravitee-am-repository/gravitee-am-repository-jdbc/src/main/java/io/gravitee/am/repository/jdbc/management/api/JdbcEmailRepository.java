@@ -161,7 +161,7 @@ public class JdbcEmailRepository extends AbstractJdbcRepository implements Email
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("create email with id {}", item.getId());
 
-        DatabaseClient.GenericExecuteSpec insertSpec = template.getDatabaseClient().sql(INSERT_STATEMENT);
+        DatabaseClient.GenericExecuteSpec insertSpec = getTemplate().getDatabaseClient().sql(INSERT_STATEMENT);
 
         insertSpec = addQuotedField(insertSpec, COL_ID, item.getId(), String.class);
         insertSpec = addQuotedField(insertSpec, COL_ENABLED, item.isEnabled(), Boolean.class);
@@ -185,7 +185,7 @@ public class JdbcEmailRepository extends AbstractJdbcRepository implements Email
     public Single<Email> update(Email item) {
         LOGGER.debug("update email with id {}", item.getId());
 
-        DatabaseClient.GenericExecuteSpec update = template.getDatabaseClient().sql(UPDATE_STATEMENT);
+        DatabaseClient.GenericExecuteSpec update = getTemplate().getDatabaseClient().sql(UPDATE_STATEMENT);
 
         update = addQuotedField(update, COL_ID, item.getId(), String.class);
         update = addQuotedField(update, COL_ENABLED, item.isEnabled(), Boolean.class);

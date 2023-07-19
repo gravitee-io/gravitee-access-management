@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *         http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -74,9 +74,9 @@ public class JdbcResourceRepository extends AbstractJdbcRepository implements Re
     }
 
     private Single<Page<Resource>> findResourcePage(String domain, int page, int size, CriteriaDefinition whereClause) {
-        return fluxToFlowable(template.select(Query.query(whereClause)
-                                .sort(Sort.by("id").ascending())
-                                .with(PageRequest.of(page, size)), JdbcResource.class))
+        return fluxToFlowable(getTemplate().select(Query.query(whereClause)
+                .sort(Sort.by("id").ascending())
+                .with(PageRequest.of(page, size)), JdbcResource.class))
                 .map(this::toEntity)
                 .flatMap(res -> completeWithScopes(Maybe.just(res), res.getId()).toFlowable(), MAX_CONCURRENCY)
                 .toList()
@@ -91,10 +91,10 @@ public class JdbcResourceRepository extends AbstractJdbcRepository implements Re
                 .toMaybe();
 
         return maybeResource.zipWith(scopes, (res, scope) -> {
-                    LOGGER.debug("findById({}) fetch {} resource scopes", id, scope == null ? 0 : scope.size());
-                    res.setResourceScopes(scope);
-                    return res;
-                });
+            LOGGER.debug("findById({}) fetch {} resource scopes", id, scope == null ? 0 : scope.size());
+            res.setResourceScopes(scope);
+            return res;
+        });
     }
 
     @Override
@@ -150,7 +150,7 @@ public class JdbcResourceRepository extends AbstractJdbcRepository implements Re
         LOGGER.debug("create Resource with id {}", item.getId());
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        Mono<Long> insertResult = template.insert(toJdbcEntity(item)).map(__ -> 1L);
+        Mono<Long> insertResult = getTemplate().insert(toJdbcEntity(item)).map(__ -> 1L);
 
         final List<String> resourceScopes = item.getResourceScopes();
         if (resourceScopes != null && !resourceScopes.isEmpty()) {
@@ -168,10 +168,10 @@ public class JdbcResourceRepository extends AbstractJdbcRepository implements Re
         LOGGER.debug("update Resource with id {}", item.getId());
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        Mono<Long> deleteScopes = template.delete(JdbcResource.Scope.class)
-                .matching(Query.query(where("resource_id").is(item.getId()))).all().map(Integer::longValue);
+        Mono<Long> deleteScopes = getTemplate().delete(Query.query(where("resource_id").is(item.getId())), JdbcResource.Scope.class)
+                .map(Integer::longValue);
 
-        Mono<Long> updateResource = template.update(toJdbcEntity(item)).map(__ -> 1L);
+        Mono<Long> updateResource = getTemplate().update(toJdbcEntity(item)).map(__ -> 1L);
         final List<String> resourceScopes = item.getResourceScopes();
         if (resourceScopes != null && !resourceScopes.isEmpty()) {
             updateResource = updateResource.then(Flux.fromIterable(resourceScopes)
@@ -184,7 +184,7 @@ public class JdbcResourceRepository extends AbstractJdbcRepository implements Re
     }
 
     private Mono<Long> insertScope(Resource item, String scope) {
-        return template.getDatabaseClient()
+        return getTemplate().getDatabaseClient()
                 .sql("INSERT INTO uma_resource_scopes(resource_id, scope) VALUES (:resource_id, :scope)")
                 .bind("resource_id", item.getId())
                 .bind("scope", scope)
@@ -196,11 +196,8 @@ public class JdbcResourceRepository extends AbstractJdbcRepository implements Re
         LOGGER.debug("Delete Resource with id {}", id);
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        Mono<Long> deleteScopes = template.delete(JdbcResource.Scope.class)
-                .matching(Query.query(where("resource_id").is(id))).all().map(Integer::longValue);
-
-        Mono<Long> delete = template.delete(JdbcResource.class)
-                .matching(Query.query(where("id").is(id))).all().map(Integer::longValue);
+        Mono<Long> deleteScopes = getTemplate().delete(Query.query(where("resource_id").is(id)), JdbcResource.Scope.class).map(Integer::longValue);
+        Mono<Long> delete = getTemplate().delete(Query.query(where("id").is(id)), JdbcResource.class).map(Integer::longValue);
 
         return monoToCompletable(delete.then(deleteScopes).as(trx::transactional));
     }

@@ -54,7 +54,7 @@ public class JdbcCibaAuthReqRepository extends AbstractJdbcRepository implements
     public Maybe<CibaAuthRequest> findById(String id) {
         LOGGER.debug("findById({})", id);
         LocalDateTime now = LocalDateTime.now(UTC);
-        return monoToMaybe(template.select(Query.query(where("id").is(id)), JdbcCibaAuthRequest.class).singleOrEmpty())
+        return monoToMaybe(getTemplate().select(Query.query(where("id").is(id)), JdbcCibaAuthRequest.class).singleOrEmpty())
                 .filter(bean -> bean.getExpireAt() == null || bean.getExpireAt().isAfter(now))
                 .map(this::toEntity);
     }
@@ -63,7 +63,7 @@ public class JdbcCibaAuthReqRepository extends AbstractJdbcRepository implements
     public Maybe<CibaAuthRequest> findByExternalId(String externalId) {
         LOGGER.debug("findByExternalId({})", externalId);
         LocalDateTime now = LocalDateTime.now(UTC);
-        return monoToMaybe(template.select(Query.query(where("ext_transaction_id").is(externalId)), JdbcCibaAuthRequest.class).singleOrEmpty())
+        return monoToMaybe(getTemplate().select(Query.query(where("ext_transaction_id").is(externalId)), JdbcCibaAuthRequest.class).singleOrEmpty())
                 .filter(bean -> bean.getExpireAt() == null || bean.getExpireAt().isAfter(now))
                 .map(this::toEntity);
     }
@@ -72,19 +72,19 @@ public class JdbcCibaAuthReqRepository extends AbstractJdbcRepository implements
     public Single<CibaAuthRequest> create(CibaAuthRequest authreq) {
         authreq.setId(authreq.getId() == null ? SecureRandomString.generate() : authreq.getId());
         LOGGER.debug("Create CibaAuthRequest with id {}", authreq.getId());
-        return monoToSingle(template.insert(this.toJdbcEntity(authreq))).map(this::toEntity);
+        return monoToSingle(getTemplate().insert(this.toJdbcEntity(authreq))).map(this::toEntity);
     }
 
     @Override
     public Single<CibaAuthRequest> update(CibaAuthRequest authreq) {
         LOGGER.debug("Update CibaAuthRequest with id {}", authreq.getId());
-        return monoToSingle(template.update(this.toJdbcEntity(authreq))).map(this::toEntity);
+        return monoToSingle(getTemplate().update(this.toJdbcEntity(authreq))).map(this::toEntity);
     }
 
     @Override
     public Single<CibaAuthRequest> updateStatus(String authReqId, String status) {
         LOGGER.debug("Update CibaAuthRequest {} with status {}", authReqId, status);
-        final Mono<Integer> action = template.update(
+        final Mono<Integer> action = getTemplate().update(
                 Query.query(where("id").is(authReqId)),
                 Update.update("status", status),
                 JdbcCibaAuthRequest.class);
@@ -94,12 +94,12 @@ public class JdbcCibaAuthReqRepository extends AbstractJdbcRepository implements
     @Override
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
-        return monoToCompletable(template.delete(Query.query(where("id").is(id)), JdbcCibaAuthRequest.class));
+        return monoToCompletable(getTemplate().delete(Query.query(where("id").is(id)), JdbcCibaAuthRequest.class));
     }
 
     public Completable purgeExpiredData() {
         LOGGER.debug("purgeExpiredData()");
         LocalDateTime now = LocalDateTime.now(UTC);
-        return monoToCompletable(template.delete(Query.query(where("expire_at").lessThan(now)), JdbcRequestObject.class)).doOnError(error -> LOGGER.error("Unable to purge CibaAuthRequests", error));
+        return monoToCompletable(getTemplate().delete(Query.query(where("expire_at").lessThan(now)), JdbcRequestObject.class)).doOnError(error -> LOGGER.error("Unable to purge CibaAuthRequests", error));
     }
 }

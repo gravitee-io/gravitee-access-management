@@ -108,7 +108,7 @@ public class JdbcScopeRepository extends AbstractJdbcRepository implements Scope
     public Single<Page<Scope>> findByDomain(String domain, int page, int size) {
 
         LOGGER.debug("findByDomain({}, {}, {})", domain, page, size);
-        return fluxToFlowable(template.select(Query.query(from(where(COL_DOMAIN).is(domain)))
+        return fluxToFlowable(getTemplate().select(Query.query(from(where(COL_DOMAIN).is(domain)))
                                 .sort(Sort.by(databaseDialectHelper.toSql(SqlIdentifier.quoted(COL_KEY))))
                                 .with(PageRequest.of(page, size)), JdbcScope.class))
                 .map(this::toEntity)
@@ -119,7 +119,7 @@ public class JdbcScopeRepository extends AbstractJdbcRepository implements Scope
     }
 
     private Single<Long> countByDomain(String domain) {
-        return monoToSingle(template.getDatabaseClient().sql("select count(s."+databaseDialectHelper.toSql(SqlIdentifier.quoted(COL_KEY))+") from scopes s where s.domain = :domain")
+        return monoToSingle(getTemplate().getDatabaseClient().sql("select count(s."+databaseDialectHelper.toSql(SqlIdentifier.quoted(COL_KEY))+") from scopes s where s.domain = :domain")
                 .bind(COL_DOMAIN, domain)
                 .map((row, rowMetadata) -> row.get(0, Long.class))
                 .first());
@@ -135,7 +135,7 @@ public class JdbcScopeRepository extends AbstractJdbcRepository implements Scope
         String search = this.databaseDialectHelper.buildSearchScopeQuery(wildcardSearch, page, size);
         String count = this.databaseDialectHelper.buildCountScopeQuery(wildcardSearch);
 
-        return fluxToFlowable(template.getDatabaseClient().sql(search)
+        return fluxToFlowable(getTemplate().getDatabaseClient().sql(search)
                 .bind(COL_DOMAIN, domain)
                 .bind("value", wildcardSearch ? wildcardQuery.toUpperCase() : query.toUpperCase())
                 .map((row, rowMetadata) -> rowMapper.read(JdbcScope.class, row))
@@ -143,7 +143,7 @@ public class JdbcScopeRepository extends AbstractJdbcRepository implements Scope
                 .map(this::toEntity)
                 .flatMap(scope -> completeWithClaims(Maybe.just(scope), scope.getId()).toFlowable())
                 .toList()
-                .flatMap(data -> monoToSingle(template.getDatabaseClient().sql(count)
+                .flatMap(data -> monoToSingle(getTemplate().getDatabaseClient().sql(count)
                         .bind(COL_DOMAIN, domain)
                         .bind("value", wildcardSearch ? wildcardQuery.toUpperCase() : query.toUpperCase())
                         .map((row, rowMetadata) -> row.get(0, Long.class))
@@ -167,7 +167,7 @@ public class JdbcScopeRepository extends AbstractJdbcRepository implements Scope
     @Override
     public Maybe<Scope> findByDomainAndKey(String domain, String key) {
         LOGGER.debug("findByDomainAndKey({}, {})", domain, key);
-        return monoToMaybe(template.select(Query.query(where(COL_DOMAIN).is(domain)
+        return monoToMaybe(getTemplate().select(Query.query(where(COL_DOMAIN).is(domain)
                         .and(where(databaseDialectHelper.toSql(SqlIdentifier.quoted(COL_KEY))).is(key)))
                 .limit(1), JdbcScope.class).singleOrEmpty()
         ).map(this::toEntity).flatMap(scope -> completeWithClaims(Maybe.just(scope), scope.getId()));
@@ -176,7 +176,7 @@ public class JdbcScopeRepository extends AbstractJdbcRepository implements Scope
     @Override
     public Flowable<Scope> findByDomainAndKeys(String domain, List<String> keys) {
         LOGGER.debug("findByDomainAndKeys({}, {})", domain, keys);
-        return fluxToFlowable(template.select(
+        return fluxToFlowable(getTemplate().select(
                 Query.query(where(COL_DOMAIN).is(domain)
                         .and(where(databaseDialectHelper.toSql(SqlIdentifier.quoted(COL_KEY))).in(keys))), JdbcScope.class))
                 .map(this::toEntity)
@@ -198,7 +198,7 @@ public class JdbcScopeRepository extends AbstractJdbcRepository implements Scope
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
 
-        DatabaseClient.GenericExecuteSpec insertSpec = template.getDatabaseClient().sql(INSERT_STATEMENT);
+        DatabaseClient.GenericExecuteSpec insertSpec = getTemplate().getDatabaseClient().sql(INSERT_STATEMENT);
 
         insertSpec = addQuotedField(insertSpec, COL_ID, item.getId(), String.class);
         insertSpec = addQuotedField(insertSpec, COL_NAME, item.getName(), String.class);
@@ -224,7 +224,7 @@ public class JdbcScopeRepository extends AbstractJdbcRepository implements Scope
     }
 
     private Mono<Long> insertClaim(String claim, Scope item) {
-        return template.getDatabaseClient().sql("INSERT INTO scope_claims(scope_id, claim) VALUES(:scope_id, :claim)")
+        return getTemplate().getDatabaseClient().sql("INSERT INTO scope_claims(scope_id, claim) VALUES(:scope_id, :claim)")
                 .bind("scope_id", item.getId())
                 .bind("claim", claim)
                 .fetch().rowsUpdated();
@@ -235,10 +235,10 @@ public class JdbcScopeRepository extends AbstractJdbcRepository implements Scope
         LOGGER.debug("Update Scope with id {}", item.getId());
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        Mono<Integer> deleteClaims = template.delete(JdbcScope.Claims.class)
+        Mono<Integer> deleteClaims = getTemplate().delete(JdbcScope.Claims.class)
                 .matching(Query.query(where("scope_id").is(item.getId()))).all();
 
-        DatabaseClient.GenericExecuteSpec update = template.getDatabaseClient().sql(UPDATE_STATEMENT);
+        DatabaseClient.GenericExecuteSpec update = getTemplate().getDatabaseClient().sql(UPDATE_STATEMENT);
 
         update = addQuotedField(update, COL_ID, item.getId(), String.class);
         update = addQuotedField(update, COL_NAME, item.getName(), String.class);
@@ -269,10 +269,10 @@ public class JdbcScopeRepository extends AbstractJdbcRepository implements Scope
         LOGGER.debug("delete({})", id);
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        Mono<Integer> deleteClaim = template.delete(JdbcScope.Claims.class)
+        Mono<Integer> deleteClaim = getTemplate().delete(JdbcScope.Claims.class)
                 .matching(Query.query(where("scope_id").is(id))).all();
 
-        Mono<Integer> delete = template.delete(JdbcScope.class)
+        Mono<Integer> delete = getTemplate().delete(JdbcScope.class)
                 .matching(Query.query(where(COL_ID).is(id))).all();
 
         return monoToCompletable(deleteClaim.then(delete).as(trx::transactional));

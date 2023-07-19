@@ -93,7 +93,7 @@ public class JdbcAuthorizationCodeRepository extends AbstractJdbcRepository impl
         authorizationCode.setId(authorizationCode.getId() == null ? RandomString.generate() : authorizationCode.getId());
         LOGGER.debug("Create authorizationCode with id {} and code {}", authorizationCode.getId(), authorizationCode.getCode());
 
-        DatabaseClient.GenericExecuteSpec insertSpec = template.getDatabaseClient().sql(INSERT_STATEMENT);
+        DatabaseClient.GenericExecuteSpec insertSpec = getTemplate().getDatabaseClient().sql(INSERT_STATEMENT);
 
         insertSpec = addQuotedField(insertSpec, COL_ID, authorizationCode.getId(), String.class);
         insertSpec = addQuotedField(insertSpec, COL_CLIENT_ID, authorizationCode.getClientId(), String.class);
@@ -118,8 +118,7 @@ public class JdbcAuthorizationCodeRepository extends AbstractJdbcRepository impl
         LOGGER.debug("delete({})", id);
         return authorizationCodeRepository.findById(id).map(this::toEntity)
                 .flatMap(authCode ->
-                    monoToMaybe(template.delete(JdbcAuthorizationCode.class)
-                            .matching(Query.query(where(COL_ID).is(id))).all())
+                    monoToMaybe(getTemplate().delete(Query.query(where(COL_ID).is(id)), JdbcAuthorizationCode.class))
                             .map(i -> authCode));
     }
 
@@ -134,7 +133,7 @@ public class JdbcAuthorizationCodeRepository extends AbstractJdbcRepository impl
     public Completable purgeExpiredData() {
         LOGGER.debug("purgeExpiredData()");
         LocalDateTime now = LocalDateTime.now(UTC);
-        return monoToCompletable(template.delete(JdbcAuthorizationCode.class)
+        return monoToCompletable(getTemplate().delete(JdbcAuthorizationCode.class)
                 .matching(Query.query(where(COL_EXPIRE_AT).lessThan(now))).all())
                 .doOnError(error -> LOGGER.error("Unable to purge authorization tokens", error));
     }

@@ -65,14 +65,14 @@ public class JdbcRefreshTokenRepository extends AbstractJdbcRepository implement
     public Single<RefreshToken> create(RefreshToken refreshToken) {
         refreshToken.setId(refreshToken.getId() == null ? RandomString.generate() : refreshToken.getId());
         LOGGER.debug("Create refreshToken with id {}", refreshToken.getId());
-        return monoToSingle(template.insert(toJdbcEntity(refreshToken))).map(this::toEntity)
+        return monoToSingle(getTemplate().insert(toJdbcEntity(refreshToken))).map(this::toEntity)
                 .doOnError((error) -> LOGGER.error("Unable to create refreshToken with id {}", refreshToken.getId(), error));
     }
 
     @Override
     public Completable delete(String token) {
         LOGGER.debug("delete({})", token);
-        return monoToCompletable(template.delete(JdbcRefreshToken.class)
+        return monoToCompletable(getTemplate().delete(JdbcRefreshToken.class)
                 .matching(Query.query(where("token").is(token))).all())
                 .doOnError(error -> LOGGER.error("Unable to delete RefreshToken", error));
     }
@@ -80,7 +80,7 @@ public class JdbcRefreshTokenRepository extends AbstractJdbcRepository implement
     @Override
     public Completable deleteByUserId(String userId) {
         LOGGER.debug("deleteByUserId({})", userId);
-        return monoToCompletable(template.delete(JdbcRefreshToken.class)
+        return monoToCompletable(getTemplate().delete(JdbcRefreshToken.class)
                 .matching(Query.query(where("subject").is(userId)))
                 .all())
                 .doOnError(error -> LOGGER.error("Unable to delete refresh token with subject {}", userId, error));
@@ -89,7 +89,7 @@ public class JdbcRefreshTokenRepository extends AbstractJdbcRepository implement
     @Override
     public Completable deleteByDomainIdClientIdAndUserId(String domainId, String clientId, String userId) {
         LOGGER.debug("deleteByDomainIdClientIdAndUserId({},{},{})", domainId, clientId, userId);
-        return monoToCompletable(template.delete(JdbcRefreshToken.class)
+        return monoToCompletable(getTemplate().delete(JdbcRefreshToken.class)
                 .matching(Query.query(where("subject").is(userId)
                         .and(where("domain").is(domainId))
                         .and(where("client").is(clientId)))).all())
@@ -100,7 +100,7 @@ public class JdbcRefreshTokenRepository extends AbstractJdbcRepository implement
     @Override
     public Completable deleteByDomainIdAndUserId(String domainId, String userId) {
         LOGGER.debug("deleteByDomainIdAndUserId({},{})", domainId, userId);
-        return monoToCompletable(template.delete(JdbcRefreshToken.class)
+        return monoToCompletable(getTemplate().delete(JdbcRefreshToken.class)
                 .matching(Query.query(where("subject").is(userId)
                         .and(where("domain").is(domainId))))
                 .all())
@@ -111,7 +111,7 @@ public class JdbcRefreshTokenRepository extends AbstractJdbcRepository implement
     public Completable purgeExpiredData() {
         LOGGER.debug("purgeExpiredData()");
         LocalDateTime now = LocalDateTime.now(UTC);
-        return monoToCompletable(template.delete(JdbcRefreshToken.class).matching(Query.query(where("expire_at").lessThan(now))).all())
+        return monoToCompletable(getTemplate().delete(JdbcRefreshToken.class).matching(Query.query(where("expire_at").lessThan(now))).all())
                 .doOnError(error -> LOGGER.error("Unable to purge refresh tokens", error));
     }
 }

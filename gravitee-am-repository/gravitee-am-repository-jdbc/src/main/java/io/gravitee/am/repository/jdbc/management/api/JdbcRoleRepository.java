@@ -112,7 +112,7 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
     @Override
     public Single<Page<Role>> findAll(ReferenceType referenceType, String referenceId, int page, int size) {
         LOGGER.debug("findAll({}, {}, {}, {})", referenceType, referenceId, page, size);
-        return fluxToFlowable(template.select(Query
+        return fluxToFlowable(getTemplate().select(Query
                         .query(where(COL_REFERENCE_ID).is(referenceId)
                         .and(where(COL_REFERENCE_TYPE).is(referenceType.name())))
                         .sort(Sort.by(COL_NAME).ascending())
@@ -134,7 +134,7 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
         String search = this.databaseDialectHelper.buildSearchRoleQuery(wildcardSearch, page, size);
         String count = this.databaseDialectHelper.buildCountRoleQuery(wildcardSearch);
 
-        return fluxToFlowable(template.getDatabaseClient().sql(search)
+        return fluxToFlowable(getTemplate().getDatabaseClient().sql(search)
                 .bind("value", wildcardSearch ? wildcardValue : query)
                 .bind("refId", referenceId)
                 .bind("refType", referenceType.name())
@@ -142,7 +142,7 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
                 .map(this::toEntity)
                 .flatMap(role -> completeWithScopes(Maybe.just(role), role.getId()).toFlowable())
                 .toList()
-                .flatMap(data -> monoToSingle(template.getDatabaseClient().sql(count)
+                .flatMap(data -> monoToSingle(getTemplate().getDatabaseClient().sql(count)
                         .bind("value", wildcardSearch ? wildcardValue : query)
                         .bind("refId", referenceId)
                         .bind("refType", referenceType.name())
@@ -199,7 +199,7 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
 
-        DatabaseClient.GenericExecuteSpec insertSpec = template.getDatabaseClient().sql(INSERT_STATEMENT);
+        DatabaseClient.GenericExecuteSpec insertSpec = getTemplate().getDatabaseClient().sql(INSERT_STATEMENT);
 
         insertSpec = addQuotedField(insertSpec, COL_ID, item.getId(), String.class);
         insertSpec = addQuotedField(insertSpec, COL_NAME, item.getName(), String.class);
@@ -231,10 +231,10 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
         LOGGER.debug("Update Role with id {}", item.getId());
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        Mono<Void> deleteScopes = template.delete(JdbcRole.OAuthScope.class)
+        Mono<Void> deleteScopes = getTemplate().delete(JdbcRole.OAuthScope.class)
                 .matching(Query.query(where("role_id").is(item.getId()))).all().then();
 
-        DatabaseClient.GenericExecuteSpec update = template.getDatabaseClient().sql(UPDATE_STATEMENT);
+        DatabaseClient.GenericExecuteSpec update = getTemplate().getDatabaseClient().sql(UPDATE_STATEMENT);
 
         update = addQuotedField(update, COL_ID, item.getId(), String.class);
         update = addQuotedField(update, COL_NAME, item.getName(), String.class);
@@ -262,7 +262,7 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
 
     private Function<String, Publisher<? extends Long>> insertScopr(Role item) {
         return scope ->
-                template.getDatabaseClient().sql("INSERT INTO role_oauth_scopes(role_id, scope) VALUES(:role_id, :scope)")
+                getTemplate().getDatabaseClient().sql("INSERT INTO role_oauth_scopes(role_id, scope) VALUES(:role_id, :scope)")
                         .bind("role_id", item.getId())
                         .bind("scope", scope)
                         .fetch().rowsUpdated();
@@ -273,10 +273,10 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
         LOGGER.debug("Delete Role with id {}", id);
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        Mono<Integer> deleteScopes = template.delete(JdbcRole.OAuthScope.class)
+        Mono<Integer> deleteScopes = getTemplate().delete(JdbcRole.OAuthScope.class)
                 .matching(Query.query(where("role_id").is(id))).all();
 
-        Mono<Integer> delete = template.delete(JdbcRole.class)
+        Mono<Integer> delete = getTemplate().delete(JdbcRole.class)
                 .matching(Query.query(where(COL_ID).is(id))).all();
 
         return monoToCompletable(delete.then(deleteScopes.as(trx::transactional)));

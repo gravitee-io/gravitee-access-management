@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *         http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -102,7 +102,7 @@ public class JdbcDomainRepository extends AbstractJdbcRepository implements Doma
 
         whereClause = whereClause.and(alertEnableClause);
 
-        return fluxToFlowable(template.select(JdbcDomain.class)
+        return fluxToFlowable(getTemplate().select(JdbcDomain.class)
                 .matching(Query.query(whereClause))
                 .all())
                 .map(this::toDomain)
@@ -146,7 +146,7 @@ public class JdbcDomainRepository extends AbstractJdbcRepository implements Doma
         LOGGER.debug("create Domain with id {}", item.getId());
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        Mono<Long> insertAction = template.insert(toJdbcDomain(item)).map(__ -> 1L); // TODO
+        Mono<Long> insertAction = getTemplate().insert(toJdbcDomain(item)).map(__ -> 1L); // TODO
         insertAction = persistChildEntities(insertAction, item);
 
         return monoToSingle(insertAction
@@ -159,7 +159,7 @@ public class JdbcDomainRepository extends AbstractJdbcRepository implements Doma
         LOGGER.debug("update Domain with id {}", item.getId());
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        Mono<Long> updateAction = template.update(toJdbcDomain(item)).map(__ -> 1L); // TODO
+        Mono<Long> updateAction = getTemplate().update(toJdbcDomain(item)).map(__ -> 1L); // TODO
 
         updateAction = updateAction.then(deleteChildEntities(item.getId()));
         updateAction = persistChildEntities(updateAction, item);
@@ -173,7 +173,7 @@ public class JdbcDomainRepository extends AbstractJdbcRepository implements Doma
     public Completable delete(String domainId) {
         LOGGER.debug("delete Domain with id {}", domainId);
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        return monoToCompletable(template.delete(JdbcDomain.class)
+        return monoToCompletable(getTemplate().delete(JdbcDomain.class)
                 .matching(Query.query(where("id").is(domainId)))
                 .all()
                 .then(deleteChildEntities(domainId))
@@ -182,7 +182,7 @@ public class JdbcDomainRepository extends AbstractJdbcRepository implements Doma
     }
 
     @Override
-    public Flowable<Domain> search(String environmentId, String query){
+    public Flowable<Domain> search(String environmentId, String query) {
         LOGGER.debug("search({}, {})", environmentId, query);
 
         boolean wildcardMatch = query.contains("*");
@@ -195,7 +195,7 @@ public class JdbcDomainRepository extends AbstractJdbcRepository implements Doma
                 .append(" :value")
                 .toString();
 
-        return fluxToFlowable(template.getDatabaseClient().sql(search)
+        return fluxToFlowable(getTemplate().getDatabaseClient().sql(search)
                 .bind("refType", ReferenceType.ENVIRONMENT.name())
                 .bind("refId", environmentId)
                 .bind("value", wildcardMatch ? wildcardQuery.toUpperCase() : query.toUpperCase())
@@ -221,14 +221,14 @@ public class JdbcDomainRepository extends AbstractJdbcRepository implements Doma
                     domain.setVhosts(vhosts);
                     return domain;
                 })
-         );
+        );
     }
 
     private Mono<Long> persistChildEntities(Mono<Long> actionFlow, Domain item) {
         final Set<String> identities = item.getIdentities();
         if (identities != null && !identities.isEmpty()) {
             actionFlow = actionFlow.then(Flux.fromIterable(identities).concatMap(idp ->
-                            template.getDatabaseClient().sql("INSERT INTO domain_identities(domain_id, identity_id) VALUES(:domain, :idp)")
+                            getTemplate().getDatabaseClient().sql("INSERT INTO domain_identities(domain_id, identity_id) VALUES(:domain, :idp)")
                                     .bind("domain", item.getId())
                                     .bind("idp", idp)
                                     .fetch().rowsUpdated())
@@ -238,7 +238,7 @@ public class JdbcDomainRepository extends AbstractJdbcRepository implements Doma
         final Set<String> tags = item.getTags();
         if (tags != null && !tags.isEmpty()) {
             actionFlow = actionFlow.then(Flux.fromIterable(tags).concatMap(tagValue ->
-                            template.getDatabaseClient().sql("INSERT INTO domain_tags(domain_id, tag) VALUES(:domain, :tag)")
+                            getTemplate().getDatabaseClient().sql("INSERT INTO domain_tags(domain_id, tag) VALUES(:domain, :tag)")
                                     .bind("domain", item.getId())
                                     .bind("tag", tagValue)
                                     .fetch().rowsUpdated())
@@ -249,7 +249,7 @@ public class JdbcDomainRepository extends AbstractJdbcRepository implements Doma
         if (virtualHosts != null && !virtualHosts.isEmpty()) {
             actionFlow = actionFlow.then(Flux.fromStream(virtualHosts.stream().map(this::toJdbcVHost)).concatMap(jdbcVHost -> {
                 jdbcVHost.setDomainId(item.getId());
-                DatabaseClient.GenericExecuteSpec insert = template.getDatabaseClient().sql("INSERT INTO domain_vhosts(domain_id, host, path, override_entrypoint) VALUES(:domain, :host, :path, :override)")
+                DatabaseClient.GenericExecuteSpec insert = getTemplate().getDatabaseClient().sql("INSERT INTO domain_vhosts(domain_id, host, path, override_entrypoint) VALUES(:domain, :host, :path, :override)")
                         .bind("domain", item.getId());
                 insert = jdbcVHost.getHost() != null ? insert.bind("host", jdbcVHost.getHost()) : insert.bindNull("host", String.class);
                 insert = jdbcVHost.getPath() != null ? insert.bind("path", jdbcVHost.getPath()) : insert.bindNull("path", String.class);
@@ -262,9 +262,10 @@ public class JdbcDomainRepository extends AbstractJdbcRepository implements Doma
     }
 
     private Mono<Long> deleteChildEntities(String domainId) {
-        Mono<Integer> deleteVirtualHosts = template.delete(JdbcDomain.Vhost.class).matching(Query.query(where("domain_id").is(domainId))).all();
-        Mono<Integer> deleteIdentities = template.delete(JdbcDomain.Identity.class).matching(Query.query(where("domain_id").is(domainId))).all();
-        Mono<Integer> deleteTags = template.delete(JdbcDomain.Tag.class).matching(Query.query(where("domain_id").is(domainId))).all();
+        final Query criteria = Query.query(where("domain_id").is(domainId));
+        Mono<Integer> deleteVirtualHosts = getTemplate().delete(criteria, JdbcDomain.Vhost.class);
+        Mono<Integer> deleteIdentities = getTemplate().delete(criteria, JdbcDomain.Identity.class);
+        Mono<Integer> deleteTags = getTemplate().delete(criteria, JdbcDomain.Tag.class);
         return deleteVirtualHosts.then(deleteIdentities).then(deleteTags).map(Integer::longValue);
     }
 }

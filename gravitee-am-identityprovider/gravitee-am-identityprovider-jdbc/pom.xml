@@ -33,14 +33,22 @@
     <name>Gravitee IO - Access Management - Identity Provider - JDBC</name>
 
     <properties>
-        <r2dbc-pool.version>0.8.6.RELEASE</r2dbc-pool.version>
-        <r2dbc-postgresql.version>0.8.11.RELEASE</r2dbc-postgresql.version>
-        <r2dbc-mssql.version>0.8.7.RELEASE</r2dbc-mssql.version>
-        <r2dbc-mysql.version>0.8.2.RELEASE</r2dbc-mysql.version>
-        <r2dbc-mariadb.version>1.0.0</r2dbc-mariadb.version>
-        <r2dbc-spi.version>0.8.4.RELEASE</r2dbc-spi.version>
-        <spring-data-r2dbc.version>1.4.1</spring-data-r2dbc.version>
+        <r2dbc-releasetrain.version>Borca-SR2</r2dbc-releasetrain.version>
+        <spring-data-r2dbc.version>1.5.13</spring-data-r2dbc.version>
+        <r2dbc-mysql.version>0.9.3</r2dbc-mysql.version>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>io.r2dbc</groupId>
+                <artifactId>r2dbc-bom</artifactId>
+                <version>${r2dbc-releasetrain.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <!-- Gravitee.io -->
@@ -86,9 +94,8 @@
 
         <!-- R2DBC -->
         <dependency>
-            <groupId>io.r2dbc</groupId>
+            <groupId>org.postgresql</groupId>
             <artifactId>r2dbc-postgresql</artifactId>
-            <version>${r2dbc-postgresql.version}</version>
             <exclusions>
                 <exclusion>
                     <artifactId>r2dbc-spi</artifactId>
@@ -103,7 +110,6 @@
         <dependency>
             <groupId>io.r2dbc</groupId>
             <artifactId>r2dbc-mssql</artifactId>
-            <version>${r2dbc-mssql.version}</version>
             <exclusions>
                 <exclusion>
                     <artifactId>r2dbc-spi</artifactId>
@@ -116,7 +122,7 @@
             </exclusions>
         </dependency>
         <dependency>
-            <groupId>dev.miku</groupId>
+            <groupId>io.asyncer</groupId>
             <artifactId>r2dbc-mysql</artifactId>
             <version>${r2dbc-mysql.version}</version>
             <exclusions>
@@ -133,7 +139,6 @@
         <dependency>
             <groupId>org.mariadb</groupId>
             <artifactId>r2dbc-mariadb</artifactId>
-            <version>${r2dbc-mariadb.version}</version>
             <exclusions>
                 <exclusion>
                     <artifactId>r2dbc-spi</artifactId>

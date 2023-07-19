@@ -160,7 +160,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
     @Override
     public Single<Page<Application>> findAll(int page, int size) {
         LOGGER.debug("findAll({}, {})", page, size);
-        return fluxToFlowable(template.select(JdbcApplication.class)
+        return fluxToFlowable(getTemplate().select(JdbcApplication.class)
                 .matching(Query.empty().with(PageRequest.of(page, size, Sort.by(COL_ID))))
                 .all())
                 .map(this::toEntity)
@@ -181,7 +181,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
     @Override
     public Single<Page<Application>> findByDomain(String domain, int page, int size) {
         LOGGER.debug("findByDomain({}, {}, {})", domain, page, size);
-        return fluxToFlowable(template.select(JdbcApplication.class)
+        return fluxToFlowable(getTemplate().select(JdbcApplication.class)
                 .matching(query(where(COL_DOMAIN).is(domain)).with(PageRequest.of(page, size, Sort.by(COL_ID))))
                 .all())
                 .map(this::toEntity)
@@ -201,7 +201,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         String search = databaseDialectHelper.buildSearchApplicationsQuery(wildcardMatch, page, size);
         String count = databaseDialectHelper.buildCountApplicationsQuery(wildcardMatch);
 
-        return fluxToFlowable(template.getDatabaseClient().sql(search)
+        return fluxToFlowable(getTemplate().getDatabaseClient().sql(search)
                 .bind(COL_DOMAIN, domain)
                 .bind("value", wildcardMatch ? wildcardQuery.toUpperCase() : query.toUpperCase())
                 .map((row, rowMetadata) -> rowMapper.read(JdbcApplication.class, row))
@@ -209,7 +209,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
                 .map(this::toEntity)
                 .flatMap(app -> completeApplication(app).toFlowable())
                 .toList()
-                .flatMap(data -> monoToSingle(template.getDatabaseClient().sql(count)
+                .flatMap(data -> monoToSingle(getTemplate().getDatabaseClient().sql(count)
                         .bind(COL_DOMAIN, domain)
                         .bind("value", wildcardMatch ? wildcardQuery.toUpperCase() : query.toUpperCase())
                         .map((row, rowMetadata) -> row.get(0, Long.class)).first())
@@ -231,7 +231,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
 
         // identity is a keyword with mssql
         final String identity = databaseDialectHelper.toSql(SqlIdentifier.quoted("identity"));
-        return fluxToFlowable(template.getDatabaseClient()
+        return fluxToFlowable(getTemplate().getDatabaseClient()
                 .sql("SELECT a.* FROM applications a INNER JOIN application_identities i ON a.id = i.application_id AND i." + identity + " = :identity")
                 .bind("identity", identityProvider)
                 .map((row, rowMetadata) -> rowMapper.read(JdbcApplication.class, row)).all())
@@ -279,7 +279,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
     @Override
     public Maybe<Application> findByDomainAndClientId(String domain, String clientId) {
         LOGGER.debug("findByDomainAndClientId({}, {})", domain, clientId);
-        return fluxToFlowable(template.getDatabaseClient().sql(databaseDialectHelper.buildFindApplicationByDomainAndClient())
+        return fluxToFlowable(getTemplate().getDatabaseClient().sql(databaseDialectHelper.buildFindApplicationByDomainAndClient())
                 .bind(COL_DOMAIN, domain)
                 .bind("clientId", clientId)
                 .map((row, rowMetadata) -> rowMapper.read(JdbcApplication.class, row))
@@ -304,7 +304,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
 
-        DatabaseClient.GenericExecuteSpec sql = template.getDatabaseClient().sql(INSERT_STATEMENT);
+        DatabaseClient.GenericExecuteSpec sql = getTemplate().getDatabaseClient().sql(INSERT_STATEMENT);
         sql = addQuotedField(sql, COL_ID, item.getId(), String.class);
         sql = addQuotedField(sql, COL_TYPE, item.getType() == null ? null : item.getType().name(), String.class);
         sql = addQuotedField(sql, COL_ENABLED, item.isEnabled(), Boolean.class);
@@ -331,7 +331,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
 
-        DatabaseClient.GenericExecuteSpec sql = template.getDatabaseClient().sql(UPDATE_STATEMENT);
+        DatabaseClient.GenericExecuteSpec sql = getTemplate().getDatabaseClient().sql(UPDATE_STATEMENT);
         sql = addQuotedField(sql, COL_ID, item.getId(), String.class);
         sql = addQuotedField(sql, COL_TYPE, item.getType() == null ? null : item.getType().name(), String.class);
         sql = addQuotedField(sql, COL_ENABLED, item.isEnabled(), Boolean.class);
@@ -357,16 +357,17 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        Mono<Integer> delete = template.delete(JdbcApplication.class).matching(query(where(COL_ID).is(id))).all();
+        Mono<Integer> delete = getTemplate().delete(JdbcApplication.class).matching(query(where(COL_ID).is(id))).all();
         return monoToCompletable(delete.then(deleteChildEntities(id)).as(trx::transactional))
                 .andThen(applicationRepository.deleteById(id));
     }
 
     private Mono<Long> deleteChildEntities(String appId) {
-        Mono<Integer> identities = template.delete(JdbcApplication.Identity.class).matching(query(where("application_id").is(appId))).all();
-        Mono<Integer> factors = template.delete(JdbcApplication.Factor.class).matching(query(where("application_id").is(appId))).all();
-        Mono<Integer> grants = template.delete(JdbcApplication.Grant.class).matching(query(where("application_id").is(appId))).all();
-        Mono<Integer> scopeSettings = template.delete(JdbcApplication.ScopeSettings.class).matching(query(where("application_id").is(appId))).all();
+        final Query criteria = query(where("application_id").is(appId));
+        Mono<Integer> identities = getTemplate().delete(criteria, JdbcApplication.Identity.class);
+        Mono<Integer> factors = getTemplate().delete(criteria, JdbcApplication.Factor.class);
+        Mono<Integer> grants = getTemplate().delete(criteria, JdbcApplication.Grant.class);
+        Mono<Integer> scopeSettings = getTemplate().delete(criteria, JdbcApplication.ScopeSettings.class);
         return factors.then(identities).then(grants).then(scopeSettings).map(Integer::longValue);
     }
 
@@ -380,7 +381,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
                 String INSERT_STMT = "INSERT INTO application_identities" +
                         "(application_id, " + identity + ", " + selectionRule + ", " + priority + ") " +
                         "VALUES (:app, :idpid, :selection_rule, :priority)";
-                final DatabaseClient.GenericExecuteSpec sql = template.getDatabaseClient()
+                final DatabaseClient.GenericExecuteSpec sql = getTemplate().getDatabaseClient()
                         .sql(INSERT_STMT)
                         .bind("app", app.getId())
                         .bind("idpid", idp.getIdentity())
@@ -394,7 +395,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         if (factors != null && !factors.isEmpty()) {
             actionFlow = actionFlow.then(Flux.fromIterable(factors).concatMap(value -> {
                 String INSERT_STMT = "INSERT INTO application_factors(application_id, factor) VALUES (:app, :factor)";
-                final DatabaseClient.GenericExecuteSpec sql = template.getDatabaseClient()
+                final DatabaseClient.GenericExecuteSpec sql = getTemplate().getDatabaseClient()
                         .sql(INSERT_STMT)
                         .bind("app", app.getId())
                         .bind("factor", value);
@@ -406,7 +407,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         if (grants != null && !grants.isEmpty()) {
             actionFlow = actionFlow.then(Flux.fromIterable(grants).concatMap(value -> {
                 String INSERT_STMT = "INSERT INTO application_grants(application_id, grant_type) VALUES (:app, :grant)";
-                final DatabaseClient.GenericExecuteSpec sql = template.getDatabaseClient()
+                final DatabaseClient.GenericExecuteSpec sql = getTemplate().getDatabaseClient()
                         .sql(INSERT_STMT)
                         .bind("app", app.getId())
                         .bind("grant", value);
@@ -418,7 +419,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         if (scopeSettings != null && !scopeSettings.isEmpty()) {
             actionFlow = actionFlow.then(Flux.fromIterable(scopeSettings).concatMap(value -> {
                 String INSERT_STMT = "INSERT INTO application_scope_settings(application_id, scope, is_default, scope_approval) VALUES (:app, :scope, :default, :approval)";
-                DatabaseClient.GenericExecuteSpec sql = template.getDatabaseClient()
+                DatabaseClient.GenericExecuteSpec sql = getTemplate().getDatabaseClient()
                         .sql(INSERT_STMT)
                         .bind("app", app.getId())
                         .bind("default", value.isDefaultScope());

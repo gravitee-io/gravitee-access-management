@@ -67,7 +67,7 @@ public class JdbcPushedAuthorizationRequestRepository extends AbstractJdbcReposi
     public Single<PushedAuthorizationRequest> create(PushedAuthorizationRequest par) {
         par.setId(par.getId() == null ? RandomString.generate() : par.getId());
         LOGGER.debug("Create PushedAuthorizationRequest with id {}", par.getId());
-        return monoToSingle(template.insert(toJdbcEntity(par))).map(this::toEntity)
+        return monoToSingle(getTemplate().insert(toJdbcEntity(par))).map(this::toEntity)
                 .doOnError((error) -> LOGGER.error("Unable to create PushedAuthorizationRequest with id {}", par.getId(), error));
     }
 
@@ -81,7 +81,7 @@ public class JdbcPushedAuthorizationRequestRepository extends AbstractJdbcReposi
     public Completable purgeExpiredData() {
         LOGGER.debug("purgeExpiredData()");
         LocalDateTime now = LocalDateTime.now(UTC);
-        return monoToCompletable(template.delete(JdbcPushedAuthorizationRequest.class)
+        return monoToCompletable(getTemplate().delete(JdbcPushedAuthorizationRequest.class)
                 .matching(Query.query(where("expire_at")
                         .lessThan(now))).all())
                 .doOnError(error -> LOGGER.error("Unable to purge PushedAuthorizationRequest", error));

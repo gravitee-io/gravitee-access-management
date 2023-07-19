@@ -20,6 +20,7 @@ import io.gravitee.am.reporter.jdbc.spring.JdbcReporterSpringConfiguration;
 import io.gravitee.am.reporter.jdbc.tool.R2dbcDatabaseContainer;
 import io.gravitee.am.repository.jdbc.provider.impl.R2DBCConnectionProvider;
 import io.gravitee.am.repository.jdbc.provider.impl.R2DBCPoolWrapper;
+import io.gravitee.am.repository.jdbc.provider.template.CustomR2dbcEntityTemplate;
 import io.gravitee.am.repository.provider.ClientWrapper;
 import io.r2dbc.spi.ConnectionFactories;
 import io.r2dbc.spi.ConnectionFactory;
@@ -129,7 +130,7 @@ public class JdbcReporterJUnitConfiguration extends JdbcReporterSpringConfigurat
 
     @Override
     public R2dbcEntityTemplate r2dbcEntityTemplate(DatabaseClient databaseClient, ReactiveDataAccessStrategy dataAccessStrategy) {
-        return new R2dbcEntityTemplate(databaseClient, dataAccessStrategy);
+        return new CustomR2dbcEntityTemplate(databaseClient, dataAccessStrategy);
     }
 
     @Override

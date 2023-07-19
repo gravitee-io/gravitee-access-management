@@ -96,7 +96,7 @@ public class JdbcAccessTokenRepository extends AbstractJdbcRepository implements
     public Single<AccessToken> create(AccessToken accessToken) {
         accessToken.setId(accessToken.getId() == null ? RandomString.generate() : accessToken.getId());
         LOGGER.debug("Create accessToken with id {}", accessToken.getId());
-        return monoToSingle(template.insert(toJdbcEntity(accessToken))).map(this::toEntity)
+        return monoToSingle(getTemplate().insert(toJdbcEntity(accessToken))).map(this::toEntity)
                 .doOnError((error) -> LOGGER.error("Unable to create accessToken with id {}", accessToken.getId(), error));
     }
 
@@ -104,9 +104,9 @@ public class JdbcAccessTokenRepository extends AbstractJdbcRepository implements
     public Completable delete(String token) {
         LOGGER.debug("delete({})", token);
         return Completable.fromMaybe(findByToken(token).flatMap(accessToken ->
-            monoToMaybe(template.delete(JdbcAccessToken.class)
-                    .matching(Query.query(where("token").is(token))).all()).map(i -> accessToken)
-        ).doOnError(error -> LOGGER.error("Unable to delete AccessToken", error)));
+            monoToMaybe(getTemplate().delete(Query.query(where("token").is(token)), JdbcAccessToken.class)
+                    .map(i -> accessToken)
+        ).doOnError(error -> LOGGER.error("Unable to delete AccessToken", error))));
     }
 
     @Override
@@ -147,7 +147,7 @@ public class JdbcAccessTokenRepository extends AbstractJdbcRepository implements
     @Override
     public Completable deleteByUserId(String userId) {
         LOGGER.debug("deleteByUserId({})", userId);
-        return monoToCompletable(template.delete(JdbcAccessToken.class)
+        return monoToCompletable(getTemplate().delete(JdbcAccessToken.class)
                 .matching(Query.query(where("subject").is(userId)))
                 .all())
                 .doOnError(error -> LOGGER.error("Unable to delete access tokens with subject {}",
@@ -157,7 +157,7 @@ public class JdbcAccessTokenRepository extends AbstractJdbcRepository implements
     @Override
     public Completable deleteByDomainIdClientIdAndUserId(String domainId, String clientId, String userId) {
         LOGGER.debug("deleteByDomainIdClientIdAndUserId({},{},{})", domainId, clientId, userId);
-        return monoToCompletable(template.delete(JdbcAccessToken.class)
+        return monoToCompletable(getTemplate().delete(JdbcAccessToken.class)
                 .matching(Query.query(
                         where("subject").is(userId)
                                 .and(where("domain").is(domainId))
@@ -170,7 +170,7 @@ public class JdbcAccessTokenRepository extends AbstractJdbcRepository implements
     @Override
     public Completable deleteByDomainIdAndUserId(String domainId, String userId) {
         LOGGER.debug("deleteByDomainIdAndUserId({},{})", domainId, userId);
-        return monoToCompletable(template.delete(JdbcAccessToken.class)
+        return monoToCompletable(getTemplate().delete(JdbcAccessToken.class)
                 .matching(Query.query(
                         where("subject").is(userId)
                                 .and(where("domain").is(domainId))))
@@ -182,7 +182,7 @@ public class JdbcAccessTokenRepository extends AbstractJdbcRepository implements
     public Completable purgeExpiredData() {
         LOGGER.debug("purgeExpiredData()");
         LocalDateTime now = LocalDateTime.now(UTC);
-        return monoToCompletable(template.delete(JdbcAccessToken.class)
+        return monoToCompletable(getTemplate().delete(JdbcAccessToken.class)
                 .matching(Query.query(where("expire_at").lessThan(now))).all())
                 .doOnError(error -> LOGGER.error("Unable to purge access tokens", error));
     }

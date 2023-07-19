@@ -65,7 +65,7 @@ public class JdbcUserActivityRepository extends AbstractJdbcRepository implement
     public Maybe<UserActivity> findById(String id) {
         LOGGER.debug("findById({})", id);
         LocalDateTime now = LocalDateTime.now(UTC);
-        return monoToMaybe(this.template.select(JdbcUserActivity.class)
+        return monoToMaybe(this.getTemplate().select(JdbcUserActivity.class)
                 .matching(query(where(COL_ID).is(id).and(where(COL_EXPIRE_AT).greaterThanOrEquals(now))))
                 .first())
                 .map(this::toEntity);
@@ -76,20 +76,20 @@ public class JdbcUserActivityRepository extends AbstractJdbcRepository implement
         LOGGER.debug("create({})", item);
         final JdbcUserActivity entity = toJdbcEntity(item);
         entity.setId(entity.getId() == null ? RandomString.generate() : entity.getId());
-        return monoToSingle(this.template.insert(entity)).map(this::toEntity);
+        return monoToSingle(this.getTemplate().insert(entity)).map(this::toEntity);
     }
 
     @Override
     public Single<UserActivity> update(UserActivity item) {
         LOGGER.debug("update({})", item);
         final JdbcUserActivity entity = toJdbcEntity(item);
-        return monoToSingle(this.template.update(entity)).map(this::toEntity);
+        return monoToSingle(this.getTemplate().update(entity)).map(this::toEntity);
     }
 
     @Override
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
-        return monoToCompletable(this.template.delete(JdbcUserActivity.class).matching(query(where(COL_ID).is(id))).all());
+        return monoToCompletable(this.getTemplate().delete(JdbcUserActivity.class).matching(query(where(COL_ID).is(id))).all());
     }
 
     @Override
@@ -107,13 +107,13 @@ public class JdbcUserActivityRepository extends AbstractJdbcRepository implement
             query = query.limit(limit);
         }
 
-        return fluxToFlowable(template.select(JdbcUserActivity.class).matching(query).all()).map(this::toEntity);
+        return fluxToFlowable(getTemplate().select(JdbcUserActivity.class).matching(query).all()).map(this::toEntity);
     }
 
     @Override
     public Completable deleteByReferenceAndKey(ReferenceType referenceType, String referenceId, String key) {
         LOGGER.debug("deleteByReferenceAndKey({}, {}, {})", referenceType, referenceId, key);
-        return monoToCompletable(this.template.delete(JdbcUserActivity.class).matching(
+        return monoToCompletable(this.getTemplate().delete(JdbcUserActivity.class).matching(
                 query(where(COL_REFERENCE_TYPE).is(referenceType)
                         .and(where(COL_REFERENCE_ID).is(referenceId))
                         .and(where(COL_USER_ACTIVITY_KEY).is(key)))).all());
@@ -122,7 +122,7 @@ public class JdbcUserActivityRepository extends AbstractJdbcRepository implement
     @Override
     public Completable deleteByReference(ReferenceType referenceType, String referenceId) {
         LOGGER.debug("deleteByReference({}, {})", referenceType, referenceId);
-        return monoToCompletable(this.template.delete(JdbcUserActivity.class).matching(
+        return monoToCompletable(this.getTemplate().delete(JdbcUserActivity.class).matching(
                 query(where(COL_REFERENCE_TYPE).is(referenceType)
                         .and(where(COL_REFERENCE_ID).is(referenceId)))).all());
     }
@@ -132,7 +132,7 @@ public class JdbcUserActivityRepository extends AbstractJdbcRepository implement
         LOGGER.debug("purgeExpiredData()");
         LocalDateTime now = LocalDateTime.now(UTC);
         return monoToCompletable(
-                template.delete(JdbcUserActivity.class).matching(Query.query(where(COL_EXPIRE_AT).lessThan(now))).all()
+                getTemplate().delete(JdbcUserActivity.class).matching(Query.query(where(COL_EXPIRE_AT).lessThan(now))).all()
         ).doOnError(error -> LOGGER.error("Unable to purge Devices", error));
     }
 }

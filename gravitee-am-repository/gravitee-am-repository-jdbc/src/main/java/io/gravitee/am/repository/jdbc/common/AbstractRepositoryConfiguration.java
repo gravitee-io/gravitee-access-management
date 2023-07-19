@@ -18,6 +18,7 @@ package io.gravitee.am.repository.jdbc.common;
 import io.gravitee.am.repository.jdbc.common.dialect.DatabaseDialectHelper;
 import io.gravitee.am.repository.jdbc.exceptions.RepositoryInitializationException;
 import io.gravitee.am.repository.jdbc.provider.impl.R2DBCPoolWrapper;
+import io.gravitee.am.repository.jdbc.provider.template.CustomR2dbcEntityTemplate;
 import io.gravitee.am.repository.jdbc.provider.utils.TlsOptionsHelper;
 import io.r2dbc.spi.ConnectionFactory;
 import liquibase.Contexts;
@@ -32,8 +33,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.core.env.Environment;
 import org.springframework.data.r2dbc.config.AbstractR2dbcConfiguration;
+import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
+import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
 import org.springframework.r2dbc.connection.R2dbcTransactionManager;
+import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.transaction.ReactiveTransactionManager;
 
 import java.sql.Connection;
@@ -101,6 +105,11 @@ public abstract class AbstractRepositoryConfiguration extends AbstractR2dbcConfi
     @Bean
     ReactiveTransactionManager transactionManager(ConnectionFactory connectionFactory) {
         return new R2dbcTransactionManager(connectionFactory);
+    }
+
+    @Bean
+    public R2dbcEntityTemplate r2dbcEntityTemplate(DatabaseClient databaseClient, ReactiveDataAccessStrategy dataAccessStrategy) {
+        return new CustomR2dbcEntityTemplate(databaseClient, dataAccessStrategy);
     }
 
     protected final void initializeDatabaseSchema(R2DBCPoolWrapper poolWrapper, Environment environment, String prefix) throws SQLException {
