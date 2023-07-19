@@ -67,14 +67,14 @@ public class JdbcAlertNotifierRepository extends AbstractJdbcRepository implemen
         alertNotifier.setId(alertNotifier.getId() == null ? RandomString.generate() : alertNotifier.getId());
         LOGGER.debug("create alert notifier with id {}", alertNotifier.getId());
 
-        return monoToSingle(template.insert(toJdbcAlertNotifier(alertNotifier))).map(this::toEntity);
+        return monoToSingle(getTemplate().insert(toJdbcAlertNotifier(alertNotifier))).map(this::toEntity);
     }
 
     @Override
     public Single<AlertNotifier> update(AlertNotifier alertNotifier) {
         LOGGER.debug("update alert notifier with id {}", alertNotifier.getId());
 
-        return monoToSingle(template.update(toJdbcAlertNotifier(alertNotifier))).map(this::toEntity);
+        return monoToSingle(getTemplate().update(toJdbcAlertNotifier(alertNotifier))).map(this::toEntity);
     }
 
     @Override
@@ -107,6 +107,6 @@ public class JdbcAlertNotifierRepository extends AbstractJdbcRepository implemen
 
         whereClause = whereClause.and(referenceClause.and(criteria.isLogicalOR() ? idsClause.or(enableClause) : idsClause.and(enableClause)));
 
-        return fluxToFlowable(template.select(Query.query(whereClause), JdbcAlertNotifier.class)).map(this::toEntity);
+        return fluxToFlowable(getTemplate().select(Query.query(whereClause), JdbcAlertNotifier.class)).map(this::toEntity);
     }
 }

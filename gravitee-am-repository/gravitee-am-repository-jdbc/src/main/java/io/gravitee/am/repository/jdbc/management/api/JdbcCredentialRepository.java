@@ -85,7 +85,7 @@ public class JdbcCredentialRepository extends AbstractJdbcRepository implements 
     public Single<Credential> create(Credential item) {
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("create credential with id {}", item.getId());
-        return monoToSingle(template.insert(toJdbcEntity(item))).map(this::toEntity);
+        return monoToSingle(getTemplate().insert(toJdbcEntity(item))).map(this::toEntity);
     }
 
     @Override
@@ -107,7 +107,7 @@ public class JdbcCredentialRepository extends AbstractJdbcRepository implements 
     @Override
     public Completable deleteByUserId(ReferenceType referenceType, String referenceId, String userId) {
         LOGGER.debug("deleteByUserId({})", userId);
-        return monoToCompletable(template.delete(JdbcCredential.class)
+        return monoToCompletable(getTemplate().delete(JdbcCredential.class)
                 .matching(Query.query(
                         where("reference_type").is(referenceType.name())
                                 .and(where("reference_id").is(referenceId))
@@ -119,7 +119,7 @@ public class JdbcCredentialRepository extends AbstractJdbcRepository implements 
     @Override
     public Completable deleteByReference(ReferenceType referenceType, String referenceId) {
         LOGGER.debug("deleteByReference({} - {})", referenceType.name(), referenceId);
-        return monoToCompletable(template.delete(JdbcCredential.class)
+        return monoToCompletable(getTemplate().delete(JdbcCredential.class)
                 .matching(Query.query(
                         where("reference_type").is(referenceType.name())
                                 .and(where("reference_id").is(referenceId))))

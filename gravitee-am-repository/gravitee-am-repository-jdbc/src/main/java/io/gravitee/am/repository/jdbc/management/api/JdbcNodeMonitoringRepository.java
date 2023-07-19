@@ -69,7 +69,7 @@ public class JdbcNodeMonitoringRepository extends AbstractJdbcRepository impleme
     @Override
     public Single<Monitoring> create(Monitoring monitoring) {
         LOGGER.debug("Create Monitoring with id {}", monitoring.getId());
-        return monoToSingle(template.insert(toJdbcEntity(monitoring))).map(this::toEntity);
+        return monoToSingle(getTemplate().insert(toJdbcEntity(monitoring))).map(this::toEntity);
     }
 
     @Override

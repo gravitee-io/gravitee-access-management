@@ -73,7 +73,7 @@ public class JdbcTagRepository extends AbstractJdbcRepository implements TagRepo
     public Single<Tag> create(Tag item) {
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("Create tag with id {}", item.getId());
-        return monoToSingle(template.insert(toJdbcEntity(item))).map(this::toEntity);
+        return monoToSingle(getTemplate().insert(toJdbcEntity(item))).map(this::toEntity);
     }
 
     @Override

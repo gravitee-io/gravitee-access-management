@@ -67,7 +67,7 @@ public class JdbcLoginAttemptRepository extends AbstractJdbcRepository implement
                 where("expire_at").greaterThan(LocalDateTime.now(UTC))
                 .or(where("expire_at").isNull()));
 
-        return monoToMaybe(template.select(Query.query(whereClause).with(PageRequest.of(0,1, Sort.by("id"))), JdbcLoginAttempt.class).singleOrEmpty())
+        return monoToMaybe(getTemplate().select(Query.query(whereClause).with(PageRequest.of(0,1, Sort.by("id"))), JdbcLoginAttempt.class).singleOrEmpty())
                 .map(this::toEntity);
     }
 
@@ -99,7 +99,7 @@ public class JdbcLoginAttemptRepository extends AbstractJdbcRepository implement
         Criteria whereClause = buildWhereClause(criteria);
 
         if (!whereClause.isEmpty()) {
-            return monoToCompletable(template.delete(JdbcLoginAttempt.class).matching(Query.query(whereClause)).all());
+            return monoToCompletable(getTemplate().delete(JdbcLoginAttempt.class).matching(Query.query(whereClause)).all());
         }
 
         throw new RepositoryIllegalQueryException("Unable to delete from LoginAttempt without criteria");
@@ -118,7 +118,7 @@ public class JdbcLoginAttemptRepository extends AbstractJdbcRepository implement
     public Single<LoginAttempt> create(LoginAttempt item) {
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("create LoginAttempt with id {}", item.getId());
-        return monoToSingle(template.insert(toJdbcEntity(item))).map(this::toEntity);
+        return monoToSingle(getTemplate().insert(toJdbcEntity(item))).map(this::toEntity);
     }
 
     @Override
@@ -137,6 +137,6 @@ public class JdbcLoginAttemptRepository extends AbstractJdbcRepository implement
     public Completable purgeExpiredData() {
         LOGGER.debug("purgeExpiredData()");
         LocalDateTime now = LocalDateTime.now(UTC);
-        return monoToCompletable(template.delete(JdbcLoginAttempt.class).matching(Query.query(where("expire_at").lessThan(now))).all());
+        return monoToCompletable(getTemplate().delete(JdbcLoginAttempt.class).matching(Query.query(where("expire_at").lessThan(now))).all());
     }
 }

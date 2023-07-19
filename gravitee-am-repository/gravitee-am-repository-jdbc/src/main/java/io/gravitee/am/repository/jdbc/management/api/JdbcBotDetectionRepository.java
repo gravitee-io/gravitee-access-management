@@ -53,7 +53,7 @@ public class JdbcBotDetectionRepository extends AbstractJdbcRepository implement
     @Override
     public Flowable<BotDetection> findAll() {
         LOGGER.debug("findAll()");
-        return fluxToFlowable(template.select(JdbcBotDetection.class)
+        return fluxToFlowable(getTemplate().select(JdbcBotDetection.class)
                 .all())
                 .map(this::toEntity);
     }
@@ -61,7 +61,7 @@ public class JdbcBotDetectionRepository extends AbstractJdbcRepository implement
     @Override
     public Flowable<BotDetection> findByReference(ReferenceType referenceType, String referenceId) {
         LOGGER.debug("findByReference({}, {})", referenceType, referenceId);
-        return fluxToFlowable(template.select(JdbcBotDetection.class)
+        return fluxToFlowable(getTemplate().select(JdbcBotDetection.class)
                 .matching(Query.query(where(REFERENCE_ID_FIELD).is(referenceId).and(where(REF_TYPE_FIELD).is(referenceType.name()))))
                 .all())
                 .map(this::toEntity);
@@ -70,7 +70,7 @@ public class JdbcBotDetectionRepository extends AbstractJdbcRepository implement
     @Override
     public Maybe<BotDetection> findById(String id) {
         LOGGER.debug("findById({})", id);
-        return monoToMaybe(template.select(JdbcBotDetection.class)
+        return monoToMaybe(getTemplate().select(JdbcBotDetection.class)
                 .matching(Query.query(where(ID_FIELD).is(id)))
                 .first())
                 .map(this::toEntity);
@@ -81,19 +81,19 @@ public class JdbcBotDetectionRepository extends AbstractJdbcRepository implement
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("create bot detection with id {}", item.getId());
 
-        return monoToSingle(template.insert(toJdbcEntity(item))).map(this::toEntity);
+        return monoToSingle(getTemplate().insert(toJdbcEntity(item))).map(this::toEntity);
     }
 
     @Override
     public Single<BotDetection> update(BotDetection item) {
         LOGGER.debug("update bot detection with id {}", item.getId());
-        return monoToSingle(template.update(toJdbcEntity(item))).map(this::toEntity);
+        return monoToSingle(getTemplate().update(toJdbcEntity(item))).map(this::toEntity);
     }
 
     @Override
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
-        return monoToCompletable(template.delete(JdbcBotDetection.class)
+        return monoToCompletable(getTemplate().delete(JdbcBotDetection.class)
                 .matching(Query.query(where(ID_FIELD).is(id))).all().then());
     }
 }

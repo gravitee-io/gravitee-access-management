@@ -83,7 +83,7 @@ public class JdbcAuthenticationFlowContextRepository extends AbstractJdbcReposit
         if (id == null) {
             return Maybe.empty();
         }
-        return monoToMaybe(template.select(JdbcAuthenticationFlowContext.class)
+        return monoToMaybe(getTemplate().select(JdbcAuthenticationFlowContext.class)
                 .matching(Query.query(where(COL_ID).is(id))).one())
                 .map(this::toEntity);
     }
@@ -96,7 +96,7 @@ public class JdbcAuthenticationFlowContextRepository extends AbstractJdbcReposit
         }
         
         LocalDateTime now = LocalDateTime.now(UTC);
-        return monoToMaybe(template.select(JdbcAuthenticationFlowContext.class)
+        return monoToMaybe(getTemplate().select(JdbcAuthenticationFlowContext.class)
                 .matching(Query.query(where(COL_TRANSACTION_ID).is(transactionId).and(where(COL_EXPIRE_AT).greaterThan(now)))
                         .sort(Sort.by(COL_VERSION).descending())
                 ).first())
@@ -111,7 +111,7 @@ public class JdbcAuthenticationFlowContextRepository extends AbstractJdbcReposit
         }
 
         LocalDateTime now = LocalDateTime.now(UTC);
-        return fluxToFlowable(template.select(JdbcAuthenticationFlowContext.class)
+        return fluxToFlowable(getTemplate().select(JdbcAuthenticationFlowContext.class)
                 .matching(Query.query(where(COL_TRANSACTION_ID).is(transactionId).and(where(COL_EXPIRE_AT).greaterThan(now)))
                         .sort(Sort.by(COL_VERSION).descending())).all())
                 .map(this::toEntity);
@@ -122,7 +122,7 @@ public class JdbcAuthenticationFlowContextRepository extends AbstractJdbcReposit
        String id = context.getTransactionId() + "-" + context.getVersion();
         LOGGER.debug("Create AuthenticationContext with id {}", id);
 
-        DatabaseClient.GenericExecuteSpec insertSpec = template.getDatabaseClient().sql(INSERT_STATEMENT);
+        DatabaseClient.GenericExecuteSpec insertSpec = getTemplate().getDatabaseClient().sql(INSERT_STATEMENT);
 
         insertSpec = addQuotedField(insertSpec,COL_ID, id, String.class);
         insertSpec = addQuotedField(insertSpec,COL_TRANSACTION_ID, context.getTransactionId(), String.class);
@@ -139,14 +139,14 @@ public class JdbcAuthenticationFlowContextRepository extends AbstractJdbcReposit
     @Override
     public Completable delete(String transactionId) {
         LOGGER.debug("delete({})", transactionId);
-        return monoToCompletable(template.delete(JdbcAuthenticationFlowContext.class)
+        return monoToCompletable(getTemplate().delete(JdbcAuthenticationFlowContext.class)
                 .matching(Query.query(where(COL_TRANSACTION_ID).is(transactionId))).all());
     }
 
     @Override
     public Completable delete(String transactionId, int version) {
         LOGGER.debug("delete({}, {})", transactionId, version);
-        return monoToCompletable(template.delete(JdbcAuthenticationFlowContext.class)
+        return monoToCompletable(getTemplate().delete(JdbcAuthenticationFlowContext.class)
                 .matching(Query.query(where(COL_TRANSACTION_ID).is(transactionId).and(where(COL_VERSION).is(version)))).all());
     }
 
@@ -154,6 +154,6 @@ public class JdbcAuthenticationFlowContextRepository extends AbstractJdbcReposit
     public Completable purgeExpiredData() {
         LOGGER.debug("purgeExpiredData()");
         LocalDateTime now = LocalDateTime.now(UTC);
-        return monoToCompletable(template.delete(JdbcAuthenticationFlowContext.class).matching(Query.query(where(COL_EXPIRE_AT).lessThan(now))).all().then()).doOnError(error -> LOGGER.error("Unable to purge authentication contexts", error));
+        return monoToCompletable(getTemplate().delete(JdbcAuthenticationFlowContext.class).matching(Query.query(where(COL_EXPIRE_AT).lessThan(now))).all().then()).doOnError(error -> LOGGER.error("Unable to purge authentication contexts", error));
     }
 }

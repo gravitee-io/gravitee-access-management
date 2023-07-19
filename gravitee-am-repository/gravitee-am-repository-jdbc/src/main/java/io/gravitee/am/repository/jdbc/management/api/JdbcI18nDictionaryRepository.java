@@ -91,7 +91,7 @@ public class JdbcI18nDictionaryRepository extends AbstractJdbcRepository impleme
         item.setId(item.getId() == null ? generate() : item.getId());
         LOGGER.debug("Create i18n dictionary with id {}", item.getId());
 
-        DatabaseClient.GenericExecuteSpec sql = template.getDatabaseClient().sql(insertStatement);
+        DatabaseClient.GenericExecuteSpec sql = getTemplate().getDatabaseClient().sql(insertStatement);
         sql = addQuotedField(sql, ID, item.getId(), String.class);
         sql = addQuotedField(sql, NAME, item.getName(), String.class);
         sql = addQuotedField(sql, LOCALE, item.getLocale(), String.class);
@@ -111,7 +111,7 @@ public class JdbcI18nDictionaryRepository extends AbstractJdbcRepository impleme
 
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        DatabaseClient.GenericExecuteSpec sql = template.getDatabaseClient().sql(updateStatement);
+        DatabaseClient.GenericExecuteSpec sql = getTemplate().getDatabaseClient().sql(updateStatement);
         sql = addQuotedField(sql, ID, item.getId(), String.class);
         sql = addQuotedField(sql, NAME, item.getName(), String.class);
         sql = addQuotedField(sql, LOCALE, item.getLocale(), String.class);
@@ -129,7 +129,7 @@ public class JdbcI18nDictionaryRepository extends AbstractJdbcRepository impleme
     }
 
     private Mono<Integer> deleteEntries(String dictionaryId) {
-        return template.delete(JdbcI18nDictionary.Entry.class).matching(Query.query(where(ENTRY_ID).is(dictionaryId))).all();
+        return getTemplate().delete(JdbcI18nDictionary.Entry.class).matching(Query.query(where(ENTRY_ID).is(dictionaryId))).all();
     }
 
     private Mono<? extends Number> persistEntries(Mono<? extends Number> insertAction, I18nDictionary item) {
@@ -144,7 +144,7 @@ public class JdbcI18nDictionaryRepository extends AbstractJdbcRepository impleme
                 jdbcEntries.add(jdbcEntry);
             });
             entries = Flux.fromIterable(jdbcEntries).concatMap(entry -> {
-                DatabaseClient.GenericExecuteSpec insert = template.getDatabaseClient().sql(insertEntryStatement);
+                DatabaseClient.GenericExecuteSpec insert = getTemplate().getDatabaseClient().sql(insertEntryStatement);
                 insert = insert.bind(ENTRY_ID, entry.getDictionaryId());
                 insert = insert.bind(ENTRY_KEY, entry.getKey());
                 insert = insert.bind(ENTRY_MESSAGE, entry.getMessage());
@@ -160,7 +160,7 @@ public class JdbcI18nDictionaryRepository extends AbstractJdbcRepository impleme
     public Completable delete(String id) {
         LOGGER.debug("delete i18n dictionary with id {}", id);
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        return monoToCompletable(template.delete(JdbcI18nDictionary.class)
+        return monoToCompletable(getTemplate().delete(JdbcI18nDictionary.class)
                                          .matching(Query.query(where(ID).is(id)))
                                          .all()
                                          .then(deleteEntries(id))
@@ -200,7 +200,7 @@ public class JdbcI18nDictionaryRepository extends AbstractJdbcRepository impleme
     }
 
     private Single<I18nDictionary> completeDictionary(I18nDictionary dictionary) {
-        return fluxToFlowable(template.select(JdbcI18nDictionary.Entry.class)
+        return fluxToFlowable(getTemplate().select(JdbcI18nDictionary.Entry.class)
                                       .matching(Query.query(where(ENTRY_ID).is(dictionary.getId())))
                                       .all()).toList().map(entries -> {
             if (!entries.isEmpty()) {

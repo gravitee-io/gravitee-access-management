@@ -126,7 +126,7 @@ public class JdbcCertificateRepository extends AbstractJdbcRepository implements
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("create certificate with id {}", item.getId());
 
-        DatabaseClient.GenericExecuteSpec insertSpec = template.getDatabaseClient().sql(INSERT_STATEMENT);
+        DatabaseClient.GenericExecuteSpec insertSpec = getTemplate().getDatabaseClient().sql(INSERT_STATEMENT);
 
         insertSpec = addQuotedField(insertSpec,COL_ID, item.getId(), String.class);
         insertSpec = addQuotedField(insertSpec,COL_TYPE, item.getType(), String.class);
@@ -149,7 +149,7 @@ public class JdbcCertificateRepository extends AbstractJdbcRepository implements
     public Single<Certificate> update(Certificate item) {
         LOGGER.debug("update Certificate with id {}", item.getId());
 
-        DatabaseClient.GenericExecuteSpec update = template.getDatabaseClient().sql(UPDATE_STATEMENT);
+        DatabaseClient.GenericExecuteSpec update = getTemplate().getDatabaseClient().sql(UPDATE_STATEMENT);
 
         update = addQuotedField(update,COL_ID, item.getId(), String.class);
         update = addQuotedField(update,COL_TYPE, item.getType(), String.class);
@@ -172,7 +172,7 @@ public class JdbcCertificateRepository extends AbstractJdbcRepository implements
     public Completable updateExpirationDate(String certificateId, Date expiresAt) {
         LOGGER.debug("update Certificate expiration date with id {} with value '{}'", certificateId, expiresAt);
 
-        DatabaseClient.GenericExecuteSpec update = template.getDatabaseClient().sql("UPDATE certificates SET " + COL_EXPIRES_AT + " = :" + COL_EXPIRES_AT + " WHERE " + COL_ID +" = :"+COL_ID);
+        DatabaseClient.GenericExecuteSpec update = getTemplate().getDatabaseClient().sql("UPDATE certificates SET " + COL_EXPIRES_AT + " = :" + COL_EXPIRES_AT + " WHERE " + COL_ID +" = :"+COL_ID);
         update = addQuotedField(update,COL_ID, certificateId, String.class);
         update = addQuotedField(update, COL_EXPIRES_AT, dateConverter.convertTo(expiresAt, null), LocalDateTime.class);
 

@@ -99,7 +99,7 @@ public class JdbcInstallationRepository extends AbstractJdbcRepository implement
         installation.setId(installation.getId() == null ? RandomString.generate() : installation.getId());
         LOGGER.debug("create installation with id {}", installation.getId());
 
-        DatabaseClient.GenericExecuteSpec insertSpec = template.getDatabaseClient().sql(INSERT_STATEMENT);
+        DatabaseClient.GenericExecuteSpec insertSpec = getTemplate().getDatabaseClient().sql(INSERT_STATEMENT);
 
         insertSpec = addQuotedField(insertSpec, COL_ID, installation.getId(), String.class);
         insertSpec = addQuotedField(insertSpec, COL_CREATED_AT, dateConverter.convertTo(installation.getCreatedAt(), null), LocalDateTime.class);
@@ -114,7 +114,7 @@ public class JdbcInstallationRepository extends AbstractJdbcRepository implement
     public Single<Installation> update(Installation installation) {
         LOGGER.debug("update installation with id {}", installation.getId());
 
-        DatabaseClient.GenericExecuteSpec update = template.getDatabaseClient().sql(UPDATE_STATEMENT);
+        DatabaseClient.GenericExecuteSpec update = getTemplate().getDatabaseClient().sql(UPDATE_STATEMENT);
 
         update = addQuotedField(update, COL_ID, installation.getId(), String.class);
         update = addQuotedField(update, COL_CREATED_AT, dateConverter.convertTo(installation.getCreatedAt(), null), LocalDateTime.class);

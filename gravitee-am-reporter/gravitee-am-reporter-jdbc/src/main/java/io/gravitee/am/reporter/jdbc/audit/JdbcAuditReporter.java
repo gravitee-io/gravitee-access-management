@@ -49,6 +49,7 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.processors.PublishProcessor;
+import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -221,7 +222,7 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
                 .concatMap(this::fillWithAccessPoint)
                 .concatMap(this::fillWithOutcomes))
                 .toList()
-                .flatMap(content -> monoToSingle(total).map(value -> new Page<Audit>(content, page, value)))
+                .flatMap(content -> monoToSingle(total).map(value -> new Page<>(content, page, value)))
                 .doOnError(error -> LOGGER.error("Unable to retrieve reports for referenceType {} and referenceId {}",
                         referenceType, referenceId, error));
     }
@@ -252,8 +253,8 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
         if (!ready) {
             LOGGER.debug("Reporter not yet bootstrapped");
             Map<Object, Object> result = new HashMap<>();
-            result.put(fieldSuccess, intervals.values().stream().collect(Collectors.toList()));
-            result.put(fieldFailure, intervals.values().stream().collect(Collectors.toList()));
+            result.put(fieldSuccess, new ArrayList<>(intervals.values()));
+            result.put(fieldFailure, new ArrayList<>(intervals.values()));
             return Single.just(result);
         }
 

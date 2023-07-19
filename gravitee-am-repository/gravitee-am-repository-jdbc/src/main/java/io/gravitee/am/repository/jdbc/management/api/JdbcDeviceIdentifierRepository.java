@@ -55,7 +55,7 @@ public class JdbcDeviceIdentifierRepository extends AbstractJdbcRepository imple
     @Override
     public Flowable<DeviceIdentifier> findByReference(ReferenceType referenceType, String referenceId) {
         LOGGER.debug("findByReference({}, {})", referenceType, referenceId);
-        return fluxToFlowable(template.select(JdbcDeviceIdentifier.class)
+        return fluxToFlowable(getTemplate().select(JdbcDeviceIdentifier.class)
                 .matching(Query.query(where(REFERENCE_ID_FIELD).is(referenceId).and(where(REF_TYPE_FIELD).is(referenceType.name()))))
                 .all())
                 .map(this::toEntity);
@@ -64,7 +64,7 @@ public class JdbcDeviceIdentifierRepository extends AbstractJdbcRepository imple
     @Override
     public Maybe<DeviceIdentifier> findById(String id) {
         LOGGER.debug("findById({})", id);
-        return monoToMaybe(template.select(JdbcDeviceIdentifier.class)
+        return monoToMaybe(getTemplate().select(JdbcDeviceIdentifier.class)
                 .matching(Query.query(where(ID_FIELD).is(id)))
                 .first())
                 .map(this::toEntity);
@@ -75,19 +75,19 @@ public class JdbcDeviceIdentifierRepository extends AbstractJdbcRepository imple
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("create device identifier with id {}", item.getId());
 
-        return monoToSingle(template.insert(toJdbcEntity(item))).map(this::toEntity);
+        return monoToSingle(getTemplate().insert(toJdbcEntity(item))).map(this::toEntity);
     }
 
     @Override
     public Single<DeviceIdentifier> update(DeviceIdentifier item) {
         LOGGER.debug("update device identifier with id {}", item.getId());
-        return monoToSingle( template.update(toJdbcEntity(item))).map(this::toEntity);
+        return monoToSingle( getTemplate().update(toJdbcEntity(item))).map(this::toEntity);
     }
 
     @Override
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
-        return monoToCompletable(template.delete(JdbcDeviceIdentifier.class)
+        return monoToCompletable(getTemplate().delete(JdbcDeviceIdentifier.class)
                 .matching(Query.query(where(ID_FIELD).is(id)))
                 .all());
     }

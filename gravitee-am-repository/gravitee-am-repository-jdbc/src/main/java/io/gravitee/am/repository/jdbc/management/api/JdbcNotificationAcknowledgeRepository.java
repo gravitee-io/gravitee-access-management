@@ -53,7 +53,7 @@ public class JdbcNotificationAcknowledgeRepository extends AbstractJdbcRepositor
     @Override
     public Maybe<NotificationAcknowledge> findById(String id) {
         LOGGER.debug("findById({})", id);
-        return monoToMaybe(this.template.select(JdbcNotificationAcknowledge.class)
+        return monoToMaybe(this.getTemplate().select(JdbcNotificationAcknowledge.class)
                 .matching(query(where(COL_ID).is(id)))
                 .first())
                 .map(this::toEntity);
@@ -62,7 +62,7 @@ public class JdbcNotificationAcknowledgeRepository extends AbstractJdbcRepositor
     @Override
     public Maybe<NotificationAcknowledge> findByResourceIdAndTypeAndAudienceId(String resourceId, String resourceType, String type, String audience) {
         LOGGER.debug("findByResourceIdAndAudienceId({},{},{},{})", resourceId, resourceType, type, audience);
-        return monoToMaybe(this.template.select(JdbcNotificationAcknowledge.class)
+        return monoToMaybe(this.getTemplate().select(JdbcNotificationAcknowledge.class)
                 .matching(query(where(COL_RESOURCE).is(resourceId)
                         .and(where(COL_RESOURCE_TYPE).is(resourceType))
                         .and(where(COL_TYPE).is(type))
@@ -76,20 +76,20 @@ public class JdbcNotificationAcknowledgeRepository extends AbstractJdbcRepositor
         LOGGER.debug("create({})", notificationAcknowledge);
         final JdbcNotificationAcknowledge entity = toJdbcEntity(notificationAcknowledge);
         entity.setId(entity.getId() == null ? RandomString.generate() : entity.getId());
-        return monoToSingle(this.template.insert(entity)).map(this::toEntity);
+        return monoToSingle(this.getTemplate().insert(entity)).map(this::toEntity);
     }
 
     @Override
     public Single<NotificationAcknowledge> update(NotificationAcknowledge notificationAcknowledge) {
         LOGGER.debug("update({})", notificationAcknowledge);
         final JdbcNotificationAcknowledge entity = toJdbcEntity(notificationAcknowledge);
-        return monoToSingle(this.template.update(entity)).map(this::toEntity);
+        return monoToSingle(this.getTemplate().update(entity)).map(this::toEntity);
     }
 
     @Override
     public Completable deleteByResourceId(String resourceId, String resourceType) {
         LOGGER.debug("deleteByResourceId({}, {})", resourceId, resourceType);
-        return monoToCompletable(this.template.delete(JdbcNotificationAcknowledge.class)
+        return monoToCompletable(this.getTemplate().delete(JdbcNotificationAcknowledge.class)
                 .matching(query(where(COL_RESOURCE).is(resourceId).and(where(COL_RESOURCE_TYPE).is(resourceType))))
                 .all());
     }

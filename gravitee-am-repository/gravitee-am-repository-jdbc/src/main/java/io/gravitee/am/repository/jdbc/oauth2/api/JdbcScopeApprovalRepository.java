@@ -99,7 +99,7 @@ public class JdbcScopeApprovalRepository extends AbstractJdbcRepository implemen
     @Override
     public Completable deleteByDomainAndScopeKey(String domain, String scope) {
         LOGGER.debug("deleteByDomainAndScopeKey({}, {})", domain, scope);
-        return monoToCompletable(template.delete(JdbcScopeApproval.class)
+        return monoToCompletable(getTemplate().delete(JdbcScopeApproval.class)
                 .matching(Query.query(where("domain").is(domain)
                         .and(where("scope").is(scope)))).all());
     }
@@ -107,7 +107,7 @@ public class JdbcScopeApprovalRepository extends AbstractJdbcRepository implemen
     @Override
     public Completable deleteByDomainAndUserAndClient(String domain, String user, String client) {
         LOGGER.debug("deleteByDomainAndUserAndClient({}, {}, {})", domain, user, client);
-        return monoToCompletable(template.delete(JdbcScopeApproval.class)
+        return monoToCompletable(getTemplate().delete(JdbcScopeApproval.class)
                 .matching(Query.query(where("domain").is(domain)
                         .and(where("user_id").is(user)
                         .and(where("client_id").is(client))))).all());
@@ -116,7 +116,7 @@ public class JdbcScopeApprovalRepository extends AbstractJdbcRepository implemen
     @Override
     public Completable deleteByDomainAndUser(String domain, String user) {
         LOGGER.debug("deleteByDomainAndUser({}, {})", domain, user);
-        return monoToCompletable(template.delete(JdbcScopeApproval.class)
+        return monoToCompletable(getTemplate().delete(JdbcScopeApproval.class)
                 .matching(Query.query(where("domain").is(domain)
                         .and(where("user_id").is(user)))).all());
     }
@@ -134,7 +134,7 @@ public class JdbcScopeApprovalRepository extends AbstractJdbcRepository implemen
     public Single<ScopeApproval> create(ScopeApproval item) {
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("Create ScopeApproval with id {}", item.getId());
-        return monoToSingle(template.insert(toJdbcEntity(item))).map(this::toEntity);
+        return monoToSingle(getTemplate().insert(toJdbcEntity(item))).map(this::toEntity);
     }
 
     @Override
@@ -153,6 +153,6 @@ public class JdbcScopeApprovalRepository extends AbstractJdbcRepository implemen
     public Completable purgeExpiredData() {
         LOGGER.debug("purgeExpiredData()");
         LocalDateTime now = LocalDateTime.now(UTC);
-        return monoToCompletable(template.delete(JdbcScopeApproval.class).matching(Query.query(where("expires_at").lessThan(now))).all());
+        return monoToCompletable(getTemplate().delete(JdbcScopeApproval.class).matching(Query.query(where("expires_at").lessThan(now))).all());
     }
 }

@@ -113,7 +113,7 @@ public class JdbcReporterRepository extends AbstractJdbcRepository implements Re
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
 
-        DatabaseClient.GenericExecuteSpec insertSpec = template.getDatabaseClient().sql(INSERT_STATEMENT);
+        DatabaseClient.GenericExecuteSpec insertSpec = getTemplate().getDatabaseClient().sql(INSERT_STATEMENT);
 
         insertSpec = addQuotedField(insertSpec, COL_ID, item.getId(), String.class);
         insertSpec = addQuotedField(insertSpec, COL_DOMAIN, item.getDomain(), String.class);
@@ -136,7 +136,7 @@ public class JdbcReporterRepository extends AbstractJdbcRepository implements Re
         LOGGER.debug("Update reporter with id '{}'", item.getId());
         TransactionalOperator trx = TransactionalOperator.create(tm);
 
-        DatabaseClient.GenericExecuteSpec updateSpec = template.getDatabaseClient().sql(UPDATE_STATEMENT);
+        DatabaseClient.GenericExecuteSpec updateSpec = getTemplate().getDatabaseClient().sql(UPDATE_STATEMENT);
 
         updateSpec = addQuotedField(updateSpec, COL_ID, item.getId(), String.class);
         updateSpec = addQuotedField(updateSpec, COL_DOMAIN, item.getDomain(), String.class);

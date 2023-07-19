@@ -60,7 +60,7 @@ public class JdbcUserNotificationRepository extends AbstractJdbcRepository imple
     @Override
     public Maybe<UserNotification> findById(String id) {
         LOGGER.debug("findById({})", id);
-        return monoToMaybe(this.template.select(JdbcUserNotification.class)
+        return monoToMaybe(this.getTemplate().select(JdbcUserNotification.class)
                 .matching(query(where(COL_ID).is(id)))
                 .first())
                 .map(this::toEntity);
@@ -71,26 +71,26 @@ public class JdbcUserNotificationRepository extends AbstractJdbcRepository imple
         LOGGER.debug("create({})", item);
         final JdbcUserNotification entity = toJdbcEntity(item);
         entity.setId(entity.getId() == null ? RandomString.generate() : entity.getId());
-        return monoToSingle(this.template.insert(entity)).map(this::toEntity);
+        return monoToSingle(this.getTemplate().insert(entity)).map(this::toEntity);
     }
 
     @Override
     public Single<UserNotification> update(UserNotification item) {
         LOGGER.debug("update({})", item);
         final JdbcUserNotification entity = toJdbcEntity(item);
-        return monoToSingle(this.template.update(entity)).map(this::toEntity);
+        return monoToSingle(this.getTemplate().update(entity)).map(this::toEntity);
     }
 
     @Override
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
-        return monoToCompletable(this.template.delete(JdbcUserNotification.class).matching(query(where(COL_ID).is(id))).all());
+        return monoToCompletable(this.getTemplate().delete(JdbcUserNotification.class).matching(query(where(COL_ID).is(id))).all());
     }
 
     @Override
     public Flowable<UserNotification> findAllByAudienceAndStatus(String audience, UserNotificationStatus status) {
         LOGGER.debug("findAllByAudienceAndStatus({}, {})", audience, status);
-        return fluxToFlowable(template.select(JdbcUserNotification.class).matching(query(
+        return fluxToFlowable(getTemplate().select(JdbcUserNotification.class).matching(query(
                 where(COL_AUDIENCE).is(audience)
                         .and(where(COL_STATUS).is(status.name())))
                         .sort(Sort.by(COL_CREATED_AT))
@@ -100,7 +100,7 @@ public class JdbcUserNotificationRepository extends AbstractJdbcRepository imple
 
     @Override
     public Completable updateNotificationStatus(String id, UserNotificationStatus status) {
-        return monoToCompletable(template.getDatabaseClient().sql("UPDATE user_notifications SET updated_at = :update, status = :status WHERE id = :id")
+        return monoToCompletable(getTemplate().getDatabaseClient().sql("UPDATE user_notifications SET updated_at = :update, status = :status WHERE id = :id")
                 .bind("update", LocalDateTime.now(ZoneOffset.UTC))
                 .bind("status", status.name())
                 .bind("id", id).fetch().rowsUpdated());

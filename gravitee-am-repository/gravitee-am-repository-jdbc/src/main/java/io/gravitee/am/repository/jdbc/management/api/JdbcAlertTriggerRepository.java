@@ -98,7 +98,7 @@ public class JdbcAlertTriggerRepository extends AbstractJdbcRepository implement
         LOGGER.debug("create alert trigger with id {}", alertTrigger.getId());
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        Mono<Void> insert = template.insert(toJdbcAlertTrigger(alertTrigger))
+        Mono<Void> insert = getTemplate().insert(toJdbcAlertTrigger(alertTrigger))
                 .then();
 
         final Mono<Void> storeAlertNotifiers = storeAlertNotifiers(alertTrigger, false);
@@ -114,7 +114,7 @@ public class JdbcAlertTriggerRepository extends AbstractJdbcRepository implement
         LOGGER.debug("update alert trigger with id {}", alertTrigger.getId());
         TransactionalOperator trx = TransactionalOperator.create(tm);
 
-        Mono<Void> update = template.update(toJdbcAlertTrigger(alertTrigger)).then();
+        Mono<Void> update = getTemplate().update(toJdbcAlertTrigger(alertTrigger)).then();
 
         final Mono<Void> storeAlertNotifiers = storeAlertNotifiers(alertTrigger, true);
 
@@ -174,7 +174,7 @@ public class JdbcAlertTriggerRepository extends AbstractJdbcRepository implement
         params.put("reference_id", referenceId);
         params.put("reference_type", referenceType.name());
 
-        org.springframework.r2dbc.core.DatabaseClient.GenericExecuteSpec execute = template.getDatabaseClient().sql(queryBuilder.toString());
+        org.springframework.r2dbc.core.DatabaseClient.GenericExecuteSpec execute = getTemplate().getDatabaseClient().sql(queryBuilder.toString());
 
         for (Map.Entry<String, Object> entry : params.entrySet()) {
             execute = execute.bind(entry.getKey(), entry.getValue());
@@ -205,7 +205,7 @@ public class JdbcAlertTriggerRepository extends AbstractJdbcRepository implement
                         return dbAlertNotifier;
                     })
                     .concatMap(dbAlertNotifier -> {
-                        final DatabaseClient.GenericExecuteSpec sql = template.getDatabaseClient()
+                        final DatabaseClient.GenericExecuteSpec sql = getTemplate().getDatabaseClient()
                                 .sql(INSERT_ALERT_NOTIFIER_STMT)
                                 .bind(ALERT_TRIGGER_ID, dbAlertNotifier.getAlertTriggerId())
                                 .bind(ALERT_NOTIFIER_ID, dbAlertNotifier.getAlertNotifierId());
@@ -218,7 +218,7 @@ public class JdbcAlertTriggerRepository extends AbstractJdbcRepository implement
     }
 
     private Mono<Void> deleteAlertNotifiers(String alertTriggerId) {
-        return template.delete(Query.query(where(ALERT_TRIGGER_ID).is(alertTriggerId)),JdbcAlertTrigger.AlertNotifier.class).then();
+        return getTemplate().delete(Query.query(where(ALERT_TRIGGER_ID).is(alertTriggerId)),JdbcAlertTrigger.AlertNotifier.class).then();
     }
 
 }

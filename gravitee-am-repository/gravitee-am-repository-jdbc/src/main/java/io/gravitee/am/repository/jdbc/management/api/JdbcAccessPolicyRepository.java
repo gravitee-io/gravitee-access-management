@@ -93,7 +93,7 @@ public class JdbcAccessPolicyRepository extends AbstractJdbcRepository implement
     @Override
     public Single<Page<AccessPolicy>> findByDomain(String domain, int page, int size) {
         LOGGER.debug("findByDomain(domain:{}, page:{}, size:{})", domain, page, size);
-        return fluxToFlowable(template.select(JdbcAccessPolicy.class)
+        return fluxToFlowable(getTemplate().select(JdbcAccessPolicy.class)
                 .matching(
                         query(where(COL_DOMAIN).is(domain))
                                 .sort(Sort.by(Sort.Order.desc(COL_UPDATED_AT)))
@@ -133,7 +133,7 @@ public class JdbcAccessPolicyRepository extends AbstractJdbcRepository implement
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("create AccessPolicy with id {}", item.getId());
 
-        DatabaseClient.GenericExecuteSpec sql = template.getDatabaseClient().sql(INSERT_STATEMENT);
+        DatabaseClient.GenericExecuteSpec sql = getTemplate().getDatabaseClient().sql(INSERT_STATEMENT);
         sql = addQuotedField(sql, COL_ID, item.getId(), String.class);
         sql = addQuotedField(sql, COL_TYPE, item.getType() == null ? null : item.getType().name(), String.class);
         sql = addQuotedField(sql, COL_ENABLED, item.isEnabled(), Boolean.class);
@@ -166,7 +166,7 @@ public class JdbcAccessPolicyRepository extends AbstractJdbcRepository implement
         updateFields = addQuotedField(updateFields, COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null));
         updateFields = addQuotedField(updateFields, COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null));
 
-        return monoToSingle(template.update(query(where(COL_ID).is(item.getId())), Update.from(updateFields), JdbcAccessPolicy.class))
+        return monoToSingle(getTemplate().update(query(where(COL_ID).is(item.getId())), Update.from(updateFields), JdbcAccessPolicy.class))
                 .flatMap(__ -> Single.defer(() -> this.findById(item.getId()).toSingle()));
     }
 

@@ -60,7 +60,7 @@ public class JdbcServiceResourceRepository extends AbstractJdbcRepository implem
     public Single<ServiceResource> create(ServiceResource item) {
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("Create Reporter with id {}", item.getId());
-        return monoToSingle(template.insert(toJdbcEntity(item))).map(this::toEntity);
+        return monoToSingle(getTemplate().insert(toJdbcEntity(item))).map(this::toEntity);
     }
 
     @Override

@@ -101,7 +101,7 @@ public class JdbcEntrypointRepository extends AbstractJdbcRepository implements 
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("create Entrypoint with id {}", item.getId());
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        Mono<Long> action = template.insert(toJdbcEntity(item)).map(__ -> 1L);
+        Mono<Long> action = getTemplate().insert(toJdbcEntity(item)).map(__ -> 1L);
 
         final List<String> tags = item.getTags();
         if (tags != null && !tags.isEmpty()) {
@@ -118,7 +118,7 @@ public class JdbcEntrypointRepository extends AbstractJdbcRepository implements 
         LOGGER.debug("update Entrypoint with id {}", item.getId());
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        Mono<Long> action = template.update(toJdbcEntity(item)).map(__ -> 1L);
+        Mono<Long> action = getTemplate().update(toJdbcEntity(item)).map(__ -> 1L);
 
         final List<String> tags = item.getTags();
         if (tags != null & !tags.isEmpty()) {
@@ -131,7 +131,7 @@ public class JdbcEntrypointRepository extends AbstractJdbcRepository implements 
     }
 
     private Mono<Long> insertTag(String tagValue, Entrypoint item) {
-        return template.getDatabaseClient().sql("INSERT INTO entrypoint_tags(entrypoint_id, tag) VALUES(:entrypoint, :tag)")
+        return getTemplate().getDatabaseClient().sql("INSERT INTO entrypoint_tags(entrypoint_id, tag) VALUES(:entrypoint, :tag)")
                 .bind("entrypoint", item.getId())
                 .bind("tag", tagValue)
                 .fetch().rowsUpdated();
@@ -141,16 +141,14 @@ public class JdbcEntrypointRepository extends AbstractJdbcRepository implements 
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        Mono<Integer> delete = template.delete(JdbcEntrypoint.class)
-                .matching(Query.query(where("id").is(id))).all();
+        Mono<Integer> delete = getTemplate().delete(Query.query(where("id").is(id)), JdbcEntrypoint.class);
 
         return monoToCompletable(deleteTags(id).then(delete).as(trx::transactional))
                 .doOnError(error -> LOGGER.error("Unable to delete entrypoint with id {}", id, error));
     }
 
     private Mono<Long> deleteTags(String id) {
-        return template.delete(JdbcEntrypoint.Tag.class)
-                .matching(Query.query(where("entrypoint_id").is(id))).all()
+        return getTemplate().delete(Query.query(where("entrypoint_id").is(id)), JdbcEntrypoint.Tag.class)
                 .map(Integer::longValue);
     }
 }

@@ -102,7 +102,7 @@ public class JdbcFormRepository extends AbstractJdbcRepository implements FormRe
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("create forms with id {}", item.getId());
 
-        return monoToSingle(template.insert(toJdbcEntity(item))).map(this::toEntity);
+        return monoToSingle(getTemplate().insert(toJdbcEntity(item))).map(this::toEntity);
     }
 
     @Override

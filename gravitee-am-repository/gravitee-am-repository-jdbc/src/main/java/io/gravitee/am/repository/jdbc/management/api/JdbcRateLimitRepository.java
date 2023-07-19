@@ -62,7 +62,7 @@ public class JdbcRateLimitRepository extends AbstractJdbcRepository implements R
     @Override
     public Maybe<RateLimit> findByCriteria(RateLimitCriteria criteria) {
         Criteria whereClause = buildWhereClause(criteria);
-        return monoToMaybe(template.select(Query.query(whereClause).with(PageRequest.of(0,1, Sort.by("id"))), JdbcRateLimit.class)
+        return monoToMaybe(getTemplate().select(Query.query(whereClause).with(PageRequest.of(0,1, Sort.by("id"))), JdbcRateLimit.class)
                 .singleOrEmpty()).map(this::toEntity);
     }
 
@@ -70,7 +70,7 @@ public class JdbcRateLimitRepository extends AbstractJdbcRepository implements R
     public Single<RateLimit> create(RateLimit item) {
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("create RateLimit with id {}", item.getId());
-        return monoToSingle(template.insert(toJdbcEntity(item))).map(this::toEntity);
+        return monoToSingle(getTemplate().insert(toJdbcEntity(item))).map(this::toEntity);
     }
 
     @Override
@@ -92,7 +92,7 @@ public class JdbcRateLimitRepository extends AbstractJdbcRepository implements R
         Criteria whereClause = buildWhereClause(criteria);
 
         if (!whereClause.isEmpty()) {
-            return monoToCompletable(template.delete(JdbcRateLimit.class).matching(Query.query(whereClause)).all());
+            return monoToCompletable(getTemplate().delete(JdbcRateLimit.class).matching(Query.query(whereClause)).all());
         }
 
         throw new RepositoryIllegalQueryException("Unable to delete from RateLimit with criteria");
@@ -108,7 +108,7 @@ public class JdbcRateLimitRepository extends AbstractJdbcRepository implements R
         }
 
         if (!whereClause.isEmpty()) {
-            return monoToCompletable(template.delete(JdbcRateLimit.class).matching(Query.query(whereClause)).all());
+            return monoToCompletable(getTemplate().delete(JdbcRateLimit.class).matching(Query.query(whereClause)).all());
         }
 
         throw new RepositoryIllegalQueryException("Unable to delete from RateLimit with userId");
@@ -124,7 +124,7 @@ public class JdbcRateLimitRepository extends AbstractJdbcRepository implements R
         }
 
         if (!whereClause.isEmpty()) {
-            return monoToCompletable(template.delete(JdbcRateLimit.class).matching(Query.query(whereClause)).all());
+            return monoToCompletable(getTemplate().delete(JdbcRateLimit.class).matching(Query.query(whereClause)).all());
         }
 
         throw new RepositoryIllegalQueryException("Unable to delete from RateLimit with domainId");

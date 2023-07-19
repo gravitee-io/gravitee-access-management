@@ -39,7 +39,7 @@
         <jdbc-mssql.version>7.4.1.jre8</jdbc-mssql.version>
         <jdbc-mysql.version>8.0.29</jdbc-mysql.version>
         <jdbc-mariadb.version>2.4.0</jdbc-mariadb.version>
-        <r2dbc-mysql.version>1.0.2</r2dbc-mysql.version>
+        <r2dbc-mysql.version>0.9.3</r2dbc-mysql.version>
 
         <skip-reporters-tests>true</skip-reporters-tests>
     </properties>

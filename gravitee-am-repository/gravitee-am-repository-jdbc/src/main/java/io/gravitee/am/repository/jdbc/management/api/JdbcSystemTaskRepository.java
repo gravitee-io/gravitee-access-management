@@ -88,7 +88,7 @@ public class JdbcSystemTaskRepository extends AbstractJdbcRepository implements 
     @Override
     public Maybe<SystemTask> findById(String id) {
         LOGGER.debug("findById({}, {}, {})", id);
-        return monoToMaybe(template.select(Query.query(where(COL_ID).is(id)).limit(1), JdbcSystemTask.class).singleOrEmpty())
+        return monoToMaybe(getTemplate().select(Query.query(where(COL_ID).is(id)).limit(1), JdbcSystemTask.class).singleOrEmpty())
                 .map(this::toEntity);
     }
 
@@ -97,7 +97,7 @@ public class JdbcSystemTaskRepository extends AbstractJdbcRepository implements 
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("Create SystemTask with id {}", item.getId());
 
-        DatabaseClient.GenericExecuteSpec insertSpec = template.getDatabaseClient().sql(INSERT_STATEMENT);
+        DatabaseClient.GenericExecuteSpec insertSpec = getTemplate().getDatabaseClient().sql(INSERT_STATEMENT);
         insertSpec = addQuotedField(insertSpec, COL_ID, item.getId(), String.class);
         insertSpec = addQuotedField(insertSpec, COL_TYPE, item.getType(), String.class);
         insertSpec = addQuotedField(insertSpec, COL_STATUS, item.getStatus(), String.class);
@@ -120,7 +120,7 @@ public class JdbcSystemTaskRepository extends AbstractJdbcRepository implements 
     public Single<SystemTask> updateIf(SystemTask item, String operationId) {
         LOGGER.debug("Update SystemTask with id {} and operationId {}", item.getId(), operationId);
 
-        DatabaseClient.GenericExecuteSpec updateSpec = template.getDatabaseClient().sql(UPDATE_STATEMENT);
+        DatabaseClient.GenericExecuteSpec updateSpec = getTemplate().getDatabaseClient().sql(UPDATE_STATEMENT);
 
         updateSpec = addQuotedField(updateSpec, COL_ID, item.getId(), String.class);
         updateSpec = addQuotedField(updateSpec, COL_TYPE, item.getType(), String.class);
@@ -139,14 +139,14 @@ public class JdbcSystemTaskRepository extends AbstractJdbcRepository implements 
     @Override
     public Completable delete(String id) {
         LOGGER.debug("Delete SystemTask with id {}", id);
-        Mono<Integer> delete = template.delete(JdbcSystemTask.class)
+        Mono<Integer> delete = getTemplate().delete(JdbcSystemTask.class)
                 .matching(Query.query(where(COL_ID).is(id))).all();
         return monoToCompletable(delete);
     }
 
     @Override
     public Flowable<SystemTask> findByType(String type) {
-        return fluxToFlowable(template.select(Query.query(where(COL_TYPE).is(type)), JdbcSystemTask.class))
+        return fluxToFlowable(getTemplate().select(Query.query(where(COL_TYPE).is(type)), JdbcSystemTask.class))
                 .map(this::toEntity);
     }
 }

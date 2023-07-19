@@ -80,7 +80,7 @@ public class JdbcPasswordHistoryRepository extends AbstractJdbcRepository implem
         item.setId(item.getId() == null ? generate() : item.getId());
         LOGGER.debug("Create password history with id {}", item.getId());
 
-        DatabaseClient.GenericExecuteSpec sql = template.getDatabaseClient().sql(insertStatement);
+        DatabaseClient.GenericExecuteSpec sql = getTemplate().getDatabaseClient().sql(insertStatement);
         sql = addQuotedField(sql, ID, item.getId(), String.class);
         sql = addQuotedField(sql, REFERENCE_ID, item.getReferenceId(), String.class);
         sql = addQuotedField(sql, REFERENCE_TYPE, item.getReferenceType().toString(), String.class);
@@ -100,7 +100,7 @@ public class JdbcPasswordHistoryRepository extends AbstractJdbcRepository implem
         LOGGER.debug("Update password history with id {}", item.getId());
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        DatabaseClient.GenericExecuteSpec sql = template.getDatabaseClient().sql(updateStatement);
+        DatabaseClient.GenericExecuteSpec sql = getTemplate().getDatabaseClient().sql(updateStatement);
         sql = addQuotedField(sql, ID, item.getId(), String.class);
         sql = addQuotedField(sql, REFERENCE_ID, item.getReferenceId(), String.class);
         sql = addQuotedField(sql, REFERENCE_TYPE, item.getReferenceType().toString(), String.class);
@@ -119,7 +119,7 @@ public class JdbcPasswordHistoryRepository extends AbstractJdbcRepository implem
     public Completable delete(String id) {
         LOGGER.debug("delete password history with id {}", id);
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        return monoToCompletable(template.delete(JdbcPasswordHistory.class)
+        return monoToCompletable(getTemplate().delete(JdbcPasswordHistory.class)
                                          .matching(Query.query(where(ID).is(id)))
                                          .all()
                                          .as(trx::transactional));
@@ -152,14 +152,14 @@ public class JdbcPasswordHistoryRepository extends AbstractJdbcRepository implem
     @Override
     public Completable deleteByUserId(String userId) {
         LOGGER.debug("deleteByUserId({})", userId);
-        return monoToCompletable(this.template.delete(JdbcPasswordHistory.class).matching(
+        return monoToCompletable(this.getTemplate().delete(JdbcPasswordHistory.class).matching(
                 query(where(USER_ID).is(userId))).all());
     }
 
     @Override
     public Completable deleteByReference(ReferenceType referenceType, String referenceId) {
         LOGGER.debug("deleteByReference({})", referenceId);
-        return monoToCompletable(this.template.delete(JdbcPasswordHistory.class).matching(
+        return monoToCompletable(this.getTemplate().delete(JdbcPasswordHistory.class).matching(
                 query(where(REFERENCE_TYPE).is(referenceType)
                                            .and(where(REFERENCE_ID).is(referenceId)))).all());
     }

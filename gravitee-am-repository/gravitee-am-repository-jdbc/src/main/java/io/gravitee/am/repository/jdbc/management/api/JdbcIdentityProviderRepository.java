@@ -142,7 +142,7 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("create identityProvider with id {}", item.getId());
 
-        DatabaseClient.GenericExecuteSpec insertSpec = template.getDatabaseClient().sql(INSERT_STATEMENT);
+        DatabaseClient.GenericExecuteSpec insertSpec = getTemplate().getDatabaseClient().sql(INSERT_STATEMENT);
 
         insertSpec = addQuotedField(insertSpec, COL_ID, item.getId(), String.class);
         insertSpec = addQuotedField(insertSpec, COL_TYPE, item.getType(), String.class);
@@ -167,7 +167,7 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
     public Single<IdentityProvider> update(IdentityProvider item) {
         LOGGER.debug("update identityProvider with id {}", item.getId());
 
-        DatabaseClient.GenericExecuteSpec update = template.getDatabaseClient().sql(UPDATE_STATEMENT);
+        DatabaseClient.GenericExecuteSpec update = getTemplate().getDatabaseClient().sql(UPDATE_STATEMENT);
 
         update = addQuotedField(update, COL_ID, item.getId(), String.class);
         update = addQuotedField(update, COL_TYPE, item.getType(), String.class);

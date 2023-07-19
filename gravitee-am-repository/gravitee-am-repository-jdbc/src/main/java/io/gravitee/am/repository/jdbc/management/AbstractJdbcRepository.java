@@ -41,7 +41,7 @@ public abstract class AbstractJdbcRepository {
     protected final Logger LOGGER = LoggerFactory.getLogger(getClass());
 
     @Autowired
-    protected R2dbcEntityTemplate template;
+    private R2dbcEntityTemplate template;
 
     @Autowired
     protected DatabaseDialectHelper databaseDialectHelper;
@@ -98,5 +98,9 @@ public abstract class AbstractJdbcRepository {
             }
         }
         return buffer.toString();
+    }
+
+    public R2dbcEntityTemplate getTemplate() {
+        return template;
     }
 }

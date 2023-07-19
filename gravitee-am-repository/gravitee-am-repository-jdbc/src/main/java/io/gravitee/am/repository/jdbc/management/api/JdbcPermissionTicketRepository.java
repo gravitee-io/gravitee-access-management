@@ -98,7 +98,7 @@ public class JdbcPermissionTicketRepository extends AbstractJdbcRepository imple
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("create PermissionTicket with id {}", item.getId());
 
-        DatabaseClient.GenericExecuteSpec insertSpec = template.getDatabaseClient().sql(INSERT_STATEMENT);
+        DatabaseClient.GenericExecuteSpec insertSpec = getTemplate().getDatabaseClient().sql(INSERT_STATEMENT);
 
         insertSpec = addQuotedField(insertSpec, COL_ID, item.getId(), String.class);
         insertSpec = addQuotedField(insertSpec, COL_CLIENT_ID, item.getClientId(), String.class);
@@ -118,7 +118,7 @@ public class JdbcPermissionTicketRepository extends AbstractJdbcRepository imple
         LOGGER.debug("update PermissionTicket with id {}", item.getId());
 
 
-        DatabaseClient.GenericExecuteSpec update = template.getDatabaseClient().sql(UPDATE_STATEMENT);
+        DatabaseClient.GenericExecuteSpec update = getTemplate().getDatabaseClient().sql(UPDATE_STATEMENT);
 
         update = addQuotedField(update, COL_ID, item.getId(), String.class);
         update = addQuotedField(update, COL_CLIENT_ID, item.getClientId(), String.class);
@@ -141,6 +141,6 @@ public class JdbcPermissionTicketRepository extends AbstractJdbcRepository imple
     public Completable purgeExpiredData() {
         LOGGER.debug("purgeExpiredData()");
         LocalDateTime now = LocalDateTime.now(UTC);
-        return monoToCompletable(template.delete(JdbcPermissionTicket.class).matching(Query.query(where(COL_EXPIRE_AT).lessThan(now))).all());
+        return monoToCompletable(getTemplate().delete(JdbcPermissionTicket.class).matching(Query.query(where(COL_EXPIRE_AT).lessThan(now))).all());
     }
 }
