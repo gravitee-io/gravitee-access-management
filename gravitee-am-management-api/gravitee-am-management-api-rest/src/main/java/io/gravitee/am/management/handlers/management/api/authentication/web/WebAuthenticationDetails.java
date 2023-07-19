@@ -18,7 +18,7 @@ package io.gravitee.am.management.handlers.management.api.authentication.web;
 import io.gravitee.am.model.Organization;
 import io.gravitee.common.http.HttpHeaders;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.io.Serializable;
 
 import static io.gravitee.am.management.handlers.management.api.authentication.controller.LoginController.ORGANIZATION_PARAMETER_NAME;

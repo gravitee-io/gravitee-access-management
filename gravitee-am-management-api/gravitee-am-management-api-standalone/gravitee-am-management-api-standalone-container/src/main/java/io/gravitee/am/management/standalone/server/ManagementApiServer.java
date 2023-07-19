@@ -18,6 +18,7 @@ package io.gravitee.am.management.standalone.server;
 import io.gravitee.am.management.handlers.management.api.ManagementApplication;
 import io.gravitee.am.management.handlers.management.api.spring.ManagementConfiguration;
 import io.gravitee.node.jetty.JettyHttpServer;
+import jakarta.servlet.DispatcherType;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -32,7 +33,6 @@ import org.springframework.web.filter.DelegatingFilterProxy;
 import org.springframework.web.filter.ForwardedHeaderFilter;
 import org.springframework.web.servlet.DispatcherServlet;
 
-import javax.servlet.DispatcherType;
 import java.util.EnumSet;
 
 /**

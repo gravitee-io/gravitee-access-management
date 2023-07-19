@@ -24,6 +24,10 @@
         <artifactId>gravitee-am-parent</artifactId>
         <version>4.1.0-SNAPSHOT</version>
     </parent>
+    <properties>
+        <spring-security-crypto.version>6.1.1</spring-security-crypto.version>
+        <angus-mail.version>2.0.2</angus-mail.version>
+    </properties>
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>io.gravitee.am.service</groupId>
@@ -145,10 +149,6 @@
             <version>${jsoup.version}</version>
         </dependency>
         <dependency>
-            <groupId>javax.mail</groupId>
-            <artifactId>mail</artifactId>
-        </dependency>
-        <dependency>
             <groupId>jakarta.mail</groupId>
             <artifactId>jakarta.mail-api</artifactId>
         </dependency>
@@ -156,7 +156,17 @@
             <groupId>org.springframework</groupId>
             <artifactId>spring-context-support</artifactId>
         </dependency>
-
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-crypto</artifactId>
+            <version>${spring-security-crypto.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.angus</groupId>
+            <artifactId>angus-mail</artifactId>
+            <version>${angus-mail.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-text</artifactId>
@@ -205,12 +215,6 @@
             <groupId>org.junit.vintage</groupId>
             <artifactId>junit-vintage-engine</artifactId>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.security</groupId>
-            <artifactId>spring-security-crypto</artifactId>
-            <version>6.1.1</version>
-            <scope>compile</scope>
         </dependency>
     </dependencies>
 </project>

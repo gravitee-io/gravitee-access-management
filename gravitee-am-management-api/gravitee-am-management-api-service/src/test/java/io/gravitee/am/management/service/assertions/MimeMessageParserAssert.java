@@ -15,12 +15,12 @@
  */
 package io.gravitee.am.management.service.assertions;
 
-import org.apache.commons.mail.util.MimeMessageParser;
+import io.gravitee.am.management.service.impl.utils.MimeMessageParser;
+import jakarta.mail.Address;
 import org.assertj.core.api.AbstractAssert;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.internal.Iterables;
 
-import javax.mail.Address;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;

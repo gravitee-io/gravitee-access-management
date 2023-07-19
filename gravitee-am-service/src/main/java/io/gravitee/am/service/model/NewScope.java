@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service.model;
 
+
 import javax.validation.constraints.NotNull;
 
 /**

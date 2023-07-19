@@ -153,33 +153,20 @@ public class WebClientBuilder {
             options.setTrustAll(isSSLTrustAllEnabled);
             options.setVerifyHost(isSSLVerifyHostEnabled);
             if (sslTrustStoreType != null) {
-                switch(sslTrustStoreType) {
-                    case JKS_KEYSTORE_TYPE:
-                        setJksTrustOptions(options);
-                        break;
-                    case PKCS12_KEYSTORE_TYPE:
-                        setPfxTrustOptions(options);
-                        break;
-                    case PEM_KEYSTORE_TYPE:
-                        setPemTrustOptions(options);
-                        break;
-                    default:
-                        LOGGER.error("No suitable httpClient SSL TrustStore type found for : " + sslTrustStoreType);
+                switch (sslTrustStoreType) {
+                    case JKS_KEYSTORE_TYPE -> setJksTrustOptions(options);
+                    case PKCS12_KEYSTORE_TYPE -> setPfxTrustOptions(options);
+                    case PEM_KEYSTORE_TYPE -> setPemTrustOptions(options);
+                    default ->
+                            LOGGER.error("No suitable httpClient SSL TrustStore type found for : " + sslTrustStoreType);
                 }
             }
             if (sslKeyStoreType != null) {
-                switch(sslKeyStoreType) {
-                    case JKS_KEYSTORE_TYPE:
-                        setJksKeyOptions(options);
-                        break;
-                    case PKCS12_KEYSTORE_TYPE:
-                        setPfxKeyOptions(options);
-                        break;
-                    case PEM_KEYSTORE_TYPE:
-                        setPemKeyOptions(options);
-                        break;
-                    default:
-                        LOGGER.error("No suitable httpClient SSL KeyStore type found for : " + sslKeyStoreType);
+                switch (sslKeyStoreType) {
+                    case JKS_KEYSTORE_TYPE -> setJksKeyOptions(options);
+                    case PKCS12_KEYSTORE_TYPE -> setPfxKeyOptions(options);
+                    case PEM_KEYSTORE_TYPE -> setPemKeyOptions(options);
+                    default -> LOGGER.error("No suitable httpClient SSL KeyStore type found for : " + sslKeyStoreType);
                 }
             }
         }

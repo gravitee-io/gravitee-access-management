@@ -75,8 +75,8 @@
 
         <!-- JavaMail -->
         <dependency>
-            <groupId>javax.mail</groupId>
-            <artifactId>mail</artifactId>
+            <groupId>jakarta.mail</groupId>
+            <artifactId>jakarta.mail-api</artifactId>
             <scope>provided</scope>
         </dependency>
 
