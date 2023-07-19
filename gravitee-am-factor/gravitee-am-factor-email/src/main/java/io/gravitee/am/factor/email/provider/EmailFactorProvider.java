@@ -34,12 +34,12 @@ import io.gravitee.am.resource.api.ResourceProvider;
 import io.gravitee.am.resource.api.email.EmailSenderProvider;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
+import jakarta.mail.internet.AddressException;
+import jakarta.mail.internet.InternetAddress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import javax.mail.internet.AddressException;
-import javax.mail.internet.InternetAddress;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;

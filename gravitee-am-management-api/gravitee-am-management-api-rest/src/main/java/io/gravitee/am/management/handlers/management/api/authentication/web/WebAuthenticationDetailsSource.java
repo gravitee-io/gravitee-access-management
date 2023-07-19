@@ -15,9 +15,9 @@
  */
 package io.gravitee.am.management.handlers.management.api.authentication.web;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.authentication.AuthenticationDetailsSource;
 
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

@@ -16,7 +16,6 @@
 package io.gravitee.am.management.handlers.management.api;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
@@ -58,6 +57,7 @@ import io.gravitee.am.service.UserActivityService;
 import io.gravitee.am.service.impl.I18nDictionaryService;
 import io.gravitee.am.service.validators.user.UserValidator;
 import io.reactivex.rxjava3.core.Single;
+import jakarta.annotation.Priority;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
 import org.junit.After;
@@ -74,7 +74,6 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
 import org.thymeleaf.TemplateEngine;
 
-import javax.annotation.Priority;
 import javax.inject.Named;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.client.WebTarget;

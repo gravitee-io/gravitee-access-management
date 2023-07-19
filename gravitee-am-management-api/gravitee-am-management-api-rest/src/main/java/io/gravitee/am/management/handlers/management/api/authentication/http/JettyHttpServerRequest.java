@@ -31,7 +31,7 @@ import io.gravitee.gateway.api.ws.WebSocket;
 import io.gravitee.reporter.api.http.Metrics;
 
 import javax.net.ssl.SSLSession;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 import java.util.Map;
 

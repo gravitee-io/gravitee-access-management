@@ -107,7 +107,7 @@
         <javax.servlet-api.version>3.1.0</javax.servlet-api.version>
         <thymeleaf.version>3.1.2.RELEASE</thymeleaf.version>
         <bouncycastle.version>1.69</bouncycastle.version>
-        <wiremock.version>2.6.0</wiremock.version>
+        <wiremock.version>3.0.0-beta-10</wiremock.version>
         <embedded-ldap-junit.version>0.7</embedded-ldap-junit.version>
         <json-smart.version>2.4.10</json-smart.version>
         <reactor-netty.version>1.0.15</reactor-netty.version>
@@ -146,6 +146,23 @@
         <gravitee-am-factor-otp-sender.version>3.0.0-alpha.1</gravitee-am-factor-otp-sender.version>
         <gravitee-am-resource-twilio.version>1.0.0-alpha.3</gravitee-am-resource-twilio.version>
 
+
+        <jakarta.validation-api.version>3.0.2</jakarta.validation-api.version>
+        <jakarta.annotation-api.version>2.1.1</jakarta.annotation-api.version>
+        <jakarta.inject-api.version>2.0.1</jakarta.inject-api.version>
+        <javax.inject.version>1</javax.inject.version>
+        <jakarta.servlet-api.version>6.0.0</jakarta.servlet-api.version>
+        <jakarta.transaction-api.version>2.0.1</jakarta.transaction-api.version>
+        <jakarta.activation-api.version>2.1.2</jakarta.activation-api.version>
+        <jakarta.xml.bind-api.version>4.0.0</jakarta.xml.bind-api.version>
+        <javax.annotation-api.version>1.3.2</javax.annotation-api.version>
+
+        <!-- javax dependencies still required for compatibility or test -->
+        <jaxb-impl.version>4.0.2</jaxb-impl.version>
+        <jaxb-api.version>2.3.1</jaxb-api.version>
+        <javax.servlet-api.version>3.0.1</javax.servlet-api.version>
+
+
         <jdk.version>17</jdk.version>
 
         <ongres.scram.version>2.1</ongres.scram.version>
@@ -159,15 +176,6 @@
 
     <dependencyManagement>
         <dependencies>
-
-            <!-- Security upgrades -->
-            <dependency>
-                <groupId>org.eclipse.jetty</groupId>
-                <artifactId>jetty-bom</artifactId>
-                <version>9.4.51.v20230217</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
 
             <dependency>
                 <groupId>net.minidev</groupId>
@@ -286,11 +294,71 @@
                 <artifactId>guava</artifactId>
                 <version>${guava.version}</version>
             </dependency>
+            <!--
+           !! Transitive dependency !!
+           Imported in DepManagement until swagger parser dependencies will update it
+            -->
+            <dependency>
+                <groupId>org.mozilla</groupId>
+                <artifactId>rhino</artifactId>
+                <version>${rhino.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.swagger.core.v3</groupId>
+                <artifactId>swagger-core</artifactId>
+                <version>${swagger-core.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>javax.validation</groupId>
+                        <artifactId>validation-api</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <!-- JAXB API & implementation -->
+            <dependency>
+                <groupId>com.sun.xml.bind</groupId>
+                <artifactId>jaxb-impl</artifactId>
+                <version>${jaxb-impl.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>jakarta.xml.bind</groupId>
+                <artifactId>jakarta.xml.bind-api</artifactId>
+                <version>${jakarta.xml.bind-api.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>jakarta.activation</groupId>
+                <artifactId>jakarta.activation-api</artifactId>
+                <version>${jakarta.activation-api.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>jakarta.annotation</groupId>
+                <artifactId>jakarta.annotation-api</artifactId>
+                <version>${jakarta.annotation-api.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>jakarta.inject</groupId>
+                <artifactId>jakarta.inject-api</artifactId>
+                <version>${jakarta.inject-api.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>javax.inject</groupId>
+                <artifactId>javax.inject</artifactId>
+                <version>${javax.inject.version}</version>
+            </dependency>
+
             <dependency>
                 <groupId>javax.validation</groupId>
                 <artifactId>validation-api</artifactId>
                 <version>${validation-api.version}</version>
             </dependency>
+
             <dependency>
                 <groupId>com.github.fge</groupId>
                 <artifactId>json-patch</artifactId>
@@ -345,11 +413,6 @@
                 <groupId>org.freemarker</groupId>
                 <artifactId>freemarker</artifactId>
                 <version>${freemarker.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>javax.mail</groupId>
-                <artifactId>mail</artifactId>
-                <version>${mail.version}</version>
             </dependency>
             <dependency>
                 <groupId>jakarta.mail</groupId>

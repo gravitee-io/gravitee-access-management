@@ -17,6 +17,7 @@ package io.gravitee.am.service.utils;
 
 import io.gravitee.am.common.email.Email;
 import io.gravitee.am.service.exception.TechnicalManagementException;
+import jakarta.activation.MimetypesFileTypeMap;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
@@ -27,7 +28,6 @@ import org.springframework.core.io.FileSystemResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 
-import javax.activation.MimetypesFileTypeMap;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;

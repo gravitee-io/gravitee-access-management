@@ -17,7 +17,7 @@ package io.gravitee.am.management.handlers.management.api.authentication.http;
 
 import io.gravitee.gateway.api.http.HttpHeaders;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;

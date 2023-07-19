@@ -29,7 +29,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 
-import javax.servlet.http.Cookie;
+import jakarta.servlet.http.Cookie;
 import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;

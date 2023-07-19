@@ -27,9 +27,9 @@ import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.LogoutAuditBuilder;
 import java.util.Optional;
 import java.util.stream.Stream;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.core.env.Environment;
 import org.springframework.security.web.authentication.logout.SimpleUrlLogoutSuccessHandler;
 

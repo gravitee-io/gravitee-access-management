@@ -18,7 +18,7 @@ package io.gravitee.am.management.handlers.management.api.authentication.csrf;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
