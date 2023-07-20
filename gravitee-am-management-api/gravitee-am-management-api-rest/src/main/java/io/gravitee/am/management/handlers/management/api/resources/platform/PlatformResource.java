@@ -70,4 +70,9 @@ public class PlatformResource {
     public InstallationResource getInstallationResource() {
         return resourceContext.getResource(InstallationResource.class);
     }
+
+    @Path("license")
+    public LicenseResource getLicenseResource() {
+        return resourceContext.getResource(LicenseResource.class);
+    }
 }
