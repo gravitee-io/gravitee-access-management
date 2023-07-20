@@ -1,5 +1,12 @@
 # Change Log
 
+== AM - 3.19.16 (2023-07-20)
+
+=== Gateway
+
+* Custom translation in mails does not works https://github.com/gravitee-io/issues/issues/9002[#9002]
+
+
 == AM - 3.18.22 (2023-07-07)
 
 === Other
