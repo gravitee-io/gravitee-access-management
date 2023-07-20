@@ -1,5 +1,28 @@
 # Change Log
 
+==  - 3.20.10 (2023-07-20)
+
+== What's new !
+
+
+
+=== Gateway
+
+* Custom translation in mails does not works https://github.com/gravitee-io/issues/issues/9002[#9002]
+
+=== Management API
+
+
+
+=== Console
+
+
+
+=== Other
+
+
+
+
 == AM - 3.19.16 (2023-07-20)
 
 === Gateway
