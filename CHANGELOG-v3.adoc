@@ -1,5 +1,29 @@
 # Change Log
 
+==  - 3.21.4 (2023-07-20)
+
+== What's new !
+
+=== Gateway
+
+* Custom translation in mails does not works https://github.com/gravitee-io/issues/issues/9002[#9002]
+* Improve Performance using JDBC implementation - Task 2 https://github.com/gravitee-io/issues/issues/9126[#9126]
+
+
+=== Other
+
+* Add debug log in HttpAuthenticationDeviceNotifierProvider class https://github.com/gravitee-io/issues/issues/9084[#9084]
+
+
+==  - 3.20.10 (2023-07-20)
+
+== What's new !
+
+=== Gateway
+
+* Custom translation in mails does not works https://github.com/gravitee-io/issues/issues/9002[#9002]
+
+
 == AM - 3.19.16 (2023-07-20)
 
 === Gateway
