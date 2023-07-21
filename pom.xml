@@ -436,11 +436,11 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-<<<<<<< HEAD
             <groupId>org.awaitility</groupId>
             <artifactId>awaitility</artifactId>
             <version>${awaitility.version}</version>
-=======
+        </dependency>
+        <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
             <scope>test</scope>
@@ -453,7 +453,6 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-params</artifactId>
->>>>>>> b272ff73f4 (fix: prevent null event or null evenType to be loaded)
             <scope>test</scope>
         </dependency>
     </dependencies>
