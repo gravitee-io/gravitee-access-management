@@ -53,6 +53,16 @@ public class EventManagerImpl implements EventManager {
 
     @Override
     public void publishEvent(Event event) {
+        if(event == null){
+            LOGGER.debug("Cannot publish event with event null");
+            return;
+        }
+
+        if(event.type() == null){
+            LOGGER.debug("Cannot publish event with event.type() null");
+            return;
+        }
+
         LOGGER.debug("Publish event {} - {}", event.type(), event.content());
 
         String domain = null;
