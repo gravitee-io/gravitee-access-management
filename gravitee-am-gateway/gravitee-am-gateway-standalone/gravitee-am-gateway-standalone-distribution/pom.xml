@@ -731,6 +731,80 @@
                                     <version>${gravitee-ae-connectors.version}</version>
                                     <type>zip</type>
                                 </artifactItem>
+
+                                <!-- AM EE plugins -->
+                                <artifactItem>
+                                    <groupId>com.graviteesource.am.identityprovider</groupId>
+                                    <artifactId>gravitee-am-identityprovider-saml2-generic</artifactId>
+                                    <version>${gravitee-am-idp-saml2.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>com.graviteesource.am.identityprovider</groupId>
+                                    <artifactId>gravitee-am-identityprovider-ldap</artifactId>
+                                    <version>${gravitee-am-idp-ldap.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>com.graviteesource.am.identityprovider</groupId>
+                                    <artifactId>gravitee-am-identityprovider-azure-ad</artifactId>
+                                    <version>${gravitee-am-idp-azure-ad.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>com.graviteesource.am.identityprovider</groupId>
+                                    <artifactId>gravitee-am-identityprovider-franceconnect</artifactId>
+                                    <version>${gravitee-am-idp-franceconnect.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>com.graviteesource.am.identityprovider</groupId>
+                                    <artifactId>gravitee-am-identityprovider-salesforce</artifactId>
+                                    <version>${gravitee-am-idp-salesforce.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>com.graviteesource.am.factor</groupId>
+                                    <artifactId>gravitee-am-factor-call</artifactId>
+                                    <version>${gravitee-am-factor-call.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>com.graviteesource.am.factor</groupId>
+                                    <artifactId>gravitee-am-factor-sms</artifactId>
+                                    <version>${gravitee-am-factor-sms.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>com.graviteesource.am.factor</groupId>
+                                    <artifactId>gravitee-am-factor-fido2</artifactId>
+                                    <version>${gravitee-am-factor-fido2.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>com.graviteesource.am.factor</groupId>
+                                    <artifactId>gravitee-am-factor-http</artifactId>
+                                    <version>${gravitee-am-factor-http.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>com.graviteesource.am.factor</groupId>
+                                    <artifactId>gravitee-am-factor-recovery-code</artifactId>
+                                    <version>${gravitee-am-factor-recovery-code.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>com.graviteesource.am.factor</groupId>
+                                    <artifactId>gravitee-am-factor-otp-sender</artifactId>
+                                    <version>${gravitee-am-factor-otp-sender.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>com.graviteesource.am.resource</groupId>
+                                    <artifactId>gravitee-am-resource-twilio</artifactId>
+                                    <version>${gravitee-am-resource-twilio.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
                             </artifactItems>
                         </configuration>
                     </execution>
