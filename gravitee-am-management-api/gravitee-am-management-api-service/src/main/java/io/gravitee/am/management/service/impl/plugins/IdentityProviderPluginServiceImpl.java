@@ -109,7 +109,7 @@ public class IdentityProviderPluginServiceImpl implements IdentityProviderPlugin
         LOGGER.debug("Find identity provider plugin schema by ID: {}", identityProviderId);
         return Maybe.create(emitter -> {
             try {
-                String icon = identityProviderPluginManager.getIcon(identityProviderId);
+                String icon = identityProviderPluginManager.getIcon(identityProviderId, true);
                 if (icon != null) {
                     emitter.onSuccess(icon);
                 } else {
