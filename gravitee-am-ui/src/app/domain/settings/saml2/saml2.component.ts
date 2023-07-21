@@ -55,8 +55,8 @@ export class Saml2Component implements OnInit {
       this.publicKeys(this.domainSamlSettings.certificate);
     }
 
-    this.pluginMetadata = {'deployed': false, 'feature': 'am-idp-saml2'};
-    const samlPlugin = this.route.snapshot.data['identities']['am-idp-saml'];
+    this.pluginMetadata = {'deployed': false, 'feature': 'am-idp-saml'};
+    const samlPlugin = this.route.snapshot.data['identities']['saml2-generic-am-idp'];
     if (samlPlugin != null) {
       this.pluginMetadata.deployed = samlPlugin.deployed;
     }
