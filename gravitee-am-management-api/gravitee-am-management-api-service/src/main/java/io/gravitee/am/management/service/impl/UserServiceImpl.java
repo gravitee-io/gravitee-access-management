@@ -520,9 +520,12 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
     }
 
     private static boolean isSendVerifyRegistrationEmailEnabled(Domain domain, Optional<Application> optClient) {
-        return optClient.map(application -> AccountSettings.getInstance(domain, application).isSendVerifyRegistrationAccountEmail())
-                .orElseGet(() -> domain.getAccountSettings() != null && domain.getAccountSettings().isSendVerifyRegistrationAccountEmail());
-
+        return optClient.map(application -> {
+                    var settings = AccountSettings.getInstance(domain, application);
+                    return settings != null && settings.isSendVerifyRegistrationAccountEmail();
+                })
+                .orElseGet(() -> domain
+                        .getAccountSettings() != null && domain.getAccountSettings().isSendVerifyRegistrationAccountEmail());
     }
 
     private String resoleEventType(Template template) {
