@@ -1086,6 +1086,7 @@ public class UserServiceTest {
         var applicationId = "application-id";
 
         return Stream.of(
+                Arguments.of(createDomain(domainId, null), createApplication(domainId, applicationId, null), Template.REGISTRATION_CONFIRMATION),
                 Arguments.of(createDomain(domainId, new AccountSettings()), createApplication(domainId, applicationId, null), Template.REGISTRATION_CONFIRMATION),
                 Arguments.of(createDomain(domainId, createAccountSetting(false, true)), createApplication(domainId, applicationId, null), Template.REGISTRATION_VERIFY),
                 Arguments.of(createDomain(domainId, createAccountSetting(false, true)), createApplication(domainId, applicationId, createAccountSetting(false, true)), Template.REGISTRATION_VERIFY),
