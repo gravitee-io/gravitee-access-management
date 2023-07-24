@@ -4,7 +4,7 @@ setup: true
 parameters:
   gio_action:
     type: enum
-    enum: [ release, publish_rpms, publish_docker_images, pull_requests, release_notes_am, publish_maven_central ]
+    enum: [ release, publish_rpms, publish_docker_images, pull_requests, release_notes_am, publish_maven_central, release_helm ]
     default: pull_requests
   gio_product:
     type: enum

@@ -1,0 +1,40 @@
+suite: test that UI configmap will contain the right baseURL
+templates:
+  - "ui/ui-configmap.yaml"
+tests:
+  - it: should have value.ui.baseURL if defined
+    set:
+      ui:
+        baseURL: "http://test/base/url"
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[constants.json]
+          pattern: "[ ]+\"baseURL\": \"http://test/base/url\""
+
+  - it: should have default value.api.ingress.path if baseURL not defined
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[constants.json]
+          pattern: "[ ]+\"baseURL\": \"https://am.example.com/management\""
+
+  - it: should have baseURL based on custom api.ingress data
+    set:
+      api.ingress.hosts[0]: "custom.hostname"
+      api.ingress.path: "/custom/path/management"
+
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[constants.json]
+          pattern: "[ ]+\"baseURL\": \"https://custom.hostname/custom/path/management\""

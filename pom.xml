@@ -480,6 +480,7 @@
                         <exclude>**/LICENSE_TEMPLATE.txt</exclude>
                         <exclude>sonar-project.properties</exclude>
                         <exclude>gravitee-am-test/api/management/**</exclude>
+                        <exclude>helm/**</exclude>
                     </excludes>
                     <mapping>
                         <ts>SLASHSTAR_STYLE</ts>
