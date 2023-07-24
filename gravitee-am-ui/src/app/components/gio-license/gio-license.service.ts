@@ -130,13 +130,6 @@ const featureMoreInformationData = {
     description:
       'The HTTP Flow identity provider is part of Gravitee Enterprise. Identity providers allow you to configure authentication methods familiar to your users and comply with your security requirement.',
   },
-  // Resources
-  'am-smtp': { // todo: This resource is missing
-    utm: '',
-    image: 'assets/gio-ee-unlock-dialog/am-smtp.svg',
-    description:
-      'The SMTP resource is part of Gravitee Enterprise. Resources allow you to easily reuse some settings.',
-  },
   // MFA
   'gravitee-risk-assessment': {
     utm: 'mfa_risk_base',
