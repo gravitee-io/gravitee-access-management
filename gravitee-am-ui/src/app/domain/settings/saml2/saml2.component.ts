@@ -20,6 +20,8 @@ import {DomainService} from '../../../services/domain.service';
 import {AuthService} from '../../../services/auth.service';
 import {MatDialog} from '@angular/material/dialog';
 import {CertificateService} from '../../../services/certificate.service';
+import {Observable} from 'rxjs';
+import {Feature, GioLicenseService} from '../../../components/gio-license/gio-license.service';
 
 @Component({
   selector: 'app-saml2',
@@ -35,13 +37,15 @@ export class Saml2Component implements OnInit {
   editMode: boolean;
   certificates: any[] = [];
   certificatePublicKeys: any[] = [];
-  pluginMetadata: any;
+  saml2Feature: Feature = { deployed: false, feature: 'am-idp-saml2'};
+  isMissingSaml2Feature$: Observable<boolean>;
 
   constructor(private domainService: DomainService,
               private snackbarService: SnackbarService,
               private authService: AuthService,
               private certificateService: CertificateService,
               private route: ActivatedRoute,
+              private licenseService: GioLicenseService,
               public dialog: MatDialog) {
   }
 
@@ -55,11 +59,11 @@ export class Saml2Component implements OnInit {
       this.publicKeys(this.domainSamlSettings.certificate);
     }
 
-    this.pluginMetadata = {'deployed': false, 'feature': 'am-idp-saml2'};
     const samlPlugin = this.route.snapshot.data['identities']['am-idp-saml'];
     if (samlPlugin != null) {
-      this.pluginMetadata.deployed = samlPlugin.deployed;
+      this.saml2Feature.deployed = samlPlugin.deployed;
     }
+    this.isMissingSaml2Feature$ = this.licenseService.isMissingFeature$(this.saml2Feature);
   }
 
   save() {

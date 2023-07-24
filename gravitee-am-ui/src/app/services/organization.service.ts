@@ -18,6 +18,7 @@ import {HttpClient, HttpHeaders} from '@angular/common/http';
 import {Observable} from 'rxjs';
 import {AppConfig} from '../../config/app.config';
 import {map} from 'rxjs/operators';
+import {Plugin} from '../entities/plugins/Plugin';
 
 @Injectable()
 export class OrganizationService {
@@ -370,8 +371,8 @@ export class OrganizationService {
     return this.http.get<any>(this.organizationURL + '/forms?template=' + template);
   }
 
-  factors(): Observable<any> {
-    return this.http.get<any>(this.platformURL + '/plugins/factors');
+  factors(): Observable<Plugin[]> {
+    return this.http.get<Plugin[]>(this.platformURL + '/plugins/factors');
   }
 
   factorSchema(id): Observable<any> {
@@ -394,7 +395,7 @@ export class OrganizationService {
     return this.http.get<any>(this.platformURL + '/plugins/auth-device-notifiers/' + id + '/schema');
   }
 
-  resources(expandIcon = false): Observable<any> {
+  resources(expandIcon = false): Observable<Plugin[]> {
     let url = `${this.platformURL}/plugins/resources`;
     const expand = [];
     if (expandIcon) {
@@ -403,7 +404,7 @@ export class OrganizationService {
     if (expand.length > 0) {
       url += `?${expand.join('&')}`;
     }
-    return this.http.get<any>(url);
+    return this.http.get<Plugin[]>(url);
   }
 
   resourceSchema(id): Observable<any> {

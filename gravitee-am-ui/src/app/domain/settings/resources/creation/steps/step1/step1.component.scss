@@ -33,3 +33,15 @@ mat-card-content {
 :host ::ng-deep mat-card-content img {
   height: 6rem;
 }
+
+.settings-resources-creation-steps {
+  &__card {
+    &__content {
+      &__featureIcon {
+        position: absolute;
+        right: 5px;
+        top: 5px;
+      }
+    }
+  }
+}

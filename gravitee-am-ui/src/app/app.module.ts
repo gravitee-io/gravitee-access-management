@@ -166,7 +166,6 @@ import {DashboardService} from './services/dashboard.service';
 import {SettingsComponent} from './settings/settings.component';
 import {HumanDatePipe} from './pipes/human-date.pipe';
 import {MapToIterablePipe} from './pipes/map-to-iterable.pipe';
-import {SafePipe} from './pipes/safe.pipe';
 import {DummyComponent} from './components/dummy/dummy.component';
 import {UsersComponent, UsersSearchInfoDialog} from './domain/settings/users/users.component';
 import {UserComponent} from './domain/settings/users/user/user.component';
@@ -439,10 +438,8 @@ import {
 } from "@gravitee/ui-particles-angular";
 import {EmailTemplateFactoryService} from "./services/email.template.factory.service";
 import {FormTemplateFactoryService} from "./services/form.template.factory.service";
-import {GioEeUnlockDialogComponent} from './components/gio-ee-unlock-dialog/gio-ee-unlock-dialog.component';
-import {GioLicenseService} from './services/gio-license.service';
-import {GioLicenseDirective} from './directives/gio-license.directive';
-import {GioEeUnlockDialogStoryComponent} from './components/gio-ee-unlock-dialog/gio-ee-unlock-dialog.stories';
+import {GioLicenseModule} from "./components/gio-license/gio-license.module";
+import {GioSafePipeModule} from "./pipes/gio.pipe.module";
 
 @NgModule({
   declarations: [
@@ -539,7 +536,6 @@ import {GioEeUnlockDialogStoryComponent} from './components/gio-ee-unlock-dialog
     SettingsComponent,
     HumanDatePipe,
     MapToIterablePipe,
-    SafePipe,
     DummyComponent,
     UsersComponent,
     UsersComponent,
@@ -691,9 +687,6 @@ import {GioEeUnlockDialogStoryComponent} from './components/gio-ee-unlock-dialog
     AssessmentComponent,
     HelpTipsThemeComponent,
     DisplayableItemPipe,
-    GioEeUnlockDialogComponent,
-    GioLicenseDirective,
-    GioEeUnlockDialogStoryComponent
   ],
   imports: [
     BrowserModule,
@@ -710,7 +703,7 @@ import {GioEeUnlockDialogStoryComponent} from './components/gio-ee-unlock-dialog
     CodemirrorModule,
     ClipboardModule,
     HighchartsChartModule,
-    GioMenuModule, GioTopBarModule, GioTopBarLinkModule, GioTopBarMenuModule, GioSubmenuModule
+    GioSafePipeModule, GioMenuModule, GioTopBarModule, GioTopBarLinkModule, GioTopBarMenuModule, GioSubmenuModule, GioLicenseModule,
   ],
   providers: [
     DomainService,
@@ -831,7 +824,6 @@ import {GioEeUnlockDialogStoryComponent} from './components/gio-ee-unlock-dialog
     I18nDictionaryService,
     ThemesResolver,
     ThemeService,
-    GioLicenseService,
     {
       provide: HTTP_INTERCEPTORS,
       useClass: HttpRequestInterceptor,

@@ -16,3 +16,20 @@ blockquote {
     border-left-color: #fdd835;
   }
 }
+
+.domain-settings-saml2 {
+
+  &__toggle {
+
+    &__label {
+      display: flex;
+
+      &__icon {
+        margin-right: 5px;
+      }
+
+    }
+
+  }
+
+}
