@@ -27,9 +27,16 @@ import java.nio.file.Path;
  */
 public class DummyPolicy implements PolicyPlugin {
 
+    private final boolean deployed;
+
     private final PluginManifest manifest;
 
     public DummyPolicy(PluginManifest manifest) {
+        this(manifest, true);
+    }
+
+    public DummyPolicy(PluginManifest manifest, boolean deployed) {
+        this.deployed = deployed;
         this.manifest = manifest;
     }
 
@@ -80,6 +87,6 @@ public class DummyPolicy implements PolicyPlugin {
 
     @Override
     public boolean deployed() {
-        return false;
+        return deployed;
     }
 }

@@ -21,9 +21,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.gravitee.am.management.service.PolicyPluginService;
 import io.gravitee.am.plugins.policy.core.PolicyPluginManager;
+import io.gravitee.am.service.exception.PluginNotDeployedException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.plugin.PolicyPlugin;
 import io.gravitee.plugin.core.api.Plugin;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
@@ -174,5 +176,13 @@ public class PolicyPluginServiceImpl implements PolicyPluginService {
         }
         policyPlugin.setFeature(plugin.manifest().feature());
         return policyPlugin;
+    }
+
+    public Completable checkPluginDeployment(String type) {
+        if (this.policyPluginManager.get(type) == null || !this.policyPluginManager.get(type).deployed()) {
+            LOGGER.debug("Plugin {} not deployed", type);
+            return Completable.error(PluginNotDeployedException.forType(type));
+        }
+        return Completable.complete();
     }
 }

@@ -17,9 +17,12 @@ package io.gravitee.am.management.service.impl.plugins;
 
 import io.gravitee.am.management.service.FactorPluginService;
 import io.gravitee.am.plugins.factor.core.FactorPluginManager;
+import io.gravitee.am.plugins.handlers.api.core.AmPluginManager;
+import io.gravitee.am.service.exception.PluginNotDeployedException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.plugin.FactorPlugin;
 import io.gravitee.plugin.core.api.Plugin;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
@@ -35,12 +38,16 @@ import java.util.List;
  * @author GraviteeSource Team
  */
 @Component
-public class FactorPluginServiceImpl implements FactorPluginService {
+public class FactorPluginServiceImpl extends AbstractPluginService implements FactorPluginService {
 
     private final Logger LOGGER = LoggerFactory.getLogger(FactorPluginServiceImpl.class);
 
-    @Autowired
     private FactorPluginManager factorPluginManager;
+
+    public FactorPluginServiceImpl(FactorPluginManager factorPluginManager) {
+        super(factorPluginManager);
+        this.factorPluginManager = factorPluginManager;
+    }
 
     @Override
     public Single<List<FactorPlugin>> findAll() {

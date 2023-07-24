@@ -17,6 +17,7 @@
 package io.gravitee.am.management.service.impl;
 
 import io.gravitee.am.management.service.DeviceIdentifierPluginService;
+import io.gravitee.am.management.service.impl.plugins.AbstractPluginService;
 import io.gravitee.am.plugins.deviceidentifier.core.DeviceIdentifierPluginManager;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.plugin.DeviceIdentifierPlugin;
@@ -37,12 +38,17 @@ import java.util.Optional;
  * @author GraviteeSource Team
  */
 @Component
-public class DeviceIdentifierPluginServiceImpl implements DeviceIdentifierPluginService {
+public class DeviceIdentifierPluginServiceImpl extends AbstractPluginService implements DeviceIdentifierPluginService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DeviceIdentifierPluginServiceImpl.class);
 
-    @Autowired
     private DeviceIdentifierPluginManager deviceIdentifierPluginManager;
+
+    @Autowired
+    public DeviceIdentifierPluginServiceImpl(DeviceIdentifierPluginManager deviceIdentifierPluginManager) {
+        super(deviceIdentifierPluginManager);
+        this.deviceIdentifierPluginManager = deviceIdentifierPluginManager;
+    }
 
     @Override
     public Single<List<DeviceIdentifierPlugin>> findAll() {
@@ -98,4 +104,5 @@ public class DeviceIdentifierPluginServiceImpl implements DeviceIdentifierPlugin
         deviceIdentifierPlugin.setFeature(plugin.manifest().feature());
         return deviceIdentifierPlugin;
     }
+
 }

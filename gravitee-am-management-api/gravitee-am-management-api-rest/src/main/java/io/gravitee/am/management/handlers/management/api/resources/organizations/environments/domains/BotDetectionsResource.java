@@ -17,6 +17,7 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.management.service.BotDetectionPluginService;
 import io.gravitee.am.management.service.BotDetectionServiceProxy;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.BotDetection;
@@ -51,6 +52,9 @@ public class BotDetectionsResource extends AbstractResource {
 
     @Autowired
     private BotDetectionServiceProxy botDetectionService;
+
+    @Autowired
+    private BotDetectionPluginService botDetectionPluginService;
 
     @Autowired
     private DomainService domainService;
@@ -98,6 +102,7 @@ public class BotDetectionsResource extends AbstractResource {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_BOT_DETECTION, Acl.CREATE)
+                .andThen(botDetectionPluginService.checkPluginDeployment(newBotDetection.getType()))
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(__ -> botDetectionService.create(domain, newBotDetection, authenticatedUser))

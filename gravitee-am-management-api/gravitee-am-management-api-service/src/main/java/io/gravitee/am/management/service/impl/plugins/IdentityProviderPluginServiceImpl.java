@@ -35,15 +35,20 @@ import org.springframework.stereotype.Component;
  * @author GraviteeSource Team
  */
 @Component
-public class IdentityProviderPluginServiceImpl implements IdentityProviderPluginService {
+public class IdentityProviderPluginServiceImpl extends AbstractPluginService implements IdentityProviderPluginService {
 
     /**
      * Logger.
      */
     private final Logger LOGGER = LoggerFactory.getLogger(IdentityProviderPluginServiceImpl.class);
 
-    @Autowired
     private IdentityProviderPluginManager identityProviderPluginManager;
+
+    @Autowired
+    public IdentityProviderPluginServiceImpl(IdentityProviderPluginManager identityProviderPluginManager) {
+        super(identityProviderPluginManager);
+        this.identityProviderPluginManager = identityProviderPluginManager;
+    }
 
     @Override
     public Single<List<IdentityProviderPlugin>> findAll(List<String> expand) {

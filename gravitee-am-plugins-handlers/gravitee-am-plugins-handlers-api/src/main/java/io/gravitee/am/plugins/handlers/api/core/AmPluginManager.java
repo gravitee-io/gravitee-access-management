@@ -32,4 +32,6 @@ public interface AmPluginManager<TYPE> {
     Plugin findById(String pluginId);
 
     String getSchema(String pluginId) throws IOException;
+
+    boolean isPluginDeployed(String pluginTypeId);
 }

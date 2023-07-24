@@ -19,9 +19,11 @@ import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.service.exception.PluginNotDeployedException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.common.http.HttpStatusCode;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -29,14 +31,11 @@ import org.junit.Test;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
-import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -100,11 +99,39 @@ public class IdentityProvidersResourceTest extends JerseySpringTest {
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Single.just(identityProvider)).when(identityProviderService).create(eq(domainId), any(), any());
+        doReturn(Completable.complete()).when(identityProviderManager).checkPluginDeployment(any());
 
         final Response response = target("domains")
                 .path(domainId)
                 .path("identities")
                 .request().post(Entity.json(newIdentityProvider));
         assertEquals(HttpStatusCode.CREATED_201, response.getStatus());
+    }
+
+    @Test
+    public void shouldNotCreate_PluginNotDeployed() {
+        final String domainId = "domain-1";
+        final Domain mockDomain = new Domain();
+        mockDomain.setId(domainId);
+
+        NewIdentityProvider newIdentityProvider = new NewIdentityProvider();
+        newIdentityProvider.setName("extensionGrant-name");
+        newIdentityProvider.setType("extensionGrant-type");
+        newIdentityProvider.setConfiguration("extensionGrant-configuration");
+        newIdentityProvider.setDomainWhitelist(List.of());
+
+        IdentityProvider identityProvider = new IdentityProvider();
+        identityProvider.setId("identityProvider-id");
+        identityProvider.setName("identityProvider-name");
+        identityProvider.setDomainWhitelist(List.of());
+
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+        doReturn(Completable.error(PluginNotDeployedException.forType(newIdentityProvider.getType()))).when(identityProviderManager).checkPluginDeployment(any());
+
+        final Response response = target("domains")
+                .path(domainId)
+                .path("identities")
+                .request().post(Entity.json(newIdentityProvider));
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
     }
 }

@@ -18,6 +18,8 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.model.FlowEntity;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.management.handlers.management.api.resources.utils.FlowUtils;
+import io.gravitee.am.management.service.PolicyPluginService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.flow.Flow;
@@ -55,6 +57,9 @@ public class FlowsResource extends AbstractResource {
 
     @Autowired
     private FlowService flowService;
+
+    @Autowired
+    private PolicyPluginService policyPluginService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -104,6 +109,7 @@ public class FlowsResource extends AbstractResource {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_FLOW, Acl.UPDATE)
+                .andThen(FlowUtils.checkPoliciesDeployed(policyPluginService, flows))
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(__ -> flowService.createOrUpdate(ReferenceType.DOMAIN, domain, convert(flows), authenticatedUser))
