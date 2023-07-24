@@ -1,0 +1,20 @@
+{{- if .Values.am.managedServiceAccount }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ template "am.serviceAccount" . }}-role-binding
+  labels:
+    app.kubernetes.io/name: {{ template "gravitee.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/version: {{ .Values.api.image.tag | default .Chart.AppVersion | quote }}
+    app.kubernetes.io/component: "{{ .Values.am.name }}"
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+roleRef:
+  kind: Role
+  name: {{ template "am.serviceAccount" . }}-role
+  apiGroup: rbac.authorization.k8s.io
+subjects:
+- kind: ServiceAccount
+  name: {{ template "am.serviceAccount" . }}
+  namespace: {{ .Release.Namespace }}
+{{- end -}}

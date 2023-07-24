@@ -1,0 +1,581 @@
+suite: test that API configmap will contain the right entrypoints
+templates:
+  - "api/api-configmap.yaml"
+tests:
+  - it: shouldn't have API entrypoint (missing values imply default values into java code)
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - notMatchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}entrypoint:.*"
+
+  - it: should have custom API entrypoint
+    set:
+      api:
+        http:
+          api:
+            entrypoint: /custom/path/mng
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}entrypoint: /custom/path/mng"
+
+  - it: should have notifier with default settings
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}tryAvoidDuplicateNotification: true"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{2}certificates:[ ]*"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}expiryThresholds: 20,15,10,5,1"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}expiryEmailSubject: \"Certificate will expire soon\""
+
+  - it: should have notifier with custom settings
+    set:
+      api.services.certificate.expiryThresholds: 30,20,10,5,1
+      api.services.certificate.expiryEmailSubject: "TEST CUSTOM SUBJECT"
+
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}tryAvoidDuplicateNotification: true"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{2}certificates:[ ]*"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}expiryThresholds: 30,20,10,5,1"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}expiryEmailSubject: \"TEST CUSTOM SUBJECT\""
+
+  - it: should have custom settings for email notifier
+    set:
+      api.notifiers.email.enabled: true
+      api.notifiers.email.host: custom.smtp.example.com
+      api.notifiers.email.port: 256
+      api.notifiers.email.from: custom-info@example.com
+      api.notifiers.email.username: custom-info@example.com
+      api.notifiers.email.password: custom-example.com
+      api.notifiers.email.startTLSEnabled: true
+      api.notifiers.email.sslTrustAll: false
+      api.notifiers.email.sslKeyStore: /path/to/custom-keystore
+      api.notifiers.email.sslKeyStorePassword: mypassword
+
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}host: custom.smtp.example.com"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}port: 256"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}from: custom-info@example.com"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}username: custom-info@example.com"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}password: custom-example.com"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}startTLSEnabled: true"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}sslKeyStore: /path/to/custom-keystore"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}sslKeyStorePassword: mypassword"
+
+
+  - it: should have custom settings for user management
+    set:
+      userManagement.resetPassword.token: 300
+      userManagement.mfaChallenge.token: 360
+      userManagement.password.policy.pattern: testpattern
+      userManagement.email.policy.pattern: testemailpattern
+      userManagement.name.policy.pattern: testnamepattern
+      userManagement.username.policy.pattern: testusernamepattern
+
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}token: 300"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}token: 360"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{6}pattern: testpattern"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{6}pattern: testemailpattern"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{6}pattern: testnamepattern"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{6}pattern: testusernamepattern"
+
+
+  - it: should have default settings for jetty
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{2}host: 0\\.0\\.0\\.0"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{2}port: 8093"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{2}acceptors: -1"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{2}selectors: -1"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{2}statistics: false"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{2}secured: false"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{2}outputBufferSize: 32768"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{2}requestHeaderSize: 8192"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{2}responseHeaderSize: 8192"
+
+  - it: should have custom settings for jetty
+    set:
+      api.http.host: https://gravitee.io
+      api.http.secured: true
+      api.http.port: 12345
+      api.http.idleTimeout: 256
+      api.http.acceptors: 24
+      api.http.selectors: 42
+      api.http.statistics: true
+      api.http.outputBufferSize: 65535
+      api.http.requestHeaderSize: 32768
+      api.http.responseHeaderSize: 33768
+      api.http.pool.minThreads: 25
+      api.http.pool.maxThreads: 253
+      api.http.pool.idleTimeout: 65535
+      api.http.pool.queueSize: 12300
+      api.ssl.enabled: true
+      api.ssl.keystore.type: jks
+      api.ssl.keystore.path: /keystore/path
+      api.ssl.keystore.password: keystorePassword
+      api.ssl.clientAuth: true
+      api.ssl.truststore.type: pem
+      api.ssl.truststore.path: /truststore/path
+      api.ssl.truststore.password: truststorePassword
+
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{2}host: https://gravitee.io"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{2}port: 12345"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{2}acceptors: 24"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{2}selectors: 42"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{2}statistics: true"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{2}secured: true"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{2}outputBufferSize: 65535"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{2}requestHeaderSize: 32768"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{2}responseHeaderSize: 33768"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{3}minThreads: 25"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{3}maxThreads: 253"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{3}idleTimeout: 65535"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{3}queueSize: 12300"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{2}clientAuth: true"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{3}type: jks"      
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{3}path: /keystore/path"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{3}password: \\\"keystorePassword\\\""
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{3}type: pem"      
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{3}path: /truststore/path"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{3}password: \\\"truststorePassword\\\""
+
+  - it: should have SSL settings for JDBC Backends
+    set:
+      management.type: jdbc
+      oauth2.type: jdbc
+      jdbc.sslEnabled: true
+      jdbc.sslMode: verify-ca
+      jdbc.sslServerCert: jdbc-ssl-cert
+      jdbc.trustServerCertificate: true
+      jdbc.disableSslHostnameVerification:  true
+      jdbc.trustStore.path: jdbc-ssl-truststore
+      jdbc.trustStore.password: jdbc-ssl-truststore-pass
+
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}sslEnabled: true"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}sslMode: verify-ca"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}sslServerCert: jdbc-ssl-cert"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}trustServerCertificate: true"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{6}path: jdbc-ssl-truststore"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{6}password: jdbc-ssl-truststore-pass"
+
+  - it: should set userManagement activity
+    set:
+      userManagement.activity.enabled: true  
+      userManagement.activity.anon.algorithm: SHA512
+      userManagement.activity.anon.salt: someSalt
+      userManagement.activity.retention.time: 12
+      userManagement.activity.retention.unit: WEEKS
+      userManagement.activity.geolocation.variation.latitude: 0.09
+      userManagement.activity.geolocation.variation.longitude: 0.07
+    
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{2}enabled: true"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{3}algorithm: SHA512"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{3}salt: someSalt"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}time: 12"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}unit: WEEKS"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{5}latitude: 0.09"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{5}longitude: 0.07"
+  
+
+  - it: should set default alert engine values disabled
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{3}enabled: false"
+
+  - it: should set default alert engine values enabled
+    set:
+      alerts.enabled: true
+      alerts.security.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{3}enabled: true"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}discovery: true"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{5}username: admin"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{5}password: adminadmin"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{6}- http://localhost:8072/"
+
+  - it: should set alert engine values enabled
+    set:
+      alerts.enabled: true
+      alerts.options.sendEventsOnHttp: false
+      alerts.options.useSystemProxy: true
+      alerts.options.connectTimeout: 25
+      alerts.options.idleTimeout: 220000
+      alerts.options.keepAlive: false
+      alerts.options.pipelining: false
+      alerts.options.tryCompression: false
+      alerts.options.maxPoolSize: 500
+      alerts.options.bulkEventsSize: 1000
+      alerts.options.bulkEventsWait: 1000
+      alerts.options.ssl.trustall: true
+      alerts.options.ssl.keystore.type: jks
+      alerts.options.ssl.keystore.path: /path/to/keystore.jks
+      alerts.options.ssl.keystore.password: changeme_jks
+      alerts.options.ssl.keystore.certs:
+        - /path/to/keystore1.cert
+        - /path/to/keystore2.cert
+        - /path/to/keystore3.cert
+      alerts.options.ssl.keystore.keys: 
+        - /path/to/keystore1.pem
+        - /path/to/keystore2.pem
+        - /path/to/keystore3.pem
+      alerts.options.ssl.truststore.type: pkc12
+      alerts.options.ssl.truststore.path: /path/to/keystore.p12
+      alerts.options.ssl.truststore.password: changeme_p12
+      alerts.security.enabled: true
+      alerts.security.username: a_username
+      alerts.security.password: a_password
+      alerts.endpoints: 
+        - https://www.host1.com
+        - https://www.host2.com
+      alerts.engines.default.security.username: a_default_username
+      alerts.engines.default.security.password: a_default_password
+      alerts.engines.default.endpoints: 
+        - https://www.default.host1.com
+        - https://www.default.host2.com
+      alerts.engines.default.ssl.keystore.certs:
+        - /path/to/default/keystore1.cert
+        - /path/to/default/keystore2.cert
+        - /path/to/default/keystore3.cert
+      alerts.engines.default.ssl.keystore.keys: 
+        - /path/to/default/keystore1.pem
+        - /path/to/default/keystore2.pem
+        - /path/to/default/keystore3.pem
+      alerts.engines.default.ssl.keystore.type: jks
+      alerts.engines.default.ssl.keystore.path: /path/to/default/keystore.jks
+      alerts.engines.default.ssl.keystore.password: default_changeme_jks
+      alerts.engines.default.ssl.truststore.type: pkc12
+      alerts.engines.default.ssl.truststore.path: /path/to/default/keystore.p12
+      alerts.engines.default.ssl.truststore.password: default_changeme_p12
+
+    
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{3}enabled: true"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}discovery: true"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}sendEventsOnHttp: false"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}useSystemProxy: true"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}connectTimeout: 25"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}idleTimeout: 220000"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}keepAlive: false"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}pipelining: false"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}tryCompression: false"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}maxPoolSize: 500"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}bulkEventsSize: 1000"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}bulkEventsWait: 1000"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{5}username: a_username"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{5}password: a_password"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{6}- https://www.host1.com"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{6}- https://www.host2.com"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{6}trustall: true"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{10}type: jks"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{10}path: /path/to/keystore.jks"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{10}password: changeme_jks"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{10}type: pkc12"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{10}path: /path/to/keystore.p12"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{10}password: changeme_p12"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{10}- /path/to/keystore1.cert"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{10}- /path/to/keystore2.cert"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{10}- /path/to/keystore3.cert"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{10}- /path/to/keystore1.pem"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{10}- /path/to/keystore2.pem"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{10}- /path/to/keystore3.pem"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{7}username: a_default_username"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{7}password: a_default_password"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{8}- https://www.default.host1.com"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{8}- https://www.default.host2.com"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{8}trustall: true"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{12}type: jks"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{12}path: /path/to/default/keystore.jks"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{12}password: default_changeme_jks"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{12}type: pkc12"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{12}path: /path/to/default/keystore.p12"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{12}password: default_changeme_p12"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{12}- /path/to/default/keystore1.cert"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{12}- /path/to/default/keystore2.cert"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{12}- /path/to/default/keystore3.cert"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{12}- /path/to/default/keystore1.pem"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{12}- /path/to/default/keystore2.pem"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{12}- /path/to/default/keystore3.pem"

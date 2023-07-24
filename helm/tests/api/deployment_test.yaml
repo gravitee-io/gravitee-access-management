@@ -1,0 +1,114 @@
+suite: Test Management API default deployment
+templates:
+  - "api/api-deployment.yaml"
+  - "api/api-configmap.yaml"
+tests:
+  - it: Deploy with managed ServiceAccount
+    template: api/api-deployment.yaml
+    set:
+      am:
+        managedServiceAccount: true
+        serviceAccount: ""
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Deployment
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: "RELEASE-NAME-am"
+
+  - it: Deploy with custom ServiceAccount
+    template: api/api-deployment.yaml
+    set:
+      am:
+        managedServiceAccount: false
+        serviceAccount: "test-sa"
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Deployment
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: "test-sa"
+
+  - it: Deploy without ServiceAccount
+    template: api/api-deployment.yaml
+    set:
+      am:
+        managedServiceAccount: false
+        serviceAccount: ""
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Deployment
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: null
+
+  - it: Deploy with custom managed ServiceAccount
+    template: api/api-deployment.yaml
+    set:
+      am:
+        managedServiceAccount: true
+        serviceAccount: "test-sa"
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Deployment
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: "test-sa"
+
+  - it: Deploy use licensekey secret if given
+    template: api/api-deployment.yaml
+    set:
+      license:
+        name: licensekey_am
+        key: unleashThePowerOfYourAPIs
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Deployment
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: licensekey
+            mountPath: /opt/graviteeio-am-management-api/license
+            readOnly: true
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: licensekey
+            secret:
+              secretName: licensekey_am
+              items:
+                - key: licensekey
+                  path: license.key
+
+  - it: Deploy not use licensekey secret by default
+    template: api/api-deployment.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Deployment
+      - notContains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: licensekey
+            mountPath: /opt/graviteeio-am-management-api/license
+            readOnly: true
+      - notContains:
+          path: spec.template.spec.volumes
+          content:
+            name: licensekey
+            secret:
+              secretName: licensekey
+              items:
+                - key: licensekey
+                  path: license.key

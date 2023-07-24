@@ -1,0 +1,60 @@
+suite: test that Gateway configmap can define HTTP Settings
+templates:
+  - "gateway/gateway-configmap.yaml"
+tests:
+  
+  - it: should have custom settings for cors
+    set:
+      gateway.http.cors.allow-origin: https://myorigin
+      gateway.http.cors.allow-credentials: true
+
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}allow-origin: https://myorigin"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}allow-credentials: true"
+  
+  - it: should have custom settings for Xframe
+    set:
+      gateway.http.xframe.action: DENY
+
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}action: DENY"
+
+  - it: should have custom settings for csp
+    set:
+      gateway.http.csp.reportOnly: true
+
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}reportOnly: true"
+
+  - it: should have custom settings for csrf
+    set:
+      gateway.http.csrf.secret: mysupersecret
+
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}secret: mysupersecret"
