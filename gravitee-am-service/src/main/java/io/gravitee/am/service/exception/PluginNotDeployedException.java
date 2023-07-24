@@ -13,24 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.service;
+package io.gravitee.am.service.exception;
 
-import io.gravitee.am.service.model.plugin.BotDetectionPlugin;
-import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.core.Single;
+import io.gravitee.am.model.PasswordSettings;
+import io.gravitee.common.http.HttpStatusCode;
 
-import java.util.List;
+public class PluginNotDeployedException extends AbstractManagementException {
 
-/**
- * @author Eric LELEU (eric.leleu at graviteesource.com)
- * @author GraviteeSource Team
- */
-public interface BotDetectionPluginService extends PluginService {
+    protected PluginNotDeployedException(String message) {
+        super(message);
+    }
 
-    Single<List<BotDetectionPlugin>> findAll();
+    @Override
+    public int getHttpStatusCode() {
+        return HttpStatusCode.BAD_REQUEST_400;
+    }
 
-    Maybe<BotDetectionPlugin> findById(String id);
-
-    Maybe<String> getSchema(String id);
-
+    public static PluginNotDeployedException forType(String type) {
+        return new PluginNotDeployedException(String.format("Plugin type %s not deployed", type));
+    }
 }

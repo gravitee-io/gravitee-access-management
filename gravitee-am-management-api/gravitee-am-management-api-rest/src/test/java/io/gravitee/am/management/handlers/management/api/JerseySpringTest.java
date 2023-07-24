@@ -23,23 +23,7 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.authentication.view.TemplateResolver;
 import io.gravitee.am.management.handlers.management.api.mapper.ObjectMapperResolver;
 import io.gravitee.am.management.handlers.management.api.preview.PreviewService;
-import io.gravitee.am.management.service.AuditReporterManager;
-import io.gravitee.am.management.service.AuthenticationDeviceNotifierPluginService;
-import io.gravitee.am.management.service.BotDetectionPluginService;
-import io.gravitee.am.management.service.BotDetectionServiceProxy;
-import io.gravitee.am.management.service.CertificateManager;
-import io.gravitee.am.management.service.CertificateServiceProxy;
-import io.gravitee.am.management.service.DeviceIdentifierPluginService;
-import io.gravitee.am.management.service.EmailManager;
-import io.gravitee.am.management.service.ExtensionGrantPluginService;
-import io.gravitee.am.management.service.FactorPluginService;
-import io.gravitee.am.management.service.IdentityProviderManager;
-import io.gravitee.am.management.service.IdentityProviderPluginService;
-import io.gravitee.am.management.service.IdentityProviderServiceProxy;
-import io.gravitee.am.management.service.OrganizationUserService;
-import io.gravitee.am.management.service.PermissionService;
-import io.gravitee.am.management.service.ReporterServiceProxy;
-import io.gravitee.am.management.service.ResourcePluginService;
+import io.gravitee.am.management.service.*;
 import io.gravitee.am.management.service.permissions.PermissionAcls;
 import io.gravitee.am.plugins.handlers.api.core.AmPluginManager;
 import io.gravitee.am.service.ApplicationService;
@@ -251,6 +235,9 @@ public abstract class JerseySpringTest {
     protected PreviewService previewService;
     @Autowired
     protected I18nDictionaryService i18nDictionaryService;
+
+    @Autowired
+    protected PolicyPluginService policyPluginService;
 
     @Before
     public void init() {
@@ -509,6 +496,11 @@ public abstract class JerseySpringTest {
         @Bean
         public PreviewService previewService() {
             return mock(PreviewService.class);
+        }
+
+        @Bean
+        public PolicyPluginService policyPluginService() {
+            return mock(PolicyPluginService.class);
         }
 
         @Bean

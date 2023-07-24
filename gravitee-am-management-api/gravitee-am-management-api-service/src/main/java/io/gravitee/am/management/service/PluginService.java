@@ -15,25 +15,12 @@
  */
 package io.gravitee.am.management.service;
 
-import io.gravitee.am.service.model.plugin.ResourcePlugin;
-import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.core.Single;
-
-import java.util.List;
+import io.reactivex.rxjava3.core.Completable;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface ResourcePluginService extends PluginService {
-    String MANIFEST_KEY_CATEGORIES = "categories";
-    String EXPAND_ICON = "icon";
-
-    Single<List<ResourcePlugin>> findAll(List<String> expand);
-
-    Maybe<ResourcePlugin> findById(String id);
-
-    Maybe<String> getSchema(String id);
-
-    Maybe<String> getIcon(String resourceId);
+public interface PluginService {
+    Completable checkPluginDeployment(String type);
 }

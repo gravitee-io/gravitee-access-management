@@ -17,6 +17,7 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.management.service.ExtensionGrantPluginService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.model.permissions.Permission;
@@ -51,6 +52,9 @@ public class ExtensionGrantsResource extends AbstractResource {
 
     @Autowired
     private ExtensionGrantService extensionGrantService;
+
+    @Autowired
+    private ExtensionGrantPluginService extensionGrantPluginService;
 
     @Autowired
     private DomainService domainService;
@@ -101,6 +105,7 @@ public class ExtensionGrantsResource extends AbstractResource {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_EXTENSION_GRANT, Acl.CREATE)
+                .andThen(extensionGrantPluginService.checkPluginDeployment(newExtensionGrant.getType()))
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(irrelevant -> extensionGrantService.create(domain, newExtensionGrant, authenticatedUser)

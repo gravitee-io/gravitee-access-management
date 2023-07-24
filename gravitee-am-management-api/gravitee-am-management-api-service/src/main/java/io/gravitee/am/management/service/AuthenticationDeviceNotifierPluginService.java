@@ -25,7 +25,7 @@ import java.util.List;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface AuthenticationDeviceNotifierPluginService {
+public interface AuthenticationDeviceNotifierPluginService extends PluginService {
     String EXPAND_ICON = "icon";
 
     Single<List<AuthenticationDeviceNotifierPlugin>> findAll(List<String> expand);
