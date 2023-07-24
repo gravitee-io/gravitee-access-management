@@ -22,7 +22,6 @@ import {Feature, GioLicenseService} from '../../../../../../components/gio-licen
 interface ModeOption {
   label: string;
   message: string;
-  factorId?: string;
   feature?: Feature
   isMissingFeature$?: Observable<boolean>;
   warning?: string;
@@ -66,10 +65,8 @@ export class MfaActivateComponent implements OnInit, OnDestroy {
       label: 'Risk-based',
       message: 'Configure the thresholds that will display MFA based on risks.',
       warning: 'You need to install the <b> GeoIP service </b> and <b> Risk Assessment </b> plugins to use Risk-based MFA',
-      factorId: 'risk-assessment',
       feature: {
         feature: 'gravitee-risk-assessment',
-        deployed: false,
       }
     },
   };
@@ -78,10 +75,11 @@ export class MfaActivateComponent implements OnInit, OnDestroy {
     this.organizationService.factors().pipe(
         tap((factors) => {
           this.factors = factors;
-          this.initModes(factors);
         }),
         takeUntil(this.unsubscribe$)
     ).subscribe();
+
+    this.initModes();
 
     if (this.riskAssessment && this.riskAssessment.enabled) {
       this.currentMode = MfaActivateComponent.modeOptions.INTELLIGENT;
@@ -191,16 +189,10 @@ export class MfaActivateComponent implements OnInit, OnDestroy {
       {'enabled': false, thresholds: {}};
   }
 
-  private initModes(factors: any) {
+  private initModes() {
     this.modes = Object.keys(MfaActivateComponent.modeOptions)
         .map(key => {
           const option = MfaActivateComponent.modeOptions[key];
-          if (option.factorId) {
-            const factor = factors.find(({id}) => id == option.factorId);
-            if (factor != null) {
-              option.feature.deployed = factor.deployed;
-            }
-          }
           option.isMissingFeature$ = this.licenseService.isMissingFeature$(option.feature);
           return option;
         });

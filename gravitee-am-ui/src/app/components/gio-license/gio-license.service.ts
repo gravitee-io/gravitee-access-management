@@ -177,7 +177,7 @@ export class GioLicenseService {
     if (feature.deployed === false) {
       return of(true);
     }
-    return this.getLicense$().pipe(map((license) => license == null || license.features.find((feat) => feat === feature) == null));
+    return this.getLicense$().pipe(map((license) => license == null || !license.features.includes(feature.feature)));
   }
 
   getFeatureMoreInformation(feature: string): any {

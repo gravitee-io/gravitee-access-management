@@ -37,7 +37,7 @@ export class Saml2Component implements OnInit {
   editMode: boolean;
   certificates: any[] = [];
   certificatePublicKeys: any[] = [];
-  saml2Feature: Feature = { deployed: false, feature: 'am-idp-saml2'};
+  saml2Feature: Feature = { feature: 'am-idp-gateway-handler-saml' };
   isMissingSaml2Feature$: Observable<boolean>;
 
   constructor(private domainService: DomainService,
@@ -59,10 +59,6 @@ export class Saml2Component implements OnInit {
       this.publicKeys(this.domainSamlSettings.certificate);
     }
 
-    const samlPlugin = this.route.snapshot.data['identities']['am-idp-saml'];
-    if (samlPlugin != null) {
-      this.saml2Feature.deployed = samlPlugin.deployed;
-    }
     this.isMissingSaml2Feature$ = this.licenseService.isMissingFeature$(this.saml2Feature);
   }
 
