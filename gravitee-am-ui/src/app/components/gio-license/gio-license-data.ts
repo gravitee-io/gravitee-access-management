@@ -32,7 +32,6 @@ export enum AmFeature {
   AM_IDP_CAS = 'am-idp-cas',
   AM_IDP_GATEWAY_HANDLER_SAML = 'am-idp-gateway-handler-saml',
   AM_IDP_HTTP_FLOW = 'am-idp-http-flow',
-  AM_SMTP = 'am-smtp',
   AM_GRAVITEE_RISK_ASSESSMENT = 'gravitee-risk-assessment',
   AM_IDP_SAML2 = 'am-idp-saml2',
 }
@@ -128,11 +127,6 @@ export const FeatureInfoData: Record<AmFeature, FeatureInfo> = {
     image: 'assets/gio-license/gravitee-ee-upgrade.svg',
     description:
       'The HTTP Flow identity provider is part of Gravitee Enterprise. Identity providers allow you to configure authentication methods familiar to your users and comply with your security requirement.',
-  },
-  // Resources
-  [AmFeature.AM_SMTP]: {
-    image: 'assets/gio-license/am-smtp.svg',
-    description: 'The SMTP resource is part of Gravitee Enterprise. Resources allow you to easily reuse some settings.',
   },
   // MFA
   [AmFeature.AM_GRAVITEE_RISK_ASSESSMENT]: {
