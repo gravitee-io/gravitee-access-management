@@ -14,22 +14,22 @@
  * limitations under the License.
  */
 import {Directive, ElementRef, Input, OnDestroy, OnInit} from '@angular/core';
-import {tap} from 'rxjs/operators';
+import {filter, map, takeUntil, tap} from 'rxjs/operators';
 import {action} from '@storybook/addon-actions';
 import {MatDialog} from '@angular/material/dialog';
 import {Subject} from 'rxjs';
 
 
-import {GioEeUnlockDialogComponent, GioEeUnlockDialogData} from '../components/gio-ee-unlock-dialog/gio-ee-unlock-dialog.component';
-import {GioLicenseService} from '../services/gio-license.service';
-import {UTM} from "../utils/license/gio-license-utm";
+import {GioEeUnlockDialogComponent, GioEeUnlockDialogData} from './gio-ee-unlock-dialog/gio-ee-unlock-dialog.component';
+import {UTM} from "../../utils/license/gio-license-utm";
+import {Feature, GioLicenseService} from "./gio-license.service";
 
 @Directive({
   selector: '[gioLicense]',
 })
 export class GioLicenseDirective implements OnInit, OnDestroy {
   @Input()
-  public gioLicense: any = {};
+  public gioLicense: Feature = {};
 
   private featureMoreInformation: any;
   private trialURL: string;
@@ -39,12 +39,22 @@ export class GioLicenseDirective implements OnInit, OnDestroy {
   constructor(private readonly licenseService: GioLicenseService, private readonly matDialog: MatDialog, private elRef: ElementRef) {}
 
   ngOnInit(): void {
-    if (!this.gioLicense.deployed) {
-      this.elRef.nativeElement.removeEventListener('click', this.onClick, true);
-      this.featureMoreInformation = this.licenseService.getFeatureMoreInformation(this.gioLicense.feature);
-      this.trialURL = UTM.ossEnterpriseV4(this.featureMoreInformation.utm).buildURL();
-      this.elRef.nativeElement.addEventListener('click', this.onClick, true);
-    }
+    this.licenseService
+        .isMissingFeature$(this.gioLicense)
+        .pipe(
+            tap(() => {
+              this.elRef.nativeElement.removeEventListener('click', this.onClick, true);
+            }),
+            filter((notAllowed) => this.gioLicense != null && notAllowed),
+            map(() => this.licenseService.getFeatureMoreInformation(this.gioLicense.feature)),
+            tap((featureMoreInformation) => {
+              this.featureMoreInformation = featureMoreInformation;
+              this.elRef.nativeElement.addEventListener('click', this.onClick, true);
+              this.trialURL = UTM.ossEnterpriseV4(this.featureMoreInformation.utm).buildURL();
+            }),
+            takeUntil(this.unsubscribe$),
+        )
+        .subscribe();
   }
 
   ngOnDestroy(): void {
