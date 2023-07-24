@@ -18,7 +18,7 @@ import { AmFeature, stringFeature } from './gio-license-data';
 
 describe('GIO license features', () => {
   it('should convert string to Feature', () => {
-    expect(stringFeature('am-smtp')).toEqual(AmFeature.AM_SMTP);
+    expect(stringFeature('am-idp-saml2')).toEqual(AmFeature.AM_IDP_SAML2);
   });
 
   it('should throw error with unknown Feature string', () => {
