@@ -36,3 +36,10 @@ gravitee-am-test/cypress/screenshots/
 .dccache
 cypress.env.json
 gravitee-am-test/api/config/development.json
+
+# Env files
+.env
+
+# ignore charts downloaded for helm build
+helm/charts/
+
