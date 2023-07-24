@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 import {Injectable} from '@angular/core';
+import {HttpClient} from "@angular/common/http";
+import {map, shareReplay} from "rxjs/operators";
+import {Observable, of} from "rxjs";
+import {AppConfig} from "../../../config/app.config";
 
 const featureMoreInformationData = {
   'am-mfa-sms': {
@@ -149,10 +153,39 @@ const featureMoreInformationData = {
   },
 };
 
+export type License = {
+  tier: string;
+  packs: Array<string>;
+  features: Array<string>;
+};
+
+export type Feature = {
+  feature?: string;
+  deployed?: boolean;
+}
+
 @Injectable({
   providedIn: 'root',
 })
 export class GioLicenseService {
+
+  constructor(private readonly http: HttpClient) {}
+
+  private loadLicense$: Observable<License> = this.http.get<License>(`${AppConfig.settings.baseURL}/platform/license`).pipe(shareReplay(1));
+
+  getLicense$(): Observable<License> {
+    return this.loadLicense$;
+  }
+
+  isMissingFeature$(feature: Feature): Observable<boolean> {
+    if (feature == null || feature.deployed === true) {
+      return of(false);
+    }
+    if (feature.deployed === false) {
+      return of(true);
+    }
+    return this.getLicense$().pipe(map((license) => license == null || license.features.find((feat) => feat === feature) == null));
+  }
 
   getFeatureMoreInformation(feature: string): any {
     const featureMoreInformation = featureMoreInformationData[feature];

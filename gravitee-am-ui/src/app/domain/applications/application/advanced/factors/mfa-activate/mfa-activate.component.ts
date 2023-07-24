@@ -13,17 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
+import {Component, EventEmitter, Input, OnDestroy, OnInit, Output} from '@angular/core';
 import {OrganizationService} from '../../../../../../services/organization.service';
+import {takeUntil, tap} from "rxjs/operators";
+import {Observable, Subject} from "rxjs";
+import {Feature, GioLicenseService} from '../../../../../../components/gio-license/gio-license.service';
+
+interface ModeOption {
+  label: string;
+  message: string;
+  factorId?: string;
+  feature?: Feature
+  isMissingFeature$?: Observable<boolean>;
+  warning?: string;
+}
 
 @Component({
   selector: 'mfa-activate',
   templateUrl: './mfa-activate.component.html',
   styleUrls: ['./mfa-activate.component.scss']
 })
-export class MfaActivateComponent implements OnInit {
+export class MfaActivateComponent implements OnInit, OnDestroy {
 
-  constructor(private organizationService: OrganizationService) {
+  constructor(private organizationService: OrganizationService, private licenseService: GioLicenseService) {
   }
 
   @Input() enrollment: any;
@@ -32,39 +44,44 @@ export class MfaActivateComponent implements OnInit {
   @Output('settings-change') settingsChangeEmitter: EventEmitter<any> = new EventEmitter<any>();
   currentMode: any;
   factors: any[];
+  modes: any[];
 
-  private static modeOptions = {
+  private unsubscribe$: Subject<boolean> = new Subject<boolean>();
+
+  private static modeOptions : Record<string, ModeOption> = {
     OPTIONAL: {
-      'label': 'Optional',
-      'message': 'Choose the period of time users can skip MFA. Default time is 10 hours.',
-      'ee': false,
+      label: 'Optional',
+      message: 'Choose the period of time users can skip MFA. Default time is 10 hours.',
     },
     REQUIRED: {
-      'label': 'Required',
-      'message': 'MFA will always be displayed.',
-      'ee': false,
+      label: 'Required',
+      message: 'MFA will always be displayed.',
     },
     CONDITIONAL: {
-      'label': 'Conditional',
-      'message': 'Set conditions that will display MFA based on the user’s information',
-      'warning': 'You need to install the <b> GeoIP service </b> plugin to use the geoip based variables',
-      'ee': false,
+      label: 'Conditional',
+      message: 'Set conditions that will display MFA based on the user’s information',
+      warning: 'You need to install the <b> GeoIP service </b> plugin to use the geoip based variables',
     },
     INTELLIGENT: {
-      'label': 'Risk-based',
-      'message': 'Configure the thresholds that will display MFA based on risks.',
-      'warning': 'You need to install the <b> GeoIP service </b> and <b> Risk Assessment </b> plugins to use Risk-based MFA',
-      'ee': true,
+      label: 'Risk-based',
+      message: 'Configure the thresholds that will display MFA based on risks.',
+      warning: 'You need to install the <b> GeoIP service </b> and <b> Risk Assessment </b> plugins to use Risk-based MFA',
+      factorId: 'risk-assessment',
+      feature: {
+        feature: 'gravitee-risk-assessment',
+        deployed: false,
+      }
     },
   };
 
-  private static modes = Object.keys(MfaActivateComponent.modeOptions)
-    .map(key => MfaActivateComponent.modeOptions[key])
-
   ngOnInit(): void {
-    this.organizationService.factors().subscribe(data => {
-      this.factors = data
-    });
+    this.organizationService.factors().pipe(
+        tap((factors) => {
+          this.factors = factors;
+          this.initModes(factors);
+        }),
+        takeUntil(this.unsubscribe$)
+    ).subscribe();
 
     if (this.riskAssessment && this.riskAssessment.enabled) {
       this.currentMode = MfaActivateComponent.modeOptions.INTELLIGENT;
@@ -77,8 +94,9 @@ export class MfaActivateComponent implements OnInit {
     }
   }
 
-  get modes() {
-    return MfaActivateComponent.modes;
+  ngOnDestroy(): void {
+    this.unsubscribe$.next(false);
+    this.unsubscribe$.unsubscribe();
   }
 
   get modeOptions() {
@@ -173,21 +191,18 @@ export class MfaActivateComponent implements OnInit {
       {'enabled': false, thresholds: {}};
   }
 
-  modeLicenseMetadata(mode): any {
-    const response = {'deployed': true, 'feature': ''}
-    if (mode.label === 'Risk-based') {
-      response.deployed = false;
-      response.feature = 'gravitee-risk-assessment';
-
-      if (this.factors != null) {
-        const factor = this.factors['gravitee-risk-assessment'] ?? this.factors['risk-assessment'];
-        if (factor != null) {
-          response.deployed = factor.deployed;
-          response.feature = factor.feature;
-        }
-      }
-    }
-
-    return response;
+  private initModes(factors: any) {
+    this.modes = Object.keys(MfaActivateComponent.modeOptions)
+        .map(key => {
+          const option = MfaActivateComponent.modeOptions[key];
+          if (option.factorId) {
+            const factor = factors.find(({id}) => id == option.factorId);
+            if (factor != null) {
+              option.feature.deployed = factor.deployed;
+            }
+          }
+          option.isMissingFeature$ = this.licenseService.isMissingFeature$(option.feature);
+          return option;
+        });
   }
 }
