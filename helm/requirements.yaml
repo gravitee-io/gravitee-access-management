@@ -1,0 +1,6 @@
+dependencies:
+  - name: mongodb
+    alias: mongodb-replicaset
+    version: ^12.1.7
+    repository: https://charts.bitnami.com/bitnami
+    condition: mongodb-replicaset.enabled
