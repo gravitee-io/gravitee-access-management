@@ -42,4 +42,5 @@ public interface IdentityProviderManager extends Service<IdentityProviderManager
 
     Completable loadIdentityProviders();
 
+    Completable checkPluginDeployment(String type);
 }

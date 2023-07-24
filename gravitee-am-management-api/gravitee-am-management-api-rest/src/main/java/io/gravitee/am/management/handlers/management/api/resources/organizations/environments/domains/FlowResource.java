@@ -18,6 +18,8 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.model.FlowEntity;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.management.handlers.management.api.resources.utils.FlowUtils;
+import io.gravitee.am.management.service.PolicyPluginService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.flow.Flow;
@@ -51,6 +53,9 @@ public class FlowResource extends AbstractResource {
 
     @Autowired
     private FlowService flowService;
+
+    @Autowired
+    private PolicyPluginService policyPluginService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -97,6 +102,7 @@ public class FlowResource extends AbstractResource {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_FLOW, Acl.UPDATE)
+                .andThen(FlowUtils.checkPoliciesDeployed(policyPluginService, updateFlow))
                 .andThen(flowService.update(ReferenceType.DOMAIN, domain, flow, convert(updateFlow), authenticatedUser)
                         .map(FlowEntity::new))
                 .subscribe(response::resume, response::resume);

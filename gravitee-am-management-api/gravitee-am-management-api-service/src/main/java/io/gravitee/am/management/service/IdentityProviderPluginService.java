@@ -26,7 +26,7 @@ import java.util.List;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface IdentityProviderPluginService {
+public interface IdentityProviderPluginService extends PluginService {
 
     String EXPAND_DISPLAY_NAME = "displayName";
     String EXPAND_ICON = "icon";

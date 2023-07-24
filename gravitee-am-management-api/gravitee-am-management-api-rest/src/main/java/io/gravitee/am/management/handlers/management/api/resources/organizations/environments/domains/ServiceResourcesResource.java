@@ -17,6 +17,7 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.management.service.ResourcePluginService;
 import io.gravitee.am.management.service.ServiceResourceServiceProxy;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.permissions.Permission;
@@ -51,6 +52,9 @@ public class ServiceResourcesResource extends AbstractResource {
 
     @Autowired
     private ServiceResourceServiceProxy resourceService;
+
+    @Autowired
+    private ResourcePluginService resourcePluginService;
 
     @Autowired
     private DomainService domainService;
@@ -102,6 +106,7 @@ public class ServiceResourcesResource extends AbstractResource {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_RESOURCE, Acl.CREATE)
+                .andThen(resourcePluginService.checkPluginDeployment(newResource.getType()))
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(__ -> resourceService.create(domain, newResource, authenticatedUser))

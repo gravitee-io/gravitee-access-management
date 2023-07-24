@@ -16,12 +16,14 @@
 package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
+import io.gravitee.am.model.DeviceIdentifier;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.DeviceIdentifier;
+import io.gravitee.am.service.exception.PluginNotDeployedException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewDeviceIdentifier;
 import io.gravitee.common.http.HttpStatusCode;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -33,9 +35,7 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.*;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
@@ -101,11 +101,37 @@ public class DeviceIdentifiersResourceTest extends JerseySpringTest {
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Single.just(deviceIdentifier)).when(deviceIdentifierService).create(eq(domainId), any(), any());
+        doReturn(Completable.complete()).when(deviceIdentifierPluginService).checkPluginDeployment(any());
 
         final Response response = target("domains")
                 .path(domainId)
                 .path("device-identifiers")
                 .request().post(Entity.json(newDeviceIdentifier));
         assertEquals(HttpStatusCode.CREATED_201, response.getStatus());
+    }
+
+    @Test
+    public void shouldNotCreate_PLuginNotDeployed() {
+        final String domainId = "domain-1";
+        final Domain mockDomain = new Domain();
+        mockDomain.setId(domainId);
+
+        var newDeviceIdentifier = new NewDeviceIdentifier();
+        newDeviceIdentifier.setName("newDeviceIdentifier-name");
+        newDeviceIdentifier.setType("newDeviceIdentifier-type");
+        newDeviceIdentifier.setConfiguration("newDeviceIdentifier-configuration");
+
+        DeviceIdentifier deviceIdentifier = new DeviceIdentifier();
+        deviceIdentifier.setId("deviceIdentifier-id");
+        deviceIdentifier.setName("deviceIdentifier-name");
+
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+        doReturn(Completable.error(PluginNotDeployedException.forType(newDeviceIdentifier.getType()))).when(deviceIdentifierPluginService).checkPluginDeployment(any());
+
+        final Response response = target("domains")
+                .path(domainId)
+                .path("device-identifiers")
+                .request().post(Entity.json(newDeviceIdentifier));
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
     }
 }

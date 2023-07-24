@@ -25,7 +25,7 @@ import java.util.List;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface ReporterPluginService {
+public interface ReporterPluginService extends PluginService {
 
     Single<List<ReporterPlugin>> findAll();
 

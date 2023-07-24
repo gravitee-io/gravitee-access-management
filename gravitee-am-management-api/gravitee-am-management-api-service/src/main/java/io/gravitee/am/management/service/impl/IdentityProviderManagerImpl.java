@@ -28,6 +28,7 @@ import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.plugins.idp.core.IdentityProviderPluginManager;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.RoleService;
+import io.gravitee.am.service.exception.PluginNotDeployedException;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
@@ -404,5 +405,13 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
             userProviders.remove(identityProvider.getId());
             identityProviders.remove(identityProvider.getId());
         });
+    }
+
+    public Completable checkPluginDeployment(String type) {
+        if (!this.identityProviderPluginManager.isPluginDeployed(type)) {
+            logger.debug("Plugin {} not deployed", type);
+            return Completable.error(PluginNotDeployedException.forType(type));
+        }
+        return Completable.complete();
     }
 }

@@ -25,12 +25,11 @@ import java.util.List;
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface DeviceIdentifierPluginService {
+public interface DeviceIdentifierPluginService extends PluginService {
 
     Single<List<DeviceIdentifierPlugin>> findAll();
 
     Maybe<DeviceIdentifierPlugin> findById(String id);
 
     Maybe<String> getSchema(String id);
-
 }

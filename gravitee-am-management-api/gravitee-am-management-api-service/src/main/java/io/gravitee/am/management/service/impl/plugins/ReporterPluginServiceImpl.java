@@ -35,12 +35,17 @@ import java.util.List;
  * @author GraviteeSource Team
  */
 @Component
-public class ReporterPluginServiceImpl implements ReporterPluginService {
+public class ReporterPluginServiceImpl extends AbstractPluginService implements ReporterPluginService {
 
     private final Logger LOGGER = LoggerFactory.getLogger(ReporterPluginServiceImpl.class);
 
-    @Autowired
     private ReporterPluginManager reporterPluginManager;
+
+    @Autowired
+    public ReporterPluginServiceImpl(ReporterPluginManager reporterPluginManager) {
+        super(reporterPluginManager);
+        this.reporterPluginManager = reporterPluginManager;
+    }
 
     @Override
     public Single<List<ReporterPlugin>> findAll() {

@@ -25,11 +25,12 @@ import java.util.Set;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface ExtensionGrantPluginService {
+public interface ExtensionGrantPluginService extends PluginService {
 
     Single<Set<ExtensionGrantPlugin>> findAll();
 
     Maybe<ExtensionGrantPlugin> findById(String id);
 
     Maybe<String> getSchema(String id);
+
 }

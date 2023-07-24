@@ -17,6 +17,7 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.management.service.DeviceIdentifierPluginService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.BotDetection;
 import io.gravitee.am.model.DeviceIdentifier;
@@ -52,6 +53,9 @@ public class DeviceIdentifiersResource extends AbstractResource {
 
     @Autowired
     private DeviceIdentifierService deviceIdentifierService;
+
+    @Autowired
+    private DeviceIdentifierPluginService deviceIdentifierPluginService;
 
     @Autowired
     private DomainService domainService;
@@ -93,15 +97,16 @@ public class DeviceIdentifiersResource extends AbstractResource {
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domain,
-            @ApiParam(name = "deviceIdentifier", required = true) @Valid @NotNull final NewDeviceIdentifier newBotDetection,
+            @ApiParam(name = "deviceIdentifier", required = true) @Valid @NotNull final NewDeviceIdentifier newDeviceIdentifier,
             @Suspended final AsyncResponse response) {
 
         final User authenticatedUser = getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_DEVICE_IDENTIFIER, Acl.CREATE)
+                .andThen(deviceIdentifierPluginService.checkPluginDeployment(newDeviceIdentifier.getType()))
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(__ -> deviceIdentifierService.create(domain, newBotDetection, authenticatedUser))
+                        .flatMapSingle(__ -> deviceIdentifierService.create(domain, newDeviceIdentifier, authenticatedUser))
                         .map(deviceIdentifier -> Response
                                 .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain + "/device-identifiers/" + deviceIdentifier.getId()))
                                 .entity(deviceIdentifier)

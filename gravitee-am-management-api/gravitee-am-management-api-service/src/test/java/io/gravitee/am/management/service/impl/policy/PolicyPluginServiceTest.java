@@ -21,6 +21,7 @@ import io.gravitee.am.management.service.impl.plugins.PolicyPluginServiceImpl;
 import io.gravitee.am.management.service.impl.policy.dummy.DummyManifest;
 import io.gravitee.am.management.service.impl.policy.dummy.DummyPolicy;
 import io.gravitee.am.plugins.policy.core.PolicyPluginManager;
+import io.gravitee.am.service.exception.PluginNotDeployedException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.plugin.core.api.PluginManifest;
 import io.gravitee.plugin.policy.PolicyPlugin;
@@ -224,5 +225,41 @@ public class PolicyPluginServiceTest {
         when(manifest.id()).thenReturn(String.valueOf(id));
         when(plugin.manifest()).thenReturn(manifest);
         return plugin;
+    }
+
+    @Test
+    public void must_accept_deployed_plugins() throws IOException {
+        String pluginId = "pluginId";
+
+        DummyPolicy policy = new DummyPolicy(new DummyManifest(pluginId), true);
+        when(policyPluginManager.get(pluginId)).thenReturn(policy);
+
+        var observer = policyPluginService.checkPluginDeployment(pluginId).test();
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoErrors();
+    }
+
+    @Test
+    public void must_reject_not_deployed_plugins() throws IOException {
+        String pluginId = "pluginId";
+
+        DummyPolicy policy = new DummyPolicy(new DummyManifest(pluginId), false);
+        when(policyPluginManager.get(pluginId)).thenReturn(policy);
+
+        var observer = policyPluginService.checkPluginDeployment(pluginId).test();
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertError(PluginNotDeployedException.class);
+    }
+
+    @Test
+    public void must_reject_unknown_plugin() throws IOException {
+        String pluginId = "pluginId";
+
+        when(policyPluginManager.get(pluginId)).thenReturn(null);
+
+        var observer = policyPluginService.checkPluginDeployment(pluginId).test();
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertError(PluginNotDeployedException.class);
     }
 }

@@ -25,7 +25,7 @@ import java.util.List;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface FactorPluginService {
+public interface FactorPluginService extends PluginService {
 
     Single<List<FactorPlugin>> findAll();
 

@@ -17,9 +17,11 @@ package io.gravitee.am.management.service.impl.plugins;
 
 import io.gravitee.am.management.service.BotDetectionPluginService;
 import io.gravitee.am.plugins.botdetection.core.BotDetectionPluginManager;
+import io.gravitee.am.service.exception.PluginNotDeployedException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.plugin.BotDetectionPlugin;
 import io.gravitee.plugin.core.api.Plugin;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
@@ -34,7 +36,7 @@ import org.springframework.stereotype.Component;
  * @author GraviteeSource Team
  */
 @Component
-public class BotDetectionPluginServiceImpl implements BotDetectionPluginService {
+public class BotDetectionPluginServiceImpl extends AbstractPluginService implements BotDetectionPluginService {
 
     private final Logger LOGGER = LoggerFactory.getLogger(BotDetectionPluginServiceImpl.class);
 
@@ -42,6 +44,7 @@ public class BotDetectionPluginServiceImpl implements BotDetectionPluginService 
 
     @Autowired
     public BotDetectionPluginServiceImpl(BotDetectionPluginManager pluginManager) {
+        super(pluginManager);
         this.pluginManager = pluginManager;
     }
 
@@ -100,4 +103,5 @@ public class BotDetectionPluginServiceImpl implements BotDetectionPluginService 
         botDetectionPlugin.setFeature(plugin.manifest().feature());
         return botDetectionPlugin;
     }
+
 }

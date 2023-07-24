@@ -25,7 +25,7 @@ import java.util.List;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface PolicyPluginService {
+public interface PolicyPluginService extends PluginService {
 
     Single<List<PolicyPlugin>> findAll(List<String> expand);
 
@@ -36,4 +36,5 @@ public interface PolicyPluginService {
     Maybe<String> getIcon(String policyId);
 
     Maybe<String> getDocumentation(String policyId);
+
 }

@@ -35,13 +35,18 @@ import java.util.List;
  * @author GraviteeSource Team
  */
 @Component
-public class ResourcePluginServiceImpl implements ResourcePluginService {
+public class ResourcePluginServiceImpl extends AbstractPluginService implements ResourcePluginService {
 
     private static final String MANIFEST_KEY_CATEGORIES_SEPARATOR = ",";
     private final Logger LOGGER = LoggerFactory.getLogger(ResourcePluginServiceImpl.class);
 
-    @Autowired
     private ResourcePluginManager resourcePluginManager;
+
+    @Autowired
+    public ResourcePluginServiceImpl(ResourcePluginManager resourcePluginManager) {
+        super(resourcePluginManager);
+        this.resourcePluginManager = resourcePluginManager;
+    }
 
     @Override
     public Single<List<ResourcePlugin>> findAll(List<String> expand) {

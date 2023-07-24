@@ -17,6 +17,7 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.management.service.FactorPluginService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.permissions.Permission;
@@ -51,6 +52,9 @@ public class FactorsResource extends AbstractResource {
 
     @Autowired
     private FactorService factorService;
+
+    @Autowired
+    private FactorPluginService factorPluginService;
 
     @Autowired
     private DomainService domainService;
@@ -102,6 +106,7 @@ public class FactorsResource extends AbstractResource {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_FACTOR, Acl.CREATE)
+                .andThen(factorPluginService.checkPluginDeployment(newFactor.getType()))
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(__ -> factorService.create(domain, newFactor, authenticatedUser))
