@@ -1,0 +1,927 @@
+# Default values for Gravitee.io Access Management.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+am:
+  name: am
+  # Whether this chart should self-manage its service account, role, and associated role binding.
+  managedServiceAccount: true
+
+  # Custom service account override that the pod will use
+  serviceAccount: ""
+
+  roleRules:
+    - apiGroups:
+        - ""
+      resources:
+        - configmaps
+        - secrets
+      verbs:
+        - get
+        - list
+        - watch
+        
+chaos:
+  enabled: false
+
+#####
+## Proxy settings to apply on HttpClient used by Management API and Gateway 
+## to perform external calls
+#####
+#httpClient:
+#  timeout: 10000 # in milliseconds
+#  proxy:
+#    enabled: false
+#    exclude-hosts: # list of hosts to exclude from proxy (wildcard hosts are supported)
+#      - '*.internal.com'
+#      - internal.mycompany.com
+#    type: HTTP #HTTP, SOCK4, SOCK5
+#    http:
+#      host: localhost
+#      port: 3128
+#      username: user
+#      password: secret
+#    https:
+#      host: localhost
+#      port: 3128
+#      username: user
+#      password: secret
+
+smtp:
+  enabled: true
+  host: smtp.example.com
+  port: 25
+  from: info@example.com
+  username: info@example.com
+  password: example.com
+  subject: "[gravitee] %s"
+  properties:
+    auth: true
+    starttlsEnable: false
+    #sslTrust: smtp.example.com
+    #sslProtocols: TLSv1.2
+    #localhost: am.example.com
+
+mongo:
+  # uri: mongodb://mongo-mongodb-replicaset:27017/gravitee?connectTimeoutMS=30000
+  # servers: |
+  #   - host: mongo1
+  #     port: 27017
+  #   - host: mongo2
+  #     port: 27017
+  sslEnabled: false
+  socketKeepAlive: false
+  rs: rs0
+  rsEnabled: true
+  dbhost: mongo-mongodb-replicaset-headless
+  dbname: gravitee
+  dbport: 27017
+  connectTimeoutMS: 30000
+  auth:
+    enabled: false
+    source: admin
+    username:
+    password:
+#  keystore:
+#    path:                      
+#    type:                      
+#    password:                  
+#    keyPassword:               
+#  truststore:
+#    path:                      
+#    type:                      
+#    password:     
+
+mongodb-replicaset:
+  initContainers:
+  enabled: false
+  architecture: replicaset
+  fullnameOverride: "mongo-mongodb-replicaset"
+  replicaSetName: rs0
+  image:
+    repository: bitnami/mongodb
+    tag: 5.0.9-debian-10-r20
+  auth:
+    enabled: false
+  resources:
+    limits:
+      cpu: 1
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+  persistence:
+    enabled: true
+    # storageClass: ""
+    accessModes:
+      - ReadWriteOnce
+    size: 1Gi
+
+jdbc:
+  driver: mysql
+  host: localhost
+  port: 3306
+  database: graviteeam
+  username:
+  password:
+  # URLs to download the drivers
+  drivers:
+    - https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.22/mysql-connector-java-8.0.22.jar
+    - https://repo1.maven.org/maven2/dev/miku/r2dbc-mysql/0.8.2.RELEASE/r2dbc-mysql-0.8.2.RELEASE.jar
+  pool:
+    acquireRetry:  1
+    initialSize: 0
+    maxSize: 10
+    maxIdleTime: 30000
+    maxLifeTime: 30000
+    maxAcquireTime: 0
+    maxCreateConnectionTime: 0
+#  sslEnabled: false
+#  sslMode: verify-ca
+#  sslServerCert: 
+#  trustServerCertificate:
+#  disableSslHostnameVerification: 
+#  trustStore:
+#    path:
+#    password:
+
+management:
+  type: mongodb
+
+oauth2:
+  type: mongodb
+
+# Support for Gravitee.io Cockpit (cockpit.gravitee.io)
+cockpit:
+  enabled: false
+  keystore: 
+    value: "base64 encoded value of the keystore provided by Cockpit (required)"
+    password:
+      #value: "keystores password provided by Cockpit"
+      #valueFrom: 
+        #secretKeyRef:
+        #configMapKeyRef:
+  #truststore: 
+    #value: base64 encoded value of the truststore provided by Cockpit (optional)
+    #password:
+      #value: "truststore password provided by Cockpit"
+      #valueFrom: 
+        #secretKeyRef:
+        #configMapKeyRef:
+  url: https://cockpit.gravitee.io
+  controller: https://cockpit-controller.gravitee.io
+  ssl:
+    verifyHostname: true
+
+api:
+  enabled: true
+  upgrader: false
+  name: management-api
+  logging:
+    debug: false
+    stdout:
+      json: false
+      encoderPattern: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    file:
+      enabled: true
+      rollingPolicy: |
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- daily rollover -->
+            <fileNamePattern>${gravitee.management.log.dir}/gravitee_%d{yyyy-MM-dd}.log</fileNamePattern>
+            <!-- keep 30 days' worth of history -->
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+      encoderPattern: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n%n"
+    graviteeLevel: DEBUG
+    graviteeSourceLevel: DEBUG
+    jettyLevel: INFO
+    #extraLoggers: |
+    #  <!-- Add here a list of loggers you want to add -->
+
+  restartPolicy: OnFailure
+  # If you provide your own gravitee.yml by using a volumeMount, reloadOnConfigChange is disabled.
+  reloadOnConfigChange: true
+  updateStrategy:
+    rollingUpdate:
+      maxUnavailable: 25%
+    type: RollingUpdate
+  replicaCount: 1
+  image:
+    repository: graviteeio/am-management-api
+    # tag: 2.10.8
+    pullPolicy: Always
+    # pullSecrets:
+    #   - name: gravitee_secrets
+
+  liquibase:
+    enabled: true
+
+  deployment:
+    # Annotations to apply to the deployment
+    annotations: {}
+    # additionals labels
+    labels: {}
+    affinity: {}
+    hostAliases: []
+    #- ip: "127.0.0.1"
+    #  hostnames:
+    #  - "foo.local"
+    #  - "bar.local"
+    nodeSelector: {}
+    tolerations: []
+    envFrom: []
+    # - configMapRef:
+    #     name: config-secret
+    securityContext:
+      runAsUser: 1001
+      runAsNonRoot: true
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxUnavailable: 25%
+    topologySpreadConstraints: []
+    # revisionHistoryLimit: 10
+
+  livenessProbe:
+    tcpSocket:
+      port: http
+    initialDelaySeconds: 30
+    periodSeconds: 30
+    failureThreshold: 3
+
+  readinessProbe:
+    tcpSocket:
+      port: http
+    initialDelaySeconds: 30
+    periodSeconds: 30
+    failureThreshold: 3
+
+  pdb:
+    enabled: false
+    minAvailable: ""
+    maxUnavailable: "50%"
+
+  podAnnotations: {}
+    # iam.amazonaws.com/role: es-cluster
+
+  # How long to wait for AM Management API pods to stop gracefully
+  terminationGracePeriod: 30
+
+  # This is the PriorityClass settings as defined in
+  # https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/#priorityclass
+  priorityClassName: ""
+
+  env: []
+  #   - name: ENV_VARIABLE
+  #     value: ENV_VARIABLE_VALUE
+  #   - name: ENV_VARIABLE_WITH_FROM
+  #     valueFrom:
+  #       configMapKeyRef:
+  #         name: special-config
+  #         key: SPECIAL_LEVEL
+
+  additionalPlugins:
+#    - https://path_to_plugin
+
+  ssl:
+    enabled: false
+    #keystore:
+    #  type: jks # Supports jks, pem, pkcs12
+    #  path: ${gravitee.home}/security/keystore.jks
+    #  password: secret
+    clientAuth: false
+    #truststore:
+    #  type: jks # Supports jks, pem, pkcs12
+    #  path: ${gravitee.home}/security/truststore.jks
+    #  password: secret
+  http:
+    #host: 0.0.0.0
+    #port: 8093
+    #idleTimeout: 30000
+    #acceptors: -1
+    #selectors: -1
+    #pool:
+      #minThreads: 10
+      #maxThreads: 200
+      #idleTimeout: 60000
+      #queueSize: 6000
+    #jmx: false
+    #statistics: false
+    #accesslog:
+      #enabled: true
+      #path: ${gravitee.home}/logs/gravitee_accesslog_yyyy_mm_dd.log
+    #secured: false
+    #outputBufferSize: 32768
+    #requestHeaderSize: 8192
+    #responseHeaderSize: 8192
+#    api:
+#      entrypoint: /management
+    services:
+      metrics:
+        enabled: false
+        prometheus:
+          enabled: true
+      core:
+        http:
+          enabled: true
+          port: 18093
+          host: localhost
+          authentication:
+            password: adminadmin
+        ingress:
+          enabled: false
+          ingressClassName: ""
+#          path: /management/_(.*)
+#          hosts:
+#            - am.example.com
+          annotations: {}
+#            kubernetes.io/ingress.class: nginx
+#            nginx.ingress.kubernetes.io/rewrite-target: /_$1
+        service:
+#       If you choose to enable this service, you'll need to expose the technical api
+#       on an accessible host outside of the pod: api.http.services.core.http.host
+          enabled: false
+#         type: ClusterIP
+#         externalPort: 18083      
+  jwt:
+    secret: s3cR3t4grAv1t3310AMS1g1ingDftK3y
+    kid: default-gravitee-AM-key
+    expireAfter: 604800
+    issuer: https://gravitee.am
+    cookie:
+      secure: false
+      path: /
+  service:
+    type: ClusterIP
+    # externalTrafficPolicy is used only when configuring type "NodePort" or "LoadBalancer"
+    externalTrafficPolicy: Cluster
+    externalPort: 83
+    internalPort: 8093
+    internalPortName: http
+#    appProtocol: http
+  # annotations:
+  securityContext:
+    runAsUser: 1001
+    runAsNonRoot: true
+  autoscaling:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 3
+    targetAverageUtilization: 50
+    targetMemoryAverageUtilization: 80
+  ingress:
+    enabled: true
+    ingressClassName: ""
+    path: /management
+    # Used to create an Ingress record.
+    hosts:
+      - am.example.com
+    annotations:
+      kubernetes.io/ingress.class: nginx
+      ingress.kubernetes.io/configuration-snippet: "etag on;\nproxy_pass_header ETag;\nproxy_set_header if-match \"\";\n"
+      # kubernetes.io/tls-acme: "true"
+    #tls:
+    # - hosts:
+    #    - am.example.com
+    #  secretName: api-custom-cert
+  resources:
+    # We usually recommend not to specify default resources and to leave this as a conscious
+    # choice for the user. This also increases chances charts run on environments with little
+    # resources, such as Minikube. If you do want to specify resources, uncomment the following
+    # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+    limits:
+      cpu: 500m
+      memory: 1024Mi
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    #  lifecycle:
+    #    postStart: '[ "/bin/sh", "-c", "echo Post starting Gravitee Management API" ]'
+    #    preStop: '[ "/bin/sh", "-c", "echo Pre stopping Gravitee Management API" ]'
+    ## Additional gravitee API volume mounts
+    # Defines additional volume mounts.
+    # extraVolumeMounts: |
+    # - name: extra-volume
+    #   mountPath: /mnt/volume
+    #   readOnly: true
+    #   existingClaim: volume-claim
+  # If you want to use your own gravitee.yml you have to provide your configmap or secret in extraVolume part.
+  # the name of the volume MUST be "config".
+  # In this case, values configuration related to gravitee.yml defined in this file will be ignored
+  #extraVolumes: |
+  #  - name: config
+  #    configMap:
+  #      name: gravitee-config-configmap-name
+  #  - name: config
+  #    secret:
+  #      secretName: gravitee-config-secret-name
+
+  services:
+    notifier:
+      enabled: true
+      tryAvoidDuplicateNotification: true
+
+    certificate:
+      enabled: true
+      # frequency on which the notifier mechanism will test
+      # if new notifications need to be send
+      # default: 0 0 5 * * * (every day at 5am)
+      cronExpression: 0 0 5 * * *
+      # send notification if certificate is going to expire in less than 20 days, then 15 days before...
+      expiryThresholds: 20,15,10,5,1
+      # Subject of the email send by the email notifier
+      expiryEmailSubject: "Certificate will expire soon"
+
+  notifiers:
+    email:
+      enabled: false
+      #host: smtp.example.com
+      #port: 25
+      #from: info@example.com
+      #username: info@example.com
+      #password: example.com
+      #startTLSEnabled: false
+      #sslTrustAll: false
+      #sslKeyStore: /path/to/keystore
+      #sslKeyStorePassword: changeme
+    ui:
+      enabled: true
+
+  domains:
+    certificates:
+      default:
+        keysize: 2048
+        alias: default
+        keypass: gravitee
+        storepass: gravitee
+        validity: 365
+        algorithm: SHA256withRSA
+        name: cn=Gravitee.io
+        refresh:
+          delay: 10
+          timeUnit: MINUTES
+          
+gateway:
+  enabled: true
+  name: gateway
+
+  http:
+    maxHeaderSize: 8192
+    maxChunkSize: 8192
+    maxInitialLineLength: 4096
+    maxFormAttributeSize: 2048
+
+  logging:
+    debug: false
+    stdout:
+      json: false
+      encoderPattern: "%d{HH:mm:ss.SSS} [%thread] [%X{api}] %-5level %logger{36} - %msg%n"
+    file:
+      enabled: true
+      rollingPolicy: |
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- daily rollover -->
+            <fileNamePattern>${gravitee.home}/logs/gravitee_%d{yyyy-MM-dd}.log</fileNamePattern>
+            <!-- keep 30 days' worth of history -->
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+      encoderPattern: "%d{HH:mm:ss.SSS} [%thread] [%X{api}] %-5level %logger{36} - %msg%n"
+    graviteeLevel: DEBUG
+    graviteeSourceLevel: DEBUG
+    jettyLevel: WARN
+    #extraLoggers: |
+    #  <!-- Add here a list of logger you want to add -->
+
+  # If you provide your own gravitee.yml by using a volumeMount, reloadOnConfigChange is disabled.
+  reloadOnConfigChange: true
+
+  liquibase:
+    enabled: false
+
+  deployment:
+    # Annotations to apply to the deployment
+    annotations: {}
+    # additionals labels
+    labels: {}
+    affinity: {}
+    hostAliases: []
+    #- ip: "127.0.0.1"
+    #  hostnames:
+    #  - "foo.local"
+    #  - "bar.local"
+    nodeSelector: {}
+    tolerations: []
+    envFrom: []
+    # - configMapRef:
+    #     name: config-secret
+    securityContext:
+      runAsUser: 1001
+      runAsNonRoot: true
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxUnavailable: 25%
+    topologySpreadConstraints: []
+    # revisionHistoryLimit: 10
+
+  livenessProbe:
+    tcpSocket:  
+      port: http
+    initialDelaySeconds: 30
+    periodSeconds: 30
+    failureThreshold: 3
+
+  readinessProbe:
+    # use the node endpoint as readinessProbe to test the domain synchronization
+    # in this case, the gateway.services.core.http.host must be defined to the Pod IP or 0.0.0.0
+    domainSync: false
+    tcpSocket:
+      port: http
+    initialDelaySeconds: 10
+    periodSeconds: 30
+    failureThreshold: 3
+
+  pdb:
+    enabled: false
+    minAvailable: ""
+    maxUnavailable: "50%"
+
+  podAnnotations: {}
+    # iam.amazonaws.com/role: es-cluster
+
+  # How long to wait for AM Management API pods to stop gracefully
+  terminationGracePeriod: 30
+
+  # This is the PriorityClass settings as defined in
+  # https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/#priorityclass
+  priorityClassName: ""
+
+  additionalPlugins:
+#    - https://path_to_plugin
+  ssl:
+    enabled: false
+    tlsProtocols: TLSv1.2, TLSv1.3
+  #  keystore:
+  #    type: jks # Supports jks, pem, pkcs12
+  #    path: ${gravitee.home}/security/keystore.jks
+  #    password: secret
+    clientAuth: false
+  #  truststore:
+  #    type: jks # Supports jks, pem, pkcs12
+  #    path: ${gravitee.home}/security/truststore.jks
+  #    password: secret
+  services:
+    core:
+      http:
+        enabled: true
+        port: 18092
+        host: localhost
+        authentication:
+          type: basic
+          password: adminadmin
+        secured: false
+        ssl:
+          keystore:
+            type: "PKCS12"
+            path: "/p12/keystore"
+      ingress:
+        enabled: false
+        ingressClassName: ""
+        path: /management/_(.*)
+        hosts:
+          - am.example.com
+        annotations: {}
+          # kubernetes.io/ingress.class: nginx
+          # nginx.ingress.kubernetes.io/rewrite-target: /_$1
+      service:
+        #       If you choose to enable this service, you'll need to expose the technical api
+        #       on an accessible host outside of the pod: api.http.services.core.http.host
+        enabled: false
+  #         type: ClusterIP
+  #         externalPort: 18082
+  #         appProtocol: http
+    metrics:
+      enabled: false
+      prometheus:
+        enabled: true
+  jwt:
+    secret: s3cR3t4grAv1t3310AMS1g1ingDftK3y
+    kid: default-gravitee-AM-key
+    expireAfter: 604800
+    issuer: https://gravitee.am
+    cookie:
+      secure: false
+      path: /
+  # handlers:
+  #   request:
+  #     transaction:
+  #       header: X-Gravitee-Transaction-Id
+  #     request:
+  #       header: X-Gravitee-Request-Id
+  # sharding_tags:
+  replicaCount: 1
+  image:
+    repository: graviteeio/am-gateway
+    # tag: 2.10.8
+    pullPolicy: Always
+    # pullSecrets:
+    #   - name: gravitee_secrets
+
+  env: []
+  #   - name: ENV_VARIABLE
+  #     value: ENV_VARIABLE_VALUE
+  #   - name: ENV_VARIABLE_WITH_FROM
+  #     valueFrom:
+  #       configMapKeyRef:
+  #         name: special-config
+  #         key: SPECIAL_LEVEL
+
+  service:
+    type: ClusterIP
+    # externalTrafficPolicy is used only when configuring type "NodePort" or "LoadBalancer"
+    externalTrafficPolicy: Cluster
+    externalPort: 82
+    internalPort: 8092
+    internalPortName: http
+  # annotations:
+  securityContext:
+    runAsUser: 1001
+    runAsNonRoot: true
+  autoscaling:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 3
+    targetAverageUtilization: 50
+    targetMemoryAverageUtilization: 80
+  ingress:
+    enabled: true
+    ingressClassName: ""
+    path: /auth
+    # Used to create an Ingress record.
+    hosts:
+      - am.example.com
+    annotations:
+      kubernetes.io/ingress.class: nginx
+      nginx.ingress.kubernetes.io/ssl-redirect: "false"
+      nginx.ingress.kubernetes.io/enable-rewrite-log: "true"
+      kubernetes.io/app-root: /auth
+      kubernetes.io/rewrite-target: /auth
+      # ingress.kubernetes.io/configuration-snippet: "etag on;\nproxy_pass_header ETag;\nproxy_set_header if-match \"\";\n"
+      # kubernetes.io/tls-acme: "true"
+    #tls:
+    #  - hosts:
+    #      - am.example.com
+    #    secretName: api-custom-cert
+  resources:
+    # We usually recommend not to specify default resources and to leave this as a conscious
+    # choice for the user. This also increases chances charts run on environments with little
+    # resources, such as Minikube. If you do want to specify resources, uncomment the following
+    # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    #  lifecycle:
+    #    postStart: '[ "/bin/sh", "-c", "echo Post starting Gravitee Gateway" ]'
+    #    preStop: '[ "/bin/sh", "-c", "echo Pre stopping Gravitee Gateway" ]'
+    ## Additional gravitee gateway volume mounts
+    # Defines additional volume mounts.
+    # extraVolumeMounts: |
+    # - name: extra-volume
+    #   mountPath: /mnt/volume
+    #   readOnly: true
+    #   existingClaim: volume-claim
+  # If you want to use your own gravitee.yml you have to provide your configmap or secret in extraVolume part.
+  # the name of the volume MUST be "config".
+  # In this case, values configuration related to gravitee.yml defined in this file will be ignored
+  #extraVolumes: |
+  #  - name: config
+  #    configMap:
+  #      name: gravitee-config-configmap-name
+  #  - name: config
+  #    secret:
+  #      secretName: gravitee-config-secret-name
+  mfa_rate:
+    enabled: true
+    limit: 5
+    timePeriod: 15
+    timeUnit: Minutes
+
+alerts:
+  enabled: false
+  endpoints:
+    - http://localhost:8072/
+  security:
+    enabled: false
+    username: admin
+    password: adminadmin
+  #triggers:
+  #  risk_assessment:
+  #    # You need the Risk Assessment Service plugin for these alerts
+  #    geoVelocity:
+  #      name: Geo velocity alert
+  #      description: A geo velocity risk-based alert has been triggered
+  #      assessments: LOW # Default is LOW
+  #      severity: WARNING
+  #    ipReputation:
+  #      name: IP reputation alert
+  #      description: An IP reputation risk-based alert has been triggered
+  #      assessments: LOW # Default is LOW
+  #      severity: WARNING
+  #    unknownDevices:
+  #      name: Unknown Device alert
+  #      description: An unknown device risk-based alert has been triggered
+  #      assessments: HIGH # Default is HIGH
+  #      severity: WARNING
+  #  too_many_login_failures:
+  #    name: "Too many login failures detected"
+  #    description: "More than {threshold}% of logins are in failure over the last {window} second(s)"
+  #    # the threshold rate in % to reach before notify. Default 10% of login failures.
+  #    threshold: 10
+  #    # the minimum sample size. Default 1000 login attempts.
+  #    sampleSize: 1000
+  #    # window time in seconds. Default 600s (10 minutes).
+  #    window: 600
+  #    # severity of the alert (INFO, WARNING, CRITICAL). Default WARNING.
+  #    severity: WARNING
+  #settings:
+  #  risk_assessment:
+  #    settings:
+  #      enabled: true # default is false
+  #      devices:
+  #        enabled: true # default is true
+  #        thresholds:
+  #          HIGH: 1 # Arbitrary value
+  #      ipReputation:
+  #        enabled: true # default is true
+  #        thresholds:
+  #          #Default is only LOW, but you can add more thresholds
+  #          #percentage
+  #          LOW: 1
+  #          #MEDIUM: 30
+  #          #HIGH: 70
+  #      geoVelocity:
+  #        enabled: true # default is true
+  #        thresholds:
+  #          # meter per second, default is 0.2777778 (1km/h)
+  #          LOW: 0.2777778
+  #          #MEDIUM: 6.9444445 # (25km/h)
+  #          #HIGH: 69.444445 # (250km/h)
+ui:
+  enabled: true
+  name: management-ui
+  replicaCount: 1
+  image:
+    repository: graviteeio/am-management-ui
+    # tag: 2.10.8
+    pullPolicy: Always
+  # pullSecrets:
+  #   - name: gravitee_secrets
+
+  deployment:
+    # Annotations to apply to the deployment
+    annotations: {}
+    # additionals labels
+    labels: {}
+    affinity: {}
+    hostAliases: []
+    #- ip: "127.0.0.1"
+    #  hostnames:
+    #  - "foo.local"
+    #  - "bar.local"
+    nodeSelector: {}
+    tolerations: []
+    envFrom: []
+    # - configMapRef:
+    #     name: config-secret
+    securityContext:
+      runAsUser: 101
+      runAsGroup: 101
+      runAsNonRoot: true
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxUnavailable: 25%
+    topologySpreadConstraints: []
+    # revisionHistoryLimit: 10
+
+  livenessProbe:
+    httpGet:
+      path: /
+      port: http
+    initialDelaySeconds: 10
+    periodSeconds: 30
+    failureThreshold: 3
+
+  readinessProbe:
+    httpGet:
+      path: /
+      port: http
+    initialDelaySeconds: 10
+    periodSeconds: 30
+    failureThreshold: 3
+
+  pdb:
+    enabled: false
+    minAvailable: ""
+    maxUnavailable: "50%"
+
+  podAnnotations: {}
+    # iam.amazonaws.com/role: es-cluster
+
+  # How long to wait for AM Console pods to stop gracefully
+  terminationGracePeriod: 30
+
+  # This is the PriorityClass settings as defined in
+  # https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/#priorityclass
+  priorityClassName: ""
+
+  env: []
+  #   - name: ENV_VARIABLE
+  #     value: ENV_VARIABLE_VALUE
+  #   - name: ENV_VARIABLE_WITH_FROM
+  #     valueFrom:
+  #       configMapKeyRef:
+  #         name: special-config
+  #         key: SPECIAL_LEVEL
+
+  autoscaling:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 3
+    targetAverageUtilization: 50
+    targetMemoryAverageUtilization: 80
+  service:
+    name: nginx
+    type: ClusterIP
+    # externalTrafficPolicy is used only when configuring type "NodePort" or "LoadBalancer"
+    externalTrafficPolicy: Cluster
+    externalPort: 8002
+    internalPort: 8080
+    internalPortName: http
+#    appProtocol: http
+    # annotations:
+  securityContext:
+    runAsUser: 101
+    runAsGroup: 101
+    runAsNonRoot: true
+  ingress:
+    enabled: true
+    ingressClassName: ""
+    path: /
+    # Used to create an Ingress record.
+    hosts:
+      - am.example.com
+    annotations:
+      kubernetes.io/ingress.class: nginx
+      kubernetes.io/app-root: /
+      kubernetes.io/rewrite-target: /
+      ingress.kubernetes.io/configuration-snippet: "etag on;\nproxy_pass_header ETag;\n"
+    #tls:
+    #  - hosts:
+    #      - am.example.com
+    #    secretName: api-custom-cert
+  resources:
+    # We usually recommend not to specify default resources and to leave this as a conscious
+    # choice for the user. This also increases chances charts run on environments with little
+    # resources, such as Minikube. If you do want to specify resources, uncomment the following
+    # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    #  lifecycle:
+    #    postStart: '[ "/bin/sh", "-c", "echo Post starting Gravitee UI" ]'
+    #    preStop: '[ "/bin/sh", "-c", "echo Pre stopping Gravitee UI" ]'
+    ## Additional gravitee ui volume mounts
+    # Defines additional volume mounts.
+    # extraVolumeMounts: |
+    # - name: extra-volume
+    #   mountPath: /mnt/volume
+    #   readOnly: true
+  # If you want to use your own constants.json you have to provide your configmap or secret in extraVolume part.
+  # the name of the volume MUST be "config".
+  # In this case, values configuration related to constants.json defined in this file will be ignored
+  #extraVolumes: |
+  #  - name: config
+  #    configMap:
+  #      name: gravitee-config-configmap-name
+  #  - name: config
+  #    secret:
+  #      secretName: gravitee-config-secret-name
+
+initContainers:
+  image: alpine:latest
+  imagePullPolicy: Always
+  securityContext:
+    runAsUser: 1001
+    runAsNonRoot: true
+  env: []
+
+# For enterprise plugin only, you will need a license
+license:
+  name: licensekey
+#  key: <put here your license.key file encoded in base64>

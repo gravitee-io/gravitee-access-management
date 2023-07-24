@@ -1,0 +1,140 @@
+{{- if .Values.ui.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "gravitee.ui.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ template "gravitee.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/version: {{ .Values.ui.image.tag | default .Chart.AppVersion | quote }}
+    app.kubernetes.io/component: "{{ .Values.ui.name }}"
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    {{- if .Values.ui.deployment.labels }}
+    {{- range $key, $value := .Values.ui.deployment.labels }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+    {{- else }}
+    {{- range $key, $value := .Values.labels }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+    {{- end }}
+  {{- if .Values.ui.deployment.annotations}}
+  annotations:
+    {{- range $key, $value := .Values.ui.deployment.annotations }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+  {{- end }}
+spec:
+  {{- if .Values.ui.deployment.revisionHistoryLimit }}
+  revisionHistoryLimit: {{ .Values.ui.deployment.revisionHistoryLimit }}
+  {{- end }}
+  {{- if not .Values.ui.autoscaling.enabled }}
+  replicas: {{ .Values.ui.replicaCount }}
+  {{- end }}
+  strategy: {{ toYaml .Values.ui.deployment.strategy | nindent 4 }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ template "gravitee.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/component: "{{ .Values.ui.name }}"
+  template:
+    metadata:
+      annotations:
+        chaos.alpha.kubernetes.io/enabled: "{{ .Values.chaos.enabled }}"
+        checksum/config: {{ include (print $.Template.BasePath "/ui/ui-configmap.yaml") . | sha256sum }}
+        {{- range $key, $value := .Values.ui.podAnnotations }}
+        {{ $key }}: {{ $value | quote }}
+        {{- end }}
+      labels:
+        app.kubernetes.io/name: {{ template "gravitee.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/version: {{ .Values.ui.image.tag | default .Chart.AppVersion | quote }}
+        app.kubernetes.io/component: "{{ .Values.ui.name }}"
+        {{- if .Values.ui.deployment.labels }}
+        {{- range $key, $value := .Values.ui.deployment.labels }}
+        {{ $key }}: {{ $value | quote }}
+        {{- end }}
+        {{- else }}
+        {{- range $key, $value := .Values.labels }}
+        {{ $key }}: {{ $value | quote }}
+        {{- end }}
+        {{- end }}
+    spec:
+      affinity: {{ toYaml .Values.ui.deployment.affinity | nindent 8 }}
+      nodeSelector: {{ toYaml .Values.ui.deployment.nodeSelector | nindent 8 }}
+      topologySpreadConstraints: {{ toYaml .Values.ui.deployment.topologySpreadConstraints | nindent 8 }}
+      tolerations: {{ toYaml .Values.ui.deployment.tolerations | nindent 8 }}
+      {{- if .Values.ui.priorityClassName }}
+      priorityClassName: {{ .Values.ui.priorityClassName  }}
+      {{- end }}
+      terminationGracePeriodSeconds: {{ .Values.ui.terminationGracePeriod }}
+      {{- if .Values.ui.deployment.hostAliases }}
+      hostAliases: {{ toYaml .Values.ui.deployment.hostAliases | nindent 6 }}
+      {{- end }}
+
+    {{- if or .Values.ui.extraInitContainers }}
+      initContainers:
+      {{- with .Values.ui.extraInitContainers }}
+        {{- tpl . $ | nindent 8 }}
+      {{- end }}
+    {{- end }}
+      containers:
+        - name: {{ template "gravitee.ui.fullname" . }}
+          image: "{{ .Values.ui.image.repository }}:{{ default .Chart.AppVersion .Values.ui.image.tag }}"
+          imagePullPolicy: {{ .Values.ui.image.pullPolicy }}
+          securityContext: {{ toYaml ( .Values.ui.securityContext | default .Values.ui.deployment.securityContext ) | nindent 12 }}
+          env:
+            - name: MGMT_API_URL
+              value: "https://{{index .Values.api.ingress.hosts 0 }}"
+            - name: MGMT_UI_URL
+              value: "https://{{index .Values.ui.ingress.hosts 0 }}{{ .Values.ui.ingress.path }}"
+{{- if .Values.ui.env | default .Values.ui.deployment.extraEnvs }}
+{{ toYaml ( .Values.ui.env | default .Values.ui.deployment.extraEnvs ) | indent 12 }}
+{{- end }}
+          envFrom: {{ toYaml .Values.ui.deployment.envFrom | nindent 12 }}
+          ports:
+            - name: {{ .Values.ui.service.internalPortName }}
+              containerPort: {{ .Values.ui.service.internalPort }}
+          {{- if .Values.ui.lifecycle }}
+          lifecycle:
+            {{- if .Values.ui.lifecycle.postStart }}
+            postStart:
+              exec:
+                command: {{ .Values.ui.lifecycle.postStart }}
+            {{- end }}
+            {{- if .Values.ui.lifecycle.preStop }}
+            preStop:
+              exec:
+                command: {{ .Values.ui.lifecycle.preStop }}
+            {{- end }}
+          {{- end }}
+          livenessProbe: {{ toYaml .Values.ui.livenessProbe | nindent 12 }}
+          readinessProbe: {{ toYaml .Values.ui.readinessProbe | nindent 12 }}
+          resources: {{ toYaml .Values.ui.resources | nindent 12 }}
+          volumeMounts:
+            - name: config
+              mountPath: /usr/share/nginx/html/constants.json
+              subPath: constants.json
+            {{- with .Values.ui.extraVolumeMounts }}
+            {{- tpl . $ | nindent 12 }}
+            {{- end }}
+        {{- if .Values.ui.extraContainers }}
+        {{- with .Values.ui.extraContainers }}
+        {{- tpl . $ | nindent 8 }}
+        {{- end }}
+        {{- end }}
+      {{- if .Values.ui.image.pullSecrets }}
+      imagePullSecrets:
+        - name: {{ .Values.ui.image.pullSecrets }}
+      {{- end }}
+      volumes:
+        {{- if not (include "ui.externalConfig" .) }}
+        - name: config
+          configMap:
+            name: {{ template "gravitee.ui.fullname" . }}
+        {{- end }}
+      {{- with .Values.ui.extraVolumes }}
+        {{- tpl . $ | nindent 8 }}
+      {{- end }}
+{{- end -}}
