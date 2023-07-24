@@ -17,6 +17,7 @@ package io.gravitee.am.management.service.impl.plugins;
 
 import io.gravitee.am.management.service.ExtensionGrantPluginService;
 import io.gravitee.am.plugins.extensiongrant.core.ExtensionGrantPluginManager;
+import io.gravitee.am.plugins.handlers.api.core.AmPluginManager;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.plugin.ExtensionGrantPlugin;
 import io.gravitee.plugin.core.api.Plugin;
@@ -35,15 +36,20 @@ import java.util.stream.Collectors;
  * @author GraviteeSource Team
  */
 @Component
-public class ExtensionGrantPluginServiceImpl implements ExtensionGrantPluginService {
+public class ExtensionGrantPluginServiceImpl extends AbstractPluginService implements ExtensionGrantPluginService {
 
     /**
      * Logger.
      */
     private final Logger LOGGER = LoggerFactory.getLogger(ExtensionGrantPluginServiceImpl.class);
 
-    @Autowired
     private ExtensionGrantPluginManager extensionGrantPluginManager;
+
+    @Autowired
+    public ExtensionGrantPluginServiceImpl(ExtensionGrantPluginManager extensionGrantPluginManager) {
+        super(extensionGrantPluginManager);
+        this.extensionGrantPluginManager = extensionGrantPluginManager;
+    }
 
     @Override
     public Single<Set<ExtensionGrantPlugin>> findAll() {

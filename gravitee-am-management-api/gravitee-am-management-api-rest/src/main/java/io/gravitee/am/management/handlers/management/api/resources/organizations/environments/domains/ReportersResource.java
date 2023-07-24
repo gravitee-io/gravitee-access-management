@@ -17,6 +17,7 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.management.service.ReporterPluginService;
 import io.gravitee.am.management.service.ReporterServiceProxy;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Reporter;
@@ -54,6 +55,9 @@ public class ReportersResource extends AbstractResource {
 
     @Autowired
     private ReporterServiceProxy reporterService;
+
+    @Autowired
+    private ReporterPluginService reporterPluginService;
 
     @Autowired
     private DomainService domainService;
@@ -114,6 +118,7 @@ public class ReportersResource extends AbstractResource {
         User authenticatedUser = getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_REPORTER, Acl.CREATE)
+                .andThen(reporterPluginService.checkPluginDeployment(newReporter.getType()))
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(irrelevant -> reporterService.create(domain, newReporter, authenticatedUser, false))

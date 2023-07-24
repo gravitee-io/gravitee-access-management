@@ -96,4 +96,8 @@ public abstract class ProviderPluginManager<INSTANCE extends AmPlugin<?, PROVIDE
             throw ex;
         }
     }
+
+    public boolean isPluginDeployed(String pluginTypeId) {
+        return this.findAll().stream().anyMatch(p -> p.getDelegate().id().equals(pluginTypeId));
+    }
 }

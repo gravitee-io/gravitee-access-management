@@ -18,9 +18,11 @@ package io.gravitee.am.management.handlers.management.api.resources;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ExtensionGrant;
+import io.gravitee.am.service.exception.PluginNotDeployedException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewExtensionGrant;
 import io.gravitee.common.http.HttpStatusCode;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -96,11 +98,38 @@ public class ExtensionGrantsResourceTest extends JerseySpringTest {
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Single.just(extensionGrant)).when(extensionGrantService).create(eq(domainId), any(), any());
+        doReturn(Completable.complete()).when(extensionGrantPluginService).checkPluginDeployment(any());
 
         final Response response = target("domains")
                 .path(domainId)
                 .path("extensionGrants")
                 .request().post(Entity.json(newExtensionGrant));
         assertEquals(HttpStatusCode.CREATED_201, response.getStatus());
+    }
+
+    @Test
+    public void shouldNotCreate_pluginNotDeployed() {
+        final String domainId = "domain-1";
+        final Domain mockDomain = new Domain();
+        mockDomain.setId(domainId);
+
+        NewExtensionGrant newExtensionGrant = new NewExtensionGrant();
+        newExtensionGrant.setName("extensionGrant-name");
+        newExtensionGrant.setType("extensionGrant-type");
+        newExtensionGrant.setConfiguration("extensionGrant-configuration");
+        newExtensionGrant.setGrantType("extensionGrant:grantType");
+
+        ExtensionGrant extensionGrant = new ExtensionGrant();
+        extensionGrant.setId("extensionGrant-id");
+        extensionGrant.setName("extensionGrant-name");
+
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+        doReturn(Completable.error(PluginNotDeployedException.forType(newExtensionGrant.getType()))).when(extensionGrantPluginService).checkPluginDeployment(any());
+
+        final Response response = target("domains")
+                .path(domainId)
+                .path("extensionGrants")
+                .request().post(Entity.json(newExtensionGrant));
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
     }
 }

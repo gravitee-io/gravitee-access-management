@@ -35,12 +35,17 @@ import java.util.List;
  * @author GraviteeSource Team
  */
 @Component
-public class AuthenticationDeviceNotifierPluginServiceImpl implements AuthenticationDeviceNotifierPluginService {
+public class AuthenticationDeviceNotifierPluginServiceImpl extends AbstractPluginService implements AuthenticationDeviceNotifierPluginService {
 
     private final Logger LOGGER = LoggerFactory.getLogger(AuthenticationDeviceNotifierPluginServiceImpl.class);
 
-    @Autowired
     private AuthenticationDeviceNotifierPluginManager pluginManager;
+
+    @Autowired
+    public AuthenticationDeviceNotifierPluginServiceImpl(AuthenticationDeviceNotifierPluginManager pluginManager) {
+        super(pluginManager);
+        this.pluginManager = pluginManager;
+    }
 
     @Override
     public Single<List<AuthenticationDeviceNotifierPlugin>> findAll(List<String> expand) {
