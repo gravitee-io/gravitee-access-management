@@ -25,7 +25,6 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.event.Payload;
-import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.EmailTemplateService;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
@@ -72,9 +71,6 @@ public class EmailManagerImpl extends AbstractService<EmailManager> implements E
 
     @Autowired
     private EventManager eventManager;
-
-    @Autowired
-    private ApplicationService applicationService;
 
     @Override
     protected void doStart() throws Exception {
@@ -181,10 +177,8 @@ public class EmailManagerImpl extends AbstractService<EmailManager> implements E
                     .filter(Email::isEnabled);
         }
 
-        return applicationService.findByDomainAndClientId(referenceId, user.getClient()).flatMap(application ->
-                        emailTemplateService.findByClientAndTemplate(refType, referenceId, application.getId(), templateDef.template())
-                                .filter(Email::isEnabled)
-                )
+        return emailTemplateService.findByClientAndTemplate(refType, referenceId, user.getClient(), templateDef.template())
+                .filter(Email::isEnabled)
                 .switchIfEmpty(Maybe.defer(() -> emailTemplateService.findByTemplate(refType, referenceId, templateDef.template())))
                 .filter(Email::isEnabled);
     }
