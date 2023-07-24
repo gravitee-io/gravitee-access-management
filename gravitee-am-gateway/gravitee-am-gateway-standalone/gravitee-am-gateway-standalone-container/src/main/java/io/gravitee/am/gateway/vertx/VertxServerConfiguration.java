@@ -45,9 +45,8 @@ public class VertxServerConfiguration {
         return VertxHttpServerOptions.builder()
                 .prefix(HTTP_PREFIX)
                 .environment(environment)
-                .port(8092)
+                .port(environment.getProperty(HTTP_PREFIX + ".port", Integer.class, 8092))
                 .keyStoreLoaderManager(keyStoreLoaderManager)
-                .maxFormAttributeSize(2048)
                 .id(HTTP_PREFIX)
                 .build();
     }
