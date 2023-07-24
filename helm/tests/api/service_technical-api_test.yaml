@@ -1,0 +1,62 @@
+suite: Test Management API Service with Technical API enabled
+templates:
+  - "api/api-service.yaml"
+tests:
+  - it: Check technical api service
+    template: api/api-service.yaml
+    set:
+      api:
+        http:
+          services:
+            core:
+              service:
+                externalPort: 18093
+                enabled: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Service
+      - isAPIVersion:
+          of: v1
+      - equal:
+          path: spec.type
+          value: ClusterIP
+      - contains:
+          path: spec.ports
+          content:
+            port: 18093
+            targetPort: 18093
+            protocol: TCP
+            name: management-api-technical
+            appProtocol: http
+
+  - it: Check technical api service with custom appProtocol
+    template: api/api-service.yaml
+    set:
+      api:
+        http:
+          services:
+            core:
+              service:
+                externalPort: 18093
+                enabled: true
+                appProtocol: http-test
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Service
+      - isAPIVersion:
+          of: v1
+      - equal:
+          path: spec.type
+          value: ClusterIP
+      - contains:
+          path: spec.ports
+          content:
+            port: 18093
+            targetPort: 18093
+            protocol: TCP
+            name: management-api-technical
+            appProtocol: http-test

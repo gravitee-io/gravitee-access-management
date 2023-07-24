@@ -1,0 +1,506 @@
+{{- if and (.Values.api.enabled) (or (not (include "api.externalConfig" .)) (.Values.api.logging.debug)) -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "gravitee.api.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ template "gravitee.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/version: {{ .Values.api.image.tag | default .Chart.AppVersion | quote }}
+    app.kubernetes.io/component: "{{ .Values.api.name }}"
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+data:
+  {{- if not (include "api.externalConfig" .)}}
+  gravitee.yml: |
+    jetty:
+      host: {{ .Values.api.http.host | default "0.0.0.0" }}
+      port: {{ .Values.api.http.port | default 8093 }}
+      idleTimeout: {{ .Values.api.http.idleTimeout | default 30000 }}
+      acceptors: {{ .Values.api.http.acceptors | default -1 }}
+      selectors: {{ .Values.api.http.selectors | default -1 }}
+      statistics: {{ .Values.api.http.statistics | default false }}
+      outputBufferSize: {{ .Values.api.http.outputBufferSize | default 32768 }}
+      requestHeaderSize: {{ .Values.api.http.requestHeaderSize | default 8192 }}
+      responseHeaderSize: {{ .Values.api.http.responseHeaderSize | default 8192 }}
+      {{- if .Values.api.http.pool }}
+      pool:
+        minThreads: {{ .Values.api.http.pool.minThreads | default 10 }}
+        maxThreads: {{ .Values.api.http.pool.maxThreads | default 200 }}
+        idleTimeout: {{ .Values.api.http.pool.idleTimeout  | default 60000 }}
+        queueSize: {{ .Values.api.http.pool.queueSize | default 6000 }}
+      {{ end }}
+      {{- if .Values.api.http.accesslog }}
+      accesslog:
+        enabled: {{ .Values.api.http.accesslog.enabled | default true }}
+        {{- if .Values.api.http.accesslog.path }}
+        path: {{ .Values.api.http.accesslog.path }}
+        {{ end }}
+      {{ end }}
+      secured: {{ .Values.api.ssl.enabled | default false }}
+      {{- if .Values.api.ssl.enabled }}
+      ssl:
+        keystore:
+          {{- if .Values.api.ssl.keystore.type }}
+          type: {{ .Values.api.ssl.keystore.type }}
+          {{- end }}
+          path: {{ .Values.api.ssl.keystore.path }}
+          password: {{ .Values.api.ssl.keystore.password | quote }}
+        clientAuth: {{ .Values.api.ssl.clientAuth }}
+        {{- if .Values.api.ssl.truststore }}
+        truststore:
+          {{- if .Values.api.ssl.truststore.type }}
+          type: {{ .Values.api.ssl.truststore.type }}
+          {{- end }}
+          path: {{ .Values.api.ssl.truststore.path }}
+          password: {{ .Values.api.ssl.truststore.password | quote }}
+        {{- end }}
+      {{- end }}
+    
+    {{- if and .Values.api.http .Values.api.http.api }}
+    http:
+      api:
+        entrypoint: {{ .Values.api.http.api.entrypoint }}
+    {{- end }}
+
+    {{- if .Values.httpClient }}
+    httpClient:
+{{ toYaml .Values.httpClient | indent 6 }}
+    {{- end }}
+
+    liquibase:
+      enabled: {{ .Values.api.liquibase.enabled }}
+  
+    management:
+      type: {{ .Values.management.type | default "mongodb" }}
+      {{- if or (eq .Values.management.type "mongodb") (kindIs "invalid" .Values.management.type) }}
+      mongodb:
+        sslEnabled: {{ .Values.mongo.sslEnabled }}
+        {{- if .Values.mongo.keystore }}
+        keystore:
+          {{ toYaml .Values.mongo.keystore | nindent 10 | trim -}}
+        {{- end }}
+        {{- if .Values.mongo.truststore }}
+        truststore:
+          {{ toYaml .Values.mongo.truststore | nindent 10 | trim -}}
+        {{- end }}
+        socketKeepAlive: {{ .Values.mongo.socketKeepAlive }}
+        {{- if .Values.mongo.uri }}
+        uri: {{ .Values.mongo.uri }}
+        {{- else if .Values.mongo.servers }}
+        servers:
+          {{- .Values.mongo.servers | nindent 10 }}
+        dbname: {{ .Values.mongo.dbname }}
+        {{- if (eq .Values.mongo.auth.enabled true) }}
+        username: {{ .Values.mongo.auth.username }}
+        {{- if .Values.mongo.auth.password }}
+        password: {{ .Values.mongo.auth.password }}
+        {{- end }}
+        {{- if .Values.mongo.auth.source }}
+        authSource: {{ .Values.mongo.auth.source }}
+        {{- end }}
+        {{- end }}
+        {{- else }}
+        uri: mongodb://{{- if (eq .Values.mongo.auth.enabled true) }}{{ .Values.mongo.auth.username }}:{{ .Values.mongo.auth.password }}@{{- end }}{{ .Values.mongo.dbhost }}:{{ .Values.mongo.dbport }}/{{ .Values.mongo.dbname }}?{{- if .Values.mongo.rsEnabled }}&replicaSet={{ .Values.mongo.rs }}{{- end }}{{- if (eq .Values.mongo.auth.enabled true) }}&authSource={{ .Values.mongo.auth.source }}{{- end }}{{- if .Values.mongo.connectTimeoutMS }}&connectTimeoutMS={{ .Values.mongo.connectTimeoutMS }}{{- end }}
+        {{- end }}
+      {{- else if (eq .Values.management.type "jdbc") }}
+      jdbc:
+        driver: {{ .Values.jdbc.driver }}
+        host: {{ .Values.jdbc.host }}
+        port: {{ .Values.jdbc.port }}
+        database: {{ .Values.jdbc.database }}
+        {{- if .Values.jdbc.username }}
+        username: {{ .Values.jdbc.username }}
+        {{- end }}
+        {{- if .Values.jdbc.password }}
+        password: {{ .Values.jdbc.password }}
+        {{- end }}
+        {{- if .Values.jdbc.pool }}
+        {{ toYaml .Values.jdbc.pool | nindent 8 | trim -}}
+        {{- end }}
+        {{- if .Values.jdbc.sslEnabled }}
+        sslEnabled: {{ .Values.jdbc.sslEnabled }}
+        {{- end }}
+        {{- if .Values.jdbc.sslMode }}
+        sslMode: {{ .Values.jdbc.sslMode }}
+        {{- end }}
+        {{- if .Values.jdbc.sslServerCert }}
+        sslServerCert: {{ .Values.jdbc.sslServerCert }}
+        {{- end }}
+        {{- if .Values.jdbc.trustServerCertificate }}
+        trustServerCertificate: {{ .Values.jdbc.trustServerCertificate }}
+        {{- end }}
+        {{- if .Values.jdbc.disableSslHostnameVerification }}
+        disableSslHostnameVerification: {{ .Values.jdbc.disableSslHostnameVerification }}
+        {{- end }}
+        {{- if .Values.jdbc.trustStore }}
+        trustStore:
+          {{ toYaml .Values.jdbc.trustStore | nindent 10 | trim -}}
+        {{- end }}
+      {{- end }}
+
+    oauth2:
+      type: {{ .Values.oauth2.type | default "mongodb" }}
+      {{- if or (eq .Values.oauth2.type "mongodb") (kindIs "invalid" .Values.oauth2.type) }}
+      mongodb:
+        sslEnabled: {{ .Values.mongo.sslEnabled }}
+        {{- if .Values.mongo.keystore }}
+        keystore:
+          {{ toYaml .Values.mongo.keystore | nindent 10 | trim -}}
+        {{- end }}
+        {{- if .Values.mongo.truststore }}
+        truststore:
+          {{ toYaml .Values.mongo.truststore | nindent 10 | trim -}}
+        {{- end }}
+        socketKeepAlive: {{ .Values.mongo.socketKeepAlive }}
+        {{- if .Values.mongo.uri }}
+        uri: {{ .Values.mongo.uri }}
+        {{- else if .Values.mongo.servers }}
+        servers:
+          {{- .Values.mongo.servers | nindent 10 }}
+        dbname: {{ .Values.mongo.dbname }}
+        {{- if (eq .Values.mongo.auth.enabled true) }}
+        username: {{ .Values.mongo.auth.username }}
+        {{- if .Values.mongo.auth.password }}
+        password: {{ .Values.mongo.auth.password }}
+        {{- end }}
+        {{- if .Values.mongo.auth.source }}
+        authSource: {{ .Values.mongo.auth.source }}
+        {{- end }}
+        {{- end }}
+        {{- else }}
+        uri: mongodb://{{- if (eq .Values.mongo.auth.enabled true) }}{{ .Values.mongo.auth.username }}:{{ .Values.mongo.auth.password }}@{{- end }}{{ .Values.mongo.dbhost }}:{{ .Values.mongo.dbport }}/{{ .Values.mongo.dbname }}?{{- if .Values.mongo.rsEnabled }}&replicaSet={{ .Values.mongo.rs }}{{- end }}{{- if (eq .Values.mongo.auth.enabled true) }}&authSource={{ .Values.mongo.auth.source }}{{- end }}{{- if .Values.mongo.connectTimeoutMS }}&connectTimeoutMS={{ .Values.mongo.connectTimeoutMS }}{{- end }}
+        {{- end }}
+      {{- else if (eq .Values.oauth2.type "jdbc") }}
+      jdbc:
+        driver: {{ .Values.jdbc.driver }}
+        host: {{ .Values.jdbc.host }}
+        port: {{ .Values.jdbc.port }}
+        database: {{ .Values.jdbc.database }}
+        {{- if .Values.jdbc.username }}
+        username: {{ .Values.jdbc.username }}
+        {{- end }}
+        {{- if .Values.jdbc.password }}
+        password: {{ .Values.jdbc.password }}
+        {{- end }}
+        {{- if .Values.jdbc.pool }}
+        {{ toYaml .Values.jdbc.pool | nindent 8 | trim -}}
+        {{- end }}
+        {{- if .Values.jdbc.sslEnabled }}
+        sslEnabled: {{ .Values.jdbc.sslEnabled }}
+        {{- end }}
+        {{- if .Values.jdbc.sslMode }}
+        sslMode: {{ .Values.jdbc.sslMode }}
+        {{- end }}
+        {{- if .Values.jdbc.sslServerCert }}
+        sslServerCert: {{ .Values.jdbc.sslServerCert }}
+        {{- end }}
+        {{- if .Values.jdbc.trustServerCertificate }}
+        trustServerCertificate: {{ .Values.jdbc.trustServerCertificate }}
+        {{- end }}
+        {{- if .Values.jdbc.disableSslHostnameVerification }}
+        disableSslHostnameVerification: {{ .Values.jdbc.disableSslHostnameVerification }}
+        {{- end }}
+        {{- if .Values.jdbc.trustStore }}
+        trustStore:
+          {{ toYaml .Values.jdbc.trustStore | nindent 10 | trim -}}
+        {{- end }}
+      {{- end }}
+
+    services:
+      core:
+        http:
+          enabled: true
+          port: {{ .Values.api.http.services.core.http.port | default "18093" }}
+          host: {{ .Values.api.http.services.core.http.host | default "localhost" }}
+          authentication:
+            type: {{ .Values.api.http.services.core.http.authentication.type | default "basic" }}
+            users:
+              admin: {{ .Values.api.http.services.core.http.authentication.password | default "adminadmin"}}
+
+      {{- if .Values.api.http.services.metrics.enabled }}
+      metrics:
+        enabled: {{ .Values.api.http.services.metrics.enabled }}
+        {{- if .Values.api.http.services.metrics.prometheus }}
+        prometheus:
+{{ toYaml .Values.api.http.services.metrics.prometheus | indent 10 }}
+        {{- end }}
+      {{- end }}
+      
+  {{- if .Values.api.services }}
+    {{- if .Values.api.services.notifier }}
+      notifier:
+{{ toYaml .Values.api.services.notifier | indent 8 }}
+    {{- end }}
+    {{- if .Values.api.services.certificate }}
+      certificate:
+        enabled: {{ .Values.api.services.certificate.enabled | default true}}
+        {{- if .Values.api.services.certificate.enabled }}
+        cronExpression: {{ .Values.api.services.certificate.cronExpression | default "0 0 5 * * *" }}
+        expiryThresholds: {{ .Values.api.services.certificate.expiryThresholds | default "20,15,10,5,1" }}
+          {{- if .Values.api.services.certificate.expiryEmailSubject }}
+        expiryEmailSubject: {{ .Values.api.services.certificate.expiryEmailSubject | quote }}
+          {{- end }}
+        {{- end }}
+    {{- end }}
+  {{- end }}
+
+    notifiers:
+      email: 
+        enabled: {{ .Values.api.notifiers.email.enabled }}
+        {{- if or .Values.api.notifiers.email.enabled .Values.smtp.enabled }}
+        host: {{ .Values.api.notifiers.email.host | default .Values.smtp.host }}
+        subject: {{ .Values.api.notifiers.email.subject | default .Values.smtp.subject | quote }}
+        port: {{ .Values.api.notifiers.email.port | default .Values.smtp.port }}
+        from: {{ .Values.api.notifiers.email.from | default .Values.smtp.from }}
+        {{- if or .Values.api.notifiers.email.username .Values.api.notifiers.email.password }}
+        username: {{ .Values.api.notifiers.email.username }}
+        password: {{ .Values.api.notifiers.email.password }}
+        {{- else if or .Values.smtp.username .Values.smtp.password }}
+        username: {{ .Values.smtp.username }}
+        password: {{ .Values.smtp.password }}
+        {{- end }}
+        startTLSEnabled: {{ .Values.api.notifiers.email.startTLSEnabled | default .Values.smtp.properties.starttlsEnable }}
+        {{- if .Values.api.notifiers.email.sslTrustAll }}
+        sslTrustAll: {{ .Values.api.notifiers.email.sslTrustAll }}
+        {{- else if eq (.Values.smtp.properties.sslTrust | default "") "*" }}
+        sslTrustAll: true
+        {{- else }}
+        sslTrustAll: false
+        {{- end }}
+        {{- if .Values.api.notifiers.email.sslKeyStore }}
+        sslKeyStore: {{ .Values.api.notifiers.email.sslKeyStore }}
+        {{- end }}
+        {{- if .Values.api.notifiers.email.sslKeyStorePassword }}
+        sslKeyStorePassword: {{ .Values.api.notifiers.email.sslKeyStorePassword }}
+        {{- end }}
+        {{- end }}
+      ui:
+        enabled: {{ .Values.api.notifiers.ui.enabled }}
+    
+    # SMTP configuration used to send mails
+    email:
+      enabled: {{ .Values.smtp.enabled }}
+      {{- if .Values.smtp.enabled }}
+      host: {{ .Values.smtp.host }}
+      subject: {{ .Values.smtp.subject | quote }}
+      port: {{ .Values.smtp.port }}
+      from: {{ .Values.smtp.from }}
+      {{- if or .Values.smtp.username .Values.smtp.password }}
+      username: {{ .Values.smtp.username }}
+      password: {{ .Values.smtp.password }}
+      {{- end }}
+      properties:
+        auth: {{ .Values.smtp.properties.auth }}
+        starttls.enable: {{ .Values.smtp.properties.starttlsEnable }}
+        {{- if .Values.smtp.properties.localhost }}
+        localhost: {{ .Values.smtp.properties.localhost }}
+        {{- end }}
+        {{- if .Values.smtp.properties.sslTrust }}
+        ssl.trust: {{ .Values.smtp.properties.sslTrust }}
+        {{- end }}
+        {{- if .Values.smtp.properties.sslProtocols }}
+        ssl.protocols: {{ .Values.smtp.properties.sslProtocols }}
+        {{- end }}
+      {{- end }}
+
+    domains:
+      certificates:
+        default:
+          keysize: {{ .Values.api.domains.certificates.default.keysize }}
+          alias: {{ .Values.api.domains.certificates.default.alias }}
+          keypass:  {{ .Values.api.domains.certificates.default.keypass }}
+          storepass:  {{ .Values.api.domains.certificates.default.storepass }}
+          validity:  {{ .Values.api.domains.certificates.default.validity }}
+          algorithm:  {{ .Values.api.domains.certificates.default.algorithm }}
+          name:  {{ .Values.api.domains.certificates.default.name }}
+          {{- if .Values.api.domains.certificates.default.refresh }}
+          refresh:
+            delay: {{ .Values.api.domains.certificates.default.refresh.delay | default 10 }}
+            timeUnit: {{ .Values.api.domains.certificates.default.refresh.timeUnit | default "MINUTES" }}
+          {{- end }}
+
+    jwt:
+      secret: {{ .Values.api.jwt.secret }}
+      kid: {{ .Values.api.jwt.kid | default "default-gravitee-AM-key" }}
+      # Allows to define the end of validity of the token in seconds (default 604800 = a week)
+      expire-after: {{ .Values.api.jwt.expireAfter | default 604800 }}
+      # Allows to define issuer (default https://gravitee.am)
+      issuer: {{ .Values.api.jwt.issuer | default "https://gravitee.am" }}
+      # Allows to define cookie context path (default /)
+      cookie-path: {{ .Values.api.jwt.cookie.path | default "/" }}
+      # Allows to define cookie domain (default "")
+      {{- if .Values.api.jwt.cookie }}
+      cookie-domain: {{ .Values.api.jwt.cookie.domain }}
+      {{- else }}
+      cookie-domain: {{ index .Values.ui.ingress.hosts 0 }}
+      {{- end }}
+      # Allows to define if cookie secure only (default false)
+      cookie-secure: {{ .Values.api.jwt.cookie.secure | default false }}
+
+    {{- if .Values.userManagement }}
+    
+    # User management configuration
+    user:
+    
+    {{- if .Values.userManagement.activity }}
+      activity:
+{{ toYaml .Values.userManagement.activity | indent 8 }}
+    {{- end}}
+
+    {{- if .Values.userManagement.email }}
+      email:
+{{ toYaml .Values.userManagement.email | indent 8 }}
+    {{- end }}
+
+    {{- if .Values.userManagement.password }}
+      password:
+{{ toYaml .Values.userManagement.password | indent 8 }}
+    {{- end }}
+
+    {{- if .Values.userManagement.name }}
+      name:
+{{ toYaml .Values.userManagement.name | indent 8 }}
+    {{- end }}
+
+    {{- if .Values.userManagement.username }}
+      username:
+{{ toYaml .Values.userManagement.username | indent 8 }}
+    {{- end }}
+
+    {{- if .Values.userManagement.registration }}
+      registration:
+{{ toYaml .Values.userManagement.registration | indent 8 }}
+    {{- end }}
+      
+    {{- if .Values.userManagement.resetPassword }}
+      resetPassword:
+{{ toYaml .Values.userManagement.resetPassword | indent 8 }}
+    {{- end }}
+
+    {{- if .Values.userManagement.blockedAccount }}      
+      blockedAccount:
+{{ toYaml .Values.userManagement.blockedAccount | indent 8 }}
+    {{- end }}
+
+    {{- if .Values.userManagement.mfaChallenge }}
+      mfaChallenge:
+{{ toYaml .Values.userManagement.mfaChallenge | indent 8 }}
+    {{- end }}
+
+    {{- end }}
+
+    # Gateway entry point used in emails
+    gateway:
+    {{- if .Values.api.gateway }}
+      url: {{ .Values.api.gateway.url }}
+    {{- else }}
+      url: https://{{index .Values.gateway.ingress.hosts 0 }}{{ .Values.gateway.ingress.path }}
+    {{- end }}
+      # Alert Engine communication
+    
+    # Alert Engine communication
+    {{ if .Values.alerts.enabled }}
+    alerts:
+      alert-engine-connector-ws:
+        enabled: true
+      alert-engine:
+        enabled: true
+        {{- if .Values.alerts.engines }}
+        engines:
+          {{ toYaml .Values.alerts.engines | nindent 10 | trim -}}
+        {{- end }}        
+        ws:
+          discovery: true
+          {{- if .Values.alerts.options }}
+          {{ toYaml .Values.alerts.options | nindent 10 | trim -}}
+          {{- end }}
+          {{- with .Values.alerts.endpoints }}
+          endpoints:
+            {{ toYaml . | nindent 12 | trim -}}
+          {{- end }}
+          {{- if (eq .Values.alerts.security.enabled true) }}
+          security:
+            username: {{ .Values.alerts.security.username }}
+            password: {{ .Values.alerts.security.password }}
+          {{- end }}
+      {{- if .Values.alerts.triggers  }}
+      {{ toYaml .Values.alerts.triggers | nindent 6 | trim -}}
+      {{- end }}
+    {{- else }}
+    alerts:
+      alert-engine-connector-ws:
+        enabled: false
+    {{- end }}
+  {{- end }}
+  {{- if .Values.api.logging.debug }}
+  logback.xml: |
+    <?xml version="1.0" encoding="UTF-8"?>
+
+    <!--
+      ~ Copyright (c) 2015-2016, The Gravitee team (http://www.gravitee.io)
+      ~
+      ~  Licensed under the Apache License, Version 2.0 (the "License");
+      ~  you may not use this file except in compliance with the License.
+      ~  You may obtain a copy of the License at
+      ~
+      ~  http://www.apache.org/licenses/LICENSE-2.0
+      ~
+      ~  Unless required by applicable law or agreed to in writing, software
+      ~  distributed under the License is distributed on an "AS IS" BASIS,
+      ~  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+      ~  See the License for the specific language governing permissions and
+      ~  limitations under the License.
+      -->
+
+        <configuration>
+
+          <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+              {{- if .Values.api.logging.stdout.json }}
+              <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
+                  <layout class="ch.qos.logback.contrib.json.classic.JsonLayout">
+                      <jsonFormatter
+                              class="ch.qos.logback.contrib.jackson.JacksonJsonFormatter">
+                      </jsonFormatter>
+                      <appendLineSeparator>true</appendLineSeparator>
+                      <timestampFormat>yyyy-MM-dd'T'HH:mm:ss.SSSXX</timestampFormat>
+                  </layout>
+              </encoder>
+              {{- else }}
+              <!-- encoders are assigned the type
+                  ch.qos.logback.classic.encoder.PatternLayoutEncoder by default -->
+              <encoder>
+                  <pattern>{{ .Values.api.logging.stdout.encoderPattern }}</pattern>
+              </encoder>
+               {{- end }}
+          </appender>
+
+            {{- if .Values.api.logging.file.enabled }}
+            <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+                <file>${gravitee.management.log.dir}/gravitee.log</file>
+{{ .Values.api.logging.file.rollingPolicy | indent 16 }}
+                <encoder>
+                    <pattern>{{ .Values.api.logging.file.encoderPattern }}</pattern>
+                </encoder>
+            </appender>
+            {{- end }}
+
+            <logger name="io.gravitee" level="{{ .Values.api.logging.graviteeLevel }}" />
+            <logger name="com.graviteesource" level="{{ .Values.api.logging.graviteeSourceLevel }}" />
+            <logger name="org.eclipse.jetty" level="{{ .Values.api.logging.jettyLevel }}" />
+            {{- if .Values.api.logging.extraLoggers }}
+{{ .Values.api.logging.extraLoggers | indent 12 }}
+            {{- end }}
+
+            <!-- Strictly speaking, the level attribute is not necessary since -->
+            <!-- the level of the root level is set to DEBUG by default.       -->
+            <root level="WARN">
+                <appender-ref ref="STDOUT" />
+                {{- if .Values.api.logging.file.enabled }}
+                <appender-ref ref="FILE" />
+                {{- end }}
+            </root>
+
+        </configuration>
+  {{- end }}
+{{- end -}}
