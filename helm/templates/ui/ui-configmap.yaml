@@ -1,0 +1,29 @@
+{{- if and (.Values.ui.enabled) (not (include "ui.externalConfig" .)) -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "gravitee.ui.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ template "gravitee.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/version: {{ .Values.ui.image.tag | default .Chart.AppVersion | quote }}
+    app.kubernetes.io/component: "{{ .Values.ui.name }}"
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+data:
+  use-gzip: "true"
+  gzip-level: "5"
+  gzip-types: "*"
+  constants.json: |
+    {
+      {{- if .Values.ui.baseURL }}
+      "baseURL": "{{ .Values.ui.baseURL }}"
+      {{- else }}
+        {{- if hasPrefix "/" .Values.api.ingress.path }}
+      "baseURL": "https://{{ index .Values.api.ingress.hosts 0 }}{{ .Values.api.ingress.path }}"
+        {{- else }}
+      "baseURL": "https://{{ index .Values.api.ingress.hosts 0 }}/{{ .Values.api.ingress.path }}"
+        {{- end }}
+      {{- end }}
+    }
+{{- end -}}
