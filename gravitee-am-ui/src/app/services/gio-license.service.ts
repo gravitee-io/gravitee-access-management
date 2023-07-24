@@ -121,7 +121,7 @@ const featureMoreInformationData = {
       'The SAML 2.0 identity provider is part of Gravitee Enterprise. Identity providers allow you to configure authentication methods familiar to your users and comply with your security requirement.',
   },
   'am-idp-http-flow': {
-    utm: '',
+    utm: 'provider_http_flow',
     image: 'assets/gio-ee-unlock-dialog/gravitee-ee-upgrade.svg',
     description:
       'The HTTP Flow identity provider is part of Gravitee Enterprise. Identity providers allow you to configure authentication methods familiar to your users and comply with your security requirement.',
