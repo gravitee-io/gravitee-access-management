@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div class="gv-page-container">
+<div class="gv-page-container domain-settings-saml2">
   <h1>SAML 2.0</h1>
   <blockquote class="warning">
     <p>
@@ -25,11 +25,14 @@
   <div>
     <div fxFlex="70">
       <form #samlSettingsForm="ngForm" (ngSubmit)="save()" (keydown.enter)="false">
-        <div class="gv-form-section" fxLayout="column" [gioLicense]="pluginMetadata">
+        <div class="gv-form-section" fxLayout="column" [gioLicense]="saml2Feature">
           <mat-slide-toggle
             (change)="enableSAML2IdP($event)"
             [checked]="isSAML2IdPEnabled()" [disabled]="!editMode">
-            SAML 2.0 IdP support
+            <span class="domain-settings-saml2__toggle__label">
+              <mat-icon *ngIf="isMissingSaml2Feature$ | async" svgIcon="gio:lock" class="domain-settings-saml2__toggle__label__icon"></mat-icon>
+              SAML 2.0 IdP support
+            </span>
           </mat-slide-toggle>
           <mat-hint style="font-size: 75%;">Enable support for SAML 2.0 IdP protocol.</mat-hint>
         </div>

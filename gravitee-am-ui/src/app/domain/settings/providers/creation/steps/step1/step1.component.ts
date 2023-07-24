@@ -16,6 +16,7 @@
 import {Component, OnInit, Input} from '@angular/core';
 import {OrganizationService} from "../../../../../../services/organization.service";
 import {ActivatedRoute} from "@angular/router";
+import {IdentityProvider} from "../../../../../../entities/identity-providers/IdentityProvider";
 
 @Component({
   selector: 'provider-creation-step1',
@@ -23,7 +24,7 @@ import {ActivatedRoute} from "@angular/router";
   styleUrls: ['./step1.component.scss']
 })
 export class ProviderCreationStep1Component implements OnInit {
-  identities: any[];
+  identities: IdentityProvider[];
   @Input() provider;
   filter: string;
 

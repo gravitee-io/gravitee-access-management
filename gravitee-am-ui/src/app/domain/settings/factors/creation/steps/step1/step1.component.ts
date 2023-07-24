@@ -13,15 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit, Input } from '@angular/core';
-import { OrganizationService } from "../../../../../../services/organization.service";
+import {Component, OnInit, Input, OnDestroy} from '@angular/core';
+import {OrganizationService} from '../../../../../../services/organization.service';
+import {Plugin} from '../../../../../../entities/plugins/Plugin';
+import {takeUntil, tap} from 'rxjs/operators';
+import {Subject} from 'rxjs';
 
 @Component({
   selector: 'factor-creation-step1',
   templateUrl: './step1.component.html',
   styleUrls: ['./step1.component.scss']
 })
-export class FactorCreationStep1Component implements OnInit {
+export class FactorCreationStep1Component implements OnInit, OnDestroy {
   private factorTypes: any = {
     'otp-am-factor' : 'Generic OTP Factor',
     'email-am-factor' : 'Email Factor',
@@ -33,16 +36,27 @@ export class FactorCreationStep1Component implements OnInit {
     'mock-am-factor': 'MOCK Factor'
   };
   @Input() factor: any;
-  factors: any[];
+  factors: Plugin[];
   selectedFactorTypeId: string;
+  private unsubscribe$: Subject<boolean> = new Subject<boolean>();
 
   constructor(private organizationService: OrganizationService) {
   }
 
   ngOnInit() {
-    this.organizationService.factors().subscribe(data => {
-      this.factors = data
-    });
+    this.organizationService.factors()
+        .pipe(
+            tap((factors) => {
+              this.factors = factors;
+            }),
+            takeUntil(this.unsubscribe$)
+        )
+        .subscribe();
+  }
+
+  ngOnDestroy(): void {
+    this.unsubscribe$.next(false);
+    this.unsubscribe$.unsubscribe();
   }
 
   selectFactorType() {
