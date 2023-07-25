@@ -373,6 +373,9 @@ jobs:
       - attach_workspace:
           at: /tmp/workspace
       - checkout
+      - keeper/env-export:
+          secret-url: keeper://w8WBpALVCgYdxtV5pVrQsw/custom_field/base64
+          var-name: GRAVITEE_LICENSE_KEY
       - run:
           name: install test module dependencies
           command: npm --prefix gravitee-am-test i
@@ -453,6 +456,9 @@ jobs:
       - attach_workspace:
           at: /tmp/workspace
       - checkout
+      - keeper/env-export:
+          secret-url: keeper://w8WBpALVCgYdxtV5pVrQsw/custom_field/base64
+          var-name: GRAVITEE_LICENSE_KEY
       - run:
           name: install test module dependencies
           command: npm --prefix gravitee-am-test i
@@ -563,6 +569,9 @@ jobs:
       - attach_workspace:
           at: /tmp/workspace
       - checkout
+      - keeper/env-export:
+          secret-url: keeper://w8WBpALVCgYdxtV5pVrQsw/custom_field/base64
+          var-name: GRAVITEE_LICENSE_KEY
       - run:
           name: Install Newman
           command: sudo npm i -g newman
@@ -620,6 +629,9 @@ jobs:
       - attach_workspace:
           at: /tmp/workspace
       - checkout
+      - keeper/env-export:
+          secret-url: keeper://w8WBpALVCgYdxtV5pVrQsw/custom_field/base64
+          var-name: GRAVITEE_LICENSE_KEY
       - run:
           name: Install Newman
           command: sudo npm i -g newman
