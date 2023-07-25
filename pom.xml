@@ -125,7 +125,7 @@
         <gravitee-policy-ipfiltering.version>1.8.0</gravitee-policy-ipfiltering.version>
         <gravitee-policy-request-validation.version>1.12.0</gravitee-policy-request-validation.version>
         <gravitee-policy-latency.version>1.4.0</gravitee-policy-latency.version>
-        <gravitee-cockpit-connectors.version>4.0.2-alpha.1</gravitee-cockpit-connectors.version>
+        <gravitee-cockpit-connectors.version>4.0.2</gravitee-cockpit-connectors.version>
         <gravitee-ae-connectors.version>2.1.0</gravitee-ae-connectors.version>
         <gravitee-notifier-webhook.version>1.1.0</gravitee-notifier-webhook.version>
         <gravitee-notifier-email.version>1.5.0</gravitee-notifier-email.version>
@@ -135,18 +135,18 @@
         <gravitee-risk-assessment-api.version>2.0.0</gravitee-risk-assessment-api.version>
 
         <!-- EE plugin included in default bundle -->
-        <gravitee-am-idp-saml2.version>3.0.0-alpha.3</gravitee-am-idp-saml2.version>
-        <gravitee-am-idp-ldap.version>1.0.0-alpha.5</gravitee-am-idp-ldap.version>
-        <gravitee-am-idp-azure-ad.version>1.0.0-alpha.3</gravitee-am-idp-azure-ad.version>
-        <gravitee-am-idp-franceconnect.version>1.0.0-alpha.3</gravitee-am-idp-franceconnect.version>
-        <gravitee-am-idp-salesforce.version>1.0.0-alpha.3</gravitee-am-idp-salesforce.version>
-        <gravitee-am-factor-call.version>1.0.0-alpha.2</gravitee-am-factor-call.version>
-        <gravitee-am-factor-sms.version>1.0.0-alpha.2</gravitee-am-factor-sms.version>
-        <gravitee-am-factor-fido2.version>3.0.0-alpha.3</gravitee-am-factor-fido2.version>
-        <gravitee-am-factor-http.version>3.0.0-alpha.3</gravitee-am-factor-http.version>
-        <gravitee-am-factor-recovery-code.version>1.0.0-alpha.2</gravitee-am-factor-recovery-code.version>
-        <gravitee-am-factor-otp-sender.version>3.0.0-alpha.1</gravitee-am-factor-otp-sender.version>
-        <gravitee-am-resource-twilio.version>1.0.0-alpha.3</gravitee-am-resource-twilio.version>
+        <gravitee-am-idp-saml2.version>3.0.0</gravitee-am-idp-saml2.version>
+        <gravitee-am-idp-ldap.version>1.0.0</gravitee-am-idp-ldap.version>
+        <gravitee-am-idp-azure-ad.version>1.0.0</gravitee-am-idp-azure-ad.version>
+        <gravitee-am-idp-franceconnect.version>1.0.0</gravitee-am-idp-franceconnect.version>
+        <gravitee-am-idp-salesforce.version>1.0.0</gravitee-am-idp-salesforce.version>
+        <gravitee-am-factor-call.version>1.0.0</gravitee-am-factor-call.version>
+        <gravitee-am-factor-sms.version>1.0.0</gravitee-am-factor-sms.version>
+        <gravitee-am-factor-fido2.version>3.0.0</gravitee-am-factor-fido2.version>
+        <gravitee-am-factor-http.version>3.0.0</gravitee-am-factor-http.version>
+        <gravitee-am-factor-recovery-code.version>1.0.0</gravitee-am-factor-recovery-code.version>
+        <gravitee-am-factor-otp-sender.version>3.0.0</gravitee-am-factor-otp-sender.version>
+        <gravitee-am-resource-twilio.version>1.0.0</gravitee-am-resource-twilio.version>
 
         <jdk.version>11</jdk.version>
 
