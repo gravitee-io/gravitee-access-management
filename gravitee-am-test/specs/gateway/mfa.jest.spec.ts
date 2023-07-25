@@ -288,7 +288,7 @@ describe("MFA", () => {
         });
     });
 
-/*    describe('recovery code factor test', () => {
+    describe('recovery code factor test', () => {
         let user4;
         let validRecoveryCode;
 
@@ -383,7 +383,7 @@ describe("MFA", () => {
             await deleteUser(domain.id, accessToken, user4.id);
         });
 
-    });*/
+    });
 });
 
 afterAll(async () => {
