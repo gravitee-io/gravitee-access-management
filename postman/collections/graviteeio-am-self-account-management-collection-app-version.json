@@ -1,9 +1,8 @@
 {
 	"info": {
-		"_postman_id": "0151f2c3-8c17-4181-b4c3-0dc70c214f7c",
+		"_postman_id": "d0fdab08-fbf7-4671-8952-b41c118261cf",
 		"name": "Gravitee.io - AM - Self Account Management - app version",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "7568294"
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
 		{
@@ -1702,6 +1701,414 @@
 										"account",
 										"api",
 										"factors"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Recovery code",
+					"item": [
+						{
+							"name": "prepare",
+							"item": [
+								{
+									"name": "Create recovery code factor",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 201\", function () {",
+													"    pm.response.to.have.status(201);",
+													"});",
+													"",
+													"var body = JSON.parse(responseBody);",
+													"pm.environment.set('recoveryCodeFactorId', body.id);"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{token}}",
+												"type": "text"
+											},
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"type\": \"recovery-code-am-factor\",\n    \"factorType\": \"Recovery Code\",\n    \"configuration\": \"{\\\"digit\\\":8,\\\"count\\\":10}\",\n    \"name\": \"Recovery Code Factor\"\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/factors",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
+												"domains",
+												"{{domain}}",
+												"factors"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Enable recovery code factor",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"setTimeout(function(){}, 10000);"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer {{token}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"factors\": [      \n       \"{{recoveryCodeFactorId}}\"\n    ],\n    \"settings\": {\n        \"mfa\": {}\n    }\n}"
+										},
+										"url": {
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{client}}",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
+												"domains",
+												"{{domain}}",
+												"applications",
+												"{{client}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Enroll recovery code factor",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{access_token}}",
+												"type": "text"
+											},
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "{{gateway_url}}/{{domainHrid}}/account/api/auth/recovery_code",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"{{domainHrid}}",
+												"account",
+												"api",
+												"auth",
+												"recovery_code"
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "Get recovery codes",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Has proper response\", function () {",
+											"    var body = pm.response.json();",
+											"    pm.expect(body).to.be.lengthOf(10)",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{access_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{gateway_url}}/{{domainHrid}}/account/api/auth/recovery_code",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"{{domainHrid}}",
+										"account",
+										"api",
+										"auth",
+										"recovery_code"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Remove recovery code form user",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 204\", function () {",
+											"    pm.response.to.have.status(204);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{access_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{gateway_url}}/{{domainHrid}}/account/api/auth/recovery_code",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"{{domainHrid}}",
+										"account",
+										"api",
+										"auth",
+										"recovery_code"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get recovery codes - after deletion",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Has proper response\", function () {",
+											"    var body = pm.response.json();",
+											"    pm.expect(body).to.be.lengthOf(0)",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{access_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{gateway_url}}/{{domainHrid}}/account/api/auth/recovery_code",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"{{domainHrid}}",
+										"account",
+										"api",
+										"auth",
+										"recovery_code"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Remove recovery factor from app",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PATCH",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"factors\": [\n       \"{{mfaFactorId}}\"\n    ],\n    \"settings\": {\n        \"mfa\": {}\n    }\n}"
+								},
+								"url": {
+									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{client}}",
+									"host": [
+										"{{management_url}}"
+									],
+									"path": [
+										"management",
+										"organizations",
+										"{{defaultOrganizationId}}",
+										"environments",
+										"{{defaultEnvironmentId}}",
+										"domains",
+										"{{domain}}",
+										"applications",
+										"{{client}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete recovery Code factor",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 204\", function () {",
+											"    pm.response.to.have.status(204);",
+											"});",
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"type\": \"recovery-code-am-factor\",\n    \"factorType\": \"Recovery Code\",\n    \"configuration\": \"{\\\"digit\\\":8,\\\"count\\\":10}\",\n    \"name\": \"Recovery Code Factor\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/factors/{{recoveryCodeFactorId}}",
+									"host": [
+										"{{management_url}}"
+									],
+									"path": [
+										"management",
+										"organizations",
+										"{{defaultOrganizationId}}",
+										"environments",
+										"{{defaultEnvironmentId}}",
+										"domains",
+										"{{domain}}",
+										"factors",
+										"{{recoveryCodeFactorId}}"
 									]
 								}
 							},

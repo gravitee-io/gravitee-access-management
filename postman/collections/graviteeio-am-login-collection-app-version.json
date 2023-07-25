@@ -5101,6 +5101,1698 @@
 					]
 				},
 				{
+					"name": "MFA - Recovery Code",
+					"item": [
+						{
+							"name": "Prepare",
+							"item": [
+								{
+									"name": "List users",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"should be able to set user id\", function () {",
+													"    const jsonData = pm.response.json();",
+													"    const userData = jsonData.data.find(data => {",
+													"        return data.username === \"user\";",
+													"    });",
+													"",
+													"    const userId = userData.id;",
+													"    tests['user id is not null'] = userId && userId.length > 0;    ",
+													"    pm.environment.set('userId', userId);",
+													"    ",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{token}}",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/users",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
+												"domains",
+												"{{domain}}",
+												"users"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Delete user MFA",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 204\", function () {",
+													"    pm.response.to.have.status(204);",
+													"});",
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "DELETE",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{token}}",
+												"type": "text"
+											},
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/users/{{userId}}/factors/{{mfaFactorId}}",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
+												"domains",
+												"{{domain}}",
+												"users",
+												"{{userId}}",
+												"factors",
+												"{{mfaFactorId}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Create Recovery Code Factor",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 201\", function () {",
+													"    pm.response.to.have.status(201);",
+													"});",
+													"",
+													"var body = JSON.parse(responseBody);",
+													"pm.environment.set('recoveryCodeFactorId', body.id);"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{token}}",
+												"type": "text"
+											},
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"type\": \"recovery-code-am-factor\",\n    \"factorType\": \"Recovery Code\",\n    \"configuration\": \"{\\\"digit\\\":8,\\\"count\\\":10}\",\n    \"name\": \"Recovery Code Factor\"\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/factors",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
+												"domains",
+												"{{domain}}",
+												"factors"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Enable SMS and Recovery Code MFA",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"setTimeout(function(){}, 10000);"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer {{token}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"factors\": [\n       \"{{mfaFactorId}}\",\n       \"{{recoveryCodeFactorId}}\"\n    ],\n    \"settings\": {\n        \"mfa\": {}\n    }\n}"
+										},
+										"url": {
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app4}}",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
+												"domains",
+												"{{domain}}",
+												"applications",
+												"{{app4}}"
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "Generate",
+							"item": [
+								{
+									"name": "Initiate Login Flow",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 302\", function () {",
+													"    pm.response.to.have.status(302);",
+													"});",
+													"",
+													"pm.test(\"Should be redirected\", function () {",
+													"    pm.response.to.be.redirection;",
+													"    pm.response.to.have.header('Location');",
+													"});",
+													"",
+													"pm.test(\"Should be a redirection to login page\", function() {",
+													"    const location = postman.getResponseHeader('Location');",
+													"    const domain = pm.environment.get(\"domainHrid\");",
+													"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=' + pm.environment.get('clientId4'));",
+													"    ",
+													"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{gateway_url}}/{{domainHrid}}/oauth/authorize/?response_type=code&client_id={{clientId4}}&redirect_uri=http://localhost:4000/&state=1234-5678-9876",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"{{domainHrid}}",
+												"oauth",
+												"authorize",
+												""
+											],
+											"query": [
+												{
+													"key": "response_type",
+													"value": "code"
+												},
+												{
+													"key": "client_id",
+													"value": "{{clientId4}}"
+												},
+												{
+													"key": "redirect_uri",
+													"value": "http://localhost:4000/"
+												},
+												{
+													"key": "state",
+													"value": "1234-5678-9876"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Redirect to login form",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"Should be ok\", function () {",
+													"    pm.response.to.be.ok;",
+													"    ",
+													"    // Extract the XSRF token to send it with the next request.",
+													"    const responseHTML = cheerio.load(pm.response.text());",
+													"    const xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
+													"    const action = responseHTML('form').attr('action');",
+													"    pm.environment.set('xsrf', xsrfToken);",
+													"    pm.environment.set('action', action);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{redirection}}",
+											"host": [
+												"{{redirection}}"
+											]
+										},
+										"description": "The client does not have a redirect_uri define"
+									},
+									"response": []
+								},
+								{
+									"name": "Post login form",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 302\", function () {",
+													"    pm.response.to.have.status(302);",
+													"});",
+													"",
+													"pm.test(\"Should be redirected to authorize\", function () {",
+													"    pm.response.to.be.redirection;",
+													"    pm.response.to.have.header('Location');",
+													"",
+													"    const location = postman.getResponseHeader(\"Location\");",
+													"    pm.environment.set('redirection', location);",
+													"    // if login was ok, we replay the authorize flow",
+													"    console.log(location);",
+													"    tests['Redirect to authorize page'] = location.includes('/oauth/authorize') && location.includes('client_id=' + pm.environment.get('clientId4'));",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/x-www-form-urlencoded"
+											}
+										],
+										"body": {
+											"mode": "urlencoded",
+											"urlencoded": [
+												{
+													"key": "X-XSRF-TOKEN",
+													"value": "{{xsrf}}",
+													"type": "text"
+												},
+												{
+													"key": "client_id",
+													"value": "{{clientId4}}",
+													"type": "text"
+												},
+												{
+													"key": "username",
+													"value": "user",
+													"type": "text"
+												},
+												{
+													"key": "password",
+													"value": "#CoMpL3X-P@SsW0Rd",
+													"type": "text"
+												}
+											]
+										},
+										"url": {
+											"raw": "{{action}}",
+											"host": [
+												"{{action}}"
+											]
+										},
+										"description": "The client does not have a redirect_uri define"
+									},
+									"response": []
+								},
+								{
+									"name": "Redirect to Authorize",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 302\", function () {",
+													"    pm.response.to.have.status(302);",
+													"});",
+													"",
+													"pm.test(\"Should be redirected\", function () {",
+													"    pm.response.to.be.redirection;",
+													"    pm.response.to.have.header('Location');",
+													"});",
+													"",
+													"pm.test(\"Should be a redirection to MFA enroll page\", function() {",
+													"    const location = postman.getResponseHeader('Location');",
+													"    const domain = pm.environment.get(\"domainHrid\");",
+													"        ",
+													"    console.log(location);",
+													"    tests['Redirect to enroll with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/mfa/enroll') && location.includes('client_id=' + pm.environment.get('clientId4'));",
+													"    ",
+													"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{redirection}}",
+											"host": [
+												"{{redirection}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Redirect to Enroll Form",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"Should be redirected to MFA enroll\", function () {",
+													"   pm.response.to.be.ok;",
+													"    ",
+													"    // Extract the XSRF token to send it with the next request.",
+													"    const responseHTML = cheerio.load(pm.response.text());",
+													"    const xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
+													"    const action = responseHTML('form').attr('action');",
+													"    pm.environment.set('xsrf', xsrfToken);",
+													"    pm.environment.set('action', action);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true
+									},
+									"request": {
+										"method": "GET",
+										"header": [],
+										"body": {
+											"mode": "formdata",
+											"formdata": []
+										},
+										"url": {
+											"raw": "{{redirection}}",
+											"host": [
+												"{{redirection}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "MFA Enroll",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 302\", function () {",
+													"    pm.response.to.have.status(302);",
+													"});",
+													"",
+													"pm.test(\"Should be redirected to authorize\", function () {",
+													"    pm.response.to.be.redirection;",
+													"    pm.response.to.have.header('Location');",
+													"",
+													"    const location = postman.getResponseHeader(\"Location\");",
+													"    pm.environment.set('redirection', location);",
+													"    // if login was ok, we replay the authorize flow",
+													"    tests['Redirect to authorize'] = location.includes('/oauth/authorize');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "urlencoded",
+											"urlencoded": [
+												{
+													"key": "X-XSRF-TOKEN",
+													"value": "{{xsrf}}",
+													"type": "text"
+												},
+												{
+													"key": "factorId",
+													"value": "{{mfaFactorId}}",
+													"type": "text"
+												},
+												{
+													"key": "phoneFact0",
+													"value": "0600000000",
+													"type": "text"
+												},
+												{
+													"key": "phone",
+													"value": "+33600000000",
+													"type": "text"
+												},
+												{
+													"key": "user_mfa_enrollment",
+													"value": "true",
+													"type": "text"
+												}
+											]
+										},
+										"url": {
+											"raw": "{{action}}",
+											"host": [
+												"{{action}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Redirect to Authorize 2",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 302\", function () {",
+													"    pm.response.to.have.status(302);",
+													"});",
+													"",
+													"pm.test(\"Should be redirected\", function () {",
+													"    pm.response.to.be.redirection;",
+													"    pm.response.to.have.header('Location');",
+													"});",
+													"",
+													"pm.test(\"Should be a redirection to challenge page\", function() {",
+													"    const location = postman.getResponseHeader('Location');",
+													"    const domain = pm.environment.get(\"domainHrid\");",
+													"        ",
+													"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/mfa/challenge') && location.includes('client_id=' + pm.environment.get('clientId4'));",
+													"    ",
+													"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{redirection}}",
+											"host": [
+												"{{redirection}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "MFA Challenge",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 302\", function () {",
+													"    pm.response.to.have.status(302);",
+													"});",
+													"",
+													"pm.test(\"Should be redirected to recovery code\", function () {",
+													"    pm.response.to.be.redirection;",
+													"    pm.response.to.have.header('Location');",
+													"",
+													"    const location = postman.getResponseHeader(\"Location\");",
+													"    pm.environment.set('redirection', location);",
+													"    console.log(location); ",
+													"    tests['Location contains authorize'] = location.includes('/oauth/authorize');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "urlencoded",
+											"urlencoded": [
+												{
+													"key": "X-XSRF-TOKEN",
+													"value": "{{xsrf}}",
+													"type": "text"
+												},
+												{
+													"key": "factorId",
+													"value": "{{mfaFactorId}}",
+													"type": "text"
+												},
+												{
+													"key": "code",
+													"value": "333-333",
+													"type": "text"
+												}
+											]
+										},
+										"url": {
+											"raw": "{{redirection}}",
+											"host": [
+												"{{redirection}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Redirect to Authorize 3",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 302\", function () {",
+													"    pm.response.to.have.status(302);",
+													"});",
+													"",
+													"pm.test(\"Should be redirected\", function () {",
+													"    pm.response.to.be.redirection;",
+													"    pm.response.to.have.header('Location');",
+													"});",
+													"",
+													"pm.test(\"Should be a redirection to recovery code page\", function() {",
+													"    const location = postman.getResponseHeader('Location');",
+													"    const domain = pm.environment.get(\"domainHrid\");",
+													"        ",
+													"    tests['Redirect to recovery page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/mfa/recovery_code') && location.includes('client_id=' + pm.environment.get('clientId4'));",
+													"    ",
+													"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{redirection}}",
+											"host": [
+												"{{redirection}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Recovery Codes",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"Should be ok\", function () {",
+													"    pm.response.to.be.ok;",
+													"    ",
+													"    // Extract the XSRF token to send it with the next request.",
+													"    const responseHTML = cheerio.load(pm.response.text());",
+													"    const xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
+													"    const action = responseHTML('form').attr('action');",
+													"    pm.environment.set('xsrf', xsrfToken);",
+													"    pm.environment.set('action', action);",
+													"});",
+													"",
+													"pm.test(\"Should contain recovery code\", function() {",
+													"    const body = cheerio(responseBody);",
+													"    const recoveryCode = body.find('.code-item').first().text();",
+													"    ",
+													"    tests['recovery code is not null'] = recoveryCode && recoveryCode.length > 0;",
+													"    pm.environment.set('recoveryCode', recoveryCode); ",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{redirection}}",
+											"host": [
+												"{{redirection}}"
+											]
+										},
+										"description": "The client does not have a redirect_uri define"
+									},
+									"response": []
+								},
+								{
+									"name": "Logout user",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 302\", function () {",
+													"    pm.response.to.have.status(302);",
+													"});",
+													"",
+													"pm.test(\"Should be redirected\", function () {",
+													"    pm.response.to.be.redirection;",
+													"    pm.response.to.have.header('Location');",
+													"    ",
+													"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{logoutEndpoint}}",
+											"host": [
+												"{{logoutEndpoint}}"
+											]
+										},
+										"description": "The client does not have a redirect_uri define"
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "Login Verify",
+							"item": [
+								{
+									"name": "Initiate Login Flow",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 302\", function () {",
+													"    pm.response.to.have.status(302);",
+													"});",
+													"",
+													"pm.test(\"Should be redirected\", function () {",
+													"    pm.response.to.be.redirection;",
+													"    pm.response.to.have.header('Location');",
+													"});",
+													"",
+													"pm.test(\"Should be a redirection to login page\", function() {",
+													"    const location = postman.getResponseHeader('Location');",
+													"    const domain = pm.environment.get(\"domainHrid\");",
+													"    ",
+													"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=' + pm.environment.get('clientId4'));",
+													"    ",
+													"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{gateway_url}}/{{domainHrid}}/oauth/authorize/?response_type=code&client_id={{clientId4}}&redirect_uri=http://localhost:4000/&state=1234-5678-9876",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"{{domainHrid}}",
+												"oauth",
+												"authorize",
+												""
+											],
+											"query": [
+												{
+													"key": "response_type",
+													"value": "code"
+												},
+												{
+													"key": "client_id",
+													"value": "{{clientId4}}"
+												},
+												{
+													"key": "redirect_uri",
+													"value": "http://localhost:4000/"
+												},
+												{
+													"key": "state",
+													"value": "1234-5678-9876"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Redirect to login form",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"Should be ok\", function () {",
+													"    pm.response.to.be.ok;",
+													"    ",
+													"    // Extract the XSRF token to send it with the next request.",
+													"    const responseHTML = cheerio.load(pm.response.text());",
+													"    const xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
+													"    const action = responseHTML('form').attr('action');",
+													"    pm.environment.set('xsrf', xsrfToken);",
+													"    pm.environment.set('action', action);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{redirection}}",
+											"host": [
+												"{{redirection}}"
+											]
+										},
+										"description": "The client does not have a redirect_uri define"
+									},
+									"response": []
+								},
+								{
+									"name": "Post login form",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 302\", function () {",
+													"    pm.response.to.have.status(302);",
+													"});",
+													"",
+													"pm.test(\"Should be redirected to authorize\", function () {",
+													"    pm.response.to.be.redirection;",
+													"    pm.response.to.have.header('Location');",
+													"",
+													"    const location = postman.getResponseHeader(\"Location\");",
+													"    pm.environment.set('redirection', location);",
+													"    // if login was ok, we replay the authorize flow",
+													"    console.log(location);",
+													"    tests['Redirect to authorize page'] = location.includes('/oauth/authorize') && location.includes('client_id=' + pm.environment.get('clientId4'));",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/x-www-form-urlencoded"
+											}
+										],
+										"body": {
+											"mode": "urlencoded",
+											"urlencoded": [
+												{
+													"key": "X-XSRF-TOKEN",
+													"value": "{{xsrf}}",
+													"type": "text"
+												},
+												{
+													"key": "client_id",
+													"value": "{{clientId4}}",
+													"type": "text"
+												},
+												{
+													"key": "username",
+													"value": "user",
+													"type": "text"
+												},
+												{
+													"key": "password",
+													"value": "#CoMpL3X-P@SsW0Rd",
+													"type": "text"
+												}
+											]
+										},
+										"url": {
+											"raw": "{{action}}",
+											"host": [
+												"{{action}}"
+											]
+										},
+										"description": "The client does not have a redirect_uri define"
+									},
+									"response": []
+								},
+								{
+									"name": "Redirect to Authorize",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 302\", function () {",
+													"    pm.response.to.have.status(302);",
+													"});",
+													"",
+													"pm.test(\"Should be redirected\", function () {",
+													"    pm.response.to.be.redirection;",
+													"    pm.response.to.have.header('Location');",
+													"});",
+													"",
+													"pm.test(\"Should be a redirection to challenge page\", function() {",
+													"    const location = postman.getResponseHeader('Location');",
+													"    const domain = pm.environment.get(\"domainHrid\");",
+													"        ",
+													"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/mfa/challenge') && location.includes('client_id=' + pm.environment.get('clientId4'));",
+													"    ",
+													"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{redirection}}",
+											"host": [
+												"{{redirection}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Redirect to Challenge Form",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"Should be redirected to MFA enroll\", function () {",
+													"   pm.response.to.be.ok;",
+													"    ",
+													"    // Extract the XSRF token to send it with the next request.",
+													"    var responseHTML = cheerio.load(pm.response.text());",
+													"    var xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
+													"    const action = responseHTML('form').attr('action');",
+													"    pm.environment.set('xsrf', xsrfToken);",
+													"    pm.environment.set('action', action);",
+													"});",
+													"",
+													"pm.test(\"Should contain recovery code\", function() {",
+													"    const body = cheerio(responseBody);",
+													"    const alternativeLink = body.find('a').attr(\"href\");",
+													"    ",
+													"    tests['alternative link is present'] = alternativeLink && alternativeLink.length > 0;",
+													"    pm.environment.set('alternativeLink', alternativeLink); ",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true
+									},
+									"request": {
+										"method": "GET",
+										"header": [],
+										"body": {
+											"mode": "formdata",
+											"formdata": []
+										},
+										"url": {
+											"raw": "{{redirection}}",
+											"host": [
+												"{{redirection}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Alternative option form",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"Should be ok\", function () {",
+													"    pm.response.to.be.ok;",
+													"    ",
+													"    // Extract the XSRF token to send it with the next request.",
+													"    const responseHTML = cheerio.load(pm.response.text());",
+													"    const xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
+													"    const action = responseHTML('form').attr('action');",
+													"    pm.environment.set('xsrf', xsrfToken);",
+													"    pm.environment.set('action', action);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{redirection}}",
+											"host": [
+												"{{redirection}}"
+											]
+										},
+										"description": "The client does not have a redirect_uri define"
+									},
+									"response": []
+								},
+								{
+									"name": "Select alternative option",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 302\", function () {",
+													"    pm.response.to.have.status(302);",
+													"});",
+													"",
+													"pm.test(\"Should be redirected to challenge\", function () {",
+													"    pm.response.to.be.redirection;",
+													"    pm.response.to.have.header('Location');",
+													"",
+													"    const location = postman.getResponseHeader(\"Location\");",
+													"    pm.environment.set('redirection', location);",
+													"    // if login was ok, we replay the authorize flow",
+													"    tests['Redirect to authorize page'] = location.includes('/mfa/challenge') && location.includes('client_id=' + pm.environment.get('clientId4'));",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/x-www-form-urlencoded"
+											}
+										],
+										"body": {
+											"mode": "urlencoded",
+											"urlencoded": [
+												{
+													"key": "X-XSRF-TOKEN",
+													"value": "{{xsrf}}",
+													"type": "text"
+												},
+												{
+													"key": "factorId",
+													"value": "{{recoveryCodeFactorId}}",
+													"type": "text"
+												}
+											]
+										},
+										"url": {
+											"raw": "{{gateway_url}}/{{domainHrid}}/mfa/challenge/alternatives?response_type=token&client_id={{clientId4}}&redirect_uri=http://localhost:4000/&state=1234-5678-9876",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"{{domainHrid}}",
+												"mfa",
+												"challenge",
+												"alternatives"
+											],
+											"query": [
+												{
+													"key": "response_type",
+													"value": "token"
+												},
+												{
+													"key": "client_id",
+													"value": "{{clientId4}}"
+												},
+												{
+													"key": "redirect_uri",
+													"value": "http://localhost:4000/"
+												},
+												{
+													"key": "state",
+													"value": "1234-5678-9876"
+												}
+											]
+										},
+										"description": "The client does not have a redirect_uri define"
+									},
+									"response": []
+								},
+								{
+									"name": "Redirect to Challenge Form 2",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"Should be redirected to MFA enroll\", function () {",
+													"   pm.response.to.be.ok;",
+													"    ",
+													"    // Extract the XSRF token to send it with the next request.",
+													"    const responseHTML = cheerio.load(pm.response.text());",
+													"    const xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
+													"    const action = responseHTML('form').attr('action');",
+													"    pm.environment.set('xsrf', xsrfToken);",
+													"    pm.environment.set('action', action);",
+													"});",
+													"",
+													"pm.test(\"Should contain recovery code\", function() {",
+													"    const body = cheerio(responseBody);",
+													"    const alternativeLink = body.find('a').attr(\"href\");",
+													"    console.log(alternativeLink)",
+													"    ",
+													"    tests['alternative link is present'] = alternativeLink && alternativeLink.length > 0;",
+													"    pm.environment.set('alternativeLink', alternativeLink); ",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true
+									},
+									"request": {
+										"method": "GET",
+										"header": [],
+										"body": {
+											"mode": "formdata",
+											"formdata": []
+										},
+										"url": {
+											"raw": "{{redirection}}",
+											"host": [
+												"{{redirection}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Challenge verify Fail",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 302\", function () {",
+													"    pm.response.to.have.status(302);",
+													"});",
+													"",
+													"pm.test(\"Should be redirected to MFA challenge page\", function () {",
+													"    pm.response.to.be.redirection;",
+													"    pm.response.to.have.header('Location');",
+													"",
+													"    const location = postman.getResponseHeader(\"Location\");",
+													"    pm.environment.set('redirection', location);",
+													"    tests['Redirect to challenge error'] = location.includes('/mfa/challenge');",
+													"    tests['Should contain error'] = location.includes('mfa_challenge_failed');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "urlencoded",
+											"urlencoded": [
+												{
+													"key": "X-XSRF-TOKEN",
+													"value": "{{xsrf}}",
+													"type": "text"
+												},
+												{
+													"key": "factorId",
+													"value": "{{recoveryCodeFactorId}}",
+													"type": "text"
+												},
+												{
+													"key": "code",
+													"value": "invalidCode",
+													"type": "text"
+												},
+												{
+													"key": "recoveryCodefactorId",
+													"value": "{{recoveryCodeFactorId}}",
+													"type": "default"
+												}
+											]
+										},
+										"url": {
+											"raw": "{{redirection}}",
+											"host": [
+												"{{redirection}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Challenge verify Success",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 302\", function () {",
+													"    pm.response.to.have.status(302);",
+													"});",
+													"",
+													"pm.test(\"Redirected to authorize\", function () {",
+													"    pm.response.to.be.redirection;",
+													"    pm.response.to.have.header('Location');",
+													"",
+													"    const location = postman.getResponseHeader(\"Location\");",
+													"    pm.environment.set('redirection', location);",
+													"    tests['Location contains authorize'] = location.includes('/oauth/authorize');",
+													"    tests['Should not contain error'] = !location.includes('mfa_challenge_failed');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "urlencoded",
+											"urlencoded": [
+												{
+													"key": "X-XSRF-TOKEN",
+													"value": "{{xsrf}}",
+													"type": "text"
+												},
+												{
+													"key": "factorId",
+													"value": "{{recoveryCodeFactorId}}",
+													"type": "text"
+												},
+												{
+													"key": "code",
+													"value": "{{recoveryCode}}",
+													"type": "text"
+												},
+												{
+													"key": "recoveryCodefactorId",
+													"value": "{{recoveryCodeFactorId}}",
+													"type": "default"
+												}
+											]
+										},
+										"url": {
+											"raw": "{{redirection}}",
+											"host": [
+												"{{redirection}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Logout user",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 302\", function () {",
+													"    pm.response.to.have.status(302);",
+													"});",
+													"",
+													"pm.test(\"Should be redirected\", function () {",
+													"    pm.response.to.be.redirection;",
+													"    pm.response.to.have.header('Location');",
+													"    ",
+													"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{logoutEndpoint}}",
+											"host": [
+												"{{logoutEndpoint}}"
+											]
+										},
+										"description": "The client does not have a redirect_uri define"
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "Clean up",
+							"item": [
+								{
+									"name": "Delete user recovvery factor",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 204\", function () {",
+													"    pm.response.to.have.status(204);",
+													"});",
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "DELETE",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{token}}",
+												"type": "text"
+											},
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/users/{{userId}}/factors/{{recoveryCodeFactorId}}",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
+												"domains",
+												"{{domain}}",
+												"users",
+												"{{userId}}",
+												"factors",
+												"{{recoveryCodeFactorId}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Remove recovery factor from app",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"setTimeout(function(){}, 10000);"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer {{token}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"factors\": [\n       \"{{mfaFactorId}}\"\n    ],\n    \"settings\": {\n        \"mfa\": {}\n    }\n}"
+										},
+										"url": {
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app4}}",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
+												"domains",
+												"{{domain}}",
+												"applications",
+												"{{app4}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Delete recovery Code Factor",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 204\", function () {",
+													"    pm.response.to.have.status(204);",
+													"});",
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "DELETE",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{token}}",
+												"type": "text"
+											},
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"type\": \"recovery-code-am-factor\",\n    \"factorType\": \"Recovery Code\",\n    \"configuration\": \"{\\\"digit\\\":8,\\\"count\\\":10}\",\n    \"name\": \"Recovery Code Factor\"\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/factors/{{recoveryCodeFactorId}}",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
+												"domains",
+												"{{domain}}",
+												"factors",
+												"{{recoveryCodeFactorId}}"
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						}
+					]
+				},
+				{
 					"name": "MFA - Step Up Authentication",
 					"item": [
 						{
