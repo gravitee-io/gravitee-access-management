@@ -1090,9 +1090,7 @@ jobs:
       - run:
           name: Maven Prepare Release
           command: |
-            # 1./  Update maven dependencies versions from properties
-            mvn -s /tmp/.gravitee.settings.xml -B -U versions:update-properties -Dmaven.version.rules.serverId=artifactory-gravitee-releases -Dincludes=io.gravitee.*:* -DallowMajorUpdates=false -DallowMinorUpdates=false -DallowIncrementalUpdates=false -DgenerateBackupPoms=false
-            # 2./ Now  calculate the maven project verison with the maven exec plugin
+            # Calculate the maven project verison with the maven exec plugin
             export MVN_PRJ_VERSION=$(mvn -s /tmp/.gravitee.settings.xml -Dexec.executable='echo' -Dexec.args='${project.version}' --non-recursive exec:exec -q | tee -a /tmp/maven.logs; echo "$?" > /tmp/maven.exit.code)
             
             export MVN_PRJ_VERSION=$(echo "${MVN_PRJ_VERSION}" | awk -F '-SNAPSHOT' '{print $1}')
