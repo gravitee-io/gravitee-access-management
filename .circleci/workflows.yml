@@ -1064,8 +1064,7 @@ jobs:
     executor:
       name: openjdk
       class: large
-      # flapdoodle.embed.mongo doesn't work with 11.0.17
-      version: "11.0.16"
+      version: "17.0.8"
     steps:
       - attach_workspace:
           at: /tmp
@@ -1121,7 +1120,7 @@ jobs:
     executor:
       name: openjdk
       class: xlarge
-      version: "11.0.16"
+      version: "17.0.8"
     environment:
       DRY_RUN: << parameters.dry_run >>
       RC_REQUESTED: << parameters.rc_requested >>
@@ -1322,7 +1321,7 @@ jobs:
     executor:
       name: openjdk
       class: xlarge
-      version: "11.0.16"
+      version: "17.0.8"
     environment:
       DRY_RUN: << parameters.dry_run >>
       GRAVITEEIO_VERSION: << parameters.graviteeio_version >>
