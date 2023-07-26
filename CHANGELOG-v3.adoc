@@ -1,5 +1,51 @@
 # Change Log
 
+== AM - 4.0.0 (2023-07-26)
+
+== What's new !
+
+* Some plugins are now part of the Enterprise Edition:
+** idp-saml2
+** idp-ldap
+** idp-azure-ad
+** idp-franceconnect
+** idp-salesforce
+** factor-call
+** factor-sms
+** factor-fido2
+** factor-http
+** factor-recovery-code
+** factor-otp-sender
+** resource-twilio
++
+If you use the community edition, for each enterprise feature you will have a dedicated popup to suggest the enterprise version.
+* Password - Password salt format option
+* Flows - add new TOKEN flow
+* MFA - initiating MFA Enrollment via OpenID Connect 1.0
+* Send email verification link
+* [Admin] Be able to re-trigger verification email
+* Passwordless - Name passwordless device
+
+
+=== Gateway
+
+* [gateway][audit] It is impossible to see the user that consented the user consent in the audit log https://github.com/gravitee-io/issues/issues/9049[#9049]
+* [gateway][mfa] Allow OTP factor to handle clock drift issues https://github.com/gravitee-io/issues/issues/9074[#9074]
+
+=== Management API
+
+* Create account with uppercase username https://github.com/gravitee-io/issues/issues/8966[#8966]
+
+
+
+=== Other
+
+* Index name too long https://github.com/gravitee-io/issues/issues/8814[#8814]
+* [policies] allow Enrich User Profile policy to accept objects as new claims
+* WebAuthn post login flow does not contain webAuthnCredentialId
+* Column messages in i18n_dictionary_entries  table has too little characters
+
+
 ==  - 3.21.4 (2023-07-20)
 
 == What's new !
