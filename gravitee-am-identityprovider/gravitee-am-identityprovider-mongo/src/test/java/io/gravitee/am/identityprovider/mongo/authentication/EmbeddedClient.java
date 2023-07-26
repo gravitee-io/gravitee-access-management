@@ -15,9 +15,6 @@
  */
 package io.gravitee.am.identityprovider.mongo.authentication;
 
-import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
-import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
-
 import com.mongodb.MongoClientSettings;
 import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcern;
@@ -25,21 +22,25 @@ import com.mongodb.connection.ClusterSettings;
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoClients;
 import com.mongodb.reactivestreams.client.MongoDatabase;
-import de.flapdoodle.embed.mongo.MongodExecutable;
-import de.flapdoodle.embed.mongo.MongodProcess;
-import de.flapdoodle.embed.mongo.MongodStarter;
-import de.flapdoodle.embed.mongo.config.MongodConfig;
 import de.flapdoodle.embed.mongo.config.Net;
 import de.flapdoodle.embed.mongo.distribution.Version;
+import de.flapdoodle.embed.mongo.transitions.Mongod;
+import de.flapdoodle.embed.mongo.transitions.RunningMongodProcess;
 import de.flapdoodle.embed.process.runtime.Network;
-import java.net.InetAddress;
-import java.util.Collections;
-import org.bson.codecs.configuration.CodecRegistry;
+import de.flapdoodle.reverse.TransitionWalker;
+import de.flapdoodle.reverse.transitions.Start;
+import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.pojo.PojoCodecProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
+
+import java.net.InetAddress;
+
+import static java.util.List.of;
+import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
+
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -49,8 +50,7 @@ public class EmbeddedClient implements InitializingBean, DisposableBean {
 
     private static final Logger logger = LoggerFactory.getLogger(EmbeddedClient.class);
 
-    static MongodProcess mongod;
-    static MongodExecutable mongodExecutable;
+    static TransitionWalker.ReachedState<RunningMongodProcess> mongodExecutable;
 
     private String databaseName;
     private MongoClient mongoClient;
@@ -62,26 +62,34 @@ public class EmbeddedClient implements InitializingBean, DisposableBean {
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        final MongodStarter starter = MongodStarter.getDefaultInstance();
 
         int port = Network.freeServerPort(InetAddress.getLocalHost());
-        MongodConfig mongodConfig = MongodConfig.builder()
-            .version(Version.Main.PRODUCTION)
-            .net(new Net(port, Network.localhostIsIPv6()))
-            .build();
 
-        MongodExecutable mongodExecutable = starter.prepare(mongodConfig);
-        mongod = mongodExecutable.start();
+        Version.Main version = Version.Main.V6_0;
+        var mongod = Mongod.builder().net(Start.to(Net.class)
+                .initializedWith(Net.builder().port(port).isIpv6(Network.localhostIsIPv6()).build()))
+                .build();
+        mongodExecutable = mongod.start(version);
 
         // cluster configuration
-        ClusterSettings clusterSettings = ClusterSettings.builder().hosts(Collections.singletonList(new ServerAddress(mongodConfig.net().getServerAddress().getHostName(), mongodConfig.net().getPort()))).build();
+        final var serverAddress = mongodExecutable.current().getServerAddress();
+        ClusterSettings clusterSettings = ClusterSettings.builder()
+                .hosts(of(new ServerAddress(serverAddress.getHost(), serverAddress.getPort()))).build();
         // codec configuration
-        CodecRegistry pojoCodecRegistry = fromRegistries(MongoClients.getDefaultCodecRegistry(),
+        var pojoCodecRegistry = CodecRegistries.fromRegistries(MongoClients.getDefaultCodecRegistry(),
                 fromProviders(PojoCodecProvider.builder().automatic(true).build()));
 
-        MongoClientSettings settings = MongoClientSettings.builder().applyToClusterSettings(clusterBuilder -> clusterBuilder.applySettings(clusterSettings)).codecRegistry(pojoCodecRegistry).writeConcern(WriteConcern.ACKNOWLEDGED).build();
+        var settings = MongoClientSettings.builder()
+                .applyToClusterSettings(clusterBuilder -> clusterBuilder.applySettings(clusterSettings))
+                .codecRegistry(pojoCodecRegistry)
+                .writeConcern(WriteConcern.ACKNOWLEDGED)
+                .build();
         mongoClient = MongoClients.create(settings);
         mongoDatabase = mongoClient.getDatabase(databaseName);
+    }
+
+    public static com.mongodb.ServerAddress serverAddress(de.flapdoodle.embed.mongo.commands.ServerAddress serverAddress) {
+        return new com.mongodb.ServerAddress(serverAddress.getHost(), serverAddress.getPort());
     }
 
     @Override
@@ -90,11 +98,8 @@ public class EmbeddedClient implements InitializingBean, DisposableBean {
             mongoClient.close();
         }
 
-        if (mongod != null) {
-            mongod.stop();
-        }
         if (mongodExecutable != null) {
-            mongodExecutable.stop();
+            mongodExecutable.close();
         }
     }
 
