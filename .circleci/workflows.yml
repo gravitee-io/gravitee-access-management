@@ -1593,7 +1593,7 @@ jobs:
           name: "build the Charts"
           working_directory: "./helm"
           command: |
-            helm dependency build
+            helm dependency update
             helm package -d charts .
       - run:
           name: Install dependencies
