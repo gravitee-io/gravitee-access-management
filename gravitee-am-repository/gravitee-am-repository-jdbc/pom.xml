@@ -233,9 +233,9 @@
         </dependency>
 
         <dependency>
-            <groupId>org.glassfish.jaxb</groupId>
-            <artifactId>jaxb-runtime</artifactId>
-            <version>${dozer-jaxb-runtime.version}</version>
+            <groupId>javax.el</groupId>
+            <artifactId>javax.el-api</artifactId>
+            <scope>compile</scope>
         </dependency>
 
         <dependency>
