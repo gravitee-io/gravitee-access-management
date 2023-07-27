@@ -49,5 +49,12 @@
 				<exclude>io.netty:netty-handler-proxy</exclude>
 			</excludes>
 		</dependencySet>
+		<dependencySet>
+			<outputDirectory>lib</outputDirectory>
+			<useProjectArtifact>false</useProjectArtifact>
+			<includes>
+				<include>javax.el:el-api</include>
+			</includes>
+		</dependencySet>
 	</dependencySets>
 </assembly>
