@@ -88,7 +88,8 @@ object SimulationSettings {
           "username" -> s"${USER_PREFIX}${index}",
           "firstname" -> s"first${index}",
           "lastname" -> s"last${index}",
-          "password" -> "B3nchUs3rs!",
+          "contract" -> s"0000${(index % 250_000)}",
+          "password" -> s"B3nchUs3rs!${index}",
           "index" -> index)
       })
   }

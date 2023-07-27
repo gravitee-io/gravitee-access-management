@@ -104,7 +104,7 @@ object ManagementAPICalls {
           |"username":"${username}",
           |"password":"${password}",
           |"source":"${identityId}",
-          |"preRegistration":false}""".stripMargin)).asJson
+          |"preRegistration":false, "additionalInformation" : { "contract": "${contract}" }}""".stripMargin)).asJson
       .check(status.is(201))
   }
 }
