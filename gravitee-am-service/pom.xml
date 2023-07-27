@@ -26,7 +26,6 @@
     </parent>
     <properties>
         <spring-security-crypto.version>6.1.1</spring-security-crypto.version>
-        <angus-mail.version>2.0.2</angus-mail.version>
     </properties>
     <modelVersion>4.0.0</modelVersion>
 
@@ -166,6 +165,11 @@
             <groupId>org.eclipse.angus</groupId>
             <artifactId>angus-mail</artifactId>
             <version>${angus-mail.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.angus</groupId>
+            <artifactId>angus-activation</artifactId>
+            <version>${angus-activation.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
