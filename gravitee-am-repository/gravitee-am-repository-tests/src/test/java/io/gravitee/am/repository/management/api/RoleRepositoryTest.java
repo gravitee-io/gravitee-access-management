@@ -204,8 +204,10 @@ public class RoleRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testNotFoundById() throws TechnicalException {
-        roleRepository.findById("test").test().assertEmpty();
+    public void testNotFoundById() throws Exception {
+        TestObserver<Role> test = roleRepository.findById("test").test();
+        test.await(10, TimeUnit.SECONDS);
+        test.assertNoValues();
     }
 
     @Test
