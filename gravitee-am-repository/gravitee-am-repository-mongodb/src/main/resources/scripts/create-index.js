@@ -106,7 +106,7 @@ db.login_attempts.reIndex();
 // "memberships" collection
 db.memberships.dropIndexes();
 db.memberships.createIndex( { "_id": 1 }, {"name": "_id1"} );
-db.memberships.createIndex( { "referenceType" : 1, "referenceId": 1 }, {"name": "ri1rt1"} );
+db.memberships.createIndex( { "referenceId" : 1, "referenceType": 1 }, {"name": "ri1rt1"} );
 db.memberships.createIndex( { "referenceId" : 1, "memberId": 1 }, {"name": "ri1mi1"} );
 db.memberships.createIndex( { "memberId" : 1, "memberType": 1 }, {"name": "mi1mt1"} );
 db.memberships.reIndex();
@@ -155,7 +155,7 @@ db.scope_approvals.createIndex( { "transactionId" : 1 }, {"name": "t1"} );
 db.scope_approvals.createIndex( { "domain" : 1, "userId": 1 }, {"name": "d1u1"} );
 db.scope_approvals.createIndex( { "domain" : 1, "clientId": 1, "userId": 1 }, {"name": "d1c1u1"} );
 db.scope_approvals.createIndex( { "domain" : 1, "clientId": 1, "userId": 1, "scope": 1 }, {"name": "d1c1u1s1"} );
-db.scope_approvals.createIndex( { "expire_at" : 1 }, {"name": "e1", "expireAfterSeconds": 0});
+db.scope_approvals.createIndex( { "expiresAt" : 1 }, {"name": "e1", "expireAfterSeconds": 0});
 db.scope_approvals.reIndex();
 
 // "tags" collection
@@ -269,7 +269,7 @@ db.devices.reIndex();
 // "i18n_dictionaries" collection
 db.i18n_dictionaries.dropIndexes();
 db.i18n_dictionaries.createIndex( { "_id": 1 }, {"name": "_id1"} );
-db.i18n_dictionaries.createIndex( { "referenceId": 1, "referenceType" : 1 }, {"name": "ri1rt1"} );
+db.i18n_dictionaries.createIndex( { "referenceType": 1, "referenceId" : 1 }, {"name": "rt1ri1"} );
 db.i18n_dictionaries.createIndex( { "referenceId": 1, "referenceType" : 1, "name" : 1 }, {"name": "ri1rt1n1"} );
 db.i18n_dictionaries.reIndex();
 
@@ -282,13 +282,13 @@ db.node_monitoring.reIndex();
 // "notification_acknowledgements" collection
 db.notification_acknowledgements.dropIndexes();
 db.notification_acknowledgements.createIndex( { "_id": 1 }, {"name": "_id1"} );
-db.notification_acknowledgements.createIndex( { "resourceId": 1, "resourceType": 1, "audienceId": 1 }, {"name": "ri1rt1a1"} );
+db.notification_acknowledgements.createIndex( { "resourceId": 1, "type": 1, "audienceId": 1 }, {"name": "ri1rt1a1"} );
 db.notification_acknowledgements.reIndex();
 
 // "password_histories" collection
 db.password_histories.dropIndexes();
 db.password_histories.createIndex( { "_id": 1 }, {"name": "_id1"} );
-db.password_histories.createIndex( { "referenceId": 1, "referenceType" : 1 }, {"name": "ri1rt1"} );
+db.password_histories.createIndex( { "referenceType": 1, "referenceId" : 1 }, {"name": "rt1ri1"} );
 db.password_histories.createIndex( { "referenceId": 1, "referenceType" : 1, "userId": 1 }, {"name": "ri1rt1u1"} );
 db.password_histories.reIndex();
 
@@ -325,7 +325,6 @@ db.user_notifications.reIndex();
 // "user_activities" collection
 db.user_activities.dropIndexes();
 db.user_activities.createIndex( { "_id": 1 }, {"name": "_id1"} );
-db.user_activities.createIndex( { "referenceType" : 1, "referenceId": 1 }, {"name": "rt1ri1"} );
 db.user_activities.createIndex( { "referenceType" : 1, "referenceId": 1 }, {"name": "rt1ri1"} );
 db.user_activities.createIndex( { "createdAt": 1 }, {"name": "c1"} );
 db.user_activities.createIndex( { "expireAt" : 1 }, {"name": "e1", "expireAfterSeconds": 0});
