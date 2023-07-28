@@ -22,7 +22,7 @@ import io.gravitee.am.repository.mongodb.management.internal.model.OrganizationU
 import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
 
 /**
