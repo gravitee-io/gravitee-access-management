@@ -32,7 +32,7 @@ import io.reactivex.rxjava3.core.Single;
 import org.bson.Document;
 import org.springframework.stereotype.Repository;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.client.model.Filters.and;

@@ -27,7 +27,7 @@ import io.reactivex.rxjava3.core.*;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;

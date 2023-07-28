@@ -29,7 +29,7 @@ import io.reactivex.rxjava3.core.Single;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import java.util.Objects;
 
 import static com.mongodb.client.model.Filters.and;

@@ -31,7 +31,7 @@ import org.bson.BsonValue;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import java.util.*;
 
 import static com.mongodb.client.model.Filters.and;
