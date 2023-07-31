@@ -120,8 +120,6 @@ public class SyncManager implements InitializingBean {
             eventsGauge.updateValue(0);
         }
 
-
-
         lastRefreshAt = nextLastRefreshAt;
         lastDelay = System.currentTimeMillis() - nextLastRefreshAt;
 
@@ -131,7 +129,14 @@ public class SyncManager implements InitializingBean {
         events.forEach(event -> {
             if (Objects.isNull(processedEventIds.getIfPresent(event.getId()))) {
                 logger.debug("Compute event id : {}, with type : {} and timestamp : {} and payload : {}", event.getId(), event.getType(), event.getCreatedAt(), event.getPayload());
-                eventManager.publishEvent(io.gravitee.am.common.event.Event.valueOf(event.getType(), event.getPayload().getAction()), event.getPayload());
+
+                final var commonEvent = io.gravitee.am.common.event.Event.valueOf(event.getType(), event.getPayload().getAction());
+                if(commonEvent == null){
+                    logger.debug("Cannot publish event {} as type is null", event.getId());
+                    return;
+                }
+
+                eventManager.publishEvent(commonEvent, event.getPayload());
             } else {
                 logger.debug("Event id {} already processed", event.getId());
             }
