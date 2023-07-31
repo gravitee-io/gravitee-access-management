@@ -34,29 +34,27 @@ import io.gravitee.am.performance.utils.GatewayCalls._
  * - req-ramp-during: ramp duration (in sec)  (default: 10)
  * - req-hold-during: duration (in sec) of the simulation at the given rate of requests (default: 1800 => 30 minutes)
  */
-class LoginPasswordFlow extends Simulation {
+class BasicLoginFlowMultiDomain extends Simulation {
 
   val httpProtocol = http
-    .userAgentHeader("Gatling - Basic Login Flow")
+    .userAgentHeader("Gatling - Basic Login Flow MultiDomain")
     .disableFollowRedirect
 
   val userGenerator = userFeeder(WORKLOAD)
+  val domainHrid = csv("domain-hrid.csv").circular()
 
-  val scnWithIntrospect = scenario("Password Login Flow")
+  val scn = scenario("Basic Login Flow Multi Domain")
+    .feed(domainHrid)
     .feed(userGenerator)
-    .exec(requestAccessTokenWithUserCredentials())
+    .exec(initCodeFlow("#{domainHrid}"))
+    .exec(renderLoginForm("#{domainHrid}"))
     .pause(1)
-    .exec(introspectToken())
-    .pause(12)
-    .repeat(10) {
-      exec(introspectToken())
-    }
-
-  val scnWithoutIntrospect = scenario("Password Login Flow")
-    .feed(userGenerator)
-    .exec(requestAccessTokenWithUserCredentials())
-
-  val scn = scnWithoutIntrospect
+    .exec(submitLoginForm("#{domainHrid}"))
+    .exec(callPostLoginRedirect)
+    .exec(requestAccessToken("#{domainHrid}"))
+    .pause(1)
+    .exec(introspectToken("#{domainHrid}"))
+    .exec(logout("#{domainHrid}"))
 
   setUp(scn.inject(constantUsersPerSec(AGENTS.floatValue()).during(INJECTION_DURATION.seconds)))
     .protocols(httpProtocol)
