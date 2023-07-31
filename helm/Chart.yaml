@@ -25,5 +25,10 @@ annotations:
   artifacthub.io/changes: |
     - Change the versioning strategy
     - Add hook-delete-policy
+<<<<<<< HEAD
     - Allow users to use `logging.debug: true` when they define their own configuration file by defining a volume
     - Remove ingress nginx annotation when `ingress.class` is not nginx
+=======
+    - "Allow users to use logging.debug: true when they define their own configuration file by defining a volume"
+    - "Remove ingress nginx annotation when ingress.class is not nginx"
+>>>>>>> 9d94536269 (fix(helm): surround special char with quote)
