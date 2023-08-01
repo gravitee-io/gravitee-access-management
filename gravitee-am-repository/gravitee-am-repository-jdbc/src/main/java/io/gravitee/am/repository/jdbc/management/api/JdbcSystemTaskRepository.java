@@ -139,7 +139,7 @@ public class JdbcSystemTaskRepository extends AbstractJdbcRepository implements 
     @Override
     public Completable delete(String id) {
         LOGGER.debug("Delete SystemTask with id {}", id);
-        Mono<Integer> delete = getTemplate().delete(JdbcSystemTask.class)
+        Mono<Long> delete = getTemplate().delete(JdbcSystemTask.class)
                 .matching(Query.query(where(COL_ID).is(id))).all();
         return monoToCompletable(delete);
     }

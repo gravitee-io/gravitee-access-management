@@ -247,7 +247,7 @@ public class JdbcFlowRepository extends AbstractJdbcRepository implements FlowRe
     }
 
     private Mono<Long> deleteChildEntities(String flowId) {
-        return getTemplate().delete(Query.query(where(COL_STEP_ID).is(flowId)), JdbcFlow.JdbcStep.class).map(Integer::longValue);
+        return getTemplate().delete(Query.query(where(COL_STEP_ID).is(flowId)), JdbcFlow.JdbcStep.class);
     }
 
     @Override

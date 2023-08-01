@@ -517,57 +517,6 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
         return insertAction.as(trx::transactional);
     }
 
-    private Mono<Long> insertReport(Audit audit) {
-        TransactionalOperator trx = TransactionalOperator.create(tm);
-
-        DatabaseClient.GenericExecuteSpec insertSpec = template.getDatabaseClient().sql(INSERT_AUDIT_STATEMENT);
-        insertSpec = addQuotedField(insertSpec, COL_ID, audit.getId(), String.class);
-        insertSpec = addQuotedField(insertSpec, COL_TRANSACTION_ID, audit.getTransactionId(), String.class);
-        insertSpec = addQuotedField(insertSpec, COL_TYPE, audit.getType(), String.class);
-        insertSpec = addQuotedField(insertSpec, COL_REFERENCE_TYPE, audit.getReferenceType() == null ? null : audit.getReferenceType().name(), String.class);
-        insertSpec = addQuotedField(insertSpec, COL_REFERENCE_ID, audit.getReferenceId(), String.class);
-        insertSpec = addQuotedField(insertSpec, COL_TIMESTAMP, LocalDateTime.ofInstant(audit.timestamp(), ZoneId.of(ZoneOffset.UTC.getId())), LocalDateTime.class);
-
-        Mono<Long> insertAction = insertSpec.fetch().rowsUpdated();
-
-        AuditEntity actor = audit.getActor();
-        if (actor != null) {
-            insertAction = insertAction.then(prepateInsertEntity(audit, actor, AUDIT_FIELD_ACTOR));
-        }
-
-        AuditEntity target = audit.getTarget();
-        if (target != null) {
-            insertAction = insertAction.then(prepateInsertEntity(audit, target, AUDIT_FIELD_TARGET));
-        }
-
-        AuditOutcome outcome = audit.getOutcome();
-        if (outcome != null) {
-            DatabaseClient.GenericExecuteSpec insertOutcomeSpec = template.getDatabaseClient().sql(INSERT_OUTCOMES_STATEMENT);
-
-            insertOutcomeSpec = addQuotedField(insertOutcomeSpec, COL_AUDIT_ID, audit.getId(), String.class);
-            insertOutcomeSpec = addQuotedField(insertOutcomeSpec, COL_STATUS, outcome.getStatus(), String.class);
-            insertOutcomeSpec = addQuotedField(insertOutcomeSpec, COL_MESSAGE, outcome.getMessage(), String.class);
-
-            insertAction = insertAction.then(insertOutcomeSpec.fetch().rowsUpdated());
-        }
-
-        AuditAccessPoint accessPoint = audit.getAccessPoint();
-        if (accessPoint != null) {
-            DatabaseClient.GenericExecuteSpec insertAccessPointSpec = template.getDatabaseClient().sql(INSERT_ACCESSPOINT_STATEMENT);
-
-            insertAccessPointSpec = addQuotedField(insertAccessPointSpec, COL_AUDIT_ID, audit.getId(), String.class);
-            insertAccessPointSpec = addQuotedField(insertAccessPointSpec, COL_ID, accessPoint.getId(), String.class);
-            insertAccessPointSpec = addQuotedField(insertAccessPointSpec, COL_ALTERNATIVE_ID, accessPoint.getAlternativeId(), String.class);
-            insertAccessPointSpec = addQuotedField(insertAccessPointSpec, COL_DISPLAY_NAME, accessPoint.getDisplayName(), String.class);
-            insertAccessPointSpec = addQuotedField(insertAccessPointSpec, COL_IP_ADDRESS, accessPoint.getIpAddress(), String.class);
-            insertAccessPointSpec = addQuotedField(insertAccessPointSpec, COL_USER_AGENT, accessPoint.getUserAgent(), String.class);
-
-            insertAction = insertAction.then(insertAccessPointSpec.fetch().rowsUpdated());
-        }
-
-        return insertAction.as(trx::transactional);
-    }
-
     private Mono<Long> prepateInsertEntity(Audit audit, AuditEntity entity, String field) {
         DatabaseClient.GenericExecuteSpec insertEntitySpec = template.getDatabaseClient().sql(INSERT_ENTITY_STATEMENT);
         insertEntitySpec = addQuotedField(insertEntitySpec, COL_AUDIT_ID, audit.getId(), String.class);
@@ -609,11 +558,11 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
             // for now simply get the file named <driver>.schema, more complex stuffs will be done if schema updates have to be done in the future
             final String sqlScript = "database/" + configuration.getDriver() + ".schema";
 
-            Function<Connection, Mono<Integer>> resultFunction = connection -> {
+            Function<Connection, Mono<Long>> resultFunction = connection -> {
                 Statement doesTableExist = connection.createStatement(dialectHelper.tableExists(auditsTable));
                 return flowableToFlux(Flowable.fromPublisher(doesTableExist.execute())
                         .flatMap(Result::getRowsUpdated)
-                        .first(0)
+                        .first(0l)
                         .flatMapPublisher(total -> {
                             if (total == 0) {
                                 LOGGER.debug("SQL datatable {} doest not exists, initialize all audit tables for the reporter.", auditsTable);
@@ -644,7 +593,7 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
                             } else {
                                 return Flowable.empty();
                             }
-                        })).reduce(Integer::sum);
+                        })).reduce(Long::sum);
             };
 
             // init bulk processor

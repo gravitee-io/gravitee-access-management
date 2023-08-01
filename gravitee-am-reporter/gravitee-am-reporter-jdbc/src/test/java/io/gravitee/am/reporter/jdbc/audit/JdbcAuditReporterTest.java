@@ -256,7 +256,7 @@ public class JdbcAuditReporterTest {
         AuditReportableCriteria criteria = new AuditReportableCriteria.Builder().user(MY_USER).build();
         TestObserver<Page<Audit>> test = auditReporter.search(ReferenceType.DOMAIN, "testReporter_searchUser", criteria, 0, 20).test();
         test.awaitDone(10, TimeUnit.SECONDS);
-        test.assertNoErrors();
+         test.assertNoErrors();
         int expectedResult = acc;
         test.assertValue(page -> page.getTotalCount() == expectedResult);
         test.assertValue(page -> page.getCurrentPage() == 0);

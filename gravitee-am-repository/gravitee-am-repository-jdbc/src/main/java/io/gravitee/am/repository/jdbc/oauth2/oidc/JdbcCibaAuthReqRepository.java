@@ -84,7 +84,7 @@ public class JdbcCibaAuthReqRepository extends AbstractJdbcRepository implements
     @Override
     public Single<CibaAuthRequest> updateStatus(String authReqId, String status) {
         LOGGER.debug("Update CibaAuthRequest {} with status {}", authReqId, status);
-        final Mono<Integer> action = getTemplate().update(
+        final Mono<Long> action = getTemplate().update(
                 Query.query(where("id").is(authReqId)),
                 Update.update("status", status),
                 JdbcCibaAuthRequest.class);

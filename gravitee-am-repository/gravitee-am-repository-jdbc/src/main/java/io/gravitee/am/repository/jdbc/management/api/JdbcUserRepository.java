@@ -848,25 +848,26 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
     }
 
     private Mono<Long> deleteChildEntities(String userId, UpdateActions actions) {
+        final Query criteria = Query.query(where("user_id").is(userId));
         var result = Mono.<Long>empty();
         if (actions.updateRole()) {
-            Mono<Long> deleteRoles = getTemplate().delete(JdbcUser.Role.class).matching(Query.query(where("user_id").is(userId))).all();
+            Mono<Long> deleteRoles = getTemplate().delete(JdbcUser.Role.class).matching(criteria).all();
             result = result.then(deleteRoles);
         }
         if (actions.updateDynamicRole()) {
-            Mono<Long> deleteDynamicRoles = getTemplate().delete(JdbcUser.DynamicRole.class).matching(Query.query(where("user_id").is(userId))).all();
+            Mono<Long> deleteDynamicRoles = getTemplate().delete(JdbcUser.DynamicRole.class).matching(criteria).all();
             result = result.then(deleteDynamicRoles);
         }
         if (actions.updateAddresses()) {
-            Mono<Long> deleteAddresses = getTemplate().delete(JdbcUser.Address.class).matching(Query.query(where("user_id").is(userId))).all();
+            Mono<Long> deleteAddresses = getTemplate().delete(JdbcUser.Address.class).matching(criteria).all();
             result = result.then(deleteAddresses);
         }
         if (actions.updateAttributes()) {
-            Mono<Long> deleteAttributes = getTemplate().delete(JdbcUser.Attribute.class).matching(Query.query(where("user_id").is(userId))).all();
+            Mono<Long> deleteAttributes = getTemplate().delete(JdbcUser.Attribute.class).matching(criteria).all();
             result = result.then(deleteAttributes);
         }
         if (actions.updateEntitlements()) {
-            Mono<Long> deleteEntitlements = getTemplate().delete(JdbcUser.Entitlements.class).matching(Query.query(where("user_id").is(userId))).all();
+            Mono<Long> deleteEntitlements = getTemplate().delete(JdbcUser.Entitlements.class).matching(criteria).all();
             result = result.then(deleteEntitlements);
         }
         return result;

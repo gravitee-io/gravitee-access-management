@@ -55,7 +55,7 @@ public class ScopeRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testFindByDomainAndKey() {
+    public void testFindByDomainAndKey()  {
         // create scope
         Scope scope = new Scope();
         scope.setName("firstOne");

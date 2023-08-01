@@ -273,10 +273,10 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
         LOGGER.debug("Delete Role with id {}", id);
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        Mono<Integer> deleteScopes = getTemplate().delete(JdbcRole.OAuthScope.class)
+        Mono<Long> deleteScopes = getTemplate().delete(JdbcRole.OAuthScope.class)
                 .matching(Query.query(where("role_id").is(id))).all();
 
-        Mono<Integer> delete = getTemplate().delete(JdbcRole.class)
+        Mono<Long> delete = getTemplate().delete(JdbcRole.class)
                 .matching(Query.query(where(COL_ID).is(id))).all();
 
         return monoToCompletable(delete.then(deleteScopes.as(trx::transactional)));

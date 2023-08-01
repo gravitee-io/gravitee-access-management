@@ -20,7 +20,6 @@ import io.gravitee.am.reporter.jdbc.spring.JdbcReporterSpringConfiguration;
 import io.gravitee.am.reporter.jdbc.tool.R2dbcDatabaseContainer;
 import io.gravitee.am.repository.jdbc.provider.impl.R2DBCConnectionProvider;
 import io.gravitee.am.repository.jdbc.provider.impl.R2DBCPoolWrapper;
-import io.gravitee.am.repository.jdbc.provider.template.CustomR2dbcEntityTemplate;
 import io.gravitee.am.repository.provider.ClientWrapper;
 import io.r2dbc.spi.ConnectionFactories;
 import io.r2dbc.spi.ConnectionFactory;
@@ -36,6 +35,8 @@ import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
 import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
+import org.springframework.data.relational.RelationalManagedTypes;
+import org.springframework.data.relational.core.mapping.DefaultNamingStrategy;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.r2dbc.connection.R2dbcTransactionManager;
 import org.springframework.r2dbc.core.DatabaseClient;
@@ -130,13 +131,15 @@ public class JdbcReporterJUnitConfiguration extends JdbcReporterSpringConfigurat
 
     @Override
     public R2dbcEntityTemplate r2dbcEntityTemplate(DatabaseClient databaseClient, ReactiveDataAccessStrategy dataAccessStrategy) {
-        return new CustomR2dbcEntityTemplate(databaseClient, dataAccessStrategy);
+        return new R2dbcEntityTemplate(databaseClient, dataAccessStrategy);
     }
 
     @Override
-    public R2dbcMappingContext r2dbcMappingContext(Optional<NamingStrategy> namingStrategy, R2dbcCustomConversions r2dbcCustomConversions) {
-        R2dbcMappingContext context = new R2dbcMappingContext(namingStrategy.orElse(NamingStrategy.INSTANCE));
+    public R2dbcMappingContext r2dbcMappingContext(Optional<NamingStrategy> namingStrategy, R2dbcCustomConversions r2dbcCustomConversions, RelationalManagedTypes r2dbcManagedTypes) {
+
+        R2dbcMappingContext context = new R2dbcMappingContext(namingStrategy.orElse(DefaultNamingStrategy.INSTANCE));
         context.setSimpleTypeHolder(r2dbcCustomConversions.getSimpleTypeHolder());
+        context.setManagedTypes(r2dbcManagedTypes);
 
         return context;
     }

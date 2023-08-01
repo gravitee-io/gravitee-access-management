@@ -27,7 +27,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
-import org.springframework.data.r2dbc.core.DatabaseClient.GenericInsertSpec;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.r2dbc.core.DatabaseClient;
@@ -55,10 +54,10 @@ public abstract class AbstractJdbcRepository {
 
     @Autowired
     protected MappingR2dbcConverter rowMapper;
-
+/*
     protected <T> GenericInsertSpec<Map<String, Object>> addQuotedField(GenericInsertSpec<Map<String, Object>> spec, String name, Object value, Class<T> type) {
         return value == null ? spec.nullValue(SqlIdentifier.quoted(name), type) : spec.value(SqlIdentifier.quoted(name), value);
-    }
+    }*/
 
     protected <T> DatabaseClient.GenericExecuteSpec addQuotedField(DatabaseClient.GenericExecuteSpec spec, String name, Object value, Class<T> type) {
         return value == null ? spec.bindNull(name, type) : spec.bind(name, value);

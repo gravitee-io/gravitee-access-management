@@ -74,7 +74,7 @@
 
     <properties>
         <awaitility.version>4.2.0</awaitility.version>
-        <gravitee-bom.version>6.0.0</gravitee-bom.version>
+        <gravitee-bom.version>6.0.4</gravitee-bom.version>
         <gravitee-common.version>2.1.0</gravitee-common.version>
         <gravitee-plugin.version>2.0.2</gravitee-plugin.version>
         <gravitee-node.version>4.0.0</gravitee-node.version>
@@ -163,6 +163,22 @@
 
         <javax.servlet-api.version>3.0.1</javax.servlet-api.version>
 
+        <!-- R2DBC -->
+        <r2dbc-postgresql.version>1.0.2.RELEASE</r2dbc-postgresql.version>
+        <r2dbc-mariadb.version>1.1.4</r2dbc-mariadb.version>
+        <!--
+        DO NOT use the 1.0.2.RELEASE as this version seems to be buggy
+        see https://github.com/r2dbc/r2dbc-mssql/issues/276
+        <r2dbc-mssql.version>1.0.2.RELEASE</r2dbc-mssql.version>
+        -->
+        <r2dbc-mssql.version>1.0.0.RELEASE</r2dbc-mssql.version>
+        <r2dbc-mysql.version>1.0.2</r2dbc-mysql.version>
+        <oracle-r2dbc.version>1.1.1</oracle-r2dbc.version>
+        <r2dbc-spi.version>1.0.0.RELEASE</r2dbc-spi.version>
+
+        <r2dbc-pool.version>1.0.1.RELEASE</r2dbc-pool.version>
+        <r2dbc-proxy.version>1.1.1.RELEASE</r2dbc-proxy.version>
+        <r2dbc-spi.version>1.0.0.RELEASE</r2dbc-spi.version>
 
         <jdk.version>17</jdk.version>
 
@@ -480,6 +496,55 @@
                 <artifactId>hazelcast</artifactId>
                 <version>${hazelcast.version}</version>
             </dependency>
+
+            <!-- R2DBC -->
+            <dependency>
+                <groupId>com.oracle.database.r2dbc</groupId>
+                <artifactId>oracle-r2dbc</artifactId>
+                <version>${r2dbc-oracle.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.r2dbc</groupId>
+                <artifactId>r2dbc-h2</artifactId>
+                <version>${r2dbc-h2.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.mariadb</groupId>
+                <artifactId>r2dbc-mariadb</artifactId>
+                <version>${r2dbc-mariadb.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.r2dbc</groupId>
+                <artifactId>r2dbc-mssql</artifactId>
+                <version>${r2dbc-mssql.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.postgresql</groupId>
+                <artifactId>r2dbc-postgresql</artifactId>
+                <version>${r2dbc-postgresql.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.asyncer</groupId>
+                <artifactId>r2dbc-mysql</artifactId>
+                <version>${r2dbc-mysql.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.r2dbc</groupId>
+                <artifactId>r2dbc-pool</artifactId>
+                <version>${r2dbc-pool.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.r2dbc</groupId>
+                <artifactId>r2dbc-proxy</artifactId>
+                <version>${r2dbc-proxy.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.r2dbc</groupId>
+                <artifactId>r2dbc-spi</artifactId>
+                <version>${r2dbc-spi.version}</version>
+            </dependency>
+
         </dependencies>
     </dependencyManagement>
 

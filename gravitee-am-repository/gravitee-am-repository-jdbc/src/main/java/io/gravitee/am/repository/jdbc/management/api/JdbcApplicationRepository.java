@@ -357,18 +357,18 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        Mono<Integer> delete = getTemplate().delete(JdbcApplication.class).matching(query(where(COL_ID).is(id))).all();
+        Mono<Long> delete = getTemplate().delete(JdbcApplication.class).matching(query(where(COL_ID).is(id))).all();
         return monoToCompletable(delete.then(deleteChildEntities(id)).as(trx::transactional))
                 .andThen(applicationRepository.deleteById(id));
     }
 
     private Mono<Long> deleteChildEntities(String appId) {
         final Query criteria = query(where("application_id").is(appId));
-        Mono<Integer> identities = getTemplate().delete(criteria, JdbcApplication.Identity.class);
-        Mono<Integer> factors = getTemplate().delete(criteria, JdbcApplication.Factor.class);
-        Mono<Integer> grants = getTemplate().delete(criteria, JdbcApplication.Grant.class);
-        Mono<Integer> scopeSettings = getTemplate().delete(criteria, JdbcApplication.ScopeSettings.class);
-        return factors.then(identities).then(grants).then(scopeSettings).map(Integer::longValue);
+        Mono<Long> identities = getTemplate().delete(criteria, JdbcApplication.Identity.class);
+        Mono<Long> factors = getTemplate().delete(criteria, JdbcApplication.Factor.class);
+        Mono<Long> grants = getTemplate().delete(criteria, JdbcApplication.Grant.class);
+        Mono<Long> scopeSettings = getTemplate().delete(criteria, JdbcApplication.ScopeSettings.class);
+        return factors.then(identities).then(grants).then(scopeSettings);
     }
 
     private Mono<Long> persistChildEntities(Mono<Long> actionFlow, Application app) {
