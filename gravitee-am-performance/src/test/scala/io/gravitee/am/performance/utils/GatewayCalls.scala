@@ -52,6 +52,17 @@ object GatewayCalls {
       .check(header(Location).saveAs("postLoginRedirect"))
   }
 
+  def submitLoginFormWithAccountId(domain: String = DOMAIN_NAME) = {
+    http("Post Login Form")
+      .post(GATEWAY_BASE_URL + s"/${domain}/login?client_id=${APP_NAME}&response_type=code&redirect_uri=https://callback-${APP_NAME}")
+      .formParam("X-XSRF-TOKEN", "${XSRF-TOKEN}")
+      .formParam("username", "${contract}")
+      .formParam("password", "${password}")
+      .formParam("client_id", APP_NAME)
+      .check(status.is(302))
+      .check(header(Location).transform(headerValue => headerValue.contains("error")).is(false))
+      .check(header(Location).saveAs("postLoginRedirect"))
+  }
   def callPostLoginRedirect = {
     http("Request Code after Login")
       .get("${postLoginRedirect}")
