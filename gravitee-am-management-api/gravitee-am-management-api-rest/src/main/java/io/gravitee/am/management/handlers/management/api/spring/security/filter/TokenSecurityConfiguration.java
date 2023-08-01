@@ -24,6 +24,7 @@ import org.springframework.security.authentication.AuthenticationDetailsSource;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @Configuration
 public class TokenSecurityConfiguration {
@@ -36,9 +37,10 @@ public class TokenSecurityConfiguration {
             HttpSecurity http,
             AuthenticationDetailsSource<HttpServletRequest, WebAuthenticationDetails> authenticationDetailsSource
     ) throws Exception {
+        var pathRequestMatcher = AntPathRequestMatcher.antMatcher("/auth/token");
         http.authorizeHttpRequests(
                         authorizeHttpRequests ->
-                                authorizeHttpRequests.requestMatchers("/auth/token").permitAll()
+                                authorizeHttpRequests.requestMatchers(pathRequestMatcher).permitAll()
                                 .anyRequest().authenticated()
                 )
                 .httpBasic(httpBasic -> httpBasic

@@ -31,7 +31,6 @@ import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.ReCaptchaService;
 import jakarta.servlet.Filter;
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
@@ -50,6 +49,9 @@ import org.springframework.security.web.authentication.logout.LogoutFilter;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+
+import java.util.Arrays;
+import java.util.List;
 
 import static java.util.Arrays.asList;
 
@@ -81,9 +83,11 @@ public class AuthSecurityConfiguration extends CsrfAwareConfiguration {
             ObjectMapper objectMapper,
             CookieCsrfSignedTokenRepository csrfTokenRepository
     ) throws Exception {
+
+        var pathRequestMatchers = Arrays.stream(PERMITTED_ROUTES).map(AntPathRequestMatcher::antMatcher).toArray(AntPathRequestMatcher[]::new);
         http.authorizeHttpRequests(
                         authorizeHttpRequests -> authorizeHttpRequests
-                                .requestMatchers(PERMITTED_ROUTES)
+                                .requestMatchers(pathRequestMatchers)
                                 .permitAll()
                                 .anyRequest().authenticated()
                 )

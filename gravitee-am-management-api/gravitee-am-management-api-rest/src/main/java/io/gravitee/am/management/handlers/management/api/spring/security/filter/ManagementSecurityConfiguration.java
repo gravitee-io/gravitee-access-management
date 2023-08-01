@@ -18,8 +18,6 @@ package io.gravitee.am.management.handlers.management.api.spring.security.filter
 import io.gravitee.am.management.handlers.management.api.authentication.csrf.CookieCsrfSignedTokenRepository;
 import io.gravitee.am.management.handlers.management.api.authentication.filter.JWTAuthenticationFilter;
 import io.gravitee.am.management.handlers.management.api.authentication.web.Http401UnauthorizedEntryPoint;
-import java.util.ArrayList;
-import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -30,6 +28,11 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import static io.gravitee.am.management.handlers.management.api.spring.security.SecurityConfiguration.*;
 import static java.util.Objects.nonNull;
@@ -56,7 +59,8 @@ public class ManagementSecurityConfiguration extends CsrfAwareConfiguration {
             JWTAuthenticationFilter jwtAuthenticationFilter,
             CookieCsrfSignedTokenRepository csrfSignedTokenRepository
     ) throws Exception {
-        http.authorizeHttpRequests(authorizeHttpRequests -> authorizeHttpRequests.requestMatchers(PATHS).authenticated())
+        var pathRequestMatchers = Arrays.stream(PATHS).map(AntPathRequestMatcher::antMatcher).toArray(AntPathRequestMatcher[]::new);
+        http.authorizeHttpRequests(authorizeHttpRequests -> authorizeHttpRequests.requestMatchers(pathRequestMatchers).authenticated())
                 .sessionManagement(sessionManagement -> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .cors(cors -> {
                 })
@@ -69,7 +73,7 @@ public class ManagementSecurityConfiguration extends CsrfAwareConfiguration {
 
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
-        return (web) -> web.ignoring().requestMatchers("/swagger.json");
+        return (web) -> web.ignoring().requestMatchers(AntPathRequestMatcher.antMatcher("/swagger.json"));
     }
 
     private HttpSecurity csp(HttpSecurity http) throws Exception {
