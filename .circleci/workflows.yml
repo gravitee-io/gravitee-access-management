@@ -6,6 +6,7 @@ orbs:
   gh: circleci/github-cli@2.2.0
   aws-s3: circleci/aws-s3@3.0
   helm: circleci/helm@2.0.1
+  snyk: snyk/snyk@1.7.0
 
 executors:
   ubuntu:
@@ -1623,6 +1624,25 @@ jobs:
                   helm registry login graviteeio.azurecr.io --username $ACR_USER_NAME --password $ACR_PASSWORD
                   helm push charts/am-${VERSION}.tgz oci://graviteeio.azurecr.io/helm/
 
+  job-snyk-am-charts:
+    docker:
+      - image: cimg/base:stable
+    resource_class: small
+    steps:
+      - checkout
+      - keeper/env-export:
+          secret-url: keeper://s83JmReKpBZWjHdud6ZAlg/custom_field/gravitee_am_org_api_token
+          var-name: SNYK_TOKEN
+      - helm/install-helm-client
+      - snyk/install
+      - run:
+          name: "build the Charts output and scan"
+          working_directory: "./helm"
+          command: |
+            helm dependency update
+            helm template . --output-dir ./output
+            snyk iac test ./output --report --target-reference="${CIRCLE_BRANCH}" --project-tags=version=${CIRCLE_BRANCH} --severity-threshold=high
+
 workflows:
   version: 2.1
   # -- typically this workflow is executed on pull requests events for Community Edition Gravitee Repositories
@@ -1714,6 +1734,17 @@ workflows:
                 - master
                 - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
       - build:
+          requires:
+            - setup
+          filters:
+            branches:
+              only:
+                - master
+                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+
+      - job-snyk-am-charts:
+          name: scan snyk Helm chart
+          context: cicd-orchestrator
           requires:
             - setup
           filters:
