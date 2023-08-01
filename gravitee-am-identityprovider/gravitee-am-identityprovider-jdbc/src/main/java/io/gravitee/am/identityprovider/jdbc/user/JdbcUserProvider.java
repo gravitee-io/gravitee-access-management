@@ -76,7 +76,7 @@ public class JdbcUserProvider extends JdbcAbstractProvider<UserProvider> impleme
                             final String tableExistsStatement = tableExists(configuration.getProtocol(), configuration.getUsersTable());
                             return query(connection, tableExistsStatement, new Object[0])
                                     .flatMap(Result::getRowsUpdated)
-                                    .first(0)
+                                    .first(0l)
                                     .flatMapPublisher(total -> {
                                         if (total == 0) {
                                             LOGGER.debug("SQL datatable {} does not exist.", configuration.getUsersTable());
@@ -145,7 +145,7 @@ public class JdbcUserProvider extends JdbcAbstractProvider<UserProvider> impleme
                             final String tableExistsStatement = tableExists(configuration.getProtocol(), configuration.getUsersTable());
                             return query(connection, tableExistsStatement, new Object[0])
                                     .flatMap(Result::getRowsUpdated)
-                                    .first(0)
+                                    .first(0l)
                                     .flatMapPublisher(total -> {
                                         if (total == 0) {
                                             LOGGER.debug("SQL datatable {} doest not exists, initialize it.", configuration.getUsersTable());
@@ -258,7 +258,7 @@ public class JdbcUserProvider extends JdbcAbstractProvider<UserProvider> impleme
 
                                     return query(cnx, sql, args)
                                             .flatMap(Result::getRowsUpdated)
-                                            .first(0)
+                                            .first(0l)
                                             .map(result -> user);
                                 }
                             }).doFinally(() -> Completable.fromPublisher(cnx.close()).subscribe());
@@ -333,7 +333,7 @@ public class JdbcUserProvider extends JdbcAbstractProvider<UserProvider> impleme
 
         return query(sql, args)
                 .flatMap(Result::getRowsUpdated)
-                .first(0)
+                .first(0l)
                 .flatMap(rowsUpdated -> {
                     if (rowsUpdated == 0) {
                         return Single.error(new UserNotFoundException(id));
@@ -360,7 +360,7 @@ public class JdbcUserProvider extends JdbcAbstractProvider<UserProvider> impleme
 
         return query(sql, args)
                 .flatMap(Result::getRowsUpdated)
-                .first(0)
+                .first(0l)
                 .flatMap(rowsUpdated -> {
                     if (rowsUpdated == 0) {
                         return Single.error(new UserNotFoundException(user.getId()));
@@ -406,7 +406,7 @@ public class JdbcUserProvider extends JdbcAbstractProvider<UserProvider> impleme
 
         return query(sql, args)
                 .flatMap(Result::getRowsUpdated)
-                .first(0)
+                .first(0l)
                 .flatMap(rowsUpdated -> {
                     if (rowsUpdated == 0) {
                         return Single.error(new UserNotFoundException(user.getId()));

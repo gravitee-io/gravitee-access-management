@@ -33,22 +33,8 @@
     <name>Gravitee IO - Access Management - Identity Provider - JDBC</name>
 
     <properties>
-        <r2dbc-releasetrain.version>Borca-SR2</r2dbc-releasetrain.version>
-        <spring-data-r2dbc.version>1.5.13</spring-data-r2dbc.version>
-        <r2dbc-mysql.version>0.9.3</r2dbc-mysql.version>
+        <spring-data-r2dbc.version>3.0.8</spring-data-r2dbc.version>
     </properties>
-
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>io.r2dbc</groupId>
-                <artifactId>r2dbc-bom</artifactId>
-                <version>${r2dbc-releasetrain.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
 
     <dependencies>
         <!-- Gravitee.io -->

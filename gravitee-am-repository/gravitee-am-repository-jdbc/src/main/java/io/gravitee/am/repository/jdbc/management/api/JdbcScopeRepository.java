@@ -235,7 +235,7 @@ public class JdbcScopeRepository extends AbstractJdbcRepository implements Scope
         LOGGER.debug("Update Scope with id {}", item.getId());
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        Mono<Integer> deleteClaims = getTemplate().delete(JdbcScope.Claims.class)
+        Mono<Long> deleteClaims = getTemplate().delete(JdbcScope.Claims.class)
                 .matching(Query.query(where("scope_id").is(item.getId()))).all();
 
         DatabaseClient.GenericExecuteSpec update = getTemplate().getDatabaseClient().sql(UPDATE_STATEMENT);
@@ -269,10 +269,10 @@ public class JdbcScopeRepository extends AbstractJdbcRepository implements Scope
         LOGGER.debug("delete({})", id);
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        Mono<Integer> deleteClaim = getTemplate().delete(JdbcScope.Claims.class)
+        Mono<Long> deleteClaim = getTemplate().delete(JdbcScope.Claims.class)
                 .matching(Query.query(where("scope_id").is(id))).all();
 
-        Mono<Integer> delete = getTemplate().delete(JdbcScope.class)
+        Mono<Long> delete = getTemplate().delete(JdbcScope.class)
                 .matching(Query.query(where(COL_ID).is(id))).all();
 
         return monoToCompletable(deleteClaim.then(delete).as(trx::transactional));

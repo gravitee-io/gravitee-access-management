@@ -149,8 +149,8 @@ public class ConnectionFactoryProvider {
                     .option(PoolingConnectionFactoryProvider.MAX_SIZE, Integer.parseInt(environment.getProperty(prefix+"maxSize", "10")))
                     .option(PoolingConnectionFactoryProvider.MAX_IDLE_TIME, Duration.of(Long.parseLong(environment.getProperty(prefix+"maxIdleTime", "30000")), ChronoUnit.MILLIS))
                     .option(PoolingConnectionFactoryProvider.MAX_LIFE_TIME, Duration.of(Long.parseLong(environment.getProperty(prefix+"maxLifeTime", "30000")), ChronoUnit.MILLIS))
-                    .option(PoolingConnectionFactoryProvider.MAX_ACQUIRE_TIME, Duration.of(Long.parseLong(environment.getProperty(prefix+"maxAcquireTime", "0")), ChronoUnit.MILLIS))
-                    .option(PoolingConnectionFactoryProvider.MAX_CREATE_CONNECTION_TIME, Duration.of(Long.parseLong(environment.getProperty(prefix+"maxCreateConnectionTime", "0")), ChronoUnit.MILLIS));
+                    .option(PoolingConnectionFactoryProvider.MAX_ACQUIRE_TIME, Duration.of(Long.parseLong(environment.getProperty(prefix+"maxAcquireTime", "-1")), ChronoUnit.MILLIS))
+                    .option(PoolingConnectionFactoryProvider.MAX_CREATE_CONNECTION_TIME, Duration.of(Long.parseLong(environment.getProperty(prefix+"maxCreateConnectionTime", "-1")), ChronoUnit.MILLIS));
 
             if (port != null) {
                 builder.option(PORT, Integer.parseInt(port));

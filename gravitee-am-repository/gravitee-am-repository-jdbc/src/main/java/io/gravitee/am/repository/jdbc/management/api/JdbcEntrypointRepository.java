@@ -141,14 +141,13 @@ public class JdbcEntrypointRepository extends AbstractJdbcRepository implements 
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        Mono<Integer> delete = getTemplate().delete(Query.query(where("id").is(id)), JdbcEntrypoint.class);
+        Mono<Long> delete = getTemplate().delete(Query.query(where("id").is(id)), JdbcEntrypoint.class);
 
         return monoToCompletable(deleteTags(id).then(delete).as(trx::transactional))
                 .doOnError(error -> LOGGER.error("Unable to delete entrypoint with id {}", id, error));
     }
 
     private Mono<Long> deleteTags(String id) {
-        return getTemplate().delete(Query.query(where("entrypoint_id").is(id)), JdbcEntrypoint.Tag.class)
-                .map(Integer::longValue);
+        return getTemplate().delete(Query.query(where("entrypoint_id").is(id)), JdbcEntrypoint.Tag.class);
     }
 }

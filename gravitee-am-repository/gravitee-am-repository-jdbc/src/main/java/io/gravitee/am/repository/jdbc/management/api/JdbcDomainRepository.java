@@ -263,9 +263,9 @@ public class JdbcDomainRepository extends AbstractJdbcRepository implements Doma
 
     private Mono<Long> deleteChildEntities(String domainId) {
         final Query criteria = Query.query(where("domain_id").is(domainId));
-        Mono<Integer> deleteVirtualHosts = getTemplate().delete(criteria, JdbcDomain.Vhost.class);
-        Mono<Integer> deleteIdentities = getTemplate().delete(criteria, JdbcDomain.Identity.class);
-        Mono<Integer> deleteTags = getTemplate().delete(criteria, JdbcDomain.Tag.class);
-        return deleteVirtualHosts.then(deleteIdentities).then(deleteTags).map(Integer::longValue);
+        Mono<Long> deleteVirtualHosts = getTemplate().delete(criteria, JdbcDomain.Vhost.class);
+        Mono<Long> deleteIdentities = getTemplate().delete(criteria, JdbcDomain.Identity.class);
+        Mono<Long> deleteTags = getTemplate().delete(criteria, JdbcDomain.Tag.class);
+        return deleteVirtualHosts.then(deleteIdentities).then(deleteTags);
     }
 }

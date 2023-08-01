@@ -128,7 +128,7 @@ public class JdbcI18nDictionaryRepository extends AbstractJdbcRepository impleme
                 .doOnError(error -> LOGGER.error("unable to update i18n dictionary with id {}", item.getId(), error));
     }
 
-    private Mono<Integer> deleteEntries(String dictionaryId) {
+    private Mono<Long> deleteEntries(String dictionaryId) {
         return getTemplate().delete(JdbcI18nDictionary.Entry.class).matching(Query.query(where(ENTRY_ID).is(dictionaryId))).all();
     }
 

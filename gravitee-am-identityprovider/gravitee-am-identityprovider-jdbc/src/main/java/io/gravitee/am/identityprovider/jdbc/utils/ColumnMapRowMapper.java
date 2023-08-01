@@ -29,8 +29,9 @@ import java.util.stream.Collectors;
 public final class ColumnMapRowMapper {
 
     public static Map<String, Object> mapRow(Row row, RowMetadata rowMetadata) {
-        Map<String, Object> claims = new HashMap<>(rowMetadata.getColumnNames()
+        Map<String, Object> claims = new HashMap<>(rowMetadata.getColumnMetadatas()
                 .stream()
+                .map(columMetadata -> columMetadata.getName())
                 .filter(c -> row.get(c) != null)
                 .collect(Collectors.toMap(c -> c, c -> row.get(c))));
         return claims;

@@ -168,8 +168,7 @@ public class JdbcResourceRepository extends AbstractJdbcRepository implements Re
         LOGGER.debug("update Resource with id {}", item.getId());
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        Mono<Long> deleteScopes = getTemplate().delete(Query.query(where("resource_id").is(item.getId())), JdbcResource.Scope.class)
-                .map(Integer::longValue);
+        Mono<Long> deleteScopes = getTemplate().delete(Query.query(where("resource_id").is(item.getId())), JdbcResource.Scope.class);
 
         Mono<Long> updateResource = getTemplate().update(toJdbcEntity(item)).map(__ -> 1L);
         final List<String> resourceScopes = item.getResourceScopes();
@@ -196,8 +195,8 @@ public class JdbcResourceRepository extends AbstractJdbcRepository implements Re
         LOGGER.debug("Delete Resource with id {}", id);
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        Mono<Long> deleteScopes = getTemplate().delete(Query.query(where("resource_id").is(id)), JdbcResource.Scope.class).map(Integer::longValue);
-        Mono<Long> delete = getTemplate().delete(Query.query(where("id").is(id)), JdbcResource.class).map(Integer::longValue);
+        Mono<Long> deleteScopes = getTemplate().delete(Query.query(where("resource_id").is(id)), JdbcResource.Scope.class);
+        Mono<Long> delete = getTemplate().delete(Query.query(where("id").is(id)), JdbcResource.class);
 
         return monoToCompletable(delete.then(deleteScopes).as(trx::transactional));
     }

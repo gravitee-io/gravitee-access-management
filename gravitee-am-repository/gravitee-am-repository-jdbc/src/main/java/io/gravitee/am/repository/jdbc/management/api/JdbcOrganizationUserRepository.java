@@ -493,7 +493,7 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        Mono<Integer> delete = getTemplate().delete(JdbcOrganizationUser.class).matching(Query.query(where(USER_COL_ID).is(id))).all();
+        Mono<Long> delete = getTemplate().delete(JdbcOrganizationUser.class).matching(Query.query(where(USER_COL_ID).is(id))).all();
 
         return monoToCompletable(delete.then(deleteChildEntities(id, UpdateActions.updateAll())).as(trx::transactional));
     }
@@ -602,24 +602,25 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
 
     private Mono<Long> deleteChildEntities(String userId, UpdateActions actions) {
         var result = Mono.<Long>empty();
+        Query criteria = Query.query(where(FK_USER_ID).is(userId));
         if (actions.updateRole()) {
-            Mono<Long> deleteRoles = getTemplate().delete(JdbcOrganizationUser.Role.class).matching(Query.query(where(FK_USER_ID).is(userId))).all();
+            Mono<Long> deleteRoles = getTemplate().delete(JdbcOrganizationUser.Role.class).matching(criteria).all();
             result = result.then(deleteRoles);
         }
         if (actions.updateDynamicRole()) {
-            Mono<Long> deleteDynamicRoles = getTemplate().delete(JdbcOrganizationUser.DynamicRole.class).matching(Query.query(where(FK_USER_ID).is(userId))).all();
+            Mono<Long> deleteDynamicRoles = getTemplate().delete(JdbcOrganizationUser.DynamicRole.class).matching(criteria).all();
             result = result.then(deleteDynamicRoles);
         }
         if (actions.updateAddresses()) {
-            Mono<Long> deleteAddresses = getTemplate().delete(JdbcOrganizationUser.Address.class).matching(Query.query(where(FK_USER_ID).is(userId))).all();
+            Mono<Long> deleteAddresses = getTemplate().delete(JdbcOrganizationUser.Address.class).matching(criteria).all();
             result = result.then(deleteAddresses);
         }
         if (actions.updateAttributes()) {
-            Mono<Long> deleteAttributes = getTemplate().delete(JdbcOrganizationUser.Attribute.class).matching(Query.query(where(FK_USER_ID).is(userId))).all();
+            Mono<Long> deleteAttributes = getTemplate().delete(JdbcOrganizationUser.Attribute.class).matching(criteria).all();
             result = result.then(deleteAttributes);
         }
         if (actions.updateEntitlements()) {
-            Mono<Long> deleteEntitlements = getTemplate().delete(JdbcOrganizationUser.Entitlements.class).matching(Query.query(where(FK_USER_ID).is(userId))).all();
+            Mono<Long> deleteEntitlements = getTemplate().delete(JdbcOrganizationUser.Entitlements.class).matching(criteria).all();
             result = result.then(deleteEntitlements);
         }
         return result;

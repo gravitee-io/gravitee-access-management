@@ -308,9 +308,9 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
 
     private Mono<Long> deleteChildEntities(String groupId) {
         final Query criteria = Query.query(where("group_id").is(groupId));
-        Mono<Integer> deleteRoles = getTemplate().delete(criteria, JdbcGroup.JdbcRole.class);
-        Mono<Integer> deleteMembers = getTemplate().delete(criteria, JdbcGroup.JdbcMember.class);
-        return deleteRoles.then(deleteMembers).map(Integer::longValue);
+        Mono<Long> deleteRoles = getTemplate().delete(criteria, JdbcGroup.JdbcRole.class);
+        Mono<Long> deleteMembers = getTemplate().delete(criteria, JdbcGroup.JdbcMember.class);
+        return deleteRoles.then(deleteMembers);
     }
 
     @Override

@@ -49,20 +49,7 @@
         <dozer-jaxb-runtime.version>2.4.0-b180830.0438</dozer-jaxb-runtime.version>
         <reactor-adapter.version>3.5.1</reactor-adapter.version>
         <reactor-core.version>3.5.8</reactor-core.version>
-        <r2dbc-mysql.version>0.9.3</r2dbc-mysql.version>
     </properties>
-
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>io.r2dbc</groupId>
-                <artifactId>r2dbc-bom</artifactId>
-                <version>${r2dbc-releasetrain.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
 
     <dependencies>
         <!-- Gravitee dependencies -->
