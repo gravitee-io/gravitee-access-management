@@ -25,24 +25,32 @@ import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.model.NewRole;
 import io.gravitee.common.http.MediaType;
-import io.swagger.annotations.*;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.tags.Tags;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.net.URI;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"role"})
+@Tags({@Tag(name= "role")})
 public class RolesResource extends AbstractResource {
 
     @Context
@@ -53,12 +61,14 @@ public class RolesResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List registered roles of the organization",
-            notes = "User must have the ORGANIZATION_ROLE[LIST] permission on the specified organization. " +
+    @Operation(summary = "List registered roles of the organization",
+            description = "User must have the ORGANIZATION_ROLE[LIST] permission on the specified organization. " +
                     "Each returned role is filtered and contains only basic information such as id, name, isSystem and assignableType.")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "List registered roles of the organization", response = RoleEntity.class, responseContainer = "Set"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "List registered roles of the organization",
+                    content = @Content(mediaType =  "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = RoleEntity.class)))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void list(
             @PathParam("organizationId") String organizationId,
             @QueryParam("type") ReferenceType type,
@@ -75,14 +85,14 @@ public class RolesResource extends AbstractResource {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Create a role for the organization",
-            notes = "User must have the ORGANIZATION_ROLE[CREATE] permission on the specified organization")
+    @Operation(summary = "Create a role for the organization",
+            description = "User must have the ORGANIZATION_ROLE[CREATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 201, message = "Role successfully created"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "201", description = "Role successfully created"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void create(
             @PathParam("organizationId") String organizationId,
-            @ApiParam(name = "role", required = true) @Valid @NotNull final NewRole newRole,
+            @Parameter(name = "role", required = true) @Valid @NotNull final NewRole newRole,
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 

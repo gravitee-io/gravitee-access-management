@@ -17,7 +17,7 @@ package io.gravitee.am.model;
 
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.model.permissions.SystemRole;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Date;
 import java.util.List;
@@ -40,9 +40,9 @@ public class Role {
     private boolean defaultRole;
     private Map<Permission, Set<Acl>> permissionAcls;
     private List<String> oauthScopes;
-    @ApiModelProperty(dataType = "java.lang.Long")
+    @Schema(type = "java.lang.Long")
     private Date createdAt;
-    @ApiModelProperty(dataType = "java.lang.Long")
+    @Schema(type = "java.lang.Long")
     private Date updatedAt;
 
     public Role() {

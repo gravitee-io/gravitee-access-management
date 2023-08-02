@@ -22,17 +22,16 @@ import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.analytics.AnalyticsQuery;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.common.http.MediaType;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import org.springframework.beans.factory.annotation.Autowired;
-
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.ws.rs.BeanParam;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.Suspended;
+import org.springframework.beans.factory.annotation.Autowired;
 
 public class ApplicationAnalyticsResource extends AbstractResource {
 
@@ -41,14 +40,14 @@ public class ApplicationAnalyticsResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Find application analytics",
-            notes = "User must have APPLICATION_ANALYTICS[READ] permission on the specified application " +
+    @Operation(summary = "Find application analytics",
+            description = "User must have APPLICATION_ANALYTICS[READ] permission on the specified application " +
                     "or APPLICATION_ANALYTICS[READ] permission on the specified domain " +
                     "or APPLICATION_ANALYTICS[READ] permission on the specified environment " +
                     "or APPLICATION_ANALYTICS[READ] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Analytics successfully fetched"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Analytics successfully fetched"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void get(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,

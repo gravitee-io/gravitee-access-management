@@ -26,11 +26,11 @@ import io.gravitee.am.service.exception.ApplicationNotFoundException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import org.springframework.beans.factory.annotation.Autowired;
-
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
@@ -38,6 +38,7 @@ import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -59,14 +60,16 @@ public class ApplicationResourcePolicyResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get resource access policy",
-            notes = "User must have APPLICATION_RESOURCE[READ] permission on the specified application " +
+    @Operation(summary = "Get resource access policy",
+            description = "User must have APPLICATION_RESOURCE[READ] permission on the specified application " +
                     "or APPLICATION_RESOURCE[READ] permission on the specified domain " +
                     "or APPLICATION_RESOURCE[READ] permission on the specified environment " +
                     "or APPLICATION_RESOURCE[READ] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Get resource access policy", response = AccessPolicy.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Get resource access policy",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = AccessPolicy.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void get(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,

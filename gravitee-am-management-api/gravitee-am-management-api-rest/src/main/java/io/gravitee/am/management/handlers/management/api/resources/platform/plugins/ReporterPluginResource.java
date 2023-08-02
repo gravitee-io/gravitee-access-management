@@ -19,10 +19,9 @@ import io.gravitee.am.management.service.ReporterPluginService;
 import io.gravitee.am.management.service.exception.ReporterPluginNotFoundException;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-
-import javax.inject.Inject;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.tags.Tags;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -33,11 +32,13 @@ import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
 
+import javax.inject.Inject;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"Plugin", "Reporter"})
+@Tags({@Tag(name= "Plugin"), @Tag(name= "Reporter")})
 public class ReporterPluginResource {
 
     @Context
@@ -48,8 +49,8 @@ public class ReporterPluginResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get a reporter plugin",
-            notes = "There is no particular permission needed. User must be authenticated.")
+    @Operation(summary = "Get a reporter plugin",
+            description = "There is no particular permission needed. User must be authenticated.")
     public void get(
             @PathParam("reporter") String reporterId,
             @Suspended final AsyncResponse response) {
@@ -63,7 +64,7 @@ public class ReporterPluginResource {
     @GET
     @Path("schema")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get a reporter plugin's schema")
+    @Operation(summary = "Get a reporter plugin's schema")
     public void getSchema(
             @PathParam("reporter") String reporterId,
             @Suspended final AsyncResponse response) {

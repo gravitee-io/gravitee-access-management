@@ -25,14 +25,13 @@ import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.tags.Tags;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PathParam;
@@ -42,13 +41,17 @@ import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.util.Locale;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"form", "preview"})
+@Tags({@Tag(name= "form"), @Tag(name= "preview")})
 public class PreviewResource extends AbstractResource {
 
     @Autowired
@@ -60,14 +63,16 @@ public class PreviewResource extends AbstractResource {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Render the provided template",
-            nickname = "renderDomainTemplate",
-            notes = "User must have the DOMAIN_THEME[READ] permission on the specified domain " +
+    @Operation(summary = "Render the provided template",
+            operationId = "renderDomainTemplate",
+            description = "User must have the DOMAIN_THEME[READ] permission on the specified domain " +
                     "or DOMAIN_THEME[READ] permission on the specified environment " +
                     "or DOMAIN_THEME[READ] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Template successfully rendered", response = PreviewResponse.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Template successfully rendered",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = PreviewResponse.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void renderDomainTemplate(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,

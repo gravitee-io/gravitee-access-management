@@ -18,7 +18,6 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 import io.gravitee.am.management.handlers.management.api.resources.AbstractUsersResource;
 import io.gravitee.am.management.service.IdentityProviderServiceProxy;
 import io.gravitee.am.model.Acl;
-import io.gravitee.am.model.Application;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
@@ -30,37 +29,32 @@ import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import java.util.Collection;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.DefaultValue;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.QueryParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.net.URI;
+import java.util.Collection;
 import java.util.Comparator;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"user"})
+@Tag(name = "user")
 public class UsersResource extends AbstractUsersResource {
 
     @Context
@@ -74,17 +68,19 @@ public class UsersResource extends AbstractUsersResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            nickname = "listUsers",
-            value = "List users for a security domain",
-            notes = "User must have the DOMAIN_USER[LIST] permission on the specified domain " +
+    @Operation(
+            operationId = "listUsers",
+            summary = "List users for a security domain",
+            description = "User must have the DOMAIN_USER[LIST] permission on the specified domain " +
                     "or DOMAIN_USER[LIST] permission on the specified environment " +
                     "or DOMAIN_USER[LIST] permission on the specified organization. " +
                     "Each returned user is filtered and contains only basic information such as id and username and displayname. " +
                     "Last login and identity provider name will be also returned if current user has DOMAIN_USER[READ] permission on the domain, environment or organization.")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "List users for a security domain", response = UserPage.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "List users for a security domain",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = UserPage.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void list(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -113,20 +109,22 @@ public class UsersResource extends AbstractUsersResource {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            nickname = "createUser",
-            value = "Create a user on the specified security domain",
-            notes = "User must have the DOMAIN_USER[CREATE] permission on the specified domain " +
+    @Operation(
+            operationId = "createUser",
+            summary = "Create a user on the specified security domain",
+            description = "User must have the DOMAIN_USER[CREATE] permission on the specified domain " +
                     "or DOMAIN_USER[CREATE] permission on the specified environment " +
                     "or DOMAIN_USER[CREATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 201, message = "User successfully created", response = User.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "201", description = "User successfully created",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = User.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void create(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domainId,
-            @ApiParam(name = "user", required = true)
+            @Parameter(name = "user", required = true)
             @Valid @NotNull final NewUser newUser,
             @Suspended final AsyncResponse response) {
 

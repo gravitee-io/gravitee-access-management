@@ -28,20 +28,22 @@ import io.gravitee.am.service.exception.IdentityProviderNotFoundException;
 import io.gravitee.am.service.model.UpdateIdentityProvider;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -61,15 +63,17 @@ public class IdentityProviderResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            nickname = "findIdentityProvider",
-            value = "Get an identity provider",
-            notes = "User must have the DOMAIN_IDENTITY_PROVIDER[READ] permission on the specified domain " +
+    @Operation(
+            operationId = "findIdentityProvider",
+            summary = "Get an identity provider",
+            description = "User must have the DOMAIN_IDENTITY_PROVIDER[READ] permission on the specified domain " +
                     "or DOMAIN_IDENTITY_PROVIDER[READ] permission on the specified environment " +
                     "or DOMAIN_IDENTITY_PROVIDER[READ] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Identity provider", response = IdentityProvider.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Identity provider",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation =IdentityProvider.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void get(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -103,21 +107,23 @@ public class IdentityProviderResource extends AbstractResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            nickname = "updateIdentityProvider",
-            value = "Update an identity provider",
-            notes = "User must have the DOMAIN_IDENTITY_PROVIDER[UPDATE] permission on the specified domain " +
+    @Operation(
+            operationId = "updateIdentityProvider",
+            summary = "Update an identity provider",
+            description = "User must have the DOMAIN_IDENTITY_PROVIDER[UPDATE] permission on the specified domain " +
                     "or DOMAIN_IDENTITY_PROVIDER[UPDATE] permission on the specified environment " +
                     "or DOMAIN_IDENTITY_PROVIDER[UPDATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 201, message = "Identity provider successfully updated", response = IdentityProvider.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "201", description = "Identity provider successfully updated",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation =IdentityProvider.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void update(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domain,
             @PathParam("identity") String identity,
-            @ApiParam(name = "identity", required = true) @Valid @NotNull UpdateIdentityProvider updateIdentityProvider,
+            @Parameter(name = "identity", required = true) @Valid @NotNull UpdateIdentityProvider updateIdentityProvider,
             @Suspended final AsyncResponse response) {
 
         final User authenticatedUser = getAuthenticatedUser();
@@ -131,16 +137,16 @@ public class IdentityProviderResource extends AbstractResource {
     }
 
     @DELETE
-    @ApiOperation(
-            nickname = "deleteIdentityProvider",
-            value = "Delete an identity provider",
-            notes = "User must have the DOMAIN_IDENTITY_PROVIDER[DELETE] permission on the specified domain " +
+    @Operation(
+            operationId = "deleteIdentityProvider",
+            summary = "Delete an identity provider",
+            description = "User must have the DOMAIN_IDENTITY_PROVIDER[DELETE] permission on the specified domain " +
                     "or DOMAIN_IDENTITY_PROVIDER[DELETE] permission on the specified environment " +
                     "or DOMAIN_IDENTITY_PROVIDER[DELETE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 204, message = "Identity provider successfully deleted"),
-            @ApiResponse(code = 400, message = "Identity provider is bind to existing clients"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "204", description = "Identity provider successfully deleted"),
+            @ApiResponse(responseCode = "400", description = "Identity provider is bind to existing clients"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void delete(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,

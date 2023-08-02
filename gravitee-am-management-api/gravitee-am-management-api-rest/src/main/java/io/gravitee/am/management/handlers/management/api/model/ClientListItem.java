@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.model;
 
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Date;
 
@@ -39,10 +39,10 @@ public class ClientListItem {
 
     private boolean template;
 
-    @ApiModelProperty(dataType = "java.lang.Long")
+    @Schema(type = "java.lang.Long")
     private Date createdAt;
 
-    @ApiModelProperty(dataType = "java.lang.Long")
+    @Schema(type = "java.lang.Long")
     private Date updatedAt;
 
     public String getId() {

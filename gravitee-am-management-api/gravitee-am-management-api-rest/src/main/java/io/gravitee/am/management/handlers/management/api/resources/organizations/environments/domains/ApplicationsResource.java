@@ -28,19 +28,25 @@ import io.gravitee.am.service.model.NewApplication;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import io.swagger.annotations.*;
-import java.util.Collection;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.net.URI;
+import java.util.Collection;
 
 import static java.util.stream.Collectors.toList;
 
@@ -48,7 +54,7 @@ import static java.util.stream.Collectors.toList;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"application"})
+@Tag(name = "application")
 public class ApplicationsResource extends AbstractResource {
 
     private static final String MAX_APPLICATIONS_SIZE_PER_PAGE_STRING = "50";
@@ -64,21 +70,22 @@ public class ApplicationsResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            nickname = "listApplications",
-            value = "List registered applications for a security domain",
-            notes = "User must have the APPLICATION[LIST] permission on the specified domain, environment or organization " +
+    @Operation(
+            operationId = "listApplications",
+            summary = "List registered applications for a security domain",
+            description = "User must have the APPLICATION[LIST] permission on the specified domain, environment or organization " +
                     "AND either APPLICATION[READ] permission on each domain's application " +
                     "or APPLICATION[READ] permission on the specified domain " +
                     "or APPLICATION[READ] permission on the specified environment " +
                     "or APPLICATION[READ] permission on the specified organization. " +
                     "Each returned application is filtered and contains only basic information such as id, name, description and isEnabled.")
     @ApiResponses({
-            @ApiResponse(code = 200,
-                    message = "List registered applications for a security domain",
-                    response = ApplicationPage.class
+            @ApiResponse(responseCode = "200",
+                    description = "List registered applications for a security domain",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApplicationPage.class))
             ),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void list(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -117,20 +124,22 @@ public class ApplicationsResource extends AbstractResource {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            nickname = "createApplication",
-            value = "Create an application",
-            notes = "User must have APPLICATION[CREATE] permission on the specified domain " +
+    @Operation(
+            operationId = "createApplication",
+            summary = "Create an application",
+            description = "User must have APPLICATION[CREATE] permission on the specified domain " +
                     "or APPLICATION[CREATE] permission on the specified environment " +
                     "or APPLICATION[CREATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 201, message = "Application successfully created", response = Application.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "201", description = "Application successfully created",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = Application.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void createApplication(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domain,
-            @ApiParam(name = "application", required = true)
+            @Parameter(name = "application", required = true)
             @Valid @NotNull final NewApplication newApplication,
             @Suspended final AsyncResponse response) {
 

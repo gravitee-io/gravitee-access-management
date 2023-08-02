@@ -20,16 +20,18 @@ import io.gravitee.am.management.service.AlertService;
 import io.gravitee.am.service.FlowService;
 import io.gravitee.am.service.SpelService;
 import io.gravitee.common.http.MediaType;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-
-import javax.inject.Inject;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.Suspended;
+
+import javax.inject.Inject;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -49,8 +51,8 @@ public class ConfigurationResource {
     @GET
     @Path("/flow/schema")
     @Produces(jakarta.ws.rs.core.MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get the Policy Studio flow schema",
-            notes = "There is no particular permission needed. User must be authenticated.")
+    @Operation(summary = "Get the Policy Studio flow schema",
+            description = "There is no particular permission needed. User must be authenticated.")
     public void list(@Suspended final AsyncResponse response) {
         flowService.getSchema()
                 .subscribe(response::resume, response::resume);
@@ -59,11 +61,13 @@ public class ConfigurationResource {
     @GET
     @Path("alerts/status")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get the alert service status",
-            notes = "There is no particular permission needed. User must be authenticated.")
+    @Operation(summary = "Get the alert service status",
+            description = "There is no particular permission needed. User must be authenticated.")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Current alert service status", response = AlertServiceStatusEntity.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Current alert service status",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = AlertServiceStatusEntity.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void getAlertServiceStatus(@Suspended final AsyncResponse response) {
 
         alertService.isAlertingAvailable()
@@ -74,8 +78,8 @@ public class ConfigurationResource {
     @GET
     @Path("spel/grammar")
     @Produces(jakarta.ws.rs.core.MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get the spel grammar",
-        notes = "There is no particular permission needed. User must be authenticated.")
+    @Operation(summary = "Get the spel grammar",
+        description = "There is no particular permission needed. User must be authenticated.")
     public void getSpelGrammar(@Suspended final AsyncResponse response) {
         spelService.getGrammar()
             .subscribe(response::resume, response::resume);

@@ -19,9 +19,9 @@ import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.management.handlers.management.api.resources.platform.configuration.ConfigurationResource;
 import io.gravitee.am.management.handlers.management.api.resources.platform.plugins.PluginsResource;
 import io.gravitee.am.management.handlers.management.api.resources.platform.roles.SystemRoleResource;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.tags.Tags;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
@@ -35,7 +35,7 @@ import jakarta.ws.rs.core.Context;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = "platform")
+@Tags(@Tag(name = "platform"))
 @Path("/platform")
 public class PlatformResource {
 
@@ -45,8 +45,8 @@ public class PlatformResource {
     @GET
     @Path("/audits/events")
     @Produces(jakarta.ws.rs.core.MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List audit event types",
-            notes = "There is no particular permission needed. User must be authenticated.")
+    @Operation(summary = "List audit event types",
+            description = "There is no particular permission needed. User must be authenticated.")
     public void list(@Suspended final AsyncResponse response) {
         response.resume(EventType.types());
     }

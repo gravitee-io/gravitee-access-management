@@ -24,26 +24,30 @@ import io.gravitee.am.management.service.UserNotificationService;
 import io.gravitee.am.model.notification.UserNotification;
 import io.gravitee.am.model.notification.UserNotificationContent;
 import io.gravitee.am.model.notification.UserNotificationStatus;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.tags.Tags;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+
 import java.util.Map;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"user notifications"})
+@Tags({@Tag(name= "user notifications")})
 public class UserNotificationsResource extends AbstractResource {
     private final Logger logger = LoggerFactory.getLogger(UserNotificationsResource.class);
 
@@ -54,10 +58,12 @@ public class UserNotificationsResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List notifications received by the current user")
+    @Operation(summary = "List notifications received by the current user")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Current user notifications successfully fetched", response = UserNotificationContent.class, responseContainer = "list"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Current user notifications successfully fetched",
+                    content = @Content(mediaType =  "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = UserNotificationContent.class)))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void listNotifications(@Suspended final AsyncResponse response) {
         // All users have rights to read notifications
         if (! isAuthenticated()) {
@@ -88,10 +94,10 @@ public class UserNotificationsResource extends AbstractResource {
     @POST
     @Path("/{notificationId}/acknowledge")
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Mark User notification as read")
+    @Operation(summary = "Mark User notification as read")
     @ApiResponses({
-            @ApiResponse(code = 204, message = "User notification has been marked as read"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "204", description = "User notification has been marked as read"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void markAsRead(@PathParam("notificationId") String notificationId, @Suspended final AsyncResponse response) {
         // All users have rights to read notifications
         if (! isAuthenticated()) {

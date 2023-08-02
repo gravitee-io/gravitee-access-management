@@ -33,21 +33,23 @@ import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import javax.inject.Named;
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import javax.inject.Named;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -71,11 +73,13 @@ public class UserResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get a user",
-            notes = "User must have the ORGANIZATION_USER[READ] permission on the specified organization")
+    @Operation(summary = "Get a user",
+            description = "User must have the ORGANIZATION_USER[READ] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "User successfully fetched", response = UserEntity.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "User successfully fetched",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = UserEntity.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void get(
             @PathParam("organizationId") String organizationId,
             @PathParam("user") String user,
@@ -91,16 +95,18 @@ public class UserResource extends AbstractResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Update a user",
-            nickname = "updateOrganizationUser",
-            notes = "User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization")
+    @Operation(summary = "Update a user",
+            operationId = "updateOrganizationUser",
+            description = "User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 201, message = "User successfully updated", response = User.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "201", description = "User successfully updated",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = User.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void updateUser(
             @PathParam("organizationId") String organizationId,
             @PathParam("user") String user,
-            @ApiParam(name = "user", required = true) @Valid @NotNull UpdateUser updateUser,
+            @Parameter(name = "user", required = true) @Valid @NotNull UpdateUser updateUser,
             @Suspended final AsyncResponse response) {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
@@ -114,16 +120,18 @@ public class UserResource extends AbstractResource {
     @Path("/status")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Update a user status",
-            nickname = "updateOrganizationUserStatus",
-            notes = "User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization")
+    @Operation(summary = "Update a user status",
+            operationId = "updateOrganizationUserStatus",
+            description = "User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 201, message = "User status successfully updated", response = User.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "201", description = "User status successfully updated",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = User.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void updateUserStatus(
             @PathParam("organizationId") String organizationId,
             @PathParam("user") String user,
-            @ApiParam(name = "status", required = true) @Valid @NotNull StatusEntity status,
+            @Parameter(name = "status", required = true) @Valid @NotNull StatusEntity status,
             @Suspended final AsyncResponse response) {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
@@ -137,17 +145,19 @@ public class UserResource extends AbstractResource {
     @Path("/username")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            nickname = "updateOrganisationUsername",
-            value = "Update a user username",
-            notes = "User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization")
+    @Operation(
+            operationId = "updateOrganisationUsername",
+            summary = "Update a user username",
+            description = "User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 201, message = "User username successfully updated", response = User.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "201", description = "User username successfully updated",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = User.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void updateUsername(
             @PathParam("organizationId") String organizationId,
             @PathParam("user") String userId,
-            @ApiParam(name = "username", required = true) @Valid @NotNull UsernameEntity username,
+            @Parameter(name = "username", required = true) @Valid @NotNull UsernameEntity username,
             @Suspended final AsyncResponse response) {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
@@ -159,12 +169,12 @@ public class UserResource extends AbstractResource {
 
 
     @DELETE
-    @ApiOperation(value = "Delete a user",
-            nickname = "deleteOrganizationUser",
-            notes = "User must have the ORGANIZATION_USER[DELETE] permission on the specified organization")
+    @Operation(summary = "Delete a user",
+            operationId = "deleteOrganizationUser",
+            description = "User must have the ORGANIZATION_USER[DELETE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 204, message = "User successfully deleted"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "204", description = "User successfully deleted"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void delete(
             @PathParam("organizationId") String organizationId,
             @PathParam("user") String user,
@@ -178,16 +188,16 @@ public class UserResource extends AbstractResource {
 
     @POST
     @Path("resetPassword")
-    @ApiOperation(value = "Reset password",
-            nickname = "resetOrganizationUserPassword",
-            notes = "User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization")
+    @Operation(summary = "Reset password",
+            operationId = "resetOrganizationUserPassword",
+            description = "User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Password reset"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Password reset"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void resetPassword(
             @PathParam("organizationId") String organizationId,
             @PathParam("user") String user,
-            @ApiParam(name = "password", required = true) @Valid @NotNull PasswordValue password,
+            @Parameter(name = "password", required = true) @Valid @NotNull PasswordValue password,
             @Suspended final AsyncResponse response) {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 

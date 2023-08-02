@@ -27,24 +27,28 @@ import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewEmail;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
-import io.swagger.annotations.*;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.net.URI;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"email"})
+@Tag(name = "email")
 public class EmailsResource extends AbstractResource {
 
     @Context
@@ -58,13 +62,13 @@ public class EmailsResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Find a email",
-            notes = "User must have the DOMAIN_EMAIL_TEMPLATE[READ] permission on the specified domain " +
+    @Operation(summary = "Find a email",
+            description = "User must have the DOMAIN_EMAIL_TEMPLATE[READ] permission on the specified domain " +
                     "or DOMAIN_EMAIL_TEMPLATE[READ] permission on the specified environment " +
                     "or DOMAIN_EMAIL_TEMPLATE[READ] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Email successfully fetched"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Email successfully fetched"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void get(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -82,18 +86,18 @@ public class EmailsResource extends AbstractResource {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Create a email",
-            notes = "User must have the DOMAIN_EMAIL_TEMPLATE[CREATE] permission on the specified domain " +
+    @Operation(summary = "Create a email",
+            description = "User must have the DOMAIN_EMAIL_TEMPLATE[CREATE] permission on the specified domain " +
                     "or DOMAIN_EMAIL_TEMPLATE[CREATE] permission on the specified environment " +
                     "or DOMAIN_EMAIL_TEMPLATE[CREATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 201, message = "Email successfully created"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "201", description = "Email successfully created"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void create(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domain,
-            @ApiParam(name = "email", required = true)
+            @Parameter(name = "email", required = true)
             @Valid @NotNull final NewEmail newEmail,
             @Suspended final AsyncResponse response) {
 

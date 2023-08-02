@@ -19,7 +19,6 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Form;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.DomainService;
@@ -29,24 +28,27 @@ import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.UpdateForm;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
-import io.swagger.annotations.*;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Response;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import static io.gravitee.am.management.service.permissions.Permissions.of;
-import static io.gravitee.am.management.service.permissions.Permissions.or;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"form"})
+@Tag(name = "form")
 public class ApplicationFormResource extends AbstractResource {
 
     @Autowired
@@ -61,21 +63,23 @@ public class ApplicationFormResource extends AbstractResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Update a form for an application",
-            notes = "User must have APPLICATION_FORM[UPDATE] permission on the specified application " +
+    @Operation(summary = "Update a form for an application",
+            description = "User must have APPLICATION_FORM[UPDATE] permission on the specified application " +
                     "or APPLICATION_FORM[UPDATE] permission on the specified domain " +
                     "or APPLICATION_FORM[UPDATE] permission on the specified environment " +
                     "or APPLICATION_FORM[UPDATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 201, message = "Form successfully updated", response = Form.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "201", description = "Form successfully updated",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = Form.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void update(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domain,
             @PathParam("application") String application,
             @PathParam("form") String form,
-            @ApiParam(name = "form", required = true) @Valid @NotNull UpdateForm updateForm,
+            @Parameter(name = "form", required = true) @Valid @NotNull UpdateForm updateForm,
             @Suspended final AsyncResponse response) {
 
         final User authenticatedUser = getAuthenticatedUser();
@@ -90,14 +94,14 @@ public class ApplicationFormResource extends AbstractResource {
     }
 
     @DELETE
-    @ApiOperation(value = "Delete a form for an application",
-            notes = "User must have APPLICATION_FORM[DELETE] permission on the specified application " +
+    @Operation(summary = "Delete a form for an application",
+            description = "User must have APPLICATION_FORM[DELETE] permission on the specified application " +
                     "or APPLICATION_FORM[DELETE] permission on the specified domain " +
                     "or APPLICATION_FORM[DELETE] permission on the specified environment " +
                     "or APPLICATION_FORM[DELETE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 204, message = "Form successfully deleted"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "204", description = "Form successfully deleted"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void delete(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,

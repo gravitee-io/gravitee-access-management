@@ -18,31 +18,37 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.model.Acl;
-import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Entrypoint;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.EntrypointService;
 import io.gravitee.am.service.model.NewEntrypoint;
 import io.gravitee.common.http.MediaType;
-import io.swagger.annotations.*;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.net.URI;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"entrypoints"})
+@Tag(name = "entrypoints")
 public class EntrypointsResource extends AbstractResource {
 
     @Autowired
@@ -53,13 +59,15 @@ public class EntrypointsResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "List entrypoints",
-            notes = "User must have the ORGANIZATION[LIST] permission on the specified organization. " +
+    @Operation(
+            summary = "List entrypoints",
+            description = "User must have the ORGANIZATION[LIST] permission on the specified organization. " +
                     "Each returned entrypoint is filtered and contains only basic information such as id and name.")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "List all the entrypoints", response = Entrypoint.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "List all the entrypoints",
+                    content = @Content(mediaType =  "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = Entrypoint.class)))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void list(
             @PathParam("organizationId") String organizationId,
             @Suspended final AsyncResponse response) {
@@ -75,14 +83,14 @@ public class EntrypointsResource extends AbstractResource {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Create a entrypoint",
-            notes = "User must have the ORGANIZATION_ENTRYPOINT[CREATE] permission on the specified organization")
+    @Operation(summary = "Create a entrypoint",
+            description = "User must have the ORGANIZATION_ENTRYPOINT[CREATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 201, message = "Entrypoint successfully created"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "201", description = "Entrypoint successfully created"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void create(
             @PathParam("organizationId") String organizationId,
-            @ApiParam(name = "entrypoint", required = true)
+            @Parameter(name = "entrypoint", required = true)
             @Valid @NotNull final NewEntrypoint newEntrypoint,
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();

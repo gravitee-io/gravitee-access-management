@@ -17,10 +17,9 @@ package io.gravitee.am.management.handlers.management.api.resources.platform.plu
 
 import io.gravitee.am.management.service.ResourcePluginService;
 import io.gravitee.am.service.model.plugin.ResourcePlugin;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-
-import javax.inject.Inject;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.tags.Tags;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
@@ -30,6 +29,8 @@ import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
+
+import javax.inject.Inject;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -38,7 +39,7 @@ import java.util.stream.Collectors;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"Plugin", "Resource"})
+@Tags({@Tag(name= "Plugin"), @Tag(name= "Resource")})
 public class ResourcesPluginResource {
 
     @Context
@@ -49,8 +50,8 @@ public class ResourcesPluginResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List resource plugins",
-            notes = "There is no particular permission needed. User must be authenticated.")
+    @Operation(summary = "List resource plugins",
+            description = "There is no particular permission needed. User must be authenticated.")
     public void list(@QueryParam("expand") List<String> expand,
                      @Suspended final AsyncResponse response) {
 

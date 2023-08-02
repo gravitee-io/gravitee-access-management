@@ -19,10 +19,9 @@ import io.gravitee.am.management.service.AuthenticationDeviceNotifierPluginServi
 import io.gravitee.am.management.service.exception.AuthenticationDeviceNotifierPluginNotFoundException;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-
-import javax.inject.Inject;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.tags.Tags;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -33,11 +32,13 @@ import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
 
+import javax.inject.Inject;
+
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"Plugin", "Authentication Device Notifier"})
+@Tags({@Tag(name= "Plugin"), @Tag(name= "Authentication Device Notifier")})
 public class AuthenticationDeviceNotifierPluginResource {
 
     @Context
@@ -48,8 +49,8 @@ public class AuthenticationDeviceNotifierPluginResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get a Authentication Device Notifier plugin",
-            notes = "There is no particular permission needed. User must be authenticated.")
+    @Operation(summary = "Get a Authentication Device Notifier plugin",
+            description = "There is no particular permission needed. User must be authenticated.")
     public void get(@PathParam("authDeviceNotifierId") String authDeviceNotifierId,
                     @Suspended final AsyncResponse response) {
 
@@ -62,8 +63,8 @@ public class AuthenticationDeviceNotifierPluginResource {
     @GET
     @Path("schema")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get an Authentication Device Notifier plugin's schema",
-            notes = "There is no particular permission needed. User must be authenticated.")
+    @Operation(summary = "Get an Authentication Device Notifier plugin's schema",
+            description = "There is no particular permission needed. User must be authenticated.")
     public void getSchema(@PathParam("authDeviceNotifierId") String authDeviceNotifierId,
                           @Suspended final AsyncResponse response) {
 

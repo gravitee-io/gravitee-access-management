@@ -16,25 +16,22 @@
 package io.gravitee.am.management.handlers.management.api;
 
 import io.gravitee.am.management.handlers.management.api.mapper.ObjectMapperResolver;
-import io.gravitee.am.management.handlers.management.api.provider.ByteArrayOutputStreamWriter;
-import io.gravitee.am.management.handlers.management.api.provider.ClientErrorExceptionMapper;
-import io.gravitee.am.management.handlers.management.api.provider.JsonMappingExceptionMapper;
-import io.gravitee.am.management.handlers.management.api.provider.ManagementExceptionMapper;
-import io.gravitee.am.management.handlers.management.api.provider.Oauth2ExceptionMapper;
-import io.gravitee.am.management.handlers.management.api.provider.ThrowableMapper;
-import io.gravitee.am.management.handlers.management.api.provider.UnrecognizedPropertyExceptionMapper;
-import io.gravitee.am.management.handlers.management.api.provider.UriBuilderRequestFilter;
-import io.gravitee.am.management.handlers.management.api.provider.ValidationExceptionMapper;
-import io.gravitee.am.management.handlers.management.api.provider.WebApplicationExceptionMapper;
-import io.gravitee.am.management.handlers.management.api.resources.organizations.OrganizationsResource;
+import io.gravitee.am.management.handlers.management.api.provider.*;
 import io.gravitee.am.management.handlers.management.api.resources.organizations.CurrentUserResource;
+import io.gravitee.am.management.handlers.management.api.resources.organizations.OrganizationsResource;
 import io.gravitee.am.management.handlers.management.api.resources.platform.PlatformResource;
+import io.gravitee.am.management.handlers.management.api.resources.swagger.GraviteeApiDefinition;
 import io.gravitee.common.util.Version;
-import io.swagger.jaxrs.config.BeanConfig;
-import io.swagger.jaxrs.listing.ApiListingResource;
-import io.swagger.jaxrs.listing.SwaggerSerializers;
+import io.swagger.v3.jaxrs2.SwaggerSerializers;
+import io.swagger.v3.jaxrs2.integration.resources.AcceptHeaderOpenApiResource;
+import io.swagger.v3.jaxrs2.integration.resources.OpenApiResource;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.servers.Server;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.server.ServerProperties;
+
+import java.util.List;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -43,13 +40,7 @@ import org.glassfish.jersey.server.ServerProperties;
 public class ManagementApplication extends ResourceConfig {
 
     public ManagementApplication() {
-
-        BeanConfig beanConfig = new BeanConfig();
-        beanConfig.setVersion(Version.RUNTIME_VERSION.MAJOR_VERSION);
-        beanConfig.setResourcePackage("io.gravitee.am.management.handlers.management.api.resources");
-        beanConfig.setTitle("Gravitee.io - Access Management API");
-        beanConfig.setBasePath("/management");
-        beanConfig.setScan(true);
+        packages("io.gravitee.am.management.handlers.management.api.resources");
 
         register(OrganizationsResource.class);
         register(PlatformResource.class);
@@ -68,9 +59,11 @@ public class ManagementApplication extends ResourceConfig {
         register(UriBuilderRequestFilter.class);
         register(ByteArrayOutputStreamWriter.class);
 
-        register(ApiListingResource.class);
+        register(GraviteeApiDefinition.class);
+        register(OpenApiResource.class);
         register(SwaggerSerializers.class);
 
         property(ServerProperties.BV_SEND_ERROR_IN_RESPONSE, true);
+        property(ServerProperties.WADL_FEATURE_DISABLE, true);
     }
 }

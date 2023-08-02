@@ -26,19 +26,21 @@ import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.OrganizationService;
 import io.gravitee.am.service.model.NewMembership;
 import io.gravitee.common.http.MediaType;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.net.URI;
 
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -60,11 +62,13 @@ public class MembersResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List members for an organization",
-            notes = "User must have ORGANIZATION_MEMBER[LIST] permission on the specified organization")
+    @Operation(summary = "List members for an organization",
+            description = "User must have ORGANIZATION_MEMBER[LIST] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "List members for an organization", response = MembershipListItem.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "List members for an organization",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = MembershipListItem.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void getMembers(
             @PathParam("organizationId") String organizationId,
             @Suspended final AsyncResponse response) {
@@ -79,12 +83,12 @@ public class MembersResource extends AbstractResource {
     @POST
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
-    @ApiOperation(value = "Add or update an organization member",
-            notes = "User must have ORGANIZATION_MEMBER[READ] permission on the specified organization")
+    @Operation(summary = "Add or update an organization member",
+            description = "User must have ORGANIZATION_MEMBER[READ] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 201, message = "Member has been added or updated successfully"),
-            @ApiResponse(code = 400, message = "Membership parameter is not valid"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "201", description = "Member has been added or updated successfully"),
+            @ApiResponse(responseCode = "400", description = "Membership parameter is not valid"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void addOrUpdateMember(
             @PathParam("organizationId") String organizationId,
             @Valid @NotNull NewMembership newMembership,

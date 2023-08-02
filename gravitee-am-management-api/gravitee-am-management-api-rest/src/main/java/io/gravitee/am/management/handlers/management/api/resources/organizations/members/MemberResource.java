@@ -21,21 +21,15 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.OrganizationService;
-import io.gravitee.am.service.exception.DomainNotFoundException;
-import io.reactivex.rxjava3.core.Maybe;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import org.springframework.beans.factory.annotation.Autowired;
-
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Response;
-
-import static io.gravitee.am.management.service.permissions.Permissions.of;
-import static io.gravitee.am.management.service.permissions.Permissions.or;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -50,11 +44,11 @@ public class MemberResource extends AbstractResource {
     private MembershipService membershipService;
 
     @DELETE
-    @ApiOperation(value = "Remove a membership of the organization",
-            notes = "User must have ORGANIZATION_MEMBER[DELETE] permission on the specified organization")
+    @Operation(summary = "Remove a membership of the organization",
+      description = "User must have ORGANIZATION_MEMBER[DELETE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 204, message = "Membership successfully deleted"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "204", description = "Membership successfully deleted"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void removeMember(
             @PathParam("organizationId") String organizationId,
             @PathParam("member") String membershipId,

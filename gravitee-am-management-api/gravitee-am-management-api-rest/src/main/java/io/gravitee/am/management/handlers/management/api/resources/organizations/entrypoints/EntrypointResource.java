@@ -18,28 +18,28 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.model.Acl;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Entrypoint;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.EntrypointService;
-import io.gravitee.am.service.exception.EntrypointNotFoundException;
 import io.gravitee.am.service.model.UpdateEntrypoint;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.rxjava3.core.Maybe;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -55,11 +55,13 @@ public class EntrypointResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get a sharding entrypoint",
-            notes = "User must have the ORGANIZATION_ENTRYPOINT[READ] permission on the specified organization")
+    @Operation(summary = "Get a sharding entrypoint",
+            description = "User must have the ORGANIZATION_ENTRYPOINT[READ] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Sharding entrypoint", response = Entrypoint.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Sharding entrypoint",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = Entrypoint.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void get(
             @PathParam("organizationId") String organizationId,
             @PathParam("entrypointId") String entrypointId, @Suspended final AsyncResponse response) {
@@ -72,14 +74,16 @@ public class EntrypointResource extends AbstractResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Update the sharding entrypoint",
-            notes = "User must have the ORGANIZATION_ENTRYPOINT[UPDATE] permission on the specified organization")
+    @Operation(summary = "Update the sharding entrypoint",
+            description = "User must have the ORGANIZATION_ENTRYPOINT[UPDATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Sharding entrypoint successfully updated", response = Entrypoint.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Sharding entrypoint successfully updated",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = Entrypoint.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void update(
             @PathParam("organizationId") String organizationId,
-            @ApiParam(name = "entrypoint", required = true) @Valid @NotNull final UpdateEntrypoint entrypointToUpdate,
+            @Parameter(name = "entrypoint", required = true) @Valid @NotNull final UpdateEntrypoint entrypointToUpdate,
             @PathParam("entrypointId") String entrypointId,
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
@@ -90,11 +94,11 @@ public class EntrypointResource extends AbstractResource {
     }
 
     @DELETE
-    @ApiOperation(value = "Delete the sharding entrypoint",
-            notes = "User must have the ORGANIZATION_ENTRYPOINT[DELETE] permission on the specified organization")
+    @Operation(summary = "Delete the sharding entrypoint",
+            description = "User must have the ORGANIZATION_ENTRYPOINT[DELETE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 204, message = "Sharding entrypoint successfully deleted"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "204", description = "Sharding entrypoint successfully deleted"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void delete(
             @PathParam("organizationId") String organizationId,
             @PathParam("entrypointId") String entrypointId,

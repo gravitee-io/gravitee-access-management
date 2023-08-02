@@ -29,20 +29,22 @@ import io.gravitee.am.service.exception.RoleNotFoundException;
 import io.gravitee.am.service.model.UpdateRole;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -61,15 +63,17 @@ public class RoleResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            nickname = "findRole",
-            value = "Get a role",
-            notes = "User must have the DOMAIN_ROLE[READ] permission on the specified domain " +
+    @Operation(
+            operationId = "findRole",
+            summary = "Get a role",
+            description = "User must have the DOMAIN_ROLE[READ] permission on the specified domain " +
                     "or DOMAIN_ROLE[READ] permission on the specified environment " +
                     "or DOMAIN_ROLE[READ] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Role successfully fetched", response = RoleEntity.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Role successfully fetched",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = RoleEntity.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void get(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -95,21 +99,23 @@ public class RoleResource extends AbstractResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            nickname = "updateRole",
-            value = "Update a role",
-            notes = "User must have the DOMAIN_ROLE[UPDATE] permission on the specified domain " +
+    @Operation(
+            operationId = "updateRole",
+            summary = "Update a role",
+            description = "User must have the DOMAIN_ROLE[UPDATE] permission on the specified domain " +
                     "or DOMAIN_ROLE[UPDATE] permission on the specified environment " +
                     "or DOMAIN_ROLE[UPDATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 201, message = "Role successfully updated", response = RoleEntity.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "201", description = "Role successfully updated",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = RoleEntity.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void update(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domain,
             @PathParam("role") String role,
-            @ApiParam(name = "role", required = true) @Valid @NotNull UpdateRole updateRole,
+            @Parameter(name = "role", required = true) @Valid @NotNull UpdateRole updateRole,
             @Suspended final AsyncResponse response) {
 
         final User authenticatedUser = getAuthenticatedUser();
@@ -123,16 +129,16 @@ public class RoleResource extends AbstractResource {
     }
 
     @DELETE
-    @ApiOperation(
-            nickname = "deleteRole",
-            value = "Delete a role",
-            notes = "User must have the DOMAIN_ROLE[DELETE] permission on the specified domain " +
+    @Operation(
+            operationId = "deleteRole",
+            summary = "Delete a role",
+            description = "User must have the DOMAIN_ROLE[DELETE] permission on the specified domain " +
                     "or DOMAIN_ROLE[DELETE] permission on the specified environment " +
                     "or DOMAIN_ROLE[DELETE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 204, message = "Role successfully deleted"),
-            @ApiResponse(code = 400, message = "Role is bind to existing users"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "204", description = "Role successfully deleted"),
+            @ApiResponse(responseCode = "400", description = "Role is bind to existing users"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void delete(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,

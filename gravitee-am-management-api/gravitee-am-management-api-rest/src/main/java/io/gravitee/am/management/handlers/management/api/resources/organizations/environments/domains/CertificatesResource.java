@@ -33,31 +33,28 @@ import io.gravitee.am.service.utils.CertificateTimeComparator;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.container.AsyncResponse;
+import jakarta.ws.rs.container.ResourceContext;
+import jakarta.ws.rs.container.Suspended;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.util.StringUtils;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.QueryParam;
-import jakarta.ws.rs.container.AsyncResponse;
-import jakarta.ws.rs.container.ResourceContext;
-import jakarta.ws.rs.container.Suspended;
-import jakarta.ws.rs.core.Context;
-import jakarta.ws.rs.core.Response;
 import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -71,7 +68,7 @@ import java.util.stream.Stream;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"certificate"})
+@Tag(name = "certificate")
 public class CertificatesResource extends AbstractResource {
 
     public static final int LATEST_SYSTEM_CERT = 1;
@@ -94,16 +91,18 @@ public class CertificatesResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            nickname = "listCertificates",
-            value = "List registered certificates for a security domain",
-            notes = "User must have the DOMAIN_CERTIFICATE[LIST] permission on the specified domain " +
+    @Operation(
+            operationId = "listCertificates",
+            summary = "List registered certificates for a security domain",
+            description = "User must have the DOMAIN_CERTIFICATE[LIST] permission on the specified domain " +
                     "or DOMAIN_CERTIFICATE[LIST] permission on the specified environment " +
                     "or DOMAIN_CERTIFICATE[LIST] permission on the specified organization. " +
                     "Each returned certificate is filtered and contains only basic information such as id, name and type.")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "List registered certificates for a security domain", response = CertificateEntity.class, responseContainer = "Set"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "List registered certificates for a security domain",
+                    content = @Content(mediaType =  "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = CertificateEntity.class)))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void list(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -174,20 +173,22 @@ public class CertificatesResource extends AbstractResource {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            nickname = "createCertificate",
-            value = "Create a certificate",
-            notes = "User must have the DOMAIN_CERTIFICATE[CREATE] permission on the specified domain " +
+    @Operation(
+            operationId = "createCertificate",
+            summary = "Create a certificate",
+            description = "User must have the DOMAIN_CERTIFICATE[CREATE] permission on the specified domain " +
                     "or DOMAIN_CERTIFICATE[CREATE] permission on the specified environment " +
                     "or DOMAIN_CERTIFICATE[CREATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 201, message = "Certificate successfully created", response = CertificateEntity.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "201", description = "Certificate successfully created",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = CertificateEntity.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void create(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domain,
-            @ApiParam(name = "certificate", required = true)
+            @Parameter(name = "certificate", required = true)
             @Valid @NotNull final NewCertificate newCertificate,
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
@@ -206,15 +207,17 @@ public class CertificatesResource extends AbstractResource {
     @Path("rotate")
     @POST
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            nickname = "rotateCertificate",
-            value = "Generate a new System a certificate",
-            notes = "User must have the DOMAIN_CERTIFICATE[CREATE] permission on the specified domain " +
+    @Operation(
+            operationId = "rotateCertificate",
+            summary = "Generate a new System a certificate",
+            description = "User must have the DOMAIN_CERTIFICATE[CREATE] permission on the specified domain " +
                     "or DOMAIN_CERTIFICATE[CREATE] permission on the specified environment " +
                     "or DOMAIN_CERTIFICATE[CREATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 201, message = "Certificate successfully created", response = CertificateEntity.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "201", description = "Certificate successfully created",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = CertificateEntity.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void rotateCertificate(@PathParam("organizationId") String organizationId,
                                 @PathParam("environmentId") String environmentId,
                                 @PathParam("domain") String domain,

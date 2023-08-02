@@ -27,24 +27,31 @@ import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewBotDetection;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
-import io.swagger.annotations.*;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.net.URI;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"bot detection"})
+@Tag(name = "bot detection")
 public class BotDetectionsResource extends AbstractResource {
 
     @Context
@@ -61,14 +68,16 @@ public class BotDetectionsResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List registered bot detections for a security domain",
-            notes = "User must have the DOMAIN_BOT_DETECTION[LIST] permission on the specified domain " +
+    @Operation(summary = "List registered bot detections for a security domain",
+            description = "User must have the DOMAIN_BOT_DETECTION[LIST] permission on the specified domain " +
                     "or DOMAIN_BOT_DETECTION[LIST] permission on the specified environment " +
                     "or DOMAIN_BOT_DETECTION[LIST] permission on the specified organization " +
                     "Each returned bot detections is filtered and contains only basic information such as id, name.")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "List registered bot detections for a security domain", response = BotDetection.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "List registered bot detections for a security domain",
+                    content = @Content(mediaType =  "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = BotDetection.class)))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void list(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -85,18 +94,18 @@ public class BotDetectionsResource extends AbstractResource {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Create a bot detection",
-            notes = "User must have the DOMAIN_BOT_DETECTION[CREATE] permission on the specified domain " +
+    @Operation(summary = "Create a bot detection",
+            description = "User must have the DOMAIN_BOT_DETECTION[CREATE] permission on the specified domain " +
                     "or DOMAIN_BOT_DETECTION[CREATE] permission on the specified environment " +
                     "or DOMAIN_BOT_DETECTION[CREATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 201, message = "Bot detection successfully created"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "201", description = "Bot detection successfully created"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void create(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domain,
-            @ApiParam(name = "detection", required = true) @Valid @NotNull final NewBotDetection newBotDetection,
+            @Parameter(name = "detection", required = true) @Valid @NotNull final NewBotDetection newBotDetection,
             @Suspended final AsyncResponse response) {
 
         final User authenticatedUser = getAuthenticatedUser();

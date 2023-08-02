@@ -19,7 +19,6 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Group;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.DomainService;
@@ -28,29 +27,32 @@ import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewGroup;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
-import io.swagger.annotations.*;
-import java.util.Collection;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
-import java.net.URI;
-import java.util.stream.Collectors;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import static io.gravitee.am.management.service.permissions.Permissions.of;
-import static io.gravitee.am.management.service.permissions.Permissions.or;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
+import java.net.URI;
+import java.util.Collection;
+import java.util.stream.Collectors;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"group"})
+@Tag(name = "group")
 public class GroupsResource extends AbstractResource {
 
     private static final int MAX_GROUPS_SIZE_PER_PAGE = 100;
@@ -67,16 +69,18 @@ public class GroupsResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            nickname = "listGroups",
-            value = "List groups for a security domain",
-            notes = "User must have the DOMAIN_GROUP[LIST] permission on the specified domain " +
+    @Operation(
+            operationId = "listGroups",
+            summary = "List groups for a security domain",
+            description = "User must have the DOMAIN_GROUP[LIST] permission on the specified domain " +
                     "or DOMAIN_GROUP[LIST] permission on the specified environment " +
                     "or DOMAIN_GROUP[LIST] permission on the specified organization. " +
                     "Each returned group is filtered and contains only basic information such as id and name.")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "List groups for a security domain", response = GroupPage.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "List groups for a security domain",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = GroupPage.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void list(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -96,20 +100,22 @@ public class GroupsResource extends AbstractResource {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            nickname = "createGroup",
-            value = "Create a group",
-            notes = "User must have the DOMAIN_GROUP[CREATE] permission on the specified domain " +
+    @Operation(
+            operationId = "createGroup",
+            summary = "Create a group",
+            description = "User must have the DOMAIN_GROUP[CREATE] permission on the specified domain " +
                     "or DOMAIN_GROUP[CREATE] permission on the specified environment " +
                     "or DOMAIN_GROUP[CREATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 201, message = "Group successfully created", response = Group.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "201", description = "Group successfully created",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = Group.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void create(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domain,
-            @ApiParam(name = "group", required = true)
+            @Parameter(name = "group", required = true)
             @Valid @NotNull final NewGroup newGroup,
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();

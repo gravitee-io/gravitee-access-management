@@ -22,22 +22,21 @@ import io.gravitee.am.service.impl.I18nDictionaryService;
 import io.gravitee.am.service.model.NewDictionary;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.container.AsyncResponse;
+import jakarta.ws.rs.container.Suspended;
+import jakarta.ws.rs.core.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.container.AsyncResponse;
-import jakarta.ws.rs.container.Suspended;
-import jakarta.ws.rs.core.Response;
 import java.net.URI;
 
 import static io.gravitee.am.model.Acl.CREATE;
@@ -50,7 +49,7 @@ import static io.gravitee.am.model.permissions.Permission.DOMAIN_I18N_DICTIONARY
  * @author GraviteeSource Team
  */
 @SuppressWarnings("ResultOfMethodCallIgnored")
-@Api(tags = {"dictionary"})
+@Tag(name = "dictionary")
 public class I18nDictionariesResource extends AbstractDomainResource {
 
     @Autowired
@@ -58,15 +57,17 @@ public class I18nDictionariesResource extends AbstractDomainResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            nickname = "listI18nDictionaries",
-            value = "List all i18n dictionaries supported for a security domain",
-            notes = "User must have the DOMAIN_I18N_DICTIONARY[LIST] permission on the specified domain " +
+    @Operation(
+            operationId = "listI18nDictionaries",
+            summary = "List all i18n dictionaries supported for a security domain",
+            description = "User must have the DOMAIN_I18N_DICTIONARY[LIST] permission on the specified domain " +
                     "or DOMAIN_I18N_DICTIONARY[LIST] permission on the specified environment " +
                     "or DOMAIN_I18N_DICTIONARY[LIST] permission on the specified organization.")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "List of i18n dictionaries for a security domain", response = I18nDictionary.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "List of i18n dictionaries for a security domain",
+                    content = @Content(mediaType =  "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = I18nDictionary.class)))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void list(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -82,15 +83,17 @@ public class I18nDictionariesResource extends AbstractDomainResource {
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            nickname = "createI18nDictionary",
-            value = "Create a new i18n dictionary for a supported language for a security domain",
-            notes = "User must have the DOMAIN_I18N_DICTIONARY[CREATE] permission on the specified domain " +
+    @Operation(
+            operationId = "createI18nDictionary",
+            summary = "Create a new i18n dictionary for a supported language for a security domain",
+            description = "User must have the DOMAIN_I18N_DICTIONARY[CREATE] permission on the specified domain " +
                     "or DOMAIN_I18N_DICTIONARY[CREATE] permission on the specified environment " +
                     "or DOMAIN_I18N_DICTIONARY[CREATE] permission on the specified organization.")
     @ApiResponses({
-            @ApiResponse(code = 201, message = "Create a new i18n dictionary for a security domain", response = I18nDictionary.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "201", description = "Create a new i18n dictionary for a security domain",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = I18nDictionary.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void create(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,

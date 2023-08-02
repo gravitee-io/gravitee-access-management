@@ -26,19 +26,21 @@ import io.gravitee.am.service.FlowService;
 import io.gravitee.am.service.exception.FlowNotFoundException;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -54,14 +56,16 @@ public class ApplicationFlowResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get a flow",
-            nickname = "getAppFlow",
-            notes = "User must have the APPLICATION_FLOW[READ] permission on the specified domain " +
+    @Operation(summary = "Get a flow",
+            operationId = "getAppFlow",
+            description = "User must have the APPLICATION_FLOW[READ] permission on the specified domain " +
                     "or APPLICATION_FLOW[READ] permission on the specified environment " +
                     "or APPLICATION_FLOW[READ] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Flow", response = FlowEntity.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Flow",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = FlowEntity.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void get(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -80,21 +84,23 @@ public class ApplicationFlowResource extends AbstractResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Update a flow",
-            nickname = "updateAppFlow",
-            notes = "User must have the APPLICATION_FLOW[UPDATE] permission on the specified domain " +
+    @Operation(summary = "Update a flow",
+            operationId = "updateAppFlow",
+            description = "User must have the APPLICATION_FLOW[UPDATE] permission on the specified domain " +
                     "or APPLICATION_FLOW[UPDATE] permission on the specified environment " +
                     "or APPLICATION_FLOW[UPDATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 201, message = "Flow successfully updated", response = FlowEntity.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "201", description = "Flow successfully updated",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = FlowEntity.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void update(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domain,
             @PathParam("application") String application,
             @PathParam("flow") String flow,
-            @ApiParam(name = "flow", required = true) @Valid @NotNull io.gravitee.am.service.model.Flow updateFlow,
+            @Parameter(name = "flow", required = true) @Valid @NotNull io.gravitee.am.service.model.Flow updateFlow,
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 

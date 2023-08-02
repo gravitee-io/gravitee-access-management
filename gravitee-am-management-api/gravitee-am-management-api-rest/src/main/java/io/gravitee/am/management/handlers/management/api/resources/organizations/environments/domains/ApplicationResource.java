@@ -31,29 +31,22 @@ import io.gravitee.am.service.model.PatchApplicationType;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-import jakarta.ws.rs.BadRequestException;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.DELETE;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.PATCH;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.PUT;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -75,18 +68,20 @@ public class ApplicationResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            nickname = "findApplication",
-            value = "Get an application",
-            notes = "User must have the APPLICATION[READ] permission on the specified application " +
+    @Operation(
+            operationId = "findApplication",
+            summary = "Get an application",
+            description = "User must have the APPLICATION[READ] permission on the specified application " +
                     "or APPLICATION[READ] permission on the specified domain " +
                     "or APPLICATION[READ] permission on the specified environment " +
                     "or APPLICATION[READ] permission on the specified organization. " +
                     "Application will be filtered according to permissions (READ on APPLICATION_IDENTITY_PROVIDER, " +
                     "APPLICATION_CERTIFICATE, APPLICATION_METADATA, APPLICATION_USER_ACCOUNT, APPLICATION_SETTINGS)")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Application", response = Application.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Application",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = Application.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void get(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -115,22 +110,24 @@ public class ApplicationResource extends AbstractResource {
     @PATCH
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            nickname = "patchApplication",
-            value = "Patch an application",
-            notes = "User must have APPLICATION[UPDATE] permission on the specified application " +
+    @Operation(
+            operationId = "patchApplication",
+            summary = "Patch an application",
+            description = "User must have APPLICATION[UPDATE] permission on the specified application " +
                     "or APPLICATION[UPDATE] permission on the specified domain " +
                     "or APPLICATION[UPDATE] permission on the specified environment " +
                     "or APPLICATION[UPDATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Application successfully patched", response = Application.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Application successfully patched",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = Application.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void patch(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domain,
             @PathParam("application") String application,
-            @ApiParam(name = "application", required = true) @Valid @NotNull PatchApplication patchApplication,
+            @Parameter(name = "application", required = true) @Valid @NotNull PatchApplication patchApplication,
             @Suspended final AsyncResponse response) {
 
         updateInternal(organizationId, environmentId, domain, application, patchApplication, response);
@@ -139,22 +136,24 @@ public class ApplicationResource extends AbstractResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            nickname = "updateApplication",
-            value = "Update an application",
-            notes = "User must have APPLICATION[UPDATE] permission on the specified application " +
+    @Operation(
+            operationId = "updateApplication",
+            summary = "Update an application",
+            description = "User must have APPLICATION[UPDATE] permission on the specified application " +
                     "or APPLICATION[UPDATE] permission on the specified domain " +
                     "or APPLICATION[UPDATE] permission on the specified environment " +
                     "or APPLICATION[UPDATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Application successfully updated", response = Application.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Application successfully updated",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = Application.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void update(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domain,
             @PathParam("application") String application,
-            @ApiParam(name = "application", required = true) @Valid @NotNull PatchApplication patchApplication,
+            @Parameter(name = "application", required = true) @Valid @NotNull PatchApplication patchApplication,
             @Suspended final AsyncResponse response) {
 
         updateInternal(organizationId, environmentId, domain, application, patchApplication, response);
@@ -164,22 +163,24 @@ public class ApplicationResource extends AbstractResource {
     @Path("type")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            nickname = "updateApplicationType",
-            value = "Update an application type",
-            notes = "User must have APPLICATION[UPDATE] permission on the specified application " +
+    @Operation(
+            operationId = "updateApplicationType",
+            summary = "Update an application type",
+            description = "User must have APPLICATION[UPDATE] permission on the specified application " +
                     "or APPLICATION[UPDATE] permission on the specified domain " +
                     "or APPLICATION[UPDATE] permission on the specified environment " +
                     "or APPLICATION[UPDATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Application type successfully updated", response = Application.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Application type successfully updated",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = Application.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void update(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domain,
             @PathParam("application") String application,
-            @ApiParam(name = "type", required = true) @Valid @NotNull PatchApplicationType patchApplicationType,
+            @Parameter(name = "type", required = true) @Valid @NotNull PatchApplicationType patchApplicationType,
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
@@ -189,16 +190,16 @@ public class ApplicationResource extends AbstractResource {
     }
 
     @DELETE
-    @ApiOperation(
-            nickname = "deleteApplication",
-            value = "Delete an application",
-            notes = "User must have APPLICATION[DELETE] permission on the specified application " +
+    @Operation(
+            operationId = "deleteApplication",
+            summary = "Delete an application",
+            description = "User must have APPLICATION[DELETE] permission on the specified application " +
                     "or APPLICATION[DELETE] permission on the specified domain " +
                     "or APPLICATION[DELETE] permission on the specified environment " +
                     "or APPLICATION[DELETE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 204, message = "Application successfully deleted"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "204", description = "Application successfully deleted"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void delete(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -214,17 +215,19 @@ public class ApplicationResource extends AbstractResource {
 
     @POST
     @Path("secret/_renew")
-    @ApiOperation(
-            nickname = "renewClientSecret",
-            value = "Renew application secret",
-            notes = "User must have APPLICATION_OPENID[UPDATE] permission on the specified application " +
+    @Operation(
+            operationId = "renewClientSecret",
+            summary = "Renew application secret",
+            description = "User must have APPLICATION_OPENID[UPDATE] permission on the specified application " +
                     "or APPLICATION_OPENID[UPDATE] permission on the specified domain " +
                     "or APPLICATION_OPENID[UPDATE] permission on the specified environment " +
                     "or APPLICATION_OPENID[UPDATE] permission on the specified organization")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Application secret successfully updated", response = Application.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Application secret successfully updated",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = Application.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void renewClientSecret(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,

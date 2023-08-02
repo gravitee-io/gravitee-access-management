@@ -20,14 +20,14 @@ import io.gravitee.am.service.model.GraviteeLicense;
 import io.gravitee.common.http.MediaType;
 import io.gravitee.node.api.license.NodeLicenseService;
 import io.reactivex.rxjava3.core.Single;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.container.AsyncResponse;
+import jakarta.ws.rs.container.Suspended;
 
 import javax.inject.Inject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.Produces;
-import javax.ws.rs.container.AsyncResponse;
-import javax.ws.rs.container.Suspended;
 
 /**
  * @author Kamiel Ahmadpour (kamiel.ahmadpour at graviteesource.com)
@@ -39,7 +39,7 @@ public class LicenseResource extends AbstractResource {
     private NodeLicenseService licenseService;
 
     @GET
-    @ApiOperation(value = "Get current node License")
+    @Operation(summary = "Get current node License")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public void get(@Suspended final AsyncResponse response) {

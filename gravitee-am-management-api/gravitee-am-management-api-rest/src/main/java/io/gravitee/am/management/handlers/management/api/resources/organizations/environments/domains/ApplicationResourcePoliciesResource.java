@@ -27,11 +27,12 @@ import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import org.springframework.beans.factory.annotation.Autowired;
-
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -40,6 +41,8 @@ import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
+import org.springframework.beans.factory.annotation.Autowired;
+
 import java.util.Collections;
 
 /**
@@ -62,14 +65,15 @@ public class ApplicationResourcePoliciesResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get resource access policies",
-            notes = "User must have APPLICATION_RESOURCE[READ] permission on the specified application " +
+    @Operation(summary = "Get resource access policies",
+            description = "User must have APPLICATION_RESOURCE[READ] permission on the specified application " +
                     "or APPLICATION_RESOURCE[READ] permission on the specified domain " +
                     "or APPLICATION_RESOURCE[READ] permission on the specified environment " +
                     "or APPLICATION_RESOURCE[READ] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Get resource access policies", response = AccessPolicyListItem.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Get resource access policies",  content = @Content(mediaType =  "application/json",
+                    array = @ArraySchema(schema = @Schema(implementation = AccessPolicyListItem.class)))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void list(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,

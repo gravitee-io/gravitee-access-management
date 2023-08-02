@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.model.notification;
 
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Date;
 
@@ -33,7 +33,7 @@ public class UserNotificationContent {
 
     private String message;
 
-    @ApiModelProperty(dataType = "java.lang.Long")
+    @Schema(type = "java.lang.Long")
     private Date createdAt;
 
     public UserNotificationContent(UserNotification notification) {

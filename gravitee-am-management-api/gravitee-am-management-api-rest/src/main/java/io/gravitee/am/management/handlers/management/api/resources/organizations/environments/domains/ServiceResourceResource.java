@@ -28,20 +28,22 @@ import io.gravitee.am.service.exception.FactorNotFoundException;
 import io.gravitee.am.service.model.UpdateServiceResource;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -60,14 +62,16 @@ public class ServiceResourceResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get a resource",
-            nickname = "getResource",
-            notes = "User must have the DOMAIN_RESOURCE[READ] permission on the specified domain " +
+    @Operation(summary = "Get a resource",
+            operationId = "getResource",
+            description = "User must have the DOMAIN_RESOURCE[READ] permission on the specified domain " +
                     "or DOMAIN_RESOURCE[READ] permission on the specified environment " +
                     "or DOMAIN_RESOURCE[READ] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Resource successfully fetched", response = ServiceResource.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Resource successfully fetched",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ServiceResource.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void get(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -92,20 +96,22 @@ public class ServiceResourceResource extends AbstractResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Update a resource",
-            nickname = "updateResource",
-            notes = "User must have the DOMAIN_RESOURCE[UPDATE] permission on the specified domain " +
+    @Operation(summary = "Update a resource",
+            operationId = "updateResource",
+            description = "User must have the DOMAIN_RESOURCE[UPDATE] permission on the specified domain " +
                     "or DOMAIN_RESOURCE[UPDATE] permission on the specified environment " +
                     "or DOMAIN_RESOURCE[UPDATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 201, message = "Resource successfully updated", response = ServiceResource.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "201", description = "Resource successfully updated",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ServiceResource.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void update(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domain,
             @PathParam("resource") String resource,
-            @ApiParam(name = "identity", required = true) @Valid @NotNull UpdateServiceResource updateResource,
+            @Parameter(name = "identity", required = true) @Valid @NotNull UpdateServiceResource updateResource,
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
@@ -117,14 +123,14 @@ public class ServiceResourceResource extends AbstractResource {
     }
 
     @DELETE
-    @ApiOperation(value = "Delete a resource",
-            nickname = "deleteResource",
-            notes = "User must have the DOMAIN_RESOURCE[DELETE] permission on the specified domain " +
+    @Operation(summary = "Delete a resource",
+            operationId = "deleteResource",
+            description = "User must have the DOMAIN_RESOURCE[DELETE] permission on the specified domain " +
                     "or DOMAIN_RESOURCE[DELETE] permission on the specified environment " +
                     "or DOMAIN_RESOURCE[DELETE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 204, message = "Resource successfully deleted"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "204", description = "Resource successfully deleted"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void delete(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,

@@ -29,16 +29,23 @@ import io.gravitee.am.service.FlowService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
-import io.swagger.annotations.*;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -46,7 +53,7 @@ import java.util.stream.Collectors;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"flow"})
+@Tag(name = "flow")
 public class FlowsResource extends AbstractResource {
 
     @Context
@@ -63,15 +70,17 @@ public class FlowsResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List registered flows for a security domain",
-            nickname = "listDomainFlows",
-            notes = "User must have the DOMAIN_FLOW[LIST] permission on the specified domain " +
+    @Operation(summary = "List registered flows for a security domain",
+            operationId = "listDomainFlows",
+            description = "User must have the DOMAIN_FLOW[LIST] permission on the specified domain " +
                     "or DOMAIN_FLOW[LIST] permission on the specified environment " +
                     "or DOMAIN_FLOW[LIST] permission on the specified organization. " +
                     "Except if user has DOMAIN_FLOW[READ] permission on the domain, environment or organization, each returned flow is filtered and contains only basic information such as id and name and isEnabled.")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "List registered flows for a security domain", response = FlowEntity.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "List registered flows for a security domain",
+                    content = @Content(mediaType =  "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = FlowEntity.class)))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void list(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -91,19 +100,21 @@ public class FlowsResource extends AbstractResource {
     @PUT
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Create or update list of flows",
-            nickname = "defineDomainFlows",
-            notes = "User must have the DOMAIN_FLOW[UPDATE] permission on the specified domain " +
+    @Operation(summary = "Create or update list of flows",
+            operationId = "defineDomainFlows",
+            description = "User must have the DOMAIN_FLOW[UPDATE] permission on the specified domain " +
                     "or DOMAIN_FLOW[UPDATE] permission on the specified environment " +
                     "or DOMAIN_FLOW[UPDATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Flows successfully updated", response = FlowEntity.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Flows successfully updated",
+                    content = @Content(mediaType =  "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = FlowEntity.class)))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void update(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domain,
-            @ApiParam(name = "flows", required = true) @Valid @NotNull final List<io.gravitee.am.service.model.Flow> flows,
+            @Parameter(name = "flows", required = true) @Valid @NotNull final List<io.gravitee.am.service.model.Flow> flows,
             @Suspended final AsyncResponse response) {
 
         final User authenticatedUser = getAuthenticatedUser();

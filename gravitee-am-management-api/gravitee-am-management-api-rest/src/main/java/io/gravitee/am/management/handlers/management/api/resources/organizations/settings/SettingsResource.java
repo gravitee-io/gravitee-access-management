@@ -24,10 +24,12 @@ import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.OrganizationService;
 import io.gravitee.am.service.model.PatchOrganization;
 import io.gravitee.common.http.MediaType;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.Suspended;
@@ -48,11 +50,13 @@ public class SettingsResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get organization main settings",
-            notes = "User must have the ORGANIZATION_SETTINGS[READ] permission on the specified organization")
+    @Operation(summary = "Get organization main settings",
+            description = "User must have the ORGANIZATION_SETTINGS[READ] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Platform settings successfully fetched", response = Domain.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Platform settings successfully fetched",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation =Domain.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void get(
             @PathParam("organizationId") String organizationId,
             @Suspended final AsyncResponse response) {
@@ -65,14 +69,16 @@ public class SettingsResource extends AbstractResource {
     @PATCH
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Update platform main settings",
-            notes = "User must have the ORGANIZATION_SETTINGS[UPDATE] permission on the specified organization")
+    @Operation(summary = "Update platform main settings",
+            description = "User must have the ORGANIZATION_SETTINGS[UPDATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Platform settings successfully patched", response = Domain.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Platform settings successfully patched",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation =Domain.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void patch(
             @PathParam("organizationId") String organizationId,
-            @ApiParam(name = "domain", required = true) @Valid @NotNull final PatchOrganization patchOrganization,
+            @Parameter(name = "domain", required = true) @Valid @NotNull final PatchOrganization patchOrganization,
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
