@@ -20,10 +20,9 @@ import io.gravitee.am.management.service.exception.ExtensionGrantPluginNotFoundE
 import io.gravitee.am.management.service.exception.ExtensionGrantPluginSchemaNotFoundException;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-
-import javax.inject.Inject;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.tags.Tags;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -34,11 +33,13 @@ import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
 
+import javax.inject.Inject;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"Plugin", "Extension Grant"})
+@Tags({@Tag(name= "Plugin"), @Tag(name= "Extension Grant")})
 public class ExtensionGrantPluginResource {
 
     @Context
@@ -49,8 +50,8 @@ public class ExtensionGrantPluginResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get an extension grant plugin",
-            notes = "There is no particular permission needed. User must be authenticated.")
+    @Operation(summary = "Get an extension grant plugin",
+            description = "There is no particular permission needed. User must be authenticated.")
     public void get(
             @PathParam("extensionGrant") String extensionGrantId,
             @Suspended final AsyncResponse response) {
@@ -64,8 +65,8 @@ public class ExtensionGrantPluginResource {
     @GET
     @Path("schema")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get an extension grant plugin's schema",
-            notes = "There is no particular permission needed. User must be authenticated.")
+    @Operation(summary = "Get an extension grant plugin's schema",
+            description = "There is no particular permission needed. User must be authenticated.")
     public void getSchema(@PathParam("extensionGrant") String extensionGrantId,
                           @Suspended final AsyncResponse response) {
 

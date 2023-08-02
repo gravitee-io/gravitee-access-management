@@ -17,7 +17,7 @@ package io.gravitee.am.service.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.gravitee.am.model.IUser;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Date;
 import java.util.Map;
@@ -62,17 +62,17 @@ public class UpdateUser implements IUser {
 
     private long loginsCount;
 
-    @ApiModelProperty(dataType = "java.lang.Long")
+    @Schema(type = "java.lang.Long")
     private Date loggedAt;
 
     private String preferredLanguage;
 
     private Map<String, Object> additionalInformation;
 
-    @ApiModelProperty(dataType = "java.lang.Long")
+    @Schema(type = "java.lang.Long")
     private Date createdAt;
 
-    @ApiModelProperty(dataType = "java.lang.Long")
+    @Schema(type = "java.lang.Long")
     private Date updatedAt;
 
     @Override

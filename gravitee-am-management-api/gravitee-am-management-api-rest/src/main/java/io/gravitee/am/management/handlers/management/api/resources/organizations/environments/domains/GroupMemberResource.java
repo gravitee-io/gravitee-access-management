@@ -18,7 +18,6 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.management.service.UserService;
 import io.gravitee.am.model.Acl;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.GroupService;
@@ -27,17 +26,17 @@ import io.gravitee.am.service.model.UpdateGroup;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import org.springframework.beans.factory.annotation.Autowired;
-
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.Suspended;
+import org.springframework.beans.factory.annotation.Autowired;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -58,16 +57,16 @@ public class GroupMemberResource extends AbstractResource {
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            nickname = "addGroupMember",
-            value = "Add a group member",
-            notes = "User must have the DOMAIN_GROUP[UPDATE] permission on the specified domain " +
+    @Operation(
+            operationId = "addGroupMember",
+            summary = "Add a group member",
+            description = "User must have the DOMAIN_GROUP[UPDATE] permission on the specified domain " +
                     "or DOMAIN_GROUP[UPDATE] permission on the specified environment " +
                     "or DOMAIN_GROUP[UPDATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Member has been added successfully"),
-            @ApiResponse(code = 400, message = "User does not exist"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Member has been added successfully"),
+            @ApiResponse(responseCode = "400", description = "User does not exist"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void addMember(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -106,16 +105,16 @@ public class GroupMemberResource extends AbstractResource {
 
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            nickname = "removeGroupMember",
-            value = "Remove a group member",
-            notes = "User must have the DOMAIN_GROUP[UPDATE] permission on the specified domain " +
+    @Operation(
+            operationId = "removeGroupMember",
+            summary = "Remove a group member",
+            description = "User must have the DOMAIN_GROUP[UPDATE] permission on the specified domain " +
                     "or DOMAIN_GROUP[UPDATE] permission on the specified environment " +
                     "or DOMAIN_GROUP[UPDATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Member has been removed successfully"),
-            @ApiResponse(code = 400, message = "User does not exist"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Member has been removed successfully"),
+            @ApiResponse(responseCode = "400", description = "User does not exist"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void removeMember(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,

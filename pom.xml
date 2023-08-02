@@ -100,8 +100,8 @@
         <zxing.version>3.4.1</zxing.version>
         <commons-codec.version>1.15</commons-codec.version>
         <commons-lang.version>2.6</commons-lang.version>
-        <swagger.version>1.6.6</swagger.version>
-        <hibernate-validator.version>6.1.5.Final</hibernate-validator.version>
+        <swagger.version>2.2.15</swagger.version>
+        <hibernate-validator.version>8.0.1.Final</hibernate-validator.version>
         <ldaptive.version>1.2.4</ldaptive.version>
         <javax.servlet-api.version>3.1.0</javax.servlet-api.version>
         <thymeleaf.version>3.1.2.RELEASE</thymeleaf.version>
@@ -116,6 +116,7 @@
         <mockito-jupiter.version>4.4.0</mockito-jupiter.version>
         <test-container.version>1.17.6</test-container.version>
         <hazelcast.version>4.1.10</hazelcast.version>
+
         <!-- External plugins versions -->
         <gravitee-policy-callout-http.version>1.15.1</gravitee-policy-callout-http.version>
         <gravitee-policy-groovy.version>2.0.0</gravitee-policy-groovy.version>
@@ -324,13 +325,25 @@
             <dependency>
                 <groupId>io.swagger.core.v3</groupId>
                 <artifactId>swagger-core</artifactId>
-                <version>${swagger-core.version}</version>
+                <version>${swagger.version}</version>
                 <exclusions>
                     <exclusion>
                         <groupId>javax.validation</groupId>
                         <artifactId>validation-api</artifactId>
                     </exclusion>
                 </exclusions>
+            </dependency>
+
+            <dependency>
+                <groupId>io.swagger.core.v3</groupId>
+                <artifactId>swagger-jaxrs2-jakarta</artifactId>
+                <version>${swagger.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.swagger.core.v3</groupId>
+                <artifactId>swagger-annotations-jakarta</artifactId>
+                <version>${swagger.version}</version>
             </dependency>
 
             <!-- JAXB API & implementation -->
@@ -416,11 +429,6 @@
                 <groupId>javax.xml.bind</groupId>
                 <artifactId>jaxb-api</artifactId>
                 <version>${jaxb-api.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.swagger</groupId>
-                <artifactId>swagger-jersey2-jaxrs</artifactId>
-                <version>${swagger.version}</version>
             </dependency>
             <dependency>
                 <groupId>commons-codec</groupId>

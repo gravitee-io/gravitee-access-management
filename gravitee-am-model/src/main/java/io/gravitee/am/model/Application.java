@@ -19,7 +19,7 @@ import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.oidc.Client;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.*;
 
@@ -80,12 +80,12 @@ public class Application implements Resource, PasswordSettingsAware {
     /**
      * Application created date
      */
-    @ApiModelProperty(dataType = "java.lang.Long")
+    @Schema(type = "java.lang.Long")
     private Date createdAt;
     /**
      * Application updated date
      */
-    @ApiModelProperty(dataType = "java.lang.Long")
+    @Schema(type = "java.lang.Long")
     private Date updatedAt;
 
     public Application() {

@@ -28,18 +28,20 @@ import io.gravitee.am.service.model.UpdateReporter;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Response;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.util.Optional;
 
 /**
@@ -56,13 +58,15 @@ public class ReporterResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get a reporter",
-            notes = "User must have the DOMAIN_REPORTER[READ] permission on the specified domain " +
+    @Operation(summary = "Get a reporter",
+            description = "User must have the DOMAIN_REPORTER[READ] permission on the specified domain " +
                     "or DOMAIN_REPORTER[READ] permission on the specified environment " +
                     "or DOMAIN_REPORTER[READ] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Reporter successfully fetched", response = Reporter.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Reporter successfully fetched",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = Reporter.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void get(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -90,19 +94,21 @@ public class ReporterResource extends AbstractResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Update a reporter",
-            notes = "User must have the DOMAIN_REPORTER[UPDATE] permission on the specified domain " +
+    @Operation(summary = "Update a reporter",
+            description = "User must have the DOMAIN_REPORTER[UPDATE] permission on the specified domain " +
                     "or DOMAIN_REPORTER[UPDATE] permission on the specified environment " +
                     "or DOMAIN_REPORTER[UPDATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 201, message = "Reporter successfully updated", response = Reporter.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "201", description = "Reporter successfully updated",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = Reporter.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void update(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domain,
             @PathParam("reporter") String reporter,
-            @ApiParam(name = "reporter", required = true) @Valid @NotNull UpdateReporter updateReporter,
+            @Parameter(name = "reporter", required = true) @Valid @NotNull UpdateReporter updateReporter,
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
@@ -115,13 +121,15 @@ public class ReporterResource extends AbstractResource {
 
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Delete a reporter",
-            notes = "User must have the DOMAIN_REPORTER[DELETE] permission on the specified domain " +
+    @Operation(summary = "Delete a reporter",
+            description = "User must have the DOMAIN_REPORTER[DELETE] permission on the specified domain " +
                     "or DOMAIN_REPORTER[DELETE] permission on the specified environment " +
                     "or DOMAIN_REPORTER[DELETE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 204, message = "Reporter successfully removed", response = Void.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "204", description = "Reporter successfully removed",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = Void.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void delete(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,

@@ -73,7 +73,9 @@ public class ManagementSecurityConfiguration extends CsrfAwareConfiguration {
 
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
-        return (web) -> web.ignoring().requestMatchers(AntPathRequestMatcher.antMatcher("/swagger.json"));
+        return (web) -> web.ignoring().requestMatchers(
+                AntPathRequestMatcher.antMatcher("/openapi.json"),
+                AntPathRequestMatcher.antMatcher("/openapi.yaml"));
     }
 
     private HttpSecurity csp(HttpSecurity http) throws Exception {

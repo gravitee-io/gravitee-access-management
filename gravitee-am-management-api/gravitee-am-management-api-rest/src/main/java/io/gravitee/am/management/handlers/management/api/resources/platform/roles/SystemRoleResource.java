@@ -23,11 +23,11 @@ import io.gravitee.am.model.Role;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.common.http.MediaType;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import org.springframework.beans.factory.annotation.Autowired;
-
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -36,6 +36,8 @@ import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
+import org.springframework.beans.factory.annotation.Autowired;
+
 import java.util.stream.Collectors;
 
 /**
@@ -53,11 +55,13 @@ public class SystemRoleResource extends AbstractResource {
     @GET
     @Path("{role}")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get a system role",
-            notes = "There is no particular permission needed. User must be authenticated.")
+    @Operation(summary = "Get a system role",
+            description = "There is no particular permission needed. User must be authenticated.")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "System role successfully fetched", response = Role.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "System role successfully fetched",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = Role.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void get(
             @PathParam("role") String role,
             @Suspended final AsyncResponse response) {

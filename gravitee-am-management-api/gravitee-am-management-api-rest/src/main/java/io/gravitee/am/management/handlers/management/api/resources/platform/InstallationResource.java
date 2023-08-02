@@ -25,16 +25,17 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.InstallationService;
 import io.gravitee.common.http.MediaType;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
-
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.Suspended;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -52,12 +53,16 @@ public class InstallationResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get installation information",
-            notes = "User must have the INSTALLATION[READ] permission on the platform")
+    @Operation(summary = "Get installation information",
+            description = "User must have the INSTALLATION[READ] permission on the platform")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Installation successfully fetched", response = InstallationEntity.class),
-            @ApiResponse(code = 404, message = "No installation has been found", response = ErrorEntity.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Installation successfully fetched",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = InstallationEntity.class))),
+            @ApiResponse(responseCode = "404", description = "No installation has been found",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation =  ErrorEntity.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void get(
             @Suspended final AsyncResponse response) {
 

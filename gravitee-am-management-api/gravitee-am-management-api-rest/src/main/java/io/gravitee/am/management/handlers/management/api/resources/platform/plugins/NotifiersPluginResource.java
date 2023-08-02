@@ -15,16 +15,17 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.platform.plugins;
 
-import io.gravitee.am.management.handlers.management.api.model.ErrorEntity;
 import io.gravitee.am.management.service.impl.plugins.NotifierPluginService;
 import io.gravitee.am.service.model.plugin.AbstractPlugin;
 import io.gravitee.am.service.model.plugin.NotifierPlugin;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-
-import javax.inject.Inject;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.tags.Tags;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
@@ -34,6 +35,8 @@ import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
+
+import javax.inject.Inject;
 import java.util.Comparator;
 import java.util.List;
 
@@ -41,7 +44,7 @@ import java.util.List;
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"Plugin", "Notifier"})
+@Tags({@Tag(name= "Plugin"), @Tag(name= "Notifier")})
 public class NotifiersPluginResource {
 
     @Context
@@ -52,11 +55,13 @@ public class NotifiersPluginResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List all available notifier plugins",
-            notes = "There is no particular permission needed. User must be authenticated.")
+    @Operation(summary = "List all available notifier plugins",
+            description = "There is no particular permission needed. User must be authenticated.")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Notifier plugin list", response = NotifierPlugin.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Notifier plugin list",
+                    content = @Content(mediaType =  "application/json",
+                    array = @ArraySchema(schema = @Schema(implementation = NotifierPlugin.class)))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void list(@QueryParam("expand") List<String> expand, @Suspended final AsyncResponse response) {
 
         notifierPluginService.findAll(expand.toArray(new String[0]))

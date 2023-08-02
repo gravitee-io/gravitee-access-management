@@ -19,7 +19,6 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ExtensionGrant;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.ExtensionGrantService;
@@ -28,23 +27,22 @@ import io.gravitee.am.service.exception.ExtensionGrantNotFoundException;
 import io.gravitee.am.service.model.UpdateExtensionGrant;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import static io.gravitee.am.management.service.permissions.Permissions.of;
-import static io.gravitee.am.management.service.permissions.Permissions.or;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -63,13 +61,15 @@ public class ExtensionGrantResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get a extension grant",
-            notes = "User must have the DOMAIN_EXTENSION_GRANT[READ] permission on the specified domain " +
+    @Operation(summary = "Get a extension grant",
+            description = "User must have the DOMAIN_EXTENSION_GRANT[READ] permission on the specified domain " +
                     "or DOMAIN_EXTENSION_GRANT[READ] permission on the specified environment " +
                     "or DOMAIN_EXTENSION_GRANT[READ] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Extension grant successfully fetched", response = ExtensionGrant.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Extension grant successfully fetched",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ExtensionGrant.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void get(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -94,19 +94,21 @@ public class ExtensionGrantResource extends AbstractResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Update a extension grant",
-            notes = "User must have the DOMAIN_EXTENSION_GRANT[UPDATE] permission on the specified domain " +
+    @Operation(summary = "Update a extension grant",
+            description = "User must have the DOMAIN_EXTENSION_GRANT[UPDATE] permission on the specified domain " +
                     "or DOMAIN_EXTENSION_GRANT[UPDATE] permission on the specified environment " +
                     "or DOMAIN_EXTENSION_GRANT[UPDATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 201, message = "Extension grant successfully updated", response = ExtensionGrant.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "201", description = "Extension grant successfully updated",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ExtensionGrant.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void update(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domain,
             @PathParam("extensionGrant") String extensionGrant,
-            @ApiParam(name = "tokenGranter", required = true) @Valid @NotNull UpdateExtensionGrant updateExtensionGrant,
+            @Parameter(name = "tokenGranter", required = true) @Valid @NotNull UpdateExtensionGrant updateExtensionGrant,
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
@@ -118,14 +120,14 @@ public class ExtensionGrantResource extends AbstractResource {
     }
 
     @DELETE
-    @ApiOperation(value = "Delete a extension grant",
-            notes = "User must have the DOMAIN_EXTENSION_GRANT[DELETE] permission on the specified domain " +
+    @Operation(summary = "Delete a extension grant",
+            description = "User must have the DOMAIN_EXTENSION_GRANT[DELETE] permission on the specified domain " +
                     "or DOMAIN_EXTENSION_GRANT[DELETE] permission on the specified environment " +
                     "or DOMAIN_EXTENSION_GRANT[DELETE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 204, message = "Extension grant successfully deleted"),
-            @ApiResponse(code = 400, message = "Extension grant is bind to existing clients"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "204", description = "Extension grant successfully deleted"),
+            @ApiResponse(responseCode = "400", description = "Extension grant is bind to existing clients"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void delete(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,

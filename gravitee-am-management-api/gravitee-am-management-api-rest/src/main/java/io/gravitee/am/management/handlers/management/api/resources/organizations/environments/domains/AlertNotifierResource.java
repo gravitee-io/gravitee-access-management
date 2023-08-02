@@ -24,21 +24,27 @@ import io.gravitee.am.model.alert.AlertNotifier;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.model.PatchAlertNotifier;
 import io.gravitee.common.http.MediaType;
-import io.swagger.annotations.*;
-
-import javax.inject.Inject;
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Response;
 
+import javax.inject.Inject;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
+
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = "alerts")
+@Tag(name = "alerts")
 public class AlertNotifierResource extends AbstractResource {
 
     @Inject
@@ -46,13 +52,15 @@ public class AlertNotifierResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Get an alert notifier",
-            notes = "Get an alert notifier by its id. " +
+    @Operation(
+            summary = "Get an alert notifier",
+            description = "Get an alert notifier by its id. " +
                     "User must have DOMAIN_ALERT_NOTIFIER[LIST] permission on the specified domain, environment or organization.")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "The alert notifier", response = AlertNotifier.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "The alert notifier",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = AlertNotifier.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void getAlertNotifier(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -68,19 +76,21 @@ public class AlertNotifierResource extends AbstractResource {
     @PATCH
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Update an alert notifier",
-            notes = "Update an alert notifier" +
+    @Operation(
+            summary = "Update an alert notifier",
+            description = "Update an alert notifier" +
                     "User must have DOMAIN_ALERT_NOTIFIER[UPDATE] permission on the specified domain, environment or organization.")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Alert notifier successfully updated", response = AlertNotifier.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Alert notifier successfully updated",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = AlertNotifier.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void patchAlertNotifier(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domainId,
             @PathParam("notifierId") String notifierId,
-            @ApiParam(name = "alertNotifier", required = true) @Valid @NotNull PatchAlertNotifier patchAlertNotifier,
+            @Parameter(name = "alertNotifier", required = true) @Valid @NotNull PatchAlertNotifier patchAlertNotifier,
             @Suspended final AsyncResponse response) {
 
         final User authenticatedUser = this.getAuthenticatedUser();
@@ -92,13 +102,13 @@ public class AlertNotifierResource extends AbstractResource {
 
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Delete an alert notifier",
-            notes = "Delete an alert notifier by its id. " +
+    @Operation(
+            summary = "Delete an alert notifier",
+            description = "Delete an alert notifier by its id. " +
                     "User must have DOMAIN_ALERT_NOTIFIER[DELETE] permission on the specified domain, environment or organization.")
     @ApiResponses({
-            @ApiResponse(code = 204, message = "Alert notifier successfully deleted"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "204", description = "Alert notifier successfully deleted"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void deleteAlertNotifier(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,

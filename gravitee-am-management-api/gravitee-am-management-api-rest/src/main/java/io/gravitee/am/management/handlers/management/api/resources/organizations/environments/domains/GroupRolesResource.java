@@ -29,23 +29,23 @@ import io.gravitee.am.service.exception.GroupNotFoundException;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.util.Collections;
 import java.util.List;
-
-import static io.gravitee.am.management.service.permissions.Permissions.of;
-import static io.gravitee.am.management.service.permissions.Permissions.or;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -67,15 +67,17 @@ public class GroupRolesResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            nickname = "findGroupRoles",
-            value = "Get a group roles",
-            notes = "User must have the DOMAIN_GROUP[READ] permission on the specified domain " +
+    @Operation(
+            operationId = "findGroupRoles",
+            summary = "Get a group roles",
+            description = "User must have the DOMAIN_GROUP[READ] permission on the specified domain " +
                     "or DOMAIN_GROUP[READ] permission on the specified environment " +
                     "or DOMAIN_GROUP[READ] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Group roles successfully fetched", response = Role.class, responseContainer = "Set"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Group roles successfully fetched",
+                    content = @Content(mediaType =  "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = Role.class)))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void list(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -100,15 +102,17 @@ public class GroupRolesResource extends AbstractResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            nickname = "assignRoles",
-            value = "Assign roles to a group",
-            notes = "User must have the DOMAIN_GROUP[UPDATE] permission on the specified domain " +
+    @Operation(
+            operationId = "assignRoles",
+            summary = "Assign roles to a group",
+            description = "User must have the DOMAIN_GROUP[UPDATE] permission on the specified domain " +
                     "or DOMAIN_GROUP[UPDATE] permission on the specified environment " +
                     "or DOMAIN_GROUP[UPDATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Roles successfully assigned", response = Group.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Roles successfully assigned",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = Group.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void assign(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,

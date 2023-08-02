@@ -26,18 +26,21 @@ import io.gravitee.am.service.model.PatchDomain;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Response;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -54,15 +57,17 @@ public class DomainResource extends AbstractDomainResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            nickname = "findDomain",
-            value = "Get a security domain",
-            notes = "User must have the DOMAIN[READ] permission on the specified domain, environment or organization. " +
+    @Operation(
+            operationId = "findDomain",
+            summary = "Get a security domain",
+            description = "User must have the DOMAIN[READ] permission on the specified domain, environment or organization. " +
                     "Domain will be filtered according to permissions (READ on DOMAIN_USER_ACCOUNT, DOMAIN_IDENTITY_PROVIDER, DOMAIN_FORM, DOMAIN_LOGIN_SETTINGS, " +
                     "DOMAIN_DCR, DOMAIN_SCIM, DOMAIN_SETTINGS)")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Domain", response = Domain.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Domain",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = Domain.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void get(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -82,20 +87,22 @@ public class DomainResource extends AbstractDomainResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            nickname = "updateDomain",
-            value = "Update the security domain",
-            notes = "User must have the DOMAIN_SETTINGS[UPDATE] permission on the specified domain " +
+    @Operation(
+            operationId = "updateDomain",
+            summary = "Update the security domain",
+            description = "User must have the DOMAIN_SETTINGS[UPDATE] permission on the specified domain " +
                     "or DOMAIN_SETTINGS[UPDATE] permission on the specified environment " +
                     "or DOMAIN_SETTINGS[UPDATE] permission on the specified organization.")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Domain successfully updated", response = Domain.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Domain successfully updated",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = Domain.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void update(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domainId,
-            @ApiParam(name = "domain", required = true) @Valid @NotNull final PatchDomain domainToPatch,
+            @Parameter(name = "domain", required = true) @Valid @NotNull final PatchDomain domainToPatch,
             @Suspended final AsyncResponse response) {
 
         updateInternal(organizationId, environmentId, domainId, domainToPatch, response);
@@ -104,35 +111,37 @@ public class DomainResource extends AbstractDomainResource {
     @PATCH
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            nickname = "patchDomain",
-            value = "Patch the security domain",
-            notes = "User must have the DOMAIN_SETTINGS[UPDATE] permission on the specified domain " +
+    @Operation(
+            operationId = "patchDomain",
+            summary = "Patch the security domain",
+            description = "User must have the DOMAIN_SETTINGS[UPDATE] permission on the specified domain " +
                     "or DOMAIN_SETTINGS[UPDATE] permission on the specified environment " +
                     "or DOMAIN_SETTINGS[UPDATE] permission on the specified organization.")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Domain successfully patched", response = Domain.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Domain successfully patched",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = Domain.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void patch(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domainId,
-            @ApiParam(name = "domain", required = true) @Valid @NotNull final PatchDomain domainToPatch,
+            @Parameter(name = "domain", required = true) @Valid @NotNull final PatchDomain domainToPatch,
             @Suspended final AsyncResponse response) {
 
         updateInternal(organizationId, environmentId, domainId, domainToPatch, response);
     }
 
     @DELETE
-    @ApiOperation(
-            nickname = "deleteDomain",
-            value = "Delete the security domain",
-            notes = "User must have the DOMAIN[DELETE] permission on the specified domain " +
+    @Operation(
+            operationId = "deleteDomain",
+            summary = "Delete the security domain",
+            description = "User must have the DOMAIN[DELETE] permission on the specified domain " +
                     "or DOMAIN[DELETE] permission on the specified environment " +
                     "or DOMAIN[DELETE] permission on the specified organization.")
     @ApiResponses({
-            @ApiResponse(code = 204, message = "Domain successfully deleted"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "204", description = "Domain successfully deleted"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void delete(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -148,15 +157,17 @@ public class DomainResource extends AbstractDomainResource {
     @GET
     @Path("/entrypoints")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            nickname = "getDomainEntrypoints",
-            value = "Get the matching gateway entrypoint of the domain",
-            notes = "User must have the DOMAIN[READ] permission on the specified domain, environment or organization. " +
+    @Operation(
+            operationId = "getDomainEntrypoints",
+            summary = "Get the matching gateway entrypoint of the domain",
+            description = "User must have the DOMAIN[READ] permission on the specified domain, environment or organization. " +
                     "Domain will be filtered according to permissions (READ on DOMAIN_USER_ACCOUNT, DOMAIN_IDENTITY_PROVIDER, DOMAIN_FORM, DOMAIN_LOGIN_SETTINGS, " +
                     "DOMAIN_DCR, DOMAIN_SCIM, DOMAIN_SETTINGS)")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Domain entrypoint", response = Entrypoint.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Domain entrypoint",
+                    content = @Content(mediaType =  "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = Entrypoint.class)))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void getEntrypoints(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,

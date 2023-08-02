@@ -16,10 +16,9 @@ package io.gravitee.am.management.handlers.management.api.resources.platform.plu
 
 import io.gravitee.am.management.service.ReporterPluginService;
 import io.gravitee.am.service.model.plugin.ReporterPlugin;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-
-import javax.inject.Inject;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.tags.Tags;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
@@ -28,6 +27,8 @@ import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
+
+import javax.inject.Inject;
 import java.util.Comparator;
 import java.util.stream.Collectors;
 
@@ -35,7 +36,7 @@ import java.util.stream.Collectors;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"Plugin", "Reporter"})
+@Tags({@Tag(name= "Plugin"), @Tag(name= "Reporter")})
 public class ReportersPluginResource {
 
     @Context
@@ -46,8 +47,8 @@ public class ReportersPluginResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List reporter plugins",
-            notes = "There is no particular permission needed. User must be authenticated.")
+    @Operation(summary = "List reporter plugins",
+            description = "There is no particular permission needed. User must be authenticated.")
     public void list(@Suspended final AsyncResponse response) {
 
         reporterPluginService.findAll()

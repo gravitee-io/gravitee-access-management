@@ -16,15 +16,10 @@
 package io.gravitee.am.management.handlers.management.api.resources.platform.plugins;
 
 import io.gravitee.am.management.service.IdentityProviderPluginService;
-import io.gravitee.am.management.service.impl.IdentityProviderManagerImpl;
 import io.gravitee.am.service.model.plugin.IdentityProviderPlugin;
-import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.core.Single;
-import io.reactivex.rxjava3.functions.Function;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-
-import javax.inject.Inject;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.tags.Tags;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
@@ -34,18 +29,18 @@ import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
+
+import javax.inject.Inject;
 import java.util.Comparator;
 import java.util.List;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"Plugin", "Identity Provider"})
+@Tags({@Tag(name= "Plugin"), @Tag(name= "Identity Provider")})
 public class IdentityProvidersPluginResource {
 
     public static final String GRAVITEE_AM_IDP = "gravitee-am-idp";
@@ -57,8 +52,8 @@ public class IdentityProvidersPluginResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List identity provider plugins",
-            notes = "There is no particular permission needed. User must be authenticated.")
+    @Operation(summary = "List identity provider plugins",
+            description = "There is no particular permission needed. User must be authenticated.")
     public void list(@QueryParam("external") Boolean external,
                      @QueryParam("expand") List<String> expand,
                      @Suspended final AsyncResponse response) {

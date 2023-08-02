@@ -27,21 +27,22 @@ import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewMembership;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.net.URI;
 import java.util.List;
 
@@ -62,13 +63,15 @@ public class MembersResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List members for a security domain",
-            notes = "User must have the DOMAIN_MEMBER[LIST] permission on the specified domain " +
+    @Operation(summary = "List members for a security domain",
+            description = "User must have the DOMAIN_MEMBER[LIST] permission on the specified domain " +
                     "or DOMAIN_MEMBER[LIST] permission on the specified environment " +
                     "or DOMAIN_MEMBER[LIST] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "List members for a security domain", response = MembershipListItem.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "List members for a security domain",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation =MembershipListItem.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void list(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -87,14 +90,14 @@ public class MembersResource extends AbstractResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Add or update an security domain member",
-            notes = "User must have the DOMAIN_MEMBER[CREATE] permission on the specified domain " +
+    @Operation(summary = "Add or update an security domain member",
+            description = "User must have the DOMAIN_MEMBER[CREATE] permission on the specified domain " +
                     "or DOMAIN_MEMBER[CREATE] permission on the specified environment " +
                     "or DOMAIN_MEMBER[CREATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 201, message = "Member has been added or updated successfully"),
-            @ApiResponse(code = 400, message = "Membership parameter is not valid"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "201", description = "Member has been added or updated successfully"),
+            @ApiResponse(responseCode = "400", description = "Membership parameter is not valid"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void addOrUpdateMember(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -124,13 +127,15 @@ public class MembersResource extends AbstractResource {
     @GET
     @Path("permissions")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List domain member's permissions",
-            notes = "User must have DOMAIN[READ] permission on the specified domain " +
+    @Operation(summary = "List domain member's permissions",
+            description = "User must have DOMAIN[READ] permission on the specified domain " +
                     "or DOMAIN[READ] permission on the specified environment " +
                     "or DOMAIN[READ] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Domain member's permissions", response = List.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Domain member's permissions",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation =List.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void permissions(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,

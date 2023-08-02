@@ -18,7 +18,7 @@ package io.gravitee.am.model.application;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.JWKSet;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -198,12 +198,12 @@ public class ApplicationOAuthSettings {
      * Time at which the client identifier was issued.
      * The time is represented as the number of seconds from 1970-01-01T00:00:00Z as measured in UTC until the date/time of issuance.
      */
-    @ApiModelProperty(dataType = "java.lang.Long")
+    @Schema(type = "java.lang.Long")
     private Date clientIdIssuedAt;
     /**
      * REQUIRED if "client_secret" is issued.  Time at which the client secret will expire or 0 if it will not expire.
      */
-    @ApiModelProperty(dataType = "java.lang.Long")
+    @Schema(type = "java.lang.Long")
     private Date clientSecretExpiresAt;
     /**
      * String containing a space-separated list of scope values (as described in Section 3.3 of OAuth 2.0 [RFC6749]) that the client can use when requesting access tokens.

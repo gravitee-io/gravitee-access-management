@@ -17,7 +17,6 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.model.Acl;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.DomainService;
@@ -25,19 +24,15 @@ import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.exception.ApplicationNotFoundException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.reactivex.rxjava3.core.Maybe;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import org.springframework.beans.factory.annotation.Autowired;
-
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Response;
-
-import static io.gravitee.am.management.service.permissions.Permissions.of;
-import static io.gravitee.am.management.service.permissions.Permissions.or;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -55,14 +50,14 @@ public class ApplicationMemberResource extends AbstractResource {
     private ApplicationService applicationService;
 
     @DELETE
-    @ApiOperation(value = "Remove a membership",
-            notes = "User must have APPLICATION_MEMBER[DELETE] permission on the specified application " +
+    @Operation(summary = "Remove a membership",
+            description = "User must have APPLICATION_MEMBER[DELETE] permission on the specified application " +
                     "or APPLICATION_MEMBER[DELETE] permission on the specified domain " +
                     "or APPLICATION_MEMBER[DELETE] permission on the specified environment " +
                     "or APPLICATION_MEMBER[DELETE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 204, message = "Membership successfully deleted"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "204", description = "Membership successfully deleted"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void removeMember(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,

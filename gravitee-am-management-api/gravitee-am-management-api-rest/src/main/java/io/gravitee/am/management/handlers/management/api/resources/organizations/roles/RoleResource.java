@@ -25,20 +25,22 @@ import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.model.UpdateRole;
 import io.gravitee.common.http.MediaType;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.util.stream.Collectors;
 
 /**
@@ -55,11 +57,13 @@ public class RoleResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get a platform role",
-            notes = "User must have the ORGANIZATION_ROLE[READ] permission on the specified organization")
+    @Operation(summary = "Get a platform role",
+            description = "User must have the ORGANIZATION_ROLE[READ] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Role successfully fetched", response = RoleEntity.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Role successfully fetched",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = RoleEntity.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void get(
             @PathParam("organizationId") String organizationId,
             @PathParam("role") String role,
@@ -74,15 +78,17 @@ public class RoleResource extends AbstractResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Update a platform role",
-            notes = "User must have the ORGANIZATION_ROLE[UPDATE] permission on the specified organization")
+    @Operation(summary = "Update a platform role",
+            description = "User must have the ORGANIZATION_ROLE[UPDATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 201, message = "Role successfully updated", response = RoleEntity.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "201", description = "Role successfully updated",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation =  RoleEntity.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void update(
             @PathParam("organizationId") String organizationId,
             @PathParam("role") String role,
-            @ApiParam(name = "role", required = true) @Valid @NotNull UpdateRole updateRole,
+            @Parameter(name = "role", required = true) @Valid @NotNull UpdateRole updateRole,
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
@@ -93,12 +99,12 @@ public class RoleResource extends AbstractResource {
     }
 
     @DELETE
-    @ApiOperation(value = "Delete a plaform role",
-            notes = "User must have the ORGANIZATION_ROLE[DELETE] permission on the specified organization")
+    @Operation(summary = "Delete a plaform role",
+            description = "User must have the ORGANIZATION_ROLE[DELETE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 204, message = "Role successfully deleted"),
-            @ApiResponse(code = 400, message = "Role is bind to existing users"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "204", description = "Role successfully deleted"),
+            @ApiResponse(responseCode = "400", description = "Role is bind to existing users"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void delete(
             @PathParam("organizationId") String organizationId,
             @PathParam("role") String role,

@@ -31,16 +31,18 @@ import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import org.springframework.beans.factory.annotation.Autowired;
-
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
+import org.springframework.beans.factory.annotation.Autowired;
+
 import java.util.Collections;
 import java.util.List;
 
@@ -67,14 +69,16 @@ public class ApplicationResourcesResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List resources for an application",
-            notes = "User must have APPLICATION_RESOURCE[LIST] permission on the specified application " +
+    @Operation(summary = "List resources for an application",
+            description = "User must have APPLICATION_RESOURCE[LIST] permission on the specified application " +
                     "or APPLICATION_RESOURCE[LIST] permission on the specified domain " +
                     "or APPLICATION_RESOURCE[LIST] permission on the specified environment " +
                     "or APPLICATION_RESOURCE[LIST] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "List resources for an application", response = ResourceListItem.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "List resources for an application",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ResourceListItem.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void list(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,

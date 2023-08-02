@@ -28,17 +28,24 @@ import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
-import io.swagger.annotations.*;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.net.URI;
 
 /**
@@ -46,7 +53,7 @@ import java.net.URI;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"identity provider"})
+@Tag(name = "identity provider")
 public class IdentityProvidersResource extends AbstractResource {
 
     @Context
@@ -63,16 +70,17 @@ public class IdentityProvidersResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            nickname = "listIdentityProviders",
-            value = "List registered identity providers for a security domain",
-            notes = "User must have the DOMAIN_IDENTITY_PROVIDER[LIST] permission on the specified domain " +
+    @Operation(
+            operationId = "listIdentityProviders",
+            summary = "List registered identity providers for a security domain",
+            description = "User must have the DOMAIN_IDENTITY_PROVIDER[LIST] permission on the specified domain " +
                     "or DOMAIN_IDENTITY_PROVIDER[LIST] permission on the specified environment " +
                     "or DOMAIN_IDENTITY_PROVIDER[LIST] permission on the specified organization. " +
                     "Each returned identity provider is filtered and contains only basic information such as id, name and type.")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "List registered identity providers for a security domain", response = FilteredIdentityProviderInfo.class, responseContainer = "Set"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "List registered identity providers for a security domain",   content = @Content(mediaType =  "application/json",
+                    array = @ArraySchema(schema = @Schema(implementation = FilteredIdentityProviderInfo.class)))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void list(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -103,20 +111,22 @@ public class IdentityProvidersResource extends AbstractResource {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            nickname = "createIdentityProvider",
-            value = "Create an identity provider",
-            notes = "User must have the DOMAIN_IDENTITY_PROVIDER[CREATE] permission on the specified domain " +
+    @Operation(
+            operationId = "createIdentityProvider",
+            summary = "Create an identity provider",
+            description = "User must have the DOMAIN_IDENTITY_PROVIDER[CREATE] permission on the specified domain " +
                     "or DOMAIN_IDENTITY_PROVIDER[CREATE] permission on the specified environment " +
                     "or DOMAIN_IDENTITY_PROVIDER[CREATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 201, message = "Identity provider successfully created", response = IdentityProvider.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "201", description = "Identity provider successfully created",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation =IdentityProvider.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void create(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domain,
-            @ApiParam(name = "identity", required = true)
+            @Parameter(name = "identity", required = true)
             @Valid @NotNull final NewIdentityProvider newIdentityProvider,
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();

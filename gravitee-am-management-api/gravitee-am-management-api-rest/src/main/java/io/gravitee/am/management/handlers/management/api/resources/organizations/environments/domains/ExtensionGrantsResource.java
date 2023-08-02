@@ -27,24 +27,31 @@ import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewExtensionGrant;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
-import io.swagger.annotations.*;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.net.URI;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"extension grant"})
+@Tag(name = "extension grant")
 public class ExtensionGrantsResource extends AbstractResource {
 
     @Context
@@ -61,14 +68,16 @@ public class ExtensionGrantsResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List registered extension grants for a security domain",
-            notes = "User must have the DOMAIN_EXTENSION_GRANT[LIST] permission on the specified domain " +
+    @Operation(summary = "List registered extension grants for a security domain",
+            description = "User must have the DOMAIN_EXTENSION_GRANT[LIST] permission on the specified domain " +
                     "or DOMAIN_EXTENSION_GRANT[LIST] permission on the specified environment " +
                     "or DOMAIN_EXTENSION_GRANT[LIST] permission on the specified organization. " +
                     "Each returned extension grant is filtered and contains only basic information such as id, name and type.")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "List registered extension grants for a security domain", response = ExtensionGrant.class, responseContainer = "Set"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "List registered extension grants for a security domain",
+                    content = @Content(mediaType =  "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = ExtensionGrant.class)))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void list(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -88,18 +97,18 @@ public class ExtensionGrantsResource extends AbstractResource {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Create a extension grant",
-            notes = "User must have the DOMAIN_EXTENSION_GRANT[CREATE] permission on the specified domain " +
+    @Operation(summary = "Create a extension grant",
+            description = "User must have the DOMAIN_EXTENSION_GRANT[CREATE] permission on the specified domain " +
                     "or DOMAIN_EXTENSION_GRANT[CREATE] permission on the specified environment " +
                     "or DOMAIN_EXTENSION_GRANT[CREATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 201, message = "Extension grant successfully created"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "201", description = "Extension grant successfully created"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void create(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domain,
-            @ApiParam(name = "extension grant", required = true)
+            @Parameter(name = "extension grant", required = true)
             @Valid @NotNull final NewExtensionGrant newExtensionGrant,
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();

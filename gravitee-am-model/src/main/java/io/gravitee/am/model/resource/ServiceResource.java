@@ -17,7 +17,7 @@ package io.gravitee.am.model.resource;
 
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Resource;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Date;
 
@@ -42,10 +42,10 @@ public class ServiceResource implements Resource {
 
     private String configuration;
 
-    @ApiModelProperty(dataType = "java.lang.Long")
+    @Schema(type = "java.lang.Long")
     private Date createdAt;
 
-    @ApiModelProperty(dataType = "java.lang.Long")
+    @Schema(type = "java.lang.Long")
     private Date updatedAt;
 
     public ServiceResource() {

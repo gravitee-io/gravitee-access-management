@@ -26,10 +26,12 @@ import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.UpdateEmail;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.validation.Valid;
@@ -54,19 +56,21 @@ public class EmailResource extends AbstractResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Update an email",
-            notes = "User must have the DOMAIN_EMAIL_TEMPLATE[UPDATE] permission on the specified domain " +
+    	@Operation(summary = "Update an email",
+            description = "User must have the DOMAIN_EMAIL_TEMPLATE[UPDATE] permission on the specified domain " +
                     "or DOMAIN_EMAIL_TEMPLATE[UPDATE] permission on the specified environment " +
                     "or DOMAIN_EMAIL_TEMPLATE[UPDATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 201, message = "Email successfully updated", response = Email.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "201", description = "Email successfully updated",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = Email.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void update(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domain,
             @PathParam("email") String email,
-            @ApiParam(name = "email", required = true) @Valid @NotNull UpdateEmail updateEmail,
+            @Parameter(name = "email", required = true) @Valid @NotNull UpdateEmail updateEmail,
             @Suspended final AsyncResponse response) {
 
         final User authenticatedUser = getAuthenticatedUser();
@@ -79,13 +83,13 @@ public class EmailResource extends AbstractResource {
     }
 
     @DELETE
-    @ApiOperation(value = "Delete an email",
-            notes = "User must have the DOMAIN_EMAIL_TEMPLATE[DELETE] permission on the specified domain " +
+    @Operation(summary = "Delete an email",
+            description = "User must have the DOMAIN_EMAIL_TEMPLATE[DELETE] permission on the specified domain " +
                     "or DOMAIN_EMAIL_TEMPLATE[DELETE] permission on the specified environment " +
                     "or DOMAIN_EMAIL_TEMPLATE[DELETE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 204, message = "Email successfully deleted"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "204", description = "Email successfully deleted"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void delete(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,

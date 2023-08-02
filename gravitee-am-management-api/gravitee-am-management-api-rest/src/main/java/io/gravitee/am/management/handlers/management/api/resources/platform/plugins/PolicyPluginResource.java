@@ -20,10 +20,9 @@ import io.gravitee.am.management.service.exception.PolicyPluginNotFoundException
 import io.gravitee.am.management.service.exception.PolicyPluginSchemaNotFoundException;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-
-import javax.inject.Inject;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.tags.Tags;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -34,11 +33,13 @@ import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
 
+import javax.inject.Inject;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"Plugin", "Policy"})
+@Tags({@Tag(name= "Plugin"), @Tag(name= "Policy")})
 public class PolicyPluginResource {
 
     @Context
@@ -49,8 +50,8 @@ public class PolicyPluginResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get a policy plugin",
-            notes = "There is no particular permission needed. User must be authenticated.")
+    @Operation(summary = "Get a policy plugin",
+            description = "There is no particular permission needed. User must be authenticated.")
     public void get(
             @PathParam("policy") String policyId,
             @Suspended final AsyncResponse response) {
@@ -64,7 +65,7 @@ public class PolicyPluginResource {
     @GET
     @Path("schema")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get a policy plugin's schema")
+    @Operation(summary = "Get a policy plugin's schema")
     public void getSchema(
             @PathParam("policy") String policyId,
             @Suspended final AsyncResponse response) {
@@ -81,7 +82,7 @@ public class PolicyPluginResource {
     @GET
     @Path("documentation")
     @Produces(MediaType.TEXT_PLAIN)
-    @ApiOperation(value = "Get a policy plugin's documentation")
+    @Operation(summary = "Get a policy plugin's documentation")
     public void getDocumentation(
         @PathParam("policy") String policyId,
         @Suspended final AsyncResponse response) {

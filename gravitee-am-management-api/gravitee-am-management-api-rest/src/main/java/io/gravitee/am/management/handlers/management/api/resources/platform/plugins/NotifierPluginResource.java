@@ -20,12 +20,13 @@ import io.gravitee.am.management.service.impl.plugins.NotifierPluginService;
 import io.gravitee.am.service.model.plugin.NotifierPlugin;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Single;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-
-import javax.inject.Inject;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.tags.Tags;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -36,11 +37,13 @@ import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
 
+import javax.inject.Inject;
+
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"Plugin", "Notifier"})
+@Tags({@Tag(name= "Plugin"), @Tag(name= "Notifier")})
 public class NotifierPluginResource {
 
     @Context
@@ -51,12 +54,14 @@ public class NotifierPluginResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get a notifier",
-            notes = "There is no particular permission needed. User must be authenticated.")
+    @Operation(summary = "Get a notifier",
+            description = "There is no particular permission needed. User must be authenticated.")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Notifier plugin", response = NotifierPlugin.class),
-            @ApiResponse(code = 404, message = "Notifier plugin not found", response = ErrorEntity.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Notifier plugin", content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = NotifierPlugin.class))),
+            @ApiResponse(responseCode = "404", description = "Notifier plugin not found", content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = ErrorEntity.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void get(
             @PathParam("notifierId") String notifierId,
             @Suspended final AsyncResponse response) {
@@ -69,12 +74,14 @@ public class NotifierPluginResource {
     @GET
     @Path("schema")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get a notifier plugin's schema",
-            notes = "There is no particular permission needed. User must be authenticated.")
+    @Operation(summary = "Get a notifier plugin's schema",
+            description = "There is no particular permission needed. User must be authenticated.")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Notifier plugin schema", response = String.class),
-            @ApiResponse(code = 404, message = "Notifier plugin schema not found", response = ErrorEntity.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Notifier plugin schema", content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = String.class))),
+            @ApiResponse(responseCode = "404", description = "Notifier plugin schema not found", content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = ErrorEntity.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void getSchema(
             @PathParam("notifierId") String notifierId,
             @Suspended final AsyncResponse response) {

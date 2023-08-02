@@ -18,7 +18,6 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.model.Acl;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.model.permissions.Permission;
@@ -28,23 +27,26 @@ import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewScope;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.core.Observable;
-import io.swagger.annotations.*;
-import java.util.Collection;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.net.URI;
+import java.util.Collection;
 import java.util.Comparator;
-import java.util.List;
-import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
 
@@ -53,7 +55,7 @@ import static java.util.stream.Collectors.toList;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"scope"})
+@Tag(name = "scope")
 public class ScopesResource extends AbstractResource {
     private static final int MAX_SCOPES_SIZE_PER_PAGE = 50;
     private static final String MAX_SCOPES_SIZE_PER_PAGE_STRING = "50";
@@ -69,16 +71,18 @@ public class ScopesResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            nickname = "listScopes",
-            value = "List scopes for a security domain",
-            notes = "User must have the DOMAIN_SCOPE[LIST] permission on the specified domain " +
+    @Operation(
+            operationId = "listScopes",
+            summary = "List scopes for a security domain",
+            description = "User must have the DOMAIN_SCOPE[LIST] permission on the specified domain " +
                     "or DOMAIN_SCOPE[LIST] permission on the specified environment " +
                     "or DOMAIN_SCOPE[LIST] permission on the specified organization " +
                     "Each returned scope is filtered and contains only basic information such as id, key, name, description, isSystem and isDiscovery.")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "List scopes for a security domain", response = ScopePage.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "List scopes for a security domain",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ScopePage.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void list(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -101,20 +105,22 @@ public class ScopesResource extends AbstractResource {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            nickname = "createScope",
-            value = "Create a scope",
-            notes = "User must have the DOMAIN_SCOPE[CREATE] permission on the specified domain " +
+    @Operation(
+            operationId = "createScope",
+            summary = "Create a scope",
+            description = "User must have the DOMAIN_SCOPE[CREATE] permission on the specified domain " +
                     "or DOMAIN_SCOPE[CREATE] permission on the specified environment " +
                     "or DOMAIN_SCOPE[CREATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 201, message = "Scope successfully created", response = Scope.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "201", description = "Scope successfully created",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = Scope.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void create(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domain,
-            @ApiParam(name = "scope", required = true)
+            @Parameter(name = "scope", required = true)
             @Valid @NotNull final NewScope newScope,
             @Suspended final AsyncResponse response) {
 

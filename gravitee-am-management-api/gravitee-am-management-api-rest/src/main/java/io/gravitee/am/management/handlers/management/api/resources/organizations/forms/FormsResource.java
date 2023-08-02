@@ -24,26 +24,29 @@ import io.gravitee.am.model.Template;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.FormService;
 import io.gravitee.am.service.model.NewForm;
-import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.http.MediaType;
-import io.swagger.annotations.*;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.net.URI;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"form"})
+@Tag(name = "form")
 public class FormsResource extends AbstractResource {
 
     @Context
@@ -54,11 +57,11 @@ public class FormsResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Find an organization form template",
-            notes = "User must have the ORGANIZATION_FORM[READ] permission on the specified organization")
+    @Operation(summary = "Find an organization form template",
+            description = "User must have the ORGANIZATION_FORM[READ] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Form successfully fetched"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Form successfully fetched"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void get(
             @PathParam("organizationId") String organizationId,
             @NotNull @QueryParam("template") Template formTemplate,
@@ -74,14 +77,14 @@ public class FormsResource extends AbstractResource {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Create a form",
-            notes = "User must have the ORGANIZATION_FORM[CREATE] permission on the specified organization")
+    @Operation(summary = "Create a form",
+            description = "User must have the ORGANIZATION_FORM[CREATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 201, message = "Form successfully created"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "201", description = "Form successfully created"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void create(
             @PathParam("organizationId") String organizationId,
-            @ApiParam(name = "form", required = true) @Valid @NotNull final NewForm newForm,
+            @Parameter(name = "form", required = true) @Valid @NotNull final NewForm newForm,
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 

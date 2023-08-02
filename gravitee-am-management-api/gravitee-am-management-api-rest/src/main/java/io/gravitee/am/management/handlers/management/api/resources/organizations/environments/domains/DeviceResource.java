@@ -22,11 +22,9 @@ import io.gravitee.am.service.DeviceService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.reactivex.rxjava3.core.Maybe;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import org.springframework.beans.factory.annotation.Autowired;
-
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.container.AsyncResponse;
@@ -34,6 +32,7 @@ import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
@@ -51,13 +50,13 @@ public class DeviceResource extends AbstractResource {
     private DeviceService deviceService;
 
     @DELETE
-    @ApiOperation(value = "Delete a device",
-            notes = "User must have the DOMAIN_USER_DEVICE[DELETE] permission on the specified domain " +
+    @Operation(summary = "Delete a device",
+            description = "User must have the DOMAIN_USER_DEVICE[DELETE] permission on the specified domain " +
                     "or DOMAIN_USER_DEVICE[DELETE] permission on the specified environment " +
                     "or DOMAIN_USER_DEVICE[DELETE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 204, message = "User successfully deleted"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "204", description = "User successfully deleted"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void delete(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,

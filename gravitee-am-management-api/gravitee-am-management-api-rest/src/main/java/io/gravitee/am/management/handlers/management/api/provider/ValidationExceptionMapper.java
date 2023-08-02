@@ -17,14 +17,14 @@ package io.gravitee.am.management.handlers.management.api.provider;
 
 import io.gravitee.am.management.handlers.management.api.model.ErrorEntity;
 import io.gravitee.common.http.HttpStatusCode;
-import org.hibernate.validator.internal.engine.path.PathImpl;
-
-import javax.validation.ConstraintViolationException;
-import javax.validation.ValidationException;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.ValidationException;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.ExceptionMapper;
 import jakarta.ws.rs.ext.Provider;
+import org.hibernate.validator.internal.engine.path.PathImpl;
+
 import java.util.stream.Collectors;
 
 /**

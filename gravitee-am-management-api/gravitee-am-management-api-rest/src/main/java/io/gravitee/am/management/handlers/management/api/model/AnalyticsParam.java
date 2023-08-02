@@ -18,8 +18,8 @@ package io.gravitee.am.management.handlers.management.api.model;
 import io.gravitee.am.common.analytics.Field;
 import io.gravitee.am.common.analytics.Type;
 import io.gravitee.am.common.audit.EventType;
-import io.swagger.annotations.ApiParam;
-
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
@@ -31,26 +31,26 @@ import jakarta.ws.rs.core.Response;
 public class AnalyticsParam {
 
     @QueryParam("from")
-    @ApiParam(value = "Used to define the start date of the time window to query")
+    @Parameter(description = "Used to define the start date of the time window to query")
     private long from;
 
     @QueryParam("to")
-    @ApiParam(value = "Used to define the end date of the time window to query")
+    @Parameter(description = "Used to define the end date of the time window to query")
     private long to;
 
     @QueryParam("interval")
-    @ApiParam(value = "The time interval when getting histogram data")
+    @Parameter(description = "The time interval when getting histogram data")
     private long interval;
 
     @QueryParam("size")
-    @ApiParam(value = "The number of data to retrieve")
+    @Parameter(description = "The number of data to retrieve")
     private int size;
 
     @QueryParam("type")
-    @ApiParam(
-            value = "The type of data to retrieve",
+    @Parameter(
+            description = "The type of data to retrieve (group_by, date_histo, count)",
             required = true,
-            allowableValues = "group_by,date_histo,count"
+            schema = @Schema(implementation = Type.class)
     )
     private AnalyticsTypeParam type;
 

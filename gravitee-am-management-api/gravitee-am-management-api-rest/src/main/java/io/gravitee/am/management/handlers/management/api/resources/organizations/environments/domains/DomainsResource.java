@@ -26,15 +26,22 @@ import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.model.NewDomain;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Single;
-import io.swagger.annotations.*;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Response;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.net.URI;
 import java.util.stream.Collectors;
 
@@ -46,7 +53,7 @@ import static io.gravitee.am.management.service.permissions.Permissions.or;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"domain"})
+@Tag(name = "domain")
 public class DomainsResource extends AbstractDomainResource {
 
     private static final String MAX_DOMAINS_SIZE_PER_PAGE_STRING = "50";
@@ -59,18 +66,20 @@ public class DomainsResource extends AbstractDomainResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            nickname = "listDomains",
-            value = "List security domains for an environment",
-            notes = "List all the security domains accessible to the current user. " +
+    @Operation(
+            operationId = "listDomains",
+            summary = "List security domains for an environment",
+            description = "List all the security domains accessible to the current user. " +
                     "User must have DOMAIN[LIST] permission on the specified environment or organization " +
                     "AND either DOMAIN[READ] permission on each security domain " +
                     "or DOMAIN[READ] permission on the specified environment " +
                     "or DOMAIN[READ] permission on the specified organization." +
                     "Each returned domain is filtered and contains only basic information such as id, name and description and isEnabled.")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "List accessible security domains for current user", response = Domain.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "List accessible security domains for current user",
+                    content = @Content(mediaType =  "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = Domain.class)))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void list(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -97,19 +106,21 @@ public class DomainsResource extends AbstractDomainResource {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            nickname = "createDomain",
-            value = "Create a security domain.",
-            notes = "Create a security domain. " +
+    @Operation(
+            operationId = "createDomain",
+            summary = "Create a security domain.",
+            description = "Create a security domain. " +
                     "User must have DOMAIN[CREATE] permission on the specified environment " +
                     "or DOMAIN[CREATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 201, message = "Domain successfully created", response = Domain.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "201", description = "Domain successfully created",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = Domain.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void create(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
-            @ApiParam(name = "domain", required = true)
+            @Parameter(name = "domain", required = true)
             @Valid @NotNull final NewDomain newDomain,
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
@@ -127,15 +138,17 @@ public class DomainsResource extends AbstractDomainResource {
     @GET
     @Path("_hrid/{hrid}")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            nickname = "findDomainByHrid",
-            value = "Get a security domain by hrid",
-            notes = "User must have the DOMAIN[READ] permission on the specified domain, environment or organization. " +
+    @Operation(
+            operationId = "findDomainByHrid",
+            summary = "Get a security domain by hrid",
+            description = "User must have the DOMAIN[READ] permission on the specified domain, environment or organization. " +
                     "Domain will be filtered according to permissions (READ on DOMAIN_USER_ACCOUNT, DOMAIN_IDENTITY_PROVIDER, DOMAIN_FORM, DOMAIN_LOGIN_SETTINGS, " +
                     "DOMAIN_DCR, DOMAIN_SCIM, DOMAIN_SETTINGS)")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Domain", response = Domain.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Domain",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = Domain.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void get(@PathParam("organizationId") String organizationId,
                     @PathParam("environmentId") String environmentId,
                     @PathParam("hrid") String hrid,

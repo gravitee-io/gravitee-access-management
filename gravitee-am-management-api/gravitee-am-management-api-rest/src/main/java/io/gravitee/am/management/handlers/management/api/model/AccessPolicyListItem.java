@@ -16,7 +16,7 @@
 package io.gravitee.am.management.handlers.management.api.model;
 
 import io.gravitee.am.model.uma.policy.AccessPolicy;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Date;
 import java.util.List;
@@ -31,9 +31,9 @@ public class AccessPolicyListItem {
     private String id;
     private String name;
     private String description;
-    @ApiModelProperty(dataType = "java.lang.Long")
+    @Schema(type = "java.lang.Long")
     private Date createdAt;
-    @ApiModelProperty(dataType = "java.lang.Long")
+    @Schema(type = "java.lang.Long")
     private Date updatedAt;
 
     public AccessPolicyListItem(AccessPolicy accessPolicy) {

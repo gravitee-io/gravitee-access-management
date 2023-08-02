@@ -28,20 +28,22 @@ import io.gravitee.am.service.model.PatchScope;
 import io.gravitee.am.service.model.UpdateScope;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -62,15 +64,17 @@ public class ScopeResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            nickname = "findScope",
-            value = "Get a scope",
-            notes = "User must have the DOMAIN_SCOPE[READ] permission on the specified domain " +
+    @Operation(
+            operationId = "findScope",
+            summary = "Get a scope",
+            description = "User must have the DOMAIN_SCOPE[READ] permission on the specified domain " +
                     "or DOMAIN_SCOPE[READ] permission on the specified environment " +
                     "or DOMAIN_SCOPE[READ] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Scope", response = Scope.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Scope",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = Scope.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void get(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -95,21 +99,23 @@ public class ScopeResource extends AbstractResource {
     @PATCH
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            nickname = "patchScope",
-            value = "Patch a scope",
-            notes = "User must have the DOMAIN_SCOPE[UPDATE] permission on the specified domain " +
+    @Operation(
+            operationId = "patchScope",
+            summary = "Patch a scope",
+            description = "User must have the DOMAIN_SCOPE[UPDATE] permission on the specified domain " +
                     "or DOMAIN_SCOPE[UPDATE] permission on the specified environment " +
                     "or DOMAIN_SCOPE[UPDATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Scope successfully patched", response = Scope.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Scope successfully patched",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = Scope.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void patch(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domain,
             @PathParam("scope") String scope,
-            @ApiParam(name = "scope", required = true) @Valid @NotNull PatchScope patchScope,
+            @Parameter(name = "scope", required = true) @Valid @NotNull PatchScope patchScope,
             @Suspended final AsyncResponse response) {
 
         final User authenticatedUser = getAuthenticatedUser();
@@ -124,21 +130,23 @@ public class ScopeResource extends AbstractResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            nickname = "updateScope",
-            value = "Update a scope",
-            notes = "User must have the DOMAIN_SCOPE[UPDATE] permission on the specified domain " +
+    @Operation(
+            operationId = "updateScope",
+            summary = "Update a scope",
+            description = "User must have the DOMAIN_SCOPE[UPDATE] permission on the specified domain " +
                     "or DOMAIN_SCOPE[UPDATE] permission on the specified environment " +
                     "or DOMAIN_SCOPE[UPDATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Scope successfully updated", response = Scope.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Scope successfully updated",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = Scope.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void update(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domain,
             @PathParam("scope") String scope,
-            @ApiParam(name = "scope", required = true) @Valid @NotNull UpdateScope updateScope,
+            @Parameter(name = "scope", required = true) @Valid @NotNull UpdateScope updateScope,
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
@@ -150,15 +158,15 @@ public class ScopeResource extends AbstractResource {
     }
 
     @DELETE
-    @ApiOperation(
-            nickname = "deleteScope",
-            value = "Delete a scope",
-            notes = "User must have the DOMAIN_SCOPE[DELETE] permission on the specified domain " +
+    @Operation(
+            operationId = "deleteScope",
+            summary = "Delete a scope",
+            description = "User must have the DOMAIN_SCOPE[DELETE] permission on the specified domain " +
                     "or DOMAIN_SCOPE[DELETE] permission on the specified environment " +
                     "or DOMAIN_SCOPE[DELETE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 204, message = "Scope successfully deleted"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "204", description = "Scope successfully deleted"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void delete(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,

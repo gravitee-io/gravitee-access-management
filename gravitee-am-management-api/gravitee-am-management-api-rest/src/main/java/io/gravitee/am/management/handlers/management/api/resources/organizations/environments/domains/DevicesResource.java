@@ -24,12 +24,13 @@ import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import org.springframework.beans.factory.annotation.Autowired;
-
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -38,12 +39,13 @@ import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Rémi SULTAN (rémi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"devices"})
+@Tag(name = "devices")
 public class DevicesResource extends AbstractUsersResource {
 
     @Context
@@ -57,13 +59,15 @@ public class DevicesResource extends AbstractUsersResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List users for a security domain",
-            notes = "User must have the DOMAIN_USER_DEVICES[LIST] permission on the specified domain " +
+    @Operation(summary = "List users for a security domain",
+            description = "User must have the DOMAIN_USER_DEVICES[LIST] permission on the specified domain " +
                     "or DOMAIN_USER_DEVICES[LIST] permission on the specified environment " +
                     "or DOMAIN_USER_DEVICES[LIST] permission on the specified organization. ")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "List users for a security domain", response = User.class, responseContainer = "Set"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "List users for a security domain",
+                    content = @Content(mediaType =  "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = User.class)))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void list(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,

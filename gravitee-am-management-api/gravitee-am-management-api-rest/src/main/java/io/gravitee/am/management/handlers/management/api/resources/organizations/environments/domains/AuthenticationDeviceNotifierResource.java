@@ -28,20 +28,22 @@ import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.UpdateAuthenticationDeviceNotifier;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -60,13 +62,15 @@ public class AuthenticationDeviceNotifierResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get an Authentication Device Notifier",
-            notes = "User must have the DOMAIN_AUTHDEVICE_NOTIFIER[READ] permission on the specified domain " +
+    @Operation(summary = "Get an Authentication Device Notifier",
+            description = "User must have the DOMAIN_AUTHDEVICE_NOTIFIER[READ] permission on the specified domain " +
                     "or DOMAIN_AUTHDEVICE_NOTIFIER[READ] permission on the specified environment " +
                     "or DOMAIN_AUTHDEVICE_NOTIFIER[READ] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Authentication Device Notifier successfully fetched", response = AuthenticationDeviceNotifier.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Authentication Device Notifier successfully fetched",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = AuthenticationDeviceNotifier.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void get(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -91,19 +95,21 @@ public class AuthenticationDeviceNotifierResource extends AbstractResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Update an Authentication Device Notifier",
-            notes = "User must have the DOMAIN_AUTHDEVICE_NOTIFIER[UPDATE] permission on the specified domain " +
+    @Operation(summary = "Update an Authentication Device Notifier",
+            description = "User must have the DOMAIN_AUTHDEVICE_NOTIFIER[UPDATE] permission on the specified domain " +
                     "or DOMAIN_AUTHDEVICE_NOTIFIER[UPDATE] permission on the specified environment " +
                     "or DOMAIN_AUTHDEVICE_NOTIFIER[UPDATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 201, message = "Authentication Device Notifier successfully updated", response = AuthenticationDeviceNotifier.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "201", description = "Authentication Device Notifier successfully updated",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = AuthenticationDeviceNotifier.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void update(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domain,
             @PathParam("authDeviceNotifier") String deviceNotifierId,
-            @ApiParam(name = "notifier", required = true) @Valid @NotNull UpdateAuthenticationDeviceNotifier updateDeviceNotifier,
+            @Parameter(name = "notifier", required = true) @Valid @NotNull UpdateAuthenticationDeviceNotifier updateDeviceNotifier,
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
@@ -115,13 +121,13 @@ public class AuthenticationDeviceNotifierResource extends AbstractResource {
     }
 
     @DELETE
-    @ApiOperation(value = "Delete an Authentication Device Notifier",
-            notes = "User must have the DOMAIN_AUTHDEVICE_NOTIFIER[DELETE] permission on the specified domain " +
+    @Operation(summary = "Delete an Authentication Device Notifier",
+            description = "User must have the DOMAIN_AUTHDEVICE_NOTIFIER[DELETE] permission on the specified domain " +
                     "or DOMAIN_AUTHDEVICE_NOTIFIER[DELETE] permission on the specified environment " +
                     "or DOMAIN_AUTHDEVICE_NOTIFIER[DELETE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 204, message = "Authentication Device Notifier successfully deleted"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "204", description = "Authentication Device Notifier successfully deleted"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void delete(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,

@@ -21,36 +21,32 @@ import io.gravitee.am.management.handlers.management.api.resources.AbstractResou
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.membership.MemberType;
-import io.gravitee.am.model.permissions.DefaultRole;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.repository.management.api.search.MembershipCriteria;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.MembershipService;
-import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.ApplicationNotFoundException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewMembership;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.net.URI;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -73,14 +69,16 @@ public class ApplicationMembersResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List members for an application",
-            notes = "User must have APPLICATION_MEMBER[LIST] permission on the specified application " +
+    @Operation(summary = "List members for an application",
+            description = "User must have APPLICATION_MEMBER[LIST] permission on the specified application " +
                     "or APPLICATION_MEMBER[LIST] permission on the specified domain " +
                     "or APPLICATION_MEMBER[LIST] permission on the specified environment " +
                     "or APPLICATION_MEMBER[LIST] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "List members for an application", response = MembershipListItem.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "List members for an application",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = MembershipListItem.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void getMembers(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -101,15 +99,15 @@ public class ApplicationMembersResource extends AbstractResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Add or update an application member",
-            notes = "User must have APPLICATION_MEMBER[CREATE] permission on the specified application " +
+    @Operation(summary = "Add or update an application member",
+            description = "User must have APPLICATION_MEMBER[CREATE] permission on the specified application " +
                     "or APPLICATION_MEMBER[CREATE] permission on the specified domain " +
                     "or APPLICATION_MEMBER[CREATE] permission on the specified environment " +
                     "or APPLICATION_MEMBER[CREATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 201, message = "Member has been added or updated successfully"),
-            @ApiResponse(code = 400, message = "Membership parameter is not valid"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "201", description = "Member has been added or updated successfully"),
+            @ApiResponse(responseCode = "400", description = "Membership parameter is not valid"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void addOrUpdateMember(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -142,14 +140,16 @@ public class ApplicationMembersResource extends AbstractResource {
     @GET
     @Path("permissions")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List application member's permissions",
-            notes = "User must have APPLICATION[READ] permission on the specified application " +
+    @Operation(summary = "List application member's permissions",
+            description = "User must have APPLICATION[READ] permission on the specified application " +
                     "or APPLICATION[READ] permission on the specified domain " +
                     "or APPLICATION[READ] permission on the specified environment " +
                     "or APPLICATION[READ] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Application member's permissions", response = List.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Application member's permissions",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = List.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void permissions(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,

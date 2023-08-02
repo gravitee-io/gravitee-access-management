@@ -26,20 +26,22 @@ import io.gravitee.am.service.exception.TagNotFoundException;
 import io.gravitee.am.service.model.UpdateTag;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -55,11 +57,13 @@ public class TagResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get a sharding tag",
-            notes = "User must have the ORGANIZATION_TAG[READ] permission on the specified organization")
+    @Operation(summary = "Get a sharding tag",
+            description = "User must have the ORGANIZATION_TAG[READ] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Sharding tag", response = Tag.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Sharding tag",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation =Tag.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void get(
             @PathParam("organizationId") String organizationId,
             @PathParam("tag") String tagId, @Suspended final AsyncResponse response) {
@@ -73,14 +77,16 @@ public class TagResource extends AbstractResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Update the sharding tag",
-            notes = "User must have the ORGANIZATION_TAG[UPDATE] permission on the specified organization")
+    @Operation(summary = "Update the sharding tag",
+            description = "User must have the ORGANIZATION_TAG[UPDATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Sharding tag successfully updated", response = Tag.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Sharding tag successfully updated",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation =Tag.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void update(
             @PathParam("organizationId") String organizationId,
-            @ApiParam(name = "tag", required = true) @Valid @NotNull final UpdateTag tagToUpdate,
+            @Parameter(name = "tag", required = true) @Valid @NotNull final UpdateTag tagToUpdate,
             @PathParam("tag") String tagId,
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
@@ -91,11 +97,11 @@ public class TagResource extends AbstractResource {
     }
 
     @DELETE
-    @ApiOperation(value = "Delete the sharding tag",
-            notes = "User must have the ORGANIZATION_TAG[DELETE] permission on the specified organization")
+    @Operation(summary = "Delete the sharding tag",
+            description= "User must have the ORGANIZATION_TAG[DELETE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 204, message = "Sharding tag successfully deleted"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "204", description = "Sharding tag successfully deleted"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void delete(
             @PathParam("organizationId") String organizationId,
             @PathParam("tag") String tag,

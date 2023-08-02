@@ -17,24 +17,30 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.service.AlertTriggerService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.alert.AlertTrigger;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.repository.management.api.search.AlertTriggerCriteria;
+import io.gravitee.am.service.AlertTriggerService;
 import io.gravitee.am.service.model.PatchAlertTrigger;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Flowable;
-import io.swagger.annotations.*;
-
-import javax.inject.Inject;
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.Suspended;
 
+import javax.inject.Inject;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.util.Comparator;
 import java.util.List;
 
@@ -42,7 +48,7 @@ import java.util.List;
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = "alerts")
+@Tag(name = "alerts")
 public class AlertTriggersResource extends AbstractResource {
 
     @Inject
@@ -50,13 +56,15 @@ public class AlertTriggersResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "List alert alert triggers",
-            notes = "List all the alert triggers of the domain accessible to the current user. " +
+    @Operation(
+            summary = "List alert alert triggers",
+            description = "List all the alert triggers of the domain accessible to the current user. " +
                     "User must have DOMAIN_ALERT[LIST] permission on the specified domain, environment or organization.")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "List alert triggers for current user", response = AlertTrigger.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "List alert triggers for current user",
+                    content = @Content(mediaType =  "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = AlertTrigger.class)))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void list(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -73,18 +81,20 @@ public class AlertTriggersResource extends AbstractResource {
     @PATCH
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Update multiple alert triggers",
-            notes = "Update multiple alert triggers in the same time" +
+    @Operation(
+            summary = "Update multiple alert triggers",
+            description = "Update multiple alert triggers in the same time" +
                     "User must have DOMAIN_ALERT[UPDATE] permission on the specified domain, environment or organization.")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Alert triggers successfully updated", response = AlertTrigger.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Alert triggers successfully updated",
+                    content = @Content(mediaType =  "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = AlertTrigger.class)))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void list(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domainId,
-            @ApiParam(name = "alertTriggers", required = true) @Valid @NotNull List<PatchAlertTrigger> patchAlertTriggers,
+            @Parameter(name = "alertTriggers", required = true) @Valid @NotNull List<PatchAlertTrigger> patchAlertTriggers,
             @Suspended final AsyncResponse response) {
 
         final User authenticatedUser = this.getAuthenticatedUser();

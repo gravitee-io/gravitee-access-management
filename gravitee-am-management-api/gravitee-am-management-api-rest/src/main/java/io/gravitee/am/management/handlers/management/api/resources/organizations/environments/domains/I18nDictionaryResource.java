@@ -24,28 +24,24 @@ import io.gravitee.am.service.impl.I18nDictionaryService;
 import io.gravitee.am.service.model.UpdateI18nDictionary;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.container.AsyncResponse;
+import jakarta.ws.rs.container.Suspended;
+import jakarta.ws.rs.core.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
-import jakarta.ws.rs.DELETE;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.PUT;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.container.AsyncResponse;
-import jakarta.ws.rs.container.Suspended;
-import jakarta.ws.rs.core.Response;
 import java.util.SortedMap;
 
-import static io.gravitee.am.model.Acl.READ;
-import static io.gravitee.am.model.Acl.UPDATE;
-import static io.gravitee.am.model.Acl.DELETE;
+import static io.gravitee.am.model.Acl.*;
 import static io.gravitee.am.model.ReferenceType.DOMAIN;
 import static io.gravitee.am.model.permissions.Permission.DOMAIN_I18N_DICTIONARY;
 
@@ -54,7 +50,7 @@ import static io.gravitee.am.model.permissions.Permission.DOMAIN_I18N_DICTIONARY
  * @author GraviteeSource Team
  */
 @SuppressWarnings("ResultOfMethodCallIgnored")
-@Api(tags = {"dictionary"})
+@Tag(name = "dictionary")
 public class I18nDictionaryResource extends AbstractDomainResource {
 
     @Autowired
@@ -62,15 +58,17 @@ public class I18nDictionaryResource extends AbstractDomainResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            nickname = "getI18nDictionary",
-            value = "Get a i18n dictionary",
-            notes = "User must have the DOMAIN_I18N_DICTIONARY[READ] permission on the specified domain " +
+    @Operation(
+            operationId = "getI18nDictionary",
+            summary = "Get a i18n dictionary",
+            description = "User must have the DOMAIN_I18N_DICTIONARY[READ] permission on the specified domain " +
                     "or DOMAIN_I18N_DICTIONARY[READ] permission on the specified environment " +
                     "or DOMAIN_I18N_DICTIONARY[READ] permission on the specified organization.")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Get the i18n dictionary", response = I18nDictionary.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Get the i18n dictionary",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation =I18nDictionary.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void get(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -85,15 +83,17 @@ public class I18nDictionaryResource extends AbstractDomainResource {
 
     @PUT
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            nickname = "putI18nDictionary",
-            value = "Update a i18n dictionary description",
-            notes = "User must have the DOMAIN_I18N_DICTIONARY[UPDATE] permission on the specified domain " +
+    @Operation(
+            operationId = "putI18nDictionary",
+            summary = "Update a i18n dictionary description",
+            description = "User must have the DOMAIN_I18N_DICTIONARY[UPDATE] permission on the specified domain " +
                     "or DOMAIN_I18N_DICTIONARY[UPDATE] permission on the specified environment " +
                     "or DOMAIN_I18N_DICTIONARY[UPDATE] permission on the specified organization.")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Update the i18n dictionary description", response = I18nDictionary.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Update the i18n dictionary description",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation =I18nDictionary.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void update(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -110,15 +110,15 @@ public class I18nDictionaryResource extends AbstractDomainResource {
     }
 
     @DELETE
-    @ApiOperation(
-            nickname = "deleteI18nDictionary",
-            value = "Delete a i18n dictionary",
-            notes = "User must have the DOMAIN_I18N_DICTIONARY[DELETE] permission on the specified domain " +
+    @Operation(
+            operationId = "deleteI18nDictionary",
+            summary = "Delete a i18n dictionary",
+            description = "User must have the DOMAIN_I18N_DICTIONARY[DELETE] permission on the specified domain " +
                     "or DOMAIN_I18N_DICTIONARY[DELETE] permission on the specified environment " +
                     "or DOMAIN_I18N_DICTIONARY[DELETE] permission on the specified organization.")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Delete a i18n dictionary from a security domain"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Delete a i18n dictionary from a security domain"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void delete(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -137,15 +137,17 @@ public class I18nDictionaryResource extends AbstractDomainResource {
     @PUT
     @Path("/entries")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            nickname = "replaceI18nDictionaryEntries",
-            value = "Update all the entries for a i18n dictionary description",
-            notes = "User must have the DOMAIN_I18N_DICTIONARY[UPDATE] permission on the specified domain " +
+    @Operation(
+            operationId = "replaceI18nDictionaryEntries",
+            summary = "Update all the entries for a i18n dictionary description",
+            description = "User must have the DOMAIN_I18N_DICTIONARY[UPDATE] permission on the specified domain " +
                     "or DOMAIN_I18N_DICTIONARY[UPDATE] permission on the specified environment " +
                     "or DOMAIN_I18N_DICTIONARY[UPDATE] permission on the specified organization.")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Update the i18n entries for the given dictionary", response = I18nDictionary.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Update the i18n entries for the given dictionary",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation =I18nDictionary.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void update(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,

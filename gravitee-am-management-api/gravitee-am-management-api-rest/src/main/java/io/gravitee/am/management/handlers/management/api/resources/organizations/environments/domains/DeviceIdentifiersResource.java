@@ -19,33 +19,39 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.management.service.DeviceIdentifierPluginService;
 import io.gravitee.am.model.Acl;
-import io.gravitee.am.model.BotDetection;
 import io.gravitee.am.model.DeviceIdentifier;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.DeviceIdentifierService;
+import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewDeviceIdentifier;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
-import io.swagger.annotations.*;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.net.URI;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"device identifiers"})
+@Tag(name = "device identifiers")
 public class DeviceIdentifiersResource extends AbstractResource {
 
     @Context
@@ -62,14 +68,16 @@ public class DeviceIdentifiersResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List registered device identifiers for a security domain",
-            notes = "User must have the DOMAIN_DEVICE_IDENTIFIERS[LIST] permission on the specified domain " +
+    @Operation(summary = "List registered device identifiers for a security domain",
+            description = "User must have the DOMAIN_DEVICE_IDENTIFIERS[LIST] permission on the specified domain " +
                     "or DOMAIN_DEVICE_IDENTIFIERS[LIST] permission on the specified environment " +
                     "or DOMAIN_DEVICE_IDENTIFIERS[LIST] permission on the specified organization " +
                     "Each returned bot detections is filtered and contains only basic information such as id, name.")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "List registered device identifiers for a security domain", response = BotDetection.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "List registered device identifiers for a security domain",
+                    content = @Content(mediaType =  "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = DeviceIdentifier.class)))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void list(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -86,18 +94,18 @@ public class DeviceIdentifiersResource extends AbstractResource {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Create a device identifier",
-            notes = "User must have the DOMAIN_DEVICE_IDENTIFIER[CREATE] permission on the specified domain " +
+    @Operation(summary = "Create a device identifier",
+            description = "User must have the DOMAIN_DEVICE_IDENTIFIER[CREATE] permission on the specified domain " +
                     "or DOMAIN_DEVICE_IDENTIFIER[CREATE] permission on the specified environment " +
                     "or DOMAIN_DEVICE_IDENTIFIER[CREATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 201, message = "Device identifiers successfully created"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "201", description = "Device identifiers successfully created"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void create(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domain,
-            @ApiParam(name = "deviceIdentifier", required = true) @Valid @NotNull final NewDeviceIdentifier newDeviceIdentifier,
+            @Parameter(name = "deviceIdentifier", required = true) @Valid @NotNull final NewDeviceIdentifier newDeviceIdentifier,
             @Suspended final AsyncResponse response) {
 
         final User authenticatedUser = getAuthenticatedUser();

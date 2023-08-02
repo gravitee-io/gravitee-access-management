@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.organizations.audits;
 
-import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.model.AuditParam;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
@@ -27,23 +26,22 @@ import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.reporter.api.audit.AuditReportableCriteria;
 import io.gravitee.am.reporter.api.audit.model.Audit;
-import io.gravitee.am.reporter.api.audit.model.AuditEntity;
-import io.gravitee.am.reporter.api.audit.model.AuditOutcome;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.rxjava3.core.Single;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import org.springframework.beans.factory.annotation.Autowired;
-
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
-import jakarta.ws.rs.core.Response;
+import org.springframework.beans.factory.annotation.Autowired;
+
 import java.util.Collections;
 import java.util.stream.Collectors;
 
@@ -51,7 +49,7 @@ import java.util.stream.Collectors;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"audit"})
+@Tag(name = "audit")
 public class AuditsResource extends AbstractResource {
 
     @Context
@@ -65,12 +63,14 @@ public class AuditsResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List audit logs for the organization",
-            notes = "User must have the ORGANIZATION_AUDIT[LIST] permission on the specified organization. " +
+    @Operation(summary = "List audit logs for the organization",
+            description = "User must have the ORGANIZATION_AUDIT[LIST] permission on the specified organization. " +
                     "Except if user has ORGANIZATION_AUDIT[READ] permission on the organization, each returned audit is filtered and contains only basic information such as id, date, event, actor, target and status.")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "List audit logs for the platform", response = Audit.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "List audit logs for the platform",
+                    content = @Content(mediaType =  "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = Audit.class)))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void list(
             @PathParam("organizationId") String organizationId,
             @BeanParam AuditParam param,

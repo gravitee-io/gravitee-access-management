@@ -27,36 +27,33 @@ import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.ThemeNotFoundException;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.DELETE;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.PUT;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import static java.util.Objects.isNull;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
+
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
 import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
+import static java.util.Objects.isNull;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"theme"})
+@Tag(name = "theme")
 public class ThemeResource extends AbstractResource {
 
     @Context
@@ -71,16 +68,18 @@ public class ThemeResource extends AbstractResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            nickname = "getTheme",
-            value = "Get the theme linked to the specified security domain",
-            notes = "User must have the DOMAIN_THEME[READ] permission on the specified domain " +
+    @Operation(
+            operationId = "getTheme",
+            summary = "Get the theme linked to the specified security domain",
+            description = "User must have the DOMAIN_THEME[READ] permission on the specified domain " +
                     "or DOMAIN_THEME[READ] permission on the specified environment " +
                     "or DOMAIN_THEME[READ] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Get theme description", response = ThemeEntity.class),
-            @ApiResponse(code = 404, message = "Theme doesn't exist", response = ThemeEntity.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Get theme description",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ThemeEntity.class))),
+            @ApiResponse(responseCode = "404", description = "Theme doesn't exist"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void read(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -99,22 +98,24 @@ public class ThemeResource extends AbstractResource {
     @PUT
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            nickname = "updateTheme",
-            value = "Update a theme on the specified security domain",
-            notes = "User must have the DOMAIN_THEME[UPDATE] permission on the specified domain " +
+    @Operation(
+            operationId = "updateTheme",
+            summary = "Update a theme on the specified security domain",
+            description = "User must have the DOMAIN_THEME[UPDATE] permission on the specified domain " +
                     "or DOMAIN_THEME[UPDATE] permission on the specified environment " +
                     "or DOMAIN_THEME[UPDATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Theme successfully updated", response = ThemeEntity.class),
-            @ApiResponse(code = 404, message = "Theme Not found", response = ThemeEntity.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Theme successfully updated",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ThemeEntity.class))),
+            @ApiResponse(responseCode = "404", description = "Theme Not found"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void update(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domainId,
             @PathParam("themeId") String themeId,
-            @ApiParam(name = "theme", required = true)
+            @Parameter(name = "theme", required = true)
             @Valid @NotNull final ThemeEntity updateTheme,
             @Suspended final AsyncResponse response) {
 
@@ -151,15 +152,15 @@ public class ThemeResource extends AbstractResource {
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            nickname = "deleteTheme",
-            value = "Delete a theme on the specified security domain",
-            notes = "User must have the DOMAIN_THEME[DELETE] permission on the specified domain " +
+    @Operation(
+            operationId = "deleteTheme",
+            summary = "Delete a theme on the specified security domain",
+            description = "User must have the DOMAIN_THEME[DELETE] permission on the specified domain " +
                     "or DOMAIN_THEME[DELETE] permission on the specified environment " +
                     "or DOMAIN_THEME[DELETE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 204, message = "Theme successfully deleted"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "204", description = "Theme successfully deleted"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void delete(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,

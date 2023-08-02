@@ -19,10 +19,9 @@ import io.gravitee.am.management.service.FactorPluginService;
 import io.gravitee.am.management.service.exception.AuthenticatorPluginNotFoundException;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-
-import javax.inject.Inject;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.tags.Tags;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -33,11 +32,13 @@ import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
 
+import javax.inject.Inject;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"Plugin", "Factor"})
+@Tags({@Tag(name= "Plugin"), @Tag(name= "Factor")})
 public class FactorPluginResource {
 
     @Context
@@ -48,8 +49,8 @@ public class FactorPluginResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get a factor plugin",
-            notes = "There is no particular permission needed. User must be authenticated.")
+    @Operation(summary = "Get a factor plugin",
+            description = "There is no particular permission needed. User must be authenticated.")
     public void get(@PathParam("factor") String factorId,
                     @Suspended final AsyncResponse response) {
         factorPluginService.findById(factorId)
@@ -61,8 +62,8 @@ public class FactorPluginResource {
     @GET
     @Path("schema")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get a factor plugin's schema",
-            notes = "There is no particular permission needed. User must be authenticated.")
+    @Operation(summary = "Get a factor plugin's schema",
+            description = "There is no particular permission needed. User must be authenticated.")
     public void getSchema(@PathParam("factor") String factorId,
                           @Suspended final AsyncResponse response) {
         factorPluginService.getSchema(factorId)

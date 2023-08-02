@@ -25,23 +25,30 @@ import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.repository.management.api.search.AlertNotifierCriteria;
 import io.gravitee.am.service.model.NewAlertNotifier;
 import io.gravitee.common.http.MediaType;
-import io.swagger.annotations.*;
-
-import javax.inject.Inject;
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
+
+import javax.inject.Inject;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.util.Comparator;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = "alerts")
+@Tag(name = "alerts")
 public class AlertNotifiersResource extends AbstractResource {
 
     @Context
@@ -52,13 +59,15 @@ public class AlertNotifiersResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "List alert notifiers",
-            notes = "List all the alert notifiers of the domain. " +
+    @Operation(
+            summary = "List alert notifiers",
+            description = "List all the alert notifiers of the domain. " +
                     "User must have DOMAIN_ALERT_NOTIFIER[LIST] permission on the specified domain, environment or organization.")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "List alert notifiers for current user", response = AlertNotifier.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "List alert notifiers for current user",
+                    content = @Content(mediaType =  "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = AlertNotifier.class)))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void listAlertNotifiers(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -75,18 +84,20 @@ public class AlertNotifiersResource extends AbstractResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Create an alert notifier",
-            notes = "Create a new alert notifier" +
+    @Operation(
+            summary = "Create an alert notifier",
+            description = "Create a new alert notifier" +
                     "User must have DOMAIN_ALERT_NOTIFIER[CREATE] permission on the specified domain, environment or organization.")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Alert notifier successfully created", response = AlertNotifier.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(responseCode = "200", description = "Alert notifier successfully created",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = AlertNotifier.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void createAlertNotifier(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domainId,
-            @ApiParam(name = "alertNotifier", required = true) @Valid @NotNull NewAlertNotifier newAlertNotifier,
+            @Parameter(name = "alertNotifier", required = true) @Valid @NotNull NewAlertNotifier newAlertNotifier,
             @Suspended final AsyncResponse response) {
 
         final User authenticatedUser = this.getAuthenticatedUser();

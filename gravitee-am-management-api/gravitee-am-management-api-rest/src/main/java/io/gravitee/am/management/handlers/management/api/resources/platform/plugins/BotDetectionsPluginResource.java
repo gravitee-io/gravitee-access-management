@@ -17,10 +17,9 @@ package io.gravitee.am.management.handlers.management.api.resources.platform.plu
 
 import io.gravitee.am.management.service.BotDetectionPluginService;
 import io.gravitee.am.service.model.plugin.BotDetectionPlugin;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-
-import javax.inject.Inject;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.tags.Tags;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
@@ -29,6 +28,8 @@ import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
+
+import javax.inject.Inject;
 import java.util.Comparator;
 import java.util.stream.Collectors;
 
@@ -36,7 +37,7 @@ import java.util.stream.Collectors;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"Plugin", "Bot Detection"})
+@Tags({@Tag(name= "Plugin"), @Tag(name= "Bot Detection")})
 public class BotDetectionsPluginResource {
 
     @Context
@@ -47,8 +48,8 @@ public class BotDetectionsPluginResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List bot detection plugins",
-            notes = "There is no particular permission needed. User must be authenticated.")
+    @Operation(summary = "List bot detection plugins",
+            description = "There is no particular permission needed. User must be authenticated.")
     public void list(@Suspended final AsyncResponse response) {
 
         pluginService.findAll()
