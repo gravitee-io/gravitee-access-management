@@ -38,6 +38,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.env.Environment;
 import org.springframework.security.authentication.AuthenticationDetailsSource;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.RedirectStrategy;
@@ -59,7 +60,8 @@ import static java.util.Arrays.asList;
 public class AuthSecurityConfiguration extends CsrfAwareConfiguration {
 
     private static final String AUTH_LOGOUT = "/auth/logout";
-    private static final String[] PERMITTED_ROUTES = {"/auth/login", "/auth/assets/**", "/auth/cockpit"};
+    private static final String AUTH_LOGIN = "/auth/login";
+    private static final String[] PERMITTED_ROUTES = {AUTH_LOGIN, "/auth/assets/**", "/auth/cockpit"};
     private final ApplicationEventPublisher applicationEventPublisher;
 
     @Autowired
@@ -91,7 +93,7 @@ public class AuthSecurityConfiguration extends CsrfAwareConfiguration {
                                 .permitAll()
                                 .anyRequest().authenticated()
                 )
-                .formLogin(formLogin -> formLogin.loginPage("/auth/login")
+                .formLogin(formLogin -> formLogin.loginPage(AUTH_LOGIN)
                         .authenticationDetailsSource(authenticationDetailsSource)
                         .successHandler(authenticationSuccessHandler())
                         .failureHandler(authenticationFailureHandler())
@@ -102,7 +104,7 @@ public class AuthSecurityConfiguration extends CsrfAwareConfiguration {
                         .addLogoutHandler(cookieClearingLogoutHandler()))
                 .exceptionHandling(exceptionHandling -> exceptionHandling
                         .authenticationEntryPoint(loginUrlAuthenticationEntryPoint()))
-                .cors(cors -> {})
+                .cors(Customizer.withDefaults())
                 .sessionManagement(sessionManagement -> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(cockpitAuthenticationFilter(), AbstractPreAuthenticatedProcessingFilter.class)
                 .addFilterBefore(new RecaptchaFilter(reCaptchaService, objectMapper), AbstractPreAuthenticatedProcessingFilter.class)
