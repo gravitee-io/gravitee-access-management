@@ -21,6 +21,8 @@ import io.gravitee.am.management.handlers.management.api.authentication.filter.C
 import org.springframework.core.env.Environment;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.csrf.CsrfFilter;
+import org.springframework.security.web.csrf.CsrfToken;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
@@ -40,12 +42,24 @@ public abstract class CsrfAwareConfiguration {
 
     protected HttpSecurity applyCsrf(HttpSecurity security, CookieCsrfSignedTokenRepository csrfTokenRepository) throws Exception {
         var csrfEnabled = environment.getProperty(PROP_HTTP_CSRF_ENABLED, Boolean.class, true);
+        if(csrfEnabled) {
+            // Don't use deferred csrf (see https://docs.spring.io/spring-security/reference/5.8/migration/servlet/exploits.html#_i_need_to_opt_out_of_deferred_tokens_for_another_reason)
+            final CsrfTokenRequestAttributeHandler requestHandler = new CsrfTokenRequestAttributeHandler();
+            requestHandler.setCsrfRequestAttributeName(null);
 
-        return csrfEnabled ? security.csrf(csrf -> csrf
-                        .csrfTokenRepository(csrfTokenRepository)
-                        .requireCsrfProtectionMatcher(getRequireCsrfProtectionMatcher()))
-                .addFilterAfter(new CsrfIncludeFilter(), CsrfFilter.class)
-                : security.csrf(csrf -> csrf.disable());
+            return security.csrf(csrf -> csrf
+                            .csrfTokenRepository(csrfTokenRepository)
+                            .csrfTokenRequestHandler(requestHandler)
+                            .requireCsrfProtectionMatcher(getRequireCsrfProtectionMatcher())
+                            .sessionAuthenticationStrategy((authentication, request, response) -> {
+                                // Force the csrf cookie to be pushed back in the response cookies to keep it across subsequent request.
+                                csrfTokenRepository.saveToken((CsrfToken) request.getAttribute(CsrfToken.class.getName()), request, response);
+                            })
+                    )
+                    .addFilterAfter(new CsrfIncludeFilter(), CsrfFilter.class);
+        } else {
+            return security.csrf(csrf -> csrf.disable());
+        }
     }
 
     protected CsrfRequestMatcher getRequireCsrfProtectionMatcher() {
