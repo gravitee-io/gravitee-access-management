@@ -170,5 +170,11 @@
             <artifactId>jakarta.annotation-api</artifactId>
         </dependency>
 
+        <!-- required for RDBMS backend -->
+        <dependency>
+            <groupId>io.projectreactor</groupId>
+            <artifactId>reactor-core</artifactId>
+        </dependency>
+
     </dependencies>
 </project>

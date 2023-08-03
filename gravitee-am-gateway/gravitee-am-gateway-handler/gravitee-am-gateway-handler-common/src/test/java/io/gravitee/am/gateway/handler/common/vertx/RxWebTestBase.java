@@ -28,7 +28,6 @@ import io.vertx.rxjava3.core.http.HttpClientRequest;
 import io.vertx.rxjava3.core.http.HttpClientResponse;
 import io.vertx.rxjava3.core.http.HttpServer;
 import io.vertx.rxjava3.ext.web.Router;
-import reactor.core.Disposable;
 
 import java.io.BufferedReader;
 import java.io.IOException;

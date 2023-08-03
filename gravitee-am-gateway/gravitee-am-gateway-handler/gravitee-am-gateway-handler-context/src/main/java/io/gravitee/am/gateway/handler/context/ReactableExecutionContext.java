@@ -112,7 +112,6 @@ public class ReactableExecutionContext implements MutableExecutionContext {
         if (templateEngine == null) {
             templateEngine = TemplateEngine.templateEngine();
 
-
             TemplateContext templateContext = templateEngine.getTemplateContext();
             templateContext.setVariable(TEMPLATE_ATTRIBUTE_REQUEST, new EvaluableRequest(request()));
             templateContext.setVariable(TEMPLATE_ATTRIBUTE_RESPONSE, new EvaluableResponse(response()));
