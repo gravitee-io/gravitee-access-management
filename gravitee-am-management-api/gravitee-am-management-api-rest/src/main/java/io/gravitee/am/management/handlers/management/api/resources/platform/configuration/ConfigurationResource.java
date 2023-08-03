@@ -31,7 +31,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.Suspended;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

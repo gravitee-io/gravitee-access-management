@@ -32,7 +32,7 @@ import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
