@@ -176,7 +176,10 @@
             <artifactId>commons-text</artifactId>
             <version>${common-text.version}</version>
         </dependency>
-
+        <dependency>
+            <groupId>jakarta.inject</groupId>
+            <artifactId>jakarta.inject-api</artifactId>
+        </dependency>
         <!-- Freemarker -->
         <dependency>
             <groupId>org.freemarker</groupId>

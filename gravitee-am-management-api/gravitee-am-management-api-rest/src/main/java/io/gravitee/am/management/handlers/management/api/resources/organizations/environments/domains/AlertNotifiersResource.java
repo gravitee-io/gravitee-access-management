@@ -39,7 +39,7 @@ import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import java.util.Comparator;
