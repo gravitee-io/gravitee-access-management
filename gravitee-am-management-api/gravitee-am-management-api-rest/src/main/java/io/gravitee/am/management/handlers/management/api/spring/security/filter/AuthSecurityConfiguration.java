@@ -87,7 +87,9 @@ public class AuthSecurityConfiguration extends CsrfAwareConfiguration {
     ) throws Exception {
 
         var pathRequestMatchers = Arrays.stream(PERMITTED_ROUTES).map(AntPathRequestMatcher::antMatcher).toArray(AntPathRequestMatcher[]::new);
-        http.authorizeHttpRequests(
+        http
+                .securityMatchers(securityMatcher -> securityMatcher.requestMatchers(pathRequestMatchers))
+                .authorizeHttpRequests(
                         authorizeHttpRequests -> authorizeHttpRequests
                                 .requestMatchers(pathRequestMatchers)
                                 .permitAll()
@@ -97,7 +99,6 @@ public class AuthSecurityConfiguration extends CsrfAwareConfiguration {
                         .authenticationDetailsSource(authenticationDetailsSource)
                         .successHandler(authenticationSuccessHandler())
                         .failureHandler(authenticationFailureHandler())
-                        .permitAll()
                 )
                 .logout(logout -> logout.logoutRequestMatcher(new AntPathRequestMatcher(AUTH_LOGOUT))
                         .logoutSuccessHandler(new CustomLogoutSuccessHandler(auditService, environment, jwtParser, userService))

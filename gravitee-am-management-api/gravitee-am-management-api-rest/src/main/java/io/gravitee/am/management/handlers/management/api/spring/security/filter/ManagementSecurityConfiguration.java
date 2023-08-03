@@ -60,7 +60,9 @@ public class ManagementSecurityConfiguration extends CsrfAwareConfiguration {
             CookieCsrfSignedTokenRepository csrfSignedTokenRepository
     ) throws Exception {
         var pathRequestMatchers = Arrays.stream(PATHS).map(AntPathRequestMatcher::antMatcher).toArray(AntPathRequestMatcher[]::new);
-        http.authorizeHttpRequests(authorizeHttpRequests -> authorizeHttpRequests.requestMatchers(pathRequestMatchers).authenticated())
+        http
+                .securityMatchers(securityMatcher -> securityMatcher.requestMatchers(pathRequestMatchers))
+                .authorizeHttpRequests(authorizeHttpRequests -> authorizeHttpRequests.requestMatchers(pathRequestMatchers).authenticated())
                 .sessionManagement(sessionManagement -> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .cors(cors -> {
                 })

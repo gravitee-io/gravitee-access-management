@@ -38,10 +38,11 @@ public class TokenSecurityConfiguration {
             AuthenticationDetailsSource<HttpServletRequest, WebAuthenticationDetails> authenticationDetailsSource
     ) throws Exception {
         var pathRequestMatcher = AntPathRequestMatcher.antMatcher("/auth/token");
-        http.authorizeHttpRequests(
+        http
+                .securityMatcher(pathRequestMatcher)
+                .authorizeHttpRequests(
                         authorizeHttpRequests ->
-                                authorizeHttpRequests.requestMatchers(pathRequestMatcher).permitAll()
-                                .anyRequest().authenticated()
+                                authorizeHttpRequests.requestMatchers(pathRequestMatcher).authenticated()
                 )
                 .httpBasic(httpBasic -> httpBasic
                         .realmName(REALM_NAME)
