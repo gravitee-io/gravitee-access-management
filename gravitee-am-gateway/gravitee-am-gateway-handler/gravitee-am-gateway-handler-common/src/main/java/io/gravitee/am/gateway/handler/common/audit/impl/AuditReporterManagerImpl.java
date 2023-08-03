@@ -19,6 +19,7 @@ import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.event.ReporterEvent;
 import io.gravitee.am.common.utils.GraviteeContext;
 import io.gravitee.am.gateway.handler.common.audit.AuditReporterManager;
+import io.gravitee.am.gateway.handler.common.utils.Tuple;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Reporter;
@@ -36,13 +37,13 @@ import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import io.vertx.rxjava3.core.RxHelper;
 import io.vertx.rxjava3.core.Vertx;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import reactor.util.function.Tuples;
+
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -90,7 +91,7 @@ public class AuditReporterManagerImpl extends AbstractService implements AuditRe
                             environmentService
                                     .findById(domain.getReferenceId())
                                     .map(env -> new GraviteeContext(env.getOrganizationId(), env.getId(), domain.getId()))
-                                    .map(ctx -> Tuples.of(reporters, ctx)))
+                                    .map(ctx -> Tuple.of(reporters, ctx)))
                     .subscribeOn(Schedulers.io())
                     .subscribe(tupleReportersContext -> {
                                 if (!tupleReportersContext.getT1().isEmpty()) {
@@ -167,7 +168,7 @@ public class AuditReporterManagerImpl extends AbstractService implements AuditRe
                         environmentService
                                 .findById(domain.getReferenceId())
                                 .map(env -> new GraviteeContext(env.getOrganizationId(), env.getId(), domain.getId()))
-                                .map(ctx -> Tuples.of(reporter, ctx)))
+                                .map(ctx -> Tuple.of(reporter, ctx)))
                 .subscribeOn(Schedulers.io())
                 .subscribe(
                         tupleReporterContext -> {
@@ -185,7 +186,7 @@ public class AuditReporterManagerImpl extends AbstractService implements AuditRe
                         environmentService
                                 .findById(domain.getReferenceId())
                                 .map(env -> new GraviteeContext(env.getOrganizationId(), env.getId(), domain.getId()))
-                                .map(ctx -> Tuples.of(reporter, ctx)))
+                                .map(ctx -> Tuple.of(reporter, ctx)))
                 .subscribeOn(Schedulers.io())
                 .subscribe(
                         tupleReporterContext -> {
