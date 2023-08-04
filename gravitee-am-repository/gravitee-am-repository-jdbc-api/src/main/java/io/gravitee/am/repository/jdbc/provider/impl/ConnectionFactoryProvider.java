@@ -58,6 +58,14 @@ public class ConnectionFactoryProvider {
     public static final String TAG_DATABASE = "r2dbc_db";
     public static final String TAG_SERVER = "r2dbc_server";
 
+    public static final int DEFAULT_SETTINGS_ACQUIRE_RETRY = 1;
+    public static final int DEFAULT_SETTINGS_INITIAL_SIZE = 1;
+    public static final int DEFAULT_SETTINGS_MAX_SIZE = 50;
+    public static final long DEFAULT_SETTINGS_MAX_IDLE_TIME = 30000;
+    public static final long DEFAULT_SETTINGS_MAX_LIFE_TIME = -1;
+    public static final long DEFAULT_SETTINGS_MAX_ACQUIRE_TIME = 3000;
+    public static final long DEFAULT_SETTINGS_MAX_CREATE_CNX_TIME = 5000;
+
     private final Environment environment;
     private final String prefix;
 
@@ -86,13 +94,13 @@ public class ConnectionFactoryProvider {
         // default values for connections
         // may be overridden by the configuration.getOptions
         builder
-                .option(PoolingConnectionFactoryProvider.ACQUIRE_RETRY, 1)
-                .option(PoolingConnectionFactoryProvider.INITIAL_SIZE, 0)
-                .option(PoolingConnectionFactoryProvider.MAX_SIZE, 10)
-                .option(PoolingConnectionFactoryProvider.MAX_IDLE_TIME, Duration.of(30000l, ChronoUnit.MILLIS))
-                .option(PoolingConnectionFactoryProvider.MAX_LIFE_TIME, Duration.of(30000l, ChronoUnit.MILLIS))
-                .option(PoolingConnectionFactoryProvider.MAX_ACQUIRE_TIME, Duration.of(0, ChronoUnit.MILLIS))
-                .option(PoolingConnectionFactoryProvider.MAX_CREATE_CONNECTION_TIME, Duration.of(0, ChronoUnit.MILLIS))
+                .option(PoolingConnectionFactoryProvider.ACQUIRE_RETRY, DEFAULT_SETTINGS_ACQUIRE_RETRY)
+                .option(PoolingConnectionFactoryProvider.INITIAL_SIZE, DEFAULT_SETTINGS_INITIAL_SIZE)
+                .option(PoolingConnectionFactoryProvider.MAX_SIZE, DEFAULT_SETTINGS_MAX_SIZE)
+                .option(PoolingConnectionFactoryProvider.MAX_IDLE_TIME, Duration.of(DEFAULT_SETTINGS_MAX_IDLE_TIME, ChronoUnit.MILLIS))
+                .option(PoolingConnectionFactoryProvider.MAX_LIFE_TIME, Duration.of(DEFAULT_SETTINGS_MAX_LIFE_TIME, ChronoUnit.MILLIS))
+                .option(PoolingConnectionFactoryProvider.MAX_ACQUIRE_TIME, Duration.of(DEFAULT_SETTINGS_MAX_ACQUIRE_TIME, ChronoUnit.MILLIS))
+                .option(PoolingConnectionFactoryProvider.MAX_CREATE_CONNECTION_TIME, Duration.of(DEFAULT_SETTINGS_MAX_CREATE_CNX_TIME, ChronoUnit.MILLIS))
                 .option(PoolingConnectionFactoryProvider.VALIDATION_DEPTH, ValidationDepth.LOCAL);
 
         List<Map<String, String>> options = configuration.getOptions();
@@ -144,13 +152,13 @@ public class ConnectionFactoryProvider {
                     .option(HOST, host)
                     .option(USER, user)
                     .option(DATABASE, db)
-                    .option(PoolingConnectionFactoryProvider.ACQUIRE_RETRY, Integer.parseInt(environment.getProperty(prefix+"acquireRetry", "1")))
-                    .option(PoolingConnectionFactoryProvider.INITIAL_SIZE, Integer.parseInt(environment.getProperty(prefix+"initialSize", "0")))
-                    .option(PoolingConnectionFactoryProvider.MAX_SIZE, Integer.parseInt(environment.getProperty(prefix+"maxSize", "10")))
-                    .option(PoolingConnectionFactoryProvider.MAX_IDLE_TIME, Duration.of(Long.parseLong(environment.getProperty(prefix+"maxIdleTime", "30000")), ChronoUnit.MILLIS))
-                    .option(PoolingConnectionFactoryProvider.MAX_LIFE_TIME, Duration.of(Long.parseLong(environment.getProperty(prefix+"maxLifeTime", "30000")), ChronoUnit.MILLIS))
-                    .option(PoolingConnectionFactoryProvider.MAX_ACQUIRE_TIME, Duration.of(Long.parseLong(environment.getProperty(prefix+"maxAcquireTime", "-1")), ChronoUnit.MILLIS))
-                    .option(PoolingConnectionFactoryProvider.MAX_CREATE_CONNECTION_TIME, Duration.of(Long.parseLong(environment.getProperty(prefix+"maxCreateConnectionTime", "-1")), ChronoUnit.MILLIS));
+                    .option(PoolingConnectionFactoryProvider.ACQUIRE_RETRY, Integer.parseInt(environment.getProperty(prefix+"acquireRetry", ""+DEFAULT_SETTINGS_ACQUIRE_RETRY)))
+                    .option(PoolingConnectionFactoryProvider.INITIAL_SIZE, Integer.parseInt(environment.getProperty(prefix+"initialSize", ""+DEFAULT_SETTINGS_INITIAL_SIZE)))
+                    .option(PoolingConnectionFactoryProvider.MAX_SIZE, Integer.parseInt(environment.getProperty(prefix+"maxSize", ""+DEFAULT_SETTINGS_MAX_SIZE)))
+                    .option(PoolingConnectionFactoryProvider.MAX_IDLE_TIME, Duration.of(Long.parseLong(environment.getProperty(prefix+"maxIdleTime", ""+DEFAULT_SETTINGS_MAX_IDLE_TIME)), ChronoUnit.MILLIS))
+                    .option(PoolingConnectionFactoryProvider.MAX_LIFE_TIME, Duration.of(Long.parseLong(environment.getProperty(prefix+"maxLifeTime", ""+DEFAULT_SETTINGS_MAX_LIFE_TIME)), ChronoUnit.MILLIS))
+                    .option(PoolingConnectionFactoryProvider.MAX_ACQUIRE_TIME, Duration.of(Long.parseLong(environment.getProperty(prefix+"maxAcquireTime", ""+DEFAULT_SETTINGS_MAX_ACQUIRE_TIME)), ChronoUnit.MILLIS))
+                    .option(PoolingConnectionFactoryProvider.MAX_CREATE_CONNECTION_TIME, Duration.of(Long.parseLong(environment.getProperty(prefix+"maxCreateConnectionTime", ""+DEFAULT_SETTINGS_MAX_CREATE_CNX_TIME)), ChronoUnit.MILLIS));
 
             if (port != null) {
                 builder.option(PORT, Integer.parseInt(port));
