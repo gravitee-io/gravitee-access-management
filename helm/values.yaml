@@ -126,15 +126,15 @@ jdbc:
   # URLs to download the drivers
   drivers:
     - https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.22/mysql-connector-java-8.0.22.jar
-    - https://repo1.maven.org/maven2/dev/miku/r2dbc-mysql/0.8.2.RELEASE/r2dbc-mysql-0.8.2.RELEASE.jar
+    - https://repo1.maven.org/maven2/io/asyncer/r2dbc-mysql/1.0.2/r2dbc-mysql-1.0.2.jar
   pool:
     acquireRetry:  1
-    initialSize: 0
-    maxSize: 10
+    initialSize: 1
+    maxSize: 50
     maxIdleTime: 30000
-    maxLifeTime: 30000
-    maxAcquireTime: 0
-    maxCreateConnectionTime: 0
+    maxLifeTime: -1
+    maxAcquireTime: 3000
+    maxCreateConnectionTime: 5000
 #  sslEnabled: false
 #  sslMode: verify-ca
 #  sslServerCert: 

@@ -2,6 +2,12 @@
 
 This file documents all notable changes to [Gravitee.io Access Management 3.x](https://github.com/gravitee-io/helm-charts/tree/master/am/) Helm Chart. The release numbering uses [semantic versioning](http://semver.org).
 
+### 4.1.0
+
+**BREAKING CHANGE**: AM 4.1.0 upgrade to R2DBC 1.0, now the r2dbc drivers need to be in 1.x. Drivers in 0.x will not work anymore. 
+
+- [X] Default values for RDBMS connection pool have changed. (**warning**: timeout duration set to 0 doesn't mean infinite anymore, you have to define negative value)
+
 ### 4.0.0
 
 To ensure the compatibility between the AM product and the AM Helm Chart, the versioning of the latter is changed.
