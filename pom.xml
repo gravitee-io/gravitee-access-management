@@ -69,7 +69,6 @@
         <module>gravitee-am-authdevice-notifier</module>
         <module>gravitee-am-ciba-delegated-service</module>
         <module>gravitee-am-monitoring</module>
-        <module>gravitee-am-spring-web</module>
     </modules>
 
     <properties>

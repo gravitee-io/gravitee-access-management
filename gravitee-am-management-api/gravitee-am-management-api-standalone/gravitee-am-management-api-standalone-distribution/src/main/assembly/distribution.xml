@@ -84,7 +84,6 @@
                 <exclude>io.gravitee.am.identityprovider:gravitee-am-identityprovider-ldap-common:jar</exclude>
                 <exclude>io.gravitee.am.repository:gravitee-am-repository-mongodb-api:jar</exclude>
                 <exclude>io.gravitee.am.repository:gravitee-am-repository-jdbc-api:jar</exclude>
-                <exclude>io.gravitee.am:gravitee-am-spring-web:jar</exclude>
             </excludes>
             <useProjectArtifact>false</useProjectArtifact>
         </dependencySet>
@@ -93,18 +92,8 @@
             <unpack>false</unpack>
             <excludes>
                 <exclude>io.gravitee.*:*:*</exclude>
-                <exclude>org.springframework:spring-web:*</exclude>
                 <exclude>commons-logging:commons-logging:*</exclude>
             </excludes>
-            <!-- Used to not include transitive dependencies for runtime dependency (IDP plugins) -->
-            <scope>compile</scope>
-        </dependencySet>
-        <dependencySet>
-            <outputDirectory>/lib/ext</outputDirectory>
-            <unpack>false</unpack>
-            <includes>
-                <include>io.gravitee.am:gravitee-am-spring-web:*</include>
-            </includes>
             <!-- Used to not include transitive dependencies for runtime dependency (IDP plugins) -->
             <scope>compile</scope>
         </dependencySet>
