@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES6",
     "lib": ["es2020", "dom"],
-    "types": ["cypress", "node", "node-fetch"],
+    "types": ["cypress", "node"],
     "baseUrl": ".",
     "moduleResolution": "node",
     "paths": {
