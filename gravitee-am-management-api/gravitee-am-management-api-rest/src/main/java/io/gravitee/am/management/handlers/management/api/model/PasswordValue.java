@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.model;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

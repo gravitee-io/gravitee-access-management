@@ -16,8 +16,8 @@
 package io.gravitee.am.service.validators.dictionary;
 
 import javax.annotation.Nullable;
-import javax.validation.ConstraintValidator;
-import javax.validation.ConstraintValidatorContext;
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorContext;
 import java.util.Locale;
 import java.util.stream.Stream;
 

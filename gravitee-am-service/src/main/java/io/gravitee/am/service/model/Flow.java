@@ -18,7 +18,7 @@ package io.gravitee.am.service.model;
 import io.gravitee.am.model.flow.Step;
 import io.gravitee.am.model.flow.Type;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 import java.util.List;
 
 /**
