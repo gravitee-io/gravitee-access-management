@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit, ViewChild} from '@angular/core';
-import { MatInput } from '@angular/material/input';
-import {ActivatedRoute, Router} from '@angular/router';
-import {DomainService} from '../../../services/domain.service';
-import {DialogService} from '../../../services/dialog.service';
-import {SnackbarService} from '../../../services/snackbar.service';
-import {AuthService} from '../../../services/auth.service';
-import {AlertService} from "../../../services/alert.service";
-import {tap} from "rxjs/operators";
-import {forkJoin, Observable} from 'rxjs';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { tap } from 'rxjs/operators';
+import { forkJoin, Observable } from 'rxjs';
+
+import { DomainService } from '../../../services/domain.service';
+import { DialogService } from '../../../services/dialog.service';
+import { SnackbarService } from '../../../services/snackbar.service';
+import { AuthService } from '../../../services/auth.service';
+import { AlertService } from '../../../services/alert.service';
 
 export interface Tag {
   id: string;
@@ -32,7 +32,7 @@ export interface Tag {
 @Component({
   selector: 'app-domain-alert-general',
   templateUrl: './general.component.html',
-  styleUrls: ['./general.component.scss']
+  styleUrls: ['./general.component.scss'],
 })
 export class DomainAlertGeneralComponent implements OnInit {
   formChanged = false;
@@ -42,14 +42,15 @@ export class DomainAlertGeneralComponent implements OnInit {
   alertEnabled: boolean;
   alertNotifiers: any;
 
-  constructor(private domainService: DomainService,
-              private dialogService: DialogService,
-              private snackbarService: SnackbarService,
-              private router: Router,
-              private route: ActivatedRoute,
-              private authService: AuthService,
-              private alertService: AlertService) {
-  }
+  constructor(
+    private domainService: DomainService,
+    private dialogService: DialogService,
+    private snackbarService: SnackbarService,
+    private router: Router,
+    private route: ActivatedRoute,
+    private authService: AuthService,
+    private alertService: AlertService,
+  ) {}
 
   ngOnInit() {
     this.domain = this.route.snapshot.data['domain'];
@@ -60,104 +61,103 @@ export class DomainAlertGeneralComponent implements OnInit {
   }
 
   loadAlertTriggers() {
-    this.alertService.getAlertTriggers(this.domain.id).subscribe(response => {
+    this.alertService.getAlertTriggers(this.domain.id).subscribe((response) => {
       this.alertTriggers = this.buildAlertTriggers(response);
-    })
+    });
   }
 
   update() {
     let patchAlertSettings;
-    let patchAlertTriggers
 
     if (this.domain.alertEnabled !== this.alertEnabled) {
       // Alert has been enabled or disabled. Need to call the api.
       patchAlertSettings = this.domainService.patchAlertSettings(this.domain.id, this.domain).pipe(
-        tap(response => {
+        tap((response) => {
           this.domain = response;
           this.domainService.notify(this.domain);
-        }));
+        }),
+      );
     } else {
-      patchAlertSettings = new Observable(subscriber => {
+      patchAlertSettings = new Observable((subscriber) => {
         subscriber.next(this.domain);
         subscriber.complete();
       });
     }
 
-    let alertTriggersToPatch = this.alertTriggers.filter(alertTrigger => alertTrigger.available);
+    const alertTriggersToPatch = this.alertTriggers.filter((alertTrigger) => alertTrigger.available);
 
     // We assume to always send all available alert triggers on the domain. This ensures they are always in sync.
-    patchAlertTriggers = this.alertService.patchAlertTriggers(this.domain.id, alertTriggersToPatch);
+    const patchAlertTriggers = this.alertService.patchAlertTriggers(this.domain.id, alertTriggersToPatch);
 
-    forkJoin([patchAlertSettings, patchAlertTriggers])
-      .subscribe(responses => {
-        this.domain = responses[0];
-        this.alertEnabled = this.domain.alertEnabled;
-        this.domainService.notify(this.domain);
-        this.formChanged = false;
-        this.snackbarService.open('Domain alerts updated');
-      })
+    forkJoin([patchAlertSettings, patchAlertTriggers]).subscribe((responses) => {
+      this.domain = responses[0];
+      this.alertEnabled = this.domain.alertEnabled;
+      this.domainService.notify(this.domain);
+      this.formChanged = false;
+      this.snackbarService.open('Domain alerts updated');
+    });
   }
 
   buildAlertTriggers(alertTriggers: any[]) {
-    let alertTriggerDefinitions = {
+    const alertTriggerDefinitions = {
       too_many_login_failures: {
         name: 'Too many login failures',
         description: 'Alert when the number of login failures is abnormally high',
         icon: 'account_box',
-        available: true
+        available: true,
       },
       risk_assessment: {
         name: 'Risk-based',
         description: 'Alert based on user behavior (new device, IP reputation, geo velocity)',
         icon: 'add_alert',
-        available: true
+        available: true,
       },
       too_many_reset_passwords: {
         name: 'Too many reset passwords',
         description: 'Alert when the number of reset passwords is abnormally high',
         icon: 'lock',
-        available: false
+        available: false,
       },
       too_many_locked_out_users: {
         name: 'Too many locked out users',
         description: 'Alert when then number of user lockouts is abnormally high',
         icon: 'lock_open',
-        available: false
+        available: false,
       },
       slow_user_signing: {
         name: 'Slow user signin',
         description: 'Alert when the user sign-in phase is unusually slow',
         icon: 'account_box',
-        available: false
+        available: false,
       },
       too_many_user_registrations: {
         name: 'Too many user registrations',
         description: 'Alert when the number of user registrations is abnormally high',
         icon: 'person_add',
-        available: false
-      }
-    }
+        available: false,
+      },
+    };
 
-    let allAlertTriggers = [];
+    const allAlertTriggers = [];
 
-    Object.keys(alertTriggerDefinitions).forEach(type => {
-      let alertTriggerDefinition = alertTriggerDefinitions[type];
+    Object.keys(alertTriggerDefinitions).forEach((type) => {
+      const alertTriggerDefinition = alertTriggerDefinitions[type];
       alertTriggerDefinition.type = type;
 
-      let alertTrigger = alertTriggers.find(alertTrigger => alertTrigger.type === type);
+      const alertTrigger = alertTriggers.find((alertTrigger) => alertTrigger.type === type);
 
       if (alertTrigger !== undefined) {
         allAlertTriggers.push(Object.assign(alertTriggerDefinition, alertTrigger));
       } else {
         allAlertTriggers.push(alertTriggerDefinition);
       }
-    })
+    });
     return allAlertTriggers;
   }
 
   getRowClass(row) {
     return {
-      'row-disabled': !row.available
+      'row-disabled': !row.available,
     };
   }
 

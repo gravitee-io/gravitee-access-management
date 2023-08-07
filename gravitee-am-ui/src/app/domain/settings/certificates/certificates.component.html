@@ -24,24 +24,19 @@
         Add new
       </a>
       <button mat-raised-button disabled="false" (click)="rotateCertificate()" [disabled]="preventRotateCertificate()">
-          Rotate system key
+        Rotate system key
       </button>
     </div>
 
-    <ngx-datatable class="material"
-                   [columnMode]="'flex'"
-                   [headerHeight]="40"
-                   [footerHeight]="50"
-                   [rowHeight]="50"
-                   [rows]='certificates'>
+    <ngx-datatable class="material" [columnMode]="'flex'" [headerHeight]="40" [footerHeight]="50" [rowHeight]="50" [rows]="certificates">
       <ngx-datatable-column name="Certificates" prop="name" [flexGrow]="2" [cellClass]="'certificate-name-cell'">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div class="certificate-header" fxLayout="row">
             <div class="certificate-icon">
-              <mat-icon>{{getCertificateTypeIcon(row.type)}}</mat-icon>
+              <mat-icon>{{ getCertificateTypeIcon(row.type) }}</mat-icon>
             </div>
             <div class="certificate-information">
-              <h3 title="{{row.name}}">{{row.name}}</h3>
+              <h3 title="{{ row.name }}">{{ row.name }}</h3>
             </div>
           </div>
         </ng-template>
@@ -56,17 +51,17 @@
       </ngx-datatable-column>
       <ngx-datatable-column name="Encryption" prop="name" [flexGrow]="1">
         <ng-template let-row="row" ngx-datatable-cell-template>
-            <div class="certificate-expiry" fxLayout="column">
-              <h3>{{displayType(row.type)}}</h3>
-            </div>
+          <div class="certificate-expiry" fxLayout="column">
+            <h3>{{ displayType(row.type) }}</h3>
+          </div>
         </ng-template>
       </ngx-datatable-column>
       <ngx-datatable-column name="Expires on" prop="expiresAt" [flexGrow]="2">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div class="certificate-expiry" fxLayout="row">
-            <h3>{{row.expiresAt |  date:'medium' }}</h3>
+            <h3>{{ row.expiresAt | date : 'medium' }}</h3>
             <span *ngIf="certificateWillExpire(row)">
-              <mat-icon class="warning" matTooltip="expiring in {{expireInDays(row.expiresAt)}} days">warning</mat-icon>
+              <mat-icon class="warning" matTooltip="expiring in {{ expireInDays(row.expiresAt) }} days">warning</mat-icon>
             </span>
             <span *ngIf="certificateIsExpired(row)">
               <mat-icon class="alert" matTooltip="expired">error</mat-icon>
@@ -80,7 +75,9 @@
       <ngx-datatable-column name="Used" [sortable]="false" [flexGrow]="1">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div class="certificate-simple-text" fxLayout="row">
-            <mat-chip-list><mat-chip matTooltip="{{getAppNames(row)}}">{{computeAppsLabel(row)}}</mat-chip></mat-chip-list>
+            <mat-chip-list
+              ><mat-chip matTooltip="{{ getAppNames(row) }}">{{ computeAppsLabel(row) }}</mat-chip></mat-chip-list
+            >
           </div>
         </ng-template>
       </ngx-datatable-column>
@@ -88,18 +85,24 @@
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div fxLayout="row" class="gv-table-cell-actions">
             <button mat-icon-button (click)="publicKey(row.id, $event)"><mat-icon matTooltip="Get public key">vpn_key</mat-icon></button>
-            <a mat-icon-button [routerLink]="[row.id]" *hasPermission="['domain_certificate_read']"><mat-icon matTooltip="Settings">settings</mat-icon></a>
-            <button *hasPermission="['domain_certificate_delete']" mat-icon-button (click)="delete(row.id, $event)"><mat-icon matTooltip="Delete">delete</mat-icon></button>
+            <a mat-icon-button [routerLink]="[row.id]" *hasPermission="['domain_certificate_read']"
+              ><mat-icon matTooltip="Settings">settings</mat-icon></a
+            >
+            <button *hasPermission="['domain_certificate_delete']" mat-icon-button (click)="delete(row.id, $event)">
+              <mat-icon matTooltip="Delete">delete</mat-icon>
+            </button>
           </div>
         </ng-template>
       </ngx-datatable-column>
     </ngx-datatable>
   </div>
 
-  <app-emptystate *ngIf="isEmpty"
-                  [message]="'Certificates will appear here'"
-                  [subMessage]="'Start creating a certificate'"
-                  [icon]="'vpn_key'"></app-emptystate>
+  <app-emptystate
+    *ngIf="isEmpty"
+    [message]="'Certificates will appear here'"
+    [subMessage]="'Start creating a certificate'"
+    [icon]="'vpn_key'"
+  ></app-emptystate>
 
   <div *hasPermission="['domain_certificate_create']" [ngClass]="'gv-add-button-center'">
     <a mat-fab color="primary" [routerLink]="['new']" *ngIf="isEmpty">

@@ -13,27 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, Input, OnInit} from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { JsonSchemaFormService } from '@ajsf/core';
-import {CertificateService} from "../../services/certificate.service";
-import {ActivatedRoute} from "@angular/router";
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'select-certificate-widget',
   template: `
     <div class="mat-input-flex mat-form-field-flex mat-form-field">
-        <mat-form-field style="margin-top: 10px" floatLabel="always">
-          <mat-label>{{ options?.title }}</mat-label>
-          <mat-select [(value)]="controlValue" (selectionChange)="updateValue($event)">
-            <mat-option>None</mat-option>
-            <mat-option [attr.selected]="certificate?.id === controlValue"
-                        *ngFor="let certificate of this.certificates"
-                        [value]="certificate.id">
-              {{certificate.name}}
-            </mat-option>
-          </mat-select>
-          <mat-hint class="mat-form-field-hint-end">{{options?.description}}</mat-hint>
-        </mat-form-field>
+      <mat-form-field style="margin-top: 10px" floatLabel="always">
+        <mat-label>{{ options?.title }}</mat-label>
+        <mat-select [(value)]="controlValue" (selectionChange)="updateValue($event)">
+          <mat-option>None</mat-option>
+          <mat-option
+            [attr.selected]="certificate?.id === controlValue"
+            *ngFor="let certificate of this.certificates"
+            [value]="certificate.id"
+          >
+            {{ certificate.name }}
+          </mat-option>
+        </mat-select>
+        <mat-hint class="mat-form-field-hint-end">{{ options?.description }}</mat-hint>
+      </mat-form-field>
     </div>
   `,
 })
@@ -45,10 +46,7 @@ export class MaterialCertificateComponent implements OnInit {
   certificates: any;
   controlValue: any;
 
-  constructor(
-    private jsf: JsonSchemaFormService,
-    private route: ActivatedRoute
-  ) { }
+  constructor(private jsf: JsonSchemaFormService, private route: ActivatedRoute) {}
 
   ngOnInit() {
     this.certificates = this.route.snapshot.data['certificates'];

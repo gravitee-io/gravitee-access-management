@@ -13,26 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Injectable } from "@angular/core";
-import { MatSnackBar, MatSnackBarConfig } from "@angular/material/snack-bar";
-import { SnackbarComponent } from "../components/snackbar/snackbar.component";
+import { Injectable } from '@angular/core';
+import { MatSnackBar, MatSnackBarConfig } from '@angular/material/snack-bar';
+
+import { SnackbarComponent } from '../components/snackbar/snackbar.component';
 
 @Injectable()
 export class SnackbarService {
-
-  constructor(private snackBar: MatSnackBar) { }
+  constructor(private snackBar: MatSnackBar) {}
 
   open(message: string) {
-    let config = new MatSnackBarConfig();
+    const config = new MatSnackBarConfig();
     config.duration = 1500;
     this.snackBar.open(message, '', config);
   }
 
   openFromComponent(title: string, errors: any) {
-    let config = new MatSnackBarConfig();
+    const config = new MatSnackBarConfig();
     config.duration = 3000;
-    let snackBarRef = this.snackBar.openFromComponent(SnackbarComponent, config);
+    const snackBarRef = this.snackBar.openFromComponent(SnackbarComponent, config);
     snackBarRef.instance.title = title;
-    snackBarRef.instance.errors = errors
+    snackBarRef.instance.errors = errors;
   }
 }

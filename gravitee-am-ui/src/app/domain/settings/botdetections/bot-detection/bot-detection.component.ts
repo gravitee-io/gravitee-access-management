@@ -13,18 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
-import {OrganizationService} from '../../../../services/organization.service';
-import {SnackbarService} from '../../../../services/snackbar.service';
-import {DialogService} from '../../../../services/dialog.service';
-import {AuthService} from '../../../../services/auth.service';
-import { BotDetectionService } from 'app/services/bot-detection.service';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { filter, switchMap, tap } from 'rxjs/operators';
+
+import { BotDetectionService } from '../../../../services/bot-detection.service';
+import { OrganizationService } from '../../../../services/organization.service';
+import { SnackbarService } from '../../../../services/snackbar.service';
+import { DialogService } from '../../../../services/dialog.service';
+import { AuthService } from '../../../../services/auth.service';
 
 @Component({
   selector: 'app-bot-detection',
   templateUrl: './bot-detection.component.html',
-  styleUrls: ['./bot-detection.component.scss']
+  styleUrls: ['./bot-detection.component.scss'],
 })
 export class BotDetectionComponent implements OnInit {
   private domainId: string;
@@ -37,15 +39,17 @@ export class BotDetectionComponent implements OnInit {
   updatebotDetectionConfiguration: any;
   editMode: boolean;
 
-  codeMirrorConfig: any = { lineNumbers: false, readOnly: true, lineWrapping: true};
+  codeMirrorConfig: any = { lineNumbers: false, readOnly: true, lineWrapping: true };
 
-  constructor(private route: ActivatedRoute,
-              private router: Router,
-              private organizationService: OrganizationService,
-              private botDetectionService: BotDetectionService,
-              private snackbarService: SnackbarService,
-              private dialogService: DialogService,
-              private authService: AuthService) { }
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private organizationService: OrganizationService,
+    private botDetectionService: BotDetectionService,
+    private snackbarService: SnackbarService,
+    private dialogService: DialogService,
+    private authService: AuthService,
+  ) {}
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
@@ -54,19 +58,19 @@ export class BotDetectionComponent implements OnInit {
     this.updatebotDetectionConfiguration = this.botDetectionConfiguration;
     this.editMode = this.authService.hasPermissions(['domain_bot_detection_update']);
 
-    this.organizationService.botDetectionsSchema(this.botDetection.type).subscribe(data => {
+    this.organizationService.botDetectionsSchema(this.botDetection.type).subscribe((data) => {
       this.botDetectionSchema = data;
     });
   }
 
   update() {
     this.botDetection.configuration = JSON.stringify(this.updatebotDetectionConfiguration);
-    this.botDetectionService.update(this.domainId, this.botDetection.id, this.botDetection).subscribe(data => {
+    this.botDetectionService.update(this.domainId, this.botDetection.id, this.botDetection).subscribe((data) => {
       this.botDetection = data;
       this.botDetectionConfiguration = JSON.parse(this.botDetection.configuration);
       this.updatebotDetectionConfiguration = this.botDetectionConfiguration;
       this.snackbarService.open('Bot detection updated');
-    })
+    });
   }
 
   enablebotDetectionUpdate(configurationWrapper) {
@@ -81,14 +85,15 @@ export class BotDetectionComponent implements OnInit {
     event.preventDefault();
     this.dialogService
       .confirm('Delete bot detection', 'Are you sure you want to delete this Bot Detection ?')
-      .subscribe(res => {
-        if (res) {
-          this.botDetectionService.delete(this.domainId, this.botDetection.id).subscribe(() => {
-            this.snackbarService.open('Bot detection deleted');
-            this.router.navigate(['..'], { relativeTo: this.route });
-          });
-        }
-      });
+      .pipe(
+        filter((res) => res),
+        switchMap(() => this.botDetectionService.delete(this.domainId, this.botDetection.id)),
+        tap(() => {
+          this.snackbarService.open('Bot detection deleted');
+          this.router.navigate(['..'], { relativeTo: this.route });
+        }),
+      )
+      .subscribe();
   }
 
   valueCopied(message: string) {
@@ -96,29 +101,34 @@ export class BotDetectionComponent implements OnInit {
   }
 
   getSnippetImportJS() {
-    if (this.botDetection.type == 'google-recaptcha-v3-am-bot-detection') {
-      return '<script src="https://www.google.com/recaptcha/api.js?render=' + this.botDetectionConfiguration.siteKey + '"></script>'
+    if (this.botDetection.type === 'google-recaptcha-v3-am-bot-detection') {
+      return '<script src="https://www.google.com/recaptcha/api.js?render=' + this.botDetectionConfiguration.siteKey + '"></script>';
     }
   }
 
   getSnippetCallService() {
-    if (this.botDetection.type == 'google-recaptcha-v3-am-bot-detection') {
-      return `
+    if (this.botDetection.type === 'google-recaptcha-v3-am-bot-detection') {
+      return (
+        `
 <script>
 function onClick(event) {
   event.preventDefault();
   grecaptcha.ready(function() {
-    grecaptcha.execute('`+ this.botDetectionConfiguration.siteKey +`', {action: 'submit'}).then(function(token) {
+    grecaptcha.execute('` +
+        this.botDetectionConfiguration.siteKey +
+        `', {action: 'submit'}).then(function(token) {
       // Add your logic to submit
       // to your backend server here
       // and assign the token variable
-      // to the configured parameter ` + this.botDetectionConfiguration.tokenParameterName + `
+      // to the configured parameter ` +
+        this.botDetectionConfiguration.tokenParameterName +
+        `
     });
   });
 }
 </script>
     `
+      );
     }
   }
-
 }

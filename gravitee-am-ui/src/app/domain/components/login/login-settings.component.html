@@ -18,12 +18,10 @@
 <form (ngSubmit)="save()" fxLayout="column" #loginForm="ngForm">
   <div *ngIf="inheritMode" fxLayout="column" class="gv-form-section">
     <div fxLayout="column">
-        <mat-slide-toggle
-        (change)="enableInheritMode($event)"
-        [checked]="isInherited()" [disabled]="readonly">
+      <mat-slide-toggle (change)="enableInheritMode($event)" [checked]="isInherited()" [disabled]="readonly">
         Inherit configuration
       </mat-slide-toggle>
-      <mat-hint style="font-size: 75%;">Inherit Login settings from the security domain.</mat-hint>
+      <mat-hint style="font-size: 75%">Inherit Login settings from the security domain.</mat-hint>
     </div>
   </div>
 
@@ -34,36 +32,42 @@
         <mat-divider></mat-divider>
       </div>
       <div fxLayout="column">
-        <mat-slide-toggle
-          (change)="enableRegistration($event)"
-          [checked]="isRegistrationEnabled()" [disabled]="readonly">
+        <mat-slide-toggle (change)="enableRegistration($event)" [checked]="isRegistrationEnabled()" [disabled]="readonly">
           User registration
         </mat-slide-toggle>
-        <mat-hint style="font-size: 75%;">Enable self user registration. A link to the create account service will be available through the login page.</mat-hint>
+        <mat-hint style="font-size: 75%"
+          >Enable self user registration. A link to the create account service will be available through the login page.</mat-hint
+        >
       </div>
-      <div fxLayout="column" style="margin-top: 10px;">
-        <mat-slide-toggle
-          (change)="enableForgotPassword($event)"
-          [checked]="isForgotPasswordEnabled()" [disabled]="readonly">
+      <div fxLayout="column" style="margin-top: 10px">
+        <mat-slide-toggle (change)="enableForgotPassword($event)" [checked]="isForgotPasswordEnabled()" [disabled]="readonly">
           Forgot password
         </mat-slide-toggle>
-        <mat-hint style="font-size: 75%;">Enable Self-service password reset (SSPR) that allows users who have forgotten their password to ask for a new one.</mat-hint>
+        <mat-hint style="font-size: 75%"
+          >Enable Self-service password reset (SSPR) that allows users who have forgotten their password to ask for a new one.</mat-hint
+        >
       </div>
-      <div fxLayout="column" style="margin-top: 10px;">
+      <div fxLayout="column" style="margin-top: 10px">
         <mat-slide-toggle
           (change)="enableHideForm($event)"
-          [checked]="isHideFormEnabled()" [disabled]="readonly || isIdentifierFirstLoginEnabled()">
+          [checked]="isHideFormEnabled()"
+          [disabled]="readonly || isIdentifierFirstLoginEnabled()"
+        >
           Hide login form
         </mat-slide-toggle>
-        <mat-hint style="font-size: 75%;">Hide the login form to only display external Identity Providers (if only one provider is enabled, the login page is skipped to redirect to the login page of the identity provider).</mat-hint>
+        <mat-hint style="font-size: 75%"
+          >Hide the login form to only display external Identity Providers (if only one provider is enabled, the login page is skipped to
+          redirect to the login page of the identity provider).</mat-hint
+        >
       </div>
-      <div fxLayout="column" style="margin-top: 10px;">
-        <mat-slide-toggle
-          (change)="enableIdentifierFirstLogin($event)"
-          [checked]="isIdentifierFirstLoginEnabled()" [disabled]="readonly">
+      <div fxLayout="column" style="margin-top: 10px">
+        <mat-slide-toggle (change)="enableIdentifierFirstLogin($event)" [checked]="isIdentifierFirstLoginEnabled()" [disabled]="readonly">
           Identifier-first login
         </mat-slide-toggle>
-        <mat-hint style="font-size: 75%;">Enables Identifier-first login (after entering the login, the user will be either asked to sign-in to an internal identity provider or will be redirected to an external provider regarding its domain whitelist).</mat-hint>
+        <mat-hint style="font-size: 75%"
+          >Enables Identifier-first login (after entering the login, the user will be either asked to sign-in to an internal identity
+          provider or will be redirected to an external provider regarding its domain whitelist).</mat-hint
+        >
       </div>
     </div>
     <div class="gv-form-section">
@@ -72,52 +76,67 @@
         <mat-divider></mat-divider>
       </div>
       <div fxLayout="column">
-        <mat-slide-toggle
-          (change)="enablePasswordless($event)"
-          [checked]="isPasswordlessEnabled()" [disabled]="readonly">
+        <mat-slide-toggle (change)="enablePasswordless($event)" [checked]="isPasswordlessEnabled()" [disabled]="readonly">
           Enable passwordless
         </mat-slide-toggle>
-        <mat-hint style="font-size: 75%;">Enable passwordless authentication (WebAuthn / FIDO).</mat-hint>
+        <mat-hint style="font-size: 75%">Enable passwordless authentication (WebAuthn / FIDO).</mat-hint>
       </div>
-      <div fxLayout="column" style="margin-top: 10px;">
+      <div fxLayout="column" style="margin-top: 10px">
         <mat-slide-toggle
           (change)="enablePasswordlessRememberDevice($event)"
-          [checked]="isPasswordlessRememberDeviceEnabled()" [disabled]="readonly || !isPasswordlessEnabled()">
+          [checked]="isPasswordlessRememberDeviceEnabled()"
+          [disabled]="readonly || !isPasswordlessEnabled()"
+        >
           Passwordless Device Recognition
         </mat-slide-toggle>
-        <mat-hint style="font-size: 75%;">Enable passwordless remember device to improve user experience. The login page is skipped to prompt directly the passwordless login page if the user has an enrolled device.</mat-hint>
+        <mat-hint style="font-size: 75%"
+          >Enable passwordless remember device to improve user experience. The login page is skipped to prompt directly the passwordless
+          login page if the user has an enrolled device.</mat-hint
+        >
       </div>
-      <div fxLayout="column" style="margin-top: 10px;">
+      <div fxLayout="column" style="margin-top: 10px">
         <mat-slide-toggle
           (change)="enablePasswordlessEnforcePassword($event)"
-          [checked]="isPasswordlessEnforcePasswordEnabled()" [disabled]="readonly || !isPasswordlessEnabled()">
+          [checked]="isPasswordlessEnforcePasswordEnabled()"
+          [disabled]="readonly || !isPasswordlessEnabled()"
+        >
           Passwordless Enforce Password usage
         </mat-slide-toggle>
-        <mat-hint style="font-size: 75%;">Force user to sign in with its credentials (password or external IdP) periodically.</mat-hint>
+        <mat-hint style="font-size: 75%">Force user to sign in with its credentials (password or external IdP) periodically.</mat-hint>
       </div>
-      <div fxLayout="column" style="margin-top: 10px;">
+      <div fxLayout="column" style="margin-top: 10px">
         <mat-form-field appearance="outline" floatLabel="always">
           <mat-label>Max passwordless usage (seconds)</mat-label>
-          <input matInput type="number" name="expiryDuration" required
-                 [ngModel]="loginSettings.passwordlessEnforcePasswordMaxAge"
-                 (ngModelChange)="setEnforcePasswordMaxAge($event)"
-                 [min]="0"
-                 [disabled]="readonly || !isPasswordlessEnforcePasswordEnabled()">
-          <mat-hint>Specifies the allowable elapsed time in seconds since the last time the End-User was actively authenticated with credentials.</mat-hint>
+          <input
+            matInput
+            type="number"
+            name="expiryDuration"
+            required
+            [ngModel]="loginSettings.passwordlessEnforcePasswordMaxAge"
+            (ngModelChange)="setEnforcePasswordMaxAge($event)"
+            [min]="0"
+            [disabled]="readonly || !isPasswordlessEnforcePasswordEnabled()"
+          />
+          <mat-hint
+            >Specifies the allowable elapsed time in seconds since the last time the End-User was actively authenticated with
+            credentials.</mat-hint
+          >
         </mat-form-field>
       </div>
-      <div fxLayout="column" style="margin-top: 10px;">
+      <div fxLayout="column" style="margin-top: 10px">
         <mat-slide-toggle
           (change)="enablePasswordlessDeviceNaming($event)"
-          [checked]="isPasswordlessDeviceNamingEnabled()" [disabled]="readonly || !isPasswordlessEnabled()">
+          [checked]="isPasswordlessDeviceNamingEnabled()"
+          [disabled]="readonly || !isPasswordlessEnabled()"
+        >
           Passwordless Device Naming
         </mat-slide-toggle>
-        <mat-hint style="font-size: 75%;">Ask users to name their devices to later identify them.</mat-hint>
+        <mat-hint style="font-size: 75%">Ask users to name their devices to later identify them.</mat-hint>
       </div>
     </div>
   </div>
 
   <div fxLayout="row" *ngIf="!readonly">
-    <button mat-raised-button color="primary" [disabled]="(!formChanged || !isFormValid())" type="submit">SAVE</button>
+    <button mat-raised-button color="primary" [disabled]="!formChanged || !isFormValid()" type="submit">SAVE</button>
   </div>
 </form>

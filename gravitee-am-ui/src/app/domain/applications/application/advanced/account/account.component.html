@@ -18,7 +18,12 @@
 <div>
   <div>
     <div fxFlex="70">
-      <app-account-settings [accountSettings]="accountSettings" [inheritMode]="true" [readonly]="readonly" (onSavedAccountSettings)="updateAccountSettings($event)"></app-account-settings>
+      <app-account-settings
+        [accountSettings]="accountSettings"
+        [inheritMode]="true"
+        [readonly]="readonly"
+        (onSavedAccountSettings)="updateAccountSettings($event)"
+      ></app-account-settings>
     </div>
     <div class="gv-page-description" fxFlex>
       <h3>User Accounts settings</h3>

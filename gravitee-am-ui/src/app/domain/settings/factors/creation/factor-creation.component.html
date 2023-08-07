@@ -30,7 +30,7 @@
         </ng-template>
         <factor-creation-step1 [factor]="factor"></factor-creation-step1>
         <div fxLayout="row" fxLayoutAlign="end end" class="stepper-button-zone">
-          <button mat-raised-button color="primary" matStepperNext type="button"[disabled]="!factor.type">Next</button>
+          <button mat-raised-button color="primary" matStepperNext type="button" [disabled]="!factor.type">Next</button>
         </div>
       </mat-step>
       <mat-step>
@@ -38,7 +38,11 @@
           <h5>Settings</h5>
           <small>Factor configuration</small>
         </ng-template>
-          <factor-creation-step2 *ngIf="stepper.selectedIndex == 1" [factor]="factor" [(configurationIsValid)]="configurationIsValid"></factor-creation-step2>
+        <factor-creation-step2
+          *ngIf="stepper.selectedIndex == 1"
+          [factor]="factor"
+          [(configurationIsValid)]="configurationIsValid"
+        ></factor-creation-step2>
         <div class="stepper-button-zone">
           <button mat-raised-button matStepperPrevious type="button">Back</button>
           <span fxFlex></span>

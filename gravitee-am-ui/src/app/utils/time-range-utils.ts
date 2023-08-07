@@ -15,21 +15,14 @@
  */
 export type TimeRangeId = '1d' | '1h' | '12h' | '7d' | '30d' | '90d';
 
-export type UnitOfTime = 'years'
-  | 'months'
-  | 'weeks'
-  | 'days'
-  | 'hours'
-  | 'minutes'
-  | 'seconds'
-  | 'milliseconds'
+export type UnitOfTime = 'years' | 'months' | 'weeks' | 'days' | 'hours' | 'minutes' | 'seconds' | 'milliseconds';
 
 export interface TimeRange {
-  id: TimeRangeId,
-  name: string,
-  value: number,
-  unit: UnitOfTime,
-  interval: number
+  id: TimeRangeId;
+  name: string;
+  value: number;
+  unit: UnitOfTime;
+  interval: number;
 }
 
 export const defaultTimeRangeId: TimeRangeId = '1d';

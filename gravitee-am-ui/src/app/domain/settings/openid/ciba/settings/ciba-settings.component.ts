@@ -13,17 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute} from "@angular/router";
-import { AuthService } from 'app/services/auth.service';
-import { DeviceNotifiersService } from 'app/services/device-notifiers.service';
-import { DomainService } from 'app/services/domain.service';
-import { SnackbarService } from 'app/services/snackbar.service';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+
+import { AuthService } from '../../../../../services/auth.service';
+import { DeviceNotifiersService } from '../../../../../services/device-notifiers.service';
+import { DomainService } from '../../../../../services/domain.service';
+import { SnackbarService } from '../../../../../services/snackbar.service';
 
 @Component({
   selector: 'app-oidc-ciba-settings',
   templateUrl: './ciba-settings.component.html',
-  styleUrls: ['./ciba-settings.component.scss']
+  styleUrls: ['./ciba-settings.component.scss'],
 })
 export class CibaSettingsComponent implements OnInit {
   domainId: string;
@@ -33,12 +34,13 @@ export class CibaSettingsComponent implements OnInit {
   formChanged = false;
   editMode: boolean;
 
-  constructor(private domainService: DomainService,
-              private notifierService: DeviceNotifiersService,
-              private snackbarService: SnackbarService,
-              private authService: AuthService,
-              private route: ActivatedRoute) {
-  }
+  constructor(
+    private domainService: DomainService,
+    private notifierService: DeviceNotifiersService,
+    private snackbarService: SnackbarService,
+    private authService: AuthService,
+    private route: ActivatedRoute,
+  ) {}
 
   ngOnInit() {
     this.domain = this.route.snapshot.data['domain'];
@@ -46,34 +48,34 @@ export class CibaSettingsComponent implements OnInit {
     this.editMode = this.authService.hasPermissions(['domain_openid_update']);
     if (!this.domain.oidc.cibaSettings) {
       this.domain.oidc.cibaSettings = {
-        authReqExpiry: 600, 
-        tokenReqInterval: 5, 
+        authReqExpiry: 600,
+        tokenReqInterval: 5,
         bindingMessageLength: 256,
-        deviceNotifiers: []
+        deviceNotifiers: [],
       };
-    } else if (this.domain.oidc.cibaSettings.deviceNotifiers && this.domain.oidc.cibaSettings.deviceNotifiers.length > 0){
-      this.selectedDeviceNotifier = this.domain.oidc.cibaSettings.deviceNotifiers[0].id 
+    } else if (this.domain.oidc.cibaSettings.deviceNotifiers && this.domain.oidc.cibaSettings.deviceNotifiers.length > 0) {
+      this.selectedDeviceNotifier = this.domain.oidc.cibaSettings.deviceNotifiers[0].id;
     }
 
     if (this.authService.hasPermissions(['domain_authdevice_notifier_read'])) {
-      this.notifierService.findByDomain(this.domainId).subscribe( data => {
-        console.debug("Authentication Device Notifiers available for CIBA settings", data)
+      this.notifierService.findByDomain(this.domainId).subscribe((data) => {
         this.deviceNotifiers = data;
       });
     }
   }
 
   save() {
-
-    if (this.selectedDeviceNotifier && this.selectedDeviceNotifier != "") {
-      this.domain.oidc.cibaSettings['deviceNotifiers'] = [{
-        'id' : this.selectedDeviceNotifier
-      }];
+    if (this.selectedDeviceNotifier && this.selectedDeviceNotifier !== '') {
+      this.domain.oidc.cibaSettings['deviceNotifiers'] = [
+        {
+          id: this.selectedDeviceNotifier,
+        },
+      ];
     } else {
       this.domain.oidc.cibaSettings['deviceNotifiers'] = [];
     }
 
-    this.domainService.patchOpenidDCRSettings(this.domainId, this.domain).subscribe(data => {
+    this.domainService.patchOpenidDCRSettings(this.domainId, this.domain).subscribe((data) => {
       this.domain = data;
       this.formChanged = false;
       this.snackbarService.open('OpenID Profile configuration updated');
@@ -95,8 +97,8 @@ export class CibaSettingsComponent implements OnInit {
   isCIBAEnabled() {
     return this.domain.oidc.cibaSettings && this.domain.oidc.cibaSettings.enabled;
   }
-  
-  modelChanged(event) {
+
+  modelChanged() {
     this.formChanged = true;
   }
 }

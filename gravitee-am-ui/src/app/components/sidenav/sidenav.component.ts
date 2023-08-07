@@ -13,21 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnDestroy, OnInit, Pipe, PipeTransform} from '@angular/core';
-import {ActivatedRoute, NavigationEnd, Router} from '@angular/router';
-import {SidenavService} from './sidenav.service';
-import {AppConfig} from '../../../config/app.config';
-import {Subscription} from 'rxjs';
-import {NavigationService} from "../../services/navigation.service";
-import {MatSelectChange} from "@angular/material/select";
-import {EnvironmentService} from "../../services/environment.service";
-import {AuthService} from "../../services/auth.service";
-import {filter} from 'rxjs/operators';
+import { Component, OnDestroy, OnInit, Pipe, PipeTransform } from '@angular/core';
+import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
+import { Subscription } from 'rxjs';
+import { filter } from 'rxjs/operators';
+
+import { SidenavService } from './sidenav.service';
+
+import { AppConfig } from '../../../config/app.config';
+import { NavigationService } from '../../services/navigation.service';
+import { EnvironmentService } from '../../services/environment.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'gv-sidenav',
   templateUrl: './sidenav.component.html',
-  styleUrls: ['./sidenav.component.scss']
+  styleUrls: ['./sidenav.component.scss'],
 })
 export class SidenavComponent implements OnInit, OnDestroy {
   private environmentSubscription: Subscription;
@@ -37,40 +38,41 @@ export class SidenavComponent implements OnInit, OnDestroy {
   reducedMode = false;
   isGlobalSettings = false;
   topMenuItems: any[] = [];
-  footerMenuItems: any[] = [{
-    label: 'Organization',
-    path: '/settings',
-    icon: 'gio:building',
-    tooltip: 'Organization settings'
-  }];
+  footerMenuItems: any[] = [
+    {
+      label: 'Organization',
+      path: '/settings',
+      icon: 'gio:building',
+      tooltip: 'Organization settings',
+    },
+  ];
   navSubscription: Subscription;
   itemsSubscription: Subscription;
   currentEnvironment: any;
   environments: any[] = [];
   private rawEnvironments: any[] = [];
 
-  constructor(private router: Router,
-              private route: ActivatedRoute,
-              private navigationService: NavigationService,
-              private sidenavService: SidenavService,
-              private environmentService: EnvironmentService,
-              private authService: AuthService) {
-  }
+  constructor(
+    private router: Router,
+    private route: ActivatedRoute,
+    private navigationService: NavigationService,
+    private sidenavService: SidenavService,
+    private environmentService: EnvironmentService,
+    private authService: AuthService,
+  ) {}
 
   ngOnInit() {
     this.initEnvironments();
 
-    this.environmentSubscription = this.environmentService.currentEnvironmentObs$.subscribe(environment => {
+    this.environmentSubscription = this.environmentService.currentEnvironmentObs$.subscribe((environment) => {
       this.currentEnvironment = environment;
     });
 
-    this.navSubscription = this.router.events.pipe(filter(evt => evt instanceof NavigationEnd))
-      .subscribe((evt: NavigationEnd) => {
-        this.isGlobalSettings = evt.urlAfterRedirects.startsWith('/settings');
-      });
+    this.navSubscription = this.router.events.pipe(filter((evt) => evt instanceof NavigationEnd)).subscribe((evt: NavigationEnd) => {
+      this.isGlobalSettings = evt.urlAfterRedirects.startsWith('/settings');
+    });
 
-    this.itemsSubscription = this.navigationService.topMenuItemsObs$
-      .subscribe(items => this.topMenuItems = items);
+    this.itemsSubscription = this.navigationService.topMenuItemsObs$.subscribe((items) => (this.topMenuItems = items));
   }
 
   ngOnDestroy() {
@@ -85,7 +87,7 @@ export class SidenavComponent implements OnInit, OnDestroy {
   }
 
   switchEnvironment($event: any) {
-    const currentEnvironment = this.rawEnvironments.find(element => element.id === $event);
+    const currentEnvironment = this.rawEnvironments.find((element) => element.id === $event);
     this.environmentService.setCurrentEnvironment(currentEnvironment);
     this.router.navigate(['/', 'environments', currentEnvironment.hrids[0]]);
   }
@@ -99,7 +101,7 @@ export class SidenavComponent implements OnInit, OnDestroy {
   }
 
   private initEnvironments() {
-    this.environmentService.getAllEnvironments().subscribe(environments => {
+    this.environmentService.getAllEnvironments().subscribe((environments) => {
       this.rawEnvironments = environments;
       this.environments = environments.map((env) => ({ value: env.id, displayValue: env.name }));
     });
@@ -108,13 +110,13 @@ export class SidenavComponent implements OnInit, OnDestroy {
 
 @Pipe({
   name: 'displayableItemFilter',
-  pure: false
+  pure: false,
 })
 export class DisplayableItemPipe implements PipeTransform {
   transform(items: any[]): any {
     if (!items || !filter) {
       return items;
     }
-    return items.filter(item => item.display);
+    return items.filter((item) => item.display);
   }
 }

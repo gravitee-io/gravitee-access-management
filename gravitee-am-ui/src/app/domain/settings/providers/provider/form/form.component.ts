@@ -13,39 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit, Input, EventEmitter, Output, OnChanges, SimpleChanges } from '@angular/core';
-import {MaterialCertificateComponent} from "../../../../../components/json-schema-form/material-certificate-component";
+import { Component, Input, EventEmitter, Output, OnChanges, SimpleChanges } from '@angular/core';
+
+import { MaterialCertificateComponent } from '../../../../../components/json-schema-form/material-certificate-component';
 
 @Component({
   selector: 'provider-form',
   templateUrl: './form.component.html',
-  styleUrls: ['./form.component.scss']
+  styleUrls: ['./form.component.scss'],
 })
-export class ProviderFormComponent implements OnInit, OnChanges {
+export class ProviderFormComponent implements OnChanges {
   @Input('providerConfiguration') configuration: any = {};
   @Input('providerSchema') providerSchema: any;
   @Output() configurationCompleted = new EventEmitter<any>();
-  displayForm: boolean = false;
+  displayForm = false;
   data: any = {};
   customWidgets = {
-    graviteeCertificate: MaterialCertificateComponent
+    graviteeCertificate: MaterialCertificateComponent,
   };
-
-  constructor() { }
-
-  ngOnInit() {
-  }
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes.providerSchema) {
-      let _providerSchema = changes.providerSchema.currentValue;
+      const _providerSchema = changes.providerSchema.currentValue;
       if (_providerSchema && _providerSchema.id) {
         this.displayForm = true;
       }
     }
 
     if (changes.configuration) {
-      let _providerConfiguration = changes.configuration.currentValue;
+      const _providerConfiguration = changes.configuration.currentValue;
       if (_providerConfiguration) {
         this.data = _providerConfiguration;
       }
@@ -57,7 +53,7 @@ export class ProviderFormComponent implements OnInit, OnChanges {
   }
 
   isValid(isValid: boolean) {
-    let configurationWrapper = { 'isValid' : isValid, 'configuration': this.configuration};
+    const configurationWrapper = { isValid: isValid, configuration: this.configuration };
     this.configurationCompleted.emit(configurationWrapper);
   }
 }

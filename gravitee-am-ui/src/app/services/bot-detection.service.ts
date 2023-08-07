@@ -15,36 +15,36 @@
  */
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { from, Observable } from 'rxjs';
+import { Observable } from 'rxjs';
+
 import { AppConfig } from '../../config/app.config';
 
 @Injectable()
 export class BotDetectionService {
   private botDetectionsURL = AppConfig.settings.domainBaseURL;
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
-  findByDomain(domainId): Observable<any>  {
+  findByDomain(domainId): Observable<any> {
     return this.http.get<any>(this.botDetectionsURL + domainId + '/bot-detections');
   }
 
-  get(domainId, id): Observable<any>  {
+  get(domainId, id): Observable<any> {
     return this.http.get<any>(this.botDetectionsURL + domainId + '/bot-detections/' + id);
   }
 
-  create(domainId, factor): Observable<any>  {
+  create(domainId, factor): Observable<any> {
     return this.http.post<any>(this.botDetectionsURL + domainId + '/bot-detections', factor);
   }
 
-  update(domainId, id, dection): Observable<any>  {
+  update(domainId, id, dection): Observable<any> {
     return this.http.put<any>(this.botDetectionsURL + domainId + '/bot-detections/' + id, {
-      'name' : dection.name,
-      'configuration' : dection.configuration
+      name: dection.name,
+      configuration: dection.configuration,
     });
   }
 
-  delete(domainId, id): Observable<any>  {
+  delete(domainId, id): Observable<any> {
     return this.http.delete<any>(this.botDetectionsURL + domainId + '/bot-detections/' + id);
   }
-
 }

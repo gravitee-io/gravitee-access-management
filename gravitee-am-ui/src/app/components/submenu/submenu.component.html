@@ -17,14 +17,15 @@
 -->
 <gio-submenu class="mat">
   <div class="submenu__title" *ngIf="hasTitle">
-    <mat-icon *ngIf="isTemplate"
-              matTooltip="{{templateTooltip}}"
-              class="submenu__title__icon submenu__title__icon__template"
-              svgIcon="gio:edit-pencil">
-
+    <mat-icon
+      *ngIf="isTemplate"
+      matTooltip="{{ templateTooltip }}"
+      class="submenu__title__icon submenu__title__icon__template"
+      svgIcon="gio:edit-pencil"
+    >
     </mat-icon>
-    <span class="submenu__title__type">{{componentType}}</span>
-    <span class="submenu__title__name">{{componentName}}</span>
+    <span class="submenu__title__type">{{ componentType }}</span>
+    <span class="submenu__title__name">{{ componentName }}</span>
   </div>
   <ng-container *ngFor="let itemGroup of subMenuItems | mapToIterable">
     <gio-submenu-group [title]="itemGroup.key" *ngIf="displaySections">

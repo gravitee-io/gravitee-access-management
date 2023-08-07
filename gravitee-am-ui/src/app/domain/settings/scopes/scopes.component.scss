@@ -33,7 +33,7 @@ ngx-datatable {
       }
 
       small {
-        color: rgba(0,0,0,.54);
+        color: rgba(0, 0, 0, 0.54);
       }
     }
   }
@@ -43,7 +43,8 @@ ngx-datatable {
   ::ng-deep.scope-name-cell {
     padding: 0 !important;
   }
-  ::ng-deep.mat-chip-list-wrapper .mat-standard-chip, .mat-chip-list-wrapper input.mat-input-element {
+  ::ng-deep.mat-chip-list-wrapper .mat-standard-chip,
+  .mat-chip-list-wrapper input.mat-input-element {
     margin: 2px 0px 0px 10px;
     min-height: 24px;
   }

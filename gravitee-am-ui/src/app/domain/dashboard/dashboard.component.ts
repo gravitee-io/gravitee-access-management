@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute} from '@angular/router';
-import {DashboardData} from '../components/dashboard/dashboard.component';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+
+import { DashboardData } from '../components/dashboard/dashboard.component';
 
 @Component({
   selector: 'app-domain-overview',
   templateUrl: './dashboard.component.html',
-  styleUrls: ['./dashboard.component.scss']
+  styleUrls: ['./dashboard.component.scss'],
 })
 export class DomainDashboardComponent implements OnInit {
   domain: any = {};
@@ -35,9 +36,9 @@ export class DomainDashboardComponent implements OnInit {
           prefix: '+',
           request: {
             type: 'count',
-            field: 'user_login'
-          }
-        }
+            field: 'user_login',
+          },
+        },
       },
       {
         flex: 25,
@@ -48,9 +49,9 @@ export class DomainDashboardComponent implements OnInit {
           prefix: '+',
           request: {
             type: 'count',
-            field: 'user_registered'
-          }
-        }
+            field: 'user_registered',
+          },
+        },
       },
       {
         flex: 25,
@@ -60,9 +61,9 @@ export class DomainDashboardComponent implements OnInit {
           type: 'count',
           request: {
             type: 'count',
-            field: 'user'
-          }
-        }
+            field: 'user',
+          },
+        },
       },
       {
         flex: 25,
@@ -72,9 +73,9 @@ export class DomainDashboardComponent implements OnInit {
           type: 'count',
           request: {
             type: 'count',
-            field: 'application'
-          }
-        }
+            field: 'application',
+          },
+        },
       },
       {
         flex: 100,
@@ -84,8 +85,8 @@ export class DomainDashboardComponent implements OnInit {
           request: {
             type: 'date_histo',
             field: 'user_login',
-          }
-        }
+          },
+        },
       },
       {
         flex: 100,
@@ -95,8 +96,8 @@ export class DomainDashboardComponent implements OnInit {
           request: {
             type: 'date_histo',
             field: 'user_registered',
-          }
-        }
+          },
+        },
       },
       {
         flex: 50,
@@ -106,9 +107,9 @@ export class DomainDashboardComponent implements OnInit {
           type: 'pie',
           request: {
             type: 'group_by',
-            field: 'user_status'
-          }
-        }
+            field: 'user_status',
+          },
+        },
       },
       {
         flex: 50,
@@ -118,9 +119,9 @@ export class DomainDashboardComponent implements OnInit {
           type: 'gauge',
           request: {
             type: 'group_by',
-            field: 'user_registration'
-          }
-        }
+            field: 'user_registration',
+          },
+        },
       },
       {
         flex: 100,
@@ -133,14 +134,14 @@ export class DomainDashboardComponent implements OnInit {
           request: {
             type: 'group_by',
             field: 'application',
-            size: 20
-          }
-        }
+            size: 20,
+          },
+        },
       },
-    ]
+    ],
   };
 
-  constructor(private route: ActivatedRoute) { }
+  constructor(private route: ActivatedRoute) {}
 
   ngOnInit() {
     this.domain = this.route.snapshot.data['domain'];

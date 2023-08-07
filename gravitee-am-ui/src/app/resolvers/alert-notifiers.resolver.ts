@@ -13,20 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Injectable} from '@angular/core';
-import {ActivatedRouteSnapshot, Resolve, RouterStateSnapshot} from "@angular/router";
-import {Observable} from "rxjs";
-import {AlertService} from "../services/alert.service";
+import { Injectable } from '@angular/core';
+import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
+import { Observable } from 'rxjs';
+
+import { AlertService } from '../services/alert.service';
 
 @Injectable()
 export class AlertNotifiersResolver implements Resolve<any> {
+  constructor(private alertService: AlertService) {}
 
-  constructor(private alertService: AlertService) {
-  }
-
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any[]> | Promise<any[]> | any[] {
+  resolve(route: ActivatedRouteSnapshot): Observable<any[]> | Promise<any[]> | any[] {
     // For now we only handle alert notifiers at domain level.
-    let domainId: string = route.parent.data['domain'].id;
+    const domainId: string = route.parent.data['domain'].id;
     return this.alertService.getAlertNotifiers(domainId);
   }
 }

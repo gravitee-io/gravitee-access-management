@@ -20,9 +20,9 @@ import { ReportersResolver } from './reporters.resolver';
 describe('ReportersResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-    providers: [ReportersResolver],
-    teardown: { destroyAfterEach: false }
-});
+      providers: [ReportersResolver],
+      teardown: { destroyAfterEach: false },
+    });
   });
 
   it('should ...', inject([ReportersResolver], (service: ReportersResolver) => {

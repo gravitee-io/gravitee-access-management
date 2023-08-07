@@ -13,35 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
-import {DomainService} from '../services/domain.service';
-import {AuthService} from '../services/auth.service';
-import {NavbarService} from "../components/navbar/navbar.service";
-import {Subscription} from "rxjs";
-import {EnvironmentService} from "../services/environment.service";
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Subscription } from 'rxjs';
+
+import { DomainService } from '../services/domain.service';
+import { AuthService } from '../services/auth.service';
+import { NavbarService } from '../components/navbar/navbar.service';
+import { EnvironmentService } from '../services/environment.service';
 
 @Component({
   selector: 'app-home',
   templateUrl: './home.component.html',
-  styleUrls: ['./home.component.scss']
+  styleUrls: ['./home.component.scss'],
 })
 export class HomeComponent implements OnInit {
-  readonly: boolean = true;
+  readonly = true;
   isLoading = true;
   currentEnvironment: any;
   subscription: Subscription;
 
-  constructor(private router: Router,
-              private route: ActivatedRoute,
-              private domainService: DomainService,
-              private authService: AuthService,
-              private navbarService: NavbarService,
-              private environmentService: EnvironmentService) {
-  }
+  constructor(
+    private router: Router,
+    private route: ActivatedRoute,
+    private domainService: DomainService,
+    private authService: AuthService,
+    private navbarService: NavbarService,
+    private environmentService: EnvironmentService,
+  ) {}
 
   ngOnInit() {
-    this.subscription = this.environmentService.currentEnvironmentObs$.subscribe(environment => {
+    this.subscription = this.environmentService.currentEnvironmentObs$.subscribe((environment) => {
       this.currentEnvironment = environment;
       this.initDomain(environment);
     });
@@ -53,7 +55,7 @@ export class HomeComponent implements OnInit {
 
   initDomain(environment: any) {
     if (this.hasCurrentEnvironment()) {
-      this.router.navigate(['environments', environment.hrids[0]], { relativeTo: this.route});
+      this.router.navigate(['environments', environment.hrids[0]], { relativeTo: this.route });
     } else {
       this.isLoading = false;
     }

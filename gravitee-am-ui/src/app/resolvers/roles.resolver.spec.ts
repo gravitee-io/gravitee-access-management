@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {inject, TestBed} from "@angular/core/testing";
-import {RolesResolver} from "./roles.resolver";
+import { inject, TestBed } from '@angular/core/testing';
+
+import { RolesResolver } from './roles.resolver';
 
 describe('RolesResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-    providers: [RolesResolver],
-    teardown: { destroyAfterEach: false }
-});
+      providers: [RolesResolver],
+      teardown: { destroyAfterEach: false },
+    });
   });
 
   it('should ...', inject([RolesResolver], (service: RolesResolver) => {

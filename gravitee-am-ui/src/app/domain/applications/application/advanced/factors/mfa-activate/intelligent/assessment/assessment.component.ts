@@ -13,19 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, EventEmitter, Input, OnInit, Output} from "@angular/core";
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 
 @Component({
   selector: 'assessment',
   templateUrl: './assessment.component.html',
-  styleUrls: ['./assessment.component.scss']
+  styleUrls: ['./assessment.component.scss'],
 })
 export class AssessmentComponent implements OnInit {
-
-  @Input() title:string;
+  @Input() title: string;
   @Input() assessment: any;
   @Input() options: any[];
-  @Output("on-assessment-change") assessmentChangeEmmit: EventEmitter<any> = new EventEmitter<any>();
+  @Output('on-assessment-change') assessmentChangeEmmit: EventEmitter<any> = new EventEmitter<any>();
 
   current: any;
 
@@ -37,8 +36,8 @@ export class AssessmentComponent implements OnInit {
     if (this.assessment && this.assessment.enabled && this.assessment.thresholds) {
       const keys = Object.keys(this.assessment.thresholds);
       if (keys.length > 0) {
-        const current = keys.map(key => this.options.find(option => option.value === key));
-        if (current.length > 0){
+        const current = keys.map((key) => this.options.find((option) => option.value === key));
+        if (current.length > 0) {
           return current[0];
         }
       }

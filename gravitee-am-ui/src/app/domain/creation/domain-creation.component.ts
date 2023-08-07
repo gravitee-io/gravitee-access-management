@@ -13,25 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit, ViewChild} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
-import {DomainService} from '../../services/domain.service';
-import {SnackbarService} from '../../services/snackbar.service';
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+
+import { DomainService } from '../../services/domain.service';
+import { SnackbarService } from '../../services/snackbar.service';
 
 @Component({
   selector: 'app-creation',
   templateUrl: './domain-creation.component.html',
-  styleUrls: ['./domain-creation.component.scss']
+  styleUrls: ['./domain-creation.component.scss'],
 })
 export class DomainCreationComponent implements OnInit {
   domain: any = {};
   displayNavLink: boolean;
   @ViewChild('createDomainBtn', { static: true }) createDomainBtn: any;
 
-  constructor(private domainService: DomainService,
-              private snackbarService: SnackbarService,
-              private router: Router,
-              private route: ActivatedRoute) { }
+  constructor(
+    private domainService: DomainService,
+    private snackbarService: SnackbarService,
+    private router: Router,
+    private route: ActivatedRoute,
+  ) {}
 
   ngOnInit() {
     this.displayNavLink = !this.router.url.startsWith('/settings');
@@ -40,13 +43,16 @@ export class DomainCreationComponent implements OnInit {
   create() {
     this.createDomainBtn.nativeElement.loading = true;
     this.createDomainBtn.nativeElement.disabled = true;
-    this.domainService.create(this.domain).subscribe(data => {
-      this.createDomainBtn.nativeElement.loading = false;
-      this.snackbarService.open('Domain ' + data.name + ' created');
-      this.router.navigate(['..', data.hrid], { relativeTo: this.route });
-    }, error => {
-      this.createDomainBtn.nativeElement.loading = false;
-      this.snackbarService.openFromComponent('Errors', [error.error.message]);
-    });
+    this.domainService.create(this.domain).subscribe(
+      (data) => {
+        this.createDomainBtn.nativeElement.loading = false;
+        this.snackbarService.open('Domain ' + data.name + ' created');
+        this.router.navigate(['..', data.hrid], { relativeTo: this.route });
+      },
+      (error) => {
+        this.createDomainBtn.nativeElement.loading = false;
+        this.snackbarService.openFromComponent('Errors', [error.error.message]);
+      },
+    );
   }
 }

@@ -1,4 +1,3 @@
-import {flatMap, map, mergeMap} from 'rxjs/operators';
 /*
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
  *
@@ -14,12 +13,12 @@ import {flatMap, map, mergeMap} from 'rxjs/operators';
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Injectable} from '@angular/core';
-import {HttpClient} from '@angular/common/http';
-import {BehaviorSubject, Observable, Subject} from 'rxjs';
-import {AppConfig} from '../../config/app.config';
-import {EnvironmentService} from "./environment.service";
-import {NavbarService} from "../components/navbar/navbar.service";
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { BehaviorSubject, Observable, Subject } from 'rxjs';
+import { map } from 'rxjs/operators';
+
+import { AppConfig } from '../../config/app.config';
 
 @Injectable()
 export class AuthService {
@@ -38,22 +37,23 @@ export class AuthService {
   notifyObservable$ = this.subject.asObservable();
 
   constructor(private http: HttpClient) {
-    this.environmentPermissionsObservable.subscribe(permissions => this.environmentPermissions = permissions);
-    this.domainPermissionsObservable.subscribe(permissions => this.domainPermissions = permissions);
-    this.applicationPermissionsObservable.subscribe(permissions => this.applicationPermissions = permissions);
+    this.environmentPermissionsObservable.subscribe((permissions) => (this.environmentPermissions = permissions));
+    this.domainPermissionsObservable.subscribe((permissions) => (this.domainPermissions = permissions));
+    this.applicationPermissionsObservable.subscribe((permissions) => (this.applicationPermissions = permissions));
   }
 
   handleAuthentication(): Observable<boolean> {
     // authentication success
-    return new Observable(observer => observer.next(true));
+    return new Observable((observer) => observer.next(true));
   }
 
   userInfo(): Observable<any> {
     return this.http.get<any>(this.userInfoUrl).pipe(
-      map(user => {
+      map((user) => {
         this.setUser(user);
         return this.currentUser;
-      }));
+      }),
+    );
   }
 
   setUser(user: any) {
@@ -61,7 +61,7 @@ export class AuthService {
   }
 
   logout(): Observable<boolean> {
-    return new Observable(observer => {
+    return new Observable((observer) => {
       observer.next(true);
     });
   }
@@ -75,16 +75,20 @@ export class AuthService {
   }
 
   hasPermissions(permissions): boolean {
-    return this.isAuthenticated() &&
-      permissions.every(v => this.user().permissions.indexOf(v) >= 0 ||
-        (this.environmentPermissions && this.environmentPermissions.indexOf(v) >= 0) ||
-        (this.domainPermissions && this.domainPermissions.indexOf(v) >= 0) ||
-        (this.applicationPermissions && this.applicationPermissions.indexOf(v) >= 0));
+    return (
+      this.isAuthenticated() &&
+      permissions.every(
+        (v) =>
+          this.user().permissions.indexOf(v) >= 0 ||
+          (this.environmentPermissions && this.environmentPermissions.indexOf(v) >= 0) ||
+          (this.domainPermissions && this.domainPermissions.indexOf(v) >= 0) ||
+          (this.applicationPermissions && this.applicationPermissions.indexOf(v) >= 0),
+      )
+    );
   }
 
   hasAnyPermissions(permissions): boolean {
-
-    return permissions.some(permission => this.hasPermissions([permission]) === true);
+    return permissions.some((permission) => this.hasPermissions([permission]) === true);
   }
 
   unauthorized() {
@@ -115,9 +119,9 @@ export class AuthService {
     return this.applicationPermissions != null;
   }
 
-  subscribeNewsletter(email): Observable<any>  {
+  subscribeNewsletter(email): Observable<any> {
     return this.http.post<any>(this.userInfoUrl + '/newsletter/_subscribe', {
-      'email': email
+      email: email,
     });
   }
 

@@ -15,7 +15,7 @@
  */
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
-import {ProviderComponent} from './notifier.component';
+import { ProviderComponent } from './notifier.component';
 
 describe('ProviderComponent', () => {
   let component: ProviderComponent;
@@ -23,10 +23,9 @@ describe('ProviderComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    declarations: [ProviderComponent],
-    teardown: { destroyAfterEach: false }
-})
-      .compileComponents();
+      declarations: [ProviderComponent],
+      teardown: { destroyAfterEach: false },
+    }).compileComponents();
   }));
 
   beforeEach(() => {

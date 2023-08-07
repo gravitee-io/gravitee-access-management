@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {inject, TestBed} from '@angular/core/testing';
-import {FactorPluginsResolver} from './factor-plugins.resolver';
-import {BotDetectionPluginsResolver} from "./bot-detection-plugins.resolver";
+import { inject, TestBed } from '@angular/core/testing';
+
+import { BotDetectionPluginsResolver } from './bot-detection-plugins.resolver';
 
 describe('BotDetectionPluginsResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-    providers: [BotDetectionPluginsResolver],
-    teardown: { destroyAfterEach: false }
-});
+      providers: [BotDetectionPluginsResolver],
+      teardown: { destroyAfterEach: false },
+    });
   });
 
   it('should ...', inject([BotDetectionPluginsResolver], (service: BotDetectionPluginsResolver) => {

@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component} from '@angular/core';
-import {ActivatedRoute} from "@angular/router";
-import {EmailTemplateFactoryService} from "../../../services/email.template.factory.service";
+import { Component } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+
+import { EmailTemplateFactoryService } from '../../../services/email.template.factory.service';
 
 @Component({
   selector: 'app-domain-emails',
   templateUrl: './emails.component.html',
-  styleUrls: ['./emails.component.scss']
+  styleUrls: ['./emails.component.scss'],
 })
 export class DomainSettingsEmailsComponent {
   domain: any;
@@ -35,8 +36,8 @@ export class DomainSettingsEmailsComponent {
   }
 
   getEmails() {
-    return this.emailTemplateFactoryService.findAll().map(email => {
-      email.enabled = email.template !== "RESET_PASSWORD" || this.allowResetPassword();
+    return this.emailTemplateFactoryService.findAll().map((email) => {
+      email.enabled = email.template !== 'RESET_PASSWORD' || this.allowResetPassword();
       return email;
     });
   }

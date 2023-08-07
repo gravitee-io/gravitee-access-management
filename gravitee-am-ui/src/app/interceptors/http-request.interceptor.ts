@@ -1,4 +1,3 @@
-import {tap} from 'rxjs/operators';
 /*
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
  *
@@ -14,7 +13,6 @@ import {tap} from 'rxjs/operators';
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import {
   HttpErrorResponse,
   HttpEvent,
@@ -22,71 +20,76 @@ import {
   HttpInterceptor,
   HttpRequest,
   HttpResponse,
-  HttpResponseBase
+  HttpResponseBase,
 } from '@angular/common/http';
-import {Injectable} from '@angular/core';
-import {Router} from '@angular/router';
-import {Observable} from 'rxjs';
-import {SnackbarService} from '../services/snackbar.service';
-import {AuthService} from '../services/auth.service';
-import {EnvironmentService} from "../services/environment.service";
+import { Injectable } from '@angular/core';
+import { Router } from '@angular/router';
+import { Observable } from 'rxjs';
+import { tap } from 'rxjs/operators';
+
+import { SnackbarService } from '../services/snackbar.service';
+import { AuthService } from '../services/auth.service';
+import { EnvironmentService } from '../services/environment.service';
 
 @Injectable()
 export class HttpRequestInterceptor implements HttpInterceptor {
-
   private xsrfToken: string;
 
-  constructor(private snackbarService: SnackbarService,
-              private authService: AuthService,
-              private environmentService: EnvironmentService,
-              private router: Router) {
-  }
+  constructor(
+    private snackbarService: SnackbarService,
+    private authService: AuthService,
+    private environmentService: EnvironmentService,
+    private router: Router,
+  ) {}
 
   intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-
     let orgId = 'DEFAULT';
     let envId = 'DEFAULT';
 
-    if(this.authService.isAuthenticated()) {
-      let user = this.authService.user();
+    if (this.authService.isAuthenticated()) {
+      const user = this.authService.user();
       orgId = user.org;
     }
 
-    if(this.environmentService.getCurrentEnvironment()) {
+    if (this.environmentService.getCurrentEnvironment()) {
       envId = this.environmentService.getCurrentEnvironment().id;
     }
 
     request = request.clone({
       withCredentials: true,
-      setHeaders: this.xsrfToken ? {'X-Xsrf-Token': [this.xsrfToken]} : {},
+      setHeaders: this.xsrfToken ? { 'X-Xsrf-Token': [this.xsrfToken] } : {},
       url: request.url.replace(':organizationId', orgId).replace(':environmentId', envId),
     });
 
-    return next.handle(request).pipe(tap((event: HttpEvent<any>) => {
-      if (event instanceof HttpResponse) {
-        this.saveXsrfToken(event);
-      }
-    }, (err: any) => {
-      if (err.status === 404) {
-        this.router.navigate(['/404']);
-      }
-      if (err instanceof HttpErrorResponse) {
-        this.saveXsrfToken(err);
-        if (err.status === 401) {
-          this.snackbarService.open('The authentication session expires or the user is not authorized');
-          this.authService.unauthorized();
-        } else if (err.status === 403) {
-          this.snackbarService.open('Access denied');
-        } else {
-          this.snackbarService.open(err.error.message || 'Server error');
-        }
-      }
-    }));
+    return next.handle(request).pipe(
+      tap(
+        (event: HttpEvent<any>) => {
+          if (event instanceof HttpResponse) {
+            this.saveXsrfToken(event);
+          }
+        },
+        (err: any) => {
+          if (err.status === 404) {
+            this.router.navigate(['/404']);
+          }
+          if (err instanceof HttpErrorResponse) {
+            this.saveXsrfToken(err);
+            if (err.status === 401) {
+              this.snackbarService.open('The authentication session expires or the user is not authorized');
+              this.authService.unauthorized();
+            } else if (err.status === 403) {
+              this.snackbarService.open('Access denied');
+            } else {
+              this.snackbarService.open(err.error.message || 'Server error');
+            }
+          }
+        },
+      ),
+    );
   }
 
   private saveXsrfToken(response: HttpResponseBase) {
-
-    let xsrfTokenHeader = response.headers.get('X-Xsrf-Token');
+    const xsrfTokenHeader = response.headers.get('X-Xsrf-Token');
 
     if (xsrfTokenHeader !== null) {
       this.xsrfToken = xsrfTokenHeader;

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-import { BotDetectionComponent } from './bot-detection.component';
 
+import { BotDetectionComponent } from './bot-detection.component';
 
 describe('BotDetectionComponent', () => {
   let component: BotDetectionComponent;
@@ -23,10 +23,9 @@ describe('BotDetectionComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    declarations: [BotDetectionComponent],
-    teardown: { destroyAfterEach: false }
-})
-    .compileComponents();
+      declarations: [BotDetectionComponent],
+      teardown: { destroyAfterEach: false },
+    }).compileComponents();
   }));
 
   beforeEach(() => {

@@ -14,19 +14,18 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { Resolve, ActivatedRouteSnapshot, RouterStateSnapshot } from "@angular/router";
-import { Observable } from "rxjs";
-import { ExtensionGrantService } from "../services/extension-grant.service";
+import { Resolve, ActivatedRouteSnapshot } from '@angular/router';
+import { Observable } from 'rxjs';
+
+import { ExtensionGrantService } from '../services/extension-grant.service';
 
 @Injectable()
 export class ExtensionGrantResolver implements Resolve<any> {
+  constructor(private extensionGrantService: ExtensionGrantService) {}
 
-  constructor(private extensionGrantService: ExtensionGrantService) { }
-
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
-    let domainId: string = route.parent.data['domain'].id;
-    let tokenGranterId: string = route.paramMap.get('extensionGrantId');
+  resolve(route: ActivatedRouteSnapshot): Observable<any> | Promise<any> | any {
+    const domainId: string = route.parent.data['domain'].id;
+    const tokenGranterId: string = route.paramMap.get('extensionGrantId');
     return this.extensionGrantService.get(domainId, tokenGranterId);
   }
-
 }

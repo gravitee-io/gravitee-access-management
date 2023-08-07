@@ -23,53 +23,62 @@
           <h1>Integrate authentication to your application</h1>
           <h2>Get your Application Information</h2>
           <p>
-            The Access Management server relies mostly on OAuth 2.0/OpenID Connect protocols.
-            To communicate with it you will need the following information :
+            The Access Management server relies mostly on OAuth 2.0/OpenID Connect protocols. To communicate with it you will need the
+            following information :
           </p>
           <ul>
-            <li>The application's domain : <b>{{domain.path}}</b></li>
-            <li>The application's client ID (OAuth 2.0) : <b>{{clientId}}</b></li>
+            <li>
+              The application's domain : <b>{{ domain.path }}</b>
+            </li>
+            <li>
+              The application's client ID (OAuth 2.0) : <b>{{ clientId }}</b>
+            </li>
           </ul>
           <blockquote>
-            <p>
-              You can also get these details from the <a [routerLink]="['..', 'settings']">Application Settings</a> section.
-            </p>
+            <p>You can also get these details from the <a [routerLink]="['..', 'settings']">Application Settings</a> section.</p>
           </blockquote>
           <h2>Configure your Users</h2>
           <p>
-            Users of the application will be redirected to the Access Management server to log in,
-            and it will authenticate them using Identity Providers such as an LDAP server, a database, Web Services or Social Providers.
+            Users of the application will be redirected to the Access Management server to log in, and it will authenticate them using
+            Identity Providers such as an LDAP server, a database, Web Services or Social Providers.
           </p>
           <blockquote>
             <p>
-              You can configure these details from the <a [routerLink]="['..', 'idp']">Application Identity Providers</a> section, if none exists, please contact the administrator of the domain.
+              You can configure these details from the <a [routerLink]="['..', 'idp']">Application Identity Providers</a> section, if none
+              exists, please contact the administrator of the domain.
             </p>
           </blockquote>
           <h2>Initiate the Login Flow</h2>
           <p>
-            To set up authentication in your application and display to users the login page, you have to redirect your users to the following URL :
+            To set up authentication in your application and display to users the login page, you have to redirect your users to the
+            following URL :
           </p>
 
           <div class="code">
-            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(pre_authorize);">
+            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(pre_authorize)">
               <mat-icon>content_copy</mat-icon>
             </button>
-            <pre #pre_authorize>{{baseUrl}}/oauth/authorize?client_id={{getEncodedClientId()}}&response_type={{getAuthorizationFlowResponseType()}}&redirect_uri={{encodedRedirectUri}}{{getCodeChallenge()}}</pre>
+            <pre #pre_authorize
+              >{{ baseUrl }}/oauth/authorize?client_id={{ getEncodedClientId() }}&response_type={{
+                getAuthorizationFlowResponseType()
+              }}&redirect_uri={{ encodedRedirectUri }}{{ getCodeChallenge() }}</pre
+            >
           </div>
 
           <p>Users will be redirected to the login page and will start the Authentication Flow.</p>
           <blockquote>
             <p>
-              All HTML pages displayed during those steps can be customized in the <a [routerLink]="['..', 'design']">Application Design</a> section.
+              All HTML pages displayed during those steps can be customized in the
+              <a [routerLink]="['..', 'design']">Application Design</a> section.
             </p>
           </blockquote>
           <p>Once users have been authenticated they will be redirected to your application URL :</p>
 
           <div class="code">
-            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(pre_redirect_uri);">
+            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(pre_redirect_uri)">
               <mat-icon>content_copy</mat-icon>
             </button>
-            <pre #pre_redirect_uri>{{redirectUri}}</pre>
+            <pre #pre_redirect_uri>{{ redirectUri }}</pre>
           </div>
 
           <p>Either with :</p>
@@ -78,60 +87,77 @@
             <li>an <b>access_token</b> with an <b>ID Token</b> depending on the query parameter <b>response_type</b></li>
           </ul>
           <blockquote>
-            <p>
-              An extra step is required if the response_type=code, exchange the authorization_code for an access_token.
-            </p>
+            <p>An extra step is required if the response_type=code, exchange the authorization_code for an access_token.</p>
           </blockquote>
           <div class="code">
-            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(pre_authorization_code_exchange, authorizationHeader);">
+            <button
+              mat-icon-button
+              matSuffix
+              matTooltip="Copy to clipboard"
+              (click)="copyToClipboard(pre_authorization_code_exchange, authorizationHeader)"
+            >
               <mat-icon>content_copy</mat-icon>
             </button>
-            <button *ngIf="!isHidden(safeAuthorizationHeader)" mat-icon-button matSuffix matTooltip="Hide sensitive data" (click)="safeAuthorizationHeader = hidden;">
+            <button
+              *ngIf="!isHidden(safeAuthorizationHeader)"
+              mat-icon-button
+              matSuffix
+              matTooltip="Hide sensitive data"
+              (click)="safeAuthorizationHeader = hidden"
+            >
               <mat-icon>visibility_off</mat-icon>
             </button>
-            <button *ngIf="isHidden(safeAuthorizationHeader)" mat-icon-button matSuffix matTooltip="Reveal sensitive data" (click)="safeAuthorizationHeader = authorizationHeader">
+            <button
+              *ngIf="isHidden(safeAuthorizationHeader)"
+              mat-icon-button
+              matSuffix
+              matTooltip="Reveal sensitive data"
+              (click)="safeAuthorizationHeader = authorizationHeader"
+            >
               <mat-icon>visibility</mat-icon>
             </button>
 
-            <pre #pre_authorization_code_exchange class="multiline">curl -X POST \
-  {{baseUrl}}/oauth/token \
-  -H 'Authorization: Basic {{safeAuthorizationHeader}}' \
+            <pre #pre_authorization_code_exchange class="multiline">
+curl -X POST \
+  {{ baseUrl }}/oauth/token \
+  -H 'Authorization: Basic {{ safeAuthorizationHeader }}' \
   -H 'Content-Type: application/x-www-form-urlencoded' \
-  -d 'grant_type=authorization_code&code=|code|&redirect_uri={{redirectUri}}&client_id={{getEncodedClientId()}}{{getCodeVerifier()}}'</pre>
+  -d 'grant_type=authorization_code&code=|code|&redirect_uri={{ redirectUri }}&client_id={{ getEncodedClientId()
+              }}{{ getCodeVerifier() }}'</pre
+            >
           </div>
 
           <h2>Proof Key for Code Exchange (PKCE)</h2>
-          <p>If the application requires the use of the PKCE,  you will need to generate : </p>
+          <p>If the application requires the use of the PKCE, you will need to generate :</p>
           <ul>
             <li>a <b>code_verifier</b> that will be sent to the Token Endpoint (oauth/token)</li>
             <li>a <b>code_challenge</b> that will be sent to the Authorization Endpoint (oauth/authorize)</li>
           </ul>
           <blockquote>
-            <p>
-              These codes are cryptographically-random values that your application has to create.
-            </p>
+            <p>These codes are cryptographically-random values that your application has to create.</p>
           </blockquote>
 
           <h4>JavaScript sample</h4>
           <div class="code">
             <pre class="multiline">
 // utils
-function base64URLEncode(str) {{ "{" }}
+function base64URLEncode(str) {{ '{' }}
   btoa(str)
     .replace(/\+/g, '-')
     .replace(/\//g, '_')
     .replace(/=/g, '');
-{{ "}" }}
+{{ '}' }}
 
-function bufferToString(buffer: Uint8Array) {{ "{" }}
+function bufferToString(buffer: Uint8Array) {{ '{' }}
   const CHARSET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   const state = [];
-  for (let i = 0; i < buffer.byteLength; i += 1) {{ "{" }}
+  for (let i = 0; i < buffer.byteLength; i += 1) {{ '{' }}
     const index = buffer[i] % this.CHARSET.length;
     state.push(this.CHARSET[index]);
-  {{ "}" }}
+  {{ '}' }}
   return state.join('');
-{{ "}" }}</pre>
+{{ '}' }}</pre
+            >
           </div>
 
           <div class="code">
@@ -139,7 +165,8 @@ function bufferToString(buffer: Uint8Array) {{ "{" }}
 // generate the code_verifier
 const array = new Uint8Array(32);
 window.crypto.getRandomValues(array);
-const codeVerifier = base64URLEncode(bufferToString(array));</pre>
+const codeVerifier = base64URLEncode(bufferToString(array));</pre
+            >
           </div>
 
           <div class="code">
@@ -148,13 +175,14 @@ const codeVerifier = base64URLEncode(bufferToString(array));</pre>
 const encoder = new TextEncoder();
 const data = encoder.encode(codeVerifier);
 window.crypto.subtle.digest('SHA-256', data)
-  .then(buffer => {{ "{" }}
+  .then(buffer => {{ '{' }}
       const bufferToString = String.fromCharCode.apply(null, new Uint8Array(buffer));
       return base64URLEncode(bufferToString);
-  {{ "}" }})
-  .then(str => {{ "{" }}
+  {{ '}' }})
+  .then(str => {{ '{' }}
       const codeChallenge = str;
-  {{ "}" }});</pre>
+  {{ '}' }});</pre
+            >
           </div>
 
           <h4>Java sample</h4>
@@ -164,7 +192,8 @@ window.crypto.subtle.digest('SHA-256', data)
 SecureRandom secureRandom = new SecureRandom();
 byte[] code = new byte[32];
 secureRandom.nextBytes(code);
-String codeVerifier = Base64.getUrlEncoder().withoutPadding().encodeToString(code);</pre>
+String codeVerifier = Base64.getUrlEncoder().withoutPadding().encodeToString(code);</pre
+            >
           </div>
 
           <div class="code">
@@ -172,51 +201,55 @@ String codeVerifier = Base64.getUrlEncoder().withoutPadding().encodeToString(cod
 // generate the code_challenge
 byte[] bytes = codeVerifier.getBytes("US-ASCII");
 MessageDigest md = MessageDigest.getInstance("SHA-256");
-String codeChallenge = Base64.getUrlEncoder().withoutPadding().encodeToString(md.digest(bytes));</pre>
+String codeChallenge = Base64.getUrlEncoder().withoutPadding().encodeToString(md.digest(bytes));</pre
+            >
           </div>
 
           <h2>Get user information</h2>
           <p>The user's profile information can be extracted from the ID token or by calling the following URL :</p>
           <div class="code">
-            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(pre_userinfo);">
+            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(pre_userinfo)">
               <mat-icon>content_copy</mat-icon>
             </button>
-            <pre #pre_userinfo class="multiline">curl -X GET \
-  {{baseUrl}}/oidc/userinfo \
-  -H 'Authorization: Bearer access_token'</pre>
+            <pre #pre_userinfo class="multiline">
+curl -X GET \
+  {{ baseUrl }}/oidc/userinfo \
+  -H 'Authorization: Bearer access_token'</pre
+            >
           </div>
-          <p>
-            The profile information is used to display their name and hide/show some UI actions according to their permissions.
-          </p>
+          <p>The profile information is used to display their name and hide/show some UI actions according to their permissions.</p>
 
           <h2>Call your APIs</h2>
           <p>
-            Most of your applications require data from APIs. Some of those resources have restricted access, so that only authenticated users with sufficient privileges can access them.
+            Most of your applications require data from APIs. Some of those resources have restricted access, so that only authenticated
+            users with sufficient privileges can access them.
           </p>
           <div class="code">
-            <pre class="multiline">curl -X GET \
+            <pre class="multiline">
+curl -X GET \
   https://api.mycompany.com/api/v1/data \
-  -H 'Authorization: Bearer access_token'</pre>
+  -H 'Authorization: Bearer access_token'</pre
+            >
           </div>
 
           <h2>Log the User Out</h2>
-          <p>
-            Any authenticated users who want to invalidate their session can navigate to the following URL :
-          </p>
+          <p>Any authenticated users who want to invalidate their session can navigate to the following URL :</p>
           <div class="code">
-            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(pre_logout);">
+            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(pre_logout)">
               <mat-icon>content_copy</mat-icon>
             </button>
-            <pre #pre_logout>{{baseUrl}}/logout</pre>
+            <pre #pre_logout>{{ baseUrl }}/logout</pre>
           </div>
           <blockquote>
             <p>
-              By default access tokens and refresh tokens are not revoked. You can add the invalidate_tokens=true query parameter to the request to invalidate current user tokens.
+              By default access tokens and refresh tokens are not revoked. You can add the invalidate_tokens=true query parameter to the
+              request to invalidate current user tokens.
             </p>
           </blockquote>
           <blockquote>
             <p>
-              You can also specify the post_logout_redirect_uri=https://myApp/logoutCallback or target_url=https://myApp/logoutCallback query parameter to redirect the user to your application after logout process.
+              You can also specify the post_logout_redirect_uri=https://myApp/logoutCallback or target_url=https://myApp/logoutCallback
+              query parameter to redirect the user to your application after logout process.
             </p>
           </blockquote>
         </div>
@@ -227,42 +260,76 @@ String codeChallenge = Base64.getUrlEncoder().withoutPadding().encodeToString(md
           <h2>Getting an access token</h2>
           <p>You can request an access token using the OAuth 2.0 client credentials grant type.</p>
           <div class="code" *ngIf="displayAuthBasicExample()">
-            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(pre_auth_basic_token, authorizationHeader)">
+            <button
+              mat-icon-button
+              matSuffix
+              matTooltip="Copy to clipboard"
+              (click)="copyToClipboard(pre_auth_basic_token, authorizationHeader)"
+            >
               <mat-icon>content_copy</mat-icon>
             </button>
-            <button *ngIf="!isHidden(safeAuthorizationHeader)" mat-icon-button matSuffix matTooltip="Hide sensitive data" (click)="safeAuthorizationHeader = hidden;">
+            <button
+              *ngIf="!isHidden(safeAuthorizationHeader)"
+              mat-icon-button
+              matSuffix
+              matTooltip="Hide sensitive data"
+              (click)="safeAuthorizationHeader = hidden"
+            >
               <mat-icon>visibility_off</mat-icon>
             </button>
-            <button *ngIf="isHidden(safeAuthorizationHeader)" mat-icon-button matSuffix matTooltip="Reveal sensitive data" (click)="safeAuthorizationHeader = authorizationHeader;">
+            <button
+              *ngIf="isHidden(safeAuthorizationHeader)"
+              mat-icon-button
+              matSuffix
+              matTooltip="Reveal sensitive data"
+              (click)="safeAuthorizationHeader = authorizationHeader"
+            >
               <mat-icon>visibility</mat-icon>
             </button>
-            <pre #pre_auth_basic_token class="multiline">curl -X POST \
-              {{baseUrl}}/oauth/token \
+            <pre #pre_auth_basic_token class="multiline">
+curl -X POST \
+              {{ baseUrl }}/oauth/token \
   -H 'Content-Type: application/x-www-form-urlencoded' \
-  -H 'Authorization: Basic {{safeAuthorizationHeader}}' \
-  -d 'grant_type=client_credentials'</pre>
+  -H 'Authorization: Basic {{ safeAuthorizationHeader }}' \
+  -d 'grant_type=client_credentials'</pre
+            >
           </div>
           <div class="code" *ngIf="!displayAuthBasicExample()">
             <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(pre_post_token, clientSecret)">
               <mat-icon>content_copy</mat-icon>
             </button>
-            <button *ngIf="!isHidden(safeClientSecret)" mat-icon-button matSuffix matTooltip="Hide sensitive data" (click)="safeClientSecret = hidden;">
+            <button
+              *ngIf="!isHidden(safeClientSecret)"
+              mat-icon-button
+              matSuffix
+              matTooltip="Hide sensitive data"
+              (click)="safeClientSecret = hidden"
+            >
               <mat-icon>visibility_off</mat-icon>
             </button>
-            <button *ngIf="isHidden(safeClientSecret)" mat-icon-button matSuffix matTooltip="Reveal sensitive data" (click)="safeClientSecret = clientSecret;">
+            <button
+              *ngIf="isHidden(safeClientSecret)"
+              mat-icon-button
+              matSuffix
+              matTooltip="Reveal sensitive data"
+              (click)="safeClientSecret = clientSecret"
+            >
               <mat-icon>visibility</mat-icon>
             </button>
-            <pre #pre_post_token class="multiline">curl -X POST \
-              {{baseUrl}}/oauth/token \
+            <pre #pre_post_token class="multiline">
+curl -X POST \
+              {{ baseUrl }}/oauth/token \
   -H 'Content-Type: application/x-www-form-urlencoded' \
-  -d 'grant_type=client_credentials&client_id={{clientId}}&client_secret={{safeClientSecret}}'</pre>
+  -d 'grant_type=client_credentials&client_id={{ clientId }}&client_secret={{ safeClientSecret }}'</pre
+            >
           </div>
           <p>If the request is valid, the authorization server will issue an access token to make authorized calls to the APIs.</p>
 
           <h2>Call your APIs</h2>
           <p>Use your access_token in your request via the Authorization HTTP header to obtain authorized access to the APIs.</p>
           <div class="code">
-            <pre class="multiline">curl -X GET \
+            <pre class="multiline">
+curl -X GET \
   https://api.mycompany.com/api/v1/data \
   -H 'Authorization: Bearer access_token'
             </pre>
@@ -270,17 +337,22 @@ String codeChallenge = Base64.getUrlEncoder().withoutPadding().encodeToString(md
         </div>
         <div *ngIf="isUmaApp()">
           <h1>Control access to your Resources</h1>
-          <p>A UMA 2.0 Resource Server allows for an end user to manage access to their data by defining a set of policies to govern access to that resource.</p>
+          <p>
+            A UMA 2.0 Resource Server allows for an end user to manage access to their data by defining a set of policies to govern access
+            to that resource.
+          </p>
           <h2>Manage Resource Sets</h2>
           <p>
-            UMA 2.0 protocol provides a standard endpoint that enable the resource server to put resources under the protection of an authorization server on behalf of the resource owner and manage them over time.
+            UMA 2.0 protocol provides a standard endpoint that enable the resource server to put resources under the protection of an
+            authorization server on behalf of the resource owner and manage them over time.
           </p>
           <div class="code">
-            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(create_resource);">
+            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(create_resource)">
               <mat-icon>content_copy</mat-icon>
             </button>
-            <pre #create_resource class="multiline">curl -X POST \
-              {{baseUrl}}/uma/protection/resource_set \
+            <pre #create_resource class="multiline">
+curl -X POST \
+              {{ baseUrl }}/uma/protection/resource_set \
   -H 'Authorization: Bearer |PAT|' \
   -H 'Content-Type: application/json' \
   -d '{{ '{' }}
@@ -292,23 +364,27 @@ String codeChallenge = Base64.getUrlEncoder().withoutPadding().encodeToString(md
           "icon_uri":"http://www.example.com/icons/flower.png",
           "name":"Photo Album",
           "type":"http://www.example.com/rsrcs/photoalbum"
-              {{ '}' }}'</pre>
+              {{ '}' }}'</pre
+            >
           </div>
           <blockquote>
             <p>
-              The endpoint requires a Protection API Token (PAT), which is an OAuth 2.0 access token with a scope of uma_protection.
-              A resource server must acquire a PAT in order to use the resource set endpoint.
-              To request for a PAT you can use any OAuth 2.0 Grant Type that involves a Resource Owner (Authorization Code, Password, ...).
+              The endpoint requires a Protection API Token (PAT), which is an OAuth 2.0 access token with a scope of uma_protection. A
+              resource server must acquire a PAT in order to use the resource set endpoint. To request for a PAT you can use any OAuth 2.0
+              Grant Type that involves a Resource Owner (Authorization Code, Password, ...).
             </p>
           </blockquote>
           <h2>Manage Access Policies</h2>
-          <p>The Authorization Server must manage the resource owner's access policies, so that registered Resource Sets can be protected.</p>
+          <p>
+            The Authorization Server must manage the resource owner's access policies, so that registered Resource Sets can be protected.
+          </p>
           <div class="code">
-            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(create_resource);">
+            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(create_resource)">
               <mat-icon>content_copy</mat-icon>
             </button>
-            <pre #create_resource class="multiline">curl -X POST \
-              {{baseUrl}}/uma/protection/resource_set/:resourceId/policies \
+            <pre #create_resource class="multiline">
+curl -X POST \
+              {{ baseUrl }}/uma/protection/resource_set/:resourceId/policies \
   -H 'Authorization: Bearer |PAT|' \
   -H 'Content-Type: application/json' \
   -d '{{ '{' }}
@@ -316,28 +392,28 @@ String codeChallenge = Base64.getUrlEncoder().withoutPadding().encodeToString(md
           "description": "My policy description",
           "type": "GROOVY",
           "condition: "GROOVY script"
-              {{ '}' }}'</pre>
+              {{ '}' }}'</pre
+            >
           </div>
           <blockquote>
-            <p>
-              Use the PAT Bearer Token previously acquired on behalf of the resource owner.
-            </p>
+            <p>Use the PAT Bearer Token previously acquired on behalf of the resource owner.</p>
           </blockquote>
           <h2>Request for a Permission Ticket</h2>
           <p>
-            The permission endpoint defines a means for the resource server to request one or more permissions when it receives a request for access to a resource
-            with the authorization server on the client's behalf, and to receive a permission ticket in return.
+            The permission endpoint defines a means for the resource server to request one or more permissions when it receives a request
+            for access to a resource with the authorization server on the client's behalf, and to receive a permission ticket in return.
           </p>
           <p>
-            In its response, the authorization server returns a permission ticket for the resource server to give to the client that represents
-            the same permissions that the resource server requested.
+            In its response, the authorization server returns a permission ticket for the resource server to give to the client that
+            represents the same permissions that the resource server requested.
           </p>
           <div class="code">
-            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(pt_request);">
+            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(pt_request)">
               <mat-icon>content_copy</mat-icon>
             </button>
-            <pre #pt_request class="multiline">curl -X POST \
-              {{baseUrl}}/uma/protection/permission \
+            <pre #pt_request class="multiline">
+curl -X POST \
+              {{ baseUrl }}/uma/protection/permission \
   -H 'Authorization: Bearer |PAT|' \
   -H 'Content-Type: application/json' \
   -d '{{ '{' }}
@@ -346,37 +422,41 @@ String codeChallenge = Base64.getUrlEncoder().withoutPadding().encodeToString(md
               "view",
               "http://photoz.example.com/dev/scopes/print"
            ]
-              {{ '}' }}'</pre>
+              {{ '}' }}'</pre
+            >
           </div>
           <blockquote>
-            <p>
-              Use the PAT Bearer Token previously acquired on behalf of the resource owner.
-            </p>
+            <p>Use the PAT Bearer Token previously acquired on behalf of the resource owner.</p>
           </blockquote>
           <h2>Obtain a Requesting Party Token (RPT)</h2>
-          <p>To access the resource owner's resource set a request party must obtain an access token (called the RPT).
-            To do so the application of the requesting party must use the User-Managed Access (UMA) 2.0 Grant for OAuth 2.0 Authorization.</p>
+          <p>
+            To access the resource owner's resource set a request party must obtain an access token (called the RPT). To do so the
+            application of the requesting party must use the User-Managed Access (UMA) 2.0 Grant for OAuth 2.0 Authorization.
+          </p>
           <div class="code">
-            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(pt_request);">
+            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(pt_request)">
               <mat-icon>content_copy</mat-icon>
             </button>
-            <pre #pt_request class="multiline">curl -X POST \
-              {{baseUrl}}/oauth/token \
+            <pre #pt_request class="multiline">
+curl -X POST \
+              {{ baseUrl }}/oauth/token \
   -H 'Authorization: Basic Base64(rqpClientId:rqpClientSecret)' \
   -H 'Content-Type: application/x-www-form-url-encoded' \
   -d 'grant_type=urn:ietf:params:oauth:grant-type:uma-ticket' \
   -d 'ticket=|PT|' \
   -d 'claim_token=|ID_Token|'
-  -d 'claim_token_format=http://openid.net/specs/openid-connect-core-1_0.html#IDToken'</pre>
+  -d 'claim_token_format=http://openid.net/specs/openid-connect-core-1_0.html#IDToken'</pre
+            >
           </div>
           <blockquote>
             <p>
-              Use the PT Token previously acquired when calling the resource server the first time and the ID Token acquired during the requesting party authentication flow (OpenID Connect flow).
+              Use the PT Token previously acquired when calling the resource server the first time and the ID Token acquired during the
+              requesting party authentication flow (OpenID Connect flow).
             </p>
           </blockquote>
         </div>
       </div>
     </div>
   </div>
-  <textarea name="copyText" #copyText id="" style="opacity: 0;height: 0; width: 0; margin: 0; border: 0"></textarea>
+  <textarea name="copyText" #copyText id="" style="opacity: 0; height: 0; width: 0; margin: 0; border: 0"></textarea>
 </div>

@@ -16,9 +16,7 @@
 
 -->
 <div fxLayout="column">
-  <p class="gv-plugin-creation-description">
-    Choose your cryptographic algorithms to sign the data (JWT tokens).
-  </p>
+  <p class="gv-plugin-creation-description">Choose your cryptographic algorithms to sign the data (JWT tokens).</p>
 
   <div fxLayout="row wrap" fxLayoutGap="10px">
     <mat-card *ngFor="let certificate of certificates" fxFlex="30">
@@ -28,7 +26,7 @@
         </mat-radio-group>
       </mat-card-header>
       <mat-card-content>
-        {{displayName(certificate)}}
+        {{ displayName(certificate) }}
       </mat-card-content>
     </mat-card>
   </div>

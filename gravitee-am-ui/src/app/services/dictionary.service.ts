@@ -13,16 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Injectable} from '@angular/core';
-import {HttpClient} from "@angular/common/http";
-import {AppConfig} from "../../config/app.config";
-import {Observable} from "rxjs";
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+
+import { AppConfig } from '../../config/app.config';
 
 @Injectable()
 export class I18nDictionaryService {
-
-  constructor(private http: HttpClient) {
-  }
+  constructor(private http: HttpClient) {}
 
   getAll(domainId): Observable<any> {
     return this.http.get<any>(this.getDictionaryUrl(domainId));

@@ -15,7 +15,7 @@
  */
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
-import {ResourceCreationStep2Component} from './step2.component';
+import { ResourceCreationStep2Component } from './step2.component';
 
 describe('ResourceCreationStep2Component', () => {
   let component: ResourceCreationStep2Component;
@@ -23,10 +23,9 @@ describe('ResourceCreationStep2Component', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    declarations: [ResourceCreationStep2Component],
-    teardown: { destroyAfterEach: false }
-})
-    .compileComponents();
+      declarations: [ResourceCreationStep2Component],
+      teardown: { destroyAfterEach: false },
+    }).compileComponents();
   }));
 
   beforeEach(() => {

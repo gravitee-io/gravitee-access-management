@@ -20,9 +20,9 @@ import { TagResolver } from './tag.resolver';
 describe('TagResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-    providers: [TagResolver],
-    teardown: { destroyAfterEach: false }
-});
+      providers: [TagResolver],
+      teardown: { destroyAfterEach: false },
+    });
   });
 
   it('should ...', inject([TagResolver], (service: TagResolver) => {

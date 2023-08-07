@@ -19,10 +19,12 @@
   <h1>Login</h1>
   <div class="gv-page-content">
     <div fxFlex="70">
-      <app-login-settings [loginSettings]="domain.loginSettings"
-                            [inheritMode]="false"
-                            [readonly]="readonly"
-                            (onSavedLoginSettings)="updateLoginSettings($event)">
+      <app-login-settings
+        [loginSettings]="domain.loginSettings"
+        [inheritMode]="false"
+        [readonly]="readonly"
+        (onSavedLoginSettings)="updateLoginSettings($event)"
+      >
       </app-login-settings>
     </div>
     <div class="gv-page-description" fxFlex>

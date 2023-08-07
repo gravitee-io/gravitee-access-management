@@ -17,7 +17,7 @@
 -->
 <div class="token-granter-container">
   <a [routerLink]="['..']" class="back-link"><small><< Back to extension grants</small></a>
-  <h1>{{extensionGrant.name}}</h1>
+  <h1>{{ extensionGrant.name }}</h1>
   <div *ngIf="extensionGrantSchema && extensionGrantSchema.description" class="token-granter-contextual-help">
     <pre [innerHTML]="extensionGrantSchema?.description"></pre>
   </div>
@@ -27,13 +27,25 @@
         <div class="gv-form-section">
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Name</mat-label>
-            <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="extensionGrant.name" required [readonly]="!editMode">
+            <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="extensionGrant.name" required [readonly]="!editMode" />
             <mat-hint>Extension grant name</mat-hint>
           </mat-form-field>
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Grant type</mat-label>
-            <input matInput type="text" placeholder="Grant type" name="grantType" [(ngModel)]="extensionGrant.grantType" [pattern]="rfc3986_absolute_URI" required disabled>
-            <mat-hint align="end">OAuth 2.0 grant type. The client uses an extension grant type by specifying the grant type value of the "grant_type" parameter of the token endpoint.</mat-hint>
+            <input
+              matInput
+              type="text"
+              placeholder="Grant type"
+              name="grantType"
+              [(ngModel)]="extensionGrant.grantType"
+              [pattern]="rfc3986_absolute_URI"
+              required
+              disabled
+            />
+            <mat-hint align="end"
+              >OAuth 2.0 grant type. The client uses an extension grant type by specifying the grant type value of the "grant_type"
+              parameter of the token endpoint.</mat-hint
+            >
           </mat-form-field>
         </div>
 
@@ -43,12 +55,10 @@
             <mat-divider></mat-divider>
           </div>
           <div fxLayout="column">
-            <mat-slide-toggle
-              (change)="enableCreateUser($event)"
-              [checked]="extensionGrant.createUser" [disabled]="!editMode">
+            <mat-slide-toggle (change)="enableCreateUser($event)" [checked]="extensionGrant.createUser" [disabled]="!editMode">
               Create user account
             </mat-slide-toggle>
-            <mat-hint style="font-size: 75%;">Used for user account activity and OAuth 2.0 refresh token flow.</mat-hint>
+            <mat-hint style="font-size: 75%">Used for user account activity and OAuth 2.0 refresh token flow.</mat-hint>
           </div>
         </div>
 
@@ -58,12 +68,10 @@
             <mat-divider></mat-divider>
           </div>
           <div fxLayout="column">
-            <mat-slide-toggle
-              (change)="enableCheckUser($event)"
-              [checked]="extensionGrant.userExists" [disabled]="!editMode">
+            <mat-slide-toggle (change)="enableCheckUser($event)" [checked]="extensionGrant.userExists" [disabled]="!editMode">
               User existence
             </mat-slide-toggle>
-            <mat-hint style="font-size: 75%;">Check that the user is existing in the identity provider.</mat-hint>
+            <mat-hint style="font-size: 75%">Check that the user is existing in the identity provider.</mat-hint>
           </div>
         </div>
 
@@ -74,8 +82,15 @@
           </div>
           <div>
             <mat-form-field appearance="outline" floatLabel="always">
-              <mat-select placeholder="Identity provider" name="identityProvider" [(ngModel)]="extensionGrant.identityProvider" [disabled]="!editMode">
-                <mat-option *ngFor="let identityProvider of identityProviders" [value]="identityProvider.id">{{ identityProvider.name }}</mat-option>
+              <mat-select
+                placeholder="Identity provider"
+                name="identityProvider"
+                [(ngModel)]="extensionGrant.identityProvider"
+                [disabled]="!editMode"
+              >
+                <mat-option *ngFor="let identityProvider of identityProviders" [value]="identityProvider.id">{{
+                  identityProvider.name
+                }}</mat-option>
               </mat-select>
               <mat-hint>Identity provider used to retrieve user information from incoming request assertion.</mat-hint>
             </mat-form-field>
@@ -88,12 +103,25 @@
             <mat-divider></mat-divider>
           </div>
           <div>
-            <extension-grant-form *ngIf="extensionGrant" [extensionGrantConfiguration]="extensionGrantConfiguration" [extensionGrantSchema]="extensionGrantSchema" (configurationCompleted)="enableTokenGranterUpdate($event)"></extension-grant-form>
+            <extension-grant-form
+              *ngIf="extensionGrant"
+              [extensionGrantConfiguration]="extensionGrantConfiguration"
+              [extensionGrantSchema]="extensionGrantSchema"
+              (configurationCompleted)="enableTokenGranterUpdate($event)"
+            ></extension-grant-form>
           </div>
         </div>
 
         <div fxLayout="row" *ngIf="editMode">
-          <button mat-raised-button [disabled]="(!tokenGranterForm.valid || tokenGranterForm.pristine) && (!configurationIsValid || configurationPristine) && !formChanged" (click)="update()">SAVE</button>
+          <button
+            mat-raised-button
+            [disabled]="
+              (!tokenGranterForm.valid || tokenGranterForm.pristine) && (!configurationIsValid || configurationPristine) && !formChanged
+            "
+            (click)="update()"
+          >
+            SAVE
+          </button>
         </div>
       </form>
 
@@ -110,9 +138,9 @@
       <h3>Manage extension grant</h3>
       <div class="token-granter-description-content">
         <p>
-          Configure new extension grant to request OAuth 2.0 access tokens. OAuth 2.0 specification defines four
-          grant types : authorization code, implicit, resource owner password credentials, and client credentials. Extension grant act as an extensibility
-          mechanism for defining additional types.
+          Configure new extension grant to request OAuth 2.0 access tokens. OAuth 2.0 specification defines four grant types : authorization
+          code, implicit, resource owner password credentials, and client credentials. Extension grant act as an extensibility mechanism for
+          defining additional types.
         </p>
       </div>
     </div>

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-import { FactorComponent } from './factor.component';
 
+import { FactorComponent } from './factor.component';
 
 describe('ExtensionGrantComponent', () => {
   let component: FactorComponent;
@@ -23,10 +23,9 @@ describe('ExtensionGrantComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    declarations: [FactorComponent],
-    teardown: { destroyAfterEach: false }
-})
-    .compileComponents();
+      declarations: [FactorComponent],
+      teardown: { destroyAfterEach: false },
+    }).compileComponents();
   }));
 
   beforeEach(() => {

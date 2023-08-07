@@ -19,17 +19,24 @@
 <div>
   <form>
     <mat-form-field appearance="outline" floatLabel="always">
-      <input matInput placeholder="Adaptive MFA rule" name="adaptiveMfaRule"
-             [(ngModel)]="adaptiveMfaRule"
-             (keyup)="updateAdaptiveMfaRule($event)"/>
-      <button mat-icon-button matSuffix disableRipple
-              matTooltipPosition="below"
-              matTooltip="More about Adaptive MFA conditions" (click)="openAMFADialog($event)">
+      <input
+        matInput
+        placeholder="Adaptive MFA rule"
+        name="adaptiveMfaRule"
+        [(ngModel)]="adaptiveMfaRule"
+        (keyup)="updateAdaptiveMfaRule($event)"
+      />
+      <button
+        mat-icon-button
+        matSuffix
+        disableRipple
+        matTooltipPosition="below"
+        matTooltip="More about Adaptive MFA conditions"
+        (click)="openAMFADialog($event)"
+      >
         <mat-icon>info_outline</mat-icon>
       </button>
-      <mat-hint>
-        MFA challenge page will be displayed if the condition above is <b>false</b> in addition to the login step.
-      </mat-hint>
+      <mat-hint> MFA challenge page will be displayed if the condition above is <b>false</b> in addition to the login step. </mat-hint>
     </mat-form-field>
   </form>
 </div>

@@ -20,9 +20,9 @@ import { PolicyService } from './policy.service';
 describe('PolicyService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-    providers: [PolicyService],
-    teardown: { destroyAfterEach: false }
-});
+      providers: [PolicyService],
+      teardown: { destroyAfterEach: false },
+    });
   });
 
   it('should ...', inject([PolicyService], (service: PolicyService) => {

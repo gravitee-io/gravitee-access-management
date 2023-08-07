@@ -13,26 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute} from '@angular/router';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import 'codemirror/mode/groovy/groovy.js';
 
 @Component({
-    selector: 'app-application-resource-policy',
-    templateUrl: './policy.component.html',
-    styleUrls: ['./policy.component.scss']
+  selector: 'app-application-resource-policy',
+  templateUrl: './policy.component.html',
+  styleUrls: ['./policy.component.scss'],
 })
 export class ApplicationResourcePolicyComponent implements OnInit {
-    policy: any;
-    config: any;
-    condition: string;
+  policy: any;
+  config: any;
+  condition: string;
 
-    constructor(private route: ActivatedRoute) {
-    }
+  constructor(private route: ActivatedRoute) {}
 
-    ngOnInit(): void {
-        this.config = { lineNumbers: true, mode: 'groovy', readOnly: true };
-        this.policy = this.route.snapshot.data['policy'];
-        this.condition = JSON.parse(this.policy.condition)['onRequestScript'];
-    }
+  ngOnInit(): void {
+    this.config = { lineNumbers: true, mode: 'groovy', readOnly: true };
+    this.policy = this.route.snapshot.data['policy'];
+    this.condition = JSON.parse(this.policy.condition)['onRequestScript'];
+  }
 }

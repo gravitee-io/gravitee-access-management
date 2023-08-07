@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import {OrganizationService} from '../../../../../../services/organization.service';
+
+import { OrganizationService } from '../../../../../../services/organization.service';
 
 @Component({
   selector: 'bot-detection-creation-step2',
   templateUrl: './step2.component.html',
-  styleUrls: ['./step2.component.scss']
+  styleUrls: ['./step2.component.scss'],
 })
 export class BotDetectionCreationStep2Component implements OnInit {
   @Input('botDetection') botDetection: any;
@@ -30,19 +31,15 @@ export class BotDetectionCreationStep2Component implements OnInit {
   configuration: any;
   botDetectionSchema: any = {};
 
-  constructor(
-    private organizationService: OrganizationService,
-    private route: ActivatedRoute) { }
+  constructor(private organizationService: OrganizationService, private route: ActivatedRoute) {}
 
   ngOnInit() {
-
-    this.organizationService.botDetectionsSchema(this.botDetection.type).subscribe(data => {
+    this.organizationService.botDetectionsSchema(this.botDetection.type).subscribe((data) => {
       this.botDetectionSchema = data;
-      
+
       if (this.botDetectionSchema.properties.detectionType) {
         this.botDetection.detectionType = this.botDetectionSchema.properties.detectionType.default;
       }
-
     });
   }
 

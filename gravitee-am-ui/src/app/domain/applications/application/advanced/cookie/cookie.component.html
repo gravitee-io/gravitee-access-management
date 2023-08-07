@@ -18,10 +18,12 @@
 <div>
   <div>
     <div fxFlex="70">
-      <app-cookie-settings [cookieSettings]="cookieSettings"
-                          [inheritMode]="true"
-                          [readonly]="readonly"
-                          (onSavedCookieSettings)="updateCookieSettings($event)">
+      <app-cookie-settings
+        [cookieSettings]="cookieSettings"
+        [inheritMode]="true"
+        [readonly]="readonly"
+        (onSavedCookieSettings)="updateCookieSettings($event)"
+      >
       </app-cookie-settings>
     </div>
     <div class="gv-page-description" fxFlex>

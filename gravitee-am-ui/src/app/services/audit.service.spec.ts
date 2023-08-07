@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { TestBed, inject } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
+import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 
 import { AuditService } from './audit.service';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { AnalyticsService } from './analytics.service';
-import { AppConfig } from '../../config/app.config';
 import { OrganizationService } from './organization.service';
+
+import { AppConfig } from '../../config/app.config';
 
 jest.mock('moment', () => {
   return () => jest.requireActual('moment')('2021-01-04T00:00:00.000Z');
@@ -31,10 +31,10 @@ describe('AuditService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-    providers: [AuditService, OrganizationService],
-    imports: [HttpClientTestingModule],
-    teardown: { destroyAfterEach: false }
-});
+      providers: [AuditService, OrganizationService],
+      imports: [HttpClientTestingModule],
+      teardown: { destroyAfterEach: false },
+    });
 
     httpTestingController = TestBed.get(HttpTestingController);
     auditService = TestBed.get(AuditService);
@@ -51,11 +51,10 @@ describe('AuditService', () => {
       const size = 10;
       const auditResponse = { currentPage: 0, data: [], totalCount: 0 };
 
-      auditService.findByDomain(domainId, page, size)
-        .subscribe(result => {
-          expect(result).toEqual(auditResponse);
-          done();
-        });
+      auditService.findByDomain(domainId, page, size).subscribe((result) => {
+        expect(result).toEqual(auditResponse);
+        done();
+      });
 
       httpTestingController
         .expectOne({
@@ -78,11 +77,10 @@ describe('AuditService', () => {
       const to = 1609718400000;
       const auditResponse = { currentPage: 0, data: [], totalCount: 0 };
 
-      auditService.search(domainId, page, size, type, status, user, from, to, false)
-        .subscribe(result => {
-          expect(result).toEqual(auditResponse);
-          done();
-        });
+      auditService.search(domainId, page, size, type, status, user, from, to, false).subscribe((result) => {
+        expect(result).toEqual(auditResponse);
+        done();
+      });
 
       httpTestingController
         .expectOne({
@@ -91,6 +89,5 @@ describe('AuditService', () => {
         })
         .flush(auditResponse);
     });
-
   });
 });

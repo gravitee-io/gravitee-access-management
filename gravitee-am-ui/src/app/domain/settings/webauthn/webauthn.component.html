@@ -23,25 +23,66 @@
         <div class="gv-form-section">
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Origin</mat-label>
-            <input matInput type="text" name="origin" placeholder="Origin" [(ngModel)]="domain.webAuthnSettings.origin" (ngModelChange)="updateFormState()" required pattern="https?://.+" [readonly]="readonly">
-            <mat-hint>This value needs to match `window.location.origin` evaluated by the User Agent during registration and authentication ceremonies.</mat-hint>
+            <input
+              matInput
+              type="text"
+              name="origin"
+              placeholder="Origin"
+              [(ngModel)]="domain.webAuthnSettings.origin"
+              (ngModelChange)="updateFormState()"
+              required
+              pattern="https?://.+"
+              [readonly]="readonly"
+            />
+            <mat-hint
+              >This value needs to match `window.location.origin` evaluated by the User Agent during registration and authentication
+              ceremonies.</mat-hint
+            >
           </mat-form-field>
 
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Relying Party ID</mat-label>
-            <input matInput type="text" name="relyingPartyId" placeholder="Relying Party ID" [(ngModel)]="domain.webAuthnSettings.relyingPartyId" (ngModelChange)="updateFormState()" [readonly]="readonly">
-            <mat-hint>Optional. Relying Party identifier. By default, the RP ID for a WebAuthn operation is set to the caller’s origin's effective domain.</mat-hint>
+            <input
+              matInput
+              type="text"
+              name="relyingPartyId"
+              placeholder="Relying Party ID"
+              [(ngModel)]="domain.webAuthnSettings.relyingPartyId"
+              (ngModelChange)="updateFormState()"
+              [readonly]="readonly"
+            />
+            <mat-hint
+              >Optional. Relying Party identifier. By default, the RP ID for a WebAuthn operation is set to the caller’s origin's effective
+              domain.</mat-hint
+            >
           </mat-form-field>
 
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Relying Party name</mat-label>
-            <input matInput type="text" name="relyingPartyName" placeholder="Relying Party name" [(ngModel)]="domain.webAuthnSettings.relyingPartyName" (ngModelChange)="updateFormState()" [readonly]="readonly">
+            <input
+              matInput
+              type="text"
+              name="relyingPartyName"
+              placeholder="Relying Party name"
+              [(ngModel)]="domain.webAuthnSettings.relyingPartyName"
+              (ngModelChange)="updateFormState()"
+              [readonly]="readonly"
+            />
             <mat-hint>Optional. Relying Party name for display purposes.</mat-hint>
           </mat-form-field>
 
-          <div style="display: flex; flex-direction: column; padding: 10px 5px;">
-            <mat-checkbox name="requireResidentKey" [(ngModel)]="domain.webAuthnSettings.requireResidentKey" (ngModelChange)="updateFormState()">Require resident key</mat-checkbox>
-            <mat-hint style="font-size: 75%;">Optional. This member describes the Relying Party's requirements regarding resident credentials. If the parameter is set to true, the authenticator MUST create a client-side-resident public key credential source when creating a public key credential.</mat-hint>
+          <div style="display: flex; flex-direction: column; padding: 10px 5px">
+            <mat-checkbox
+              name="requireResidentKey"
+              [(ngModel)]="domain.webAuthnSettings.requireResidentKey"
+              (ngModelChange)="updateFormState()"
+              >Require resident key</mat-checkbox
+            >
+            <mat-hint style="font-size: 75%"
+              >Optional. This member describes the Relying Party's requirements regarding resident credentials. If the parameter is set to
+              true, the authenticator MUST create a client-side-resident public key credential source when creating a public key
+              credential.</mat-hint
+            >
           </div>
 
           <mat-form-field appearance="outline" floatLabel="always">
@@ -49,66 +90,103 @@
             <mat-select name="userVerification" [(ngModel)]="domain.webAuthnSettings.userVerification" (ngModelChange)="updateFormState()">
               <mat-option>unspecified</mat-option>
               <mat-option *ngFor="let userVerification of userVerifications" [value]="userVerification">
-                {{userVerification}}
+                {{ userVerification }}
               </mat-option>
             </mat-select>
-            <mat-hint>
-              Optional. This member describes the Relying Party's requirements regarding user verification.
-            </mat-hint>
+            <mat-hint> Optional. This member describes the Relying Party's requirements regarding user verification. </mat-hint>
           </mat-form-field>
 
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Authenticator Attachment</mat-label>
-            <mat-select name="authenticatorAttachment" [(ngModel)]="domain.webAuthnSettings.authenticatorAttachment" (ngModelChange)="updateFormState()">
+            <mat-select
+              name="authenticatorAttachment"
+              [(ngModel)]="domain.webAuthnSettings.authenticatorAttachment"
+              (ngModelChange)="updateFormState()"
+            >
               <mat-option>unspecified</mat-option>
               <mat-option *ngFor="let authenticatorAttachment of authenticatorAttachments" [value]="authenticatorAttachment">
-                {{authenticatorAttachment}}
+                {{ authenticatorAttachment }}
               </mat-option>
             </mat-select>
             <mat-hint>
-              Optional. Mechanism use by clients to communicate with authenticators;
-              "unspecified" value means that the web browser will display all possibilities (both Device and Security key), "platform" value only Device and "cross-platform" only the Security Key.
+              Optional. Mechanism use by clients to communicate with authenticators; "unspecified" value means that the web browser will
+              display all possibilities (both Device and Security key), "platform" value only Device and "cross-platform" only the Security
+              Key.
             </mat-hint>
           </mat-form-field>
 
-          <mat-form-field appearance="outline" floatLabel="always" style="margin-top: 15px;">
+          <mat-form-field appearance="outline" floatLabel="always" style="margin-top: 15px">
             <mat-label>Attestation Conveyance Preference</mat-label>
-            <mat-select name="attestationConveyancePreference" [(ngModel)]="domain.webAuthnSettings.attestationConveyancePreference" (ngModelChange)="updateFormState()">
+            <mat-select
+              name="attestationConveyancePreference"
+              [(ngModel)]="domain.webAuthnSettings.attestationConveyancePreference"
+              (ngModelChange)="updateFormState()"
+            >
               <mat-option>unspecified</mat-option>
-              <mat-option *ngFor="let attestationConveyancePreference of attestationConveyancePreferences" [value]="attestationConveyancePreference">
-                {{attestationConveyancePreference}}
+              <mat-option
+                *ngFor="let attestationConveyancePreference of attestationConveyancePreferences"
+                [value]="attestationConveyancePreference"
+              >
+                {{ attestationConveyancePreference }}
               </mat-option>
             </mat-select>
             <mat-hint>
-              Optional. WebAuthn Relying Parties may use AttestationConveyancePreference to specify their preference regarding attestation conveyance during credential generation.
+              Optional. WebAuthn Relying Parties may use AttestationConveyancePreference to specify their preference regarding attestation
+              conveyance during credential generation.
             </mat-hint>
           </mat-form-field>
 
-          <div style="display: flex; flex-direction: column; padding: 10px 5px; margin-top: 10px;">
-            <mat-checkbox name="forceRegistration" [(ngModel)]="domain.webAuthnSettings.forceRegistration" (ngModelChange)="updateFormState()">Force registration</mat-checkbox>
-            <mat-hint style="font-size: 75%;">Optional. If the parameter is set to true, the Relying Party accepts the registration instead of failing the registration ceremony.</mat-hint>
+          <div style="display: flex; flex-direction: column; padding: 10px 5px; margin-top: 10px">
+            <mat-checkbox
+              name="forceRegistration"
+              [(ngModel)]="domain.webAuthnSettings.forceRegistration"
+              (ngModelChange)="updateFormState()"
+              >Force registration</mat-checkbox
+            >
+            <mat-hint style="font-size: 75%"
+              >Optional. If the parameter is set to true, the Relying Party accepts the registration instead of failing the registration
+              ceremony.</mat-hint
+            >
           </div>
-          <div style="padding: 10px 5px; margin-top: 10px;">
-            <div style="display: flex; flex-direction: column;">
-              <mat-checkbox name="forceIntegrity" [(ngModel)]="domain.webAuthnSettings.enforceAuthenticatorIntegrity" (ngModelChange)="updateFormState()">Force authenticator integrity</mat-checkbox>
-              <mat-hint style="font-size: 75%;">Optional. If the parameter is set to true, the end-user authenticator statement will be used to verify the certificate chain during the authentication ceremony.</mat-hint>
+          <div style="padding: 10px 5px; margin-top: 10px">
+            <div style="display: flex; flex-direction: column">
+              <mat-checkbox
+                name="forceIntegrity"
+                [(ngModel)]="domain.webAuthnSettings.enforceAuthenticatorIntegrity"
+                (ngModelChange)="updateFormState()"
+                >Force authenticator integrity</mat-checkbox
+              >
+              <mat-hint style="font-size: 75%"
+                >Optional. If the parameter is set to true, the end-user authenticator statement will be used to verify the certificate
+                chain during the authentication ceremony.</mat-hint
+              >
             </div>
-            <mat-form-field appearance="outline" floatLabel="always" style="margin-top: 10px;">
+            <mat-form-field appearance="outline" floatLabel="always" style="margin-top: 10px">
               <mat-label>Max age last check (seconds)</mat-label>
-              <input matInput type="number" name="forceIntegrityMaxAge"
-                     [ngModel]="domain.webAuthnSettings.enforceAuthenticatorIntegrityMaxAge"
-                     (ngModelChange)="changeMaxAge($event)"
-                     [min]="0">
-              <mat-hint>Specifies the allowable elapsed time in seconds since the last time the End-User webauthn authenticator was actively checked.</mat-hint>
+              <input
+                matInput
+                type="number"
+                name="forceIntegrityMaxAge"
+                [ngModel]="domain.webAuthnSettings.enforceAuthenticatorIntegrityMaxAge"
+                (ngModelChange)="changeMaxAge($event)"
+                [min]="0"
+              />
+              <mat-hint
+                >Specifies the allowable elapsed time in seconds since the last time the End-User webauthn authenticator was actively
+                checked.</mat-hint
+              >
             </mat-form-field>
           </div>
         </div>
         <div class="gv-form-section">
           <div class="gv-form-section-title">
             <h5>Certificates</h5>
-            <small>If your application needs to update a certificate on it’s own, use a more up to date one, or another with a different cypher, then you can replace the default root certificates.</small>
+            <small
+              >If your application needs to update a certificate on it’s own, use a more up to date one, or another with a different cypher,
+              then you can replace the default root certificates.</small
+            >
           </div>
-          <div fxLayout="row" fxLayoutGap="10px" style="padding: 15px; border: 1px solid rgba(0, 0, 0, 0.12); border-radius: 4px;">
+          <div fxLayout="row" fxLayoutGap="10px" style="padding: 15px; border: 1px solid rgba(0, 0, 0, 0.12); border-radius: 4px">
             <mat-form-field appearance="outline" floatLabel="always">
               <mat-select placeholder="Type" [(ngModel)]="attestation.name" name="attestationName">
                 <mat-option *ngFor="let attestationName of attestationNames" [value]="attestationName">{{ attestationName }}</mat-option>
@@ -116,48 +194,74 @@
               <mat-hint>The attestation's name.</mat-hint>
             </mat-form-field>
             <mat-form-field appearance="outline" floatLabel="always">
-              <input matInput name="certificate" placeholder="Certificate" [(ngModel)]="attestation.value"/>
+              <input matInput name="certificate" placeholder="Certificate" [(ngModel)]="attestation.value" />
               <mat-hint>The certificate's value (pem format without boundaries).</mat-hint>
             </mat-form-field>
             <div>
-              <button style="margin-top: 7px;" mat-stroked-button (click)="addCertificate($event)" [disabled]="!attestation.name || !attestation.value">+ ADD</button>
+              <button
+                style="margin-top: 7px"
+                mat-stroked-button
+                (click)="addCertificate($event)"
+                [disabled]="!attestation.name || !attestation.value"
+              >
+                + ADD
+              </button>
             </div>
           </div>
           <div *ngIf="!certificatesIsEmpty()">
-            <small style="display: block; margin-top: 10px;">
+            <small style="display: block; margin-top: 10px">
               <i>Double click to edit and press enter to save changes</i>
             </small>
           </div>
-          <ngx-datatable class="material"
-                         [columnMode]="'flex'"
-                         [headerHeight]="40"
-                         [footerHeight]="40"
-                         [rowHeight]="55"
-                         [messages]="{emptyMessage:'There is no certificate'}"
-                         [rows]='attestationCertificates'>
+          <ngx-datatable
+            class="material"
+            [columnMode]="'flex'"
+            [headerHeight]="40"
+            [footerHeight]="40"
+            [rowHeight]="55"
+            [messages]="{ emptyMessage: 'There is no certificate' }"
+            [rows]="attestationCertificates"
+          >
             <ngx-datatable-column name="Attestation name" [flexGrow]="2">
               <ng-template let-row="row" let-rowIndex="rowIndex" ngx-datatable-cell-template>
-                  <span (dblclick)="editing[row.id + '-name'] = true" *ngIf="!editing[row.id + '-name']">
-                    {{row.name}}
-                  </span>
+                <span (dblclick)="editing[row.id + '-name'] = true" *ngIf="!editing[row.id + '-name']">
+                  {{ row.name }}
+                </span>
                 <mat-form-field *ngIf="editing[row.id + '-name']" class="datatable-input">
-                  <input matInput type="text" required autofocus placeholder="Attestation name"
-                         (keyup.enter)="updateCertificate($event, 'name', row.id)"
-                         (blur)="editing[row.id + '-name'] = false"
-                         [value]="row.name" />
+                  <input
+                    matInput
+                    type="text"
+                    required
+                    autofocus
+                    placeholder="Attestation name"
+                    (keyup.enter)="updateCertificate($event, 'name', row.id)"
+                    (blur)="editing[row.id + '-name'] = false"
+                    [value]="row.name"
+                  />
                 </mat-form-field>
               </ng-template>
             </ngx-datatable-column>
             <ngx-datatable-column name="" [flexGrow]="4">
               <ng-template let-row="row" let-rowIndex="rowIndex" ngx-datatable-cell-template>
-                  <pre style="margin: 0px; white-space: normal; font-size: 12px;" (dblclick)="editing[row.id + '-value'] = true" *ngIf="!editing[row.id + '-value']">
-                    {{row.value}}
-                  </pre>
+                <pre
+                  style="margin: 0px; white-space: normal; font-size: 12px"
+                  (dblclick)="editing[row.id + '-value'] = true"
+                  *ngIf="!editing[row.id + '-value']"
+                >
+                    {{ row.value }}
+                  </pre
+                >
                 <mat-form-field *ngIf="editing[row.id + '-value']" class="datatable-input">
-                  <input matInput type="text" required autofocus placeholder="Certificate"
-                         (keyup.enter)="updateCertificate($event, 'value', row.id)"
-                         (blur)="editing[row.id + '-value'] = false"
-                         [value]="row.value" />
+                  <input
+                    matInput
+                    type="text"
+                    required
+                    autofocus
+                    placeholder="Certificate"
+                    (keyup.enter)="updateCertificate($event, 'value', row.id)"
+                    (blur)="editing[row.id + '-value'] = false"
+                    [value]="row.value"
+                  />
                 </mat-form-field>
               </ng-template>
             </ngx-datatable-column>
@@ -181,27 +285,33 @@
         <p>WebAuthn configuration for the passwordless feature.</p>
         <h4>User verification</h4>
         <p>
-          User verification serves to ensure that the persons authenticating to a service is in fact who they say they are for the purposes of that service.
-          These are following options for "userVerification" when initiating registration or authentication:
+          User verification serves to ensure that the persons authenticating to a service is in fact who they say they are for the purposes
+          of that service. These are following options for "userVerification" when initiating registration or authentication:
         </p>
         <small>
-          <b><i>DISCOURAGED</i></b> This value indicates that the RP does not want user verification employed during the operation (for example, to minimize disruption to the user interaction flow).<br>
-          <b><i>PREFERRED</i></b> This value indicates that the RP prefers user verification for the operation if possible, but will not fail the operation if the response does not have the "AuthenticatorDataFlags.UV" flag set.<br>
-          <b><i>REQUIRED</i></b> Indicates that the RP requires user verification for the operation and will fail the operation if the response does not have the "AuthenticatorDataFlags.UV flag" set.<br>
+          <b><i>DISCOURAGED</i></b> This value indicates that the RP does not want user verification employed during the operation (for
+          example, to minimize disruption to the user interaction flow).<br />
+          <b><i>PREFERRED</i></b> This value indicates that the RP prefers user verification for the operation if possible, but will not
+          fail the operation if the response does not have the "AuthenticatorDataFlags.UV" flag set.<br />
+          <b><i>REQUIRED</i></b> Indicates that the RP requires user verification for the operation and will fail the operation if the
+          response does not have the "AuthenticatorDataFlags.UV flag" set.<br />
         </small>
         <p>
-          User verification is appropriate for passwordless scenarios and multi-factor authentication (MFA) because the user enters a shared secret with the authenticator (PIN) that is not sent over the network.
+          User verification is appropriate for passwordless scenarios and multi-factor authentication (MFA) because the user enters a shared
+          secret with the authenticator (PIN) that is not sent over the network.
         </p>
 
         <h4>Attestation Conveyance Preference</h4>
         <p>
-          User verification serves to ensure that the persons authenticating to a service is in fact who they say they are for the purposes of that service.
-          These are following options for "userVerification" when initiating registration or authentication:
+          User verification serves to ensure that the persons authenticating to a service is in fact who they say they are for the purposes
+          of that service. These are following options for "userVerification" when initiating registration or authentication:
         </p>
         <small>
-          <b><i>NONE</i></b> This value indicates that the RP is not interested in authenticator attestation.<br>
-          <b><i>INDIRECT</i></b> This value indicates that the RP prefers an attestation conveyance yielding verifiable attestation statements. There is no guarantee that the RP will obtain a verifiable attestation statement in this case. <br>
-          <b><i>DIRECT</i></b> This value indicates that the RP wants to receive the attestation statement as generated by the authenticator.<br>
+          <b><i>NONE</i></b> This value indicates that the RP is not interested in authenticator attestation.<br />
+          <b><i>INDIRECT</i></b> This value indicates that the RP prefers an attestation conveyance yielding verifiable attestation
+          statements. There is no guarantee that the RP will obtain a verifiable attestation statement in this case. <br />
+          <b><i>DIRECT</i></b> This value indicates that the RP wants to receive the attestation statement as generated by the
+          authenticator.<br />
         </small>
       </div>
     </div>

@@ -13,21 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
-import { UserService} from '../../../services/user.service';
+import { filter, switchMap, tap } from 'rxjs/operators';
+
+import { UserService } from '../../../services/user.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { DialogService } from '../../../services/dialog.service';
 import { OrganizationService } from '../../../services/organization.service';
 import { AuthService } from '../../../services/auth.service';
-import {ApplicationService} from "../../../services/application.service";
-import {ProviderService} from "../../../services/provider.service";
+import { ApplicationService } from '../../../services/application.service';
+import { ProviderService } from '../../../services/provider.service';
 
 @Component({
   selector: 'app-users',
   templateUrl: './users.component.html',
-  styleUrls: ['./users.component.scss']
+  styleUrls: ['./users.component.scss'],
 })
 export class UsersComponent implements OnInit {
   private re = /\b(eq|ne|co|sw|ew|pr|gt|ge|lt|le|and|or)\b/gi;
@@ -44,19 +46,21 @@ export class UsersComponent implements OnInit {
   identityProviders: any[];
   selectedIdPs: string[];
   selectedApplications: string[];
-  selectedDisabledUsers: boolean = false;
-  displayAdvancedSearchMode: boolean = false;
+  selectedDisabledUsers = false;
+  displayAdvancedSearchMode = false;
 
-  constructor(private userService: UserService,
-              private organizationService: OrganizationService,
-              private dialogService: DialogService,
-              private snackbarService: SnackbarService,
-              private authService: AuthService,
-              private applicationService: ApplicationService,
-              private providerService: ProviderService,
-              private route: ActivatedRoute,
-              private router: Router,
-              public dialog: MatDialog) {
+  constructor(
+    private userService: UserService,
+    private organizationService: OrganizationService,
+    private dialogService: DialogService,
+    private snackbarService: SnackbarService,
+    private authService: AuthService,
+    private applicationService: ApplicationService,
+    private providerService: ProviderService,
+    private route: ActivatedRoute,
+    private router: Router,
+    public dialog: MatDialog,
+  ) {
     this.page.pageNumber = 0;
     this.page.size = 25;
   }
@@ -87,7 +91,7 @@ export class UsersComponent implements OnInit {
         : this.userService.findByDomain(this.domainId, this.page.pageNumber, this.page.size);
     }
     this.isLoading = true;
-    findUsers.subscribe(pagedUsers => {
+    findUsers.subscribe((pagedUsers) => {
       this.isLoading = false;
       this.page.totalElements = pagedUsers.totalCount;
       this.users = pagedUsers.data;
@@ -101,26 +105,27 @@ export class UsersComponent implements OnInit {
     event.preventDefault();
     this.dialogService
       .confirm('Delete User', 'Are you sure you want to delete this user ?')
-      .subscribe(res => {
-        if (res) {
-          this.userService.delete(this.domainId, id, this.organizationContext).subscribe(response => {
-            this.snackbarService.open('User deleted');
-            this.page.pageNumber = 0;
-            this.loadUsers(null);
-          });
-        }
-      });
+      .pipe(
+        filter((res) => res),
+        switchMap(() => this.userService.delete(this.domainId, id, this.organizationContext)),
+        tap(() => {
+          this.snackbarService.open('User deleted');
+          this.page.pageNumber = 0;
+          this.loadUsers(null);
+        }),
+      )
+      .subscribe();
   }
 
   openAdvancedSearch() {
     this.displayAdvancedSearchMode = !this.displayAdvancedSearchMode;
     if (this.displayAdvancedSearchMode) {
-      this.applicationService.findByDomain(this.domainId, 0, 50).subscribe(response => {
+      this.applicationService.findByDomain(this.domainId, 0, 50).subscribe((response) => {
         this.applications = response.data;
-      })
-      this.providerService.findByDomain(this.domainId).subscribe(response => {
+      });
+      this.providerService.findByDomain(this.domainId).subscribe((response) => {
         this.identityProviders = response;
-      })
+      });
     }
   }
 
@@ -150,13 +155,13 @@ export class UsersComponent implements OnInit {
       if (searchQuery.length > 1) {
         searchQuery += ' and ';
       }
-      searchQuery += this.selectedApplications.map(app =>  'client eq "' + app + '"').join(' or ');
+      searchQuery += this.selectedApplications.map((app) => 'client eq "' + app + '"').join(' or ');
     }
     if (this.selectedIdPs && this.selectedIdPs.length > 0) {
       if (searchQuery.length > 1) {
         searchQuery += ' and ';
       }
-      searchQuery += this.selectedIdPs.map(idp => 'source eq "' + idp + '"').join(' or ');
+      searchQuery += this.selectedIdPs.map((idp) => 'source eq "' + idp + '"').join(' or ');
     }
     if (this.selectedDisabledUsers) {
       if (searchQuery.length > 1) {
@@ -202,4 +207,3 @@ export class UsersComponent implements OnInit {
 export class UsersSearchInfoDialog {
   constructor(public dialogRef: MatDialogRef<UsersSearchInfoDialog>) {}
 }
-

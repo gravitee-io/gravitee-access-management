@@ -18,37 +18,40 @@
 <div class="gv-page-container" fxLayout="column">
   <h1>Users</h1>
   <div class="users-search" fxLayout="column">
-    <mat-form-field id="users-search-input" appearance="fill" floatLabel="always" style="max-width: 90%;">
+    <mat-form-field id="users-search-input" appearance="fill" floatLabel="always" style="max-width: 90%">
       <mat-icon matPrefix>search</mat-icon>
       <mat-label>Search for users</mat-label>
-      <input [(ngModel)]="searchValue" type="text" matInput placeholder="Search" (keyup.enter)="onSearch()">
+      <input [(ngModel)]="searchValue" type="text" matInput placeholder="Search" (keyup.enter)="onSearch()" />
       <button *ngIf="searchValue" mat-icon-button matSuffix (click)="discardSearchValue()"><mat-icon>close</mat-icon></button>
-      <button *ngIf="!organizationContext" mat-icon-button matSuffix (click)="openAdvancedSearch();"><mat-icon>tune</mat-icon></button>
-      <mat-hint align="end">Press <b>enter</b> to perform the search request <mat-icon (click)="openDialog()" style="font-size: 15px; color:black; cursor: pointer;">info_outline</mat-icon></mat-hint>
+      <button *ngIf="!organizationContext" mat-icon-button matSuffix (click)="openAdvancedSearch()"><mat-icon>tune</mat-icon></button>
+      <mat-hint align="end"
+        >Press <b>enter</b> to perform the search request
+        <mat-icon (click)="openDialog()" style="font-size: 15px; color: black; cursor: pointer">info_outline</mat-icon></mat-hint
+      >
     </mat-form-field>
     <mat-card *ngIf="displayAdvancedSearchMode" class="advanced-search-card">
       <mat-card-content>
-        <div fxLayout="row" style="align-items: center;">
+        <div fxLayout="row" style="align-items: center">
           <label fxFlex="25">Identity provider</label>
           <mat-form-field>
             <mat-select name="idp" [(ngModel)]="selectedIdPs" multiple>
               <mat-option *ngFor="let idp of identityProviders" [value]="idp.id">
-                {{idp.name}}
+                {{ idp.name }}
               </mat-option>
             </mat-select>
           </mat-form-field>
         </div>
-        <div fxLayout="row" style="align-items: center;">
+        <div fxLayout="row" style="align-items: center">
           <label fxFlex="25">Application</label>
           <mat-form-field>
             <mat-select name="application" [(ngModel)]="selectedApplications" multiple>
               <mat-option *ngFor="let application of applications" [value]="application.id">
-                {{application.name}}
+                {{ application.name }}
               </mat-option>
             </mat-select>
           </mat-form-field>
         </div>
-        <div fxLayout="row" style="align-items: center; margin-top: 10px;">
+        <div fxLayout="row" style="align-items: center; margin-top: 10px">
           <div fxFlex="5">
             <mat-checkbox (change)="toggleDisabledUsers($event)"></mat-checkbox>
           </div>
@@ -56,53 +59,73 @@
         </div>
       </mat-card-content>
       <mat-card-actions fxLayoutAlign="end end">
-        <button mat-button (click)="closeAdvancedSearch();">CLOSE</button>
-        <button mat-raised-button color="primary" (click)="onAdvancedSearch();">SEARCH</button>
+        <button mat-button (click)="closeAdvancedSearch()">CLOSE</button>
+        <button mat-raised-button color="primary" (click)="onAdvancedSearch()">SEARCH</button>
       </mat-card-actions>
     </mat-card>
   </div>
 
   <div class="users-content">
-    <ngx-datatable class="material"
-                   [columnMode]="'flex'"
-                   [headerHeight]="40"
-                   [footerHeight]="40"
-                   [rowHeight]="50"
-                   [messages]="{emptyMessage: 'There is no user to display.', totalMessage: 'total'}"
-                   [rows]='users'
-                   [loadingIndicator]="isLoading"
-                   [externalPaging]="true"
-                   [count]="page.totalElements"
-                   [offset]="page.pageNumber"
-                   [limit]="page.size"
-                   (page)='setPage($event)'>
+    <ngx-datatable
+      class="material"
+      [columnMode]="'flex'"
+      [headerHeight]="40"
+      [footerHeight]="40"
+      [rowHeight]="50"
+      [messages]="{ emptyMessage: 'There is no user to display.', totalMessage: 'total' }"
+      [rows]="users"
+      [loadingIndicator]="isLoading"
+      [externalPaging]="true"
+      [count]="page.totalElements"
+      [offset]="page.pageNumber"
+      [limit]="page.size"
+      (page)="setPage($event)"
+    >
       <ngx-datatable-column name="Name" prop="username" [flexGrow]="4" [cellClass]="'user-name-cell'">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div class="user-header" fxLayout="row">
-            <div class="user-avatar"
-                 matBadge="&#8288;"
-                 matBadgeSize="small"
-                 [ngClass]="(row.enabled && !accountLocked(row)) ? 'user-enabled': (!row.enabled ? 'user-disabled' : accountLocked(row) ? 'user-locked' : '')"
-                 [matTooltip]="(row.enabled && !accountLocked(row)) ? 'User enabled': (!row.enabled ? 'User disabled' : accountLocked(row) ? 'User locked' : '')">
+            <div
+              class="user-avatar"
+              matBadge="&#8288;"
+              matBadgeSize="small"
+              [ngClass]="
+                row.enabled && !accountLocked(row)
+                  ? 'user-enabled'
+                  : !row.enabled
+                  ? 'user-disabled'
+                  : accountLocked(row)
+                  ? 'user-locked'
+                  : ''
+              "
+              [matTooltip]="
+                row.enabled && !accountLocked(row)
+                  ? 'User enabled'
+                  : !row.enabled
+                  ? 'User disabled'
+                  : accountLocked(row)
+                  ? 'User locked'
+                  : ''
+              "
+            >
               <app-user-avatar [user]="row" [width]="'40'"></app-user-avatar>
             </div>
             <div class="user-information" fxLayout="column">
-              <a [routerLink]="[row.id]" *ngIf="hasReadPermissions()">{{row.displayName}}</a>
-              <span *ngIf="!hasReadPermissions()">{{row.displayName}}</span>
-              <small>{{row.username}}</small>
+              <a [routerLink]="[row.id]" *ngIf="hasReadPermissions()">{{ row.displayName }}</a>
+              <span *ngIf="!hasReadPermissions()">{{ row.displayName }}</span>
+              <small>{{ row.username }}</small>
             </div>
           </div>
         </ng-template>
       </ngx-datatable-column>
       <ngx-datatable-column name="Identity Provider" prop="source" [flexGrow]="2" *hasPermission="[requiredReadPermission]">
         <ng-template let-row="row" ngx-datatable-cell-template>
-          {{row.source}}
+          {{ row.source }}
         </ng-template>
       </ngx-datatable-column>
-      <ngx-datatable-column name="Last login" prop="loggedAt" [flexGrow]="2" *hasPermission="[requiredReadPermission]" >
+      <ngx-datatable-column name="Last login" prop="loggedAt" [flexGrow]="2" *hasPermission="[requiredReadPermission]">
         <ng-template let-row="row" ngx-datatable-cell-template>
-          <span *ngIf="(row.loggedAt)">{{row.loggedAt | humanDate}}</span>
-          <span *ngIf="!(row.loggedAt)">Never logged in</span>
+          <span *ngIf="row.loggedAt">{{ row.loggedAt | humanDate }}</span>
+          <span *ngIf="!row.loggedAt">Never logged in</span>
         </ng-template>
       </ngx-datatable-column>
       <ngx-datatable-column name="Actions" [flexGrow]="1" *hasPermission="[requiredReadPermission]">

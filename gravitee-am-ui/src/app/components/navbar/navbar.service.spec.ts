@@ -20,9 +20,9 @@ import { NavbarService } from './navbar.service';
 describe('NavbarService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-    providers: [NavbarService],
-    teardown: { destroyAfterEach: false }
-});
+      providers: [NavbarService],
+      teardown: { destroyAfterEach: false },
+    });
   });
 
   it('should ...', inject([NavbarService], (service: NavbarService) => {

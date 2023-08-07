@@ -21,28 +21,33 @@
     <div fxFlex="70">
       <form (ngSubmit)="save()">
         <div class="gv-form-section" fxLayout="column">
-          <mat-slide-toggle
-            (change)="enableSCIM($event)"
-            [checked]="isSCIMEnabled()" [disabled]="!editMode">
+          <mat-slide-toggle (change)="enableSCIM($event)" [checked]="isSCIMEnabled()" [disabled]="!editMode">
             System for Cross-domain Identity Management (SCIM) Support
           </mat-slide-toggle>
-          <mat-hint style="font-size: 75%;">Enable application owner to self register its users and groups through SCIM endpoints.
-            SCIM service provider's configuration is available under <i>/scim/ServiceProviderConfig.</i></mat-hint>
+          <mat-hint style="font-size: 75%"
+            >Enable application owner to self register its users and groups through SCIM endpoints. SCIM service provider's configuration is
+            available under <i>/scim/ServiceProviderConfig.</i></mat-hint
+          >
 
           <div *ngIf="isSCIMEnabled()">
-            <div fxLayout="column" style="margin-top: 20px;">
-              <mat-slide-toggle
-                (change)="enableIdpSelection($event)"
-                [checked]="isIdpSelectionEnabled()" [disabled]="!editMode">
+            <div fxLayout="column" style="margin-top: 20px">
+              <mat-slide-toggle (change)="enableIdpSelection($event)" [checked]="isIdpSelectionEnabled()" [disabled]="!editMode">
                 Identity Provider selection feature
               </mat-slide-toggle>
-              <mat-hint style="font-size: 75%;">Select the identity provider used when provisioning your users.</mat-hint>
+              <mat-hint style="font-size: 75%">Select the identity provider used when provisioning your users.</mat-hint>
             </div>
-            <div *ngIf="isIdpSelectionEnabled()" style="margin-top: 20px;">
+            <div *ngIf="isIdpSelectionEnabled()" style="margin-top: 20px">
               <mat-form-field appearance="outline" floatLabel="always">
                 <mat-label>Identity provider selection rule</mat-label>
-                <input matInput type="text" name="idpSelectionRule" [(ngModel)]="domain.scim.idpSelectionRule" (ngModelChange)="formChange()" required>
-                <mat-icon matSuffix (click)="openDialog($event)" style="cursor:pointer;">info_outline</mat-icon>
+                <input
+                  matInput
+                  type="text"
+                  name="idpSelectionRule"
+                  [(ngModel)]="domain.scim.idpSelectionRule"
+                  (ngModelChange)="formChange()"
+                  required
+                />
+                <mat-icon matSuffix (click)="openDialog($event)" style="cursor: pointer">info_outline</mat-icon>
                 <mat-hint>Identity provider selection rule (support EL).</mat-hint>
               </mat-form-field>
             </div>

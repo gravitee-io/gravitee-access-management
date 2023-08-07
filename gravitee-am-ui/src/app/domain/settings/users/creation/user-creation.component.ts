@@ -13,53 +13,48 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, ComponentFactoryResolver, OnInit, ViewChild, ViewContainerRef} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
-import {animate, style, transition, trigger} from '@angular/animations';
-import {SnackbarService} from '../../../../services/snackbar.service';
-import {UserService} from '../../../../services/user.service';
-import {ProviderService} from '../../../../services/provider.service';
-import {UserClaimComponent} from './user-claim.component';
+import { Component, ComponentFactoryResolver, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { animate, style, transition, trigger } from '@angular/animations';
 import * as _ from 'lodash';
-import { OrganizationService } from 'app/services/organization.service';
+
+import { UserClaimComponent } from './user-claim.component';
+
+import { SnackbarService } from '../../../../services/snackbar.service';
+import { UserService } from '../../../../services/user.service';
+import { ProviderService } from '../../../../services/provider.service';
+import { OrganizationService } from '../../../../services/organization.service';
 
 @Component({
   selector: 'user-creation',
-  animations: [
-    trigger(
-      'fadeInOut', [
-        transition(':leave', [
-          animate(500, style({opacity:0}))
-        ])
-      ]
-    )
-  ],
+  animations: [trigger('fadeInOut', [transition(':leave', [animate(500, style({ opacity: 0 }))])])],
   templateUrl: './user-creation.component.html',
-  styleUrls: ['./user-creation.component.scss']
+  styleUrls: ['./user-creation.component.scss'],
 })
 export class UserCreationComponent implements OnInit {
   private domainId: string;
-  preRegistration: boolean = false;
-  hidePassword: boolean = true;
-  useEmailAsUsername: boolean = false;
+  preRegistration = false;
+  hidePassword = true;
+  useEmailAsUsername = false;
   user: any = {};
   userClaims: any = {};
   userProviders: any[];
   @ViewChild('dynamic', { read: ViewContainerRef, static: true }) viewContainerRef: ViewContainerRef;
 
-  constructor(private userService: UserService,
-              private router: Router,
-              private route: ActivatedRoute,
-              private snackbarService: SnackbarService,
-              private factoryResolver: ComponentFactoryResolver,
-              private providerService: ProviderService,
-              private organizationService: OrganizationService) {
-  }
+  constructor(
+    private userService: UserService,
+    private router: Router,
+    private route: ActivatedRoute,
+    private snackbarService: SnackbarService,
+    private factoryResolver: ComponentFactoryResolver,
+    private providerService: ProviderService,
+    private organizationService: OrganizationService,
+  ) {}
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
     if (!this.isOrganizationUserAction()) {
-      this.providerService.findUserProvidersByDomain(this.domainId).subscribe(response => {
+      this.providerService.findUserProvidersByDomain(this.domainId).subscribe((response) => {
         this.userProviders = response;
       });
     }
@@ -72,22 +67,22 @@ export class UserCreationComponent implements OnInit {
   create() {
     // set additional information
     if (this.userClaims && Object.keys(this.userClaims).length > 0) {
-      let additionalInformation = {};
-      _.each(this.userClaims, function(item) {
+      const additionalInformation = {};
+      _.each(this.userClaims, function (item) {
         additionalInformation[item.claimName] = item.claimValue;
       });
       this.user.additionalInformation = additionalInformation;
     }
     // set pre-registration
     this.user.preRegistration = this.preRegistration;
-    
+
     if (this.isOrganizationUserAction()) {
-      this.organizationService.createUser(this.user).subscribe(data => {
+      this.organizationService.createUser(this.user).subscribe((data) => {
         this.snackbarService.open('User ' + data.username + ' created');
         this.router.navigate(['..', data.id], { relativeTo: this.route });
       });
     } else {
-      this.userService.create(this.domainId, this.user).subscribe(data => {
+      this.userService.create(this.domainId, this.user).subscribe((data) => {
         this.snackbarService.open('User ' + data.username + ' created');
         this.router.navigate(['..', data.id], { relativeTo: this.route });
       });
@@ -114,18 +109,17 @@ export class UserCreationComponent implements OnInit {
     const factory = this.factoryResolver.resolveComponentFactory(UserClaimComponent);
     const component = this.viewContainerRef.createComponent(factory);
 
-    let that = this;
-    component.instance.addClaimChange.subscribe(claim => {
+    component.instance.addClaimChange.subscribe((claim) => {
       if (claim.name && claim.value) {
-        that.userClaims[claim.id] = {'claimName': claim.name, 'claimValue': claim.value};
+        this.userClaims[claim.id] = { claimName: claim.name, claimValue: claim.value };
       }
     });
 
-    component.instance.removeClaimChange.subscribe(claim => {
-      delete that.userClaims[claim.id];
-      that.viewContainerRef.remove(that.viewContainerRef.indexOf(component.hostView));
+    component.instance.removeClaimChange.subscribe((claim) => {
+      delete this.userClaims[claim.id];
+      this.viewContainerRef.remove(this.viewContainerRef.indexOf(component.hostView));
       if (claim.name && claim.value) {
-        that.snackbarService.open('Claim ' + claim.name + ' deleted');
+        this.snackbarService.open('Claim ' + claim.name + ' deleted');
       }
     });
   }
@@ -134,7 +128,7 @@ export class UserCreationComponent implements OnInit {
     this.user.client = event.id;
   }
 
-  onAppDeleted(event) {
+  onAppDeleted() {
     this.user.client = null;
   }
 }

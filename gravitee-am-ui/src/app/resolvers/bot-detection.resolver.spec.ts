@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 import { TestBed, inject } from '@angular/core/testing';
-import { BotDetectionResolver } from './bot-detection.resolver';
 
+import { BotDetectionResolver } from './bot-detection.resolver';
 
 describe('BotDetectionResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-    providers: [BotDetectionResolver],
-    teardown: { destroyAfterEach: false }
-});
+      providers: [BotDetectionResolver],
+      teardown: { destroyAfterEach: false },
+    });
   });
 
   it('should ...', inject([BotDetectionResolver], (service: BotDetectionResolver) => {

@@ -15,7 +15,7 @@
  */
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
-import {DomainSettingsEntrypointsComponent } from './entrypoints.component';
+import { DomainSettingsEntrypointsComponent } from './entrypoints.component';
 
 describe('DomainSettingsEntrypointsComponent', () => {
   let component: DomainSettingsEntrypointsComponent;
@@ -23,10 +23,9 @@ describe('DomainSettingsEntrypointsComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    declarations: [DomainSettingsEntrypointsComponent],
-    teardown: { destroyAfterEach: false }
-})
-    .compileComponents();
+      declarations: [DomainSettingsEntrypointsComponent],
+      teardown: { destroyAfterEach: false },
+    }).compileComponents();
   }));
 
   beforeEach(() => {

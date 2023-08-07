@@ -13,18 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Injectable} from "@angular/core";
-import moment, {DurationInputArg1, DurationInputArg2} from "moment";
+import { Injectable } from '@angular/core';
+import moment, { DurationInputArg1, DurationInputArg2 } from 'moment';
 
 @Injectable()
 export class TimeConverterService {
-
   getTime(value: DurationInputArg1, unit: DurationInputArg2 = 'seconds') {
     if (value) {
       const humanizeDate = moment.duration(value, unit).humanize().split(' ');
-      return (humanizeDate.length === 2)
-        ? (humanizeDate[0] === 'a' || humanizeDate[0] === 'an') ? 1 : humanizeDate[0]
-        : value;
+      return humanizeDate.length === 2 ? (humanizeDate[0] === 'a' || humanizeDate[0] === 'an' ? 1 : humanizeDate[0]) : value;
     }
     return null;
   }
@@ -32,11 +29,15 @@ export class TimeConverterService {
   getUnitTime(value: DurationInputArg1, unit: DurationInputArg2 = 'seconds') {
     if (value) {
       const humanizeDate = moment.duration(value, unit).humanize().split(' ');
-      return (humanizeDate.length === 2)
-        ? humanizeDate[1].endsWith('s') ? humanizeDate[1] : humanizeDate[1] + 's'
-        : humanizeDate[2].endsWith('s') ? humanizeDate[2] : humanizeDate[2] + 's';
+      return humanizeDate.length === 2
+        ? humanizeDate[1].endsWith('s')
+          ? humanizeDate[1]
+          : humanizeDate[1] + 's'
+        : humanizeDate[2].endsWith('s')
+        ? humanizeDate[2]
+        : humanizeDate[2] + 's';
     }
-    return 'seconds'
+    return 'seconds';
   }
 
   getHumanTime(value: DurationInputArg1, unit: DurationInputArg2 = 'seconds') {

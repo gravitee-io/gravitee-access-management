@@ -14,29 +14,29 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, Resolve, RouterStateSnapshot } from "@angular/router";
-import {Observable, of} from "rxjs";
-import { DomainService } from "../services/domain.service";
-import { ApplicationService } from "../services/application.service";
-import {catchError} from "rxjs/operators";
-import {OrganizationService} from "../services/organization.service";
+import { ActivatedRouteSnapshot, Resolve, RouterStateSnapshot } from '@angular/router';
+import { Observable, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+
+import { DomainService } from '../services/domain.service';
+import { ApplicationService } from '../services/application.service';
+import { OrganizationService } from '../services/organization.service';
 
 @Injectable()
 export class MembershipsResolver implements Resolve<any> {
+  constructor(
+    private organizationService: OrganizationService,
+    private domainService: DomainService,
+    private applicationService: ApplicationService,
+  ) {}
 
-  constructor(private organizationService: OrganizationService,
-              private domainService: DomainService,
-              private applicationService: ApplicationService) { }
-
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
-
+  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> | Promise<any> | any {
     if (state.url.startsWith('/settings')) {
-      return this.organizationService.members()
-        .pipe(
-          catchError(__ => {
-            return of({});
-          })
-        );
+      return this.organizationService.members().pipe(
+        catchError((__) => {
+          return of({});
+        }),
+      );
     }
 
     const domainId = route.parent.data['domain'].id;
@@ -48,5 +48,4 @@ export class MembershipsResolver implements Resolve<any> {
       return this.domainService.members(domainId);
     }
   }
-
 }

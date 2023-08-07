@@ -13,17 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
-import {DomainService} from '../../../services/domain.service';
-import {DialogService} from '../../../services/dialog.service';
-import {SnackbarService} from '../../../services/snackbar.service';
-import {AuthService} from '../../../services/auth.service';
-import {NavbarService} from '../../../components/navbar/navbar.service';
-import {DictionaryDialog} from '../../../components/dialog/dictionary/dictionary-dialog.component';
-import {MatDialog} from '@angular/material/dialog';
-import {I18nDictionaryService} from '../../../services/dictionary.service';
-import {i18nLanguages} from './i18nLanguages';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
+
+import { i18nLanguages } from './i18nLanguages';
+
+import { DomainService } from '../../../services/domain.service';
+import { DialogService } from '../../../services/dialog.service';
+import { SnackbarService } from '../../../services/snackbar.service';
+import { AuthService } from '../../../services/auth.service';
+import { NavbarService } from '../../../components/navbar/navbar.service';
+import { DictionaryDialog } from '../../../components/dialog/dictionary/dictionary-dialog.component';
+import { I18nDictionaryService } from '../../../services/dictionary.service';
 
 interface Dictionary {
   id?: string;
@@ -35,41 +37,42 @@ interface Dictionary {
 @Component({
   selector: 'app-dictionaries',
   templateUrl: './dictionaries.component.html',
-  styleUrls: ['./dictionaries.component.scss']
+  styleUrls: ['./dictionaries.component.scss'],
 })
 export class DomainSettingsDictionariesComponent implements OnInit {
   domain: any = {};
   readonly = false;
   dictionaries: Dictionary[] = [];
   translations: any[] = [];
-  selectedDictionary: Dictionary = {locale: '', name: ''};
+  selectedDictionary: Dictionary = { locale: '', name: '' };
   languageCodes: any[];
   dictsToSave: Dictionary[] = [];
   dictsToDelete: any[] = [];
-  codeMirrorConfig: any = {lineNumbers: true, readOnly: false};
+  codeMirrorConfig: any = { lineNumbers: true, readOnly: false };
   formContent = '';
   displayCodeMirror: boolean;
   formChangedTranslations: boolean;
   private selectedTab = 0;
   private originalFormContent: string;
 
-  constructor(private domainService: DomainService,
-              private dialogService: DialogService,
-              private dictionaryService: I18nDictionaryService,
-              private snackbarService: SnackbarService,
-              private router: Router,
-              private route: ActivatedRoute,
-              private authService: AuthService,
-              private navbarService: NavbarService,
-              private dialog: MatDialog) {
-  }
+  constructor(
+    private domainService: DomainService,
+    private dialogService: DialogService,
+    private dictionaryService: I18nDictionaryService,
+    private snackbarService: SnackbarService,
+    private router: Router,
+    private route: ActivatedRoute,
+    private authService: AuthService,
+    private navbarService: NavbarService,
+    private dialog: MatDialog,
+  ) {}
 
   ngOnInit() {
     this.domain = this.route.snapshot.data['domain'];
     this.readonly = !this.authService.hasPermissions(['domain_i18n_dictionary_update']);
     this.dictionaries = this.route.snapshot.data['dictionaries'] || [];
-    const dictionaryCodes = this.dictionaries.map(dict => dict.locale);
-    this.languageCodes = Object.entries(i18nLanguages).filter(language => !dictionaryCodes.includes(language[0]));
+    const dictionaryCodes = this.dictionaries.map((dict) => dict.locale);
+    this.languageCodes = Object.entries(i18nLanguages).filter((language) => !dictionaryCodes.includes(language[0]));
     this.selectedDictionary = this.dictionaries[0];
     if (this.selectedDictionary) {
       this.changeTranslation();
@@ -79,26 +82,25 @@ export class DomainSettingsDictionariesComponent implements OnInit {
   }
 
   addLanguage() {
-    const dialogRef = this.dialog.open(DictionaryDialog,
-      {
-        data: {
-          title: 'Add a new language',
-          prop1Label: 'Language code',
-          prop2Label: 'Display name',
-          languageCodes: this.languageCodes
-        }
-      });
+    const dialogRef = this.dialog.open(DictionaryDialog, {
+      data: {
+        title: 'Add a new language',
+        prop1Label: 'Language code',
+        prop2Label: 'Display name',
+        languageCodes: this.languageCodes,
+      },
+    });
 
-    dialogRef.afterClosed().subscribe(result => {
+    dialogRef.afterClosed().subscribe((result) => {
       if (result) {
         const locale = result.prop1;
         const name = result.prop2;
         const tempDicts = [...this.dictionaries];
-        const newDict = {locale: locale, name: name, entries: {}};
+        const newDict = { locale: locale, name: name, entries: {} };
         tempDicts.push(newDict);
         this.dictionaries = tempDicts;
         this.dictsToSave.push(newDict);
-        this.languageCodes = this.languageCodes.filter(code => code[0] !== locale);
+        this.languageCodes = this.languageCodes.filter((code) => code[0] !== locale);
         this.saveLanguages();
       }
     });
@@ -107,15 +109,18 @@ export class DomainSettingsDictionariesComponent implements OnInit {
   deleteLanguage(row, event) {
     event.preventDefault();
     this.dialogService
-      .confirm('Delete Language', 'Deleting the language will delete all the saved translations. Are you sure you want to delete this language?')
-      .subscribe(res => {
+      .confirm(
+        'Delete Language',
+        'Deleting the language will delete all the saved translations. Are you sure you want to delete this language?',
+      )
+      .subscribe((res) => {
         if (res) {
           if (row.id) {
             this.dictsToDelete.push(row.id);
           } else {
-            this.dictsToSave = this.dictsToSave.filter(dict => dict.locale !== row.locale)
+            this.dictsToSave = this.dictsToSave.filter((dict) => dict.locale !== row.locale);
           }
-          this.dictionaries = this.dictionaries.filter(dict => dict.locale !== row.locale);
+          this.dictionaries = this.dictionaries.filter((dict) => dict.locale !== row.locale);
           if (this.selectedDictionary.locale === row.locale) {
             this.translations = [];
           }
@@ -128,46 +133,43 @@ export class DomainSettingsDictionariesComponent implements OnInit {
 
   deleteTranslation(rowIndex, event) {
     event.preventDefault();
-    this.dialogService
-      .confirm('Delete translation', 'Are you sure you want to delete this translation?')
-      .subscribe(res => {
-        const deleteCount = 1;
-        if (res) {
-          this.translations.splice(rowIndex, deleteCount);
-          this.translations = [...this.translations];
-          this.saveTranslations();
-        }
-      });
+    this.dialogService.confirm('Delete translation', 'Are you sure you want to delete this translation?').subscribe((res) => {
+      const deleteCount = 1;
+      if (res) {
+        this.translations.splice(rowIndex, deleteCount);
+        this.translations = [...this.translations];
+        this.saveTranslations();
+      }
+    });
   }
 
   changeTranslation() {
     this.translations = [];
 
     Object.entries(this.selectedDictionary.entries).forEach(([k, v]) => {
-      this.translations.push({key: k, message: v});
+      this.translations.push({ key: k, message: v });
     });
 
     if (this.selectedTab === 1) {
-      this.onTabSelectedChanged({index: 1})
+      this.onTabSelectedChanged({ index: 1 });
     }
   }
 
   addTranslation() {
     const tempEntries = [...this.translations];
     if (this.selectedDictionary) {
-      const dialogRef = this.dialog.open(DictionaryDialog,
-        {
-          data: {
-            title: 'Add a new translation',
-            prop1Label: 'Key',
-            prop2Label: 'Value'
-          }
-        });
+      const dialogRef = this.dialog.open(DictionaryDialog, {
+        data: {
+          title: 'Add a new translation',
+          prop1Label: 'Key',
+          prop2Label: 'Value',
+        },
+      });
 
-      dialogRef.afterClosed().subscribe(result => {
+      dialogRef.afterClosed().subscribe((result) => {
         const entryKey = result.prop1;
         const value = result.prop2;
-        tempEntries.push({key: entryKey, message: value});
+        tempEntries.push({ key: entryKey, message: value });
         this.translations = tempEntries;
         this.saveTranslations();
       });
@@ -178,13 +180,15 @@ export class DomainSettingsDictionariesComponent implements OnInit {
 
   saveTranslations() {
     if (!this.selectedDictionary.id) {
-      this.dictionaryService.create(this.domain.id, {
-        locale: this.selectedDictionary.locale,
-        name: this.selectedDictionary.name
-      }).subscribe(created => {
-        this.updateId(created);
-        this.update();
-      });
+      this.dictionaryService
+        .create(this.domain.id, {
+          locale: this.selectedDictionary.locale,
+          name: this.selectedDictionary.name,
+        })
+        .subscribe((created) => {
+          this.updateId(created);
+          this.update();
+        });
     } else if (this.selectedDictionary) {
       this.update();
     } else {
@@ -193,7 +197,7 @@ export class DomainSettingsDictionariesComponent implements OnInit {
   }
 
   private updateId(created) {
-    this.dictionaries.forEach(dict => {
+    this.dictionaries.forEach((dict) => {
       if (dict.locale === created.locale) {
         dict.id = created.id;
       }
@@ -202,8 +206,7 @@ export class DomainSettingsDictionariesComponent implements OnInit {
 
   private update() {
     const updateEntries = this.selectedTab === 0 ? this.entriesToObject() : JSON.parse(this.formContent);
-    this.dictionaryService.update(this.domain.id, this.selectedDictionary.id,
-      {entries: updateEntries}).subscribe(result => {
+    this.dictionaryService.update(this.domain.id, this.selectedDictionary.id, { entries: updateEntries }).subscribe((result) => {
       if (result) {
         this.snackbarService.open('Translations saved');
         this.formChangedTranslations = false;
@@ -220,44 +223,46 @@ export class DomainSettingsDictionariesComponent implements OnInit {
 
   private entriesToObject() {
     // @ts-ignore
-    return Object.fromEntries(this.translations.flatMap(row => [Object.values(row)]));
+    return Object.fromEntries(this.translations.flatMap((row) => [Object.values(row)]));
   }
 
   saveLanguages() {
     const dictsToSave = [...this.dictsToSave];
     const dictsToDelete = [...this.dictsToDelete];
-    dictsToSave.forEach(language => {
-      this.dictionaryService.create(this.domain.id, {
-        locale: language.locale,
-        name: language.name
-      }).subscribe(created => {
-        this.updateId(created);
-        this.dictsToSave = [];
-        this.snackbarService.open('Languages saved');
-      });
+    dictsToSave.forEach((language) => {
+      this.dictionaryService
+        .create(this.domain.id, {
+          locale: language.locale,
+          name: language.name,
+        })
+        .subscribe((created) => {
+          this.updateId(created);
+          this.dictsToSave = [];
+          this.snackbarService.open('Languages saved');
+        });
     });
-    dictsToDelete.forEach(id => {
+    dictsToDelete.forEach((id) => {
       this.dictionaryService.delete(this.domain.id, id).subscribe(() => {
-        this.dictionaries = this.dictionaries.filter(dict => dict.id !== id);
+        this.dictionaries = this.dictionaries.filter((dict) => dict.id !== id);
         this.dictsToDelete = [];
         if (this.selectedDictionary.id === id) {
           this.translations = [];
         }
         this.snackbarService.open('Languages saved');
       });
-    })
+    });
   }
 
   onFileSelected(event) {
     const file: File = event.target.files[0];
 
     if (file) {
-      file.text().then(content => {
+      file.text().then((content) => {
         this.formContent = content;
         try {
           const parse = JSON.parse(content);
           const entries = [];
-          Object.entries(parse).forEach(mapEntry => {
+          Object.entries(parse).forEach((mapEntry) => {
             entries.push(mapEntry);
           });
         } catch (e) {
@@ -277,7 +282,7 @@ export class DomainSettingsDictionariesComponent implements OnInit {
       const parse = JSON.parse(this.formContent);
       this.translations = [];
       Object.entries(parse).forEach(([k, v]) => {
-        this.translations.push({key: k, message: v});
+        this.translations.push({ key: k, message: v });
       });
     }
   }

@@ -13,22 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {AppConfig} from "../../../config/app.config";
-import {ActivatedRoute} from "@angular/router";
-import {EnvironmentService} from "../../services/environment.service";
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+
+import { AppConfig } from '../../../config/app.config';
 
 @Component({
   selector: 'app-cockpit',
   templateUrl: './cockpit.component.html',
-  styleUrls: ['./cockpit.component.scss']
+  styleUrls: ['./cockpit.component.scss'],
 })
 export class CockpitComponent implements OnInit {
   title = AppConfig.settings.portalTitle;
   version = AppConfig.settings.version;
-  installation: any = { };
+  installation: any = {};
 
-  constructor(private route : ActivatedRoute) { }
+  constructor(private route: ActivatedRoute) {}
 
   ngOnInit() {
     this.installation = this.route.snapshot.data.installation;

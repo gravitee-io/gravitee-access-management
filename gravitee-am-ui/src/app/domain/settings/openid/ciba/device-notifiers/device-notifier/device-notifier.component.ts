@@ -13,18 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
-import { AuthService } from 'app/services/auth.service';
-import { DeviceNotifiersService } from 'app/services/device-notifiers.service';
-import { DialogService } from 'app/services/dialog.service';
-import { OrganizationService } from 'app/services/organization.service';
-import { SnackbarService } from 'app/services/snackbar.service';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { filter, switchMap, tap } from 'rxjs/operators';
+
+import { AuthService } from '../../../../../../services/auth.service';
+import { DeviceNotifiersService } from '../../../../../../services/device-notifiers.service';
+import { DialogService } from '../../../../../../services/dialog.service';
+import { OrganizationService } from '../../../../../../services/organization.service';
+import { SnackbarService } from '../../../../../../services/snackbar.service';
 
 @Component({
   selector: 'app-device-notifier',
   templateUrl: './device-notifier.component.html',
-  styleUrls: ['./device-notifier.component.scss']
+  styleUrls: ['./device-notifier.component.scss'],
 })
 export class DeviceNotifierComponent implements OnInit {
   private domainId: string;
@@ -37,13 +39,15 @@ export class DeviceNotifierComponent implements OnInit {
   updateDeviceNotifierConfiguration: any;
   editMode: boolean;
 
-  constructor(private route: ActivatedRoute,
-              private router: Router,
-              private organizationService: OrganizationService,
-              private notifierService: DeviceNotifiersService,
-              private snackbarService: SnackbarService,
-              private dialogService: DialogService,
-              private authService: AuthService) { }
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private organizationService: OrganizationService,
+    private notifierService: DeviceNotifiersService,
+    private snackbarService: SnackbarService,
+    private dialogService: DialogService,
+    private authService: AuthService,
+  ) {}
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
@@ -52,16 +56,16 @@ export class DeviceNotifierComponent implements OnInit {
     this.updateDeviceNotifierConfiguration = this.deviceNotifierConfiguration;
     this.editMode = this.authService.hasPermissions(['domain_authdevice_notifier_update']);
 
-    this.organizationService.deviceNotifierSchema(this.deviceNotifier.type).subscribe(data => {
+    this.organizationService.deviceNotifierSchema(this.deviceNotifier.type).subscribe((data) => {
       this.deviceNotifierSchema = data;
     });
   }
 
   update() {
     this.deviceNotifier.configuration = JSON.stringify(this.updateDeviceNotifierConfiguration);
-    this.notifierService.update(this.domainId, this.deviceNotifier.id, this.deviceNotifier).subscribe(data => {
+    this.notifierService.update(this.domainId, this.deviceNotifier.id, this.deviceNotifier).subscribe(() => {
       this.snackbarService.open('Device Notifier updated');
-    })
+    });
   }
 
   enableDeviceNotifierUpdate(configurationWrapper) {
@@ -76,13 +80,14 @@ export class DeviceNotifierComponent implements OnInit {
     event.preventDefault();
     this.dialogService
       .confirm('Delete Device Notifier', 'Are you sure you want to delete this notifier ?')
-      .subscribe(res => {
-        if (res) {
-          this.notifierService.delete(this.domainId, this.deviceNotifier.id).subscribe(() => {
-            this.snackbarService.open('Device Notifier deleted');
-            this.router.navigate(['..'], { relativeTo: this.route });
-          });
-        }
-      });
+      .pipe(
+        filter((res) => res),
+        switchMap(() => this.notifierService.delete(this.domainId, this.deviceNotifier.id)),
+        tap(() => {
+          this.snackbarService.open('Device Notifier deleted');
+          this.router.navigate(['..'], { relativeTo: this.route });
+        }),
+      )
+      .subscribe();
   }
 }

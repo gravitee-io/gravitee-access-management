@@ -13,23 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute} from '@angular/router';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-domain-bot-detections',
   templateUrl: './bot-detections.component.html',
-  styleUrls: ['./bot-detections.component.scss']
+  styleUrls: ['./bot-detections.component.scss'],
 })
 export class DomainSettingsBotDetectionsComponent implements OnInit {
   private detectionTypes: any = {
-    'google-recaptcha-v3-am-bot-detection' : 'Google reCAPTHCA v3'
+    'google-recaptcha-v3-am-bot-detection': 'Google reCAPTHCA v3',
   };
   detections: any[];
   domainId: any;
 
-  constructor(private route: ActivatedRoute) {
-  }
+  constructor(private route: ActivatedRoute) {}
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;

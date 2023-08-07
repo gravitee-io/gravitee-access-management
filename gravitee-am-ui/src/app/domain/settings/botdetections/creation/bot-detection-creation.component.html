@@ -30,7 +30,7 @@
         </ng-template>
         <bot-detection-creation-step1 [botDetection]="botDetection"></bot-detection-creation-step1>
         <div fxLayout="row" fxLayoutAlign="end end" class="stepper-button-zone">
-          <button mat-raised-button color="primary" matStepperNext type="button"[disabled]="!botDetection.type">Next</button>
+          <button mat-raised-button color="primary" matStepperNext type="button" [disabled]="!botDetection.type">Next</button>
         </div>
       </mat-step>
       <mat-step>
@@ -38,7 +38,11 @@
           <h5>Settings</h5>
           <small>Bot detection configuration</small>
         </ng-template>
-          <bot-detection-creation-step2 *ngIf="stepper.selectedIndex == 1" [botDetection]="botDetection" [(configurationIsValid)]="configurationIsValid"></bot-detection-creation-step2>
+        <bot-detection-creation-step2
+          *ngIf="stepper.selectedIndex == 1"
+          [botDetection]="botDetection"
+          [(configurationIsValid)]="configurationIsValid"
+        ></bot-detection-creation-step2>
         <div class="stepper-button-zone">
           <button mat-raised-button matStepperPrevious type="button">Back</button>
           <span fxFlex></span>

@@ -23,10 +23,9 @@ describe('UmaComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    declarations: [UmaComponent],
-    teardown: { destroyAfterEach: false }
-})
-    .compileComponents();
+      declarations: [UmaComponent],
+      teardown: { destroyAfterEach: false },
+    }).compileComponents();
   }));
 
   beforeEach(() => {

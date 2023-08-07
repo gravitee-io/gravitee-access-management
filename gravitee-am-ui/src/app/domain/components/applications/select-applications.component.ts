@@ -14,15 +14,16 @@
  * limitations under the License.
  */
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { ActivatedRoute } from "@angular/router";
-import { FormControl } from "@angular/forms";
-import { ApplicationService } from "../../../services/application.service";
-import {map, mergeMap, startWith} from "rxjs/operators";
-import {Observable, of} from "rxjs";
+import { ActivatedRoute } from '@angular/router';
+import { FormControl } from '@angular/forms';
+import { map, mergeMap, startWith } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+
+import { ApplicationService } from '../../../services/application.service';
 
 @Component({
   selector: 'app-select-applications',
-  templateUrl: './select-applications.component.html'
+  templateUrl: './select-applications.component.html',
 })
 export class SelectApplicationsComponent implements OnInit {
   private domainId: string;
@@ -32,22 +33,20 @@ export class SelectApplicationsComponent implements OnInit {
   @Output() onSelectApp = new EventEmitter<any>();
   @Output() onRemoveApp = new EventEmitter<any>();
 
-  constructor(private route: ActivatedRoute,
-              private applicationService: ApplicationService) {
-  }
+  constructor(private route: ActivatedRoute, private applicationService: ApplicationService) {}
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
     this.filteredApps = this.appCtrl.valueChanges.pipe(
       startWith(''),
-      mergeMap(value => {
-        const searchTerm = (typeof(value) == 'string' || value instanceof String) ? value + '*' : '*';
+      mergeMap((value) => {
+        const searchTerm = typeof value == 'string' || value instanceof String ? value + '*' : '*';
         return this.applicationService.search(this.domainId, searchTerm);
       }),
-      map(value => value['data'])
+      map((value) => value['data']),
     );
     if (this.selectedApp) {
-      this.appCtrl.setValue({name: this.selectedApp.name, clientId: this.selectedApp.clientId});
+      this.appCtrl.setValue({ name: this.selectedApp.name, clientId: this.selectedApp.clientId });
     }
   }
 

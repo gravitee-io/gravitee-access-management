@@ -13,30 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Injectable} from '@angular/core';
-import {Resolve, ActivatedRouteSnapshot, RouterStateSnapshot} from "@angular/router";
-import {Observable} from "rxjs";
-import {OrganizationService} from "../services/organization.service";
+import { Injectable } from '@angular/core';
+import { Resolve } from '@angular/router';
+import { Observable } from 'rxjs';
+
+import { OrganizationService } from '../services/organization.service';
 
 @Injectable()
 export class IdentitiesResolver implements Resolve<any> {
+  constructor(private organizationService: OrganizationService) {}
 
-  constructor(private organizationService: OrganizationService) {
-  }
-
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> | Promise<any> | any {
+  resolve(): Observable<any> | Promise<any> | any {
     return Promise.all([
       this.organizationService.identities(true, true, true).toPromise(),
-      this.organizationService.socialIdentities(true, true, true).toPromise()
-        .then((response) => response.map((idp) => {
-          idp.external = true;
-          return idp;
-        }))
-    ])
-      .then(([a, b]) => [...a, ...b].reduce((map, idp) => {
+      this.organizationService
+        .socialIdentities(true, true, true)
+        .toPromise()
+        .then((response) =>
+          response.map((idp) => {
+            idp.external = true;
+            return idp;
+          }),
+        ),
+    ]).then(([a, b]) =>
+      [...a, ...b].reduce((map, idp) => {
         map[idp.id] = idp;
         return map;
-      }, {}));
+      }, {}),
+    );
   }
-
 }

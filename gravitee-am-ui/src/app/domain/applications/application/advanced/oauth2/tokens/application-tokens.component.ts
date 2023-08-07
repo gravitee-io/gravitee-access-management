@@ -13,21 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, EventEmitter, OnInit, Output, ViewChild} from '@angular/core'
-import {ActivatedRoute, Router} from "@angular/router";
-import {ApplicationService} from "../../../../../../services/application.service";
-import {SnackbarService} from "../../../../../../services/snackbar.service";
-import {AuthService} from "../../../../../../services/auth.service";
-import * as _ from "lodash";
-import {MatDialog, MatDialogRef} from "@angular/material/dialog";
-import {NgForm} from "@angular/forms";
+import { Component, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import * as _ from 'lodash';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { NgForm } from '@angular/forms';
+
+import { ApplicationService } from '../../../../../../services/application.service';
+import { SnackbarService } from '../../../../../../services/snackbar.service';
+import { AuthService } from '../../../../../../services/auth.service';
 
 @Component({
   selector: 'application-tokens',
   templateUrl: './application-tokens.component.html',
-  styleUrls: ['./application-tokens.component.scss']
+  styleUrls: ['./application-tokens.component.scss'],
 })
-
 export class ApplicationTokensComponent implements OnInit {
   @ViewChild('claimsTable') table: any;
   private domainId: string;
@@ -37,17 +37,19 @@ export class ApplicationTokensComponent implements OnInit {
   readonly = false;
   editing: any = {};
 
-  constructor(private route: ActivatedRoute,
-              private router: Router,
-              private applicationService: ApplicationService,
-              private snackbarService: SnackbarService,
-              private authService: AuthService,
-              public dialog: MatDialog) {}
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private applicationService: ApplicationService,
+    private snackbarService: SnackbarService,
+    private authService: AuthService,
+    public dialog: MatDialog,
+  ) {}
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
     this.application = this.route.snapshot.data['application'];
-    this.applicationOauthSettings = (this.application.settings == null) ? {} : this.application.settings.oauth || {};
+    this.applicationOauthSettings = this.application.settings == null ? {} : this.application.settings.oauth || {};
     this.applicationOauthSettings.tokenCustomClaims = this.applicationOauthSettings.tokenCustomClaims || [];
     this.readonly = !this.authService.hasPermissions(['application_openid_update']);
     this.initCustomClaims();
@@ -55,14 +57,14 @@ export class ApplicationTokensComponent implements OnInit {
 
   patch() {
     this.cleanCustomClaims();
-    let oauthSettings: any = {};
+    const oauthSettings: any = {};
     oauthSettings.tokenCustomClaims = this.applicationOauthSettings.tokenCustomClaims;
     oauthSettings.accessTokenValiditySeconds = this.applicationOauthSettings.accessTokenValiditySeconds;
     oauthSettings.refreshTokenValiditySeconds = this.applicationOauthSettings.refreshTokenValiditySeconds;
     oauthSettings.idTokenValiditySeconds = this.applicationOauthSettings.idTokenValiditySeconds;
-    this.applicationService.patch(this.domainId, this.application.id, {'settings' : { 'oauth' : oauthSettings}}).subscribe(data => {
+    this.applicationService.patch(this.domainId, this.application.id, { settings: { oauth: oauthSettings } }).subscribe(() => {
       this.snackbarService.open('Application updated');
-      this.router.navigate(['.'], { relativeTo: this.route, queryParams: { 'reload': true }});
+      this.router.navigate(['.'], { relativeTo: this.route, queryParams: { reload: true } });
       this.formChanged = false;
       this.initCustomClaims();
     });
@@ -83,7 +85,7 @@ export class ApplicationTokensComponent implements OnInit {
   }
 
   claimExits(claim): boolean {
-    return _.find(this.applicationOauthSettings.tokenCustomClaims, function(el) {
+    return _.find(this.applicationOauthSettings.tokenCustomClaims, function (el) {
       return el.tokenType === claim.tokenType && el.claimName === claim.claimName;
     });
   }
@@ -92,7 +94,7 @@ export class ApplicationTokensComponent implements OnInit {
     const claim = event.target.value;
     if (claim) {
       this.editing[rowIndex + '-' + cell] = false;
-      const index = _.findIndex(this.applicationOauthSettings.tokenCustomClaims, {id: rowIndex});
+      const index = _.findIndex(this.applicationOauthSettings.tokenCustomClaims, { id: rowIndex });
       this.applicationOauthSettings.tokenCustomClaims[index][cell] = claim;
       this.applicationOauthSettings.tokenCustomClaims = [...this.applicationOauthSettings.tokenCustomClaims];
       this.formChanged = true;
@@ -101,8 +103,8 @@ export class ApplicationTokensComponent implements OnInit {
 
   deleteClaim(tokenType, key, event) {
     event.preventDefault();
-    _.remove(this.applicationOauthSettings.tokenCustomClaims, function(el: any) {
-      return (el.tokenType === tokenType && el.claimName === key);
+    _.remove(this.applicationOauthSettings.tokenCustomClaims, function (el: any) {
+      return el.tokenType === tokenType && el.claimName === key;
     });
     this.applicationOauthSettings.tokenCustomClaims = [...this.applicationOauthSettings.tokenCustomClaims];
     this.formChanged = true;
@@ -121,38 +123,36 @@ export class ApplicationTokensComponent implements OnInit {
     this.dialog.open(ClaimsInfoDialog, {});
   }
 
-  modelChanged(model) {
+  modelChanged() {
     this.formChanged = true;
   }
 
   private cleanCustomClaims() {
     if (this.applicationOauthSettings.tokenCustomClaims.length > 0) {
-      this.applicationOauthSettings.tokenCustomClaims.forEach(claim => {
+      this.applicationOauthSettings.tokenCustomClaims.forEach((claim) => {
         delete claim.id;
-      })
+      });
     }
   }
 
   private initCustomClaims() {
     if (this.applicationOauthSettings.tokenCustomClaims.length > 0) {
-      this.applicationOauthSettings.tokenCustomClaims.forEach(claim => {
+      this.applicationOauthSettings.tokenCustomClaims.forEach((claim) => {
         claim.id = Math.random().toString(36).substring(7);
-      })
+      });
     }
   }
 }
 
 @Component({
   selector: 'app-create-claim',
-  templateUrl: './claims/add-claim.component.html'
+  templateUrl: './claims/add-claim.component.html',
 })
 export class CreateClaimComponent {
   claim: any = {};
   tokenTypes: any[] = ['id_token', 'access_token'];
   @Output() addClaimChange = new EventEmitter();
   @ViewChild('claimForm', { static: true }) form: NgForm;
-
-  constructor() {}
 
   addClaim() {
     this.addClaimChange.emit(this.claim);

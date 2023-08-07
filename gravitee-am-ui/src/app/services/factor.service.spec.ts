@@ -20,9 +20,9 @@ import { FactorService } from './factor.service';
 describe('FactorService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-    providers: [FactorService],
-    teardown: { destroyAfterEach: false }
-});
+      providers: [FactorService],
+      teardown: { destroyAfterEach: false },
+    });
   });
 
   it('should ...', inject([FactorService], (service: FactorService) => {

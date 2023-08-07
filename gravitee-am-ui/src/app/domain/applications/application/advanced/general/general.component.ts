@@ -13,20 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit, ViewChild} from '@angular/core';
-import {ActivatedRoute, NavigationEnd, Router} from '@angular/router';
-import {SnackbarService} from '../../../../../services/snackbar.service';
-import {ApplicationService} from '../../../../../services/application.service';
-import {DialogService} from '../../../../../services/dialog.service';
-import {AuthService} from '../../../../../services/auth.service';
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import * as _ from 'lodash';
-import {filter} from "rxjs/operators";
-import {ApplicationComponent} from "../../application.component";
+import { filter, switchMap, tap } from 'rxjs/operators';
+
+import { SnackbarService } from '../../../../../services/snackbar.service';
+import { ApplicationService } from '../../../../../services/application.service';
+import { DialogService } from '../../../../../services/dialog.service';
+import { AuthService } from '../../../../../services/auth.service';
 
 @Component({
   selector: 'application-general',
   templateUrl: './general.component.html',
-  styleUrls: ['./general.component.scss']
+  styleUrls: ['./general.component.scss'],
 })
 export class ApplicationGeneralComponent implements OnInit {
   @ViewChild('applicationForm', { static: true }) form: any;
@@ -49,32 +49,34 @@ export class ApplicationGeneralComponent implements OnInit {
   applicationTypes: any[] = [
     {
       name: 'Web',
-      type: 'WEB'
+      type: 'WEB',
     },
     {
       name: 'Single-Page App',
-      type: 'BROWSER'
+      type: 'BROWSER',
     },
     {
       name: 'Native',
-      type: 'NATIVE'
+      type: 'NATIVE',
     },
     {
       name: 'Backend to Backend',
-      type: 'SERVICE'
+      type: 'SERVICE',
     },
     {
       name: 'Resource Server',
       type: 'RESOURCE_SERVER',
-    }];
+    },
+  ];
 
-  constructor(private route: ActivatedRoute,
-              private router: Router,
-              private snackbarService: SnackbarService,
-              private applicationService: ApplicationService,
-              private authService: AuthService,
-              private dialogService: DialogService) {
-  }
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private snackbarService: SnackbarService,
+    private applicationService: ApplicationService,
+    private authService: AuthService,
+    private dialogService: DialogService,
+  ) {}
 
   ngOnInit() {
     this.domain = this.route.snapshot.data['domain'];
@@ -88,14 +90,20 @@ export class ApplicationGeneralComponent implements OnInit {
     this.applicationOAuthSettings.singleSignOut = this.applicationOAuthSettings.singleSignOut || false;
     this.applicationOAuthSettings.silentReAuthentication = this.applicationOAuthSettings.silentReAuthentication || false;
     this.application.factors = this.application.factors || [];
-    this.redirectUris = _.map(this.applicationOAuthSettings.redirectUris, function (item) { return { value: item }; });
-    this.requestUris = _.map(this.applicationOAuthSettings.requestUris, function (item) { return { value: item }; });
-    this.logoutRedirectUris = _.map(this.applicationOAuthSettings.postLogoutRedirectUris, function (item) { return { value: item }; });
+    this.redirectUris = _.map(this.applicationOAuthSettings.redirectUris, function (item) {
+      return { value: item };
+    });
+    this.requestUris = _.map(this.applicationOAuthSettings.requestUris, function (item) {
+      return { value: item };
+    });
+    this.logoutRedirectUris = _.map(this.applicationOAuthSettings.postLogoutRedirectUris, function (item) {
+      return { value: item };
+    });
     this.editMode = this.authService.hasPermissions(['application_settings_update']);
     this.deleteMode = this.authService.hasPermissions(['application_settings_delete']);
     this.renewSecretMode = this.authService.hasPermissions(['application_openid_update']);
     if (!this.domain.uma || !this.domain.uma.enabled) {
-      _.remove(this.applicationTypes, { 'type' : 'RESOURCE_SERVER' });
+      _.remove(this.applicationTypes, { type: 'RESOURCE_SERVER' });
     }
   }
 
@@ -105,14 +113,14 @@ export class ApplicationGeneralComponent implements OnInit {
     data.description = this.application.description;
     data.settings = {};
     data.settings.oauth = {
-      'redirectUris' : _.map(this.redirectUris, 'value'),
-      'requestUris' : _.map(this.requestUris, 'value'),
-      'postLogoutRedirectUris' : _.map(this.logoutRedirectUris, 'value'),
-      'singleSignOut' : this.applicationOAuthSettings.singleSignOut,
-      'silentReAuthentication': this.applicationOAuthSettings.silentReAuthentication
+      redirectUris: _.map(this.redirectUris, 'value'),
+      requestUris: _.map(this.requestUris, 'value'),
+      postLogoutRedirectUris: _.map(this.logoutRedirectUris, 'value'),
+      singleSignOut: this.applicationOAuthSettings.singleSignOut,
+      silentReAuthentication: this.applicationOAuthSettings.silentReAuthentication,
     };
-    data.settings.advanced = { 'skipConsent' : this.applicationAdvancedSettings.skipConsent };
-    this.applicationService.patch(this.domainId, this.application.id, data).subscribe(response => {
+    data.settings.advanced = { skipConsent: this.applicationAdvancedSettings.skipConsent };
+    this.applicationService.patch(this.domainId, this.application.id, data).subscribe((response) => {
       this.application = response;
       this.route.snapshot.data['application'] = this.application;
       this.form.reset(this.application);
@@ -125,52 +133,63 @@ export class ApplicationGeneralComponent implements OnInit {
     event.preventDefault();
     this.dialogService
       .confirm('Delete Application', 'Are you sure you want to delete this application ?')
-      .subscribe(res => {
-        if (res) {
-          this.applicationService.delete(this.domainId, this.application.id).subscribe(response => {
-            this.snackbarService.open('Application deleted');
-            this.router.navigate(['/environments', this.domain.referenceId, 'domains', this.domain.hrid, 'applications']);
-          });
-        }
-      });
+      .pipe(
+        filter((res) => res),
+        switchMap(() => this.applicationService.delete(this.domainId, this.application.id)),
+        tap(() => {
+          this.snackbarService.open('Application deleted');
+          this.router.navigate(['/environments', this.domain.referenceId, 'domains', this.domain.hrid, 'applications']);
+        }),
+      )
+      .subscribe();
   }
 
   renewClientSecret(event) {
     event.preventDefault();
     this.dialogService
       .confirm('Renew Client secret', 'Are you sure you want to renew the client secret ?')
-      .subscribe(res => {
-        if (res) {
-          this.applicationService.renewClientSecret(this.domainId, this.application.id).subscribe(data => {
-            this.application = data;
-            this.snackbarService.open('Client secret updated');
-          });
-        }
-      });
+      .pipe(
+        filter((res) => res),
+        switchMap(() => this.applicationService.renewClientSecret(this.domainId, this.application.id)),
+        tap((data) => {
+          this.application = data;
+          this.snackbarService.open('Client secret updated');
+        }),
+      )
+      .subscribe();
   }
 
   changeApplicationType() {
-
     this.dialogService
       .confirm('Change application type', 'Are you sure you want to change the type of the application ?')
-      .subscribe(res => {
-        if (res) {
-          this.applicationService.updateType(this.domainId, this.application.id, this.applicationType).subscribe(data => {
-            this.application = data;
-            this.snackbarService.open('Application type changed');
-            this.router.navigateByUrl('/dummy', { skipLocationChange: true })
-              .then(() => this.router.navigate(['/environments', this.domain.referenceId, 'domains', this.domain.hrid, 'applications', this.application.id]));
-          });
-        }
-      });
+      .pipe(
+        filter((res) => res),
+        switchMap(() => this.applicationService.updateType(this.domainId, this.application.id, this.applicationType)),
+        tap((data) => {
+          this.application = data;
+          this.snackbarService.open('Application type changed');
+        }),
+        switchMap(() => this.router.navigateByUrl('/dummy', { skipLocationChange: true })),
+        switchMap(() =>
+          this.router.navigate([
+            '/environments',
+            this.domain.referenceId,
+            'domains',
+            this.domain.hrid,
+            'applications',
+            this.application.id,
+          ]),
+        ),
+      )
+      .subscribe();
   }
 
   addRedirectUris(event) {
     event.preventDefault();
     if (this.redirectUri) {
       const sanitizedUri = this.redirectUri.trim();
-      if (!this.redirectUris.some(el => el.value === sanitizedUri)) {
-        this.redirectUris.push({value: sanitizedUri});
+      if (!this.redirectUris.some((el) => el.value === sanitizedUri)) {
+        this.redirectUris.push({ value: sanitizedUri });
         this.redirectUris = [...this.redirectUris];
         this.redirectUri = null;
         this.formChanged = true;
@@ -184,8 +203,8 @@ export class ApplicationGeneralComponent implements OnInit {
     event.preventDefault();
     if (this.requestUri) {
       const sanitizedUri = this.requestUri.trim();
-      if (!this.requestUris.some(el => el.value === sanitizedUri)) {
-        this.requestUris.push({value: sanitizedUri});
+      if (!this.requestUris.some((el) => el.value === sanitizedUri)) {
+        this.requestUris.push({ value: sanitizedUri });
         this.requestUris = [...this.requestUris];
         this.requestUri = null;
         this.formChanged = true;
@@ -195,13 +214,12 @@ export class ApplicationGeneralComponent implements OnInit {
     }
   }
 
-
   addLogoutRedirectUris(event) {
     event.preventDefault();
     if (this.logoutRedirectUri) {
       const sanitizedUri = this.logoutRedirectUri.trim();
-      if (!this.logoutRedirectUris.some(el => el.value === sanitizedUri)) {
-        this.logoutRedirectUris.push({value: sanitizedUri});
+      if (!this.logoutRedirectUris.some((el) => el.value === sanitizedUri)) {
+        this.logoutRedirectUris.push({ value: sanitizedUri });
         this.logoutRedirectUris = [...this.logoutRedirectUris];
         this.logoutRedirectUri = null;
         this.formChanged = true;
@@ -213,41 +231,35 @@ export class ApplicationGeneralComponent implements OnInit {
 
   deleteRedirectUris(redirectUri, event) {
     event.preventDefault();
-    this.dialogService
-      .confirm('Remove redirect URI', 'Are you sure you want to remove this redirect URI ?')
-      .subscribe(res => {
-        if (res) {
-          _.remove(this.redirectUris, { value: redirectUri });
-          this.redirectUris = [...this.redirectUris];
-          this.formChanged = true;
-        }
-      });
+    this.dialogService.confirm('Remove redirect URI', 'Are you sure you want to remove this redirect URI ?').subscribe((res) => {
+      if (res) {
+        _.remove(this.redirectUris, { value: redirectUri });
+        this.redirectUris = [...this.redirectUris];
+        this.formChanged = true;
+      }
+    });
   }
 
   deleteRequestUris(requestUri, event) {
     event.preventDefault();
-    this.dialogService
-      .confirm('Remove request URI', 'Are you sure you want to remove this request URI ?')
-      .subscribe(res => {
-        if (res) {
-          _.remove(this.requestUris, { value: requestUri });
-          this.requestUris = [...this.requestUris];
-          this.formChanged = true;
-        }
-      });
+    this.dialogService.confirm('Remove request URI', 'Are you sure you want to remove this request URI ?').subscribe((res) => {
+      if (res) {
+        _.remove(this.requestUris, { value: requestUri });
+        this.requestUris = [...this.requestUris];
+        this.formChanged = true;
+      }
+    });
   }
 
   deleteLogoutRedirectUris(logoutRedirectUri, event) {
     event.preventDefault();
-    this.dialogService
-      .confirm('Remove logout redirect URI', 'Are you sure you want to remove this redirect URI ?')
-      .subscribe(res => {
-        if (res) {
-          _.remove(this.logoutRedirectUris, { value: logoutRedirectUri });
-          this.logoutRedirectUris = [...this.logoutRedirectUris];
-          this.formChanged = true;
-        }
-      });
+    this.dialogService.confirm('Remove logout redirect URI', 'Are you sure you want to remove this redirect URI ?').subscribe((res) => {
+      if (res) {
+        _.remove(this.logoutRedirectUris, { value: logoutRedirectUri });
+        this.logoutRedirectUris = [...this.logoutRedirectUris];
+        this.formChanged = true;
+      }
+    });
   }
 
   enableAutoApprove(event) {

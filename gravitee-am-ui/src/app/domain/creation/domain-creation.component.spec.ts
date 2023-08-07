@@ -15,7 +15,7 @@
  */
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
-import {DomainCreationComponent} from './domain-creation.component';
+import { DomainCreationComponent } from './domain-creation.component';
 
 describe('DomainCreationComponent', () => {
   let component: DomainCreationComponent;
@@ -23,10 +23,9 @@ describe('DomainCreationComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    declarations: [DomainCreationComponent],
-    teardown: { destroyAfterEach: false }
-})
-    .compileComponents();
+      declarations: [DomainCreationComponent],
+      teardown: { destroyAfterEach: false },
+    }).compileComponents();
   }));
 
   beforeEach(() => {

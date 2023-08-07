@@ -18,12 +18,10 @@
 <form (ngSubmit)="save()" fxLayout="column" #accountForm="ngForm">
   <div *ngIf="inheritMode" fxLayout="column" class="gv-form-section">
     <div fxLayout="column">
-        <mat-slide-toggle
-        (change)="enableInheritMode($event)"
-        [checked]="isInherited()" [disabled]="readonly">
+      <mat-slide-toggle (change)="enableInheritMode($event)" [checked]="isInherited()" [disabled]="readonly">
         Inherit configuration
       </mat-slide-toggle>
-      <mat-hint style="font-size: 75%;">Inherit User Accounts settings from the security domain.</mat-hint>
+      <mat-hint style="font-size: 75%">Inherit User Accounts settings from the security domain.</mat-hint>
     </div>
   </div>
 
@@ -37,24 +35,51 @@
         <div fxLayout="column">
           <mat-slide-toggle
             (change)="enableBrutForceAuthenticationDetection($event)"
-            [checked]="isBrutForceAuthenticationEnabled()" [disabled]="readonly">
+            [checked]="isBrutForceAuthenticationEnabled()"
+            [disabled]="readonly"
+          >
             Brute Force Detection
           </mat-slide-toggle>
-          <mat-hint style="font-size: 75%;">Prevent brute force authentication attempts.</mat-hint>
+          <mat-hint style="font-size: 75%">Prevent brute force authentication attempts.</mat-hint>
         </div>
         <div fxLayout="row">
           <mat-form-field appearance="outline" floatLabel="always">
-            <input matInput type="number" placeholder="Max Login Attempts" name="maxLoginAttempts" [(ngModel)]="accountSettings.maxLoginAttempts" (ngModelChange)="updateModel()" [disabled]="!isBrutForceAuthenticationEnabled()" required>
+            <input
+              matInput
+              type="number"
+              placeholder="Max Login Attempts"
+              name="maxLoginAttempts"
+              [(ngModel)]="accountSettings.maxLoginAttempts"
+              (ngModelChange)="updateModel()"
+              [disabled]="!isBrutForceAuthenticationEnabled()"
+              required
+            />
             <mat-hint>Max login failures after which the account will be blocked.</mat-hint>
           </mat-form-field>
         </div>
         <div fxLayout="row">
           <mat-form-field appearance="outline" floatLabel="always">
-            <input matInput type="number" placeholder="Login Attempts Reset Time" name="loginAttemptsResetTime" [(ngModel)]="accountSettings.loginAttemptsResetTime" (ngModelChange)="updateModel()" [disabled]="!isBrutForceAuthenticationEnabled()" required>
+            <input
+              matInput
+              type="number"
+              placeholder="Login Attempts Reset Time"
+              name="loginAttemptsResetTime"
+              [(ngModel)]="accountSettings.loginAttemptsResetTime"
+              (ngModelChange)="updateModel()"
+              [disabled]="!isBrutForceAuthenticationEnabled()"
+              required
+            />
             <mat-hint>Time after which the login attempts will be reset if max attempts has not been reached.</mat-hint>
           </mat-form-field>
-          <mat-form-field fxFlex style="margin-left: 20px;" appearance="outline" floatLabel="always">
-            <mat-select placeholder="Unit time" name="loginAttemptsResetTimeUnitTime" [(ngModel)]="accountSettings.loginAttemptsResetTimeUnitTime" (ngModelChange)="updateModel()" [disabled]="!isBrutForceAuthenticationEnabled()" required>
+          <mat-form-field fxFlex style="margin-left: 20px" appearance="outline" floatLabel="always">
+            <mat-select
+              placeholder="Unit time"
+              name="loginAttemptsResetTimeUnitTime"
+              [(ngModel)]="accountSettings.loginAttemptsResetTimeUnitTime"
+              (ngModelChange)="updateModel()"
+              [disabled]="!isBrutForceAuthenticationEnabled()"
+              required
+            >
               <mat-option value="seconds">SECONDS</mat-option>
               <mat-option value="minutes">MINUTES</mat-option>
               <mat-option value="hours">HOURS</mat-option>
@@ -67,11 +92,27 @@
         </div>
         <div fxLayout="row">
           <mat-form-field fxFlex="85" appearance="outline" floatLabel="always">
-            <input matInput type="number" placeholder="Account Blocked Duration" name="accountBlockedDuration" [(ngModel)]="accountSettings.accountBlockedDuration" (ngModelChange)="updateModel()" [disabled]="!isBrutForceAuthenticationEnabled()" required>
+            <input
+              matInput
+              type="number"
+              placeholder="Account Blocked Duration"
+              name="accountBlockedDuration"
+              [(ngModel)]="accountSettings.accountBlockedDuration"
+              (ngModelChange)="updateModel()"
+              [disabled]="!isBrutForceAuthenticationEnabled()"
+              required
+            />
             <mat-hint>Amount of time while the user will be blocked.</mat-hint>
           </mat-form-field>
-          <mat-form-field fxFlex style="margin-left: 20px;" appearance="outline" floatLabel="always">
-            <mat-select placeholder="Unit time" name="accountBlockedDurationUnitTime" [(ngModel)]="accountSettings.accountBlockedDurationUnitTime" (ngModelChange)="updateModel()" [disabled]="!isBrutForceAuthenticationEnabled()" required>
+          <mat-form-field fxFlex style="margin-left: 20px" appearance="outline" floatLabel="always">
+            <mat-select
+              placeholder="Unit time"
+              name="accountBlockedDurationUnitTime"
+              [(ngModel)]="accountSettings.accountBlockedDurationUnitTime"
+              (ngModelChange)="updateModel()"
+              [disabled]="!isBrutForceAuthenticationEnabled()"
+              required
+            >
               <mat-option value="seconds">SECONDS</mat-option>
               <mat-option value="minutes">MINUTES</mat-option>
               <mat-option value="hours">HOURS</mat-option>
@@ -82,13 +123,15 @@
             </mat-select>
           </mat-form-field>
         </div>
-        <div fxLayout="column" style="margin-top: 10px;">
+        <div fxLayout="column" style="margin-top: 10px">
           <mat-slide-toggle
             (change)="enableSendRecoverAccountEmail($event)"
-            [checked]="isSendRecoverAccountEmailEnabled()" [disabled]="readonly">
+            [checked]="isSendRecoverAccountEmailEnabled()"
+            [disabled]="readonly"
+          >
             Send account recovery email
           </mat-slide-toggle>
-          <mat-hint style="font-size: 75%;">Send an email if user account has been blocked.</mat-hint>
+          <mat-hint style="font-size: 75%">Send an email if user account has been blocked.</mat-hint>
         </div>
       </div>
     </div>
@@ -102,24 +145,54 @@
         <div fxLayout="column">
           <mat-slide-toggle
             (change)="enableMFABrutForceAuthenticationDetection($event)"
-            [checked]="isMFAChallengeBrutForceAuthenticationEnabled()" [disabled]="readonly">
+            [checked]="isMFAChallengeBrutForceAuthenticationEnabled()"
+            [disabled]="readonly"
+          >
             Brute Force Detection
           </mat-slide-toggle>
-          <mat-hint style="font-size: 75%;">Prevent MFA brute force challenge attempts.</mat-hint>
+          <mat-hint style="font-size: 75%">Prevent MFA brute force challenge attempts.</mat-hint>
         </div>
         <div fxLayout="row">
           <mat-form-field appearance="outline" floatLabel="always">
-            <input matInput type="number" placeholder="Max Challenge Attempts" name="maxChallengeAttempts" [(ngModel)]="accountSettings.mfaChallengeMaxAttempts" (ngModelChange)="updateModel()" [disabled]="!isMFAChallengeBrutForceAuthenticationEnabled()" required>
-            <mat-hint>Max challenge attempts after which the user will not be able to send request until <b>MFA Attempts Reset Time</b> is reached.</mat-hint>
+            <input
+              matInput
+              type="number"
+              placeholder="Max Challenge Attempts"
+              name="maxChallengeAttempts"
+              [(ngModel)]="accountSettings.mfaChallengeMaxAttempts"
+              (ngModelChange)="updateModel()"
+              [disabled]="!isMFAChallengeBrutForceAuthenticationEnabled()"
+              required
+            />
+            <mat-hint
+              >Max challenge attempts after which the user will not be able to send request until <b>MFA Attempts Reset Time</b> is
+              reached.</mat-hint
+            >
           </mat-form-field>
         </div>
         <div fxLayout="row">
           <mat-form-field appearance="outline" floatLabel="always">
-            <input matInput type="number" placeholder="MFA Attempts Reset Time" name="challengeAttemptsResetTime" [(ngModel)]="accountSettings.mfaChallengeAttemptsResetTime" (ngModelChange)="updateModel()" [disabled]="!isMFAChallengeBrutForceAuthenticationEnabled()" required>
+            <input
+              matInput
+              type="number"
+              placeholder="MFA Attempts Reset Time"
+              name="challengeAttemptsResetTime"
+              [(ngModel)]="accountSettings.mfaChallengeAttemptsResetTime"
+              (ngModelChange)="updateModel()"
+              [disabled]="!isMFAChallengeBrutForceAuthenticationEnabled()"
+              required
+            />
             <mat-hint>Time after which the challenge attempts will be reset.</mat-hint>
           </mat-form-field>
-          <mat-form-field fxFlex style="margin-left: 20px;" appearance="outline" floatLabel="always">
-            <mat-select placeholder="Unit time" name="challengeAttemptsResetTimeUnit" [(ngModel)]="accountSettings.mfaChallengeAttemptsResetTimeUnit" (ngModelChange)="updateModel()" [disabled]="!isMFAChallengeBrutForceAuthenticationEnabled()" required>
+          <mat-form-field fxFlex style="margin-left: 20px" appearance="outline" floatLabel="always">
+            <mat-select
+              placeholder="Unit time"
+              name="challengeAttemptsResetTimeUnit"
+              [(ngModel)]="accountSettings.mfaChallengeAttemptsResetTimeUnit"
+              (ngModelChange)="updateModel()"
+              [disabled]="!isMFAChallengeBrutForceAuthenticationEnabled()"
+              required
+            >
               <mat-option value="seconds">SECONDS</mat-option>
               <mat-option value="minutes">MINUTES</mat-option>
               <mat-option value="hours">HOURS</mat-option>
@@ -130,13 +203,15 @@
             </mat-select>
           </mat-form-field>
         </div>
-        <div fxLayout="column" style="margin-top: 10px;">
+        <div fxLayout="column" style="margin-top: 10px">
           <mat-slide-toggle
             (change)="enableMFAChallengeSendVerifyAlertEmail($event)"
-            [checked]="isMFAChallengeSendVerifyAlertEmailEnabled()" [disabled]="readonly">
+            [checked]="isMFAChallengeSendVerifyAlertEmailEnabled()"
+            [disabled]="readonly"
+          >
             Send alert email
           </mat-slide-toggle>
-          <mat-hint style="font-size: 75%;">Send an email if maximum challenge attempts are detected.</mat-hint>
+          <mat-hint style="font-size: 75%">Send an email if maximum challenge attempts are detected.</mat-hint>
         </div>
       </div>
     </div>
@@ -149,49 +224,75 @@
       <div>
         <div fxLayout="column">
           <mat-form-field appearance="outline">
-            <mat-select placeholder="Identity provider" name="defaultIdentityProviderForRegistration" [(ngModel)]="accountSettings.defaultIdentityProviderForRegistration" (ngModelChange)="updateModel()">
+            <mat-select
+              placeholder="Identity provider"
+              name="defaultIdentityProviderForRegistration"
+              [(ngModel)]="accountSettings.defaultIdentityProviderForRegistration"
+              (ngModelChange)="updateModel()"
+            >
               <mat-option>None</mat-option>
-              <mat-option *ngFor="let userProvider of userProviders" [value]="userProvider.id">{{userProvider.name}}</mat-option>
+              <mat-option *ngFor="let userProvider of userProviders" [value]="userProvider.id">{{ userProvider.name }}</mat-option>
             </mat-select>
-            <mat-hint>Default identity provider for user registration. The user will be stored in the selected identity provider instead of the default one.</mat-hint>
+            <mat-hint
+              >Default identity provider for user registration. The user will be stored in the selected identity provider instead of the
+              default one.</mat-hint
+            >
           </mat-form-field>
         </div>
         <div fxLayout="column">
-          <mat-slide-toggle
-            (change)="enableDynamicUserRegistration($event)"
-            [checked]="isDynamicUserRegistrationEnabled()">
+          <mat-slide-toggle (change)="enableDynamicUserRegistration($event)" [checked]="isDynamicUserRegistrationEnabled()">
             Dynamic user registration
           </mat-slide-toggle>
-          <mat-hint style="font-size: 75%;">Upon successful pre-registration, returns the newly-created User with location of the User Registration Endpoint to finalize the account. No email will be sent to the User (works only on the management side with the POST /users endpoint).</mat-hint>
+          <mat-hint style="font-size: 75%"
+            >Upon successful pre-registration, returns the newly-created User with location of the User Registration Endpoint to finalize
+            the account. No email will be sent to the User (works only on the management side with the POST /users endpoint).</mat-hint
+          >
         </div>
-        <div fxLayout="column" style="margin-top: 10px;">
-          <mat-slide-toggle
-            (change)="enableCompleteRegistration($event)"
-            [checked]="isCompleteRegistrationEnabled()" [disabled]="readonly">
+        <div fxLayout="column" style="margin-top: 10px">
+          <mat-slide-toggle (change)="enableCompleteRegistration($event)" [checked]="isCompleteRegistrationEnabled()" [disabled]="readonly">
             Complete user registration (reset password)
           </mat-slide-toggle>
-          <mat-hint style="font-size: 75%;">If a user renewed his password without completing his registration, finalize the account. The default behavior is to display an error to the user.</mat-hint>
+          <mat-hint style="font-size: 75%"
+            >If a user renewed his password without completing his registration, finalize the account. The default behavior is to display an
+            error to the user.</mat-hint
+          >
         </div>
-        <div fxLayout="column" style="margin-top: 10px;">
+        <div fxLayout="column" style="margin-top: 10px">
           <mat-slide-toggle
             (change)="enableSendVerifyRegistrationAccountEmail($event)"
-            [checked]="isSendVerifyRegistrationAccountEmail()" [disabled]="readonly">
+            [checked]="isSendVerifyRegistrationAccountEmail()"
+            [disabled]="readonly"
+          >
             Account verification via email
           </mat-slide-toggle>
-          <mat-hint style="font-size: 75%;">Once a user has registered, automatically send them an email with an account registration link.</mat-hint>
+          <mat-hint style="font-size: 75%"
+            >Once a user has registered, automatically send them an email with an account registration link.</mat-hint
+          >
         </div>
-        <div fxLayout="column" style="margin-top: 10px;">
+        <div fxLayout="column" style="margin-top: 10px">
           <mat-slide-toggle
             (change)="enableAutoLoginAfterRegistration($event)"
-            [checked]="isAutoLoginAfterRegistrationEnabled()" [disabled]="readonly">
+            [checked]="isAutoLoginAfterRegistrationEnabled()"
+            [disabled]="readonly"
+          >
             Auto login after user registration
           </mat-slide-toggle>
-          <mat-hint style="font-size: 75%;">Automatically login user after registration process.</mat-hint>
+          <mat-hint style="font-size: 75%">Automatically login user after registration process.</mat-hint>
         </div>
         <div fxLayout="column">
           <mat-form-field appearance="outline" floatLabel="always">
-            <input matInput placeholder="Registration redirect URI" name="autoLoginRegistration" [(ngModel)]="accountSettings.redirectUriAfterRegistration" (ngModelChange)="updateModel()" [disabled]="readonly">
-            <mat-hint>After complete its registration the user can be redirected to the specified URL. The default behavior is to display the registration confirmation page to the user.</mat-hint>
+            <input
+              matInput
+              placeholder="Registration redirect URI"
+              name="autoLoginRegistration"
+              [(ngModel)]="accountSettings.redirectUriAfterRegistration"
+              (ngModelChange)="updateModel()"
+              [disabled]="readonly"
+            />
+            <mat-hint
+              >After complete its registration the user can be redirected to the specified URL. The default behavior is to display the
+              registration confirmation page to the user.</mat-hint
+            >
           </mat-form-field>
         </div>
       </div>
@@ -206,75 +307,102 @@
         <div fxLayout="column">
           <mat-slide-toggle
             (change)="enableDeletePasswordlessDevicesAfterResetPassword($event)"
-            [checked]="isDeletePasswordlessDevicesAfterResetPasswordEnabled()" [disabled]="readonly">
+            [checked]="isDeletePasswordlessDevicesAfterResetPasswordEnabled()"
+            [disabled]="readonly"
+          >
             Delete passwordless devices
           </mat-slide-toggle>
-          <mat-hint style="font-size: 75%;">Automatically delete passswordless devices after reset password process.</mat-hint>
+          <mat-hint style="font-size: 75%">Automatically delete passswordless devices after reset password process.</mat-hint>
         </div>
-        <div fxLayout="column" style="margin-top: 10px;">
+        <div fxLayout="column" style="margin-top: 10px">
           <mat-slide-toggle
             (change)="enableAutoLoginAfterResetPassword($event)"
-            [checked]="isAutoLoginAfterResetPasswordEnabled()" [disabled]="readonly">
+            [checked]="isAutoLoginAfterResetPasswordEnabled()"
+            [disabled]="readonly"
+          >
             Auto login after reset password
           </mat-slide-toggle>
-          <mat-hint style="font-size: 75%;">Automatically login user after reset password process.</mat-hint>
+          <mat-hint style="font-size: 75%">Automatically login user after reset password process.</mat-hint>
         </div>
         <div fxLayout="column">
           <mat-form-field appearance="outline" floatLabel="always">
-            <input matInput placeholder="Reset password redirect URI" name="autoLoginResetPassword" [(ngModel)]="accountSettings.redirectUriAfterResetPassword" (ngModelChange)="updateModel()" [disabled]="readonly">
-            <mat-hint>After reset its password the user can be redirected to the specified URL. The default behavior is to display the reset password page to the user.</mat-hint>
+            <input
+              matInput
+              placeholder="Reset password redirect URI"
+              name="autoLoginResetPassword"
+              [(ngModel)]="accountSettings.redirectUriAfterResetPassword"
+              (ngModelChange)="updateModel()"
+              [disabled]="readonly"
+            />
+            <mat-hint
+              >After reset its password the user can be redirected to the specified URL. The default behavior is to display the reset
+              password page to the user.</mat-hint
+            >
           </mat-form-field>
         </div>
       </div>
       <div fxLayout="column">
-        <mat-slide-toggle
-          (change)="enableInvalidateTokens($event)"
-          [checked]="isInvalidateTokensEnabled()" [disabled]="readonly">
+        <mat-slide-toggle (change)="enableInvalidateTokens($event)" [checked]="isInvalidateTokensEnabled()" [disabled]="readonly">
           Invalidate Tokens
         </mat-slide-toggle>
-        <mat-hint style="font-size: 75%;">Invalidate user's tokens after a reset password.</mat-hint>
+        <mat-hint style="font-size: 75%">Invalidate user's tokens after a reset password.</mat-hint>
       </div>
 
       <div fxLayout="column">
         <mat-slide-toggle
           (change)="enableResetPasswordCustomForm($event)"
-          [checked]="isResetPasswordCustomFormEnabled()" [disabled]="readonly">
+          [checked]="isResetPasswordCustomFormEnabled()"
+          [disabled]="readonly"
+        >
           Allow Forgot Password form with custom fields
         </mat-slide-toggle>
-        <mat-hint style="font-size: 75%;">Allow to define a custom Forgot Password form.</mat-hint>
+        <mat-hint style="font-size: 75%">Allow to define a custom Forgot Password form.</mat-hint>
       </div>
 
-      <div fxLayout="column" *ngIf="isResetPasswordCustomFormEnabled()" style="margin-top: 10px;">
+      <div fxLayout="column" *ngIf="isResetPasswordCustomFormEnabled()" style="margin-top: 10px">
         <div fxLayout="row">
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-select placeholder="Field key" name="fieldKey" [(ngModel)]="newField.key" (selectionChange)="onFieldSelected($event)">
-              <mat-option *ngFor="let field of availableFields" [disabled]="isFieldSelected(field.key)" [value]="field.key">{{field.label}}</mat-option>
+              <mat-option *ngFor="let field of availableFields" [disabled]="isFieldSelected(field.key)" [value]="field.key">{{
+                field.label
+              }}</mat-option>
             </mat-select>
             <mat-hint>Field identifier</mat-hint>
           </mat-form-field>
-          <mat-form-field appearance="outline" floatLabel="always" style="margin-left: 20px;" >
-            <input matInput placeholder="Field Label" name="fieldLabel" [(ngModel)]="newField.label">
+          <mat-form-field appearance="outline" floatLabel="always" style="margin-left: 20px">
+            <input matInput placeholder="Field Label" name="fieldLabel" [(ngModel)]="newField.label" />
             <mat-hint>Label used when the form is rendered.</mat-hint>
           </mat-form-field>
           <div>
-            <button style="margin-top: 7px; margin-left: 10px;" mat-stroked-button [disabled]="false" type="button" (click)="addField()" [disabled]="!(newField.key && newField.label)">+ ADD</button>
+            <button
+              style="margin-top: 7px; margin-left: 10px"
+              mat-stroked-button
+              [disabled]="false"
+              type="button"
+              (click)="addField()"
+              [disabled]="!(newField.key && newField.label)"
+            >
+              + ADD
+            </button>
           </div>
         </div>
         <div *ngIf="selectedFields.length > 0">
-          <ngx-datatable class="material"
-                         [columnMode]="'flex'"
-                         [headerHeight]="40"
-                         [footerHeight]="40"
-                         [rowHeight]="50"
-                         [rows]='selectedFields'>
+          <ngx-datatable
+            class="material"
+            [columnMode]="'flex'"
+            [headerHeight]="40"
+            [footerHeight]="40"
+            [rowHeight]="50"
+            [rows]="selectedFields"
+          >
             <ngx-datatable-column name="Key" [flexGrow]="2">
               <ng-template let-row="row" ngx-datatable-cell-template>
-                {{row.key}}
+                {{ row.key }}
               </ng-template>
             </ngx-datatable-column>
             <ngx-datatable-column name="Label" [flexGrow]="4">
               <ng-template let-row="row" ngx-datatable-cell-template>
-                {{row.label}}
+                {{ row.label }}
               </ng-template>
             </ngx-datatable-column>
             <ngx-datatable-column name="" [flexGrow]="1">
@@ -289,10 +417,15 @@
         <div fxLayout="column">
           <mat-slide-toggle
             (change)="enableResetPasswordConfirmIdentity($event)"
-            [checked]="isResetPasswordConfirmIdentityEnabled()" [disabled]="readonly">
+            [checked]="isResetPasswordConfirmIdentityEnabled()"
+            [disabled]="readonly"
+          >
             Allow confirm user identity
           </mat-slide-toggle>
-          <mat-hint style="font-size: 75%;">Use the user email as search criteria for forgot password form and fallback to custom form if multiple users are found.</mat-hint>
+          <mat-hint style="font-size: 75%"
+            >Use the user email as search criteria for forgot password form and fallback to custom form if multiple users are
+            found.</mat-hint
+          >
         </div>
       </div>
     </div>
@@ -306,17 +439,30 @@
         <div fxLayout="column">
           <mat-slide-toggle
             (change)="enableBotDetection($event)"
-            [checked]="isBotDetectionEnabled()" [disabled]="readonly || !hasBotDetectionPlugins()">
+            [checked]="isBotDetectionEnabled()"
+            [disabled]="readonly || !hasBotDetectionPlugins()"
+          >
             Protect pages against bots
           </mat-slide-toggle>
-          <mat-hint style="font-size: 75%;">Enable protection against bots on Sign-In, Sign-Up and Forgot Password pages.</mat-hint>
+          <mat-hint style="font-size: 75%">Enable protection against bots on Sign-In, Sign-Up and Forgot Password pages.</mat-hint>
         </div>
-        <div fxLayout="column" style="margin-top: 10px;">
+        <div fxLayout="column" style="margin-top: 10px">
           <mat-form-field appearance="outline">
-            <mat-select placeholder="Bot detection plugin" name="botDetectionPlugin" [disabled]="readonly || !hasBotDetectionPlugins()" [(ngModel)]="accountSettings.botDetectionPlugin" (ngModelChange)="updateModel()">
-              <mat-option *ngFor="let botDetectionPlugin of botDetectionPlugins" [value]="botDetectionPlugin.id">{{botDetectionPlugin.name}}</mat-option>
+            <mat-select
+              placeholder="Bot detection plugin"
+              name="botDetectionPlugin"
+              [disabled]="readonly || !hasBotDetectionPlugins()"
+              [(ngModel)]="accountSettings.botDetectionPlugin"
+              (ngModelChange)="updateModel()"
+            >
+              <mat-option *ngFor="let botDetectionPlugin of botDetectionPlugins" [value]="botDetectionPlugin.id">{{
+                botDetectionPlugin.name
+              }}</mat-option>
             </mat-select>
-            <mat-hint>The bot detection plugin that will be used. If you made custom template, please look at the BotDetection configuration form to get code snippets to include into your pages</mat-hint>
+            <mat-hint
+              >The bot detection plugin that will be used. If you made custom template, please look at the BotDetection configuration form
+              to get code snippets to include into your pages</mat-hint
+            >
           </mat-form-field>
         </div>
       </div>
@@ -324,6 +470,6 @@
   </div>
 
   <div fxLayout="row" *ngIf="!readonly">
-    <button mat-raised-button color="primary" [disabled]="(!formChanged || !formIsValid())" type="submit">SAVE</button>
+    <button mat-raised-button color="primary" [disabled]="!formChanged || !formIsValid()" type="submit">SAVE</button>
   </div>
 </form>

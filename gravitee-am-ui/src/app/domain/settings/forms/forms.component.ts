@@ -13,23 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
-import {FormTemplateFactoryService} from "../../../services/form.template.factory.service";
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+
+import { FormTemplateFactoryService } from '../../../services/form.template.factory.service';
 
 @Component({
   selector: 'app-domain-forms',
   templateUrl: './forms.component.html',
-  styleUrls: ['./forms.component.scss']
+  styleUrls: ['./forms.component.scss'],
 })
 export class DomainSettingsFormsComponent implements OnInit {
   forms: any[];
   domain: any;
 
-  constructor(private route: ActivatedRoute,
-              private router: Router,
-              private formTemplateFactoryService: FormTemplateFactoryService) {
-  }
+  constructor(private route: ActivatedRoute, private router: Router, private formTemplateFactoryService: FormTemplateFactoryService) {}
 
   ngOnInit() {
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
@@ -41,20 +39,18 @@ export class DomainSettingsFormsComponent implements OnInit {
   }
 
   getForms() {
-    return this.formTemplateFactoryService.findAll()
-      .map(form => {
-        form.enabled = true;
-        return form;
-      });
+    return this.formTemplateFactoryService.findAll().map((form) => {
+      form.enabled = true;
+      return form;
+    });
   }
 
   getOrganizationForms() {
     return this.formTemplateFactoryService
-      .findBy(form => form.template === "LOGIN")
-      .map(form => {
+      .findBy((form) => form.template === 'LOGIN')
+      .map((form) => {
         form.enabled = true;
         return form;
       });
   }
-
 }

@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {inject, TestBed} from '@angular/core/testing';
-import {PlatformAlertStatusResolver} from "./platform-alert-status.resolver";
+import { inject, TestBed } from '@angular/core/testing';
 
+import { PlatformAlertStatusResolver } from './platform-alert-status.resolver';
 
 describe('PlatformAlertStatusResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-    providers: [PlatformAlertStatusResolver],
-    teardown: { destroyAfterEach: false }
-});
+      providers: [PlatformAlertStatusResolver],
+      teardown: { destroyAfterEach: false },
+    });
   });
 
   it('should ...', inject([PlatformAlertStatusResolver], (service: PlatformAlertStatusResolver) => {

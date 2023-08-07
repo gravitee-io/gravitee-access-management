@@ -13,18 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute, Router} from "@angular/router";
-import {SnackbarService} from "../../../../../../services/snackbar.service";
-import {DialogService} from "../../../../../../services/dialog.service";
-import {UserService} from "../../../../../../services/user.service";
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import * as _ from 'lodash';
-import {AuthService} from "../../../../../../services/auth.service";
+import { filter, switchMap, tap } from 'rxjs/operators';
+
+import { SnackbarService } from '../../../../../../services/snackbar.service';
+import { DialogService } from '../../../../../../services/dialog.service';
+import { UserService } from '../../../../../../services/user.service';
+import { AuthService } from '../../../../../../services/auth.service';
 
 @Component({
   selector: 'app-user-application',
   templateUrl: './application.component.html',
-  styleUrls: ['./application.component.scss']
+  styleUrls: ['./application.component.scss'],
 })
 export class UserApplicationComponent implements OnInit {
   private domainId: string;
@@ -34,13 +36,14 @@ export class UserApplicationComponent implements OnInit {
   consents: any[];
   canRevoke: boolean;
 
-  constructor(private route: ActivatedRoute,
-              private router: Router,
-              private snackbarService: SnackbarService,
-              private dialogService: DialogService,
-              private userService: UserService,
-              private authService: AuthService) {
-  }
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private snackbarService: SnackbarService,
+    private dialogService: DialogService,
+    private userService: UserService,
+    private authService: AuthService,
+  ) {}
 
   ngOnInit() {
     this.application = this.route.snapshot.data['application'];
@@ -55,48 +58,50 @@ export class UserApplicationComponent implements OnInit {
     event.preventDefault();
     this.dialogService
       .confirm('Revoke access', 'Are you sure you want to revoke application access ?')
-      .subscribe(res => {
-        if (res) {
-          this.userService.revokeConsents(this.domainId, this.userId, this.clientId).subscribe(response => {
-            this.snackbarService.open('Access for application ' + this.application.name + ' revoked');
-            this.router.navigate(['..'], { relativeTo: this.route });
-          });
-        }
-      });
+      .pipe(
+        filter((res) => res),
+        switchMap(() => this.userService.revokeConsents(this.domainId, this.userId, this.clientId)),
+        tap(() => {
+          this.snackbarService.open('Access for application ' + this.application.name + ' revoked');
+          this.router.navigate(['..'], { relativeTo: this.route });
+        }),
+      )
+      .subscribe();
   }
 
   revokeConsent(event, consent) {
     event.preventDefault();
     this.dialogService
       .confirm('Revoke access', 'Are you sure you want to revoke this permission ?')
-      .subscribe(res => {
-        if (res) {
-          this.userService.revokeConsent(this.domainId, this.userId, consent.id).subscribe(response => {
-            this.snackbarService.open('Permission ' + consent.scopeEntity.name + ' revoked');
-            if (this.consents.length === 1) {
-              this.router.navigate(['..'], { relativeTo: this.route });
-            } else {
-              this.loadConsents();
-            }
-          });
-        }
-      });
+      .pipe(
+        filter((res) => res),
+        switchMap(() => this.userService.revokeConsent(this.domainId, this.userId, consent.id)),
+        tap(() => {
+          this.snackbarService.open('Permission ' + consent.scopeEntity.name + ' revoked');
+          if (this.consents.length === 1) {
+            this.router.navigate(['..'], { relativeTo: this.route });
+          } else {
+            this.loadConsents();
+          }
+        }),
+      )
+      .subscribe();
   }
 
   loadConsents() {
-    this.userService.consents(this.domainId, this.userId, null).subscribe(consents => {
-      this.consents = consents.filter(consent => consent.clientId === this.clientId);
+    this.userService.consents(this.domainId, this.userId, null).subscribe((consents) => {
+      this.consents = consents.filter((consent) => consent.clientId === this.clientId);
       this.consents = [...this.consents];
     });
   }
 
   canRevokeAccess() {
-    return _.find(this.consents, {status: 'approved'})
+    return _.find(this.consents, { status: 'approved' });
   }
 
   getRowClass(row) {
     return {
-      'row-disabled': row.status !== 'approved'
+      'row-disabled': row.status !== 'approved',
     };
   }
 }

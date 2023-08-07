@@ -13,34 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, EventEmitter, Input, Output} from "@angular/core";
-import {MatDialog, MatDialogRef} from "@angular/material/dialog";
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 
 @Component({
   selector: 'mfa-step-up',
   templateUrl: './mfa-step-up.component.html',
-  styleUrls: ['./mfa-step-up.component.scss']
+  styleUrls: ['./mfa-step-up.component.scss'],
 })
 export class MfaStepUpComponent {
+  @Input() stepUpRule = '';
+  @Output('on-rule-change') stepUpRuleEmitter: EventEmitter<string> = new EventEmitter<string>();
 
-  @Input() stepUpRule: string = "";
-  @Output("on-rule-change") stepUpRuleEmitter: EventEmitter<string> = new EventEmitter<string>();
-
-  constructor(
-    private dialog: MatDialog
-  ) {}
+  constructor(private dialog: MatDialog) {}
 
   change($event) {
-    if($event.target){
+    if ($event.target) {
       this.stepUpRuleEmitter.emit($event.target.value);
     }
   }
 
   openStepUpDialog($event) {
     $event.preventDefault();
-    this.dialog.open(MfaStepUpDialog, {width: '700px'});
+    this.dialog.open(MfaStepUpDialog, { width: '700px' });
   }
-
 }
 
 @Component({
@@ -48,6 +44,5 @@ export class MfaStepUpComponent {
   templateUrl: './dialog/mfa-step-up-info.component.html',
 })
 export class MfaStepUpDialog {
-  constructor(public dialogRef: MatDialogRef<MfaStepUpDialog>) {
-  }
+  constructor(public dialogRef: MatDialogRef<MfaStepUpDialog>) {}
 }

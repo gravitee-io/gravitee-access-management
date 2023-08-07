@@ -13,30 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnDestroy} from '@angular/core';
-import {ActivatedRoute, NavigationEnd, Router, RouterEvent} from '@angular/router';
-import {filter} from "rxjs/operators";
-import {Subscription} from "rxjs";
-import {AuthService} from "../../../../../services/auth.service";
+import { Component, OnDestroy } from '@angular/core';
+import { ActivatedRoute, NavigationEnd, Router, RouterEvent } from '@angular/router';
+import { filter } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
+
+import { AuthService } from '../../../../../services/auth.service';
 
 @Component({
   selector: 'app-application-oauth2',
   templateUrl: './oauth2.component.html',
-  styleUrls: ['./oauth2.component.scss']
+  styleUrls: ['./oauth2.component.scss'],
 })
 export class ApplicationOAuth2Component implements OnDestroy {
   private subscription: Subscription;
   navLinks: any = [
-    {'href': 'grantFlows' , 'label': 'Grant flows', 'icon': 'more_vert'},
-    {'href': 'scopes' , 'label': 'Scopes', 'icon': 'transform'},
-    {'href': 'tokens' , 'label': 'Tokens', 'icon': 'swap_horiz'},
+    { href: 'grantFlows', label: 'Grant flows', icon: 'more_vert' },
+    { href: 'scopes', label: 'Scopes', icon: 'transform' },
+    { href: 'tokens', label: 'Tokens', icon: 'swap_horiz' },
   ];
-  constructor(private router: Router,
-              private route: ActivatedRoute,
-              private authService: AuthService) {
-    this.subscription = this.router.events.pipe(
-      filter((event: RouterEvent) => event instanceof NavigationEnd)
-    ).subscribe(next  => {
+  constructor(private router: Router, private route: ActivatedRoute, private authService: AuthService) {
+    this.subscription = this.router.events.pipe(filter((event: RouterEvent) => event instanceof NavigationEnd)).subscribe((next) => {
       if (next.url.endsWith('oauth2')) {
         this.loadPermissions();
       }

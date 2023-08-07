@@ -23,10 +23,9 @@ describe('UserCreationComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    declarations: [UserCreationComponent],
-    teardown: { destroyAfterEach: false }
-})
-      .compileComponents();
+      declarations: [UserCreationComponent],
+      teardown: { destroyAfterEach: false },
+    }).compileComponents();
   }));
 
   beforeEach(() => {

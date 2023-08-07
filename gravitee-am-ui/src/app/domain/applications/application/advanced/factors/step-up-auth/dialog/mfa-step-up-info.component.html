@@ -23,14 +23,13 @@
     <mat-list dense>
       <mat-list-item>
         <mat-icon matListIcon>info</mat-icon>
-        <h3 matLine> You can use <b>Expression Language</b> to set the MFA step up authentication condition. </h3>
+        <h3 matLine>You can use <b>Expression Language</b> to set the MFA step up authentication condition.</h3>
       </mat-list-item>
     </mat-list>
     <h5>Condition examples</h5>
     <mat-divider></mat-divider>
     <pre>
-<![CDATA[
-{#request.params['scope'][0] == 'write'}
+<![CDATA[{#request.params['scope'][0] == 'write'}
 {#request.params['audience'][0] == 'https://myapi.com'}
 ]]>
     </pre>

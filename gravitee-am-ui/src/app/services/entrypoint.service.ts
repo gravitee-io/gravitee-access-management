@@ -13,16 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Injectable} from '@angular/core';
-import {AppConfig} from "../../config/app.config";
-import {HttpClient} from "@angular/common/http";
-import {Observable} from "rxjs";
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+
+import { AppConfig } from '../../config/app.config';
 
 @Injectable()
 export class EntrypointService {
   private entrypointsURL = AppConfig.settings.organizationBaseURL + '/entrypoints/';
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
   list(): Observable<any> {
     return this.http.get<any>(this.entrypointsURL);
@@ -38,10 +39,10 @@ export class EntrypointService {
 
   update(id, entrypoint): Observable<any> {
     return this.http.put<any>(this.entrypointsURL + id, {
-      'name' : entrypoint.name,
-      'description' : entrypoint.description,
-      'url': entrypoint.url,
-      'tags': entrypoint.tags
+      name: entrypoint.name,
+      description: entrypoint.description,
+      url: entrypoint.url,
+      tags: entrypoint.tags,
     });
   }
 
@@ -50,24 +51,23 @@ export class EntrypointService {
   }
 
   resolveBaseUrl(entrypoint: any, domain: any): string {
-
     let baseUrl = entrypoint.url;
-      let path = domain.path;
+    let path = domain.path;
 
-      if (domain.vhostMode) {
-        let vhost = domain.vhosts.find(vhost => vhost.overrideEntrypoint);
+    if (domain.vhostMode) {
+      const vhost = domain.vhosts.find((vhost) => vhost.overrideEntrypoint);
 
-        if (vhost != null) {
-          let scheme = entrypoint.url.match("^(https?://).*$")[1]
-          baseUrl = scheme + vhost.host
-          path = vhost.path;
-        }
+      if (vhost != null) {
+        const scheme = entrypoint.url.match('^(https?://).*$')[1];
+        baseUrl = scheme + vhost.host;
+        path = vhost.path;
       }
+    }
 
-      if(path !== '/') {
-        baseUrl = baseUrl + path;
-      }
+    if (path !== '/') {
+      baseUrl = baseUrl + path;
+    }
 
-      return baseUrl
+    return baseUrl;
   }
 }

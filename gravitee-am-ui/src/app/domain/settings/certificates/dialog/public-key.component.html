@@ -16,15 +16,32 @@
 
 -->
 <div>
-  <h1 matDialogTitle>{{title}}</h1>
+  <h1 matDialogTitle>{{ title }}</h1>
   <mat-dialog-content>
     <p *ngIf="error">Failed to load public key</p>
     <div *ngIf="!error && certificateKeys.length > 0">
       <div *ngFor="let certificatePublicKey of certificateKeys">
         <mat-form-field appearance="outline" floatLabel="always">
-          <mat-label>{{certificatePublicKey.fmt}}</mat-label>
-          <textarea rows="5" matInput placeholder="Certificate" name="certificate" [value]="certificatePublicKey.payload" disabled="true"></textarea>
-          <button mat-icon-button matSuffix matTooltip="Copy to clipboard" ngxClipboard [cbContent]="certificatePublicKey.payload" (cbOnSuccess)="valueCopied('Certificate key copied to the clipboard')" (click)="$event.preventDefault();"><mat-icon>content_copy</mat-icon></button>
+          <mat-label>{{ certificatePublicKey.fmt }}</mat-label>
+          <textarea
+            rows="5"
+            matInput
+            placeholder="Certificate"
+            name="certificate"
+            [value]="certificatePublicKey.payload"
+            disabled="true"
+          ></textarea>
+          <button
+            mat-icon-button
+            matSuffix
+            matTooltip="Copy to clipboard"
+            ngxClipboard
+            [cbContent]="certificatePublicKey.payload"
+            (cbOnSuccess)="valueCopied('Certificate key copied to the clipboard')"
+            (click)="$event.preventDefault()"
+          >
+            <mat-icon>content_copy</mat-icon>
+          </button>
         </mat-form-field>
       </div>
     </div>

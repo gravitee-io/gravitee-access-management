@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 import { TestBed } from '@angular/core/testing';
-import {
-  HttpClientTestingModule,
-  HttpTestingController,
-} from '@angular/common/http/testing';
+import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 
 import { AnalyticsService } from './analytics.service';
+
 import { AppConfig } from '../../config/app.config';
 
 describe('AnalyticsService', () => {
@@ -30,10 +28,10 @@ describe('AnalyticsService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-    providers: [AnalyticsService],
-    imports: [HttpClientTestingModule],
-    teardown: { destroyAfterEach: false }
-});
+      providers: [AnalyticsService],
+      imports: [HttpClientTestingModule],
+      teardown: { destroyAfterEach: false },
+    });
 
     httpTestingController = TestBed.get(HttpTestingController);
     analyticsService = TestBed.get(AnalyticsService);
@@ -52,11 +50,10 @@ describe('AnalyticsService', () => {
     const to = 100;
     const size = 20;
 
-    analyticsService.search(domainId, { type, field, interval, from, to, size})
-      .subscribe(result => {
-        expect(result.value).toEqual(analyticsResponse.value);
-        done();
-      });
+    analyticsService.search(domainId, { type, field, interval, from, to, size }).subscribe((result) => {
+      expect(result.value).toEqual(analyticsResponse.value);
+      done();
+    });
 
     httpTestingController
       .expectOne({
@@ -64,7 +61,6 @@ describe('AnalyticsService', () => {
         url: `${AppConfig.settings.domainBaseURL}${domainId}/analytics?type=${type}&field=${field}&interval=${interval}&from=${from}&to=${to}&size=${size}`,
       })
       .flush(analyticsResponse);
-
   });
 
   it('calls domain analytics endpoint with optional params', (done) => {
@@ -74,11 +70,10 @@ describe('AnalyticsService', () => {
     const interval = 12;
     const size = 20;
 
-    analyticsService.search(domainId, {type, field, interval, from: undefined, to: undefined, size})
-      .subscribe(result => {
-        expect(result.value).toEqual(analyticsResponse.value);
-        done();
-      });
+    analyticsService.search(domainId, { type, field, interval, from: undefined, to: undefined, size }).subscribe((result) => {
+      expect(result.value).toEqual(analyticsResponse.value);
+      done();
+    });
 
     httpTestingController
       .expectOne({
@@ -98,11 +93,10 @@ describe('AnalyticsService', () => {
     const to = 100;
     const size = 20;
 
-    analyticsService.searchApplicationAnalytics(domainId, applicationId, { type, field, interval, from, to, size})
-      .subscribe(result => {
-        expect(result.value).toEqual(analyticsResponse.value);
-        done();
-      });
+    analyticsService.searchApplicationAnalytics(domainId, applicationId, { type, field, interval, from, to, size }).subscribe((result) => {
+      expect(result.value).toEqual(analyticsResponse.value);
+      done();
+    });
 
     httpTestingController
       .expectOne({
@@ -120,8 +114,9 @@ describe('AnalyticsService', () => {
     const interval = 12;
     const size = 20;
 
-    analyticsService.searchApplicationAnalytics(domainId, applicationId, {type, field, interval, from: undefined, to: undefined, size})
-      .subscribe(result => {
+    analyticsService
+      .searchApplicationAnalytics(domainId, applicationId, { type, field, interval, from: undefined, to: undefined, size })
+      .subscribe((result) => {
         expect(result.value).toEqual(analyticsResponse.value);
         done();
       });

@@ -24,15 +24,22 @@
       <gio-top-bar-content type="am" productName="Access Management"></gio-top-bar-content>
       <gio-top-bar-menu>
         <button class="currentDomain" mat-raised-button disabled>
-          <span>{{currentDomain?.name | lowercase}}</span>
+          <span>{{ currentDomain?.name | lowercase }}</span>
         </button>
         <button mat-icon-button [matMenuTriggerFor]="userNotificationsMenu" [disabled]="!hasNotifications()" disableRipple>
           <div class="notifications-menu">
-            <mat-icon svgIcon="gio:bell" style="color: #f7f8fd;"></mat-icon>
+            <mat-icon svgIcon="gio:bell" style="color: #f7f8fd"></mat-icon>
             <div class="notifications-menu-circle" *ngIf="hasNotifications()"></div>
           </div>
         </button>
-        <button class="userAccountMenu" mat-icon-button [matMenuTriggerFor]="userAccountMenu" disableRipple (click)="listDomains()" data-testid="user-notifications-button">
+        <button
+          class="userAccountMenu"
+          mat-icon-button
+          [matMenuTriggerFor]="userAccountMenu"
+          disableRipple
+          (click)="listDomains()"
+          data-testid="user-notifications-button"
+        >
           <app-user-avatar [user]="user" [width]="'36'"></app-user-avatar>
         </button>
       </gio-top-bar-menu>
@@ -42,27 +49,33 @@
     <div class="userAccount" fxLayout="column">
       <div class="userAccountProfile" fxLayout="row">
         <app-user-avatar [user]="user" [width]="'80'"></app-user-avatar>
-        <div class="userAccountInfo" fxLayout="column" style="margin: 20px;">
-          <h3>{{user.name}}</h3>
-          <small>{{user.preferred_username}}</small>
+        <div class="userAccountInfo" fxLayout="column" style="margin: 20px">
+          <h3>{{ user.name }}</h3>
+          <small>{{ user.preferred_username }}</small>
         </div>
       </div>
       <div class="userAccountActions first" *ngIf="hasCurrentEnvironment()">
         <mat-list>
           <h3 matSubheader>Domains</h3>
-          <a [routerLink]="['/environments', currentEnvironment.hrids[0], 'domains', domain.hrid]" *ngFor="let domain of domains" mat-menu-item>
-            <mat-list-item [ngClass]="{'domain-disabled':!domain.enabled}">
+          <a
+            [routerLink]="['/environments', currentEnvironment.hrids[0], 'domains', domain.hrid]"
+            *ngFor="let domain of domains"
+            mat-menu-item
+          >
+            <mat-list-item [ngClass]="{ 'domain-disabled': !domain.enabled }">
               <mat-icon mat-list-icon>domain</mat-icon>
-              <h4 matLine >{{domain.name}}</h4>
-              <span *ngIf="!domain.enabled"><mat-icon class="domain-disabled-icon"><i class="material-icons">priority_high</i></mat-icon> domain disabled</span>
+              <h4 matLine>{{ domain.name }}</h4>
+              <span *ngIf="!domain.enabled"
+                ><mat-icon class="domain-disabled-icon"><i class="material-icons">priority_high</i></mat-icon> domain disabled</span
+              >
             </mat-list-item>
           </a>
         </mat-list>
       </div>
       <div class="userAccountActions" *ngFor="let link of navLinks">
         <a [routerLink]="link.href" mat-menu-item>
-          <mat-icon>{{link.icon}}</mat-icon>
-          <span>{{link.label}}</span>
+          <mat-icon>{{ link.icon }}</mat-icon>
+          <span>{{ link.label }}</span>
         </a>
       </div>
     </div>
@@ -70,7 +83,7 @@
 
   <mat-menu #userNotificationsMenu="matMenu" [overlapTrigger]="false">
     <div fxLayout="column">
-      <div class="notification" fxLayout="column" style="margin-left: 20px; margin-right: 20px;"  *ngFor="let notification of notifications;">
+      <div class="notification" fxLayout="column" style="margin-left: 20px; margin-right: 20px" *ngFor="let notification of notifications">
         <div class="notification-title">
           <h3>{{ notification.title }}</h3>
           <button mat-icon-button (click)="markNotificationAsRead(notification.id, $event)">
@@ -78,7 +91,9 @@
           </button>
         </div>
         <p>{{ notification.message }}</p>
-        <small><i>{{ notification.createdAt | date:'medium' }}</i></small>
+        <small
+          ><i>{{ notification.createdAt | date : 'medium' }}</i></small
+        >
         <mat-divider></mat-divider>
       </div>
     </div>

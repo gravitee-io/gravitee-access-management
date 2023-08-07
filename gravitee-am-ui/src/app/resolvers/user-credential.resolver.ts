@@ -14,20 +14,19 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, Resolve, RouterStateSnapshot } from '@angular/router';
+import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import { Observable } from 'rxjs';
+
 import { UserService } from '../services/user.service';
 
 @Injectable()
 export class UserCredentialResolver implements Resolve<any> {
+  constructor(private userService: UserService) {}
 
-  constructor(private userService: UserService) { }
-
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
+  resolve(route: ActivatedRouteSnapshot): Observable<any> | Promise<any> | any {
     const credentialId = route.paramMap.get('credentialId');
     const userId = route.parent.paramMap.get('userId');
     const domainId = route.parent.data['domain'].id;
     return this.userService.credential(domainId, userId, credentialId);
   }
-
 }

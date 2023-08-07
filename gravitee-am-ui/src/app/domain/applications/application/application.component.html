@@ -17,12 +17,13 @@
 -->
 <div fxLayout="row">
   <gv-submenu
-    [displaySections] = "false"
-    [hasTitle] = "true"
-    [isTemplate] = "application.template"
+    [displaySections]="false"
+    [hasTitle]="true"
+    [isTemplate]="application.template"
     [templateTooltip]="'Application set as a template'"
     [componentType]="application.type"
-    [componentName]="application.name">
+    [componentName]="application.name"
+  >
   </gv-submenu>
   <div class="application-content">
     <router-outlet></router-outlet>

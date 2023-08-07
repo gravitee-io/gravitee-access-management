@@ -14,19 +14,18 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, Resolve, RouterStateSnapshot } from '@angular/router';
+import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import { Observable } from 'rxjs';
+
 import { UserService } from '../services/user.service';
 
 @Injectable()
 export class EnrolledFactorsResolver implements Resolve<any> {
+  constructor(private userService: UserService) {}
 
-  constructor(private userService: UserService) { }
-
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
+  resolve(route: ActivatedRouteSnapshot): Observable<any> | Promise<any> | any {
     const domainId = route.parent.data['domain'].id;
     const userId = route.paramMap.get('userId');
     return this.userService.factors(domainId, userId);
   }
-
 }

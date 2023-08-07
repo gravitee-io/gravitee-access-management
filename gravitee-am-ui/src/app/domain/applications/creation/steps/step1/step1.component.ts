@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, Input, OnInit} from '@angular/core';
-import {ActivatedRoute} from '@angular/router';
+import { Component, Input, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import * as _ from 'lodash';
 
 @Component({
   selector: 'application-creation-step1',
   templateUrl: './step1.component.html',
-  styleUrls: ['./step1.component.scss']
+  styleUrls: ['./step1.component.scss'],
 })
 export class ApplicationCreationStep1Component implements OnInit {
   @Input() application;
@@ -31,43 +31,44 @@ export class ApplicationCreationStep1Component implements OnInit {
       icon: 'language',
       type: 'WEB',
       description: 'Traditional web apps',
-      subDescription: 'e.g : .NET, Java'
+      subDescription: 'e.g : .NET, Java',
     },
     {
       name: 'Single-Page App',
       icon: 'web',
       type: 'BROWSER',
       description: 'JavaScript front-end apps',
-      subDescription: 'e.g : Angular, React, VueJS'
+      subDescription: 'e.g : Angular, React, VueJS',
     },
     {
       name: 'Native',
       icon: 'devices_other',
       type: 'NATIVE',
       description: 'Mobile, Desktop apps',
-      subDescription: 'e.g : iOS, Android'
+      subDescription: 'e.g : iOS, Android',
     },
     {
       name: 'Backend to Backend',
       icon: 'storage',
       type: 'SERVICE',
       description: 'Machine-to-Machine apps',
-      subDescription : 'e.g : Shell script, daemon, CLI'
+      subDescription: 'e.g : Shell script, daemon, CLI',
     },
     {
       name: 'Resource Server',
       icon: 'folder_shared',
       type: 'RESOURCE_SERVER',
       description: 'Resource Server apps',
-      subDescription : 'e.g : APIs'
-    }];
+      subDescription: 'e.g : APIs',
+    },
+  ];
 
   constructor(private route: ActivatedRoute) {}
 
   ngOnInit(): void {
     this.domain = this.route.snapshot.data['domain'];
     if (!this.domain.uma || !this.domain.uma.enabled) {
-      _.remove(this.applicationTypes, { 'type' : 'RESOURCE_SERVER' });
+      _.remove(this.applicationTypes, { type: 'RESOURCE_SERVER' });
     }
   }
 

@@ -13,26 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, Input, OnDestroy, OnInit} from '@angular/core';
-import {NavigationService} from "../../services/navigation.service";
-import {Subscription} from "rxjs";
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Subscription } from 'rxjs';
+
+import { NavigationService } from '../../services/navigation.service';
 
 @Component({
   selector: 'gv-breadcrumb',
   templateUrl: './breadcrumb.component.html',
-  styleUrls: ['./breadcrumb.component.scss']
+  styleUrls: ['./breadcrumb.component.scss'],
 })
 export class BreadcrumbComponent implements OnInit, OnDestroy {
   private subscription: Subscription;
-  breadcrumbItems : any[] = [];
+  breadcrumbItems: any[] = [];
 
-  constructor(
-    private navigationService : NavigationService
-  ) {
-  }
+  constructor(private navigationService: NavigationService) {}
 
   ngOnInit() {
-    this.subscription = this.navigationService.breadcrumbItemsObs$.subscribe(items => this.breadcrumbItems = items)
+    this.subscription = this.navigationService.breadcrumbItemsObs$.subscribe((items) => (this.breadcrumbItems = items));
   }
 
   ngOnDestroy(): void {

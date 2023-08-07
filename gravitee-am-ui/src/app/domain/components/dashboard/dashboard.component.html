@@ -18,18 +18,24 @@
 <div *ngIf="!isLoading" fxLayout="column">
   <div fxLayoutAlign="end">
     <button mat-icon-button (click)="search()">
-      <mat-icon style="color: grey;" matTooltip="Refresh data" matTooltipPosition="above">refresh</mat-icon>
+      <mat-icon style="color: grey" matTooltip="Refresh data" matTooltipPosition="above">refresh</mat-icon>
     </button>
-    <mat-form-field appearance="fill" floatLabel="always" fxFlex="20" style="font-size: 12px;">
+    <mat-form-field appearance="fill" floatLabel="always" fxFlex="20" style="font-size: 12px">
       <mat-icon matPrefix>timer</mat-icon>
       <mat-label>Quick Time Range</mat-label>
       <mat-select name="quickTimeRange" [(value)]="selectedTimeRange" (selectionChange)="search()">
-        <mat-option *ngFor="let timeRange of timeRanges" [value]="timeRange.id">{{timeRange.name}}</mat-option>
+        <mat-option *ngFor="let timeRange of timeRanges" [value]="timeRange.id">{{ timeRange.name }}</mat-option>
       </mat-select>
     </mat-form-field>
   </div>
   <div fxLayout="row wrap">
-    <gv-widget *ngFor="let widget of widgets" [widget]="widget" [fxFlex]="widget.flex" [Highcharts]="Highcharts" style="padding: 5px;"></gv-widget>
+    <gv-widget
+      *ngFor="let widget of widgets"
+      [widget]="widget"
+      [fxFlex]="widget.flex"
+      [Highcharts]="Highcharts"
+      style="padding: 5px"
+    ></gv-widget>
   </div>
 </div>
 <div class="loading" *ngIf="isLoading" fxLayoutAlign="center center"><gv-loader></gv-loader></div>

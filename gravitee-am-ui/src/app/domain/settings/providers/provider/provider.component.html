@@ -18,16 +18,12 @@
 <div *ngIf="provider" class="gv-page-container">
   <a [routerLink]="['..']" class="gv-back-link"><small><< Back to identity providers</small></a>
   <div class="providerTitle">
-    <h1>{{provider.name}}</h1>
+    <h1>{{ provider.name }}</h1>
     <mat-chip-list *ngIf="provider.system"><mat-chip>system</mat-chip></mat-chip-list>
   </div>
   <nav mat-tab-nav-bar color="accent">
-    <a mat-tab-link
-       *ngFor="let link of navLinks"
-       [routerLink]="link.href"
-       routerLinkActive #rla="routerLinkActive"
-       [active]="rla.isActive">
-      {{link.label}}
+    <a mat-tab-link *ngFor="let link of navLinks" [routerLink]="link.href" routerLinkActive #rla="routerLinkActive" [active]="rla.isActive">
+      {{ link.label }}
     </a>
   </nav>
   <div class="gv-page-content">

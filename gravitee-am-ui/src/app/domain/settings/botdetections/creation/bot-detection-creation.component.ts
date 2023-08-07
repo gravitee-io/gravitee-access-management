@@ -13,16 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit, ViewChild} from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { MatStepper } from '@angular/material/stepper';
-import {ActivatedRoute, Router} from '@angular/router';
-import { BotDetectionService } from 'app/services/bot-detection.service';
-import {SnackbarService} from '../../../../services/snackbar.service';
+import { ActivatedRoute, Router } from '@angular/router';
+
+import { BotDetectionService } from '../../../../services/bot-detection.service';
+import { SnackbarService } from '../../../../services/snackbar.service';
 
 @Component({
   selector: 'app-bot-detection-creation',
   templateUrl: './bot-detection-creation.component.html',
-  styleUrls: ['./bot-detection-creation.component.scss']
+  styleUrls: ['./bot-detection-creation.component.scss'],
 })
 export class BotDetectionCreationComponent implements OnInit {
   private domainId: string;
@@ -30,10 +31,12 @@ export class BotDetectionCreationComponent implements OnInit {
   configurationIsValid = true;
   @ViewChild('stepper', { static: true }) stepper: MatStepper;
 
-  constructor(private botDetectionService: BotDetectionService,
-              private snackbarService: SnackbarService,
-              private router: Router,
-              private route: ActivatedRoute) { }
+  constructor(
+    private botDetectionService: BotDetectionService,
+    private snackbarService: SnackbarService,
+    private router: Router,
+    private route: ActivatedRoute,
+  ) {}
 
   ngOnInit(): void {
     this.domainId = this.route.snapshot.data['domain']?.id;
@@ -41,16 +44,13 @@ export class BotDetectionCreationComponent implements OnInit {
 
   create() {
     this.botDetection.configuration = JSON.stringify(this.botDetection.configuration);
-    this.botDetectionService.create(this.domainId, this.botDetection).subscribe(data => {
+    this.botDetectionService.create(this.domainId, this.botDetection).subscribe((data) => {
       this.snackbarService.open('Bot detection ' + data.name + ' created');
       this.router.navigate(['..', data.id], { relativeTo: this.route });
     });
   }
 
   stepperValid() {
-    return this.botDetection &&
-      this.botDetection.name &&
-      this.configurationIsValid;
+    return this.botDetection && this.botDetection.name && this.configurationIsValid;
   }
-
 }

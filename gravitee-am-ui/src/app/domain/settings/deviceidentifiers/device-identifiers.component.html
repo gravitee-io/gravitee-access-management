@@ -18,12 +18,14 @@
 <div class="gv-page-container">
   <h1 *ngIf="!isEmpty()">Device Identifier</h1>
   <div class="gv-page-content" *ngIf="!isEmpty()">
-    <ngx-datatable class="material"
-                   [columnMode]="'flex'"
-                   [headerHeight]="40"
-                   [footerHeight]="40"
-                   [rowHeight]="50"
-                   [rows]='deviceIdentifiers'>
+    <ngx-datatable
+      class="material"
+      [columnMode]="'flex'"
+      [headerHeight]="40"
+      [footerHeight]="40"
+      [rowHeight]="50"
+      [rows]="deviceIdentifiers"
+    >
       <ngx-datatable-column name="deviceIdentifiers" [flexGrow]="4" [cellClass]="'device-identifier-name-cell'">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div class="device-identifier-header" fxLayout="row">
@@ -31,8 +33,8 @@
               <mat-icon>devices</mat-icon>
             </div>
             <div class="device-identifier-information" fxLayout="column">
-              <h3>{{row.name}}</h3>
-              <small>{{displayType(row.type)}}</small>
+              <h3>{{ row.name }}</h3>
+              <small>{{ displayType(row.type) }}</small>
             </div>
           </div>
         </ng-template>
@@ -40,19 +42,23 @@
       <ngx-datatable-column name="" [flexGrow]="1">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div fxLayout="row" class="gv-table-cell-actions">
-            <a mat-icon-button [routerLink]="[row.id]" *hasPermission="['domain_device_identifier_read']"><mat-icon matTooltip="Settings">settings</mat-icon></a>
+            <a mat-icon-button [routerLink]="[row.id]" *hasPermission="['domain_device_identifier_read']"
+              ><mat-icon matTooltip="Settings">settings</mat-icon></a
+            >
           </div>
         </ng-template>
       </ngx-datatable-column>
     </ngx-datatable>
   </div>
 
-  <app-emptystate *ngIf="isEmpty()"
-                  [message]="'Device Identifiers plugins will appear here'"
-                  [subMessage]="'Start configuring a device identifier plugin'"
-                  [icon]="'donut_large'"></app-emptystate>
+  <app-emptystate
+    *ngIf="isEmpty()"
+    [message]="'Device Identifiers plugins will appear here'"
+    [subMessage]="'Start configuring a device identifier plugin'"
+    [icon]="'donut_large'"
+  ></app-emptystate>
 
-  <div *hasPermission="['domain_device_identifier_create']" [ngClass]="{'gv-add-button': !isEmpty(), 'gv-add-button-center': isEmpty()}">
+  <div *hasPermission="['domain_device_identifier_create']" [ngClass]="{ 'gv-add-button': !isEmpty(), 'gv-add-button-center': isEmpty() }">
     <a mat-fab color="primary" [routerLink]="['new']">
       <mat-icon>add</mat-icon>
     </a>

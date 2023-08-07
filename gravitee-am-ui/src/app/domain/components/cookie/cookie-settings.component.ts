@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild} from '@angular/core';
-import {ActivatedRoute} from '@angular/router';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-cookie-settings',
   templateUrl: './cookie-settings.component.html',
-  styleUrls: ['./cookie-settings.component.scss']
+  styleUrls: ['./cookie-settings.component.scss'],
 })
 export class CookieSettingsComponent implements OnInit, OnChanges {
   @Output() onSavedCookieSettings = new EventEmitter<any>();
@@ -29,8 +29,7 @@ export class CookieSettingsComponent implements OnInit, OnChanges {
   formChanged = false;
   private domainId: string;
 
-  constructor(private route: ActivatedRoute) {
-  }
+  constructor(private route: ActivatedRoute) {}
 
   ngOnInit(): void {
     this.domainId = this.route.snapshot.data['domain']?.id;
@@ -45,10 +44,10 @@ export class CookieSettingsComponent implements OnInit, OnChanges {
   save() {
     let cookieSettings = Object.assign({}, this.cookieSettings);
     if (cookieSettings.inherited) {
-      cookieSettings = {'inherited': true};
+      cookieSettings = { inherited: true };
     } else {
       if (!cookieSettings.session) {
-        cookieSettings.session = {'persistent': false};
+        cookieSettings.session = { persistent: false };
       }
     }
     this.onSavedCookieSettings.emit(cookieSettings);

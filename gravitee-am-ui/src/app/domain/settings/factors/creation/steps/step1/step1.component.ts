@@ -13,45 +13,46 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit, Input, OnDestroy} from '@angular/core';
-import {OrganizationService} from '../../../../../../services/organization.service';
-import {Plugin} from '../../../../../../entities/plugins/Plugin';
-import {takeUntil, tap} from 'rxjs/operators';
-import {Subject} from 'rxjs';
+import { Component, OnInit, Input, OnDestroy } from '@angular/core';
+import { takeUntil, tap } from 'rxjs/operators';
+import { Subject } from 'rxjs';
+
+import { OrganizationService } from '../../../../../../services/organization.service';
+import { Plugin } from '../../../../../../entities/plugins/Plugin';
 
 @Component({
   selector: 'factor-creation-step1',
   templateUrl: './step1.component.html',
-  styleUrls: ['./step1.component.scss']
+  styleUrls: ['./step1.component.scss'],
 })
 export class FactorCreationStep1Component implements OnInit, OnDestroy {
   private factorTypes: any = {
-    'otp-am-factor' : 'Generic OTP Factor',
-    'email-am-factor' : 'Email Factor',
-    'sms-am-factor' : 'SMS Factor',
-    'call-am-factor' : 'Call Factor',
+    'otp-am-factor': 'Generic OTP Factor',
+    'email-am-factor': 'Email Factor',
+    'sms-am-factor': 'SMS Factor',
+    'call-am-factor': 'Call Factor',
     'http-am-factor': 'HTTP Factor',
     'recovery-code-am-factor': 'Recovery Code Factor',
     'fido2-am-factor': 'FIDO2 Factor',
-    'mock-am-factor': 'MOCK Factor'
+    'mock-am-factor': 'MOCK Factor',
   };
   @Input() factor: any;
   factors: Plugin[];
   selectedFactorTypeId: string;
   private unsubscribe$: Subject<boolean> = new Subject<boolean>();
 
-  constructor(private organizationService: OrganizationService) {
-  }
+  constructor(private organizationService: OrganizationService) {}
 
   ngOnInit() {
-    this.organizationService.factors()
-        .pipe(
-            tap((factors) => {
-              this.factors = factors;
-            }),
-            takeUntil(this.unsubscribe$)
-        )
-        .subscribe();
+    this.organizationService
+      .factors()
+      .pipe(
+        tap((factors) => {
+          this.factors = factors;
+        }),
+        takeUntil(this.unsubscribe$),
+      )
+      .subscribe();
   }
 
   ngOnDestroy(): void {

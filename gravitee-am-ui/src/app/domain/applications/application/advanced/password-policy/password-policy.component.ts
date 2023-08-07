@@ -13,19 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit, ViewChild} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
-import {SnackbarService} from '../../../../../services/snackbar.service';
-import {ApplicationService} from '../../../../../services/application.service';
-import {AuthService} from '../../../../../services/auth.service';
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+
+import { SnackbarService } from '../../../../../services/snackbar.service';
+import { ApplicationService } from '../../../../../services/application.service';
+import { AuthService } from '../../../../../services/auth.service';
 
 @Component({
   selector: 'password-policy',
   templateUrl: './password-policy.component.html',
-  styleUrls: ['./password-policy.component.scss']
+  styleUrls: ['./password-policy.component.scss'],
 })
 export class PasswordPolicyComponent implements OnInit {
-  @ViewChild('applicationForm', {static: true}) form: any;
+  @ViewChild('applicationForm', { static: true }) form: any;
   private domainId: string;
   domain: any;
   application: any;
@@ -47,12 +48,13 @@ export class PasswordPolicyComponent implements OnInit {
   passwordHistoryEnabled: number;
   oldPasswords: number;
 
-  constructor(private route: ActivatedRoute,
-              private router: Router,
-              private snackbarService: SnackbarService,
-              private applicationService: ApplicationService,
-              private authService: AuthService) {
-  }
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private snackbarService: SnackbarService,
+    private applicationService: ApplicationService,
+    private authService: AuthService,
+  ) {}
 
   ngOnInit() {
     this.domain = this.route.snapshot.data['domain'];
@@ -86,7 +88,6 @@ export class PasswordPolicyComponent implements OnInit {
     this.includeNumbers = e.checked;
   }
 
-
   setIncludeSpecialCharacters(e) {
     this.includeSpecialCharacters = e.checked;
   }
@@ -112,42 +113,42 @@ export class PasswordPolicyComponent implements OnInit {
   }
 
   update() {
-    if (this.passwordHistoryEnabled && (!this.oldPasswords || (this.oldPasswords < 1 || this.oldPasswords > 24))) {
-      this.snackbarService.open("Number of old passwords must be within the range [1, 24]")
+    if (this.passwordHistoryEnabled && (!this.oldPasswords || this.oldPasswords < 1 || this.oldPasswords > 24)) {
+      this.snackbarService.open('Number of old passwords must be within the range [1, 24]');
       return;
     }
 
     const data: any = {};
     data.settings = {};
-    
-    if (this.minLength && this.minLength <= 0)  {
+
+    if (this.minLength && this.minLength <= 0) {
       this.snackbarService.open('Min length must be greater than zero');
       return;
     }
 
-    if (this.maxLength && this.maxLength <= 0)  {
+    if (this.maxLength && this.maxLength <= 0) {
       this.snackbarService.open('Max length must be greater than zero');
       return;
     }
 
     data.settings.passwordSettings = {
-      'inherited': this.inherited,
-      'minLength': this.minLength,
-      'maxLength': this.maxLength,
-      'includeNumbers': this.includeNumbers,
-      'includeSpecialCharacters': this.includeSpecialCharacters,
-      'lettersInMixedCase': this.lettersInMixedCase,
-      'maxConsecutiveLetters': this.maxConsecutiveLetters,
-      'excludePasswordsInDictionary': this.excludePasswordsInDictionary,
-      'excludeUserProfileInfoInPassword': this.excludeUserProfileInfoInPassword,
-      'expiryDuration': this.expiryDuration,
-      'passwordHistoryEnabled': this.passwordHistoryEnabled,
-      'oldPasswords': this.oldPasswords
+      inherited: this.inherited,
+      minLength: this.minLength,
+      maxLength: this.maxLength,
+      includeNumbers: this.includeNumbers,
+      includeSpecialCharacters: this.includeSpecialCharacters,
+      lettersInMixedCase: this.lettersInMixedCase,
+      maxConsecutiveLetters: this.maxConsecutiveLetters,
+      excludePasswordsInDictionary: this.excludePasswordsInDictionary,
+      excludeUserProfileInfoInPassword: this.excludeUserProfileInfoInPassword,
+      expiryDuration: this.expiryDuration,
+      passwordHistoryEnabled: this.passwordHistoryEnabled,
+      oldPasswords: this.oldPasswords,
     };
-    this.applicationService.patch(this.domainId, this.application.id, data).subscribe(response => {
+    this.applicationService.patch(this.domainId, this.application.id, data).subscribe(() => {
       this.formChanged = false;
       this.snackbarService.open('Application updated');
-      this.router.navigate(['.'], { relativeTo: this.route, queryParams: { 'reload': true }});
+      this.router.navigate(['.'], { relativeTo: this.route, queryParams: { reload: true } });
     });
   }
 }

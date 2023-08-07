@@ -13,29 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute} from "@angular/router";
-import {SnackbarService} from "../../../../../services/snackbar.service";
-import {ApplicationService} from "../../../../../services/application.service";
-import {CertificateService} from "../../../../../services/certificate.service";
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+
+import { SnackbarService } from '../../../../../services/snackbar.service';
+import { ApplicationService } from '../../../../../services/application.service';
+import { CertificateService } from '../../../../../services/certificate.service';
 
 @Component({
   selector: 'app-application-certificates',
   templateUrl: './certificates.component.html',
-  styleUrls: ['./certificates.component.scss']
+  styleUrls: ['./certificates.component.scss'],
 })
 export class ApplicationCertificatesComponent implements OnInit {
   private domainId: string;
-  formChanged: boolean = false;
+  formChanged = false;
   application: any;
   certificates: any[] = [];
   certificatePublicKeys: any[] = [];
   selectedCertificate: string;
 
-  constructor(private route: ActivatedRoute,
-              private snackbarService: SnackbarService,
-              private applicationService: ApplicationService,
-              private certificateService: CertificateService) { }
+  constructor(
+    private route: ActivatedRoute,
+    private snackbarService: SnackbarService,
+    private applicationService: ApplicationService,
+    private certificateService: CertificateService,
+  ) {}
 
   ngOnInit(): void {
     this.domainId = this.route.snapshot.parent.data['domain'].id;
@@ -48,8 +51,8 @@ export class ApplicationCertificatesComponent implements OnInit {
   }
 
   patch(): void {
-    let data = {'certificate': (this.selectedCertificate) ? this.selectedCertificate : null };
-    this.applicationService.patch(this.domainId, this.application.id, data).subscribe(data => {
+    const data = { certificate: this.selectedCertificate ? this.selectedCertificate : null };
+    this.applicationService.patch(this.domainId, this.application.id, data).subscribe((data) => {
       this.application = data;
       this.route.snapshot.data['application'] = this.application;
       this.certificatePublicKeys = [];
@@ -61,7 +64,7 @@ export class ApplicationCertificatesComponent implements OnInit {
     });
   }
 
-  onChange(event) {
+  onChange() {
     this.formChanged = true;
   }
 
@@ -70,7 +73,7 @@ export class ApplicationCertificatesComponent implements OnInit {
   }
 
   private publicKeys(certificateId) {
-    this.certificateService.publicKeys(this.domainId, certificateId).subscribe(response => {
+    this.certificateService.publicKeys(this.domainId, certificateId).subscribe((response) => {
       this.certificatePublicKeys = response;
     });
   }

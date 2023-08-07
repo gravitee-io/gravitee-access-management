@@ -13,23 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import {FormTemplateFactoryService} from "../../../../../services/form.template.factory.service";
+
+import { FormTemplateFactoryService } from '../../../../../services/form.template.factory.service';
 
 @Component({
   selector: 'app-application-forms',
   templateUrl: './forms.component.html',
-  styleUrls: ['./forms.component.scss']
+  styleUrls: ['./forms.component.scss'],
 })
 export class ApplicationFormsComponent implements OnInit {
   domain: any;
   application: any;
 
-  constructor(
-    private route: ActivatedRoute,
-    private formTemplateFactoryService: FormTemplateFactoryService) {
-  }
+  constructor(private route: ActivatedRoute, private formTemplateFactoryService: FormTemplateFactoryService) {}
 
   ngOnInit() {
     this.domain = this.route.snapshot.data['domain'];
@@ -37,10 +35,10 @@ export class ApplicationFormsComponent implements OnInit {
   }
 
   getForms() {
-    return this.formTemplateFactoryService.findAll().map(form => {
-      form.enabled = form.template === "ERROR" || this.applicationSettingsValid();
+    return this.formTemplateFactoryService.findAll().map((form) => {
+      form.enabled = form.template === 'ERROR' || this.applicationSettingsValid();
       return form;
-    })
+    });
   }
 
   private applicationSettingsValid() {
@@ -48,10 +46,11 @@ export class ApplicationFormsComponent implements OnInit {
       return this.application.type !== 'service';
     }
     if (this.application.settings && this.application.settings.oauth && this.application.settings.oauth.grantTypes) {
-      return this.application.settings.oauth.grantTypes.includes('authorization_code')
-        || this.application.settings.oauth.grantTypes.includes('implicit');
+      return (
+        this.application.settings.oauth.grantTypes.includes('authorization_code') ||
+        this.application.settings.oauth.grantTypes.includes('implicit')
+      );
     }
     return false;
   }
-
 }

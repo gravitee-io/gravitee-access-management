@@ -16,8 +16,8 @@
 
 -->
 <div>
-  <h1>Write your own {{data.template}} page</h1>
-  <p>This is the minimal HTML element required to perform {{data.template}}.</p>
+  <h1>Write your own {{ data.template }} page</h1>
+  <p>This is the minimal HTML element required to perform {{ data.template }}.</p>
   <pre *ngIf="data.rawTemplate === 'LOGIN'">
     <![CDATA[
 <!DOCTYPE html>
@@ -79,7 +79,8 @@
         </body>
         </html>
       ]]>
-    </pre>
+    </pre
+  >
   <pre *ngIf="data.rawTemplate === 'WEBAUTHN_LOGIN'">
       <![CDATA[
         <!DOCTYPE html>
@@ -117,7 +118,8 @@
         </body>
         </html>
       ]]>
-    </pre>
+    </pre
+  >
   <pre *ngIf="data.rawTemplate === 'WEBAUTHN_REGISTER'">
       <![CDATA[
         <!DOCTYPE html>
@@ -138,7 +140,8 @@
         </body>
         </html>
       ]]>
-    </pre>
+    </pre
+  >
   <pre *ngIf="data.rawTemplate === 'REGISTRATION'">
       <![CDATA[
         <!DOCTYPE html>
@@ -183,7 +186,8 @@
         </body>
         </html>
       ]]>
-    </pre>
+    </pre
+  >
   <pre *ngIf="data.rawTemplate === 'FORGOT_PASSWORD'">
       <![CDATA[
         <!DOCTYPE html>
@@ -220,11 +224,14 @@
         </body>
         </html>
       ]]>
-    </pre>
+    </pre
+  >
   <p *ngIf="data.rawTemplate === 'FORGOT_PASSWORD'">
-      <b>NOTE:</b> When forgot password succeeded, the token present into the URL is used to populate user profile into the template engine. If the token is invalid or has expired, the user profile will be missing from the template engine context, so pay attention to test if user is null before accessing its attributes.
-      Here after, you can find a snippet of HTML to adapt the message to inform the user on whoch address email the message has been sent.
-    </p>
+    <b>NOTE:</b> When forgot password succeeded, the token present into the URL is used to populate user profile into the template engine.
+    If the token is invalid or has expired, the user profile will be missing from the template engine context, so pay attention to test if
+    user is null before accessing its attributes. Here after, you can find a snippet of HTML to adapt the message to inform the user on
+    whoch address email the message has been sent.
+  </p>
   <pre *ngIf="data.rawTemplate === 'FORGOT_PASSWORD'">
       <![CDATA[
 
@@ -237,7 +244,8 @@
         </div>
 
       ]]>
-    </pre>
+    </pre
+  >
   <pre *ngIf="data.rawTemplate === 'RESET_PASSWORD'">
       <![CDATA[
         <!DOCTYPE html>
@@ -279,7 +287,8 @@
         </body>
         </html>
       ]]>
-    </pre>
+    </pre
+  >
   <pre *ngIf="data.rawTemplate === 'REGISTRATION_CONFIRMATION'">
       <![CDATA[
         <!DOCTYPE html>
@@ -321,7 +330,8 @@
         </body>
         </html>
       ]]>
-    </pre>
+    </pre
+  >
   <pre *ngIf="data.rawTemplate === 'OAUTH2_USER_CONSENT'">
       <![CDATA[
         <!DOCTYPE html>
@@ -358,7 +368,8 @@
         </body>
         </html>
       ]]>
-    </pre>
+    </pre
+  >
   <pre *ngIf="data.rawTemplate === 'ERROR'">
       <![CDATA[
         <!DOCTYPE html>
@@ -383,7 +394,8 @@
         </body>
         </html>
       ]]>
-    </pre>
+    </pre
+  >
   <pre *ngIf="data.rawTemplate === 'MFA_ENROLL'">
       <![CDATA[
         <!DOCTYPE html>
@@ -462,7 +474,8 @@
         </body>
         </html>
       ]]>
-    </pre>
+    </pre
+  >
   <pre *ngIf="data.rawTemplate === 'MFA_CHALLENGE'">
       <![CDATA[
         <!DOCTYPE html>
@@ -513,7 +526,8 @@
         </body>
         </html>
       ]]>
-    </pre>
+    </pre
+  >
   <pre *ngIf="data.rawTemplate === 'MFA_CHALLENGE_ALTERNATIVES'">
       <![CDATA[
         <!DOCTYPE html>
@@ -555,7 +569,8 @@
         </body>
         </html>
       ]]>
-    </pre>
+    </pre
+  >
   <pre *ngIf="data.rawTemplate === 'MFA_RECOVERY_CODE'">
       <![CDATA[
         <!DOCTYPE html>
@@ -587,8 +602,9 @@
         </body>
         </html>
       ]]>
-    </pre>
-    <pre *ngIf="data.rawTemplate === 'REGISTRATION_VERIFY'">
+    </pre
+  >
+  <pre *ngIf="data.rawTemplate === 'REGISTRATION_VERIFY'">
       <![CDATA[
         <!DOCTYPE html>
         <html lang="en" xmlns:th="http://www.thymeleaf.org">
@@ -621,5 +637,6 @@
         </body>
         </html>
       ]]>
-    </pre>
+    </pre
+  >
 </div>

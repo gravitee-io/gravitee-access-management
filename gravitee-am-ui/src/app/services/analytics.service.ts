@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Injectable} from '@angular/core';
-import {HttpClient} from '@angular/common/http';
-import {AppConfig} from '../../config/app.config';
-import {toHttpParams} from "../utils/http-utils";
-import {Observable} from "rxjs";
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+
+import { AppConfig } from '../../config/app.config';
+import { toHttpParams } from '../utils/http-utils';
 
 interface AnalyticsQuery {
   readonly type: string;
@@ -32,7 +33,7 @@ interface AnalyticsQuery {
 export class AnalyticsService {
   private analyticsURL = AppConfig.settings.domainBaseURL;
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
   search(domainId: string, analyticsQuery: AnalyticsQuery): Observable<any> {
     const url = `${this.analyticsURL + domainId}/analytics`;
@@ -44,9 +45,9 @@ export class AnalyticsService {
     return this._search(url, analyticsQuery);
   }
 
-  private _search(url, analyticsQuery: AnalyticsQuery ) {
-    const params = toHttpParams({...analyticsQuery});
+  private _search(url, analyticsQuery: AnalyticsQuery) {
+    const params = toHttpParams({ ...analyticsQuery });
 
-    return this.http.get(url, {params});
+    return this.http.get(url, { params });
   }
 }

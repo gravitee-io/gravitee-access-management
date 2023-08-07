@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
-import {OrganizationService} from '../../../../../../services/organization.service';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+
+import { OrganizationService } from '../../../../../../services/organization.service';
 
 @Component({
   selector: 'device-identifier-creation-step2',
   templateUrl: './step2.component.html',
-  styleUrls: ['./step2.component.scss']
+  styleUrls: ['./step2.component.scss'],
 })
 export class DeviceIdentifierCreationStep2Component implements OnInit {
   @Input('deviceIdentifier') deviceIdentifier: any;
@@ -29,18 +30,15 @@ export class DeviceIdentifierCreationStep2Component implements OnInit {
   configuration: any;
   deviceIdentifierSchema: any = {};
 
-
   private deviceIdentifierTypes: any = {
     'fingerprintjs-v3-community-device-identifier': 'FingerprintJS v3 community',
-    'fingerprintjs-v3-pro-device-identifier': 'FingerprintJS v3 Pro'
+    'fingerprintjs-v3-pro-device-identifier': 'FingerprintJS v3 Pro',
   };
 
-
-  constructor(
-    private organizationService: OrganizationService) { }
+  constructor(private organizationService: OrganizationService) {}
 
   ngOnInit() {
-    this.organizationService.deviceIdentifiersSchema(this.deviceIdentifier.type).subscribe(data => {
+    this.organizationService.deviceIdentifiersSchema(this.deviceIdentifier.type).subscribe((data) => {
       this.deviceIdentifierSchema = data;
     });
   }

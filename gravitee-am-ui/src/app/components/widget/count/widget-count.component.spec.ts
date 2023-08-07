@@ -23,10 +23,9 @@ describe('WidgetCountComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    declarations: [WidgetCountComponent],
-    teardown: { destroyAfterEach: false }
-})
-    .compileComponents();
+      declarations: [WidgetCountComponent],
+      teardown: { destroyAfterEach: false },
+    }).compileComponents();
   }));
 
   beforeEach(() => {
