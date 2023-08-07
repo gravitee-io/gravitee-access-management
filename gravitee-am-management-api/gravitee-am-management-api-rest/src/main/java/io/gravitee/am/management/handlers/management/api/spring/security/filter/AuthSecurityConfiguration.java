@@ -61,7 +61,25 @@ public class AuthSecurityConfiguration extends CsrfAwareConfiguration {
 
     private static final String AUTH_LOGOUT = "/auth/logout";
     private static final String AUTH_LOGIN = "/auth/login";
-    private static final String[] PERMITTED_ROUTES = {AUTH_LOGIN, "/auth/assets/**", "/auth/cockpit"};
+    private static final String AUTH_AUTHORIZE = "/auth/authorize";
+    public static final String AUTH_COCKPIT = "/auth/cockpit";
+    public static final String AUTH_LOGIN_CALLBACK = "/auth/login/callback";
+    public static final String AUTH_ASSETS = "/auth/assets/**";
+    private static final String[] MATCHER_ROUTES = {
+            AUTH_LOGIN,
+            AUTH_AUTHORIZE,
+            AUTH_COCKPIT,
+            AUTH_LOGIN_CALLBACK,
+            AUTH_LOGOUT,
+            AUTH_ASSETS
+    };
+
+    private static final String[] PERMITTED_ROUTES = {
+            AUTH_LOGIN,
+            AUTH_COCKPIT,
+            AUTH_ASSETS
+    };
+
     private final ApplicationEventPublisher applicationEventPublisher;
 
     @Autowired
@@ -86,12 +104,13 @@ public class AuthSecurityConfiguration extends CsrfAwareConfiguration {
             CookieCsrfSignedTokenRepository csrfTokenRepository
     ) throws Exception {
 
-        var pathRequestMatchers = Arrays.stream(PERMITTED_ROUTES).map(AntPathRequestMatcher::antMatcher).toArray(AntPathRequestMatcher[]::new);
+        var pathRequestMatchers = Arrays.stream(MATCHER_ROUTES).map(AntPathRequestMatcher::antMatcher).toArray(AntPathRequestMatcher[]::new);
+        var permittedMatchers = Arrays.stream(PERMITTED_ROUTES).map(AntPathRequestMatcher::antMatcher).toArray(AntPathRequestMatcher[]::new);
         http
                 .securityMatchers(securityMatcher -> securityMatcher.requestMatchers(pathRequestMatchers))
                 .authorizeHttpRequests(
                         authorizeHttpRequests -> authorizeHttpRequests
-                                .requestMatchers(pathRequestMatchers)
+                                .requestMatchers(permittedMatchers)
                                 .permitAll()
                                 .anyRequest().authenticated()
                 )
@@ -99,6 +118,7 @@ public class AuthSecurityConfiguration extends CsrfAwareConfiguration {
                         .authenticationDetailsSource(authenticationDetailsSource)
                         .successHandler(authenticationSuccessHandler())
                         .failureHandler(authenticationFailureHandler())
+                        .permitAll()
                 )
                 .logout(logout -> logout.logoutRequestMatcher(new AntPathRequestMatcher(AUTH_LOGOUT))
                         .logoutSuccessHandler(new CustomLogoutSuccessHandler(auditService, environment, jwtParser, userService))
@@ -128,7 +148,7 @@ public class AuthSecurityConfiguration extends CsrfAwareConfiguration {
 
     @Bean
     public AuthenticationFailureHandler authenticationFailureHandler() {
-        SimpleUrlAuthenticationFailureHandler authenticationFailureHandler = new CustomAuthenticationFailureHandler("/auth/login?error");
+        SimpleUrlAuthenticationFailureHandler authenticationFailureHandler = new CustomAuthenticationFailureHandler(AUTH_LOGIN+"?error");
         authenticationFailureHandler.setRedirectStrategy(redirectStrategy());
         return authenticationFailureHandler;
     }
@@ -171,17 +191,17 @@ public class AuthSecurityConfiguration extends CsrfAwareConfiguration {
 
     @Bean
     public Filter builtInAuthFilter() {
-        return new BuiltInAuthenticationFilter(new AntPathRequestMatcher("/auth/authorize"));
+        return new BuiltInAuthenticationFilter(new AntPathRequestMatcher(AUTH_AUTHORIZE));
     }
 
     @Bean
     public LoginUrlAuthenticationEntryPoint loginUrlAuthenticationEntryPoint() {
-        return new LoginUrlAuthenticationEntryPoint("/auth/login");
+        return new LoginUrlAuthenticationEntryPoint(AUTH_LOGIN);
     }
 
     @Bean
     public Filter socialAuthFilter() {
-        SocialAuthenticationFilter socialAuthenticationFilter = new SocialAuthenticationFilter("/auth/login/callback");
+        SocialAuthenticationFilter socialAuthenticationFilter = new SocialAuthenticationFilter(AUTH_LOGIN_CALLBACK);
         socialAuthenticationFilter.setApplicationEventPublisher(applicationEventPublisher);
         return socialAuthenticationFilter;
     }
