@@ -13,35 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {getUserApi} from "@management-commands/service/utils";
+import { getUserApi } from '@management-commands/service/utils';
 
 export const createOrganisationUser = (accessToken, user) =>
-    getUserApi(accessToken).createOrganisationUser({
-        organizationId: process.env.AM_DEF_ORG_ID,
-        user: user
-    });
+  getUserApi(accessToken).createOrganisationUser({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    user: user,
+  });
 
 export const getOrganisationUserPage = (accessToken, page: number = null, size: number = null) => {
-    const params = {
-        organizationId: process.env.AM_DEF_ORG_ID
-    };
-    if (page !== null && size != null) {
-        return getUserApi(accessToken).listOrganisationUsers({...params, page: page, size: size});
-    }
-    return getUserApi(accessToken).listOrganisationUsers(params);
-}
+  const params = {
+    organizationId: process.env.AM_DEF_ORG_ID,
+  };
+  if (page !== null && size != null) {
+    return getUserApi(accessToken).listOrganisationUsers({ ...params, page: page, size: size });
+  }
+  return getUserApi(accessToken).listOrganisationUsers(params);
+};
 
 export const updateOrganisationUsername = (accessToken, userId, username) =>
-    getUserApi(accessToken).updateOrganisationUsername({
-        organizationId: process.env.AM_DEF_ORG_ID,
-        user: userId,
-        username: {username: username}
-    });
+  getUserApi(accessToken).updateOrganisationUsername({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    user: userId,
+    username: { username: username },
+  });
 
 export const deleteOrganisationUser = (accessToken, userId) =>
-    getUserApi(accessToken).deleteOrganizationUser({
-        organizationId: process.env.AM_DEF_ORG_ID,
-        user: userId,
-    });
+  getUserApi(accessToken).deleteOrganizationUser({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    user: userId,
+  });
 
 export const getCurrentUser = (accessToken) => getUserApi(accessToken).get();

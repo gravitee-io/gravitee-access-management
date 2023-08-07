@@ -14,29 +14,26 @@
  * limitations under the License.
  */
 
-import {expect} from "@jest/globals";
+import { expect } from '@jest/globals';
 
 export function getBase64BasicAuth(clientId, clientSecret) {
-    return Buffer.from(clientId + ":" + clientSecret).toString('base64');
+  return Buffer.from(clientId + ':' + clientSecret).toString('base64');
 }
 
 export function applicationBase64Token(app) {
-    return getBase64BasicAuth(app.settings.oauth.clientId, app.settings.oauth.clientSecret);
+  return getBase64BasicAuth(app.settings.oauth.clientId, app.settings.oauth.clientSecret);
 }
 
 export function assertGeneratedTokenAndGet(data, scopes = null) {
-	expect(data.access_token).toBeDefined();
-	expect(data.token_type).toBeDefined();
-	expect(data.token_type).toEqual("bearer");
-	expect(data.expires_in).toBeDefined();
-	if (scopes) {
-			expect(data.scope).toBeDefined();
-			expect(data.scope).toEqual(scopes);
-	} else {
-			expect(data.scope).not.toBeDefined();
-	}
-	return data.access_token;
+  expect(data.access_token).toBeDefined();
+  expect(data.token_type).toBeDefined();
+  expect(data.token_type).toEqual('bearer');
+  expect(data.expires_in).toBeDefined();
+  if (scopes) {
+    expect(data.scope).toBeDefined();
+    expect(data.scope).toEqual(scopes);
+  } else {
+    expect(data.scope).not.toBeDefined();
+  }
+  return data.access_token;
 }
-
-
-	

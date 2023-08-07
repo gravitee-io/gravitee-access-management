@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 module.exports = {
-    verbose: true,
-    rootDir: "../..",
-    setupFiles: ["./api/config/dev.setup.js"],
-    moduleNameMapper: {
-        '@management-apis/(.*)': '<rootDir>/api/management/apis/$1',
-        '@management-commands/(.*)': '<rootDir>/api/commands/management/$1',
-        '@gateway-commands/(.*)': '<rootDir>/api/commands/gateway/$1',
-        '@utils-commands/(.*)': '<rootDir>/api/commands/utils/$1',
-        '@api-fixtures/(.*)': '<rootDir>/api/fixtures/$1',
-    }
+  verbose: true,
+  rootDir: '../..',
+  setupFiles: ['./api/config/dev.setup.js'],
+  moduleNameMapper: {
+    '@management-apis/(.*)': '<rootDir>/api/management/apis/$1',
+    '@management-commands/(.*)': '<rootDir>/api/commands/management/$1',
+    '@gateway-commands/(.*)': '<rootDir>/api/commands/gateway/$1',
+    '@utils-commands/(.*)': '<rootDir>/api/commands/utils/$1',
+    '@api-fixtures/(.*)': '<rootDir>/api/fixtures/$1',
+  },
 };

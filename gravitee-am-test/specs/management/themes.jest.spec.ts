@@ -13,20 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import fetch from "cross-fetch";
+import fetch from 'cross-fetch';
 import * as faker from 'faker';
-import {afterAll, beforeAll, expect} from '@jest/globals';
-import {requestAdminAccessToken} from "@management-commands/token-management-commands";
-import {createDomain, deleteDomain, startDomain} from "@management-commands/domain-management-commands";
-import {
-    createTheme,
-    deleteTheme,
-    getAllThemes,
-    getTheme,
-    updateTheme
-} from "@management-commands/theme-management-commands";
-import {getAllDictionaries} from "@management-commands/dictionary-management-commands";
-import {ResponseError} from "../../api/management/runtime";
+import { afterAll, beforeAll, expect } from '@jest/globals';
+import { requestAdminAccessToken } from '@management-commands/token-management-commands';
+import { createDomain, deleteDomain, startDomain } from '@management-commands/domain-management-commands';
+import { createTheme, deleteTheme, getAllThemes, getTheme, updateTheme } from '@management-commands/theme-management-commands';
+import { getAllDictionaries } from '@management-commands/dictionary-management-commands';
+import { ResponseError } from '../../api/management/runtime';
 
 global.fetch = fetch;
 
@@ -35,88 +29,88 @@ let domain;
 let theme;
 
 beforeAll(async () => {
-    const adminTokenResponse = await requestAdminAccessToken();
-    accessToken = adminTokenResponse.body.access_token;
-    expect(accessToken).toBeDefined()
+  const adminTokenResponse = await requestAdminAccessToken();
+  accessToken = adminTokenResponse.body.access_token;
+  expect(accessToken).toBeDefined();
 
-    const createdDomain = await createDomain(accessToken, "domain-themes", faker.company.catchPhraseDescriptor());
-    expect(createdDomain).toBeDefined();
-    expect(createdDomain.id).toBeDefined();
+  const createdDomain = await createDomain(accessToken, 'domain-themes', faker.company.catchPhraseDescriptor());
+  expect(createdDomain).toBeDefined();
+  expect(createdDomain.id).toBeDefined();
 
-    const domainStarted = await startDomain(createdDomain.id, accessToken);
-    expect(domainStarted).toBeDefined();
-    expect(domainStarted.id).toEqual(createdDomain.id);
+  const domainStarted = await startDomain(createdDomain.id, accessToken);
+  expect(domainStarted).toBeDefined();
+  expect(domainStarted.id).toEqual(createdDomain.id);
 
-    domain = domainStarted;
+  domain = domainStarted;
 });
 
 async function testCreate() {
-    let name = faker.address.country();
-    let locale = faker.address.countryCode();
-    const created = await createTheme(domain.id, accessToken, {name: name, "locale": locale})
-    expect(created).toBeDefined();
-    expect(created.id).toBeDefined();
-    return created;
+  let name = faker.address.country();
+  let locale = faker.address.countryCode();
+  const created = await createTheme(domain.id, accessToken, { name: name, locale: locale });
+  expect(created).toBeDefined();
+  expect(created.id).toBeDefined();
+  return created;
 }
 
-describe("Testing themes api...", () => {
-    describe("When creating many themes", () => {
-        it('must only create one theme maximum ', async () => {
-            theme = await testCreate();
-            try {
-                await testCreate();
-            } catch (e) {
-                expect(e.response.status).toEqual(400);
-            }
-        });
-
-        it('should find only one theme', async () => {
-            const themes = await getAllThemes(domain.id, accessToken);
-            expect(themes).toHaveLength(1);
-            await deleteTheme(domain.id, accessToken, theme.id);
-        });
+describe('Testing themes api...', () => {
+  describe('When creating many themes', () => {
+    it('must only create one theme maximum ', async () => {
+      theme = await testCreate();
+      try {
+        await testCreate();
+      } catch (e) {
+        expect(e.response.status).toEqual(400);
+      }
     });
 
-    describe("When creating a theme", () => {
-        it('should create a theme ', async () => {
-            theme = await testCreate();
-        });
-        it("should find a given theme", async () => {
-            const found = await getTheme(domain.id, accessToken, theme.id);
-            expect(found).toBeDefined();
-            expect(found.id).toEqual(theme.id);
-            await deleteTheme(domain.id, accessToken, theme.id);
-        });
+    it('should find only one theme', async () => {
+      const themes = await getAllThemes(domain.id, accessToken);
+      expect(themes).toHaveLength(1);
+      await deleteTheme(domain.id, accessToken, theme.id);
     });
+  });
 
-    describe("When updating a theme", () => {
-        it("should update a theme's requested properties", async () => {
-            theme = await testCreate();
-            const beforeUpdate = await getTheme(domain.id, accessToken, theme.id);
-            let updatePrimaryButtonColorHex = "#fafafa";
-            await updateTheme(domain.id, accessToken, beforeUpdate.id, {
-                primaryButtonColorHex: updatePrimaryButtonColorHex
-            });
-            const afterUpdate = await getTheme(domain.id, accessToken, beforeUpdate.id);
-            expect(afterUpdate.id).toEqual(beforeUpdate.id);
-            expect(afterUpdate.primaryButtonColorHex).toEqual(updatePrimaryButtonColorHex);
-            await deleteTheme(domain.id, accessToken, theme.id);
-        });
+  describe('When creating a theme', () => {
+    it('should create a theme ', async () => {
+      theme = await testCreate();
     });
-
-    describe("When deleting a theme", () => {
-        it("should delete a theme", async () => {
-            theme = await testCreate();
-            await deleteTheme(domain.id, accessToken, theme.id);
-
-            const dictionaries = await getAllDictionaries(domain.id, accessToken);
-            dictionaries.forEach(dict => expect(dict.id).not.toEqual(theme.id));
-        });
+    it('should find a given theme', async () => {
+      const found = await getTheme(domain.id, accessToken, theme.id);
+      expect(found).toBeDefined();
+      expect(found.id).toEqual(theme.id);
+      await deleteTheme(domain.id, accessToken, theme.id);
     });
+  });
+
+  describe('When updating a theme', () => {
+    it("should update a theme's requested properties", async () => {
+      theme = await testCreate();
+      const beforeUpdate = await getTheme(domain.id, accessToken, theme.id);
+      let updatePrimaryButtonColorHex = '#fafafa';
+      await updateTheme(domain.id, accessToken, beforeUpdate.id, {
+        primaryButtonColorHex: updatePrimaryButtonColorHex,
+      });
+      const afterUpdate = await getTheme(domain.id, accessToken, beforeUpdate.id);
+      expect(afterUpdate.id).toEqual(beforeUpdate.id);
+      expect(afterUpdate.primaryButtonColorHex).toEqual(updatePrimaryButtonColorHex);
+      await deleteTheme(domain.id, accessToken, theme.id);
+    });
+  });
+
+  describe('When deleting a theme', () => {
+    it('should delete a theme', async () => {
+      theme = await testCreate();
+      await deleteTheme(domain.id, accessToken, theme.id);
+
+      const dictionaries = await getAllDictionaries(domain.id, accessToken);
+      dictionaries.forEach((dict) => expect(dict.id).not.toEqual(theme.id));
+    });
+  });
 });
 
 afterAll(async () => {
-    if (domain && domain.id) {
-        await deleteDomain(domain.id, accessToken);
-    }
+  if (domain && domain.id) {
+    await deleteDomain(domain.id, accessToken);
+  }
 });

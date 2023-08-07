@@ -14,85 +14,85 @@
  * limitations under the License.
  */
 
-import {getApplicationApi} from "./service/utils";
+import { getApplicationApi } from './service/utils';
 
 export const createApplication = (domainId, accessToken, body) =>
-    getApplicationApi(accessToken).createApplication({
-        organizationId: process.env.AM_DEF_ORG_ID,
-        environmentId: process.env.AM_DEF_ENV_ID,
-        domain: domainId,
-        application: body
-    });
+  getApplicationApi(accessToken).createApplication({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    application: body,
+  });
 
 export const getApplication = (domainId, accessToken, applicationId) =>
-    getApplicationApi(accessToken).findApplication({
-        organizationId: process.env.AM_DEF_ORG_ID,
-        environmentId: process.env.AM_DEF_ENV_ID,
-        domain: domainId,
-        application: applicationId
-    })
+  getApplicationApi(accessToken).findApplication({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    application: applicationId,
+  });
 
-export const getAllApplications = (domainId, accessToken) => getApplicationPage(domainId, accessToken)
+export const getAllApplications = (domainId, accessToken) => getApplicationPage(domainId, accessToken);
 
 export const getApplicationPage = (domainId, accessToken, page: number = null, size: number = null) => {
-    const params = {
-        organizationId: process.env.AM_DEF_ORG_ID,
-        environmentId: process.env.AM_DEF_ENV_ID,
-        domain: domainId
-    };
-    if (page !== null && size != null) {
-        return getApplicationApi(accessToken).listApplications({...params, "page": page, "size": size});
-    }
-    return getApplicationApi(accessToken).listApplications(params);
-}
+  const params = {
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+  };
+  if (page !== null && size != null) {
+    return getApplicationApi(accessToken).listApplications({ ...params, page: page, size: size });
+  }
+  return getApplicationApi(accessToken).listApplications(params);
+};
 
 export const patchApplication = (domainId, accessToken, body, applicationId) =>
-    getApplicationApi(accessToken).patchApplication({
-        organizationId: process.env.AM_DEF_ORG_ID,
-        environmentId: process.env.AM_DEF_ENV_ID,
-        domain: domainId,
-        application: applicationId,
-        application2: body
-    })
+  getApplicationApi(accessToken).patchApplication({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    application: applicationId,
+    application2: body,
+  });
 
 export const updateApplication = (domainId, accessToken, body, applicationId) =>
-    getApplicationApi(accessToken).updateApplication({
-        organizationId: process.env.AM_DEF_ORG_ID,
-        environmentId: process.env.AM_DEF_ENV_ID,
-        domain: domainId,
-        application: applicationId,
-        application2: body
-    })
+  getApplicationApi(accessToken).updateApplication({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    application: applicationId,
+    application2: body,
+  });
 
 export const deleteApplication = (domainId, accessToken, applicationId) =>
-    getApplicationApi(accessToken).deleteApplication({
-        organizationId: process.env.AM_DEF_ORG_ID,
-        environmentId: process.env.AM_DEF_ENV_ID,
-        domain: domainId,
-        application: applicationId,
-    })
+  getApplicationApi(accessToken).deleteApplication({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    application: applicationId,
+  });
 
 export const renewApplicationSecrets = (domainId, accessToken, applicationId) =>
-    getApplicationApi(accessToken).renewClientSecret({
-        organizationId: process.env.AM_DEF_ORG_ID,
-        environmentId: process.env.AM_DEF_ENV_ID,
-        domain: domainId,
-        application: applicationId,
-    });
+  getApplicationApi(accessToken).renewClientSecret({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    application: applicationId,
+  });
 
 export const getApplicationFlows = (domainId, accessToken, applicationId) =>
-    getApplicationApi(accessToken).listAppFlows({
-        organizationId: process.env.AM_DEF_ORG_ID,
-        environmentId: process.env.AM_DEF_ENV_ID,
-        domain: domainId,
-        application: applicationId
-    })
+  getApplicationApi(accessToken).listAppFlows({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    application: applicationId,
+  });
 
-export const updateApplicationFlows =  (domainId, accessToken, applicationId, flows) =>
-    getApplicationApi(accessToken).defineAppFlows({
-        organizationId: process.env.AM_DEF_ORG_ID,
-        environmentId: process.env.AM_DEF_ENV_ID,
-        domain: domainId,
-        application: applicationId,
-        flows
-    })
+export const updateApplicationFlows = (domainId, accessToken, applicationId, flows) =>
+  getApplicationApi(accessToken).defineAppFlows({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    application: applicationId,
+    flows,
+  });

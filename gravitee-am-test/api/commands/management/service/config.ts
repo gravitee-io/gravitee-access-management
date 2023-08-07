@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-
-import {ConfigurationParameters} from "../../../management/runtime";
+import { ConfigurationParameters } from '../../../management/runtime';
 
 export const managementConf: ConfigurationParameters = {
-    basePath: process.env.AM_MANAGEMENT_ENDPOINT
+  basePath: process.env.AM_MANAGEMENT_ENDPOINT,
 };
