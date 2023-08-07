@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-import {getFormApi} from "./service/utils";
+import { getFormApi } from './service/utils';
 
-export const preview = (domainId, accessToken, body) => getFormApi(accessToken).renderDomainTemplate({
+export const preview = (domainId, accessToken, body) =>
+  getFormApi(accessToken).renderDomainTemplate({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
-    body
-});
+    body,
+  });

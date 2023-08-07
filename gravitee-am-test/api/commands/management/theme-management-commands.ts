@@ -14,39 +14,44 @@
  * limitations under the License.
  */
 
-import {getThemeApi} from "./service/utils";
+import { getThemeApi } from './service/utils';
 
-export const createTheme = (domainId, accessToken, body) => getThemeApi(accessToken).createTheme({
+export const createTheme = (domainId, accessToken, body) =>
+  getThemeApi(accessToken).createTheme({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
-    theme: body
-});
+    theme: body,
+  });
 
-export const getTheme = (domainId, accessToken, themeId) => getThemeApi(accessToken).getTheme({
-    organizationId: process.env.AM_DEF_ORG_ID,
-    environmentId: process.env.AM_DEF_ENV_ID,
-    domain: domainId,
-    themeId: themeId
-});
-
-export const getAllThemes = (domainId, accessToken) => getThemeApi(accessToken).listThemes({
-    organizationId: process.env.AM_DEF_ORG_ID,
-    environmentId: process.env.AM_DEF_ENV_ID,
-    domain: domainId
-});
-
-export const updateTheme = (domainId, accessToken, themeId, body) => getThemeApi(accessToken).updateTheme({
+export const getTheme = (domainId, accessToken, themeId) =>
+  getThemeApi(accessToken).getTheme({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
     themeId: themeId,
-    theme: body
-});
+  });
 
-export const deleteTheme = (domainId, accessToken, themeId) => getThemeApi(accessToken).deleteTheme({
+export const getAllThemes = (domainId, accessToken) =>
+  getThemeApi(accessToken).listThemes({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
-    themeId: themeId
-});
+  });
+
+export const updateTheme = (domainId, accessToken, themeId, body) =>
+  getThemeApi(accessToken).updateTheme({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    themeId: themeId,
+    theme: body,
+  });
+
+export const deleteTheme = (domainId, accessToken, themeId) =>
+  getThemeApi(accessToken).deleteTheme({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    themeId: themeId,
+  });

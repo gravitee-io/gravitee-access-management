@@ -14,79 +14,76 @@
  * limitations under the License.
  */
 
-import {getDomainApi, getDomainManagerUrl} from "./service/utils";
-import {Domain} from "../../management/models";
+import { getDomainApi, getDomainManagerUrl } from './service/utils';
+import { Domain } from '../../management/models';
 
 const request = require('supertest');
 
 export const createDomain = (accessToken, name, description): Promise<Domain> =>
-    getDomainApi(accessToken).createDomain({
-        organizationId: process.env.AM_DEF_ORG_ID,
-        environmentId: process.env.AM_DEF_ENV_ID,
-        domain: {
-            name: name,
-            description: description
-        }
-    });
-
+  getDomainApi(accessToken).createDomain({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: {
+      name: name,
+      description: description,
+    },
+  });
 
 export const deleteDomain = (domainId, accessToken): Promise<void> =>
-    getDomainApi(accessToken).deleteDomain({
-        organizationId: process.env.AM_DEF_ORG_ID,
-        environmentId: process.env.AM_DEF_ENV_ID,
-        domain: domainId
-    });
+  getDomainApi(accessToken).deleteDomain({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+  });
 
 export const patchDomain = (domainId, accessToken, body): Promise<Domain> =>
-    getDomainApi(accessToken).patchDomain({
-        organizationId: process.env.AM_DEF_ORG_ID,
-        environmentId: process.env.AM_DEF_ENV_ID,
-        // domain in path param
-        domain: domainId,
-        // domain payload
-        domain2: body
-    });
+  getDomainApi(accessToken).patchDomain({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    // domain in path param
+    domain: domainId,
+    // domain payload
+    domain2: body,
+  });
 
-export const startDomain = (domainId, accessToken):Promise<Domain> =>
-    patchDomain(domainId, accessToken, {enabled: true})
+export const startDomain = (domainId, accessToken): Promise<Domain> => patchDomain(domainId, accessToken, { enabled: true });
 
 export const getDomain = (domainId, accessToken): Promise<Domain> =>
-    getDomainApi(accessToken).findDomain({
-        organizationId: process.env.AM_DEF_ORG_ID,
-        environmentId: process.env.AM_DEF_ENV_ID,
-        // domain in path param
-        domain: domainId
-    })
+  getDomainApi(accessToken).findDomain({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    // domain in path param
+    domain: domainId,
+  });
 
 export const createAcceptAllDeviceNotifier = (domainId, accessToken) =>
-    request(getDomainManagerUrl(null) + "/auth-device-notifiers")
-        .post('')
-        .set('Authorization', 'Bearer ' + accessToken)
-        .send(
-            {
-                type: "http-am-authdevice-notifier",
-                configuration: "{\"endpoint\":\"http://localhost:8080/ciba/notify/accept-all\",\"headerName\":\"Authorization\",\"connectTimeout\":5000,\"idleTimeout\":10000,\"maxPoolSize\":10}",
-                name: "Always OK notifier"
-            }
-        )
-        .expect(201);
+  request(getDomainManagerUrl(null) + '/auth-device-notifiers')
+    .post('')
+    .set('Authorization', 'Bearer ' + accessToken)
+    .send({
+      type: 'http-am-authdevice-notifier',
+      configuration:
+        '{"endpoint":"http://localhost:8080/ciba/notify/accept-all","headerName":"Authorization","connectTimeout":5000,"idleTimeout":10000,"maxPoolSize":10}',
+      name: 'Always OK notifier',
+    })
+    .expect(201);
 
 export const getDomainFlows = (domainId, accessToken) =>
-    getDomainApi(accessToken).listDomainFlows({
-        organizationId: process.env.AM_DEF_ORG_ID,
-        environmentId: process.env.AM_DEF_ENV_ID,
-        // domain in path param
-        domain: domainId
-    })
+  getDomainApi(accessToken).listDomainFlows({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    // domain in path param
+    domain: domainId,
+  });
 
 export const updateDomainFlows = (domainId, accessToken, flows) =>
-    getDomainApi(accessToken).defineDomainFlows({
-        organizationId: process.env.AM_DEF_ORG_ID,
-        environmentId: process.env.AM_DEF_ENV_ID,
-        // domain in path param
-        domain: domainId,
-        flows
-    })
+  getDomainApi(accessToken).defineDomainFlows({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    // domain in path param
+    domain: domainId,
+    flows,
+  });
 
-export const waitForDomainSync = (duration = 6000) => waitFor(duration)
-export const waitFor = (duration) => new Promise((r) => setTimeout(r, duration))
+export const waitForDomainSync = (duration = 6000) => waitFor(duration);
+export const waitFor = (duration) => new Promise((r) => setTimeout(r, duration));
