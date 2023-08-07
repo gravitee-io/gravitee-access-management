@@ -15,7 +15,7 @@
  */
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
-import { SidenavSettingsComponent } from "./sidenav-settings.component";
+import { SidenavSettingsComponent } from './sidenav-settings.component';
 
 describe('SidenavSettingsComponent', () => {
   let component: SidenavSettingsComponent;
@@ -23,10 +23,9 @@ describe('SidenavSettingsComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    declarations: [SidenavSettingsComponent],
-    teardown: { destroyAfterEach: false }
-})
-      .compileComponents();
+      declarations: [SidenavSettingsComponent],
+      teardown: { destroyAfterEach: false },
+    }).compileComponents();
   }));
 
   beforeEach(() => {

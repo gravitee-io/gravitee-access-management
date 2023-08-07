@@ -17,14 +17,14 @@
 -->
 <div class="gv-page-container">
   <a [routerLink]="['..']" class="gv-back-link"><small><< Back to resources</small></a>
-  <h1>{{resource.name}}</h1>
+  <h1>{{ resource.name }}</h1>
   <div fxLayout="row">
     <div fxLayout="column" fxFlex="70">
       <form #resourceForm="ngForm">
         <div class="gv-form-section">
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Name</mat-label>
-            <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="resource.name" required [readonly]="!editMode">
+            <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="resource.name" required [readonly]="!editMode" />
             <mat-hint>Resource name</mat-hint>
           </mat-form-field>
         </div>
@@ -35,12 +35,24 @@
             <mat-divider></mat-divider>
           </div>
           <div>
-            <resource-form *ngIf="resource" [resourceConfiguration]="resourceConfiguration" [resourceSchema]="resourceSchema" (configurationCompleted)="enableResourceUpdate($event)"></resource-form>
+            <resource-form
+              *ngIf="resource"
+              [resourceConfiguration]="resourceConfiguration"
+              [resourceSchema]="resourceSchema"
+              (configurationCompleted)="enableResourceUpdate($event)"
+            ></resource-form>
           </div>
         </div>
 
         <div fxLayout="row" *ngIf="editMode">
-          <button mat-raised-button color="primary" [disabled]="(!resourceForm.valid || resourceForm.pristine) && (!configurationIsValid || configurationPristine) && !formChanged" (click)="update()">SAVE</button>
+          <button
+            mat-raised-button
+            color="primary"
+            [disabled]="(!resourceForm.valid || resourceForm.pristine) && (!configurationIsValid || configurationPristine) && !formChanged"
+            (click)="update()"
+          >
+            SAVE
+          </button>
         </div>
       </form>
 
@@ -56,22 +68,25 @@
     <div class="gv-page-description" fxFlex>
       <h3>Manage Resource</h3>
       <div class="gv-page-description-content" *ngIf="!isHttpFactorResource()">
-        <p>
-          Resource is a configuration facility to reuse some settings.
-        </p>
+        <p>Resource is a configuration facility to reuse some settings.</p>
       </div>
 
       <div class="gv-page-description-content" *ngIf="isHttpFactorResource()">
         <h4>HTTP Factor Resource</h4>
         <p>
-          The HTTP Factor resource facilitates HTTP requests to send and verify a generated, one time code.
-          It supports Gravitee Expression Language (EL) to configure the resource properties.
+          The HTTP Factor resource facilitates HTTP requests to send and verify a generated, one time code. It supports Gravitee Expression
+          Language (EL) to configure the resource properties.
         </p>
         <h5>HTTP Response</h5>
-        <p>The response can be accessed via EL using xpath, e.g.: <br><b>&#123;#xpath(#response.content, ".//code") == '1234'&#125;</b><br> where code is a property of the XML response.</p>
+        <p>
+          The response can be accessed via EL using xpath, e.g.: <br /><b>&#123;#xpath(#response.content, ".//code") == '1234'&#125;</b
+          ><br />
+          where code is a property of the XML response.
+        </p>
         <h5>Pin or Verification Code</h5>
         <p>
-          The user pin or verification code is available in the <b>&#123;#context.attributes['code']&#125;</b> EL property after the user has submitted the code for verification.
+          The user pin or verification code is available in the <b>&#123;#context.attributes['code']&#125;</b> EL property after the user
+          has submitted the code for verification.
         </p>
       </div>
     </div>

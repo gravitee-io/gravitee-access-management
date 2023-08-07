@@ -13,21 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Injectable} from '@angular/core';
-import {ActivatedRouteSnapshot, Resolve, RouterStateSnapshot} from "@angular/router";
-import {Observable} from "rxjs";
-import {EnvironmentService} from "../services/environment.service";
-import {tap} from "rxjs/operators";
+import { Injectable } from '@angular/core';
+import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
+import { Observable } from 'rxjs';
+import { tap } from 'rxjs/operators';
+
+import { EnvironmentService } from '../services/environment.service';
 
 @Injectable()
 export class EnvironmentResolver implements Resolve<any> {
+  constructor(private environmentService: EnvironmentService) {}
 
-  constructor(private environmentService: EnvironmentService) {
-  }
-
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> | Promise<any> | any {
+  resolve(route: ActivatedRouteSnapshot): Observable<any> | Promise<any> | any {
     const envHrid = route.paramMap.get('envHrid');
-    return this.environmentService.getEnvironmentById(envHrid)
-      .pipe(tap(environment => this.environmentService.setCurrentEnvironment(environment)));
+    return this.environmentService
+      .getEnvironmentById(envHrid)
+      .pipe(tap((environment) => this.environmentService.setCurrentEnvironment(environment)));
   }
 }

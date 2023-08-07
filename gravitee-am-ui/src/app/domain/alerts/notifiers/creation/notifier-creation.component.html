@@ -38,8 +38,11 @@
           <h5>Settings</h5>
           <small>Alert notifier configuration</small>
         </ng-template>
-        <alert-notifier-creation-step2 *ngIf="stepper.selectedIndex == 1" [alertNotifier]="alertNotifier"
-                                       [(configurationIsValid)]="configurationIsValid"></alert-notifier-creation-step2>
+        <alert-notifier-creation-step2
+          *ngIf="stepper.selectedIndex == 1"
+          [alertNotifier]="alertNotifier"
+          [(configurationIsValid)]="configurationIsValid"
+        ></alert-notifier-creation-step2>
         <div class="stepper-button-zone">
           <button mat-raised-button matStepperPrevious type="button">Back</button>
           <span fxFlex></span>

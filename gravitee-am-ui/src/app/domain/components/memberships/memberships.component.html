@@ -31,12 +31,11 @@
       </mat-form-field>
       <mat-form-field *ngIf="selectedMemberType === 'user'" appearance="outline" floatLabel="always" fxFlex="100">
         <mat-label><mat-icon matPrefix>search</mat-icon></mat-label>
-        <input matInput placeholder="Enter username" [matAutocomplete]="auto" [formControl]="userCtrl"/>
+        <input matInput placeholder="Enter username" [matAutocomplete]="auto" [formControl]="userCtrl" />
         <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onUserSelectionChanged($event)" [displayWith]="displayUserFn">
           <mat-option *ngFor="let user of filteredUsers" [value]="user">
-            <span>{{user.displayName}}</span> |
-            <small>{{user.username}}</small> |
-            <small style="color:grey;">{{user.source}}</small>
+            <span>{{ user.displayName }}</span> | <small>{{ user.username }}</small> |
+            <small style="color: grey">{{ user.source }}</small>
           </mat-option>
         </mat-autocomplete>
         <mat-hint>The user's name.</mat-hint>
@@ -58,18 +57,23 @@
         <mat-hint>The role's name.</mat-hint>
       </mat-form-field>
       <div>
-        <button style="margin-top: 7px;" mat-stroked-button (click)="addMembership($event)" [disabled]="!selectedMember || !selectedRole">+ ADD</button>
+        <button style="margin-top: 7px" mat-stroked-button (click)="addMembership($event)" [disabled]="!selectedMember || !selectedRole">
+          + ADD
+        </button>
       </div>
     </div>
   </div>
 
-  <ngx-datatable class="material" *ngIf="dataLoaded"
-                 [columnMode]="'flex'"
-                 [headerHeight]="40"
-                 [footerHeight]="40"
-                 [rowHeight]="50"
-                 [rows]='members'
-                 [sorts]="[{ prop: 'memberType', dir: 'desc' }]">
+  <ngx-datatable
+    class="material"
+    *ngIf="dataLoaded"
+    [columnMode]="'flex'"
+    [headerHeight]="40"
+    [footerHeight]="40"
+    [rowHeight]="50"
+    [rows]="members"
+    [sorts]="[{ prop: 'memberType', dir: 'desc' }]"
+  >
     <ngx-datatable-column name="Name" [flexGrow]="4" [cellClass]="'membership-name-cell'">
       <ng-template let-row="row" ngx-datatable-cell-template>
         <div class="membership-header" fxLayout="row">
@@ -80,26 +84,31 @@
             <mat-icon>group</mat-icon>
           </div>
           <div class="membership-information" fxLayout="column">
-            <h3>{{row.name}}</h3>
+            <h3>{{ row.name }}</h3>
           </div>
         </div>
       </ng-template>
     </ngx-datatable-column>
     <ngx-datatable-column name="Type" [flexGrow]="1" prop="memberType">
       <ng-template let-row="row" ngx-datatable-cell-template>
-        <p>{{row.memberType}}</p>
+        <p>{{ row.memberType }}</p>
       </ng-template>
     </ngx-datatable-column>
     <ngx-datatable-column name="Role" [flexGrow]="2" prop="roleName">
       <ng-template let-row="row" ngx-datatable-cell-template>
-        <mat-form-field *ngIf="isEditable(row)" style="margin-top: -12px;">
-          <mat-select name="memberRole" [value]="row.roleId" (selectionChange)="update(row.memberId, row.memberType, $event)" [disabled]="!editMode">
+        <mat-form-field *ngIf="isEditable(row)" style="margin-top: -12px">
+          <mat-select
+            name="memberRole"
+            [value]="row.roleId"
+            (selectionChange)="update(row.memberId, row.memberType, $event)"
+            [disabled]="!editMode"
+          >
             <mat-option *ngFor="let role of roles" [value]="role.id" [disabled]="isRoleDisabled(role)">
               <span>{{ role.name }}</span>
             </mat-option>
           </mat-select>
         </mat-form-field>
-        <p class="primary-owner-membership" *ngIf="!isEditable(row)">{{row.roleName}}</p>
+        <p class="primary-owner-membership" *ngIf="!isEditable(row)">{{ row.roleName }}</p>
       </ng-template>
     </ngx-datatable-column>
     <ngx-datatable-column name="" [flexGrow]="1">

@@ -23,10 +23,9 @@ describe('NavbarComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    declarations: [NavbarComponent],
-    teardown: { destroyAfterEach: false }
-})
-    .compileComponents();
+      declarations: [NavbarComponent],
+      teardown: { destroyAfterEach: false },
+    }).compileComponents();
   }));
 
   beforeEach(() => {

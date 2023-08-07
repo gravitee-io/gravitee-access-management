@@ -17,14 +17,18 @@
 -->
 <mat-card>
   <mat-card-header>
-    <mat-card-title>{{widget.title}}</mat-card-title>
-    <mat-card-subtitle>{{widget.subhead}}</mat-card-subtitle>
+    <mat-card-title>{{ widget.title }}</mat-card-title>
+    <mat-card-subtitle>{{ widget.subhead }}</mat-card-subtitle>
   </mat-card-header>
   <mat-card-content>
     <gv-widget-chart-line *ngIf="widget.chart.type === 'line'" [chart]="widget.chart" [Highcharts]="Highcharts"></gv-widget-chart-line>
     <gv-widget-chart-pie *ngIf="widget.chart.type === 'pie'" [chart]="widget.chart" [Highcharts]="Highcharts"></gv-widget-chart-pie>
     <gv-widget-chart-gauge *ngIf="widget.chart.type === 'gauge'" [chart]="widget.chart" [Highcharts]="Highcharts"></gv-widget-chart-gauge>
     <gv-widget-data-table *ngIf="widget.chart.type === 'table'" [chart]="widget.chart"></gv-widget-data-table>
-    <gv-widget-count style="text-align: right; display: block;" *ngIf="widget.chart.type === 'count'" [chart]="widget.chart"></gv-widget-count>
+    <gv-widget-count
+      style="text-align: right; display: block"
+      *ngIf="widget.chart.type === 'count'"
+      [chart]="widget.chart"
+    ></gv-widget-count>
   </mat-card-content>
 </mat-card>

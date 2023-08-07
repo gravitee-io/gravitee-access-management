@@ -42,7 +42,7 @@ $graviteeio-am-primary-palette: (
     A200: rgba(black, 0.87),
     A400: white,
     A700: white,
-  )
+  ),
 );
 
 $graviteeio-am-accent-palette: (
@@ -75,12 +75,12 @@ $graviteeio-am-accent-palette: (
     A200: white,
     A400: white,
     A700: white,
-  )
+  ),
 );
 
 /* Configure theme */
 $graviteeio-am-primary: mat.define-palette($graviteeio-am-primary-palette);
-$graviteeio-am-accent:  mat.define-palette($graviteeio-am-accent-palette);
+$graviteeio-am-accent: mat.define-palette($graviteeio-am-accent-palette);
 $graviteeio-am-main-theme: mat.define-light-theme($graviteeio-am-primary, $graviteeio-am-accent);
 @mixin graviteeio-am-theme($theme) {
   $primary: map-get($theme, primary);
@@ -88,7 +88,9 @@ $graviteeio-am-main-theme: mat.define-light-theme($graviteeio-am-primary, $gravi
   .gv-sidenav {
     background-color: mat.get-color-from-palette($primary, 500);
   }
-  .mat-step-header .mat-step-icon-selected, .mat-step-header .mat-step-icon-state-edit, .mat-step-header .mat-step-icon-state-done {
+  .mat-step-header .mat-step-icon-selected,
+  .mat-step-header .mat-step-icon-state-edit,
+  .mat-step-header .mat-step-icon-state-done {
     background-color: mat.get-color-from-palette($primary, 500);
   }
   material-add-reference-widget {
@@ -98,7 +100,8 @@ $graviteeio-am-main-theme: mat.define-light-theme($graviteeio-am-primary, $gravi
   }
   a {
     color: mat.get-color-from-palette($primary, 500);
-    &.active, &:hover {
+    &.active,
+    &:hover {
       color: mat.get-color-from-palette($accent, 500);
     }
     &.gv-accent-link {
@@ -114,17 +117,18 @@ $graviteeio-am-main-theme: mat.define-light-theme($graviteeio-am-primary, $gravi
   .application-creation-step1-container {
     .application-creation-step1-content {
       mat-card {
-        &.selected, i.selected {
+        &.selected,
+        i.selected {
           border: 1px solid mat.get-color-from-palette($accent, 500);
         }
       }
     }
   }
   .not-found-content-description {
-    border-top: 8px solid mat.get-color-from-palette($primary, 500);;
+    border-top: 8px solid mat.get-color-from-palette($primary, 500);
   }
   .gv-splash-screen {
-    background: #fdfdfd
+    background: #fdfdfd;
   }
 }
 @include mat.all-component-themes($graviteeio-am-main-theme);
@@ -136,18 +140,15 @@ $graviteeio-am-main-theme: mat.define-light-theme($graviteeio-am-primary, $gravi
   font-style: normal;
   font-weight: 400;
   src: url(assets/iconfont/MaterialIcons-Regular.eot); /* For IE6-8 */
-  src: local('Material Icons'),
-  local('MaterialIcons-Regular'),
-  url(assets/iconfont/MaterialIcons-Regular.woff2) format('woff2'),
-  url(assets/iconfont/MaterialIcons-Regular.woff) format('woff'),
-  url(assets/iconfont/MaterialIcons-Regular.ttf) format('truetype');
+  src: local('Material Icons'), local('MaterialIcons-Regular'), url(assets/iconfont/MaterialIcons-Regular.woff2) format('woff2'),
+    url(assets/iconfont/MaterialIcons-Regular.woff) format('woff'), url(assets/iconfont/MaterialIcons-Regular.ttf) format('truetype');
 }
 
 .material-icons {
   font-family: 'Material Icons';
   font-weight: normal;
   font-style: normal;
-  font-size: 24px;  /* Preferred icon size */
+  font-size: 24px; /* Preferred icon size */
   display: inline-block;
   line-height: 1;
   text-transform: none;
@@ -165,14 +166,19 @@ $graviteeio-am-main-theme: mat.define-light-theme($graviteeio-am-primary, $gravi
   font-feature-settings: 'liga';
 }
 
-html, body, app-root, mat-sidenav-container {
+html,
+body,
+app-root,
+mat-sidenav-container {
   font-family: 'Golos UI', 'Roboto', 'Helvetica Neue', sans-serif;
   margin: 0;
   width: 100%;
   height: 100%;
 }
 
-:where(.mat) *, :where(.mat) *::before, :where(.mat) *::after {
+:where(.mat) *,
+:where(.mat) *::before,
+:where(.mat) *::after {
   box-sizing: border-box;
 }
 
@@ -195,7 +201,8 @@ mat-sidenav-container {
   background-color: #ffffff !important;
 }
 
-.mat-list .mat-list-item .mat-list-item-content, .mat-nav-list .mat-list-item .mat-list-item-content {
+.mat-list .mat-list-item .mat-list-item-content,
+.mat-nav-list .mat-list-item .mat-list-item-content {
   position: inherit !important;
 }
 
@@ -206,7 +213,8 @@ mat-sidenav-container {
   padding: 0.2em 0;
 }
 
-.mat-form-field, mat-form-field {
+.mat-form-field,
+mat-form-field {
   width: 100%;
 }
 
@@ -220,7 +228,7 @@ mat-sidenav-container {
 }
 
 .mat-form-field-appearance-outline.mat-form-field-disabled .mat-form-field-outline {
-  background: #F1F1F1;
+  background: #f1f1f1;
   border-radius: 5px;
 }
 
@@ -258,7 +266,8 @@ mat-sidenav-container {
 ngx-datatable {
   .gv-table-cell-actions {
     margin-left: -10px;
-    button, a {
+    button,
+    a {
       top: -9px;
       color: grey;
     }
@@ -373,7 +382,8 @@ mat-horizontal-stepper {
   margin-bottom: 20px;
   .gv-form-section-title {
     margin-bottom: 10px;
-    h5, h4 {
+    h5,
+    h4 {
       margin: 0px 0px 5px 0px;
     }
     small {

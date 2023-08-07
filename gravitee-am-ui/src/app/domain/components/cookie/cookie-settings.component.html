@@ -18,29 +18,28 @@
 <form (ngSubmit)="save()" fxLayout="column">
   <div *ngIf="inheritMode" fxLayout="column" class="gv-form-section">
     <div fxLayout="column">
-        <mat-slide-toggle
-        (change)="enableInheritMode($event)"
-        [checked]="isInherited()" [disabled]="readonly">
+      <mat-slide-toggle (change)="enableInheritMode($event)" [checked]="isInherited()" [disabled]="readonly">
         Inherit configuration
       </mat-slide-toggle>
-      <mat-hint style="font-size: 75%;">Inherit session settings from the platform settings.</mat-hint>
+      <mat-hint style="font-size: 75%">Inherit session settings from the platform settings.</mat-hint>
     </div>
   </div>
 
   <div *ngIf="!inheritMode || !cookieSettings.inherited">
     <div class="gv-form-section">
       <div fxLayout="column">
-        <mat-slide-toggle
-          (change)="enableSessionPersistent($event)"
-          [checked]="isSessionPersistent()" [disabled]="readonly">
+        <mat-slide-toggle (change)="enableSessionPersistent($event)" [checked]="isSessionPersistent()" [disabled]="readonly">
           Persistent session
         </mat-slide-toggle>
-        <mat-hint style="font-size: 75%;">Enable persistent session cookie settings. If set to <b>false</b>, the session will be evicted by the browser when closed.</mat-hint>
+        <mat-hint style="font-size: 75%"
+          >Enable persistent session cookie settings. If set to <b>false</b>, the session will be evicted by the browser when
+          closed.</mat-hint
+        >
       </div>
     </div>
   </div>
 
   <div fxLayout="row" *ngIf="!readonly">
-    <button mat-raised-button color="primary" [disabled]="(!formChanged)" type="submit">SAVE</button>
+    <button mat-raised-button color="primary" [disabled]="!formChanged" type="submit">SAVE</button>
   </div>
 </form>

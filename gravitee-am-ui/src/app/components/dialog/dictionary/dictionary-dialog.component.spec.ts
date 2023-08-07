@@ -23,10 +23,9 @@ describe('ConfirmComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    declarations: [DictionaryDialog],
-    teardown: { destroyAfterEach: false }
-})
-    .compileComponents();
+      declarations: [DictionaryDialog],
+      teardown: { destroyAfterEach: false },
+    }).compileComponents();
   }));
 
   beforeEach(() => {

@@ -14,20 +14,18 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { Resolve, ActivatedRouteSnapshot, RouterStateSnapshot } from "@angular/router";
-import { Observable } from "rxjs";
-import { RoleService } from "../services/role.service";
-import { OrganizationService } from "../services/organization.service";
+import { Resolve, ActivatedRouteSnapshot } from '@angular/router';
+import { Observable } from 'rxjs';
+
+import { RoleService } from '../services/role.service';
+import { OrganizationService } from '../services/organization.service';
 
 @Injectable()
 export class PageRolesResolver implements Resolve<any> {
+  constructor(private roleService: RoleService, private organizationService: OrganizationService) {}
 
-  constructor(private roleService: RoleService,
-              private organizationService: OrganizationService) { }
-
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
+  resolve(route: ActivatedRouteSnapshot): Observable<any> | Promise<any> | any {
     const domainId = route.parent.data['domain'].id;
     return this.roleService.findByDomain(domainId, 0, 10);
   }
-
 }

@@ -13,33 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, Input, OnDestroy, OnInit} from '@angular/core';
-import {ActivatedRoute, Router} from "@angular/router";
-import {AuthGuard} from "../../guards/auth-guard.service";
-import {NavigationService} from "../../services/navigation.service";
-import {Subscription} from "rxjs";
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
+import { Subscription } from 'rxjs';
+
+import { NavigationService } from '../../services/navigation.service';
 
 @Component({
   selector: 'gv-sidenav-settings',
   templateUrl: './sidenav-settings.component.html',
-  styleUrls: ['./sidenav-settings.component.scss']
+  styleUrls: ['./sidenav-settings.component.scss'],
 })
 export class SidenavSettingsComponent implements OnInit, OnDestroy {
-
   subMenuItems: any;
   subscription: Subscription;
 
-  constructor(private router: Router,
-              private navigationService: NavigationService) {
-  }
+  constructor(private router: Router, private navigationService: NavigationService) {}
 
   ngOnInit(): void {
-    this.subscription = this.navigationService.subMenuItemsObs$
-      .subscribe(items => this.subMenuItems = items.reduce((r, a) => {
-        r[a.section] = r[a.section] || [];
-        r[a.section].push(a);
-        return r;
-      }, {}));
+    this.subscription = this.navigationService.subMenuItemsObs$.subscribe(
+      (items) =>
+        (this.subMenuItems = items.reduce((r, a) => {
+          r[a.section] = r[a.section] || [];
+          r[a.section].push(a);
+          return r;
+        }, {})),
+    );
   }
 
   ngOnDestroy(): void {

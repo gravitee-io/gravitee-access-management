@@ -29,9 +29,8 @@
     </div>
   </div>
   <div fxLayout="column">
-
     <form>
-      <mat-form-field appearance="outline" floatLabel="always" fxFlex="40" style="margin-left: 5px;">
+      <mat-form-field appearance="outline" floatLabel="always" fxFlex="40" style="margin-left: 5px">
         <mat-select placeholder="Mode" name="mode" [(ngModel)]="this.currentMode" (selectionChange)="applyModeChange($event)">
           <mat-option *ngFor="let mode of modes" [value]="mode" [gioLicense]="mode.feature">
             {{ mode.label }}
@@ -49,9 +48,7 @@
     </blockquote>
 
     <blockquote *ngIf="currentMode.warning" class="warning">
-      <p>
-        <mat-icon>warning_outline</mat-icon><span [innerHTML]="currentMode.warning"></span>
-      </p>
+      <p><mat-icon>warning_outline</mat-icon><span [innerHTML]="currentMode.warning"></span></p>
     </blockquote>
 
     <div *ngIf="this.currentMode !== modeOptions.REQUIRED" class="gv-form-section-title mfa-section-title">
@@ -63,13 +60,15 @@
     <mfa-optional
       *ngIf="this.currentMode === modeOptions.OPTIONAL"
       [enrollment]="this.enrollment"
-      (settings-change)="updateOptional($event)">
+      (settings-change)="updateOptional($event)"
+    >
     </mfa-optional>
 
     <mfa-conditional
       *ngIf="this.currentMode === modeOptions.CONDITIONAL"
       [adaptiveMfaRule]="this.adaptiveMfaRule"
-      (on-rule-change)="updateAdaptiveMfaRule($event)">
+      (on-rule-change)="updateAdaptiveMfaRule($event)"
+    >
     </mfa-conditional>
 
     <mfa-intelligent
@@ -78,6 +77,5 @@
       *ngIf="this.currentMode === modeOptions.INTELLIGENT"
     >
     </mfa-intelligent>
-
   </div>
 </div>

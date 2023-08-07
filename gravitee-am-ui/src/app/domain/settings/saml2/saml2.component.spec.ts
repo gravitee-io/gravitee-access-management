@@ -23,9 +23,8 @@ describe('Saml2Component', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ Saml2Component ]
-    })
-    .compileComponents();
+      declarations: [Saml2Component],
+    }).compileComponents();
   }));
 
   beforeEach(() => {

@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {SnackbarService} from "../../../services/snackbar.service";
-import {ActivatedRoute, Router} from "@angular/router";
-import {DomainService} from "../../../services/domain.service";
-import {AuthService} from "../../../services/auth.service";
-import internal from 'stream';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+
+import { SnackbarService } from '../../../services/snackbar.service';
+import { DomainService } from '../../../services/domain.service';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-self-service-account',
-  templateUrl: './self-service-account.component.html'
+  templateUrl: './self-service-account.component.html',
 })
 export class DomainSettingsSelfServiceAccountComponent implements OnInit {
   domainId: string;
@@ -32,11 +32,12 @@ export class DomainSettingsSelfServiceAccountComponent implements OnInit {
   editMode: boolean;
   tokenAge: number;
 
-  constructor(private domainService: DomainService,
-              private snackbarService: SnackbarService,
-              private authService: AuthService,
-              private route: ActivatedRoute) {
-  }
+  constructor(
+    private domainService: DomainService,
+    private snackbarService: SnackbarService,
+    private authService: AuthService,
+    private route: ActivatedRoute,
+  ) {}
 
   ngOnInit() {
     this.domain = this.route.snapshot.data['domain'];
@@ -52,12 +53,12 @@ export class DomainSettingsSelfServiceAccountComponent implements OnInit {
     const selfServiceAccountSettings: any = {};
     selfServiceAccountSettings.enabled = this.isSelfServiceAccountEnabled();
     if (this.tokenAge < 0) {
-      this.snackbarService.open("Max age must be greater or equals to zero");
+      this.snackbarService.open('Max age must be greater or equals to zero');
       return;
     }
     this.resetPassword.tokenAge = this.tokenAge;
     selfServiceAccountSettings.resetPassword = this.resetPassword;
-    this.domainService.patch(this.domainId, { 'selfServiceAccountManagementSettings' : selfServiceAccountSettings }).subscribe(data => {
+    this.domainService.patch(this.domainId, { selfServiceAccountManagementSettings: selfServiceAccountSettings }).subscribe((data) => {
       this.domain = data;
       this.formChanged = false;
       this.snackbarService.open('Self-service account configuration updated');
@@ -65,7 +66,7 @@ export class DomainSettingsSelfServiceAccountComponent implements OnInit {
   }
 
   enableSelfServiceAccount(event) {
-    this.domain.selfServiceAccountManagementSettings = { 'enabled': (event.checked) };
+    this.domain.selfServiceAccountManagementSettings = { enabled: event.checked };
     this.formChanged = true;
   }
 
@@ -79,11 +80,10 @@ export class DomainSettingsSelfServiceAccountComponent implements OnInit {
   }
 
   isOldPasswordRequired() {
-    return this.domain.selfServiceAccountManagementSettings &&
-          this.resetPassword.oldPasswordRequired;
+    return this.domain.selfServiceAccountManagementSettings && this.resetPassword.oldPasswordRequired;
   }
 
   setTokenAge() {
     this.formChanged = true;
-  } 
+  }
 }

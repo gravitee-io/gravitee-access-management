@@ -21,8 +21,7 @@ import { action } from '@storybook/addon-actions';
 import { tap } from 'rxjs/operators';
 import { MatButtonModule } from '@angular/material/button';
 
-import {GioEeUnlockDialogComponent, GioEeUnlockDialogData} from './gio-ee-unlock-dialog.component';
-
+import { GioEeUnlockDialogComponent, GioEeUnlockDialogData } from './gio-ee-unlock-dialog.component';
 
 @Component({
   selector: 'app-gio-ee-unlock-dialog-story',

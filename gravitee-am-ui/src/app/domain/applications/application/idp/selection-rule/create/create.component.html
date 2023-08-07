@@ -15,29 +15,36 @@
     limitations under the License.
 
 -->
-<h5 matDialogTitle>
-  Selection rule
-</h5>
+<h5 matDialogTitle>Selection rule</h5>
 <mat-dialog-content>
   <form #attributeForm="ngForm">
     <div>
-      <p>
-        When authenticating, if this rule matches, this identity provider will be chosen.
-      </p>
+      <p>When authenticating, if this rule matches, this identity provider will be chosen.</p>
     </div>
     <div>
-      <gv-expression-language name="value"
-                              placeholder="Supports Expression Language"
-                              ngDefaultControl
-                              gvControl
-                              [ngModel]="selectionRule"
-                              (keyup)="change($event)"
-                              inner-hint
-                              rows="1"></gv-expression-language>
+      <gv-expression-language
+        name="value"
+        placeholder="Supports Expression Language"
+        ngDefaultControl
+        gvControl
+        [ngModel]="selectionRule"
+        (keyup)="change($event)"
+        inner-hint
+        rows="1"
+      ></gv-expression-language>
     </div>
   </form>
 </mat-dialog-content>
 <mat-dialog-actions>
-  <button type="button" [disabled]="data.readonly" mat-raised-button color="primary" (click)="dialogRef.close(attributeForm.value)" color="primary">Save</button>
-  <button type="button" mat-button (click)="dialogRef.close()" class="dialog-cancel" style="margin-left: 20px;">Cancel</button>
+  <button
+    type="button"
+    [disabled]="data.readonly"
+    mat-raised-button
+    color="primary"
+    (click)="dialogRef.close(attributeForm.value)"
+    color="primary"
+  >
+    Save
+  </button>
+  <button type="button" mat-button (click)="dialogRef.close()" class="dialog-cancel" style="margin-left: 20px">Cancel</button>
 </mat-dialog-actions>

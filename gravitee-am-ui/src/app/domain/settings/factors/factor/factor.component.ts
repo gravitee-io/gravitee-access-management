@@ -13,18 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
-import {OrganizationService} from '../../../../services/organization.service';
-import {SnackbarService} from '../../../../services/snackbar.service';
-import {DialogService} from '../../../../services/dialog.service';
-import {AuthService} from '../../../../services/auth.service';
-import {FactorService} from '../../../../services/factor.service';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { filter, switchMap, tap } from 'rxjs/operators';
+import * as _ from 'lodash';
+
+import { OrganizationService } from '../../../../services/organization.service';
+import { SnackbarService } from '../../../../services/snackbar.service';
+import { DialogService } from '../../../../services/dialog.service';
+import { AuthService } from '../../../../services/auth.service';
+import { FactorService } from '../../../../services/factor.service';
 
 @Component({
   selector: 'app-factor',
   templateUrl: './factor.component.html',
-  styleUrls: ['./factor.component.scss']
+  styleUrls: ['./factor.component.scss'],
 })
 export class FactorComponent implements OnInit {
   private domainId: string;
@@ -40,13 +43,15 @@ export class FactorComponent implements OnInit {
   private resourcePlugins: any[];
   private resources: any[];
 
-  constructor(private route: ActivatedRoute,
-              private router: Router,
-              private organizationService: OrganizationService,
-              private factorService: FactorService,
-              private snackbarService: SnackbarService,
-              private dialogService: DialogService,
-              private authService: AuthService) { }
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private organizationService: OrganizationService,
+    private factorService: FactorService,
+    private snackbarService: SnackbarService,
+    private dialogService: DialogService,
+    private authService: AuthService,
+  ) {}
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
@@ -58,7 +63,7 @@ export class FactorComponent implements OnInit {
     this.resourcePlugins = this.route.snapshot.data['resourcePlugins'];
     this.resources = this.route.snapshot.data['resources'];
 
-    this.organizationService.factorSchema(this.factor.type).subscribe(data => {
+    this.organizationService.factorSchema(this.factor.type).subscribe((data) => {
       this.factorSchema = data;
       // set the grant_type value
 
@@ -75,9 +80,9 @@ export class FactorComponent implements OnInit {
 
   update() {
     this.factor.configuration = JSON.stringify(this.updateFactorConfiguration);
-    this.factorService.update(this.domainId, this.factor.id, this.factor).subscribe(data => {
+    this.factorService.update(this.domainId, this.factor.id, this.factor).subscribe(() => {
       this.snackbarService.open('Factor updated');
-    })
+    });
   }
 
   enableFactorUpdate(configurationWrapper) {
@@ -92,18 +97,19 @@ export class FactorComponent implements OnInit {
     event.preventDefault();
     this.dialogService
       .confirm('Delete Factor', 'Are you sure you want to delete this factor ?')
-      .subscribe(res => {
-        if (res) {
-          this.factorService.delete(this.domainId, this.factor.id).subscribe(() => {
-            this.snackbarService.open('Factor deleted');
-            this.router.navigate(['..'], { relativeTo: this.route });
-          });
-        }
-      });
+      .pipe(
+        filter((res) => res),
+        switchMap(() => this.factorService.delete(this.domainId, this.factor.id)),
+        tap(() => {
+          this.snackbarService.open('Factor deleted');
+          this.router.navigate(['..'], { relativeTo: this.route });
+        }),
+      )
+      .subscribe();
   }
 
-  isFido2Factor(){
-    return this.factor.type.includes("fido2-am-factor");
+  isFido2Factor() {
+    return this.factor.type.includes('fido2-am-factor');
   }
 
   private applyResourceSelection(property, propertyName?) {
@@ -118,19 +124,27 @@ export class FactorComponent implements OnInit {
 
     if ('graviteeResource' === property.widget || 'graviteeResource' === propertyName) {
       if (this.resources && this.resources.length > 0) {
-        const resourcePluginTypeToCategories = this.resourcePlugins.reduce((accumulator, currentPlugin) => ({ ...accumulator, [currentPlugin.id]: currentPlugin.categories}), {});
-        const factorPluginTypeToCategories = this.factorPlugins.reduce((accumulator, currentPlugin) => ({ ...accumulator, [currentPlugin.id]: currentPlugin.category}), {});
+        const resourcePluginTypeToCategories = this.resourcePlugins.reduce(
+          (accumulator, currentPlugin) => ({ ...accumulator, [currentPlugin.id]: currentPlugin.categories }),
+          {},
+        );
+        const factorPluginTypeToCategories = this.factorPlugins.reduce(
+          (accumulator, currentPlugin) => ({ ...accumulator, [currentPlugin.id]: currentPlugin.category }),
+          {},
+        );
         const factorCategory = factorPluginTypeToCategories[this.factor.type];
         // filter resources with category compatible with the Factor Plugin one
-        const filteredResources = this.resources.filter(r =>
-          factorCategory === 'any' ||
-          (resourcePluginTypeToCategories[r.type] && resourcePluginTypeToCategories[r.type].filter(resourceCategory => resourceCategory === factorCategory).length > 0)
+        const filteredResources = this.resources.filter(
+          (r) =>
+            factorCategory === 'any' ||
+            (resourcePluginTypeToCategories[r.type] &&
+              resourcePluginTypeToCategories[r.type].filter((resourceCategory) => resourceCategory === factorCategory).length > 0),
         );
 
-        property['x-schema-form'] = { 'type' : 'select' };
+        property['x-schema-form'] = { type: 'select' };
         if (filteredResources.length > 0) {
-          property.enum = filteredResources.map(r => r.id);
-          property['x-schema-form'].titleMap = filteredResources.reduce(function(map, obj) {
+          property.enum = filteredResources.map((r) => r.id);
+          property['x-schema-form'].titleMap = filteredResources.reduce(function (map, obj) {
             map[obj.id] = obj.name;
             return map;
           }, {});
@@ -144,5 +158,4 @@ export class FactorComponent implements OnInit {
       }
     }
   }
-
 }

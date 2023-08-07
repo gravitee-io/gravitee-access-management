@@ -16,9 +16,9 @@
 
 -->
 <mat-toolbar mat-dialog-title>
-  <span style="display: flex; flex: 1 1 auto;"></span>
+  <span style="display: flex; flex: 1 1 auto"></span>
   <h1>Administrative settings for <b>{{resource?.name}}</b></h1>
-  <span style="display: flex; flex: 1 1 auto;"></span>
+  <span style="display: flex; flex: 1 1 auto"></span>
   <button (click)="close()" mat-icon-button><mat-icon>close</mat-icon></button>
 </mat-toolbar>
 <div mat-dialog-content>
@@ -29,14 +29,16 @@
     <mat-drawer-content>
       <h4>Administrative roles</h4>
       <p>Grant access to your resource by adding users and groups.</p>
-      <app-memberships [members]="members"
-                       [roleType]="roleType"
-                       [createMode]="createMode"
-                       [editMode]="editMode"
-                       [deleteMode]="deleteMode"
-                       (membershipAdded)="add($event)"
-                       (membershipDeleted)="delete($event)"
-                       (membershipUpdated)="update($event)"></app-memberships>
+      <app-memberships
+        [members]="members"
+        [roleType]="roleType"
+        [createMode]="createMode"
+        [editMode]="editMode"
+        [deleteMode]="deleteMode"
+        (membershipAdded)="add($event)"
+        (membershipDeleted)="delete($event)"
+        (membershipUpdated)="update($event)"
+      ></app-memberships>
     </mat-drawer-content>
   </mat-drawer-container>
 </div>

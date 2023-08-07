@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Plugin} from '../plugins/Plugin';
+import { Plugin } from '../plugins/Plugin';
 
 export class IdentityProvider extends Plugin {
   displayName?: string;

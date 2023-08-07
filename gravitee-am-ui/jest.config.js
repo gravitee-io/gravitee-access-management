@@ -17,5 +17,5 @@ module.exports = {
   preset: 'jest-preset-angular',
   setupFilesAfterEnv: ['<rootDir>/src/setupJest.ts'],
   collectCoverage: false,
-  collectCoverageFrom: ["src/**/*.ts"]
-}
+  collectCoverageFrom: ['src/**/*.ts'],
+};

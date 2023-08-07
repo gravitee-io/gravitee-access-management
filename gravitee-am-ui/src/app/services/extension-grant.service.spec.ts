@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {inject, TestBed} from "@angular/core/testing";
-import {ExtensionGrantService} from "./extension-grant.service";
+import { inject, TestBed } from '@angular/core/testing';
+
+import { ExtensionGrantService } from './extension-grant.service';
 
 describe('ExtensionGrantService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-    providers: [ExtensionGrantService],
-    teardown: { destroyAfterEach: false }
-});
+      providers: [ExtensionGrantService],
+      teardown: { destroyAfterEach: false },
+    });
   });
 
   it('should ...', inject([ExtensionGrantService], (service: ExtensionGrantService) => {

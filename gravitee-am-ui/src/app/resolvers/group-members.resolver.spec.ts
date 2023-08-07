@@ -15,14 +15,14 @@
  */
 import { TestBed, inject } from '@angular/core/testing';
 
-import {GroupMembersResolver} from "./group-members.resolver";
+import { GroupMembersResolver } from './group-members.resolver';
 
 describe('GroupMembersResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-    providers: [GroupMembersResolver],
-    teardown: { destroyAfterEach: false }
-});
+      providers: [GroupMembersResolver],
+      teardown: { destroyAfterEach: false },
+    });
   });
 
   it('should ...', inject([GroupMembersResolver], (service: GroupMembersResolver) => {

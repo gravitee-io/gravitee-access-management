@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit } from "@angular/core";
-import { AppConfig } from "../../../config/app.config";
-import { ActivatedRoute } from "@angular/router";
-import { DomainService } from "../../services/domain.service";
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+
+import { AppConfig } from '../../../config/app.config';
+import { DomainService } from '../../services/domain.service';
 
 @Component({
-  selector: "app-domains",
-  templateUrl: "./domains.component.html",
-  styleUrls: ["./domains.component.scss"],
+  selector: 'app-domains',
+  templateUrl: './domains.component.html',
+  styleUrls: ['./domains.component.scss'],
 })
 export class DomainsComponent implements OnInit {
   private searchValue: string;
@@ -30,8 +31,7 @@ export class DomainsComponent implements OnInit {
   version = AppConfig.settings.version;
   domains = [];
 
-  constructor(private route: ActivatedRoute,
-              private domainService: DomainService) {
+  constructor(private route: ActivatedRoute, private domainService: DomainService) {
     this.page.pageNumber = 0;
     this.page.size = 10;
   }
@@ -39,7 +39,7 @@ export class DomainsComponent implements OnInit {
   ngOnInit() {
     const pagedDomains = this.route.snapshot.data['domains'];
     this.domains = pagedDomains.data;
-    this.page.totalElements = pagedDomains.totalCount
+    this.page.totalElements = pagedDomains.totalCount;
   }
 
   onSearch(event) {
@@ -49,11 +49,11 @@ export class DomainsComponent implements OnInit {
   }
 
   loadDomains() {
-    const findDomains = (this.searchValue) ?
-      this.domainService.search('*' + this.searchValue + '*', this.page.pageNumber, this.page.size) :
-      this.domainService.findByEnvironment(this.page.pageNumber, this.page.size);
+    const findDomains = this.searchValue
+      ? this.domainService.search('*' + this.searchValue + '*', this.page.pageNumber, this.page.size)
+      : this.domainService.findByEnvironment(this.page.pageNumber, this.page.size);
 
-    findDomains.subscribe(pagedDomains => {
+    findDomains.subscribe((pagedDomains) => {
       this.page.totalElements = pagedDomains.totalCount;
       this.domains = pagedDomains.data;
     });
@@ -65,6 +65,6 @@ export class DomainsComponent implements OnInit {
   }
 
   get isEmpty() {
-    return !this.domains || this.domains.length === 0 && !this.searchValue;
+    return !this.domains || (this.domains.length === 0 && !this.searchValue);
   }
 }

@@ -13,39 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit, Input, EventEmitter, Output, OnChanges, SimpleChanges} from '@angular/core';
+import { Component, Input, EventEmitter, Output, OnChanges, SimpleChanges } from '@angular/core';
 import '@gravitee/ui-components/wc/gv-schema-form';
 
 @Component({
   selector: 'alert-notifier-form',
   templateUrl: './form.component.html',
-  styleUrls: ['./form.component.scss']
+  styleUrls: ['./form.component.scss'],
 })
-export class AlertNotifierFormComponent implements OnInit, OnChanges {
+export class AlertNotifierFormComponent implements OnChanges {
   @Input('notifierConfiguration') notifierConfiguration: any = {};
   @Input('notifierSchema') notifierSchema: any;
   @Output() configurationCompleted = new EventEmitter<any>();
-  displayForm: boolean = false;
+  displayForm = false;
   data: any = {};
-
-  constructor() {
-  }
-
-  ngOnInit() {
-
-    // x-schema-form.type
-  }
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes.notifierSchema) {
-      let notifierSchema = changes.notifierSchema.currentValue;
+      const notifierSchema = changes.notifierSchema.currentValue;
       if (notifierSchema && notifierSchema.id) {
         this.displayForm = true;
       }
     }
 
     if (changes.notifierConfiguration) {
-      let notifierConfiguration = changes.notifierConfiguration.currentValue;
+      const notifierConfiguration = changes.notifierConfiguration.currentValue;
       if (notifierConfiguration) {
         this.data = notifierConfiguration;
       }
@@ -57,7 +49,7 @@ export class AlertNotifierFormComponent implements OnInit, OnChanges {
   }
 
   isValid(isValid: boolean) {
-    let configurationWrapper = {'isValid': isValid, 'configuration': this.notifierConfiguration};
+    const configurationWrapper = { isValid: isValid, configuration: this.notifierConfiguration };
     this.configurationCompleted.emit(configurationWrapper);
   }
 }

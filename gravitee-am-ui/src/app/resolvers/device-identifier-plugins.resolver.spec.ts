@@ -13,16 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {inject, TestBed} from '@angular/core/testing';
-import {FactorPluginsResolver} from './factor-plugins.resolver';
-import {DeviceIdentifierPluginsResolver} from "./device-identifier-plugins.resolver";
+import { inject, TestBed } from '@angular/core/testing';
+
+import { FactorPluginsResolver } from './factor-plugins.resolver';
+import { DeviceIdentifierPluginsResolver } from './device-identifier-plugins.resolver';
 
 describe('DeviceIdentifierPluginsResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-    providers: [FactorPluginsResolver],
-    teardown: { destroyAfterEach: false }
-});
+      providers: [FactorPluginsResolver],
+      teardown: { destroyAfterEach: false },
+    });
   });
 
   it('should ...', inject([DeviceIdentifierPluginsResolver], (service: DeviceIdentifierPluginsResolver) => {

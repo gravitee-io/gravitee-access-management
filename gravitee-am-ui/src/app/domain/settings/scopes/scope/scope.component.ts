@@ -13,19 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit, ViewChild} from '@angular/core';
-import {NgForm} from '@angular/forms';
-import {ActivatedRoute, Router} from '@angular/router';
-import {ScopeService} from '../../../../services/scope.service';
-import {SnackbarService} from '../../../../services/snackbar.service';
-import {DialogService} from '../../../../services/dialog.service';
-import {AuthService} from '../../../../services/auth.service';
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { NgForm } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import moment from 'moment';
+import { filter, switchMap, tap } from 'rxjs/operators';
+
+import { ScopeService } from '../../../../services/scope.service';
+import { SnackbarService } from '../../../../services/snackbar.service';
+import { DialogService } from '../../../../services/dialog.service';
+import { AuthService } from '../../../../services/auth.service';
 
 @Component({
   selector: 'app-scope',
   templateUrl: './scope.component.html',
-  styleUrls: ['./scope.component.scss']
+  styleUrls: ['./scope.component.scss'],
 })
 export class ScopeComponent implements OnInit {
   private domainId: string;
@@ -37,12 +39,14 @@ export class ScopeComponent implements OnInit {
   deleteMode: boolean;
   @ViewChild('scopeForm', { static: true }) public scopeForm: NgForm;
 
-  constructor(private scopeService: ScopeService,
-              private snackbarService: SnackbarService,
-              private route: ActivatedRoute,
-              private router: Router,
-              private dialogService: DialogService,
-              private authService: AuthService) { }
+  constructor(
+    private scopeService: ScopeService,
+    private snackbarService: SnackbarService,
+    private route: ActivatedRoute,
+    private router: Router,
+    private dialogService: DialogService,
+    private authService: AuthService,
+  ) {}
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
@@ -58,7 +62,7 @@ export class ScopeComponent implements OnInit {
     if (this.expiresIn && this.unitTime) {
       this.scope.expiresIn = moment.duration(this.expiresIn, this.unitTime).asSeconds();
     }
-    this.scopeService.update(this.domainId, this.scope.id, this.scope).subscribe(data => {
+    this.scopeService.update(this.domainId, this.scope.id, this.scope).subscribe((data) => {
       this.scope = data;
       this.formChanged = false;
       this.scopeForm.reset(this.scope);
@@ -73,7 +77,7 @@ export class ScopeComponent implements OnInit {
   }
 
   getScopeExpiry() {
-    return (this.scope.expiresIn) ? moment.duration(this.scope.expiresIn, 'seconds').humanize() : 'no time set';
+    return this.scope.expiresIn ? moment.duration(this.scope.expiresIn, 'seconds').humanize() : 'no time set';
   }
 
   clearExpiry() {
@@ -93,7 +97,7 @@ export class ScopeComponent implements OnInit {
   enableParameterizedScope(event) {
     this.scope.parameterized = event.checked;
   }
-  
+
   isParameterized() {
     return this.scope.parameterized;
   }
@@ -102,13 +106,14 @@ export class ScopeComponent implements OnInit {
     event.preventDefault();
     this.dialogService
       .confirm('Delete Scope', 'Are you sure you want to delete this scope ?')
-      .subscribe(res => {
-        if (res) {
-          this.scopeService.delete(this.domainId, this.scope.id).subscribe(() => {
-            this.snackbarService.open('Scope deleted');
-            this.router.navigate(['..'], { relativeTo: this.route });
-          });
-        }
-      });
+      .pipe(
+        filter((res) => res),
+        switchMap(() => this.scopeService.delete(this.domainId, this.scope.id)),
+        tap(() => {
+          this.snackbarService.open('Scope deleted');
+          this.router.navigate(['..'], { relativeTo: this.route });
+        }),
+      )
+      .subscribe();
   }
 }

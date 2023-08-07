@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {inject, TestBed} from "@angular/core/testing";
-import {EmailTemplateFactoryService} from "./email.template.factory.service";
+import { inject, TestBed } from '@angular/core/testing';
+
+import { EmailTemplateFactoryService } from './email.template.factory.service';
 
 describe('EmailTemplateFactoryService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-    providers: [EmailTemplateFactoryService],
-    teardown: { destroyAfterEach: false }
-});
+      providers: [EmailTemplateFactoryService],
+      teardown: { destroyAfterEach: false },
+    });
   });
 
   it('should create email template factory service', inject([EmailTemplateFactoryService], (service: EmailTemplateFactoryService) => {

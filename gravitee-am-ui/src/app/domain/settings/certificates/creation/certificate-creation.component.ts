@@ -13,16 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, ViewChild} from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
 import { MatStepper } from '@angular/material/stepper';
-import {ActivatedRoute, Router} from '@angular/router';
-import {CertificateService} from '../../../../services/certificate.service';
-import {SnackbarService} from '../../../../services/snackbar.service';
+import { ActivatedRoute, Router } from '@angular/router';
+
+import { CertificateService } from '../../../../services/certificate.service';
+import { SnackbarService } from '../../../../services/snackbar.service';
 
 @Component({
   selector: 'app-certificate-creation',
   templateUrl: './certificate-creation.component.html',
-  styleUrls: ['./certificate-creation.component.scss']
+  styleUrls: ['./certificate-creation.component.scss'],
 })
 export class CertificateCreationComponent {
   public certificate: any = {};
@@ -30,10 +31,12 @@ export class CertificateCreationComponent {
   configurationIsValid = false;
   @ViewChild('stepper', { static: true }) stepper: MatStepper;
 
-  constructor(private certificateService: CertificateService,
-              private snackbarService: SnackbarService,
-              private router: Router,
-              private route: ActivatedRoute) { }
+  constructor(
+    private certificateService: CertificateService,
+    private snackbarService: SnackbarService,
+    private router: Router,
+    private route: ActivatedRoute,
+  ) {}
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
@@ -41,7 +44,7 @@ export class CertificateCreationComponent {
 
   create() {
     this.certificate.configuration = JSON.stringify(this.certificate.configuration);
-    this.certificateService.create(this.domainId, this.certificate).subscribe(data => {
+    this.certificateService.create(this.domainId, this.certificate).subscribe((data) => {
       this.snackbarService.open('Certificate ' + data.name + ' created');
       this.router.navigate(['..', data.id], { relativeTo: this.route });
     });

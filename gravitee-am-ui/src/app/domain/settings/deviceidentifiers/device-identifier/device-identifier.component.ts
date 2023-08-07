@@ -13,18 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
-import {OrganizationService} from '../../../../services/organization.service';
-import {SnackbarService} from '../../../../services/snackbar.service';
-import {DialogService} from '../../../../services/dialog.service';
-import {AuthService} from '../../../../services/auth.service';
-import {DeviceIdentifierService} from "../../../../services/device-identifier.service";
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { filter, switchMap, tap } from 'rxjs/operators';
+
+import { OrganizationService } from '../../../../services/organization.service';
+import { SnackbarService } from '../../../../services/snackbar.service';
+import { DialogService } from '../../../../services/dialog.service';
+import { AuthService } from '../../../../services/auth.service';
+import { DeviceIdentifierService } from '../../../../services/device-identifier.service';
 
 @Component({
   selector: 'app-device-identifier',
   templateUrl: './device-identifier.component.html',
-  styleUrls: ['./device-identifier.component.scss']
+  styleUrls: ['./device-identifier.component.scss'],
 })
 export class DeviceIdentifierComponent implements OnInit {
   private domainId: string;
@@ -39,16 +41,18 @@ export class DeviceIdentifierComponent implements OnInit {
 
   private deviceIdentifierTypes: any = {
     'fingerprintjs-v3-community-device-identifier': 'FingerprintJS v3 community',
-    'fingerprintjs-v3-pro-device-identifier': 'FingerprintJS v3 Pro'
+    'fingerprintjs-v3-pro-device-identifier': 'FingerprintJS v3 Pro',
   };
 
-  constructor(private route: ActivatedRoute,
-              private router: Router,
-              private organizationService: OrganizationService,
-              private deviceIdentifierService: DeviceIdentifierService,
-              private snackbarService: SnackbarService,
-              private dialogService: DialogService,
-              private authService: AuthService) { }
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private organizationService: OrganizationService,
+    private deviceIdentifierService: DeviceIdentifierService,
+    private snackbarService: SnackbarService,
+    private dialogService: DialogService,
+    private authService: AuthService,
+  ) {}
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
@@ -57,16 +61,16 @@ export class DeviceIdentifierComponent implements OnInit {
     this.updateDeviceIdentifierConfiguration = this.deviceIdentifierConfiguration;
     this.editMode = this.authService.hasPermissions(['domain_device_identifier_update']);
 
-    this.organizationService.deviceIdentifiersSchema(this.deviceIdentifier.type).subscribe(data => {
+    this.organizationService.deviceIdentifiersSchema(this.deviceIdentifier.type).subscribe((data) => {
       this.deviceIdentifierSchema = data;
     });
   }
 
   update() {
     this.deviceIdentifier.configuration = JSON.stringify(this.updateDeviceIdentifierConfiguration);
-    this.deviceIdentifierService.update(this.domainId, this.deviceIdentifier.id, this.deviceIdentifier).subscribe(data => {
+    this.deviceIdentifierService.update(this.domainId, this.deviceIdentifier.id, this.deviceIdentifier).subscribe(() => {
       this.snackbarService.open('Device identifier updated');
-    })
+    });
   }
 
   enableDeviceIdentifierDetectionUpdate(configurationWrapper) {
@@ -81,14 +85,15 @@ export class DeviceIdentifierComponent implements OnInit {
     event.preventDefault();
     this.dialogService
       .confirm('Delete device identifier', 'Are you sure you want to delete this Device Identifier ?')
-      .subscribe(res => {
-        if (res) {
-          this.deviceIdentifierService.delete(this.domainId, this.deviceIdentifier.id).subscribe(() => {
-            this.snackbarService.open('Device identifier deleted');
-            this.router.navigate(['..'], { relativeTo: this.route });
-          });
-        }
-      });
+      .pipe(
+        filter((res) => res),
+        switchMap(() => this.deviceIdentifierService.delete(this.domainId, this.deviceIdentifier.id)),
+        tap(() => {
+          this.snackbarService.open('Device identifier deleted');
+          this.router.navigate(['..'], { relativeTo: this.route });
+        }),
+      )
+      .subscribe();
   }
 
   displayType(type) {

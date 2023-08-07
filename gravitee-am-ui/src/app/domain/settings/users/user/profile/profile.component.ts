@@ -13,19 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, ComponentFactoryResolver, OnInit, ViewChild, ViewContainerRef} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
-import {SnackbarService} from '../../../../../services/snackbar.service';
-import {DialogService} from '../../../../../services/dialog.service';
-import {UserService} from '../../../../../services/user.service';
-import {UserClaimComponent} from '../../creation/user-claim.component';
-import {AuthService} from '../../../../../services/auth.service';
-import {NgForm} from '@angular/forms';
+import { Component, ComponentFactoryResolver, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { NgForm } from '@angular/forms';
+import { filter, switchMap, tap } from 'rxjs/operators';
+import { isObject } from 'lodash';
+
+import { SnackbarService } from '../../../../../services/snackbar.service';
+import { DialogService } from '../../../../../services/dialog.service';
+import { UserService } from '../../../../../services/user.service';
+import { UserClaimComponent } from '../../creation/user-claim.component';
+import { AuthService } from '../../../../../services/auth.service';
 
 @Component({
   selector: 'app-user-profile',
   templateUrl: './profile.component.html',
-  styleUrls: ['./profile.component.scss']
+  styleUrls: ['./profile.component.scss'],
 })
 export class UserProfileComponent implements OnInit {
   private domainId: string;
@@ -40,13 +43,15 @@ export class UserProfileComponent implements OnInit {
   canEdit: boolean;
   canDelete: boolean;
 
-  constructor(private route: ActivatedRoute,
-              private router: Router,
-              private snackbarService: SnackbarService,
-              private dialogService: DialogService,
-              private userService: UserService,
-              private authService: AuthService,
-              private factoryResolver: ComponentFactoryResolver) { }
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private snackbarService: SnackbarService,
+    private dialogService: DialogService,
+    private userService: UserService,
+    private authService: AuthService,
+    private factoryResolver: ComponentFactoryResolver,
+  ) {}
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
@@ -64,9 +69,9 @@ export class UserProfileComponent implements OnInit {
   update() {
     // TODO we should be able to update platform users
     this.user.additionalInformation = this.user.additionalInformation || {};
-    Object.keys(this.userClaims).forEach(key => this.user.additionalInformation[key] = this.userClaims[key]);
-    this.user.displayName = [this.user.firstName, this.user.lastName].filter(Boolean).join(" ");
-    this.userService.update(this.domainId, this.user.id, this.user, this.organizationContext).subscribe(data => {
+    Object.keys(this.userClaims).forEach((key) => (this.user.additionalInformation[key] = this.userClaims[key]));
+    this.user.displayName = [this.user.firstName, this.user.lastName].filter(Boolean).join(' ');
+    this.userService.update(this.domainId, this.user.id, this.user, this.organizationContext).subscribe((data) => {
       this.user = data;
       this.userClaims = {};
       this.viewContainerRef.clear();
@@ -79,59 +84,63 @@ export class UserProfileComponent implements OnInit {
     event.preventDefault();
     this.dialogService
       .confirm('Delete User', 'Are you sure you want to delete this user ?')
-      .subscribe(res => {
-        if (res) {
-          this.userService.delete(this.domainId, this.user.id, this.organizationContext).subscribe(response => {
-            this.snackbarService.open('User ' + this.user.username + ' deleted');
-            this.router.navigate(['../..'], { relativeTo: this.route });
-          });
-        }
-      });
+      .pipe(
+        filter((res) => res),
+        switchMap(() => this.userService.delete(this.domainId, this.user.id, this.organizationContext)),
+        tap(() => {
+          this.snackbarService.open('User ' + this.user.username + ' deleted');
+          this.router.navigate(['../..'], { relativeTo: this.route });
+        }),
+      )
+      .subscribe();
   }
 
   resendConfirmationRegistration(event) {
     event.preventDefault();
     this.dialogService
       .confirm('Send Email', 'Are you sure you want to send the confirmation registration email ?')
-      .subscribe( res => {
-        if (res) {
-          this.userService.resendRegistrationConfirmation(this.domainId, this.user.id).subscribe(() => {
-            this.snackbarService.open('Email sent');
-          });
-        }
-      });
+      .pipe(
+        filter((res) => res),
+        switchMap(() => this.userService.resendRegistrationConfirmation(this.domainId, this.user.id)),
+        tap(() => {
+          this.snackbarService.open('Email sent');
+        }),
+      )
+      .subscribe();
   }
 
   resetPassword() {
     this.dialogService
       .confirm('Reset Password', 'Are you sure you want to reset the password ?')
-      .subscribe(res => {
-        if (res) {
-          this.userService.resetPassword(this.domainId, this.user.id, this.password, this.organizationContext).subscribe(() => {
-            this.password = null;
-            this.passwordForm.reset();
-            // reset the errors of all the controls
-            for (let name in this.passwordForm.controls) {
-              this.passwordForm.controls[name].setErrors(null);
-            }
-            this.snackbarService.open('Password reset');
-          });
-        }
-      });
+      .pipe(
+        filter((res) => res),
+        switchMap(() => this.userService.resetPassword(this.domainId, this.user.id, this.password, this.organizationContext)),
+        tap(() => {
+          this.password = null;
+          this.passwordForm.reset();
+          // reset the errors of all the controls
+          for (const name in this.passwordForm.controls) {
+            this.passwordForm.controls[name].setErrors(null);
+          }
+          this.snackbarService.open('Password reset');
+        }),
+      )
+      .subscribe();
   }
 
   unlock(event) {
     event.preventDefault();
     this.dialogService
       .confirm('Unlock User', 'Are you sure you want to unlock the user ?')
-      .subscribe(res => {
-        if (res) {
-          this.userService.unlock(this.domainId, this.user.id).subscribe(() => {
-            this.unlockUser(this.user);
-            this.snackbarService.open('User unlocked');
-          });
-        }
-      });
+      .pipe(
+        filter((res) => res),
+        switchMap(() => this.userService.unlock(this.domainId, this.user.id)),
+        tap(() => {
+          this.unlockUser(this.user);
+          this.snackbarService.open('User unlocked');
+        }),
+      )
+      .subscribe();
   }
 
   isOrganizationUserAction() {
@@ -143,27 +152,34 @@ export class UserProfileComponent implements OnInit {
   }
 
   isEmptyObject(obj) {
-    return (obj && (Object.keys(obj).length === 0));
+    return obj && Object.keys(obj).length === 0;
   }
 
   enableUser(event) {
     // TODO we should be able to update platform users
     this.dialogService
-      .confirm( (event.checked ? 'Enable' : 'Disable') + ' User', 'Are you sure you want to ' + (event.checked ? 'enable' : 'disable') + ' the user ?')
-      .subscribe(res => {
-        if (res) {
-          this.userService.updateStatus(this.domainId, this.user.id, event.checked).subscribe(() => {
-            this.user.enabled = event.checked;
-            this.snackbarService.open('User ' + (event.checked ? 'enabled' : 'disabled'));
-          });
-        } else {
-          event.source.checked = true;
-        }
-      });
+      .confirm(
+        (event.checked ? 'Enable' : 'Disable') + ' User',
+        'Are you sure you want to ' + (event.checked ? 'enable' : 'disable') + ' the user ?',
+      )
+      .pipe(
+        filter((res) => {
+          if (res === false) {
+            event.source.checked = true;
+          }
+          return res;
+        }),
+        switchMap(() => this.userService.updateStatus(this.domainId, this.user.id, event.checked)),
+        tap(() => {
+          this.user.enabled = event.checked;
+          this.snackbarService.open('User ' + (event.checked ? 'enabled' : 'disabled'));
+        }),
+      )
+      .subscribe();
   }
 
   asObject(value) {
-    return value && typeof value === 'object'
+    return value && isObject(value);
   }
 
   isUserEnabled() {
@@ -174,16 +190,15 @@ export class UserProfileComponent implements OnInit {
     const factory = this.factoryResolver.resolveComponentFactory(UserClaimComponent);
     const component = this.viewContainerRef.createComponent(factory);
 
-    const that = this;
-    component.instance.addClaimChange.subscribe(claim => {
+    component.instance.addClaimChange.subscribe((claim) => {
       if (claim.name && claim.value) {
-        that.userClaims[claim.name] = claim.value;
+        this.userClaims[claim.name] = claim.value;
         this.formChanged = true;
       }
     });
 
-    component.instance.removeClaimChange.subscribe(claim => {
-      that.viewContainerRef.remove(that.viewContainerRef.indexOf(component.hostView));
+    component.instance.removeClaimChange.subscribe((claim) => {
+      this.viewContainerRef.remove(this.viewContainerRef.indexOf(component.hostView));
       if (claim.name && claim.value) {
         this.formChanged = true;
       }
@@ -192,10 +207,9 @@ export class UserProfileComponent implements OnInit {
 
   removeExistingClaim(claimKey, event) {
     event.preventDefault();
-    const that = this;
-    this.user.additionalInformation = Object.keys(this.user.additionalInformation).reduce(function (obj, key) {
+    this.user.additionalInformation = Object.keys(this.user.additionalInformation).reduce((obj, key) => {
       if (key !== claimKey) {
-        obj[key] = that.user.additionalInformation[key];
+        obj[key] = this.user.additionalInformation[key];
       }
       return obj;
     }, {});
@@ -207,13 +221,13 @@ export class UserProfileComponent implements OnInit {
     this.formChanged = true;
   }
 
-  onAppDeleted(event) {
+  onAppDeleted() {
     this.user.client = null;
     this.formChanged = true;
   }
 
   displayClientName() {
-    return this.user.applicationEntity != null ? this.user.applicationEntity.name : "";
+    return this.user.applicationEntity != null ? this.user.applicationEntity.name : '';
   }
 
   accountLocked(user) {
@@ -223,15 +237,16 @@ export class UserProfileComponent implements OnInit {
   updateUsername() {
     this.dialogService
       .confirm('Update Username', 'Are you sure you want to update this username?')
-      .subscribe(res => {
-        if (res) {
-          this.userService.updateUsername(this.domainId, this.user.id, this.organizationContext, this.user.username).subscribe(() => {
-            this.usernameForm.resetForm({ username: this.user.username });
-            this.unlockUser(this.user);
-            this.snackbarService.open('Username updated');
-          })
-        }
-      });
+      .pipe(
+        filter((res) => res),
+        switchMap(() => this.userService.updateUsername(this.domainId, this.user.id, this.organizationContext, this.user.username)),
+        tap(() => {
+          this.usernameForm.resetForm({ username: this.user.username });
+          this.unlockUser(this.user);
+          this.snackbarService.open('Username updated');
+        }),
+      )
+      .subscribe();
   }
 
   private unlockUser(user) {

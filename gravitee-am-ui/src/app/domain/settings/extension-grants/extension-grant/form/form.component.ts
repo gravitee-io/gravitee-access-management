@@ -13,35 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit, Input, EventEmitter, Output, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, EventEmitter, Output, OnChanges, SimpleChanges } from '@angular/core';
 
 @Component({
   selector: 'extension-grant-form',
   templateUrl: './form.component.html',
-  styleUrls: ['./form.component.scss']
+  styleUrls: ['./form.component.scss'],
 })
-export class ExtensionGrantFormComponent implements OnInit, OnChanges {
+export class ExtensionGrantFormComponent implements OnChanges {
   @Input('extensionGrantConfiguration') configuration: any = {};
   @Input('extensionGrantSchema') extensionGrantSchema: any;
   @Output() configurationCompleted = new EventEmitter<any>();
-  displayForm: boolean = false;
+  displayForm = false;
   data: any = {};
-
-  constructor() { }
-
-  ngOnInit() {
-  }
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes.extensionGrantSchema) {
-      let _extensionGrantSchema= changes.extensionGrantSchema.currentValue;
+      const _extensionGrantSchema = changes.extensionGrantSchema.currentValue;
       if (_extensionGrantSchema && _extensionGrantSchema.id) {
         this.displayForm = true;
       }
     }
 
     if (changes.configuration) {
-      let _extensionGrantConfiguration = changes.configuration.currentValue;
+      const _extensionGrantConfiguration = changes.configuration.currentValue;
       if (_extensionGrantConfiguration) {
         this.data = _extensionGrantConfiguration;
       }
@@ -53,7 +48,7 @@ export class ExtensionGrantFormComponent implements OnInit, OnChanges {
   }
 
   isValid(isValid: boolean) {
-    let configurationWrapper = { 'isValid' : isValid, 'configuration': this.configuration};
+    const configurationWrapper = { isValid: isValid, configuration: this.configuration };
     this.configurationCompleted.emit(configurationWrapper);
   }
 }

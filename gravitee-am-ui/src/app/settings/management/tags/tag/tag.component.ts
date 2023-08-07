@@ -13,30 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit, ViewChild} from '@angular/core';
-import {NgForm} from '@angular/forms';
-import {ActivatedRoute, Router} from '@angular/router';
-import {SnackbarService} from '../../../../services/snackbar.service';
-import {TagService} from '../../../../services/tag.service';
-import {DialogService} from '../../../../services/dialog.service';
-import {AuthService} from '../../../../services/auth.service';
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { NgForm } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
+import { filter, switchMap, tap } from 'rxjs/operators';
+
+import { SnackbarService } from '../../../../services/snackbar.service';
+import { TagService } from '../../../../services/tag.service';
+import { DialogService } from '../../../../services/dialog.service';
+import { AuthService } from '../../../../services/auth.service';
 
 @Component({
   selector: 'app-tag',
   templateUrl: './tag.component.html',
-  styleUrls: ['./tag.component.scss']
+  styleUrls: ['./tag.component.scss'],
 })
 export class TagComponent implements OnInit {
   tag: any;
   @ViewChild('tagForm', { static: true }) public tagForm: NgForm;
   readonly: boolean;
 
-  constructor(private tagService: TagService,
-              private snackbarService: SnackbarService,
-              private route: ActivatedRoute,
-              private router: Router,
-              private dialogService: DialogService,
-              private authService: AuthService) { }
+  constructor(
+    private tagService: TagService,
+    private snackbarService: SnackbarService,
+    private route: ActivatedRoute,
+    private router: Router,
+    private dialogService: DialogService,
+    private authService: AuthService,
+  ) {}
 
   ngOnInit() {
     this.tag = this.route.snapshot.data['tag'];
@@ -44,7 +48,7 @@ export class TagComponent implements OnInit {
   }
 
   update() {
-    this.tagService.update(this.tag.id, this.tag).subscribe(data => {
+    this.tagService.update(this.tag.id, this.tag).subscribe((data) => {
       this.tag = data;
       this.tagForm.reset(Object.assign({}, this.tag));
       this.snackbarService.open('Sharding tag updated');
@@ -55,13 +59,14 @@ export class TagComponent implements OnInit {
     event.preventDefault();
     this.dialogService
       .confirm('Delete Sharding Tag', 'Are you sure you want to delete this sharding tag ?')
-      .subscribe(res => {
-        if (res) {
-          this.tagService.delete(this.tag.id).subscribe(response => {
-            this.snackbarService.open('Sharding tag deleted');
-            this.router.navigate(['/settings', 'tags']);
-          });
-        }
-      });
+      .pipe(
+        filter((res) => res),
+        switchMap(() => this.tagService.delete(this.tag.id)),
+        tap(() => {
+          this.snackbarService.open('Sharding tag deleted');
+          this.router.navigate(['/settings', 'tags']);
+        }),
+      )
+      .subscribe();
   }
 }

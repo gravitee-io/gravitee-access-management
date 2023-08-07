@@ -23,10 +23,9 @@ describe('WidgetChartPieComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    declarations: [WidgetChartPieComponent],
-    teardown: { destroyAfterEach: false }
-})
-    .compileComponents();
+      declarations: [WidgetChartPieComponent],
+      teardown: { destroyAfterEach: false },
+    }).compileComponents();
   }));
 
   beforeEach(() => {

@@ -18,12 +18,13 @@
 <div>
   <div>
     <div fxFlex="70">
-      <form (keydown.enter)="false" (ngSubmit)="patch()">
-
-        <mfa-select [factors]="factors"
-                    [applicationFactors]="application.factors"
-                    [editMode]="editMode"
-                    (select-factor)="selectFactor($event)"></mfa-select>
+      <form (keydown.enter)="(false)" (ngSubmit)="patch()">
+        <mfa-select
+          [factors]="factors"
+          [applicationFactors]="application.factors"
+          [editMode]="editMode"
+          (select-factor)="selectFactor($event)"
+        ></mfa-select>
 
         <mfa-activate
           *ngIf="hasFactors() && hasSelectedFactors()"
@@ -46,7 +47,7 @@
           (on-rule-change)="updateStepUpRule($event)"
         ></mfa-step-up>
 
-        <div fxLayout="row" style="margin-top: 20px;" *hasPermission="['application_factor_update']">
+        <div fxLayout="row" style="margin-top: 20px" *hasPermission="['application_factor_update']">
           <button mat-raised-button color="primary" type="submit" [disabled]="!formChanged">SAVE</button>
         </div>
       </form>
@@ -55,8 +56,10 @@
     <div class="gv-page-description" fxFlex>
       <h3>Multi-factor Authentication</h3>
       <div class="gv-page-description-content">
-        <p>By selecting a MFA authentication method, the end-user will be prompted to process the MFA verification after
-          he has been authenticated.</p>
+        <p>
+          By selecting a MFA authentication method, the end-user will be prompted to process the MFA verification after he has been
+          authenticated.
+        </p>
       </div>
     </div>
   </div>

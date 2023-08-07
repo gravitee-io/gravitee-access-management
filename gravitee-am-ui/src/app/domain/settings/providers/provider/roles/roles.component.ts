@@ -13,20 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit, Inject, ViewChild, HostListener} from '@angular/core';
+import { Component, OnInit, Inject, ViewChild, HostListener } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
-import { SnackbarService } from "../../../../../services/snackbar.service";
-import { ActivatedRoute, Router } from "@angular/router";
-import { ProviderService } from "../../../../../services/provider.service";
-import { DialogService } from "../../../../../services/dialog.service";
-import { AppConfig } from "../../../../../../config/app.config";
-import { NgForm } from "@angular/forms";
-import {OrganizationService} from "../../../../../services/organization.service";
+import { ActivatedRoute, Router } from '@angular/router';
+import { NgForm } from '@angular/forms';
+
+import { SnackbarService } from '../../../../../services/snackbar.service';
+import { ProviderService } from '../../../../../services/provider.service';
+import { DialogService } from '../../../../../services/dialog.service';
+import { OrganizationService } from '../../../../../services/organization.service';
 
 @Component({
   selector: 'app-roles',
   templateUrl: './roles.component.html',
-  styleUrls: ['./roles.component.scss']
+  styleUrls: ['./roles.component.scss'],
 })
 export class ProviderRolesComponent implements OnInit {
   private domainId: string;
@@ -35,13 +35,14 @@ export class ProviderRolesComponent implements OnInit {
   roles: any;
   providerRoleMapper: any = {};
 
-  constructor(private snackbarService: SnackbarService,
-              private providerService: ProviderService,
-              private dialogService: DialogService,
-              private dialog: MatDialog,
-              private route: ActivatedRoute,
-              private router: Router) {
-  }
+  constructor(
+    private snackbarService: SnackbarService,
+    private providerService: ProviderService,
+    private dialogService: DialogService,
+    private dialog: MatDialog,
+    private route: ActivatedRoute,
+    private router: Router,
+  ) {}
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
@@ -56,21 +57,24 @@ export class ProviderRolesComponent implements OnInit {
   }
 
   add() {
-    let dialogRef = this.dialog.open(CreateRoleMapperComponent, { data: { domain: this.domainId, roles: this.roles, organizationContext: this.organizationContext }, width : '700px'});
+    const dialogRef = this.dialog.open(CreateRoleMapperComponent, {
+      data: { domain: this.domainId, roles: this.roles, organizationContext: this.organizationContext },
+      width: '700px',
+    });
 
-    dialogRef.afterClosed().subscribe(mapper => {
+    dialogRef.afterClosed().subscribe((mapper) => {
       if (mapper) {
-        let errorMessages = [];
+        const errorMessages = [];
         let roleMapped = false;
         let mapperRoles;
 
-        if(Array.isArray(mapper.roles)) {
+        if (Array.isArray(mapper.roles)) {
           mapperRoles = mapper.roles;
         } else {
-          mapperRoles = [ mapper.roles ];
+          mapperRoles = [mapper.roles];
         }
 
-        mapperRoles.forEach(role => {
+        mapperRoles.forEach((role) => {
           // no mapping for this role
           if (!this.providerRoleMapper.hasOwnProperty(role)) {
             if (mapper.user) {
@@ -79,7 +83,7 @@ export class ProviderRolesComponent implements OnInit {
             roleMapped = true;
           } else {
             // check uniqueness
-            let users = this.providerRoleMapper[role];
+            const users = this.providerRoleMapper[role];
             // user
             if (mapper.user) {
               if (users.indexOf(mapper.user) === -1) {
@@ -107,20 +111,20 @@ export class ProviderRolesComponent implements OnInit {
   update() {
     this.provider.configuration = this.provider.configuration ? JSON.parse(this.provider.configuration) : {};
     this.provider.roleMapper = this.providerRoleMapper;
-    this.providerService.update(this.domainId, this.provider.id, this.provider, this.organizationContext).subscribe(data => {
-      this.snackbarService.open("Role mapping updated");
-    })
+    this.providerService.update(this.domainId, this.provider.id, this.provider, this.organizationContext).subscribe(() => {
+      this.snackbarService.open('Role mapping updated');
+    });
   }
 
   deleteUserFromRole(role, user, event) {
     event.preventDefault();
     this.dialogService
       .confirm('Delete entry from role', `Are you sure you want to remove this entry from '${this.getRole(role)}' role ?`)
-      .subscribe(res => {
+      .subscribe((res) => {
         if (res) {
-          let users = this.providerRoleMapper[role];
-          this.providerRoleMapper[role] = users.filter(_user => _user !== user);
-          if (this.providerRoleMapper[role].length == 0) {
+          const users = this.providerRoleMapper[role];
+          this.providerRoleMapper[role] = users.filter((_user) => _user !== user);
+          if (this.providerRoleMapper[role].length === 0) {
             delete this.providerRoleMapper[role];
           }
           this.update();
@@ -129,7 +133,7 @@ export class ProviderRolesComponent implements OnInit {
   }
 
   getRole(id): string {
-    return this.roles.filter((role) => role.id === id).map(role => role.name);
+    return this.roles.filter((role) => role.id === id).map((role) => role.name);
   }
 
   get providerRoles(): string[] {
@@ -141,7 +145,7 @@ export class ProviderRolesComponent implements OnInit {
   }
 
   get isEmpty() {
-    return !this.providerRoleMapper || this.providerRoles.length == 0;
+    return !this.providerRoleMapper || this.providerRoles.length === 0;
   }
 }
 
@@ -154,16 +158,21 @@ export class CreateRoleMapperComponent {
   spelGrammar: any;
   rule: string;
 
-  constructor(@Inject(MAT_DIALOG_DATA) public data: any,
-              public dialogRef: MatDialogRef<CreateRoleMapperComponent>,
-              private organizationService: OrganizationService) {
-    this.rule = "";
+  constructor(
+    @Inject(MAT_DIALOG_DATA) public data: any,
+    public dialogRef: MatDialogRef<CreateRoleMapperComponent>,
+    private organizationService: OrganizationService,
+  ) {
+    this.rule = '';
   }
 
   ngOnInit() {
-    this.organizationService.spelGrammar().toPromise().then((response) => {
-      this.spelGrammar = response;
-    });
+    this.organizationService
+      .spelGrammar()
+      .toPromise()
+      .then((response) => {
+        this.spelGrammar = response;
+      });
   }
 
   getGrammar() {
@@ -171,22 +180,25 @@ export class CreateRoleMapperComponent {
       return Promise.resolve(this.spelGrammar);
     }
 
-    return this.organizationService.spelGrammar().toPromise().then((response) => {
-      this.spelGrammar = response;
-      return this.spelGrammar;
-    });
+    return this.organizationService
+      .spelGrammar()
+      .toPromise()
+      .then((response) => {
+        this.spelGrammar = response;
+        return this.spelGrammar;
+      });
   }
 
   @HostListener(':gv-expression-language:ready', ['$event.detail'])
-  setGrammar({currentTarget}) {
-    this.getGrammar().then((grammar)=> {
+  setGrammar({ currentTarget }) {
+    this.getGrammar().then((grammar) => {
       currentTarget.grammar = grammar;
       currentTarget.requestUpdate();
     });
-  };
+  }
 
   get formInvalid() {
-    let formValue = this.form.value;
+    const formValue = this.form.value;
     return !formValue.user;
   }
 

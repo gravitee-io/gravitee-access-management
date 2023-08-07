@@ -16,19 +16,20 @@
 
 -->
 <div fxLayout="column">
-  <p class="gv-plugin-creation-description">
-    Choose how your alerts will be emitted.
-    It could be any of the following supported channels
-  </p>
+  <p class="gv-plugin-creation-description">Choose how your alerts will be emitted. It could be any of the following supported channels</p>
 
   <div *ngIf="notifiers.length > 0" fxLayout="row wrap" fxFlex fxLayoutGap="10px" fxLayoutAlign="center">
-    <mat-card *ngFor="let n of notifiers" fxFlex="30" [class.selected]="alertNotifier.id === n.id"
-              (click)="selectNotifier(n)"
-              (keyup.enter)="selectNotifier(n)"
-              tabIndex="0">
+    <mat-card
+      *ngFor="let n of notifiers"
+      fxFlex="30"
+      [class.selected]="alertNotifier.id === n.id"
+      (click)="selectNotifier(n)"
+      (keyup.enter)="selectNotifier(n)"
+      tabIndex="0"
+    >
       <mat-card-content>
-        <div class="identity-provider__icon" [innerHTML]="getNotifierIcon(n) | safe:'html'"></div>
-        {{n.name}}
+        <div class="identity-provider__icon" [innerHTML]="getNotifierIcon(n) | safe : 'html'"></div>
+        {{ n.name }}
       </mat-card-content>
     </mat-card>
   </div>

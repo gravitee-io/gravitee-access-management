@@ -13,16 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit, ViewChild} from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { MatStepper } from '@angular/material/stepper';
-import {ActivatedRoute, Router} from '@angular/router';
-import {SnackbarService} from '../../../../services/snackbar.service';
-import {ResourceService} from '../../../../services/resource.service';
+import { ActivatedRoute, Router } from '@angular/router';
+
+import { SnackbarService } from '../../../../services/snackbar.service';
+import { ResourceService } from '../../../../services/resource.service';
 
 @Component({
   selector: 'app-resource-creation',
   templateUrl: './resource-creation.component.html',
-  styleUrls: ['./resource-creation.component.scss']
+  styleUrls: ['./resource-creation.component.scss'],
 })
 export class ResourceCreationComponent implements OnInit {
   private domainId: string;
@@ -30,10 +31,12 @@ export class ResourceCreationComponent implements OnInit {
   configurationIsValid = true;
   @ViewChild('stepper', { static: true }) stepper: MatStepper;
 
-  constructor(private resourceService: ResourceService,
-              private snackbarService: SnackbarService,
-              private router: Router,
-              private route: ActivatedRoute) { }
+  constructor(
+    private resourceService: ResourceService,
+    private snackbarService: SnackbarService,
+    private router: Router,
+    private route: ActivatedRoute,
+  ) {}
 
   ngOnInit(): void {
     this.domainId = this.route.snapshot.data['domain']?.id;
@@ -41,16 +44,14 @@ export class ResourceCreationComponent implements OnInit {
 
   create() {
     this.resource.configuration = JSON.stringify(this.resource.configuration);
-    this.resourceService.create(this.domainId, this.resource).subscribe(data => {
+    this.resourceService.create(this.domainId, this.resource).subscribe((data) => {
       this.snackbarService.open('Resource ' + data.name + ' created');
       this.router.navigate(['..', data.id], { relativeTo: this.route });
     });
   }
 
   stepperValid() {
-    return this.resource &&
-      this.resource.name &&
-      this.configurationIsValid;
+    return this.resource && this.resource.name && this.configurationIsValid;
   }
 
   isHttpFactorResource() {
@@ -60,5 +61,4 @@ export class ResourceCreationComponent implements OnInit {
     }
     return false;
   }
-
 }

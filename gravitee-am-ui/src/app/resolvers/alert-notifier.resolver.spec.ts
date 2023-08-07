@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 import { TestBed, inject } from '@angular/core/testing';
-import {AlertNotifierResolver} from "./alert-notifier.resolver";
 
+import { AlertNotifierResolver } from './alert-notifier.resolver';
 
 describe('AlertNotifierResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-    providers: [AlertNotifierResolver],
-    teardown: { destroyAfterEach: false }
-});
+      providers: [AlertNotifierResolver],
+      teardown: { destroyAfterEach: false },
+    });
   });
 
   it('should ...', inject([AlertNotifierResolver], (service: AlertNotifierResolver) => {

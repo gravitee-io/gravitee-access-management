@@ -16,15 +16,13 @@
 
 -->
 <div fxLayout="column">
-  <p class="gv-plugin-creation-description">
-    Configure your alert notifier.
-  </p>
+  <p class="gv-plugin-creation-description">Configure your alert notifier.</p>
   <div>
     <form fxLayout="column">
       <div class="gv-form-section">
         <mat-form-field appearance="outline" floatLabel="always">
           <mat-label>Name</mat-label>
-          <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="alertNotifier.name" required>
+          <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="alertNotifier.name" required />
           <mat-hint>Notifier name</mat-hint>
         </mat-form-field>
       </div>
@@ -35,8 +33,11 @@
           <mat-divider></mat-divider>
         </div>
         <div>
-          <alert-notifier-form [notifierConfiguration]="configuration" [notifierSchema]="notifierSchema"
-                               (configurationCompleted)="enableNotifierCreation($event)"></alert-notifier-form>
+          <alert-notifier-form
+            [notifierConfiguration]="configuration"
+            [notifierSchema]="notifierSchema"
+            (configurationCompleted)="enableNotifierCreation($event)"
+          ></alert-notifier-form>
         </div>
       </div>
     </form>

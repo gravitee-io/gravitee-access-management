@@ -13,16 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute} from '@angular/router';
-import {ApplicationService} from '../../../../../services/application.service';
-import {SnackbarService} from '../../../../../services/snackbar.service';
-import {AuthService} from '../../../../../services/auth.service';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+
+import { ApplicationService } from '../../../../../services/application.service';
+import { SnackbarService } from '../../../../../services/snackbar.service';
+import { AuthService } from '../../../../../services/auth.service';
 
 @Component({
   selector: 'app-application-cookie-settings',
   templateUrl: './cookie.component.html',
-  styleUrls: ['./cookie.component.scss']
+  styleUrls: ['./cookie.component.scss'],
 })
 export class ApplicationCookieSettingsComponent implements OnInit {
   private domainId: string;
@@ -30,26 +31,28 @@ export class ApplicationCookieSettingsComponent implements OnInit {
   cookieSettings: any;
   readonly = false;
 
-  constructor(private route: ActivatedRoute,
-              private applicationService: ApplicationService,
-              private authService: AuthService,
-              private snackbarService: SnackbarService) {
-  }
+  constructor(
+    private route: ActivatedRoute,
+    private applicationService: ApplicationService,
+    private authService: AuthService,
+    private snackbarService: SnackbarService,
+  ) {}
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
     this.application = this.route.snapshot.data['application'];
-    this.cookieSettings = this.application.settings.cookieSettings || {'inherited': true};
+    this.cookieSettings = this.application.settings.cookieSettings || { inherited: true };
     this.readonly = !this.authService.hasPermissions(['application_settings_update']);
   }
 
   updateCookieSettings(cookieSettings) {
     this.cookieSettings = cookieSettings;
-    this.applicationService.patch(this.domainId, this.application.id,
-      {'settings': {'cookieSettings': cookieSettings}}).subscribe(data => {
-      this.application = data;
-      this.route.snapshot.data['application'] = this.application;
-      this.snackbarService.open('Application updated');
-    });
+    this.applicationService
+      .patch(this.domainId, this.application.id, { settings: { cookieSettings: cookieSettings } })
+      .subscribe((data) => {
+        this.application = data;
+        this.route.snapshot.data['application'] = this.application;
+        this.snackbarService.open('Application updated');
+      });
   }
 }

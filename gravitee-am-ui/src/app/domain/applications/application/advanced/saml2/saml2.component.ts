@@ -13,16 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit, ViewChild} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
-import {ApplicationService} from "../../../../../services/application.service";
-import {SnackbarService} from "../../../../../services/snackbar.service";
-import {AuthService} from "../../../../../services/auth.service";
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+
+import { ApplicationService } from '../../../../../services/application.service';
+import { SnackbarService } from '../../../../../services/snackbar.service';
+import { AuthService } from '../../../../../services/auth.service';
 
 @Component({
   selector: 'app-application-saml2',
   templateUrl: './saml2.component.html',
-  styleUrls: ['./saml2.component.scss']
+  styleUrls: ['./saml2.component.scss'],
 })
 export class ApplicationSaml2Component implements OnInit {
   @ViewChild('samlSettingsForm', { static: true }) form: any;
@@ -34,30 +35,31 @@ export class ApplicationSaml2Component implements OnInit {
   certificates: any[] = [];
   certificatePublicKeys: any[] = [];
 
-  constructor(private router: Router,
-              private route: ActivatedRoute,
-              private applicationService: ApplicationService,
-              private authService: AuthService,
-              private snackbarService: SnackbarService) {
-  }
+  constructor(
+    private router: Router,
+    private route: ActivatedRoute,
+    private applicationService: ApplicationService,
+    private authService: AuthService,
+    private snackbarService: SnackbarService,
+  ) {}
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
     this.application = this.route.snapshot.data['application'];
     this.certificates = this.route.snapshot.data['certificates'];
-    this.applicationSamlSettings = (this.application.settings == null) ? {} : this.application.settings.saml || {};
+    this.applicationSamlSettings = this.application.settings == null ? {} : this.application.settings.saml || {};
     this.editMode = this.authService.hasPermissions(['application_saml_update']);
   }
 
   patch() {
-    this.applicationSamlSettings.certificate = (this.applicationSamlSettings.certificate) ? this.applicationSamlSettings.certificate : null;
-    let settings = {
-      'settings': {
-        'saml': this.applicationSamlSettings
-      }
+    this.applicationSamlSettings.certificate = this.applicationSamlSettings.certificate ? this.applicationSamlSettings.certificate : null;
+    const settings = {
+      settings: {
+        saml: this.applicationSamlSettings,
+      },
     };
-    this.applicationService.patch(this.domainId, this.application.id, settings).subscribe(data => {
-      this.router.navigate(['.'], { relativeTo: this.route, queryParams: { 'reload': true }});
+    this.applicationService.patch(this.domainId, this.application.id, settings).subscribe((data) => {
+      this.router.navigate(['.'], { relativeTo: this.route, queryParams: { reload: true } });
       this.formChanged = false;
       this.application = data;
       this.form.reset(this.application.settings.saml);

@@ -18,24 +18,23 @@ import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { ApplicationResourcePolicyComponent } from './policy.component';
 
 describe('ApplicationResourcePolicyComponent', () => {
-    let component: ApplicationResourcePolicyComponent;
-    let fixture: ComponentFixture<ApplicationResourcePolicyComponent>;
+  let component: ApplicationResourcePolicyComponent;
+  let fixture: ComponentFixture<ApplicationResourcePolicyComponent>;
 
-    beforeEach(waitForAsync(() => {
-        TestBed.configureTestingModule({
-    declarations: [ApplicationResourcePolicyComponent],
-    teardown: { destroyAfterEach: false }
-})
-            .compileComponents();
-    }));
+  beforeEach(waitForAsync(() => {
+    TestBed.configureTestingModule({
+      declarations: [ApplicationResourcePolicyComponent],
+      teardown: { destroyAfterEach: false },
+    }).compileComponents();
+  }));
 
-    beforeEach(() => {
-        fixture = TestBed.createComponent(ApplicationResourcePolicyComponent);
-        component = fixture.componentInstance;
-        fixture.detectChanges();
-    });
+  beforeEach(() => {
+    fixture = TestBed.createComponent(ApplicationResourcePolicyComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
 
-    it('should be created', () => {
-        expect(component).toBeTruthy();
-    });
+  it('should be created', () => {
+    expect(component).toBeTruthy();
+  });
 });

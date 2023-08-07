@@ -20,9 +20,9 @@ import { EnvironmentResolver } from './environment-resolver.service';
 describe('EnvironmentResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-    providers: [EnvironmentResolver],
-    teardown: { destroyAfterEach: false }
-});
+      providers: [EnvironmentResolver],
+      teardown: { destroyAfterEach: false },
+    });
   });
 
   it('should ...', inject([EnvironmentResolver], (service: EnvironmentResolver) => {

@@ -13,20 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, Input, OnChanges, OnInit, SimpleChanges} from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 
 @Component({
   selector: 'app-help-tips',
   templateUrl: './help-tips.component.html',
-  styleUrls: ['./help-tips.component.scss']
+  styleUrls: ['./help-tips.component.scss'],
 })
 export class HelpTipsThemeComponent implements OnInit, OnChanges {
-
   @Input('template') template: string;
   data: any = {};
-
-  constructor() {
-  }
 
   ngOnInit() {
     this.loadTemplate(this.template);

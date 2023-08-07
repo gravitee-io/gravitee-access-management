@@ -17,15 +17,14 @@
 -->
 <div fxLayout="column">
   <p class="gv-plugin-creation-description">
-    Choose how your users will connect to the authorization server.
-    That could be an Active Directory or a corporate authentication service.
+    Choose how your users will connect to the authorization server. That could be an Active Directory or a corporate authentication service.
   </p>
 
   <div fxLayout="row" fxFlex>
     <mat-form-field appearance="outline" floatLabel="always">
       <mat-icon matPrefix>search</mat-icon>
       <mat-label>Filter providers...</mat-label>
-      <input matInput type="search" [(ngModel)]="filter" autocomplete="off">
+      <input matInput type="search" [(ngModel)]="filter" autocomplete="off" />
       <button mat-button mat-icon-button matSuffix (click)="clear()" *ngIf="filter">
         <mat-icon>close</mat-icon>
       </button>
@@ -33,17 +32,19 @@
   </div>
 
   <div fxLayout="row wrap" fxFlex fxLayoutGap="10px" fxLayoutAlign="center">
-
-    <mat-card *ngFor="let idp of getFilteredIdentities()" fxFlex="30" [class.selected]="provider.type === idp.id"
-              (click)="selectProviderType(idp)"
-              (keyup.enter)="selectProviderType(idp)"
-              tabIndex="0"
-              [gioLicense]="idp">
+    <mat-card
+      *ngFor="let idp of getFilteredIdentities()"
+      fxFlex="30"
+      [class.selected]="provider.type === idp.id"
+      (click)="selectProviderType(idp)"
+      (keyup.enter)="selectProviderType(idp)"
+      tabIndex="0"
+      [gioLicense]="idp"
+    >
       <mat-card-content>
-        <div class="identity-provider__icon" [innerHTML]="getIcon(idp) | safe:'html'"></div>
-        {{displayName(idp)}}
+        <div class="identity-provider__icon" [innerHTML]="getIcon(idp) | safe : 'html'"></div>
+        {{ displayName(idp) }}
       </mat-card-content>
     </mat-card>
-
   </div>
 </div>

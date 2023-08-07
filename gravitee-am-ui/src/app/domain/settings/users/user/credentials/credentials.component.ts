@@ -15,6 +15,8 @@
  */
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { filter, switchMap, tap } from 'rxjs/operators';
+
 import { SnackbarService } from '../../../../../services/snackbar.service';
 import { DialogService } from '../../../../../services/dialog.service';
 import { UserService } from '../../../../../services/user.service';
@@ -23,7 +25,7 @@ import { AuthService } from '../../../../../services/auth.service';
 @Component({
   selector: 'app-user-credentials',
   templateUrl: './credentials.component.html',
-  styleUrls: ['./credentials.component.scss']
+  styleUrls: ['./credentials.component.scss'],
 })
 export class UserCredentialsComponent implements OnInit {
   private domainId: string;
@@ -31,13 +33,14 @@ export class UserCredentialsComponent implements OnInit {
   private credentials: any[];
   canRevoke: boolean;
 
-  constructor(private route: ActivatedRoute,
-              private router: Router,
-              private snackbarService: SnackbarService,
-              private dialogService: DialogService,
-              private userService: UserService,
-              private authService: AuthService) {
-  }
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private snackbarService: SnackbarService,
+    private dialogService: DialogService,
+    private userService: UserService,
+    private authService: AuthService,
+  ) {}
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
@@ -54,18 +57,19 @@ export class UserCredentialsComponent implements OnInit {
     event.preventDefault();
     this.dialogService
       .confirm('Remove WebAuthn credential', 'Are you sure you want to remove this credential ?')
-      .subscribe(res => {
-        if (res) {
-          this.userService.removeCredential(this.domainId, this.user.id, credential.id).subscribe(response => {
-            this.snackbarService.open('Credential deleted');
-            this.loadCredentials();
-          });
-        }
-      });
+      .pipe(
+        filter((res) => res),
+        switchMap(() => this.userService.removeCredential(this.domainId, this.user.id, credential.id)),
+        tap(() => {
+          this.snackbarService.open('Credential deleted');
+          this.loadCredentials();
+        }),
+      )
+      .subscribe();
   }
 
   loadCredentials() {
-    this.userService.credentials(this.domainId, this.user.id).subscribe(credentials => {
+    this.userService.credentials(this.domainId, this.user.id).subscribe((credentials) => {
       this.credentials = credentials;
     });
   }

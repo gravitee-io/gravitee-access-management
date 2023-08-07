@@ -13,22 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Injectable} from '@angular/core';
-import {ActivatedRouteSnapshot, Resolve, RouterStateSnapshot} from '@angular/router';
-import {EmailService} from '../services/email.service';
-import {Observable} from 'rxjs';
+import { Injectable } from '@angular/core';
+import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
+import { Observable } from 'rxjs';
+
+import { EmailService } from '../services/email.service';
 
 @Injectable()
 export class EmailResolver implements Resolve<any> {
+  constructor(private emailService: EmailService) {}
 
-  constructor(private emailService: EmailService) { }
-
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
+  resolve(route: ActivatedRouteSnapshot): Observable<any> | Promise<any> | any {
     const emailTemplate = route.queryParams['template'];
     const domainId = route.parent.data['domain'].id;
     const appId = route.paramMap.get('appId');
 
     return this.emailService.get(domainId, appId, emailTemplate);
   }
-
 }

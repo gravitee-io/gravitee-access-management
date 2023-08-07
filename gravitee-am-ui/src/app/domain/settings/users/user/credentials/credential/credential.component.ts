@@ -13,19 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute} from '@angular/router';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-user-credential',
   templateUrl: './credential.component.html',
-  styleUrls: ['./credential.component.scss']
+  styleUrls: ['./credential.component.scss'],
 })
 export class UserCredentialComponent implements OnInit {
   credential: any;
 
-  constructor(private route: ActivatedRoute) {
-  }
+  constructor(private route: ActivatedRoute) {}
 
   ngOnInit() {
     this.credential = this.route.snapshot.data['credential'];

@@ -17,15 +17,22 @@
 -->
 <div class="gv-page-container">
   <a [routerLink]="['..']" class="gv-back-link"><small><< Back to device identifier plugins</small></a>
-  <h1>{{deviceIdentifier.name}}</h1>
+  <h1>{{ deviceIdentifier.name }}</h1>
   <div fxLayout="row">
     <div fxLayout="column" fxFlex="70">
       <form #deviceIdentifierForm="ngForm">
         <div class="gv-form-section">
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Name</mat-label>
-            <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="deviceIdentifier.name" required
-                   [readonly]="!editMode">
+            <input
+              matInput
+              type="text"
+              placeholder="Name"
+              name="name"
+              [(ngModel)]="deviceIdentifier.name"
+              required
+              [readonly]="!editMode"
+            />
             <mat-hint>Device identifier name</mat-hint>
           </mat-form-field>
           <mat-form-field appearance="outline" floatLabel="always">
@@ -41,16 +48,26 @@
             <mat-divider></mat-divider>
           </div>
           <div>
-            <device-identifier-form *ngIf="deviceIdentifier" [deviceIdentifierConfiguration]="deviceIdentifierConfiguration"
-                                  [deviceIdentifierSchema]="deviceIdentifierSchema"
-                                  (configurationCompleted)="enableDeviceIdentifierDetectionUpdate($event)"></device-identifier-form>
+            <device-identifier-form
+              *ngIf="deviceIdentifier"
+              [deviceIdentifierConfiguration]="deviceIdentifierConfiguration"
+              [deviceIdentifierSchema]="deviceIdentifierSchema"
+              (configurationCompleted)="enableDeviceIdentifierDetectionUpdate($event)"
+            ></device-identifier-form>
           </div>
         </div>
 
         <div fxLayout="row" *ngIf="editMode">
-          <button mat-raised-button
-                  [disabled]="(!deviceIdentifierForm.valid || deviceIdentifierForm.pristine) && (!configurationIsValid || configurationPristine) && !formChanged"
-                  (click)="update()">SAVE
+          <button
+            mat-raised-button
+            [disabled]="
+              (!deviceIdentifierForm.valid || deviceIdentifierForm.pristine) &&
+              (!configurationIsValid || configurationPristine) &&
+              !formChanged
+            "
+            (click)="update()"
+          >
+            SAVE
           </button>
         </div>
       </form>

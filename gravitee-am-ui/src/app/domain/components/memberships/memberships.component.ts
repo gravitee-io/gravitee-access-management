@@ -13,17 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges} from '@angular/core';
-import {FormControl} from '@angular/forms';
-import {OrganizationService} from '../../../services/organization.service';
-import {DialogService} from '../../../services/dialog.service';
-import {AuthService} from '../../../services/auth.service';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
+import { FormControl } from '@angular/forms';
 import * as _ from 'lodash';
+import { filter, switchMap, tap } from 'rxjs/operators';
+
+import { OrganizationService } from '../../../services/organization.service';
+import { DialogService } from '../../../services/dialog.service';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-memberships',
   templateUrl: './memberships.component.html',
-  styleUrls: ['./memberships.component.scss']
+  styleUrls: ['./memberships.component.scss'],
 })
 export class MembershipsComponent implements OnInit, OnChanges {
   @Input('roleType') roleType: any;
@@ -46,24 +48,24 @@ export class MembershipsComponent implements OnInit, OnChanges {
   filteredGroups: any[];
   displayReset = false;
 
-  constructor(private organizationService: OrganizationService,
-              private dialogService: DialogService,
-              private authService: AuthService) {
+  constructor(private organizationService: OrganizationService, private dialogService: DialogService, private authService: AuthService) {
     this.userCtrl.valueChanges
-      .subscribe(searchTerm => {
-        if (searchTerm && typeof searchTerm === 'string') {
-          this.organizationService.searchUsers('q='+searchTerm + '*', 0, 30).subscribe(response => {
-            this.filteredUsers = response.data.filter(user => _.map(this.members, 'memberId').indexOf(user.id) === -1);
-          });
-        }
-      });
+      .pipe(
+        filter((searchTerm) => searchTerm && typeof searchTerm === 'string'),
+        switchMap((searchTerm) => this.organizationService.searchUsers('q=' + searchTerm + '*', 0, 30)),
+        tap((response) => {
+          this.filteredUsers = response.data.filter((user) => _.map(this.members, 'memberId').indexOf(user.id) === -1);
+        }),
+      )
+      .subscribe();
   }
 
   ngOnInit() {
     this.loadRoles();
     this.loadGroups();
-    const that = this;
-    setTimeout(function() { that.dataLoaded = true; }, 0);
+    setTimeout(() => {
+      this.dataLoaded = true;
+    }, 0);
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -98,29 +100,25 @@ export class MembershipsComponent implements OnInit, OnChanges {
 
   delete(membershipId, event) {
     event.preventDefault();
-    this.dialogService
-      .confirm('Delete member', 'Are you sure you want to delete this member ?')
-      .subscribe(res => {
-        if (res) {
-          this.membershipDeleted.emit(membershipId);
-          this.filterGroups();
-        }
-      });
+    this.dialogService.confirm('Delete member', 'Are you sure you want to delete this member ?').subscribe((res) => {
+      if (res) {
+        this.membershipDeleted.emit(membershipId);
+        this.filterGroups();
+      }
+    });
   }
 
   update(memberId, memberType, event) {
-    this.dialogService
-      .confirm('Updater member', 'Are you sure you want to change this membership ?')
-      .subscribe(res => {
-        if (res) {
-          const member = {};
-          member['memberId'] = memberId;
-          member['memberType'] = memberType;
-          member['role'] = event.value;
-          this.membershipUpdated.emit(member);
-          this.filterGroups();
-        }
-      });
+    this.dialogService.confirm('Updater member', 'Are you sure you want to change this membership ?').subscribe((res) => {
+      if (res) {
+        const member = {};
+        member['memberId'] = memberId;
+        member['memberType'] = memberType;
+        member['role'] = event.value;
+        this.membershipUpdated.emit(member);
+        this.filterGroups();
+      }
+    });
   }
 
   isEditable(membership) {
@@ -140,19 +138,19 @@ export class MembershipsComponent implements OnInit, OnChanges {
   }
 
   private loadRoles() {
-    this.organizationService.roles(this.roleType).subscribe(response => {
+    this.organizationService.roles(this.roleType).subscribe((response) => {
       this.roles = response;
     });
   }
 
   private loadGroups() {
-    this.organizationService.groups().subscribe(response => {
+    this.organizationService.groups().subscribe((response) => {
       this.groups = response.data;
       this.filterGroups();
     });
   }
 
   private filterGroups() {
-    this.filteredGroups = this.groups.filter(group => _.map(this.members, 'memberId').indexOf(group.id) === -1);
+    this.filteredGroups = this.groups.filter((group) => _.map(this.members, 'memberId').indexOf(group.id) === -1);
   }
 }

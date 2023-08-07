@@ -23,10 +23,9 @@ describe('WidgetChartLineComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    declarations: [WidgetChartLineComponent],
-    teardown: { destroyAfterEach: false }
-})
-    .compileComponents();
+      declarations: [WidgetChartLineComponent],
+      teardown: { destroyAfterEach: false },
+    }).compileComponents();
   }));
 
   beforeEach(() => {

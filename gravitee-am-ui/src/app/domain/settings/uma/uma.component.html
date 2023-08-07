@@ -21,13 +21,13 @@
     <div fxFlex="70">
       <form (ngSubmit)="save()">
         <div class="gv-form-section" fxLayout="column">
-          <mat-slide-toggle
-            (change)="enableUMA($event)"
-            [checked]="isUMAEnabled()" [disabled]="!editMode">
+          <mat-slide-toggle (change)="enableUMA($event)" [checked]="isUMAEnabled()" [disabled]="!editMode">
             User-Managed Access (UMA) 2.0 Support
           </mat-slide-toggle>
-          <mat-hint style="font-size: 75%;">Enable resource owner to grant access to his resource to a third requesting party through UMA policies.
-            UMA 2.0 service provider's configuration is available under <i>/uma/.well-known/uma2-configuration</i>.</mat-hint>
+          <mat-hint style="font-size: 75%"
+            >Enable resource owner to grant access to his resource to a third requesting party through UMA policies. UMA 2.0 service
+            provider's configuration is available under <i>/uma/.well-known/uma2-configuration</i>.</mat-hint
+          >
         </div>
         <div fxLayout="row" *ngIf="editMode">
           <button mat-raised-button color="primary" [disabled]="!formChanged" type="submit">SAVE</button>

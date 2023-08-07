@@ -19,8 +19,7 @@ import { MatDialogModule } from '@angular/material/dialog';
 
 import { GioLicenseDirective } from './gio-license.directive';
 import { GioLicenseService } from './gio-license.service';
-import {GioEeUnlockDialogModule} from "./gio-ee-unlock-dialog/gio-ee-unlock-dialog.module";
-
+import { GioEeUnlockDialogModule } from './gio-ee-unlock-dialog/gio-ee-unlock-dialog.module';
 
 @NgModule({
   imports: [CommonModule, MatDialogModule, GioEeUnlockDialogModule],

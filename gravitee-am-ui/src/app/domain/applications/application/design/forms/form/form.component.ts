@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute} from '@angular/router';
-import {AuthService} from '../../../../../../services/auth.service';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+
+import { AuthService } from '../../../../../../services/auth.service';
 
 @Component({
   selector: 'app-application-form',
   templateUrl: './form.component.html',
-  styleUrls: ['./form.component.scss']
+  styleUrls: ['./form.component.scss'],
 })
 export class ApplicationFormComponent implements OnInit {
   private domainId: string;
@@ -31,8 +32,7 @@ export class ApplicationFormComponent implements OnInit {
   editMode: boolean;
   deleteMode: boolean;
 
-  constructor(private route: ActivatedRoute,
-              private authService: AuthService) { }
+  constructor(private route: ActivatedRoute, private authService: AuthService) {}
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;

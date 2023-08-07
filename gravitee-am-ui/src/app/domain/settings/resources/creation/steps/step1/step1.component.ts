@@ -13,40 +13,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit, Input, OnDestroy} from '@angular/core';
-import { OrganizationService } from "../../../../../../services/organization.service";
-import {takeUntil, tap} from 'rxjs/operators';
-import {Subject} from 'rxjs';
-import {Plugin} from 'app/entities/plugins/Plugin';
+import { Component, OnInit, Input, OnDestroy } from '@angular/core';
+import { takeUntil, tap } from 'rxjs/operators';
+import { Subject } from 'rxjs';
+
+import { Plugin } from '../../../../../../entities/plugins/Plugin';
+import { OrganizationService } from '../../../../../../services/organization.service';
 
 @Component({
   selector: 'resource-creation-step1',
   templateUrl: './step1.component.html',
-  styleUrls: ['./step1.component.scss']
+  styleUrls: ['./step1.component.scss'],
 })
 export class ResourceCreationStep1Component implements OnInit, OnDestroy {
   private resourceTypes: any = {
-    'twilio-verify-am-resource' : 'Twilio Verify',
-    'smtp-am-resource' : 'SMTP',
-    'infobip-am-resource' : 'Infobip 2FA',
-    'http-factor-am-resource' : 'HTTP Factor'
+    'twilio-verify-am-resource': 'Twilio Verify',
+    'smtp-am-resource': 'SMTP',
+    'infobip-am-resource': 'Infobip 2FA',
+    'http-factor-am-resource': 'HTTP Factor',
   };
   @Input() resource: any;
   resources: Plugin[];
   private unsubscribe$: Subject<boolean> = new Subject<boolean>();
 
-  constructor(private organizationService: OrganizationService) {
-  }
+  constructor(private organizationService: OrganizationService) {}
 
   ngOnInit() {
-    this.organizationService.resources(true)
-        .pipe(
-            tap((resources) => {
-              this.resources = resources;
-            }),
-            takeUntil(this.unsubscribe$)
-        )
-        .subscribe();
+    this.organizationService
+      .resources(true)
+      .pipe(
+        tap((resources) => {
+          this.resources = resources;
+        }),
+        takeUntil(this.unsubscribe$),
+      )
+      .subscribe();
   }
 
   ngOnDestroy(): void {

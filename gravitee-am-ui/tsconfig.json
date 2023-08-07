@@ -2,13 +2,8 @@
   "compileOnSave": false,
   "compilerOptions": {
     "paths": {
-      "crypto": [
-        "../node_modules/crypto-browserify",
-      ],
-      "stream": [
-        "../node_modules/stream-browserify",
-        ".../node_modules/readable-stream"
-      ],
+      "crypto": ["../node_modules/crypto-browserify"],
+      "stream": ["../node_modules/stream-browserify", ".../node_modules/readable-stream"]
     },
     "downlevelIteration": true,
     "importHelpers": true,
@@ -22,13 +17,8 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "target": "es2015",
-    "types": [
-      "jest"
-    ],
-    "lib": [
-      "es2016",
-      "dom"
-    ],
+    "types": ["jest"],
+    "lib": ["es2016", "dom"],
     "module": "es2020"
   }
 }

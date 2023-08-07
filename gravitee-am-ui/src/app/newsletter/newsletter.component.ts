@@ -13,44 +13,46 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, HostListener, OnInit, ViewChild} from '@angular/core';
+import { Component, HostListener, OnInit, ViewChild } from '@angular/core';
 import '@gravitee/ui-components/wc/gv-newsletter-subscription';
-import {ActivatedRoute, Router} from "@angular/router";
-import {AuthService} from "../services/auth.service";
-import {SnackbarService} from "../services/snackbar.service";
+import { ActivatedRoute, Router } from '@angular/router';
+
+import { AuthService } from '../services/auth.service';
+import { SnackbarService } from '../services/snackbar.service';
 
 @Component({
   selector: 'app-newsletter',
   templateUrl: './newsletter.component.html',
-  styleUrls: ['./newsletter.component.scss']
+  styleUrls: ['./newsletter.component.scss'],
 })
 export class NewsletterComponent implements OnInit {
+  @ViewChild('newsletter', { static: true }) newsletter;
+  email = '';
+  taglines: string[];
 
-  @ViewChild('newsletter', {static: true}) newsletter;
-  email: string = '';
-  taglines : string[];
-
-  constructor(private route: ActivatedRoute,
-              private router: Router,
-              private snackbarService: SnackbarService,
-              private authService: AuthService) { }
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private snackbarService: SnackbarService,
+    private authService: AuthService,
+  ) {}
 
   ngOnInit() {
     this.taglines = this.route.snapshot.data['taglines'];
     if (this.taglines && this.taglines.length > 0) {
       this.newsletter.nativeElement.taglines = this.taglines;
     }
-    this.authService.userInfo().subscribe(user => {
-        this.email = user.email || '';
+    this.authService.userInfo().subscribe((user) => {
+      this.email = user.email || '';
     });
   }
 
   @HostListener(':gv-newsletter-subscription:subscribe', ['$event.detail'])
   onSubscribe(detail) {
-    this.authService.subscribeNewsletter(detail).subscribe(__ => {
+    this.authService.subscribeNewsletter(detail).subscribe((__) => {
       this.snackbarService.open('Your newsletter preference has been saved.');
       this.router.navigate(['/']);
-    })
+    });
   }
 
   @HostListener(':gv-newsletter-subscription:skip')

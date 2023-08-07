@@ -20,9 +20,9 @@ import { GroupService } from './group.service';
 describe('GroupService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-    providers: [GroupService],
-    teardown: { destroyAfterEach: false }
-});
+      providers: [GroupService],
+      teardown: { destroyAfterEach: false },
+    });
   });
 
   it('should be created', inject([GroupService], (service: GroupService) => {

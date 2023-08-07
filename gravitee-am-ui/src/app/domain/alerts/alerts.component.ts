@@ -13,22 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute, Router} from "@angular/router";
-import {AuthService} from "../../services/auth.service";
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-domain-alerts',
   templateUrl: './alerts.component.html',
-  styleUrls: ['./alerts.component.scss']
+  styleUrls: ['./alerts.component.scss'],
 })
 export class DomainAlertsComponent implements OnInit {
   alertStatus: any;
 
-  constructor(private router: Router,
-              private route: ActivatedRoute,
-              private authService: AuthService) {
-  }
+  constructor(private router: Router, private route: ActivatedRoute, private authService: AuthService) {}
 
   ngOnInit() {
     this.alertStatus = this.route.snapshot.data.alertStatus;
@@ -38,5 +36,4 @@ export class DomainAlertsComponent implements OnInit {
   private canNavigate(permissions): boolean {
     return this.authService.hasPermissions(permissions);
   }
-
 }

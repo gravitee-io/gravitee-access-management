@@ -20,9 +20,9 @@ import { EnvironmentService } from './environment.service';
 describe('EnvironmentService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-    providers: [EnvironmentService],
-    teardown: { destroyAfterEach: false }
-});
+      providers: [EnvironmentService],
+      teardown: { destroyAfterEach: false },
+    });
   });
 
   it('should ...', inject([EnvironmentService], (service: EnvironmentService) => {

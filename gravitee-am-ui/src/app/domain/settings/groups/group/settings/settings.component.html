@@ -21,13 +21,30 @@
       <div class="gv-form-section">
         <mat-form-field appearance="outline" floatLabel="always">
           <mat-label>Name</mat-label>
-          <input matInput type="text" placeholder="Group name" #name="ngModel" name="name" [(ngModel)]="group.name" required [readonly]="!editMode">
+          <input
+            matInput
+            type="text"
+            placeholder="Group name"
+            #name="ngModel"
+            name="name"
+            [(ngModel)]="group.name"
+            required
+            [readonly]="!editMode"
+          />
           <mat-hint>The name of the Group.</mat-hint>
           <mat-error *ngIf="name.errors?.required">Enter name</mat-error>
         </mat-form-field>
         <mat-form-field appearance="outline" floatLabel="always">
           <mat-label>Description</mat-label>
-          <input matInput type="text" placeholder="Description" #name="ngModel" name="description" [(ngModel)]="group.description" [readonly]="!editMode">
+          <input
+            matInput
+            type="text"
+            placeholder="Description"
+            #name="ngModel"
+            name="description"
+            [(ngModel)]="group.description"
+            [readonly]="!editMode"
+          />
           <mat-hint>The description of the Group.</mat-hint>
         </mat-form-field>
       </div>
@@ -51,17 +68,20 @@
         <mat-list-item>
           <mat-icon mat-list-icon>alarm_on</mat-icon>
           <h4 matLine>Created at</h4>
-          <p matLine>{{group.createdAt | humanDate}}</p>
+          <p matLine>{{ group.createdAt | humanDate }}</p>
         </mat-list-item>
         <mat-list-item>
           <mat-icon mat-list-icon>alarm</mat-icon>
           <h4 matLine>Last update</h4>
-          <p matLine>{{group.updatedAt | humanDate}}</p>
+          <p matLine>{{ group.updatedAt | humanDate }}</p>
         </mat-list-item>
         <mat-list-item>
           <mat-icon mat-list-icon>people</mat-icon>
           <h4 matLine>Members count</h4>
-          <p matLine><span *ngIf="!group.members || group.members.length == 0; else members">No member</span><ng-template #members>{{group.members.length}} members</ng-template></p>
+          <p matLine>
+            <span *ngIf="!group.members || group.members.length == 0; else members">No member</span
+            ><ng-template #members>{{ group.members.length }} members</ng-template>
+          </p>
         </mat-list-item>
       </mat-list>
     </div>

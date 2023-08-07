@@ -3,7 +3,7 @@
   flex-direction: row;
   width: 100%;
 
-  .mfa-title{
+  .mfa-title {
     width: 95%;
   }
 
@@ -12,7 +12,7 @@
     mat-chip-list {
       mat-chip {
         font-size: 11px;
-        opacity: 1.0;
+        opacity: 1;
         background-color: transparent;
         border: thin solid rgba(0, 0, 0, 0.2);
       }
@@ -23,7 +23,7 @@
 blockquote {
   padding: 15px;
   margin: 10px 0;
-  border-left: .25em solid rgba(0, 0, 0, .11);
+  border-left: 0.25em solid rgba(0, 0, 0, 0.11);
 
   p {
     color: inherit;
@@ -37,17 +37,17 @@ blockquote {
   }
 
   &.warning {
-    color: rgba(0, 0, 0, .535);
+    color: rgba(0, 0, 0, 0.535);
     background: #fff9c4;
     border-left-color: #fdd835;
     border-radius: 8px;
   }
 
-  &.info  {
-    background: #E3E7FC;
-    border: 1px solid #3B59F6;
+  &.info {
+    background: #e3e7fc;
+    border: 1px solid #3b59f6;
     border-radius: 8px;
-    color: #325AFE;
+    color: #325afe;
 
     font-style: normal;
     font-weight: 700;
@@ -57,4 +57,3 @@ blockquote {
     letter-spacing: 0.6px;
   }
 }
-

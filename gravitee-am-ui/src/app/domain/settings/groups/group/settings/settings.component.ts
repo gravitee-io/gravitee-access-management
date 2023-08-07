@@ -13,17 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit, ViewChild} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
-import {SnackbarService} from '../../../../../services/snackbar.service';
-import {DialogService} from '../../../../../services/dialog.service';
-import {GroupService} from '../../../../../services/group.service';
-import {AuthService} from '../../../../../services/auth.service';
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { filter, switchMap, tap } from 'rxjs/operators';
+
+import { SnackbarService } from '../../../../../services/snackbar.service';
+import { DialogService } from '../../../../../services/dialog.service';
+import { GroupService } from '../../../../../services/group.service';
+import { AuthService } from '../../../../../services/auth.service';
 
 @Component({
   selector: 'app-group-settings',
   templateUrl: './settings.component.html',
-  styleUrls: ['./settings.component.scss']
+  styleUrls: ['./settings.component.scss'],
 })
 export class GroupSettingsComponent implements OnInit {
   @ViewChild('groupForm', { static: true }) form: any;
@@ -33,12 +35,14 @@ export class GroupSettingsComponent implements OnInit {
   editMode: boolean;
   deleteMode: boolean;
 
-  constructor(private route: ActivatedRoute,
-              private router: Router,
-              private snackbarService: SnackbarService,
-              private dialogService: DialogService,
-              private groupService: GroupService,
-              private authService: AuthService) { }
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private snackbarService: SnackbarService,
+    private dialogService: DialogService,
+    private groupService: GroupService,
+    private authService: AuthService,
+  ) {}
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
@@ -54,7 +58,7 @@ export class GroupSettingsComponent implements OnInit {
   }
 
   update() {
-    this.groupService.update(this.domainId, this.group.id, this.group, this.organizationContext).subscribe(data => {
+    this.groupService.update(this.domainId, this.group.id, this.group, this.organizationContext).subscribe((data) => {
       this.group = data;
       this.form.reset(this.group);
       this.snackbarService.open('Group updated');
@@ -65,13 +69,14 @@ export class GroupSettingsComponent implements OnInit {
     event.preventDefault();
     this.dialogService
       .confirm('Delete Group', 'Are you sure you want to delete this group ?')
-      .subscribe(res => {
-        if (res) {
-          this.groupService.delete(this.domainId, this.group.id, this.organizationContext).subscribe(response => {
-            this.snackbarService.open('Group ' + this.group.name + ' deleted');
-            this.router.navigate(['../..'], { relativeTo: this.route});
-          });
-        }
-      });
+      .pipe(
+        filter((res) => res),
+        switchMap(() => this.groupService.delete(this.domainId, this.group.id, this.organizationContext)),
+        tap(() => {
+          this.snackbarService.open('Group ' + this.group.name + ' deleted');
+          this.router.navigate(['../..'], { relativeTo: this.route });
+        }),
+      )
+      .subscribe();
   }
 }

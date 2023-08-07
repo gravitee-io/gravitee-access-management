@@ -23,33 +23,31 @@
       <div class="gv-form-section">
         <mat-form-field appearance="outline" floatLabel="always">
           <mat-label>Name</mat-label>
-          <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="entrypoint.name" required>
+          <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="entrypoint.name" required />
           <mat-hint>A name for the entrypoint.</mat-hint>
         </mat-form-field>
 
         <mat-form-field appearance="outline" floatLabel="always">
           <mat-label>Description</mat-label>
-          <input matInput type="text" placeholder="Description" name="description" [(ngModel)]="entrypoint.description">
+          <input matInput type="text" placeholder="Description" name="description" [(ngModel)]="entrypoint.description" />
           <mat-hint>A description for the entrypoint.</mat-hint>
         </mat-form-field>
 
         <mat-form-field appearance="outline" floatLabel="always">
           <mat-label>Entrypoint url</mat-label>
-          <input matInput type="text" placeholder="Entrypoint" name="url" [(ngModel)]="entrypoint.url" required pattern="https?://.+">
+          <input matInput type="text" placeholder="Entrypoint" name="url" [(ngModel)]="entrypoint.url" required pattern="https?://.+" />
           <mat-hint>An url for the entrypoint.</mat-hint>
         </mat-form-field>
       </div>
       <div fxLayout="row" fxLayoutAlign="end">
-        <a mat-button [routerLink]="['..']" style="margin-right: 20px;">CANCEL</a>
+        <a mat-button [routerLink]="['..']" style="margin-right: 20px">CANCEL</a>
         <button mat-raised-button [disabled]="!entrypointForm.valid || entrypointForm.pristine" type="submit">CREATE</button>
       </div>
     </form>
     <div class="gv-page-description" fxFlex>
       <h3>Entrypoint ?</h3>
       <div class="gv-page-description-content">
-        <p>
-          An entrypoint allows you to display the url to use when end-user applications will contact the AM Gateway.
-        </p>
+        <p>An entrypoint allows you to display the url to use when end-user applications will contact the AM Gateway.</p>
       </div>
     </div>
   </div>

@@ -14,60 +14,65 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { HttpClient } from "@angular/common/http";
-import { AppConfig } from "../../config/app.config";
-import { merge, Observable, of } from "rxjs";
-import { mergeMap, toArray } from "rxjs/operators";
+import { HttpClient } from '@angular/common/http';
+import { merge, Observable, of } from 'rxjs';
+import { mergeMap, toArray } from 'rxjs/operators';
+
+import { AppConfig } from '../../config/app.config';
 
 @Injectable()
 export class RoleService {
   private rolesURL = AppConfig.settings.domainBaseURL;
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
   findAllByDomain(domainId): Observable<any> {
     const PAGE_SIZE = 50; // probably enough to get all roles at once, but just in case iterate on pages
-    return this.findByDomain(domainId, 0, PAGE_SIZE).pipe(mergeMap((p) => {
-      let iterations = Math.floor(p.totalCount / PAGE_SIZE) + (p.totalCount % PAGE_SIZE == 0 ? 0 : 1);
-      let pageRequests = [];
-      pageRequests[0] = of(... p.data);
-      for (let i = 1; i < iterations; ++i) {
-        pageRequests[i] = this.findByDomain(domainId, i, PAGE_SIZE)
-          .pipe(mergeMap((p) => {
-            return of(... p.data);
-          }));
-      }
+    return this.findByDomain(domainId, 0, PAGE_SIZE)
+      .pipe(
+        mergeMap((p) => {
+          const iterations = Math.floor(p.totalCount / PAGE_SIZE) + (p.totalCount % PAGE_SIZE === 0 ? 0 : 1);
+          const pageRequests = [];
+          pageRequests[0] = of(...p.data);
+          for (let i = 1; i < iterations; ++i) {
+            pageRequests[i] = this.findByDomain(domainId, i, PAGE_SIZE).pipe(
+              mergeMap((p) => {
+                return of(...p.data);
+              }),
+            );
+          }
 
-      return merge (...pageRequests);
-    })).pipe(toArray())
+          return merge(...pageRequests);
+        }),
+      )
+      .pipe(toArray());
   }
 
   findByDomain(domainId, page, size): Observable<any> {
-    return this.http.get<any>(this.rolesURL + domainId + "/roles?page=" + page + "&size=" + size);
+    return this.http.get<any>(this.rolesURL + domainId + '/roles?page=' + page + '&size=' + size);
   }
 
-  search(searchTerm, domainId,page, size): Observable<any> {
-    return this.http.get<any>(this.rolesURL + domainId + "/roles" + '?q=' + searchTerm + '&page=' + page + '&size=' + size);
+  search(searchTerm, domainId, page, size): Observable<any> {
+    return this.http.get<any>(this.rolesURL + domainId + '/roles' + '?q=' + searchTerm + '&page=' + page + '&size=' + size);
   }
 
   get(domainId, id): Observable<any> {
-    return this.http.get<any>(this.rolesURL + domainId + "/roles/" + id);
+    return this.http.get<any>(this.rolesURL + domainId + '/roles/' + id);
   }
 
   create(domainId, role): Observable<any> {
-    return this.http.post<any>(this.rolesURL + domainId + "/roles", role);
+    return this.http.post<any>(this.rolesURL + domainId + '/roles', role);
   }
 
   update(domainId, id, role): Observable<any> {
-    return this.http.put<any>(this.rolesURL + domainId + "/roles/" + id, {
-      'name' : role.name,
-      'description' : role.description,
-      'permissions' : role.permissions
+    return this.http.put<any>(this.rolesURL + domainId + '/roles/' + id, {
+      name: role.name,
+      description: role.description,
+      permissions: role.permissions,
     });
   }
 
   delete(domainId, id): Observable<any> {
-    return this.http.delete<any>(this.rolesURL + domainId + "/roles/" + id);
+    return this.http.delete<any>(this.rolesURL + domainId + '/roles/' + id);
   }
-
 }

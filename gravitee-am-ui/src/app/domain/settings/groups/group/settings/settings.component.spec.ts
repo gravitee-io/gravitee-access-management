@@ -15,7 +15,7 @@
  */
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
-import {GroupSettingsComponent} from './settings.component';
+import { GroupSettingsComponent } from './settings.component';
 
 describe('GroupSettingsComponent', () => {
   let component: GroupSettingsComponent;
@@ -23,10 +23,9 @@ describe('GroupSettingsComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    declarations: [GroupSettingsComponent],
-    teardown: { destroyAfterEach: false }
-})
-    .compileComponents();
+      declarations: [GroupSettingsComponent],
+      teardown: { destroyAfterEach: false },
+    }).compileComponents();
   }));
 
   beforeEach(() => {

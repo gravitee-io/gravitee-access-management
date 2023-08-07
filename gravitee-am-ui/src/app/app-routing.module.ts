@@ -13,214 +13,215 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {NgModule} from '@angular/core';
-import {RouterModule, Routes} from '@angular/router';
-import {LoginComponent} from './login/login.component';
-import {LoginCallbackComponent} from './login/callback/callback.component';
-import {DomainsComponent} from './settings/domains/domains.component';
-import {DomainComponent} from './domain/domain.component';
-import {DomainDashboardComponent} from './domain/dashboard/dashboard.component';
-import {DomainSettingsComponent} from './domain/settings/settings.component';
-import {DomainSettingsGeneralComponent} from './domain/settings/general/general.component';
-import {DomainSettingsOpenidClientRegistrationComponent} from './domain/settings/openid/client-registration/client-registration.component';
-import {ClientRegistrationSettingsComponent} from './domain/settings/openid/client-registration/settings/settings.component';
-import {ClientRegistrationDefaultScopeComponent} from './domain/settings/openid/client-registration/default-scope/default-scope.component';
-import {ClientRegistrationAllowedScopeComponent} from './domain/settings/openid/client-registration/allowed-scope/allowed-scope.component';
-import {ClientRegistrationTemplatesComponent} from './domain/settings/openid/client-registration/templates/templates.component';
-import {DomainSettingsCertificatesComponent} from './domain/settings/certificates/certificates.component';
-import {DomainSettingsProvidersComponent} from './domain/settings/providers/providers.component';
-import {DomainSettingsRolesComponent} from './domain/settings/roles/roles.component';
-import {DomainSettingsScopesComponent} from './domain/settings/scopes/scopes.component';
-import {DomainSettingsFormsComponent} from './domain/settings/forms/forms.component';
-import {DomainSettingsFormComponent} from './domain/settings/forms/form/form.component';
-import {DomainSettingsLoginComponent} from './domain/settings/login/login.component';
-import {DomainSettingsEmailsComponent} from './domain/settings/emails/emails.component';
-import {DomainSettingsEmailComponent} from './domain/settings/emails/email/email.component';
-import {DomainSettingsExtensionGrantsComponent} from './domain/settings/extension-grants/extension-grants.component';
-import {DomainSettingsAccountComponent} from './domain/settings/account/account.component';
-import {DomainSettingsSelfServiceAccountComponent} from './domain/settings/self-service-account/self-service-account.component';
-import {DomainSettingsMembershipsComponent} from './domain/settings/memberships/memberships.component';
-import {DomainSettingsFlowsComponent} from './domain/settings/flows/flows.component';
-import {DomainCreationComponent} from './domain/creation/domain-creation.component';
-import {ProviderCreationComponent} from './domain/settings/providers/creation/provider-creation.component';
-import {ProviderComponent} from './domain/settings/providers/provider/provider.component';
-import {LogoutCallbackComponent} from './logout/callback/callback.component';
-import {LogoutComponent} from './logout/logout.component';
-import {DomainsResolver} from './resolvers/domains.resolver';
-import {DomainResolver} from './resolvers/domain.resolver';
-import {DomainEntrypointResolver} from './resolvers/domain-entrypoint.resolver';
-import {DomainFlowsResolver} from './resolvers/domain-flows.resolver';
-import {ProvidersResolver} from './resolvers/providers.resolver';
-import {ProviderResolver} from './resolvers/provider.resolver';
-import {ProviderRolesComponent} from './domain/settings/providers/provider/roles/roles.component';
-import {ProviderSettingsComponent} from './domain/settings/providers/provider/settings/settings.component';
-import {ProviderMappersComponent} from './domain/settings/providers/provider/mappers/mappers.component';
-import {CertificatesResolver} from './resolvers/certificates.resolver';
-import {SignCertificatesResolver} from './resolvers/sign-certificates.resolver';
-import {CertificateCreationComponent} from './domain/settings/certificates/creation/certificate-creation.component';
-import {CertificateComponent} from './domain/settings/certificates/certificate/certificate.component';
-import {CertificateResolver} from './resolvers/certificate.resolver';
-import {RolesResolver} from './resolvers/roles.resolver';
-import {PageRolesResolver} from './resolvers/page-roles.resolver';
-import {RoleCreationComponent} from './domain/settings/roles/creation/role-creation.component';
-import {RoleComponent} from './domain/settings/roles/role/role.component';
-import {RoleResolver} from './resolvers/role.resolver';
-import {ScopeResolver} from './resolvers/scope.resolver';
-import {ScopesResolver} from './resolvers/scopes.resolver';
-import {ScopeCreationComponent} from './domain/settings/scopes/creation/scope-creation.component';
-import {ScopeComponent} from './domain/settings/scopes/scope/scope.component';
-import {SettingsComponent} from './settings/settings.component';
-import {SettingsMembershipsComponent} from './settings/memberships/memberships.component';
-import {UsersComponent} from './domain/settings/users/users.component';
-import {UserComponent} from './domain/settings/users/user/user.component';
-import {UserResolver} from './resolvers/user.resolver';
-import {UserCreationComponent} from './domain/settings/users/creation/user-creation.component';
-import {UserProfileComponent} from './domain/settings/users/user/profile/profile.component';
-import {UserApplicationsComponent} from './domain/settings/users/user/applications/applications.component';
-import {UserApplicationComponent} from './domain/settings/users/user/applications/application/application.component';
-import {UserRolesComponent} from './domain/settings/users/user/roles/roles.component';
-import {UserRolesResolver} from './resolvers/user-roles.resolver';
-import {DynamicUserRolesResolver} from './resolvers/dynamic-user-roles.resolver';
-import {UserFactorsComponent} from './domain/settings/users/user/factors/factors.component';
-import {UserCredentialsResolver} from './resolvers/user-credentials.resolver';
-import {UserCredentialResolver} from './resolvers/user-credential.resolver';
-import {UserCredentialsComponent} from './domain/settings/users/user/credentials/credentials.component';
-import {UserCredentialComponent} from './domain/settings/users/user/credentials/credential/credential.component';
-import {ExtensionGrantCreationComponent} from './domain/settings/extension-grants/creation/extension-grant-creation.component';
-import {ExtensionGrantComponent} from './domain/settings/extension-grants/extension-grant/extension-grant.component';
-import {ExtensionGrantsResolver} from './resolvers/extension-grants.resolver';
-import {ExtensionGrantResolver} from './resolvers/extension-grant.resolver';
-import {ManagementComponent} from './settings/management/management.component';
-import {ManagementGeneralComponent} from './settings/management/general/general.component';
-import {FormResolver} from './resolvers/form.resolver';
-import {GroupsResolver} from './resolvers/groups.resolver';
-import {GroupsComponent} from './domain/settings/groups/groups.component';
-import {GroupCreationComponent} from './domain/settings/groups/creation/group-creation.component';
-import {GroupResolver} from './resolvers/group.resolver';
-import {GroupComponent} from './domain/settings/groups/group/group.component';
-import {GroupSettingsComponent} from './domain/settings/groups/group/settings/settings.component';
-import {GroupMembersComponent} from './domain/settings/groups/group/members/members.component';
-import {GroupRolesComponent} from './domain/settings/groups/group/roles/roles.component';
-import {GroupRolesResolver} from './resolvers/group-roles.resolver';
-import {ScimComponent} from './domain/settings/scim/scim.component';
-import {EmailResolver} from './resolvers/email.resolver';
-import {ConsentsResolver} from './resolvers/consents.resolver';
-import {AuditResolver} from './resolvers/audit.resolver';
-import {AuditsComponent} from './domain/settings/audits/audits.component';
-import {AuditComponent} from './domain/settings/audits/audit/audit.component';
-import {AuditsSettingsComponent} from './domain/settings/audits/settings/settings.component';
-import {ReportersResolver} from './resolvers/reporters.resolver';
-import {ReporterResolver} from './resolvers/reporter.resolver';
-import {ReporterComponent} from './domain/settings/audits/settings/reporter/reporter.component';
-import {TagsResolver} from './resolvers/tags.resolver';
-import {TagsComponent} from './settings/management/tags/tags.component';
-import {TagCreationComponent} from './settings/management/tags/creation/tag-creation.component';
-import {TagComponent} from './settings/management/tags/tag/tag.component';
-import {TagResolver} from './resolvers/tag.resolver';
-import {GroupMembersResolver} from './resolvers/group-members.resolver';
-import {ApplicationsComponent} from './domain/applications/applications.component';
-import {ApplicationsResolver} from './resolvers/applications.resolver';
-import {ApplicationCreationComponent} from './domain/applications/creation/application-creation.component';
-import {ApplicationComponent} from './domain/applications/application/application.component';
-import {ApplicationOverviewComponent} from './domain/applications/application/overview/overview.component';
-import {ApplicationEndpointsComponent} from './domain/applications/application/endpoints/endpoints.component';
-import {ApplicationResolver} from './resolvers/application.resolver';
-import {ApplicationPermissionsResolver} from './resolvers/application-permissions.resolver';
-import {ApplicationIdPComponent} from './domain/applications/application/idp/idp.component';
-import {ApplicationDesignComponent} from './domain/applications/application/design/design.component';
-import {ApplicationFormsComponent} from './domain/applications/application/design/forms/forms.component';
-import {ApplicationFormComponent} from './domain/applications/application/design/forms/form/form.component';
-import {ApplicationEmailsComponent} from './domain/applications/application/design/emails/emails.component';
-import {ApplicationEmailComponent} from './domain/applications/application/design/emails/email/email.component';
-import {ApplicationAdvancedComponent} from './domain/applications/application/advanced/advanced.component';
-import {ApplicationGeneralComponent} from './domain/applications/application/advanced/general/general.component';
-import {PasswordPolicyComponent} from './domain/applications/application/advanced/password-policy/password-policy.component';
-import {DomainPasswordPolicyComponent} from './domain/settings/password-policy/domain-password-policy.component';
-import {ApplicationAccountSettingsComponent} from './domain/applications/application/advanced/account/account.component';
-import {ApplicationOAuth2Component} from './domain/applications/application/advanced/oauth2/oauth2.component';
-import {ApplicationSaml2Component} from './domain/applications/application/advanced/saml2/saml2.component';
-import {ApplicationScopesComponent} from './domain/applications/application/advanced/oauth2/scopes/application-scopes.component';
-import {ApplicationTokensComponent} from './domain/applications/application/advanced/oauth2/tokens/application-tokens.component';
-import {ApplicationGrantFlowsComponent} from './domain/applications/application/advanced/oauth2/grantFlows/application-grant-flows.component';
-import {ApplicationCertificatesComponent} from './domain/applications/application/advanced/certificates/certificates.component';
-import {ApplicationMetadataComponent} from './domain/applications/application/advanced/metadata/metadata.component';
-import {ApplicationMembershipsComponent} from './domain/applications/application/advanced/memberships/memberships.component';
-import {ApplicationFactorsComponent} from './domain/applications/application/advanced/factors/factors.component';
-import {ApplicationFlowsComponent} from './domain/applications/application/design/flows/flows.component';
-import {ManagementRolesComponent} from './settings/management/roles/roles.component';
-import {ManagementRoleComponent} from './settings/management/roles/role/role.component';
-import {MembershipsResolver} from './resolvers/memberships.resolver';
-import {SettingsResolver} from './resolvers/settings.resolver';
-import {AuthGuard} from './guards/auth-guard.service';
-import {HomeComponent} from './home/home.component';
-import {DomainSettingsFactorsComponent} from './domain/settings/factors/factors.component';
-import {FactorsResolver} from './resolvers/factors.resolver';
-import {FactorCreationComponent} from './domain/settings/factors/creation/factor-creation.component';
-import {FactorComponent} from './domain/settings/factors/factor/factor.component';
-import {FactorResolver} from './resolvers/factor.resolver';
-import {EnrolledFactorsResolver} from './resolvers/enrolled-factors.resolver';
-import {DomainSettingsResourcesComponent} from './domain/settings/resources/resources.component';
-import {ResourceCreationComponent} from './domain/settings/resources/creation/resource-creation.component';
-import {ResourceComponent} from './domain/settings/resources/resource/resource.component';
-import {ResourceResolver} from './resolvers/resource.resolver';
-import {ResourcesResolver} from './resolvers/resources.resolver';
-import {NotFoundComponent} from './not-found/not-found.component';
-import {EntrypointsComponent} from './settings/management/entrypoints/entrypoints.component';
-import {EntrypointCreationComponent} from './settings/management/entrypoints/creation/entrypoint-creation.component';
-import {EntrypointComponent} from './settings/management/entrypoints/entrypoint/entrypoint.component';
-import {EntrypointResolver} from './resolvers/entrypoint.resolver';
-import {EntrypointsResolver} from './resolvers/entrypoints.resolver';
-import {UmaComponent} from './domain/settings/uma/uma.component';
-import {ApplicationResourcesComponent} from './domain/applications/application/advanced/resources/resources.component';
-import {ApplicationResourcesResolver} from './resolvers/application-resources.resolver';
-import {ApplicationResourceComponent} from './domain/applications/application/advanced/resources/resource/resource.component';
-import {ApplicationResourceResolver} from './resolvers/application-resource.resolver';
-import {ApplicationResourcePolicyComponent} from './domain/applications/application/advanced/resources/resource/policies/policy/policy.component';
-import {ApplicationResourcePolicyResolver} from './resolvers/application-resource-policy.resolver';
-import {ApplicationFlowsResolver} from './resolvers/application-flows.resolver';
-import {DomainSettingsEntrypointsComponent} from './domain/settings/entrypoints/entrypoints.component';
-import {DomainSettingsWebAuthnComponent} from './domain/settings/webauthn/webauthn.component';
-import {ApplicationLoginSettingsComponent} from "./domain/applications/application/advanced/login/login.component";
-import {IdentitiesResolver} from './resolvers/identities.resolver';
-import {PluginPoliciesResolver} from './resolvers/plugin-policies.resolver';
-import {PlatformFlowSchemaResolver} from './resolvers/platform-flow-schema.resolver';
-import {NewsletterComponent} from "./newsletter/newsletter.component";
-import {NewsletterResolver} from "./resolvers/newsletter.resolver";
-import {ApplicationAnalyticsComponent} from "./domain/applications/application/analytics/analytics.component";
-import {UserHistoryComponent} from './domain/settings/users/user/history/history.component';
-import {EnvironmentResolver} from "./resolvers/environment-resolver.service";
-import {DummyComponent} from "./components/dummy/dummy.component";
-import {CockpitComponent} from "./settings/cockpit/cockpit.component";
-import {InstallationResolver} from "./resolvers/installation.resolver";
-import {EnvironmentComponent} from "./environment/environment.component";
-import {PluginReportersResolver} from './resolvers/plugin-reporters.resolver';
-import {DomainAlertGeneralComponent} from "./domain/alerts/general/general.component";
-import {DomainAlertsComponent} from "./domain/alerts/alerts.component";
-import {NotifiersResolver} from "./resolvers/notifiers.resolver";
-import {AlertNotifiersResolver} from "./resolvers/alert-notifiers.resolver";
-import {DomainAlertNotifiersComponent} from "./domain/alerts/notifiers/notifiers.component";
-import {AlertNotifierResolver} from "./resolvers/alert-notifier.resolver";
-import {DomainAlertNotifierCreationComponent} from "./domain/alerts/notifiers/creation/notifier-creation.component";
-import {DomainAlertNotifierComponent} from "./domain/alerts/notifiers/notifier/notifier.component";
-import {PlatformAlertStatusResolver} from "./resolvers/platform-alert-status.resolver";
-import {FactorPluginsResolver} from './resolvers/factor-plugins.resolver';
-import {ResourcePluginsResolver} from './resolvers/resource-plugins.resolver';
-import {DomainSettingsBotDetectionsComponent} from './domain/settings/botdetections/bot-detections.component';
-import {BotDetectionsResolver} from './resolvers/bot-detections.resolver';
-import {BotDetectionCreationComponent} from './domain/settings/botdetections/creation/bot-detection-creation.component';
-import {BotDetectionPluginsResolver} from './resolvers/bot-detection-plugins.resolver';
-import {BotDetectionComponent} from './domain/settings/botdetections/bot-detection/bot-detection.component';
-import {BotDetectionResolver} from './resolvers/bot-detection.resolver';
-import {ScopesAllResolver} from "./resolvers/scopes-all.resolver";
-import {OIDCProfileComponent} from './domain/settings/openid/oidc-profile/oidc-profile.component';
-import {DomainSettingsDeviceIdentifiersComponent} from "./domain/settings/deviceidentifiers/device-identifiers.component";
-import {DeviceIdentifierPluginsResolver} from "./resolvers/device-identifier-plugins.resolver";
-import {DeviceIdentifierCreationComponent} from "./domain/settings/deviceidentifiers/creation/device-identifier-creation.component";
-import {DeviceIdentifiersResolver} from "./resolvers/device-identifiers.resolver";
-import {DeviceIdentifierResolver} from "./resolvers/device-identifier.resolver";
-import {DeviceIdentifierComponent} from "./domain/settings/deviceidentifiers/device-identifier/device-identifier.component";
-import {UserDevicesComponent} from "./domain/settings/users/user/devices/devices.component";
-import {UserDevicesResolver} from "./resolvers/user-devices.resolver";
+import { NgModule } from '@angular/core';
+import { RouterModule, Routes } from '@angular/router';
+
+import { LoginComponent } from './login/login.component';
+import { LoginCallbackComponent } from './login/callback/callback.component';
+import { DomainsComponent } from './settings/domains/domains.component';
+import { DomainComponent } from './domain/domain.component';
+import { DomainDashboardComponent } from './domain/dashboard/dashboard.component';
+import { DomainSettingsComponent } from './domain/settings/settings.component';
+import { DomainSettingsGeneralComponent } from './domain/settings/general/general.component';
+import { DomainSettingsOpenidClientRegistrationComponent } from './domain/settings/openid/client-registration/client-registration.component';
+import { ClientRegistrationSettingsComponent } from './domain/settings/openid/client-registration/settings/settings.component';
+import { ClientRegistrationDefaultScopeComponent } from './domain/settings/openid/client-registration/default-scope/default-scope.component';
+import { ClientRegistrationAllowedScopeComponent } from './domain/settings/openid/client-registration/allowed-scope/allowed-scope.component';
+import { ClientRegistrationTemplatesComponent } from './domain/settings/openid/client-registration/templates/templates.component';
+import { DomainSettingsCertificatesComponent } from './domain/settings/certificates/certificates.component';
+import { DomainSettingsProvidersComponent } from './domain/settings/providers/providers.component';
+import { DomainSettingsRolesComponent } from './domain/settings/roles/roles.component';
+import { DomainSettingsScopesComponent } from './domain/settings/scopes/scopes.component';
+import { DomainSettingsFormsComponent } from './domain/settings/forms/forms.component';
+import { DomainSettingsFormComponent } from './domain/settings/forms/form/form.component';
+import { DomainSettingsLoginComponent } from './domain/settings/login/login.component';
+import { DomainSettingsEmailsComponent } from './domain/settings/emails/emails.component';
+import { DomainSettingsEmailComponent } from './domain/settings/emails/email/email.component';
+import { DomainSettingsExtensionGrantsComponent } from './domain/settings/extension-grants/extension-grants.component';
+import { DomainSettingsAccountComponent } from './domain/settings/account/account.component';
+import { DomainSettingsSelfServiceAccountComponent } from './domain/settings/self-service-account/self-service-account.component';
+import { DomainSettingsMembershipsComponent } from './domain/settings/memberships/memberships.component';
+import { DomainSettingsFlowsComponent } from './domain/settings/flows/flows.component';
+import { DomainCreationComponent } from './domain/creation/domain-creation.component';
+import { ProviderCreationComponent } from './domain/settings/providers/creation/provider-creation.component';
+import { ProviderComponent } from './domain/settings/providers/provider/provider.component';
+import { LogoutCallbackComponent } from './logout/callback/callback.component';
+import { LogoutComponent } from './logout/logout.component';
+import { DomainsResolver } from './resolvers/domains.resolver';
+import { DomainResolver } from './resolvers/domain.resolver';
+import { DomainEntrypointResolver } from './resolvers/domain-entrypoint.resolver';
+import { DomainFlowsResolver } from './resolvers/domain-flows.resolver';
+import { ProvidersResolver } from './resolvers/providers.resolver';
+import { ProviderResolver } from './resolvers/provider.resolver';
+import { ProviderRolesComponent } from './domain/settings/providers/provider/roles/roles.component';
+import { ProviderSettingsComponent } from './domain/settings/providers/provider/settings/settings.component';
+import { ProviderMappersComponent } from './domain/settings/providers/provider/mappers/mappers.component';
+import { CertificatesResolver } from './resolvers/certificates.resolver';
+import { SignCertificatesResolver } from './resolvers/sign-certificates.resolver';
+import { CertificateCreationComponent } from './domain/settings/certificates/creation/certificate-creation.component';
+import { CertificateComponent } from './domain/settings/certificates/certificate/certificate.component';
+import { CertificateResolver } from './resolvers/certificate.resolver';
+import { RolesResolver } from './resolvers/roles.resolver';
+import { PageRolesResolver } from './resolvers/page-roles.resolver';
+import { RoleCreationComponent } from './domain/settings/roles/creation/role-creation.component';
+import { RoleComponent } from './domain/settings/roles/role/role.component';
+import { RoleResolver } from './resolvers/role.resolver';
+import { ScopeResolver } from './resolvers/scope.resolver';
+import { ScopesResolver } from './resolvers/scopes.resolver';
+import { ScopeCreationComponent } from './domain/settings/scopes/creation/scope-creation.component';
+import { ScopeComponent } from './domain/settings/scopes/scope/scope.component';
+import { SettingsComponent } from './settings/settings.component';
+import { SettingsMembershipsComponent } from './settings/memberships/memberships.component';
+import { UsersComponent } from './domain/settings/users/users.component';
+import { UserComponent } from './domain/settings/users/user/user.component';
+import { UserResolver } from './resolvers/user.resolver';
+import { UserCreationComponent } from './domain/settings/users/creation/user-creation.component';
+import { UserProfileComponent } from './domain/settings/users/user/profile/profile.component';
+import { UserApplicationsComponent } from './domain/settings/users/user/applications/applications.component';
+import { UserApplicationComponent } from './domain/settings/users/user/applications/application/application.component';
+import { UserRolesComponent } from './domain/settings/users/user/roles/roles.component';
+import { UserRolesResolver } from './resolvers/user-roles.resolver';
+import { DynamicUserRolesResolver } from './resolvers/dynamic-user-roles.resolver';
+import { UserFactorsComponent } from './domain/settings/users/user/factors/factors.component';
+import { UserCredentialsResolver } from './resolvers/user-credentials.resolver';
+import { UserCredentialResolver } from './resolvers/user-credential.resolver';
+import { UserCredentialsComponent } from './domain/settings/users/user/credentials/credentials.component';
+import { UserCredentialComponent } from './domain/settings/users/user/credentials/credential/credential.component';
+import { ExtensionGrantCreationComponent } from './domain/settings/extension-grants/creation/extension-grant-creation.component';
+import { ExtensionGrantComponent } from './domain/settings/extension-grants/extension-grant/extension-grant.component';
+import { ExtensionGrantsResolver } from './resolvers/extension-grants.resolver';
+import { ExtensionGrantResolver } from './resolvers/extension-grant.resolver';
+import { ManagementComponent } from './settings/management/management.component';
+import { ManagementGeneralComponent } from './settings/management/general/general.component';
+import { FormResolver } from './resolvers/form.resolver';
+import { GroupsResolver } from './resolvers/groups.resolver';
+import { GroupsComponent } from './domain/settings/groups/groups.component';
+import { GroupCreationComponent } from './domain/settings/groups/creation/group-creation.component';
+import { GroupResolver } from './resolvers/group.resolver';
+import { GroupComponent } from './domain/settings/groups/group/group.component';
+import { GroupSettingsComponent } from './domain/settings/groups/group/settings/settings.component';
+import { GroupMembersComponent } from './domain/settings/groups/group/members/members.component';
+import { GroupRolesComponent } from './domain/settings/groups/group/roles/roles.component';
+import { GroupRolesResolver } from './resolvers/group-roles.resolver';
+import { ScimComponent } from './domain/settings/scim/scim.component';
+import { EmailResolver } from './resolvers/email.resolver';
+import { ConsentsResolver } from './resolvers/consents.resolver';
+import { AuditResolver } from './resolvers/audit.resolver';
+import { AuditsComponent } from './domain/settings/audits/audits.component';
+import { AuditComponent } from './domain/settings/audits/audit/audit.component';
+import { AuditsSettingsComponent } from './domain/settings/audits/settings/settings.component';
+import { ReportersResolver } from './resolvers/reporters.resolver';
+import { ReporterResolver } from './resolvers/reporter.resolver';
+import { ReporterComponent } from './domain/settings/audits/settings/reporter/reporter.component';
+import { TagsResolver } from './resolvers/tags.resolver';
+import { TagsComponent } from './settings/management/tags/tags.component';
+import { TagCreationComponent } from './settings/management/tags/creation/tag-creation.component';
+import { TagComponent } from './settings/management/tags/tag/tag.component';
+import { TagResolver } from './resolvers/tag.resolver';
+import { GroupMembersResolver } from './resolvers/group-members.resolver';
+import { ApplicationsComponent } from './domain/applications/applications.component';
+import { ApplicationsResolver } from './resolvers/applications.resolver';
+import { ApplicationCreationComponent } from './domain/applications/creation/application-creation.component';
+import { ApplicationComponent } from './domain/applications/application/application.component';
+import { ApplicationOverviewComponent } from './domain/applications/application/overview/overview.component';
+import { ApplicationEndpointsComponent } from './domain/applications/application/endpoints/endpoints.component';
+import { ApplicationResolver } from './resolvers/application.resolver';
+import { ApplicationPermissionsResolver } from './resolvers/application-permissions.resolver';
+import { ApplicationIdPComponent } from './domain/applications/application/idp/idp.component';
+import { ApplicationDesignComponent } from './domain/applications/application/design/design.component';
+import { ApplicationFormsComponent } from './domain/applications/application/design/forms/forms.component';
+import { ApplicationFormComponent } from './domain/applications/application/design/forms/form/form.component';
+import { ApplicationEmailsComponent } from './domain/applications/application/design/emails/emails.component';
+import { ApplicationEmailComponent } from './domain/applications/application/design/emails/email/email.component';
+import { ApplicationAdvancedComponent } from './domain/applications/application/advanced/advanced.component';
+import { ApplicationGeneralComponent } from './domain/applications/application/advanced/general/general.component';
+import { PasswordPolicyComponent } from './domain/applications/application/advanced/password-policy/password-policy.component';
+import { DomainPasswordPolicyComponent } from './domain/settings/password-policy/domain-password-policy.component';
+import { ApplicationAccountSettingsComponent } from './domain/applications/application/advanced/account/account.component';
+import { ApplicationOAuth2Component } from './domain/applications/application/advanced/oauth2/oauth2.component';
+import { ApplicationSaml2Component } from './domain/applications/application/advanced/saml2/saml2.component';
+import { ApplicationScopesComponent } from './domain/applications/application/advanced/oauth2/scopes/application-scopes.component';
+import { ApplicationTokensComponent } from './domain/applications/application/advanced/oauth2/tokens/application-tokens.component';
+import { ApplicationGrantFlowsComponent } from './domain/applications/application/advanced/oauth2/grantFlows/application-grant-flows.component';
+import { ApplicationCertificatesComponent } from './domain/applications/application/advanced/certificates/certificates.component';
+import { ApplicationMetadataComponent } from './domain/applications/application/advanced/metadata/metadata.component';
+import { ApplicationMembershipsComponent } from './domain/applications/application/advanced/memberships/memberships.component';
+import { ApplicationFactorsComponent } from './domain/applications/application/advanced/factors/factors.component';
+import { ApplicationFlowsComponent } from './domain/applications/application/design/flows/flows.component';
+import { ManagementRolesComponent } from './settings/management/roles/roles.component';
+import { ManagementRoleComponent } from './settings/management/roles/role/role.component';
+import { MembershipsResolver } from './resolvers/memberships.resolver';
+import { SettingsResolver } from './resolvers/settings.resolver';
+import { AuthGuard } from './guards/auth-guard.service';
+import { HomeComponent } from './home/home.component';
+import { DomainSettingsFactorsComponent } from './domain/settings/factors/factors.component';
+import { FactorsResolver } from './resolvers/factors.resolver';
+import { FactorCreationComponent } from './domain/settings/factors/creation/factor-creation.component';
+import { FactorComponent } from './domain/settings/factors/factor/factor.component';
+import { FactorResolver } from './resolvers/factor.resolver';
+import { EnrolledFactorsResolver } from './resolvers/enrolled-factors.resolver';
+import { DomainSettingsResourcesComponent } from './domain/settings/resources/resources.component';
+import { ResourceCreationComponent } from './domain/settings/resources/creation/resource-creation.component';
+import { ResourceComponent } from './domain/settings/resources/resource/resource.component';
+import { ResourceResolver } from './resolvers/resource.resolver';
+import { ResourcesResolver } from './resolvers/resources.resolver';
+import { NotFoundComponent } from './not-found/not-found.component';
+import { EntrypointsComponent } from './settings/management/entrypoints/entrypoints.component';
+import { EntrypointCreationComponent } from './settings/management/entrypoints/creation/entrypoint-creation.component';
+import { EntrypointComponent } from './settings/management/entrypoints/entrypoint/entrypoint.component';
+import { EntrypointResolver } from './resolvers/entrypoint.resolver';
+import { EntrypointsResolver } from './resolvers/entrypoints.resolver';
+import { UmaComponent } from './domain/settings/uma/uma.component';
+import { ApplicationResourcesComponent } from './domain/applications/application/advanced/resources/resources.component';
+import { ApplicationResourcesResolver } from './resolvers/application-resources.resolver';
+import { ApplicationResourceComponent } from './domain/applications/application/advanced/resources/resource/resource.component';
+import { ApplicationResourceResolver } from './resolvers/application-resource.resolver';
+import { ApplicationResourcePolicyComponent } from './domain/applications/application/advanced/resources/resource/policies/policy/policy.component';
+import { ApplicationResourcePolicyResolver } from './resolvers/application-resource-policy.resolver';
+import { ApplicationFlowsResolver } from './resolvers/application-flows.resolver';
+import { DomainSettingsEntrypointsComponent } from './domain/settings/entrypoints/entrypoints.component';
+import { DomainSettingsWebAuthnComponent } from './domain/settings/webauthn/webauthn.component';
+import { ApplicationLoginSettingsComponent } from './domain/applications/application/advanced/login/login.component';
+import { IdentitiesResolver } from './resolvers/identities.resolver';
+import { PluginPoliciesResolver } from './resolvers/plugin-policies.resolver';
+import { PlatformFlowSchemaResolver } from './resolvers/platform-flow-schema.resolver';
+import { NewsletterComponent } from './newsletter/newsletter.component';
+import { NewsletterResolver } from './resolvers/newsletter.resolver';
+import { ApplicationAnalyticsComponent } from './domain/applications/application/analytics/analytics.component';
+import { UserHistoryComponent } from './domain/settings/users/user/history/history.component';
+import { EnvironmentResolver } from './resolvers/environment-resolver.service';
+import { DummyComponent } from './components/dummy/dummy.component';
+import { CockpitComponent } from './settings/cockpit/cockpit.component';
+import { InstallationResolver } from './resolvers/installation.resolver';
+import { EnvironmentComponent } from './environment/environment.component';
+import { PluginReportersResolver } from './resolvers/plugin-reporters.resolver';
+import { DomainAlertGeneralComponent } from './domain/alerts/general/general.component';
+import { DomainAlertsComponent } from './domain/alerts/alerts.component';
+import { NotifiersResolver } from './resolvers/notifiers.resolver';
+import { AlertNotifiersResolver } from './resolvers/alert-notifiers.resolver';
+import { DomainAlertNotifiersComponent } from './domain/alerts/notifiers/notifiers.component';
+import { AlertNotifierResolver } from './resolvers/alert-notifier.resolver';
+import { DomainAlertNotifierCreationComponent } from './domain/alerts/notifiers/creation/notifier-creation.component';
+import { DomainAlertNotifierComponent } from './domain/alerts/notifiers/notifier/notifier.component';
+import { PlatformAlertStatusResolver } from './resolvers/platform-alert-status.resolver';
+import { FactorPluginsResolver } from './resolvers/factor-plugins.resolver';
+import { ResourcePluginsResolver } from './resolvers/resource-plugins.resolver';
+import { DomainSettingsBotDetectionsComponent } from './domain/settings/botdetections/bot-detections.component';
+import { BotDetectionsResolver } from './resolvers/bot-detections.resolver';
+import { BotDetectionCreationComponent } from './domain/settings/botdetections/creation/bot-detection-creation.component';
+import { BotDetectionPluginsResolver } from './resolvers/bot-detection-plugins.resolver';
+import { BotDetectionComponent } from './domain/settings/botdetections/bot-detection/bot-detection.component';
+import { BotDetectionResolver } from './resolvers/bot-detection.resolver';
+import { ScopesAllResolver } from './resolvers/scopes-all.resolver';
+import { OIDCProfileComponent } from './domain/settings/openid/oidc-profile/oidc-profile.component';
+import { DomainSettingsDeviceIdentifiersComponent } from './domain/settings/deviceidentifiers/device-identifiers.component';
+import { DeviceIdentifierPluginsResolver } from './resolvers/device-identifier-plugins.resolver';
+import { DeviceIdentifierCreationComponent } from './domain/settings/deviceidentifiers/creation/device-identifier-creation.component';
+import { DeviceIdentifiersResolver } from './resolvers/device-identifiers.resolver';
+import { DeviceIdentifierResolver } from './resolvers/device-identifier.resolver';
+import { DeviceIdentifierComponent } from './domain/settings/deviceidentifiers/device-identifier/device-identifier.component';
+import { UserDevicesComponent } from './domain/settings/users/user/devices/devices.component';
+import { UserDevicesResolver } from './resolvers/user-devices.resolver';
 import { CibaComponent } from './domain/settings/openid/ciba/ciba.component';
 import { CibaSettingsComponent } from './domain/settings/openid/ciba/settings/ciba-settings.component';
 import { Saml2Component } from './domain/settings/saml2/saml2.component';
@@ -231,12 +232,12 @@ import { DeviceNotifierPluginsResolver } from './resolvers/device-notifier-plugi
 import { DeviceNotifierResolver } from './resolvers/device-notifier.resolver';
 import { DeviceNotifierComponent } from './domain/settings/openid/ciba/device-notifiers/device-notifier/device-notifier.component';
 import { ApplicationCookieSettingsComponent } from './domain/applications/application/advanced/cookie/cookie.component';
-import {DomainSettingsDictionariesComponent} from "./domain/settings/texts/dictionaries.component";
-import {DictionariesResolver} from "./resolvers/dictionaries.resolver";
-import {DomainSettingsThemeComponent} from './domain/settings/theme/theme.component';
-import {ThemesResolver} from "./resolvers/themes.resolver";
+import { DomainSettingsDictionariesComponent } from './domain/settings/texts/dictionaries.component';
+import { DictionariesResolver } from './resolvers/dictionaries.resolver';
+import { DomainSettingsThemeComponent } from './domain/settings/theme/theme.component';
+import { ThemesResolver } from './resolvers/themes.resolver';
 
-let applyOnLabel = (label) => label.toLowerCase().replace(/_/g, ' ');
+const applyOnLabel = (label) => label.toLowerCase().replace(/_/g, ' ');
 
 export const routes: Routes = [
   {
@@ -244,8 +245,8 @@ export const routes: Routes = [
     component: SettingsComponent,
     data: {
       perms: {
-        only: ['organization_settings_read']
-      }
+        only: ['organization_settings_read'],
+      },
     },
     children: [
       {
@@ -255,14 +256,14 @@ export const routes: Routes = [
           menu: {
             level: 'top',
             label: 'Settings',
-            icon: 'gio:settings'
+            icon: 'gio:settings',
           },
           perms: {
-            only: ['organization_settings_read']
-          }
+            only: ['organization_settings_read'],
+          },
         },
         children: [
-          {path: '', redirectTo: 'general', pathMatch: 'full'},
+          { path: '', redirectTo: 'general', pathMatch: 'full' },
           {
             path: 'general',
             component: ManagementGeneralComponent,
@@ -273,29 +274,29 @@ export const routes: Routes = [
             data: {
               menu: {
                 label: 'General',
-                section: 'Settings'
+                section: 'Settings',
               },
               perms: {
-                only: ['organization_settings_read']
-              }
-            }
+                only: ['organization_settings_read'],
+              },
+            },
           },
           {
             path: 'members',
             component: SettingsMembershipsComponent,
             canActivate: [AuthGuard],
             resolve: {
-              members: MembershipsResolver
+              members: MembershipsResolver,
             },
             data: {
               menu: {
                 label: 'Administrative roles',
-                section: 'Settings'
+                section: 'Settings',
               },
               perms: {
-                only: ['organization_member_list']
-              }
-            }
+                only: ['organization_member_list'],
+              },
+            },
           },
           {
             path: 'forms',
@@ -303,11 +304,11 @@ export const routes: Routes = [
             data: {
               menu: {
                 label: 'Forms',
-                section: 'Design'
+                section: 'Design',
               },
               perms: {
-                only: ['organization_form_list']
-              }
+                only: ['organization_form_list'],
+              },
             },
             children: [
               {
@@ -319,19 +320,19 @@ export const routes: Routes = [
                 path: 'form',
                 component: DomainSettingsFormComponent,
                 resolve: {
-                  form: FormResolver
+                  form: FormResolver,
                 },
                 data: {
                   breadcrumb: {
                     label: 'form.template',
-                    applyOnLabel: applyOnLabel
+                    applyOnLabel: applyOnLabel,
                   },
                   perms: {
-                    only: ['organization_form_read']
-                  }
-                }
-              }
-            ]
+                    only: ['organization_form_read'],
+                  },
+                },
+              },
+            ],
           },
           {
             path: 'providers',
@@ -339,11 +340,11 @@ export const routes: Routes = [
             data: {
               menu: {
                 label: 'Providers',
-                section: 'Identities'
+                section: 'Identities',
               },
               perms: {
-                only: ['organization_identity_provider_list']
-              }
+                only: ['organization_identity_provider_list'],
+              },
             },
             children: [
               {
@@ -352,45 +353,45 @@ export const routes: Routes = [
                 component: DomainSettingsProvidersComponent,
                 resolve: {
                   providers: ProvidersResolver,
-                  identities: IdentitiesResolver
-                }
+                  identities: IdentitiesResolver,
+                },
               },
               {
                 path: 'new',
                 component: ProviderCreationComponent,
                 canActivate: [AuthGuard],
                 resolve: {
-                  identities: IdentitiesResolver
+                  identities: IdentitiesResolver,
                 },
                 data: {
                   perms: {
-                    only: ['organization_identity_provider_create']
-                  }
-                }
+                    only: ['organization_identity_provider_create'],
+                  },
+                },
               },
               {
                 path: ':providerId',
                 component: ProviderComponent,
                 canActivate: [AuthGuard],
                 resolve: {
-                  provider: ProviderResolver
+                  provider: ProviderResolver,
                 },
                 data: {
                   breadcrumb: {
-                    label: 'provider.name'
+                    label: 'provider.name',
                   },
                   perms: {
-                    only: ['organization_identity_provider_read']
-                  }
+                    only: ['organization_identity_provider_read'],
+                  },
                 },
                 children: [
-                  {path: '', redirectTo: 'settings', pathMatch: 'full'},
-                  {path: 'settings', component: ProviderSettingsComponent},
-                  {path: 'mappers', component: ProviderMappersComponent},
-                  {path: 'roles', component: ProviderRolesComponent, resolve: {roles: RolesResolver}}
-                ]
+                  { path: '', redirectTo: 'settings', pathMatch: 'full' },
+                  { path: 'settings', component: ProviderSettingsComponent },
+                  { path: 'mappers', component: ProviderMappersComponent },
+                  { path: 'roles', component: ProviderRolesComponent, resolve: { roles: RolesResolver } },
+                ],
               },
-            ]
+            ],
           },
           {
             path: 'audits',
@@ -398,11 +399,11 @@ export const routes: Routes = [
             data: {
               menu: {
                 label: 'Audit Log',
-                section: 'Security'
+                section: 'Security',
               },
               perms: {
-                only: ['organization_audit_list']
-              }
+                only: ['organization_audit_list'],
+              },
             },
             children: [
               {
@@ -415,18 +416,18 @@ export const routes: Routes = [
                 component: AuditComponent,
                 canActivate: [AuthGuard],
                 resolve: {
-                  audit: AuditResolver
+                  audit: AuditResolver,
                 },
                 data: {
                   breadcrumb: {
-                    label: 'audit.id'
+                    label: 'audit.id',
                   },
                   perms: {
-                    only: ['organization_audit_read']
-                  }
-                }
-              }
-            ]
+                    only: ['organization_audit_read'],
+                  },
+                },
+              },
+            ],
           },
           {
             path: 'users',
@@ -434,17 +435,17 @@ export const routes: Routes = [
             data: {
               menu: {
                 label: 'Users',
-                section: 'User Management'
+                section: 'User Management',
               },
               perms: {
-                only: ['organization_user_list']
-              }
+                only: ['organization_user_list'],
+              },
             },
             children: [
               {
                 path: '',
                 pathMatch: 'full',
-                component: UsersComponent
+                component: UsersComponent,
               },
               {
                 path: 'new',
@@ -452,38 +453,38 @@ export const routes: Routes = [
                 canActivate: [AuthGuard],
                 data: {
                   perms: {
-                    only: ['organization_user_create']
-                  }
-                }
+                    only: ['organization_user_create'],
+                  },
+                },
               },
               {
                 path: ':userId',
                 component: UserComponent,
                 canActivate: [AuthGuard],
                 resolve: {
-                  user: UserResolver
+                  user: UserResolver,
                 },
                 data: {
                   breadcrumb: {
-                    label: 'user.username'
+                    label: 'user.username',
                   },
                   perms: {
-                    only: ['organization_user_read']
-                  }
+                    only: ['organization_user_read'],
+                  },
                 },
                 children: [
                   {
                     path: '',
                     redirectTo: 'profile',
-                    pathMatch: 'full'
+                    pathMatch: 'full',
                   },
                   {
                     path: 'profile',
-                    component: UserProfileComponent
-                  }
-                ]
+                    component: UserProfileComponent,
+                  },
+                ],
               },
-            ]
+            ],
           },
           {
             path: 'groups',
@@ -491,11 +492,11 @@ export const routes: Routes = [
             data: {
               menu: {
                 label: 'Groups',
-                section: 'User Management'
+                section: 'User Management',
               },
               perms: {
-                only: ['organization_group_list']
-              }
+                only: ['organization_group_list'],
+              },
             },
             children: [
               {
@@ -503,8 +504,8 @@ export const routes: Routes = [
                 pathMatch: 'full',
                 component: GroupsComponent,
                 resolve: {
-                  groups: GroupsResolver
-                }
+                  groups: GroupsResolver,
+                },
               },
               {
                 path: 'new',
@@ -512,32 +513,32 @@ export const routes: Routes = [
                 canActivate: [AuthGuard],
                 data: {
                   perms: {
-                    only: ['organization_group_create']
-                  }
-                }
+                    only: ['organization_group_create'],
+                  },
+                },
               },
               {
                 path: ':groupId',
                 component: GroupComponent,
                 canActivate: [AuthGuard],
                 resolve: {
-                  group: GroupResolver
+                  group: GroupResolver,
                 },
                 data: {
                   breadcrumb: {
-                    label: 'group.name'
+                    label: 'group.name',
                   },
                   perms: {
-                    only: ['organization_group_read']
-                  }
+                    only: ['organization_group_read'],
+                  },
                 },
                 children: [
-                  {path: '', redirectTo: 'settings', pathMatch: 'full'},
-                  {path: 'settings', component: GroupSettingsComponent},
-                  {path: 'members', component: GroupMembersComponent, resolve: {members: GroupMembersResolver}}
-                ]
-              }
-            ]
+                  { path: '', redirectTo: 'settings', pathMatch: 'full' },
+                  { path: 'settings', component: GroupSettingsComponent },
+                  { path: 'members', component: GroupMembersComponent, resolve: { members: GroupMembersResolver } },
+                ],
+              },
+            ],
           },
           {
             path: 'roles',
@@ -548,8 +549,8 @@ export const routes: Routes = [
                 section: 'User Management',
               },
               perms: {
-                only: ['organization_role_list']
-              }
+                only: ['organization_role_list'],
+              },
             },
             children: [
               {
@@ -557,7 +558,7 @@ export const routes: Routes = [
                 pathMatch: 'full',
                 component: ManagementRolesComponent,
                 resolve: {
-                  roles: RolesResolver
+                  roles: RolesResolver,
                 },
               },
               {
@@ -566,27 +567,27 @@ export const routes: Routes = [
                 canActivate: [AuthGuard],
                 data: {
                   perms: {
-                    only: ['organization_role_create']
-                  }
-                }
+                    only: ['organization_role_create'],
+                  },
+                },
               },
               {
                 path: ':roleId',
                 component: ManagementRoleComponent,
                 canActivate: [AuthGuard],
                 resolve: {
-                  role: RoleResolver
+                  role: RoleResolver,
                 },
                 data: {
                   breadcrumb: {
-                    label: 'role.name'
+                    label: 'role.name',
                   },
                   perms: {
-                    only: ['organization_role_read']
-                  }
-                }
-              }
-            ]
+                    only: ['organization_role_read'],
+                  },
+                },
+              },
+            ],
           },
           {
             path: 'tags',
@@ -594,11 +595,11 @@ export const routes: Routes = [
             data: {
               menu: {
                 label: 'Sharding tags',
-                section: 'Deployment'
+                section: 'Deployment',
               },
               perms: {
-                only: ['organization_tag_list']
-              }
+                only: ['organization_tag_list'],
+              },
             },
             children: [
               {
@@ -606,7 +607,7 @@ export const routes: Routes = [
                 pathMatch: 'full',
                 component: TagsComponent,
                 resolve: {
-                  tags: TagsResolver
+                  tags: TagsResolver,
                 },
               },
               {
@@ -615,27 +616,27 @@ export const routes: Routes = [
                 canActivate: [AuthGuard],
                 data: {
                   perms: {
-                    only: ['organization_tag_create']
-                  }
-                }
+                    only: ['organization_tag_create'],
+                  },
+                },
               },
               {
                 path: ':tagId',
                 component: TagComponent,
                 canActivate: [AuthGuard],
                 resolve: {
-                  tag: TagResolver
+                  tag: TagResolver,
                 },
                 data: {
                   breadcrumb: {
-                    label: 'tag.name'
+                    label: 'tag.name',
                   },
                   perms: {
-                    only: ['organization_tag_read']
-                  }
-                }
-              }
-            ]
+                    only: ['organization_tag_read'],
+                  },
+                },
+              },
+            ],
           },
           {
             path: 'entrypoints',
@@ -643,11 +644,11 @@ export const routes: Routes = [
             data: {
               menu: {
                 label: 'Entrypoints',
-                section: 'Deployment'
+                section: 'Deployment',
               },
               perms: {
-                only: ['organization_entrypoint_list']
-              }
+                only: ['organization_entrypoint_list'],
+              },
             },
             children: [
               {
@@ -655,7 +656,7 @@ export const routes: Routes = [
                 pathMatch: 'full',
                 component: EntrypointsComponent,
                 resolve: {
-                  entrypoints: EntrypointsResolver
+                  entrypoints: EntrypointsResolver,
                 },
               },
               {
@@ -664,9 +665,9 @@ export const routes: Routes = [
                 canActivate: [AuthGuard],
                 data: {
                   perms: {
-                    only: ['organization_entrypoint_create']
-                  }
-                }
+                    only: ['organization_entrypoint_create'],
+                  },
+                },
               },
               {
                 path: ':entrypointId',
@@ -674,48 +675,48 @@ export const routes: Routes = [
                 canActivate: [AuthGuard],
                 resolve: {
                   entrypoint: EntrypointResolver,
-                  tags: TagsResolver
+                  tags: TagsResolver,
                 },
                 data: {
                   breadcrumb: {
-                    label: 'entrypoint.name'
+                    label: 'entrypoint.name',
                   },
                   perms: {
-                    only: ['organization_entrypoint_read']
-                  }
-                }
-              }
-            ]
-          }
-        ]
+                    only: ['organization_entrypoint_read'],
+                  },
+                },
+              },
+            ],
+          },
+        ],
       },
       {
         path: 'cockpit',
         component: CockpitComponent,
         canActivate: [AuthGuard],
         resolve: {
-          installation: InstallationResolver
+          installation: InstallationResolver,
         },
         data: {
           menu: {
             level: 'top',
             label: 'Cockpit',
             icon: 'gio:compass',
-            beta: true
+            beta: true,
           },
           perms: {
-            only: ['installation_read']
-          }
-        }
-      }
-    ]
+            only: ['installation_read'],
+          },
+        },
+      },
+    ],
   },
   {
     path: 'environments',
     data: {
       breadcrumb: {
-        disabled: true
-      }
+        disabled: true,
+      },
     },
     children: [
       {
@@ -723,8 +724,8 @@ export const routes: Routes = [
         canActivate: [AuthGuard],
         data: {
           breadcrumb: {
-            disabled: true
-          }
+            disabled: true,
+          },
         },
         resolve: {
           environment: EnvironmentResolver,
@@ -743,15 +744,15 @@ export const routes: Routes = [
                 label: 'Domains',
                 level: 'top',
                 icon: 'gio:report-columns',
-                routerLinkActiveOptions: {exact: true},
-                displayOptions: {exact: true}
+                routerLinkActiveOptions: { exact: true },
+                displayOptions: { exact: true },
               },
               breadcrumb: {
-                label: 'domains'
+                label: 'domains',
               },
               perms: {
-                only: ['domain_list']
-              }
+                only: ['domain_list'],
+              },
             },
             children: [
               {
@@ -759,44 +760,44 @@ export const routes: Routes = [
                 pathMatch: 'full',
                 component: DomainsComponent,
                 resolve: {
-                  domains: DomainsResolver
+                  domains: DomainsResolver,
                 },
                 canActivate: [AuthGuard],
                 data: {
                   perms: {
-                    only: ['domain_list']
-                  }
-                }
+                    only: ['domain_list'],
+                  },
+                },
               },
               {
                 path: 'new',
                 component: DomainCreationComponent,
                 resolve: {
-                  environment: EnvironmentResolver
+                  environment: EnvironmentResolver,
                 },
                 canActivate: [AuthGuard],
                 data: {
                   perms: {
-                    only: ['domain_create']
-                  }
+                    only: ['domain_create'],
+                  },
                 },
               },
               {
                 path: ':domainId',
                 component: DomainComponent,
                 resolve: {
-                  domain: DomainResolver
-                  //permissions: DomainPermissionsResolver
+                  domain: DomainResolver,
+                  // permissions: DomainPermissionsResolver
                 },
                 data: {
                   breadcrumb: {
-                    label: "domain.name"
-                  }
+                    label: 'domain.name',
+                  },
                 },
                 children: [
                   {
                     path: '',
-                    component: DomainComponent
+                    component: DomainComponent,
                   },
                   {
                     path: 'dashboard',
@@ -806,15 +807,15 @@ export const routes: Routes = [
                       menu: {
                         label: 'Dashboard',
                         icon: 'gio:home',
-                        level: 'top'
+                        level: 'top',
                       },
                       breadcrumb: {
                         include: true,
                       },
                       perms: {
-                        only: ['domain_analytics_read']
-                      }
-                    }
+                        only: ['domain_analytics_read'],
+                      },
+                    },
                   },
                   {
                     path: 'applications',
@@ -822,11 +823,11 @@ export const routes: Routes = [
                       menu: {
                         label: 'Applications',
                         icon: 'gio:multi-window',
-                        level: 'top'
+                        level: 'top',
                       },
                       perms: {
-                        only: ['application_list']
-                      }
+                        only: ['application_list'],
+                      },
                     },
                     children: [
                       {
@@ -834,7 +835,7 @@ export const routes: Routes = [
                         pathMatch: 'full',
                         component: ApplicationsComponent,
                         resolve: {
-                          applications: ApplicationsResolver
+                          applications: ApplicationsResolver,
                         },
                       },
                       {
@@ -843,26 +844,28 @@ export const routes: Routes = [
                         canActivate: [AuthGuard],
                         data: {
                           perms: {
-                            only: ['application_create']
-                          }
-                        }
+                            only: ['application_create'],
+                          },
+                        },
                       },
                       {
                         path: ':appId',
                         component: ApplicationComponent,
                         resolve: {
                           application: ApplicationResolver,
-                          permissions: ApplicationPermissionsResolver
+                          permissions: ApplicationPermissionsResolver,
                         },
                         runGuardsAndResolvers: 'pathParamsOrQueryParamsChange',
                         data: {
                           breadcrumb: {
-                            label: 'application.name'
-                          }
+                            label: 'application.name',
+                          },
                         },
                         children: [
                           {
-                            path: '', redirectTo: 'overview', pathMatch: 'full'
+                            path: '',
+                            redirectTo: 'overview',
+                            pathMatch: 'full',
                           },
                           {
                             path: 'overview',
@@ -871,12 +874,12 @@ export const routes: Routes = [
                               menu: {
                                 label: 'Overview',
                                 section: 'Overview',
-                                level: 'level2'
+                                level: 'level2',
                               },
                             },
                             resolve: {
-                              entrypoint: DomainEntrypointResolver
-                            }
+                              entrypoint: DomainEntrypointResolver,
+                            },
                           },
                           {
                             path: 'endpoints',
@@ -885,33 +888,33 @@ export const routes: Routes = [
                               menu: {
                                 label: 'Endpoints',
                                 section: 'Endpoints',
-                                level: 'level2'
+                                level: 'level2',
                               },
                             },
                             resolve: {
-                              entrypoint: DomainEntrypointResolver
-                            }
+                              entrypoint: DomainEntrypointResolver,
+                            },
                           },
                           {
                             path: 'idp',
                             component: ApplicationIdPComponent,
                             canActivate: [AuthGuard],
                             resolve: {
-                              identities: IdentitiesResolver
+                              identities: IdentitiesResolver,
                             },
                             data: {
                               menu: {
                                 label: 'Identity Providers',
                                 section: 'Identity Providers',
-                                level: 'level2'
+                                level: 'level2',
                               },
                               perms: {
-                                only: ['application_identity_provider_list']
+                                only: ['application_identity_provider_list'],
                               },
                               types: {
-                                only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER']
-                              }
-                            }
+                                only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER'],
+                              },
+                            },
                           },
                           {
                             path: 'design',
@@ -920,14 +923,19 @@ export const routes: Routes = [
                               menu: {
                                 label: 'Design',
                                 section: 'Design',
-                                level: 'level2'
+                                level: 'level2',
                               },
                               perms: {
-                                only: ['application_email_template_list', 'application_email_template_read', 'application_form_list', 'application_form_read']
+                                only: [
+                                  'application_email_template_list',
+                                  'application_email_template_read',
+                                  'application_form_list',
+                                  'application_form_read',
+                                ],
                               },
                               types: {
-                                only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER']
-                              }
+                                only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER'],
+                              },
                             },
                             children: [
                               {
@@ -937,11 +945,11 @@ export const routes: Routes = [
                                   menu: {
                                     label: 'Forms',
                                     section: 'Design',
-                                    level: 'level3'
+                                    level: 'level3',
                                   },
                                   perms: {
-                                    only: ['application_form_list', 'application_form_read']
-                                  }
+                                    only: ['application_form_list', 'application_form_read'],
+                                  },
                                 },
                                 children: [
                                   {
@@ -953,18 +961,18 @@ export const routes: Routes = [
                                     path: 'form',
                                     component: ApplicationFormComponent,
                                     canActivate: [AuthGuard],
-                                    resolve: {form: FormResolver},
+                                    resolve: { form: FormResolver },
                                     data: {
                                       breadcrumb: {
-                                        label: "form.template",
-                                        applyOnLabel: applyOnLabel
+                                        label: 'form.template',
+                                        applyOnLabel: applyOnLabel,
                                       },
                                       perms: {
-                                        only: ['application_form_read']
-                                      }
-                                    }
-                                  }
-                                ]
+                                        only: ['application_form_read'],
+                                      },
+                                    },
+                                  },
+                                ],
                               },
                               {
                                 path: 'emails',
@@ -973,11 +981,11 @@ export const routes: Routes = [
                                   menu: {
                                     label: 'Emails',
                                     section: 'Design',
-                                    level: 'level3'
+                                    level: 'level3',
                                   },
                                   perms: {
-                                    only: ['application_email_template_list', 'application_email_template_read']
-                                  }
+                                    only: ['application_email_template_list', 'application_email_template_read'],
+                                  },
                                 },
                                 children: [
                                   {
@@ -991,19 +999,19 @@ export const routes: Routes = [
                                     component: ApplicationEmailComponent,
                                     canActivate: [AuthGuard],
                                     resolve: {
-                                      email: EmailResolver
+                                      email: EmailResolver,
                                     },
                                     data: {
                                       breadcrumb: {
-                                        label: "email.template",
-                                        applyOnLabel: applyOnLabel
+                                        label: 'email.template',
+                                        applyOnLabel: applyOnLabel,
                                       },
                                       perms: {
-                                        only: ['application_email_template_read']
-                                      }
-                                    }
-                                  }
-                                ]
+                                        only: ['application_email_template_read'],
+                                      },
+                                    },
+                                  },
+                                ],
                               },
                               {
                                 path: 'flows',
@@ -1013,20 +1021,20 @@ export const routes: Routes = [
                                   flows: ApplicationFlowsResolver,
                                   policies: PluginPoliciesResolver,
                                   flowSettingsForm: PlatformFlowSchemaResolver,
-                                  factors: FactorsResolver
+                                  factors: FactorsResolver,
                                 },
                                 data: {
                                   menu: {
                                     label: 'Flows',
                                     section: 'Design',
-                                    level: 'level3'
+                                    level: 'level3',
                                   },
                                   perms: {
-                                    only: ['application_flow_list', 'application_flow_read']
-                                  }
-                                }
+                                    only: ['application_flow_list', 'application_flow_read'],
+                                  },
+                                },
                               },
-                            ]
+                            ],
                           },
                           {
                             path: 'analytics',
@@ -1036,15 +1044,15 @@ export const routes: Routes = [
                               menu: {
                                 label: 'Analytics',
                                 section: 'Analytics',
-                                level: 'level2'
+                                level: 'level2',
                               },
                               perms: {
-                                only: ['application_analytics_list']
+                                only: ['application_analytics_list'],
                               },
                               types: {
-                                only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER']
-                              }
-                            }
+                                only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER'],
+                              },
+                            },
                           },
                           {
                             path: 'settings',
@@ -1053,11 +1061,11 @@ export const routes: Routes = [
                               menu: {
                                 label: 'Settings',
                                 section: 'Settings',
-                                level: 'level2'
+                                level: 'level2',
                               },
                               perms: {
-                                only: ['application_settings_read', 'application_oauth_read', 'application_certificate_list']
-                              }
+                                only: ['application_settings_read', 'application_oauth_read', 'application_certificate_list'],
+                              },
                             },
                             children: [
                               {
@@ -1068,12 +1076,12 @@ export const routes: Routes = [
                                   menu: {
                                     label: 'General',
                                     section: 'Settings',
-                                    level: 'level3'
+                                    level: 'level3',
                                   },
                                   perms: {
-                                    only: ['application_settings_read']
-                                  }
-                                }
+                                    only: ['application_settings_read'],
+                                  },
+                                },
                               },
                               {
                                 path: 'metadata',
@@ -1083,12 +1091,12 @@ export const routes: Routes = [
                                   menu: {
                                     label: 'Application metadata',
                                     section: 'Settings',
-                                    level: 'level3'
+                                    level: 'level3',
                                   },
                                   perms: {
-                                    only: ['application_settings_read']
-                                  }
-                                }
+                                    only: ['application_settings_read'],
+                                  },
+                                },
                               },
                               {
                                 path: 'oauth2',
@@ -1097,11 +1105,11 @@ export const routes: Routes = [
                                   menu: {
                                     label: 'OAuth 2.0 / OIDC',
                                     section: 'Settings',
-                                    level: 'level3'
+                                    level: 'level3',
                                   },
                                   perms: {
-                                    only: ['application_openid_read']
-                                  }
+                                    only: ['application_openid_read'],
+                                  },
                                 },
                                 children: [
                                   {
@@ -1109,26 +1117,26 @@ export const routes: Routes = [
                                     component: ApplicationGrantFlowsComponent,
                                     canActivate: [AuthGuard],
                                     resolve: {
-                                      domainGrantTypes: ExtensionGrantsResolver
+                                      domainGrantTypes: ExtensionGrantsResolver,
                                     },
                                     data: {
                                       perms: {
-                                        only: ['application_openid_read']
-                                      }
-                                    }
+                                        only: ['application_openid_read'],
+                                      },
+                                    },
                                   },
                                   {
                                     path: 'scopes',
                                     component: ApplicationScopesComponent,
                                     canActivate: [AuthGuard],
                                     resolve: {
-                                      scopes: ScopesAllResolver
+                                      scopes: ScopesAllResolver,
                                     },
                                     data: {
                                       perms: {
-                                        only: ['application_openid_read']
-                                      }
-                                    }
+                                        only: ['application_openid_read'],
+                                      },
+                                    },
                                   },
                                   {
                                     path: 'tokens',
@@ -1136,11 +1144,11 @@ export const routes: Routes = [
                                     canActivate: [AuthGuard],
                                     data: {
                                       perms: {
-                                        only: ['application_openid_read']
-                                      }
-                                    }
-                                  }
-                                ]
+                                        only: ['application_openid_read'],
+                                      },
+                                    },
+                                  },
+                                ],
                               },
                               {
                                 path: 'saml2',
@@ -1150,19 +1158,19 @@ export const routes: Routes = [
                                   menu: {
                                     label: 'SAML 2.0',
                                     section: 'Settings',
-                                    level: 'level3'
+                                    level: 'level3',
                                   },
                                   perms: {
-                                    only: ['application_saml_read']
+                                    only: ['application_saml_read'],
                                   },
                                   types: {
-                                    only: ['WEB', 'NATIVE', 'BROWSER']
+                                    only: ['WEB', 'NATIVE', 'BROWSER'],
                                   },
-                                  protocol: 'SAML'
+                                  protocol: 'SAML',
                                 },
                                 resolve: {
-                                  certificates: CertificatesResolver
-                                }
+                                  certificates: CertificatesResolver,
+                                },
                               },
                               {
                                 path: 'login',
@@ -1172,54 +1180,54 @@ export const routes: Routes = [
                                   menu: {
                                     label: 'Login',
                                     section: 'Settings',
-                                    level: 'level3'
+                                    level: 'level3',
                                   },
                                   perms: {
-                                    only: ['application_settings_read']
+                                    only: ['application_settings_read'],
                                   },
                                   types: {
-                                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER']
-                                  }
-                                }
+                                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER'],
+                                  },
+                                },
                               },
                               {
                                 path: 'members',
                                 component: ApplicationMembershipsComponent,
                                 canActivate: [AuthGuard],
                                 resolve: {
-                                  members: MembershipsResolver
+                                  members: MembershipsResolver,
                                 },
                                 data: {
                                   menu: {
                                     label: 'Administrative roles',
                                     section: 'Settings',
-                                    level: 'level3'
+                                    level: 'level3',
                                   },
                                   perms: {
-                                    only: ['application_member_list']
-                                  }
-                                }
+                                    only: ['application_member_list'],
+                                  },
+                                },
                               },
                               {
                                 path: 'factors',
                                 component: ApplicationFactorsComponent,
                                 canActivate: [AuthGuard],
                                 resolve: {
-                                  deviceIdentifiers: DeviceIdentifiersResolver
+                                  deviceIdentifiers: DeviceIdentifiersResolver,
                                 },
                                 data: {
                                   menu: {
                                     label: 'Multifactor Auth',
                                     section: 'Security',
-                                    level: 'level3'
+                                    level: 'level3',
                                   },
                                   perms: {
-                                    only: ['application_factor_list']
+                                    only: ['application_factor_list'],
                                   },
                                   types: {
-                                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER']
-                                  }
-                                }
+                                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER'],
+                                  },
+                                },
                               },
                               {
                                 path: 'account',
@@ -1229,31 +1237,31 @@ export const routes: Routes = [
                                   menu: {
                                     label: 'User Accounts',
                                     section: 'Security',
-                                    level: 'level3'
+                                    level: 'level3',
                                   },
                                   perms: {
-                                    only: ['application_settings_read']
+                                    only: ['application_settings_read'],
                                   },
                                   types: {
-                                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER']
-                                  }
-                                }
+                                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER'],
+                                  },
+                                },
                               },
                               {
                                 path: 'certificates',
                                 component: ApplicationCertificatesComponent,
                                 canActivate: [AuthGuard],
-                                resolve: {certificates: SignCertificatesResolver},
+                                resolve: { certificates: SignCertificatesResolver },
                                 data: {
                                   menu: {
                                     label: 'Certificates',
                                     section: 'Security',
-                                    level: 'level3'
+                                    level: 'level3',
                                   },
                                   perms: {
-                                    only: ['application_certificate_list']
-                                  }
-                                }
+                                    only: ['application_certificate_list'],
+                                  },
+                                },
                               },
                               {
                                 path: 'password-policy',
@@ -1263,12 +1271,12 @@ export const routes: Routes = [
                                   menu: {
                                     label: 'Password policy',
                                     section: 'Security',
-                                    level: 'level3'
+                                    level: 'level3',
                                   },
                                   perms: {
-                                    only: ['application_settings_read']
-                                  }
-                                }
+                                    only: ['application_settings_read'],
+                                  },
+                                },
                               },
                               {
                                 path: 'session',
@@ -1278,12 +1286,12 @@ export const routes: Routes = [
                                   menu: {
                                     label: 'Session management',
                                     section: 'Security',
-                                    level: 'level3'
+                                    level: 'level3',
                                   },
                                   perms: {
-                                    only: ['application_settings_read']
-                                  }
-                                }
+                                    only: ['application_settings_read'],
+                                  },
+                                },
                               },
                               {
                                 path: 'resources',
@@ -1292,14 +1300,14 @@ export const routes: Routes = [
                                   menu: {
                                     label: 'Resources',
                                     section: 'Security',
-                                    level: 'level3'
+                                    level: 'level3',
                                   },
                                   perms: {
-                                    only: ['application_resource_list']
+                                    only: ['application_resource_list'],
                                   },
                                   types: {
-                                    only: ['RESOURCE_SERVER']
-                                  }
+                                    only: ['RESOURCE_SERVER'],
+                                  },
                                 },
                                 children: [
                                   {
@@ -1307,22 +1315,22 @@ export const routes: Routes = [
                                     pathMatch: 'full',
                                     component: ApplicationResourcesComponent,
                                     resolve: {
-                                      resources: ApplicationResourcesResolver
-                                    }
+                                      resources: ApplicationResourcesResolver,
+                                    },
                                   },
                                   {
                                     path: ':resourceId',
                                     canActivate: [AuthGuard],
                                     resolve: {
-                                      resource: ApplicationResourceResolver
+                                      resource: ApplicationResourceResolver,
                                     },
                                     data: {
                                       breadcrumb: {
-                                        label: 'resource.name'
+                                        label: 'resource.name',
                                       },
                                       perms: {
-                                        only: ['application_resource_read']
-                                      }
+                                        only: ['application_resource_read'],
+                                      },
                                     },
                                     children: [
                                       {
@@ -1335,27 +1343,26 @@ export const routes: Routes = [
                                         component: ApplicationResourcePolicyComponent,
                                         canActivate: [AuthGuard],
                                         resolve: {
-                                          policy: ApplicationResourcePolicyResolver
+                                          policy: ApplicationResourcePolicyResolver,
                                         },
                                         data: {
                                           breadcrumb: {
-                                            label: 'policy.name'
+                                            label: 'policy.name',
                                           },
                                           perms: {
-                                            only: ['application_resource_read']
-                                          }
-                                        }
-                                      }
-
-                                    ]
+                                            only: ['application_resource_read'],
+                                          },
+                                        },
+                                      },
+                                    ],
                                   },
-                                ]
-                              }
-                            ]
-                          }
-                        ]
-                      }
-                    ]
+                                ],
+                              },
+                            ],
+                          },
+                        ],
+                      },
+                    ],
                   },
                   {
                     path: 'settings',
@@ -1365,31 +1372,31 @@ export const routes: Routes = [
                       menu: {
                         label: 'Settings',
                         icon: 'gio:settings',
-                        level: 'top'
+                        level: 'top',
                       },
                       perms: {
-                        only: ['domain_settings_read']
-                      }
+                        only: ['domain_settings_read'],
+                      },
                     },
                     children: [
-                      {path: '', redirectTo: 'general', pathMatch: 'full'},
+                      { path: '', redirectTo: 'general', pathMatch: 'full' },
                       {
                         path: 'general',
                         component: DomainSettingsGeneralComponent,
                         canActivate: [AuthGuard],
                         resolve: {
-                          tags: TagsResolver
+                          tags: TagsResolver,
                         },
                         data: {
                           menu: {
                             label: 'General',
                             section: 'Settings',
-                            level: 'level2'
+                            level: 'level2',
                           },
                           perms: {
-                            only: ['domain_settings_read']
-                          }
-                        }
+                            only: ['domain_settings_read'],
+                          },
+                        },
                       },
                       {
                         path: 'entrypoints',
@@ -1397,18 +1404,18 @@ export const routes: Routes = [
                         canActivate: [AuthGuard],
                         resolve: {
                           entrypoint: DomainEntrypointResolver,
-                          environment: EnvironmentResolver
+                          environment: EnvironmentResolver,
                         },
                         data: {
                           menu: {
                             label: 'Entrypoints',
                             section: 'Settings',
-                            level: 'level2'
+                            level: 'level2',
                           },
                           perms: {
-                            only: ['domain_settings_read']
-                          }
-                        }
+                            only: ['domain_settings_read'],
+                          },
+                        },
                       },
                       {
                         path: 'login',
@@ -1418,71 +1425,71 @@ export const routes: Routes = [
                           menu: {
                             label: 'Login',
                             section: 'Settings',
-                            level: 'level2'
+                            level: 'level2',
                           },
                           perms: {
-                            only: ['domain_settings_read']
-                          }
-                        }
+                            only: ['domain_settings_read'],
+                          },
+                        },
                       },
                       {
                         path: 'members',
                         component: DomainSettingsMembershipsComponent,
                         canActivate: [AuthGuard],
                         resolve: {
-                          members: MembershipsResolver
+                          members: MembershipsResolver,
                         },
                         data: {
                           menu: {
                             label: 'Administrative roles',
                             section: 'Settings',
-                            level: 'level2'
+                            level: 'level2',
                           },
                           perms: {
-                            only: ['domain_member_list']
-                          }
-                        }
+                            only: ['domain_member_list'],
+                          },
+                        },
                       },
                       {
                         path: 'theme',
                         component: DomainSettingsThemeComponent,
                         canActivate: [AuthGuard],
                         resolve: {
-                          themes: ThemesResolver
+                          themes: ThemesResolver,
                         },
                         data: {
                           menu: {
                             label: 'Theme',
                             section: 'Design',
-                            level: 'level2'
+                            level: 'level2',
                           },
                           perms: {
-                            only: ['domain_theme_list', 'domain_theme_read', 'domain_form_list', 'domain_form_read']
-                          }
-                        }
+                            only: ['domain_theme_list', 'domain_theme_read', 'domain_form_list', 'domain_form_read'],
+                          },
+                        },
                       },
                       {
                         path: 'texts',
                         component: DomainSettingsDictionariesComponent,
                         canActivate: [AuthGuard],
                         resolve: {
-                          dictionaries: DictionariesResolver
+                          dictionaries: DictionariesResolver,
                         },
                         data: {
                           menu: {
                             label: 'Texts',
                             section: 'Design',
-                            level: 'level2'
+                            level: 'level2',
                           },
                           perms: {
                             only: [
                               'domain_i18n_dictionary_list',
                               'domain_i18n_dictionary_create',
                               'domain_i18n_dictionary_update',
-                              'domain_i18n_dictionary_delete'
-                              ]
-                          }
-                        }
+                              'domain_i18n_dictionary_delete',
+                            ],
+                          },
+                        },
                       },
                       {
                         path: 'emails',
@@ -1491,11 +1498,11 @@ export const routes: Routes = [
                           menu: {
                             label: 'Emails',
                             section: 'Design',
-                            level: 'level2'
+                            level: 'level2',
                           },
                           perms: {
-                            only: ['domain_email_template_list', 'domain_email_template_read']
-                          }
+                            only: ['domain_email_template_list', 'domain_email_template_read'],
+                          },
                         },
                         children: [
                           {
@@ -1507,16 +1514,16 @@ export const routes: Routes = [
                             path: 'email',
                             component: DomainSettingsEmailComponent,
                             resolve: {
-                              email: EmailResolver
+                              email: EmailResolver,
                             },
                             data: {
                               breadcrumb: {
-                                label: "email.template",
-                                applyOnLabel: applyOnLabel
-                              }
-                            }
-                          }
-                        ]
+                                label: 'email.template',
+                                applyOnLabel: applyOnLabel,
+                              },
+                            },
+                          },
+                        ],
                       },
                       {
                         path: 'flows',
@@ -1526,18 +1533,18 @@ export const routes: Routes = [
                           flows: DomainFlowsResolver,
                           policies: PluginPoliciesResolver,
                           flowSettingsForm: PlatformFlowSchemaResolver,
-                          factors: FactorsResolver
+                          factors: FactorsResolver,
                         },
                         data: {
                           menu: {
                             label: 'Flows',
                             section: 'Design',
-                            level: 'level2'
+                            level: 'level2',
                           },
                           perms: {
-                            only: ['domain_flow_list']
-                          }
-                        }
+                            only: ['domain_flow_list'],
+                          },
+                        },
                       },
                       {
                         path: 'providers',
@@ -1546,11 +1553,11 @@ export const routes: Routes = [
                           menu: {
                             label: 'Providers',
                             section: 'Identities',
-                            level: 'level2'
+                            level: 'level2',
                           },
                           perms: {
-                            only: ['domain_identity_provider_list']
-                          }
+                            only: ['domain_identity_provider_list'],
+                          },
                         },
                         children: [
                           {
@@ -1559,85 +1566,88 @@ export const routes: Routes = [
                             component: DomainSettingsProvidersComponent,
                             resolve: {
                               providers: ProvidersResolver,
-                              identities: IdentitiesResolver
-                            }
+                              identities: IdentitiesResolver,
+                            },
                           },
                           {
                             path: 'new',
                             component: ProviderCreationComponent,
                             resolve: {
                               certificates: CertificatesResolver,
-                              identities: IdentitiesResolver
-                            }
+                              identities: IdentitiesResolver,
+                            },
                           },
                           {
                             path: ':providerId',
                             component: ProviderComponent,
                             resolve: {
-                              provider: ProviderResolver
+                              provider: ProviderResolver,
                             },
                             data: {
                               breadcrumb: {
-                                label: 'provider.name'
-                              }
+                                label: 'provider.name',
+                              },
                             },
                             children: [
                               {
-                                path: '', redirectTo: 'settings', pathMatch: 'full'
+                                path: '',
+                                redirectTo: 'settings',
+                                pathMatch: 'full',
                               },
                               {
                                 path: 'settings',
                                 component: ProviderSettingsComponent,
                                 data: {
                                   breadcrumb: {
-                                    disabled: true
-                                  }
+                                    disabled: true,
+                                  },
                                 },
                                 resolve: {
-                                  certificates: CertificatesResolver
-                                }
+                                  certificates: CertificatesResolver,
+                                },
                               },
                               {
                                 path: 'mappers',
                                 component: ProviderMappersComponent,
                                 data: {
                                   breadcrumb: {
-                                    label: 'user mappers'
-                                  }
-                                }
+                                    label: 'user mappers',
+                                  },
+                                },
                               },
                               {
-                                path: 'roles', component: ProviderRolesComponent,
+                                path: 'roles',
+                                component: ProviderRolesComponent,
                                 resolve: {
-                                  roles: RolesResolver
+                                  roles: RolesResolver,
                                 },
                                 data: {
                                   breadcrumb: {
-                                    label: 'role mappers'
-                                  }
-                                }
-                              }
-                            ]
-                          }
-                        ]
+                                    label: 'role mappers',
+                                  },
+                                },
+                              },
+                            ],
+                          },
+                        ],
                       },
                       {
                         path: 'webauthn',
                         component: DomainSettingsWebAuthnComponent,
                         canActivate: [AuthGuard],
                         resolve: {
-                          entrypoint: DomainEntrypointResolver
+                          entrypoint: DomainEntrypointResolver,
                         },
                         data: {
                           menu: {
                             label: 'WebAuthn',
                             section: 'Security',
-                            level: 'level2'
+                            level: 'level2',
                           },
                           perms: {
-                            only: ['domain_settings_read']
-                          }
-                        }
+                            only: ['domain_settings_read'],
+                          },
+                        },
                       },
                       {
                         path: 'factors',
@@ -1646,11 +1656,11 @@ export const routes: Routes = [
                           menu: {
                             label: 'Multifactor Auth',
                             section: 'Security',
-                            level: 'level2'
+                            level: 'level2',
                           },
                           perms: {
-                            only: ['domain_factor_list']
-                          }
+                            only: ['domain_factor_list'],
+                          },
                         },
                         children: [
                           {
@@ -1663,9 +1673,9 @@ export const routes: Routes = [
                             },
                             data: {
                               perms: {
-                                only: ['domain_factor_list']
-                              }
-                            }
+                                only: ['domain_factor_list'],
+                              },
+                            },
                           },
                           {
                             path: 'new',
@@ -1674,13 +1684,13 @@ export const routes: Routes = [
                             resolve: {
                               factorPlugins: FactorPluginsResolver,
                               resources: ResourcesResolver,
-                              resourcePlugins: ResourcePluginsResolver
+                              resourcePlugins: ResourcePluginsResolver,
                             },
                             data: {
                               perms: {
-                                only: ['domain_factor_create']
-                              }
-                            }
+                                only: ['domain_factor_create'],
+                              },
+                            },
                           },
                           {
                             path: ':factorId',
@@ -1690,18 +1700,18 @@ export const routes: Routes = [
                               factor: FactorResolver,
                               factorPlugins: FactorPluginsResolver,
                               resources: ResourcesResolver,
-                              resourcePlugins: ResourcePluginsResolver
+                              resourcePlugins: ResourcePluginsResolver,
                             },
                             data: {
                               breadcrumb: {
-                                label: "factor.name",
+                                label: 'factor.name',
                               },
                               perms: {
-                                only: ['domain_factor_read']
-                              }
-                            }
-                          }
-                        ]
+                                only: ['domain_factor_read'],
+                              },
+                            },
+                          },
+                        ],
                       },
                       {
                         path: 'password-policy',
@@ -1711,12 +1721,12 @@ export const routes: Routes = [
                           menu: {
                             label: 'Password policy',
                             section: 'Security',
-                            level: 'level2'
+                            level: 'level2',
                           },
                           perms: {
-                            only: ['application_settings_read']
-                          }
-                        }
+                            only: ['application_settings_read'],
+                          },
+                        },
                       },
                       {
                         path: 'audits',
@@ -1725,11 +1735,11 @@ export const routes: Routes = [
                           menu: {
                             label: 'Audit Log',
                             section: 'Security',
-                            level: 'level2'
+                            level: 'level2',
                           },
                           perms: {
-                            only: ['domain_audit_list']
-                          }
+                            only: ['domain_audit_list'],
+                          },
                         },
                         children: [
                           {
@@ -1739,9 +1749,9 @@ export const routes: Routes = [
                             canActivate: [AuthGuard],
                             data: {
                               perms: {
-                                only: ['domain_audit_list']
-                              }
-                            }
+                                only: ['domain_audit_list'],
+                              },
+                            },
                           },
                           {
                             path: 'settings',
@@ -1752,61 +1762,61 @@ export const routes: Routes = [
                                 component: AuditsSettingsComponent,
                                 canActivate: [AuthGuard],
                                 resolve: {
-                                  reporters: ReportersResolver
+                                  reporters: ReportersResolver,
                                 },
                                 data: {
                                   perms: {
-                                    only: ['domain_reporter_list']
-                                  }
-                                }
+                                    only: ['domain_reporter_list'],
+                                  },
+                                },
                               },
                               {
                                 path: 'new',
                                 component: ReporterComponent,
                                 canActivate: [AuthGuard],
                                 resolve: {
-                                  reporterPlugins: PluginReportersResolver
+                                  reporterPlugins: PluginReportersResolver,
                                 },
                                 data: {
                                   perms: {
-                                    only: ['domain_reporter_create']
-                                  }
-                                }
+                                    only: ['domain_reporter_create'],
+                                  },
+                                },
                               },
                               {
                                 path: ':reporterId',
                                 component: ReporterComponent,
                                 resolve: {
                                   reporter: ReporterResolver,
-                                  reporterPlugins: PluginReportersResolver
+                                  reporterPlugins: PluginReportersResolver,
                                 },
                                 data: {
                                   breadcrumb: {
-                                    label: 'reporter.name'
+                                    label: 'reporter.name',
                                   },
                                   perms: {
-                                    only: ['domain_reporter_read']
-                                  }
-                                }
-                              }
-                            ]
+                                    only: ['domain_reporter_read'],
+                                  },
+                                },
+                              },
+                            ],
                           },
                           {
                             path: ':auditId',
                             component: AuditComponent,
                             resolve: {
-                              audit: AuditResolver
+                              audit: AuditResolver,
                             },
                             data: {
                               breadcrumb: {
-                                label: "audit.id"
+                                label: 'audit.id',
                               },
                               perms: {
-                                only: ['domain_audit_read']
-                              }
-                            }
-                          }
-                        ]
+                                only: ['domain_audit_read'],
+                              },
+                            },
+                          },
+                        ],
                       },
                       {
                         path: 'account',
@@ -1816,12 +1826,12 @@ export const routes: Routes = [
                           menu: {
                             label: 'User Accounts',
                             section: 'Security',
-                            level: 'level2'
+                            level: 'level2',
                           },
                           perms: {
-                            only: ['domain_settings_read']
-                          }
-                        }
+                            only: ['domain_settings_read'],
+                          },
+                        },
                       },
                       {
                         path: 'certificates',
@@ -1830,11 +1840,11 @@ export const routes: Routes = [
                           menu: {
                             label: 'Certificates',
                             section: 'Security',
-                            level: 'level2'
+                            level: 'level2',
                           },
                           perms: {
-                            only: ['domain_certificate_list']
-                          }
+                            only: ['domain_certificate_list'],
+                          },
                         },
                         children: [
                           {
@@ -1842,30 +1852,30 @@ export const routes: Routes = [
                             pathMatch: 'full',
                             component: DomainSettingsCertificatesComponent,
                             resolve: {
-                              certificates: CertificatesResolver
-                            }
+                              certificates: CertificatesResolver,
+                            },
                           },
                           {
                             path: 'new',
-                            component: CertificateCreationComponent
+                            component: CertificateCreationComponent,
                           },
                           {
                             path: ':certificateId',
                             component: CertificateComponent,
                             canActivate: [AuthGuard],
                             resolve: {
-                              certificate: CertificateResolver
+                              certificate: CertificateResolver,
                             },
                             data: {
                               breadcrumb: {
-                                label: 'certificate.name'
+                                label: 'certificate.name',
                               },
                               perms: {
-                                only: ['domain_certificate_read']
-                              }
-                            }
-                          }
-                        ]
+                                only: ['domain_certificate_read'],
+                              },
+                            },
+                          },
+                        ],
                       },
                       {
                         path: 'bot-detection',
@@ -1874,11 +1884,11 @@ export const routes: Routes = [
                           menu: {
                             label: 'Bot Detection',
                             section: 'Security',
-                            level: 'level2'
+                            level: 'level2',
                           },
                           perms: {
-                            only: ['domain_bot_detection_list']
-                          }
+                            only: ['domain_bot_detection_list'],
+                          },
                         },
                         children: [
                           {
@@ -1891,9 +1901,9 @@ export const routes: Routes = [
                             },
                             data: {
                               perms: {
-                                only: ['domain_bot_detection_list']
-                              }
-                            }
+                                only: ['domain_bot_detection_list'],
+                              },
+                            },
                           },
                           {
                             path: 'new',
@@ -1904,9 +1914,9 @@ export const routes: Routes = [
                             },
                             data: {
                               perms: {
-                                only: ['domain_bot_detection_create']
-                              }
-                            }
+                                only: ['domain_bot_detection_create'],
+                              },
+                            },
                           },
                           {
                             path: ':botDetectionId',
@@ -1917,14 +1927,14 @@ export const routes: Routes = [
                             },
                             data: {
                               breadcrumb: {
-                                label: "botDetection.name",
+                                label: 'botDetection.name',
                               },
                               perms: {
-                                only: ['domain_bot_detection_read']
-                              }
-                            }
-                          }
-                        ]
+                                only: ['domain_bot_detection_read'],
+                              },
+                            },
+                          },
+                        ],
                       },
                       {
                         path: 'device-identifier',
@@ -1933,11 +1943,11 @@ export const routes: Routes = [
                           menu: {
                             label: 'Device Identifier',
                             section: 'Security',
-                            level: 'level2'
+                            level: 'level2',
                           },
                           perms: {
-                            only: ['domain_device_identifier_list']
-                          }
+                            only: ['domain_device_identifier_list'],
+                          },
                         },
                         children: [
                           {
@@ -1950,9 +1960,9 @@ export const routes: Routes = [
                             },
                             data: {
                               perms: {
-                                only: ['domain_device_identifier_list']
-                              }
-                            }
+                                only: ['domain_device_identifier_list'],
+                              },
+                            },
                           },
                           {
                             path: 'new',
@@ -1963,9 +1973,9 @@ export const routes: Routes = [
                             },
                             data: {
                               perms: {
-                                only: ['domain_device_identifier_create']
-                              }
-                            }
+                                only: ['domain_device_identifier_create'],
+                              },
+                            },
                           },
                           {
                             path: ':deviceIdentifierId',
@@ -1976,14 +1986,14 @@ export const routes: Routes = [
                             },
                             data: {
                               breadcrumb: {
-                                label: "deviceIdentifier.name",
+                                label: 'deviceIdentifier.name',
                               },
                               perms: {
-                                only: ['domain_device_identifier_read']
-                              }
-                            }
-                          }
-                        ]
+                                only: ['domain_device_identifier_read'],
+                              },
+                            },
+                          },
+                        ],
                       },
                       {
                         path: 'resources',
@@ -1992,11 +2002,11 @@ export const routes: Routes = [
                           menu: {
                             label: 'Services',
                             section: 'Resources',
-                            level: 'level2'
+                            level: 'level2',
                           },
                           perms: {
-                            only: ['domain_resource_list']
-                          }
+                            only: ['domain_resource_list'],
+                          },
                         },
                         children: [
                           {
@@ -2006,13 +2016,13 @@ export const routes: Routes = [
                             canActivate: [AuthGuard],
                             data: {
                               perms: {
-                                only: ['domain_resource_read']
-                              }
+                                only: ['domain_resource_read'],
+                              },
                             },
                             resolve: {
                               resources: ResourcesResolver,
-                              resourcePlugins: ResourcePluginsResolver
-                            }
+                              resourcePlugins: ResourcePluginsResolver,
+                            },
                           },
                           {
                             path: 'new',
@@ -2020,9 +2030,9 @@ export const routes: Routes = [
                             canActivate: [AuthGuard],
                             data: {
                               perms: {
-                                only: ['domain_resource_create']
-                              }
-                            }
+                                only: ['domain_resource_create'],
+                              },
+                            },
                           },
                           {
                             path: ':resourceId',
@@ -2033,14 +2043,14 @@ export const routes: Routes = [
                             },
                             data: {
                               breadcrumb: {
-                                label: "resource.name",
+                                label: 'resource.name',
                               },
                               perms: {
-                                only: ['domain_resource_read']
-                              }
-                            }
-                          }
-                        ]
+                                only: ['domain_resource_read'],
+                              },
+                            },
+                          },
+                        ],
                       },
                       {
                         path: 'users',
@@ -2049,17 +2059,17 @@ export const routes: Routes = [
                           menu: {
                             label: 'Users',
                             section: 'User Management',
-                            level: 'level2'
+                            level: 'level2',
                           },
                           perms: {
-                            only: ['domain_user_list']
-                          }
+                            only: ['domain_user_list'],
+                          },
                         },
                         children: [
                           {
                             path: '',
                             pathMatch: 'full',
-                            component: UsersComponent
+                            component: UsersComponent,
                           },
                           {
                             path: 'new',
@@ -2067,38 +2077,38 @@ export const routes: Routes = [
                             canActivate: [AuthGuard],
                             data: {
                               perms: {
-                                only: ['domain_user_create']
-                              }
-                            }
+                                only: ['domain_user_create'],
+                              },
+                            },
                           },
                           {
                             path: ':userId',
                             component: UserComponent,
                             canActivate: [AuthGuard],
                             resolve: {
-                              user: UserResolver
+                              user: UserResolver,
                             },
                             data: {
                               breadcrumb: {
-                                label: 'user.username'
+                                label: 'user.username',
                               },
                               perms: {
-                                only: ['domain_user_read']
-                              }
+                                only: ['domain_user_read'],
+                              },
                             },
                             children: [
                               {
                                 path: '',
                                 redirectTo: 'profile',
-                                pathMatch: 'full'
+                                pathMatch: 'full',
                               },
                               {
                                 path: 'profile',
-                                component: UserProfileComponent
+                                component: UserProfileComponent,
                               },
                               {
                                 path: 'history',
-                                component: UserHistoryComponent
+                                component: UserHistoryComponent,
                               },
                               {
                                 path: 'applications',
@@ -2108,30 +2118,30 @@ export const routes: Routes = [
                                     pathMatch: 'full',
                                     component: UserApplicationsComponent,
                                     resolve: {
-                                      consents: ConsentsResolver
-                                    }
+                                      consents: ConsentsResolver,
+                                    },
                                   },
                                   {
                                     path: ':appId',
                                     component: UserApplicationComponent,
                                     resolve: {
                                       application: ApplicationResolver,
-                                      consents: ConsentsResolver
+                                      consents: ConsentsResolver,
                                     },
                                     data: {
                                       breadcrumb: {
-                                        label: 'application.name'
-                                      }
-                                    }
-                                  }
-                                ]
+                                        label: 'application.name',
+                                      },
+                                    },
+                                  },
+                                ],
                               },
                               {
                                 path: 'factors',
                                 component: UserFactorsComponent,
                                 resolve: {
-                                  factors: EnrolledFactorsResolver
-                                }
+                                  factors: EnrolledFactorsResolver,
+                                },
                               },
                               {
                                 path: 'credentials',
@@ -2140,24 +2150,24 @@ export const routes: Routes = [
                                     path: '',
                                     pathMatch: 'full',
                                     component: UserCredentialsComponent,
-                                    resolve: {credentials: UserCredentialsResolver}
+                                    resolve: { credentials: UserCredentialsResolver },
                                   },
                                   {
                                     path: ':credentialId',
                                     component: UserCredentialComponent,
-                                    resolve: {credential: UserCredentialResolver},
+                                    resolve: { credential: UserCredentialResolver },
                                     data: {
                                       breadcrumb: {
-                                        label: 'detail'
-                                      }
-                                    }
-                                  }
-                                ]
+                                        label: 'detail',
+                                      },
+                                    },
+                                  },
+                                ],
                               },
                               {
                                 path: 'roles',
                                 component: UserRolesComponent,
-                                resolve: {roles: UserRolesResolver, dynamicRoles: DynamicUserRolesResolver}
+                                resolve: { roles: UserRolesResolver, dynamicRoles: DynamicUserRolesResolver },
                               },
                               {
                                 path: 'devices',
@@ -2165,12 +2175,12 @@ export const routes: Routes = [
                                 resolve: {
                                   devices: UserDevicesResolver,
                                   deviceIdentifiers: DeviceIdentifiersResolver,
-                                  consents: ConsentsResolver
-                                }
-                              }
-                            ]
+                                  consents: ConsentsResolver,
+                                },
+                              },
+                            ],
                           },
-                        ]
+                        ],
                       },
                       {
                         path: 'groups',
@@ -2179,11 +2189,11 @@ export const routes: Routes = [
                           menu: {
                             label: 'Groups',
                             section: 'User Management',
-                            level: 'level2'
+                            level: 'level2',
                           },
                           perms: {
-                            only: ['domain_group_list']
-                          }
+                            only: ['domain_group_list'],
+                          },
                         },
                         children: [
                           {
@@ -2191,8 +2201,8 @@ export const routes: Routes = [
                             pathMatch: 'full',
                             component: GroupsComponent,
                             resolve: {
-                              groups: GroupsResolver
-                            }
+                              groups: GroupsResolver,
+                            },
                           },
                           {
                             path: 'new',
@@ -2200,37 +2210,37 @@ export const routes: Routes = [
                             canActivate: [AuthGuard],
                             data: {
                               perms: {
-                                only: ['domain_group_create']
-                              }
-                            }
+                                only: ['domain_group_create'],
+                              },
+                            },
                           },
                           {
                             path: ':groupId',
                             component: GroupComponent,
                             canActivate: [AuthGuard],
                             resolve: {
-                              group: GroupResolver
+                              group: GroupResolver,
                             },
                             data: {
                               breadcrumb: {
-                                label: 'group.name'
+                                label: 'group.name',
                               },
                               perms: {
-                                only: ['domain_group_read']
-                              }
+                                only: ['domain_group_read'],
+                              },
                             },
                             children: [
-                              {path: '', redirectTo: 'settings', pathMatch: 'full'},
-                              {path: 'settings', component: GroupSettingsComponent},
+                              { path: '', redirectTo: 'settings', pathMatch: 'full' },
+                              { path: 'settings', component: GroupSettingsComponent },
                               {
                                 path: 'members',
                                 component: GroupMembersComponent,
-                                resolve: {members: GroupMembersResolver}
+                                resolve: { members: GroupMembersResolver },
                               },
-                              {path: 'roles', component: GroupRolesComponent, resolve: {roles: GroupRolesResolver}}
-                            ]
-                          }
-                        ]
+                              { path: 'roles', component: GroupRolesComponent, resolve: { roles: GroupRolesResolver } },
+                            ],
+                          },
+                        ],
                       },
                       {
                         path: 'roles',
@@ -2239,11 +2249,11 @@ export const routes: Routes = [
                           menu: {
                             label: 'Roles',
                             section: 'User Management',
-                            level: 'level2'
+                            level: 'level2',
                           },
                           perms: {
-                            only: ['domain_role_list']
-                          }
+                            only: ['domain_role_list'],
+                          },
                         },
                         children: [
                           {
@@ -2251,21 +2261,21 @@ export const routes: Routes = [
                             pathMatch: 'full',
                             component: DomainSettingsRolesComponent,
                             resolve: {
-                              roles: PageRolesResolver
-                            }
+                              roles: PageRolesResolver,
+                            },
                           },
                           {
                             path: 'new',
                             component: RoleCreationComponent,
                             canActivate: [AuthGuard],
                             resolve: {
-                              scopes: ScopesAllResolver
+                              scopes: ScopesAllResolver,
                             },
                             data: {
                               perms: {
-                                only: ['domain_role_create']
-                              }
-                            }
+                                only: ['domain_role_create'],
+                              },
+                            },
                           },
                           {
                             path: ':roleId',
@@ -2273,18 +2283,18 @@ export const routes: Routes = [
                             canActivate: [AuthGuard],
                             resolve: {
                               role: RoleResolver,
-                              scopes: ScopesAllResolver
+                              scopes: ScopesAllResolver,
                             },
                             data: {
                               breadcrumb: {
-                                label: 'role.name'
+                                label: 'role.name',
                               },
                               perms: {
-                                only: ['domain_role_read']
-                              }
-                            }
-                          }
-                        ]
+                                only: ['domain_role_read'],
+                              },
+                            },
+                          },
+                        ],
                       },
                       {
                         path: 'scim',
@@ -2294,12 +2304,12 @@ export const routes: Routes = [
                           menu: {
                             label: 'SCIM',
                             section: 'User Management',
-                            level: 'level2'
+                            level: 'level2',
                           },
                           perms: {
-                            only: ['domain_scim_read']
-                          }
-                        }
+                            only: ['domain_scim_read'],
+                          },
+                        },
                       },
                       {
                         path: 'self-service-account',
@@ -2309,12 +2319,12 @@ export const routes: Routes = [
                           menu: {
                             label: 'Self-service account',
                             section: 'User Management',
-                            level: 'level2'
+                            level: 'level2',
                           },
                           perms: {
-                            only: ['domain_settings_read']
-                          }
-                        }
+                            only: ['domain_settings_read'],
+                          },
+                        },
                       },
                       {
                         path: 'scopes',
@@ -2323,11 +2333,11 @@ export const routes: Routes = [
                           menu: {
                             label: 'Scopes',
                             section: 'OAuth 2.0',
-                            level: 'level2'
+                            level: 'level2',
                           },
                           perms: {
-                            only: ['domain_scope_list']
-                          }
+                            only: ['domain_scope_list'],
+                          },
                         },
                         children: [
                           {
@@ -2335,8 +2345,8 @@ export const routes: Routes = [
                             pathMatch: 'full',
                             component: DomainSettingsScopesComponent,
                             resolve: {
-                              scopes: ScopesResolver
-                            }
+                              scopes: ScopesResolver,
+                            },
                           },
                           {
                             path: 'new',
@@ -2344,27 +2354,27 @@ export const routes: Routes = [
                             canActivate: [AuthGuard],
                             data: {
                               perms: {
-                                only: ['domain_scope_create']
-                              }
-                            }
+                                only: ['domain_scope_create'],
+                              },
+                            },
                           },
                           {
                             path: ':scopeId',
                             component: ScopeComponent,
                             canActivate: [AuthGuard],
                             resolve: {
-                              scope: ScopeResolver
+                              scope: ScopeResolver,
                             },
                             data: {
                               breadcrumb: {
-                                label: 'scope.name'
+                                label: 'scope.name',
                               },
                               perms: {
-                                only: ['domain_scope_read']
-                              }
-                            }
-                          }
-                        ]
+                                only: ['domain_scope_read'],
+                              },
+                            },
+                          },
+                        ],
                       },
                       {
                         path: 'extensionGrants',
@@ -2373,11 +2383,11 @@ export const routes: Routes = [
                           menu: {
                             label: 'Extension Grants',
                             section: 'OAuth 2.0',
-                            level: 'level2'
+                            level: 'level2',
                           },
                           perms: {
-                            only: ['domain_extension_grant_list']
-                          }
+                            only: ['domain_extension_grant_list'],
+                          },
                         },
                         children: [
                           {
@@ -2385,21 +2395,21 @@ export const routes: Routes = [
                             pathMatch: 'full',
                             component: DomainSettingsExtensionGrantsComponent,
                             resolve: {
-                              extensionGrants: ExtensionGrantsResolver
-                            }
+                              extensionGrants: ExtensionGrantsResolver,
+                            },
                           },
                           {
                             path: 'new',
                             component: ExtensionGrantCreationComponent,
                             canActivate: [AuthGuard],
                             resolve: {
-                              identityProviders: ProvidersResolver
+                              identityProviders: ProvidersResolver,
                             },
                             data: {
                               perms: {
-                                only: ['domain_extension_grant_create']
-                              }
-                            }
+                                only: ['domain_extension_grant_create'],
+                              },
+                            },
                           },
                           {
                             path: ':extensionGrantId',
@@ -2407,18 +2417,18 @@ export const routes: Routes = [
                             canActivate: [AuthGuard],
                             resolve: {
                               extensionGrant: ExtensionGrantResolver,
-                              identityProviders: ProvidersResolver
+                              identityProviders: ProvidersResolver,
                             },
                             data: {
                               breadcrumb: {
-                                label: 'extensionGrant.name'
+                                label: 'extensionGrant.name',
                               },
                               perms: {
-                                only: ['domain_extension_grant_read']
-                              }
-                            }
+                                only: ['domain_extension_grant_read'],
+                              },
+                            },
                           },
-                        ]
+                        ],
                       },
                       {
                         path: 'uma',
@@ -2428,12 +2438,12 @@ export const routes: Routes = [
                           menu: {
                             label: 'UMA',
                             section: 'OAuth 2.0',
-                            level: 'level2'
+                            level: 'level2',
                           },
                           perms: {
-                            only: ['domain_uma_read']
-                          }
-                        }
+                            only: ['domain_uma_read'],
+                          },
+                        },
                       },
                       {
                         path: 'dcr',
@@ -2443,34 +2453,34 @@ export const routes: Routes = [
                           menu: {
                             label: 'Client Registration',
                             section: 'Openid',
-                            level: 'level2'
+                            level: 'level2',
                           },
                           perms: {
-                            only: ['domain_openid_read']
-                          }
+                            only: ['domain_openid_read'],
+                          },
                         },
                         children: [
-                          {path: '', redirectTo: 'settings', pathMatch: 'full'},
+                          { path: '', redirectTo: 'settings', pathMatch: 'full' },
                           {
                             path: 'settings',
-                            component: ClientRegistrationSettingsComponent
+                            component: ClientRegistrationSettingsComponent,
                           },
                           {
                             path: 'default-scope',
                             component: ClientRegistrationDefaultScopeComponent,
-                            resolve: {scopes: ScopesAllResolver}
+                            resolve: { scopes: ScopesAllResolver },
                           },
                           {
                             path: 'allowed-scope',
                             component: ClientRegistrationAllowedScopeComponent,
-                            resolve: {scopes: ScopesAllResolver}
+                            resolve: { scopes: ScopesAllResolver },
                           },
                           {
                             path: 'templates',
                             component: ClientRegistrationTemplatesComponent,
-                            resolve: {apps: ApplicationsResolver}
-                          }
-                        ]
+                            resolve: { apps: ApplicationsResolver },
+                          },
+                        ],
                       },
                       {
                         path: 'oidc-profile',
@@ -2480,12 +2490,12 @@ export const routes: Routes = [
                           menu: {
                             label: 'Security Profile',
                             section: 'Openid',
-                            level: 'level2'
+                            level: 'level2',
                           },
                           perms: {
-                            only: ['domain_openid_read']
-                          }
-                        }
+                            only: ['domain_openid_read'],
+                          },
+                        },
                       },
                       {
                         path: 'ciba',
@@ -2495,39 +2505,39 @@ export const routes: Routes = [
                           menu: {
                             label: 'CIBA',
                             section: 'Openid',
-                            level: 'level2'
+                            level: 'level2',
                           },
                           perms: {
-                            only: ['domain_openid_read']
-                          }
+                            only: ['domain_openid_read'],
+                          },
                         },
                         children: [
-                          {path: '', redirectTo: 'settings', pathMatch: 'full'},
+                          { path: '', redirectTo: 'settings', pathMatch: 'full' },
                           {
                             path: 'settings',
-                            component: CibaSettingsComponent
+                            component: CibaSettingsComponent,
                           },
                           {
                             path: 'device-notifiers',
                             component: DeviceNotifiersComponent,
-                            resolve: {notifiers: DeviceNotifiersResolver}
+                            resolve: { notifiers: DeviceNotifiersResolver },
                           },
                           {
                             path: 'device-notifiers/new',
                             component: DeviceNotifiersCreationComponent,
-                            resolve: {notifierPlugins: DeviceNotifierPluginsResolver}
+                            resolve: { notifierPlugins: DeviceNotifierPluginsResolver },
                           },
                           {
                             path: 'device-notifiers/:notifierId',
                             component: DeviceNotifierComponent,
-                            resolve: {deviceNotifier: DeviceNotifierResolver},
+                            resolve: { deviceNotifier: DeviceNotifierResolver },
                             data: {
                               breadcrumb: {
-                                label: 'detail'
-                              }
-                            }
-                          }
-                        ]
+                                label: 'detail',
+                              },
+                            },
+                          },
+                        ],
                       },
                       {
                         path: 'saml2',
@@ -2537,57 +2547,59 @@ export const routes: Routes = [
                           menu: {
                             label: 'SAML 2.0',
                             section: 'SAML 2.0',
-                            level: 'level2'
+                            level: 'level2',
                           },
                           perms: {
-                            only: ['domain_saml_read']
-                          }
+                            only: ['domain_saml_read'],
+                          },
                         },
                         resolve: {
                           certificates: CertificatesResolver,
-                          identities: IdentitiesResolver
-                        }
-                      }
-                    ]
+                          identities: IdentitiesResolver,
+                        },
+                      },
+                    ],
                   },
                   {
                     path: 'alerts',
                     component: DomainAlertsComponent,
                     canActivate: [AuthGuard],
                     resolve: {
-                      alertStatus: PlatformAlertStatusResolver
+                      alertStatus: PlatformAlertStatusResolver,
                     },
                     data: {
                       menu: {
                         label: 'Alerts',
                         icon: 'gio:alarm',
-                        level: 'top'
+                        level: 'top',
                       },
                       perms: {
-                        only: ['domain_alert_read']
-                      }
+                        only: ['domain_alert_read'],
+                      },
                     },
                     children: [
                       {
-                        path: '', redirectTo: 'general', pathMatch: 'full'
+                        path: '',
+                        redirectTo: 'general',
+                        pathMatch: 'full',
                       },
                       {
                         path: 'general',
                         component: DomainAlertGeneralComponent,
                         canActivate: [AuthGuard],
                         resolve: {
-                          alertNotifiers: AlertNotifiersResolver
+                          alertNotifiers: AlertNotifiersResolver,
                         },
                         data: {
                           menu: {
                             label: 'General',
                             section: 'Alerts',
-                            level: 'level2'
+                            level: 'level2',
                           },
                           perms: {
-                            only: ['domain_alert_read']
-                          }
-                        }
+                            only: ['domain_alert_read'],
+                          },
+                        },
                       },
                       {
                         path: 'notifiers',
@@ -2595,17 +2607,17 @@ export const routes: Routes = [
                         runGuardsAndResolvers: 'pathParamsOrQueryParamsChange',
                         resolve: {
                           notifiers: NotifiersResolver,
-                          alertNotifiers: AlertNotifiersResolver
+                          alertNotifiers: AlertNotifiersResolver,
                         },
                         data: {
                           menu: {
                             label: 'Notifiers',
                             section: 'Alerts',
-                            level: 'level2'
+                            level: 'level2',
                           },
                           perms: {
-                            only: ['domain_alert_notifier_list']
-                          }
+                            only: ['domain_alert_notifier_list'],
+                          },
                         },
                         children: [
                           {
@@ -2619,57 +2631,58 @@ export const routes: Routes = [
                             canActivate: [AuthGuard],
                             data: {
                               perms: {
-                                only: ['domain_alert_notifier_create']
-                              }
-                            }
+                                only: ['domain_alert_notifier_create'],
+                              },
+                            },
                           },
                           {
                             path: ':alertNotifierId',
                             component: DomainAlertNotifierComponent,
                             canActivate: [AuthGuard],
                             resolve: {
-                              alertNotifier: AlertNotifierResolver
+                              alertNotifier: AlertNotifierResolver,
                             },
                             data: {
                               breadcrumb: {
-                                label: 'alertNotifier.name'
+                                label: 'alertNotifier.name',
                               },
                               perms: {
-                                only: ['domain_alert_notifier_read']
-                              }
-                            }
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      }
-    ]
+                                only: ['domain_alert_notifier_read'],
+                              },
+                            },
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
   },
-  {path: 'login', component: LoginComponent},
-  {path: 'login/callback', component: LoginCallbackComponent},
-  {path: 'logout', component: LogoutComponent},
-  {path: 'logout/callback', component: LogoutCallbackComponent},
-  {path: 'newsletter', component: NewsletterComponent, resolve: {taglines: NewsletterResolver}},
-  {path: 'dummy', component: DummyComponent},
-  {path: '404', component: NotFoundComponent},
-  {path: '', component: HomeComponent},
-  {path: '**', redirectTo: '404', pathMatch: 'full'}
+  { path: 'login', component: LoginComponent },
+  { path: 'login/callback', component: LoginCallbackComponent },
+  { path: 'logout', component: LogoutComponent },
+  { path: 'logout/callback', component: LogoutCallbackComponent },
+  { path: 'newsletter', component: NewsletterComponent, resolve: { taglines: NewsletterResolver } },
+  { path: 'dummy', component: DummyComponent },
+  { path: '404', component: NotFoundComponent },
+  { path: '', component: HomeComponent },
+  { path: '**', redirectTo: '404', pathMatch: 'full' },
 ];
 
 @NgModule({
-  imports: [RouterModule.forRoot(routes, {
-    paramsInheritanceStrategy: 'always',
-    scrollPositionRestoration: 'top',
-    relativeLinkResolution: 'corrected',
-    onSameUrlNavigation: 'reload',
-  })],
-  exports: [RouterModule]
+  imports: [
+    RouterModule.forRoot(routes, {
+      paramsInheritanceStrategy: 'always',
+      scrollPositionRestoration: 'top',
+      relativeLinkResolution: 'corrected',
+      onSameUrlNavigation: 'reload',
+    }),
+  ],
+  exports: [RouterModule],
 })
-export class AppRoutingModule {
-}
+export class AppRoutingModule {}

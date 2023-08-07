@@ -1,10 +1,10 @@
 blockquote {
   padding: 15px;
   margin: 10px 0;
-  border-left: .25em solid rgba(0,0,0,.11);
+  border-left: 0.25em solid rgba(0, 0, 0, 0.11);
   border-radius: 7px;
   p {
-    color: rgba(0,0,0,.535);
+    color: rgba(0, 0, 0, 0.535);
     font-size: 13px;
     margin: 0;
   }
@@ -18,18 +18,13 @@ blockquote {
 }
 
 .domain-settings-saml2 {
-
   &__toggle {
-
     &__label {
       display: flex;
 
       &__icon {
         margin-right: 5px;
       }
-
     }
-
   }
-
 }

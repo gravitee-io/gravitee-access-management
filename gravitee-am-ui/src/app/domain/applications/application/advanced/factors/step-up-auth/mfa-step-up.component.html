@@ -25,22 +25,26 @@
     </div>
     <div class="mfa-title">
       <h5>Step up authentication</h5>
-      <small>Step up authentication may be required in certain situations where it is asked to provide access to a
-        resource that is determined to be very sensitive.</small>
+      <small
+        >Step up authentication may be required in certain situations where it is asked to provide access to a resource that is determined
+        to be very sensitive.</small
+      >
     </div>
   </div>
   <div fxLayout="column">
     <mat-form-field appearance="outline" floatLabel="always">
-      <input matInput placeholder="Step up authentication rule" name="mfaSelectionRule" [(ngModel)]="stepUpRule" (keyup)="change($event)">
-      <button mat-icon-button matSuffix disableRipple
-              matTooltipPosition="below"
-              matTooltip="More about Step Up conditions" (click)="openStepUpDialog($event)">
+      <input matInput placeholder="Step up authentication rule" name="mfaSelectionRule" [(ngModel)]="stepUpRule" (keyup)="change($event)" />
+      <button
+        mat-icon-button
+        matSuffix
+        disableRipple
+        matTooltipPosition="below"
+        matTooltip="More about Step Up conditions"
+        (click)="openStepUpDialog($event)"
+      >
         <mat-icon>info_outline</mat-icon>
       </button>
-      <mat-hint>MFA challenge page will be displayed if the conditions are met in addition of the login step.
-      </mat-hint>
+      <mat-hint>MFA challenge page will be displayed if the conditions are met in addition of the login step. </mat-hint>
     </mat-form-field>
-
   </div>
-
 </div>

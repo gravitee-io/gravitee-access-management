@@ -23,9 +23,8 @@ describe('LoginSettingsComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ CookieSettingsComponent ]
-    })
-      .compileComponents();
+      declarations: [CookieSettingsComponent],
+    }).compileComponents();
   }));
 
   beforeEach(() => {

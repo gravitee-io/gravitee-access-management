@@ -13,28 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnDestroy, OnInit} from '@angular/core';
-import {Router} from "@angular/router";
-import {NavigationService} from "app/services/navigation.service";
-import {Subscription} from "rxjs";
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
+import { Subscription } from 'rxjs';
+
+import { NavigationService } from '../../services/navigation.service';
 
 @Component({
   selector: 'gv-tab-navbar',
   templateUrl: './tab-navbar.component.html',
-  styleUrls: ['./tab-navbar.component.scss']
+  styleUrls: ['./tab-navbar.component.scss'],
 })
 export class TabNavbarComponent implements OnInit, OnDestroy {
-
   subMenuItems: any;
   subscription: Subscription;
 
-  constructor(private router: Router,
-              private navigationService: NavigationService) {
-  }
+  constructor(private router: Router, private navigationService: NavigationService) {}
 
   ngOnInit(): void {
-    this.subscription = this.navigationService.level3MenuItemsObs$
-      .subscribe(items => this.subMenuItems = items);
+    this.subscription = this.navigationService.level3MenuItemsObs$.subscribe((items) => (this.subMenuItems = items));
   }
 
   ngOnDestroy(): void {

@@ -16,13 +16,9 @@
 
 -->
 <div>
-  <nav mat-tab-nav-bar color="accent" style="background: #f1f1f1; max-width: 70%; border-radius: 8px;">
-    <a mat-tab-link
-       *ngFor="let link of navLinks"
-       [routerLink]="link.href"
-       routerLinkActive #rla="routerLinkActive"
-       [active]="rla.isActive">
-      <span>{{link.label}}</span>
+  <nav mat-tab-nav-bar color="accent" style="background: #f1f1f1; max-width: 70%; border-radius: 8px">
+    <a mat-tab-link *ngFor="let link of navLinks" [routerLink]="link.href" routerLinkActive #rla="routerLinkActive" [active]="rla.isActive">
+      <span>{{ link.label }}</span>
     </a>
   </nav>
   <div class="application-oauth2-content">

@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Injectable} from '@angular/core';
-import {HttpClient} from "@angular/common/http";
-import {map, shareReplay} from "rxjs/operators";
-import {Observable, of} from "rxjs";
-import {AppConfig} from "../../../config/app.config";
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { map, shareReplay } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
+
+import { AppConfig } from '../../../config/app.config';
 
 const featureMoreInformationData = {
   'am-mfa-sms': {
@@ -111,7 +112,8 @@ const featureMoreInformationData = {
     description:
       'The France Connect identity provider is part of Gravitee Enterprise. Identity providers allow you to configure authentication methods familiar to your users and comply with your security requirement.',
   },
-  'am-idp-cas': { // utm_source=oss_am&utm_medium=provider_cas&utm_campaign=oss_am_to_ee_am
+  'am-idp-cas': {
+    // utm_source=oss_am&utm_medium=provider_cas&utm_campaign=oss_am_to_ee_am
     utm: 'provider_cas',
     image: 'assets/gio-ee-unlock-dialog/am-idp-cas.svg',
     description:
@@ -131,11 +133,11 @@ const featureMoreInformationData = {
       'The HTTP Flow identity provider is part of Gravitee Enterprise. Identity providers allow you to configure authentication methods familiar to your users and comply with your security requirement.',
   },
   // Resources
-  'am-smtp': { // todo: This resource is missing
+  'am-smtp': {
+    // todo: This resource is missing
     utm: '',
     image: 'assets/gio-ee-unlock-dialog/am-smtp.svg',
-    description:
-      'The SMTP resource is part of Gravitee Enterprise. Resources allow you to easily reuse some settings.',
+    description: 'The SMTP resource is part of Gravitee Enterprise. Resources allow you to easily reuse some settings.',
   },
   // MFA
   'gravitee-risk-assessment': {
@@ -162,13 +164,12 @@ export type License = {
 export type Feature = {
   feature?: string;
   deployed?: boolean;
-}
+};
 
 @Injectable({
   providedIn: 'root',
 })
 export class GioLicenseService {
-
   constructor(private readonly http: HttpClient) {}
 
   private loadLicense$: Observable<License> = this.http.get<License>(`${AppConfig.settings.baseURL}/platform/license`).pipe(shareReplay(1));

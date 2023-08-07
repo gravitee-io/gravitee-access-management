@@ -20,9 +20,9 @@ import { AuthService } from './auth.service';
 describe('AuthService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-    providers: [AuthService],
-    teardown: { destroyAfterEach: false }
-});
+      providers: [AuthService],
+      teardown: { destroyAfterEach: false },
+    });
   });
 
   it('should ...', inject([AuthService], (service: AuthService) => {

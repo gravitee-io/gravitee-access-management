@@ -13,17 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {SnackbarService} from "../../../services/snackbar.service";
-import {ActivatedRoute} from "@angular/router";
-import {DomainService} from "../../../services/domain.service";
-import {AuthService} from "../../../services/auth.service";
-import {MatDialog, MatDialogRef} from "@angular/material/dialog";
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
+
+import { SnackbarService } from '../../../services/snackbar.service';
+import { DomainService } from '../../../services/domain.service';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-scim',
   templateUrl: './scim.component.html',
-  styleUrls: ['./scim.component.scss']
+  styleUrls: ['./scim.component.scss'],
 })
 export class ScimComponent implements OnInit {
   domainId: string;
@@ -31,12 +32,13 @@ export class ScimComponent implements OnInit {
   formChanged = false;
   editMode: boolean;
 
-  constructor(private domainService: DomainService,
-              private snackbarService: SnackbarService,
-              private authService: AuthService,
-              private route: ActivatedRoute,
-              public dialog: MatDialog) {
-  }
+  constructor(
+    private domainService: DomainService,
+    private snackbarService: SnackbarService,
+    private authService: AuthService,
+    private route: ActivatedRoute,
+    public dialog: MatDialog,
+  ) {}
 
   ngOnInit() {
     this.domain = this.route.snapshot.data['domain'];
@@ -46,7 +48,7 @@ export class ScimComponent implements OnInit {
   }
 
   save() {
-    this.domainService.patchScimSettings(this.domainId, this.domain).subscribe(data => {
+    this.domainService.patchScimSettings(this.domainId, this.domain).subscribe((data) => {
       this.domain = data;
       this.formChanged = false;
       this.snackbarService.open('SCIM configuration updated');
@@ -54,12 +56,12 @@ export class ScimComponent implements OnInit {
   }
 
   enableSCIM(event) {
-    this.domain.scim['enabled'] = (event.checked);
+    this.domain.scim['enabled'] = event.checked;
     this.formChanged = true;
   }
 
   enableIdpSelection(event) {
-    this.domain.scim['idpSelectionEnabled'] = (event.checked);
+    this.domain.scim['idpSelectionEnabled'] = event.checked;
     this.formChanged = true;
   }
 
@@ -86,7 +88,6 @@ export class ScimComponent implements OnInit {
     }
     return false;
   }
-
 }
 
 @Component({

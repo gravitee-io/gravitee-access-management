@@ -16,12 +16,13 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import moment from 'moment';
 import { Observable } from 'rxjs';
-import { OrganizationService } from '../../../../../services/organization.service';
 import { DatatableComponent } from '@swimlane/ngx-datatable';
-import { availableTimeRanges, defaultTimeRangeId } from '../../../../../utils/time-range-utils';
 import { find } from 'lodash';
 import { ActivatedRoute } from '@angular/router';
-import { UserService } from "../../../../../services/user.service";
+
+import { availableTimeRanges, defaultTimeRangeId } from '../../../../../utils/time-range-utils';
+import { OrganizationService } from '../../../../../services/organization.service';
+import { UserService } from '../../../../../services/user.service';
 
 @Component({
   selector: 'app-history',
@@ -51,10 +52,11 @@ export class UserHistoryComponent implements OnInit {
   private endDateChanged = false;
   private domainId: string;
 
-  constructor(private readonly userService: UserService,
-              private readonly organizationService: OrganizationService,
-              private readonly route: ActivatedRoute) {
-  }
+  constructor(
+    private readonly userService: UserService,
+    private readonly organizationService: OrganizationService,
+    private readonly route: ActivatedRoute,
+  ) {}
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
@@ -121,13 +123,17 @@ export class UserHistoryComponent implements OnInit {
 
   private searchAudits() {
     const selectedTimeRange = find(this.timeRanges, { id: this.selectedTimeRange });
-    const from = this.startDateChanged ? moment(this.startDate).valueOf() : moment().subtract(selectedTimeRange.value, selectedTimeRange.unit).valueOf();
+    const from = this.startDateChanged
+      ? moment(this.startDate).valueOf()
+      : moment().subtract(selectedTimeRange.value, selectedTimeRange.unit).valueOf();
     const to = this.endDateChanged ? moment(this.endDate).valueOf() : moment().valueOf();
     this.loadingIndicator = true;
-    this.userService.audits(this.domainId, this.user.id, this.page.pageNumber, this.page.size, this.eventType, this.eventStatus, from, to).subscribe(pagedAudits => {
-      this.page.totalElements = pagedAudits.totalCount;
-      this.audits = pagedAudits.data;
-      this.loadingIndicator = false;
-    });
+    this.userService
+      .audits(this.domainId, this.user.id, this.page.pageNumber, this.page.size, this.eventType, this.eventStatus, from, to)
+      .subscribe((pagedAudits) => {
+        this.page.totalElements = pagedAudits.totalCount;
+        this.audits = pagedAudits.data;
+        this.loadingIndicator = false;
+      });
   }
 }

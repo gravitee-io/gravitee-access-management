@@ -14,26 +14,26 @@
  * limitations under the License.
  */
 import { Component, OnInit, Input } from '@angular/core';
-import { OrganizationService } from "../../../../../../services/organization.service";
+
+import { OrganizationService } from '../../../../../../services/organization.service';
 
 @Component({
   selector: 'bot-detection-creation-step1',
   templateUrl: './step1.component.html',
-  styleUrls: ['./step1.component.scss']
+  styleUrls: ['./step1.component.scss'],
 })
 export class BotDetectionCreationStep1Component implements OnInit {
   private botDetectionTypes: any = {
-    'google-recaptcha-v3-am-bot-detection' : 'Google reCAPTHCA v3'
+    'google-recaptcha-v3-am-bot-detection': 'Google reCAPTHCA v3',
   };
   @Input() botDetection: any;
   botDetections: any[];
   selectedBotDetectionTypeId: string;
 
-  constructor(private organizationService: OrganizationService) {
-  }
+  constructor(private organizationService: OrganizationService) {}
 
   ngOnInit() {
-    this.organizationService.botDetections().subscribe(data => this.botDetections = data);
+    this.organizationService.botDetections().subscribe((data) => (this.botDetections = data));
   }
 
   selectBotDetectionType() {

@@ -17,12 +17,21 @@
 -->
 <div *ngIf="!isLoading" class="environment-container">
   <div class="environment-content">
-    <div class="environment-content-header">Integrate authentication and authorization to secure access for your applications and APIs.</div>
+    <div class="environment-content-header">
+      Integrate authentication and authorization to secure access for your applications and APIs.
+    </div>
     <div class="environment-content-description">
-      Identity and Access Management Platform will let you create applications, register users and manage identity providers to provide centralize authentication, authorization and user management features.
+      Identity and Access Management Platform will let you create applications, register users and manage identity providers to provide
+      centralize authentication, authorization and user management features.
     </div>
     <div class="environment-content-actions">
-      <a mat-raised-button color="primary" [routerLink]="['/environments', currentEnvironment.hrids[0], 'domains', 'new']" [disabled]="readonly">Create a Security Domain</a>
+      <a
+        mat-raised-button
+        color="primary"
+        [routerLink]="['/environments', currentEnvironment.hrids[0], 'domains', 'new']"
+        [disabled]="readonly"
+        >Create a Security Domain</a
+      >
       <span *ngIf="readonly">There is not enough permission, ask for support or wait for invitation to collaborate.</span>
     </div>
   </div>

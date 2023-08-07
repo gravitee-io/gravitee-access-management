@@ -16,15 +16,13 @@
 
 -->
 <div fxLayout="column">
-  <p class="gv-plugin-creation-description">
-    Configure your authentication device notifier.
-  </p>
+  <p class="gv-plugin-creation-description">Configure your authentication device notifier.</p>
   <div>
     <form fxLayout="column">
       <div class="gv-form-section">
         <mat-form-field appearance="outline" floatLabel="always">
           <mat-label>Name</mat-label>
-          <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="deviceNotifier.name" required>
+          <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="deviceNotifier.name" required />
           <mat-hint>Device notifier name</mat-hint>
         </mat-form-field>
       </div>
@@ -35,7 +33,11 @@
           <mat-divider></mat-divider>
         </div>
         <div>
-          <device-notifier-form [deviceNotifierConfiguration]="configuration" [deviceNotifierSchema]="deviceNotifierSchema" (configurationCompleted)="enableDeviceNotifierCreation($event)"></device-notifier-form>
+          <device-notifier-form
+            [deviceNotifierConfiguration]="configuration"
+            [deviceNotifierSchema]="deviceNotifierSchema"
+            (configurationCompleted)="enableDeviceNotifierCreation($event)"
+          ></device-notifier-form>
         </div>
       </div>
     </form>

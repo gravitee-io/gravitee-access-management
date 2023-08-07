@@ -15,4 +15,11 @@
     limitations under the License.
 
 -->
-<img [src]="url" alt="Photo of a {{username}}" (error)="userAvatar.src = 'assets/default-account-icon.png'" #userAvatar [width]="width" style="border-radius: 50%;"/>
+<img
+  [src]="url"
+  alt="Photo of a {{ username }}"
+  (error)="userAvatar.src = 'assets/default-account-icon.png'"
+  #userAvatar
+  [width]="width"
+  style="border-radius: 50%"
+/>

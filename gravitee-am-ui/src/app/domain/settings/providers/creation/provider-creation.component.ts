@@ -13,16 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit, ViewChild} from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { MatStepper } from '@angular/material/stepper';
-import {ActivatedRoute, Router} from '@angular/router';
-import {ProviderService} from '../../../../services/provider.service';
-import {SnackbarService} from '../../../../services/snackbar.service';
+import { ActivatedRoute, Router } from '@angular/router';
+
+import { ProviderService } from '../../../../services/provider.service';
+import { SnackbarService } from '../../../../services/snackbar.service';
 
 @Component({
   selector: 'app-idp-creation',
   templateUrl: './provider-creation.component.html',
-  styleUrls: ['./provider-creation.component.scss']
+  styleUrls: ['./provider-creation.component.scss'],
 })
 export class ProviderCreationComponent implements OnInit {
   private identities: any[];
@@ -32,10 +33,12 @@ export class ProviderCreationComponent implements OnInit {
   configurationIsValid = false;
   @ViewChild('stepper', { static: true }) stepper: MatStepper;
 
-  constructor(private providerService: ProviderService,
-              private snackbarService: SnackbarService,
-              private router: Router,
-              private route: ActivatedRoute) { }
+  constructor(
+    private providerService: ProviderService,
+    private snackbarService: SnackbarService,
+    private router: Router,
+    private route: ActivatedRoute,
+  ) {}
 
   ngOnInit(): void {
     this.domainId = this.route.snapshot.data['domain']?.id;
@@ -46,7 +49,7 @@ export class ProviderCreationComponent implements OnInit {
   }
 
   create() {
-    this.providerService.create(this.domainId, this.provider, this.organizationContext).subscribe(data => {
+    this.providerService.create(this.domainId, this.provider, this.organizationContext).subscribe((data) => {
       this.snackbarService.open('Provider ' + data.name + ' created');
       this.router.navigate(['..', data.id], { relativeTo: this.route });
     });

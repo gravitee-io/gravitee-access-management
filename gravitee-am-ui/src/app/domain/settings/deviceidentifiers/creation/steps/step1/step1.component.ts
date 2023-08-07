@@ -14,27 +14,27 @@
  * limitations under the License.
  */
 import { Component, OnInit, Input } from '@angular/core';
-import { OrganizationService } from "../../../../../../services/organization.service";
+
+import { OrganizationService } from '../../../../../../services/organization.service';
 
 @Component({
   selector: 'device-identifier-creation-step1',
   templateUrl: './step1.component.html',
-  styleUrls: ['./step1.component.scss']
+  styleUrls: ['./step1.component.scss'],
 })
 export class DeviceIdentifierCreationStep1Component implements OnInit {
   private deviceIdentifierTypes: any = {
-    'fingerprintjs-v3-community-device-identifier' : 'FingerprintJS v3 community',
-    'fingerprintjs-v3-pro-device-identifier' : 'FingerprintJS v3 Pro'
+    'fingerprintjs-v3-community-device-identifier': 'FingerprintJS v3 community',
+    'fingerprintjs-v3-pro-device-identifier': 'FingerprintJS v3 Pro',
   };
   @Input() deviceIdentifier: any;
   deviceIdentifiers: any[];
   selectedDeviceIdentifierTypeId: string;
 
-  constructor(private organizationService: OrganizationService) {
-  }
+  constructor(private organizationService: OrganizationService) {}
 
   ngOnInit() {
-    this.organizationService.deviceIdentifiers().subscribe(data => this.deviceIdentifiers = data);
+    this.organizationService.deviceIdentifiers().subscribe((data) => (this.deviceIdentifiers = data));
   }
 
   selectType() {
@@ -42,7 +42,7 @@ export class DeviceIdentifierCreationStep1Component implements OnInit {
   }
 
   displayName(detection) {
-    if(this.deviceIdentifierTypes[detection.id]){
+    if (this.deviceIdentifierTypes[detection.id]) {
       return this.deviceIdentifierTypes[detection.id];
     }
     return detection.name;

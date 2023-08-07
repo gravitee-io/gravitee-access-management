@@ -15,7 +15,7 @@
  */
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
-import {FactorCreationStep2Component} from './step2.component';
+import { FactorCreationStep2Component } from './step2.component';
 
 describe('FactorCreationStep2Component', () => {
   let component: FactorCreationStep2Component;
@@ -23,10 +23,9 @@ describe('FactorCreationStep2Component', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    declarations: [FactorCreationStep2Component],
-    teardown: { destroyAfterEach: false }
-})
-    .compileComponents();
+      declarations: [FactorCreationStep2Component],
+      teardown: { destroyAfterEach: false },
+    }).compileComponents();
   }));
 
   beforeEach(() => {

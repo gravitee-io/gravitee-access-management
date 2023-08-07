@@ -15,17 +15,18 @@
  */
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { AppConfig } from '../../config/app.config';
 import { Observable } from 'rxjs';
-import { OrganizationService } from './organization.service';
 import * as bcrypt from 'bcryptjs';
+
+import { OrganizationService } from './organization.service';
+
+import { AppConfig } from '../../config/app.config';
 
 @Injectable()
 export class ProviderService {
   private providersURL = AppConfig.settings.domainBaseURL;
 
-  constructor(private http: HttpClient,
-              private organizationService: OrganizationService) { }
+  constructor(private http: HttpClient, private organizationService: OrganizationService) {}
 
   findByDomain(domainId): Observable<any> {
     return this.http.get<any>(this.providersURL + domainId + '/identities');
@@ -57,11 +58,11 @@ export class ProviderService {
       return this.organizationService.updateIdentityProvider(id, provider);
     }
     return this.http.put<any>(this.providersURL + domainId + '/identities/' + id, {
-      'name' : provider.name,
-      'configuration' : provider.configuration,
-      'domainWhitelist' : provider.domainWhitelist,
-      'mappers' : provider.mappers,
-      'roleMapper' : provider.roleMapper
+      name: provider.name,
+      configuration: provider.configuration,
+      domainWhitelist: provider.domainWhitelist,
+      mappers: provider.mappers,
+      roleMapper: provider.roleMapper,
     });
   }
 
@@ -79,14 +80,13 @@ export class ProviderService {
 
   private enhanceConfiguration(provider) {
     if (provider.type && provider.type === 'inline-am-idp') {
-      if (provider.configuration.passwordEncoder &&
-        provider.configuration.passwordEncoder === 'BCrypt') {
+      if (provider.configuration.passwordEncoder && provider.configuration.passwordEncoder === 'BCrypt') {
         // hash password if not already hashed
         if (provider.configuration.users) {
-          const hashedPassword = '********'
-          provider.configuration.users.forEach(user => {
+          const hashedPassword = '********';
+          provider.configuration.users.forEach((user) => {
             if (!user.password.startsWith('$2a$') && hashedPassword !== user.password) {
-              user.password = bcrypt.hashSync(user.password, bcrypt.genSaltSync(10))
+              user.password = bcrypt.hashSync(user.password, bcrypt.genSaltSync(10));
             }
           });
         }

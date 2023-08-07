@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Injectable} from '@angular/core';
-import {ActivatedRouteSnapshot, Resolve, RouterStateSnapshot} from '@angular/router';
-import {ApplicationService} from '../services/application.service';
-import {Observable} from 'rxjs';
+import { Injectable } from '@angular/core';
+import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
+import { Observable } from 'rxjs';
+
+import { ApplicationService } from '../services/application.service';
 
 @Injectable()
 export class ApplicationFlowsResolver implements Resolve<any> {
+  constructor(private applicationService: ApplicationService) {}
 
-  constructor(private applicationService: ApplicationService) { }
-
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
+  resolve(route: ActivatedRouteSnapshot): Observable<any> | Promise<any> | any {
     const domainId = route.parent.data['domain'].id;
     const appId = route.paramMap.get('appId');
     return this.applicationService.flows(domainId, appId);

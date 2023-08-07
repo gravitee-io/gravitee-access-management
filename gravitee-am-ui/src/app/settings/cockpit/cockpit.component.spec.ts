@@ -23,10 +23,9 @@ describe('CockpitComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    declarations: [CockpitComponent],
-    teardown: { destroyAfterEach: false }
-})
-    .compileComponents();
+      declarations: [CockpitComponent],
+      teardown: { destroyAfterEach: false },
+    }).compileComponents();
   }));
 
   beforeEach(() => {

@@ -24,110 +24,306 @@
     <div>
       <mat-form-field appearance="outline" floatLabel="always">
         <mat-label>Authorization endpoint</mat-label>
-        <input matInput type="text" name="authorizeEndpoint" [value]="endpoint('/oauth/authorize')" disabled>
-        <mat-hint>The authorization endpoint is used to obtain an OAuth 2.0 token using either authorization code or implicit grant type</mat-hint>
-        <button mat-icon-button matSuffix matTooltip="Copy to clipboard" ngxClipboard [cbContent]="endpoint('/oauth/authorize')" (cbOnSuccess)="valueCopied('Copied to clipboard')" (click)="$event.preventDefault();"><mat-icon>content_copy</mat-icon></button>
+        <input matInput type="text" name="authorizeEndpoint" [value]="endpoint('/oauth/authorize')" disabled />
+        <mat-hint
+          >The authorization endpoint is used to obtain an OAuth 2.0 token using either authorization code or implicit grant type</mat-hint
+        >
+        <button
+          mat-icon-button
+          matSuffix
+          matTooltip="Copy to clipboard"
+          ngxClipboard
+          [cbContent]="endpoint('/oauth/authorize')"
+          (cbOnSuccess)="valueCopied('Copied to clipboard')"
+          (click)="$event.preventDefault()"
+        >
+          <mat-icon>content_copy</mat-icon>
+        </button>
       </mat-form-field>
       <mat-form-field appearance="outline" floatLabel="always">
         <mat-label>Token endpoint</mat-label>
-        <input matInput type="text" name="tokenEndpoint" [value]="endpoint('/oauth/token')" disabled>
+        <input matInput type="text" name="tokenEndpoint" [value]="endpoint('/oauth/token')" disabled />
         <mat-hint>The token endpoint is used to obtain an OAuth 2.0 token</mat-hint>
-        <button mat-icon-button matSuffix matTooltip="Copy to clipboard" ngxClipboard [cbContent]="endpoint('/oauth/token')" (cbOnSuccess)="valueCopied('Copied to clipboard')" (click)="$event.preventDefault();"><mat-icon>content_copy</mat-icon></button>
+        <button
+          mat-icon-button
+          matSuffix
+          matTooltip="Copy to clipboard"
+          ngxClipboard
+          [cbContent]="endpoint('/oauth/token')"
+          (cbOnSuccess)="valueCopied('Copied to clipboard')"
+          (click)="$event.preventDefault()"
+        >
+          <mat-icon>content_copy</mat-icon>
+        </button>
       </mat-form-field>
       <mat-form-field appearance="outline" floatLabel="always">
         <mat-label>Introspection endpoint</mat-label>
-        <input matInput type="text" name="introspectEndpoint" [value]="endpoint('/oauth/introspect')" disabled>
+        <input matInput type="text" name="introspectEndpoint" [value]="endpoint('/oauth/introspect')" disabled />
         <mat-hint>The introspection endpoint allows to access information about an OAuth 2.0 token</mat-hint>
-        <button mat-icon-button matSuffix matTooltip="Copy to clipboard" ngxClipboard [cbContent]="endpoint('/oauth/introspect')" (cbOnSuccess)="valueCopied('Copied to clipboard')" (click)="$event.preventDefault();"><mat-icon>content_copy</mat-icon></button>
+        <button
+          mat-icon-button
+          matSuffix
+          matTooltip="Copy to clipboard"
+          ngxClipboard
+          [cbContent]="endpoint('/oauth/introspect')"
+          (cbOnSuccess)="valueCopied('Copied to clipboard')"
+          (click)="$event.preventDefault()"
+        >
+          <mat-icon>content_copy</mat-icon>
+        </button>
       </mat-form-field>
       <mat-form-field appearance="outline" floatLabel="always">
         <mat-label>Revocation endpoint</mat-label>
-        <input matInput type="text" name="revokeEndpoint" [value]="endpoint('/oauth/revoke')" disabled>
+        <input matInput type="text" name="revokeEndpoint" [value]="endpoint('/oauth/revoke')" disabled />
         <mat-hint> The revocation endpoint allows to invalidate a previously obtained OAuth 2.0 refresh or access token</mat-hint>
-        <button mat-icon-button matSuffix matTooltip="Copy to clipboard" ngxClipboard [cbContent]="endpoint('/oauth/revoke')" (cbOnSuccess)="valueCopied('Copied to clipboard')" (click)="$event.preventDefault();"><mat-icon>content_copy</mat-icon></button>
+        <button
+          mat-icon-button
+          matSuffix
+          matTooltip="Copy to clipboard"
+          ngxClipboard
+          [cbContent]="endpoint('/oauth/revoke')"
+          (cbOnSuccess)="valueCopied('Copied to clipboard')"
+          (click)="$event.preventDefault()"
+        >
+          <mat-icon>content_copy</mat-icon>
+        </button>
       </mat-form-field>
       <mat-form-field appearance="outline" floatLabel="always">
         <mat-label>UserInfo endpoint</mat-label>
-        <input matInput type="text" name="userInfoEndpoint" [value]="endpoint('/oidc/userinfo')" disabled>
+        <input matInput type="text" name="userInfoEndpoint" [value]="endpoint('/oidc/userinfo')" disabled />
         <mat-hint>The user info endpoint allows client applications to retrieve information about an authenticated user</mat-hint>
-        <button mat-icon-button matSuffix matTooltip="Copy to clipboard" ngxClipboard [cbContent]="endpoint('/oidc/userinfo')" (cbOnSuccess)="valueCopied('Copied to clipboard')" (click)="$event.preventDefault();"><mat-icon>content_copy</mat-icon></button>
+        <button
+          mat-icon-button
+          matSuffix
+          matTooltip="Copy to clipboard"
+          ngxClipboard
+          [cbContent]="endpoint('/oidc/userinfo')"
+          (cbOnSuccess)="valueCopied('Copied to clipboard')"
+          (click)="$event.preventDefault()"
+        >
+          <mat-icon>content_copy</mat-icon>
+        </button>
       </mat-form-field>
       <mat-form-field appearance="outline" floatLabel="always">
         <mat-label>End session endpoint</mat-label>
-        <input matInput type="text" name="endSessionEndpoint" [value]="endpoint('/logout')" disabled>
+        <input matInput type="text" name="endSessionEndpoint" [value]="endpoint('/logout')" disabled />
         <mat-hint>The end session endpoint allows to invalidate a user's session</mat-hint>
-        <button mat-icon-button matSuffix matTooltip="Copy to clipboard" ngxClipboard [cbContent]="endpoint('/logout')" (cbOnSuccess)="valueCopied('Copied to clipboard')" (click)="$event.preventDefault();"><mat-icon>content_copy</mat-icon></button>
+        <button
+          mat-icon-button
+          matSuffix
+          matTooltip="Copy to clipboard"
+          ngxClipboard
+          [cbContent]="endpoint('/logout')"
+          (cbOnSuccess)="valueCopied('Copied to clipboard')"
+          (click)="$event.preventDefault()"
+        >
+          <mat-icon>content_copy</mat-icon>
+        </button>
       </mat-form-field>
       <mat-form-field appearance="outline" floatLabel="always">
         <mat-label>OpenID Configuration endpoint</mat-label>
-        <input matInput type="text" name="openIdConfigurationEndpoint" [value]="endpoint('/oidc/.well-known/openid-configuration')" disabled>
+        <input
+          matInput
+          type="text"
+          name="openIdConfigurationEndpoint"
+          [value]="endpoint('/oidc/.well-known/openid-configuration')"
+          disabled
+        />
         <mat-hint>The OpenId configuration endpoint allows third party systems to get the complete OpenId configuration</mat-hint>
-        <button mat-icon-button matSuffix matTooltip="Copy to clipboard" ngxClipboard [cbContent]="endpoint('/oidc/.well-known/openid-configuration')" (cbOnSuccess)="valueCopied('Copied to clipboard')" (click)="$event.preventDefault();"><mat-icon>content_copy</mat-icon></button>
+        <button
+          mat-icon-button
+          matSuffix
+          matTooltip="Copy to clipboard"
+          ngxClipboard
+          [cbContent]="endpoint('/oidc/.well-known/openid-configuration')"
+          (cbOnSuccess)="valueCopied('Copied to clipboard')"
+          (click)="$event.preventDefault()"
+        >
+          <mat-icon>content_copy</mat-icon>
+        </button>
       </mat-form-field>
       <mat-form-field appearance="outline" floatLabel="always">
         <mat-label>JWKs endpoint</mat-label>
-        <input matInput type="text" name="jwksEndpoint" [value]="endpoint('/oidc/.well-known/jwks.json')" disabled>
+        <input matInput type="text" name="jwksEndpoint" [value]="endpoint('/oidc/.well-known/jwks.json')" disabled />
         <mat-hint>Exposes the JWKs (JSON Web Keys) used to sign or encrypt JWTs issued by the authorization server</mat-hint>
-        <button mat-icon-button matSuffix matTooltip="Copy to clipboard" ngxClipboard [cbContent]="endpoint('/oidc/.well-known/jwks.json')" (cbOnSuccess)="valueCopied('Copied to clipboard')" (click)="$event.preventDefault();"><mat-icon>content_copy</mat-icon></button>
+        <button
+          mat-icon-button
+          matSuffix
+          matTooltip="Copy to clipboard"
+          ngxClipboard
+          [cbContent]="endpoint('/oidc/.well-known/jwks.json')"
+          (cbOnSuccess)="valueCopied('Copied to clipboard')"
+          (click)="$event.preventDefault()"
+        >
+          <mat-icon>content_copy</mat-icon>
+        </button>
       </mat-form-field>
       <mat-form-field *ngIf="scimEnabled()" appearance="outline" floatLabel="always">
         <mat-label>SCIM Configuration endpoint</mat-label>
-        <input matInput type="text" name="scimConfigurationEndpoint" [value]="endpoint('/scim/ServiceProviderConfig')" disabled>
+        <input matInput type="text" name="scimConfigurationEndpoint" [value]="endpoint('/scim/ServiceProviderConfig')" disabled />
         <mat-hint>The SCIM configuration endpoint allows third party systems to get the complete SCIM configuration</mat-hint>
-        <button mat-icon-button matSuffix matTooltip="Copy to clipboard" ngxClipboard [cbContent]="endpoint('/scim/ServiceProviderConfig')" (cbOnSuccess)="valueCopied('Copied to clipboard')" (click)="$event.preventDefault();"><mat-icon>content_copy</mat-icon></button>
+        <button
+          mat-icon-button
+          matSuffix
+          matTooltip="Copy to clipboard"
+          ngxClipboard
+          [cbContent]="endpoint('/scim/ServiceProviderConfig')"
+          (cbOnSuccess)="valueCopied('Copied to clipboard')"
+          (click)="$event.preventDefault()"
+        >
+          <mat-icon>content_copy</mat-icon>
+        </button>
       </mat-form-field>
       <div *ngIf="uma2Enabled()">
         <mat-form-field appearance="outline" floatLabel="always">
           <mat-label>UMA 2.0 Configuration endpoint</mat-label>
-          <input matInput type="text" name="uma2ConfigurationEndpoint" [value]="endpoint('/uma/.well-known/uma2-configuration')" disabled>
+          <input matInput type="text" name="uma2ConfigurationEndpoint" [value]="endpoint('/uma/.well-known/uma2-configuration')" disabled />
           <mat-hint>The UMA 2.0 configuration endpoint allows third party systems to get the complete UMA 2.0 configuration</mat-hint>
-          <button mat-icon-button matSuffix matTooltip="Copy to clipboard" ngxClipboard [cbContent]="endpoint('/uma/.well-known/uma2-configuration')" (cbOnSuccess)="valueCopied('Copied to clipboard')" (click)="$event.preventDefault();"><mat-icon>content_copy</mat-icon></button>
+          <button
+            mat-icon-button
+            matSuffix
+            matTooltip="Copy to clipboard"
+            ngxClipboard
+            [cbContent]="endpoint('/uma/.well-known/uma2-configuration')"
+            (cbOnSuccess)="valueCopied('Copied to clipboard')"
+            (click)="$event.preventDefault()"
+          >
+            <mat-icon>content_copy</mat-icon>
+          </button>
         </mat-form-field>
         <mat-form-field appearance="outline" floatLabel="always">
           <mat-label>UMA 2.0 Resource Registration endpoint</mat-label>
-          <input matInput type="text" name="uma2ResourceRegistrationEndpoint" [value]="endpoint('/uma/protection/resource_set')" disabled>
-          <mat-hint>The resource registration endpoint enables the resource server to put resources under the protection of the authorization server</mat-hint>
-          <button mat-icon-button matSuffix matTooltip="Copy to clipboard" ngxClipboard [cbContent]="endpoint('/uma/protection/resource_set')" (cbOnSuccess)="valueCopied('Copied to clipboard')" (click)="$event.preventDefault();"><mat-icon>content_copy</mat-icon></button>
+          <input matInput type="text" name="uma2ResourceRegistrationEndpoint" [value]="endpoint('/uma/protection/resource_set')" disabled />
+          <mat-hint
+            >The resource registration endpoint enables the resource server to put resources under the protection of the authorization
+            server</mat-hint
+          >
+          <button
+            mat-icon-button
+            matSuffix
+            matTooltip="Copy to clipboard"
+            ngxClipboard
+            [cbContent]="endpoint('/uma/protection/resource_set')"
+            (cbOnSuccess)="valueCopied('Copied to clipboard')"
+            (click)="$event.preventDefault()"
+          >
+            <mat-icon>content_copy</mat-icon>
+          </button>
         </mat-form-field>
         <mat-form-field appearance="outline" floatLabel="always">
           <mat-label>UMA 2.0 Permission endpoint</mat-label>
-          <input matInput type="text" name="uma2PermissionEndpoint" [value]="endpoint('/uma/protection/permission')" disabled>
-          <mat-hint>The permission endpoint defines a means for the resource server to request permissions, and to receive a permission ticket in return</mat-hint>
-          <button mat-icon-button matSuffix matTooltip="Copy to clipboard" ngxClipboard [cbContent]="endpoint('/uma/protection/permission')" (cbOnSuccess)="valueCopied('Copied to clipboard')" (click)="$event.preventDefault();"><mat-icon>content_copy</mat-icon></button>
+          <input matInput type="text" name="uma2PermissionEndpoint" [value]="endpoint('/uma/protection/permission')" disabled />
+          <mat-hint
+            >The permission endpoint defines a means for the resource server to request permissions, and to receive a permission ticket in
+            return</mat-hint
+          >
+          <button
+            mat-icon-button
+            matSuffix
+            matTooltip="Copy to clipboard"
+            ngxClipboard
+            [cbContent]="endpoint('/uma/protection/permission')"
+            (cbOnSuccess)="valueCopied('Copied to clipboard')"
+            (click)="$event.preventDefault()"
+          >
+            <mat-icon>content_copy</mat-icon>
+          </button>
         </mat-form-field>
         <mat-form-field appearance="outline" floatLabel="always">
           <mat-label>UMA 2.0 User Access Policy endpoint</mat-label>
-          <input matInput type="text" name="uma2AccessPolicyEndpoint" [value]="endpoint('/uma/protection/resource_set/:resourceId/policies')" disabled>
-          <mat-hint>Endpoint where the resource owner can immediately set or modify access policies subsequent to the resource registration action</mat-hint>
-          <button mat-icon-button matSuffix matTooltip="Copy to clipboard" ngxClipboard [cbContent]="endpoint('/uma/protection/resource_set/:resourceId/policies')" (cbOnSuccess)="valueCopied('Copied to clipboard')" (click)="$event.preventDefault();"><mat-icon>content_copy</mat-icon></button>
+          <input
+            matInput
+            type="text"
+            name="uma2AccessPolicyEndpoint"
+            [value]="endpoint('/uma/protection/resource_set/:resourceId/policies')"
+            disabled
+          />
+          <mat-hint
+            >Endpoint where the resource owner can immediately set or modify access policies subsequent to the resource registration
+            action</mat-hint
+          >
+          <button
+            mat-icon-button
+            matSuffix
+            matTooltip="Copy to clipboard"
+            ngxClipboard
+            [cbContent]="endpoint('/uma/protection/resource_set/:resourceId/policies')"
+            (cbOnSuccess)="valueCopied('Copied to clipboard')"
+            (click)="$event.preventDefault()"
+          >
+            <mat-icon>content_copy</mat-icon>
+          </button>
         </mat-form-field>
       </div>
       <div *ngIf="cibaEnabled()">
         <mat-form-field appearance="outline" floatLabel="always">
           <mat-label>Backchannel Authentication endpoint</mat-label>
-          <input matInput type="text" name="cibaEndpoint" [value]="endpoint('/oidc/ciba/authenticate')" disabled>
-          <mat-hint>The Client Initiated Backchannel Authentication endpoint used to initiate an out-of-band authentication of the end-user</mat-hint>
-          <button mat-icon-button matSuffix matTooltip="Copy to clipboard" ngxClipboard [cbContent]="endpoint('//ciba/authenticate')" (cbOnSuccess)="valueCopied('Copied to clipboard')" (click)="$event.preventDefault();"><mat-icon>content_copy</mat-icon></button>
+          <input matInput type="text" name="cibaEndpoint" [value]="endpoint('/oidc/ciba/authenticate')" disabled />
+          <mat-hint
+            >The Client Initiated Backchannel Authentication endpoint used to initiate an out-of-band authentication of the
+            end-user</mat-hint
+          >
+          <button
+            mat-icon-button
+            matSuffix
+            matTooltip="Copy to clipboard"
+            ngxClipboard
+            [cbContent]="endpoint('//ciba/authenticate')"
+            (cbOnSuccess)="valueCopied('Copied to clipboard')"
+            (click)="$event.preventDefault()"
+          >
+            <mat-icon>content_copy</mat-icon>
+          </button>
         </mat-form-field>
       </div>
       <div *ngIf="samlEnabled()">
         <mat-form-field appearance="outline" floatLabel="always">
           <mat-label>SAML 2.0 IdP metadata</mat-label>
-          <input matInput type="text" name="samlMetadataEndpoint" [value]="endpoint('/saml2/idp/metadata')" disabled>
+          <input matInput type="text" name="samlMetadataEndpoint" [value]="endpoint('/saml2/idp/metadata')" disabled />
           <mat-hint>The SAML 2.0 metadata endpoint at the identity provider</mat-hint>
-          <button mat-icon-button matSuffix matTooltip="Copy to clipboard" ngxClipboard [cbContent]="endpoint('/saml2/idp/metadata')" (cbOnSuccess)="valueCopied('Copied to clipboard')" (click)="$event.preventDefault();"><mat-icon>content_copy</mat-icon></button>
+          <button
+            mat-icon-button
+            matSuffix
+            matTooltip="Copy to clipboard"
+            ngxClipboard
+            [cbContent]="endpoint('/saml2/idp/metadata')"
+            (cbOnSuccess)="valueCopied('Copied to clipboard')"
+            (click)="$event.preventDefault()"
+          >
+            <mat-icon>content_copy</mat-icon>
+          </button>
         </mat-form-field>
         <mat-form-field appearance="outline" floatLabel="always">
           <mat-label>SAML 2.0 Single Sign On Service</mat-label>
-          <input matInput type="text" name="samlSsoEndpoint" [value]="endpoint('/saml2/idp/SSO')" disabled>
+          <input matInput type="text" name="samlSsoEndpoint" [value]="endpoint('/saml2/idp/SSO')" disabled />
           <mat-hint>The SAML 2.0 authentication request protocol endpoint at the identity provider</mat-hint>
-          <button mat-icon-button matSuffix matTooltip="Copy to clipboard" ngxClipboard [cbContent]="endpoint('/saml2/idp/SSO')" (cbOnSuccess)="valueCopied('Copied to clipboard')" (click)="$event.preventDefault();"><mat-icon>content_copy</mat-icon></button>
+          <button
+            mat-icon-button
+            matSuffix
+            matTooltip="Copy to clipboard"
+            ngxClipboard
+            [cbContent]="endpoint('/saml2/idp/SSO')"
+            (cbOnSuccess)="valueCopied('Copied to clipboard')"
+            (click)="$event.preventDefault()"
+          >
+            <mat-icon>content_copy</mat-icon>
+          </button>
         </mat-form-field>
         <mat-form-field appearance="outline" floatLabel="always">
           <mat-label>SAML 2.0 Single Logout Service</mat-label>
-          <input matInput type="text" name="samlLogoutEndpoint" [value]="endpoint('/saml2/idp/logout')" disabled>
+          <input matInput type="text" name="samlLogoutEndpoint" [value]="endpoint('/saml2/idp/logout')" disabled />
           <mat-hint>The SAML 2.0 single logout protocol endpoint at the identity provider</mat-hint>
-          <button mat-icon-button matSuffix matTooltip="Copy to clipboard" ngxClipboard [cbContent]="endpoint('/saml2/idp/logout')" (cbOnSuccess)="valueCopied('Copied to clipboard')" (click)="$event.preventDefault();"><mat-icon>content_copy</mat-icon></button>
+          <button
+            mat-icon-button
+            matSuffix
+            matTooltip="Copy to clipboard"
+            ngxClipboard
+            [cbContent]="endpoint('/saml2/idp/logout')"
+            (cbOnSuccess)="valueCopied('Copied to clipboard')"
+            (click)="$event.preventDefault()"
+          >
+            <mat-icon>content_copy</mat-icon>
+          </button>
         </mat-form-field>
       </div>
     </div>

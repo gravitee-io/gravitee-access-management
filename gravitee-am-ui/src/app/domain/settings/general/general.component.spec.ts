@@ -15,7 +15,7 @@
  */
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
-import {DomainSettingsGeneralComponent} from './general.component';
+import { DomainSettingsGeneralComponent } from './general.component';
 
 describe('DomainSettingsGeneralComponent', () => {
   let component: DomainSettingsGeneralComponent;
@@ -23,10 +23,9 @@ describe('DomainSettingsGeneralComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    declarations: [DomainSettingsGeneralComponent],
-    teardown: { destroyAfterEach: false }
-})
-    .compileComponents();
+      declarations: [DomainSettingsGeneralComponent],
+      teardown: { destroyAfterEach: false },
+    }).compileComponents();
   }));
 
   beforeEach(() => {

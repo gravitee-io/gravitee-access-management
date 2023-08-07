@@ -15,7 +15,7 @@
  */
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
-import {EntrypointCreationComponent} from './entrypoint-creation.component';
+import { EntrypointCreationComponent } from './entrypoint-creation.component';
 
 describe('EntrypointCreationComponent', () => {
   let component: EntrypointCreationComponent;
@@ -23,10 +23,9 @@ describe('EntrypointCreationComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    declarations: [EntrypointCreationComponent],
-    teardown: { destroyAfterEach: false }
-})
-    .compileComponents();
+      declarations: [EntrypointCreationComponent],
+      teardown: { destroyAfterEach: false },
+    }).compileComponents();
   }));
 
   beforeEach(() => {

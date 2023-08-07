@@ -13,33 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges} from '@angular/core';
-import {ActivatedRoute} from '@angular/router';
-import {OrganizationService} from '../../../../../../services/organization.service';
-import * as _ from 'lodash';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+
+import { OrganizationService } from '../../../../../../services/organization.service';
 
 @Component({
   selector: 'alert-notifier-creation-step2',
   templateUrl: './step2.component.html',
-  styleUrls: ['./step2.component.scss']
+  styleUrls: ['./step2.component.scss'],
 })
-export class DomainAlertNotifierCreationStep2Component implements OnInit, OnChanges {
+export class DomainAlertNotifierCreationStep2Component implements OnChanges {
   @Input('alertNotifier') alertNotifier: any;
   @Input('configurationIsValid') configurationIsValid: boolean;
   @Output('configurationIsValidChange') configurationIsValidChange: EventEmitter<boolean> = new EventEmitter<boolean>();
   configuration: any;
   notifierSchema: any = {};
 
-  constructor(private organizationService: OrganizationService,
-              private route: ActivatedRoute) {
-  }
-
-  ngOnInit() {
-  }
+  constructor(private organizationService: OrganizationService) {}
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes.alertNotifier) {
-      this.organizationService.notifierSchema(changes.alertNotifier.currentValue.type).subscribe(data => {
+      this.organizationService.notifierSchema(changes.alertNotifier.currentValue.type).subscribe((data) => {
         this.notifierSchema = data;
       });
     }

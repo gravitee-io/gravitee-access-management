@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {inject, TestBed} from '@angular/core/testing';
+import { inject, TestBed } from '@angular/core/testing';
 
-import {ThemesResolver} from "./themes.resolver";
+import { ThemesResolver } from './themes.resolver';
 
 describe('ThemesResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       providers: [ThemesResolver],
-      teardown: {destroyAfterEach: false}
+      teardown: { destroyAfterEach: false },
     });
   });
 
