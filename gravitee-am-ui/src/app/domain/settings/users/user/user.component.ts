@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 
 interface NavLink {
-  readonly href: string,
-  readonly label: string
+  readonly href: string;
+  readonly label: string;
 }
 
 @Component({
@@ -32,9 +32,7 @@ export class UserComponent implements OnInit {
   user: any;
   navLinks: NavLink[] = [];
 
-  constructor(private route: ActivatedRoute,
-              private router: Router) {
-  }
+  constructor(private route: ActivatedRoute, private router: Router) {}
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;

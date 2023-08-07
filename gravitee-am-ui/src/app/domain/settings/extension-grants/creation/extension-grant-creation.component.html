@@ -30,7 +30,7 @@
         </ng-template>
         <extension-grant-creation-step1 [extensionGrant]="extensionGrant"></extension-grant-creation-step1>
         <div fxLayout="row" fxLayoutAlign="end end" class="stepper-button-zone">
-          <button mat-raised-button color="primary" matStepperNext type="button"[disabled]="!extensionGrant.type">Next</button>
+          <button mat-raised-button color="primary" matStepperNext type="button" [disabled]="!extensionGrant.type">Next</button>
         </div>
       </mat-step>
       <mat-step>
@@ -38,7 +38,11 @@
           <h5>Settings</h5>
           <small>Extension grant configuration</small>
         </ng-template>
-          <extension-grant-creation-step2 *ngIf="stepper.selectedIndex == 1" [extensionGrant]="extensionGrant" [(configurationIsValid)]="configurationIsValid"></extension-grant-creation-step2>
+        <extension-grant-creation-step2
+          *ngIf="stepper.selectedIndex == 1"
+          [extensionGrant]="extensionGrant"
+          [(configurationIsValid)]="configurationIsValid"
+        ></extension-grant-creation-step2>
         <div class="stepper-button-zone">
           <button mat-raised-button matStepperPrevious type="button">Back</button>
           <span fxFlex></span>

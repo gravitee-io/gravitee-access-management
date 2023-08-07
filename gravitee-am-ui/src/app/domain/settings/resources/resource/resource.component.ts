@@ -13,18 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
-import {OrganizationService} from '../../../../services/organization.service';
-import {SnackbarService} from '../../../../services/snackbar.service';
-import {DialogService} from '../../../../services/dialog.service';
-import {AuthService} from '../../../../services/auth.service';
-import {ResourceService} from '../../../../services/resource.service';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { catchError, filter, switchMap, tap } from 'rxjs/operators';
+
+import { OrganizationService } from '../../../../services/organization.service';
+import { SnackbarService } from '../../../../services/snackbar.service';
+import { DialogService } from '../../../../services/dialog.service';
+import { AuthService } from '../../../../services/auth.service';
+import { ResourceService } from '../../../../services/resource.service';
 
 @Component({
   selector: 'app-resource',
   templateUrl: './resource.component.html',
-  styleUrls: ['./resource.component.scss']
+  styleUrls: ['./resource.component.scss'],
 })
 export class ResourceComponent implements OnInit {
   private domainId: string;
@@ -37,13 +39,15 @@ export class ResourceComponent implements OnInit {
   updateResourceConfiguration: any;
   editMode: boolean;
 
-  constructor(private route: ActivatedRoute,
-              private router: Router,
-              private organizationService: OrganizationService,
-              private resourceService: ResourceService,
-              private snackbarService: SnackbarService,
-              private dialogService: DialogService,
-              private authService: AuthService) { }
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private organizationService: OrganizationService,
+    private resourceService: ResourceService,
+    private snackbarService: SnackbarService,
+    private dialogService: DialogService,
+    private authService: AuthService,
+  ) {}
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
@@ -51,18 +55,18 @@ export class ResourceComponent implements OnInit {
     this.resourceConfiguration = JSON.parse(this.resource.configuration);
     this.updateResourceConfiguration = this.resourceConfiguration;
     this.editMode = this.authService.hasPermissions(['domain_resource_update']);
-    this.organizationService.resourceSchema(this.resource.type).subscribe(data => {
+    this.organizationService.resourceSchema(this.resource.type).subscribe((data) => {
       this.resourceSchema = data;
     });
   }
 
   update() {
     this.resource.configuration = JSON.stringify(this.updateResourceConfiguration);
-    this.resourceService.update(this.domainId, this.resource.id, this.resource).subscribe(data => {
+    this.resourceService.update(this.domainId, this.resource.id, this.resource).subscribe((data) => {
       this.resource = data;
       this.resourceConfiguration = JSON.parse(this.resource.configuration);
       this.snackbarService.open('Resource updated');
-    })
+    });
   }
 
   enableResourceUpdate(configurationWrapper) {
@@ -77,16 +81,16 @@ export class ResourceComponent implements OnInit {
     event.preventDefault();
     this.dialogService
       .confirm('Delete Resource', 'Are you sure you want to delete this resource ?')
-      .subscribe(res => {
-        if (res) {
-          this.resourceService.delete(this.domainId, this.resource.id).subscribe(() => {
-            this.snackbarService.open('Resource deleted');
-            this.router.navigate(['..'], { relativeTo: this.route });
-          }, () => {
-            this.router.navigate(['..', this.resource.id], { relativeTo: this.route });
-          });
-        }
-      });
+      .pipe(
+        filter((res) => res),
+        switchMap(() => this.resourceService.delete(this.domainId, this.resource.id)),
+        tap(() => {
+          this.snackbarService.open('Resource deleted');
+          this.router.navigate(['..'], { relativeTo: this.route });
+        }),
+        catchError(() => this.router.navigate(['..', this.resource.id], { relativeTo: this.route })),
+      )
+      .subscribe();
   }
 
   isHttpFactorResource() {

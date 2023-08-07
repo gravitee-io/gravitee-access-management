@@ -13,19 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit, Input, OnChanges, SimpleChanges} from '@angular/core';
+import { Component, OnInit, Input, OnChanges, SimpleChanges } from '@angular/core';
 
 @Component({
   selector: 'app-user-avatar',
-  templateUrl: './user-avatar.component.html'
+  templateUrl: './user-avatar.component.html',
 })
 export class UserAvatarComponent implements OnInit, OnChanges {
   @Input() user: any;
   @Input() width: string;
   url: string;
   username: string;
-
-  constructor() { }
 
   ngOnInit() {
     this.loadUrl();
@@ -49,5 +47,4 @@ export class UserAvatarComponent implements OnInit, OnChanges {
       this.url = 'assets/material-letter-icons/' + this.username.charAt(0).toUpperCase() + '.png';
     }
   }
-
 }

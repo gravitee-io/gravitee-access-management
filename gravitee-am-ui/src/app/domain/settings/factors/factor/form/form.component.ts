@@ -13,24 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit, Input, EventEmitter, Output, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, EventEmitter, Output, OnChanges, SimpleChanges } from '@angular/core';
 
 @Component({
   selector: 'factor-form',
   templateUrl: './form.component.html',
-  styleUrls: ['./form.component.scss']
+  styleUrls: ['./form.component.scss'],
 })
-export class FactorFormComponent implements OnInit, OnChanges {
+export class FactorFormComponent implements OnChanges {
   @Input('factorConfiguration') configuration: any = {};
   @Input('factorSchema') factorSchema: any;
   @Output() configurationCompleted = new EventEmitter<any>();
   displayForm = false;
   data: any = {};
-
-  constructor() { }
-
-  ngOnInit() {
-  }
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes.factorSchema) {
@@ -53,7 +48,7 @@ export class FactorFormComponent implements OnInit, OnChanges {
   }
 
   isValid(isValid: boolean) {
-    const configurationWrapper = { 'isValid' : isValid, 'configuration': this.configuration};
+    const configurationWrapper = { isValid: isValid, configuration: this.configuration };
     this.configurationCompleted.emit(configurationWrapper);
   }
 }

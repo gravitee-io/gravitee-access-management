@@ -13,17 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit, ViewChild} from '@angular/core';
-import {NgForm} from '@angular/forms';
-import {AlertService} from "../../../../services/alert.service";
-import {ActivatedRoute, Router} from "@angular/router";
-import {SnackbarService} from "../../../../services/snackbar.service";
-import {DialogService} from "../../../../services/dialog.service";
-import {OrganizationService} from "../../../../services/organization.service";
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { filter, switchMap, tap } from 'rxjs/operators';
+
+import { AlertService } from '../../../../services/alert.service';
+import { SnackbarService } from '../../../../services/snackbar.service';
+import { DialogService } from '../../../../services/dialog.service';
+import { OrganizationService } from '../../../../services/organization.service';
 
 @Component({
   templateUrl: './notifier.component.html',
-  styleUrls: ['./notifier.component.scss']
+  styleUrls: ['./notifier.component.scss'],
 })
 export class DomainAlertNotifierComponent implements OnInit {
   domain: any = {};
@@ -36,13 +37,14 @@ export class DomainAlertNotifierComponent implements OnInit {
   updateAlertNotifierConfiguration: any;
   redirectUri: string;
 
-  constructor(private alertService: AlertService,
-              private snackbarService: SnackbarService,
-              private route: ActivatedRoute,
-              private router: Router,
-              private dialogService: DialogService,
-              private organizationService: OrganizationService) {
-  }
+  constructor(
+    private alertService: AlertService,
+    private snackbarService: SnackbarService,
+    private route: ActivatedRoute,
+    private router: Router,
+    private dialogService: DialogService,
+    private organizationService: OrganizationService,
+  ) {}
 
   ngOnInit() {
     this.alertNotifier = this.route.snapshot.data['alertNotifier'];
@@ -50,18 +52,17 @@ export class DomainAlertNotifierComponent implements OnInit {
     this.alertNotifierConfiguration = JSON.parse(this.alertNotifier.configuration);
     this.updateAlertNotifierConfiguration = this.alertNotifierConfiguration;
 
-    this.organizationService.notifierSchema(this.alertNotifier.type).subscribe(data => {
+    this.organizationService.notifierSchema(this.alertNotifier.type).subscribe((data) => {
       this.notifierSchema = data;
-      let self = this;
-      Object.keys(this.notifierSchema['properties']).forEach(function (key) {
-        self.notifierSchema['properties'][key].default = '';
+      Object.keys(this.notifierSchema['properties']).forEach((key) => {
+        this.notifierSchema['properties'][key].default = '';
       });
     });
   }
 
   update() {
     this.alertNotifier.configuration = this.updateAlertNotifierConfiguration;
-    this.alertService.patchAlertNotifier(this.domain.id, this.alertNotifier).subscribe(data => {
+    this.alertService.patchAlertNotifier(this.domain.id, this.alertNotifier).subscribe((data) => {
       this.snackbarService.open('Alert notifier updated');
       this.alertNotifier = data;
       this.alertNotifierConfiguration = JSON.parse(this.alertNotifier.configuration);
@@ -74,14 +75,15 @@ export class DomainAlertNotifierComponent implements OnInit {
     event.preventDefault();
     this.dialogService
       .confirm('Delete Alert Notifier', 'Are you sure you want to delete this alert notifier ?')
-      .subscribe(res => {
-        if (res) {
-          this.alertService.deleteAlertNotifier(this.domain.id, this.alertNotifier.id).subscribe(() => {
-            this.snackbarService.open('Alert notifier deleted');
-            this.router.navigate(['../..'], {relativeTo: this.route});
-          });
-        }
-      });
+      .pipe(
+        filter((res) => res),
+        switchMap(() => this.alertService.deleteAlertNotifier(this.domain.id, this.alertNotifier.id)),
+        tap(() => {
+          this.snackbarService.open('Alert notifier deleted');
+          this.router.navigate(['../..'], { relativeTo: this.route });
+        }),
+      )
+      .subscribe();
   }
 
   enableProviderUpdate(configurationWrapper) {

@@ -16,35 +16,35 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+
 import { AppConfig } from '../../config/app.config';
 
 @Injectable()
 export class DeviceIdentifierService {
   private deviceIdentifierUrl = AppConfig.settings.domainBaseURL;
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
-  findByDomain(domainId): Observable<any>  {
+  findByDomain(domainId): Observable<any> {
     return this.http.get<any>(this.deviceIdentifierUrl + domainId + '/device-identifiers');
   }
 
-  get(domainId, id): Observable<any>  {
+  get(domainId, id): Observable<any> {
     return this.http.get<any>(this.deviceIdentifierUrl + domainId + '/device-identifiers/' + id);
   }
 
-  create(domainId, deviceIdentifier): Observable<any>  {
+  create(domainId, deviceIdentifier): Observable<any> {
     return this.http.post<any>(this.deviceIdentifierUrl + domainId + '/device-identifiers', deviceIdentifier);
   }
 
-  update(domainId, id, deviceIdentifier): Observable<any>  {
+  update(domainId, id, deviceIdentifier): Observable<any> {
     return this.http.put<any>(this.deviceIdentifierUrl + domainId + '/device-identifiers/' + id, {
-      'name' : deviceIdentifier.name,
-      'configuration' : deviceIdentifier.configuration
+      name: deviceIdentifier.name,
+      configuration: deviceIdentifier.configuration,
     });
   }
 
-  delete(domainId, id): Observable<any>  {
+  delete(domainId, id): Observable<any> {
     return this.http.delete<any>(this.deviceIdentifierUrl + domainId + '/device-identifiers/' + id);
   }
-
 }

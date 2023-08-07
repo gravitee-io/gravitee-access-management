@@ -13,19 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Injectable} from '@angular/core';
-import {AppConfig} from '../../config/app.config';
-import {HttpClient} from '@angular/common/http';
-import {Observable} from 'rxjs';
-import {OrganizationService} from './organization.service';
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+
+import { AppConfig } from '../../config/app.config';
 
 @Injectable()
 export class UserNotificationsService {
-
   private userNotificationUrl: string = AppConfig.settings.baseURL + '/user/notifications';
 
-  constructor(private http: HttpClient) {
-  }
+  constructor(private http: HttpClient) {}
 
   listNotifications(): Observable<any> {
     return this.http.get<any>(this.userNotificationUrl);
@@ -34,5 +32,4 @@ export class UserNotificationsService {
   markAsRead(id: string): Observable<any> {
     return this.http.post<any>(this.userNotificationUrl + '/' + id + '/acknowledge', null);
   }
-
 }

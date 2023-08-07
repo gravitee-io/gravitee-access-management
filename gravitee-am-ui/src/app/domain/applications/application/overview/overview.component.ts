@@ -13,16 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, ElementRef, OnInit, ViewChild} from '@angular/core';
-import {ActivatedRoute} from '@angular/router';
-import {AuthService} from '../../../../services/auth.service';
-import {SnackbarService} from '../../../../services/snackbar.service';
-import {EntrypointService} from "../../../../services/entrypoint.service";
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+
+import { AuthService } from '../../../../services/auth.service';
+import { SnackbarService } from '../../../../services/snackbar.service';
+import { EntrypointService } from '../../../../services/entrypoint.service';
 
 @Component({
   selector: 'application-overview',
   templateUrl: './overview.component.html',
-  styleUrls: ['./overview.component.scss']
+  styleUrls: ['./overview.component.scss'],
 })
 export class ApplicationOverviewComponent implements OnInit {
   domain: any;
@@ -45,11 +46,12 @@ export class ApplicationOverviewComponent implements OnInit {
   private CHARSET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   @ViewChild('copyText', { read: ElementRef, static: true }) copyText: ElementRef;
 
-  constructor(private route: ActivatedRoute,
-              private authService: AuthService,
-              private snackbarService: SnackbarService,
-              private entrypointService: EntrypointService) {
-  }
+  constructor(
+    private route: ActivatedRoute,
+    private authService: AuthService,
+    private snackbarService: SnackbarService,
+    private entrypointService: EntrypointService,
+  ) {}
 
   ngOnInit() {
     this.domain = this.route.snapshot.data['domain'];
@@ -63,7 +65,10 @@ export class ApplicationOverviewComponent implements OnInit {
       this.grantTypes = applicationOAuthSettings.grantTypes;
       this.clientId = applicationOAuthSettings.clientId;
       this.clientSecret = applicationOAuthSettings.clientSecret;
-      this.redirectUri = applicationOAuthSettings.redirectUris && applicationOAuthSettings.redirectUris[0] !== undefined ? applicationOAuthSettings.redirectUris[0] : 'Not defined';
+      this.redirectUri =
+        applicationOAuthSettings.redirectUris && applicationOAuthSettings.redirectUris[0] !== undefined
+          ? applicationOAuthSettings.redirectUris[0]
+          : 'Not defined';
       this.encodedRedirectUri = encodeURIComponent(this.redirectUri);
       this.authorizationHeader = btoa(this.getEncodedClientId() + ':' + encodeURIComponent(this.clientSecret));
       this.tokenEndpointAuthMethod = applicationOAuthSettings.tokenEndpointAuthMethod;
@@ -77,7 +82,7 @@ export class ApplicationOverviewComponent implements OnInit {
     this.baseUrl = this.entrypointService.resolveBaseUrl(this.entrypoint, this.domain);
     if (this.forcePKCE) {
       this.codeVerifier = this.generateCodeVerifier();
-      this.generateCodeChallenge(this.codeVerifier).then(data => this.codeChallenge = data);
+      this.generateCodeChallenge(this.codeVerifier).then((data) => (this.codeChallenge = data));
     }
   }
 
@@ -135,16 +140,13 @@ export class ApplicationOverviewComponent implements OnInit {
   private generateCodeChallenge(codeVerifier): PromiseLike<string> {
     const encoder = new TextEncoder();
     const data = encoder.encode(codeVerifier);
-    return window.crypto.subtle.digest('SHA-256', data).then(buffer => {
+    return window.crypto.subtle.digest('SHA-256', data).then((buffer) => {
       return this.base64URLEncode(String.fromCharCode.apply(null, new Uint8Array(buffer)));
     });
   }
 
   private base64URLEncode(str) {
-    return btoa(str)
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .replace(/=/g, '');
+    return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
   }
 
   private bufferToString(buffer: Uint8Array) {

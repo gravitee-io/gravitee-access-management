@@ -22,17 +22,13 @@
       <app-user-avatar [user]="user" [width]="'80'"></app-user-avatar>
     </div>
     <div class="user-information" fxLayout="column">
-      <span class="user-display-name">{{user.displayName}}</span>
-      <span class="user-username">{{user.username}}</span>
+      <span class="user-display-name">{{ user.displayName }}</span>
+      <span class="user-username">{{ user.username }}</span>
     </div>
   </div>
   <nav mat-tab-nav-bar color="accent">
-    <a mat-tab-link
-       *ngFor="let link of navLinks"
-       [routerLink]="link.href"
-       routerLinkActive #rla="routerLinkActive"
-       [active]="rla.isActive">
-      {{link.label}}
+    <a mat-tab-link *ngFor="let link of navLinks" [routerLink]="link.href" routerLinkActive #rla="routerLinkActive" [active]="rla.isActive">
+      {{ link.label }}
     </a>
   </nav>
   <div class="user-content">

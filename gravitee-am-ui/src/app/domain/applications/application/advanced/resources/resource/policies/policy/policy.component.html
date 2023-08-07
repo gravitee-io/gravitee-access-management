@@ -16,43 +16,41 @@
 
 -->
 <div>
-    <a [routerLink]="['../..']" class="gv-back-link"><small><< Back to resource</small></a>
-    <div fxLayout="row">
-        <form fxLayout="column" fxFlex="70">
-            <h1>{{policy.name}}</h1>
-            <div class="gv-form-section">
-                <div fxLayout="column" style="margin-bottom: 10px;">
-                    <mat-slide-toggle [checked]="policy.enabled" disabled>
-                        Policy's status
-                    </mat-slide-toggle>
-                    <mat-hint style="font-size: 75%;">Enable or disable access policy to apply authorization grant rules.</mat-hint>
-                </div>
-                <mat-form-field *ngIf="policy.name" appearance="outline" floatLabel="always">
-                    <mat-label>Name</mat-label>
-                    <input matInput placeholder="Name" disabled [value]="policy.name">
-                    <mat-hint>Policy's name</mat-hint>
-                </mat-form-field>
-                <mat-form-field *ngIf="policy.description" appearance="outline" floatLabel="always">
-                    <mat-label>Description</mat-label>
-                    <input matInput placeholder="Description" disabled [value]="policy.description">
-                    <mat-hint>Policy's description</mat-hint>
-                </mat-form-field>
-            </div>
-            <div class="gv-form-section">
-                <div class="gv-form-section-title">
-                    <h5>Condition</h5>
-                    <mat-divider></mat-divider>
-                </div>
-                <div>
-                    <codemirror #editor [value]="condition" [config]="config"></codemirror>
-                </div>
-            </div>
-        </form>
-        <div class="gv-page-description" fxFlex>
-            <h3>Resource access policy</h3>
-            <div class="gv-page-description-content">
-                <p>Authorization grant rules, which the authorization server executes in the process of issuing access tokens.</p>
-            </div>
+  <a [routerLink]="['../..']" class="gv-back-link"><small><< Back to resource</small></a>
+  <div fxLayout="row">
+    <form fxLayout="column" fxFlex="70">
+      <h1>{{ policy.name }}</h1>
+      <div class="gv-form-section">
+        <div fxLayout="column" style="margin-bottom: 10px">
+          <mat-slide-toggle [checked]="policy.enabled" disabled> Policy's status </mat-slide-toggle>
+          <mat-hint style="font-size: 75%">Enable or disable access policy to apply authorization grant rules.</mat-hint>
         </div>
+        <mat-form-field *ngIf="policy.name" appearance="outline" floatLabel="always">
+          <mat-label>Name</mat-label>
+          <input matInput placeholder="Name" disabled [value]="policy.name" />
+          <mat-hint>Policy's name</mat-hint>
+        </mat-form-field>
+        <mat-form-field *ngIf="policy.description" appearance="outline" floatLabel="always">
+          <mat-label>Description</mat-label>
+          <input matInput placeholder="Description" disabled [value]="policy.description" />
+          <mat-hint>Policy's description</mat-hint>
+        </mat-form-field>
+      </div>
+      <div class="gv-form-section">
+        <div class="gv-form-section-title">
+          <h5>Condition</h5>
+          <mat-divider></mat-divider>
+        </div>
+        <div>
+          <codemirror #editor [value]="condition" [config]="config"></codemirror>
+        </div>
+      </div>
+    </form>
+    <div class="gv-page-description" fxFlex>
+      <h3>Resource access policy</h3>
+      <div class="gv-page-description-content">
+        <p>Authorization grant rules, which the authorization server executes in the process of issuing access tokens.</p>
+      </div>
     </div>
+  </div>
 </div>

@@ -14,17 +14,19 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { SnackbarService } from "../../../services/snackbar.service";
-import { DialogService } from "../../../services/dialog.service";
-import { ActivatedRoute } from "@angular/router";
-import { ScopeService } from "../../../services/scope.service";
+import { ActivatedRoute } from '@angular/router';
 import moment from 'moment';
-import {AuthService} from "../../../services/auth.service";
+import { filter, switchMap, tap } from 'rxjs/operators';
+
+import { SnackbarService } from '../../../services/snackbar.service';
+import { DialogService } from '../../../services/dialog.service';
+import { ScopeService } from '../../../services/scope.service';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-scopes',
   templateUrl: './scopes.component.html',
-  styleUrls: ['./scopes.component.scss']
+  styleUrls: ['./scopes.component.scss'],
 })
 export class DomainSettingsScopesComponent implements OnInit {
   private searchValue: string;
@@ -34,11 +36,13 @@ export class DomainSettingsScopesComponent implements OnInit {
   canDelete: boolean;
   canEdit: boolean;
 
-  constructor(private scopeService: ScopeService,
-              private dialogService: DialogService,
-              private snackbarService: SnackbarService,
-              private authService: AuthService,
-              private route: ActivatedRoute) {
+  constructor(
+    private scopeService: ScopeService,
+    private dialogService: DialogService,
+    private snackbarService: SnackbarService,
+    private authService: AuthService,
+    private route: ActivatedRoute,
+  ) {
     this.page.pageNumber = 0;
     this.page.size = 10;
   }
@@ -47,7 +51,7 @@ export class DomainSettingsScopesComponent implements OnInit {
     this.domainId = this.route.snapshot.data['domain']?.id;
     const pagedScopes = this.route.snapshot.data['scopes'];
     this.scopes = pagedScopes.data;
-    this.page.totalElements = pagedScopes.totalCount
+    this.page.totalElements = pagedScopes.totalCount;
     this.canDelete = this.authService.hasPermissions(['domain_scope_delete']);
     this.canEdit = this.authService.hasPermissions(['domain_scope_update']);
   }
@@ -59,33 +63,33 @@ export class DomainSettingsScopesComponent implements OnInit {
   }
 
   loadScopes() {
-    const findScopes = (this.searchValue) ?
-      this.scopeService.search('*' + this.searchValue + '*',this.domainId, this.page.pageNumber, this.page.size) :
-      this.scopeService.findByDomain(this.domainId, this.page.pageNumber, this.page.size);
+    const findScopes = this.searchValue
+      ? this.scopeService.search('*' + this.searchValue + '*', this.domainId, this.page.pageNumber, this.page.size)
+      : this.scopeService.findByDomain(this.domainId, this.page.pageNumber, this.page.size);
 
-
-    findScopes.subscribe(pagedScopes => {
+    findScopes.subscribe((pagedScopes) => {
       this.page.totalElements = pagedScopes.totalCount;
       this.scopes = pagedScopes.data;
     });
   }
 
   get isEmpty() {
-    return !this.scopes || this.scopes.length === 0 && !this.searchValue;
+    return !this.scopes || (this.scopes.length === 0 && !this.searchValue);
   }
 
   delete(id, event) {
     event.preventDefault();
     this.dialogService
       .confirm('Delete Scope', 'Are you sure you want to delete this scope ?')
-      .subscribe(res => {
-        if (res) {
-          this.scopeService.delete(this.domainId, id).subscribe(response => {
-            this.snackbarService.open("Scope deleted");
-            this.loadScopes();
-          });
-        }
-      });
+      .pipe(
+        filter((res) => res),
+        switchMap(() => this.scopeService.delete(this.domainId, id)),
+        tap(() => {
+          this.snackbarService.open('Scope deleted');
+          this.loadScopes();
+        }),
+      )
+      .subscribe();
   }
 
   setPage(pageInfo) {
@@ -98,17 +102,16 @@ export class DomainSettingsScopesComponent implements OnInit {
   }
 
   enableScopeDiscovery(id, event) {
-    this.scopeService.patchDiscovery(this.domainId, id, event.checked).subscribe(response => {
+    this.scopeService.patchDiscovery(this.domainId, id, event.checked).subscribe(() => {
       this.snackbarService.open('Scope updated');
       this.loadScopes();
     });
   }
 
   enableParameterizedScope(id, event) {
-    this.scopeService.patchParameterized(this.domainId, id, event.checked).subscribe(response => {
+    this.scopeService.patchParameterized(this.domainId, id, event.checked).subscribe(() => {
       this.snackbarService.open('Scope updated');
       this.loadScopes();
     });
   }
-  
 }

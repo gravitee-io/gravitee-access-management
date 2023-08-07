@@ -13,35 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, Input, OnInit} from '@angular/core';
-import {forkJoin, Observable} from "rxjs";
-import {map} from "rxjs/operators";
-import {AnalyticsService} from '../../../services/analytics.service';
+import { Component, Input, OnInit } from '@angular/core';
+import { forkJoin, Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import * as Highcharts from 'highcharts';
 import moment from 'moment';
 import * as _ from 'lodash';
-import {Widget} from '../../../components/widget/widget.model';
-import {isNil} from 'lodash';
+import { isNil } from 'lodash';
+
+import { Widget } from '../../../components/widget/widget.model';
+import { AnalyticsService } from '../../../services/analytics.service';
 import { availableTimeRanges, defaultTimeRangeId } from '../../../utils/time-range-utils';
 
 export interface DashboardData {
-  widgets: Widget[]
+  widgets: Widget[];
 }
 
 Highcharts.setOptions({
   credits: {
-    enabled: false
+    enabled: false,
   },
   title: {
-    text: null
+    text: null,
   },
-  colors: ['#058DC7', '#50B432', '#ED561B', '#DDDF00', '#24CBE5', '#64E572', '#FF9655', '#FFF263', '#6AF9C4']
+  colors: ['#058DC7', '#50B432', '#ED561B', '#DDDF00', '#24CBE5', '#64E572', '#FF9655', '#FFF263', '#6AF9C4'],
 });
 
 @Component({
   selector: 'gv-dashboard',
   templateUrl: './dashboard.component.html',
-  styleUrls: ['./dashboard.component.scss']
+  styleUrls: ['./dashboard.component.scss'],
 })
 export class DashboardComponent implements OnInit {
   @Input('dashboard') dashboard: DashboardData;
@@ -59,7 +60,7 @@ export class DashboardComponent implements OnInit {
   readonly timeRanges = availableTimeRanges;
   selectedTimeRange = defaultTimeRangeId;
 
-  constructor(private analyticsService: AnalyticsService) { }
+  constructor(private analyticsService: AnalyticsService) {}
 
   ngOnInit() {
     this.fetch();
@@ -70,7 +71,7 @@ export class DashboardComponent implements OnInit {
   }
 
   private query(widget): Observable<Widget> {
-    const selectedTimeRange = _.find(this.timeRanges, { id : this.selectedTimeRange });
+    const selectedTimeRange = _.find(this.timeRanges, { id: this.selectedTimeRange });
 
     const analyticsQuery = {
       type: widget.chart.request.type,
@@ -78,33 +79,30 @@ export class DashboardComponent implements OnInit {
       from: moment().subtract(selectedTimeRange.value, selectedTimeRange.unit).valueOf(),
       to: moment().valueOf(),
       interval: selectedTimeRange.interval,
-      size: widget.chart.request.size
-    }
+      size: widget.chart.request.size,
+    };
 
-    const result$ =
-      isNil(this.applicationId)
-        ? this.analyticsService
-          .search(this.domainId, analyticsQuery)
-        : this.analyticsService
-          .searchApplicationAnalytics(this.domainId, this.applicationId, analyticsQuery)
+    const result$ = isNil(this.applicationId)
+      ? this.analyticsService.search(this.domainId, analyticsQuery)
+      : this.analyticsService.searchApplicationAnalytics(this.domainId, this.applicationId, analyticsQuery);
 
-
-    return result$.pipe(map(response => {
-      widget.chart.response = response
-      return widget;
-    }));
+    return result$.pipe(
+      map((response) => {
+        widget.chart.response = response;
+        return widget;
+      }),
+    );
   }
 
   private fetch() {
     const dashboard: DashboardData = Object.assign({}, this.dashboard);
     this.widgets = [];
     this.isLoading = true;
-    forkJoin(_.map(dashboard.widgets, widget => this.query(widget)))
-      .subscribe(widgets => {
-        this.widgets = [...widgets];
-        setTimeout(() => {
-          this.isLoading = false;
-        }, 1500);
-      });
+    forkJoin(_.map(dashboard.widgets, (widget) => this.query(widget))).subscribe((widgets) => {
+      this.widgets = [...widgets];
+      setTimeout(() => {
+        this.isLoading = false;
+      }, 1500);
+    });
   }
 }

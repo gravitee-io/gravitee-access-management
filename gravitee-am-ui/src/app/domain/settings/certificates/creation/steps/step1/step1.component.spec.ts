@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { ComponentFixture, TestBed, waitForAsync } from "@angular/core/testing";
-import {CertificateCreationStep1Component} from "./step1.component";
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
+import { CertificateCreationStep1Component } from './step1.component';
 
 describe('CertificateCreationStep1Component', () => {
   let component: CertificateCreationStep1Component;
@@ -23,10 +23,9 @@ describe('CertificateCreationStep1Component', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    declarations: [CertificateCreationStep1Component],
-    teardown: { destroyAfterEach: false }
-})
-    .compileComponents();
+      declarations: [CertificateCreationStep1Component],
+      teardown: { destroyAfterEach: false },
+    }).compileComponents();
   }));
 
   beforeEach(() => {

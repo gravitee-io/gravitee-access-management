@@ -23,9 +23,8 @@ describe('ApplicationCookieSettingsComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ ApplicationCookieSettingsComponent ]
-    })
-      .compileComponents();
+      declarations: [ApplicationCookieSettingsComponent],
+    }).compileComponents();
   }));
 
   beforeEach(() => {

@@ -23,10 +23,9 @@ describe('ManagementRolesComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    declarations: [ManagementRolesComponent],
-    teardown: { destroyAfterEach: false }
-})
-      .compileComponents();
+      declarations: [ManagementRolesComponent],
+      teardown: { destroyAfterEach: false },
+    }).compileComponents();
   }));
 
   beforeEach(() => {

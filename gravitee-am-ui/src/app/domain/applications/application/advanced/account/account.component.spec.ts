@@ -23,10 +23,9 @@ describe('ApplicationAccountSettingsComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    declarations: [ApplicationAccountSettingsComponent],
-    teardown: { destroyAfterEach: false }
-})
-      .compileComponents();
+      declarations: [ApplicationAccountSettingsComponent],
+      teardown: { destroyAfterEach: false },
+    }).compileComponents();
   }));
 
   beforeEach(() => {

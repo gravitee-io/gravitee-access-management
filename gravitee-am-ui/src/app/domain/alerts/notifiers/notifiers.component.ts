@@ -13,39 +13,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {ProviderService} from "../../../services/provider.service";
-import {SnackbarService} from "../../../services/snackbar.service";
-import {DialogService} from "../../../services/dialog.service";
-import {ActivatedRoute, Router} from "@angular/router";
-import {OrganizationService} from "../../../services/organization.service";
-import {AlertService} from "../../../services/alert.service";
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { filter, switchMap, tap } from 'rxjs/operators';
+
+import { SnackbarService } from '../../../services/snackbar.service';
+import { DialogService } from '../../../services/dialog.service';
+import { OrganizationService } from '../../../services/organization.service';
+import { AlertService } from '../../../services/alert.service';
 
 @Component({
   selector: 'app-domain-alert-notifiers',
   templateUrl: './notifiers.component.html',
-  styleUrls: ['./notifiers.component.scss']
+  styleUrls: ['./notifiers.component.scss'],
 })
 export class DomainAlertNotifiersComponent implements OnInit {
   private notifiersByType: any;
   private domain: any;
   alertNotifiers: any[];
 
-  constructor(private organizationService: OrganizationService,
-              private dialogService: DialogService,
-              private snackbarService: SnackbarService,
-              private route: ActivatedRoute,
-              private router: Router,
-              private alertService: AlertService) {
-  }
+  constructor(
+    private organizationService: OrganizationService,
+    private dialogService: DialogService,
+    private snackbarService: SnackbarService,
+    private route: ActivatedRoute,
+    private router: Router,
+    private alertService: AlertService,
+  ) {}
 
   ngOnInit() {
     this.domain = this.route.snapshot.data['domain'];
-    let availableNotifiers = this.route.snapshot.data['notifiers'];
+    const availableNotifiers = this.route.snapshot.data['notifiers'];
     this.notifiersByType = availableNotifiers.reduce((map, notifier) => {
-      map[notifier.id] = notifier
-      return map
-    }, {})
+      map[notifier.id] = notifier;
+      return map;
+    }, {});
 
     this.alertNotifiers = this.route.snapshot.data['alertNotifiers'];
   }
@@ -70,18 +72,18 @@ export class DomainAlertNotifiersComponent implements OnInit {
     event.preventDefault();
     this.dialogService
       .confirm('Delete Alert Notifier', 'Are you sure you want to delete this alert notifier ?')
-      .subscribe(res => {
-        if (res) {
-          this.alertService.deleteAlertNotifier(this.domain.id, id).subscribe(response => {
-            this.snackbarService.open('Alert notifier deleted');
-            this.loadAlertNotifiers();
-          });
-        }
-      });
+      .pipe(
+        filter((res) => res),
+        switchMap(() => this.alertService.deleteAlertNotifier(this.domain.id, id)),
+        tap(() => {
+          this.snackbarService.open('Alert notifier deleted');
+          this.loadAlertNotifiers();
+        }),
+      )
+      .subscribe();
   }
 
   loadAlertNotifiers() {
-    this.alertService.getAlertNotifiers(this.domain.id)
-      .subscribe(response => this.alertNotifiers = response);
+    this.alertService.getAlertNotifiers(this.domain.id).subscribe((response) => (this.alertNotifiers = response));
   }
 }

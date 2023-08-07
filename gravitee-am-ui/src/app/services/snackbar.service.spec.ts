@@ -20,9 +20,9 @@ import { SnackbarService } from './snackbar.service';
 describe('SnackbarService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-    providers: [SnackbarService],
-    teardown: { destroyAfterEach: false }
-});
+      providers: [SnackbarService],
+      teardown: { destroyAfterEach: false },
+    });
   });
 
   it('should ...', inject([SnackbarService], (service: SnackbarService) => {

@@ -13,27 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute} from '@angular/router';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-domain-resources',
   templateUrl: './resources.component.html',
-  styleUrls: ['./resources.component.scss']
+  styleUrls: ['./resources.component.scss'],
 })
 export class DomainSettingsResourcesComponent implements OnInit {
   private resourceTypes: any = {
-    'twilio-verify-am-resource' : 'Twilio Verify',
-    'smtp-am-resource' : 'SMTP',
-    'infobip-am-resource' : 'Infobip 2FA',
-    'http-factor-am-resource' : 'HTTP Factor'
+    'twilio-verify-am-resource': 'Twilio Verify',
+    'smtp-am-resource': 'SMTP',
+    'infobip-am-resource': 'Infobip 2FA',
+    'http-factor-am-resource': 'HTTP Factor',
   };
   resources: any[];
   resourcePlugins: any[];
   domainId: any;
 
-  constructor(private route: ActivatedRoute) {
-  }
+  constructor(private route: ActivatedRoute) {}
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
@@ -63,9 +62,8 @@ export class DomainSettingsResourcesComponent implements OnInit {
 
   private getResourcePlugin(type) {
     if (this.resourcePlugins) {
-      return this.resourcePlugins.find(r => r.id === type);
+      return this.resourcePlugins.find((r) => r.id === type);
     }
     return null;
   }
-
 }

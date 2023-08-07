@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {inject, TestBed} from '@angular/core/testing';
+import { inject, TestBed } from '@angular/core/testing';
+
 import { DeviceNotifiersResolver } from './device-notifiers.resolver';
 
 describe('DeviceNotifiersResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-    providers: [DeviceNotifiersResolver],
-    teardown: { destroyAfterEach: false }
-});
+      providers: [DeviceNotifiersResolver],
+      teardown: { destroyAfterEach: false },
+    });
   });
 
   it('should ...', inject([DeviceNotifiersResolver], (service: DeviceNotifiersResolver) => {

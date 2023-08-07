@@ -23,10 +23,9 @@ describe('WidgetComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    declarations: [WidgetComponent],
-    teardown: { destroyAfterEach: false }
-})
-    .compileComponents();
+      declarations: [WidgetComponent],
+      teardown: { destroyAfterEach: false },
+    }).compileComponents();
   }));
 
   beforeEach(() => {

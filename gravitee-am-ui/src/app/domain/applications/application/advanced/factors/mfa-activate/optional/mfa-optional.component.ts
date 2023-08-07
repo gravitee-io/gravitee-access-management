@@ -13,30 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, EventEmitter, Input, OnInit, Output} from "@angular/core";
-import {TimeConverterService} from "../../../../../../../services/time-converter.service";
-import moment from "moment";
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import moment from 'moment';
+
+import { TimeConverterService } from '../../../../../../../services/time-converter.service';
 
 @Component({
   selector: 'mfa-optional',
   templateUrl: './mfa-optional.component.html',
-  styleUrls: ['./mfa-optional.component.scss']
+  styleUrls: ['./mfa-optional.component.scss'],
 })
 export class MfaOptionalComponent implements OnInit {
-
   private humanTime: { skipTime: any; skipUnit: any };
 
   @Input() enrollment: any;
-  @Output("settings-change") settingsChangeEmitter: EventEmitter<any> = new EventEmitter<any>();
+  @Output('settings-change') settingsChangeEmitter: EventEmitter<any> = new EventEmitter<any>();
 
-  constructor(private timeConverterService: TimeConverterService) {
-  }
+  constructor(private timeConverterService: TimeConverterService) {}
 
   ngOnInit(): void {
     const time = this.enrollment && this.enrollment.skipTimeSeconds ? this.enrollment.skipTimeSeconds : 36000; // Default 10h
     this.humanTime = {
-      'skipTime': this.timeConverterService.getTime(time),
-      'skipUnit': this.timeConverterService.getUnitTime(time)
+      skipTime: this.timeConverterService.getTime(time),
+      skipUnit: this.timeConverterService.getUnitTime(time),
     };
   }
 
@@ -60,8 +59,8 @@ export class MfaOptionalComponent implements OnInit {
 
   private updateOptionalEnrollement() {
     this.settingsChangeEmitter.emit({
-      "forceEnrollment": false,
-      "skipTimeSeconds": this.humanTimeToSeconds()
+      forceEnrollment: false,
+      skipTimeSeconds: this.humanTimeToSeconds(),
     });
   }
 

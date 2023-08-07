@@ -16,15 +16,13 @@
 
 -->
 <div fxLayout="column">
-  <p class="gv-plugin-creation-description">
-    Configure your device identifier plugin.
-  </p>
+  <p class="gv-plugin-creation-description">Configure your device identifier plugin.</p>
   <div>
     <form fxLayout="column">
       <div class="gv-form-section">
         <mat-form-field appearance="outline" floatLabel="always">
           <mat-label>Name</mat-label>
-          <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="deviceIdentifier.name" required>
+          <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="deviceIdentifier.name" required />
           <mat-hint>Device identifier name</mat-hint>
         </mat-form-field>
         <mat-form-field appearance="outline" floatLabel="always">
@@ -40,7 +38,11 @@
           <mat-divider></mat-divider>
         </div>
         <div>
-          <device-identifier-form [deviceIdentifierConfiguration]="configuration" [deviceIdentifierSchema]="deviceIdentifierSchema" (configurationCompleted)="enableCreation($event)"></device-identifier-form>
+          <device-identifier-form
+            [deviceIdentifierConfiguration]="configuration"
+            [deviceIdentifierSchema]="deviceIdentifierSchema"
+            (configurationCompleted)="enableCreation($event)"
+          ></device-identifier-form>
         </div>
       </div>
     </form>

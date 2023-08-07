@@ -13,24 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit, Input, EventEmitter, Output, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, EventEmitter, Output, OnChanges, SimpleChanges } from '@angular/core';
 
 @Component({
   selector: 'device-notifier-form',
   templateUrl: './form.component.html',
-  styleUrls: ['./form.component.scss']
+  styleUrls: ['./form.component.scss'],
 })
-export class DeviceNotifierFormComponent implements OnInit, OnChanges {
+export class DeviceNotifierFormComponent implements OnChanges {
   @Input('deviceNotifierConfiguration') configuration: any = {};
   @Input('deviceNotifierSchema') deviceNotifierSchema: any;
   @Output() configurationCompleted = new EventEmitter<any>();
   displayForm = false;
   data: any = {};
-
-  constructor() { }
-
-  ngOnInit() {
-  }
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes.deviceNotifierSchema) {
@@ -53,7 +48,7 @@ export class DeviceNotifierFormComponent implements OnInit, OnChanges {
   }
 
   isValid(isValid: boolean) {
-    const configurationWrapper = { 'isValid' : isValid, 'configuration': this.configuration};
+    const configurationWrapper = { isValid: isValid, configuration: this.configuration };
     this.configurationCompleted.emit(configurationWrapper);
   }
 }

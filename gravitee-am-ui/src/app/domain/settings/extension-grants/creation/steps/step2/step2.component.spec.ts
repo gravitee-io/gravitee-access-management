@@ -15,7 +15,7 @@
  */
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
-import {ExtensionGrantCreationStep2Component} from './step2.component';
+import { ExtensionGrantCreationStep2Component } from './step2.component';
 
 describe('ExtensionGrantCreationStep2Component', () => {
   let component: ExtensionGrantCreationStep2Component;
@@ -23,10 +23,9 @@ describe('ExtensionGrantCreationStep2Component', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    declarations: [ExtensionGrantCreationStep2Component],
-    teardown: { destroyAfterEach: false }
-})
-    .compileComponents();
+      declarations: [ExtensionGrantCreationStep2Component],
+      teardown: { destroyAfterEach: false },
+    }).compileComponents();
   }));
 
   beforeEach(() => {

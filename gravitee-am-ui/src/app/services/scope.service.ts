@@ -14,74 +14,79 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { HttpClient } from "@angular/common/http";
-import { AppConfig } from "../../config/app.config";
-import {merge, Observable, of} from "rxjs";
-import {mergeMap, toArray} from "rxjs/operators";
+import { HttpClient } from '@angular/common/http';
+import { merge, Observable, of } from 'rxjs';
+import { mergeMap, toArray } from 'rxjs/operators';
+
+import { AppConfig } from '../../config/app.config';
 
 @Injectable()
 export class ScopeService {
   private scopes = AppConfig.settings.domainBaseURL;
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
   findAllByDomain(domainId): Observable<any> {
     const PAGE_SIZE = 50; // probably enough to get all scopes at once, but just in case iterate on pages
-    return this.findByDomain(domainId, 0, PAGE_SIZE).pipe(mergeMap((p) => {
-      let iterations = Math.floor(p.totalCount / PAGE_SIZE) + (p.totalCount % PAGE_SIZE == 0 ? 0 : 1);
-      let pageRequests = [];
-      pageRequests[0] = of(... p.data);
-      for (let i = 1; i < iterations; ++i) {
-        pageRequests[i] = this.findByDomain(domainId, i, PAGE_SIZE)
-          .pipe(mergeMap((p) => {
-            return of(... p.data);
-          }));
-      }
+    return this.findByDomain(domainId, 0, PAGE_SIZE)
+      .pipe(
+        mergeMap((p) => {
+          const iterations = Math.floor(p.totalCount / PAGE_SIZE) + (p.totalCount % PAGE_SIZE === 0 ? 0 : 1);
+          const pageRequests = [];
+          pageRequests[0] = of(...p.data);
+          for (let i = 1; i < iterations; ++i) {
+            pageRequests[i] = this.findByDomain(domainId, i, PAGE_SIZE).pipe(
+              mergeMap((p) => {
+                return of(...p.data);
+              }),
+            );
+          }
 
-      return merge (...pageRequests);
-    })).pipe(toArray())
+          return merge(...pageRequests);
+        }),
+      )
+      .pipe(toArray());
   }
 
   findByDomain(domainId, page, size): Observable<any> {
-    return this.http.get<any>(this.scopes + domainId + "/scopes" + '?page=' + page + '&size=' + size);
+    return this.http.get<any>(this.scopes + domainId + '/scopes' + '?page=' + page + '&size=' + size);
   }
 
-  search(searchTerm, domainId,page, size): Observable<any> {
-    return this.http.get<any>(this.scopes + domainId + "/scopes" + '?q=' + searchTerm + '&page=' + page + '&size=' + size);
+  search(searchTerm, domainId, page, size): Observable<any> {
+    return this.http.get<any>(this.scopes + domainId + '/scopes' + '?q=' + searchTerm + '&page=' + page + '&size=' + size);
   }
 
   get(domainId, id): Observable<any> {
-    return this.http.get<any>(this.scopes + domainId + "/scopes/" + id);
+    return this.http.get<any>(this.scopes + domainId + '/scopes/' + id);
   }
 
   create(domainId, scope): Observable<any> {
-    return this.http.post<any>(this.scopes + domainId + "/scopes", scope);
+    return this.http.post<any>(this.scopes + domainId + '/scopes', scope);
   }
 
   update(domainId, id, scope): Observable<any> {
-    return this.http.put<any>(this.scopes + domainId + "/scopes/" + id, {
-      'name' : scope.name,
-      'description' : scope.description,
-      'expiresIn' : scope.expiresIn,
-      'discovery' : scope.discovery,
-      'parameterized' : scope.parameterized
+    return this.http.put<any>(this.scopes + domainId + '/scopes/' + id, {
+      name: scope.name,
+      description: scope.description,
+      expiresIn: scope.expiresIn,
+      discovery: scope.discovery,
+      parameterized: scope.parameterized,
     });
   }
 
   patchDiscovery(domainId, id, discovery): Observable<any> {
-    return this.http.patch<any>(this.scopes + domainId + "/scopes/" + id, {
-      'discovery' : discovery
+    return this.http.patch<any>(this.scopes + domainId + '/scopes/' + id, {
+      discovery: discovery,
     });
   }
 
   patchParameterized(domainId, id, parameterized): Observable<any> {
-    return this.http.patch<any>(this.scopes + domainId + "/scopes/" + id, {
-      'parameterized' : parameterized
+    return this.http.patch<any>(this.scopes + domainId + '/scopes/' + id, {
+      parameterized: parameterized,
     });
   }
 
   delete(domainId, id): Observable<any> {
-    return this.http.delete<any>(this.scopes + domainId + "/scopes/" + id);
+    return this.http.delete<any>(this.scopes + domainId + '/scopes/' + id);
   }
-
 }

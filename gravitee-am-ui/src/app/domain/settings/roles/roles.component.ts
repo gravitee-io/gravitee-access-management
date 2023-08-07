@@ -13,16 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute} from '@angular/router';
-import {RoleService} from '../../../services/role.service';
-import {DialogService} from '../../../services/dialog.service';
-import {SnackbarService} from '../../../services/snackbar.service';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { filter, switchMap, tap } from 'rxjs/operators';
+
+import { RoleService } from '../../../services/role.service';
+import { DialogService } from '../../../services/dialog.service';
+import { SnackbarService } from '../../../services/snackbar.service';
 
 @Component({
   selector: 'app-roles',
   templateUrl: './roles.component.html',
-  styleUrls: ['./roles.component.scss']
+  styleUrls: ['./roles.component.scss'],
 })
 export class DomainSettingsRolesComponent implements OnInit {
   private searchValue: string;
@@ -30,10 +32,12 @@ export class DomainSettingsRolesComponent implements OnInit {
   domainId: string;
   page: any = {};
 
-  constructor(private roleService: RoleService,
-              private dialogService: DialogService,
-              private snackbarService: SnackbarService,
-              private route: ActivatedRoute) {
+  constructor(
+    private roleService: RoleService,
+    private dialogService: DialogService,
+    private snackbarService: SnackbarService,
+    private route: ActivatedRoute,
+  ) {
     this.page.pageNumber = 0;
     this.page.size = 10;
   }
@@ -46,16 +50,15 @@ export class DomainSettingsRolesComponent implements OnInit {
   }
 
   get isEmpty() {
-    return !this.roles || this.roles.length === 0 && !this.searchValue;
+    return !this.roles || (this.roles.length === 0 && !this.searchValue);
   }
 
   loadRoles() {
-    const findRoles = (this.searchValue) ?
-      this.roleService.search('*' + this.searchValue + '*',this.domainId, this.page.pageNumber, this.page.size) :
-      this.roleService.findByDomain(this.domainId, this.page.pageNumber, this.page.size);
+    const findRoles = this.searchValue
+      ? this.roleService.search('*' + this.searchValue + '*', this.domainId, this.page.pageNumber, this.page.size)
+      : this.roleService.findByDomain(this.domainId, this.page.pageNumber, this.page.size);
 
-
-    findRoles.subscribe(pagedScopes => {
+    findRoles.subscribe((pagedScopes) => {
       this.page.totalElements = pagedScopes.totalCount;
       this.roles = pagedScopes.data;
     });
@@ -71,19 +74,19 @@ export class DomainSettingsRolesComponent implements OnInit {
     event.preventDefault();
     this.dialogService
       .confirm('Delete Role', 'Are you sure you want to delete this role ?')
-      .subscribe(res => {
-        if (res) {
-          this.roleService.delete(this.domainId, id).subscribe(response => {
-            this.snackbarService.open('Role deleted');
-            this.loadRoles();
-          });
-        }
-      });
+      .pipe(
+        filter((res) => res),
+        switchMap(() => this.roleService.delete(this.domainId, id)),
+        tap(() => {
+          this.snackbarService.open('Role deleted');
+          this.loadRoles();
+        }),
+      )
+      .subscribe();
   }
 
   setPage(pageInfo) {
     this.page.pageNumber = pageInfo.offset;
     this.loadRoles();
   }
-
 }

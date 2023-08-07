@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 import { TestBed, inject } from '@angular/core/testing';
+
 import { DeviceNotifierResolver } from './device-notifier.resolver';
 
 describe('DeviceNotifierResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-    providers: [DeviceNotifierResolver],
-    teardown: { destroyAfterEach: false }
-});
+      providers: [DeviceNotifierResolver],
+      teardown: { destroyAfterEach: false },
+    });
   });
 
   it('should ...', inject([DeviceNotifierResolver], (service: DeviceNotifierResolver) => {

@@ -14,32 +14,38 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { Router } from "@angular/router";
-import { AuthService } from "../../services/auth.service";
-import { SnackbarService } from "../../services/snackbar.service";
+import { Router } from '@angular/router';
+import { catchError, filter, switchMap, tap } from 'rxjs/operators';
+
+import { AuthService } from '../../services/auth.service';
+import { SnackbarService } from '../../services/snackbar.service';
 
 @Component({
   selector: 'app-login-callback',
-  template: ``
+  template: ``,
 })
 export class LoginCallbackComponent implements OnInit {
-  constructor(private router: Router, private authService: AuthService, private snackbarService: SnackbarService) { }
+  constructor(private router: Router, private authService: AuthService, private snackbarService: SnackbarService) {}
 
   ngOnInit() {
-    this.authService.handleAuthentication().subscribe(authentSuccess => {
-      if (authentSuccess) {
-        this.authService.userInfo().subscribe(user => {
+    this.authService
+      .handleAuthentication()
+      .pipe(
+        filter((authentSuccess) => authentSuccess),
+        switchMap(() => this.authService.userInfo()),
+        tap((user) => {
           this.snackbarService.open('Login successful');
           if (user['newsletter_enabled'] && user['login_count'] === 1) {
             this.router.navigate(['/newsletter']);
           } else {
             this.router.navigate(['/']);
           }
-        });
-      }
-    }, error => {
-      this.snackbarService.open(error.replace(/%20/g, ' '));
-      this.router.navigate(['/logout']);
-    });
+        }),
+        catchError((error) => {
+          this.snackbarService.open(error.replace(/%20/g, ' '));
+          return this.router.navigate(['/logout']);
+        }),
+      )
+      .subscribe();
   }
 }

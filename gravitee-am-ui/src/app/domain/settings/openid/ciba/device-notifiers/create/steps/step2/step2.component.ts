@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import {OrganizationService} from '../../../../../../../../services/organization.service';
+
+import { OrganizationService } from '../../../../../../../../services/organization.service';
 
 @Component({
   selector: 'device-notifier-creation-step2',
   templateUrl: './step2.component.html',
-  styleUrls: ['./step2.component.scss']
+  styleUrls: ['./step2.component.scss'],
 })
 export class DeviceNotifierCreationStep2Component implements OnInit {
   @Input('deviceNotifier') deviceNotifier: any;
@@ -29,13 +30,11 @@ export class DeviceNotifierCreationStep2Component implements OnInit {
   formChanged = false;
   configuration: any;
   deviceNotifierSchema: any = {};
-  
-  constructor(
-    private organizationService: OrganizationService,
-    private route: ActivatedRoute) { }
+
+  constructor(private organizationService: OrganizationService, private route: ActivatedRoute) {}
 
   ngOnInit() {
-    this.organizationService.deviceNotifierSchema(this.deviceNotifier.type).subscribe(data => {
+    this.organizationService.deviceNotifierSchema(this.deviceNotifier.type).subscribe((data) => {
       this.deviceNotifierSchema = data;
     });
   }

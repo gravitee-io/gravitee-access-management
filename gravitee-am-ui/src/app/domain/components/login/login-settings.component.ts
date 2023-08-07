@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild} from '@angular/core';
-import {ActivatedRoute} from '@angular/router';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-login-settings',
   templateUrl: './login-settings.component.html',
-  styleUrls: ['./login-settings.component.scss']
+  styleUrls: ['./login-settings.component.scss'],
 })
 export class LoginSettingsComponent implements OnInit, OnChanges {
   @Output() onSavedLoginSettings = new EventEmitter<any>();
@@ -45,7 +45,7 @@ export class LoginSettingsComponent implements OnInit, OnChanges {
   save() {
     let loginSettings = Object.assign({}, this.loginSettings);
     if (loginSettings.inherited) {
-      loginSettings = { 'inherited' : true };
+      loginSettings = { inherited: true };
     }
     this.onSavedLoginSettings.emit(loginSettings);
     this.formChanged = false;
@@ -140,7 +140,7 @@ export class LoginSettingsComponent implements OnInit, OnChanges {
     return this.loginSettings && this.loginSettings.identifierFirstEnabled;
   }
 
-  isFormValid() : boolean {
-    return this.form.disabled ? true : this.form.valid
+  isFormValid(): boolean {
+    return this.form.disabled ? true : this.form.valid;
   }
 }

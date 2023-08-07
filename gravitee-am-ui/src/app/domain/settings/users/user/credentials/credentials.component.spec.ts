@@ -15,7 +15,7 @@
  */
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
-import { UserFactorsComponent } from './factors.component';
+import { UserFactorsComponent } from '../factors/factors.component';
 
 describe('UserFactorsComponent', () => {
   let component: UserFactorsComponent;
@@ -23,10 +23,9 @@ describe('UserFactorsComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    declarations: [UserFactorsComponent],
-    teardown: { destroyAfterEach: false }
-})
-      .compileComponents();
+      declarations: [UserFactorsComponent],
+      teardown: { destroyAfterEach: false },
+    }).compileComponents();
   }));
 
   beforeEach(() => {

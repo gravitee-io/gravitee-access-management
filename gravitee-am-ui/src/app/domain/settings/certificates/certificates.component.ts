@@ -16,33 +16,38 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { filter, switchMap, tap } from 'rxjs/operators';
+
+import { DialogService } from '../../../services/dialog.service';
 import { CertificateService } from '../../../services/certificate.service';
-import { DialogService } from 'app/services/dialog.service';
 import { SnackbarService } from '../../../services/snackbar.service';
-import internal from 'stream';
-import { AppConfig } from 'config/app.config';
 
 @Component({
   selector: 'app-certificates',
   templateUrl: './certificates.component.html',
-  styleUrls: ['./certificates.component.scss']
+  styleUrls: ['./certificates.component.scss'],
 })
 export class DomainSettingsCertificatesComponent implements OnInit {
   private certificateTypes: any = {
-    'javakeystore-am-certificate' : 'Java Keystore (.jks)',
-    'pkcs12-am-certificate' : 'PKCS#12 (.p12)'
+    'javakeystore-am-certificate': 'Java Keystore (.jks)',
+    'pkcs12-am-certificate': 'PKCS#12 (.p12)',
   };
   private certificateIcons: any = {
-    'javakeystore-am-certificate' : 'security',
-    'pkcs12-am-certificate' : 'security'
+    'javakeystore-am-certificate': 'security',
+    'pkcs12-am-certificate': 'security',
   };
   certificates: any[];
   domainId: string;
   threshold: number;
-  ongoingRotation: boolean = false;
+  ongoingRotation = false;
 
-  constructor(private certificateService: CertificateService, private dialogService: DialogService,
-              private snackbarService: SnackbarService, private route: ActivatedRoute, private dialog: MatDialog) { }
+  constructor(
+    private certificateService: CertificateService,
+    private dialogService: DialogService,
+    private snackbarService: SnackbarService,
+    private route: ActivatedRoute,
+    private dialog: MatDialog,
+  ) {}
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
@@ -54,16 +59,19 @@ export class DomainSettingsCertificatesComponent implements OnInit {
   }
 
   loadCertificates() {
-    this.certificateService.findByDomain(this.domainId).subscribe(response => this.certificates = response);
+    this.certificateService.findByDomain(this.domainId).subscribe((response) => (this.certificates = response));
   }
 
   publicKey(id, event) {
     event.preventDefault();
-    this.certificateService.publicKeys(this.domainId, id).subscribe(response => {
-      this.openPublicKeyInfo(response, false);
-    }, error => {
-      this.openPublicKeyInfo([], true);
-    });
+    this.certificateService.publicKeys(this.domainId, id).subscribe(
+      (response) => {
+        this.openPublicKeyInfo(response, false);
+      },
+      () => {
+        this.openPublicKeyInfo([], true);
+      },
+    );
   }
 
   getCertificateTypeIcon(type) {
@@ -93,64 +101,63 @@ export class DomainSettingsCertificatesComponent implements OnInit {
   }
 
   computeAppsLabel(cert) {
-    const apps = cert.applications ? cert.applications.map(app => app.name).length : 0;
-    return `${apps} app` + (apps > 1 ? "s" : "");
+    const apps = cert.applications ? cert.applications.map((app) => app.name).length : 0;
+    return `${apps} app` + (apps > 1 ? 's' : '');
   }
 
   getAppNames(cert) {
-    const names = cert.applications ? cert.applications.map(app => app.name).join(' / ') : [];
-    const length = cert.applications ? cert.applications.map(app => app.name).length : 0;
-    return length > 4 ? names + " / ..." : names
+    const names = cert.applications ? cert.applications.map((app) => app.name).join(' / ') : [];
+    const length = cert.applications ? cert.applications.map((app) => app.name).length : 0;
+    return length > 4 ? names + ' / ...' : names;
   }
 
   expireInDays(expiry) {
-    return Math.ceil( (expiry - Date.now()) / (1000 * 3600 * 24));
+    return Math.ceil((expiry - Date.now()) / (1000 * 3600 * 24));
   }
 
   delete(id, event) {
     event.preventDefault();
     this.dialogService
       .confirm('Delete Certificate', 'Are you sure you want to delete this certificate ?')
-      .subscribe(res => {
-        if (res) {
-          this.certificateService.delete(this.domainId, id).subscribe(response => {
-            this.snackbarService.open('Certificate deleted');
-            this.loadCertificates();
-          });
-        }
-      });
+      .pipe(
+        filter((res) => res),
+        switchMap(() => this.certificateService.delete(this.domainId, id)),
+        tap(() => {
+          this.snackbarService.open('Certificate deleted');
+          this.loadCertificates();
+        }),
+      )
+      .subscribe();
   }
 
   openPublicKeyInfo(publicKeys, error) {
-    const dialogRef = this.dialog.open(CertitificatePublicKeyDialog, { width : '700px' });
+    const dialogRef = this.dialog.open(CertitificatePublicKeyDialog, { width: '700px' });
     dialogRef.componentInstance.title = 'Public certificate key';
     dialogRef.componentInstance.certificateKeys = publicKeys;
     dialogRef.componentInstance.error = error;
   }
 
   rotateCertificate() {
-    this.ongoingRotation = true;
     this.dialogService
       .confirm('Rotate key', 'Are you sure you want to generate a new system certificate ?')
-      .subscribe(res => {
-        if (res) {
-          this.certificateService.rotateCertificate(this.domainId).subscribe(response => {
-            this.snackbarService.open('New system certificate created');
-            this.loadCertificates();
-            this.ongoingRotation = false
-            
-            // expiration date is extract during the certificate plugin generation
-            // we trigger a 5 second delay refresh to try provide the information 
-            // without user interaction 
-            setTimeout(() => {
-              this.loadCertificates()
-            }, 5000);
-
-          });
-        } else {
+      .pipe(
+        filter((res) => res),
+        tap(() => (this.ongoingRotation = true)),
+        switchMap(() => this.certificateService.rotateCertificate(this.domainId)),
+        tap(() => {
+          this.snackbarService.open('New system certificate created');
+          this.loadCertificates();
           this.ongoingRotation = false;
-        }
-      });
+
+          // expiration date is extract during the certificate plugin generation
+          // we trigger a 5 second delay refresh to try provide the information
+          // without user interaction
+          setTimeout(() => {
+            this.loadCertificates();
+          }, 5000);
+        }),
+      )
+      .subscribe();
   }
 
   preventRotateCertificate() {
@@ -161,7 +168,7 @@ export class DomainSettingsCertificatesComponent implements OnInit {
 @Component({
   selector: 'certificate-public-key-dialog',
   templateUrl: './dialog/public-key.component.html',
-  styleUrls: ['./dialog/public-key.component.scss']
+  styleUrls: ['./dialog/public-key.component.scss'],
 })
 export class CertitificatePublicKeyDialog {
   public title: string;

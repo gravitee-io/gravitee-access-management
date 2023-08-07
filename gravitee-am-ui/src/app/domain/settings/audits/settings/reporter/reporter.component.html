@@ -18,23 +18,25 @@
 <div class="gv-page-container">
   <a [routerLink]="['..']" class="gv-back-link"><small><< Back to reporters</small></a>
   <div class="reporterTitle">
-    <h1>{{reporter.name}}</h1>
+    <h1>{{ reporter.name }}</h1>
     <mat-chip-list *ngIf="reporter.system"><mat-chip>system</mat-chip></mat-chip-list>
   </div>
   <div class="reporter-content">
-    <form #reporterForm="ngForm" fxLayout="column" fxFlex="70" >
+    <form #reporterForm="ngForm" fxLayout="column" fxFlex="70">
       <div class="gv-form-section" fxLayout="column">
         <div fxFlex fxLayoutAlign="end">
-          <mat-slide-toggle matTooltip="{{reporter.enabled ? 'Disable reporter ?' : 'Enable reporter ?'}}"
-                            (change)="enableReporter($event)"
-                            [checked]="reporter.enabled"></mat-slide-toggle>
+          <mat-slide-toggle
+            matTooltip="{{ reporter.enabled ? 'Disable reporter ?' : 'Enable reporter ?' }}"
+            (change)="enableReporter($event)"
+            [checked]="reporter.enabled"
+          ></mat-slide-toggle>
         </div>
         <div *ngIf="createMode">
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Reporter Type</mat-label>
             <mat-select [(value)]="reporter.type" name="type" (selectionChange)="onReporterTypeChanged($event)" [(ngModel)]="reporter.type">
               <mat-option *ngFor="let plugin of plugins" [value]="plugin.id" required>
-                {{labelFor(plugin.id)}}
+                {{ labelFor(plugin.id) }}
               </mat-option>
             </mat-select>
             <mat-hint>The type of reporter.</mat-hint>
@@ -43,8 +45,7 @@
         <div>
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Name</mat-label>
-            <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="reporter.name" 
-            (input)="validateName()" required>
+            <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="reporter.name" (input)="validateName()" required />
             <mat-hint>A name for your reporter.</mat-hint>
           </mat-form-field>
         </div>
@@ -56,13 +57,27 @@
           <mat-divider></mat-divider>
         </div>
         <div>
-          <reporter-form *ngIf="reporter" [reporterConfiguration]="reporterConfiguration" [reporterSchema]="reporterSchema" (configurationCompleted)="enableReporterUpdate($event)"></reporter-form>
+          <reporter-form
+            *ngIf="reporter"
+            [reporterConfiguration]="reporterConfiguration"
+            [reporterSchema]="reporterSchema"
+            (configurationCompleted)="enableReporterUpdate($event)"
+          ></reporter-form>
         </div>
       </div>
       <div fxLayout="row">
-        <button mat-raised-button [disabled]="((!reporterForm.valid || reporterForm.pristine) && (!configurationIsValid || !hasName || configurationPristine) && !formChanged)" (click)="save()">SAVE</button>
+        <button
+          mat-raised-button
+          [disabled]="
+            (!reporterForm.valid || reporterForm.pristine) && (!configurationIsValid || !hasName || configurationPristine) && !formChanged
+          "
+          (click)="save()"
+        >
+          SAVE
+        </button>
       </div>
-      <ng-template [ngIf]="!createMode"> <!-- use ng-template otherwise *ngIf can't be used into the div -->
+      <ng-template [ngIf]="!createMode">
+        <!-- use ng-template otherwise *ngIf can't be used into the div -->
         <div *hasPermission="['domain_reporter_delete']" class="gv-page-delete-zone" fxLayout="column">
           <p>This operation cannot be undone.</p>
           Reporter will be deleted.
@@ -76,9 +91,7 @@
     <div class="gv-page-description" fxFlex>
       <h3>Reporter</h3>
       <div class="gv-page-description-content">
-        <p>
-          A reporter is used by the platform to report many types of event (e.g Audit logs).
-        </p>
+        <p>A reporter is used by the platform to report many types of event (e.g Audit logs).</p>
       </div>
     </div>
   </div>

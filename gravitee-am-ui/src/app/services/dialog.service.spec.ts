@@ -20,9 +20,9 @@ import { DialogService } from './dialog.service';
 describe('DialogService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-    providers: [DialogService],
-    teardown: { destroyAfterEach: false }
-});
+      providers: [DialogService],
+      teardown: { destroyAfterEach: false },
+    });
   });
 
   it('should ...', inject([DialogService], (service: DialogService) => {

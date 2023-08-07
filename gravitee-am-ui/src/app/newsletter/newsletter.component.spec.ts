@@ -23,10 +23,9 @@ describe('NewsletterComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    declarations: [NewsletterComponent],
-    teardown: { destroyAfterEach: false }
-})
-    .compileComponents();
+      declarations: [NewsletterComponent],
+      teardown: { destroyAfterEach: false },
+    }).compileComponents();
   }));
 
   beforeEach(() => {

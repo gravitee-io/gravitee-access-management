@@ -13,21 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute} from '@angular/router';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-openid-client-registration',
   templateUrl: './client-registration.component.html',
-  styleUrls: ['./client-registration.component.scss']
+  styleUrls: ['./client-registration.component.scss'],
 })
 export class DomainSettingsOpenidClientRegistrationComponent implements OnInit {
   private domainId: string;
   navLinks: any = [
-    {'href': 'settings' , 'label': 'Settings'},
-    {'href': 'default-scope' , 'label': 'Default Scopes'},
-    {'href': 'allowed-scope' , 'label': 'Allowed Scopes'},
-    {'href': 'templates' , 'label': 'Client templates'}
+    { href: 'settings', label: 'Settings' },
+    { href: 'default-scope', label: 'Default Scopes' },
+    { href: 'allowed-scope', label: 'Allowed Scopes' },
+    { href: 'templates', label: 'Client templates' },
   ];
 
   constructor(private route: ActivatedRoute) {}

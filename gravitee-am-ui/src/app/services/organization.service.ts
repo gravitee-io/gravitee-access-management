@@ -13,22 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Injectable} from '@angular/core';
-import {HttpClient, HttpHeaders} from '@angular/common/http';
-import {Observable} from 'rxjs';
-import {AppConfig} from '../../config/app.config';
-import {map} from 'rxjs/operators';
-import {Plugin} from '../entities/plugins/Plugin';
+import { Injectable } from '@angular/core';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+
+import { AppConfig } from '../../config/app.config';
+import { Plugin } from '../entities/plugins/Plugin';
 
 @Injectable()
 export class OrganizationService {
   private organizationURL = AppConfig.settings.organizationBaseURL;
   private platformURL = AppConfig.settings.baseURL + '/platform';
 
-  constructor(private http: HttpClient) {
-  }
+  constructor(private http: HttpClient) {}
 
-  private computeIdentitiesParameters(external, expandIcon: boolean = false, expandDisplayName: boolean = false, expandLabels: boolean = false) {
+  private computeIdentitiesParameters(external, expandIcon = false, expandDisplayName = false, expandLabels = false) {
     const params = [];
     if (external) {
       params.push('external=true');
@@ -45,29 +45,33 @@ export class OrganizationService {
     return params.length > 0 ? `?${params.join('&')}` : params;
   }
 
-  identities(expandIcon: boolean = false, expandDisplayName: boolean = false, expandLabels: boolean = false): Observable<any> {
-    return this.http.get<any>(this.platformURL + '/plugins/identities' + this.computeIdentitiesParameters(false, expandIcon, expandDisplayName, expandLabels));
+  identities(expandIcon = false, expandDisplayName = false, expandLabels = false): Observable<any> {
+    return this.http.get<any>(
+      this.platformURL + '/plugins/identities' + this.computeIdentitiesParameters(false, expandIcon, expandDisplayName, expandLabels),
+    );
   }
 
-  socialIdentities(expandIcon: boolean = false, expandDisplayName: boolean = false, expandLabels: boolean = false): Observable<any> {
-    return this.http.get<any>(this.platformURL + '/plugins/identities' + this.computeIdentitiesParameters(true, expandIcon, expandDisplayName, expandLabels));
+  socialIdentities(expandIcon = false, expandDisplayName = false, expandLabels = false): Observable<any> {
+    return this.http.get<any>(
+      this.platformURL + '/plugins/identities' + this.computeIdentitiesParameters(true, expandIcon, expandDisplayName, expandLabels),
+    );
   }
 
   identitySchema(id): Observable<any> {
     return this.http.get<any>(this.platformURL + '/plugins/identities/' + id + '/schema');
   }
 
-  notifiers(expandIcon: boolean = false): Observable<any> {
-    let expands = [];
+  notifiers(expandIcon = false): Observable<any> {
+    const expands = [];
 
     if (expandIcon) {
-      expands.push("icon");
+      expands.push('icon');
     }
 
     return this.http.get<any>(this.platformURL + '/plugins/notifiers', {
       params: {
-        expand: expands
-      }
+        expand: expands,
+      },
     });
   }
 
@@ -77,7 +81,7 @@ export class OrganizationService {
 
   identityProviders(userProvider?: boolean): Observable<any> {
     if (userProvider) {
-      return this.http.get<any>(this.organizationURL + '/identities?userProvider='+userProvider);
+      return this.http.get<any>(this.organizationURL + '/identities?userProvider=' + userProvider);
     }
     return this.http.get<any>(this.organizationURL + '/identities');
   }
@@ -92,10 +96,10 @@ export class OrganizationService {
 
   updateIdentityProvider(id, idp) {
     return this.http.put<any>(this.organizationURL + '/identities/' + id, {
-      'name': idp.name,
-      'configuration': idp.configuration,
-      'mappers': idp.mappers,
-      'roleMapper': idp.roleMapper
+      name: idp.name,
+      configuration: idp.configuration,
+      mappers: idp.mappers,
+      roleMapper: idp.roleMapper,
     });
   }
 
@@ -128,12 +132,18 @@ export class OrganizationService {
   }
 
   audits(page, size, type?, status?, user?, from?, to?): Observable<any> {
-    return this.http.get(this.organizationURL + '/audits?page=' + page + '&size=' + size +
-      (type ? '&type=' + type : '') +
-      (status ? '&status=' + status : '') +
-      (user ? '&user=' + user : '') +
-      (from ? '&from=' + from : '') +
-      (to ? '&to=' + to : ''));
+    return this.http.get(
+      this.organizationURL +
+        '/audits?page=' +
+        page +
+        '&size=' +
+        size +
+        (type ? '&type=' + type : '') +
+        (status ? '&status=' + status : '') +
+        (user ? '&user=' + user : '') +
+        (from ? '&from=' + from : '') +
+        (to ? '&to=' + to : ''),
+    );
   }
 
   audit(auditId): Observable<any> {
@@ -168,7 +178,7 @@ export class OrganizationService {
     const headers = new HttpHeaders().set('Content-Type', 'text/plain; charset=utf-8');
     return this.http.get<any>(this.platformURL + '/plugins/policies/' + id + '/documentation', {
       headers,
-      responseType: 'text' as 'json'
+      responseType: 'text' as 'json',
     });
   }
 
@@ -194,9 +204,9 @@ export class OrganizationService {
 
   updateRole(roleId, role): Observable<any> {
     return this.http.put<any>(this.organizationURL + '/roles/' + roleId, {
-      'name': role.name,
-      'description': role.description,
-      'permissions': role.permissions
+      name: role.name,
+      description: role.description,
+      permissions: role.permissions,
     });
   }
 
@@ -204,30 +214,30 @@ export class OrganizationService {
     return this.http.delete<any>(this.organizationURL + '/roles/' + roleId);
   }
 
-
   members(): Observable<any> {
-    return this.http.get<any>(this.organizationURL + '/members')
-      .pipe(map(response => {
+    return this.http.get<any>(this.organizationURL + '/members').pipe(
+      map((response) => {
         const memberships = response.memberships;
         const metadata = response.metadata;
-        const members = memberships.map(m => {
-          m.roleName = (metadata['roles'][m.roleId]) ? metadata['roles'][m.roleId].name : 'Unknown role';
+        const members = memberships.map((m) => {
+          m.roleName = metadata['roles'][m.roleId] ? metadata['roles'][m.roleId].name : 'Unknown role';
           if (m.memberType === 'user') {
-            m.name = (metadata['users'][m.memberId]) ? metadata['users'][m.memberId].displayName : 'Unknown user';
+            m.name = metadata['users'][m.memberId] ? metadata['users'][m.memberId].displayName : 'Unknown user';
           } else if (m.memberType === 'group') {
-            m.name = (metadata['groups'][m.memberId]) ? metadata['groups'][m.memberId].displayName : 'Unknown group';
+            m.name = metadata['groups'][m.memberId] ? metadata['groups'][m.memberId].displayName : 'Unknown group';
           }
           return m;
         });
         return members;
-      }));
+      }),
+    );
   }
 
   addMember(memberId, memberType, role) {
     return this.http.post<any>(this.organizationURL + '/members', {
-      'memberId': memberId,
-      'memberType': memberType,
-      'role': role
+      memberId: memberId,
+      memberType: memberType,
+      role: role,
     });
   }
 
@@ -241,8 +251,8 @@ export class OrganizationService {
 
   updateForm(id, form): Observable<any> {
     return this.http.put<any>(this.organizationURL + '/forms/' + id, {
-      'enabled': form.enabled,
-      'content': form.content
+      enabled: form.enabled,
+      content: form.content,
     });
   }
 
@@ -251,9 +261,9 @@ export class OrganizationService {
   }
 
   groups(page?: number, size?: number): Observable<any> {
-    return this.http.get<any>(this.organizationURL + '/groups' +
-      (page !== undefined ? '?page=' + page : '') +
-      (size !== undefined ? '&size=' + size : ''));
+    return this.http.get<any>(
+      this.organizationURL + '/groups' + (page !== undefined ? '?page=' + page : '') + (size !== undefined ? '&size=' + size : ''),
+    );
   }
 
   group(groupId) {
@@ -266,9 +276,9 @@ export class OrganizationService {
 
   updateGroup(groupId, group): Observable<any> {
     return this.http.put<any>(this.organizationURL + '/groups/' + groupId, {
-      'name': group.name,
-      'description': group.description,
-      'members': group.members
+      name: group.name,
+      description: group.description,
+      members: group.members,
     });
   }
 
@@ -306,7 +316,7 @@ export class OrganizationService {
 
   resetUserPassword(userId, password): Observable<any> {
     return this.http.post<any>(this.organizationURL + '/users/' + userId + '/resetPassword', {
-      'password': password
+      password: password,
     });
   }
 
@@ -340,9 +350,9 @@ export class OrganizationService {
 
   updateReporter(reporterId, reporter): Observable<any> {
     return this.http.put<any>(this.organizationURL + '/reporters/' + reporterId, {
-      'name': reporter.name,
-      'enabled': reporter.enabled,
-      'configuration': reporter.configuration
+      name: reporter.name,
+      enabled: reporter.enabled,
+      configuration: reporter.configuration,
     });
   }
 
@@ -351,11 +361,11 @@ export class OrganizationService {
   }
 
   createReporter(reporter): Observable<any> {
-    return this.http.post<any>(this.organizationURL + '/reporters/',  {
-      'name' : reporter.name,
-      'type' : reporter.type,
-      'enabled': reporter.enabled,
-      'configuration' : reporter.configuration
+    return this.http.post<any>(this.organizationURL + '/reporters/', {
+      name: reporter.name,
+      type: reporter.type,
+      enabled: reporter.enabled,
+      configuration: reporter.configuration,
     });
   }
 
@@ -439,9 +449,9 @@ export class OrganizationService {
     return this.http.get<any>(this.platformURL + '/configuration/spel/grammar');
   }
 
-  updateUsername(userId, username) : Observable<any> {
+  updateUsername(userId, username): Observable<any> {
     return this.http.patch<any>(this.organizationURL + '/users/' + userId + '/username', {
-      'username': username
+      username: username,
     });
   }
 }

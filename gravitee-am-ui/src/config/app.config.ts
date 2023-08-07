@@ -1,4 +1,4 @@
-import { Injectable } from "@angular/core";
+import { Injectable } from '@angular/core';
 /*
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
  *

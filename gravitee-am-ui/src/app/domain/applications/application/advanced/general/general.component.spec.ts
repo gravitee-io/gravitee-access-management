@@ -15,7 +15,7 @@
  */
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
-import {ApplicationGeneralComponent} from './general.component';
+import { ApplicationGeneralComponent } from './general.component';
 
 describe('ApplicationGeneralComponent', () => {
   let component: ApplicationGeneralComponent;
@@ -23,10 +23,9 @@ describe('ApplicationGeneralComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    declarations: [ApplicationGeneralComponent],
-    teardown: { destroyAfterEach: false }
-})
-    .compileComponents();
+      declarations: [ApplicationGeneralComponent],
+      teardown: { destroyAfterEach: false },
+    }).compileComponents();
   }));
 
   beforeEach(() => {

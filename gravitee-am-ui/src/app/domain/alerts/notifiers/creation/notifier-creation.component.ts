@@ -13,28 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit, ViewChild} from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { MatStepper } from '@angular/material/stepper';
-import {ActivatedRoute, Router} from '@angular/router';
-import {SnackbarService} from '../../../../services/snackbar.service';
-import {AlertService} from "../../../../services/alert.service";
+import { ActivatedRoute, Router } from '@angular/router';
+
+import { SnackbarService } from '../../../../services/snackbar.service';
+import { AlertService } from '../../../../services/alert.service';
 
 @Component({
   selector: 'alert-notifier-creation',
   templateUrl: './notifier-creation.component.html',
-  styleUrls: ['./notifier-creation.component.scss']
+  styleUrls: ['./notifier-creation.component.scss'],
 })
 export class DomainAlertNotifierCreationComponent implements OnInit {
   public alertNotifier: any = {};
   private domain: any;
   configurationIsValid = false;
-  @ViewChild('stepper', {static: true}) stepper: MatStepper;
+  @ViewChild('stepper', { static: true }) stepper: MatStepper;
 
-  constructor(private alertService: AlertService,
-              private snackbarService: SnackbarService,
-              private router: Router,
-              private route: ActivatedRoute) {
-  }
+  constructor(
+    private alertService: AlertService,
+    private snackbarService: SnackbarService,
+    private router: Router,
+    private route: ActivatedRoute,
+  ) {}
 
   ngOnInit(): void {
     this.domain = this.route.snapshot.data['domain'];
@@ -43,9 +45,9 @@ export class DomainAlertNotifierCreationComponent implements OnInit {
   create() {
     // By default, the notifier should be enabled when created.
     this.alertNotifier.enabled = true;
-    this.alertService.createAlertNotifier(this.domain.id, this.alertNotifier).subscribe(data => {
+    this.alertService.createAlertNotifier(this.domain.id, this.alertNotifier).subscribe((data) => {
       this.snackbarService.open('Alert notifier ' + data.name + ' created');
-      this.router.navigate(['..', data.id], {relativeTo: this.route, queryParams: {reload: true}});
+      this.router.navigate(['..', data.id], { relativeTo: this.route, queryParams: { reload: true } });
     });
   }
 

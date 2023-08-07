@@ -13,32 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute} from '@angular/router';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-provider',
   templateUrl: './provider.component.html',
-  styleUrls: ['./provider.component.scss']
+  styleUrls: ['./provider.component.scss'],
 })
 export class ProviderComponent implements OnInit {
   private domainId: string;
   provider: any;
   navLinks: any = [];
 
-  constructor(private route: ActivatedRoute) { }
+  constructor(private route: ActivatedRoute) {}
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
     this.provider = this.route.snapshot.data['provider'];
     if (this.provider.system) {
       this.navLinks = [
-          {'href': 'mappers' , 'label': 'User mappers'},
-          {'href': 'roles' , 'label': 'Role mappers'}];
+        { href: 'mappers', label: 'User mappers' },
+        { href: 'roles', label: 'Role mappers' },
+      ];
     } else {
-      this.navLinks = [{'href': 'settings' , 'label': 'Settings'},
-            {'href': 'mappers' , 'label': 'User mappers'},
-            {'href': 'roles' , 'label': 'Role mappers'}];
+      this.navLinks = [
+        { href: 'settings', label: 'Settings' },
+        { href: 'mappers', label: 'User mappers' },
+        { href: 'roles', label: 'Role mappers' },
+      ];
     }
   }
 }

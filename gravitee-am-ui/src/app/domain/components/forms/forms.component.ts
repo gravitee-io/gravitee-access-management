@@ -13,24 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, Input, OnInit} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
-import {AuthService} from '../../../services/auth.service';
+import { Component, Input, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-forms',
   templateUrl: './forms.component.html',
-  styleUrls: ['./forms.component.scss']
+  styleUrls: ['./forms.component.scss'],
 })
 export class FormsComponent implements OnInit {
   @Input() forms: any[];
   appId: string;
-  private viewPermission: String;
+  private viewPermission: string;
 
-  constructor(private router: Router,
-              private route: ActivatedRoute,
-              private authService: AuthService) {
-  }
+  constructor(private router: Router, private route: ActivatedRoute, private authService: AuthService) {}
 
   ngOnInit() {
     this.appId = this.route.snapshot.params['appId'];
@@ -54,7 +52,7 @@ export class FormsComponent implements OnInit {
 
   getRowClass(row) {
     return {
-      'row-disabled': !row.enabled
+      'row-disabled': !row.enabled,
     };
   }
 }

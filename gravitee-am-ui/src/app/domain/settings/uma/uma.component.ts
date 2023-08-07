@@ -13,16 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {SnackbarService} from "../../../services/snackbar.service";
-import {ActivatedRoute, Router} from "@angular/router";
-import {DomainService} from "../../../services/domain.service";
-import {AuthService} from "../../../services/auth.service";
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+
+import { SnackbarService } from '../../../services/snackbar.service';
+import { DomainService } from '../../../services/domain.service';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-uma',
   templateUrl: './uma.component.html',
-  styleUrls: ['./uma.component.scss']
+  styleUrls: ['./uma.component.scss'],
 })
 export class UmaComponent implements OnInit {
   domainId: string;
@@ -30,12 +31,13 @@ export class UmaComponent implements OnInit {
   formChanged = false;
   editMode: boolean;
 
-  constructor(private domainService: DomainService,
-              private snackbarService: SnackbarService,
-              private authService: AuthService,
-              private route: ActivatedRoute,
-              private router: Router) {
-  }
+  constructor(
+    private domainService: DomainService,
+    private snackbarService: SnackbarService,
+    private authService: AuthService,
+    private route: ActivatedRoute,
+    private router: Router,
+  ) {}
 
   ngOnInit() {
     this.domain = this.route.snapshot.data['domain'];
@@ -44,7 +46,7 @@ export class UmaComponent implements OnInit {
   }
 
   save() {
-    this.domainService.patchUmaSettings(this.domainId, this.domain).subscribe(data => {
+    this.domainService.patchUmaSettings(this.domainId, this.domain).subscribe((data) => {
       this.domain = data;
       this.formChanged = false;
       this.snackbarService.open('UMA configuration updated');
@@ -52,7 +54,7 @@ export class UmaComponent implements OnInit {
   }
 
   enableUMA(event) {
-    this.domain.uma = { 'enabled': (event.checked) };
+    this.domain.uma = { enabled: event.checked };
     this.formChanged = true;
   }
 

@@ -23,10 +23,9 @@ describe('EmptystateComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    declarations: [EmptystateComponent],
-    teardown: { destroyAfterEach: false }
-})
-    .compileComponents();
+      declarations: [EmptystateComponent],
+      teardown: { destroyAfterEach: false },
+    }).compileComponents();
   }));
 
   beforeEach(() => {

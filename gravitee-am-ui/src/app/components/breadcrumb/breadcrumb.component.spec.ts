@@ -23,10 +23,9 @@ describe('BreadcrumbComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    declarations: [BreadcrumbComponent],
-    teardown: { destroyAfterEach: false }
-})
-    .compileComponents();
+      declarations: [BreadcrumbComponent],
+      teardown: { destroyAfterEach: false },
+    }).compileComponents();
   }));
 
   beforeEach(() => {

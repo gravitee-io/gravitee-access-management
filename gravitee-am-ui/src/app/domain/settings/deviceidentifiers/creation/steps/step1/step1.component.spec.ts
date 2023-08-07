@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { ComponentFixture, TestBed, waitForAsync } from "@angular/core/testing";
-import {DeviceIdentifierCreationStep1Component} from "./step1.component";
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
+import { DeviceIdentifierCreationStep1Component } from './step1.component';
 
 describe('DeviceIdentifiersCreationStep1Component', () => {
   let component: DeviceIdentifierCreationStep1Component;
@@ -23,10 +23,9 @@ describe('DeviceIdentifiersCreationStep1Component', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    declarations: [DeviceIdentifierCreationStep1Component],
-    teardown: { destroyAfterEach: false }
-})
-    .compileComponents();
+      declarations: [DeviceIdentifierCreationStep1Component],
+      teardown: { destroyAfterEach: false },
+    }).compileComponents();
   }));
 
   beforeEach(() => {

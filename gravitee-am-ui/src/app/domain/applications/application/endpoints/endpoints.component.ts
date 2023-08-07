@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, ElementRef, OnInit, ViewChild} from '@angular/core';
-import {ActivatedRoute} from '@angular/router';
-import {AuthService} from "../../../../services/auth.service";
-import {SnackbarService} from "../../../../services/snackbar.service";
-import {EntrypointService} from "../../../../services/entrypoint.service";
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+
+import { SnackbarService } from '../../../../services/snackbar.service';
+import { EntrypointService } from '../../../../services/entrypoint.service';
 
 @Component({
   selector: 'application-overview',
   templateUrl: './endpoints.component.html',
-  styleUrls: ['./endpoints.component.scss']
+  styleUrls: ['./endpoints.component.scss'],
 })
 export class ApplicationEndpointsComponent implements OnInit {
   application: any;
@@ -31,10 +31,7 @@ export class ApplicationEndpointsComponent implements OnInit {
   private domain: any;
   @ViewChild('copyText', { read: ElementRef }) copyText: ElementRef;
 
-  constructor(private route: ActivatedRoute,
-              private snackbarService: SnackbarService,
-              private entrypointService: EntrypointService) {
-  }
+  constructor(private route: ActivatedRoute, private snackbarService: SnackbarService, private entrypointService: EntrypointService) {}
 
   ngOnInit() {
     this.domain = this.route.snapshot.data['domain'];

@@ -13,22 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute, Router} from "@angular/router";
-import { AuthService } from 'app/services/auth.service';
-import { DomainService } from 'app/services/domain.service';
-import { SnackbarService } from 'app/services/snackbar.service';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-oidc-ciba',
   templateUrl: './ciba.component.html',
-  styleUrls: ['./ciba.component.scss']
+  styleUrls: ['./ciba.component.scss'],
 })
 export class CibaComponent implements OnInit {
   private domainId: string;
   navLinks: any = [
-    {'href': 'settings' , 'label': 'Settings'},
-    {'href': 'device-notifiers' , 'label': 'Device Notifiers'}
+    { href: 'settings', label: 'Settings' },
+    { href: 'device-notifiers', label: 'Device Notifiers' },
   ];
 
   constructor(private route: ActivatedRoute) {}

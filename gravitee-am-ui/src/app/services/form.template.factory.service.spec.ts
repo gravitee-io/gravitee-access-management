@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {inject, TestBed} from "@angular/core/testing";
-import {FormTemplateFactoryService} from "./form.template.factory.service";
+import { inject, TestBed } from '@angular/core/testing';
+
+import { FormTemplateFactoryService } from './form.template.factory.service';
 
 describe('FormTemplateFactoryService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-    providers: [FormTemplateFactoryService],
-    teardown: { destroyAfterEach: false }
-});
+      providers: [FormTemplateFactoryService],
+      teardown: { destroyAfterEach: false },
+    });
   });
 
   it('should ...', inject([FormTemplateFactoryService], (service: FormTemplateFactoryService) => {

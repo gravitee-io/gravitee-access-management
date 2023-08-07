@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges} from '@angular/core';
-import {ActivatedRoute} from '@angular/router';
-import {OrganizationService} from '../../../../../../services/organization.service';
-import {SnackbarService} from "../../../../../../services/snackbar.service";
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+
+import { OrganizationService } from '../../../../../../services/organization.service';
+import { SnackbarService } from '../../../../../../services/snackbar.service';
 
 @Component({
   selector: 'provider-creation-step2',
   templateUrl: './step2.component.html',
-  styleUrls: ['./step2.component.scss']
+  styleUrls: ['./step2.component.scss'],
 })
 export class ProviderCreationStep2Component implements OnInit, OnChanges {
   @Input('provider') provider: any;
@@ -29,12 +30,10 @@ export class ProviderCreationStep2Component implements OnInit, OnChanges {
   @Output('configurationIsValidChange') configurationIsValidChange: EventEmitter<boolean> = new EventEmitter<boolean>();
   configuration: any;
   providerSchema: any = {};
-  domainWhitelistPattern:string = ''
+  domainWhitelistPattern = '';
   private certificates: any[];
 
-  constructor(private organizationService: OrganizationService,
-              private snackbarService: SnackbarService,
-              private route: ActivatedRoute) { }
+  constructor(private organizationService: OrganizationService, private snackbarService: SnackbarService, private route: ActivatedRoute) {}
 
   ngOnInit() {
     this.certificates = this.route.snapshot.data['certificates'];
@@ -42,7 +41,7 @@ export class ProviderCreationStep2Component implements OnInit, OnChanges {
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes.provider) {
-      this.organizationService.identitySchema(changes.provider.currentValue.type).subscribe(data => {
+      this.organizationService.identitySchema(changes.provider.currentValue.type).subscribe((data) => {
         this.providerSchema = data;
       });
     }
@@ -54,12 +53,12 @@ export class ProviderCreationStep2Component implements OnInit, OnChanges {
     this.provider.configuration = configurationWrapper.configuration;
   }
 
-  addDomainWhitelistPattern(event){
+  addDomainWhitelistPattern(event) {
     event.preventDefault();
     if (this.domainWhitelistPattern) {
-      if (!this.provider.domainWhitelist.some(el => el === this.domainWhitelistPattern)) {
+      if (!this.provider.domainWhitelist.some((el) => el === this.domainWhitelistPattern)) {
         this.provider.domainWhitelist.push(this.domainWhitelistPattern);
-        this.provider.domainWhitelist = [...this.provider.domainWhitelist]
+        this.provider.domainWhitelist = [...this.provider.domainWhitelist];
         this.domainWhitelistPattern = '';
       } else {
         this.snackbarService.open(`Error : domain whitelist pattern "${this.domainWhitelistPattern}" already exists`);
@@ -67,9 +66,9 @@ export class ProviderCreationStep2Component implements OnInit, OnChanges {
     }
   }
 
-  removeDomainWhitelistPattern(dwPattern){
+  removeDomainWhitelistPattern(dwPattern) {
     const index = this.provider.domainWhitelist.indexOf(dwPattern);
-    if (index > -1){
+    if (index > -1) {
       this.provider.domainWhitelist.splice(index, 1);
     }
   }

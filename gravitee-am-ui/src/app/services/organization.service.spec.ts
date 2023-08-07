@@ -20,9 +20,9 @@ import { OrganizationService } from './organization.service';
 describe('OrganizationService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-    providers: [OrganizationService],
-    teardown: { destroyAfterEach: false }
-});
+      providers: [OrganizationService],
+      teardown: { destroyAfterEach: false },
+    });
   });
 
   it('should ...', inject([OrganizationService], (service: OrganizationService) => {

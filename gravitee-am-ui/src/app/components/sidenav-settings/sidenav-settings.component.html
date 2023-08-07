@@ -18,9 +18,11 @@
 <div class="settings-sidenav">
   <mat-list>
     <div class="settings-sidenav-item" *ngFor="let itemGroup of subMenuItems | mapToIterable">
-      <h3 matSubheader>{{itemGroup.key}}</h3>
+      <h3 matSubheader>{{ itemGroup.key }}</h3>
       <mat-list-item *ngFor="let menuItem of itemGroup.value">
-        <h4 matLine><a [routerLink]="menuItem.path" routerLinkActive="active">{{menuItem.label}}</a></h4>
+        <h4 matLine>
+          <a [routerLink]="menuItem.path" routerLinkActive="active">{{ menuItem.label }}</a>
+        </h4>
       </mat-list-item>
     </div>
   </mat-list>

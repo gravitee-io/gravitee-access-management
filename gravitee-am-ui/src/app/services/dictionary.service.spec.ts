@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {inject, TestBed} from "@angular/core/testing";
-import {I18nDictionaryService} from "./dictionary.service";
+import { inject, TestBed } from '@angular/core/testing';
+
+import { I18nDictionaryService } from './dictionary.service';
 
 describe('I18nDictionaryService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-    providers: [I18nDictionaryService],
-    teardown: { destroyAfterEach: false }
-});
+      providers: [I18nDictionaryService],
+      teardown: { destroyAfterEach: false },
+    });
   });
 
   it('should ...', inject([I18nDictionaryService], (service: I18nDictionaryService) => {

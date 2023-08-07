@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-import {DeviceIdentifierCreationComponent} from './device-identifier-creation.component';
 
+import { DeviceIdentifierCreationComponent } from './device-identifier-creation.component';
 
 describe('DeviceIdentifiersCreationComponent', () => {
   let component: DeviceIdentifierCreationComponent;
@@ -23,10 +23,9 @@ describe('DeviceIdentifiersCreationComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    declarations: [DeviceIdentifierCreationComponent],
-    teardown: { destroyAfterEach: false }
-})
-    .compileComponents();
+      declarations: [DeviceIdentifierCreationComponent],
+      teardown: { destroyAfterEach: false },
+    }).compileComponents();
   }));
 
   beforeEach(() => {

@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {TestBed, inject} from '@angular/core/testing';
+import { TestBed, inject } from '@angular/core/testing';
 
-import {InstallationService} from './installation.service';
+import { InstallationService } from './installation.service';
 
 describe('InstallationService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-    providers: [InstallationService],
-    teardown: { destroyAfterEach: false }
-});
+      providers: [InstallationService],
+      teardown: { destroyAfterEach: false },
+    });
   });
 
   it('should ...', inject([InstallationService], (service: InstallationService) => {

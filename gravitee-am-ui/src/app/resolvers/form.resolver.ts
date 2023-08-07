@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Injectable} from '@angular/core';
-import {ActivatedRouteSnapshot, Resolve, RouterStateSnapshot} from '@angular/router';
-import {FormService} from '../services/form.service';
-import {OrganizationService} from '../services/organization.service';
-import {Observable} from 'rxjs';
+import { Injectable } from '@angular/core';
+import { ActivatedRouteSnapshot, Resolve, RouterStateSnapshot } from '@angular/router';
+import { Observable } from 'rxjs';
+
+import { FormService } from '../services/form.service';
+import { OrganizationService } from '../services/organization.service';
 
 @Injectable()
 export class FormResolver implements Resolve<any> {
+  constructor(private formService: FormService, private organizationService: OrganizationService) {}
 
-  constructor(private formService: FormService, private organizationService: OrganizationService) { }
-
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
+  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> | Promise<any> | any {
     const template = route.queryParams['template'];
     if (state.url.startsWith('/settings')) {
       return this.organizationService.forms(template);
@@ -33,5 +33,4 @@ export class FormResolver implements Resolve<any> {
     const appId = route.paramMap.get('appId');
     return this.formService.get(domainId, appId, template);
   }
-
 }

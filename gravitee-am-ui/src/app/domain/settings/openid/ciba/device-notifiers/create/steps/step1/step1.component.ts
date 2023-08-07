@@ -14,27 +14,27 @@
  * limitations under the License.
  */
 import { Component, OnInit, Input } from '@angular/core';
-import { OrganizationService } from "../../../../../../../../services/organization.service";
+
+import { OrganizationService } from '../../../../../../../../services/organization.service';
 
 @Component({
   selector: 'device-notifier-creation-step1',
   templateUrl: './step1.component.html',
-  styleUrls: ['./step1.component.scss']
+  styleUrls: ['./step1.component.scss'],
 })
 export class DeviceNotifierCreationStep1Component implements OnInit {
   private deviceNotifierTypes: any = {
-    'http-am-authdevice-notifier' : 'External HTTP Service'
+    'http-am-authdevice-notifier': 'External HTTP Service',
   };
   @Input() deviceNotifier: any;
   deviceNotifiers: any[];
   selectedNotifierTypeId: string;
 
-  constructor(private organizationService: OrganizationService) {
-  }
+  constructor(private organizationService: OrganizationService) {}
 
   ngOnInit() {
-    this.organizationService.deviceNotifiers(true).subscribe(data => {
-      this.deviceNotifiers = data
+    this.organizationService.deviceNotifiers(true).subscribe((data) => {
+      this.deviceNotifiers = data;
     });
   }
 

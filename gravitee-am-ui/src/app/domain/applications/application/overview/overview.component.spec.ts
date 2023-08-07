@@ -15,7 +15,7 @@
  */
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
-import {ApplicationOverviewComponent} from './overview.component';
+import { ApplicationOverviewComponent } from './overview.component';
 
 describe('ApplicationOverviewComponent', () => {
   let component: ApplicationOverviewComponent;
@@ -23,10 +23,9 @@ describe('ApplicationOverviewComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    declarations: [ApplicationOverviewComponent],
-    teardown: { destroyAfterEach: false }
-})
-    .compileComponents();
+      declarations: [ApplicationOverviewComponent],
+      teardown: { destroyAfterEach: false },
+    }).compileComponents();
   }));
 
   beforeEach(() => {

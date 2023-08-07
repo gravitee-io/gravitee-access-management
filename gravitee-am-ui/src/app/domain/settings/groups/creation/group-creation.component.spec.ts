@@ -15,7 +15,7 @@
  */
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
-import { UserCreationComponent } from './user-creation.component';
+import { UserCreationComponent } from '../../users/creation/user-creation.component';
 
 describe('UserCreationComponent', () => {
   let component: UserCreationComponent;
@@ -23,10 +23,9 @@ describe('UserCreationComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    declarations: [UserCreationComponent],
-    teardown: { destroyAfterEach: false }
-})
-      .compileComponents();
+      declarations: [UserCreationComponent],
+      teardown: { destroyAfterEach: false },
+    }).compileComponents();
   }));
 
   beforeEach(() => {

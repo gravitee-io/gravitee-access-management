@@ -13,29 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit, ViewChild} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-device-notifiers',
   templateUrl: './device-notifiers.component.html',
-  styleUrls: ['./device-notifiers.component.scss']
+  styleUrls: ['./device-notifiers.component.scss'],
 })
 export class DeviceNotifiersComponent implements OnInit {
   private notifierTypes: any = {
-    'http-am-authdevice-notifier' : 'External HTTP service'
+    'http-am-authdevice-notifier': 'External HTTP service',
   };
 
   notifiers: any[];
   domainId: any;
 
-  constructor(private route: ActivatedRoute) {
-  }
+  constructor(private route: ActivatedRoute) {}
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
     this.notifiers = this.route.snapshot.data['notifiers'];
-    console.debug("DeviceNotifiersComponent initialized with notifiers", this.notifiers);
   }
 
   isEmpty() {

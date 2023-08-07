@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {inject, TestBed} from '@angular/core/testing';
-import {FactorsResolver} from './factors.resolver';
+import { inject, TestBed } from '@angular/core/testing';
+
+import { FactorsResolver } from './factors.resolver';
 
 describe('FactorsResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-    providers: [FactorsResolver],
-    teardown: { destroyAfterEach: false }
-});
+      providers: [FactorsResolver],
+      teardown: { destroyAfterEach: false },
+    });
   });
 
   it('should ...', inject([FactorsResolver], (service: FactorsResolver) => {

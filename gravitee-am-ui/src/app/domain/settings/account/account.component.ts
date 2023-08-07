@@ -13,16 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute} from "@angular/router";
-import {DomainService} from "../../../services/domain.service";
-import {SnackbarService} from "../../../services/snackbar.service";
-import {AuthService} from "../../../services/auth.service";
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+
+import { DomainService } from '../../../services/domain.service';
+import { SnackbarService } from '../../../services/snackbar.service';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-domain-account',
   templateUrl: './account.component.html',
-  styleUrls: ['./account.component.scss']
+  styleUrls: ['./account.component.scss'],
 })
 export class DomainSettingsAccountComponent implements OnInit {
   domainId: string;
@@ -30,25 +31,28 @@ export class DomainSettingsAccountComponent implements OnInit {
   accountSettings: any;
   readonly = false;
 
-  constructor(private domainService: DomainService,
-              private snackbarService: SnackbarService,
-              private authService: AuthService,
-              private route: ActivatedRoute) { }
+  constructor(
+    private domainService: DomainService,
+    private snackbarService: SnackbarService,
+    private authService: AuthService,
+    private route: ActivatedRoute,
+  ) {}
 
   ngOnInit() {
     this.domain = this.route.snapshot.data['domain'];
     this.domainId = this.domain.id;
     this.accountSettings = Object.assign({}, this.domain.accountSettings);
-    this.readonly = !this.authService.hasPermissions(['domain_settings_create']) && !this.authService.hasPermissions(['domain_settings_update'])
+    this.readonly =
+      !this.authService.hasPermissions(['domain_settings_create']) && !this.authService.hasPermissions(['domain_settings_update']);
   }
 
   updateAccountSettings(accountSettings) {
     // force inherit false
     accountSettings.inherited = false;
-    this.domainService.patchAccountSettings(this.domainId, accountSettings).subscribe(data => {
-      this.domain['accountSettings'] = {... data.accountSettings};
+    this.domainService.patchAccountSettings(this.domainId, accountSettings).subscribe((data) => {
+      this.domain['accountSettings'] = { ...data.accountSettings };
       this.route.snapshot.data['domain'] = this.domain;
-      this.snackbarService.open("User Accounts Settings updated");
+      this.snackbarService.open('User Accounts Settings updated');
     });
   }
 }

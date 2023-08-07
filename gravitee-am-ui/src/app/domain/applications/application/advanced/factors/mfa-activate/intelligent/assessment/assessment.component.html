@@ -17,14 +17,16 @@
 -->
 
 <div class="assessment-container">
-    <h3>{{ title }}</h3>
-    <mat-button-toggle-group name="fontStyle" aria-label="Font Style" [value]="this.current">
-      <ng-template ngFor let-assessment [ngForOf]="options" let-i="index">
-        <mat-button-toggle
-          (click)="selectElement(assessment)"
-          [matTooltip]="assessment.tooltip"
-          matTooltipPosition="below"
-          [value]="assessment">{{assessment.label}}</mat-button-toggle>
-      </ng-template>
-    </mat-button-toggle-group>
+  <h3>{{ title }}</h3>
+  <mat-button-toggle-group name="fontStyle" aria-label="Font Style" [value]="this.current">
+    <ng-template ngFor let-assessment [ngForOf]="options" let-i="index">
+      <mat-button-toggle
+        (click)="selectElement(assessment)"
+        [matTooltip]="assessment.tooltip"
+        matTooltipPosition="below"
+        [value]="assessment"
+        >{{ assessment.label }}</mat-button-toggle
+      >
+    </ng-template>
+  </mat-button-toggle-group>
 </div>

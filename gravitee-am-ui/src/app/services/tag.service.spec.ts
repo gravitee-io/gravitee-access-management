@@ -20,9 +20,9 @@ import { TagService } from './tag.service';
 describe('TagService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-    providers: [TagService],
-    teardown: { destroyAfterEach: false }
-});
+      providers: [TagService],
+      teardown: { destroyAfterEach: false },
+    });
   });
 
   it('should be created', inject([TagService], (service: TagService) => {

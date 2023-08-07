@@ -15,7 +15,7 @@
  */
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
-import {BotDetectionCreationStep2Component} from './step2.component';
+import { BotDetectionCreationStep2Component } from './step2.component';
 
 describe('BotDetectionCreationStep2Component', () => {
   let component: BotDetectionCreationStep2Component;
@@ -23,10 +23,9 @@ describe('BotDetectionCreationStep2Component', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    declarations: [BotDetectionCreationStep2Component],
-    teardown: { destroyAfterEach: false }
-})
-    .compileComponents();
+      declarations: [BotDetectionCreationStep2Component],
+      teardown: { destroyAfterEach: false },
+    }).compileComponents();
   }));
 
   beforeEach(() => {

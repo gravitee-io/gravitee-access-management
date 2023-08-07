@@ -20,9 +20,9 @@ import { DeviceNotifiersService } from './device-notifiers.service';
 describe('DeviceNotifiersService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-    providers: [DeviceNotifiersService],
-    teardown: { destroyAfterEach: false }
-});
+      providers: [DeviceNotifiersService],
+      teardown: { destroyAfterEach: false },
+    });
   });
 
   it('should ...', inject([DeviceNotifiersService], (service: DeviceNotifiersService) => {

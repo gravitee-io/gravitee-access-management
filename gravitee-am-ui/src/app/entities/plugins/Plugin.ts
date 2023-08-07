@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 export class Plugin {
-    id: string;
-    category: string;
-    deployed: boolean;
-    description: string;
-    name: string;
-    version: string;
-    feature?: string;
+  id: string;
+  category: string;
+  deployed: boolean;
+  description: string;
+  name: string;
+  version: string;
+  feature?: string;
 }

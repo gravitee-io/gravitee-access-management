@@ -20,11 +20,9 @@ import { HomeComponent } from './home.component';
 describe('HomeComponent', () => {
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    declarations: [
-        HomeComponent
-    ],
-    teardown: { destroyAfterEach: false }
-}).compileComponents();
+      declarations: [HomeComponent],
+      teardown: { destroyAfterEach: false },
+    }).compileComponents();
   }));
 
   it('should create the app', waitForAsync(() => {

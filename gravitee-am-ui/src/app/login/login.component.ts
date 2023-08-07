@@ -13,17 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {AppConfig} from '../../config/app.config';
+import { Component, OnInit } from '@angular/core';
+
+import { AppConfig } from '../../config/app.config';
 
 @Component({
   selector: 'app-login',
-  template: ``
+  template: ``,
 })
 export class LoginComponent implements OnInit {
   private loginEndpoint = AppConfig.settings.baseURL + '/auth/authorize';
-
-  constructor() {}
 
   ngOnInit() {
     this.loginEndpoint = this.loginEndpoint + '?redirect_uri=' + window.location.href + '/callback';

@@ -13,17 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit, ViewChild} from '@angular/core';
-import {ActivatedRoute, Router} from "@angular/router";
-import {ApplicationService} from "../../../../../services/application.service";
-import {SnackbarService} from "../../../../../services/snackbar.service";
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import * as _ from 'lodash';
-import {NgForm} from "@angular/forms";
+import { NgForm } from '@angular/forms';
+
+import { ApplicationService } from '../../../../../services/application.service';
+import { SnackbarService } from '../../../../../services/snackbar.service';
 
 @Component({
   selector: 'app-application-metadata',
   templateUrl: './metadata.component.html',
-  styleUrls: ['./metadata.component.scss']
+  styleUrls: ['./metadata.component.scss'],
 })
 export class ApplicationMetadataComponent implements OnInit {
   @ViewChild('metadataForm', { static: true }) public form: NgForm;
@@ -32,12 +33,14 @@ export class ApplicationMetadataComponent implements OnInit {
   metadata: any = {};
   editing = {};
   appMetadata: any[] = [];
-  formChanged: boolean = false;
+  formChanged = false;
 
-  constructor(private route: ActivatedRoute,
-              private router: Router,
-              private applicationService: ApplicationService,
-              private snackbarService: SnackbarService) { }
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private applicationService: ApplicationService,
+    private snackbarService: SnackbarService,
+  ) {}
 
   ngOnInit(): void {
     this.domainId = this.route.snapshot.data['domain']?.id;
@@ -72,14 +75,14 @@ export class ApplicationMetadataComponent implements OnInit {
   }
 
   updateMetadata(event, cell, rowIndex) {
-    let metadata = event.target.value;
+    const metadata = event.target.value;
     if (metadata) {
       if (cell === 'name' && this.metadataExits(metadata)) {
         this.snackbarService.open(`Error : metadata "${metadata}" already exists`);
         return;
       }
       this.editing[rowIndex + '-' + cell] = false;
-      let index = _.findIndex(this.appMetadata, {id: rowIndex});
+      const index = _.findIndex(this.appMetadata, { id: rowIndex });
       this.appMetadata[index][cell] = metadata;
       this.appMetadata = [...this.appMetadata];
       this.formChanged = true;
@@ -88,7 +91,7 @@ export class ApplicationMetadataComponent implements OnInit {
 
   deleteMetadata(key, event) {
     event.preventDefault();
-    _.remove(this.appMetadata, function(el) {
+    _.remove(this.appMetadata, function (el) {
       return el.id === key;
     });
     this.appMetadata = [...this.appMetadata];
@@ -96,7 +99,9 @@ export class ApplicationMetadataComponent implements OnInit {
   }
 
   metadataExits(attribute): boolean {
-    return _.find(this.appMetadata, function(el) { return  el.name === attribute; })
+    return _.find(this.appMetadata, function (el) {
+      return el.name === attribute;
+    });
   }
 
   metadataIsEmpty() {
@@ -104,13 +109,13 @@ export class ApplicationMetadataComponent implements OnInit {
   }
 
   patch(): void {
-    let metadata = {};
-    _.each(this.appMetadata, function(item) {
+    const metadata = {};
+    _.each(this.appMetadata, function (item) {
       metadata[item.name] = item.value;
     });
-    this.applicationService.patch(this.domainId, this.application.id, { 'metadata' : metadata }).subscribe(data => {
+    this.applicationService.patch(this.domainId, this.application.id, { metadata: metadata }).subscribe(() => {
       this.snackbarService.open('Application updated');
-      this.router.navigate(['.'], { relativeTo: this.route, queryParams: { 'reload': true }});
+      this.router.navigate(['.'], { relativeTo: this.route, queryParams: { reload: true } });
     });
   }
 }

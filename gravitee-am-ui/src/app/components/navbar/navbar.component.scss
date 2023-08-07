@@ -25,7 +25,7 @@
 
 .currentDomain {
   color: #fff !important;
-  background: rgba(240,241,248,.3) !important;
+  background: rgba(240, 241, 248, 0.3) !important;
 }
 
 .userAccount {
@@ -46,7 +46,9 @@
   .userAccountActions.first {
     background-color: #f5f5f5;
     mat-list-item.domain-disabled {
-      mat-icon, h4, span {
+      mat-icon,
+      h4,
+      span {
         color: orange;
       }
       span {
@@ -67,8 +69,8 @@
 .notifications-menu-circle {
   background-color: #e7e2fb;
   color: #000;
-  text-align:center;
-  border-radius:50%;
+  text-align: center;
+  border-radius: 50%;
   height: 14px;
   width: 14px;
   position: absolute;
@@ -96,5 +98,5 @@
 }
 
 .notification-title > button {
-  margin-left: auto
+  margin-left: auto;
 }

@@ -13,16 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
-import {ScopeService} from '../../../../services/scope.service';
-import {SnackbarService} from '../../../../services/snackbar.service';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import moment from 'moment';
+
+import { ScopeService } from '../../../../services/scope.service';
+import { SnackbarService } from '../../../../services/snackbar.service';
 
 @Component({
   selector: 'app-creation',
   templateUrl: './scope-creation.component.html',
-  styleUrls: ['./scope-creation.component.scss']
+  styleUrls: ['./scope-creation.component.scss'],
 })
 export class ScopeCreationComponent implements OnInit {
   private domainId: string;
@@ -30,10 +31,12 @@ export class ScopeCreationComponent implements OnInit {
   expiresIn: any;
   unitTime: any;
 
-  constructor(private scopeService: ScopeService,
-              private router: Router,
-              private route: ActivatedRoute,
-              private snackbarService: SnackbarService) { }
+  constructor(
+    private scopeService: ScopeService,
+    private router: Router,
+    private route: ActivatedRoute,
+    private snackbarService: SnackbarService,
+  ) {}
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
@@ -44,9 +47,9 @@ export class ScopeCreationComponent implements OnInit {
     if (this.expiresIn && this.unitTime) {
       this.scope.expiresIn = moment.duration(this.expiresIn, this.unitTime).asSeconds();
     }
-    this.scopeService.create(this.domainId, this.scope).subscribe(data => {
-    this.snackbarService.open('Scope ' + data.name + ' created');
-    this.router.navigate(['..', data.id], { relativeTo: this.route });
+    this.scopeService.create(this.domainId, this.scope).subscribe((data) => {
+      this.snackbarService.open('Scope ' + data.name + ' created');
+      this.router.navigate(['..', data.id], { relativeTo: this.route });
     });
   }
 
@@ -55,7 +58,7 @@ export class ScopeCreationComponent implements OnInit {
   }
 
   getScopeExpiry() {
-    return (this.scope.expiresIn) ? moment.duration(this.scope.expiresIn, 'seconds').humanize() : 'no time set';
+    return this.scope.expiresIn ? moment.duration(this.scope.expiresIn, 'seconds').humanize() : 'no time set';
   }
 
   enableScopeDiscovery(event) {

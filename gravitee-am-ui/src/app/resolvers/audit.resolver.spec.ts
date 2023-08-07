@@ -15,14 +15,14 @@
  */
 import { TestBed, inject } from '@angular/core/testing';
 
-import {AuditResolver} from "./audit.resolver";
+import { AuditResolver } from './audit.resolver';
 
 describe('AuditResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-    providers: [AuditResolver],
-    teardown: { destroyAfterEach: false }
-});
+      providers: [AuditResolver],
+      teardown: { destroyAfterEach: false },
+    });
   });
 
   it('should ...', inject([AuditResolver], (service: AuditResolver) => {

@@ -13,38 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, EventEmitter, Input, Output} from "@angular/core";
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 
 @Component({
   selector: 'mfa-select',
   templateUrl: './mfa-select.component.html',
-  styleUrls: ['./mfa-select.component.scss']
+  styleUrls: ['./mfa-select.component.scss'],
 })
 export class MfaSelectComponent {
-
   @Input() factors: any[];
   @Input() applicationFactors: any[];
   @Input() editMode: boolean;
-  @Output("select-factor") selectFactorEmitter = new EventEmitter<any>();
+  @Output('select-factor') selectFactorEmitter = new EventEmitter<any>();
 
   private factorTypes: any = {
-    'OTP': 'TOTP',
-    'SMS': 'SMS',
-    'EMAIL': 'EMAIL',
-    'CALL': 'CALL',
-    'HTTP': 'HTTP',
-    'RECOVERY_CODE' : 'Recovery Code',
-    'FIDO2' : 'FIDO2'
+    OTP: 'TOTP',
+    SMS: 'SMS',
+    EMAIL: 'EMAIL',
+    CALL: 'CALL',
+    HTTP: 'HTTP',
+    RECOVERY_CODE: 'Recovery Code',
+    FIDO2: 'FIDO2',
   };
 
   private factorIcons: any = {
-    'OTP': 'mobile_friendly',
-    'SMS': 'sms',
-    'EMAIL': 'email',
-    'CALL': 'call',
-    'HTTP': 'http',
-    'RECOVERY_CODE': 'autorenew',
-    'FIDO2': 'fingerprint'
+    OTP: 'mobile_friendly',
+    SMS: 'sms',
+    EMAIL: 'email',
+    CALL: 'call',
+    HTTP: 'http',
+    RECOVERY_CODE: 'autorenew',
+    FIDO2: 'fingerprint',
   };
 
   getFactorTypeIcon(type) {
@@ -73,7 +72,7 @@ export class MfaSelectComponent {
 
   selectFactor($event, factorId: string) {
     if (this.editMode) {
-      this.selectFactorEmitter.emit({ "checked" : $event.checked, "factorId": factorId });
+      this.selectFactorEmitter.emit({ checked: $event.checked, factorId: factorId });
     }
   }
 }

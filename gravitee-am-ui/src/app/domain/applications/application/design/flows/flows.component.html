@@ -17,19 +17,12 @@
 -->
 <div>
   <div fxLayout="column" class="gv-form-section">
-    <div fxLayout="row" style="align-items: center;">
-      <mat-slide-toggle
-        (change)="enableInheritMode($event)"
-        [checked]="isInherited()">
-      </mat-slide-toggle>
+    <div fxLayout="row" style="align-items: center">
+      <mat-slide-toggle (change)="enableInheritMode($event)" [checked]="isInherited()"> </mat-slide-toggle>
       <span>&nbsp; Inherit configuration</span>
     </div>
-    <mat-hint style="font-size: 75%;">Inherit Flows from the security domain.</mat-hint>
+    <mat-hint style="font-size: 75%">Inherit Flows from the security domain.</mat-hint>
   </div>
-  <gv-policy-studio #studio
-                    [policies]="policies"
-                    [flowSchema]="flowSchema"
-                    [hasConditionalSteps]="true"
-                    [definition]="definition" can-add>
+  <gv-policy-studio #studio [policies]="policies" [flowSchema]="flowSchema" [hasConditionalSteps]="true" [definition]="definition" can-add>
   </gv-policy-studio>
 </div>

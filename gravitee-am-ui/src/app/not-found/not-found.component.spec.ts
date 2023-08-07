@@ -20,11 +20,9 @@ import { NotFoundComponent } from './not-found.component';
 describe('NotFoundComponent', () => {
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    declarations: [
-        NotFoundComponent
-    ],
-    teardown: { destroyAfterEach: false }
-}).compileComponents();
+      declarations: [NotFoundComponent],
+      teardown: { destroyAfterEach: false },
+    }).compileComponents();
   }));
 
   it('should create the app', waitForAsync(() => {

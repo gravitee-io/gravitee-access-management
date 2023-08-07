@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Injectable, OnDestroy} from '@angular/core';
-import {ReplaySubject, Subject, Subscription} from 'rxjs';
-import {ActivatedRouteSnapshot, ActivationEnd, Data, NavigationEnd, Route, Router} from "@angular/router";
-import {buffer, filter, map, pluck} from "rxjs/operators";
-import {AuthGuard} from "../guards/auth-guard.service";
+import { Injectable, OnDestroy } from '@angular/core';
+import { ReplaySubject, Subject, Subscription } from 'rxjs';
+import { ActivatedRouteSnapshot, ActivationEnd, Data, NavigationEnd, Route, Router } from '@angular/router';
+import { buffer, filter, map, pluck } from 'rxjs/operators';
+
+import { AuthGuard } from '../guards/auth-guard.service';
 
 @Injectable()
 export class NavigationService implements OnDestroy {
-
   public topMenuItemsObs$: Subject<any[]> = new ReplaySubject<any[]>(1);
   public subMenuItemsObs$: Subject<any[]> = new ReplaySubject<any[]>(1);
   public breadcrumbItemsObs$: Subject<any[]> = new ReplaySubject<any[]>(1);
@@ -30,17 +30,17 @@ export class NavigationService implements OnDestroy {
 
   subscription: Subscription;
 
-  constructor(private router: Router,
-              private authGuard: AuthGuard) {
+  constructor(private router: Router, private authGuard: AuthGuard) {
+    const navigationEnd$ = this.router.events.pipe(filter((ev) => ev instanceof NavigationEnd));
 
-    const navigationEnd$ = this.router.events.pipe(filter(ev => ev instanceof NavigationEnd));
-
-    this.subscription = this.router.events.pipe(
-      filter(ev => ev instanceof ActivationEnd),
-      pluck("snapshot"),
-      buffer(navigationEnd$),
-      map((activatedRoutes: ActivatedRouteSnapshot[]) => activatedRoutes[0]))
-      .subscribe(activatedRoute => this.notifyChanges(activatedRoute));
+    this.subscription = this.router.events
+      .pipe(
+        filter((ev) => ev instanceof ActivationEnd),
+        pluck('snapshot'),
+        buffer(navigationEnd$),
+        map((activatedRoutes: ActivatedRouteSnapshot[]) => activatedRoutes[0]),
+      )
+      .subscribe((activatedRoute) => this.notifyChanges(activatedRoute));
   }
 
   ngOnDestroy() {
@@ -53,24 +53,22 @@ export class NavigationService implements OnDestroy {
   }
 
   notifyChanges(activatedRoute: ActivatedRouteSnapshot): void {
-    let menuItems = this.getMenuItems(activatedRoute);
-    this.topMenuItemsObs$.next(menuItems.filter(item => item.level === 'top'));
-    this.subMenuItemsObs$.next(menuItems.filter(item => item.level !== 'top'));
-    this.level2MenuItemsObs$.next(menuItems.filter(item => item.level === 'level2'));
-    this.level3MenuItemsObs$.next(menuItems.filter(item => item.level === 'level3'));
+    const menuItems = this.getMenuItems(activatedRoute);
+    this.topMenuItemsObs$.next(menuItems.filter((item) => item.level === 'top'));
+    this.subMenuItemsObs$.next(menuItems.filter((item) => item.level !== 'top'));
+    this.level2MenuItemsObs$.next(menuItems.filter((item) => item.level === 'level2'));
+    this.level3MenuItemsObs$.next(menuItems.filter((item) => item.level === 'level3'));
     this.breadcrumbItemsObs$.next(this.getBreadcrumbItems(activatedRoute));
   }
 
   getBreadcrumbItems(route: ActivatedRouteSnapshot): any[] {
-
     let breadcrumbItems: any[] = [];
 
     if (route != null) {
-
       breadcrumbItems = this.getBreadcrumbItems(route.parent);
 
-      let routeConfig = route.routeConfig;
-      let breadcrumbData = routeConfig && routeConfig.data && routeConfig.data.breadcrumb;
+      const routeConfig = route.routeConfig;
+      const breadcrumbData = routeConfig && routeConfig.data && routeConfig.data.breadcrumb;
 
       if (routeConfig && !(breadcrumbData && breadcrumbData.disabled) && routeConfig.path !== '') {
         breadcrumbItems.push({
@@ -84,12 +82,11 @@ export class NavigationService implements OnDestroy {
   }
 
   getMenuItems(route: ActivatedRouteSnapshot): any[] {
-
     let menuItems: any[] = [];
 
     if (route && route.parent) {
       if (route.parent.routeConfig && route.parent.routeConfig.children) {
-        route.parent.routeConfig.children.forEach(siblingRoute => {
+        route.parent.routeConfig.children.forEach((siblingRoute) => {
           if (siblingRoute.data && siblingRoute.data.menu && this.authGuard.canDisplay(route.parent, siblingRoute)) {
             menuItems.push({
               label: siblingRoute.data.menu.label,
@@ -99,7 +96,7 @@ export class NavigationService implements OnDestroy {
               level: siblingRoute.data.menu.level,
               beta: siblingRoute.data.menu.beta,
               display: this.resolveDisplay(route, siblingRoute),
-              routerLinkActiveOptions: siblingRoute.data.menu.routerLinkActiveOptions ? siblingRoute.data.menu.routerLinkActiveOptions : {}
+              routerLinkActiveOptions: siblingRoute.data.menu.routerLinkActiveOptions ? siblingRoute.data.menu.routerLinkActiveOptions : {},
             });
           }
         });
@@ -112,8 +109,7 @@ export class NavigationService implements OnDestroy {
   }
 
   resolveDisplay(activatedRoute: ActivatedRouteSnapshot, route: Route): boolean {
-
-    if(route.data.menu.displayOptions && route.data.menu.displayOptions.exact === true) {
+    if (route.data.menu.displayOptions && route.data.menu.displayOptions.exact === true) {
       return this.router.routerState.snapshot.url === this.resolvePath(activatedRoute.parent, route.path).join('/');
     }
 
@@ -122,7 +118,7 @@ export class NavigationService implements OnDestroy {
 
   resolvePath(route: ActivatedRouteSnapshot, path?: string) {
     let paths: string[] = [];
-    route.pathFromRoot.forEach(p => p.url.forEach(url => paths.push(url.path)));
+    route.pathFromRoot.forEach((p) => p.url.forEach((url) => paths.push(url.path)));
 
     if (path) {
       paths = paths.concat(path.split('/'));
@@ -134,10 +130,9 @@ export class NavigationService implements OnDestroy {
   }
 
   resolveLabel(data: any, alt: string, data1: Data): string {
-
     if (data && data.label) {
-      let resolved = this.getProperty(data.label, data1);
-      let label = resolved ? resolved : data.label
+      const resolved = this.getProperty(data.label, data1);
+      const label = resolved ? resolved : data.label;
 
       if (data.applyOnLabel && typeof data.applyOnLabel === 'function') {
         return data.applyOnLabel(label);
@@ -150,16 +145,14 @@ export class NavigationService implements OnDestroy {
   }
 
   getProperty(propertyName: string, object: any) {
-    var parts = propertyName.split("."),
-      length = parts.length,
-      i,
-      property = object || this;
+    const parts = propertyName.split('.');
+    const length = parts.length;
+    let property = object || this;
 
-    for (i = 0; i < length; i++) {
+    for (let i = 0; i < length; i++) {
       property = property[parts[i]];
     }
 
     return property;
   }
-
 }

@@ -13,24 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute} from '@angular/router';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-domain-device-identifiers',
   templateUrl: './device-identifiers.component.html',
-  styleUrls: ['./device-identifiers.component.scss']
+  styleUrls: ['./device-identifiers.component.scss'],
 })
 export class DomainSettingsDeviceIdentifiersComponent implements OnInit {
   private deviceIdentifierTypes: any = {
     'fingerprintjs-v3-community-device-identifier': 'FingerprintJS v3 community',
-    'fingerprintjs-v3-pro-device-identifier': 'FingerprintJS v3 Pro'
+    'fingerprintjs-v3-pro-device-identifier': 'FingerprintJS v3 Pro',
   };
   deviceIdentifiers: any[];
   domainId: any;
 
-  constructor(private route: ActivatedRoute) {
-  }
+  constructor(private route: ActivatedRoute) {}
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;

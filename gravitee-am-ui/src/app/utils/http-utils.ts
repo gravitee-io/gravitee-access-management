@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {HttpParams} from "@angular/common/http";
+import { HttpParams } from '@angular/common/http';
 import { isNil } from 'lodash';
 
 export function toHttpParams(params: Record<string, number | string | undefined | null>): HttpParams {
   let httpParams: HttpParams = new HttpParams();
-  Object.keys(params).forEach(param => {
+  Object.keys(params).forEach((param) => {
     if (!isNil(params[param])) {
       httpParams = httpParams.set(param, String(params[param]));
     }

@@ -14,35 +14,34 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import {ActivatedRoute} from "@angular/router";
-import { AuthService } from 'app/services/auth.service';
+import { ActivatedRoute } from '@angular/router';
+
+import { AuthService } from '../../../../services/auth.service';
 
 @Component({
   selector: 'app-audits-settings',
   templateUrl: './settings.component.html',
-  styleUrls: ['./settings.component.scss']
+  styleUrls: ['./settings.component.scss'],
 })
 export class AuditsSettingsComponent implements OnInit {
   reporters: any[];
   domainId: string;
 
-  constructor(private route: ActivatedRoute,
-    private authService: AuthService) {
-  }
+  constructor(private route: ActivatedRoute, private authService: AuthService) {}
 
   ngOnInit() {
     this.reporters = this.route.snapshot.data['reporters'];
   }
 
   get isEmpty() {
-    return !this.reporters || this.reporters.length == 0;
+    return !this.reporters || this.reporters.length === 0;
   }
 
   rowClass = (row) => {
     return {
-      'row-disabled': !row.enabled
+      'row-disabled': !row.enabled,
     };
-  }
+  };
 
   hasPermissions(permissions) {
     return this.authService.hasPermissions(permissions);

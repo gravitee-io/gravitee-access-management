@@ -14,18 +14,17 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, Resolve, RouterStateSnapshot } from '@angular/router';
+import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import { Observable } from 'rxjs';
-import {DeviceIdentifierService} from "../services/device-identifier.service";
+
+import { DeviceIdentifierService } from '../services/device-identifier.service';
 
 @Injectable()
 export class DeviceIdentifiersResolver implements Resolve<any> {
+  constructor(private deviceIdentifierService: DeviceIdentifierService) {}
 
-  constructor(private deviceIdentifierService: DeviceIdentifierService) { }
-
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
+  resolve(route: ActivatedRouteSnapshot): Observable<any> | Promise<any> | any {
     const domainId = route.parent.data['domain'].id;
     return this.deviceIdentifierService.findByDomain(domainId);
   }
-
 }

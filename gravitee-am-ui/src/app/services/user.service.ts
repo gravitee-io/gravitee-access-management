@@ -13,20 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Injectable} from '@angular/core';
-import {AppConfig} from '../../config/app.config';
-import {HttpClient} from '@angular/common/http';
-import {Observable} from 'rxjs';
-import {OrganizationService} from './organization.service';
-import {toHttpParams} from "../utils/http-utils";
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+
+import { OrganizationService } from './organization.service';
+
+import { AppConfig } from '../../config/app.config';
+import { toHttpParams } from '../utils/http-utils';
 
 @Injectable()
 export class UserService {
   private usersURL = AppConfig.settings.domainBaseURL;
 
-  constructor(private http: HttpClient,
-              private organizationService: OrganizationService) {
-  }
+  constructor(private http: HttpClient, private organizationService: OrganizationService) {}
 
   findByDomain(domainId, page, size): Observable<any> {
     return this.http.get<any>(this.usersURL + domainId + '/users?page=' + page + '&size=' + size);
@@ -41,14 +41,14 @@ export class UserService {
   }
 
   update(domainId, id, user, organizationContext): Observable<any> {
-    let updatedUserProfile = {
-      'firstName': user.firstName,
-      'lastName': user.lastName,
-      'displayName': user.displayName,
-      'email': user.email,
-      'enabled': user.enabled,
-      'client': user.client,
-      'additionalInformation': user.additionalInformation
+    const updatedUserProfile = {
+      firstName: user.firstName,
+      lastName: user.lastName,
+      displayName: user.displayName,
+      email: user.email,
+      enabled: user.enabled,
+      client: user.client,
+      additionalInformation: user.additionalInformation,
     };
 
     if (organizationContext) {
@@ -59,7 +59,7 @@ export class UserService {
 
   updateStatus(domainId, id, status): Observable<any> {
     return this.http.put<any>(this.usersURL + domainId + '/users/' + id + '/status', {
-      'enabled': status
+      enabled: status,
     });
   }
 
@@ -79,7 +79,7 @@ export class UserService {
       return this.organizationService.resetUserPassword(id, password);
     }
     return this.http.post<any>(this.usersURL + domainId + '/users/' + id + '/resetPassword', {
-      'password': password
+      password: password,
     });
   }
 
@@ -160,8 +160,8 @@ export class UserService {
         type,
         status,
         from,
-        to
-      })
+        to,
+      }),
     });
   }
 
@@ -174,7 +174,7 @@ export class UserService {
       return this.organizationService.updateUsername(userId, username);
     }
     return this.http.patch<any>(this.usersURL + domainId + '/users/' + userId + '/username', {
-      'username': username
+      username: username,
     });
   }
 }

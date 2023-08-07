@@ -20,9 +20,9 @@ import { DashboardService } from './dashboard.service';
 describe('DashboardService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-    providers: [DashboardService],
-    teardown: { destroyAfterEach: false }
-});
+      providers: [DashboardService],
+      teardown: { destroyAfterEach: false },
+    });
   });
 
   it('should be created', inject([DashboardService], (service: DashboardService) => {

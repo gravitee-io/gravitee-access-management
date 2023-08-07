@@ -15,15 +15,14 @@
  */
 import { TestBed, inject } from '@angular/core/testing';
 
-import {UserRolesResolver} from "./user-roles.resolver";
-import {UserDevicesResolver} from "./user-devices.resolver";
+import { UserDevicesResolver } from './user-devices.resolver';
 
 describe('UserDevicesResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-    providers: [UserDevicesResolver],
-    teardown: { destroyAfterEach: false }
-});
+      providers: [UserDevicesResolver],
+      teardown: { destroyAfterEach: false },
+    });
   });
 
   it('should ...', inject([UserDevicesResolver], (service: UserDevicesResolver) => {

@@ -18,7 +18,7 @@
 <div>
   <div>
     <div fxFlex="70">
-      <form (keydown.enter)="false" (ngSubmit)="patch()">
+      <form (keydown.enter)="(false)" (ngSubmit)="patch()">
         <div class="gv-form-section">
           <div class="gv-form-section-title">
             <h5>Certificate</h5>
@@ -34,20 +34,39 @@
           <div *ngIf="certificatePublicKeys.length > 0">
             <div *ngFor="let certificatePublicKey of certificatePublicKeys">
               <mat-form-field appearance="outline" floatLabel="always">
-                <mat-label>{{certificatePublicKey.fmt}}</mat-label>
-                <textarea rows="5" matInput placeholder="Certificate" name="certificate" [value]="certificatePublicKey.payload" disabled="true"></textarea>
-                <button mat-icon-button matSuffix matTooltip="Copy to clipboard" ngxClipboard [cbContent]="certificatePublicKey.payload" (cbOnSuccess)="valueCopied('Certificate key copied to the clipboard')" (click)="$event.preventDefault();"><mat-icon>content_copy</mat-icon></button>
+                <mat-label>{{ certificatePublicKey.fmt }}</mat-label>
+                <textarea
+                  rows="5"
+                  matInput
+                  placeholder="Certificate"
+                  name="certificate"
+                  [value]="certificatePublicKey.payload"
+                  disabled="true"
+                ></textarea>
+                <button
+                  mat-icon-button
+                  matSuffix
+                  matTooltip="Copy to clipboard"
+                  ngxClipboard
+                  [cbContent]="certificatePublicKey.payload"
+                  (cbOnSuccess)="valueCopied('Certificate key copied to the clipboard')"
+                  (click)="$event.preventDefault()"
+                >
+                  <mat-icon>content_copy</mat-icon>
+                </button>
               </mat-form-field>
             </div>
           </div>
 
-          <app-emptystate *ngIf="!application.certificate"
-                          [message]="'You are using the default certificate.'"
-                          [subMessage]="'Select the certificate which fulfill your security requirements.'"
-                          [icon]="'vpn_key'"></app-emptystate>
+          <app-emptystate
+            *ngIf="!application.certificate"
+            [message]="'You are using the default certificate.'"
+            [subMessage]="'Select the certificate which fulfill your security requirements.'"
+            [icon]="'vpn_key'"
+          ></app-emptystate>
         </div>
 
-        <div fxLayout="row" style="margin-top: 20px;" *hasPermission="['application_certificate_update']">
+        <div fxLayout="row" style="margin-top: 20px" *hasPermission="['application_certificate_update']">
           <button mat-raised-button color="primary" type="submit" [disabled]="!formChanged">SAVE</button>
         </div>
       </form>
@@ -60,4 +79,3 @@
     </div>
   </div>
 </div>
-

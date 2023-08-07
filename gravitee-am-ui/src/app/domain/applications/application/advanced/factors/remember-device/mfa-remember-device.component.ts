@@ -13,28 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, EventEmitter, Input, OnInit, Output} from "@angular/core";
-import {TimeConverterService} from "../../../../../../services/time-converter.service";
-import moment from "moment";
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import moment from 'moment';
+
+import { TimeConverterService } from '../../../../../../services/time-converter.service';
 
 @Component({
   selector: 'mfa-remember-device',
   templateUrl: './mfa-remember-device.component.html',
-  styleUrls: ['./mfa-remember-device.component.scss']
+  styleUrls: ['./mfa-remember-device.component.scss'],
 })
 export class MfaRememberDeviceComponent implements OnInit {
-
   @Input() rememberDevice: any;
   @Input() deviceIdentifiers: any[] = [];
 
-  @Output("settings-change") settingsChangeEmitter: EventEmitter<any> = new EventEmitter<any>();
+  @Output('settings-change') settingsChangeEmitter: EventEmitter<any> = new EventEmitter<any>();
 
   private humanTime: { expirationTime: any; expirationUnit: any };
   active: boolean;
   selectedDeviceIdentifier: any;
 
-  constructor(private timeConverterService: TimeConverterService) {
-  }
+  constructor(private timeConverterService: TimeConverterService) {}
 
   ngOnInit(): void {
     this.active = this.rememberDevice ? this.rememberDevice.active : false;
@@ -43,9 +42,9 @@ export class MfaRememberDeviceComponent implements OnInit {
       this.selectedDeviceIdentifier = this.rememberDevice ? this.rememberDevice.deviceIdentifierId : null;
     }
     this.humanTime = {
-      'expirationTime': this.timeConverterService.getTime(time, 'seconds'),
-      'expirationUnit': this.timeConverterService.getUnitTime(time, 'seconds')
-    }
+      expirationTime: this.timeConverterService.getTime(time, 'seconds'),
+      expirationUnit: this.timeConverterService.getUnitTime(time, 'seconds'),
+    };
   }
 
   displayExpiresIn() {
@@ -63,36 +62,36 @@ export class MfaRememberDeviceComponent implements OnInit {
   updateDeviceIdentifierId($event) {
     this.selectedDeviceIdentifier = $event.value;
     this.updateRememberDeviceSettings({
-      "active": this.active,
-      "deviceIdentifierId": this.selectedDeviceIdentifier,
-      "expirationTimeSeconds": this.humanTimeToSeconds()
+      active: this.active,
+      deviceIdentifierId: this.selectedDeviceIdentifier,
+      expirationTimeSeconds: this.humanTimeToSeconds(),
     });
   }
 
   onToggle($event) {
     this.active = $event.checked;
     this.updateRememberDeviceSettings({
-      "active": this.active,
-      "deviceIdentifierId": this.selectedDeviceIdentifier,
-      "expirationTimeSeconds": this.humanTimeToSeconds()
+      active: this.active,
+      deviceIdentifierId: this.selectedDeviceIdentifier,
+      expirationTimeSeconds: this.humanTimeToSeconds(),
     });
   }
 
   onTimeChange($event) {
     this.humanTime.expirationTime = Math.abs($event.target.value);
     this.updateRememberDeviceSettings({
-      "active": this.active,
-      "deviceIdentifierId": this.selectedDeviceIdentifier,
-      "expirationTimeSeconds": this.humanTimeToSeconds()
+      active: this.active,
+      deviceIdentifierId: this.selectedDeviceIdentifier,
+      expirationTimeSeconds: this.humanTimeToSeconds(),
     });
   }
 
   onUnitChange($event) {
     this.humanTime.expirationUnit = $event.value;
     this.updateRememberDeviceSettings({
-      "active": this.active,
-      "deviceIdentifierId": this.selectedDeviceIdentifier,
-      "expirationTimeSeconds": this.humanTimeToSeconds()
+      active: this.active,
+      deviceIdentifierId: this.selectedDeviceIdentifier,
+      expirationTimeSeconds: this.humanTimeToSeconds(),
     });
   }
 

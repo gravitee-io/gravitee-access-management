@@ -17,30 +17,59 @@
 -->
 <div>
   <div fxFlex="70">
-    <form #samlSettingsForm="ngForm" (ngSubmit)="patch();" (keydown.enter)="false">
+    <form #samlSettingsForm="ngForm" (ngSubmit)="patch()" (keydown.enter)="(false)">
       <div class="gv-form-section">
         <mat-form-field appearance="outline" floatLabel="always">
           <mat-label>Entity ID</mat-label>
-          <input matInput type="text" placeholder="Enter the Entity ID" name="entityId" [(ngModel)]="applicationSamlSettings.entityId" required [disabled]="!editMode">
+          <input
+            matInput
+            type="text"
+            placeholder="Enter the Entity ID"
+            name="entityId"
+            [(ngModel)]="applicationSamlSettings.entityId"
+            required
+            [disabled]="!editMode"
+          />
           <mat-hint>URL or URN that uniquely identifies the SP</mat-hint>
         </mat-form-field>
         <mat-form-field appearance="outline" floatLabel="always">
           <mat-label>Attribute Consume Service URL</mat-label>
-          <input matInput type="text" placeholder="Enter the attribute consume service URL" name="attributeConsumeServiceUrl" [(ngModel)]="applicationSamlSettings.attributeConsumeServiceUrl" required [disabled]="!editMode">
+          <input
+            matInput
+            type="text"
+            placeholder="Enter the attribute consume service URL"
+            name="attributeConsumeServiceUrl"
+            [(ngModel)]="applicationSamlSettings.attributeConsumeServiceUrl"
+            required
+            [disabled]="!editMode"
+          />
           <mat-hint>The SP endpoint where the IdP should direct SAML responses</mat-hint>
         </mat-form-field>
         <mat-form-field appearance="outline" floatLabel="always">
           <mat-label>Single Logout Service URL</mat-label>
-          <input matInput type="text" placeholder="Enter the single logout service URL" name="singleLogoutServiceUrl" [(ngModel)]="applicationSamlSettings.singleLogoutServiceUrl" [disabled]="!editMode">
+          <input
+            matInput
+            type="text"
+            placeholder="Enter the single logout service URL"
+            name="singleLogoutServiceUrl"
+            [(ngModel)]="applicationSamlSettings.singleLogoutServiceUrl"
+            [disabled]="!editMode"
+          />
           <mat-hint>The SP endpoint where the IdP should redirect to after performing single logout</mat-hint>
         </mat-form-field>
-        <div style="display: flex; flex-direction: column; padding: 10px 5px;">
-          <mat-checkbox name="wantResponseSigned" [(ngModel)]="applicationSamlSettings.wantResponseSigned" [disabled]="!editMode">Want Response Signed</mat-checkbox>
-          <mat-hint style="font-size: 75%;">Optional. If the parameter is set to true, the response message will be digitally signed.</mat-hint>
+        <div style="display: flex; flex-direction: column; padding: 10px 5px">
+          <mat-checkbox name="wantResponseSigned" [(ngModel)]="applicationSamlSettings.wantResponseSigned" [disabled]="!editMode"
+            >Want Response Signed</mat-checkbox
+          >
+          <mat-hint style="font-size: 75%"
+            >Optional. If the parameter is set to true, the response message will be digitally signed.</mat-hint
+          >
         </div>
-        <div style="display: flex; flex-direction: column; padding: 10px 5px;">
-          <mat-checkbox name="wantAssertionsSigned" [(ngModel)]="applicationSamlSettings.wantAssertionsSigned" [disabled]="!editMode">Want Assertions Signed</mat-checkbox>
-          <mat-hint style="font-size: 75%;">Optional. If the parameter is set to true, the assertions will be digitally signed.</mat-hint>
+        <div style="display: flex; flex-direction: column; padding: 10px 5px">
+          <mat-checkbox name="wantAssertionsSigned" [(ngModel)]="applicationSamlSettings.wantAssertionsSigned" [disabled]="!editMode"
+            >Want Assertions Signed</mat-checkbox
+          >
+          <mat-hint style="font-size: 75%">Optional. If the parameter is set to true, the assertions will be digitally signed.</mat-hint>
         </div>
       </div>
       <div class="gv-form-section">
@@ -50,20 +79,31 @@
           <mat-divider></mat-divider>
         </div>
         <mat-form-field appearance="outline" floatLabel="always">
-          <textarea rows="5" matInput placeholder="PEM-encoded certificate" name="certificate" [(ngModel)]="applicationSamlSettings.certificate"></textarea>
+          <textarea
+            rows="5"
+            matInput
+            placeholder="PEM-encoded certificate"
+            name="certificate"
+            [(ngModel)]="applicationSamlSettings.certificate"
+          ></textarea>
         </mat-form-field>
       </div>
       <div fxLayout="row" *ngIf="editMode">
-        <button mat-raised-button color="primary" [disabled]="(!samlSettingsForm.valid || samlSettingsForm.pristine) && !formChanged" type="submit">SAVE</button>
+        <button
+          mat-raised-button
+          color="primary"
+          [disabled]="(!samlSettingsForm.valid || samlSettingsForm.pristine) && !formChanged"
+          type="submit"
+        >
+          SAVE
+        </button>
       </div>
     </form>
   </div>
   <div class="gv-page-description" fxFlex>
     <h3>SAML 2.0</h3>
     <div class="gv-page-description-content">
-      <p>
-        SAML relying party configuration that receives and accepts a SAML assertion issued by a SAML IdP.
-      </p>
+      <p>SAML relying party configuration that receives and accepts a SAML assertion issued by a SAML IdP.</p>
     </div>
   </div>
 </div>

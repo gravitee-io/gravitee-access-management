@@ -15,7 +15,7 @@
  */
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
-import {AlertNotifierFormComponent} from './form.component';
+import { AlertNotifierFormComponent } from './form.component';
 
 describe('AlertNotifierFormComponent', () => {
   let component: AlertNotifierFormComponent;
@@ -23,10 +23,9 @@ describe('AlertNotifierFormComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    declarations: [AlertNotifierFormComponent],
-    teardown: { destroyAfterEach: false }
-})
-      .compileComponents();
+      declarations: [AlertNotifierFormComponent],
+      teardown: { destroyAfterEach: false },
+    }).compileComponents();
   }));
 
   beforeEach(() => {

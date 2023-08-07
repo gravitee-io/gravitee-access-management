@@ -13,28 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Injectable} from '@angular/core';
-import {ActivatedRouteSnapshot, Resolve, RouterStateSnapshot} from "@angular/router";
-import {Observable} from "rxjs";
-import {DomainService} from "../services/domain.service";
-import {EnvironmentService} from "../services/environment.service";
+import { Injectable } from '@angular/core';
+import { Resolve } from '@angular/router';
+import { Observable } from 'rxjs';
+
+import { DomainService } from '../services/domain.service';
+import { EnvironmentService } from '../services/environment.service';
 
 @Injectable()
 export class DomainsResolver implements Resolve<any> {
+  constructor(private domainService: DomainService, private environmentService: EnvironmentService) {}
 
-  constructor(private domainService: DomainService,
-              private environmentService: EnvironmentService) { }
-
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
-
-    if(!this.environmentService.getCurrentEnvironment()){
-      return new Observable(subscriber => {
+  resolve(): Observable<any> {
+    if (!this.environmentService.getCurrentEnvironment()) {
+      return new Observable((subscriber) => {
         subscriber.next([]);
-        subscriber.complete()
+        subscriber.complete();
       });
     }
 
     return this.domainService.findByEnvironment(0, 10);
   }
-
 }

@@ -13,40 +13,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute} from '@angular/router';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-domain-factors',
   templateUrl: './factors.component.html',
-  styleUrls: ['./factors.component.scss']
+  styleUrls: ['./factors.component.scss'],
 })
 export class DomainSettingsFactorsComponent implements OnInit {
   private factorTypes: any = {
-    'otp' : 'Generic OTP Factor',
-    'email' : 'Email Factor',
-    'sms' : 'SMS Factor',
-    'http' : 'HTTP Factor',
-    'call' : 'Call Factor',
-    'recovery_code' : 'Recovery Code Factor',
-    'fido2' : 'FIDO2 Factor'
+    otp: 'Generic OTP Factor',
+    email: 'Email Factor',
+    sms: 'SMS Factor',
+    http: 'HTTP Factor',
+    call: 'Call Factor',
+    recovery_code: 'Recovery Code Factor',
+    fido2: 'FIDO2 Factor',
   };
 
   private factorIcons: any = {
-    'otp': 'mobile_friendly',
-    'email': 'sms',
-    'sms': 'email',
-    'call': 'call',
-    'http': 'http',
-    'recovery_code': 'autorenew',
-    'fido2': 'fingerprint'
+    otp: 'mobile_friendly',
+    email: 'sms',
+    sms: 'email',
+    call: 'call',
+    http: 'http',
+    recovery_code: 'autorenew',
+    fido2: 'fingerprint',
   };
 
   factors: any[];
   domainId: any;
 
-  constructor(private route: ActivatedRoute) {
-  }
+  constructor(private route: ActivatedRoute) {}
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
@@ -68,6 +67,6 @@ export class DomainSettingsFactorsComponent implements OnInit {
     if (this.factorIcons[type]) {
       return this.factorIcons[type];
     }
-    return "donut_large";
+    return 'donut_large';
   }
 }
