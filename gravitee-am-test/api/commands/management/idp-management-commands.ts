@@ -14,44 +14,44 @@
  * limitations under the License.
  */
 
-import {getIdpApi} from "./service/utils";
+import { getIdpApi } from './service/utils';
 
 export const createIdp = (domainId, accessToken, idp) =>
-    getIdpApi(accessToken).createIdentityProvider({
-        organizationId: process.env.AM_DEF_ORG_ID,
-        environmentId: process.env.AM_DEF_ENV_ID,
-        domain: domainId,
-        identity: idp
-    });
+  getIdpApi(accessToken).createIdentityProvider({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    identity: idp,
+  });
 
 export const getIdp = (domainId, accessToken, idpId) =>
-    getIdpApi(accessToken).findIdentityProvider({
-        organizationId: process.env.AM_DEF_ORG_ID,
-        environmentId: process.env.AM_DEF_ENV_ID,
-        domain: domainId,
-        identity: idpId
-    })
+  getIdpApi(accessToken).findIdentityProvider({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    identity: idpId,
+  });
 
 export const getAllIdps = (domainId, accessToken) =>
-    getIdpApi(accessToken).listIdentityProviders({
-        organizationId: process.env.AM_DEF_ORG_ID,
-        environmentId: process.env.AM_DEF_ENV_ID,
-        domain: domainId
-    })
+  getIdpApi(accessToken).listIdentityProviders({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+  });
 
 export const updateIdp = (domainId, accessToken, body, idpId) =>
-    getIdpApi(accessToken).updateIdentityProvider({
-        organizationId: process.env.AM_DEF_ORG_ID,
-        environmentId: process.env.AM_DEF_ENV_ID,
-        domain: domainId,
-        identity: idpId,
-        identity2: body
-    })
+  getIdpApi(accessToken).updateIdentityProvider({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    identity: idpId,
+    identity2: body,
+  });
 
 export const deleteIdp = (domainId, accessToken, idpId) =>
-    getIdpApi(accessToken).deleteIdentityProvider({
-        organizationId: process.env.AM_DEF_ORG_ID,
-        environmentId: process.env.AM_DEF_ENV_ID,
-        domain: domainId,
-        identity: idpId,
-    })
+  getIdpApi(accessToken).deleteIdentityProvider({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    identity: idpId,
+  });

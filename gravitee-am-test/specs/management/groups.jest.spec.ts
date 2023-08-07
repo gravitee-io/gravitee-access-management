@@ -13,22 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import fetch from "cross-fetch";
+import fetch from 'cross-fetch';
 import * as faker from 'faker';
-import {afterAll, beforeAll, expect} from '@jest/globals';
-import {requestAdminAccessToken} from "@management-commands/token-management-commands";
-import {createDomain, deleteDomain, startDomain} from "@management-commands/domain-management-commands";
+import { afterAll, beforeAll, expect } from '@jest/globals';
+import { requestAdminAccessToken } from '@management-commands/token-management-commands';
+import { createDomain, deleteDomain, startDomain } from '@management-commands/domain-management-commands';
+import { buildCreateAndTestUser } from '@management-commands/user-management-commands';
+import { createRole, updateRole } from '@management-commands/role-management-commands';
 import {
-    buildCreateAndTestUser,
-} from "@management-commands/user-management-commands";
-import {
-    createRole, updateRole
-} from "@management-commands/role-management-commands";
-import {
-    addRolesToGroup,
-    createGroup, deleteGroup, getAllGroups,
-    getGroup, getGroupPage, revokeRoleToGroup, updateGroup,
-} from "@management-commands/group-management-commands";
+  addRolesToGroup,
+  createGroup,
+  deleteGroup,
+  getAllGroups,
+  getGroup,
+  getGroupPage,
+  revokeRoleToGroup,
+  updateGroup,
+} from '@management-commands/group-management-commands';
 
 global.fetch = fetch;
 
@@ -40,132 +41,130 @@ let role;
 let group;
 
 beforeAll(async () => {
-    const adminTokenResponse = await requestAdminAccessToken();
-    accessToken = adminTokenResponse.body.access_token;
-    expect(accessToken).toBeDefined()
+  const adminTokenResponse = await requestAdminAccessToken();
+  accessToken = adminTokenResponse.body.access_token;
+  expect(accessToken).toBeDefined();
 
-    const createdDomain = await createDomain(accessToken,
-        "domain-groups",
-        faker.company.catchPhraseDescriptor()
-    );
-    expect(createdDomain).toBeDefined();
-    expect(createdDomain.id).toBeDefined();
+  const createdDomain = await createDomain(accessToken, 'domain-groups', faker.company.catchPhraseDescriptor());
+  expect(createdDomain).toBeDefined();
+  expect(createdDomain.id).toBeDefined();
 
-    const domainStarted = await startDomain(createdDomain.id, accessToken);
-    expect(domainStarted).toBeDefined();
-    expect(domainStarted.id).toEqual(createdDomain.id);
+  const domainStarted = await startDomain(createdDomain.id, accessToken);
+  expect(domainStarted).toBeDefined();
+  expect(domainStarted.id).toEqual(createdDomain.id);
 
-    domain = domainStarted
+  domain = domainStarted;
 });
 
-describe("before creating groups", () => {
-    it('must create a user', async () => {
-        user = await buildCreateAndTestUser(domain.id, accessToken, 1)
-        expect(user).toBeDefined();
-    });
+describe('before creating groups', () => {
+  it('must create a user', async () => {
+    user = await buildCreateAndTestUser(domain.id, accessToken, 1);
+    expect(user).toBeDefined();
+  });
 
-    it('must create a role', async () => {
-        role = await createRole(domain.id, accessToken, {
-            name: "ROLE_DOMAIN_USER",
-            assignableType: "domain",
-            description: faker.lorem.paragraph(),
-        })
-        expect(role).toBeDefined();
-        role = await updateRole(domain.id, accessToken, role.id, {
-            name: role.name,
-            assignableType: role.assignableType,
-            description: role.description,
-            permissions: ["read"]
-        });
-        expect(role).toBeDefined();
+  it('must create a role', async () => {
+    role = await createRole(domain.id, accessToken, {
+      name: 'ROLE_DOMAIN_USER',
+      assignableType: 'domain',
+      description: faker.lorem.paragraph(),
     });
+    expect(role).toBeDefined();
+    role = await updateRole(domain.id, accessToken, role.id, {
+      name: role.name,
+      assignableType: role.assignableType,
+      description: role.description,
+      permissions: ['read'],
+    });
+    expect(role).toBeDefined();
+  });
 });
 
-describe("when creating groups", () => {
-    for (let i = 0; i < 10; i++) {
-        it('must create new group ' + i, async () => {
-            group = await createGroup(domain.id, accessToken, {
-                name: "group " + i,
-                description: faker.lorem.paragraph()
-            })
-            expect(group).toBeDefined();
-            expect(group.name).toEqual("group " + i);
-            expect(group.description).toBeDefined();
-        });
-    }
+describe('when creating groups', () => {
+  for (let i = 0; i < 10; i++) {
+    it('must create new group ' + i, async () => {
+      group = await createGroup(domain.id, accessToken, {
+        name: 'group ' + i,
+        description: faker.lorem.paragraph(),
+      });
+      expect(group).toBeDefined();
+      expect(group.name).toEqual('group ' + i);
+      expect(group.description).toBeDefined();
+    });
+  }
 });
 
-describe("when groups are created", () => {
+describe('when groups are created', () => {
+  it('must find group by id', async () => {
+    const foundGroup = await getGroup(domain.id, accessToken, group.id);
+    expect(foundGroup).toBeDefined();
+    expect(foundGroup.id).toEqual(group.id);
+  });
 
-    it('must find group by id', async () => {
-        const foundGroup = await getGroup(domain.id, accessToken, group.id);
-        expect(foundGroup).toBeDefined();
-        expect(foundGroup.id).toEqual(group.id);
+  it('must update group', async () => {
+    const updatedGroup = await updateGroup(domain.id, accessToken, group.id, {
+      ...group,
+      description: 'another description',
+      members: [user.id],
     });
+    expect(updatedGroup).toBeDefined();
+    expect(updatedGroup.id).toEqual(group.id);
+    expect(updatedGroup.description).toEqual('another description');
+    expect(updatedGroup.members).toContain(user.id);
+    group = updatedGroup;
+  });
 
-    it('must update group', async () => {
-        const updatedGroup = await updateGroup(domain.id, accessToken, group.id, {
-            ...group, description: "another description", members: [user.id]
-        });
-        expect(updatedGroup).toBeDefined();
-        expect(updatedGroup.id).toEqual(group.id);
-        expect(updatedGroup.description).toEqual("another description");
-        expect(updatedGroup.members).toContain(user.id);
-        group = updatedGroup;
-    });
+  it('must list all groups', async () => {
+    const groupPage = await getAllGroups(domain.id, accessToken);
 
-    it('must list all groups', async () => {
-        const groupPage = await getAllGroups(domain.id, accessToken);
+    expect(groupPage.currentPage).toEqual(0);
+    expect(groupPage.totalCount).toEqual(10);
+    expect(groupPage.data.length).toEqual(10);
+  });
 
-        expect(groupPage.currentPage).toEqual(0);
-        expect(groupPage.totalCount).toEqual(10);
-        expect(groupPage.data.length).toEqual(10);
-    });
+  it('must get group page', async () => {
+    const groupPage = await getGroupPage(domain.id, accessToken, 1, 3);
 
-    it('must get group page', async () => {
-        const groupPage = await getGroupPage(domain.id, accessToken, 1, 3);
+    expect(groupPage.currentPage).toEqual(1);
+    expect(groupPage.totalCount).toEqual(10);
+    expect(groupPage.data.length).toEqual(3);
+  });
 
-        expect(groupPage.currentPage).toEqual(1);
-        expect(groupPage.totalCount).toEqual(10);
-        expect(groupPage.data.length).toEqual(3);
-    });
+  it('must get last group page', async () => {
+    const groupPage = await getGroupPage(domain.id, accessToken, 3, 3);
 
-    it('must get last group page', async () => {
-        const groupPage = await getGroupPage(domain.id, accessToken, 3, 3);
+    expect(groupPage.currentPage).toEqual(3);
+    expect(groupPage.totalCount).toEqual(10);
+    expect(groupPage.data.length).toEqual(1);
+  });
 
-        expect(groupPage.currentPage).toEqual(3);
-        expect(groupPage.totalCount).toEqual(10);
-        expect(groupPage.data.length).toEqual(1);
-    });
+  it('must add a role to group', async () => {
+    const updatedGroup = await addRolesToGroup(domain.id, accessToken, group.id, [role.id]);
 
-    it('must add a role to group', async () => {
-        const updatedGroup = await addRolesToGroup(domain.id, accessToken, group.id, [role.id]);
+    expect(updatedGroup).toBeDefined();
+    expect(updatedGroup.roles).toContain(role.id);
+  });
 
-        expect(updatedGroup).toBeDefined();
-        expect(updatedGroup.roles).toContain(role.id)
-    });
+  it('must revoke a role from group', async () => {
+    const updatedGroup = await revokeRoleToGroup(domain.id, accessToken, group.id, role.id);
 
-    it('must revoke a role from group', async () => {
-        const updatedGroup = await revokeRoleToGroup(domain.id, accessToken, group.id, role.id);
+    expect(updatedGroup).toBeDefined();
+    expect(updatedGroup.roles).not.toContain(role.id);
+  });
 
-        expect(updatedGroup).toBeDefined();
-        expect(updatedGroup.roles).not.toContain(role.id);
-    });
+  it('must delete a group', async () => {
+    await deleteGroup(domain.id, accessToken, group.id);
 
-    it('must delete a group', async () => {
-        await deleteGroup(domain.id, accessToken, group.id);
+    const remainingGroups = await getAllGroups(domain.id, accessToken);
 
-        const remainingGroups = await getAllGroups(domain.id, accessToken);
-
-        expect(remainingGroups.currentPage).toEqual(0);
-        expect(remainingGroups.totalCount).toEqual(9);
-        expect(remainingGroups.data.length).toEqual(9);
-        expect(remainingGroups.data.find(g => g.id === group.id)).toBeFalsy();
-    });
+    expect(remainingGroups.currentPage).toEqual(0);
+    expect(remainingGroups.totalCount).toEqual(9);
+    expect(remainingGroups.data.length).toEqual(9);
+    expect(remainingGroups.data.find((g) => g.id === group.id)).toBeFalsy();
+  });
 });
 
 afterAll(async () => {
-    if (domain && domain.id) {
-        await deleteDomain(domain.id, accessToken);
-    }
+  if (domain && domain.id) {
+    await deleteDomain(domain.id, accessToken);
+  }
 });

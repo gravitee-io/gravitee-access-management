@@ -20,6 +20,16 @@ export interface BasicAuthentication {
 }
 
 export const ADMIN_USER: BasicAuthentication = {
-  username: Cypress.env("admin_user_login"),
-  password: Cypress.env("admin_user_password"),
+  username: Cypress.env('admin_user_login'),
+  password: Cypress.env('admin_user_password'),
+};
+
+export const loginPageElements = {
+  loginFormTitle: '.login-form-title > label',
+  loginFormSubTitle: '.login-form-title > span',
+  loginFormLogo: 'img',
+  userName: '#username',
+  password: '#password',
+  signInButton: '.login-form-actions > .mdl-button > .mdl-button__ripple-container',
+  dashboardLogo: '.logo-image',
 };

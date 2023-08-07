@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-import {getFactorApi} from "./service/utils";
+import { getFactorApi } from './service/utils';
 
-export const createFactor = (domainId, accessToken, body) => getFactorApi(accessToken).createFactor({
+export const createFactor = (domainId, accessToken, body) =>
+  getFactorApi(accessToken).createFactor({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
-    factor: body
-});
+    factor: body,
+  });

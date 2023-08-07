@@ -40,8 +40,8 @@
 // -- This will overwrite an existing command --
 // Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
 
-Cypress.Commands.add("setCookies", () => {
+Cypress.Commands.add('setCookies', () => {
   Cypress.Cookies.defaults({
-    preserve: ["Redirect-Graviteeio-AM", "XSRF-Graviteeio-AM-API-TOKEN"],
+    preserve: ['Redirect-Graviteeio-AM', 'XSRF-Graviteeio-AM-API-TOKEN'],
   });
 });

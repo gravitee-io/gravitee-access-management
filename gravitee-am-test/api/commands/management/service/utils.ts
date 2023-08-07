@@ -14,81 +14,83 @@
  * limitations under the License.
  */
 
-import {Configuration} from "../../../management/runtime";
-import {managementConf} from "./config";
-import {DomainApi} from "@management-apis/DomainApi";
-import {ApplicationApi} from "@management-apis/ApplicationApi";
-import {UserApi} from "@management-apis/UserApi";
-import {RoleApi} from "@management-apis/RoleApi";
-import {GroupApi} from "@management-apis/GroupApi";
-import {IdentityProviderApi} from "@management-apis/IdentityProviderApi";
-import {ScopeApi} from "@management-apis/ScopeApi";
-import {CertificateApi} from "@management-apis/CertificateApi";
-import {DictionaryApi} from "@management-apis/DictionaryApi";
-import {ThemeApi} from "@management-apis/ThemeApi";
-import { FormApi } from "@management-apis/FormApi";
-import {FactorApi} from "@management-apis/FactorApi";
-import {ResourceApi} from "@management-apis/ResourceApi";
+import { Configuration } from '../../../management/runtime';
+import { managementConf } from './config';
+import { DomainApi } from '@management-apis/DomainApi';
+import { ApplicationApi } from '@management-apis/ApplicationApi';
+import { UserApi } from '@management-apis/UserApi';
+import { RoleApi } from '@management-apis/RoleApi';
+import { GroupApi } from '@management-apis/GroupApi';
+import { IdentityProviderApi } from '@management-apis/IdentityProviderApi';
+import { ScopeApi } from '@management-apis/ScopeApi';
+import { CertificateApi } from '@management-apis/CertificateApi';
+import { DictionaryApi } from '@management-apis/DictionaryApi';
+import { ThemeApi } from '@management-apis/ThemeApi';
+import { FormApi } from '@management-apis/FormApi';
+import { FactorApi } from '@management-apis/FactorApi';
+import { ResourceApi } from '@management-apis/ResourceApi';
 
 function createAccessTokenConfig(accessToken) {
-    return new Configuration({...managementConf, apiKey: 'Bearer ' + accessToken});
+  return new Configuration({ ...managementConf, apiKey: 'Bearer ' + accessToken });
 }
 
 export const getDomainManagerUrl = (domainId: String) => {
-    const domainPathParam = domainId ? `${domainId}` : '';
-    return process.env.AM_MANAGEMENT_URL
-        + `/management/organizations/${process.env.AM_DEF_ORG_ID}`
-        + `/environments/${process.env.AM_DEF_ENV_ID}/domains/${domainPathParam}`;
+  const domainPathParam = domainId ? `${domainId}` : '';
+  return (
+    process.env.AM_MANAGEMENT_URL +
+    `/management/organizations/${process.env.AM_DEF_ORG_ID}` +
+    `/environments/${process.env.AM_DEF_ENV_ID}/domains/${domainPathParam}`
+  );
 };
 
 export function getDomainApi(accessToken) {
-    return new DomainApi(createAccessTokenConfig(accessToken));
+  return new DomainApi(createAccessTokenConfig(accessToken));
 }
 
 export function getApplicationApi(accessToken) {
-    return new ApplicationApi(createAccessTokenConfig(accessToken));
+  return new ApplicationApi(createAccessTokenConfig(accessToken));
 }
 
 export function getRoleApi(accessToken) {
-    return new RoleApi(createAccessTokenConfig(accessToken));
+  return new RoleApi(createAccessTokenConfig(accessToken));
 }
 
 export function getUserApi(accessToken) {
-    return new UserApi(createAccessTokenConfig(accessToken));
+  return new UserApi(createAccessTokenConfig(accessToken));
 }
 
 export function getGroupApi(accessToken) {
-    return new GroupApi(createAccessTokenConfig(accessToken));
+  return new GroupApi(createAccessTokenConfig(accessToken));
 }
 
 export function getIdpApi(accessToken) {
-    return new IdentityProviderApi(createAccessTokenConfig(accessToken));
+  return new IdentityProviderApi(createAccessTokenConfig(accessToken));
 }
 
 export function getScopeApi(accessToken) {
-    return new ScopeApi(createAccessTokenConfig(accessToken));
+  return new ScopeApi(createAccessTokenConfig(accessToken));
 }
 
 export function getCertificateApi(accessToken) {
-    return new CertificateApi(createAccessTokenConfig(accessToken));
+  return new CertificateApi(createAccessTokenConfig(accessToken));
 }
 
 export function getDictionaryApi(accessToken) {
-    return new DictionaryApi(createAccessTokenConfig(accessToken));
+  return new DictionaryApi(createAccessTokenConfig(accessToken));
 }
 
 export function getThemeApi(accessToken) {
-    return new ThemeApi(createAccessTokenConfig(accessToken));
+  return new ThemeApi(createAccessTokenConfig(accessToken));
 }
 
 export function getFormApi(accessToken) {
-    return new FormApi(createAccessTokenConfig(accessToken));
+  return new FormApi(createAccessTokenConfig(accessToken));
 }
 
 export function getFactorApi(accessToken) {
-    return new FactorApi(createAccessTokenConfig(accessToken));
+  return new FactorApi(createAccessTokenConfig(accessToken));
 }
 
 export function getResourceApi(accessToke) {
-    return new ResourceApi(createAccessTokenConfig(accessToke));
+  return new ResourceApi(createAccessTokenConfig(accessToke));
 }
