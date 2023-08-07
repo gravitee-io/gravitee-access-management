@@ -14,60 +14,60 @@
  * limitations under the License.
  */
 
-import fetch from "cross-fetch";
+import fetch from 'cross-fetch';
 
 const cheerio = require('cheerio');
 
 export class Email {
-	id: number;
+  id: number;
   fromAddress: string;
   toAddress: string;
   subject: string;
   contents: Array<Content>;
-  
-	public extractLink() {
+
+  public extractLink() {
     if (this.contents.length > 0) {
-			const dom = cheerio.load(this.contents[0].data);
-			return dom("a").attr('href');
-		} else {
-			throw 'Email content is missing';
-		}
+      const dom = cheerio.load(this.contents[0].data);
+      return dom('a').attr('href');
+    } else {
+      throw 'Email content is missing';
+    }
   }
 }
 
 class Content {
-	data: string;
-	contentType: string;
+  data: string;
+  contentType: string;
 }
 
 export async function getLastEmail(delay = 1000) {
-	await new Promise((r) => setTimeout(r, delay))
-	const response = await fetch(process.env.FAKE_SMTP+'/api/email');
-	const array = await response.json()
-	const jsonEmail = array[0];
+  await new Promise((r) => setTimeout(r, delay));
+  const response = await fetch(process.env.FAKE_SMTP + '/api/email');
+  const array = await response.json();
+  const jsonEmail = array[0];
 
-	const email = new Email();
-	email.id = jsonEmail['id'];
-	email.fromAddress = jsonEmail['fromAddress'];
-	email.toAddress = jsonEmail['toAddress'];
-	email.subject = jsonEmail['subject'];
-	email.contents = jsonEmail['contents'].map(c => {
-		const content = new Content();
-		content.data = c['data'];
-		content.contentType = c['contentType'];
-		return content;
-	});
+  const email = new Email();
+  email.id = jsonEmail['id'];
+  email.fromAddress = jsonEmail['fromAddress'];
+  email.toAddress = jsonEmail['toAddress'];
+  email.subject = jsonEmail['subject'];
+  email.contents = jsonEmail['contents'].map((c) => {
+    const content = new Content();
+    content.data = c['data'];
+    content.contentType = c['contentType'];
+    return content;
+  });
 
-	return email;
+  return email;
 }
 
 export async function clearEmails() {
-	await fetch(process.env.FAKE_SMTP+'/api/email', {method: 'delete'});
+  await fetch(process.env.FAKE_SMTP + '/api/email', { method: 'delete' });
 }
 
 export async function hasEmail(delay = 1000) {
-	await new Promise((r) => setTimeout(r, delay))
-	const response = await fetch(process.env.FAKE_SMTP+'/api/email');
-	const array = await response.json()
-	return array.length > 0;
+  await new Promise((r) => setTimeout(r, delay));
+  const response = await fetch(process.env.FAKE_SMTP + '/api/email');
+  const array = await response.json();
+  return array.length > 0;
 }

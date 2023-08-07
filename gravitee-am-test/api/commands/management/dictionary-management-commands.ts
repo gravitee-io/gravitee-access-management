@@ -14,51 +14,57 @@
  * limitations under the License.
  */
 
-import {getDictionaryApi} from "./service/utils";
+import { getDictionaryApi } from './service/utils';
 
-export const createDictionary = (domainId, accessToken, body) => getDictionaryApi(accessToken).createI18nDictionary({
+export const createDictionary = (domainId, accessToken, body) =>
+  getDictionaryApi(accessToken).createI18nDictionary({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
-    body: body
-});
+    body: body,
+  });
 
-export const getDictionary = (domainId, accessToken, dictionaryId) => getDictionaryApi(accessToken).getI18nDictionary({
-    organizationId: process.env.AM_DEF_ORG_ID,
-    environmentId: process.env.AM_DEF_ENV_ID,
-    domain: domainId,
-    dictionary: dictionaryId
-});
-
-export const getAllDictionaries = (domainId, accessToken) => getDictionaryApi(accessToken).listI18nDictionaries({
-    organizationId: process.env.AM_DEF_ORG_ID,
-    environmentId: process.env.AM_DEF_ENV_ID,
-    domain: domainId
-});
-
-export const updateDictionary = (domainId, accessToken, dictionaryId, body) => getDictionaryApi(accessToken).putI18nDictionary({
+export const getDictionary = (domainId, accessToken, dictionaryId) =>
+  getDictionaryApi(accessToken).getI18nDictionary({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
     dictionary: dictionaryId,
-    body: body
-});
+  });
+
+export const getAllDictionaries = (domainId, accessToken) =>
+  getDictionaryApi(accessToken).listI18nDictionaries({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+  });
+
+export const updateDictionary = (domainId, accessToken, dictionaryId, body) =>
+  getDictionaryApi(accessToken).putI18nDictionary({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    dictionary: dictionaryId,
+    body: body,
+  });
 
 /*
 Differs from updateDictionary above in that only the entries can be updated.
  */
 
-export const updateDictionaryEntries = (domainId, accessToken, dictionaryId, entryMap) => getDictionaryApi(accessToken).replaceI18nDictionaryEntries({
+export const updateDictionaryEntries = (domainId, accessToken, dictionaryId, entryMap) =>
+  getDictionaryApi(accessToken).replaceI18nDictionaryEntries({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
     dictionary: dictionaryId,
-    body: entryMap
-});
+    body: entryMap,
+  });
 
-export const deleteDictionary = (domainId, accessToken, dictionaryId) => getDictionaryApi(accessToken).deleteI18nDictionary({
+export const deleteDictionary = (domainId, accessToken, dictionaryId) =>
+  getDictionaryApi(accessToken).deleteI18nDictionary({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
-    dictionary: dictionaryId
-});
+    dictionary: dictionaryId,
+  });

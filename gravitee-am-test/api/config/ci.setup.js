@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-process.env.AM_BASE_URL = "http://localhost/am/ui";
-process.env.AM_MANAGEMENT_URL = "http://localhost/am";
+process.env.AM_BASE_URL = 'http://localhost/am/ui';
+process.env.AM_MANAGEMENT_URL = 'http://localhost/am';
 process.env.AM_MANAGEMENT_ENDPOINT = process.env.AM_MANAGEMENT_URL + '/management';
-process.env.AM_GATEWAY_URL = "http://localhost/am";
-process.env.AM_CIBA_NOTIFIER_URL = "http://localhost:8080/ciba";
-process.env.AM_DEF_ORG_ID = "DEFAULT";
-process.env.AM_DEF_ENV_ID = "DEFAULT";
-process.env.AM_ADMIN_USERNAME = "admin";
-process.env.AM_ADMIN_PASSWORD = "adminadmin";
-process.env.FAKE_SMTP = "http://localhost:5080";
+process.env.AM_GATEWAY_URL = 'http://localhost/am';
+process.env.AM_CIBA_NOTIFIER_URL = 'http://localhost:8080/ciba';
+process.env.AM_DEF_ORG_ID = 'DEFAULT';
+process.env.AM_DEF_ENV_ID = 'DEFAULT';
+process.env.AM_ADMIN_USERNAME = 'admin';
+process.env.AM_ADMIN_PASSWORD = 'adminadmin';
+process.env.FAKE_SMTP = 'http://localhost:5080';

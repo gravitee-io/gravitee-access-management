@@ -13,33 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { loginPageElements } from "../fixtures/elements/login-page-elements";
-import { ADMIN_USER } from "../fixtures/users";
+import { ADMIN_USER, loginPageElements } from '../fixtures/users';
 
-const {
-  loginFormTitle,
-  loginFormSubTitle,
-  loginFormLogo,
-  userName,
-  password,
-  signInButton,
-  dashboardLogo,
-} = loginPageElements;
+const { loginFormTitle, loginFormSubTitle, loginFormLogo, userName, password, signInButton, dashboardLogo } = loginPageElements;
 
-describe("login feature", () => {
+describe('login feature', () => {
   before(() => {
-    cy.visit(Cypress.env("baseUrl"));
+    cy.visit(Cypress.env('baseUrl'));
     cy.setCookies();
   });
 
-  it("should load login page", () => {
-    cy.url().should("contain", "login");
+  it('should load login page', () => {
+    cy.url().should('contain', 'login');
   });
 
   it(`should have login page elements`, () => {
-    cy.get(loginFormTitle).should("be.visible").and("contain", "Sign In");
-    cy.get(loginFormSubTitle).should("be.visible");
-    cy.get(loginFormLogo).should("be.visible");
+    cy.get(loginFormTitle).should('be.visible').and('contain', 'Sign In');
+    cy.get(loginFormSubTitle).should('be.visible');
+    cy.get(loginFormLogo).should('be.visible');
   });
 
   it(`should sucessful login`, () => {
@@ -49,6 +40,6 @@ describe("login feature", () => {
   });
 
   it(`should verify the dashboard`, () => {
-    cy.get(dashboardLogo).should("be.visible");
+    cy.get(dashboardLogo).should('be.visible');
   });
 });

@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-
 // see https://github.com/panva/jose/blob/main/README.md
-import * as jose from 'jose'
+import * as jose from 'jose';
 
 export function decodeJwt(accessToken) {
-	return jose.decodeJwt(accessToken);
+  return jose.decodeJwt(accessToken);
 }

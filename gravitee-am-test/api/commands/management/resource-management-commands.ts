@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-import {getResourceApi} from "./service/utils";
+import { getResourceApi } from './service/utils';
 
-export const createResource = (domainId, accessToken, body) => getResourceApi(accessToken).createResource({
+export const createResource = (domainId, accessToken, body) =>
+  getResourceApi(accessToken).createResource({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
-    resource: body
-});
+    resource: body,
+  });

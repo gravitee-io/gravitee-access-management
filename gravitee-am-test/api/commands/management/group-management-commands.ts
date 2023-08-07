@@ -14,69 +14,69 @@
  * limitations under the License.
  */
 
-import {getGroupApi} from "./service/utils";
+import { getGroupApi } from './service/utils';
 
 export const createGroup = (domainId, accessToken, group) =>
-    getGroupApi(accessToken).createGroup({
-        organizationId: process.env.AM_DEF_ORG_ID,
-        environmentId: process.env.AM_DEF_ENV_ID,
-        domain: domainId,
-        group: group
-    });
+  getGroupApi(accessToken).createGroup({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    group: group,
+  });
 
 export const getGroup = (domainId, accessToken, groupId) =>
-    getGroupApi(accessToken).findGroup({
-        organizationId: process.env.AM_DEF_ORG_ID,
-        environmentId: process.env.AM_DEF_ENV_ID,
-        domain: domainId,
-        group: groupId
-    })
+  getGroupApi(accessToken).findGroup({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    group: groupId,
+  });
 
 export const getGroupPage = (domainId, accessToken, page: number = null, size: number = null) => {
-    const params = {
-        organizationId: process.env.AM_DEF_ORG_ID,
-        environmentId: process.env.AM_DEF_ENV_ID,
-        domain: domainId,
-    };
-    if (page !== null && size != null) {
-        return getGroupApi(accessToken).listGroups({...params, page: page, size: size});
-    }
-    return getGroupApi(accessToken).listGroups(params);
-}
+  const params = {
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+  };
+  if (page !== null && size != null) {
+    return getGroupApi(accessToken).listGroups({ ...params, page: page, size: size });
+  }
+  return getGroupApi(accessToken).listGroups(params);
+};
 
-export const getAllGroups = (domainId, accessToken) => getGroupPage(domainId, accessToken)
+export const getAllGroups = (domainId, accessToken) => getGroupPage(domainId, accessToken);
 
 export const updateGroup = (domainId, accessToken, groupId, payload) =>
-    getGroupApi(accessToken).updateGroup({
-        organizationId: process.env.AM_DEF_ORG_ID,
-        environmentId: process.env.AM_DEF_ENV_ID,
-        domain: domainId,
-        group: groupId,
-        group2: payload
-    })
+  getGroupApi(accessToken).updateGroup({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    group: groupId,
+    group2: payload,
+  });
 
 export const deleteGroup = (domainId, accessToken, groupId) =>
-    getGroupApi(accessToken).deleteGroup({
-        organizationId: process.env.AM_DEF_ORG_ID,
-        environmentId: process.env.AM_DEF_ENV_ID,
-        domain: domainId,
-        group: groupId,
-    })
+  getGroupApi(accessToken).deleteGroup({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    group: groupId,
+  });
 
 export const addRolesToGroup = (domainId, accessToken, groupId, roles: Array<string>) =>
-    getGroupApi(accessToken).assignRoles({
-        organizationId: process.env.AM_DEF_ORG_ID,
-        environmentId: process.env.AM_DEF_ENV_ID,
-        domain: domainId,
-        group: groupId,
-        body: roles
-    })
+  getGroupApi(accessToken).assignRoles({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    group: groupId,
+    body: roles,
+  });
 
 export const revokeRoleToGroup = (domainId, accessToken, groupId, role) =>
-    getGroupApi(accessToken).revokeRole({
-        organizationId: process.env.AM_DEF_ORG_ID,
-        environmentId: process.env.AM_DEF_ENV_ID,
-        domain: domainId,
-        group: groupId,
-        role: role
-    })
+  getGroupApi(accessToken).revokeRole({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    group: groupId,
+    role: role,
+  });

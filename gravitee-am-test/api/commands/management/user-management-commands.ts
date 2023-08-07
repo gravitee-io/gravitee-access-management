@@ -13,135 +13,134 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {getDomainApi, getUserApi} from "./service/utils";
-import {expect} from "@jest/globals";
+import { getDomainApi, getUserApi } from './service/utils';
+import { expect } from '@jest/globals';
 
 export const createUser = (domainId, accessToken, user) =>
-    getUserApi(accessToken).createUser({
-        organizationId: process.env.AM_DEF_ORG_ID,
-        environmentId: process.env.AM_DEF_ENV_ID,
-        domain: domainId,
-        user: user
-    })
+  getUserApi(accessToken).createUser({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    user: user,
+  });
 
 export const getUser = (domainId, accessToken, userId: string) =>
-    getUserApi(accessToken).findUser({
-        organizationId: process.env.AM_DEF_ORG_ID,
-        environmentId: process.env.AM_DEF_ENV_ID,
-        domain: domainId,
-        user: userId
-    })
+  getUserApi(accessToken).findUser({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    user: userId,
+  });
 
-export const getAllUsers = (domainId, accessToken) =>
-    getUserPage(domainId, accessToken)
+export const getAllUsers = (domainId, accessToken) => getUserPage(domainId, accessToken);
 
 export const getUserPage = (domainId, accessToken, page: number = null, size: number = null) => {
-    const params = {
-        organizationId: process.env.AM_DEF_ORG_ID,
-        environmentId: process.env.AM_DEF_ENV_ID,
-        domain: domainId,
-    };
-    if (page !== null && size != null) {
-        return getUserApi(accessToken).listUsers({...params, page: page, size: size});
-    }
-    return getUserApi(accessToken).listUsers(params);
-}
+  const params = {
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+  };
+  if (page !== null && size != null) {
+    return getUserApi(accessToken).listUsers({ ...params, page: page, size: size });
+  }
+  return getUserApi(accessToken).listUsers(params);
+};
 
 export const updateUser = (domainId, accessToken, userId, payload) =>
-    getUserApi(accessToken).updateUser({
-        organizationId: process.env.AM_DEF_ORG_ID,
-        environmentId: process.env.AM_DEF_ENV_ID,
-        domain: domainId,
-        user: userId,
-        user2: payload
-    })
+  getUserApi(accessToken).updateUser({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    user: userId,
+    user2: payload,
+  });
 
 export const updateUserStatus = (domainId, accessToken, userId, status: boolean) =>
-    getUserApi(accessToken).updateUserStatus({
-        organizationId: process.env.AM_DEF_ORG_ID,
-        environmentId: process.env.AM_DEF_ENV_ID,
-        domain: domainId,
-        user: userId,
-        status: {enabled: status}
-    });
+  getUserApi(accessToken).updateUserStatus({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    user: userId,
+    status: { enabled: status },
+  });
 
 export const updateUsername = (domainId, accessToken, userId, username) =>
-    getUserApi(accessToken).updateUsername({
-        organizationId: process.env.AM_DEF_ORG_ID,
-        environmentId: process.env.AM_DEF_ENV_ID,
-        domain: domainId,
-        user: userId,
-        username: {username: username}
-    });
+  getUserApi(accessToken).updateUsername({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    user: userId,
+    username: { username: username },
+  });
 
 export const resetUserPassword = (domainId, accessToken, userId, password) =>
-    getUserApi(accessToken).resetPassword({
-        organizationId: process.env.AM_DEF_ORG_ID,
-        environmentId: process.env.AM_DEF_ENV_ID,
-        domain: domainId,
-        user: userId,
-        password: { password: password }
-    })
+  getUserApi(accessToken).resetPassword({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    user: userId,
+    password: { password: password },
+  });
 
 export const sendRegistrationConfirmation = (domainId, accessToken, userId) =>
-    getUserApi(accessToken).sendRegistrationConfirmation({
-        organizationId: process.env.AM_DEF_ORG_ID,
-        environmentId: process.env.AM_DEF_ENV_ID,
-        domain: domainId,
-        user: userId
-    })
+  getUserApi(accessToken).sendRegistrationConfirmation({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    user: userId,
+  });
 
 export const lockUser = (domainId, accessToken, userId) =>
-    getUserApi(accessToken).lockUser({
-        organizationId: process.env.AM_DEF_ORG_ID,
-        environmentId: process.env.AM_DEF_ENV_ID,
-        domain: domainId,
-        user: userId
-    })
+  getUserApi(accessToken).lockUser({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    user: userId,
+  });
 
 export const unlockUser = (domainId, accessToken, userId) =>
-    getUserApi(accessToken).unlockUser({
-        organizationId: process.env.AM_DEF_ORG_ID,
-        environmentId: process.env.AM_DEF_ENV_ID,
-        domain: domainId,
-        user: userId
-    })
+  getUserApi(accessToken).unlockUser({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    user: userId,
+  });
 
 export const deleteUser = (domainId, accessToken, userId) =>
-    getUserApi(accessToken).deleteUser({
-        organizationId: process.env.AM_DEF_ORG_ID,
-        environmentId: process.env.AM_DEF_ENV_ID,
-        domain: domainId,
-        user: userId,
-    })
+  getUserApi(accessToken).deleteUser({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    user: userId,
+  });
 
 export async function buildCreateAndTestUser(domainId, accessToken, i: number, preRegistration: boolean = false) {
-    const firstName = "firstName" + i;
-    const lastName = "lastName" + i;
-    const payload = {
-        firstName: firstName,
-        lastName: lastName,
-        email: `${firstName}.${lastName}@mail.com`,
-        username: `${firstName}.${lastName}`,
-        password: "SomeP@ssw0rd",
-        preRegistration: preRegistration
-    }
+  const firstName = 'firstName' + i;
+  const lastName = 'lastName' + i;
+  const payload = {
+    firstName: firstName,
+    lastName: lastName,
+    email: `${firstName}.${lastName}@mail.com`,
+    username: `${firstName}.${lastName}`,
+    password: 'SomeP@ssw0rd',
+    preRegistration: preRegistration,
+  };
 
-    const newUser = await createUser(domainId, accessToken, payload)
-    expect(newUser).toBeDefined();
-    expect(newUser.id).toBeDefined();
-    expect(newUser.firstName).toEqual(payload.firstName);
-    expect(newUser.lastName).toEqual(payload.lastName);
-    expect(newUser.username).toEqual(payload.username);
-    expect(newUser.email).toEqual(payload.email);
-    expect(newUser.password).not.toBeDefined();
-    return newUser;
+  const newUser = await createUser(domainId, accessToken, payload);
+  expect(newUser).toBeDefined();
+  expect(newUser.id).toBeDefined();
+  expect(newUser.firstName).toEqual(payload.firstName);
+  expect(newUser.lastName).toEqual(payload.lastName);
+  expect(newUser.username).toEqual(payload.username);
+  expect(newUser.email).toEqual(payload.email);
+  expect(newUser.password).not.toBeDefined();
+  return newUser;
 }
 
 export const listUsers = (domainId, accessToken, query) =>
-    getDomainApi(accessToken).listUsers({
-        organizationId: process.env.AM_DEF_ORG_ID,
-        environmentId: process.env.AM_DEF_ENV_ID,
-        domain: domainId,
-        q: query,
-    })
+  getDomainApi(accessToken).listUsers({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    q: query,
+  });
