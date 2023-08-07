@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.service.model;
 
-import javax.validation.constraints.Min;
+import jakarta.validation.constraints.Min;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
