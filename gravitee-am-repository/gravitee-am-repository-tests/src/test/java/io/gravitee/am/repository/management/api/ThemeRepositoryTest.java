@@ -71,8 +71,13 @@ public class ThemeRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testNotFoundById() throws TechnicalException {
-        themeRepository.findById("unknown").test().assertEmpty();
+    public void testNotFoundById() throws Exception {
+        var observer = themeRepository.findById("unknown").test();
+
+        observer.awaitDone(5, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoValues();
+        observer.assertNoErrors();
     }
 
     @Test
@@ -162,7 +167,7 @@ public class ThemeRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testDelete() throws TechnicalException {
+    public void testDelete() throws Exception {
         Theme theme = buildTheme(ReferenceType.DOMAIN, DOMAIN_ID);
         Theme themeCreated = themeRepository.create(theme).blockingGet();
         TestObserver<Theme> testObserver = themeRepository.findById(themeCreated.getId()).test();
@@ -173,7 +178,12 @@ public class ThemeRepositoryTest extends AbstractManagementTest {
         TestObserver testObserver1 = themeRepository.delete(themeCreated.getId()).test();
         testObserver1.awaitDone(10, TimeUnit.SECONDS);
 
-        themeRepository.findById(themeCreated.getId()).test().assertEmpty();
+        testObserver = themeRepository.findById(themeCreated.getId()).test();
+
+        testObserver.awaitDone(5, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoValues();
+        testObserver.assertNoErrors();
     }
 
 }

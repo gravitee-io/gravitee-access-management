@@ -36,13 +36,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static java.time.ZoneOffset.UTC;
@@ -287,8 +281,13 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testNotFoundById() throws TechnicalException {
-        organizationUserRepository.findById("test").test().assertEmpty();
+    public void testNotFoundById() throws Exception {
+        var observer = organizationUserRepository.findById("test").test();
+
+        observer.awaitDone(5, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoValues();
+        observer.assertNoErrors();
     }
 
     @Test
@@ -351,7 +350,11 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
         testObserver1.awaitDone(10, TimeUnit.SECONDS);
 
         // fetch user
-        organizationUserRepository.findById(userCreated.getId()).test().assertEmpty();
+        var observer = organizationUserRepository.findById(userCreated.getId()).test();
+        observer.awaitDone(5, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoValues();
+        observer.assertNoErrors();
     }
 
     @Test

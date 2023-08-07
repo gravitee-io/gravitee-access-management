@@ -31,10 +31,12 @@ import org.bson.Document;
 import org.springframework.stereotype.Component;
 
 import jakarta.annotation.PostConstruct;
+
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.*;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -59,7 +61,8 @@ public class MongoPushedAuthorizationRequestRepository extends AbstractOAuth2Mon
     @Override
     public Maybe<PushedAuthorizationRequest> findById(String id) {
         return Observable
-                .fromPublisher(parCollection.find(eq(FIELD_ID, id)).limit(1).first())
+                .fromPublisher(parCollection.find(and(eq(FIELD_ID, id),
+                        or(gt(FIELD_EXPIRE_AT, new Date()), eq(FIELD_EXPIRE_AT, null)))).limit(1).first())
                 .firstElement()
                 .map(this::convert);
     }

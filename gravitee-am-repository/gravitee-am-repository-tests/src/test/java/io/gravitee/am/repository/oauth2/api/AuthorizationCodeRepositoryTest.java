@@ -56,7 +56,7 @@ public class AuthorizationCodeRepositoryTest extends AbstractOAuthTest {
         String code = "unknownCode";
         TestObserver<AuthorizationCode> test = authorizationCodeRepository.findByCode(code).test();
         test.awaitDone(10, TimeUnit.SECONDS);
-        //test.assertEmpty();
+        test.assertComplete();
         test.assertNoValues();
     }
 

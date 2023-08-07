@@ -93,7 +93,11 @@ public class EntrypointRepositoryTest extends AbstractManagementTest {
 
     @Test
     public void testNotFoundById() {
-        entrypointRepository.findById("test").test().assertEmpty();
+        var observer = entrypointRepository.findById("test").test();
+        observer.awaitDone(5, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoValues();
+        observer.assertNoErrors();
     }
 
     @Test

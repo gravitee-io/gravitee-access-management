@@ -125,7 +125,11 @@ public class CredentialRepositoryTest extends AbstractManagementTest {
 
     @Test
     public void testNotFoundById() throws TechnicalException {
-        credentialRepository.findById("test").test().assertEmpty();
+        var observer = credentialRepository.findById("test").test();
+        observer.awaitDone(5, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoValues();
+        observer.assertNoErrors();
     }
 
     @Test
@@ -177,7 +181,12 @@ public class CredentialRepositoryTest extends AbstractManagementTest {
         testObserver1.awaitDone(10, TimeUnit.SECONDS);
 
         // fetch credential
-        credentialRepository.findById(credentialCreated.getId()).test().assertEmpty();
+        testObserver = credentialRepository.findById(credentialCreated.getId()).test();
+
+        testObserver.awaitDone(5, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoValues();
+        testObserver.assertNoErrors();
     }
 
     @Test

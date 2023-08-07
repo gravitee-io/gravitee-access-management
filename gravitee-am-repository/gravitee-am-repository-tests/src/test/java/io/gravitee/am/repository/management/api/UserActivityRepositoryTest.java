@@ -20,14 +20,14 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.UserActivity;
 import io.gravitee.am.model.UserActivity.Type;
 import io.gravitee.am.repository.management.AbstractManagementTest;
+import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+
 import java.time.Clock;
 import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-
-import org.junit.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import static java.util.Objects.nonNull;
 import static java.util.concurrent.ThreadLocalRandom.current;
@@ -70,7 +70,10 @@ public class UserActivityRepositoryTest extends AbstractManagementTest {
         final String id = UUID.randomUUID().toString();
         var testSubscriber = userActivityRepository.findById(id).test();
 
-        testSubscriber.assertEmpty();
+        testSubscriber.awaitDone(5, TimeUnit.SECONDS);
+        testSubscriber.assertComplete();
+        testSubscriber.assertNoValues();
+        testSubscriber.assertNoErrors();
     }
 
     @Test
@@ -82,7 +85,10 @@ public class UserActivityRepositoryTest extends AbstractManagementTest {
         userActivityRepository.create(userActivity).blockingGet();
         var testSubscriber = userActivityRepository.findById(id).test();
 
-        testSubscriber.assertEmpty();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
+        testSubscriber.assertComplete();
+        testSubscriber.assertNoValues();
+        testSubscriber.assertNoErrors();
     }
 
     @Test
@@ -163,7 +169,10 @@ public class UserActivityRepositoryTest extends AbstractManagementTest {
         userActivityRepository.create(buildUserActivity(null, "key-2", "domainId2")).blockingGet();
         var testSubscriber = userActivityRepository.findByDomainAndTypeAndKey("domainId", Type.LOGIN, key).test();
 
-        testSubscriber.assertEmpty();
+        testSubscriber.awaitDone(5, TimeUnit.SECONDS);
+        testSubscriber.assertComplete();
+        testSubscriber.assertNoValues();
+        testSubscriber.assertNoErrors();
     }
 
     @Test
@@ -172,7 +181,11 @@ public class UserActivityRepositoryTest extends AbstractManagementTest {
         userActivityRepository.create(buildUserActivity(null, key, "domainId")).blockingGet();
         userActivityRepository.delete(key).test().awaitDone(10, TimeUnit.SECONDS);
 
-        userActivityRepository.findById(key).test().assertEmpty();
+        var observer = userActivityRepository.findById(key).test();
+        observer.awaitDone(5, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoValues();
+        observer.assertNoErrors();
     }
 
     @Test
@@ -181,7 +194,11 @@ public class UserActivityRepositoryTest extends AbstractManagementTest {
         userActivityRepository.create(buildUserActivity(null, key, "domainId")).blockingGet();
         userActivityRepository.deleteByDomainAndKey("domainId", key).test().awaitDone(10, TimeUnit.SECONDS);
 
-        userActivityRepository.findByDomainAndTypeAndKey("domain", Type.LOGIN, key).test().assertEmpty();
+        var observer = userActivityRepository.findByDomainAndTypeAndKey("domain", Type.LOGIN, key).test();
+        observer.awaitDone(5, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoValues();
+        observer.assertNoErrors();
     }
 
     @Test
@@ -190,7 +207,11 @@ public class UserActivityRepositoryTest extends AbstractManagementTest {
         userActivityRepository.create(buildUserActivity(null, key, "domainId")).blockingGet();
         userActivityRepository.deleteByDomain("domainId").test().awaitDone(10, TimeUnit.SECONDS);
 
-        userActivityRepository.findByDomainAndTypeAndKey("domainId", Type.LOGIN, key).test().assertEmpty();
+        var observer = userActivityRepository.findByDomainAndTypeAndKey("domainId", Type.LOGIN, key).test();
+        observer.awaitDone(5, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoValues();
+        observer.assertNoErrors();
     }
 
     public UserActivity buildUserActivity(String id, String key, String refId) {

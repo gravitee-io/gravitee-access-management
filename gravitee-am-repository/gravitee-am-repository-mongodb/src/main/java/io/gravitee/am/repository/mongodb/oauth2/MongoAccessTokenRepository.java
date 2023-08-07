@@ -26,15 +26,15 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
-import jakarta.annotation.PostConstruct;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.client.model.Filters.and;
-import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.*;
 import static java.util.stream.Collectors.toList;
 
 /**
@@ -67,7 +67,8 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
 
     private Maybe<AccessToken> findById(String id) {
         return Observable
-                .fromPublisher(accessTokenCollection.find(eq(FIELD_ID, id)).limit(1).first())
+                .fromPublisher(accessTokenCollection.find(and(eq(FIELD_ID, id),
+                        or(gt(FIELD_EXPIRE_AT, new Date()), eq(FIELD_EXPIRE_AT, null)))).limit(1).first())
                 .firstElement()
                 .map(this::convert);
     }
@@ -75,7 +76,8 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
     @Override
     public Maybe<AccessToken> findByToken(String token) {
         return Observable
-                .fromPublisher(accessTokenCollection.find(eq(FIELD_TOKEN, token)).limit(1).first())
+                .fromPublisher(accessTokenCollection.find(and(eq(FIELD_TOKEN, token),
+                        or(gt(FIELD_EXPIRE_AT, new Date()), eq(FIELD_EXPIRE_AT, null)))).limit(1).first())
                 .firstElement()
                 .map(this::convert);
     }
@@ -95,27 +97,31 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
     @Override
     public Observable<AccessToken> findByClientIdAndSubject(String clientId, String subject) {
         return Observable
-                .fromPublisher(accessTokenCollection.find(and(eq(FIELD_CLIENT, clientId), eq(FIELD_SUBJECT, subject))))
+                .fromPublisher(accessTokenCollection.find(and(eq(FIELD_CLIENT, clientId), eq(FIELD_SUBJECT, subject),
+                        or(gt(FIELD_EXPIRE_AT, new Date()), eq(FIELD_EXPIRE_AT, null)))))
                 .map(this::convert);
     }
 
     @Override
     public Observable<AccessToken> findByClientId(String clientId) {
         return Observable
-                .fromPublisher(accessTokenCollection.find(eq(FIELD_CLIENT, clientId)))
+                .fromPublisher(accessTokenCollection.find(and(eq(FIELD_CLIENT, clientId),
+                        or(gt(FIELD_EXPIRE_AT, new Date()), eq(FIELD_EXPIRE_AT, null)))))
                 .map(this::convert);
     }
 
     @Override
     public Observable<AccessToken> findByAuthorizationCode(String authorizationCode) {
         return Observable
-                .fromPublisher(accessTokenCollection.find(eq(FIELD_AUTHORIZATION_CODE, authorizationCode)))
+                .fromPublisher(accessTokenCollection.find(and(eq(FIELD_AUTHORIZATION_CODE, authorizationCode),
+                        or(gt(FIELD_EXPIRE_AT, new Date()), eq(FIELD_EXPIRE_AT, null)))))
                 .map(this::convert);
     }
 
     @Override
     public Single<Long> countByClientId(String clientId) {
-        return Single.fromPublisher(accessTokenCollection.countDocuments(eq(FIELD_CLIENT, clientId)));
+        return Single.fromPublisher(accessTokenCollection.countDocuments(and(eq(FIELD_CLIENT, clientId),
+                or(gt(FIELD_EXPIRE_AT, new Date()), eq(FIELD_EXPIRE_AT, null)))));
     }
 
     @Override

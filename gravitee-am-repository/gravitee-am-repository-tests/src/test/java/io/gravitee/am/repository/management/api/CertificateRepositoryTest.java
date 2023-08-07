@@ -106,7 +106,11 @@ public class CertificateRepositoryTest extends AbstractManagementTest {
 
     @Test
     public void testNotFoundById() throws TechnicalException {
-        certificateRepository.findById("test").test().assertEmpty();
+        var observer = certificateRepository.findById("test").test();
+        observer.awaitDone(5, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoValues();
+        observer.assertNoErrors();
     }
 
     @Test
@@ -180,6 +184,10 @@ public class CertificateRepositoryTest extends AbstractManagementTest {
         testObserver1.awaitDone(10, TimeUnit.SECONDS);
 
         // fetch domain
-        certificateRepository.findById(certificateCreated.getId()).test().assertEmpty();
+        testObserver = certificateRepository.findById(certificateCreated.getId()).test();
+        testObserver.awaitDone(5, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoValues();
+        testObserver.assertNoErrors();
     }
 }

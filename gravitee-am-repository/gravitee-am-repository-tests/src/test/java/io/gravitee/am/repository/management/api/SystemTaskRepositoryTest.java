@@ -94,7 +94,11 @@ public class SystemTaskRepositoryTest extends AbstractManagementTest {
 
     @Test
     public void testNotFoundById() throws TechnicalException {
-        taskRepository.findById("test").test().assertEmpty();
+        var observer = taskRepository.findById("test").test();
+        observer.awaitDone(5, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoValues();
+        observer.assertNoErrors();
     }
 
     @Test
@@ -186,7 +190,11 @@ public class SystemTaskRepositoryTest extends AbstractManagementTest {
         testObserver1.awaitDone(10, TimeUnit.SECONDS);
 
         // fetch SystemTask
-        taskRepository.findById(systemTaskCreated.getId()).test().assertEmpty();
+        testObserver = taskRepository.findById(systemTaskCreated.getId()).test();
+        testObserver.awaitDone(5, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoValues();
+        testObserver.assertNoErrors();
     }
 
 }

@@ -31,12 +31,13 @@ import org.bson.Document;
 import org.springframework.stereotype.Component;
 
 import jakarta.annotation.PostConstruct;
+
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static com.mongodb.client.model.Filters.and;
-import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -64,7 +65,8 @@ public class MongoRefreshTokenRepository extends AbstractOAuth2MongoRepository i
 
     private Maybe<RefreshToken> findById(String id) {
         return Observable
-                .fromPublisher(refreshTokenCollection.find(eq(FIELD_ID, id)).first())
+                .fromPublisher(refreshTokenCollection.find(and(eq(FIELD_ID, id),
+                        or(gt(FIELD_EXPIRE_AT, new Date()), eq(FIELD_EXPIRE_AT, null)))).first())
                 .firstElement()
                 .map(this::convert);
     }
@@ -72,7 +74,8 @@ public class MongoRefreshTokenRepository extends AbstractOAuth2MongoRepository i
     @Override
     public Maybe<RefreshToken> findByToken(String token) {
         return Observable
-                .fromPublisher(refreshTokenCollection.find(eq(FIELD_TOKEN, token)).first())
+                .fromPublisher(refreshTokenCollection.find(and(eq(FIELD_TOKEN, token),
+                        or(gt(FIELD_EXPIRE_AT, new Date()), eq(FIELD_EXPIRE_AT, null)))).first())
                 .firstElement()
                 .map(this::convert);
     }

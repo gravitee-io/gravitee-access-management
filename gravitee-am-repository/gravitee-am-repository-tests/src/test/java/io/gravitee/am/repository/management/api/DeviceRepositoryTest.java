@@ -56,11 +56,16 @@ public class DeviceRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testNotFindByDomainAndApplicationAndUser_expired() {
+    public void testNotFindByDomainAndApplicationAndUser_expired() throws Exception {
         Device device = buildDevice(new Date(System.currentTimeMillis() - 10000));
         Device createdDevice = repository.create(device).blockingGet();
 
-       repository.findById(createdDevice.getUserId()).test().assertEmpty();
+       var observer = repository.findById(createdDevice.getUserId()).test();
+
+        observer.awaitDone(5, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoValues();
+        observer.assertNoErrors();
     }
 
     private Device buildDevice() {
@@ -103,12 +108,15 @@ public class DeviceRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testNotFindById_expired() {
+    public void testNotFindById_expired()  {
         Device device = buildDevice(new Date(System.currentTimeMillis() - 10000));
         Device deviceCreated = repository.create(device).blockingGet();
 
         TestObserver<Device> testObserver = repository.findById(deviceCreated.getId()).test();
-        testObserver.assertEmpty();
+        testObserver.awaitDone(5, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoValues();
+        testObserver.assertNoErrors();
     }
 
     @Test
@@ -140,12 +148,17 @@ public class DeviceRepositoryTest extends AbstractManagementTest {
     public void testNotFindByDomainAndClientAndUserAndDeviceIdentifierAndDeviceId_unknown_client() {
         Device device = buildDevice();
         Device deviceCreated = repository.create(device).blockingGet();
-        final TestObserver<Device> test = repository.findByDomainAndClientAndUserAndDeviceIdentifierAndDeviceId(
+        final TestObserver<Device> observer = repository.findByDomainAndClientAndUserAndDeviceIdentifierAndDeviceId(
                 deviceCreated.getReferenceId(),
                 "unknown_client",
                 deviceCreated.getUserId(),
                 deviceCreated.getDeviceIdentifierId(),
-                deviceCreated.getDeviceId()).test().assertEmpty();
+                deviceCreated.getDeviceId()).test();
+        observer.awaitDone(5, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoValues();
+        observer.assertNoErrors();
+
     }
 
     @Test
@@ -153,17 +166,26 @@ public class DeviceRepositoryTest extends AbstractManagementTest {
         Device device = buildDevice(new Date(System.currentTimeMillis() - 10000));
         Device deviceCreated = repository.create(device).blockingGet();
 
-        final TestObserver<Device> test = repository.findByDomainAndClientAndUserAndDeviceIdentifierAndDeviceId(
+        final TestObserver<Device> observer = repository.findByDomainAndClientAndUserAndDeviceIdentifierAndDeviceId(
                 deviceCreated.getReferenceId(),
                 deviceCreated.getClient(),
                 deviceCreated.getUserId(),
                 deviceCreated.getDeviceIdentifierId(),
-                deviceCreated.getDeviceId()).test().assertEmpty();
+                deviceCreated.getDeviceId()).test();
+
+        observer.awaitDone(5, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoValues();
+        observer.assertNoErrors();
     }
 
     @Test
     public void testNotFoundById_unknown_id() {
-        repository.findById("unknown_id").test().assertEmpty();
+        var observer = repository.findById("unknown_id").test();
+        observer.awaitDone(5, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoValues();
+        observer.assertNoErrors();
     }
 
     @Test
@@ -223,6 +245,10 @@ public class DeviceRepositoryTest extends AbstractManagementTest {
         TestObserver testObserver1 = repository.delete(deviceCreated.getId()).test();
         testObserver1.awaitDone(10, TimeUnit.SECONDS);
 
-        repository.findById(deviceCreated.getId()).test().assertEmpty();
+        testObserver = repository.findById(deviceCreated.getId()).test();
+        testObserver.awaitDone(5, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoValues();
+        testObserver.assertNoErrors();
     }
 }

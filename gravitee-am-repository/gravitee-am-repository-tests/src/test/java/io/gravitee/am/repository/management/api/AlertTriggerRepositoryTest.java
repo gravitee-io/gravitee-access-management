@@ -60,8 +60,13 @@ public class AlertTriggerRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testNotFoundById() {
-        alertTriggerRepository.findById("UNKNOWN").test().assertEmpty();
+    public void testNotFoundById() throws Exception {
+        var observer = alertTriggerRepository.findById("UNKNOWN").test();
+
+        observer.awaitDone(5, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoValues();
+        observer.assertNoErrors();
     }
 
     @Test
@@ -106,7 +111,12 @@ public class AlertTriggerRepositoryTest extends AbstractManagementTest {
         testObserver1.awaitDone(10, TimeUnit.SECONDS);
 
         // fetch idp
-        alertTriggerRepository.findById(alertTriggerCreated.getId()).test().assertEmpty();
+        var observer = alertTriggerRepository.findById(alertTriggerCreated.getId()).test();
+
+        observer.awaitDone(5, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoValues();
+        observer.assertNoErrors();
     }
 
     @Test

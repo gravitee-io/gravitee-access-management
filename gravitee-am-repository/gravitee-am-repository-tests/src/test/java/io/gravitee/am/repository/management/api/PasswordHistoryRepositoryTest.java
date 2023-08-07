@@ -26,7 +26,7 @@ import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
 import static java.util.UUID.randomUUID;
-import static junit.framework.TestCase.*;
+import static junit.framework.TestCase.assertNotNull;
 
 @SuppressWarnings("ALL")
 public class PasswordHistoryRepositoryTest extends AbstractManagementTest {
@@ -52,7 +52,11 @@ public class PasswordHistoryRepositoryTest extends AbstractManagementTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        repository.findById(created.getId()).test().assertEmpty();
+        var observer = repository.findById(created.getId()).test();
+        observer.awaitDone(5, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoValues();
+        observer.assertNoErrors();
     }
 
     @Test

@@ -33,11 +33,11 @@ import org.springframework.stereotype.Component;
 
 import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.client.model.Filters.and;
-import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -63,12 +63,12 @@ public class MongoLoginAttemptRepository extends AbstractManagementMongoReposito
 
     @Override
     public Maybe<LoginAttempt> findById(String id) {
-        return Observable.fromPublisher(loginAttemptsCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(loginAttemptsCollection.find(and(eq(FIELD_ID, id), gte(FIELD_EXPIRE_AT, new Date()))).first()).firstElement().map(this::convert);
     }
 
     @Override
     public Maybe<LoginAttempt> findByCriteria(LoginAttemptCriteria criteria) {
-        return Observable.fromPublisher(withMaxTime(loginAttemptsCollection.find(query(criteria))).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(withMaxTime(loginAttemptsCollection.find(and(query(criteria), gte(FIELD_EXPIRE_AT, new Date())))).first()).firstElement().map(this::convert);
     }
 
     @Override

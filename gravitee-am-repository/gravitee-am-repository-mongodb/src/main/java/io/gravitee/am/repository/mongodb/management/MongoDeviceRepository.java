@@ -23,15 +23,15 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.management.api.DeviceRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.DeviceMongo;
 import io.reactivex.rxjava3.core.*;
+import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
-import jakarta.annotation.PostConstruct;
+import java.util.Date;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.client.model.Filters.and;
-import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.*;
 import static java.util.Optional.ofNullable;
 
 /**
@@ -60,7 +60,7 @@ public class MongoDeviceRepository extends AbstractManagementMongoRepository imp
 
     @Override
     public Flowable<Device> findByReferenceAndUser(ReferenceType referenceType, String referenceId, String user) {
-        var query = and(eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_USER_ID, user));
+        var query = and(eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_USER_ID, user), gte(FIELD_EXPIRES_AT, new Date()));
         var devicePublisher = rememberDeviceMongoCollection.find(query);
         return Flowable.fromPublisher(devicePublisher).map(this::convert);
 
@@ -71,13 +71,13 @@ public class MongoDeviceRepository extends AbstractManagementMongoRepository imp
             ReferenceType referenceType, String referenceId, String client, String user, String deviceIdentifierId, String deviceId) {
         var query = and(
                 eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_REFERENCE_TYPE, referenceType.name()),
-                eq(FIELD_CLIENT, client), eq(FIELD_USER_ID, user), eq(DEVICE_IDENTIFIER_ID, deviceIdentifierId), eq(DEVICE_ID, deviceId));
+                eq(FIELD_CLIENT, client), eq(FIELD_USER_ID, user), eq(DEVICE_IDENTIFIER_ID, deviceIdentifierId), eq(DEVICE_ID, deviceId), gte(FIELD_EXPIRES_AT, new Date()));
         return Observable.fromPublisher(rememberDeviceMongoCollection.find(query).first()).firstElement().map(this::convert);
     }
 
     @Override
     public Maybe<Device> findById(String deviceId) {
-        return Observable.fromPublisher(rememberDeviceMongoCollection.find(eq(FIELD_ID, deviceId)).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(rememberDeviceMongoCollection.find(and(eq(FIELD_ID, deviceId), gte(FIELD_EXPIRES_AT, new Date()))).first()).firstElement().map(this::convert);
     }
 
     @Override

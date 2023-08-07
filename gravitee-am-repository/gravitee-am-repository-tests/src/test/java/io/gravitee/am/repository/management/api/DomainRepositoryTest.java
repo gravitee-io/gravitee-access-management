@@ -200,7 +200,11 @@ public class DomainRepositoryTest extends AbstractManagementTest {
 
     @Test
     public void testNotFoundById() throws TechnicalException {
-        domainRepository.findById("test").test().assertEmpty();
+        var observer = domainRepository.findById("test").test();
+        observer.awaitDone(5, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoValues();
+        observer.assertNoErrors();
     }
 
     @Test
@@ -283,7 +287,11 @@ public class DomainRepositoryTest extends AbstractManagementTest {
         testObserver1.awaitDone(10, TimeUnit.SECONDS);
 
         // fetch domain
-        domainRepository.findById(domainCreated.getId()).test().assertEmpty();
+        testObserver = domainRepository.findById(domainCreated.getId()).test();
+        testObserver.awaitDone(5, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoValues();
+        testObserver.assertNoErrors();
     }
 
     @Test

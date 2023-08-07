@@ -56,8 +56,10 @@ public class AlertNotifierRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testNotFoundById() {
-        alertNotifierRepository.findById("UNKNOWN").test().assertEmpty();
+    public void testNotFoundById() throws Exception {
+        TestObserver<AlertNotifier> observer = alertNotifierRepository.findById("UNKNOWN").test();
+        observer.awaitDone(5, TimeUnit.SECONDS);
+        observer.assertNoValues();
     }
 
     @Test
@@ -92,17 +94,21 @@ public class AlertNotifierRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testDelete() {
+    public void testDelete() throws Exception {
         // create idp
         AlertNotifier alertNotifier = buildAlertNotifier();
         AlertNotifier alertNotifierCreated = alertNotifierRepository.create(alertNotifier).blockingGet();
 
         // delete idp
-        TestObserver<Void> testObserver1 = alertNotifierRepository.delete(alertNotifierCreated.getId()).test();
-        testObserver1.awaitDone(10, TimeUnit.SECONDS);
+        var testObserver = alertNotifierRepository.delete(alertNotifierCreated.getId()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         // fetch idp
-        alertNotifierRepository.findById(alertNotifierCreated.getId()).test().assertEmpty();
+        var testObserver2 = alertNotifierRepository.findById(alertNotifierCreated.getId()).test();
+        testObserver2.awaitDone(5, TimeUnit.SECONDS);
+        testObserver2.assertComplete();
+        testObserver2.assertNoErrors();
+        testObserver2.assertNoValues();
     }
 
     @Test

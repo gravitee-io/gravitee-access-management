@@ -22,16 +22,15 @@ import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.repository.mongodb.oauth2.internal.model.ScopeApprovalMongo;
 import io.gravitee.am.repository.oauth2.api.ScopeApprovalRepository;
 import io.reactivex.rxjava3.core.*;
+import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
-import jakarta.annotation.PostConstruct;
 import java.util.Date;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.client.model.Filters.and;
-import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.*;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -63,17 +62,17 @@ public class MongoScopeApprovalRepository extends AbstractOAuth2MongoRepository 
 
     @Override
     public Flowable<ScopeApproval> findByDomainAndUserAndClient(String domain, String userId, String clientId) {
-        return Flowable.fromPublisher(scopeApprovalsCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT_ID, clientId), eq(FIELD_USER_ID, userId)))).map(this::convert);
+        return Flowable.fromPublisher(scopeApprovalsCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT_ID, clientId), eq(FIELD_USER_ID, userId), gte(FIELD_EXPIRES_AT, new Date())))).map(this::convert);
     }
 
     @Override
     public Flowable<ScopeApproval> findByDomainAndUser(String domain, String user) {
-        return Flowable.fromPublisher(scopeApprovalsCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_USER_ID, user)))).map(this::convert);
+        return Flowable.fromPublisher(scopeApprovalsCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_USER_ID, user), gte(FIELD_EXPIRES_AT, new Date())))).map(this::convert);
     }
 
     @Override
     public Maybe<ScopeApproval> findById(String id) {
-        return Observable.fromPublisher(scopeApprovalsCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(scopeApprovalsCollection.find(and(eq(FIELD_ID, id), gte(FIELD_EXPIRES_AT, new Date()))).first()).firstElement().map(this::convert);
     }
 
     @Override
@@ -139,10 +138,6 @@ public class MongoScopeApprovalRepository extends AbstractOAuth2MongoRepository 
     public Completable deleteByDomainAndUser(String domain, String user) {
         return Completable.fromPublisher(scopeApprovalsCollection.deleteMany(
                 and(eq(FIELD_DOMAIN, domain), eq(FIELD_USER_ID, user))));
-    }
-
-    private Single<ScopeApproval> _findById(String id) {
-        return Single.fromPublisher(scopeApprovalsCollection.find(eq(FIELD_ID, id)).first()).map(this::convert);
     }
 
     private ScopeApproval convert(ScopeApprovalMongo scopeApprovalMongo) {

@@ -54,7 +54,7 @@ public class MongoAuthenticationFlowContextRepository extends AbstractManagement
 
     @Override
     public Maybe<AuthenticationFlowContext> findById(String id) {
-        return Observable.fromPublisher(authContextCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(authContextCollection.find(and(eq(FIELD_ID, id), gt(FIELD_EXPIRES_AT, new Date()))).first()).firstElement().map(this::convert);
     }
 
     @Override

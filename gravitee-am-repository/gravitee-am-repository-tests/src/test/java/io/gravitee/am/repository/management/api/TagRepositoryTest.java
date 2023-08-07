@@ -71,7 +71,11 @@ public class TagRepositoryTest extends AbstractManagementTest {
 
     @Test
     public void testNotFoundById() throws TechnicalException {
-        tagRepository.findById("test").test().assertEmpty();
+        var observer = tagRepository.findById("test").test();
+        observer.awaitDone(5, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoValues();
+        observer.assertNoErrors();
     }
 
     @Test
@@ -128,7 +132,11 @@ public class TagRepositoryTest extends AbstractManagementTest {
         testObserver1.awaitDone(10, TimeUnit.SECONDS);
 
         // fetch tag
-        tagRepository.findById(tagCreated.getId()).test().assertEmpty();
+        testObserver = tagRepository.findById(tagCreated.getId()).test();
+        testObserver.awaitDone(5, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoValues();
+        testObserver.assertNoErrors();
     }
 
 }
