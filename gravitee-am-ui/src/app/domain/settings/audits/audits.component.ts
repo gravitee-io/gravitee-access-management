@@ -13,31 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit, ViewChild} from '@angular/core';
-import {ActivatedRoute, Router} from "@angular/router";
-import {AppConfig} from "../../../../config/app.config";
-import {AuditService} from "../../../services/audit.service";
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import moment from 'moment';
-import {OrganizationService} from "../../../services/organization.service";
-import {UserService} from "../../../services/user.service";
-import {FormControl} from "@angular/forms";
+import { FormControl } from '@angular/forms';
 import * as _ from 'lodash';
-import {AuthService} from "../../../services/auth.service";
-import {Observable} from 'rxjs';
-import {filter, map, switchMap} from 'rxjs/operators';
-import {availableTimeRanges, defaultTimeRangeId} from '../../../utils/time-range-utils';
+import { Observable } from 'rxjs';
+import { filter, map, switchMap } from 'rxjs/operators';
+
+import { AuditService } from '../../../services/audit.service';
+import { OrganizationService } from '../../../services/organization.service';
+import { UserService } from '../../../services/user.service';
+import { AuthService } from '../../../services/auth.service';
+import { availableTimeRanges, defaultTimeRangeId } from '../../../utils/time-range-utils';
 
 @Component({
   selector: 'app-audits',
   templateUrl: './audits.component.html',
-  styleUrls: ['./audits.component.scss']
+  styleUrls: ['./audits.component.scss'],
 })
 export class AuditsComponent implements OnInit {
   private startDateChanged = false;
   private endDateChanged = false;
   organizationContext = false;
   requiredReadPermission: string;
-  @ViewChild('auditsTable', {static: true}) table: any;
+  @ViewChild('auditsTable', { static: true }) table: any;
   userCtrl = new FormControl();
   audits: any[];
   pagedAudits: any;
@@ -51,25 +51,27 @@ export class AuditsComponent implements OnInit {
   displayReset = false;
   expanded: any = {};
   loadingIndicator: boolean;
-  config: any = {lineWrapping: true, lineNumbers: true, readOnly: true, mode: 'application/json'};
+  config: any = { lineWrapping: true, lineNumbers: true, readOnly: true, mode: 'application/json' };
   filteredUsers$: Observable<any[]>;
   selectedUser: any;
   selectedTimeRange = defaultTimeRangeId;
-  readonly timeRanges = availableTimeRanges
+  readonly timeRanges = availableTimeRanges;
 
-  constructor(private route: ActivatedRoute,
-              private router: Router,
-              private auditService: AuditService,
-              private organizationService: OrganizationService,
-              private userService: UserService,
-              private authService: AuthService) {
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private auditService: AuditService,
+    private organizationService: OrganizationService,
+    private userService: UserService,
+    private authService: AuthService,
+  ) {
     this.page.pageNumber = 0;
     this.page.size = 10;
     this.filteredUsers$ = this.userCtrl.valueChanges.pipe(
-      filter(searchTerm => typeof searchTerm === 'string'),
-      switchMap(searchTerm => this.userService.search(this.domainId, 'q=' + searchTerm + '*', 0, 30, this.organizationContext)),
-      map(response => response.data)
-    )
+      filter((searchTerm) => typeof searchTerm === 'string'),
+      switchMap((searchTerm) => this.userService.search(this.domainId, 'q=' + searchTerm + '*', 0, 30, this.organizationContext)),
+      map((response) => response.data),
+    );
   }
 
   ngOnInit() {
@@ -81,13 +83,13 @@ export class AuditsComponent implements OnInit {
       this.requiredReadPermission = 'domain_audit_read';
     }
     // load event types
-    this.organizationService.auditEventTypes().subscribe(data => this.eventTypes = data);
+    this.organizationService.auditEventTypes().subscribe((data) => (this.eventTypes = data));
     // load audits
     this.search();
   }
 
   get isEmpty() {
-    return !this.audits || this.audits.length === 0 && !this.displayReset;
+    return !this.audits || (this.audits.length === 0 && !this.displayReset);
   }
 
   setPage(pageInfo) {
@@ -104,7 +106,7 @@ export class AuditsComponent implements OnInit {
   }
 
   getActorUrl(row) {
-    let routerLink = [];
+    const routerLink = [];
 
     if ('organization' === row.actor.referenceType) {
       routerLink.push('/settings');
@@ -121,7 +123,7 @@ export class AuditsComponent implements OnInit {
   }
 
   getTargetUrl(row) {
-    let routerLink = [];
+    const routerLink = [];
 
     if (row.target.type === 'MEMBERSHIP') {
       // Membership doesn't have link;
@@ -162,7 +164,7 @@ export class AuditsComponent implements OnInit {
   }
 
   getTargetParams(row) {
-    let params = {};
+    const params = {};
     if (row.target.type === 'FORM' || row.target.type === 'EMAIL') {
       params['template'] = row.target.displayName.toUpperCase();
     }
@@ -174,12 +176,12 @@ export class AuditsComponent implements OnInit {
     this.searchAudits();
   }
 
-  startDateChange(element, event) {
+  startDateChange() {
     this.startDateChanged = true;
     this.updateForm();
   }
 
-  endDateChange(element, event) {
+  endDateChange() {
     this.endDateChanged = true;
     this.updateForm();
   }
@@ -207,29 +209,45 @@ export class AuditsComponent implements OnInit {
   }
 
   searchAudits() {
-    let selectedTimeRange = _.find(this.timeRanges, {id: this.selectedTimeRange});
-    let from = this.startDateChanged ? moment(this.startDate).valueOf() : moment().subtract(selectedTimeRange.value, selectedTimeRange.unit).valueOf();
-    let to = this.endDateChanged ? moment(this.endDate).valueOf() : moment().valueOf();
-    let user = this.selectedUser || (this.userCtrl.value ? (typeof this.userCtrl.value === 'string' ? this.userCtrl.value : this.userCtrl.value.username) : null);
+    const selectedTimeRange = _.find(this.timeRanges, { id: this.selectedTimeRange });
+    const from = this.startDateChanged
+      ? moment(this.startDate).valueOf()
+      : moment().subtract(selectedTimeRange.value, selectedTimeRange.unit).valueOf();
+    const to = this.endDateChanged ? moment(this.endDate).valueOf() : moment().valueOf();
+    const user =
+      this.selectedUser ||
+      (this.userCtrl.value ? (typeof this.userCtrl.value === 'string' ? this.userCtrl.value : this.userCtrl.value.username) : null);
     this.loadingIndicator = true;
-    this.auditService.search(this.domainId, this.page.pageNumber, this.page.size, this.eventType, this.eventStatus, user, from, to, this.organizationContext).subscribe(pagedAudits => {
-      this.page.totalElements = pagedAudits.totalCount;
-      this.audits = pagedAudits.data
-      .map(audit => this.createActorSortDisplayName(audit))
-      .map(audit => this.createTargetSortDisplayName(audit));
-      this.selectedUser = null;
-      this.loadingIndicator = false;
-    });
+    this.auditService
+      .search(
+        this.domainId,
+        this.page.pageNumber,
+        this.page.size,
+        this.eventType,
+        this.eventStatus,
+        user,
+        from,
+        to,
+        this.organizationContext,
+      )
+      .subscribe((pagedAudits) => {
+        this.page.totalElements = pagedAudits.totalCount;
+        this.audits = pagedAudits.data
+          .map((audit) => this.createActorSortDisplayName(audit))
+          .map((audit) => this.createTargetSortDisplayName(audit));
+        this.selectedUser = null;
+        this.loadingIndicator = false;
+      });
   }
 
   private createTargetSortDisplayName(audit) {
     if (audit.target) {
       audit.target.sortDisplayName = audit.target.displayName;
       if (audit.target.alternativeId) {
-        audit.target.sortDisplayName += ` | ${audit.target?.alertnativeId}`
+        audit.target.sortDisplayName += ` | ${audit.target?.alertnativeId}`;
       }
     }
-    return audit
+    return audit;
   }
 
   private createActorSortDisplayName(audit) {
@@ -237,9 +255,9 @@ export class AuditsComponent implements OnInit {
       if (this.isUnknownActor(audit)) {
         audit.actor.sortDisplayName = audit.actor.alternativeId;
       } else if (this.hasActorUrl(audit)) {
-        audit.actor.sortDisplayName = `${audit.actor.displayName} | ${audit.actor?.displayName}`
+        audit.actor.sortDisplayName = `${audit.actor.displayName} | ${audit.actor?.displayName}`;
       } else {
-        audit.actor.sortDisplayName = audit.actor.displayName
+        audit.actor.sortDisplayName = audit.actor.displayName;
       }
     }
     return audit;
@@ -262,10 +280,9 @@ export class AuditsComponent implements OnInit {
   }
 
   onUserSelectionChanged(event) {
-    this.selectedUser = event.option.value["username"];
+    this.selectedUser = event.option.value['username'];
     this.displayReset = true;
   }
-
 
   displayUserFn(user?: any): string | undefined {
     return user ? user.username : undefined;
@@ -273,7 +290,7 @@ export class AuditsComponent implements OnInit {
 
   displayUserName(user) {
     if (user.firstName) {
-      return user.firstName + " " + (user.lastName ? user.lastName : '');
+      return user.firstName + ' ' + (user.lastName ? user.lastName : '');
     } else {
       return user.username;
     }

@@ -13,27 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Injectable} from '@angular/core';
-import {ActivatedRouteSnapshot, Resolve, RouterStateSnapshot} from '@angular/router';
-import {Observable} from 'rxjs';
-import {DomainService} from '../services/domain.service';
-import {map, mergeMap, tap} from "rxjs/operators";
-import {NavbarService} from "../components/navbar/navbar.service";
+import { Injectable } from '@angular/core';
+import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
+import { Observable } from 'rxjs';
+import { map, mergeMap } from 'rxjs/operators';
+
+import { DomainService } from '../services/domain.service';
+import { NavbarService } from '../components/navbar/navbar.service';
 
 @Injectable()
 export class DomainResolver implements Resolve<any> {
+  constructor(private domainService: DomainService, private navbarService: NavbarService) {}
 
-  constructor(private domainService: DomainService,
-              private navbarService: NavbarService) { }
-
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
+  resolve(route: ActivatedRouteSnapshot): Observable<any> {
     const domainHrid = route.paramMap.get('domainId');
 
-    return this.domainService.get(domainHrid)
-      .pipe(mergeMap(domain => this.domainService.permissions(domain.id)
-        .pipe(map(__ => {
-          this.navbarService.notifyDomain(domain);
-          return domain;
-        }))));
+    return this.domainService.get(domainHrid).pipe(
+      mergeMap((domain) =>
+        this.domainService.permissions(domain.id).pipe(
+          map((__) => {
+            this.navbarService.notifyDomain(domain);
+            return domain;
+          }),
+        ),
+      ),
+    );
   }
 }

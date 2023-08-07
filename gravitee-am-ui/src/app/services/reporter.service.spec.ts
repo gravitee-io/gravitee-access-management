@@ -20,9 +20,9 @@ import { ReporterService } from './reporter.service';
 describe('ReporterService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-    providers: [ReporterService],
-    teardown: { destroyAfterEach: false }
-});
+      providers: [ReporterService],
+      teardown: { destroyAfterEach: false },
+    });
   });
 
   it('should ...', inject([ReporterService], (service: ReporterService) => {

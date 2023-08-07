@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import {OrganizationService} from '../../../../../../services/organization.service';
+
+import { OrganizationService } from '../../../../../../services/organization.service';
 
 @Component({
   selector: 'factor-creation-step2',
   templateUrl: './step2.component.html',
-  styleUrls: ['./step2.component.scss']
+  styleUrls: ['./step2.component.scss'],
 })
 export class FactorCreationStep2Component implements OnInit {
   @Input('factor') factor: any;
@@ -33,16 +34,14 @@ export class FactorCreationStep2Component implements OnInit {
   private resourcePlugins: any[];
   private resources: any[];
 
-  constructor(
-    private organizationService: OrganizationService,
-    private route: ActivatedRoute) { }
+  constructor(private organizationService: OrganizationService, private route: ActivatedRoute) {}
 
   ngOnInit() {
     this.factorPlugins = this.route.snapshot.data['factorPlugins'];
     this.resourcePlugins = this.route.snapshot.data['resourcePlugins'];
     this.resources = this.route.snapshot.data['resources'];
 
-    this.organizationService.factorSchema(this.factor.type).subscribe(data => {
+    this.organizationService.factorSchema(this.factor.type).subscribe((data) => {
       this.factorSchema = data;
       // set the grant_type value
       if (this.factorSchema.properties.factorType) {
@@ -53,7 +52,6 @@ export class FactorCreationStep2Component implements OnInit {
         const property = this.factorSchema.properties[key];
         this.applyResourceSelection(property, key);
       }
-
     });
   }
 
@@ -63,8 +61,8 @@ export class FactorCreationStep2Component implements OnInit {
     this.factor.configuration = configurationWrapper.configuration;
   }
 
-  isFido2Factor(){
-    return this.factor.type.includes("fido2-am-factor");
+  isFido2Factor() {
+    return this.factor.type.includes('fido2-am-factor');
   }
 
   private applyResourceSelection(property, propertyName?) {
@@ -76,20 +74,28 @@ export class FactorCreationStep2Component implements OnInit {
         }
       }
     }
-      if ('graviteeResource' === property.widget || 'graviteeResource' === propertyName) {
+    if ('graviteeResource' === property.widget || 'graviteeResource' === propertyName) {
       if (this.resources && this.resources.length > 0) {
-        const resourcePluginTypeToCategories = this.resourcePlugins.reduce((accumulator, currentPlugin) => ({ ...accumulator, [currentPlugin.id]: currentPlugin.categories}), {});
-        const factorPluginTypeToCategories = this.factorPlugins.reduce((accumulator, currentPlugin) => ({ ...accumulator, [currentPlugin.id]: currentPlugin.category}), {});
+        const resourcePluginTypeToCategories = this.resourcePlugins.reduce(
+          (accumulator, currentPlugin) => ({ ...accumulator, [currentPlugin.id]: currentPlugin.categories }),
+          {},
+        );
+        const factorPluginTypeToCategories = this.factorPlugins.reduce(
+          (accumulator, currentPlugin) => ({ ...accumulator, [currentPlugin.id]: currentPlugin.category }),
+          {},
+        );
         const factorCategory = factorPluginTypeToCategories[this.factor.type];
         // filter resources with category compatible with the Factor Plugin one
-        const filteredResources = this.resources.filter(r =>
-          factorCategory === 'any' ||
-          (resourcePluginTypeToCategories[r.type] && resourcePluginTypeToCategories[r.type].filter(resourceCategory => resourceCategory === factorCategory).length > 0)
+        const filteredResources = this.resources.filter(
+          (r) =>
+            factorCategory === 'any' ||
+            (resourcePluginTypeToCategories[r.type] &&
+              resourcePluginTypeToCategories[r.type].filter((resourceCategory) => resourceCategory === factorCategory).length > 0),
         );
-          property['x-schema-form'] = { 'type' : 'select' };
+        property['x-schema-form'] = { type: 'select' };
         if (filteredResources.length > 0) {
-          property.enum = filteredResources.map(r => r.id);
-          property['x-schema-form'].titleMap = filteredResources.reduce(function(map, obj) {
+          property.enum = filteredResources.map((r) => r.id);
+          property['x-schema-form'].titleMap = filteredResources.reduce(function (map, obj) {
             map[obj.id] = obj.name;
             return map;
           }, {});

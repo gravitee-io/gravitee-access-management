@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {inject, TestBed} from "@angular/core/testing";
-import {GroupsResolver} from "./groups.resolver";
+import { inject, TestBed } from '@angular/core/testing';
+
+import { GroupsResolver } from './groups.resolver';
 
 describe('GroupsResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-    providers: [GroupsResolver],
-    teardown: { destroyAfterEach: false }
-});
+      providers: [GroupsResolver],
+      teardown: { destroyAfterEach: false },
+    });
   });
 
   it('should ...', inject([GroupsResolver], (service: GroupsResolver) => {

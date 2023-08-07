@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild} from '@angular/core';
-import {ActivatedRoute} from '@angular/router';
-import {ProviderService} from '../../../services/provider.service';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import moment from 'moment';
-import { filter } from 'lodash';
-import { BotDetectionService } from 'app/services/bot-detection.service';
+
+import { BotDetectionService } from '../../../services/bot-detection.service';
+import { ProviderService } from '../../../services/provider.service';
 
 @Component({
   selector: 'app-account-settings',
   templateUrl: './account-settings.component.html',
-  styleUrls: ['./account-settings.component.scss']
+  styleUrls: ['./account-settings.component.scss'],
 })
 export class AccountSettingsComponent implements OnInit, OnChanges {
   @Output() onSavedAccountSettings = new EventEmitter<any>();
@@ -48,29 +48,27 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
   private defaultMFAChallengeAttemptsResetTimeUnit = 'minutes';
 
   availableFields = [
-    {"key" : "email", "label" : "Email", "type" : "email"},
-    {"key" : "username", "label" : "Username", "type" : "text"},
+    { key: 'email', label: 'Email', type: 'email' },
+    { key: 'username', label: 'Username', type: 'text' },
   ];
 
   newField = {};
 
   selectedFields = [];
 
-  constructor(private route: ActivatedRoute,
-              private providerService: ProviderService,
-              private botDetectionService: BotDetectionService) {}
+  constructor(private route: ActivatedRoute, private providerService: ProviderService, private botDetectionService: BotDetectionService) {}
 
   ngOnInit(): void {
     this.domainId = this.route.snapshot.data['domain']?.id;
     this.initDateValues();
     this.initSelectedFields();
-    this.providerService.findUserProvidersByDomain(this.domainId).subscribe(response => {
+    this.providerService.findUserProvidersByDomain(this.domainId).subscribe((response) => {
       this.userProviders = response;
     });
 
-    this.botDetectionService.findByDomain(this.domainId).subscribe(response => {
+    this.botDetectionService.findByDomain(this.domainId).subscribe((response) => {
       this.botDetectionPlugins = response;
-    })
+    });
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -84,11 +82,17 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
   save() {
     let accountSettings = Object.assign({}, this.accountSettings);
     if (accountSettings.inherited) {
-      accountSettings = { 'inherited' : true };
+      accountSettings = { inherited: true };
     } else {
       // set duration values
-      accountSettings.loginAttemptsResetTime = this.getDuration(accountSettings.loginAttemptsResetTime, accountSettings.loginAttemptsResetTimeUnitTime);
-      accountSettings.accountBlockedDuration = this.getDuration(accountSettings.accountBlockedDuration, accountSettings.accountBlockedDurationUnitTime);
+      accountSettings.loginAttemptsResetTime = this.getDuration(
+        accountSettings.loginAttemptsResetTime,
+        accountSettings.loginAttemptsResetTimeUnitTime,
+      );
+      accountSettings.accountBlockedDuration = this.getDuration(
+        accountSettings.accountBlockedDuration,
+        accountSettings.accountBlockedDurationUnitTime,
+      );
       delete accountSettings.loginAttemptsResetTimeUnitTime;
       delete accountSettings.accountBlockedDurationUnitTime;
 
@@ -104,8 +108,11 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
         delete accountSettings.botDetectionPlugin;
       }
 
-      //set duration value for MFA challenge attempts
-      accountSettings.mfaChallengeAttemptsResetTime = this.getDuration(accountSettings.mfaChallengeAttemptsResetTime, accountSettings.mfaChallengeAttemptsResetTimeUnit);
+      // set duration value for MFA challenge attempts
+      accountSettings.mfaChallengeAttemptsResetTime = this.getDuration(
+        accountSettings.mfaChallengeAttemptsResetTime,
+        accountSettings.mfaChallengeAttemptsResetTimeUnit,
+      );
       delete accountSettings.mfaChallengeAttemptsResetTimeUnit;
     }
 
@@ -114,27 +121,27 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
   }
 
   onFieldSelected(event) {
-    this.newField = {...this.availableFields.filter(f=> f.key === event.value)[0]};
+    this.newField = { ...this.availableFields.filter((f) => f.key === event.value)[0] };
   }
 
   addField() {
-    this.selectedFields.push({...this.newField});
+    this.selectedFields.push({ ...this.newField });
     this.selectedFields = [...this.selectedFields];
     this.newField = {};
     this.formChanged = true;
   }
 
   removeField(key) {
-    let idx = this.selectedFields.findIndex(item => item.key === key);
+    const idx = this.selectedFields.findIndex((item) => item.key === key);
     if (idx >= 0) {
-        this.selectedFields.splice(idx, 1);
-        this.selectedFields = [...this.selectedFields];
-        this.formChanged = true;
+      this.selectedFields.splice(idx, 1);
+      this.selectedFields = [...this.selectedFields];
+      this.formChanged = true;
     }
   }
 
   isFieldSelected(key) {
-    return this.selectedFields.findIndex(item => item.key === key) >= 0;
+    return this.selectedFields.findIndex((item) => item.key === key) >= 0;
   }
 
   enableInheritMode(event) {
@@ -153,9 +160,11 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
     // apply default values
     this.accountSettings.maxLoginAttempts = this.accountSettings.maxLoginAttempts || this.defaultMaxAttempts;
     this.accountSettings.loginAttemptsResetTime = this.accountSettings.loginAttemptsResetTime || this.defaultLoginAttemptsResetTime;
-    this.accountSettings.loginAttemptsResetTimeUnitTime = this.accountSettings.loginAttemptsResetTimeUnitTime || this.defaultLoginAttemptsResetTimeUnit;
+    this.accountSettings.loginAttemptsResetTimeUnitTime =
+      this.accountSettings.loginAttemptsResetTimeUnitTime || this.defaultLoginAttemptsResetTimeUnit;
     this.accountSettings.accountBlockedDuration = this.accountSettings.accountBlockedDuration || this.defaultAccountBlockedDuration;
-    this.accountSettings.accountBlockedDurationUnitTime = this.accountSettings.accountBlockedDurationUnitTime || this.defaultAccountBlockedDurationUnit;
+    this.accountSettings.accountBlockedDurationUnitTime =
+      this.accountSettings.accountBlockedDurationUnitTime || this.defaultAccountBlockedDurationUnit;
   }
 
   isBrutForceAuthenticationEnabled() {
@@ -333,17 +342,21 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
 
   private getHumanizeDuration(value) {
     const humanizeDate = moment.duration(value, 'seconds').humanize().split(' ');
-    const humanizeDateValue = (humanizeDate.length === 2)
-      ? (humanizeDate[0] === 'a' || humanizeDate[0] === 'an') ? 1 : humanizeDate[0]
-      : value;
-    const humanizeDateUnit = (humanizeDate.length === 2)
-      ? humanizeDate[1].endsWith('s') ? humanizeDate[1] : humanizeDate[1] + 's'
-      : humanizeDate[2].endsWith('s') ? humanizeDate[2] : humanizeDate[2] + 's';
-    return new Array(humanizeDateValue, humanizeDateUnit);
+    const humanizeDateValue =
+      humanizeDate.length === 2 ? (humanizeDate[0] === 'a' || humanizeDate[0] === 'an' ? 1 : humanizeDate[0]) : value;
+    const humanizeDateUnit =
+      humanizeDate.length === 2
+        ? humanizeDate[1].endsWith('s')
+          ? humanizeDate[1]
+          : humanizeDate[1] + 's'
+        : humanizeDate[2].endsWith('s')
+        ? humanizeDate[2]
+        : humanizeDate[2] + 's';
+    return [humanizeDateValue, humanizeDateUnit];
   }
 
   private getDuration(value, unit) {
-    return moment.duration(parseInt(value), unit).asSeconds();
+    return moment.duration(parseInt(value, 10), unit).asSeconds();
   }
 
   isMFAChallengeBrutForceAuthenticationEnabled() {
@@ -356,10 +369,10 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
 
     // apply default values
     this.accountSettings.mfaChallengeMaxAttempts = this.accountSettings.mfaChallengeMaxAttempts || this.defaultMFAChallengeMaxAttempts;
-    this.accountSettings.mfaChallengeAttemptsResetTime = this.accountSettings.mfaChallengeAttemptsResetTime
-      || this.defaultMFAChallengeAttemptsResetTime;
-    this.accountSettings.mfaChallengeAttemptsResetTimeUnit = this.accountSettings.mfaChallengeAttemptsResetTimeUnit
-      || this.defaultMFAChallengeAttemptsResetTimeUnit;
+    this.accountSettings.mfaChallengeAttemptsResetTime =
+      this.accountSettings.mfaChallengeAttemptsResetTime || this.defaultMFAChallengeAttemptsResetTime;
+    this.accountSettings.mfaChallengeAttemptsResetTimeUnit =
+      this.accountSettings.mfaChallengeAttemptsResetTimeUnit || this.defaultMFAChallengeAttemptsResetTimeUnit;
   }
 
   enableMFAChallengeSendVerifyAlertEmail(event) {

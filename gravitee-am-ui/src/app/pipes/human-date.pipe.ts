@@ -14,19 +14,17 @@
  * limitations under the License.
  */
 import { Pipe, PipeTransform } from '@angular/core';
-import moment from "moment";
+import moment from 'moment';
 
 @Pipe({
-  name: 'humanDate'
+  name: 'humanDate',
 })
 export class HumanDatePipe implements PipeTransform {
-
-  transform(value: any, args?: any): any {
+  transform(value: any): any {
     if (!moment().subtract(1, 'weeks').isAfter(value)) {
       return moment(value).fromNow();
     } else {
       return moment(value).format('D MMM. YYYY HH:mm:ss');
     }
   }
-
 }

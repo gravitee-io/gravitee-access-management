@@ -13,20 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, Inject, OnInit} from '@angular/core';
-import {MAT_DIALOG_DATA, MatDialog, MatDialogRef} from "@angular/material/dialog";
-import {ActivatedRoute, Router} from "@angular/router";
-import {SnackbarService} from "../../../../../services/snackbar.service";
-import {DialogService} from "../../../../../services/dialog.service";
-import {UserService} from "../../../../../services/user.service";
-import {RoleService} from "../../../../../services/role.service";
-import {OrganizationService} from "../../../../../services/organization.service";
-import {AuthService} from "../../../../../services/auth.service";
+import { Component, Inject, OnInit } from '@angular/core';
+import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { ActivatedRoute, Router } from '@angular/router';
+import { filter, switchMap, tap } from 'rxjs/operators';
+
+import { SnackbarService } from '../../../../../services/snackbar.service';
+import { DialogService } from '../../../../../services/dialog.service';
+import { UserService } from '../../../../../services/user.service';
+import { RoleService } from '../../../../../services/role.service';
+import { OrganizationService } from '../../../../../services/organization.service';
+import { AuthService } from '../../../../../services/auth.service';
 
 @Component({
   selector: 'app-user-roles',
   templateUrl: './roles.component.html',
-  styleUrls: ['./roles.component.scss']
+  styleUrls: ['./roles.component.scss'],
 })
 export class UserRolesComponent implements OnInit {
   private domainId: string;
@@ -36,15 +38,16 @@ export class UserRolesComponent implements OnInit {
   dynamicRoles: any[];
   editMode: boolean;
 
-  constructor(private route: ActivatedRoute,
-              private router: Router,
-              private snackbarService: SnackbarService,
-              private dialogService: DialogService,
-              private userService: UserService,
-              private organizationService: OrganizationService,
-              private authService: AuthService,
-              private dialog: MatDialog) {
-  }
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private snackbarService: SnackbarService,
+    private dialogService: DialogService,
+    private userService: UserService,
+    private organizationService: OrganizationService,
+    private authService: AuthService,
+    private dialog: MatDialog,
+  ) {}
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
@@ -74,10 +77,10 @@ export class UserRolesComponent implements OnInit {
   get totalRoles() {
     let count = 0;
     if (!this.isUserRoleEmpty) {
-      count += this.userRoles.length
+      count += this.userRoles.length;
     }
     if (!this.isDynamicUserRoleEmpty) {
-      count += this.dynamicRoles.length
+      count += this.dynamicRoles.length;
     }
     return count;
   }
@@ -87,11 +90,11 @@ export class UserRolesComponent implements OnInit {
   }
 
   add() {
-    let dialogRef = this.dialog.open(AddUserRolesComponent, {
+    const dialogRef = this.dialog.open(AddUserRolesComponent, {
       width: '700px',
-      data: {domain: this.domainId, organizationContext: this.organizationContext, assignedRoles: this.userRoles}
+      data: { domain: this.domainId, organizationContext: this.organizationContext, assignedRoles: this.userRoles },
     });
-    dialogRef.afterClosed().subscribe(roles => {
+    dialogRef.afterClosed().subscribe((roles) => {
       if (roles) {
         this.assignRoles(roles);
       }
@@ -102,27 +105,30 @@ export class UserRolesComponent implements OnInit {
     event.preventDefault();
     this.dialogService
       .confirm('Revoke role', 'Are you sure you want to remove role from the user ?')
-      .subscribe(res => {
-        if (res) {
-          this.userService.revokeRole(this.domainId, this.user.id, role.id, this.organizationContext).subscribe(user => {
-            this.user = user;
-            this.route.snapshot.data['user'] = user;
-            this.snackbarService.open('Role ' + role.name + ' revoked');
-            this.loadRoles();
-          });
-        }
-      });
+      .pipe(
+        filter((res) => res),
+        switchMap(() => this.userService.revokeRole(this.domainId, this.user.id, role.id, this.organizationContext)),
+        tap((user) => {
+          this.user = user;
+          this.route.snapshot.data['user'] = user;
+          this.snackbarService.open('Role ' + role.name + ' revoked');
+          this.loadRoles();
+        }),
+      )
+      .subscribe();
   }
 
   loadRoles() {
-    const userRolesCall = this.organizationContext ? this.organizationService.userRoles(this.user.id) : this.userService.roles(this.domainId, this.user.id);
-    userRolesCall.subscribe(roles => {
+    const userRolesCall = this.organizationContext
+      ? this.organizationService.userRoles(this.user.id)
+      : this.userService.roles(this.domainId, this.user.id);
+    userRolesCall.subscribe((roles) => {
       this.userRoles = roles;
     });
   }
 
   private assignRoles(roles) {
-    this.userService.assignRoles(this.domainId, this.user.id, roles, this.organizationContext).subscribe(user => {
+    this.userService.assignRoles(this.domainId, this.user.id, roles, this.organizationContext).subscribe((user) => {
       this.user = user;
       this.route.snapshot.data['user'] = user;
       this.snackbarService.open('Role(s) assigned');
@@ -141,12 +147,14 @@ export class AddUserRolesComponent implements OnInit {
   roles: any[];
   initialSelectedRoles: any[];
   assignedRoles: string[] = [];
-  hasChanged: boolean = false;
+  hasChanged = false;
 
-  constructor(@Inject(MAT_DIALOG_DATA) public data: any,
-              public dialogRef: MatDialogRef<AddUserRolesComponent>,
-              private roleService: RoleService,
-              private organizationService: OrganizationService) {
+  constructor(
+    @Inject(MAT_DIALOG_DATA) public data: any,
+    public dialogRef: MatDialogRef<AddUserRolesComponent>,
+    private roleService: RoleService,
+    private organizationService: OrganizationService,
+  ) {
     this.domainId = data.domain;
     this.organizationContext = data.organizationContext;
     this.initialSelectedRoles = data.assignedRoles;
@@ -154,11 +162,11 @@ export class AddUserRolesComponent implements OnInit {
 
   ngOnInit() {
     if (this.organizationContext) {
-      this.organizationService.roles('MANAGEMENT').subscribe(roles => {
+      this.organizationService.roles('MANAGEMENT').subscribe((roles) => {
         this.roles = roles;
-      })
+      });
     } else {
-      this.roleService.findAllByDomain(this.domainId).subscribe(roles => {
+      this.roleService.findAllByDomain(this.domainId).subscribe((roles) => {
         this.roles = roles;
       });
     }

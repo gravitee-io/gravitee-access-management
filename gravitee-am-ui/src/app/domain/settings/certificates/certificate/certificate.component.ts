@@ -15,62 +15,67 @@
  */
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { filter, switchMap, tap } from 'rxjs/operators';
+
 import { OrganizationService } from '../../../../services/organization.service';
-import { CertificateService}  from '../../../../services/certificate.service';
+import { CertificateService } from '../../../../services/certificate.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { DialogService } from '../../../../services/dialog.service';
 
 @Component({
   selector: 'app-certificate',
   templateUrl: './certificate.component.html',
-  styleUrls: ['./certificate.component.scss']
+  styleUrls: ['./certificate.component.scss'],
 })
 export class CertificateComponent implements OnInit {
   private domainId: string;
-  configurationIsValid: boolean = true;
-  configurationPristine: boolean = true;
+  configurationIsValid = true;
+  configurationPristine = true;
   certificate: any;
   certificateSchema: any;
   certificateConfiguration: any;
   updateCertificateConfiguration: any;
 
-  constructor(private route: ActivatedRoute,
-              private organizationService: OrganizationService,
-              private certificateService: CertificateService,
-              private snackbarService: SnackbarService,
-              private router: Router,
-              private dialogService: DialogService) { }
+  constructor(
+    private route: ActivatedRoute,
+    private organizationService: OrganizationService,
+    private certificateService: CertificateService,
+    private snackbarService: SnackbarService,
+    private router: Router,
+    private dialogService: DialogService,
+  ) {}
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
     this.certificate = this.route.snapshot.data['certificate'];
     this.certificateConfiguration = JSON.parse(this.certificate.configuration);
     this.updateCertificateConfiguration = this.certificateConfiguration;
-    this.organizationService.certificateSchema(this.certificate.type).subscribe(data => this.certificateSchema = data);
+    this.organizationService.certificateSchema(this.certificate.type).subscribe((data) => (this.certificateSchema = data));
   }
 
   update() {
     this.certificate.configuration = JSON.stringify(this.updateCertificateConfiguration);
-    this.certificateService.update(this.domainId, this.certificate.id, this.certificate).subscribe(data => {
-      this.snackbarService.open("Certificate updated");
+    this.certificateService.update(this.domainId, this.certificate.id, this.certificate).subscribe((data) => {
+      this.snackbarService.open('Certificate updated');
       this.certificate = data;
       this.certificateConfiguration = JSON.parse(this.certificate.configuration);
       this.updateCertificateConfiguration = this.certificateConfiguration;
-    })
+    });
   }
 
   delete(event) {
     event.preventDefault();
     this.dialogService
       .confirm('Delete Certificate', 'Are you sure you want to delete this certificate ?')
-      .subscribe(res => {
-        if (res) {
-          this.certificateService.delete(this.domainId, this.certificate.id).subscribe(() => {
-            this.snackbarService.open("Certificate deleted");
-            this.router.navigate(['..'], { relativeTo: this.route });
-          });
-        }
-      });
+      .pipe(
+        filter((res) => res),
+        switchMap(() => this.certificateService.delete(this.domainId, this.certificate.id)),
+        tap(() => {
+          this.snackbarService.open('Certificate deleted');
+          this.router.navigate(['..'], { relativeTo: this.route });
+        }),
+      )
+      .subscribe();
   }
 
   enableCertificateUpdate(configurationWrapper) {

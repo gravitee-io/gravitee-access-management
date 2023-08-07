@@ -13,18 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, HostListener, OnInit, ViewChild} from '@angular/core';
-import {ActivatedRoute} from '@angular/router';
+import { Component, HostListener, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import '@gravitee/ui-components/wc/gv-policy-studio';
-import {OrganizationService} from '../../../../../services/organization.service';
-import {SnackbarService} from '../../../../../services/snackbar.service';
-import {ApplicationService} from '../../../../../services/application.service';
-import {DialogService} from '../../../../../services/dialog.service';
+import { filter, switchMap, tap } from 'rxjs/operators';
+
+import { OrganizationService } from '../../../../../services/organization.service';
+import { SnackbarService } from '../../../../../services/snackbar.service';
+import { ApplicationService } from '../../../../../services/application.service';
+import { DialogService } from '../../../../../services/dialog.service';
 
 @Component({
   selector: 'app-application-flows',
   templateUrl: './flows.component.html',
-  styleUrls: ['./flows.component.scss']
+  styleUrls: ['./flows.component.scss'],
 })
 export class ApplicationFlowsComponent implements OnInit {
   private domainId: string;
@@ -34,14 +36,15 @@ export class ApplicationFlowsComponent implements OnInit {
   flowSchema: string;
   documentation: string;
 
-  @ViewChild('studio', {static: true}) studio;
+  @ViewChild('studio', { static: true }) studio;
 
-  constructor(private route: ActivatedRoute,
-              private organizationService: OrganizationService,
-              private applicationService: ApplicationService,
-              private snackbarService: SnackbarService,
-              private dialogService: DialogService) {
-  }
+  constructor(
+    private route: ActivatedRoute,
+    private organizationService: OrganizationService,
+    private applicationService: ApplicationService,
+    private snackbarService: SnackbarService,
+    private dialogService: DialogService,
+  ) {}
 
   ngOnInit(): void {
     this.domainId = this.route.snapshot.data['domain']?.id;
@@ -54,28 +57,30 @@ export class ApplicationFlowsComponent implements OnInit {
   @HostListener(':gv-policy-studio:fetch-documentation', ['$event.detail'])
   onFetchDocumentation(detail) {
     const policy = detail.policy;
-    this.organizationService.policyDocumentation(policy.id).subscribe((response) => {
-      this.studio.nativeElement.documentation = {
-        content: response,
-        image: policy.icon,
-        id: policy.id
-      };
-    }, () => {
-      this.studio.nativeElement.documentation = null;
-    });
+    this.organizationService.policyDocumentation(policy.id).subscribe(
+      (response) => {
+        this.studio.nativeElement.documentation = {
+          content: response,
+          image: policy.icon,
+          id: policy.id,
+        };
+      },
+      () => {
+        this.studio.nativeElement.documentation = null;
+      },
+    );
   }
 
   _stringifyConfiguration(step) {
     if (step.configuration != null) {
       const configuration = typeof step.configuration === 'string' ? step.configuration : JSON.stringify(step.configuration);
-      return {...step, configuration};
+      return { ...step, configuration };
     }
     return step;
   }
 
   @HostListener(':gv-policy-studio:save', ['$event.detail'])
-  onSave({definition}) {
-
+  onSave({ definition }) {
     const flows = definition.flows.map((flow) => {
       delete flow.icon;
       delete flow.createdAt;
@@ -87,66 +92,76 @@ export class ApplicationFlowsComponent implements OnInit {
 
     this.applicationService.updateFlows(this.domainId, this.application.id, flows).subscribe((updatedFlows) => {
       this.studio.nativeElement.saved();
-      this.definition = { ...this.definition, flows: updatedFlows};
+      this.definition = { ...this.definition, flows: updatedFlows };
       this.snackbarService.open('Flows updated');
     });
-
   }
 
   @HostListener(':gv-expression-language:ready', ['$event.detail'])
-  fetchSpelGrammar ({currentTarget}) {
-    this.organizationService.spelGrammar().toPromise().then((response) => {
-      currentTarget.grammar = response;
-    });
-  };
+  fetchSpelGrammar({ currentTarget }) {
+    this.organizationService
+      .spelGrammar()
+      .toPromise()
+      .then((response) => {
+        currentTarget.grammar = response;
+      });
+  }
 
   enableInheritMode(event) {
     this.dialogService
       .confirm('Inherit Flows', 'Are you sure you want to change the execution flows behavior ?')
-      .subscribe(res => {
-        if (res) {
-          const settings = {
-            'settings' : {
-              'advanced' : {
-                'flowsInherited' : event.checked
-              }
-            }
-          };
-          this.applicationService.patch(this.domainId, this.application.id, settings).subscribe(data => {
-            this.application = data;
-            this.route.snapshot.parent.parent.data['application'] = this.application;
-            this.snackbarService.open('Application updated');
-          });
-        } else {
-          event.source.checked = !event.checked;
-        }
-      });
+      .pipe(
+        filter((res) => {
+          if (res === false) {
+            event.source.checked = !event.checked;
+          }
+          return res;
+        }),
+        switchMap(() =>
+          this.applicationService.patch(this.domainId, this.application.id, {
+            settings: {
+              advanced: {
+                flowsInherited: event.checked,
+              },
+            },
+          }),
+        ),
+        tap((data) => {
+          this.application = data;
+          this.route.snapshot.parent.parent.data['application'] = this.application;
+          this.snackbarService.open('Application updated');
+        }),
+      )
+      .subscribe();
   }
 
   isInherited() {
-    return this.application &&
+    return (
+      this.application &&
       this.application.settings &&
       this.application.settings.advanced &&
-      this.application.settings.advanced.flowsInherited;
+      this.application.settings.advanced.flowsInherited
+    );
   }
 
   private initPolicies() {
     this.policies = this.route.snapshot.data['policies'] || [];
     const factors = this.route.snapshot.data['factors'] || [];
     const appFactorIds = this.application.factors || [];
-    const filteredFactors = factors.filter(f => appFactorIds.includes(f.id))
-                                   .filter(f => f.factorType && f.factorType.toUpperCase() != 'RECOVERY_CODE');
-    this.policies.forEach(policy => {
-      let policySchema = JSON.parse(policy.schema);
+    const filteredFactors = factors
+      .filter((f) => appFactorIds.includes(f.id))
+      .filter((f) => f.factorType && f.factorType.toUpperCase() !== 'RECOVERY_CODE');
+    this.policies.forEach((policy) => {
+      const policySchema = JSON.parse(policy.schema);
       if (policySchema.properties) {
         for (const key in policySchema.properties) {
           if ('graviteeFactor' === policySchema.properties[key].widget) {
-            policySchema.properties[key]['x-schema-form'] = { 'type' : 'select' };
+            policySchema.properties[key]['x-schema-form'] = { type: 'select' };
             policySchema.properties[key].enum = [''];
-            policySchema.properties[key]['x-schema-form'].titleMap = { '' : 'None' };
+            policySchema.properties[key]['x-schema-form'].titleMap = { '': 'None' };
             if (filteredFactors.length > 0) {
-              policySchema.properties[key].enum = policySchema.properties[key].enum.concat(filteredFactors.map(f => f.id));
-              filteredFactors.forEach(obj => {
+              policySchema.properties[key].enum = policySchema.properties[key].enum.concat(filteredFactors.map((f) => f.id));
+              filteredFactors.forEach((obj) => {
                 policySchema.properties[key]['x-schema-form'].titleMap[obj.id] = obj.name;
               });
             }
@@ -157,4 +172,3 @@ export class ApplicationFlowsComponent implements OnInit {
     });
   }
 }
-

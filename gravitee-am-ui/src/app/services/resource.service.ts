@@ -16,35 +16,35 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+
 import { AppConfig } from '../../config/app.config';
 
 @Injectable()
 export class ResourceService {
   private resourcesURL = AppConfig.settings.domainBaseURL;
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
-  findByDomain(domainId): Observable<any>  {
+  findByDomain(domainId): Observable<any> {
     return this.http.get<any>(this.resourcesURL + domainId + '/resources');
   }
 
-  get(domainId, id): Observable<any>  {
+  get(domainId, id): Observable<any> {
     return this.http.get<any>(this.resourcesURL + domainId + '/resources/' + id);
   }
 
-  create(domainId, resource): Observable<any>  {
+  create(domainId, resource): Observable<any> {
     return this.http.post<any>(this.resourcesURL + domainId + '/resources', resource);
   }
 
-  update(domainId, id, resource): Observable<any>  {
+  update(domainId, id, resource): Observable<any> {
     return this.http.put<any>(this.resourcesURL + domainId + '/resources/' + id, {
-      'name' : resource.name,
-      'configuration' : resource.configuration
+      name: resource.name,
+      configuration: resource.configuration,
     });
   }
 
-  delete(domainId, id): Observable<any>  {
+  delete(domainId, id): Observable<any> {
     return this.http.delete<any>(this.resourcesURL + domainId + '/resources/' + id);
   }
-
 }

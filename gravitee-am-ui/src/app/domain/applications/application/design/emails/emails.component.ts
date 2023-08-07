@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 import { Component } from '@angular/core';
-import { ActivatedRoute } from "@angular/router";
-import { EmailTemplateFactoryService } from "../../../../../services/email.template.factory.service";
+import { ActivatedRoute } from '@angular/router';
+
+import { EmailTemplateFactoryService } from '../../../../../services/email.template.factory.service';
 
 @Component({
   selector: 'app-application-emails',
   templateUrl: './emails.component.html',
-  styleUrls: ['./emails.component.scss']
+  styleUrls: ['./emails.component.scss'],
 })
 export class ApplicationEmailsComponent {
   emails: any[];
@@ -39,9 +40,9 @@ export class ApplicationEmailsComponent {
 
   getEmails() {
     return this.emailTemplateFactoryService
-      .findBy( email => email.template !== "CERTIFICATE_EXPIRATION")
-      .map(email => {
-        email.enabled = email.template === "RESET_PASSWORD" ? this.allowResetPassword() : this.applicationSettingsValid();
+      .findBy((email) => email.template !== 'CERTIFICATE_EXPIRATION')
+      .map((email) => {
+        email.enabled = email.template === 'RESET_PASSWORD' ? this.allowResetPassword() : this.applicationSettingsValid();
         return email;
       });
   }
@@ -51,8 +52,10 @@ export class ApplicationEmailsComponent {
       return this.application.type !== 'service';
     }
     if (this.application.settings && this.application.settings.oauth && this.application.settings.oauth.grantTypes) {
-      return this.application.settings.oauth.grantTypes.includes('authorization_code') ||
-        this.application.settings.oauth.grantTypes.includes('implicit');
+      return (
+        this.application.settings.oauth.grantTypes.includes('authorization_code') ||
+        this.application.settings.oauth.grantTypes.includes('implicit')
+      );
     }
     return false;
   }

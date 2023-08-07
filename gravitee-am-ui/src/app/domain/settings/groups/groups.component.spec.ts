@@ -23,10 +23,9 @@ describe('GroupsComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    declarations: [GroupsComponent],
-    teardown: { destroyAfterEach: false }
-})
-    .compileComponents();
+      declarations: [GroupsComponent],
+      teardown: { destroyAfterEach: false },
+    }).compileComponents();
   }));
 
   beforeEach(() => {

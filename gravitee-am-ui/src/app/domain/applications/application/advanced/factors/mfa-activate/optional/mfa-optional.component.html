@@ -17,15 +17,19 @@
 -->
 <form>
   <mat-form-field appearance="outline" floatLabel="always" fxFlex="50">
-    <input matInput type="number" placeholder="Duration" name="skipTimeSecond" min="0" [min]="0"
-           [value]="displaySkipTime()"
-           (keyup)="onSkipTimeInEvent($event)">
+    <input
+      matInput
+      type="number"
+      placeholder="Duration"
+      name="skipTimeSecond"
+      min="0"
+      [min]="0"
+      [value]="displaySkipTime()"
+      (keyup)="onSkipTimeInEvent($event)"
+    />
   </mat-form-field>
-  <mat-form-field appearance="outline" floatLabel="always" fxFlex="50" style="margin-left: 5px;">
-    <mat-select placeholder="Unit"
-                name="skipTimeUnit"
-                [value]="displaySkipUnit()"
-                (selectionChange)="onSkipTimeUnitEvent($event)">
+  <mat-form-field appearance="outline" floatLabel="always" fxFlex="50" style="margin-left: 5px">
+    <mat-select placeholder="Unit" name="skipTimeUnit" [value]="displaySkipUnit()" (selectionChange)="onSkipTimeUnitEvent($event)">
       <mat-option value="seconds">SECONDS</mat-option>
       <mat-option value="minutes">MINUTES</mat-option>
       <mat-option value="hours">HOURS</mat-option>

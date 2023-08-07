@@ -18,25 +18,29 @@
 <div class="gv-page-container">
   <h1 *ngIf="!isEmpty">Roles</h1>
   <div *ngIf="!isEmpty">
-    <ngx-datatable class="material"
-                   #rolesTable
-                   [columnMode]="'flex'"
-                   [headerHeight]="40"
-                   [footerHeight]="40"
-                   [rowHeight]="50"
-                   [rows]='roles'
-                   [groupRowsBy]="'assignableType'"
-                   [groupExpansionDefault]="true">
+    <ngx-datatable
+      class="material"
+      #rolesTable
+      [columnMode]="'flex'"
+      [headerHeight]="40"
+      [footerHeight]="40"
+      [rowHeight]="50"
+      [rows]="roles"
+      [groupRowsBy]="'assignableType'"
+      [groupExpansionDefault]="true"
+    >
       <!-- Group Header Template -->
       <ngx-datatable-group-header [rowHeight]="50">
         <ng-template let-group="group" let-expanded="expanded" ngx-datatable-group-header-template>
-          <div style="padding:5px;">
+          <div style="padding: 5px">
             <a
-              href="javascript:void(0);" style="color: grey; text-decoration: none; font-size: 14px;"
+              href="javascript:void(0);"
+              style="color: grey; text-decoration: none; font-size: 14px"
               [class.datatable-icon-right]="!expanded"
               [class.datatable-icon-down]="expanded"
               title="Expand/Collapse Group"
-              (click)="toggleExpandGroup(group)">
+              (click)="toggleExpandGroup(group)"
+            >
               {{ group.value[0].assignableType | uppercase }}
             </a>
           </div>
@@ -51,11 +55,11 @@
             </div>
             <div class="role-information" fxLayout="column">
               <div fxLayout="row">
-                <a [routerLink]="[row.id]" [queryParams]="{system:row.system}">{{row.name}}</a>
+                <a [routerLink]="[row.id]" [queryParams]="{ system: row.system }">{{ row.name }}</a>
                 <mat-chip-list *ngIf="row.system"><mat-chip>system</mat-chip></mat-chip-list>
                 <mat-chip-list *ngIf="row.defaultRole"><mat-chip color="primary" selected="true">default</mat-chip></mat-chip-list>
               </div>
-              <small>{{row.description}}</small>
+              <small>{{ row.description }}</small>
             </div>
           </div>
         </ng-template>
@@ -64,19 +68,23 @@
       <ngx-datatable-column name="" [flexGrow]="1">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div fxLayout="row" class="gv-table-cell-actions" *hasPermission="['organization_role_delete']">
-            <button *ngIf="!row.system" mat-icon-button (click)="delete(row.id, $event)"><mat-icon matTooltip="Delete">delete</mat-icon></button>
+            <button *ngIf="!row.system" mat-icon-button (click)="delete(row.id, $event)">
+              <mat-icon matTooltip="Delete">delete</mat-icon>
+            </button>
           </div>
         </ng-template>
       </ngx-datatable-column>
     </ngx-datatable>
   </div>
 
-  <app-emptystate *ngIf="isEmpty"
-                  [message]="'Roles will appear here'"
-                  [subMessage]="'Start creating a role'"
-                  [icon]="'supervisor_account'"></app-emptystate>
+  <app-emptystate
+    *ngIf="isEmpty"
+    [message]="'Roles will appear here'"
+    [subMessage]="'Start creating a role'"
+    [icon]="'supervisor_account'"
+  ></app-emptystate>
 
-  <div *hasPermission="['organization_role_create']" [ngClass]="{'gv-add-button': !isEmpty, 'gv-add-button-center': isEmpty}">
+  <div *hasPermission="['organization_role_create']" [ngClass]="{ 'gv-add-button': !isEmpty, 'gv-add-button-center': isEmpty }">
     <a mat-fab color="primary" [routerLink]="['new']">
       <mat-icon>add</mat-icon>
     </a>

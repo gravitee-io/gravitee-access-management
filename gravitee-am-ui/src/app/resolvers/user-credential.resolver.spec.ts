@@ -15,14 +15,14 @@
  */
 import { TestBed, inject } from '@angular/core/testing';
 
-import {UserCredentialResolver} from './user-credential.resolver';
+import { UserCredentialResolver } from './user-credential.resolver';
 
 describe('UserCredentialResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-    providers: [UserCredentialResolver],
-    teardown: { destroyAfterEach: false }
-});
+      providers: [UserCredentialResolver],
+      teardown: { destroyAfterEach: false },
+    });
   });
 
   it('should ...', inject([UserCredentialResolver], (service: UserCredentialResolver) => {

@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from "@angular/router";
-import { SnackbarService } from "../../../../../services/snackbar.service";
-import { DialogService } from "../../../../../services/dialog.service";
-import { UserService } from "../../../../../services/user.service";
-import * as _ from 'lodash';
-import {AuthService} from "../../../../../services/auth.service";
-import {DeviceIdentifiersResolver} from "../../../../../resolvers/device-identifiers.resolver";
+import { ActivatedRoute, Router } from '@angular/router';
+import { filter, switchMap, tap } from 'rxjs/operators';
+
+import { SnackbarService } from '../../../../../services/snackbar.service';
+import { DialogService } from '../../../../../services/dialog.service';
+import { UserService } from '../../../../../services/user.service';
+import { AuthService } from '../../../../../services/auth.service';
 
 @Component({
   selector: 'app-user-devices',
   templateUrl: './devices.component.html',
-  styleUrls: ['./devices.component.scss']
+  styleUrls: ['./devices.component.scss'],
 })
 export class UserDevicesComponent implements OnInit {
   private domainId: string;
@@ -35,34 +35,35 @@ export class UserDevicesComponent implements OnInit {
   devices: any[];
   deviceIdentifiers: any[];
 
-  constructor(private route: ActivatedRoute,
-              private router: Router,
-              private snackbarService: SnackbarService,
-              private dialogService: DialogService,
-              private userService: UserService,
-              private authService: AuthService) {
-  }
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private snackbarService: SnackbarService,
+    private dialogService: DialogService,
+    private userService: UserService,
+    private authService: AuthService,
+  ) {}
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
     this.user = this.route.snapshot.data['user'];
     this.deviceIdentifiers = this.route.snapshot.data['deviceIdentifiers'];
     this.devices = this.route.snapshot.data['devices'];
-    this.consents =  this.route.snapshot.data['consents'];
+    this.consents = this.route.snapshot.data['consents'];
     this.canDelete = this.authService.hasPermissions(['domain_user_device_delete']);
   }
 
-  getApplicationName(appId){
-    const consent = this.consents.find(consent => consent.clientId === appId);
-    if (consent){
+  getApplicationName(appId) {
+    const consent = this.consents.find((consent) => consent.clientId === appId);
+    if (consent) {
       return consent.clientEntity.name;
     }
     return appId;
   }
 
-  getDeviceIdentifierName(id){
-    const deviceIdentifier = this.deviceIdentifiers.find(deviceIdentifier => deviceIdentifier.id === id);
-    if (id && deviceIdentifier){
+  getDeviceIdentifierName(id) {
+    const deviceIdentifier = this.deviceIdentifiers.find((deviceIdentifier) => deviceIdentifier.id === id);
+    if (id && deviceIdentifier) {
       return deviceIdentifier.name;
     }
     return id;
@@ -70,20 +71,21 @@ export class UserDevicesComponent implements OnInit {
 
   remove($event, device) {
     $event.preventDefault();
-    if(this.canDelete){
+    if (this.canDelete) {
       this.dialogService
         .confirm('Remove trusted device', 'Are you sure you want to remove this trusted device ?')
-        .subscribe(res => {
-          if (res) {
-            this.userService.removeDevice(this.domainId, this.user.id, device.id).subscribe(response => {
-              this.snackbarService.open('Device has been deleted deleted');
-              const index = this.devices.indexOf(device);
-              if (index > -1) {
-                this.devices.splice(index, 1);
-              }
-            });
-          }
-        });
+        .pipe(
+          filter((res) => res),
+          switchMap(() => this.userService.removeDevice(this.domainId, this.user.id, device.id)),
+          tap(() => {
+            this.snackbarService.open('Device has been deleted deleted');
+            const index = this.devices.indexOf(device);
+            if (index > -1) {
+              this.devices.splice(index, 1);
+            }
+          }),
+        )
+        .subscribe();
     }
   }
 }

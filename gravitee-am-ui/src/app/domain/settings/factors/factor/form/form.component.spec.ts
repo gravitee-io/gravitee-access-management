@@ -23,10 +23,9 @@ describe('FactorFormComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    declarations: [FactorFormComponent],
-    teardown: { destroyAfterEach: false }
-})
-    .compileComponents();
+      declarations: [FactorFormComponent],
+      teardown: { destroyAfterEach: false },
+    }).compileComponents();
   }));
 
   beforeEach(() => {

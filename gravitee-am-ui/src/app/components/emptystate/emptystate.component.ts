@@ -13,21 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, Input } from '@angular/core';
 
 @Component({
   selector: 'app-emptystate',
   templateUrl: './emptystate.component.html',
-  styleUrls: ['./emptystate.component.scss']
+  styleUrls: ['./emptystate.component.scss'],
 })
-export class EmptystateComponent implements OnInit {
+export class EmptystateComponent {
   @Input() message: string;
   @Input() subMessage: string;
   @Input() icon: string;
-
-  constructor() { }
-
-  ngOnInit() {
-  }
-
 }

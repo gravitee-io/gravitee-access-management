@@ -23,10 +23,9 @@ describe('RolesComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    declarations: [DomainSettingsRolesComponent],
-    teardown: { destroyAfterEach: false }
-})
-    .compileComponents();
+      declarations: [DomainSettingsRolesComponent],
+      teardown: { destroyAfterEach: false },
+    }).compileComponents();
   }));
 
   beforeEach(() => {

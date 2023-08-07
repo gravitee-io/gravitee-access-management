@@ -13,16 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit, ViewChild} from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { MatStepper } from '@angular/material/stepper';
-import {ActivatedRoute, Router} from '@angular/router';
-import {ExtensionGrantService} from '../../../../services/extension-grant.service';
-import {SnackbarService} from '../../../../services/snackbar.service';
+import { ActivatedRoute, Router } from '@angular/router';
+
+import { ExtensionGrantService } from '../../../../services/extension-grant.service';
+import { SnackbarService } from '../../../../services/snackbar.service';
 
 @Component({
   selector: 'app-extension-grant-creation',
   templateUrl: './extension-grant-creation.component.html',
-  styleUrls: ['./extension-grant-creation.component.scss']
+  styleUrls: ['./extension-grant-creation.component.scss'],
 })
 export class ExtensionGrantCreationComponent implements OnInit {
   private domainId: string;
@@ -30,10 +31,12 @@ export class ExtensionGrantCreationComponent implements OnInit {
   configurationIsValid = false;
   @ViewChild('stepper', { static: true }) stepper: MatStepper;
 
-  constructor(private extensionGrantService: ExtensionGrantService,
-              private snackbarService: SnackbarService,
-              private router: Router,
-              private route: ActivatedRoute) { }
+  constructor(
+    private extensionGrantService: ExtensionGrantService,
+    private snackbarService: SnackbarService,
+    private router: Router,
+    private route: ActivatedRoute,
+  ) {}
 
   ngOnInit(): void {
     this.domainId = this.route.snapshot.data['domain']?.id;
@@ -41,17 +44,13 @@ export class ExtensionGrantCreationComponent implements OnInit {
 
   create() {
     this.extensionGrant.configuration = JSON.stringify(this.extensionGrant.configuration);
-    this.extensionGrantService.create(this.domainId, this.extensionGrant).subscribe(data => {
+    this.extensionGrantService.create(this.domainId, this.extensionGrant).subscribe((data) => {
       this.snackbarService.open('Extension grant ' + data.name + ' created');
       this.router.navigate(['..', data.id], { relativeTo: this.route });
     });
   }
 
   stepperValid() {
-    return this.extensionGrant &&
-      this.extensionGrant.name &&
-      this.extensionGrant.grantType &&
-      this.configurationIsValid;
+    return this.extensionGrant && this.extensionGrant.name && this.extensionGrant.grantType && this.configurationIsValid;
   }
-
 }

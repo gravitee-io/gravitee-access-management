@@ -13,50 +13,50 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {enableProdMode} from '@angular/core';
-import {platformBrowserDynamic} from '@angular/platform-browser-dynamic';
-import {AppModule} from './app/app.module';
-import {environment} from './environments/environment';
-import {AppConfig} from './config/app.config';
-import {forkJoin, Observable} from 'rxjs';
+import { enableProdMode } from '@angular/core';
+import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
+import { forkJoin, Observable } from 'rxjs';
 import { loadDefaultTranslations } from '@gravitee/ui-components/src/lib/i18n';
+
+import { AppModule } from './app/app.module';
+import { environment } from './environments/environment';
+import { AppConfig } from './config/app.config';
 
 if (environment.production) {
   enableProdMode();
 }
 
-loadDefaultTranslations().then(_ => {});
+loadDefaultTranslations().then((_) => ({}));
 
-const constants = new Observable(observer => {
-  fetch('constants.json', {method: 'get'}).then(response => {
-    response.json().then(data => {
+const constants = new Observable((observer) => {
+  fetch('constants.json', { method: 'get' }).then((response) => {
+    response.json().then((data) => {
       observer.next(data);
       observer.complete();
-    })
-  })
-});
-
-const build = new Observable(observer => {
-  fetch('build.json', {method: 'get'}).then(response => {
-    response.json().then(data => {
-      observer.next(data);
-      observer.complete();
-    })
-  })
-});
-
-forkJoin([constants, build])
-  .subscribe((response) => {
-    const DEFAULT_ORGANIZATION = ':organizationId';
-    const DEFAULT_ENV = ':environmentId';
-    const PORTAL_TITLE = 'Access Management';
-    const config = {};
-    Object.keys(response[0]).forEach((key) => config[key] = response[0][key]);
-    Object.keys(response[1]).forEach((key) => config[key] = response[1][key]);
-    AppConfig.settings = config;
-    AppConfig.settings.portalTitle = PORTAL_TITLE;
-    AppConfig.settings.organizationBaseURL = AppConfig.settings.baseURL + '/organizations/' + DEFAULT_ORGANIZATION;
-    AppConfig.settings.domainBaseURL = AppConfig.settings.organizationBaseURL + '/environments/' + DEFAULT_ENV + '/domains/'
-
-    platformBrowserDynamic().bootstrapModule(AppModule);
+    });
   });
+});
+
+const build = new Observable((observer) => {
+  fetch('build.json', { method: 'get' }).then((response) => {
+    response.json().then((data) => {
+      observer.next(data);
+      observer.complete();
+    });
+  });
+});
+
+forkJoin([constants, build]).subscribe((response) => {
+  const DEFAULT_ORGANIZATION = ':organizationId';
+  const DEFAULT_ENV = ':environmentId';
+  const PORTAL_TITLE = 'Access Management';
+  const config = {};
+  Object.keys(response[0]).forEach((key) => (config[key] = response[0][key]));
+  Object.keys(response[1]).forEach((key) => (config[key] = response[1][key]));
+  AppConfig.settings = config;
+  AppConfig.settings.portalTitle = PORTAL_TITLE;
+  AppConfig.settings.organizationBaseURL = AppConfig.settings.baseURL + '/organizations/' + DEFAULT_ORGANIZATION;
+  AppConfig.settings.domainBaseURL = AppConfig.settings.organizationBaseURL + '/environments/' + DEFAULT_ENV + '/domains/';
+
+  platformBrowserDynamic().bootstrapModule(AppModule);
+});

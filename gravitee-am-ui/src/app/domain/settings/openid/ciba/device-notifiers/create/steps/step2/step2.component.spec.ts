@@ -15,7 +15,7 @@
  */
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
-import {DeviceNotifierCreationStep2Component} from './step2.component';
+import { DeviceNotifierCreationStep2Component } from './step2.component';
 
 describe('DeviceNotifierCreationStep2Component', () => {
   let component: DeviceNotifierCreationStep2Component;
@@ -23,10 +23,9 @@ describe('DeviceNotifierCreationStep2Component', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    declarations: [DeviceNotifierCreationStep2Component],
-    teardown: { destroyAfterEach: false }
-})
-    .compileComponents();
+      declarations: [DeviceNotifierCreationStep2Component],
+      teardown: { destroyAfterEach: false },
+    }).compileComponents();
   }));
 
   beforeEach(() => {

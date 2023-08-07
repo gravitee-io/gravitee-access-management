@@ -15,7 +15,7 @@
  */
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
-import {DomainAlertsComponent} from './alerts.component';
+import { DomainAlertsComponent } from './alerts.component';
 
 describe('DomainAlertsComponent', () => {
   let component: DomainAlertsComponent;
@@ -23,10 +23,9 @@ describe('DomainAlertsComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    declarations: [DomainAlertsComponent],
-    teardown: { destroyAfterEach: false }
-})
-      .compileComponents();
+      declarations: [DomainAlertsComponent],
+      teardown: { destroyAfterEach: false },
+    }).compileComponents();
   }));
 
   beforeEach(() => {

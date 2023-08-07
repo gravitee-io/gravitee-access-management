@@ -14,18 +14,17 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, Resolve, RouterStateSnapshot } from '@angular/router';
+import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import { Observable } from 'rxjs';
+
 import { FactorService } from '../services/factor.service';
 
 @Injectable()
 export class FactorsResolver implements Resolve<any> {
+  constructor(private factorService: FactorService) {}
 
-  constructor(private factorService: FactorService) { }
-
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
+  resolve(route: ActivatedRouteSnapshot): Observable<any> | Promise<any> | any {
     const domainId = route.parent.data['domain'].id;
     return this.factorService.findByDomain(domainId);
   }
-
 }

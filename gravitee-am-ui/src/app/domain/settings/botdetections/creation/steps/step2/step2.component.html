@@ -16,20 +16,26 @@
 
 -->
 <div fxLayout="column">
-  <p class="gv-plugin-creation-description">
-    Configure your bot detection plugin.
-  </p>
+  <p class="gv-plugin-creation-description">Configure your bot detection plugin.</p>
   <div>
     <form fxLayout="column">
       <div class="gv-form-section">
         <mat-form-field appearance="outline" floatLabel="always">
           <mat-label>Name</mat-label>
-          <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="botDetection.name" required>
+          <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="botDetection.name" required />
           <mat-hint>Bot detection name</mat-hint>
         </mat-form-field>
         <mat-form-field appearance="outline" floatLabel="always">
           <mat-label>Detection type</mat-label>
-          <input matInput type="text" placeholder="Detection type" name="detectionType" [(ngModel)]="botDetection.detectionType" required disabled>
+          <input
+            matInput
+            type="text"
+            placeholder="Detection type"
+            name="detectionType"
+            [(ngModel)]="botDetection.detectionType"
+            required
+            disabled
+          />
           <mat-hint>Type of bot detection</mat-hint>
         </mat-form-field>
       </div>
@@ -40,7 +46,11 @@
           <mat-divider></mat-divider>
         </div>
         <div>
-          <bot-detection-form [botDetectionConfiguration]="configuration" [botDetectionSchema]="botDetectionSchema" (configurationCompleted)="enableBotDetectionCreation($event)"></bot-detection-form>
+          <bot-detection-form
+            [botDetectionConfiguration]="configuration"
+            [botDetectionSchema]="botDetectionSchema"
+            (configurationCompleted)="enableBotDetectionCreation($event)"
+          ></bot-detection-form>
         </div>
       </div>
     </form>

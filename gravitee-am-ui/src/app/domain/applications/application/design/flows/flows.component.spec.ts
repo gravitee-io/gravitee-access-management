@@ -23,10 +23,9 @@ describe('DomainSettingsFlowsComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    declarations: [DomainSettingsFlowsComponent],
-    teardown: { destroyAfterEach: false }
-})
-      .compileComponents();
+      declarations: [DomainSettingsFlowsComponent],
+      teardown: { destroyAfterEach: false },
+    }).compileComponents();
   }));
 
   beforeEach(() => {
@@ -39,4 +38,3 @@ describe('DomainSettingsFlowsComponent', () => {
     expect(component).toBeTruthy();
   });
 });
-

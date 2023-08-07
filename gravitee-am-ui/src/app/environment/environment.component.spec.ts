@@ -20,11 +20,9 @@ import { EnvironmentComponent } from './environment.component';
 describe('HomeComponent', () => {
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    declarations: [
-        EnvironmentComponent
-    ],
-    teardown: { destroyAfterEach: false }
-}).compileComponents();
+      declarations: [EnvironmentComponent],
+      teardown: { destroyAfterEach: false },
+    }).compileComponents();
   }));
 
   it('should create the app', waitForAsync(() => {

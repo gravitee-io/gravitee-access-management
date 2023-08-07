@@ -14,16 +14,18 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { ProviderService } from "../../../services/provider.service";
-import { SnackbarService } from "../../../services/snackbar.service";
-import { DialogService } from "../../../services/dialog.service";
-import {ActivatedRoute, Router} from "@angular/router";
-import {OrganizationService} from "../../../services/organization.service";
+import { ActivatedRoute, Router } from '@angular/router';
+import { filter, switchMap, tap } from 'rxjs/operators';
+
+import { ProviderService } from '../../../services/provider.service';
+import { SnackbarService } from '../../../services/snackbar.service';
+import { DialogService } from '../../../services/dialog.service';
+import { OrganizationService } from '../../../services/organization.service';
 
 @Component({
   selector: 'app-providers',
   templateUrl: './providers.component.html',
-  styleUrls: ['./providers.component.scss']
+  styleUrls: ['./providers.component.scss'],
 })
 export class DomainSettingsProvidersComponent implements OnInit {
   private providers: any[];
@@ -31,13 +33,14 @@ export class DomainSettingsProvidersComponent implements OnInit {
   private organizationContext = false;
   domainId: string;
 
-  constructor(private providerService: ProviderService,
-              private organizationService: OrganizationService,
-              private dialogService: DialogService,
-              private snackbarService: SnackbarService,
-              private route: ActivatedRoute,
-              private router: Router) {
-  }
+  constructor(
+    private providerService: ProviderService,
+    private organizationService: OrganizationService,
+    private dialogService: DialogService,
+    private snackbarService: SnackbarService,
+    private route: ActivatedRoute,
+    private router: Router,
+  ) {}
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
@@ -50,9 +53,9 @@ export class DomainSettingsProvidersComponent implements OnInit {
 
   loadProviders() {
     if (this.organizationContext) {
-      this.organizationService.identityProviders().subscribe(response => this.providers = response);
+      this.organizationService.identityProviders().subscribe((response) => (this.providers = response));
     } else {
-      this.providerService.findByDomain(this.domainId).subscribe(response => this.providers = response);
+      this.providerService.findByDomain(this.domainId).subscribe((response) => (this.providers = response));
     }
   }
 
@@ -88,14 +91,14 @@ export class DomainSettingsProvidersComponent implements OnInit {
     event.preventDefault();
     this.dialogService
       .confirm('Delete Provider', 'Are you sure you want to delete this provider?')
-      .subscribe(res => {
-        if (res) {
-          this.providerService.delete(this.domainId, id, this.organizationContext).subscribe(response => {
-            this.snackbarService.open('Provider deleted');
-            this.loadProviders();
-          });
-        }
-      });
+      .pipe(
+        filter((res) => res),
+        switchMap(() => this.providerService.delete(this.domainId, id, this.organizationContext)),
+        tap(() => {
+          this.snackbarService.open('Provider deleted');
+          this.loadProviders();
+        }),
+      )
+      .subscribe();
   }
-
 }

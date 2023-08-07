@@ -13,20 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, Input, OnInit} from '@angular/core';
-import {ActivatedRoute} from "@angular/router";
+import { Component, Input, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'alert-notifier-creation-step1',
   templateUrl: './step1.component.html',
-  styleUrls: ['./step1.component.scss']
+  styleUrls: ['./step1.component.scss'],
 })
 export class DomainAlertNotifierCreationStep1Component implements OnInit {
   notifiers: any[];
   @Input('alertNotifier') alertNotifier;
 
-  constructor(private route: ActivatedRoute) {
-  }
+  constructor(private route: ActivatedRoute) {}
 
   ngOnInit() {
     this.notifiers = this.route.snapshot.data['notifiers'];

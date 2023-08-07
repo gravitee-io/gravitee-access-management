@@ -13,40 +13,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit, Input} from '@angular/core';
-import {OrganizationService} from "../../../../../../services/organization.service";
-import {ActivatedRoute} from "@angular/router";
-import {IdentityProvider} from "../../../../../../entities/identity-providers/IdentityProvider";
+import { Component, OnInit, Input } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+
+import { OrganizationService } from '../../../../../../services/organization.service';
+import { IdentityProvider } from '../../../../../../entities/identity-providers/IdentityProvider';
 
 @Component({
   selector: 'provider-creation-step1',
   templateUrl: './step1.component.html',
-  styleUrls: ['./step1.component.scss']
+  styleUrls: ['./step1.component.scss'],
 })
 export class ProviderCreationStep1Component implements OnInit {
   identities: IdentityProvider[];
   @Input() provider;
   filter: string;
 
-  constructor(private organizationService: OrganizationService, private route: ActivatedRoute) {
-  }
+  constructor(private organizationService: OrganizationService, private route: ActivatedRoute) {}
 
   ngOnInit() {
     this.filter = '';
     this.identities = this.route.snapshot.data['identities'];
   }
 
-  private initDomainWhitelist(idpType:string) {
+  private initDomainWhitelist(idpType: string) {
     this.provider.domainWhitelist = [];
-    if(idpType === 'google-am-idp'){
-      this.provider.domainWhitelist.push("gmail.com");
+    if (idpType === 'google-am-idp') {
+      this.provider.domainWhitelist.push('gmail.com');
     }
-    if(idpType === 'azure-ad-am-idp'){
-      this.provider.domainWhitelist.push("microsoft.com");
+    if (idpType === 'azure-ad-am-idp') {
+      this.provider.domainWhitelist.push('microsoft.com');
     }
   }
 
-  selectProviderType({id, external}) {
+  selectProviderType({ id, external }) {
     this.provider.external = external === true;
     this.provider.type = id;
     this.initDomainWhitelist(id);
@@ -70,7 +70,7 @@ export class ProviderCreationStep1Component implements OnInit {
       return identities.filter((identity) => {
         let fields = [identity.name.toLowerCase()];
         if (identity.displayName != null) {
-          fields.push(identity.displayName.toLowerCase())
+          fields.push(identity.displayName.toLowerCase());
         }
         if (identity.labels != null) {
           fields = [...fields, ...identity.labels.map((t) => t.toLowerCase().toLowerCase())];
@@ -84,5 +84,4 @@ export class ProviderCreationStep1Component implements OnInit {
   clear() {
     this.filter = '';
   }
-
 }

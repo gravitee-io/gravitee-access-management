@@ -20,9 +20,9 @@ import { EmailResolver } from './email.resolver';
 describe('EmailResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-    providers: [EmailResolver],
-    teardown: { destroyAfterEach: false }
-});
+      providers: [EmailResolver],
+      teardown: { destroyAfterEach: false },
+    });
   });
 
   it('should ...', inject([EmailResolver], (service: EmailResolver) => {

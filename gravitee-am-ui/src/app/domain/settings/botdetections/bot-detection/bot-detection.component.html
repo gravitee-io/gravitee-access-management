@@ -17,19 +17,27 @@
 -->
 <div class="gv-page-container">
   <a [routerLink]="['..']" class="gv-back-link"><small><< Back to bot detection plugins</small></a>
-  <h1>{{botDetection.name}}</h1>
+  <h1>{{ botDetection.name }}</h1>
   <div fxLayout="row">
     <div fxLayout="column" fxFlex="70">
       <form #botDetectionForm="ngForm">
         <div class="gv-form-section">
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Name</mat-label>
-            <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="botDetection.name" required [readonly]="!editMode">
+            <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="botDetection.name" required [readonly]="!editMode" />
             <mat-hint>Bot detection name</mat-hint>
           </mat-form-field>
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Detection type</mat-label>
-            <input matInput type="text" placeholder="Detection type" name="detectionType" [(ngModel)]="botDetection.detectionType" required disabled>
+            <input
+              matInput
+              type="text"
+              placeholder="Detection type"
+              name="detectionType"
+              [(ngModel)]="botDetection.detectionType"
+              required
+              disabled
+            />
             <mat-hint>Type of bot detection</mat-hint>
           </mat-form-field>
         </div>
@@ -40,12 +48,25 @@
             <mat-divider></mat-divider>
           </div>
           <div>
-            <bot-detection-form *ngIf="botDetection" [botDetectionConfiguration]="botDetectionConfiguration" [botDetectionSchema]="botDetectionSchema" (configurationCompleted)="enablebotDetectionUpdate($event)"></bot-detection-form>
+            <bot-detection-form
+              *ngIf="botDetection"
+              [botDetectionConfiguration]="botDetectionConfiguration"
+              [botDetectionSchema]="botDetectionSchema"
+              (configurationCompleted)="enablebotDetectionUpdate($event)"
+            ></bot-detection-form>
           </div>
         </div>
 
         <div fxLayout="row" *ngIf="editMode">
-          <button mat-raised-button [disabled]="(!botDetectionForm.valid || botDetectionForm.pristine) && (!configurationIsValid || configurationPristine) && !formChanged" (click)="update()">SAVE</button>
+          <button
+            mat-raised-button
+            [disabled]="
+              (!botDetectionForm.valid || botDetectionForm.pristine) && (!configurationIsValid || configurationPristine) && !formChanged
+            "
+            (click)="update()"
+          >
+            SAVE
+          </button>
         </div>
       </form>
 
@@ -61,9 +82,7 @@
     <div class="gv-page-description" fxFlex="30">
       <h3>Bot detection</h3>
       <div class="gv-page-description-content">
-        <p>
-          Bot Detection plugins protect your applications against bots. Protected pages are:
-        </p>
+        <p>Bot Detection plugins protect your applications against bots. Protected pages are:</p>
         <ul>
           <li>Sign-In</li>
           <li>Sign-Up</li>
@@ -76,12 +95,20 @@
         <small>1. Import the JavaScript API</small>
 
         <div class="code">
-          <button mat-icon-button matSuffix matTooltip="Copy to clipboard" ngxClipboard [cbContent]="getSnippetImportJS()" (cbOnSuccess)="valueCopied('Copied to clipboard')" (click)="$event.preventDefault();">
+          <button
+            mat-icon-button
+            matSuffix
+            matTooltip="Copy to clipboard"
+            ngxClipboard
+            [cbContent]="getSnippetImportJS()"
+            (cbOnSuccess)="valueCopied('Copied to clipboard')"
+            (click)="$event.preventDefault()"
+          >
             <mat-icon>content_copy</mat-icon>
           </button>
-          <pre style="white-space: normal;">
+          <pre style="white-space: normal">
             <![CDATA[
-              {{getSnippetImportJS()}}
+              {{ getSnippetImportJS() }}
             ]]>
           </pre>
         </div>
@@ -89,15 +116,24 @@
         <small>2. Call reCAPTCHA service before submit the form</small>
 
         <div class="code">
-          <button mat-icon-button matSuffix matTooltip="Copy to clipboard" ngxClipboard [cbContent]="getSnippetCallService()" (cbOnSuccess)="valueCopied('Copied to clipboard')" (click)="$event.preventDefault();">
+          <button
+            mat-icon-button
+            matSuffix
+            matTooltip="Copy to clipboard"
+            ngxClipboard
+            [cbContent]="getSnippetCallService()"
+            (cbOnSuccess)="valueCopied('Copied to clipboard')"
+            (click)="$event.preventDefault()"
+          >
             <mat-icon>content_copy</mat-icon>
           </button>
-          <textarea class="mdc-text-field__input" rows="18" [disabled]="true" aria-label="Label">{{getSnippetCallService()}}</textarea>
+          <textarea class="mdc-text-field__input" rows="18" [disabled]="true" aria-label="Label">{{ getSnippetCallService() }}</textarea>
         </div>
 
-        <p class="bot-protection-settings-description-contextual-help">For more information about Google reCAPTCHA v3 integration see <a href="https://developers.google.com/recaptcha/docs/v3">the official documentation</a></p>
-
-
+        <p class="bot-protection-settings-description-contextual-help">
+          For more information about Google reCAPTCHA v3 integration see
+          <a href="https://developers.google.com/recaptcha/docs/v3">the official documentation</a>
+        </p>
       </div>
     </div>
   </div>

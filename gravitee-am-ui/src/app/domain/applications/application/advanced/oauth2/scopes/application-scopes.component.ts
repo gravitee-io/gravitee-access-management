@@ -13,24 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, ElementRef, Inject, OnInit, ViewChild} from '@angular/core'
-import {ActivatedRoute, Router} from "@angular/router";
-import {ApplicationService} from "../../../../../../services/application.service";
-import {SnackbarService} from "../../../../../../services/snackbar.service";
-import {AuthService} from "../../../../../../services/auth.service";
-import moment from "moment";
-import * as _ from "lodash";
-import {MAT_DIALOG_DATA, MatDialog, MatDialogRef} from "@angular/material/dialog";
-import {MatAutocompleteTrigger} from "@angular/material/autocomplete";
-import {FormControl} from "@angular/forms";
-import {COMMA, ENTER} from "@angular/cdk/keycodes";
+import { Component, ElementRef, Inject, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import moment from 'moment';
+import * as _ from 'lodash';
+import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
+import { FormControl } from '@angular/forms';
+import { COMMA, ENTER } from '@angular/cdk/keycodes';
+
+import { AuthService } from '../../../../../../services/auth.service';
+import { SnackbarService } from '../../../../../../services/snackbar.service';
+import { ApplicationService } from '../../../../../../services/application.service';
 
 @Component({
   selector: 'application-scopes',
   templateUrl: './application-scopes.component.html',
-  styleUrls: ['./application-scopes.component.scss']
+  styleUrls: ['./application-scopes.component.scss'],
 })
-
 export class ApplicationScopesComponent implements OnInit {
   private domainId: string;
   private defaultScopes: string[];
@@ -42,19 +42,21 @@ export class ApplicationScopesComponent implements OnInit {
   scopes: any[] = [];
   readonly = false;
 
-  constructor(private route: ActivatedRoute,
-              private router: Router,
-              private applicationService: ApplicationService,
-              private snackbarService: SnackbarService,
-              private authService: AuthService,
-              private dialog: MatDialog) {}
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private applicationService: ApplicationService,
+    private snackbarService: SnackbarService,
+    private authService: AuthService,
+    private dialog: MatDialog,
+  ) {}
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
     this.application = this.route.snapshot.data['application'];
     this.scopes = this.route.snapshot.data['scopes'];
-    this.applicationOauthSettings = (this.application.settings == null) ? {} : this.application.settings.oauth || {};
-    this.applicationOauthSettings.scopes =  this.applicationOauthSettings.scopes || [];
+    this.applicationOauthSettings = this.application.settings == null ? {} : this.application.settings.oauth || {};
+    this.applicationOauthSettings.scopes = this.applicationOauthSettings.scopes || [];
     this.readonly = !this.authService.hasPermissions(['application_openid_update']);
     this.initScopes();
   }
@@ -65,57 +67,61 @@ export class ApplicationScopesComponent implements OnInit {
     this.defaultScopes = [];
     this.selectedScopeApprovals = {};
     if (this.applicationOauthSettings.scopeSettings) {
-      this.applicationOauthSettings.scopeSettings.forEach(scopeSettings => {
-        const definedScope = _.find(this.scopes, {key: scopeSettings.scope});
+      this.applicationOauthSettings.scopeSettings.forEach((scopeSettings) => {
+        const definedScope = _.find(this.scopes, { key: scopeSettings.scope });
         if (definedScope) {
           this.selectedScopes.push(definedScope);
           if (scopeSettings.defaultScope) {
-            this.defaultScopes.push(scopeSettings.scope);      
+            this.defaultScopes.push(scopeSettings.scope);
           }
           if (scopeSettings.scopeApproval) {
-            this.selectedScopeApprovals[scopeSettings.scope] = { 'expiresIn' : this.getExpiresIn(scopeSettings.scopeApproval), 'unitTime' : this.getUnitTime(scopeSettings.scopeApproval) };
+            this.selectedScopeApprovals[scopeSettings.scope] = {
+              expiresIn: this.getExpiresIn(scopeSettings.scopeApproval),
+              unitTime: this.getUnitTime(scopeSettings.scopeApproval),
+            };
           }
         }
       });
-
     }
 
     this.scopes = _.difference(this.scopes, this.selectedScopes);
-
   }
 
   patch() {
-    let oauthSettings: any = {};
+    const oauthSettings: any = {};
     oauthSettings.enhanceScopesWithUserPermissions = this.applicationOauthSettings.enhanceScopesWithUserPermissions;
     oauthSettings.scopeSettings = [];
-    this.selectedScopes.forEach(s => {
-      let setting = {
+    this.selectedScopes.forEach((s) => {
+      const setting = {
         scope: s.key,
-        defaultScope: (this.defaultScopes.indexOf(s.key) !== -1)
+        defaultScope: this.defaultScopes.indexOf(s.key) !== -1,
       };
 
-      let approval = this.selectedScopeApprovals[s.key];
+      const approval = this.selectedScopeApprovals[s.key];
       if (approval) {
         setting['scopeApproval'] = moment.duration(approval.expiresIn, approval.unitTime).asSeconds();
       }
 
       oauthSettings.scopeSettings.push(setting);
     });
-    this.applicationService.patch(this.domainId, this.application.id, {'settings' : { 'oauth' : oauthSettings}}).subscribe(data => {
+    this.applicationService.patch(this.domainId, this.application.id, { settings: { oauth: oauthSettings } }).subscribe(() => {
       this.snackbarService.open('Application updated');
-      this.router.navigate(['.'], { relativeTo: this.route, queryParams: { 'reload': true }});
+      this.router.navigate(['.'], { relativeTo: this.route, queryParams: { reload: true } });
       this.formChanged = false;
     });
   }
 
   add(event) {
     event.preventDefault();
-    let applicationScopes = _.map(this.selectedScopes, scope => scope.key);
-    let dialogRef = this.dialog.open(AddScopeComponent, { width : '700px', data: { domainScopes: this.scopes, applicationScopes: applicationScopes }});
-    dialogRef.afterClosed().subscribe(scopes => {
+    const applicationScopes = _.map(this.selectedScopes, (scope) => scope.key);
+    const dialogRef = this.dialog.open(AddScopeComponent, {
+      width: '700px',
+      data: { domainScopes: this.scopes, applicationScopes: applicationScopes },
+    });
+    dialogRef.afterClosed().subscribe((scopes) => {
       if (scopes) {
-        scopes.forEach(scope => {
-          const selectedScope = _.find(this.scopes, {key: scope});
+        scopes.forEach((scope) => {
+          const selectedScope = _.find(this.scopes, { key: scope });
           if (selectedScope) {
             this.selectedScopes.push(selectedScope);
           }
@@ -128,9 +134,11 @@ export class ApplicationScopesComponent implements OnInit {
 
   removeScope(scopeKey, event) {
     event.preventDefault();
-    this.scopes = this.scopes.concat(_.remove(this.selectedScopes, function(selectPermission) {
-      return selectPermission.key === scopeKey;
-    }));
+    this.scopes = this.scopes.concat(
+      _.remove(this.selectedScopes, function (selectPermission) {
+        return selectPermission.key === scopeKey;
+      }),
+    );
     this.selectedScopes = [...this.selectedScopes];
     delete this.selectedScopeApprovals[scopeKey];
     this.formChanged = true;
@@ -183,26 +191,30 @@ export class ApplicationScopesComponent implements OnInit {
   }
 
   displayExpiresIn(scopeKey) {
-    return (this.selectedScopeApprovals[scopeKey]) ? this.selectedScopeApprovals[scopeKey].expiresIn : null;
+    return this.selectedScopeApprovals[scopeKey] ? this.selectedScopeApprovals[scopeKey].expiresIn : null;
   }
 
   displayUnitTime(scopeKey) {
-    return (this.selectedScopeApprovals[scopeKey]) ? this.selectedScopeApprovals[scopeKey].unitTime : null;
+    return this.selectedScopeApprovals[scopeKey] ? this.selectedScopeApprovals[scopeKey].unitTime : null;
   }
 
   private getExpiresIn(value) {
     const humanizeDate = moment.duration(value, 'seconds').humanize().split(' ');
-    const humanizeDateValue = (humanizeDate.length === 2)
-      ? (humanizeDate[0] === 'a' || humanizeDate[0] === 'an') ? 1 : humanizeDate[0]
-      : value;
+    const humanizeDateValue =
+      humanizeDate.length === 2 ? (humanizeDate[0] === 'a' || humanizeDate[0] === 'an' ? 1 : humanizeDate[0]) : value;
     return humanizeDateValue;
   }
 
   private getUnitTime(value) {
     const humanizeDate = moment.duration(value, 'seconds').humanize().split(' ');
-    const humanizeDateUnit = (humanizeDate.length === 2)
-      ? humanizeDate[1].endsWith('s') ? humanizeDate[1] : humanizeDate[1] + 's'
-      : humanizeDate[2].endsWith('s') ? humanizeDate[2] : humanizeDate[2] + 's';
+    const humanizeDateUnit =
+      humanizeDate.length === 2
+        ? humanizeDate[1].endsWith('s')
+          ? humanizeDate[1]
+          : humanizeDate[1] + 's'
+        : humanizeDate[2].endsWith('s')
+        ? humanizeDate[2]
+        : humanizeDate[2] + 's';
     return humanizeDateUnit;
   }
 }
@@ -222,19 +234,20 @@ export class AddScopeComponent {
   separatorKeysCodes: number[] = [ENTER, COMMA];
   private applicationScopes: string[] = [];
 
-  constructor(@Inject(MAT_DIALOG_DATA) public data: any,
-              public dialogRef: MatDialogRef<AddScopeComponent>) {
+  constructor(@Inject(MAT_DIALOG_DATA) public data: any, public dialogRef: MatDialogRef<AddScopeComponent>) {
     this.applicationScopes = data.applicationScopes || [];
     this.filteredScopes = this.loadFilteredScopes();
-    this.scopeCtrl.valueChanges
-      .subscribe(searchTerm => {
-        if (typeof(searchTerm) === 'string' || searchTerm instanceof String) {
-          this.filteredScopes = data.domainScopes.filter(domainScope => {
-            return domainScope.key.includes(searchTerm) && this.selectedScopes.indexOf(domainScope.key) === -1 &&
-              this.applicationScopes.indexOf(domainScope.key) === -1;
-          });
-        }
-      });
+    this.scopeCtrl.valueChanges.subscribe((searchTerm) => {
+      if (typeof searchTerm === 'string' || searchTerm instanceof String) {
+        this.filteredScopes = data.domainScopes.filter((domainScope) => {
+          return (
+            domainScope.key.includes(searchTerm) &&
+            this.selectedScopes.indexOf(domainScope.key) === -1 &&
+            this.applicationScopes.indexOf(domainScope.key) === -1
+          );
+        });
+      }
+    });
   }
 
   onSelectionChanged(event) {
@@ -254,9 +267,8 @@ export class AddScopeComponent {
   }
 
   private loadFilteredScopes(): any[] {
-    return this.data.domainScopes.filter(domainScope => {
-      return this.selectedScopes.indexOf(domainScope.key) === -1 &&
-        this.applicationScopes.indexOf(domainScope.key) === -1;
+    return this.data.domainScopes.filter((domainScope) => {
+      return this.selectedScopes.indexOf(domainScope.key) === -1 && this.applicationScopes.indexOf(domainScope.key) === -1;
     });
   }
 }

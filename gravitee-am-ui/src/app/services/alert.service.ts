@@ -13,32 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Injectable} from '@angular/core';
-import {HttpClient} from '@angular/common/http';
-import {AuthService} from './auth.service';
-import {AppConfig} from '../../config/app.config';
-import {Observable, Subject} from 'rxjs';
-import {map, tap} from 'rxjs/operators';
-import {DomainService} from "./domain.service";
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+
+import { DomainService } from './domain.service';
+
+import { AppConfig } from '../../config/app.config';
 
 @Injectable()
 export class AlertService {
   private alertsURL: string = AppConfig.settings.domainBaseURL;
 
-  constructor(private http: HttpClient, private domainService: DomainService) {
-  }
+  constructor(private http: HttpClient, private domainService: DomainService) {}
 
   getAlertTriggers(domainId: string): Observable<any[]> {
     return this.http.get<any>(this.alertsURL + domainId + '/alerts/triggers');
   }
 
   patchAlertTriggers(domainId: string, alertTriggers: any[]): Observable<any> {
-    let alertTriggersPatch = alertTriggers.map(alertTrigger => {
+    const alertTriggersPatch = alertTriggers.map((alertTrigger) => {
       return {
-        'type': alertTrigger.type,
-        'enabled': alertTrigger.enabled,
-        'alertNotifiers': alertTrigger.alertNotifiers
-      }
+        type: alertTrigger.type,
+        enabled: alertTrigger.enabled,
+        alertNotifiers: alertTrigger.alertNotifiers,
+      };
     });
 
     return this.http.patch<any>(this.alertsURL + domainId + '/alerts/triggers', alertTriggersPatch);
@@ -62,10 +61,10 @@ export class AlertService {
   }
 
   patchAlertNotifier(domainId: string, alertNotifier: any): Observable<any> {
-    let alertNotifierPatch = {
-      'name': alertNotifier.name,
-      'enabled': alertNotifier.enabled,
-      'configuration': JSON.stringify(alertNotifier.configuration),
+    const alertNotifierPatch = {
+      name: alertNotifier.name,
+      enabled: alertNotifier.enabled,
+      configuration: JSON.stringify(alertNotifier.configuration),
     };
 
     return this.http.patch<any>(this.alertsURL + domainId + '/alerts/notifiers/' + alertNotifier.id, alertNotifierPatch);

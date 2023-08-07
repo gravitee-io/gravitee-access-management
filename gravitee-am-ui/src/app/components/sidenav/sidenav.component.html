@@ -18,7 +18,8 @@
 <div class="gio-side-nav mat mat-typography mat-app-background">
   <gio-menu>
     <gio-menu-header>
-      <gio-menu-selector *ngIf="canDisplayEnvironments()"
+      <gio-menu-selector
+        *ngIf="canDisplayEnvironments()"
         [selectedItemValue]="currentEnvironment.id"
         selectorTitle="Environment"
         [selectorItems]="environments"
@@ -26,17 +27,19 @@
       ></gio-menu-selector>
     </gio-menu-header>
     <gio-menu-list>
-      <a *ngFor="let item of topMenuItems | displayableItemFilter" [routerLink]="item.path" title="{{item.label}}"
-         routerLinkActive #rla="routerLinkActive" [routerLinkActiveOptions]="item.routerLinkActiveOptions">
-        <gio-menu-item
-          [icon]="item.icon"
-          [active]="rla.isActive">{{ item.label }}</gio-menu-item>
+      <a
+        *ngFor="let item of topMenuItems | displayableItemFilter"
+        [routerLink]="item.path"
+        title="{{ item.label }}"
+        routerLinkActive
+        #rla="routerLinkActive"
+        [routerLinkActiveOptions]="item.routerLinkActiveOptions"
+      >
+        <gio-menu-item [icon]="item.icon" [active]="rla.isActive">{{ item.label }}</gio-menu-item>
       </a>
     </gio-menu-list>
     <gio-menu-footer *ngIf="canDisplayOrganizationSettings()">
-      <a *ngFor="let item of footerMenuItems"
-         [routerLink]="item.path"
-         [matTooltip]="item.tooltip" [matTooltipPosition]="'right'">
+      <a *ngFor="let item of footerMenuItems" [routerLink]="item.path" [matTooltip]="item.tooltip" [matTooltipPosition]="'right'">
         <gio-menu-item [icon]="item.icon">{{ item.label }}</gio-menu-item>
       </a>
     </gio-menu-footer>

@@ -13,17 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
-import {ApplicationService} from '../../../../../services/application.service';
-import {SnackbarService} from '../../../../../services/snackbar.service';
-import {FactorService} from '../../../../../services/factor.service';
-import {AuthService} from '../../../../../services/auth.service';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+
+import { ApplicationService } from '../../../../../services/application.service';
+import { SnackbarService } from '../../../../../services/snackbar.service';
+import { FactorService } from '../../../../../services/factor.service';
+import { AuthService } from '../../../../../services/auth.service';
 
 @Component({
   selector: 'app-application-factors',
   templateUrl: './factors.component.html',
-  styleUrls: ['./factors.component.scss']
+  styleUrls: ['./factors.component.scss'],
 })
 export class ApplicationFactorsComponent implements OnInit {
   private domainId: string;
@@ -37,72 +38,76 @@ export class ApplicationFactorsComponent implements OnInit {
 
   mfa: any;
 
-  mfaStepUpRule: string = "";
+  mfaStepUpRule = '';
   rememberDevice: any = {};
 
-  adaptiveMfaRule: string = "";
+  adaptiveMfaRule = '';
   enrollment: any = {};
   private riskAssessment: any = {};
 
-  constructor(private route: ActivatedRoute,
-              private router: Router,
-              private applicationService: ApplicationService,
-              private factorService: FactorService,
-              private authService: AuthService,
-              private snackbarService: SnackbarService) {
-  }
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private applicationService: ApplicationService,
+    private factorService: FactorService,
+    private authService: AuthService,
+    private snackbarService: SnackbarService,
+  ) {}
 
   ngOnInit(): void {
     this.domainId = this.route.snapshot.data['domain']?.id;
     this.application = this.route.snapshot.data['application'];
     this.deviceIdentifiers = this.route.snapshot.data['deviceIdentifiers'] || [];
-    this.mfa = this.application.settings == null ? {} : (this.application.settings.mfa || {});
+    this.mfa = this.application.settings == null ? {} : this.application.settings.mfa || {};
     this.mfa.enrollment = {
-      ...(this.mfa.enrollment ? this.mfa.enrollment : {
-        "forceEnrollment": false,
-        "skipTimeSeconds": null
-      })
+      ...(this.mfa.enrollment
+        ? this.mfa.enrollment
+        : {
+            forceEnrollment: false,
+            skipTimeSeconds: null,
+          }),
     };
-    this.mfaStepUpRule = this.mfa.stepUpAuthenticationRule ? this.mfa.stepUpAuthenticationRule.slice() : "";
-    this.adaptiveMfaRule = this.mfa.adaptiveAuthenticationRule ? this.mfa.adaptiveAuthenticationRule.slice() : "";
-    this.rememberDevice = {...this.mfa.rememberDevice};
-    this.enrollment = {...this.mfa.enrollment};
+    this.mfaStepUpRule = this.mfa.stepUpAuthenticationRule ? this.mfa.stepUpAuthenticationRule.slice() : '';
+    this.adaptiveMfaRule = this.mfa.adaptiveAuthenticationRule ? this.mfa.adaptiveAuthenticationRule.slice() : '';
+    this.rememberDevice = { ...this.mfa.rememberDevice };
+    this.enrollment = { ...this.mfa.enrollment };
 
-    this.application.settings.riskAssessment = this.application.settings.riskAssessment || ApplicationFactorsComponent.getDefaultRiskAssessment();
-    this.riskAssessment = {...this.application.settings.riskAssessment};
+    this.application.settings.riskAssessment =
+      this.application.settings.riskAssessment || ApplicationFactorsComponent.getDefaultRiskAssessment();
+    this.riskAssessment = { ...this.application.settings.riskAssessment };
 
     this.editMode = this.authService.hasPermissions(['application_settings_update']);
-    this.factorService.findByDomain(this.domainId).subscribe(response => this.factors = [...response]);
+    this.factorService.findByDomain(this.domainId).subscribe((response) => (this.factors = [...response]));
   }
 
   private static getDefaultRiskAssessment() {
     return {
-      "enabled": false,
-      "deviceAssessment": {"enabled": false},
-      "ipReputationAssessment": {"enabled": false},
-      "geoVelocityAssessment": {"enabled": false}
+      enabled: false,
+      deviceAssessment: { enabled: false },
+      ipReputationAssessment: { enabled: false },
+      geoVelocityAssessment: { enabled: false },
     };
   }
 
   patch(): void {
     const data = {
-      'factors': this.application.factors,
-      'settings': {
-        'riskAssessment': this.riskAssessment,
-        'mfa': {
-          'stepUpAuthenticationRule': this.mfaStepUpRule,
-          'adaptiveAuthenticationRule': this.adaptiveMfaRule,
-          'rememberDevice': this.rememberDevice,
-          'enrollment': this.enrollment
-        }
-      }
+      factors: this.application.factors,
+      settings: {
+        riskAssessment: this.riskAssessment,
+        mfa: {
+          stepUpAuthenticationRule: this.mfaStepUpRule,
+          adaptiveAuthenticationRule: this.adaptiveMfaRule,
+          rememberDevice: this.rememberDevice,
+          enrollment: this.enrollment,
+        },
+      },
     };
-    this.applicationService.patch(this.domainId, this.application.id, data).subscribe(data => {
+    this.applicationService.patch(this.domainId, this.application.id, data).subscribe((data) => {
       this.application = data;
       this.formChanged = false;
       this.mfa = this.application.settings == null ? {} : this.application.settings.mfa || {};
       this.snackbarService.open('Application updated');
-      this.router.navigate(['.'], {relativeTo: this.route, queryParams: {'reload': true}});
+      this.router.navigate(['.'], { relativeTo: this.route, queryParams: { reload: true } });
     });
   }
 
@@ -117,7 +122,7 @@ export class ApplicationFactorsComponent implements OnInit {
   }
 
   updateRememberDevice(rememberDevice) {
-    this.rememberDevice = {...rememberDevice};
+    this.rememberDevice = { ...rememberDevice };
     if (!this.rememberDevice.deviceIdentifierId) {
       this.rememberDevice.deviceIdentifierId = this.deviceIdentifiers[0].id;
     }
@@ -125,9 +130,9 @@ export class ApplicationFactorsComponent implements OnInit {
   }
 
   updateActivateMfa(options) {
-    this.enrollment = {...options.enrollment};
-    this.adaptiveMfaRule = (options.adaptiveMfaRule || "").slice();
-    this.riskAssessment = {...options.riskAssessment};
+    this.enrollment = { ...options.enrollment };
+    this.adaptiveMfaRule = (options.adaptiveMfaRule || '').slice();
+    this.riskAssessment = { ...options.riskAssessment };
     this.formChanged = true;
   }
 

@@ -14,11 +14,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
-            "allowedCommonJsDependencies": [
-              "crypto-browserify",
-              "stream-browserify",
-              "readable-stream"
-            ],
+            "allowedCommonJsDependencies": ["crypto-browserify", "stream-browserify", "readable-stream"],
             "outputPath": "dist",
             "index": "src/index.html",
             "main": "src/main.ts",
@@ -68,10 +64,7 @@
                 "output": "assets/"
               }
             ],
-            "styles": [
-              "src/styles.scss",
-              "src/font-libre-franklin.css"
-            ],
+            "styles": ["src/styles.scss", "src/font-libre-franklin.css"],
             "scripts": [],
             "vendorChunk": true,
             "extractLicenses": false,

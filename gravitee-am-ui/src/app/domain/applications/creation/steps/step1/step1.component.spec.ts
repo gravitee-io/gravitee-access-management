@@ -23,10 +23,9 @@ describe('Step2Component', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    declarations: [ProviderCreationStep1Component],
-    teardown: { destroyAfterEach: false }
-})
-    .compileComponents();
+      declarations: [ProviderCreationStep1Component],
+      teardown: { destroyAfterEach: false },
+    }).compileComponents();
   }));
 
   beforeEach(() => {

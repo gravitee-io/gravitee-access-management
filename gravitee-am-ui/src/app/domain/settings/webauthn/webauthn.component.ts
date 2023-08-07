@@ -13,18 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnChanges, OnInit, SimpleChanges, ViewChild} from '@angular/core';
-import {ActivatedRoute} from '@angular/router';
-import {DomainService} from '../../../services/domain.service';
-import {SnackbarService} from '../../../services/snackbar.service';
-import {AuthService} from '../../../services/auth.service';
-import {EntrypointService} from '../../../services/entrypoint.service';
-import * as _ from "lodash";
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import * as _ from 'lodash';
+
+import { DomainService } from '../../../services/domain.service';
+import { SnackbarService } from '../../../services/snackbar.service';
+import { AuthService } from '../../../services/auth.service';
+import { EntrypointService } from '../../../services/entrypoint.service';
 
 @Component({
   selector: 'app-domain-webauthn',
   templateUrl: './webauthn.component.html',
-  styleUrls: ['./webauthn.component.scss']
+  styleUrls: ['./webauthn.component.scss'],
 })
 export class DomainSettingsWebAuthnComponent implements OnInit {
   private entrypoint: any;
@@ -36,16 +37,18 @@ export class DomainSettingsWebAuthnComponent implements OnInit {
   userVerifications: string[] = ['required', 'preferred', 'discouraged'];
   authenticatorAttachments: string[] = ['cross_platform', 'platform'];
   attestationConveyancePreferences: string[] = ['none', 'indirect', 'direct'];
-  attestationNames: string[] = [ 'none', 'u2f', 'packed', 'android-key', 'android-safetynet', 'tpm', 'apple', 'mds' ];
+  attestationNames: string[] = ['none', 'u2f', 'packed', 'android-key', 'android-safetynet', 'tpm', 'apple', 'mds'];
   attestation: any = {};
   attestationCertificates: any[] = [];
   editing = {};
 
-  constructor(private domainService: DomainService,
-              private snackbarService: SnackbarService,
-              private authService: AuthService,
-              private route: ActivatedRoute,
-              private entrypointService: EntrypointService) { }
+  constructor(
+    private domainService: DomainService,
+    private snackbarService: SnackbarService,
+    private authService: AuthService,
+    private route: ActivatedRoute,
+    private entrypointService: EntrypointService,
+  ) {}
 
   ngOnInit() {
     this.domain = this.route.snapshot.data['domain'];
@@ -75,14 +78,14 @@ export class DomainSettingsWebAuthnComponent implements OnInit {
 
   save() {
     if (this.attestationCertificates) {
-      let attestation = {};
+      const attestation = {};
       _.each(this.attestationCertificates, function (item) {
         attestation[item.name] = item.value;
       });
       this.domain.webAuthnSettings.certificates = attestation;
     }
 
-    this.domainService.patchWebAuthnSettings(this.domainId, this.domain).subscribe(data => {
+    this.domainService.patchWebAuthnSettings(this.domainId, this.domain).subscribe((data) => {
       this.domain = data;
       this.formChanged = false;
       this.snackbarService.open('WebAuthn configuration updated');
@@ -103,14 +106,14 @@ export class DomainSettingsWebAuthnComponent implements OnInit {
   }
 
   updateCertificate(event, cell, rowIndex) {
-    let metadata = event.target.value;
+    const metadata = event.target.value;
     if (metadata) {
       if (cell === 'name' && this.certificateExits(metadata)) {
         this.snackbarService.open(`Error : attestation "${metadata}" already exists`);
         return;
       }
       this.editing[rowIndex + '-' + cell] = false;
-      let index = _.findIndex(this.attestationCertificates, {id: rowIndex});
+      const index = _.findIndex(this.attestationCertificates, { id: rowIndex });
       this.attestationCertificates[index][cell] = metadata;
       this.attestationCertificates = [...this.attestationCertificates];
       this.formChanged = true;
@@ -119,7 +122,7 @@ export class DomainSettingsWebAuthnComponent implements OnInit {
 
   deleteCertificate(key, event) {
     event.preventDefault();
-    _.remove(this.attestationCertificates, function(el) {
+    _.remove(this.attestationCertificates, function (el) {
       return el.id === key;
     });
     this.attestationCertificates = [...this.attestationCertificates];
@@ -127,7 +130,9 @@ export class DomainSettingsWebAuthnComponent implements OnInit {
   }
 
   certificateExits(attribute): boolean {
-    return _.find(this.attestationCertificates, function(el) { return  el.name === attribute; })
+    return _.find(this.attestationCertificates, function (el) {
+      return el.name === attribute;
+    });
   }
 
   certificatesIsEmpty() {

@@ -14,17 +14,16 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, Resolve, RouterStateSnapshot } from '@angular/router';
+import { Resolve } from '@angular/router';
 import { Observable } from 'rxjs';
+
 import { OrganizationService } from '../services/organization.service';
 
 @Injectable()
 export class BotDetectionPluginsResolver implements Resolve<any> {
+  constructor(private organizationService: OrganizationService) {}
 
-  constructor(private organizationService: OrganizationService) { }
-
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
+  resolve(): Observable<any> | Promise<any> | any {
     return this.organizationService.botDetections();
   }
-
 }

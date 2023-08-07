@@ -16,18 +16,20 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { NgForm } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { filter, switchMap, tap } from 'rxjs/operators';
+
 import { ProviderService } from '../../../../../services/provider.service';
 import { SnackbarService } from '../../../../../services/snackbar.service';
 import { OrganizationService } from '../../../../../services/organization.service';
 import { DomainService } from '../../../../../services/domain.service';
 import { DialogService } from '../../../../../services/dialog.service';
-import {EntrypointService} from '../../../../../services/entrypoint.service';
-import {AppConfig} from '../../../../../../config/app.config';
+import { EntrypointService } from '../../../../../services/entrypoint.service';
+import { AppConfig } from '../../../../../../config/app.config';
 
 @Component({
   selector: 'provider-settings',
   templateUrl: './settings.component.html',
-  styleUrls: ['./settings.component.scss']
+  styleUrls: ['./settings.component.scss'],
 })
 export class ProviderSettingsComponent implements OnInit {
   @ViewChild('providerForm', { static: true }) public form: NgForm;
@@ -44,16 +46,18 @@ export class ProviderSettingsComponent implements OnInit {
   updateProviderConfiguration: any;
   redirectUri: string;
   customCode: string;
-  domainWhitelistPattern:string;
+  domainWhitelistPattern: string;
 
-  constructor(private providerService: ProviderService,
-              private organizationService: OrganizationService,
-              private snackbarService: SnackbarService,
-              private route: ActivatedRoute,
-              private router: Router,
-              private domainService: DomainService,
-              private dialogService: DialogService,
-              private entrypointService: EntrypointService) { }
+  constructor(
+    private providerService: ProviderService,
+    private organizationService: OrganizationService,
+    private snackbarService: SnackbarService,
+    private route: ActivatedRoute,
+    private router: Router,
+    private domainService: DomainService,
+    private dialogService: DialogService,
+    private entrypointService: EntrypointService,
+  ) {}
 
   ngOnInit() {
     this.provider = this.route.snapshot.data['provider'];
@@ -68,45 +72,47 @@ export class ProviderSettingsComponent implements OnInit {
       this.organizationContext = true;
     }
     if (this.organizationContext) {
-      this.organizationService.settings().subscribe(data => this.domain = data);
-      this.entrypoint = { url: AppConfig.settings.baseURL};
+      this.organizationService.settings().subscribe((data) => (this.domain = data));
+      this.entrypoint = { url: AppConfig.settings.baseURL };
       this.redirectUri = this.entrypoint.url + '/auth/login/callback?provider=' + this.provider.id;
     } else {
       this.domain = this.route.snapshot.data['domain'];
       this.domainId = this.domain.id;
-      this.domainService.getEntrypoint(this.domainId).subscribe(data => {
+      this.domainService.getEntrypoint(this.domainId).subscribe((data) => {
         this.entrypoint = data;
         this.redirectUri = this.entrypointService.resolveBaseUrl(this.entrypoint, this.domain) + '/login/callback';
       });
     }
     this.providerConfiguration = JSON.parse(this.provider.configuration);
     this.updateProviderConfiguration = this.providerConfiguration;
-    this.organizationService.identitySchema(this.provider.type).subscribe(data => {
+    this.organizationService.identitySchema(this.provider.type).subscribe((data) => {
       this.providerSchema = data;
       if (data) {
         // handle default null values
-        let self = this;
-        Object.keys(this.providerSchema['properties']).forEach(function(key) {
-          self.providerSchema['properties'][key].default = '';
+        Object.keys(this.providerSchema['properties']).forEach((key) => {
+          this.providerSchema['properties'][key].default = '';
         });
       }
     });
   }
 
   update(event) {
-    if (this.provider.type !== "inline-am-idp"){
+    if (this.provider.type !== 'inline-am-idp') {
       this._update();
     } else {
       event.preventDefault();
       const originalConfig = JSON.parse(this.provider.configuration);
-      const updatedUsernames = this.updateProviderConfiguration.users ? this.updateProviderConfiguration.users.map(user => user.username) : [];
-      const allOriginalUsernames = !originalConfig.users || originalConfig.users.every(u => updatedUsernames.includes(u.username)) ;
+      const updatedUsernames = this.updateProviderConfiguration.users
+        ? this.updateProviderConfiguration.users.map((user) => user.username)
+        : [];
+      const allOriginalUsernames = !originalConfig.users || originalConfig.users.every((u) => updatedUsernames.includes(u.username));
 
       if (!allOriginalUsernames) {
         const title = 'Update Provider: a user has been modified or deleted.';
-        const message = 'If you modified an existing user with another username make sure the password has been modified manually too. ' +
+        const message =
+          'If you modified an existing user with another username make sure the password has been modified manually too. ' +
           'Do you want to save your configuration ?';
-        this.dialogService.confirm(title, message).subscribe(res => {
+        this.dialogService.confirm(title, message).subscribe((res) => {
           if (res) {
             this._update();
           }
@@ -119,7 +125,7 @@ export class ProviderSettingsComponent implements OnInit {
 
   private _update() {
     this.provider.configuration = this.updateProviderConfiguration;
-    this.providerService.update(this.domainId, this.provider.id, this.provider, this.organizationContext).subscribe(data => {
+    this.providerService.update(this.domainId, this.provider.id, this.provider, this.organizationContext).subscribe((data) => {
       this.provider = data;
       this.providerConfiguration = JSON.parse(this.provider.configuration);
       this.updateProviderConfiguration = this.providerConfiguration;
@@ -133,14 +139,15 @@ export class ProviderSettingsComponent implements OnInit {
     event.preventDefault();
     this.dialogService
       .confirm('Delete Provider', 'Are you sure you want to delete this provider ?')
-      .subscribe(res => {
-        if (res) {
-          this.providerService.delete(this.domainId, this.provider.id, this.organizationContext).subscribe(() => {
-            this.snackbarService.open('Identity provider deleted');
-            this.router.navigate(['../..'], { relativeTo: this.route });
-          });
-        }
-      });
+      .pipe(
+        filter((res) => res),
+        switchMap(() => this.providerService.delete(this.domainId, this.provider.id, this.organizationContext)),
+        tap(() => {
+          this.snackbarService.open('Identity provider deleted');
+          this.router.navigate(['../..'], { relativeTo: this.route });
+        }),
+      )
+      .subscribe();
   }
 
   enableProviderUpdate(configurationWrapper) {
@@ -151,12 +158,12 @@ export class ProviderSettingsComponent implements OnInit {
     });
   }
 
-  addDomainWhitelistPattern(event){
+  addDomainWhitelistPattern(event) {
     event.preventDefault();
     if (this.domainWhitelistPattern) {
-      if (!this.provider.domainWhitelist.some(el => el === this.domainWhitelistPattern)) {
+      if (!this.provider.domainWhitelist.some((el) => el === this.domainWhitelistPattern)) {
         this.provider.domainWhitelist.push(this.domainWhitelistPattern);
-        this.provider.domainWhitelist = [...this.provider.domainWhitelist]
+        this.provider.domainWhitelist = [...this.provider.domainWhitelist];
         this.form.form.markAsDirty();
         this.domainWhitelistPattern = '';
       } else {
@@ -165,9 +172,9 @@ export class ProviderSettingsComponent implements OnInit {
     }
   }
 
-  removeDomainWhitelistPattern(dwPattern){
+  removeDomainWhitelistPattern(dwPattern) {
     const index = this.provider.domainWhitelist.indexOf(dwPattern);
-    if (index > -1){
+    if (index > -1) {
       this.provider.domainWhitelist.splice(index, 1);
       this.form.form.markAsDirty();
     }

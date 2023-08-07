@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { ComponentFixture, TestBed, waitForAsync } from "@angular/core/testing";
-import {ResourceCreationStep1Component} from "./step1.component";
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
+import { ResourceCreationStep1Component } from './step1.component';
 
 describe('FactorCreationStep1Component', () => {
   let component: ResourceCreationStep1Component;
@@ -23,10 +23,9 @@ describe('FactorCreationStep1Component', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    declarations: [ResourceCreationStep1Component],
-    teardown: { destroyAfterEach: false }
-})
-    .compileComponents();
+      declarations: [ResourceCreationStep1Component],
+      teardown: { destroyAfterEach: false },
+    }).compileComponents();
   }));
 
   beforeEach(() => {

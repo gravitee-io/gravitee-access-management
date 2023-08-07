@@ -23,10 +23,9 @@ describe('DomainSettingsEmailsComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    declarations: [DomainSettingsEmailsComponent],
-    teardown: { destroyAfterEach: false }
-})
-    .compileComponents();
+      declarations: [DomainSettingsEmailsComponent],
+      teardown: { destroyAfterEach: false },
+    }).compileComponents();
   }));
 
   beforeEach(() => {

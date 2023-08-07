@@ -13,39 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit, Input, EventEmitter, Output, OnChanges, SimpleChanges } from '@angular/core';
-import { MaterialFileComponent } from "../../../../../components/json-schema-form/material-file.component";
+import { Component, Input, EventEmitter, Output, OnChanges, SimpleChanges } from '@angular/core';
+
+import { MaterialFileComponent } from '../../../../../components/json-schema-form/material-file.component';
 
 @Component({
   selector: 'certificate-form',
   templateUrl: './form.component.html',
-  styleUrls: ['./form.component.scss']
+  styleUrls: ['./form.component.scss'],
 })
-export class CertificateFormComponent implements OnInit, OnChanges {
+export class CertificateFormComponent implements OnChanges {
   @Input('certificateConfiguration') configuration: any = {};
   @Input('certificateSchema') certificateSchema: any;
   @Output() configurationCompleted = new EventEmitter<any>();
-  displayForm: boolean = false;
+  displayForm = false;
   data: any = {};
   customWidgets = {
-    file: MaterialFileComponent
+    file: MaterialFileComponent,
   };
-
-  constructor() { }
-
-  ngOnInit() {
-  }
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes.certificateSchema) {
-      let _certificateSchema = changes.certificateSchema.currentValue;
+      const _certificateSchema = changes.certificateSchema.currentValue;
       if (_certificateSchema && _certificateSchema.id) {
         this.displayForm = true;
       }
     }
 
     if (changes.configuration) {
-      let _certificateConfiguration = changes.configuration.currentValue;
+      const _certificateConfiguration = changes.configuration.currentValue;
       if (_certificateConfiguration) {
         this.data = _certificateConfiguration;
       }
@@ -57,7 +53,7 @@ export class CertificateFormComponent implements OnInit, OnChanges {
   }
 
   isValid(isValid: boolean) {
-    let configurationWrapper = { 'isValid' : isValid, 'configuration': this.configuration};
+    const configurationWrapper = { isValid: isValid, configuration: this.configuration };
     this.configurationCompleted.emit(configurationWrapper);
   }
 }

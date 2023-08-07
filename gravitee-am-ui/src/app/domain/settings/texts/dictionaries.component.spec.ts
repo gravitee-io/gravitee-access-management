@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {ComponentFixture, TestBed, waitForAsync} from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
-import {DomainSettingsDictionariesComponent} from './dictionaries.component';
+import { DomainSettingsDictionariesComponent } from './dictionaries.component';
 
 describe('DomainSettingsDictionariesComponent', () => {
   let component: DomainSettingsDictionariesComponent;
@@ -23,10 +23,9 @@ describe('DomainSettingsDictionariesComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    declarations: [DomainSettingsDictionariesComponent],
-    teardown: { destroyAfterEach: false }
-})
-    .compileComponents();
+      declarations: [DomainSettingsDictionariesComponent],
+      teardown: { destroyAfterEach: false },
+    }).compileComponents();
   }));
 
   beforeEach(() => {

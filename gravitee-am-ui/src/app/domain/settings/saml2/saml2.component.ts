@@ -13,23 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit, ViewChild} from '@angular/core';
-import {SnackbarService} from '../../../services/snackbar.service';
-import {ActivatedRoute} from '@angular/router';
-import {DomainService} from '../../../services/domain.service';
-import {AuthService} from '../../../services/auth.service';
-import {MatDialog} from '@angular/material/dialog';
-import {CertificateService} from '../../../services/certificate.service';
-import {Observable} from 'rxjs';
-import {Feature, GioLicenseService} from '../../../components/gio-license/gio-license.service';
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
+import { Observable } from 'rxjs';
+
+import { SnackbarService } from '../../../services/snackbar.service';
+import { DomainService } from '../../../services/domain.service';
+import { AuthService } from '../../../services/auth.service';
+import { CertificateService } from '../../../services/certificate.service';
+import { Feature, GioLicenseService } from '../../../components/gio-license/gio-license.service';
 
 @Component({
   selector: 'app-saml2',
   templateUrl: './saml2.component.html',
-  styleUrls: ['./saml2.component.scss']
+  styleUrls: ['./saml2.component.scss'],
 })
 export class Saml2Component implements OnInit {
-  @ViewChild('samlSettingsForm', {static: true}) form: any;
+  @ViewChild('samlSettingsForm', { static: true }) form: any;
   domainId: string;
   domain: any = {};
   domainSamlSettings: any;
@@ -40,14 +41,15 @@ export class Saml2Component implements OnInit {
   saml2Feature: Feature = { feature: 'am-idp-gateway-handler-saml' };
   isMissingSaml2Feature$: Observable<boolean>;
 
-  constructor(private domainService: DomainService,
-              private snackbarService: SnackbarService,
-              private authService: AuthService,
-              private certificateService: CertificateService,
-              private route: ActivatedRoute,
-              private licenseService: GioLicenseService,
-              public dialog: MatDialog) {
-  }
+  constructor(
+    private domainService: DomainService,
+    private snackbarService: SnackbarService,
+    private authService: AuthService,
+    private certificateService: CertificateService,
+    private route: ActivatedRoute,
+    private licenseService: GioLicenseService,
+    public dialog: MatDialog,
+  ) {}
 
   ngOnInit() {
     this.domain = this.route.snapshot.data['domain'];
@@ -63,8 +65,8 @@ export class Saml2Component implements OnInit {
   }
 
   save() {
-    this.domainSamlSettings.certificate = (this.domainSamlSettings.certificate) ? this.domainSamlSettings.certificate : null;
-    this.domainService.patch(this.domainId, {'saml': this.domainSamlSettings}).subscribe(data => {
+    this.domainSamlSettings.certificate = this.domainSamlSettings.certificate ? this.domainSamlSettings.certificate : null;
+    this.domainService.patch(this.domainId, { saml: this.domainSamlSettings }).subscribe((data) => {
       this.domain['saml'] = data.saml;
       this.formChanged = false;
       this.form.reset(this.domain.saml);
@@ -95,7 +97,7 @@ export class Saml2Component implements OnInit {
   }
 
   private publicKeys(certificateId) {
-    this.certificateService.publicKeys(this.domainId, certificateId).subscribe(response => {
+    this.certificateService.publicKeys(this.domainId, certificateId).subscribe((response) => {
       this.certificatePublicKeys = response;
     });
   }

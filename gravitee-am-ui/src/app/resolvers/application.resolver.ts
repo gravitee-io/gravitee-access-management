@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { Resolve, ActivatedRouteSnapshot, RouterStateSnapshot } from "@angular/router";
-import { Observable } from "rxjs";
-import { ApplicationService } from "../services/application.service";
+import { Resolve, ActivatedRouteSnapshot } from '@angular/router';
+import { Observable } from 'rxjs';
+
+import { ApplicationService } from '../services/application.service';
 
 @Injectable()
 export class ApplicationResolver implements Resolve<any> {
+  constructor(private applicationService: ApplicationService) {}
 
-  constructor(private applicationService: ApplicationService) { }
-
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
+  resolve(route: ActivatedRouteSnapshot): Observable<any> | Promise<any> | any {
     const domainId = route.parent.data['domain'].id;
     const appId = route.paramMap.get('appId');
     return this.applicationService.get(domainId, appId);

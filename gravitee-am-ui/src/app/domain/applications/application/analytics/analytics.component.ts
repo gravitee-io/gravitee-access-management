@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute} from '@angular/router';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+
 import { DashboardData } from '../../../components/dashboard/dashboard.component';
 
 @Component({
   selector: 'app-application-analytics',
   templateUrl: './analytics.component.html',
-  styleUrls: ['./analytics.component.scss']
+  styleUrls: ['./analytics.component.scss'],
 })
 export class ApplicationAnalyticsComponent implements OnInit {
   dashboard: DashboardData = {
@@ -34,9 +35,9 @@ export class ApplicationAnalyticsComponent implements OnInit {
           prefix: '+',
           request: {
             type: 'count',
-            field: 'user_login'
-          }
-        }
+            field: 'user_login',
+          },
+        },
       },
       {
         flex: 50,
@@ -47,9 +48,9 @@ export class ApplicationAnalyticsComponent implements OnInit {
           prefix: '+',
           request: {
             type: 'count',
-            field: 'user_registered'
-          }
-        }
+            field: 'user_registered',
+          },
+        },
       },
       {
         flex: 100,
@@ -59,8 +60,8 @@ export class ApplicationAnalyticsComponent implements OnInit {
           request: {
             type: 'date_histo',
             field: 'user_login',
-          }
-        }
+          },
+        },
       },
       {
         flex: 100,
@@ -70,20 +71,18 @@ export class ApplicationAnalyticsComponent implements OnInit {
           request: {
             type: 'date_histo',
             field: 'user_registered',
-          }
-        }
-      }
-    ]
+          },
+        },
+      },
+    ],
   };
   domainId: string;
   applicationId: string;
 
-  constructor(private route: ActivatedRoute) {
-  }
+  constructor(private route: ActivatedRoute) {}
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
     this.applicationId = this.route.snapshot.params['appId'];
   }
-
 }

@@ -20,9 +20,9 @@ import { UserService } from './user.service';
 describe('UserService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-    providers: [UserService],
-    teardown: { destroyAfterEach: false }
-});
+      providers: [UserService],
+      teardown: { destroyAfterEach: false },
+    });
   });
 
   it('should be created', inject([UserService], (service: UserService) => {

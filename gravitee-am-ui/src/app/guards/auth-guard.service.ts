@@ -13,25 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Injectable} from '@angular/core';
-import {ActivatedRouteSnapshot, CanActivate, RouterStateSnapshot} from '@angular/router';
-import {combineLatest, Observable, of} from 'rxjs';
-import {catchError, map, mergeMap} from 'rxjs/operators';
-import {AuthService} from './../services/auth.service';
-import {DomainService} from '../services/domain.service';
-import {ApplicationService} from '../services/application.service';
-import {EnvironmentService} from "../services/environment.service";
+import { Injectable } from '@angular/core';
+import { ActivatedRouteSnapshot, CanActivate } from '@angular/router';
+import { combineLatest, Observable, of } from 'rxjs';
+import { catchError, map, mergeMap } from 'rxjs/operators';
+
+import { AuthService } from '../services/auth.service';
+import { DomainService } from '../services/domain.service';
+import { ApplicationService } from '../services/application.service';
+import { EnvironmentService } from '../services/environment.service';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
+  constructor(
+    private authService: AuthService,
+    private environmentService: EnvironmentService,
+    private domainService: DomainService,
+    private applicationService: ApplicationService,
+  ) {}
 
-  constructor(private authService: AuthService,
-              private environmentService: EnvironmentService,
-              private domainService: DomainService,
-              private applicationService: ApplicationService) {}
-
-  canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean> | Promise<boolean> | boolean {
-
+  canActivate(route: ActivatedRouteSnapshot): Observable<boolean> | Promise<boolean> | boolean {
     // if no permission required, continue
     if (!route.data || !route.data.perms || !route.data.perms.only) {
       return true;
@@ -48,28 +49,35 @@ export class AuthGuard implements CanActivate {
       const domainHrid = route.paramMap.get('domainId');
       const appId = route.paramMap.get('appId');
 
-      if(environmentId && !this.authService.environmentPermissionsLoaded()) {
+      if (environmentId && !this.authService.environmentPermissionsLoaded()) {
         combineSources.push(this.environmentService.permissions(environmentId));
       }
 
-      if(domainHrid && !this.authService.domainPermissionsLoaded()) {
-        combineSources.push(this.domainService.get(domainHrid)
-          .pipe(mergeMap(domain => this.domainService.permissions(domain.id)
-            .pipe(mergeMap(__ => {
-              if (appId && !this.authService.applicationPermissionsLoaded()) {
-                return this.applicationService.permissions(domain.id, appId)
-              } else {
-                return of([]);
-              }
-            })))));
+      if (domainHrid && !this.authService.domainPermissionsLoaded()) {
+        combineSources.push(
+          this.domainService.get(domainHrid).pipe(
+            mergeMap((domain) =>
+              this.domainService.permissions(domain.id).pipe(
+                mergeMap((__) => {
+                  if (appId && !this.authService.applicationPermissionsLoaded()) {
+                    return this.applicationService.permissions(domain.id, appId);
+                  } else {
+                    return of([]);
+                  }
+                }),
+              ),
+            ),
+          ),
+        );
       }
     }
     // check permissions
     return combineLatest(combineSources).pipe(
-      map(() =>  this.isAuthorized(requiredPerms)),
-      catchError((err) => {
+      map(() => this.isAuthorized(requiredPerms)),
+      catchError(() => {
         return of(false);
-      }));
+      }),
+    );
   }
 
   canDisplay(route: ActivatedRouteSnapshot, path): boolean {
@@ -78,7 +86,7 @@ export class AuthGuard implements CanActivate {
       return true;
     }
     // display SAML menu on the app settings only if the domain has enabled the SAML Protocol
-    if (path.data.protocol && path.data.protocol == "SAML" && (!route.data['domain'].saml || !route.data['domain'].saml.enabled)) {
+    if (path.data.protocol && path.data.protocol === 'SAML' && (!route.data['domain'].saml || !route.data['domain'].saml.enabled)) {
       return false;
     }
     // if resource (application) should not display a settings page, continue

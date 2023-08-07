@@ -23,9 +23,8 @@ import { FormControl } from '@angular/forms';
 @Component({
   selector: 'role-selection',
   templateUrl: './role-selection.component.html',
-  styleUrls: ['./role-selection.component.scss']
+  styleUrls: ['./role-selection.component.scss'],
 })
-
 export class RoleSelectionComponent implements OnInit {
   @Output() onRoleSelection = new EventEmitter();
   @Input('roles') domainRoles: any[] = [];
@@ -40,16 +39,13 @@ export class RoleSelectionComponent implements OnInit {
   roleCtrl = new FormControl();
   userInputSub: Subscription;
 
-  constructor() {
-  }
-
   ngOnDestroy(): void {
     this.userInputSub?.unsubscribe();
   }
 
   ngOnInit(): void {
     this.assignedRoles = this.initialSelectedRoles ? _.map(this.initialSelectedRoles, 'id') : [];
-    this.userInputSub = this.roleCtrl.valueChanges.subscribe(value => {
+    this.userInputSub = this.roleCtrl.valueChanges.subscribe((value) => {
       this._filterByUserInput(value);
     });
   }
@@ -73,20 +69,21 @@ export class RoleSelectionComponent implements OnInit {
   }
 
   onFocus() {
-    this.trigger._onChange("");
+    this.trigger._onChange('');
     this.trigger.openPanel();
   }
 
   private _filter(): void {
-    this.filteredRoles.next(this.domainRoles.filter(domainRole => !this.assignedRoles.includes(domainRole.id)));
-    this.initialSelectedRoles = this.domainRoles.filter(selectedRole => this.assignedRoles.includes(selectedRole.id));
+    this.filteredRoles.next(this.domainRoles.filter((domainRole) => !this.assignedRoles.includes(domainRole.id)));
+    this.initialSelectedRoles = this.domainRoles.filter((selectedRole) => this.assignedRoles.includes(selectedRole.id));
   }
 
   private _filterByUserInput(value: any) {
     const normalizedValue = value?.toLowerCase().trim();
-    const rolesNotAssignedYet = this.domainRoles.filter(domainRole => !this.assignedRoles.includes(domainRole.id));
-    const filteredRolesFromUserInput = normalizedValue ? rolesNotAssignedYet.filter(role => role.name.toLowerCase().includes(normalizedValue)) : rolesNotAssignedYet;
+    const rolesNotAssignedYet = this.domainRoles.filter((domainRole) => !this.assignedRoles.includes(domainRole.id));
+    const filteredRolesFromUserInput = normalizedValue
+      ? rolesNotAssignedYet.filter((role) => role.name.toLowerCase().includes(normalizedValue))
+      : rolesNotAssignedYet;
     this.filteredRoles.next(filteredRolesFromUserInput);
   }
-
 }

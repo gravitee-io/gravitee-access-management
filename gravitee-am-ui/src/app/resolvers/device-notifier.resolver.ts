@@ -14,20 +14,18 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { Resolve, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
-import { DeviceNotifiersService } from 'app/services/device-notifiers.service';
+import { Resolve, ActivatedRouteSnapshot } from '@angular/router';
 import { Observable } from 'rxjs';
 
+import { DeviceNotifiersService } from '../services/device-notifiers.service';
 
 @Injectable()
 export class DeviceNotifierResolver implements Resolve<any> {
+  constructor(private notifierService: DeviceNotifiersService) {}
 
-  constructor(private notifierService: DeviceNotifiersService) { }
-
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
+  resolve(route: ActivatedRouteSnapshot): Observable<any> | Promise<any> | any {
     const domainId = route.parent.data['domain'].id;
     const notifierId = route.paramMap.get('notifierId');
     return this.notifierService.get(domainId, notifierId);
   }
-
 }

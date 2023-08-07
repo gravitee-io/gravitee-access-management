@@ -22,20 +22,22 @@
       <mat-form-field appearance="fill" floatLabel="always">
         <mat-icon matPrefix>search</mat-icon>
         <mat-label>Search for roles</mat-label>
-        <input type="text" matInput placeholder="Search" (input)="onSearch($event)">
+        <input type="text" matInput placeholder="Search" (input)="onSearch($event)" />
       </mat-form-field>
     </div>
-    <ngx-datatable class="material"
-                   [columnMode]="'flex'"
-                   [headerHeight]="40"
-                   [footerHeight]="40"
-                   [rowHeight]="50"
-                   [rows]='roles'
-                   [externalPaging]="true"
-                   [count]="page.totalElements"
-                   [offset]="page.pageNumber"
-                   [limit]="page.size"
-                   (page)='setPage($event)'>
+    <ngx-datatable
+      class="material"
+      [columnMode]="'flex'"
+      [headerHeight]="40"
+      [footerHeight]="40"
+      [rowHeight]="50"
+      [rows]="roles"
+      [externalPaging]="true"
+      [count]="page.totalElements"
+      [offset]="page.pageNumber"
+      [limit]="page.size"
+      (page)="setPage($event)"
+    >
       <ngx-datatable-column name="Name" [flexGrow]="4" [cellClass]="'role-name-cell'">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div class="role-header" fxLayout="row">
@@ -43,8 +45,8 @@
               <mat-icon>perm_contact_calendar</mat-icon>
             </div>
             <div class="role-information" fxLayout="column">
-              <h3>{{row.name}}</h3>
-              <small>{{row.description}}</small>
+              <h3>{{ row.name }}</h3>
+              <small>{{ row.description }}</small>
             </div>
           </div>
         </ng-template>
@@ -52,20 +54,26 @@
       <ngx-datatable-column name="" [flexGrow]="1">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div fxLayout="row" class="gv-table-cell-actions">
-            <a mat-icon-button [routerLink]="[row.id]" *hasPermission="['domain_role_read']"><mat-icon matTooltip="Settings">settings</mat-icon></a>
-            <button *hasPermission="['domain_role_delete']" mat-icon-button (click)="delete(row.id, $event)"><mat-icon matTooltip="Delete">delete</mat-icon></button>
+            <a mat-icon-button [routerLink]="[row.id]" *hasPermission="['domain_role_read']"
+              ><mat-icon matTooltip="Settings">settings</mat-icon></a
+            >
+            <button *hasPermission="['domain_role_delete']" mat-icon-button (click)="delete(row.id, $event)">
+              <mat-icon matTooltip="Delete">delete</mat-icon>
+            </button>
           </div>
         </ng-template>
       </ngx-datatable-column>
     </ngx-datatable>
   </div>
 
-  <app-emptystate *ngIf="isEmpty"
-                  [message]="'Roles will appear here'"
-                  [subMessage]="'Start creating a role'"
-                  [icon]="'supervisor_account'"></app-emptystate>
+  <app-emptystate
+    *ngIf="isEmpty"
+    [message]="'Roles will appear here'"
+    [subMessage]="'Start creating a role'"
+    [icon]="'supervisor_account'"
+  ></app-emptystate>
 
-  <div *hasPermission="['domain_role_create']" [ngClass]="{'gv-add-button': !isEmpty, 'gv-add-button-center': isEmpty}">
+  <div *hasPermission="['domain_role_create']" [ngClass]="{ 'gv-add-button': !isEmpty, 'gv-add-button-center': isEmpty }">
     <a mat-fab color="primary" [routerLink]="['new']">
       <mat-icon>add</mat-icon>
     </a>

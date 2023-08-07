@@ -13,35 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit, Input, EventEmitter, Output, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, EventEmitter, Output, OnChanges, SimpleChanges } from '@angular/core';
 
 @Component({
   selector: 'reporter-form',
   templateUrl: './form.component.html',
-  styleUrls: ['./form.component.scss']
+  styleUrls: ['./form.component.scss'],
 })
-export class ReporterFormComponent implements OnInit, OnChanges {
+export class ReporterFormComponent implements OnChanges {
   @Input('reporterConfiguration') configuration: any = {};
   @Input('reporterSchema') reporterSchema: any;
   @Output() configurationCompleted = new EventEmitter<any>();
-  displayForm: boolean = false;
+  displayForm = false;
   data: any = {};
-
-  constructor() { }
-
-  ngOnInit() {
-  }
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes.reporterSchema) {
-      let _reporterSchema = changes.reporterSchema.currentValue;
+      const _reporterSchema = changes.reporterSchema.currentValue;
       if (_reporterSchema && _reporterSchema.id) {
         this.displayForm = true;
       }
     }
 
     if (changes.configuration) {
-      let _reporterConfiguration = changes.configuration.currentValue;
+      const _reporterConfiguration = changes.configuration.currentValue;
       if (_reporterConfiguration) {
         this.data = _reporterConfiguration;
       }
@@ -53,7 +48,7 @@ export class ReporterFormComponent implements OnInit, OnChanges {
   }
 
   isValid(isValid: boolean) {
-    let configurationWrapper = { 'isValid' : isValid, 'configuration': this.configuration};
+    const configurationWrapper = { isValid: isValid, configuration: this.configuration };
     this.configurationCompleted.emit(configurationWrapper);
   }
 }

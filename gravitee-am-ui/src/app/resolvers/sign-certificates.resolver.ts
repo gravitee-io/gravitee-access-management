@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Injectable} from '@angular/core';
-import {ActivatedRouteSnapshot, Resolve, RouterStateSnapshot} from '@angular/router';
-import {Observable} from 'rxjs';
-import {CertificateService} from '../services/certificate.service';
+import { Injectable } from '@angular/core';
+import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
+import { Observable } from 'rxjs';
+
+import { CertificateService } from '../services/certificate.service';
 
 @Injectable()
 export class SignCertificatesResolver implements Resolve<any> {
+  constructor(private certificateService: CertificateService) {}
 
-  constructor(private certificateService: CertificateService) { }
-
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
+  resolve(route: ActivatedRouteSnapshot): Observable<any> | Promise<any> | any {
     const domainId = route.parent.data['domain'].id;
-    return this.certificateService.findByDomainAndUse(domainId, "sig");
+    return this.certificateService.findByDomainAndUse(domainId, 'sig');
   }
 }

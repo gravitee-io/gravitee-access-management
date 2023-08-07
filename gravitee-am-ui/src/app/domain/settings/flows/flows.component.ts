@@ -13,17 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, HostListener, OnInit, ViewChild} from '@angular/core';
-import {ActivatedRoute} from '@angular/router';
+import { Component, HostListener, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+
 import '@gravitee/ui-components/wc/gv-policy-studio';
-import {OrganizationService} from '../../../services/organization.service';
-import {DomainService} from '../../../services/domain.service';
-import {SnackbarService} from '../../../services/snackbar.service';
+import { OrganizationService } from '../../../services/organization.service';
+import { DomainService } from '../../../services/domain.service';
+import { SnackbarService } from '../../../services/snackbar.service';
 
 @Component({
   selector: 'app-domain-flows',
   templateUrl: './flows.component.html',
-  styleUrls: ['./flows.component.scss']
+  styleUrls: ['./flows.component.scss'],
 })
 export class DomainSettingsFlowsComponent implements OnInit {
   private domainId: string;
@@ -32,14 +33,14 @@ export class DomainSettingsFlowsComponent implements OnInit {
   flowSchema: string;
   documentation: string;
 
-  @ViewChild('studio', {static: true}) studio;
+  @ViewChild('studio', { static: true }) studio;
 
-  constructor(private route: ActivatedRoute,
-              private organizationService: OrganizationService,
-              private domainService: DomainService,
-              private snackbarService: SnackbarService
-  ) {
-  }
+  constructor(
+    private route: ActivatedRoute,
+    private organizationService: OrganizationService,
+    private domainService: DomainService,
+    private snackbarService: SnackbarService,
+  ) {}
 
   ngOnInit(): void {
     this.domainId = this.route.snapshot.data['domain']?.id;
@@ -51,28 +52,30 @@ export class DomainSettingsFlowsComponent implements OnInit {
   @HostListener(':gv-policy-studio:fetch-documentation', ['$event.detail'])
   onFetchDocumentation(detail) {
     const policy = detail.policy;
-    this.organizationService.policyDocumentation(policy.id).subscribe((response) => {
-      this.studio.nativeElement.documentation = {
-        content: response,
-        image: policy.icon,
-        id: policy.id
-      };
-    }, () => {
-      this.studio.nativeElement.documentation = null;
-    });
+    this.organizationService.policyDocumentation(policy.id).subscribe(
+      (response) => {
+        this.studio.nativeElement.documentation = {
+          content: response,
+          image: policy.icon,
+          id: policy.id,
+        };
+      },
+      () => {
+        this.studio.nativeElement.documentation = null;
+      },
+    );
   }
 
   _stringifyConfiguration(step) {
     if (step.configuration != null) {
       const configuration = typeof step.configuration === 'string' ? step.configuration : JSON.stringify(step.configuration);
-      return {...step, configuration};
+      return { ...step, configuration };
     }
     return step;
   }
 
   @HostListener(':gv-policy-studio:save', ['$event.detail'])
-  onSave({definition}) {
-
+  onSave({ definition }) {
     const flows = definition.flows.map((flow) => {
       delete flow.icon;
       delete flow.createdAt;
@@ -84,27 +87,26 @@ export class DomainSettingsFlowsComponent implements OnInit {
 
     this.domainService.updateFlows(this.domainId, flows).subscribe((updatedFlows) => {
       this.studio.nativeElement.saved();
-      this.definition = {...this.definition, flows: updatedFlows};
+      this.definition = { ...this.definition, flows: updatedFlows };
       this.snackbarService.open('Flows updated');
     });
-
   }
 
   private initPolicies() {
     this.policies = this.route.snapshot.data['policies'] || [];
     const factors = this.route.snapshot.data['factors'] || [];
-    const filteredFactors = factors.filter(f => f.factorType && f.factorType.toUpperCase() != 'RECOVERY_CODE');
-    this.policies.forEach(policy => {
-      let policySchema = JSON.parse(policy.schema);
+    const filteredFactors = factors.filter((f) => f.factorType && f.factorType.toUpperCase() !== 'RECOVERY_CODE');
+    this.policies.forEach((policy) => {
+      const policySchema = JSON.parse(policy.schema);
       if (policySchema.properties) {
         for (const key in policySchema.properties) {
           if ('graviteeFactor' === policySchema.properties[key].widget) {
-            policySchema.properties[key]['x-schema-form'] = { 'type' : 'select' };
+            policySchema.properties[key]['x-schema-form'] = { type: 'select' };
             policySchema.properties[key].enum = [''];
-            policySchema.properties[key]['x-schema-form'].titleMap = { '' : 'None' };
+            policySchema.properties[key]['x-schema-form'].titleMap = { '': 'None' };
             if (filteredFactors.length > 0) {
-              policySchema.properties[key].enum = policySchema.properties[key].enum.concat(filteredFactors.map(f => f.id));
-              filteredFactors.forEach(obj => {
+              policySchema.properties[key].enum = policySchema.properties[key].enum.concat(filteredFactors.map((f) => f.id));
+              filteredFactors.forEach((obj) => {
                 policySchema.properties[key]['x-schema-form'].titleMap[obj.id] = obj.name;
               });
             }
@@ -114,6 +116,4 @@ export class DomainSettingsFlowsComponent implements OnInit {
       }
     });
   }
-
 }
-

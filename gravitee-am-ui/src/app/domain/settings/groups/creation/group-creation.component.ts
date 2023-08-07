@@ -14,26 +14,29 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from "@angular/router";
-import { SnackbarService } from "../../../../services/snackbar.service";
-import { GroupService } from "../../../../services/group.service";
-import { OrganizationService } from "../../../../services/organization.service";
+import { ActivatedRoute, Router } from '@angular/router';
+
+import { SnackbarService } from '../../../../services/snackbar.service';
+import { GroupService } from '../../../../services/group.service';
+import { OrganizationService } from '../../../../services/organization.service';
 
 @Component({
   selector: 'group-creation',
   templateUrl: './group-creation.component.html',
-  styleUrls: ['./group-creation.component.scss']
+  styleUrls: ['./group-creation.component.scss'],
 })
 export class GroupCreationComponent implements OnInit {
   private domainId: string;
   private organizationContext: boolean;
   group: any = {};
 
-  constructor(private groupService: GroupService,
-              private organizationService: OrganizationService,
-              private router: Router,
-              private route: ActivatedRoute,
-              private snackbarService: SnackbarService) { }
+  constructor(
+    private groupService: GroupService,
+    private organizationService: OrganizationService,
+    private router: Router,
+    private route: ActivatedRoute,
+    private snackbarService: SnackbarService,
+  ) {}
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
@@ -44,14 +47,14 @@ export class GroupCreationComponent implements OnInit {
 
   create() {
     if (this.organizationContext) {
-      this.organizationService.createGroup(this.group).subscribe(data => {
+      this.organizationService.createGroup(this.group).subscribe((data) => {
         this.snackbarService.open('Group ' + data.name + ' created');
         this.router.navigate(['/settings', 'groups', data.id]);
       });
     } else {
-      this.groupService.create(this.domainId, this.group).subscribe(data => {
+      this.groupService.create(this.domainId, this.group).subscribe((data) => {
         this.snackbarService.open('Group ' + data.name + ' created');
-        this.router.navigate(['..', data.id], {relativeTo: this.route} );
+        this.router.navigate(['..', data.id], { relativeTo: this.route });
       });
     }
   }

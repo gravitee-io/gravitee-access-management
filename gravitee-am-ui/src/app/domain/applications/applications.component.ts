@@ -13,16 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {DialogService} from "../../services/dialog.service";
-import {SnackbarService} from "../../services/snackbar.service";
-import {ActivatedRoute} from "@angular/router";
-import {ApplicationService} from "../../services/application.service";
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+
+import { DialogService } from '../../services/dialog.service';
+import { SnackbarService } from '../../services/snackbar.service';
+import { ApplicationService } from '../../services/application.service';
 
 @Component({
   selector: 'app-applications',
   templateUrl: './applications.component.html',
-  styleUrls: ['./applications.component.scss']
+  styleUrls: ['./applications.component.scss'],
 })
 export class ApplicationsComponent implements OnInit {
   private applications: any[];
@@ -30,10 +31,12 @@ export class ApplicationsComponent implements OnInit {
   domainId: string;
   page: any = {};
 
-  constructor(private dialogService: DialogService,
-              private snackbarService: SnackbarService,
-              private applicationService: ApplicationService,
-              private route: ActivatedRoute) {
+  constructor(
+    private dialogService: DialogService,
+    private snackbarService: SnackbarService,
+    private applicationService: ApplicationService,
+    private route: ActivatedRoute,
+  ) {
     this.page.pageNumber = 0;
     this.page.size = 10;
   }
@@ -52,11 +55,11 @@ export class ApplicationsComponent implements OnInit {
   }
 
   loadApps() {
-    const findApps = (this.searchValue) ?
-      this.applicationService.search(this.domainId, '*' + this.searchValue + '*') :
-      this.applicationService.findByDomain(this.domainId, this.page.pageNumber, this.page.size);
+    const findApps = this.searchValue
+      ? this.applicationService.search(this.domainId, '*' + this.searchValue + '*')
+      : this.applicationService.findByDomain(this.domainId, this.page.pageNumber, this.page.size);
 
-    findApps.subscribe(pagedApps => {
+    findApps.subscribe((pagedApps) => {
       this.page.totalElements = pagedApps.totalCount;
       this.applications = pagedApps.data;
     });
@@ -68,6 +71,6 @@ export class ApplicationsComponent implements OnInit {
   }
 
   get isEmpty() {
-    return !this.applications || this.applications.length === 0 && !this.searchValue;
+    return !this.applications || (this.applications.length === 0 && !this.searchValue);
   }
 }

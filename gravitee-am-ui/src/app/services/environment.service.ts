@@ -13,16 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Injectable} from '@angular/core';
-import {HttpClient} from '@angular/common/http';
-import {Observable, ReplaySubject, Subject} from 'rxjs';
-import {AppConfig} from '../../config/app.config';
-import {map, mergeMap} from "rxjs/operators";
-import {AuthService} from "./auth.service";
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable, ReplaySubject } from 'rxjs';
+import { map, mergeMap } from 'rxjs/operators';
+
+import { AuthService } from './auth.service';
+
+import { AppConfig } from '../../config/app.config';
 
 @Injectable()
 export class EnvironmentService {
-  public static NO_ENVIRONMENT: string = 'NO_ENVIRONMENT';
+  public static NO_ENVIRONMENT = 'NO_ENVIRONMENT';
 
   private organizationURL = AppConfig.settings.organizationBaseURL;
   private currentEnvironment;
@@ -30,23 +32,22 @@ export class EnvironmentService {
   public currentEnvironmentObs$ = this.currentEnvironmentSubject.asObservable();
   private allEnvironments: any[];
 
-  constructor(private http: HttpClient,
-              private authService: AuthService) {
-  }
+  constructor(private http: HttpClient, private authService: AuthService) {}
 
   getAllEnvironments(): Observable<any[]> {
     if (this.allEnvironments) {
-      return new Observable<any[]>(subscriber => {
+      return new Observable<any[]>((subscriber) => {
         subscriber.next(this.allEnvironments);
         subscriber.complete();
       });
     }
 
-    return this.http.get<any>(this.organizationURL + '/environments')
-      .pipe(map(environments => {
+    return this.http.get<any>(this.organizationURL + '/environments').pipe(
+      map((environments) => {
         this.allEnvironments = environments;
         return this.allEnvironments;
-      }));
+      }),
+    );
   }
 
   getCurrentEnvironment(): any {
@@ -60,16 +61,18 @@ export class EnvironmentService {
     }
   }
 
-  getEnvironmentById(id: String): Observable<any> {
-    return this.getAllEnvironments().pipe(map(environments => {
-      if (environments && environments.length > 0) {
-        let find = environments.find(e => e.id === id || e.hrids.includes(id));
-        this.setCurrentEnvironment(find);
-        return find;
-      }
+  getEnvironmentById(id: string): Observable<any> {
+    return this.getAllEnvironments().pipe(
+      map((environments) => {
+        if (environments && environments.length > 0) {
+          const find = environments.find((e) => e.id === id || e.hrids.includes(id));
+          this.setCurrentEnvironment(find);
+          return find;
+        }
 
-      return null;
-    }));
+        return null;
+      }),
+    );
   }
 
   private notifyEnvironment(environment) {
@@ -79,11 +82,12 @@ export class EnvironmentService {
   }
 
   permissions(id): Observable<any> {
-    return this.getEnvironmentById(id)
-      .pipe(mergeMap(environment => this.http.get<any>(this.organizationURL + '/environments/' + environment.id + '/members/permissions')),
-        map(perms => {
-          this.authService.reloadEnvironmentPermissions(perms);
-          return perms;
-        }));
+    return this.getEnvironmentById(id).pipe(
+      mergeMap((environment) => this.http.get<any>(this.organizationURL + '/environments/' + environment.id + '/members/permissions')),
+      map((perms) => {
+        this.authService.reloadEnvironmentPermissions(perms);
+        return perms;
+      }),
+    );
   }
 }

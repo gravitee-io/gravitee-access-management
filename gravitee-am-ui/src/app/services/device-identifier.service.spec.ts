@@ -16,14 +16,14 @@
 import { TestBed, inject } from '@angular/core/testing';
 
 import { DialogService } from './dialog.service';
-import {DeviceIdentifierService} from "./device-identifier.service";
+import { DeviceIdentifierService } from './device-identifier.service';
 
 describe('DeviceIdentifierService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-    providers: [DialogService],
-    teardown: { destroyAfterEach: false }
-});
+      providers: [DialogService],
+      teardown: { destroyAfterEach: false },
+    });
   });
 
   it('should ...', inject([DeviceIdentifierService], (service: DeviceIdentifierService) => {

@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {ComponentFixture, TestBed, waitForAsync} from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
-import {DomainSettingsThemeComponent} from "./theme.component";
+import { DomainSettingsThemeComponent } from './theme.component';
 
 describe('DomainSettingsThemeComponent', () => {
   let component: DomainSettingsThemeComponent;
@@ -23,10 +23,9 @@ describe('DomainSettingsThemeComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    declarations: [DomainSettingsThemeComponent],
-    teardown: { destroyAfterEach: false }
-})
-    .compileComponents();
+      declarations: [DomainSettingsThemeComponent],
+      teardown: { destroyAfterEach: false },
+    }).compileComponents();
   }));
 
   beforeEach(() => {

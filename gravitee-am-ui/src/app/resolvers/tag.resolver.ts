@@ -13,19 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Injectable} from '@angular/core';
-import {ActivatedRouteSnapshot, Resolve, RouterStateSnapshot} from "@angular/router";
-import {Observable} from "rxjs";
-import {TagService} from "../services/tag.service";
+import { Injectable } from '@angular/core';
+import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
+import { Observable } from 'rxjs';
+
+import { TagService } from '../services/tag.service';
 
 @Injectable()
 export class TagResolver implements Resolve<any> {
+  constructor(private tagService: TagService) {}
 
-  constructor(private tagService: TagService) { }
-
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
-    let tagId: string = route.paramMap.get('tagId');
+  resolve(route: ActivatedRouteSnapshot): Observable<any> | Promise<any> | any {
+    const tagId: string = route.paramMap.get('tagId');
     return this.tagService.get(tagId);
   }
-
 }

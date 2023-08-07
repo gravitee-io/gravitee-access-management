@@ -13,16 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit, ViewChild} from '@angular/core';
-import {MatHorizontalStepper, MatStepper} from '@angular/material/stepper';
-import {ActivatedRoute, Router} from '@angular/router';
-import {SnackbarService} from '../../../../services/snackbar.service';
-import {FactorService} from '../../../../services/factor.service';
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { MatHorizontalStepper, MatStepper } from '@angular/material/stepper';
+import { ActivatedRoute, Router } from '@angular/router';
+
+import { SnackbarService } from '../../../../services/snackbar.service';
+import { FactorService } from '../../../../services/factor.service';
 
 @Component({
   selector: 'app-factor-creation',
   templateUrl: './factor-creation.component.html',
-  styleUrls: ['./factor-creation.component.scss']
+  styleUrls: ['./factor-creation.component.scss'],
 })
 export class FactorCreationComponent implements OnInit {
   private domainId: string;
@@ -30,10 +31,12 @@ export class FactorCreationComponent implements OnInit {
   configurationIsValid = true;
   @ViewChild('stepper', { static: true }) stepper: MatStepper;
 
-  constructor(private factorService: FactorService,
-              private snackbarService: SnackbarService,
-              private router: Router,
-              private route: ActivatedRoute) { }
+  constructor(
+    private factorService: FactorService,
+    private snackbarService: SnackbarService,
+    private router: Router,
+    private route: ActivatedRoute,
+  ) {}
 
   ngOnInit(): void {
     this.domainId = this.route.snapshot.data['domain']?.id;
@@ -41,19 +44,17 @@ export class FactorCreationComponent implements OnInit {
 
   create() {
     this.factor.configuration = JSON.stringify(this.factor.configuration);
-    this.factorService.create(this.domainId, this.factor).subscribe(data => {
+    this.factorService.create(this.domainId, this.factor).subscribe((data) => {
       this.snackbarService.open('Factor ' + data.name + ' created');
       this.router.navigate(['..', data.id], { relativeTo: this.route });
     });
   }
 
   stepperValid() {
-    return this.factor &&
-      this.factor.name &&
-      this.configurationIsValid;
+    return this.factor && this.factor.name && this.configurationIsValid;
   }
 
-  setStepper(stepper: MatHorizontalStepper, step:number) {
+  setStepper(stepper: MatHorizontalStepper, step: number) {
     stepper.selectedIndex = step;
   }
 }

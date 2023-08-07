@@ -14,19 +14,18 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { Resolve, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
+import { Resolve, ActivatedRouteSnapshot } from '@angular/router';
 import { Observable } from 'rxjs';
+
 import { ResourceService } from '../services/resource.service';
 
 @Injectable()
 export class ResourceResolver implements Resolve<any> {
+  constructor(private resourceService: ResourceService) {}
 
-  constructor(private resourceService: ResourceService) { }
-
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
+  resolve(route: ActivatedRouteSnapshot): Observable<any> | Promise<any> | any {
     const domainId = route.parent.data['domain'].id;
     const resourceId: string = route.paramMap.get('resourceId');
     return this.resourceService.get(domainId, resourceId);
   }
-
 }

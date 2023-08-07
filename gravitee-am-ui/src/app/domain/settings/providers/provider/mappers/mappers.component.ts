@@ -14,42 +14,44 @@
  * limitations under the License.
  */
 import { Component, ElementRef, HostListener, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from "@angular/router";
-import { SnackbarService } from "../../../../../services/snackbar.service";
-import { ProviderService } from "../../../../../services/provider.service";
-import { DialogService } from "../../../../../services/dialog.service";
+import { ActivatedRoute, Router } from '@angular/router';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
-import { OrganizationService } from "../../../../../services/organization.service";
+
+import { SnackbarService } from '../../../../../services/snackbar.service';
+import { ProviderService } from '../../../../../services/provider.service';
+import { DialogService } from '../../../../../services/dialog.service';
+import { OrganizationService } from '../../../../../services/organization.service';
 import '@gravitee/ui-components/wc/gv-expression-language';
 
 @Component({
   selector: 'provider-mappers',
   templateUrl: './mappers.component.html',
-  styleUrls: ['./mappers.component.scss']
+  styleUrls: ['./mappers.component.scss'],
 })
 export class ProviderMappersComponent implements OnInit {
   private domainId: string;
   private organizationContext = false;
   private defaultMappers: any = {
-    'sub': 'uid',
-    'email': 'mail',
-    'name': 'displayname',
-    'given_name': 'givenname',
-    'family_name': 'sn'
+    sub: 'uid',
+    email: 'mail',
+    name: 'displayname',
+    given_name: 'givenname',
+    family_name: 'sn',
   };
   mappers: any = [];
   provider: any;
   editing = {};
   spelGrammar: any;
 
-  constructor(private providerService: ProviderService,
-              private snackbarService: SnackbarService,
-              private dialogService: DialogService,
-              private route: ActivatedRoute,
-              private router: Router,
-              private dialog: MatDialog,
-              private organizationService: OrganizationService) {
-  }
+  constructor(
+    private providerService: ProviderService,
+    private snackbarService: SnackbarService,
+    private dialogService: DialogService,
+    private route: ActivatedRoute,
+    private router: Router,
+    private dialog: MatDialog,
+    private organizationService: OrganizationService,
+  ) {}
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
@@ -69,32 +71,35 @@ export class ProviderMappersComponent implements OnInit {
       return Promise.resolve(this.spelGrammar);
     }
 
-    return this.organizationService.spelGrammar().toPromise().then((response) => {
-      this.spelGrammar = response;
-      return this.spelGrammar;
-    });
+    return this.organizationService
+      .spelGrammar()
+      .toPromise()
+      .then((response) => {
+        this.spelGrammar = response;
+        return this.spelGrammar;
+      });
   }
 
   setMappers(mappers) {
     this.mappers = [];
-    for (var k in mappers){
+    for (const k in mappers) {
       if (mappers.hasOwnProperty(k)) {
         this.mappers.push({
           key: k,
-          value: mappers[k]
+          value: mappers[k],
         });
       }
     }
   }
 
   add() {
-    let dialogRef = this.dialog.open(CreateMapperComponent, { width : '700px'});
-    dialogRef.afterClosed().subscribe(mapper => {
+    const dialogRef = this.dialog.open(CreateMapperComponent, { width: '700px' });
+    dialogRef.afterClosed().subscribe((mapper) => {
       if (mapper) {
         if (!this.attributeExits(mapper.key)) {
           this.mappers.push(mapper);
           this.mappers = [...this.mappers];
-          this.update("Attribute added");
+          this.update('Attribute added');
         } else {
           this.snackbarService.open(`Error : attribute ${mapper.key} already exists`);
         }
@@ -104,14 +109,17 @@ export class ProviderMappersComponent implements OnInit {
 
   update(message) {
     this.provider.configuration = this.provider.configuration ? JSON.parse(this.provider.configuration) : {};
-    this.provider.mappers = this.mappers.reduce(function(map, obj) { map[obj.key] = obj.value; return map; }, {});
-    this.providerService.update(this.domainId, this.provider.id, this.provider, this.organizationContext).subscribe(data => {
+    this.provider.mappers = this.mappers.reduce(function (map, obj) {
+      map[obj.key] = obj.value;
+      return map;
+    }, {});
+    this.providerService.update(this.domainId, this.provider.id, this.provider, this.organizationContext).subscribe(() => {
       this.snackbarService.open(message);
-    })
+    });
   }
 
   updateMapper(event, cell, rowIndex) {
-    let mapper = event.target.value;
+    const mapper = event.target.value;
     if (mapper) {
       if (cell === 'key' && this.attributeExits(mapper)) {
         this.snackbarService.open(`Error : mapper ${mapper} already exists`);
@@ -121,38 +129,43 @@ export class ProviderMappersComponent implements OnInit {
       this.editing[rowIndex + '-' + cell] = false;
       this.mappers[rowIndex][cell] = mapper;
       this.mappers = [...this.mappers];
-      this.update("Mapper saved");
+      this.update('Mapper saved');
     }
   }
 
   delete(key, event) {
     event.preventDefault();
-    this.dialogService
-      .confirm('Delete Mapper', 'Are you sure you want to delete this mapper ?')
-      .subscribe(res => {
-        if (res) {
-          this.mappers = this.mappers.filter(function(el) { return el.key !== key; });
-          this.update('Mapper deleted');
-        }
-      });
+    this.dialogService.confirm('Delete Mapper', 'Are you sure you want to delete this mapper ?').subscribe((res) => {
+      if (res) {
+        this.mappers = this.mappers.filter(function (el) {
+          return el.key !== key;
+        });
+        this.update('Mapper deleted');
+      }
+    });
   }
 
   attributeExits(attribute): boolean {
-    return this.mappers.map(function(m) { return m.key; }).indexOf(attribute) > -1;
+    return (
+      this.mappers
+        .map(function (m) {
+          return m.key;
+        })
+        .indexOf(attribute) > -1
+    );
   }
 
   get isEmpty() {
-    return !this.mappers || this.mappers.length == 0;
+    return !this.mappers || this.mappers.length === 0;
   }
 
   @HostListener(':gv-expression-language:ready', ['$event.detail'])
-  setGrammar({currentTarget}) {
-    this.getGrammar().then((grammar)=> {
+  setGrammar({ currentTarget }) {
+    this.getGrammar().then((grammar) => {
       currentTarget.grammar = grammar;
       currentTarget.requestUpdate();
     });
-  };
-
+  }
 }
 
 @Component({
@@ -160,20 +173,22 @@ export class ProviderMappersComponent implements OnInit {
   templateUrl: './create/create.component.html',
 })
 export class CreateMapperComponent {
-
   spelGrammar: any;
   rule: string;
 
-  constructor(public dialogRef: MatDialogRef<CreateMapperComponent>,
-              private elementRef: ElementRef,
-              private organizationService: OrganizationService) {
-  }
+  constructor(
+    public dialogRef: MatDialogRef<CreateMapperComponent>,
+    private elementRef: ElementRef,
+    private organizationService: OrganizationService,
+  ) {}
 
   ngOnInit() {
-    this.organizationService.spelGrammar().toPromise().then((response) => {
-      this.spelGrammar = response;
-    });
-
+    this.organizationService
+      .spelGrammar()
+      .toPromise()
+      .then((response) => {
+        this.spelGrammar = response;
+      });
   }
 
   getGrammar() {
@@ -181,20 +196,22 @@ export class CreateMapperComponent {
       return Promise.resolve(this.spelGrammar);
     }
 
-    return this.organizationService.spelGrammar().toPromise().then((response) => {
-      this.spelGrammar = response;
-      return this.spelGrammar;
-    });
+    return this.organizationService
+      .spelGrammar()
+      .toPromise()
+      .then((response) => {
+        this.spelGrammar = response;
+        return this.spelGrammar;
+      });
   }
 
   @HostListener(':gv-expression-language:ready', ['$event.detail'])
-  setGrammar({currentTarget}) {
-    this.getGrammar().then((grammar)=> {
+  setGrammar({ currentTarget }) {
+    this.getGrammar().then((grammar) => {
       currentTarget.grammar = grammar;
       currentTarget.requestUpdate();
     });
-  };
-
+  }
 
   change($event) {
     this.rule = $event.target.value;

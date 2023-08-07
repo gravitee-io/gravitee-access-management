@@ -21,32 +21,35 @@
     <div fxLayout="column" fxFlex="70">
       <form (ngSubmit)="update()" #domainForm="ngForm" fxLayout="column">
         <div class="gv-form-section">
-          <div fxLayout="column" style="margin-bottom: 10px;">
-            <mat-slide-toggle
-              (change)="enableDomain($event)"
-              [checked]="domain.enabled" [disabled]="readonly">
+          <div fxLayout="column" style="margin-bottom: 10px">
+            <mat-slide-toggle (change)="enableDomain($event)" [checked]="domain.enabled" [disabled]="readonly">
               Enable domain
             </mat-slide-toggle>
-            <mat-hint style="font-size: 75%;">Enable domain to handle incoming authentication and authorization requests.</mat-hint>
+            <mat-hint style="font-size: 75%">Enable domain to handle incoming authentication and authorization requests.</mat-hint>
           </div>
-          <div fxLayout="column" style="margin-bottom: 10px;">
-            <mat-slide-toggle
-              (change)="setMaster($event)"
-              [checked]="domain.master" [disabled]="readonly">
+          <div fxLayout="column" style="margin-bottom: 10px">
+            <mat-slide-toggle (change)="setMaster($event)" [checked]="domain.master" [disabled]="readonly">
               Master domain
             </mat-slide-toggle>
-            <mat-hint style="font-size: 75%;">
-              A master security domain can introspect tokens from other domains. Useful if you want to dedicate a domain only to verify tokens.
+            <mat-hint style="font-size: 75%">
+              A master security domain can introspect tokens from other domains. Useful if you want to dedicate a domain only to verify
+              tokens.
             </mat-hint>
           </div>
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Name</mat-label>
-            <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="domain.name" required [readonly]="readonly">
+            <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="domain.name" required [readonly]="readonly" />
             <mat-hint>Your domain's name.</mat-hint>
           </mat-form-field>
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Description</mat-label>
-            <textarea matInput placeholder="Description" name="description" [(ngModel)]="domain.description" [readonly]="readonly"></textarea>
+            <textarea
+              matInput
+              placeholder="Description"
+              name="description"
+              [(ngModel)]="domain.description"
+              [readonly]="readonly"
+            ></textarea>
             <mat-hint>Your domain's description.</mat-hint>
           </mat-form-field>
         </div>
@@ -54,31 +57,45 @@
         <div class="gv-form-section">
           <div class="gv-form-section-title">
             <h5>Post logout redirect URIs</h5>
-            <small>List of allowed URLs where the user will be redirected after being sign out.
-              It prevents some vulnerabilities like being redirected to unsafe websites.</small>
+            <small
+              >List of allowed URLs where the user will be redirected after being sign out. It prevents some vulnerabilities like being
+              redirected to unsafe websites.</small
+            >
             <mat-divider></mat-divider>
           </div>
           <div fxLayout="column">
             <div fxLayout="row" fxLayoutGap="10px" *hasPermission="['domain_settings_update']">
               <div fxFlex="90">
                 <mat-form-field appearance="outline" floatLabel="always">
-                  <input matInput type="text" placeholder="Enter a redirect URI" name="logoutRedirectUri" (keydown.enter)="addLogoutRedirectUris($event)" [value]="logoutRedirectUri || ''" (input)='logoutRedirectUri = $event.target.value'>
+                  <input
+                    matInput
+                    type="text"
+                    placeholder="Enter a redirect URI"
+                    name="logoutRedirectUri"
+                    (keydown.enter)="addLogoutRedirectUris($event)"
+                    [value]="logoutRedirectUri || ''"
+                    (input)="logoutRedirectUri = $event.target.value"
+                  />
                 </mat-form-field>
               </div>
               <div>
-                <button mat-stroked-button style="margin-top: 7px;" (click)="addLogoutRedirectUris($event)" [disabled]="!logoutRedirectUri">+ ADD</button>
+                <button mat-stroked-button style="margin-top: 7px" (click)="addLogoutRedirectUris($event)" [disabled]="!logoutRedirectUri">
+                  + ADD
+                </button>
               </div>
             </div>
-            <ngx-datatable class="material"
-                           [columnMode]="'flex'"
-                           [headerHeight]="40"
-                           [footerHeight]="40"
-                           [rowHeight]="50"
-                           [messages]="{emptyMessage:'There are no redirect URIs'}"
-                           [rows]="logoutRedirectUris">
+            <ngx-datatable
+              class="material"
+              [columnMode]="'flex'"
+              [headerHeight]="40"
+              [footerHeight]="40"
+              [rowHeight]="50"
+              [messages]="{ emptyMessage: 'There are no redirect URIs' }"
+              [rows]="logoutRedirectUris"
+            >
               <ngx-datatable-column name="Redirect URIs" [flexGrow]="4">
                 <ng-template let-row="row" ngx-datatable-cell-template>
-                  {{row.value}}
+                  {{ row.value }}
                 </ng-template>
               </ngx-datatable-column>
               <ngx-datatable-column name="" [flexGrow]="1" *hasPermission="['domain_settings_update']">
@@ -95,31 +112,43 @@
         <div class="gv-form-section">
           <div class="gv-form-section-title">
             <h5>Request URIs</h5>
-            <small>List of allowed URLs an application can used as request_uri parameter.
-              It prevents some vulnerabilities like Server Side Request Forgery.</small>
+            <small
+              >List of allowed URLs an application can used as request_uri parameter. It prevents some vulnerabilities like Server Side
+              Request Forgery.</small
+            >
             <mat-divider></mat-divider>
           </div>
           <div fxLayout="column">
             <div fxLayout="row" fxLayoutGap="10px" *hasPermission="['domain_settings_update']">
               <div fxFlex="90">
                 <mat-form-field appearance="outline" floatLabel="always">
-                  <input matInput type="text" placeholder="Enter a request URI" name="requestUri" (keydown.enter)="addRequestUris($event)" [value]="requestUri || ''" (input)='requestUri = $event.target.value'>
+                  <input
+                    matInput
+                    type="text"
+                    placeholder="Enter a request URI"
+                    name="requestUri"
+                    (keydown.enter)="addRequestUris($event)"
+                    [value]="requestUri || ''"
+                    (input)="requestUri = $event.target.value"
+                  />
                 </mat-form-field>
               </div>
               <div>
-                <button mat-stroked-button style="margin-top: 7px;" (click)="addRequestUris($event)" [disabled]="!requestUri">+ ADD</button>
+                <button mat-stroked-button style="margin-top: 7px" (click)="addRequestUris($event)" [disabled]="!requestUri">+ ADD</button>
               </div>
             </div>
-            <ngx-datatable class="material"
-                           [columnMode]="'flex'"
-                           [headerHeight]="40"
-                           [footerHeight]="40"
-                           [rowHeight]="50"
-                           [messages]="{emptyMessage:'There is no request URIs'}"
-                           [rows]="requestUris">
+            <ngx-datatable
+              class="material"
+              [columnMode]="'flex'"
+              [headerHeight]="40"
+              [footerHeight]="40"
+              [rowHeight]="50"
+              [messages]="{ emptyMessage: 'There is no request URIs' }"
+              [rows]="requestUris"
+            >
               <ngx-datatable-column name="Request URIs" [flexGrow]="4">
                 <ng-template let-row="row" ngx-datatable-cell-template>
-                  {{row.value}}
+                  {{ row.value }}
                 </ng-template>
               </ngx-datatable-column>
               <ngx-datatable-column name="" [flexGrow]="1" *hasPermission="['domain_settings_update']">
@@ -142,24 +171,27 @@
             <mat-form-field appearance="outline" floatLabel="always">
               <mat-label>Sharding tags</mat-label>
               <mat-chip-list #chipListTags>
-                <mat-chip *ngFor="let tag of selectedTags" color="primary"
-                          selected="true" (removed)="removeTag(tag)">
-                  <mat-icon style="vertical-align:middle;">filter_none</mat-icon>
-                  &nbsp;<span>{{tag.id}}</span>&nbsp;|&nbsp;<small>{{tag.name}}</small>
+                <mat-chip *ngFor="let tag of selectedTags" color="primary" selected="true" (removed)="removeTag(tag)">
+                  <mat-icon style="vertical-align: middle">filter_none</mat-icon>
+                  &nbsp;<span>{{ tag.id }}</span
+                  >&nbsp;|&nbsp;<small>{{ tag.name }}</small>
                   <mat-icon matChipRemove>cancel</mat-icon>
                 </mat-chip>
-                <input matInput
-                       aria-label="Sharding Tags"
-                       placeholder="Sharding Tags"
-                       [matAutocomplete]="auto"
-                       [matChipInputFor]="chipListTags" [readonly]="readonly"
-                       #chipInput>
+                <input
+                  matInput
+                  aria-label="Sharding Tags"
+                  placeholder="Sharding Tags"
+                  [matAutocomplete]="auto"
+                  [matChipInputFor]="chipListTags"
+                  [readonly]="readonly"
+                  #chipInput
+                />
               </mat-chip-list>
 
               <mat-autocomplete #auto="matAutocomplete" (optionSelected)="addTag($event)">
                 <mat-option *ngFor="let tag of tags" [value]="tag.id">
-                  <mat-icon style="vertical-align:middle;">filter_none</mat-icon>
-                  <span>{{ tag.id }}</span> | <small>{{tag.name}}</small>
+                  <mat-icon style="vertical-align: middle">filter_none</mat-icon>
+                  <span>{{ tag.id }}</span> | <small>{{ tag.name }}</small>
                 </mat-option>
               </mat-autocomplete>
               <mat-hint>Select a sharding tag and press enter.</mat-hint>
@@ -168,13 +200,15 @@
         </div>
 
         <div *hasPermission="['domain_settings_update']">
-          <button mat-raised-button color="primary" [disabled]="(!domainForm.valid || domainForm.pristine) && !formChanged" type="submit">SAVE</button>
+          <button mat-raised-button color="primary" [disabled]="(!domainForm.valid || domainForm.pristine) && !formChanged" type="submit">
+            SAVE
+          </button>
         </div>
       </form>
       <div *hasPermission="['domain_settings_delete']" class="gv-page-delete-zone" fxLayout="column">
         <p>This operation cannot be undone.</p>
-        Domain will be deleted included all related data such as clients, identity providers, certificates and roles.
-        Current domain's users will no longer have access to the platform to log in and access protected resources.
+        Domain will be deleted included all related data such as clients, identity providers, certificates and roles. Current domain's users
+        will no longer have access to the platform to log in and access protected resources.
         <div class="gv-page-delete-button" fxLayout="row">
           <span fxFlex></span>
           <gv-button #deleteDomainBtn danger (click)="delete($event)">DELETE</gv-button>
@@ -184,9 +218,7 @@
     <div class="gv-page-description" fxFlex>
       <h3>Manage security domain</h3>
       <div class="gv-page-description-content">
-        <p>
-          Configure your security domain's name, path and description.
-        </p>
+        <p>Configure your security domain's name, path and description.</p>
         <small>Changing the security domain's path involve to change endpoint URLs in your current applications.</small>
         <br />
         <br />

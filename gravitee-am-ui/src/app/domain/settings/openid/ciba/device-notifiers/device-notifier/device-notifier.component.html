@@ -17,14 +17,14 @@
 -->
 <div class="gv-page-container">
   <a [routerLink]="['..']" class="gv-back-link"><small><< Back to device notifiers</small></a>
-  <h1>{{deviceNotifier.name}}</h1>
+  <h1>{{ deviceNotifier.name }}</h1>
   <div fxLayout="row">
     <div fxLayout="column" fxFlex="70">
       <form #deviceNotifierForm="ngForm">
         <div class="gv-form-section">
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Name</mat-label>
-            <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="deviceNotifier.name" required [readonly]="!editMode">
+            <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="deviceNotifier.name" required [readonly]="!editMode" />
             <mat-hint>Notifier name</mat-hint>
           </mat-form-field>
         </div>
@@ -35,12 +35,26 @@
             <mat-divider></mat-divider>
           </div>
           <div>
-            <device-notifier-form *ngIf="deviceNotifier" [deviceNotifierConfiguration]="deviceNotifierConfiguration" [deviceNotifierSchema]="deviceNotifierSchema" (configurationCompleted)="enableDeviceNotifierUpdate($event)"></device-notifier-form>
+            <device-notifier-form
+              *ngIf="deviceNotifier"
+              [deviceNotifierConfiguration]="deviceNotifierConfiguration"
+              [deviceNotifierSchema]="deviceNotifierSchema"
+              (configurationCompleted)="enableDeviceNotifierUpdate($event)"
+            ></device-notifier-form>
           </div>
         </div>
 
         <div fxLayout="row" *ngIf="editMode">
-          <button mat-raised-button color="primary" [disabled]="(!deviceNotifierForm.valid || deviceNotifierForm.pristine) && (!configurationIsValid || configurationPristine) && !formChanged" (click)="update()">SAVE</button>
+          <button
+            mat-raised-button
+            color="primary"
+            [disabled]="
+              (!deviceNotifierForm.valid || deviceNotifierForm.pristine) && (!configurationIsValid || configurationPristine) && !formChanged
+            "
+            (click)="update()"
+          >
+            SAVE
+          </button>
         </div>
       </form>
 
@@ -58,5 +72,6 @@
       <div class="gv-page-description-content">
         <p>A Device Notifier is a plugin used by Access Management to manage the Authentication Device interactions in a CIBA flow.</p>
       </div>
+    </div>
   </div>
 </div>

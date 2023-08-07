@@ -15,37 +15,42 @@
     limitations under the License.
 
 -->
-<h5 matDialogTitle>
-  Add scope
-</h5>
+<h5 matDialogTitle>Add scope</h5>
 <mat-dialog-content>
   <mat-form-field>
     <mat-chip-list #chipList aria-label="Scopes selection">
-      <mat-chip
-        *ngFor="let scope of selectedScopes"
-        [removable]="true"
-        (removed)="remove(scope)">
-        {{scope}}
+      <mat-chip *ngFor="let scope of selectedScopes" [removable]="true" (removed)="remove(scope)">
+        {{ scope }}
         <mat-icon matChipRemove *ngIf="removable">cancel</mat-icon>
       </mat-chip>
-      <input name="scope"
-             #scopeInput
-             placeholder="Select scopes to add to this application."
-             [formControl]="scopeCtrl"
-             [matAutocomplete]="auto"
-             [matChipInputFor]="chipList"
-             [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
-             [matChipInputAddOnBlur]="addOnBlur">
+      <input
+        name="scope"
+        #scopeInput
+        placeholder="Select scopes to add to this application."
+        [formControl]="scopeCtrl"
+        [matAutocomplete]="auto"
+        [matChipInputFor]="chipList"
+        [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+        [matChipInputAddOnBlur]="addOnBlur"
+      />
     </mat-chip-list>
     <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onSelectionChanged($event)">
       <mat-option *ngFor="let scope of filteredScopes" [value]="scope.key">
-        <span>{{scope.name}}</span> |
-        <small>{{scope.description}}</small>
+        <span>{{ scope.name }}</span> |
+        <small>{{ scope.description }}</small>
       </mat-option>
     </mat-autocomplete>
   </mat-form-field>
 </mat-dialog-content>
 <mat-dialog-actions>
-  <button type="button" mat-raised-button (click)="dialogRef.close(selectedScopes)" color="primary" [disabled]="selectedScopes.length === 0">Add</button>
-  <button type="button" mat-button (click)="dialogRef.close()" class="dialog-cancel" style="margin-left: 20px;">Cancel</button>
+  <button
+    type="button"
+    mat-raised-button
+    (click)="dialogRef.close(selectedScopes)"
+    color="primary"
+    [disabled]="selectedScopes.length === 0"
+  >
+    Add
+  </button>
+  <button type="button" mat-button (click)="dialogRef.close()" class="dialog-cancel" style="margin-left: 20px">Cancel</button>
 </mat-dialog-actions>

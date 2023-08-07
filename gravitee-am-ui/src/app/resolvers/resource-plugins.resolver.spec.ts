@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {inject, TestBed} from '@angular/core/testing';
-import {ResourcePluginsResolver} from './resource-plugins.resolver';
+import { inject, TestBed } from '@angular/core/testing';
+
+import { ResourcePluginsResolver } from './resource-plugins.resolver';
 
 describe('ResourcePluginsResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-    providers: [ResourcePluginsResolver],
-    teardown: { destroyAfterEach: false }
-});
+      providers: [ResourcePluginsResolver],
+      teardown: { destroyAfterEach: false },
+    });
   });
 
   it('should ...', inject([ResourcePluginsResolver], (service: ResourcePluginsResolver) => {

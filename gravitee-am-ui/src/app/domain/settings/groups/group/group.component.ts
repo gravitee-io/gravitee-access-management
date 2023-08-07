@@ -13,22 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
   selector: 'app-group',
   templateUrl: './group.component.html',
-  styleUrls: ['./group.component.scss']
+  styleUrls: ['./group.component.scss'],
 })
 export class GroupComponent implements OnInit {
   private domainId: string;
   private organizationContext = false;
   group: any;
-  navLinks: any = [ ];
+  navLinks: any = [];
 
-  constructor(private route: ActivatedRoute,
-              private router: Router) { }
+  constructor(private route: ActivatedRoute, private router: Router) {}
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
@@ -40,11 +39,11 @@ export class GroupComponent implements OnInit {
   }
 
   initNavLinks() {
-    this.navLinks.push({'href': 'settings' , 'label': 'Settings'});
-    this.navLinks.push({'href': 'members' , 'label': 'Members'});
+    this.navLinks.push({ href: 'settings', label: 'Settings' });
+    this.navLinks.push({ href: 'members', label: 'Members' });
 
     if (!this.organizationContext) {
-      this.navLinks.push({'href': 'roles' , 'label': 'Roles'});
+      this.navLinks.push({ href: 'roles', label: 'Roles' });
     }
   }
 }

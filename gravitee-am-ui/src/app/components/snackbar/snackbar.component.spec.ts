@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { ComponentFixture, TestBed, waitForAsync } from "@angular/core/testing";
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
-import {SnackbarComponent} from "./snackbar.component";
+import { SnackbarComponent } from './snackbar.component';
 
 describe('SnackbarComponent', () => {
   let component: SnackbarComponent;
@@ -23,10 +23,9 @@ describe('SnackbarComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    declarations: [SnackbarComponent],
-    teardown: { destroyAfterEach: false }
-})
-    .compileComponents();
+      declarations: [SnackbarComponent],
+      teardown: { destroyAfterEach: false },
+    }).compileComponents();
   }));
 
   beforeEach(() => {

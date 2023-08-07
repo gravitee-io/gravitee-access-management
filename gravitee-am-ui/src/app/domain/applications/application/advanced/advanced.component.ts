@@ -13,33 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnDestroy, OnInit} from '@angular/core';
-import {ActivatedRoute, NavigationEnd, Router, RouterEvent} from '@angular/router';
-import {AuthService} from '../../../../services/auth.service';
-import {filter} from 'rxjs/operators';
-import {Subscription} from 'rxjs';
+import { Component, OnDestroy } from '@angular/core';
+import { ActivatedRoute, NavigationEnd, Router, RouterEvent } from '@angular/router';
+import { filter } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
+
+import { AuthService } from '../../../../services/auth.service';
 
 @Component({
   selector: 'app-application-advanced',
   templateUrl: './advanced.component.html',
-  styleUrls: ['./advanced.component.scss']
+  styleUrls: ['./advanced.component.scss'],
 })
-export class ApplicationAdvancedComponent implements OnInit, OnDestroy {
+export class ApplicationAdvancedComponent implements OnDestroy {
   private subscription: Subscription;
 
-  constructor(private router: Router,
-              private route: ActivatedRoute,
-              private authService: AuthService) {
-    this.subscription = this.router.events.pipe(
-      filter((event: RouterEvent) => event instanceof NavigationEnd)
-    ).subscribe(next  => {
+  constructor(private router: Router, private route: ActivatedRoute, private authService: AuthService) {
+    this.subscription = this.router.events.pipe(filter((event: RouterEvent) => event instanceof NavigationEnd)).subscribe((next) => {
       if (next.url.endsWith('settings')) {
         this.loadPermissions();
       }
     });
   }
-
-  ngOnInit(): void {}
 
   ngOnDestroy(): void {
     this.subscription.unsubscribe();

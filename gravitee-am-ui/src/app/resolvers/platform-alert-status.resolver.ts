@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Injectable} from '@angular/core';
-import {ActivatedRouteSnapshot, Resolve, RouterStateSnapshot} from "@angular/router";
-import {Observable} from "rxjs";
-import {OrganizationService} from "../services/organization.service";
+import { Injectable } from '@angular/core';
+import { Resolve } from '@angular/router';
+import { Observable } from 'rxjs';
+
+import { OrganizationService } from '../services/organization.service';
 
 @Injectable()
 export class PlatformAlertStatusResolver implements Resolve<any> {
+  constructor(private organizationService: OrganizationService) {}
 
-  constructor(private organizationService: OrganizationService) {
-  }
-
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> | Promise<any> | any {
+  resolve(): Observable<any> {
     return this.organizationService.alertingStatus();
   }
 }

@@ -13,40 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, EventEmitter, Input, Output} from "@angular/core";
-import {MatDialog, MatDialogRef} from "@angular/material/dialog";
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 
 @Component({
   selector: 'mfa-conditional',
   templateUrl: './mfa-conditional.component.html',
-  styleUrls: ['./mfa-conditional.component.scss']
+  styleUrls: ['./mfa-conditional.component.scss'],
 })
 export class MfaConditionalComponent {
-
   @Input() adaptiveMfaRule: string;
-  @Output("on-rule-change") amfaRuleEmitter: EventEmitter<string> = new EventEmitter<string>();
+  @Output('on-rule-change') amfaRuleEmitter: EventEmitter<string> = new EventEmitter<string>();
 
-  constructor(private dialog: MatDialog) {
-  }
+  constructor(private dialog: MatDialog) {}
 
   openAMFADialog($event) {
     $event.preventDefault();
-    this.dialog.open(AdaptiveMfaDialog, {width: '700px'});
+    this.dialog.open(AdaptiveMfaDialog, { width: '700px' });
   }
 
   updateAdaptiveMfaRule($event) {
-    if($event.target){
+    if ($event.target) {
       this.amfaRuleEmitter.emit($event.target.value);
     }
   }
 }
-
 
 @Component({
   selector: 'adaptive-mfa-dialog',
   templateUrl: './dialog/adaptive-mfa-info.component.html',
 })
 export class AdaptiveMfaDialog {
-  constructor(public dialogRef: MatDialogRef<AdaptiveMfaDialog>) {
-  }
+  constructor(public dialogRef: MatDialogRef<AdaptiveMfaDialog>) {}
 }

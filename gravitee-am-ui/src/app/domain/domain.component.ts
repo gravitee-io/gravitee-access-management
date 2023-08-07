@@ -13,45 +13,47 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
-import {SidenavService} from '../components/sidenav/sidenav.service';
-import {DomainService} from '../services/domain.service';
-import {NavbarService} from '../components/navbar/navbar.service';
-import {SnackbarService} from '../services/snackbar.service';
-import {AuthService} from '../services/auth.service';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+
+import { SidenavService } from '../components/sidenav/sidenav.service';
+import { DomainService } from '../services/domain.service';
+import { NavbarService } from '../components/navbar/navbar.service';
+import { SnackbarService } from '../services/snackbar.service';
+import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-domain',
   templateUrl: './domain.component.html',
-  styleUrls: ['./domain.component.scss']
+  styleUrls: ['./domain.component.scss'],
 })
 export class DomainComponent implements OnInit {
   domain: any = {};
   environment: any = {};
 
-  constructor(private route: ActivatedRoute,
-              private router: Router,
-              private sidenavService: SidenavService,
-              private navbarService: NavbarService,
-              private snackbarService: SnackbarService,
-              private domainService: DomainService,
-              private authService: AuthService) {
-  }
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private sidenavService: SidenavService,
+    private navbarService: NavbarService,
+    private snackbarService: SnackbarService,
+    private domainService: DomainService,
+    private authService: AuthService,
+  ) {}
 
   ngOnInit() {
     this.environment = this.route.snapshot.data['environment'];
     this.domain = this.route.snapshot.data['domain'];
-    this.domainService.domainUpdated$.subscribe(domain => this.domain = domain);
+    this.domainService.domainUpdated$.subscribe((domain) => (this.domain = domain));
 
     // redirect user according to its permissions
     if (this.router.url.indexOf('applications') === -1 && this.router.url.indexOf('settings') === -1) {
       if (this.canNavigate(['domain_analytics_read'])) {
-        this.router.navigate(['dashboard'], {relativeTo: this.route});
+        this.router.navigate(['dashboard'], { relativeTo: this.route });
       } else if (this.canNavigate(['application_list'])) {
-        this.router.navigate(['applications'], {relativeTo: this.route});
+        this.router.navigate(['applications'], { relativeTo: this.route });
       } else {
-        this.router.navigate(['settings'], {relativeTo: this.route});
+        this.router.navigate(['settings'], { relativeTo: this.route });
       }
     } else {
       this.router.navigateByUrl(this.router.url);
@@ -60,13 +62,13 @@ export class DomainComponent implements OnInit {
 
   enable() {
     this.domain.enabled = true;
-    this.domainService.enable(this.domain.id, this.domain).subscribe(response => {
+    this.domainService.enable(this.domain.id, this.domain).subscribe((response) => {
       this.domain = response;
       this.snackbarService.open('Domain ' + this.domain.name + ' enabled');
     });
   }
 
-  hasPermissions(permissions): boolean{
+  hasPermissions(permissions): boolean {
     return this.authService.hasPermissions(permissions);
   }
 
@@ -74,4 +76,3 @@ export class DomainComponent implements OnInit {
     return this.authService.hasPermissions(permissions);
   }
 }
-

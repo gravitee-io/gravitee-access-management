@@ -30,7 +30,7 @@
         </ng-template>
         <device-notifier-creation-step1 [deviceNotifier]="deviceNotifier"></device-notifier-creation-step1>
         <div fxLayout="row" fxLayoutAlign="end end" class="stepper-button-zone">
-          <button mat-raised-button color="primary" matStepperNext type="button"[disabled]="!deviceNotifier.type">Next</button>
+          <button mat-raised-button color="primary" matStepperNext type="button" [disabled]="!deviceNotifier.type">Next</button>
         </div>
       </mat-step>
       <mat-step>
@@ -38,7 +38,11 @@
           <h5>Settings</h5>
           <small>Device Notifier configuration</small>
         </ng-template>
-          <device-notifier-creation-step2 *ngIf="stepper.selectedIndex == 1" [deviceNotifier]="deviceNotifier" [(configurationIsValid)]="configurationIsValid"></device-notifier-creation-step2>
+        <device-notifier-creation-step2
+          *ngIf="stepper.selectedIndex == 1"
+          [deviceNotifier]="deviceNotifier"
+          [(configurationIsValid)]="configurationIsValid"
+        ></device-notifier-creation-step2>
         <div class="stepper-button-zone">
           <button mat-raised-button matStepperPrevious type="button">Back</button>
           <span fxFlex></span>

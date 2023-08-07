@@ -23,10 +23,9 @@ describe('LoginCallbackComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    declarations: [LoginCallbackComponent],
-    teardown: { destroyAfterEach: false }
-})
-    .compileComponents();
+      declarations: [LoginCallbackComponent],
+      teardown: { destroyAfterEach: false },
+    }).compileComponents();
   }));
 
   beforeEach(() => {

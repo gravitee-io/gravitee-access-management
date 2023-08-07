@@ -13,20 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit, ViewChild} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
-import {AuthService} from "../../../services/auth.service";
-import {DomainService} from "../../../services/domain.service";
-import {SnackbarService} from "../../../services/snackbar.service";
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 
+import { AuthService } from '../../../services/auth.service';
+import { DomainService } from '../../../services/domain.service';
+import { SnackbarService } from '../../../services/snackbar.service';
 
 @Component({
   selector: 'password-policy',
   templateUrl: './domain-password-policy.component.html',
-  styleUrls: ['./domain-password-policy.component.scss']
+  styleUrls: ['./domain-password-policy.component.scss'],
 })
 export class DomainPasswordPolicyComponent implements OnInit {
-  @ViewChild('applicationForm', {static: true}) form: any;
+  @ViewChild('applicationForm', { static: true }) form: any;
   private domainId: string;
   domain: any;
   formChanged = false;
@@ -45,13 +45,13 @@ export class DomainPasswordPolicyComponent implements OnInit {
   passwordHistoryEnabled: number;
   oldPasswords: number;
 
-  constructor(private route: ActivatedRoute,
-              private router: Router,
-              private authService: AuthService,
-              private snackbarService: SnackbarService,
-              private domainService: DomainService
-  ) {
-  }
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private authService: AuthService,
+    private snackbarService: SnackbarService,
+    private domainService: DomainService,
+  ) {}
 
   ngOnInit() {
     this.domain = this.route.snapshot.data['domain'];
@@ -102,39 +102,37 @@ export class DomainPasswordPolicyComponent implements OnInit {
   }
 
   update() {
-
-    if (this.passwordHistoryEnabled && (!this.oldPasswords || (this.oldPasswords < 1 || this.oldPasswords > 24))) {
-      this.snackbarService.open("Number of old passwords must be within the range [1, 24]")
+    if (this.passwordHistoryEnabled && (!this.oldPasswords || this.oldPasswords < 1 || this.oldPasswords > 24)) {
+      this.snackbarService.open('Number of old passwords must be within the range [1, 24]');
       return;
     }
 
     const data: any = {};
 
-    if (this.minLength && this.minLength <= 0)  {
+    if (this.minLength && this.minLength <= 0) {
       this.snackbarService.open('Min length must be greater than zero');
       return;
     }
 
-    if (this.maxLength && this.maxLength <= 0)  {
+    if (this.maxLength && this.maxLength <= 0) {
       this.snackbarService.open('Max length must be greater than zero');
       return;
     }
 
     data.passwordSettings = {
-      'minLength': this.minLength,
-      'maxLength': this.maxLength,
-      'includeNumbers': this.includeNumbers,
-      'includeSpecialCharacters': this.includeSpecialCharacters,
-      'lettersInMixedCase': this.lettersInMixedCase,
-      'maxConsecutiveLetters': this.maxConsecutiveLetters,
-      'excludePasswordsInDictionary': this.excludePasswordsInDictionary,
-      'excludeUserProfileInfoInPassword': this.excludeUserProfileInfoInPassword,
-      'expiryDuration': this.expiryDuration,
-      'passwordHistoryEnabled': this.passwordHistoryEnabled,
-      'oldPasswords': this.oldPasswords
-
+      minLength: this.minLength,
+      maxLength: this.maxLength,
+      includeNumbers: this.includeNumbers,
+      includeSpecialCharacters: this.includeSpecialCharacters,
+      lettersInMixedCase: this.lettersInMixedCase,
+      maxConsecutiveLetters: this.maxConsecutiveLetters,
+      excludePasswordsInDictionary: this.excludePasswordsInDictionary,
+      excludeUserProfileInfoInPassword: this.excludeUserProfileInfoInPassword,
+      expiryDuration: this.expiryDuration,
+      passwordHistoryEnabled: this.passwordHistoryEnabled,
+      oldPasswords: this.oldPasswords,
     };
-    this.domainService.patchPasswordSettings(this.domainId, data).subscribe(data => {
+    this.domainService.patchPasswordSettings(this.domainId, data).subscribe((data) => {
       this.passwordSettings = data.passwordSettings;
       this.domain['passwordSettings'] = this.passwordSettings;
       this.form.reset(this.passwordSettings);

@@ -13,19 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {HttpClient} from '@angular/common/http';
-import {Injectable} from '@angular/core';
-import {AuthService} from './auth.service';
-import {AppConfig} from '../../config/app.config';
-import {Observable} from 'rxjs';
-import {map} from 'rxjs/operators';
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+
+import { AppConfig } from '../../config/app.config';
 
 @Injectable()
 export class InstallationService {
   private installationUrl = AppConfig.settings.baseURL + '/platform/installation';
 
-  constructor(private http: HttpClient) {
-  }
+  constructor(private http: HttpClient) {}
 
   get(): Observable<any> {
     return this.http.get<any>(this.installationUrl);

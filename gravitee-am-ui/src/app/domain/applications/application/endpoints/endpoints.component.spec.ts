@@ -15,7 +15,7 @@
  */
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
-import {ApplicationEndpointsComponent} from './endpoints.component';
+import { ApplicationEndpointsComponent } from './endpoints.component';
 
 describe('ApplicationEndpointsComponent', () => {
   let component: ApplicationEndpointsComponent;
@@ -23,10 +23,9 @@ describe('ApplicationEndpointsComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    declarations: [ApplicationEndpointsComponent],
-    teardown: { destroyAfterEach: false }
-})
-    .compileComponents();
+      declarations: [ApplicationEndpointsComponent],
+      teardown: { destroyAfterEach: false },
+    }).compileComponents();
   }));
 
   beforeEach(() => {

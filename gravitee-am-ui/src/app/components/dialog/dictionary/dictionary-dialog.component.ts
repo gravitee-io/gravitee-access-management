@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, Inject, OnInit} from '@angular/core';
-import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
-import {FormControl} from "@angular/forms";
-import {Observable} from "rxjs";
-import {map, startWith} from 'rxjs/operators';
+import { Component, Inject, OnInit } from '@angular/core';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { FormControl } from '@angular/forms';
+import { Observable } from 'rxjs';
+import { map, startWith } from 'rxjs/operators';
 
 interface Language {
   code: string;
@@ -27,10 +27,9 @@ interface Language {
 @Component({
   selector: 'app-dictionary-dialog',
   templateUrl: './dictionary-dialog.component.html',
-  styleUrls: ['./dictionary-dialog.component.scss']
+  styleUrls: ['./dictionary-dialog.component.scss'],
 })
 export class DictionaryDialog implements OnInit {
-
   prop1: string;
   prop2: string;
   prop1Label: string;
@@ -41,8 +40,10 @@ export class DictionaryDialog implements OnInit {
   languageCtrl = new FormControl('');
   filtered: Observable<Language[]>;
 
-
-  constructor(@Inject(MAT_DIALOG_DATA) public data: { title: string, prop1Label: string, prop2Label: string, languageCodes: string[] }, public dialogRef: MatDialogRef<DictionaryDialog>) {
+  constructor(
+    @Inject(MAT_DIALOG_DATA) public data: { title: string; prop1Label: string; prop2Label: string; languageCodes: string[] },
+    public dialogRef: MatDialogRef<DictionaryDialog>,
+  ) {
     this.prop1Label = data.prop1Label;
     this.prop2Label = data.prop2Label;
     this.title = data.title;
@@ -50,7 +51,7 @@ export class DictionaryDialog implements OnInit {
     this.languageCodes = [];
     if (data.languageCodes) {
       for (const [key, value] of data.languageCodes) {
-        this.languageCodes.push({code: key, name: value});
+        this.languageCodes.push({ code: key, name: value });
       }
     }
   }
@@ -58,18 +59,18 @@ export class DictionaryDialog implements OnInit {
   ngOnInit() {
     this.filtered = this.languageCtrl.valueChanges.pipe(
       startWith(''),
-      map(value => this._filter(value || "")),
+      map((value) => this._filter(value || '')),
     );
   }
 
   private _filter(value: any): Language[] {
-    const filterValue = typeof value === "string" ? value.toLowerCase() : value.code.toLowerCase();
-    return this.languageCodes.filter(lang => lang.code.includes(filterValue));
+    const filterValue = typeof value === 'string' ? value.toLowerCase() : value.code.toLowerCase();
+    return this.languageCodes.filter((lang) => lang.code.includes(filterValue));
   }
 
   validate() {
-    if ((this.prop1 && this.prop1.trim().length > 0) && (this.prop2 && this.prop2.trim().length > 0)) {
-      this.dialogRef.close({prop1: this.prop1, prop2: this.prop2})
+    if (this.prop1 && this.prop1.trim().length > 0 && this.prop2 && this.prop2.trim().length > 0) {
+      this.dialogRef.close({ prop1: this.prop1, prop2: this.prop2 });
     }
   }
 

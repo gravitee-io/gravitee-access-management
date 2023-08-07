@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute} from '@angular/router';
-import {ApplicationService} from '../../../../../services/application.service';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+
+import { ApplicationService } from '../../../../../services/application.service';
 
 @Component({
   selector: 'app-application-resources',
   templateUrl: './resources.component.html',
-  styleUrls: ['./resources.component.scss']
+  styleUrls: ['./resources.component.scss'],
 })
 export class ApplicationResourcesComponent implements OnInit {
   private domainId: string;
@@ -28,8 +29,7 @@ export class ApplicationResourcesComponent implements OnInit {
   resources: any[];
   page: any = {};
 
-  constructor(private route: ActivatedRoute,
-              private applicationService: ApplicationService) {
+  constructor(private route: ActivatedRoute, private applicationService: ApplicationService) {
     this.page.pageNumber = 0;
     this.page.size = 10;
   }
@@ -43,10 +43,12 @@ export class ApplicationResourcesComponent implements OnInit {
   }
 
   loadResources() {
-    this.applicationService.resources(this.domainId, this.application.id, this.page.pageNumber, this.page.size).subscribe(pagedResources => {
-      this.page.totalElements = pagedResources.totalCount;
-      this.resources = pagedResources.data;
-    });
+    this.applicationService
+      .resources(this.domainId, this.application.id, this.page.pageNumber, this.page.size)
+      .subscribe((pagedResources) => {
+        this.page.totalElements = pagedResources.totalCount;
+        this.resources = pagedResources.data;
+      });
   }
 
   setPage(pageInfo) {

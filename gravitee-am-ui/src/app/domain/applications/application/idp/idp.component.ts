@@ -14,20 +14,21 @@
  * limitations under the License.
  */
 
-import {Component, HostListener, Inject, OnInit} from '@angular/core';
-import {SnackbarService} from "../../../../services/snackbar.service";
-import {ActivatedRoute} from "@angular/router";
-import {ProviderService} from "../../../../services/provider.service";
-import {ApplicationService} from "../../../../services/application.service";
-import {AuthService} from "../../../../services/auth.service";
-import {MAT_DIALOG_DATA, MatDialog, MatDialogRef} from '@angular/material/dialog';
-import {OrganizationService} from "../../../../services/organization.service";
-import {CdkDrag, moveItemInArray} from "@angular/cdk/drag-drop";
+import { Component, HostListener, Inject, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { moveItemInArray } from '@angular/cdk/drag-drop';
+
+import { SnackbarService } from '../../../../services/snackbar.service';
+import { ProviderService } from '../../../../services/provider.service';
+import { ApplicationService } from '../../../../services/application.service';
+import { AuthService } from '../../../../services/auth.service';
+import { OrganizationService } from '../../../../services/organization.service';
 
 @Component({
   selector: 'app-idp',
   templateUrl: './idp.component.html',
-  styleUrls: ['./idp.component.scss']
+  styleUrls: ['./idp.component.scss'],
 })
 export class ApplicationIdPComponent implements OnInit {
   private domainId: string;
@@ -40,78 +41,86 @@ export class ApplicationIdPComponent implements OnInit {
   formChanged = false;
   readonly = false;
 
-  constructor(private route: ActivatedRoute,
-              private applicationService: ApplicationService,
-              private snackbarService: SnackbarService,
-              private providerService: ProviderService,
-              private authService: AuthService,
-              private dialog: MatDialog
-  ) {
-  }
+  constructor(
+    private route: ActivatedRoute,
+    private applicationService: ApplicationService,
+    private snackbarService: SnackbarService,
+    private providerService: ProviderService,
+    private authService: AuthService,
+    private dialog: MatDialog,
+  ) {}
 
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.data['domain'].id;
     this.application = this.route.snapshot.data['application'];
     this.identities = this.route.snapshot.data['identities'];
     this.readonly = !this.authService.hasPermissions(['application_identity_provider_update']);
-    this.providerService.findByDomain(this.domainId).subscribe(data => {
-      this.loadIdentityProviders(data.filter(idp => !idp.external), data.filter(idp => idp.external));
+    this.providerService.findByDomain(this.domainId).subscribe((data) => {
+      this.loadIdentityProviders(
+        data.filter((idp) => !idp.external),
+        data.filter((idp) => idp.external),
+      );
       this.loadIdentities = false;
     });
   }
 
   private static sortFunction() {
     return (a, b) => {
-      return a.priority > b.priority ? 1 : -1
+      return a.priority > b.priority ? 1 : -1;
     };
   }
 
   private setUpIdentityProviders(identityProviders, applicationIdentityProviders) {
-    return identityProviders.map(idp => {
-      const appIdentity = applicationIdentityProviders.find(appIdp => appIdp.identity == idp.id);
-      if (appIdentity) {
-        idp.selected = true;
-        idp.selectionRule = appIdentity.selectionRule;
-        idp.priority = appIdentity.priority;
-      } else {
-        idp.selected = false;
-        idp.selectionRule = "";
-        idp.priority = identityProviders.length;
-      }
-      return idp
-    }).sort(ApplicationIdPComponent.sortFunction());
+    return identityProviders
+      .map((idp) => {
+        const appIdentity = applicationIdentityProviders.find((appIdp) => appIdp.identity === idp.id);
+        if (appIdentity) {
+          idp.selected = true;
+          idp.selectionRule = appIdentity.selectionRule;
+          idp.priority = appIdentity.priority;
+        } else {
+          idp.selected = false;
+          idp.selectionRule = '';
+          idp.priority = identityProviders.length;
+        }
+        return idp;
+      })
+      .sort(ApplicationIdPComponent.sortFunction());
   }
 
   update() {
     const applicationIdentityProviders = ApplicationIdPComponent.prepareIdpUpdate(this.identityProviders)
       .concat(ApplicationIdPComponent.prepareIdpUpdate(this.socialIdentityProviders))
-      .map(idp => {
-        return {'identity': idp.id, 'selectionRule': idp.selectionRule, 'priority': idp.priority}
+      .map((idp) => {
+        return { identity: idp.id, selectionRule: idp.selectionRule, priority: idp.priority };
       });
-    this.applicationService.patch(this.domainId, this.application.id,
-      {'identityProviders': applicationIdentityProviders}).subscribe(data => {
-      this.application = data;
-      this.loadIdentityProviders(this.identityProviders, this.socialIdentityProviders);
-      this.formChanged = false;
-      this.snackbarService.open('Application updated');
-    });
+    this.applicationService
+      .patch(this.domainId, this.application.id, { identityProviders: applicationIdentityProviders })
+      .subscribe((data) => {
+        this.application = data;
+        this.loadIdentityProviders(this.identityProviders, this.socialIdentityProviders);
+        this.formChanged = false;
+        this.snackbarService.open('Application updated');
+      });
   }
 
   private loadIdentityProviders(identityProviders, socialIdentityProviders) {
     const applicationIdentityProviders = this.application.identityProviders || [];
     this.identityProviders = this.setUpIdentityProviders(identityProviders, applicationIdentityProviders);
-    this.socialIdentityProviders = this.setUpIdentityProviders(socialIdentityProviders, applicationIdentityProviders)
+    this.socialIdentityProviders = this.setUpIdentityProviders(socialIdentityProviders, applicationIdentityProviders);
   }
 
   private static prepareIdpUpdate(identityProviders) {
-    return identityProviders.filter(idp => idp.selected).map((idp, idx) => {
-      idp.priority = idx;
-      return idp;
-    });
+    return identityProviders
+      .filter((idp) => idp.selected)
+      .map((idp, idx) => {
+        idp.priority = idx;
+        return idp;
+      });
   }
 
   selectIdentityProvider(event, identityProviderId, identityProviders) {
-    const idp = identityProviders.find(idp => idp.id === identityProviderId);
+    const idp = identityProviders.find((idp) => idp.id === identityProviderId);
     idp.selected = event.checked;
     this.formChanged = true;
   }
@@ -154,19 +163,19 @@ export class ApplicationIdPComponent implements OnInit {
   }
 
   isIdentityProviderSelected(identityProviderId, identityProviders) {
-    const identityProvider = identityProviders.find(idp => idp.id === identityProviderId);
+    const identityProvider = identityProviders.find((idp) => idp.id === identityProviderId);
     return identityProvider !== undefined && identityProvider.selected;
   }
 
   add(identityProvider) {
     let selectionRule = identityProvider.selectionRule;
     if (!selectionRule && !this.readonly) {
-      if (identityProvider.type === "google-am-idp") {
-        selectionRule = "{#request.params['username'] matches '.+@gmail.com$'}"
-      } else if (identityProvider.type === "azure-ad-am-idp") {
-        selectionRule = "{#request.params['username'] matches '.+@microsoft.com$'}"
+      if (identityProvider.type === 'google-am-idp') {
+        selectionRule = "{#request.params['username'] matches '.+@gmail.com$'}";
+      } else if (identityProvider.type === 'azure-ad-am-idp') {
+        selectionRule = "{#request.params['username'] matches '.+@microsoft.com$'}";
       } else {
-        selectionRule = "{#request.params['username'] matches '.+'}"
+        selectionRule = "{#request.params['username'] matches '.+'}";
       }
     }
     if (!this.readonly || selectionRule) {
@@ -174,10 +183,10 @@ export class ApplicationIdPComponent implements OnInit {
         width: '700px',
         data: {
           selectionRule: selectionRule,
-          readonly: this.readonly
-        }
+          readonly: this.readonly,
+        },
       });
-      dialogRef.afterClosed().subscribe(idpSelectionRule => {
+      dialogRef.afterClosed().subscribe((idpSelectionRule) => {
         if (idpSelectionRule && !this.readonly) {
           identityProvider.selectionRule = idpSelectionRule.value;
           identityProvider.selected = true;
@@ -193,13 +202,13 @@ export class ApplicationIdPComponent implements OnInit {
   templateUrl: './selection-rule/create/create.component.html',
 })
 export class CreateIdpSelectionRuleComponent {
-
   spelGrammar: any;
   selectionRule: string;
 
-  constructor(public dialogRef: MatDialogRef<CreateIdpSelectionRuleComponent>,
-              private organizationService: OrganizationService,
-              @Inject(MAT_DIALOG_DATA) public data: any
+  constructor(
+    public dialogRef: MatDialogRef<CreateIdpSelectionRuleComponent>,
+    private organizationService: OrganizationService,
+    @Inject(MAT_DIALOG_DATA) public data: any,
   ) {
     this.selectionRule = data.selectionRule;
   }
@@ -209,19 +218,22 @@ export class CreateIdpSelectionRuleComponent {
       return Promise.resolve(this.spelGrammar);
     }
 
-    return this.organizationService.spelGrammar().toPromise().then((response) => {
-      this.spelGrammar = response;
-      return this.spelGrammar;
-    });
+    return this.organizationService
+      .spelGrammar()
+      .toPromise()
+      .then((response) => {
+        this.spelGrammar = response;
+        return this.spelGrammar;
+      });
   }
 
   @HostListener(':gv-expression-language:ready', ['$event.detail'])
-  setGrammar({currentTarget}) {
+  setGrammar({ currentTarget }) {
     this.getGrammar().then((grammar) => {
       currentTarget.grammar = grammar;
       currentTarget.requestUpdate();
     });
-  };
+  }
 
   change($event) {
     this.selectionRule = $event.target.value;

@@ -16,35 +16,35 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+
 import { AppConfig } from '../../config/app.config';
 
 @Injectable()
 export class DeviceNotifiersService {
   private notfiersURL = AppConfig.settings.domainBaseURL;
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
-  findByDomain(domainId): Observable<any>  {
+  findByDomain(domainId): Observable<any> {
     return this.http.get<any>(this.notfiersURL + domainId + '/auth-device-notifiers');
   }
 
-  get(domainId, id): Observable<any>  {
+  get(domainId, id): Observable<any> {
     return this.http.get<any>(this.notfiersURL + domainId + '/auth-device-notifiers/' + id);
   }
 
-  create(domainId, deviceNotifier): Observable<any>  {
+  create(domainId, deviceNotifier): Observable<any> {
     return this.http.post<any>(this.notfiersURL + domainId + '/auth-device-notifiers', deviceNotifier);
   }
 
-  update(domainId, id, deviceNotifier): Observable<any>  {
+  update(domainId, id, deviceNotifier): Observable<any> {
     return this.http.put<any>(this.notfiersURL + domainId + '/auth-device-notifiers/' + id, {
-      'name' : deviceNotifier.name,
-      'configuration' : deviceNotifier.configuration
+      name: deviceNotifier.name,
+      configuration: deviceNotifier.configuration,
     });
   }
 
-  delete(domainId, id): Observable<any>  {
+  delete(domainId, id): Observable<any> {
     return this.http.delete<any>(this.notfiersURL + domainId + '/auth-device-notifiers/' + id);
   }
-
 }

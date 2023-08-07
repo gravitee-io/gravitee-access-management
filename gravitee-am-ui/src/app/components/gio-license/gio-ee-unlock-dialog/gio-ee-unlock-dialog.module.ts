@@ -20,6 +20,7 @@ import { GioIconsModule } from '@gravitee/ui-particles-angular';
 import { MatButtonModule } from '@angular/material/button';
 
 import { GioEeUnlockDialogComponent } from './gio-ee-unlock-dialog.component';
+
 import { GioSafePipeModule } from '../../../pipes/gio.pipe.module';
 
 @NgModule({

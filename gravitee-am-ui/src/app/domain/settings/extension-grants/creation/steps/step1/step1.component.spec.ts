@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { ComponentFixture, TestBed, waitForAsync } from "@angular/core/testing";
-import {ExtensionGrantCreationStep1Component} from "./step1.component";
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
+import { ExtensionGrantCreationStep1Component } from './step1.component';
 
 describe('ExtensionGrantCreationStep1Component', () => {
   let component: ExtensionGrantCreationStep1Component;
@@ -23,10 +23,9 @@ describe('ExtensionGrantCreationStep1Component', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-    declarations: [ExtensionGrantCreationStep1Component],
-    teardown: { destroyAfterEach: false }
-})
-    .compileComponents();
+      declarations: [ExtensionGrantCreationStep1Component],
+      teardown: { destroyAfterEach: false },
+    }).compileComponents();
   }));
 
   beforeEach(() => {

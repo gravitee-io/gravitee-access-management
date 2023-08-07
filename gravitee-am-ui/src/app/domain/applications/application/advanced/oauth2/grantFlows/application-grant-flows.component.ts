@@ -13,19 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core'
-import {ActivatedRoute, Router} from "@angular/router";
-import {ApplicationService} from "../../../../../../services/application.service";
-import {SnackbarService} from "../../../../../../services/snackbar.service";
-import {AuthService} from "../../../../../../services/auth.service";
-import * as _ from "lodash";
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import * as _ from 'lodash';
+
+import { ApplicationService } from '../../../../../../services/application.service';
+import { SnackbarService } from '../../../../../../services/snackbar.service';
+import { AuthService } from '../../../../../../services/auth.service';
 
 @Component({
   selector: 'application-grant-types',
   templateUrl: './application-grant-flows.component.html',
-  styleUrls: ['./application-grant-flows.component.scss']
+  styleUrls: ['./application-grant-flows.component.scss'],
 })
-
 export class ApplicationGrantFlowsComponent implements OnInit {
   private CIBA_GRANT_TYPE = 'urn:openid:params:grant-type:ciba';
   private domainId: string;
@@ -34,38 +34,42 @@ export class ApplicationGrantFlowsComponent implements OnInit {
   applicationOauthSettings: any = {};
   readonly = false;
   tokenEndpointAuthMethods: any[] = [
-    { name : 'client_secret_basic', value: 'client_secret_basic'},
-    { name : 'client_secret_post', value: 'client_secret_post'},
-    { name : 'client_secret_jwt', value: 'client_secret_jwt'},
-    { name : 'private_key_jwt', value: 'private_key_jwt'},
-    { name : 'Mutual TLS - PKI Mutual (tls_client_auth)', value: 'tls_client_auth'},
-    { name : 'Mutual TLS - Self-Signed Certificate Mutual (self_signed_tls_client_auth)', value: 'self_signed_tls_client_auth'},
-    { name : 'none', value: 'none'}
+    { name: 'client_secret_basic', value: 'client_secret_basic' },
+    { name: 'client_secret_post', value: 'client_secret_post' },
+    { name: 'client_secret_jwt', value: 'client_secret_jwt' },
+    { name: 'private_key_jwt', value: 'private_key_jwt' },
+    { name: 'Mutual TLS - PKI Mutual (tls_client_auth)', value: 'tls_client_auth' },
+    { name: 'Mutual TLS - Self-Signed Certificate Mutual (self_signed_tls_client_auth)', value: 'self_signed_tls_client_auth' },
+    { name: 'none', value: 'none' },
   ];
   grantTypes: any[] = [
     { name: 'AUTHORIZATION CODE', value: 'authorization_code', checked: false, disabled: false },
-    { name: 'IMPLICIT', value: 'implicit', checked: false, disabled: false  },
-    { name: 'REFRESH TOKEN', value: 'refresh_token', checked: false, disabled: false  },
+    { name: 'IMPLICIT', value: 'implicit', checked: false, disabled: false },
+    { name: 'REFRESH TOKEN', value: 'refresh_token', checked: false, disabled: false },
     { name: 'PASSWORD', value: 'password', checked: false },
-    { name: 'CLIENT CREDENTIALS', value: 'client_credentials', checked: false, disabled: false  },
-    { name: 'UMA TICKET', value: 'urn:ietf:params:oauth:grant-type:uma-ticket', checked: false, disabled: false  },
-    { name: 'CIBA', value: this.CIBA_GRANT_TYPE, checked: false, disabled: false  }
+    { name: 'CLIENT CREDENTIALS', value: 'client_credentials', checked: false, disabled: false },
+    { name: 'UMA TICKET', value: 'urn:ietf:params:oauth:grant-type:uma-ticket', checked: false, disabled: false },
+    { name: 'CIBA', value: this.CIBA_GRANT_TYPE, checked: false, disabled: false },
   ];
   customGrantTypes: any[];
   config: any = {};
 
-  constructor(private route: ActivatedRoute,
-              private router: Router,
-              private applicationService: ApplicationService,
-              private snackbarService: SnackbarService,
-              private authService: AuthService) {}
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private applicationService: ApplicationService,
+    private snackbarService: SnackbarService,
+    private authService: AuthService,
+  ) {}
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
     this.application = this.route.snapshot.data['application'];
     this.customGrantTypes = this.route.snapshot.data['domainGrantTypes'] || [];
-    this.applicationOauthSettings = (this.application.settings == null) ? {} : this.application.settings.oauth || {};
-    this.applicationOauthSettings.jwks = (this.applicationOauthSettings.jwks) ? JSON.stringify(this.applicationOauthSettings.jwks,null, 2) : null;
+    this.applicationOauthSettings = this.application.settings == null ? {} : this.application.settings.oauth || {};
+    this.applicationOauthSettings.jwks = this.applicationOauthSettings.jwks
+      ? JSON.stringify(this.applicationOauthSettings.jwks, null, 2)
+      : null;
     this.readonly = !this.authService.hasPermissions(['application_openid_update']);
     this.initTokenEndpointAuthMethods();
     this.initGrantTypes();
@@ -80,20 +84,20 @@ export class ApplicationGrantFlowsComponent implements OnInit {
         return;
       }
       if (this.applicationOauthSettings.jwksUri && this.applicationOauthSettings.jwks) {
-        this.snackbarService.open("The jwks_uri and jwks parameters MUST NOT be used together.")
+        this.snackbarService.open('The jwks_uri and jwks parameters MUST NOT be used together.');
         return;
       }
       if (this.applicationOauthSettings.jwks) {
         try {
           JSON.parse(this.applicationOauthSettings.jwks);
         } catch (e) {
-          this.snackbarService.open("The jwks parameter is malformed.")
+          this.snackbarService.open('The jwks parameter is malformed.');
           return;
         }
       }
     }
 
-    let oauthSettings: any = {};
+    const oauthSettings: any = {};
     oauthSettings.grantTypes = this.selectedGrantTypes.concat(this.selectedCustomGrantTypes);
     oauthSettings.forcePKCE = this.applicationOauthSettings.forcePKCE;
     oauthSettings.forceS256CodeChallengeMethod = this.applicationOauthSettings.forceS256CodeChallengeMethod;
@@ -104,11 +108,11 @@ export class ApplicationGrantFlowsComponent implements OnInit {
     oauthSettings.tlsClientAuthSanIp = this.applicationOauthSettings.tlsClientAuthSanIp;
     oauthSettings.tlsClientAuthSanEmail = this.applicationOauthSettings.tlsClientAuthSanEmail;
     oauthSettings.jwksUri = this.applicationOauthSettings.jwksUri;
-    oauthSettings.jwks = (this.applicationOauthSettings.jwks) ? JSON.parse(this.applicationOauthSettings.jwks): null;
+    oauthSettings.jwks = this.applicationOauthSettings.jwks ? JSON.parse(this.applicationOauthSettings.jwks) : null;
     oauthSettings.disableRefreshTokenRotation = this.applicationOauthSettings.disableRefreshTokenRotation;
-    this.applicationService.patch(this.domainId, this.application.id, {'settings' : { 'oauth' : oauthSettings}}).subscribe(data => {
+    this.applicationService.patch(this.domainId, this.application.id, { settings: { oauth: oauthSettings } }).subscribe(() => {
       this.snackbarService.open('Application updated');
-      this.router.navigate(['.'], { relativeTo: this.route, queryParams: { 'reload': true }});
+      this.router.navigate(['.'], { relativeTo: this.route, queryParams: { reload: true } });
       this.formChanged = false;
     });
   }
@@ -118,16 +122,14 @@ export class ApplicationGrantFlowsComponent implements OnInit {
   }
 
   selectGrantType(event) {
-    this.grantTypes
-      .filter(grantType => grantType.value === event.source.value)
-      .map(grantType => grantType.checked = event.checked);
+    this.grantTypes.filter((grantType) => grantType.value === event.source.value).map((grantType) => (grantType.checked = event.checked));
     this.formChanged = true;
   }
 
   selectCustomGrantType(event) {
     this.customGrantTypes
-      .filter(grantType => grantType.value === event.source.value)
-      .map(grantType => grantType.checked = event.checked);
+      .filter((grantType) => grantType.value === event.source.value)
+      .map((grantType) => (grantType.checked = event.checked));
     this.formChanged = true;
   }
 
@@ -163,19 +165,15 @@ export class ApplicationGrantFlowsComponent implements OnInit {
   }
 
   get selectedGrantTypes() {
-    return this.grantTypes
-      .filter(grantType => grantType.checked)
-      .map(grantType => grantType.value)
+    return this.grantTypes.filter((grantType) => grantType.checked).map((grantType) => grantType.value);
   }
 
   get selectedCustomGrantTypes() {
-    return this.customGrantTypes
-      .filter(grantType => grantType.checked)
-      .map(grantType => grantType.value)
+    return this.customGrantTypes.filter((grantType) => grantType.checked).map((grantType) => grantType.value);
   }
 
   tokenEndpointAuthMethodChanged(value) {
-    const clientCredentials = this.grantTypes.find(grantType => grantType.value === 'client_credentials');
+    const clientCredentials = this.grantTypes.find((grantType) => grantType.value === 'client_credentials');
     if ('none' === value) {
       // remove client_credentials flow if 'none' token endpoint auth method is selected
       clientCredentials.checked = false;
@@ -183,17 +181,17 @@ export class ApplicationGrantFlowsComponent implements OnInit {
     } else {
       clientCredentials.disabled = false;
     }
-    this.modelChanged(value);
+    this.modelChanged();
   }
 
-  modelChanged(model) {
+  modelChanged() {
     this.formChanged = true;
   }
 
   private initTokenEndpointAuthMethods() {
     // disabled none (public client) for service application
     if (this.application.type === 'service') {
-      const updatedAuthMethods =  _.map(this.tokenEndpointAuthMethods, item => {
+      const updatedAuthMethods = _.map(this.tokenEndpointAuthMethods, (item) => {
         if (item.value === 'none') {
           item.disabled = true;
         }
@@ -204,27 +202,34 @@ export class ApplicationGrantFlowsComponent implements OnInit {
   }
 
   private initGrantTypes() {
-    this.grantTypes.forEach(grantType => {
-      grantType.checked = _.some(this.applicationOauthSettings.grantTypes, authorizedGrantType => authorizedGrantType.toLowerCase() === grantType.value.toLowerCase());
-      if (this.applicationOauthSettings.tokenEndpointAuthMethod &&
+    this.grantTypes.forEach((grantType) => {
+      grantType.checked = _.some(
+        this.applicationOauthSettings.grantTypes,
+        (authorizedGrantType) => authorizedGrantType.toLowerCase() === grantType.value.toLowerCase(),
+      );
+      if (
+        this.applicationOauthSettings.tokenEndpointAuthMethod &&
         'none' === this.applicationOauthSettings.tokenEndpointAuthMethod &&
-        'client_credentials' === grantType.value) {
+        'client_credentials' === grantType.value
+      ) {
         grantType.disabled = true;
       }
       if (this.CIBA_GRANT_TYPE === grantType.value && this.route.snapshot.data['domain']) {
-        let domain = this.route.snapshot.data['domain'];
+        const domain = this.route.snapshot.data['domain'];
         grantType.disabled = domain.oidc.cibaSettings && !domain.oidc.cibaSettings.enabled;
       }
-    })
+    });
   }
 
   private initCustomGrantTypes() {
     const oldestExtensionGrant = _.minBy(this.customGrantTypes, 'createdAt');
-    this.customGrantTypes.forEach(customGrantType => {
+    this.customGrantTypes.forEach((customGrantType) => {
       customGrantType.value = customGrantType.grantType + '~' + customGrantType.id;
-      customGrantType.checked = _.some(this.applicationOauthSettings.grantTypes, authorizedGrantType => {
-        return authorizedGrantType.toLowerCase() === customGrantType.value.toLowerCase() ||
-          (authorizedGrantType.toLowerCase() === customGrantType.grantType && customGrantType.createdAt === oldestExtensionGrant.createdAt);
+      customGrantType.checked = _.some(this.applicationOauthSettings.grantTypes, (authorizedGrantType) => {
+        return (
+          authorizedGrantType.toLowerCase() === customGrantType.value.toLowerCase() ||
+          (authorizedGrantType.toLowerCase() === customGrantType.grantType && customGrantType.createdAt === oldestExtensionGrant.createdAt)
+        );
       });
     });
   }

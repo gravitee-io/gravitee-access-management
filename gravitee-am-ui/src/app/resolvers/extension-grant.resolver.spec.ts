@@ -15,14 +15,14 @@
  */
 import { TestBed, inject } from '@angular/core/testing';
 
-import { ExtensionGrantResolver } from "./extension-grant.resolver";
+import { ExtensionGrantResolver } from './extension-grant.resolver';
 
 describe('ExtensionGrantResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-    providers: [ExtensionGrantResolver],
-    teardown: { destroyAfterEach: false }
-});
+      providers: [ExtensionGrantResolver],
+      teardown: { destroyAfterEach: false },
+    });
   });
 
   it('should ...', inject([ExtensionGrantResolver], (service: ExtensionGrantResolver) => {

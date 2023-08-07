@@ -14,20 +14,21 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { Resolve, ActivatedRouteSnapshot, RouterStateSnapshot } from "@angular/router";
-import { Observable } from "rxjs";
-import { DashboardService } from "../services/dashboard.service";
-import { ApplicationService } from "../services/application.service";
+import { Resolve, ActivatedRouteSnapshot } from '@angular/router';
+import { Observable } from 'rxjs';
+
+import { DashboardService } from '../services/dashboard.service';
+import { ApplicationService } from '../services/application.service';
 
 @Injectable()
 export class ApplicationsResolver implements Resolve<any> {
-  private default_page: number = 0;
-  private default_size: number = 50;
+  private default_page = 0;
+  private default_size = 50;
 
-  constructor(private applicationService: ApplicationService, private dashboardService: DashboardService) { }
+  constructor(private applicationService: ApplicationService, private dashboardService: DashboardService) {}
 
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
-    let domain = route.parent.data['domain'];
+  resolve(route: ActivatedRouteSnapshot): Observable<any> | Promise<any> | any {
+    const domain = route.parent.data['domain'];
 
     if (domain) {
       return this.applicationService.findByDomain(domain.id, this.default_page, this.default_size);
@@ -35,5 +36,4 @@ export class ApplicationsResolver implements Resolve<any> {
       return this.dashboardService.findApplications(null);
     }
   }
-
 }

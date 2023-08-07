@@ -20,9 +20,9 @@ import { DomainPermissionsResolver } from './domain-permissions.resolver';
 describe('DomainPermissionsResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-    providers: [DomainPermissionsResolver],
-    teardown: { destroyAfterEach: false }
-});
+      providers: [DomainPermissionsResolver],
+      teardown: { destroyAfterEach: false },
+    });
   });
 
   it('should ...', inject([DomainPermissionsResolver], (service: DomainPermissionsResolver) => {

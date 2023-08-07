@@ -1,19 +1,19 @@
 :host {
-  --light-blue-color: #2AA7E3;
-  --deep-orange-color: #D94C3E;
-  --blue-color: #3F71F4;
-  --orange-color: #EA9345;
-  --deep-purple-color: #6A4FF7;
-  --yellow-color: #EED052;
-  --purple-color: #9346E9;
-  --light-green-color: #9FC929;
-  --light-purple-color: #CC63D6;
-  --green-color: #7FCF79;
-  --deep-pink-color: #D8549A;
-  --teal-color: #66C2AC;
-  --pink-color: #FE8AA8;
-  --grey-color: #8A979E;
-  --deep-red-color: #C52852;
+  --light-blue-color: #2aa7e3;
+  --deep-orange-color: #d94c3e;
+  --blue-color: #3f71f4;
+  --orange-color: #ea9345;
+  --deep-purple-color: #6a4ff7;
+  --yellow-color: #eed052;
+  --purple-color: #9346e9;
+  --light-green-color: #9fc929;
+  --light-purple-color: #cc63d6;
+  --green-color: #7fcf79;
+  --deep-pink-color: #d8549a;
+  --teal-color: #66c2ac;
+  --pink-color: #fe8aa8;
+  --grey-color: #8a979e;
+  --deep-red-color: #c52852;
   --deep-grey-color: #252829;
 
   .gv-form-section {
@@ -28,7 +28,7 @@
     border-right: 1px solid rgba(0, 0, 0, 0.12);
 
     h5 {
-      color : #7A7B7A;
+      color: #7a7b7a;
       margin-top: 0px;
     }
 
@@ -63,7 +63,7 @@
 
   ::ng-deep {
     .custom-css .CodeMirror {
-      border: 1px solid rgba(0, 0, 0, 0.12);;
+      border: 1px solid rgba(0, 0, 0, 0.12);
       border-radius: 4px;
     }
     .preview .CodeMirror {
@@ -72,8 +72,9 @@
 
     .mat-expansion-panel {
       box-shadow: none;
-      .mat-expansion-panel-header, .mat-expansion-panel-header.mat-expanded {
-        background-color: #F1F1F1;
+      .mat-expansion-panel-header,
+      .mat-expansion-panel-header.mat-expanded {
+        background-color: #f1f1f1;
         border-radius: 8px;
         margin-bottom: 15px;
       }
@@ -82,7 +83,8 @@
       }
     }
 
-    .mat-radio-button.mat-accent, .mat-radio-button.mat-accent.mat-radio-checked {
+    .mat-radio-button.mat-accent,
+    .mat-radio-button.mat-accent.mat-radio-checked {
       &.light-blue {
         .mat-radio-inner-circle {
           background-color: var(--light-blue-color);
