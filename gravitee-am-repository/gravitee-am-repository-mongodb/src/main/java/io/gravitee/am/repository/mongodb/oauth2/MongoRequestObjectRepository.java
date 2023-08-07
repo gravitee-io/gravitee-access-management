@@ -28,9 +28,11 @@ import org.bson.Document;
 import org.springframework.stereotype.Component;
 
 import jakarta.annotation.PostConstruct;
+
+import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.*;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -55,7 +57,7 @@ public class MongoRequestObjectRepository extends AbstractOAuth2MongoRepository 
     @Override
     public Maybe<RequestObject> findById(String id) {
         return Observable
-                .fromPublisher(requestObjectCollection.find(eq(FIELD_ID, id)).limit(1).first())
+                .fromPublisher(requestObjectCollection.find(and(eq(FIELD_ID, id), gte(FIELD_EXPIRE_AT, new Date()))).limit(1).first())
                 .firstElement()
                 .map(this::convert);
     }

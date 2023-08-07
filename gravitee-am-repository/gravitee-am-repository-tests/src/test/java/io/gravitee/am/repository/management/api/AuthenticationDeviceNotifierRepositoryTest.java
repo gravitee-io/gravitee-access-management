@@ -84,7 +84,11 @@ public class AuthenticationDeviceNotifierRepositoryTest extends AbstractManageme
 
     @Test
     public void testNotFoundById() throws TechnicalException {
-        repository.findById("test").test().assertEmpty();
+        var observer = repository.findById("test").test();
+        observer.awaitDone(5, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoValues();
+        observer.assertNoErrors();
     }
 
     @Test
@@ -138,7 +142,11 @@ public class AuthenticationDeviceNotifierRepositoryTest extends AbstractManageme
         TestObserver testObserver1 = repository.delete(pluginCreated.getId()).test();
         testObserver1.awaitDone(10, TimeUnit.SECONDS);
 
-        repository.findById(pluginCreated.getId()).test().assertEmpty();
+        testObserver = repository.findById(pluginCreated.getId()).test();
+        testObserver.awaitDone(5, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoValues();
+        testObserver.assertNoErrors();
     }
 
 }

@@ -85,18 +85,32 @@ public class I18nDictionaryRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void shouldNotFindById() {
-        repository.findById("1234").test().assertEmpty();
+    public void shouldNotFindById() throws Exception {
+        var observer = repository.findById("1234").test();
+        observer.awaitDone(5, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoValues();
+        observer.assertNoErrors();
     }
 
     @Test
-    public void shouldNotFindByReferenceAndId() {
-        repository.findById(DOMAIN, "1234", "5678").test().assertEmpty();
+    public void shouldNotFindByReferenceAndId() throws Exception {
+        var observer = repository.findById(DOMAIN, "1234", "5678").test();
+
+        observer.awaitDone(5, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoValues();
+        observer.assertNoErrors();
     }
 
     @Test
-    public void shouldNotFindByName() {
-        repository.findByLocale(DOMAIN, "1234", null).test().assertEmpty();
+    public void shouldNotFindByName() throws Exception {
+        var observer = repository.findByLocale(DOMAIN, "1234", null).test();
+
+        observer.awaitDone(5, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoValues();
+        observer.assertNoErrors();
     }
 
     @Test
@@ -143,7 +157,7 @@ public class I18nDictionaryRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void shouldDelete() {
+    public void shouldDelete() throws Exception {
         String referenceId = randomUUID().toString();
         var created = repository.create(buildDictionary(referenceId)).blockingGet();
 
@@ -151,7 +165,11 @@ public class I18nDictionaryRepositoryTest extends AbstractManagementTest {
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertNoErrors();
 
-        repository.findById(created.getId()).test().assertEmpty();
+        var observer2 = repository.findById(created.getId()).test();
+        observer2.awaitDone(5, TimeUnit.SECONDS);
+        observer2.assertComplete();
+        observer2.assertNoValues();
+        observer2.assertNoErrors();
     }
 
     private void assertObservedValues(I18nDictionary created, TestObserver<I18nDictionary> observer) {

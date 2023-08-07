@@ -17,16 +17,15 @@ package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Installation;
-import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -54,8 +53,13 @@ public class InstallationRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testNotFoundById() {
-        installationRepository.findById("UNKNOWN").test().assertEmpty();
+    public void testNotFoundById() throws Exception {
+        var observer = installationRepository.findById("UNKNOWN").test();
+
+        observer.awaitDone(5, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoValues();
+        observer.assertNoErrors();
     }
 
     @Test
@@ -103,7 +107,11 @@ public class InstallationRepositoryTest extends AbstractManagementTest {
         testObserver1.awaitDone(10, TimeUnit.SECONDS);
 
         // fetch idp
-        installationRepository.findById(installationCreated.getId()).test().assertEmpty();
+        var observer = installationRepository.findById(installationCreated.getId()).test();
+        observer.awaitDone(5, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoValues();
+        observer.assertNoErrors();
     }
 
     private Installation buildInstallation() {

@@ -66,7 +66,11 @@ public class EnvironmentRepositoryTest extends AbstractManagementTest {
 
     @Test
     public void testNotFoundById() {
-        environmentRepository.findById("unknown").test().assertEmpty();
+        var observer = environmentRepository.findById("unknown").test();
+        observer.awaitDone(5, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoValues();
+        observer.assertNoErrors();
     }
 
     @Test

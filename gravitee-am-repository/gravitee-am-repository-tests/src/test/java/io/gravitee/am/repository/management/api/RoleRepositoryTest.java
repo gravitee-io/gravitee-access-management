@@ -261,7 +261,11 @@ public class RoleRepositoryTest extends AbstractManagementTest {
         testObserver1.awaitDone(10, TimeUnit.SECONDS);
 
         // fetch role
-        roleRepository.findById(roleCreated.getId()).test().assertEmpty();
+        testObserver = roleRepository.findById(roleCreated.getId()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertNoValues();
     }
 
 }

@@ -34,8 +34,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.client.model.Filters.and;
-import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.*;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -61,7 +60,7 @@ public class MongoCibaAuthRequestRepository extends AbstractOAuth2MongoRepositor
     @Override
     public Maybe<CibaAuthRequest> findById(String id) {
         return Observable
-                .fromPublisher(cibaAuthRequestCollection.find(eq(FIELD_ID, id)).limit(1).first())
+                .fromPublisher(cibaAuthRequestCollection.find(and(eq(FIELD_ID, id), gte(FIELD_EXPIRE_AT, new Date()))).limit(1).first())
                 .firstElement()
                 .map(this::convert);
     }
@@ -69,7 +68,7 @@ public class MongoCibaAuthRequestRepository extends AbstractOAuth2MongoRepositor
     @Override
     public Maybe<CibaAuthRequest> findByExternalId(String externalId) {
         return Observable
-                .fromPublisher(cibaAuthRequestCollection.find(eq(FIELD_EXTERNAL_ID, externalId)).limit(1).first())
+                .fromPublisher(cibaAuthRequestCollection.find(and(eq(FIELD_EXTERNAL_ID, externalId), gte(FIELD_EXPIRE_AT, new Date()))).limit(1).first())
                 .firstElement()
                 .map(this::convert);
     }

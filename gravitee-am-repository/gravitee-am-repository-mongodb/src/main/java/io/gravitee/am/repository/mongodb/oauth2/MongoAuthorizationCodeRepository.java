@@ -30,10 +30,12 @@ import org.bson.Document;
 import org.springframework.stereotype.Component;
 
 import jakarta.annotation.PostConstruct;
+
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -60,7 +62,8 @@ public class MongoAuthorizationCodeRepository extends AbstractOAuth2MongoReposit
 
     private Maybe<AuthorizationCode> findById(String id) {
         return Observable
-                .fromPublisher(authorizationCodeCollection.find(eq(FIELD_ID, id)).first())
+                .fromPublisher(authorizationCodeCollection.find(and(eq(FIELD_ID, id),
+                        or(gt(FIELD_EXPIRE_AT, new Date()), eq(FIELD_EXPIRE_AT, null)))).first())
                 .firstElement()
                 .map(this::convert);
     }
@@ -83,7 +86,8 @@ public class MongoAuthorizationCodeRepository extends AbstractOAuth2MongoReposit
 
     @Override
     public Maybe<AuthorizationCode> findByCode(String code) {
-        return Observable.fromPublisher(authorizationCodeCollection.find(eq(FIELD_CODE, code)).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(authorizationCodeCollection.find((and(eq(FIELD_CODE, code),
+                or(gt(FIELD_EXPIRE_AT, new Date()), eq(FIELD_EXPIRE_AT, null))))).first()).firstElement().map(this::convert);
     }
 
     private AuthorizationCode convert(AuthorizationCodeMongo authorizationCodeMongo) {

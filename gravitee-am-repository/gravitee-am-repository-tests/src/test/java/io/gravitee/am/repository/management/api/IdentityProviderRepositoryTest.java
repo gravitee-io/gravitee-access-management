@@ -17,8 +17,8 @@ package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.am.repository.exceptions.TechnicalException;
+import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -138,8 +138,13 @@ public class IdentityProviderRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testNotFoundById() throws TechnicalException {
-        identityProviderRepository.findById("test").test().assertEmpty();
+    public void testNotFoundById() throws Exception {
+        var observer = identityProviderRepository.findById("test").test();
+
+        observer.awaitDone(5, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoValues();
+        observer.assertNoErrors();
     }
 
     @Test
@@ -194,7 +199,11 @@ public class IdentityProviderRepositoryTest extends AbstractManagementTest {
         testObserver1.awaitDone(10, TimeUnit.SECONDS);
 
         // fetch idp
-        identityProviderRepository.findById(identityProviderCreated.getId()).test().assertEmpty();
+        testObserver = identityProviderRepository.findById(identityProviderCreated.getId()).test();
+        testObserver.awaitDone(5, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoValues();
+        testObserver.assertNoErrors();
     }
 
 }

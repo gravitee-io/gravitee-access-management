@@ -18,7 +18,6 @@ package io.gravitee.am.repository.management.api;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.repository.management.AbstractManagementTest;
-import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -159,8 +158,12 @@ public class ScopeRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testNotFoundById() throws TechnicalException {
-        scopeRepository.findById("test").test().assertEmpty();
+    public void testNotFoundById() throws Exception {
+        TestObserver<Scope> observer = scopeRepository.findById("test").test();
+        observer.awaitDone(5, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoValues();
+        observer.assertNoErrors();
     }
 
     @Test
@@ -196,7 +199,7 @@ public class ScopeRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testDelete() {
+    public void testDelete() throws Exception {
         // create scope
         Scope scope = new Scope();
         scope.setName("testName");
@@ -214,7 +217,11 @@ public class ScopeRepositoryTest extends AbstractManagementTest {
         testObserver1.awaitDone(10, TimeUnit.SECONDS);
 
         // fetch scope
-        scopeRepository.findById(scopeCreated.getId()).test().assertEmpty();
+        var observer = scopeRepository.findById(scopeCreated.getId()).test();
+        observer.awaitDone(5, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoValues();
+        observer.assertNoErrors();
     }
 
     @Test

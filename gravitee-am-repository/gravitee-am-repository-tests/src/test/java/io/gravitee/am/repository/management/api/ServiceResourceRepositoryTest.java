@@ -92,8 +92,13 @@ public class ServiceResourceRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testNotFoundById() throws TechnicalException {
-        serviceResourceRepository.findById("test").test().assertEmpty();
+    public void testNotFoundById() throws Exception {
+        var observer = serviceResourceRepository.findById("test").test();
+
+        observer.awaitDone(5, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoValues();
+        observer.assertNoErrors();
     }
 
     @Test
@@ -136,7 +141,7 @@ public class ServiceResourceRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testDelete() throws TechnicalException {
+    public void testDelete() throws Exception {
         ServiceResource resource = buildResource();
         ServiceResource resourceCreated = serviceResourceRepository.create(resource).blockingGet();
 
@@ -149,7 +154,12 @@ public class ServiceResourceRepositoryTest extends AbstractManagementTest {
         TestObserver testObserver1 = serviceResourceRepository.delete(resourceCreated.getId()).test();
         testObserver1.awaitDone(10, TimeUnit.SECONDS);
 
-        serviceResourceRepository.findById(resourceCreated.getId()).test().assertEmpty();
+        testObserver = serviceResourceRepository.findById(resourceCreated.getId()).test();
+
+        testObserver.awaitDone(5, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoValues();
+        testObserver.assertNoErrors();
     }
 
 }

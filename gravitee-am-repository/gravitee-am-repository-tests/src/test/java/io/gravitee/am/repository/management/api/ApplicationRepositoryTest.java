@@ -249,8 +249,13 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testNotFoundById() throws TechnicalException {
-        applicationRepository.findById("test").test().assertEmpty();
+    public void testNotFoundById() throws Exception {
+        var observer = applicationRepository.findById("test").test();
+
+        observer.awaitDone(5, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoValues();
+        observer.assertNoErrors();
     }
 
     @Test
@@ -285,7 +290,7 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testDelete() throws TechnicalException {
+    public void testDelete() throws Exception {
         // create app
         Application app = new Application();
         app.setName("testClientId");
@@ -303,7 +308,12 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         testObserver1.awaitDone(10, TimeUnit.SECONDS);
 
         // fetch app
-        applicationRepository.findById(appCreated.getId()).test().assertEmpty();
+        testObserver = applicationRepository.findById(appCreated.getId()).test();
+
+        testObserver.awaitDone(5, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoValues();
+        testObserver.assertNoErrors();
     }
 
     @Test

@@ -33,10 +33,11 @@ import org.bson.Document;
 import org.springframework.stereotype.Repository;
 
 import jakarta.annotation.PostConstruct;
+
+import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.client.model.Filters.and;
-import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.*;
 import static io.gravitee.am.model.UserActivity.Type.valueOf;
 import static java.util.Objects.isNull;
 
@@ -69,7 +70,7 @@ public class MongoUserActivityRepository extends AbstractManagementMongoReposito
 
     @Override
     public Maybe<UserActivity> findById(String id) {
-        return Observable.fromPublisher(userActivityCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(userActivityCollection.find(and(eq(FIELD_ID, id), gte(FIELD_EXPIRE_AT, new Date()))).first()).firstElement().map(this::convert);
     }
 
     @Override
@@ -78,7 +79,7 @@ public class MongoUserActivityRepository extends AbstractManagementMongoReposito
                 eq(FIELD_REFERENCE_TYPE, referenceType.name()),
                 eq(FIELD_REFERENCE_ID, referenceId),
                 eq(FIELD_USER_ACTIVITY_TYPE, type.name()),
-                eq(FIELD_USER_ACTIVITY_KEY, key)))
+                eq(FIELD_USER_ACTIVITY_KEY, key), gte(FIELD_EXPIRE_AT, new Date())))
         ).sort(new Document(FIELD_CREATED_AT, -1)).limit(limit)).map(this::convert);
     }
 

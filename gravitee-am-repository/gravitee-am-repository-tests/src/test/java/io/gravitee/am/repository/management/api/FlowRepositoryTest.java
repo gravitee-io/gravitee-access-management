@@ -185,7 +185,11 @@ public class FlowRepositoryTest extends AbstractManagementTest {
 
     @Test
     public void testNotFoundById() {
-        flowRepository.findById("test").test().assertEmpty();
+        var observer = flowRepository.findById("test").test();
+        observer.awaitDone(5, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoValues();
+        observer.assertNoErrors();
     }
 
     @Test
