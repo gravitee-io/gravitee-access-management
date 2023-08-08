@@ -37,6 +37,7 @@ import io.gravitee.am.service.i18n.ThreadLocalDomainDictionaryProvider;
 import io.gravitee.am.service.impl.I18nDictionaryService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.EmailAuditBuilder;
+import io.gravitee.am.service.validators.email.EmailDomainValidator;
 import io.netty.handler.codec.http.QueryStringDecoder;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -75,19 +76,19 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
     private final Integer registrationVerifyExpireAfter;
     private final String certificateExpirySubject;
 
-    private EmailManager emailManager;
+    private final EmailManager emailManager;
 
-    private io.gravitee.am.service.EmailService emailService;
+    private final io.gravitee.am.service.EmailService emailService;
 
-    private Configuration freemarkerConfiguration;
+    private final Configuration freemarkerConfiguration;
 
-    private AuditService auditService;
+    private final AuditService auditService;
 
-    private JWTBuilder jwtBuilder;
+    private final JWTBuilder jwtBuilder;
 
-    private DomainService domainService;
+    private final DomainService domainService;
 
-    private I18nDictionaryService i18nDictionaryService;
+    private final I18nDictionaryService i18nDictionaryService;
 
     private final ThreadLocalDomainDictionaryProvider dictionaryProvider;
 
@@ -142,9 +143,8 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
             Email email = prepareEmail(domain, client, template, emailTemplate, user);
             // send email
             sendEmail(email, user);
-
-                return email;
-            });
+            return email;
+        });
     }
 
     private Completable refreshDomainDictionaries(Domain domain) {

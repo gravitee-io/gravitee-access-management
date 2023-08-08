@@ -56,6 +56,8 @@ import io.gravitee.am.service.ThemeService;
 import io.gravitee.am.service.TokenService;
 import io.gravitee.am.service.UserActivityService;
 import io.gravitee.am.service.impl.I18nDictionaryService;
+import io.gravitee.am.service.validators.email.resource.EmailTemplateValidator;
+import io.gravitee.am.service.validators.flow.FlowValidator;
 import io.gravitee.am.service.validators.user.UserValidator;
 import io.reactivex.rxjava3.core.Single;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -239,6 +241,11 @@ public abstract class JerseySpringTest {
     @Autowired
     protected PolicyPluginService policyPluginService;
 
+    @Autowired
+    protected FlowValidator flowValidator;
+
+    @Autowired
+    protected EmailTemplateValidator emailResourceValidator;
     @Before
     public void init() {
         when(permissionService.hasPermission(any(User.class), any(PermissionAcls.class))).thenReturn(Single.just(true));
@@ -446,6 +453,16 @@ public abstract class JerseySpringTest {
         @Bean
         public FlowService flowService() {
             return mock(FlowService.class);
+        }
+
+        @Bean
+        public FlowValidator flowValidator() {
+            return mock(FlowValidator.class);
+        }
+
+        @Bean
+        public EmailTemplateValidator emailResourceValidator() {
+            return mock(EmailTemplateValidator.class);
         }
 
         @Bean

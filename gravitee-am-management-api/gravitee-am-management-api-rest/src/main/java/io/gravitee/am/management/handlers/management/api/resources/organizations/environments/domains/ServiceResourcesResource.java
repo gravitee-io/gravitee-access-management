@@ -25,6 +25,8 @@ import io.gravitee.am.model.resource.ServiceResource;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewServiceResource;
+import io.gravitee.am.service.validators.resource.ResourceValidator;
+import io.gravitee.am.service.validators.resource.ResourceValidator.ResourceHolder;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
 import io.swagger.annotations.*;
@@ -58,6 +60,9 @@ public class ServiceResourcesResource extends AbstractResource {
 
     @Autowired
     private DomainService domainService;
+
+    @Autowired
+    private ResourceValidator resourceValidator;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -107,6 +112,7 @@ public class ServiceResourcesResource extends AbstractResource {
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_RESOURCE, Acl.CREATE)
                 .andThen(resourcePluginService.checkPluginDeployment(newResource.getType()))
+                .andThen(resourceValidator.validate(new ResourceHolder(newResource.getType(), newResource.getConfiguration())))
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(__ -> resourceService.create(domain, newResource, authenticatedUser))

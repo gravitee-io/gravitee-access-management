@@ -16,7 +16,9 @@
 package io.gravitee.am.service.spring.email;
 
 import io.gravitee.common.util.EnvironmentUtils;
-import org.springframework.beans.factory.annotation.Autowired;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -27,6 +29,8 @@ import org.springframework.mail.javamail.JavaMailSenderImpl;
 import java.util.Map;
 import java.util.Properties;
 
+import static java.util.Objects.isNull;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -34,32 +38,39 @@ import java.util.Properties;
 @Configuration
 public class EmailConfiguration {
 
+    private static final String EMAIL_ALLOW_LIST = "email.allowedfrom[%d]";
     private final static String EMAIL_PROPERTIES_PREFIX = "email.properties";
     private final static String MAILAPI_PROPERTIES_PREFIX = "mail.smtp.";
+    private final boolean enabled;
+    private final String host;
+    private final String port;
+    private final String username;
+    private final String password;
+    private final String protocol;
+    private final String from;
 
-    @Value("${email.enabled:false}")
-    private boolean enabled;
+    private final ConfigurableEnvironment environment;
+    private final List<String> allowedFrom;
 
-    @Value("${email.host}")
-    private String host;
-
-    @Value("${email.port}")
-    private String port;
-
-    @Value("${email.username:#{null}}")
-    private String username;
-
-    @Value("${email.password:#{null}}")
-    private String password;
-
-    @Value("${email.protocol:smtp}")
-    private String protocol;
-
-    @Value("${email.from}")
-    private String from;
-
-    @Autowired
-    private ConfigurableEnvironment environment;
+    public EmailConfiguration(
+            @Value("${email.enabled:false}") boolean enabled,
+            @Value("${email.host}") String host,
+            @Value("${email.port}") String port,
+            @Value("${email.username:#{null}}") String username,
+            @Value("${email.password:#{null}}") String password,
+            @Value("${email.protocol:smtp}") String protocol,
+            @Value("${email.from}") String from,
+            ConfigurableEnvironment environment) {
+        this.enabled = enabled;
+        this.host = host;
+        this.port = port;
+        this.username = username;
+        this.password = password;
+        this.protocol = protocol;
+        this.from = from;
+        this.environment = environment;
+        this.allowedFrom = initializeAllowList();
+    }
 
     @Bean
     public JavaMailSender mailSender() {
@@ -115,11 +126,19 @@ public class EmailConfiguration {
         return enabled;
     }
 
-    public boolean useAuth() {
-        return getProperty("auth", false, Boolean.class);
+    public List<String> getAllowedFrom() {
+        return allowedFrom;
     }
 
-    private <T> T getProperty(String propName, T defaultValue, Class<T> clazz) {
+    public boolean useAuth() {
+        return getProperty("auth", false);
+    }
+
+    public boolean useStartTls() {
+        return getProperty("starttls.enable", false);
+    }
+
+    private <T> T getProperty(String propName, T defaultValue) {
         final Map<String, Object> emailProperties = EnvironmentUtils.getPropertiesStartingWith(environment, EMAIL_PROPERTIES_PREFIX);
         if (emailProperties.containsKey(EMAIL_PROPERTIES_PREFIX + "." + propName)) {
             return (T) emailProperties.get(EMAIL_PROPERTIES_PREFIX + "." + propName);
@@ -128,8 +147,20 @@ public class EmailConfiguration {
         }
     }
 
-    public boolean useStartTls() {
-        return getProperty("starttls.enable", false, Boolean.class);
-    }
+    private List<String> initializeAllowList() {
+        List<String> allowList = new ArrayList<>();
+        for (int i = 0; true; i++) {
+            var propertyKey = String.format(EMAIL_ALLOW_LIST, i);
+            var value = environment.getProperty(propertyKey, String.class);
+            if (isNull(value)) {
+                break;
+            }
+            allowList.add(value);
+        }
+        if (allowList.isEmpty()) {
+            allowList.add(from);
+        }
+        return allowList;
 
+    }
 }
