@@ -13,27 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.identityprovider.jdbc.utils;
+package io.gravitee.am.identityprovider.jdbc.configuration;
+
+import org.springframework.context.annotation.Configuration;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public final class ParametersUtils {
+@Configuration
+public class JdbcAuthenticationProviderConfigurationTest_Oracle extends JdbcAuthenticationProviderConfigurationTest {
 
-    public static String getIndexParameter(String database, int index, String field) {
-        switch (database) {
-            case "mysql":
-            case "mariadb":
-                return "?";
-            case "postgresql":
-                return "$" + index;
-            case "sqlserver":
-                return "@" + field;
-            case "oracle":
-                return ":" + field;
-            default:
-                return "" + index;
-        }
+    public String url() {
+        return "r2dbc:tc:oracle:///db?TC_IMAGE_TAG=21-slim-faststart";
+    }
+
+    @Override
+    public String protocol() {
+        return "oracle";
     }
 }

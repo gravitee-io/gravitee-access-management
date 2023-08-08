@@ -1,0 +1,7 @@
+--
+-- Script to create Oracle schema
+-- Table & index names are suffixed by 3 underscores to define a
+-- pattern to replace with the domain name
+--
+CREATE TABLE idp_users___ (id NVARCHAR2(64) NOT NULL, username NVARCHAR2(320) NOT NULL, password NVARCHAR2(255) NULL, email NVARCHAR2(320) NULL, metadata CLOB NULL, PRIMARY KEY (id))
+CREATE INDEX idp_users____username_idx ON users(username)

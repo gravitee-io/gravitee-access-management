@@ -169,10 +169,13 @@ public class JdbcUserProvider extends JdbcAbstractProvider<UserProvider> impleme
     }
 
     private String tableExists(String protocol, String table) {
-        if ("sqlserver".equalsIgnoreCase(protocol)) {
-            return "SELECT 1 FROM sysobjects WHERE name = '" + table + "' AND xtype = 'U'";
-        } else {
-            return "SELECT 1 FROM information_schema.tables WHERE table_name = '" + table + "'";
+        switch (protocol) {
+            case "sqlserver" :
+                return "SELECT 1 FROM sysobjects WHERE name = '" + table + "' AND xtype = 'U'";
+            case "oracle":
+                return "SELECT 1 from user_tables where table_name = '" + table + "'";
+            default:
+                return "SELECT 1 FROM information_schema.tables WHERE table_name = '" + table + "'";
         }
     }
 

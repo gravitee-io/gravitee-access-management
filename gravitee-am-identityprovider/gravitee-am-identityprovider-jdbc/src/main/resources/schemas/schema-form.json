@@ -14,9 +14,9 @@
     },
     "protocol" : {
       "type": "string",
-      "enum": ["postgresql", "mysql", "sqlserver", "mariadb"],
+      "enum": ["postgresql", "mysql", "sqlserver", "mariadb", "oracle"],
       "title": "Database driver identifier",
-      "description": "Type of your relational database (RDBMS). PostgreSQL, MySQL, SQL Server, MariaDB, ..."
+      "description": "Type of your relational database (RDBMS). PostgreSQL, MySQL, SQL Server, MariaDB, Oracle"
     },
     "database" : {
       "type" : "string",
@@ -78,6 +78,12 @@
       "default": "email",
       "title": "User email attribute",
       "description": "Email field of your users"
+    },
+    "metadataAttribute" : {
+      "type" : "string",
+      "default": "metadata",
+      "title": "User metadata attribute",
+      "description": "Additional information field of your users"
     },
     "passwordAttribute" : {
       "type" : "string",

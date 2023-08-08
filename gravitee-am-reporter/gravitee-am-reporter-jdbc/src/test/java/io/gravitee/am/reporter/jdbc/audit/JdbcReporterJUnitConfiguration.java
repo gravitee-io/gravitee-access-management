@@ -70,7 +70,7 @@ public class JdbcReporterJUnitConfiguration extends JdbcReporterSpringConfigurat
             options = ConnectionFactoryOptions.builder()
                     .from(options)
                     .option(DRIVER, "pool")
-                    .option(PROTOCOL, options.getValue(DRIVER))
+                    .option(PROTOCOL, options.getValue(DRIVER).toString())
                     .build();
             this.connectionFactory = ConnectionFactories.get(options);
     }
@@ -81,13 +81,12 @@ public class JdbcReporterJUnitConfiguration extends JdbcReporterSpringConfigurat
     public JdbcReporterConfiguration reporterConfiguration(R2dbcDatabaseContainer dbContainer) {
         ConnectionFactoryOptions options = dbContainer.getOptions();
         JdbcReporterConfiguration config = new JdbcReporterConfiguration();
-        config.setDriver(options.getValue(DRIVER));
-        config.setDatabase(options.getValue(DATABASE));
-        config.setHost(options.getValue(HOST));
-        config.setPort(options.getValue(PORT));
-        config.setUsername(options.getValue(USER));
-        CharSequence value = options.getValue(PASSWORD);
-        config.setPassword(String.join("", value));
+        config.setDriver(options.getValue(DRIVER).toString());
+        config.setDatabase(options.getValue(DATABASE).toString());
+        config.setHost(options.getValue(HOST).toString());
+        config.setPort(Integer.valueOf(options.getValue(PORT).toString()));
+        config.setUsername(options.getValue(USER).toString());
+        config.setPassword(options.getValue(PASSWORD).toString());
 
         config.setTableSuffix("junit");
         config.setFlushInterval(1);
