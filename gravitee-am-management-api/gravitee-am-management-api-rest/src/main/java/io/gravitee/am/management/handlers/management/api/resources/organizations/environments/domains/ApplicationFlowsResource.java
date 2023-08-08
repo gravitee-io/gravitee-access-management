@@ -18,6 +18,8 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.model.FlowEntity;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.management.handlers.management.api.resources.utils.FlowUtils;
+import io.gravitee.am.management.service.PolicyPluginService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.flow.Flow;
@@ -25,6 +27,7 @@ import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.FlowService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
+import io.gravitee.am.service.validators.flow.FlowValidator;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
 import io.swagger.v3.oas.annotations.Operation;
@@ -60,6 +63,12 @@ public class ApplicationFlowsResource extends AbstractResource {
 
     @Autowired
     private FlowService flowService;
+
+    @Autowired
+    private PolicyPluginService policyPluginService;
+
+    @Autowired
+    private FlowValidator flowValidator;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -115,6 +124,8 @@ public class ApplicationFlowsResource extends AbstractResource {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.APPLICATION_FLOW, Acl.UPDATE)
+                .andThen(FlowUtils.checkPoliciesDeployed(policyPluginService, flows))
+                .andThen(flowValidator.validateAll(flows))
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(__ -> flowService.createOrUpdate(ReferenceType.DOMAIN, domain, application, convert(flows), authenticatedUser))

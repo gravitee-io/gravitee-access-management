@@ -579,3 +579,41 @@ tests:
       - matchRegex:
           path: data.[gravitee.yml]
           pattern: "[ ]{12}- /path/to/default/keystore3.pem"
+
+
+  - it: should set allowed from
+    set:
+      smtp.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{2}allowedfrom:"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{3}- \\$\\{email\\.from\\}"
+
+  - it: should set allowed from with custom values
+    set:
+      smtp.enabled: true
+      smtp.allowedfrom:
+        - "*@company.com"
+        - "specific@email.com"
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{2}allowedfrom:"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{3}- '\\*@company\\.com'"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{3}- specific@email\\.com"
+

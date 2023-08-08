@@ -24,6 +24,8 @@ import io.gravitee.am.model.alert.AlertNotifier;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.repository.management.api.search.AlertNotifierCriteria;
 import io.gravitee.am.service.model.NewAlertNotifier;
+import io.gravitee.am.service.validators.notifier.NotifierValidator;
+import io.gravitee.am.service.validators.notifier.NotifierValidator.NotifierHolder;
 import io.gravitee.common.http.MediaType;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -43,6 +45,7 @@ import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import java.util.Comparator;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -56,6 +59,9 @@ public class AlertNotifiersResource extends AbstractResource {
 
     @Inject
     private AlertNotifierServiceProxy alertNotifierService;
+
+    @Autowired
+    private NotifierValidator notifierValidator;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -103,6 +109,7 @@ public class AlertNotifiersResource extends AbstractResource {
         final User authenticatedUser = this.getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, Permission.DOMAIN_ALERT_NOTIFIER, Acl.CREATE)
+                .andThen(notifierValidator.validate(new NotifierHolder(newAlertNotifier.getType(), newAlertNotifier.getConfiguration())))
                 .andThen(alertNotifierService.create(ReferenceType.DOMAIN, domainId, newAlertNotifier, authenticatedUser))
                 .subscribe(response::resume, response::resume);
     }

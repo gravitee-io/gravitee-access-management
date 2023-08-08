@@ -15,67 +15,9 @@
  */
 package io.gravitee.am.service.model;
 
-import jakarta.validation.constraints.Min;
-
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class UpdateEmail {
-
-    private boolean enabled;
-    private String from;
-    private String fromName;
-    private String subject;
-    private String content;
-    @Min(1)
-    private int expiresAfter;
-
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
-
-    public String getFrom() {
-        return from;
-    }
-
-    public void setFrom(String from) {
-        this.from = from;
-    }
-
-    public String getFromName() {
-        return fromName;
-    }
-
-    public void setFromName(String fromName) {
-        this.fromName = fromName;
-    }
-
-    public String getSubject() {
-        return subject;
-    }
-
-    public void setSubject(String subject) {
-        this.subject = subject;
-    }
-
-    public String getContent() {
-        return content;
-    }
-
-    public void setContent(String content) {
-        this.content = content;
-    }
-
-    public int getExpiresAfter() {
-        return expiresAfter;
-    }
-
-    public void setExpiresAfter(int expiresAfter) {
-        this.expiresAfter = expiresAfter;
-    }
+public class UpdateEmail extends AbstractEmail {
 }
