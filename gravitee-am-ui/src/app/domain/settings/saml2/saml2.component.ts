@@ -17,12 +17,13 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { Observable } from 'rxjs';
+import { GioLicenseService, LicenseOptions } from '@gravitee/ui-particles-angular';
 
 import { SnackbarService } from '../../../services/snackbar.service';
 import { DomainService } from '../../../services/domain.service';
 import { AuthService } from '../../../services/auth.service';
 import { CertificateService } from '../../../services/certificate.service';
-import { Feature, GioLicenseService } from '../../../components/gio-license/gio-license.service';
+import { AmFeature } from '../../../components/gio-license/gio-license-data';
 
 @Component({
   selector: 'app-saml2',
@@ -38,7 +39,7 @@ export class Saml2Component implements OnInit {
   editMode: boolean;
   certificates: any[] = [];
   certificatePublicKeys: any[] = [];
-  saml2Feature: Feature = { feature: 'am-idp-gateway-handler-saml' };
+  saml2LicenseOptions: LicenseOptions = { feature: AmFeature.AM_IDP_GATEWAY_HANDLER_SAML };
   isMissingSaml2Feature$: Observable<boolean>;
 
   constructor(
@@ -61,7 +62,7 @@ export class Saml2Component implements OnInit {
       this.publicKeys(this.domainSamlSettings.certificate);
     }
 
-    this.isMissingSaml2Feature$ = this.licenseService.isMissingFeature$(this.saml2Feature);
+    this.isMissingSaml2Feature$ = this.licenseService.isMissingFeature$(this.saml2LicenseOptions);
   }
 
   save() {

@@ -17,10 +17,12 @@ import { enableProdMode } from '@angular/core';
 import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
 import { forkJoin, Observable } from 'rxjs';
 import { loadDefaultTranslations } from '@gravitee/ui-components/src/lib/i18n';
+import { LicenseConfiguration } from '@gravitee/ui-particles-angular';
 
 import { AppModule } from './app/app.module';
 import { environment } from './environments/environment';
 import { AppConfig } from './config/app.config';
+import { FeatureInfoData } from './app/components/gio-license/gio-license-data';
 
 if (environment.production) {
   enableProdMode();
@@ -57,6 +59,15 @@ forkJoin([constants, build]).subscribe((response) => {
   AppConfig.settings.portalTitle = PORTAL_TITLE;
   AppConfig.settings.organizationBaseURL = AppConfig.settings.baseURL + '/organizations/' + DEFAULT_ORGANIZATION;
   AppConfig.settings.domainBaseURL = AppConfig.settings.organizationBaseURL + '/environments/' + DEFAULT_ENV + '/domains/';
-
-  platformBrowserDynamic().bootstrapModule(AppModule);
+  const resourceURL = `${AppConfig.settings.baseURL}/platform/license`;
+  const trialResourceURL = 'https://gravitee.io/self-hosted-trial';
+  const featureInfoData = FeatureInfoData;
+  const licenseConfiguration: LicenseConfiguration = {
+    resourceURL,
+    featureInfoData,
+    trialResourceURL,
+    utmSource: 'oss_am',
+    utmCampaign: 'oss_am_to_ee_am',
+  };
+  platformBrowserDynamic([{ provide: 'LicenseConfiguration', useValue: licenseConfiguration }]).bootstrapModule(AppModule);
 });

@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { NgModule } from '@angular/core';
 
-import { SafePipe } from './safe.pipe';
+import { AmFeature, stringFeature } from './gio-license-data';
 
-@NgModule({
-  imports: [],
-  declarations: [SafePipe],
-  exports: [SafePipe],
-})
-export class GioSafePipeModule {}
+describe('GIO license features', () => {
+  it('should convert string to Feature', () => {
+    expect(stringFeature('am-smtp')).toEqual(AmFeature.AM_SMTP);
+  });
+
+  it('should throw error with unknown Feature string', () => {
+    expect(() => stringFeature('unknown feature')).toThrow();
+  });
+});
