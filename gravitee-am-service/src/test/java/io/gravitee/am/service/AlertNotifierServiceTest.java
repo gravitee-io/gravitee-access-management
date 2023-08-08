@@ -22,10 +22,13 @@ import io.gravitee.am.model.alert.AlertNotifier;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.repository.management.api.AlertNotifierRepository;
 import io.gravitee.am.repository.management.api.search.AlertNotifierCriteria;
+import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.impl.AlertNotifierServiceImpl;
 import io.gravitee.am.service.model.NewAlertNotifier;
 import io.gravitee.am.service.model.PatchAlertNotifier;
 import io.gravitee.am.service.reporter.builder.management.AlertNotifierAuditBuilder;
+import io.gravitee.am.service.validators.notifier.NotifierValidator;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -69,11 +72,14 @@ public class AlertNotifierServiceTest {
     @Mock
     private EventService eventService;
 
+    @Mock
+    private NotifierValidator notifierValidator;
+
     private AlertNotifierService cut;
 
     @Before
     public void before() {
-        cut = new AlertNotifierServiceImpl(alertNotifierRepository, auditService, eventService);
+        cut = new AlertNotifierServiceImpl(alertNotifierRepository, auditService, eventService, notifierValidator);
     }
 
     @Test
@@ -123,8 +129,6 @@ public class AlertNotifierServiceTest {
 
     @Test
     public void create() {
-        final AlertNotifierCriteria criteria = new AlertNotifierCriteria();
-
         final NewAlertNotifier newAlertNotifier = new NewAlertNotifier();
         newAlertNotifier.setEnabled(true);
         newAlertNotifier.setName(NAME);
@@ -155,8 +159,7 @@ public class AlertNotifierServiceTest {
     }
 
     @Test
-    public void update() {
-
+    public void must_not_update_invalid_alert() {
         final PatchAlertNotifier patchAlertNotifier = new PatchAlertNotifier();
         patchAlertNotifier.setEnabled(Optional.of(true));
         patchAlertNotifier.setName(Optional.of(NAME));
@@ -170,6 +173,33 @@ public class AlertNotifierServiceTest {
         alertNotifierToUpdate.setReferenceId(DOMAIN_ID);
         alertNotifierToUpdate.setCreatedAt(createdAt);
 
+        when(alertNotifierRepository.findById(ALERT_NOTIFIER_ID)).thenReturn(Maybe.just(alertNotifierToUpdate));
+        when(notifierValidator.validate(any())).thenReturn(Completable.error(new InvalidParameterException("Invalid resource")));
+
+        final TestObserver<AlertNotifier> obs = cut.update(ReferenceType.DOMAIN, DOMAIN_ID, ALERT_NOTIFIER_ID, patchAlertNotifier, new DefaultUser(USERNAME)).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertError(InvalidParameterException.class);
+
+        verify(auditService, never()).report(any(AlertNotifierAuditBuilder.class));
+    }
+
+    @Test
+    public void update() {
+        final PatchAlertNotifier patchAlertNotifier = new PatchAlertNotifier();
+        patchAlertNotifier.setEnabled(Optional.of(true));
+        patchAlertNotifier.setName(Optional.of(NAME));
+        patchAlertNotifier.setConfiguration(Optional.of(CONFIGURATION));
+
+        final Date createdAt = new Date();
+        final AlertNotifier alertNotifierToUpdate = new AlertNotifier();
+        alertNotifierToUpdate.setId(ALERT_NOTIFIER_ID);
+        alertNotifierToUpdate.setType(TYPE);
+        alertNotifierToUpdate.setReferenceType(ReferenceType.DOMAIN);
+        alertNotifierToUpdate.setReferenceId(DOMAIN_ID);
+        alertNotifierToUpdate.setCreatedAt(createdAt);
+
+        when(notifierValidator.validate(any())).thenReturn(Completable.complete());
         when(alertNotifierRepository.findById(ALERT_NOTIFIER_ID)).thenReturn(Maybe.just(alertNotifierToUpdate));
         when(alertNotifierRepository.update(any(AlertNotifier.class))).thenAnswer(i -> Single.just(i.getArgument(0)));
         when(eventService.create(any(Event.class))).thenAnswer(i -> Single.just(i.getArgument(0)));

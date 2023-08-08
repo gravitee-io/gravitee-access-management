@@ -25,6 +25,7 @@ import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.EmailTemplateService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewEmail;
+import io.gravitee.am.service.validators.email.resource.EmailTemplateValidator;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
 import io.swagger.annotations.*;
@@ -55,6 +56,9 @@ public class EmailsResource extends AbstractResource {
 
     @Autowired
     private DomainService domainService;
+
+    @Autowired
+    private EmailTemplateValidator emailResourceValidator;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -100,6 +104,7 @@ public class EmailsResource extends AbstractResource {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_EMAIL_TEMPLATE, Acl.CREATE)
+                .andThen(emailResourceValidator.validate(newEmail))
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(__ -> emailTemplateService.create(domain, newEmail, authenticatedUser))
