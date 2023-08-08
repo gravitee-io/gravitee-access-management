@@ -25,6 +25,7 @@ import io.gravitee.am.service.EmailTemplateService;
 import io.gravitee.am.service.exception.ApplicationNotFoundException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.UpdateEmail;
+import io.gravitee.am.service.validators.email.resource.EmailTemplateValidator;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
 import io.swagger.v3.oas.annotations.Operation;
@@ -59,6 +60,9 @@ public class ApplicationEmailResource extends AbstractResource {
     @Autowired
     private ApplicationService applicationService;
 
+    @Autowired
+    private EmailTemplateValidator emailTemplateValidator;
+
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
@@ -82,6 +86,7 @@ public class ApplicationEmailResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
 
         checkAnyPermission(organizationId, environmentId, domain, application, Permission.APPLICATION_EMAIL_TEMPLATE, Acl.UPDATE)
+                .andThen(emailTemplateValidator.validate(updateEmail))
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMap(irrelevant -> applicationService.findById(application))

@@ -13,26 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service.model;
+package io.gravitee.am.service.validators.resource.smtp;
 
-import io.gravitee.am.model.Template;
-
-import jakarta.validation.constraints.NotNull;
+import io.gravitee.am.service.exception.InvalidParameterException;
+import io.gravitee.am.service.validators.Validator;
+import io.gravitee.am.service.validators.resource.ResourceValidator.ResourceHolder;
+import java.util.Optional;
 
 /**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class NewEmail extends AbstractEmail {
-    @NotNull
-    private Template template;
-
-    public Template getTemplate() {
-        return template;
-    }
-
-    public NewEmail setTemplate(Template template) {
-        this.template = template;
-        return this;
-    }
+public interface SmtpResourceValidator extends Validator<ResourceHolder, Optional<InvalidParameterException>> {
 }

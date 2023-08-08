@@ -26,6 +26,7 @@ import io.gravitee.am.model.flow.Flow;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.FlowService;
 import io.gravitee.am.service.exception.FlowNotFoundException;
+import io.gravitee.am.service.validators.flow.FlowValidator;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
 import io.swagger.v3.oas.annotations.Operation;
@@ -58,6 +59,9 @@ public class FlowResource extends AbstractResource {
 
     @Autowired
     private PolicyPluginService policyPluginService;
+
+    @Autowired
+    private FlowValidator flowValidator;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -109,6 +113,7 @@ public class FlowResource extends AbstractResource {
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_FLOW, Acl.UPDATE)
                 .andThen(FlowUtils.checkPoliciesDeployed(policyPluginService, updateFlow))
+                .andThen(flowValidator.validate(updateFlow))
                 .andThen(flowService.update(ReferenceType.DOMAIN, domain, flow, convert(updateFlow), authenticatedUser)
                         .map(FlowEntity::new))
                 .subscribe(response::resume, response::resume);
