@@ -33,6 +33,8 @@ import io.gravitee.am.service.model.NewAlertNotifier;
 import io.gravitee.am.service.model.PatchAlertNotifier;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.AlertNotifierAuditBuilder;
+import io.gravitee.am.service.validators.notifier.NotifierValidator;
+import io.gravitee.am.service.validators.notifier.NotifierValidator.NotifierHolder;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
@@ -58,10 +60,13 @@ public class AlertNotifierServiceImpl implements io.gravitee.am.service.AlertNot
     private final AuditService auditService;
     private final EventService eventService;
 
-    public AlertNotifierServiceImpl(@Lazy AlertNotifierRepository alertNotifierRepository, AuditService auditService, EventService eventService) {
+    private final NotifierValidator notifierValidator;
+
+    public AlertNotifierServiceImpl(@Lazy AlertNotifierRepository alertNotifierRepository, AuditService auditService, EventService eventService, NotifierValidator notifierValidator) {
         this.alertNotifierRepository = alertNotifierRepository;
         this.auditService = auditService;
         this.eventService = eventService;
+        this.notifierValidator = notifierValidator;
     }
 
     /**
@@ -146,7 +151,7 @@ public class AlertNotifierServiceImpl implements io.gravitee.am.service.AlertNot
                         // Do not update alert notifier if nothing has changed.
                         return Single.just(alertNotifier);
                     }
-                    return updateInternal(toUpdate, byUser, alertNotifier);
+                    return updateInternal(toUpdate);
                 });
     }
 
@@ -176,10 +181,16 @@ public class AlertNotifierServiceImpl implements io.gravitee.am.service.AlertNot
                 .flatMap(updated -> eventService.create(new Event(Type.ALERT_NOTIFIER, new Payload(updated.getId(), updated.getReferenceType(), updated.getReferenceId(), Action.CREATE))).ignoreElement().andThen(Single.just(updated)));
     }
 
-    private Single<AlertNotifier> updateInternal(AlertNotifier alertNotifier, User updatedBy, AlertNotifier previous) {
+    private Single<AlertNotifier> updateInternal(AlertNotifier alertNotifier) {
         alertNotifier.setUpdatedAt(new Date());
-        return alertNotifierRepository.update(alertNotifier)
-                .flatMap(updated -> eventService.create(new Event(Type.ALERT_NOTIFIER, new Payload(updated.getId(), updated.getReferenceType(), updated.getReferenceId(), Action.UPDATE))).ignoreElement().andThen(Single.just(updated)));
+        return notifierValidator.validate(new NotifierHolder(alertNotifier.getType(), alertNotifier.getConfiguration()))
+                .andThen(Single.defer(() ->
+                                alertNotifierRepository.update(alertNotifier)
+                                        .flatMap(updated -> eventService.create(new Event(Type.ALERT_NOTIFIER, new Payload(updated.getId(), updated.getReferenceType(), updated.getReferenceId(), Action.UPDATE)))
+                                                .ignoreElement()
+                                                .andThen(Single.just(updated)))
+                        )
+                );
     }
 
     private Completable deleteInternal(AlertNotifier alertNotifier, User deletedBy) {

@@ -13,16 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service.model;
+package io.gravitee.am.service.validators.email;
 
-<<<<<<< HEAD
-import javax.validation.constraints.Min;
+import io.gravitee.am.service.validators.Validator;
 
-=======
->>>>>>> 8c006cf9c1 (feat: email allow list to protect from impersonation)
 /**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class UpdateEmail extends AbstractEmail {
+public interface EmailDomainValidator extends Validator<String, Boolean> {
 }

@@ -25,6 +25,7 @@ import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.FlowService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
+import io.gravitee.am.service.validators.flow.FlowValidator;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
 import io.swagger.annotations.*;
@@ -56,6 +57,15 @@ public class FlowsResource extends AbstractResource {
     @Autowired
     private FlowService flowService;
 
+<<<<<<< HEAD
+=======
+    @Autowired
+    private PolicyPluginService policyPluginService;
+
+    @Autowired
+    private FlowValidator flowValidator;
+
+>>>>>>> 8c006cf9c1 (feat: email allow list to protect from impersonation)
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "List registered flows for a security domain",
@@ -104,6 +114,11 @@ public class FlowsResource extends AbstractResource {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_FLOW, Acl.UPDATE)
+<<<<<<< HEAD
+=======
+                .andThen(FlowUtils.checkPoliciesDeployed(policyPluginService, flows))
+                .andThen(flowValidator.validateAll(flows))
+>>>>>>> 8c006cf9c1 (feat: email allow list to protect from impersonation)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(__ -> flowService.createOrUpdate(ReferenceType.DOMAIN, domain, convert(flows), authenticatedUser))

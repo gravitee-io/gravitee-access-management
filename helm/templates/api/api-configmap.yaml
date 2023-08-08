@@ -286,6 +286,8 @@ data:
       subject: {{ .Values.smtp.subject | quote }}
       port: {{ .Values.smtp.port }}
       from: {{ .Values.smtp.from }}
+      allowedfrom:
+        {{ toYaml .Values.smtp.allowedfrom | nindent 8 | trim -}}
       {{- if or .Values.smtp.username .Values.smtp.password }}
       username: {{ .Values.smtp.username }}
       password: {{ .Values.smtp.password }}
