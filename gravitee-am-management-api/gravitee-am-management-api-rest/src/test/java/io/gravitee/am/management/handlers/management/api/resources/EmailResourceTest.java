@@ -20,6 +20,7 @@ import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Email;
 import io.gravitee.am.service.exception.EmailNotFoundException;
+import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.model.UpdateEmail;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Completable;
@@ -43,7 +44,6 @@ import static org.mockito.Mockito.doReturn;
 public class EmailResourceTest extends JerseySpringTest {
 
     @Test
-    @Ignore
     public void shouldUpdate() {
         final String emailId = "email-1";
         final String domainId = "domain-1";
@@ -56,6 +56,7 @@ public class EmailResourceTest extends JerseySpringTest {
         updateEmail.setContent("content");
         updateEmail.setExpiresAfter(1000);
 
+        doReturn(Completable.complete()).when(emailResourceValidator).validate(any());
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Single.just(new Email())).when(emailTemplateService).update(eq(domainId), eq(emailId), any(), any(User.class));
 
@@ -65,6 +66,29 @@ public class EmailResourceTest extends JerseySpringTest {
                 .path(emailId)
                 .request().put(Entity.json(updateEmail));
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
+    }
+
+    @Test
+    public void shouldNotUpdate_email_not_valid() {
+        final String emailId = "email-1";
+        final String domainId = "domain-1";
+        final Domain mockDomain = new Domain();
+        mockDomain.setId(domainId);
+
+        UpdateEmail updateEmail = new UpdateEmail();
+        updateEmail.setFrom("test");
+        updateEmail.setSubject("subject");
+        updateEmail.setContent("content");
+        updateEmail.setExpiresAfter(1000);
+
+        doReturn(Completable.error(new InvalidParameterException("Invalid email"))).when(emailResourceValidator).validate(any());
+
+        final Response response = target("domains")
+                .path(domainId)
+                .path("emails")
+                .path(emailId)
+                .request().put(Entity.json(updateEmail));
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
     }
 
     @Test

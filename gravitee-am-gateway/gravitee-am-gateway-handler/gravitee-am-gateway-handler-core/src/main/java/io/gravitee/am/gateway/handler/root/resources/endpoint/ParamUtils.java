@@ -20,6 +20,7 @@ import io.gravitee.am.common.oidc.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.identityprovider.common.oauth2.utils.URLEncodedUtils;
+import io.gravitee.am.service.utils.WildcardUtils;
 import io.vertx.core.json.Json;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.ext.web.RoutingContext;
@@ -36,7 +37,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.util.Objects.nonNull;
@@ -49,16 +49,14 @@ import static java.util.Objects.nonNull;
  * @author GraviteeSource Team
  */
 public class ParamUtils {
-    private static Logger LOGGER = LoggerFactory.getLogger(ParamUtils.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ParamUtils.class);
 
     public static Set<String> splitScopes(String scope) {
-        HashSet<String> scopes = scope != null && !scope.isEmpty() ? new HashSet<>(Arrays.asList(scope.split("\\s+"))) : null;
-        return scopes;
+        return scope != null && !scope.isEmpty() ? new HashSet<>(Arrays.asList(scope.split("\\s+"))) : null;
     }
 
     public static List<String> splitAcrValues(String values) {
-        List<String> acrValues = values != null && !values.isEmpty() ? Arrays.asList(values.split("\\s+")) : null;
-        return acrValues;
+        return values != null && !values.isEmpty() ? Arrays.asList(values.split("\\s+")) : null;
     }
 
     public static String getOAuthParameter(RoutingContext context, String paramName) {
@@ -130,27 +128,7 @@ public class ParamUtils {
     }
 
     private static String buildPattern(String patternPath) {
-        if (patternPath == null) {
-            return null;
-        }
-        var patternBuilder = new StringBuilder();
-        final char[] patternArray = patternPath.toCharArray();
-        int firstIndex = 0;
-        for (int i = 0; i < patternArray.length; i++) {
-            char c = patternArray[i];
-            if (c == '*') {
-                if (firstIndex != i) {
-                    patternBuilder.append(Pattern.quote(patternPath.substring(firstIndex, i)));
-                }
-                patternBuilder.append(".*");
-                firstIndex = i + 1;
-            }
-        }
-        //There is no wildcard so we need to add the whole string
-        if (firstIndex == 0){
-            patternBuilder.append(patternPath);
-        }
-        return patternBuilder.toString();
+        return WildcardUtils.toRegex(patternPath);
     }
 
     public static String appendQueryParameter(String redirectTo, MultiMap queryParams) {

@@ -33,6 +33,7 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -84,6 +85,39 @@ public class FlowResourceTest extends JerseySpringTest {
         io.gravitee.am.service.model.Flow flowToUpdate = new io.gravitee.am.service.model.Flow();
         flowToUpdate.setName("updatedName");
         flowToUpdate.setType(Type.LOGIN);
+<<<<<<< HEAD
+=======
+        Step step = new Step();
+        step.setPolicy("dummy-policy");
+        flowToUpdate.setPost(List.of(step));
+
+        Flow updatedFlow = new Flow();
+        updatedFlow.setPost(List.of(step));
+        updatedFlow.setName(flowToUpdate.getName());
+        updatedFlow.setType(flowToUpdate.getType());
+
+        doReturn(Completable.complete()).when(policyPluginService).checkPluginDeployment(step.getPolicy());
+        when(flowValidator.validate(any())).thenReturn(Completable.complete());
+        doReturn(Single.just(updatedFlow)).when(flowService).update(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), eq(FLOW_ID), any(Flow.class), any(User.class));
+
+        final Response response = put(target("domains")
+                .path(DOMAIN_ID)
+                .path("flows")
+                .path(FLOW_ID), flowToUpdate);
+
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+
+        final FlowEntity flow = readEntity(response, FlowEntity.class);
+        assertEquals(flowToUpdate.getName(), flow.getName());
+    }
+
+    @Test
+    public void shouldUpdateFlow_EmptyStep() {
+
+        io.gravitee.am.service.model.Flow flowToUpdate = new io.gravitee.am.service.model.Flow();
+        flowToUpdate.setName("updatedName");
+        flowToUpdate.setType(Type.LOGIN);
+>>>>>>> 8c006cf9c1 (feat: email allow list to protect from impersonation)
 
         Flow updatedFlow = new Flow();
         updatedFlow.setName(flowToUpdate.getName());
@@ -103,6 +137,66 @@ public class FlowResourceTest extends JerseySpringTest {
     }
 
     @Test
+<<<<<<< HEAD
+=======
+    public void shouldNotUpdateFlow_PolicyNotDeployed() {
+
+        io.gravitee.am.service.model.Flow flowToUpdate = new io.gravitee.am.service.model.Flow();
+        flowToUpdate.setName("updatedName");
+        flowToUpdate.setType(Type.LOGIN);
+        Step step = new Step();
+        step.setPolicy("dummy-policy");
+        flowToUpdate.setPost(List.of(step));
+
+        Flow updatedFlow = new Flow();
+        updatedFlow.setPost(List.of(step));
+        updatedFlow.setName(flowToUpdate.getName());
+        updatedFlow.setType(flowToUpdate.getType());
+
+        doReturn(Completable.error(PluginNotDeployedException.forType(step.getPolicy()))).when(policyPluginService).checkPluginDeployment(step.getPolicy());
+
+        final Response response = put(target("domains")
+                .path(DOMAIN_ID)
+                .path("flows")
+                .path(FLOW_ID), flowToUpdate);
+
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
+
+        final ErrorEntity error = readEntity(response, ErrorEntity.class);
+        assertEquals("Plugin type dummy-policy not deployed", error.getMessage());
+    }
+
+    @Test
+    public void shouldNotUpdateFlow_Flow_invalid() {
+
+        io.gravitee.am.service.model.Flow flowToUpdate = new io.gravitee.am.service.model.Flow();
+        flowToUpdate.setName("updatedName");
+        flowToUpdate.setType(Type.LOGIN);
+        Step step = new Step();
+        step.setPolicy("dummy-policy");
+        flowToUpdate.setPost(List.of(step));
+
+        Flow updatedFlow = new Flow();
+        updatedFlow.setPost(List.of(step));
+        updatedFlow.setName(flowToUpdate.getName());
+        updatedFlow.setType(flowToUpdate.getType());
+
+        doReturn(Completable.error(PluginNotDeployedException.forType(step.getPolicy()))).when(policyPluginService).checkPluginDeployment(step.getPolicy());
+        when(flowValidator.validate(any())).thenReturn(Completable.error(Exception::new));
+
+        final Response response = put(target("domains")
+                .path(DOMAIN_ID)
+                .path("flows")
+                .path(FLOW_ID), flowToUpdate);
+
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
+
+        final ErrorEntity error = readEntity(response, ErrorEntity.class);
+        assertEquals("Plugin type dummy-policy not deployed", error.getMessage());
+    }
+
+    @Test
+>>>>>>> 8c006cf9c1 (feat: email allow list to protect from impersonation)
     public void shouldNotUpdateEntrypoint_notFound() {
 
         io.gravitee.am.service.model.Flow flowToUpdate = new io.gravitee.am.service.model.Flow();

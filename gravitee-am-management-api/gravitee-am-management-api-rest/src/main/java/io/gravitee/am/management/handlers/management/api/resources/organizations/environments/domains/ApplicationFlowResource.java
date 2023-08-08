@@ -18,12 +18,15 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.model.FlowEntity;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.management.handlers.management.api.resources.utils.FlowUtils;
+import io.gravitee.am.management.service.PolicyPluginService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.flow.Flow;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.FlowService;
 import io.gravitee.am.service.exception.FlowNotFoundException;
+import io.gravitee.am.service.validators.flow.FlowValidator;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
 import io.swagger.annotations.ApiOperation;
@@ -51,6 +54,12 @@ public class ApplicationFlowResource extends AbstractResource {
 
     @Autowired
     private FlowService flowService;
+
+    @Autowired
+    private PolicyPluginService policyPluginService;
+
+    @Autowired
+    private FlowValidator flowValidator;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -97,6 +106,8 @@ public class ApplicationFlowResource extends AbstractResource {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.APPLICATION_FLOW, Acl.UPDATE)
+                .andThen(FlowUtils.checkPoliciesDeployed(policyPluginService, updateFlow))
+                .andThen(flowValidator.validate(updateFlow))
                 .andThen(flowService.update(ReferenceType.DOMAIN, domain, flow, convert(updateFlow), authenticatedUser)
                         .map(FlowEntity::new))
                 .subscribe(response::resume, response::resume);
