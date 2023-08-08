@@ -41,8 +41,17 @@ import io.gravitee.am.service.i18n.ThreadLocalDomainDictionaryProvider;
 import io.gravitee.am.service.impl.I18nDictionaryService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.EmailAuditBuilder;
+<<<<<<< HEAD
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
+=======
+import io.gravitee.am.service.validators.email.EmailDomainValidator;
+import io.netty.handler.codec.http.QueryStringDecoder;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.vertx.rxjava3.core.MultiMap;
+import org.apache.commons.lang3.StringUtils;
+>>>>>>> 8c006cf9c1 (feat: email allow list to protect from impersonation)
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -75,6 +84,7 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
     private final Integer registrationExpireAfter;
     private final String certificateExpirySubject;
 
+<<<<<<< HEAD
     @Autowired
     private EmailManager emailManager;
 
@@ -96,6 +106,21 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
 
     @Autowired
     private I18nDictionaryService i18nDictionaryService;
+=======
+    private final EmailManager emailManager;
+
+    private final io.gravitee.am.service.EmailService emailService;
+
+    private final Configuration freemarkerConfiguration;
+
+    private final AuditService auditService;
+
+    private final JWTBuilder jwtBuilder;
+
+    private final DomainService domainService;
+
+    private final I18nDictionaryService i18nDictionaryService;
+>>>>>>> 8c006cf9c1 (feat: email allow list to protect from impersonation)
 
     private final ThreadLocalDomainDictionaryProvider dictionaryProvider;
 
@@ -132,9 +157,14 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
             Email email = prepareEmail(domain, client, template, emailTemplate, user);
             // send email
             sendEmail(email, user);
+<<<<<<< HEAD
 
             return email;
         }).ignoreElement();
+=======
+            return email;
+        });
+>>>>>>> 8c006cf9c1 (feat: email allow list to protect from impersonation)
     }
 
     private Completable refreshDomainDictionaries(Domain domain) {

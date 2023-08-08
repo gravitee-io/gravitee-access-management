@@ -13,16 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service.model;
+package io.gravitee.am.service.validators.flow;
 
-<<<<<<< HEAD
-import javax.validation.constraints.Min;
+import io.gravitee.am.service.model.Flow;
+import io.gravitee.am.service.validators.Validator;
+import io.reactivex.rxjava3.core.Completable;
+import java.util.List;
 
-=======
->>>>>>> 8c006cf9c1 (feat: email allow list to protect from impersonation)
 /**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class UpdateEmail extends AbstractEmail {
+public interface FlowValidator extends Validator<Flow, Completable> {
+
+    Completable validateAll(List<Flow> flows);
+
 }

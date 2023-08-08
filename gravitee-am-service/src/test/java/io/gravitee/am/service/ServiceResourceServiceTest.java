@@ -22,18 +22,29 @@ import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.resource.ServiceResource;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.ServiceResourceRepository;
+import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.exception.ServiceResourceCurrentlyUsedException;
 import io.gravitee.am.service.exception.ServiceResourceNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.ServiceResourceServiceImpl;
 import io.gravitee.am.service.model.NewServiceResource;
 import io.gravitee.am.service.model.UpdateServiceResource;
+<<<<<<< HEAD
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
 import io.reactivex.subscribers.TestSubscriber;
+=======
+import io.gravitee.am.service.validators.resource.ResourceValidator;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
+>>>>>>> 8c006cf9c1 (feat: email allow list to protect from impersonation)
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -68,6 +79,9 @@ public class ServiceResourceServiceTest {
 
     @Mock
     private AuditService auditService;
+
+    @Mock
+    private ResourceValidator resourceValidator;
 
     private final static String DOMAIN = "domain1";
 
@@ -167,6 +181,7 @@ public class ServiceResourceServiceTest {
         record.setUpdatedAt(new Date());
 
         when(resourceRepository.findById(record.getId())).thenReturn(Maybe.just(record));
+        when(resourceValidator.validate(any())).thenReturn(Completable.complete());
         when(resourceRepository.update(argThat(bean -> bean.getId().equals(record.getId())))).thenReturn(Single.just(record));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
@@ -177,6 +192,30 @@ public class ServiceResourceServiceTest {
         testObserver.assertValueCount(1);
 
         verify(auditService, never()).report(argThat(auditBuilder -> auditBuilder.build(new ObjectMapper()).getOutcome().getStatus().equals("SUCCESS")));
+    }
+
+    @Test
+    public void shouldNotUpdate() {
+        UpdateServiceResource resource = new UpdateServiceResource();
+        resource.setConfiguration("{}");
+        resource.setName("myresource");
+
+        ServiceResource record = new ServiceResource();
+        record.setId("resid");
+        record.setName(resource.getName());
+        record.setType("rtype");
+        record.setConfiguration(resource.getConfiguration());
+        record.setReferenceId(DOMAIN);
+        record.setReferenceType(ReferenceType.DOMAIN);
+        record.setCreatedAt(new Date());
+        record.setUpdatedAt(new Date());
+
+        when(resourceRepository.findById(record.getId())).thenReturn(Maybe.just(record));
+        when(resourceValidator.validate(any())).thenReturn(Completable.error(new InvalidParameterException("Invalid parameter")));
+
+        TestObserver<ServiceResource> testObserver = resourceService.update(DOMAIN, record.getId(), resource, null).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertError(InvalidParameterException.class);
     }
 
     @Test

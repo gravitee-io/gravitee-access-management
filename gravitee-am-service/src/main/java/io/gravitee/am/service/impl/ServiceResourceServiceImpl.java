@@ -37,10 +37,19 @@ import io.gravitee.am.service.model.NewServiceResource;
 import io.gravitee.am.service.model.UpdateServiceResource;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.ServiceResourceAuditBuilder;
+<<<<<<< HEAD
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+=======
+import io.gravitee.am.service.validators.resource.ResourceValidator;
+import io.gravitee.am.service.validators.resource.ResourceValidator.ResourceHolder;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+>>>>>>> 8c006cf9c1 (feat: email allow list to protect from impersonation)
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -73,6 +82,9 @@ public class ServiceResourceServiceImpl implements ServiceResourceService {
 
     @Autowired
     private AuditService auditService;
+
+    @Autowired
+    private ResourceValidator resourceValidator;
 
     @Override
     public Maybe<ServiceResource> findById(String id) {
@@ -129,19 +141,29 @@ public class ServiceResourceServiceImpl implements ServiceResourceService {
         LOGGER.debug("Update a resource {} for domain {}", id, domain);
 
         return serviceResourceRepository.findById(id)
+<<<<<<< HEAD
                 .switchIfEmpty(Maybe.error(new ServiceResourceNotFoundException(id)))
                 .flatMapSingle(oldServiceResource -> {
                     ServiceResource factorToUpdate = new ServiceResource(oldServiceResource);
                     factorToUpdate.setName(updateResource.getName());
                     factorToUpdate.setConfiguration(updateResource.getConfiguration());
                     factorToUpdate.setUpdatedAt(new Date());
+=======
+                .switchIfEmpty(Single.error(new ServiceResourceNotFoundException(id)))
+                .flatMap(oldServiceResource -> {
+                    ServiceResource resourceToUpdate = new ServiceResource(oldServiceResource);
+                    resourceToUpdate.setName(updateResource.getName());
+                    resourceToUpdate.setConfiguration(updateResource.getConfiguration());
+                    resourceToUpdate.setUpdatedAt(new Date());
+>>>>>>> 8c006cf9c1 (feat: email allow list to protect from impersonation)
 
-                    return serviceResourceRepository.update(factorToUpdate)
-                            .flatMap(resource1 -> {
-                                // send sync event to refresh plugins that are using this resource
-                                Event event = new Event(Type.RESOURCE, new Payload(resource1.getId(), resource1.getReferenceType(), resource1.getReferenceId(), Action.UPDATE));
-                                return eventService.create(event).flatMap(__ -> Single.just(resource1));
-                            });
+                    return resourceValidator.validate(new ResourceHolder(resourceToUpdate.getType(), resourceToUpdate.getConfiguration()))
+                            .andThen(Single.defer(() -> serviceResourceRepository.update(resourceToUpdate)
+                                    .flatMap(resource1 -> {
+                                        // send sync event to refresh plugins that are using this resource
+                                        Event event = new Event(Type.RESOURCE, new Payload(resource1.getId(), resource1.getReferenceType(), resource1.getReferenceId(), Action.UPDATE));
+                                        return eventService.create(event).flatMap(__ -> Single.just(resource1));
+                                    })));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -159,17 +181,17 @@ public class ServiceResourceServiceImpl implements ServiceResourceService {
         return serviceResourceRepository.findById(resourceId)
                 .switchIfEmpty(Maybe.error(new ServiceResourceNotFoundException(resourceId)))
                 .flatMapSingle(resource ->
-                    factorService.findByDomain(domain)
-                            .filter(factor -> factor.getConfiguration() != null && factor.getConfiguration().contains("\""+resourceId+"\""))
-                            .toList()
-                            .flatMap(factors -> {
-                                        if (factors.isEmpty()) {
-                                            return Single.just(resource);
-                                        } else {
-                                            return Single.error(new ServiceResourceCurrentlyUsedException(resourceId, factors.get(0).getName(), "MultiFactor Authentication"));
+                        factorService.findByDomain(domain)
+                                .filter(factor -> factor.getConfiguration() != null && factor.getConfiguration().contains("\"" + resourceId + "\""))
+                                .toList()
+                                .flatMap(factors -> {
+                                            if (factors.isEmpty()) {
+                                                return Single.just(resource);
+                                            } else {
+                                                return Single.error(new ServiceResourceCurrentlyUsedException(resourceId, factors.get(0).getName(), "MultiFactor Authentication"));
+                                            }
                                         }
-                                    }
-                            )
+                                )
                 )
                 .flatMapCompletable(resource -> {
                             Event event = new Event(Type.RESOURCE, new Payload(resource.getId(), resource.getReferenceType(), resource.getReferenceId(), Action.DELETE));

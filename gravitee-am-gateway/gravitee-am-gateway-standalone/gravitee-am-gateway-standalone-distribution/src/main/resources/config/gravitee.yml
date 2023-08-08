@@ -221,6 +221,11 @@ email:
   from: noreply@my.domain
   username: user@my.domain
   password: password
+  # List of allowed from
+  allowedfrom:
+    - ${email.from}
+    # - *@mydomain.org
+    # - *@*.*
 #  properties:
 #    auth: true
 #    starttls.enable: true
