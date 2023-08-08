@@ -61,7 +61,15 @@ import { MaterialDesignFrameworkModule } from '@ajsf/material';
 import { HighchartsChartModule } from 'highcharts-angular';
 import { ClipboardModule } from 'ngx-clipboard';
 import { map, mergeMap } from 'rxjs/operators';
-import { GioMenuModule, GioSubmenuModule, GioTopBarLinkModule, GioTopBarMenuModule, GioTopBarModule } from '@gravitee/ui-particles-angular';
+import {
+  GioLicenseModule,
+  GioMenuModule,
+  GioSafePipeModule,
+  GioSubmenuModule,
+  GioTopBarLinkModule,
+  GioTopBarMenuModule,
+  GioTopBarModule,
+} from '@gravitee/ui-particles-angular';
 
 import { CertificateCreationStep2Component } from './domain/settings/certificates/creation/steps/step2/step2.component';
 import { ExtensionGrantResolver } from './resolvers/extension-grant.resolver';
@@ -418,8 +426,6 @@ import { ThemeService } from './services/theme.service';
 import { HelpTipsThemeComponent } from './domain/settings/theme/help-tips/help-tips.component';
 import { EmailTemplateFactoryService } from './services/email.template.factory.service';
 import { FormTemplateFactoryService } from './services/form.template.factory.service';
-import { GioLicenseModule } from './components/gio-license/gio-license.module';
-import { GioSafePipeModule } from './pipes/gio.pipe.module';
 
 import { AppConfig } from '../config/app.config';
 
@@ -716,13 +722,13 @@ import { AppConfig } from '../config/app.config';
     CodemirrorModule,
     ClipboardModule,
     HighchartsChartModule,
-    GioSafePipeModule,
     GioMenuModule,
     GioTopBarModule,
     GioTopBarLinkModule,
     GioTopBarMenuModule,
     GioSubmenuModule,
     GioLicenseModule,
+    GioSafePipeModule,
   ],
   providers: [
     DomainService,

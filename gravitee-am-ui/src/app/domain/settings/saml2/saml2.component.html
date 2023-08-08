@@ -25,7 +25,7 @@
   <div>
     <div fxFlex="70">
       <form #samlSettingsForm="ngForm" (ngSubmit)="save()" (keydown.enter)="(false)">
-        <div class="gv-form-section" fxLayout="column" [gioLicense]="saml2Feature">
+        <div class="gv-form-section" fxLayout="column" [gioLicense]="saml2LicenseOptions">
           <mat-slide-toggle (change)="enableSAML2IdP($event)" [checked]="isSAML2IdPEnabled()" [disabled]="!editMode">
             <span class="domain-settings-saml2__toggle__label">
               <mat-icon

@@ -13,7 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-export class Plugin {
+import { LicenseOptions } from '@gravitee/ui-particles-angular';
+
+export class Plugin implements LicenseOptions {
   id: string;
   category: string;
   deployed: boolean;
