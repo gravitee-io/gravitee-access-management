@@ -84,6 +84,8 @@ databaseChangeLog:
   - include:
       - file: liquibase/changelogs/v3_19_13/3.19.13-alter-i18n_dictionary_entries-column-length.yml
   - include:
+      - file: liquibase/changelogs/v3_19_21/3.19.21-alter-users_username_unique.yml
+  - include:
       - file: liquibase/changelogs/v3_20_0/3.20.0-add-password-histories-table.yml
   - include:
       - file: liquibase/changelogs/v3_20_0/3.20.0-update-certificates-table.yml
@@ -95,4 +97,3 @@ databaseChangeLog:
       - file: liquibase/changelogs/v3_20_0/3.20.0-add-verify-attempt-table.yml
   - include:
       - file: liquibase/changelogs/v3_20_0/3.20.0-alter-password-histories-table-length.yml
-
