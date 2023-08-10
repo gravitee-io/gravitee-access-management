@@ -146,7 +146,7 @@ db.users.createIndex( { "referenceType" : 1, "referenceId": 1, "displayName": 1 
 db.users.createIndex( { "referenceType" : 1, "referenceId": 1, "firstName": 1 } );
 db.users.createIndex( { "referenceType" : 1, "referenceId": 1, "lastName": 1 } );
 db.users.createIndex( { "referenceType" : 1, "referenceId": 1, "externalId": 1 } );
-db.users.createIndex( { "referenceType" : 1, "referenceId": 1, "username": 1, "source": 1 } );
+db.users.createIndex( { "referenceType" : 1, "referenceId": 1, "username": 1, "source": 1 }, { unique: true } );
 db.users.createIndex( { "referenceType" : 1, "referenceId": 1, "externalId": 1, "source": 1 } );
 db.users.reIndex();
 
