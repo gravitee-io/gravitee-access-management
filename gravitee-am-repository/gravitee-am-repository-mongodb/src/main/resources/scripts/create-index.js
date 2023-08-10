@@ -175,7 +175,7 @@ db.users.createIndex( { "referenceType" : 1, "referenceId": 1, "displayName": 1 
 db.users.createIndex( { "referenceType" : 1, "referenceId": 1, "firstName": 1 }, {"name": "rt1ri1f1"} );
 db.users.createIndex( { "referenceType" : 1, "referenceId": 1, "lastName": 1 }, {"name": "rt1ri1l1"} );
 db.users.createIndex( { "referenceType" : 1, "referenceId": 1, "externalId": 1 }, {"name": "rt1ri1ext1"} );
-db.users.createIndex( { "referenceType" : 1, "referenceId": 1, "username": 1, "source": 1 }, {"name": "rt1ri1u1s1"} );
+db.users.createIndex( { "referenceType" : 1, "referenceId": 1, "username": 1, "source": 1 }, {"name": "rt1ri1u1s1_unique"}, { unique: true } );
 db.users.createIndex( { "referenceType" : 1, "referenceId": 1, "externalId": 1, "source": 1 }, {"name": "rt1ri1ext1s1"} );
 db.users.reIndex();
 
@@ -359,7 +359,7 @@ db.alert_notifiers.reIndex();
 db.request_objects.dropIndexes();
 db.request_objects.createIndex( { "_id": 1 }, {"name": "_id1"} );
 db.request_objects.createIndex( { "expire_at" : 1 }, {"name": "e1", "expireAfterSeconds": 0});
-db.request_objects
+db.request_objects.reIndex();
 
 // "pushed_authorization_requests" collection
 db.pushed_authorization_requests.dropIndexes();
