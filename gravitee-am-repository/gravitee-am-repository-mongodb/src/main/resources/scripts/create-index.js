@@ -175,7 +175,7 @@ db.users.createIndex( { "referenceType" : 1, "referenceId": 1, "displayName": 1 
 db.users.createIndex( { "referenceType" : 1, "referenceId": 1, "firstName": 1 }, {"name": "rt1ri1f1"} );
 db.users.createIndex( { "referenceType" : 1, "referenceId": 1, "lastName": 1 }, {"name": "rt1ri1l1"} );
 db.users.createIndex( { "referenceType" : 1, "referenceId": 1, "externalId": 1 }, {"name": "rt1ri1ext1"} );
-db.users.createIndex( { "referenceType" : 1, "referenceId": 1, "username": 1, "source": 1 }, {"name": "rt1ri1u1s1"} );
+db.users.createIndex( { "referenceType" : 1, "referenceId": 1, "username": 1, "source": 1 }, {"name": "rt1ri1u1s1_unique"}, { unique: true } );
 db.users.createIndex( { "referenceType" : 1, "referenceId": 1, "externalId": 1, "source": 1 }, {"name": "rt1ri1ext1s1"} );
 db.users.reIndex();
 
