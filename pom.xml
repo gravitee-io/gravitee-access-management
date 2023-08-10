@@ -540,7 +540,6 @@
                 <groupId>io.asyncer</groupId>
                 <artifactId>r2dbc-mysql</artifactId>
                 <version>${r2dbc-mysql.version}</version>
-                <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>io.r2dbc</groupId>

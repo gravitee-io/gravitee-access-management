@@ -29,11 +29,6 @@
     <artifactId>gravitee-am-repository-mongodb-api</artifactId>
     <name>Gravitee IO - Access Management - Repository MongoDB API</name>
 
-    <properties>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
-    </properties>
-
     <dependencies>
         <!-- Gravitee dependencies -->
         <dependency>
