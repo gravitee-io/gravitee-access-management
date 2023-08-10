@@ -851,13 +851,13 @@ public class UserRepositoryTest extends AbstractManagementTest {
     public void testFindByDomainAndEmail() throws TechnicalException {
         final String domain = "domain";
         // create user
-        User user = new User();
+        User user = createUserWithRandomName();
         user.setReferenceType(ReferenceType.DOMAIN);
         user.setReferenceId(domain);
         user.setEmail("test@test.com");
         userRepository.create(user).blockingGet();
 
-        User user2 = new User();
+        User user2 = createUserWithRandomName();
         user2.setReferenceType(ReferenceType.DOMAIN);
         user2.setReferenceId(domain);
         user2.setEmail("test@Test.com");
@@ -876,13 +876,13 @@ public class UserRepositoryTest extends AbstractManagementTest {
     public void testFindByDomainAndEmailWithStandardClaim() throws TechnicalException {
         final String domain = "domain";
         // create user
-        User user = new User();
+        User user = createUserWithRandomName();
         user.setReferenceType(ReferenceType.DOMAIN);
         user.setReferenceId(domain);
         user.setEmail("test@test.com");
         userRepository.create(user).blockingGet();
 
-        User user2 = new User();
+        User user2 = createUserWithRandomName();
         user2.setReferenceType(ReferenceType.DOMAIN);
         user2.setReferenceId(domain);
         user2.setAdditionalInformation(Collections.singletonMap(StandardClaims.EMAIL, "test@Test.com"));// one UPPER case letter
@@ -968,21 +968,21 @@ public class UserRepositoryTest extends AbstractManagementTest {
     public void testStat_UserRegistration() throws TechnicalException {
         final String domain = "domain";
         // create user
-        User user = new User();
+        User user = createUserWithRandomName();
         user.setReferenceType(ReferenceType.DOMAIN);
         user.setReferenceId(domain);
         user.setPreRegistration(true);
         user.setRegistrationCompleted(true);
         userRepository.create(user).blockingGet();
 
-        User user2 = new User();
+        User user2 = createUserWithRandomName();
         user2.setReferenceType(ReferenceType.DOMAIN);
         user2.setReferenceId(domain);
         user2.setPreRegistration(true);
         user2.setRegistrationCompleted(false);
         userRepository.create(user2).blockingGet();
 
-        User user3 = new User();
+        User user3 = createUserWithRandomName();
         user3.setReferenceType(ReferenceType.DOMAIN);
         user3.setReferenceId(domain);
         user3.setPreRegistration(false);
@@ -1007,7 +1007,7 @@ public class UserRepositoryTest extends AbstractManagementTest {
     public void testStat_StatusRepartition() throws TechnicalException {
         final String domain = "domain_status";
         // enabled used
-        User user = new User();
+        User user = createUserWithRandomName();
         user.setReferenceType(ReferenceType.DOMAIN);
         user.setReferenceId(domain);
         user.setEnabled(true);
@@ -1015,7 +1015,7 @@ public class UserRepositoryTest extends AbstractManagementTest {
         userRepository.create(user).blockingGet();
 
         // disabled used
-        User user2 = new User();
+        User user2 = createUserWithRandomName();
         user2.setReferenceType(ReferenceType.DOMAIN);
         user2.setReferenceId(domain);
         user2.setEnabled(false);
@@ -1023,7 +1023,7 @@ public class UserRepositoryTest extends AbstractManagementTest {
         userRepository.create(user2).blockingGet();
 
         // locked used
-        User user3 = new User();
+        User user3 = createUserWithRandomName();
         user3.setReferenceType(ReferenceType.DOMAIN);
         user3.setReferenceId(domain);
         user3.setAccountNonLocked(false);
@@ -1032,7 +1032,7 @@ public class UserRepositoryTest extends AbstractManagementTest {
         userRepository.create(user3).blockingGet();
 
         // expired locked user ==> so active one
-        User user4 = new User();
+        User user4 = createUserWithRandomName();
         user4.setReferenceType(ReferenceType.DOMAIN);
         user4.setReferenceId(domain);
         user4.setAccountNonLocked(false);
@@ -1041,7 +1041,7 @@ public class UserRepositoryTest extends AbstractManagementTest {
         userRepository.create(user4).blockingGet();
 
         // inactive user
-        User user5 = new User();
+        User user5 =createUserWithRandomName();
         user5.setReferenceType(ReferenceType.DOMAIN);
         user5.setReferenceId(domain);
         user5.setLoggedAt(new Date(Instant.now().minus(91, ChronoUnit.DAYS).toEpochMilli()));
@@ -1070,7 +1070,7 @@ public class UserRepositoryTest extends AbstractManagementTest {
         final String clientId2 = UUID.randomUUID().toString();;
 
         // enabled used
-        User user = new User();
+        User user = createUserWithRandomName();
         user.setClient(clientId1);
         user.setReferenceType(ReferenceType.DOMAIN);
         user.setReferenceId(domain);
@@ -1079,7 +1079,7 @@ public class UserRepositoryTest extends AbstractManagementTest {
         userRepository.create(user).blockingGet();
 
         // disabled used
-        User user2 = new User();
+        User user2 = createUserWithRandomName();
         user2.setClient(clientId1);
         user2.setReferenceType(ReferenceType.DOMAIN);
         user2.setReferenceId(domain);
@@ -1088,7 +1088,7 @@ public class UserRepositoryTest extends AbstractManagementTest {
         userRepository.create(user2).blockingGet();
 
         // locked used
-        User user3 = new User();
+        User user3 = createUserWithRandomName();
         user3.setClient(clientId1);
         user3.setReferenceType(ReferenceType.DOMAIN);
         user3.setReferenceId(domain);
@@ -1098,7 +1098,7 @@ public class UserRepositoryTest extends AbstractManagementTest {
         userRepository.create(user3).blockingGet();
 
         // expired locked user ==> so active one
-        User user4 = new User();
+        User user4 = createUserWithRandomName();
         user4.setClient(clientId2);
         user4.setReferenceType(ReferenceType.DOMAIN);
         user4.setReferenceId(domain);
@@ -1108,7 +1108,7 @@ public class UserRepositoryTest extends AbstractManagementTest {
         userRepository.create(user4).blockingGet();
 
         // inactive user
-        User user5 = new User();
+        User user5 = createUserWithRandomName();
         user5.setClient(clientId2);
         user5.setReferenceType(ReferenceType.DOMAIN);
         user5.setReferenceId(domain);
@@ -1146,5 +1146,12 @@ public class UserRepositoryTest extends AbstractManagementTest {
         testObserver2.assertValue(users -> ((Number)users.get("inactive")).intValue() == 1);
         testObserver2.assertValue(users -> ((Number)users.get("disabled")).intValue() == 0);
         testObserver2.assertValue(users -> ((Number)users.get("locked")).intValue() == 0);
+    }
+
+    private User createUserWithRandomName(){
+        User user = new User();
+        String uuid = UUID.randomUUID().toString().replace("-", "");
+        user.setUsername("testUser" + uuid);
+        return user;
     }
 }
