@@ -16,6 +16,7 @@
 package io.gravitee.am.identityprovider.mongo.user;
 
 import com.google.common.base.Strings;
+import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Updates;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.oidc.StandardClaims;
@@ -35,7 +36,10 @@ import io.reactivex.rxjava3.core.Single;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.conversions.Bson;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Import;
 
 import java.security.SecureRandom;
@@ -51,22 +55,28 @@ import static com.mongodb.client.model.Filters.eq;
  */
 @Import({MongoAuthenticationProviderConfiguration.class})
 public class MongoUserProvider extends MongoAbstractProvider implements UserProvider {
+    private static final Logger LOGGER = LoggerFactory.getLogger(MongoUserProvider.class);
     private static final String FIELD_ID = "_id";
     private static final String FIELD_CREATED_AT = "createdAt";
     private static final String FIELD_UPDATED_AT = "updatedAt";
+    private static final String INDEX_USERNAME = "username_1";
+    private static final String INDEX_USERNAME_UNIQUE = "u1_unique";
 
     @Autowired
     private BinaryToTextEncoder binaryToTextEncoder;
 
     private MongoCollection<Document> usersCollection;
 
+    @Value("${management.mongodb.ensureIndexOnStart:true}")
+    private boolean ensureIndexOnStart;
+
     @Override
     public void afterPropertiesSet() {
         super.afterPropertiesSet();
         // init users collection
         usersCollection = this.mongoClient.getDatabase(this.configuration.getDatabase()).getCollection(this.configuration.getUsersCollection());
-        // create index on username field
-        Observable.fromPublisher(usersCollection.createIndex(new Document(configuration.getUsernameField(), 1))).subscribe();
+
+        createOrUpdateIndex();
     }
 
     public UserProvider stop() throws Exception {
@@ -273,5 +283,31 @@ public class MongoUserProvider extends MongoAbstractProvider implements UserProv
         byte[] salt = new byte[configuration.getPasswordSaltLength()];
         random.nextBytes(salt);
         return salt;
+    }
+
+    /**
+     * Create or update index on username field
+     */
+    private void createOrUpdateIndex() {
+        if (ensureIndexOnStart) {
+            getUserNameIndex()
+                    .andThen(Completable.fromPublisher(usersCollection.createIndex(new Document(configuration.getUsernameField(), 1),
+                            new IndexOptions().name(INDEX_USERNAME_UNIQUE).unique(true))))
+                    .subscribe(
+                            () -> LOGGER.debug("Unique index on username created"),
+                            err -> LOGGER.error("An error occurred while creating index {} with unique constraints", INDEX_USERNAME_UNIQUE, err));
+        }
+    }
+
+    private Completable getUserNameIndex() {
+        return Observable.fromPublisher(usersCollection.listIndexes())
+                .map(document -> document.getString("name"))
+                .flatMapCompletable(indexName -> {
+                    if (indexName.equals(INDEX_USERNAME)) {
+                        return Completable.fromPublisher(usersCollection.dropIndex(indexName));
+                    } else {
+                        return Completable.complete();
+                    }
+                });
     }
 }
