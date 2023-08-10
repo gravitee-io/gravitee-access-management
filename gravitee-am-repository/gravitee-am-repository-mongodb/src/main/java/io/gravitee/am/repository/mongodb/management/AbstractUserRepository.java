@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.mongodb.management;
 
 import com.mongodb.BasicDBObject;
+import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.ReferenceType;
@@ -41,6 +42,7 @@ import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -67,8 +69,12 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
     protected static final String FIELD_EMAIL = "email";
     protected static final String FIELD_EMAIL_CLAIM = "additionalInformation.email";
     protected static final String FIELD_EXTERNAL_ID = "externalId";
+    private static final String INDEX_REFERENCE_TYPE_REFERENCE_ID_USERNAME_SOURCE = "referenceType_1_referenceId_1_username_1_source_1";
 
     protected MongoCollection<T> usersCollection;
+
+    @Value("${management.mongodb.ensureIndexOnStart:true}")
+    private boolean ensureIndexOnStart;
 
     protected abstract Class<T> getMongoClass();
 
@@ -83,8 +89,8 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
         super.createIndex(usersCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_FIRST_NAME, 1));
         super.createIndex(usersCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_LAST_NAME, 1));
         super.createIndex(usersCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_EXTERNAL_ID, 1));
-        super.createIndex(usersCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_USERNAME, 1).append(FIELD_SOURCE, 1));
         super.createIndex(usersCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_EXTERNAL_ID, 1).append(FIELD_SOURCE, 1));
+        createOrUpdateIndex();
     }
 
 
@@ -447,5 +453,31 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
                     mongoCertificate.setValue(modelCertificate.getValue());
                     return mongoCertificate;
                 }).collect(Collectors.toList());
+    }
+
+    private void createOrUpdateIndex() {
+        if (ensureIndexOnStart) {
+            getDeletableIndex()
+                    .doOnComplete(() -> {
+                        try {
+                            super.createIndex(usersCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_USERNAME, 1).append(FIELD_SOURCE, 1), new IndexOptions().unique(true));
+                        } catch (Exception e) {
+                            logger.error("An error has occurred while creating index {} with unique constraints", INDEX_REFERENCE_TYPE_REFERENCE_ID_USERNAME_SOURCE, e);
+                        }
+                    }).doOnError(e -> logger.error("An error has occurred while deleting index {}", INDEX_REFERENCE_TYPE_REFERENCE_ID_USERNAME_SOURCE, e))
+                    .subscribe();
+        }
+    }
+
+    private Completable getDeletableIndex() {
+        return Observable.fromPublisher(usersCollection.listIndexes())
+                .map(document -> document.getString("name"))
+                .flatMapCompletable(indexName -> {
+                    if (indexName.equals(AbstractUserRepository.INDEX_REFERENCE_TYPE_REFERENCE_ID_USERNAME_SOURCE)) {
+                        return Completable.fromPublisher(usersCollection.dropIndex(indexName));
+                    } else {
+                        return Completable.complete();
+                    }
+                });
     }
 }
