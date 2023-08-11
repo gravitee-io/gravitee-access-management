@@ -13,186 +13,151 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { map, shareReplay } from 'rxjs/operators';
-import { Observable, of } from 'rxjs';
+export enum AmFeature {
+  AM_MFA_SMS = 'am-mfa-sms',
+  AM_MFA_CALL = 'am-mfa-call',
+  AM_MFA_FIDO2 = 'am-mfa-fido2',
+  AM_MFA_RESOURCE_HTTP_FACTOR = 'am-mfa-resource-http-factor',
+  AM_MFA_HTTP = 'am-mfa-http',
+  AM_MFA_RECOVERY_CODE = 'am-mfa-recovery-code',
+  AM_RESOURCE_HTTP_FACTOR = 'am-resource-http-factor',
+  AM_MFA_OTP_SENDER = 'am-mfa-otp-sender',
+  AM_RESOURCE_TWILIO = 'am-resource-twilio',
+  AM_IDP_SALESFORCE = 'am-idp-salesforce',
+  AM_IDP_SAML = 'am-idp-saml',
+  AM_IDP_LDAP = 'am-idp-ldap',
+  AM_IDP_KERBEROS = 'am-idp-kerberos',
+  AM_IDP_AZURE_AD = 'am-idp-azure_ad',
+  AM_IDP_FRANCE_CONNECT = 'am-idp-kerberos',
+  AM_IDP_CAS = 'am-idp-cas',
+  AM_IDP_GATEWAY_HANDLER_SAML = 'am-idp-gateway-handler-saml',
+  AM_IDP_HTTP_FLOW = 'am-idp-http-flow',
+  AM_SMTP = 'am-smtp',
+  AM_GRAVITEE_RISK_ASSESSMENT = 'gravitee-risk-assessment',
+  AM_IDP_SAML2 = 'am-idp-saml2',
+}
 
-import { AppConfig } from '../../../config/app.config';
-
-const featureMoreInformationData = {
-  'am-mfa-sms': {
-    utm: 'mfa_sms_factor',
+export const FeatureInfoData: Record<AmFeature, FeatureInfo> = {
+  [AmFeature.AM_MFA_SMS]: {
     image: 'assets/gio-ee-unlock-dialog/am-mfa-sms.svg',
     description:
       'The SMS factor is part of Gravitee Enterprise. Multi-factor authentication is an additional step during login to enforce access control.',
   },
-  'am-mfa-call': {
-    utm: 'mfa_call_factor',
+  [AmFeature.AM_MFA_CALL]: {
     image: 'assets/gio-ee-unlock-dialog/am-mfa-call.svg',
     description:
       'The Call factor is part of Gravitee Enterprise. Multi-factor authentication is an additional step during login to enforce access control.',
   },
-  'am-mfa-fido2': {
-    utm: 'mfa_fido_factor',
+  [AmFeature.AM_MFA_FIDO2]: {
     image: 'assets/gio-ee-unlock-dialog/am-mfa-fido2.svg',
     description:
       'The FIDO2 factor is part of Gravitee Enterprise. Multi-factor authentication is an additional step during login to enforce access control.',
   },
-  'am-mfa-resource-http-factor': {
-    utm: 'mfa_http_factor',
+  [AmFeature.AM_MFA_RESOURCE_HTTP_FACTOR]: {
     image: 'assets/gio-ee-unlock-dialog/am-mfa-http.svg',
     description:
       'The HTTP factor is part of Gravitee Enterprise. Multi-factor authentication is an additional step during login to enforce access control.',
   },
-  'am-mfa-http': {
-    utm: 'mfa_http',
+  [AmFeature.AM_MFA_HTTP]: {
     image: 'assets/gio-ee-unlock-dialog/am-mfa-http.svg',
     description:
       'The HTTP factor is part of Gravitee Enterprise. Multi-factor authentication is an additional step during login to enforce access control.',
   },
-  'am-mfa-recovery-code': {
-    utm: 'mfa_recovery_code_factor',
-    image: 'assets/gio-ee-unlock-dialog/am-mfa-recovery-code.svg',
+  [AmFeature.AM_MFA_RECOVERY_CODE]: {
+    image: 'assets/gio-license/am-mfa-recovery-code.svg',
     description:
       'The Recovery code factor is part of Gravitee Enterprise. Multi-factor authentication is an additional step during login to enforce access control.',
   },
-  // todo: Missing images and description
-  'am-resource-http-factor': {
-    utm: 'resource_http',
-    image: 'assets/gio-ee-unlock-dialog/am-mfa-http.svg',
+  [AmFeature.AM_RESOURCE_HTTP_FACTOR]: {
+    image: 'assets/gio-license/am-mfa-http.svg',
     description:
       'The HTTP factor is part of Gravitee Enterprise. Multi-factor authentication is an additional step during login to enforce access control.',
   },
-  'am-mfa-otp-sender': {
-    image: 'assets/gio-ee-unlock-dialog/gravitee-ee-upgrade.svg',
+  [AmFeature.AM_MFA_OTP_SENDER]: {
+    image: 'assets/gio-license/gravitee-ee-upgrade.svg',
     description:
       'The OTO Sender is part of Gravitee Enterprise. Multi-factor authentication is an additional step during login to enforce access control.',
   },
-  'am-resource-twilio': {
-    utm: 'resource_twilio_verify',
-    image: 'assets/gio-ee-unlock-dialog/gravitee-ee-upgrade.svg',
+  [AmFeature.AM_RESOURCE_TWILIO]: {
+    image: 'assets/gio-license/gravitee-ee-upgrade.svg',
     description:
       'The Twilio resource is part of Gravitee Enterprise. Multi-factor authentication is an additional step during login to enforce access control.',
   },
   // IDPs
-  'am-idp-salesforce': {
-    utm: 'provider_salesforce',
-    image: 'assets/gio-ee-unlock-dialog/am-idp-salesforce.svg',
+  [AmFeature.AM_IDP_SALESFORCE]: {
+    image: 'assets/gio-license/am-idp-salesforce.svg',
     description:
       'The Salesforce identity provider is part of Gravitee Enterprise. Identity providers allow you to configure authentication methods familiar to your users and comply with your security requirement.',
   },
-  'am-idp-saml': {
-    utm: 'provider_saml',
-    image: 'assets/gio-ee-unlock-dialog/am-idp-saml.svg',
+  [AmFeature.AM_IDP_SAML]: {
+    image: 'assets/gio-license/am-idp-saml.svg',
     description:
       'The SAML 2.0 identity provider is part of Gravitee Enterprise. Identity providers allow you to configure authentication methods familiar to your users and comply with your security requirement.',
   },
-  'am-idp-ldap': {
-    utm: 'provider_ldap',
-    image: 'assets/gio-ee-unlock-dialog/am-idp-ldap.svg',
+  [AmFeature.AM_IDP_LDAP]: {
+    image: 'assets/gio-license/am-idp-ldap.svg',
     description:
       'The LDAP identity provider is part of Gravitee Enterprise. Identity providers allow you to configure authentication methods familiar to your users and comply with your security requirement.',
   },
-  'am-idp-kerberos': {
-    utm: 'provider_kerberos',
-    image: 'assets/gio-ee-unlock-dialog/am-idp-kerberos.svg',
+  [AmFeature.AM_IDP_KERBEROS]: {
+    image: 'assets/gio-license/am-idp-kerberos.svg',
     description:
       'The Kerberos identity provider is part of Gravitee Enterprise. Identity providers allow you to configure authentication methods familiar to your users and comply with your security requirement.',
   },
-  'am-idp-azure-ad': {
-    utm: 'provider_azure_ad',
-    image: 'assets/gio-ee-unlock-dialog/am-idp-azure-ad.svg',
+  [AmFeature.AM_IDP_AZURE_AD]: {
+    image: 'assets/gio-license/am-idp-azure-ad.svg',
     description:
       'The Azure AD identity provider is part of Gravitee Enterprise. Identity providers allow you to configure authentication methods familiar to your users and comply with your security requirement.',
   },
-  'am-idp-france-connect': {
-    utm: 'provider_france_connect',
-    image: 'assets/gio-ee-unlock-dialog/am-idp-france-connect.svg',
+  [AmFeature.AM_IDP_FRANCE_CONNECT]: {
+    image: 'assets/gio-license/am-idp-france-connect.svg',
     description:
       'The France Connect identity provider is part of Gravitee Enterprise. Identity providers allow you to configure authentication methods familiar to your users and comply with your security requirement.',
   },
-  'am-idp-cas': {
-    // utm_source=oss_am&utm_medium=provider_cas&utm_campaign=oss_am_to_ee_am
-    utm: 'provider_cas',
-    image: 'assets/gio-ee-unlock-dialog/am-idp-cas.svg',
+  [AmFeature.AM_IDP_CAS]: {
+    image: 'assets/gio-license/am-idp-cas.svg',
     description:
       'The CAS provider is part of Gravitee Enterprise. Identity providers allow you to configure authentication methods familiar to your users and comply with your security requirement.',
   },
-  // todo: Missing information
-  'am-idp-gateway-handler-saml': {
-    utm: 'provider_saml',
-    image: 'assets/gio-ee-unlock-dialog/gravitee-ee-upgrade.svg',
+  [AmFeature.AM_IDP_GATEWAY_HANDLER_SAML]: {
+    image: 'assets/gio-license/gravitee-ee-upgrade.svg',
     description:
       'The SAML 2.0 identity provider is part of Gravitee Enterprise. Identity providers allow you to configure authentication methods familiar to your users and comply with your security requirement.',
   },
-  'am-idp-http-flow': {
-    utm: 'provider_http_flow',
-    image: 'assets/gio-ee-unlock-dialog/gravitee-ee-upgrade.svg',
+  [AmFeature.AM_IDP_HTTP_FLOW]: {
+    image: 'assets/gio-license/gravitee-ee-upgrade.svg',
     description:
       'The HTTP Flow identity provider is part of Gravitee Enterprise. Identity providers allow you to configure authentication methods familiar to your users and comply with your security requirement.',
   },
   // Resources
-  'am-smtp': {
-    // todo: This resource is missing
-    utm: '',
-    image: 'assets/gio-ee-unlock-dialog/am-smtp.svg',
+  [AmFeature.AM_SMTP]: {
+    image: 'assets/gio-license/am-smtp.svg',
     description: 'The SMTP resource is part of Gravitee Enterprise. Resources allow you to easily reuse some settings.',
   },
   // MFA
-  'gravitee-risk-assessment': {
-    utm: 'mfa_risk_base',
-    image: 'assets/gio-ee-unlock-dialog/gravitee-risk-assessment.svg',
+  [AmFeature.AM_GRAVITEE_RISK_ASSESSMENT]: {
+    image: 'assets/gio-license/gravitee-risk-assessment.svg',
     description:
       'Risk-based Multi-factor authentication is part of Gravitee Enterprise. MFA allows you to prompt end-users to process MFA verification after they have been authenticated.',
   },
   // SAML2 support
-  'am-idp-saml2': {
-    utm: 'provider_saml',
-    image: 'assets/gio-ee-unlock-dialog/am-idp-saml2.svg',
+  [AmFeature.AM_IDP_SAML2]: {
+    image: 'assets/gio-license/am-idp-saml2.svg',
     description:
       'SAML 2.0 IdP support is part of Gravitee Enterprise. SAML 2.0 allows you to exchange security information between online business partners.',
   },
 };
 
-export type License = {
-  tier: string;
-  packs: Array<string>;
-  features: Array<string>;
-};
-
-export type Feature = {
-  feature?: string;
-  deployed?: boolean;
-};
-
-@Injectable({
-  providedIn: 'root',
-})
-export class GioLicenseService {
-  constructor(private readonly http: HttpClient) {}
-
-  private loadLicense$: Observable<License> = this.http.get<License>(`${AppConfig.settings.baseURL}/platform/license`).pipe(shareReplay(1));
-
-  getLicense$(): Observable<License> {
-    return this.loadLicense$;
+export function stringFeature(value: string): AmFeature {
+  const feature = value as AmFeature;
+  if (FeatureInfoData[feature]) {
+    return feature;
   }
+  throw new Error(`Unknown Feature value ${value}. Expected one of ${Object.keys(FeatureInfoData)}`);
+}
 
-  isMissingFeature$(feature: Feature): Observable<boolean> {
-    if (feature == null || feature.deployed === true) {
-      return of(false);
-    }
-    if (feature.deployed === false) {
-      return of(true);
-    }
-    return this.getLicense$().pipe(map((license) => license == null || !license.features.includes(feature.feature)));
-  }
-
-  getFeatureMoreInformation(feature: string): any {
-    const featureMoreInformation = featureMoreInformationData[feature];
-    if (!featureMoreInformation) {
-      throw new Error(`No data defined for '${feature}', you must use one of ${Object.keys(featureMoreInformationData)}`);
-    }
-    return featureMoreInformation;
-  }
+export interface FeatureInfo {
+  image: string;
+  description: string;
+  title?: string;
 }

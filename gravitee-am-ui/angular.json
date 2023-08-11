@@ -65,6 +65,9 @@
               }
             ],
             "styles": ["src/styles.scss", "src/font-libre-franklin.css"],
+            "stylePreprocessorOptions": {
+              "includePaths": ["node_modules/"]
+            },
             "scripts": [],
             "vendorChunk": true,
             "extractLicenses": false,

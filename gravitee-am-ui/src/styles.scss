@@ -2,10 +2,10 @@
 @use 'sass:map';
 @use '@angular/material' as mat;
 @use '@gravitee/ui-particles-angular' as gio;
-@import '~@gravitee/ui-components/assets/css/gravitee-console-theme.css';
-@import '~@swimlane/ngx-datatable/themes/material.css';
-@import '~@swimlane/ngx-datatable/assets/icons.css';
-@import '~codemirror/lib/codemirror.css';
+@import '@gravitee/ui-components/assets/css/gravitee-console-theme.css';
+@import '@swimlane/ngx-datatable/themes/material.css';
+@import '@swimlane/ngx-datatable/assets/icons.css';
+@import 'codemirror/lib/codemirror.css';
 @include mat.core();
 @include gio.import-fonts();
 @include gio.mat-theme();

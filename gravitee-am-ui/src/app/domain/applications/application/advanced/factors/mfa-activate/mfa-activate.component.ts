@@ -16,14 +16,15 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { takeUntil, tap } from 'rxjs/operators';
 import { Observable, Subject } from 'rxjs';
+import { GioLicenseService, LicenseOptions } from '@gravitee/ui-particles-angular';
 
 import { OrganizationService } from '../../../../../../services/organization.service';
-import { Feature, GioLicenseService } from '../../../../../../components/gio-license/gio-license.service';
+import { AmFeature } from '../../../../../../components/gio-license/gio-license-data';
 
 interface ModeOption {
   label: string;
   message: string;
-  feature?: Feature;
+  licenseOptions?: LicenseOptions;
   isMissingFeature$?: Observable<boolean>;
   warning?: string;
 }
@@ -64,8 +65,8 @@ export class MfaActivateComponent implements OnInit, OnDestroy {
       label: 'Risk-based',
       message: 'Configure the thresholds that will display MFA based on risks.',
       warning: 'You need to install the <b> GeoIP service </b> and <b> Risk Assessment </b> plugins to use Risk-based MFA',
-      feature: {
-        feature: 'gravitee-risk-assessment',
+      licenseOptions: {
+        feature: AmFeature.AM_GRAVITEE_RISK_ASSESSMENT,
       },
     },
   };
@@ -191,7 +192,7 @@ export class MfaActivateComponent implements OnInit, OnDestroy {
   private initModes() {
     this.modes = Object.keys(MfaActivateComponent.modeOptions).map((key) => {
       const option = MfaActivateComponent.modeOptions[key];
-      option.isMissingFeature$ = this.licenseService.isMissingFeature$(option.feature);
+      option.isMissingFeature$ = this.licenseService.isMissingFeature$(option.licenseOptions);
       return option;
     });
   }
