@@ -1,23 +1,23 @@
 /**
- * Get the Ascii doc formatted changelog for input issues
+ * Get the MarkDown doc formatted changelog for input issues
  *
  * @param title {string}
- * @param issues {Array<{id: string, fields: Array<{customfield_10115: string, summary: string}>}>}
+ * @param issues {Array<{id: string, key: string, githubIssue: string, summary: string, components: Array<string>, issueTypeName: string, statusName: string}>}
  */
 export function getChangelogFor(title, issues) {
-  const authorizedIssueTypes = ['Public Bug', 'Story'];
+  const authorizedIssueTypes = ['Public Bug', 'Public Security', 'Story'];
 
   const filteredIssues = issues
     .filter((issue) => {
-      return !!issue.fields.issuetype.name && authorizedIssueTypes.includes(issue.fields.issuetype.name);
+      return !!issue.issueTypeName && authorizedIssueTypes.includes(issue.issueTypeName);
     })
     .filter((issue) => {
-      return issue.fields.status.name === 'Done';
+      return issue.statusName === 'Done';
     })
     .sort((issue1, issue2) => {
       // if null or undefined, put it at the end
-      const githubIssueNumber1 = issue1.fields.customfield_10115;
-      const githubIssueNumber2 = issue2.fields.customfield_10115;
+      const githubIssueNumber1 = issue1.githubIssue;
+      const githubIssueNumber2 = issue2.githubIssue;
       if (!githubIssueNumber1) {
         return 1;
       }
@@ -27,13 +27,13 @@ export function getChangelogFor(title, issues) {
       return githubIssueNumber1 - githubIssueNumber2;
     })
     .map((issue) => {
-      const githubIssue = issue.fields.customfield_10115;
+      const githubIssue = issue.githubIssue;
       let publicIssueContent = '';
       if (githubIssue) {
         const githubLink = `https://github.com/gravitee-io/issues/issues/${githubIssue}`;
         publicIssueContent = ` ${githubLink}[#${githubIssue}]`;
       }
-      return `* ${issue.fields.summary}${publicIssueContent}`;
+      return `* ${issue.summary}${publicIssueContent}`;
     })
     .join('\n');
 
