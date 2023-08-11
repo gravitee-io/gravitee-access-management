@@ -21,14 +21,20 @@ package io.gravitee.am.service.exception;
  */
 public class FactorNotFoundException extends AbstractNotFoundException {
 
-    private final String factor;
+    String message;
 
     public FactorNotFoundException(String factor) {
-        this.factor = factor;
+        this.message = "Factor [" + factor + "] can not be found.";
     }
 
     @Override
     public String getMessage() {
-        return "Factor [" + factor + "] can not be found.";
+        return this.message;
+    }
+
+    public static FactorNotFoundException withMessage(String message) {
+        var exception = new FactorNotFoundException("");
+        exception.message = message;
+        return exception;
     }
 }

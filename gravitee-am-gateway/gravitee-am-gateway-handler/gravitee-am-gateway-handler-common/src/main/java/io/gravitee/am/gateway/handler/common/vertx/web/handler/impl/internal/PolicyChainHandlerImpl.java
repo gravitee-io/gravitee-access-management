@@ -25,6 +25,7 @@ import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
 import io.gravitee.am.gateway.policy.Policy;
 import io.gravitee.am.gateway.policy.PolicyChainException;
 import io.gravitee.am.gateway.policy.PolicyChainProcessorFactory;
+import io.gravitee.am.gateway.policy.impl.processor.PolicyChainProcessorFailure;
 import io.gravitee.am.model.AuthenticationFlowContext;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.gateway.api.ExecutionContext;
@@ -42,6 +43,8 @@ import org.slf4j.LoggerFactory;
 import java.util.Arrays;
 import java.util.List;
 
+import static io.gravitee.am.common.utils.ConstantKeys.ALTERNATIVE_FACTOR_ID_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.POLICY_CHAIN_ERROR_KEY_MFA_CHALLENGE_ERROR;
 import static io.gravitee.am.gateway.handler.common.utils.RoutingContextHelper.getEvaluableAttributes;
 
 /**
@@ -108,8 +111,16 @@ public class PolicyChainHandlerImpl implements Handler<RoutingContext> {
                 // call the policy chain
                 executePolicyChain(policies, executionContext, policyChainHandler -> {
                     if (policyChainHandler.failed()) {
-                        logger.debug("An error occurs while executing the policy chain", policyChainHandler.cause());
-                        context.fail(policyChainHandler.cause());
+                        Throwable failureCause = policyChainHandler.cause();
+                        logger.debug("An error occurs while executing the policy chain", failureCause);
+
+                        if (failureCause instanceof PolicyChainException
+                                && POLICY_CHAIN_ERROR_KEY_MFA_CHALLENGE_ERROR.equals(((PolicyChainException) failureCause).key())) {
+                            // need to set into the session the alternativeFactorId
+                            context.session().put(ALTERNATIVE_FACTOR_ID_KEY, ((PolicyChainException) failureCause).parameters().get(ALTERNATIVE_FACTOR_ID_KEY));
+                        }
+
+                        context.fail(failureCause);
                         return;
                     }
                     // update context attributes
@@ -121,10 +132,6 @@ public class PolicyChainHandlerImpl implements Handler<RoutingContext> {
                                 // update authentication flow context version into the session
                                 context.session().put(ConstantKeys.AUTH_FLOW_CONTEXT_VERSION_KEY, authFlowContext.getVersion());
                             }
-                        }
-                        // add the MFA Factor ID in session for later use
-                        if (ConstantKeys.ALTERNATIVE_FACTOR_ID_KEY.equals(k)) {
-                            context.session().put(ConstantKeys.ALTERNATIVE_FACTOR_ID_KEY, v);
                         }
                         context.put(k, v);
                     });
