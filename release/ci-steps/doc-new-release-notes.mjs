@@ -1,4 +1,4 @@
-import { extractVersion } from '../helpers/version-helper.mjs';
+import { computeVersion, extractVersion } from '../helpers/version-helper.mjs';
 import { getJiraIssuesOfVersion, getJiraVersion } from '../helpers/jira-helper.mjs';
 import { getChangelogFor } from '../helpers/changelog-helper.mjs';
 import { isDryRun } from '../helpers/option-helper.mjs';
@@ -8,38 +8,51 @@ console.log(chalk.magenta(`# 📰 Open docs PR for new Release Note #`));
 console.log(chalk.magenta(`#############################################`));
 
 const releasingVersion = await extractVersion();
+const versions = computeVersion(releasingVersion);
+const dateOptions = { year: 'numeric', month: 'long', day: 'numeric' };
+
+const docRepository = 'gravitee-platform-docs';
+const docRepositoryURL = `https://github.com/gravitee-io/${docRepository}`;
+const docAmChangelogFolder = 'docs/am/releases-and-changelogs/changelogs/';
+const docAmChangelogFile = `${docAmChangelogFolder}am-${versions.branch}-changelog.md`;
+const localTmpFolder = '.tmp';
 
 echo(chalk.blue(`# Build current changelog branch name`));
-const gitBranch = `changelog-AM-${releasingVersion}`;
+const gitBranch = `changelog-am-${releasingVersion}`;
 
-echo(chalk.blue(`# Checking out on ${gitBranch} branch from master `));
-await $`git checkout master && git checkout -b ${gitBranch}`;
+echo(chalk.blue(`# Create local tmp folder: ${localTmpFolder}`));
+await $`mkdir -p ${localTmpFolder}`;
+cd(localTmpFolder);
+await $`rm -rf ${docRepository}`;
 
-echo(chalk.blue(`# Get changelog file `));
-let changelogFileName = 'CHANGELOG-v3.adoc';
-const docAmChangelogFile = '../' + changelogFileName;
-
-echo(chalk.blue(`# Write changelog to ${docAmChangelogFile}`));
+echo(chalk.blue(`# Clone ${docRepository} repository`));
+await $`git clone --depth 1  ${docRepositoryURL} --single-branch --branch=main`;
+cd(docRepository);
 
 const version = await getJiraVersion(releasingVersion);
+if (version === undefined) {
+  echo(chalk.blue(`No Jira release found for: ${releasingVersion}, nothing to do.`));
+  process.exit(0);
+}
+
 const issues = await getJiraIssuesOfVersion(version.name);
 
-const features = issues.filter((issue) => issue.fields.issuetype.name === 'Story');
+const features = issues.filter((issue) => issue.issueTypeName === 'Story');
 
 const gatewayIssues = issues
   .filter((issue) => !features.includes(issue))
-  .filter((issue) => issue.fields.components.some((cmp) => cmp.name === 'Gateway'));
+  .filter((issue) => issue.components.some((cmp) => cmp.name === 'Gateway'));
 
 const managementAPIIssues = issues
   .filter((issue) => !features.includes(issue))
   .filter((issue) => !gatewayIssues.includes(issue))
-  .filter((issue) => issue.fields.components.some((cmp) => cmp.name === 'Management API'));
+  .filter((issue) => issue.components.some((cmp) => cmp.name === 'Management API'));
 
 const consoleIssues = issues
   .filter((issue) => !features.includes(issue))
   .filter((issue) => !managementAPIIssues.includes(issue))
   .filter((issue) => !gatewayIssues.includes(issue))
-  .filter((issue) => issue.fields.components.some((cmp) => cmp.name === 'Console'));
+  .filter((issue) => issue.components.some((cmp) => cmp.name === 'Console'));
 
 const otherIssues = issues
   .filter((issue) => !features.includes(issue))
@@ -47,18 +60,29 @@ const otherIssues = issues
   .filter((issue) => !gatewayIssues.includes(issue))
   .filter((issue) => !consoleIssues.includes(issue));
 
+const whatsNewChangelogSection =
+  features.length > 0
+    ? `<details>
+<summary>What's new !</summary>
+${getChangelogFor("=**What's new!**", features)}
+</details>`
+    : '';
+
 let changelogPatchTemplate = `
-== AM - ${releasingVersion} (${new Date().toISOString().slice(0, 10)})
+## Gravitee Access Management ${releasingVersion} - ${new Date().toLocaleDateString('en-US', dateOptions)}
 
-${getChangelogFor("== What's new !", features)}
+${whatsNewChangelogSection}
 
-${getChangelogFor('=== Gateway', gatewayIssues)}
+<details>
+<summary>Bug fixes</summary>
+${getChangelogFor('**Gateway**', gatewayIssues)}
 
-${getChangelogFor('=== Management API', managementAPIIssues)}
+${getChangelogFor('**Management API**', managementAPIIssues)}
 
-${getChangelogFor('=== Console', consoleIssues)}
+${getChangelogFor('**Console**', consoleIssues)}
 
-${getChangelogFor('=== Other', otherIssues)}
+${getChangelogFor('**Other**', otherIssues)}
+</details>
 `;
 
 echo(changelogPatchTemplate);
@@ -66,8 +90,8 @@ echo(changelogPatchTemplate);
 // write after anchor
 const changelogFileContent = fs.readFileSync(docAmChangelogFile, 'utf8');
 const changelogFileContentWithPatch = changelogFileContent.replace(
-  '# Change Log',
-  `# Change Log
+  `# AM ${versions.branch}`,
+  `$&
 ${changelogPatchTemplate}`,
 );
 fs.writeFileSync(`${docAmChangelogFile}`, changelogFileContentWithPatch);
@@ -90,8 +114,8 @@ if (!dryRun) {
 }
 
 const prBody = `
-# New version ${releasingVersion} has been released
-📝 You can modify the changelog template online [here](https://github.com/gravitee-io/gravitee-access-management/edit/${gitBranch}/${changelogFileName})
+# AM ${releasingVersion} has been released
+📝 Please review and merge this pull request to add the changelog to the documentation.
 
 ## Jira issues
 

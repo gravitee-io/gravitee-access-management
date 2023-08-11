@@ -4,6 +4,7 @@ target/
 .idea/
 *.iml
 .DS_Store
+.tmp/
 
 # eclipse
 .settings/
