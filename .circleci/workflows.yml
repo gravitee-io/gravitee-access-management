@@ -441,6 +441,7 @@ jobs:
             export GRAVITEE_EMAIL_ENABLED=true
             export GRAVITEE_EMAIL_HOST=localhost
             export GRAVITEE_EMAIL_PORT=5025
+            export GRAVITEE_EMAIL_ALLOWEDFROM_0="*@*.*"
             
             # Export env var for MFA rate limit
             export GRAVITEE_MFA_RATE_ENABLED=true
@@ -533,6 +534,7 @@ jobs:
             export GRAVITEE_EMAIL_ENABLED=true
             export GRAVITEE_EMAIL_HOST=localhost
             export GRAVITEE_EMAIL_PORT=5025
+            export GRAVITEE_EMAIL_ALLOWEDFROM_0="*@*.*"
             
             # Export env var for MFA rate limit
             export GRAVITEE_MFA_RATE_ENABLED=true
@@ -608,6 +610,15 @@ jobs:
             cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
             cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/
             
+<<<<<<< HEAD
+=======
+            cp /tmp/workspace/gravitee-am-factor-mock-*.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
+            cp /tmp/workspace/gravitee-am-factor-mock-*.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/
+            
+            # Environment Variables
+            export GRAVITEE_EMAIL_ALLOWEDFROM_0="*@*.*"
+            
+>>>>>>> eb36ea9cd9 (fix: change workflow to accept all emails)
             # Start AM Management
             gravitee-am-management-api-standalone-${AM_VERSION}/bin/gravitee &
             # Start AM Gateway
@@ -691,6 +702,9 @@ jobs:
             export GRAVITEE_OAUTH2_JDBC_DATABASE=postgres
             export GRAVITEE_OAUTH2_JDBC_USERNAME=postgres
             export GRAVITEE_OAUTH2_JDBC_PASSWORD=T0pS3cr3t
+            
+            export GRAVITEE_EMAIL_ALLOWEDFROM_0="*@*.*"
+            
             # Start AM Management
             gravitee-am-management-api-standalone-${AM_VERSION}/bin/gravitee &
             # Start AM Gateway
