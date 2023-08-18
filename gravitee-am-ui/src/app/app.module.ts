@@ -426,6 +426,7 @@ import { ThemeService } from './services/theme.service';
 import { HelpTipsThemeComponent } from './domain/settings/theme/help-tips/help-tips.component';
 import { EmailTemplateFactoryService } from './services/email.template.factory.service';
 import { FormTemplateFactoryService } from './services/form.template.factory.service';
+import { LicenseGuard } from './guards/license-guard.service';
 
 import { AppConfig } from '../config/app.config';
 
@@ -818,6 +819,7 @@ import { AppConfig } from '../config/app.config';
     ResourcePluginsResolver,
     ResourceResolver,
     AuthGuard,
+    LicenseGuard,
     AnalyticsService,
     ApplicationResourcesResolver,
     ApplicationResourceResolver,
