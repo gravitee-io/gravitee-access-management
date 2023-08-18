@@ -236,6 +236,8 @@ import { DomainSettingsDictionariesComponent } from './domain/settings/texts/dic
 import { DictionariesResolver } from './resolvers/dictionaries.resolver';
 import { DomainSettingsThemeComponent } from './domain/settings/theme/theme.component';
 import { ThemesResolver } from './resolvers/themes.resolver';
+import { LicenseGuard } from './guards/license-guard.service';
+import { AmFeature } from './components/gio-license/gio-license-data';
 
 const applyOnLabel = (label) => label.toLowerCase().replace(/_/g, ' ');
 
@@ -2563,11 +2565,12 @@ export const routes: Routes = [
                   {
                     path: 'alerts',
                     component: DomainAlertsComponent,
-                    canActivate: [AuthGuard],
+                    canActivate: [AuthGuard, LicenseGuard],
                     resolve: {
                       alertStatus: PlatformAlertStatusResolver,
                     },
                     data: {
+                      licenseOptions: { feature: AmFeature.ALERT_ENGINE },
                       menu: {
                         label: 'Alerts',
                         icon: 'gio:alarm',
