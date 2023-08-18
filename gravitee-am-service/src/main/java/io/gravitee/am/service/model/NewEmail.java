@@ -17,12 +17,7 @@ package io.gravitee.am.service.model;
 
 import io.gravitee.am.model.Template;
 
-<<<<<<< HEAD
-import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
-=======
-import jakarta.validation.constraints.NotNull;
->>>>>>> 8c006cf9c1 (feat: email allow list to protect from impersonation)
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

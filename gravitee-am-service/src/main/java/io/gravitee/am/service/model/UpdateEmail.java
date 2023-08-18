@@ -15,11 +15,6 @@
  */
 package io.gravitee.am.service.model;
 
-<<<<<<< HEAD
-import javax.validation.constraints.Min;
-
-=======
->>>>>>> 8c006cf9c1 (feat: email allow list to protect from impersonation)
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
