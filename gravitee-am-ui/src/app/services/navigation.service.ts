@@ -14,11 +14,27 @@
  * limitations under the License.
  */
 import { Injectable, OnDestroy } from '@angular/core';
-import { ReplaySubject, Subject, Subscription } from 'rxjs';
+import { Observable, ReplaySubject, Subject, Subscription } from 'rxjs';
 import { ActivatedRouteSnapshot, ActivationEnd, Data, NavigationEnd, Route, Router } from '@angular/router';
 import { buffer, filter, map, pluck } from 'rxjs/operators';
+import { LicenseOptions } from '@gravitee/ui-particles-angular';
 
 import { AuthGuard } from '../guards/auth-guard.service';
+import { LicenseGuard } from '../guards/license-guard.service';
+
+export interface MenuItem {
+  label: string;
+  icon: string;
+  path: string[];
+  section: string;
+  level: string;
+  beta: boolean;
+  display: boolean;
+  routerLinkActiveOptions: object;
+  licenseOptions?: LicenseOptions;
+  isMissingFeature$?: Observable<boolean>;
+  iconRight$?: Observable<string | undefined>;
+}
 
 @Injectable()
 export class NavigationService implements OnDestroy {
@@ -30,7 +46,7 @@ export class NavigationService implements OnDestroy {
 
   subscription: Subscription;
 
-  constructor(private router: Router, private authGuard: AuthGuard) {
+  constructor(private router: Router, private authGuard: AuthGuard, private licenseGuard: LicenseGuard) {
     const navigationEnd$ = this.router.events.pipe(filter((ev) => ev instanceof NavigationEnd));
 
     this.subscription = this.router.events
@@ -81,13 +97,17 @@ export class NavigationService implements OnDestroy {
     return breadcrumbItems;
   }
 
-  getMenuItems(route: ActivatedRouteSnapshot): any[] {
-    let menuItems: any[] = [];
+  getMenuItems(route: ActivatedRouteSnapshot): MenuItem[] {
+    let menuItems: MenuItem[] = [];
 
     if (route && route.parent) {
       if (route.parent.routeConfig && route.parent.routeConfig.children) {
         route.parent.routeConfig.children.forEach((siblingRoute) => {
           if (siblingRoute.data && siblingRoute.data.menu && this.authGuard.canDisplay(route.parent, siblingRoute)) {
+            const isMissingFeature$ = this.licenseGuard.isMissingFeature$(siblingRoute);
+            const licenseOptions = this.licenseGuard.getLicenseOptions(siblingRoute);
+            const iconRight$ = isMissingFeature$.pipe(map((isMissingFeature) => (isMissingFeature ? 'gio:lock' : undefined)));
+
             menuItems.push({
               label: siblingRoute.data.menu.label,
               icon: siblingRoute.data.menu.icon,
@@ -97,6 +117,9 @@ export class NavigationService implements OnDestroy {
               beta: siblingRoute.data.menu.beta,
               display: this.resolveDisplay(route, siblingRoute),
               routerLinkActiveOptions: siblingRoute.data.menu.routerLinkActiveOptions ? siblingRoute.data.menu.routerLinkActiveOptions : {},
+              licenseOptions,
+              isMissingFeature$,
+              iconRight$,
             });
           }
         });
@@ -112,7 +135,6 @@ export class NavigationService implements OnDestroy {
     if (route.data.menu.displayOptions && route.data.menu.displayOptions.exact === true) {
       return this.router.routerState.snapshot.url === this.resolvePath(activatedRoute.parent, route.path).join('/');
     }
-
     return true;
   }
 
