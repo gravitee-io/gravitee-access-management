@@ -35,6 +35,7 @@ export enum AmFeature {
   AM_SMTP = 'am-smtp',
   AM_GRAVITEE_RISK_ASSESSMENT = 'gravitee-risk-assessment',
   AM_IDP_SAML2 = 'am-idp-saml2',
+  ALERT_ENGINE = 'alert-engine',
 }
 
 export const FeatureInfoData: Record<AmFeature, FeatureInfo> = {
@@ -145,6 +146,11 @@ export const FeatureInfoData: Record<AmFeature, FeatureInfo> = {
     image: 'assets/gio-license/am-idp-saml2.svg',
     description:
       'SAML 2.0 IdP support is part of Gravitee Enterprise. SAML 2.0 allows you to exchange security information between online business partners.',
+  },
+  [AmFeature.ALERT_ENGINE]: {
+    image: 'assets/gio-license/alert-engine.png',
+    description:
+      'Alert Engine allows you to isolate, understand and remediate for API performance and security risks before they cause a problem for your customers.',
   },
 };
 

@@ -16,12 +16,13 @@
 import { Component, OnDestroy, OnInit, Pipe, PipeTransform } from '@angular/core';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { filter } from 'rxjs/operators';
+import { filter, tap } from 'rxjs/operators';
+import { GioLicenseService } from '@gravitee/ui-particles-angular';
 
 import { SidenavService } from './sidenav.service';
 
 import { AppConfig } from '../../../config/app.config';
-import { NavigationService } from '../../services/navigation.service';
+import { MenuItem, NavigationService } from '../../services/navigation.service';
 import { EnvironmentService } from '../../services/environment.service';
 import { AuthService } from '../../services/auth.service';
 
@@ -37,7 +38,7 @@ export class SidenavComponent implements OnInit, OnDestroy {
   version = AppConfig.settings.version;
   reducedMode = false;
   isGlobalSettings = false;
-  topMenuItems: any[] = [];
+  topMenuItems: MenuItem[] = [];
   footerMenuItems: any[] = [
     {
       label: 'Organization',
@@ -59,6 +60,7 @@ export class SidenavComponent implements OnInit, OnDestroy {
     private sidenavService: SidenavService,
     private environmentService: EnvironmentService,
     private authService: AuthService,
+    private licenseService: GioLicenseService,
   ) {}
 
   ngOnInit() {
@@ -105,6 +107,19 @@ export class SidenavComponent implements OnInit, OnDestroy {
       this.rawEnvironments = environments;
       this.environments = environments.map((env) => ({ value: env.id, displayValue: env.name }));
     });
+  }
+
+  onTopMenuItemClick(topMenuItem: MenuItem) {
+    if (topMenuItem.isMissingFeature$) {
+      topMenuItem.isMissingFeature$
+        .pipe(
+          filter((isMissingFeature: boolean) => isMissingFeature),
+          tap(() => {
+            this.licenseService.openDialog(topMenuItem.licenseOptions);
+          }),
+        )
+        .subscribe();
+    }
   }
 }
 

@@ -34,8 +34,9 @@
         routerLinkActive
         #rla="routerLinkActive"
         [routerLinkActiveOptions]="item.routerLinkActiveOptions"
+        (click)="onTopMenuItemClick(item)"
       >
-        <gio-menu-item [icon]="item.icon" [active]="rla.isActive">{{ item.label }}</gio-menu-item>
+        <gio-menu-item [icon]="item.icon" [active]="rla.isActive" [iconRight]="item?.iconRight$ | async">{{ item.label }}</gio-menu-item>
       </a>
     </gio-menu-list>
     <gio-menu-footer *ngIf="canDisplayOrganizationSettings()">
