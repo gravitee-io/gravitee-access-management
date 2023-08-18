@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { FeatureInfo } from '@gravitee/ui-particles-angular';
+
 export enum AmFeature {
   AM_MFA_SMS = 'am-mfa-sms',
   AM_MFA_CALL = 'am-mfa-call',
@@ -160,10 +162,4 @@ export function stringFeature(value: string): AmFeature {
     return feature;
   }
   throw new Error(`Unknown Feature value ${value}. Expected one of ${Object.keys(FeatureInfoData)}`);
-}
-
-export interface FeatureInfo {
-  image: string;
-  description: string;
-  title?: string;
 }
