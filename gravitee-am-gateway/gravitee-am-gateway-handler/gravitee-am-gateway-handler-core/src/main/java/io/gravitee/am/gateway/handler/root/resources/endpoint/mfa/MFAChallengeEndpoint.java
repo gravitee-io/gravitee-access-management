@@ -474,7 +474,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
         }
 
         if (endUser.getFactors() == null) {
-            throw new FactorNotFoundException("No factor found for the end user");
+            throw FactorNotFoundException.withMessage("No factor found for the end user");
         }
 
         // get the primary enrolled factor
@@ -486,7 +486,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
                 .collect(Collectors.toList());
 
         if (enrolledFactors.isEmpty()) {
-            throw new FactorNotFoundException("No factor found for the end user");
+            throw FactorNotFoundException.withMessage("No factor found for the end user");
         }
 
         return enrolledFactors
@@ -559,7 +559,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
         }
 
         return getEnrolledFactor(factor, endUser)
-                .orElseThrow(() -> new FactorNotFoundException("No enrolled factor found for the end user"));
+                .orElseThrow(() -> FactorNotFoundException.withMessage("No enrolled factor found for the end user"));
     }
 
     private Optional<EnrolledFactor> getEnrolledFactor(Factor factor, User endUser) {
