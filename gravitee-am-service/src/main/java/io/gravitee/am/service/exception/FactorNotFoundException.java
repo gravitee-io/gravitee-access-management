@@ -27,13 +27,16 @@ public class FactorNotFoundException extends AbstractNotFoundException {
         this.message = "Factor [" + factor + "] can not be found.";
     }
 
+    private FactorNotFoundException() {
+    }
+
     @Override
     public String getMessage() {
         return this.message;
     }
 
     public static FactorNotFoundException withMessage(String message) {
-        var exception = new FactorNotFoundException("");
+        var exception = new FactorNotFoundException();
         exception.message = message;
         return exception;
     }
