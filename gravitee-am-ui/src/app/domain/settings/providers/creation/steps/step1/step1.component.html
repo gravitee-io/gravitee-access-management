@@ -24,7 +24,7 @@
     <mat-form-field appearance="outline" floatLabel="always">
       <mat-icon matPrefix>search</mat-icon>
       <mat-label>Filter providers...</mat-label>
-      <input matInput type="search" [(ngModel)]="filter" autocomplete="off" />
+      <input matInput type="search" [(ngModel)]="filter" autocomplete="off" (ngModelChange)="onFilterChange()" />
       <button mat-button mat-icon-button matSuffix (click)="clear()" *ngIf="filter">
         <mat-icon>close</mat-icon>
       </button>
@@ -33,7 +33,7 @@
 
   <div fxLayout="row wrap" fxFlex fxLayoutGap="10px" fxLayoutAlign="center">
     <mat-card
-      *ngFor="let idp of getFilteredIdentities()"
+      *ngFor="let idp of filteredIdentities"
       fxFlex="30"
       [class.selected]="provider.type === idp.id"
       (click)="selectProviderType(idp)"

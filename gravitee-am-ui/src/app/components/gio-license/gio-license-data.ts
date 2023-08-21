@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { FeatureInfo } from '@gravitee/ui-particles-angular';
+
 export enum AmFeature {
   AM_MFA_SMS = 'am-mfa-sms',
   AM_MFA_CALL = 'am-mfa-call',
@@ -27,8 +29,8 @@ export enum AmFeature {
   AM_IDP_SAML = 'am-idp-saml',
   AM_IDP_LDAP = 'am-idp-ldap',
   AM_IDP_KERBEROS = 'am-idp-kerberos',
-  AM_IDP_AZURE_AD = 'am-idp-azure_ad',
-  AM_IDP_FRANCE_CONNECT = 'am-idp-kerberos',
+  AM_IDP_AZURE_AD = 'am-idp-azure-ad',
+  AM_IDP_FRANCE_CONNECT = 'am-idp-france-connect',
   AM_IDP_CAS = 'am-idp-cas',
   AM_IDP_GATEWAY_HANDLER_SAML = 'am-idp-gateway-handler-saml',
   AM_IDP_HTTP_FLOW = 'am-idp-http-flow',
@@ -40,27 +42,27 @@ export enum AmFeature {
 
 export const FeatureInfoData: Record<AmFeature, FeatureInfo> = {
   [AmFeature.AM_MFA_SMS]: {
-    image: 'assets/gio-ee-unlock-dialog/am-mfa-sms.svg',
+    image: 'assets/gio-license/am-mfa-sms.svg',
     description:
       'The SMS factor is part of Gravitee Enterprise. Multi-factor authentication is an additional step during login to enforce access control.',
   },
   [AmFeature.AM_MFA_CALL]: {
-    image: 'assets/gio-ee-unlock-dialog/am-mfa-call.svg',
+    image: 'assets/gio-license/am-mfa-call.svg',
     description:
       'The Call factor is part of Gravitee Enterprise. Multi-factor authentication is an additional step during login to enforce access control.',
   },
   [AmFeature.AM_MFA_FIDO2]: {
-    image: 'assets/gio-ee-unlock-dialog/am-mfa-fido2.svg',
+    image: 'assets/gio-license/am-mfa-fido2.svg',
     description:
       'The FIDO2 factor is part of Gravitee Enterprise. Multi-factor authentication is an additional step during login to enforce access control.',
   },
   [AmFeature.AM_MFA_RESOURCE_HTTP_FACTOR]: {
-    image: 'assets/gio-ee-unlock-dialog/am-mfa-http.svg',
+    image: 'assets/gio-license/am-mfa-http.svg',
     description:
       'The HTTP factor is part of Gravitee Enterprise. Multi-factor authentication is an additional step during login to enforce access control.',
   },
   [AmFeature.AM_MFA_HTTP]: {
-    image: 'assets/gio-ee-unlock-dialog/am-mfa-http.svg',
+    image: 'assets/gio-license/am-mfa-http.svg',
     description:
       'The HTTP factor is part of Gravitee Enterprise. Multi-factor authentication is an additional step during login to enforce access control.',
   },
@@ -160,10 +162,4 @@ export function stringFeature(value: string): AmFeature {
     return feature;
   }
   throw new Error(`Unknown Feature value ${value}. Expected one of ${Object.keys(FeatureInfoData)}`);
-}
-
-export interface FeatureInfo {
-  image: string;
-  description: string;
-  title?: string;
 }

@@ -18,4 +18,5 @@ import { Plugin } from '../plugins/Plugin';
 export class IdentityProvider extends Plugin {
   displayName?: string;
   labels: Array<string>;
+  external?: boolean;
 }
