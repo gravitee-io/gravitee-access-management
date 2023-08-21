@@ -205,10 +205,10 @@ public abstract class AbstractCertificateProvider implements CertificateProvider
             jwk = new ECKey();
         }
 
-        if (nimbusJwk.getKeyUse() != null) {
-            jwk.setUse(nimbusJwk.getKeyUse().identifier());
-        } else {
+        if (use != null) {
             jwk.setUse(use);
+        } else if (nimbusJwk.getKeyUse() != null) {
+            jwk.setUse(nimbusJwk.getKeyUse().identifier());
         }
 
         if (nimbusJwk.getKeyOperations() != null) {
