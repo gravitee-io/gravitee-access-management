@@ -32,12 +32,18 @@ import io.vertx.reactivex.ext.web.RoutingContext;
  */
 public class WebAuthnResponseEndpoint extends AbstractEndpoint implements Handler<RoutingContext>  {
 
+    private final boolean sanitizeParametersEncoding;
+
+    public WebAuthnResponseEndpoint(boolean sanitizeParametersEncoding) {
+        this.sanitizeParametersEncoding = sanitizeParametersEncoding;
+    }
+
     @Override
     public void handle(RoutingContext ctx) {
         // at this stage the user has been authenticated
         // redirect the user to the original request
         final MultiMap queryParams = RequestUtils.getCleanedQueryParams(ctx.request());
-        final String redirectUri = getReturnUrl(ctx, queryParams);
+        final String redirectUri = getReturnUrl(ctx, queryParams, sanitizeParametersEncoding);
 
         ctx.response().putHeader(io.vertx.core.http.HttpHeaders.LOCATION, redirectUri)
                 .setStatusCode(302)

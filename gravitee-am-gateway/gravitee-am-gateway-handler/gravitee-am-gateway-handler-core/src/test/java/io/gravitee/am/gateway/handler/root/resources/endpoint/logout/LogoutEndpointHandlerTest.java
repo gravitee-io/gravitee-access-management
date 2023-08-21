@@ -87,7 +87,7 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
 
         router.route(HttpMethod.GET, "/logout")
                 .handler(new LogoutEndpoint(domain, clientSyncService, jwtService, userService, authenticationFlowContextService, identityProviderManager, certificateManager, webClient))
-                .failureHandler(new ErrorHandler("/error"));
+                .failureHandler(new ErrorHandler("/error", true));
     }
 
     @Test

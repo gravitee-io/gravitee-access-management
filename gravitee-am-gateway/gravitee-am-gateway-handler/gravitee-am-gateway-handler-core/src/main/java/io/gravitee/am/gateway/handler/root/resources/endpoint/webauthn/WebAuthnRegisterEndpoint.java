@@ -35,7 +35,6 @@ import io.vertx.reactivex.ext.web.common.template.TemplateEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collections;
 import java.util.HashMap;
 
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
@@ -49,11 +48,14 @@ public class WebAuthnRegisterEndpoint extends WebAuthnHandler {
     private static final Logger logger = LoggerFactory.getLogger(WebAuthnRegisterEndpoint.class);
     private static final String SKIP_WEBAUTHN_PARAM_KEY = "skipWebAuthN";
     private final Domain domain;
+    private final boolean sanitizeParametersEncoding;
 
     public WebAuthnRegisterEndpoint(TemplateEngine templateEngine,
-                                    Domain domain, FactorManager factorManager) {
+                                    Domain domain, FactorManager factorManager,
+                                    boolean sanitizeParametersEncoding) {
         super(templateEngine);
         this.domain = domain;
+        this.sanitizeParametersEncoding = sanitizeParametersEncoding;
         setFactorManager(factorManager);
     }
 
@@ -83,7 +85,7 @@ public class WebAuthnRegisterEndpoint extends WebAuthnHandler {
             final HttpServerRequest request = routingContext.request();
             if (Boolean.parseBoolean(request.getParam(SKIP_WEBAUTHN_PARAM_KEY))) {
                 queryParams.remove(SKIP_WEBAUTHN_PARAM_KEY);
-                final String returnURL = getReturnUrl(routingContext, queryParams);
+                final String returnURL = getReturnUrl(routingContext, queryParams, sanitizeParametersEncoding);
                 routingContext.session().put(ConstantKeys.WEBAUTHN_SKIPPED_KEY, true);
                 // Now redirect back to the original url
                 doRedirect(routingContext.response(), returnURL);
@@ -95,8 +97,8 @@ public class WebAuthnRegisterEndpoint extends WebAuthnHandler {
             final User user = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
             final UserProperties userProperties = new UserProperties(user);
 
-            final String action = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams, true);
-            final String skipAction = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams.set("skipWebAuthN", "true"), true);
+            final String action = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams, true, sanitizeParametersEncoding);
+            final String skipAction = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams.set("skipWebAuthN", "true"), true, sanitizeParametersEncoding);
             if(isEnrollingFido2Factor(routingContext)){
                 routingContext.put(ConstantKeys.MFA_ENROLLING_FIDO2_FACTOR, "true");
             }

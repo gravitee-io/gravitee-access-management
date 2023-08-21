@@ -118,7 +118,7 @@ public class LoginEndpointHandlerTest extends RxWebTestBase {
         domain.setPath("/login-domain");
         domain.setLoginSettings(loginSettings);
         appClient.setDomain(domain.getId());
-        loginEndpoint = new LoginEndpoint(templateEngine, domain, botDetectionManager, deviceIdentifierManager, userActivityService);
+        loginEndpoint = new LoginEndpoint(templateEngine, domain, botDetectionManager, deviceIdentifierManager, userActivityService, true);
         appClient.setLoginSettings(loginSettings);
         doReturn(Map.of()).when(deviceIdentifierManager).getTemplateVariables(any());
         doReturn(true).when(userActivityService).canSaveUserActivity();
@@ -175,7 +175,7 @@ public class LoginEndpointHandlerTest extends RxWebTestBase {
         appIdp.setSelectionRule("true");
         appIdp.setIdentity("provider-id");
 
-        final TreeSet treeSet = new TreeSet();
+        final TreeSet<ApplicationIdentityProvider> treeSet = new TreeSet<>();
         treeSet.add(appIdp);
         appClient.setIdentityProviders(treeSet);
 
@@ -250,7 +250,7 @@ public class LoginEndpointHandlerTest extends RxWebTestBase {
             loginEndpoint.handle(context);
             context.next();
         });
-        ;
+
         when(clientSyncService.findByClientId(appClient.getClientId())).thenReturn(Maybe.just(appClient));
         testRequest(
                 HttpMethod.GET, "/login?client_id=" + appClient.getClientId() + "&response_type=code&redirect_uri=somewhere.com&username=",
@@ -300,21 +300,18 @@ public class LoginEndpointHandlerTest extends RxWebTestBase {
                     var queryParamsNoUsername = MultiMap.caseInsensitiveMultiMap();
                     queryParamsNoUsername.addAll(queryParams);
                     queryParamsNoUsername.remove(USERNAME_PARAM_KEY);
-                    assertEquals(routingContext.get(ACTION_KEY), resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/login", queryParams, true));
-                    assertEquals(routingContext.get(FORGOT_ACTION_KEY), resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/forgotPassword", queryParams, true));
-                    assertEquals(routingContext.get(REGISTER_ACTION_KEY), resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/register", queryParams, true));
-                    assertEquals(routingContext.get(WEBAUTHN_ACTION_KEY), resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/webauthn/login", queryParams, true));
+                    assertEquals(routingContext.get(ACTION_KEY), resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/login", queryParams, true, true));
+                    assertEquals(routingContext.get(FORGOT_ACTION_KEY), resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/forgotPassword", queryParams, true, true));
+                    assertEquals(routingContext.get(REGISTER_ACTION_KEY), resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/register", queryParams, true, true));
+                    assertEquals(routingContext.get(WEBAUTHN_ACTION_KEY), resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/webauthn/login", queryParams, true, true));
                     if (expectedFirstIdentifier) {
-                        assertEquals(routingContext.get(BACK_TO_LOGIN_IDENTIFIER_ACTION_KEY), resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/login/identifier", queryParamsNoUsername, true));
+                        assertEquals(routingContext.get(BACK_TO_LOGIN_IDENTIFIER_ACTION_KEY), resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/login/identifier", queryParamsNoUsername, true, true));
                     }
                     assertFalse(TRUE.equals(routingContext.get(ALLOW_FORGOT_PASSWORD_CONTEXT_KEY)));
                     assertFalse(TRUE.equals(routingContext.get(ALLOW_REGISTER_CONTEXT_KEY)));
                     assertFalse(TRUE.equals(routingContext.get(ALLOW_PASSWORDLESS_CONTEXT_KEY)));
                     assertEquals(TRUE.equals(routingContext.get(HIDE_FORM_CONTEXT_KEY)), expectedHide);
                     assertEquals(TRUE.equals(routingContext.get(IDENTIFIER_FIRST_LOGIN_ENABLED)), expectedFirstIdentifier);
-
-                } catch (Exception e) {
-                    e.printStackTrace();
                 } finally {
                     routingContext.end();
                 }
@@ -337,18 +334,16 @@ public class LoginEndpointHandlerTest extends RxWebTestBase {
                 queryParamsNoUsername.addAll(queryParams);
                 queryParamsNoUsername.remove(USERNAME_PARAM_KEY);
 
-                assertEquals(routingContext.get(ACTION_KEY), resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/login", queryParams, true));
-                assertEquals(routingContext.get(FORGOT_ACTION_KEY), resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/forgotPassword", queryParams, true));
-                assertEquals(routingContext.get(REGISTER_ACTION_KEY), resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/register", queryParams, true));
-                assertEquals(routingContext.get(WEBAUTHN_ACTION_KEY), resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/webauthn/login", queryParams, true));
+                assertEquals(routingContext.get(ACTION_KEY), resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/login", queryParams, true, true));
+                assertEquals(routingContext.get(FORGOT_ACTION_KEY), resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/forgotPassword", queryParams, true, true));
+                assertEquals(routingContext.get(REGISTER_ACTION_KEY), resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/register", queryParams, true, true));
+                assertEquals(routingContext.get(WEBAUTHN_ACTION_KEY), resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/webauthn/login", queryParams, true, true));
 
                 assertFalse(TRUE.equals(routingContext.get(ALLOW_FORGOT_PASSWORD_CONTEXT_KEY)));
                 assertFalse(TRUE.equals(routingContext.get(ALLOW_REGISTER_CONTEXT_KEY)));
                 assertFalse(TRUE.equals(routingContext.get(ALLOW_PASSWORDLESS_CONTEXT_KEY)));
                 assertEquals(TRUE.equals(routingContext.get(HIDE_FORM_CONTEXT_KEY)), expectedHide);
                 assertEquals(TRUE.equals(routingContext.get(IDENTIFIER_FIRST_LOGIN_ENABLED)), expectedFirstIdentifier);
-            } catch (Exception e) {
-                e.printStackTrace();
             } finally {
                 routingContext.end();
             }

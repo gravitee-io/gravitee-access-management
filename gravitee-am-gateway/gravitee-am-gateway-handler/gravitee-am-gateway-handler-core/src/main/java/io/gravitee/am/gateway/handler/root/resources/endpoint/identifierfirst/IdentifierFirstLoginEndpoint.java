@@ -20,7 +20,6 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
-import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.context.EvaluableRequest;
 import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
@@ -71,11 +70,13 @@ public class IdentifierFirstLoginEndpoint extends AbstractEndpoint implements Ha
 
     private final Domain domain;
     private final BotDetectionManager botDetectionManager;
+    private final boolean sanitizeParametersEncoding;
 
-    public IdentifierFirstLoginEndpoint(TemplateEngine templateEngine, Domain domain, BotDetectionManager botDetectionManager) {
+    public IdentifierFirstLoginEndpoint(TemplateEngine templateEngine, Domain domain, BotDetectionManager botDetectionManager, boolean sanitizeParametersEncoding) {
         super(templateEngine);
         this.domain = domain;
         this.botDetectionManager = botDetectionManager;
+        this.sanitizeParametersEncoding = sanitizeParametersEncoding;
     }
 
     @Override
@@ -129,10 +130,10 @@ public class IdentifierFirstLoginEndpoint extends AbstractEndpoint implements Ha
 
         // put actions in context
         final MultiMap queryParams = RequestUtils.getCleanedQueryParams(request);
-        routingContext.put(ACTION_KEY, resolveProxyRequest(request, routingContext.get(CONTEXT_PATH) + "/login/identifier", queryParams, true));
-        routingContext.put(REGISTER_ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/register", queryParams, true));
-        routingContext.put(WEBAUTHN_ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/webauthn/login", queryParams, true));
-        routingContext.put(FORGOT_ACTION_KEY, resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/forgotPassword", queryParams, true));
+        routingContext.put(ACTION_KEY, resolveProxyRequest(request, routingContext.get(CONTEXT_PATH) + "/login/identifier", queryParams, true, sanitizeParametersEncoding));
+        routingContext.put(REGISTER_ACTION_KEY, resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/register", queryParams, true, sanitizeParametersEncoding));
+        routingContext.put(WEBAUTHN_ACTION_KEY, resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/webauthn/login", queryParams, true, sanitizeParametersEncoding));
+        routingContext.put(FORGOT_ACTION_KEY, resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/forgotPassword", queryParams, true, sanitizeParametersEncoding));
 
         final Map<String, Object> data = generateData(routingContext, domain, client);
         data.putAll(botDetectionManager.getTemplateVariables(domain, client));
@@ -145,8 +146,10 @@ public class IdentifierFirstLoginEndpoint extends AbstractEndpoint implements Ha
         final MultiMap queryParams = RequestUtils.getCleanedQueryParams(request);
         // login_hint parameter can be duplicated from a previous step, remove it
         queryParams.remove(Parameters.LOGIN_HINT);
-        queryParams.add(Parameters.LOGIN_HINT, UriBuilder.encodeURIComponent(request.getParam(USERNAME_PARAM_KEY)));
-        final String url = UriBuilderRequest.resolveProxyRequest(request, redirectUrl, queryParams, true);
+        // If parameters is sanitized when generating the redirect URL, then the login-hint requires an extra encoding
+        queryParams.add(Parameters.LOGIN_HINT, sanitizeParametersEncoding ? UriBuilder.encodeURIComponent(request.getParam(USERNAME_PARAM_KEY)) : request.getParam(USERNAME_PARAM_KEY));
+        queryParams.add(Parameters.LOGIN_HINT, request.getParam(USERNAME_PARAM_KEY));
+        final String url = resolveProxyRequest(request, redirectUrl, queryParams, true, sanitizeParametersEncoding);
         doRedirect0(routingContext, url);
     }
 

@@ -68,18 +68,21 @@ public class LoginEndpoint extends AbstractEndpoint implements Handler<RoutingCo
     private final BotDetectionManager botDetectionManager;
     private final DeviceIdentifierManager deviceIdentifierManager;
     private final UserActivityService userActivityService;
+    private final boolean sanitizeParametersEncoding;
 
     public LoginEndpoint(
             TemplateEngine templateEngine,
             Domain domain,
             BotDetectionManager botDetectionManager,
             DeviceIdentifierManager deviceIdentifierManager,
-            UserActivityService userActivityService) {
+            UserActivityService userActivityService,
+            boolean sanitizeParametersEncoding) {
         super(templateEngine);
         this.domain = domain;
         this.botDetectionManager = botDetectionManager;
         this.deviceIdentifierManager = deviceIdentifierManager;
         this.userActivityService = userActivityService;
+        this.sanitizeParametersEncoding = sanitizeParametersEncoding;
     }
 
     @Override
@@ -128,17 +131,17 @@ public class LoginEndpoint extends AbstractEndpoint implements Handler<RoutingCo
 
         // put action urls in context
         final MultiMap queryParams = getCleanedQueryParams(routingContext.request());
-        routingContext.put(ACTION_KEY, resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams, true));
-        routingContext.put(TEMPLATE_KEY_FORGOT_ACTION_KEY, resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/forgotPassword", queryParams, true));
-        routingContext.put(TEMPLATE_KEY_REGISTER_ACTION_KEY, resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/register", queryParams, true));
-        routingContext.put(TEMPLATE_KEY_WEBAUTHN_ACTION_KEY, resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/webauthn/login", queryParams, true));
+        routingContext.put(ACTION_KEY, resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams, true, sanitizeParametersEncoding));
+        routingContext.put(TEMPLATE_KEY_FORGOT_ACTION_KEY, resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/forgotPassword", queryParams, true, sanitizeParametersEncoding));
+        routingContext.put(TEMPLATE_KEY_REGISTER_ACTION_KEY, resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/register", queryParams, true, sanitizeParametersEncoding));
+        routingContext.put(TEMPLATE_KEY_WEBAUTHN_ACTION_KEY, resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/webauthn/login", queryParams, true, sanitizeParametersEncoding));
         if (isIdentifierFirstLoginEnabled) {
             // we remove the login_hint in the backToIdFirst login action to avoid
             // * infinite loop (if the idFirst login page submit the form if these parameter is provided)
             // * prevent the user from changing the username in the idFirst login page
             // https://github.com/gravitee-io/issues/issues/8236
             queryParams.remove(Parameters.LOGIN_HINT);
-            routingContext.put(TEMPLATE_KEY_BACK_LOGIN_IDENTIFIER_ACTION_KEY, resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/login/identifier", queryParams, true));
+            routingContext.put(TEMPLATE_KEY_BACK_LOGIN_IDENTIFIER_ACTION_KEY, resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/login/identifier", queryParams, true, sanitizeParametersEncoding));
         }
     }
 

@@ -62,7 +62,7 @@ public class LoginFailureHandlerTest extends RxWebTestBase {
 
         router.route(HttpMethod.GET, "/login")
                 .handler(rc -> rc.fail(policyChainException))
-                .failureHandler(new LoginFailureHandler(authenticationFlowContextService, domain, identityProviderManager));
+                .failureHandler(new LoginFailureHandler(authenticationFlowContextService, domain, identityProviderManager, true));
     }
 
     @Test

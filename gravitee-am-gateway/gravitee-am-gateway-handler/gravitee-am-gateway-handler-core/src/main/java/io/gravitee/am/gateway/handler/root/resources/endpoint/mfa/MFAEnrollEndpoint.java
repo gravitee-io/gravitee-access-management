@@ -62,12 +62,14 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
     private final FactorManager factorManager;
     private final UserService userService;
     private final Domain domain;
+    private final boolean sanitizeParametersEncoding;
 
-    public MFAEnrollEndpoint(FactorManager factorManager, TemplateEngine engine, UserService userService, Domain domain) {
+    public MFAEnrollEndpoint(FactorManager factorManager, TemplateEngine engine, UserService userService, Domain domain, boolean sanitizeParametersEncoding) {
         super(engine);
         this.factorManager = factorManager;
         this.userService = userService;
         this.domain = domain;
+        this.sanitizeParametersEncoding = sanitizeParametersEncoding;
     }
 
     @Override
@@ -99,7 +101,7 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
 
             // Create post action url.
             final MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
-            final String action = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams, true);
+            final String action = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams, true, sanitizeParametersEncoding);
 
             // load factor providers
             load(factors, endUser, h -> {
@@ -204,7 +206,7 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
 
     private void redirectToAuthorize(RoutingContext routingContext) {
         final MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
-        final String returnURL = getReturnUrl(routingContext, queryParams);
+        final String returnURL = getReturnUrl(routingContext, queryParams, sanitizeParametersEncoding);
         doRedirect(routingContext.response(), returnURL);
     }
 

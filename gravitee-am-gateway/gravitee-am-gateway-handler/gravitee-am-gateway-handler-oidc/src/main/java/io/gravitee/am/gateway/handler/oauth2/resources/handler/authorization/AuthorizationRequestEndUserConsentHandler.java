@@ -61,9 +61,11 @@ public class AuthorizationRequestEndUserConsentHandler implements Handler<Routin
     private static final String CONSENT_PAGE_PATH = "/oauth/consent";
 
     private final UserConsentService userConsentService;
+    private final boolean sanitizeParametersEncoding;
 
-    public AuthorizationRequestEndUserConsentHandler(UserConsentService userConsentService) {
+    public AuthorizationRequestEndUserConsentHandler(UserConsentService userConsentService, boolean sanitizeParametersEncoding) {
         this.userConsentService = userConsentService;
+        this.sanitizeParametersEncoding = sanitizeParametersEncoding;
     }
 
     @Override
@@ -156,7 +158,7 @@ public class AuthorizationRequestEndUserConsentHandler implements Handler<Routin
 
         try {
             final MultiMap queryParams = RequestUtils.getCleanedQueryParams(request);
-            String proxiedRedirectURI = UriBuilderRequest.resolveProxyRequest(request, consentPageURL, queryParams, true);
+            String proxiedRedirectURI = UriBuilderRequest.resolveProxyRequest(request, consentPageURL, queryParams, true, sanitizeParametersEncoding);
             request.response()
                     .putHeader(HttpHeaders.LOCATION, proxiedRedirectURI)
                     .setStatusCode(302)

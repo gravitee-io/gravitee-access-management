@@ -34,9 +34,12 @@ public class CSRFHandlerFactory implements FactoryBean<CSRFHandler> {
     @Autowired
     private Vertx vertx;
 
+    @Value("${legacy.openid.sanitizeParametersEncoding:true}")
+    private boolean sanitizeParametersEncoding;
+
     @Override
     public CSRFHandler getObject() {
-        return CSRFHandler.newInstance(new CSRFHandlerImpl(vertx, csrfSecret));
+        return CSRFHandler.newInstance(new CSRFHandlerImpl(vertx, csrfSecret, sanitizeParametersEncoding));
     }
 
     @Override

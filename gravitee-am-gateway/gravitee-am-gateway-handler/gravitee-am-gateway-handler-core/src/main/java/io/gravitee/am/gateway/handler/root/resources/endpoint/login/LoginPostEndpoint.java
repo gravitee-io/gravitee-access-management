@@ -31,11 +31,17 @@ import io.vertx.reactivex.ext.web.Session;
  */
 public class LoginPostEndpoint extends AbstractEndpoint implements Handler<RoutingContext> {
 
+    private final boolean sanitizeParametersEncoding;
+
+    public LoginPostEndpoint(boolean sanitizeParametersEncoding) {
+        this.sanitizeParametersEncoding = sanitizeParametersEncoding;
+    }
+
     @Override
     public void handle(RoutingContext context) {
         final Session session = context.session();
         final MultiMap queryParams = RequestUtils.getCleanedQueryParams(context.request());
-        final String redirectUri = getReturnUrl(context, queryParams);
+        final String redirectUri = getReturnUrl(context, queryParams, sanitizeParametersEncoding);
 
         // save that the user has just been signed in
         session.put(ConstantKeys.USER_LOGIN_COMPLETED_KEY, true);

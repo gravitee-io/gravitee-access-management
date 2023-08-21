@@ -91,9 +91,9 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         super.setUp();
 
         List<AuthenticationFlowStep> steps = new LinkedList<>();
-        steps.add(new MFAEnrollStep(RedirectHandler.create("/mfa/enroll"), ruleEngine, factorManager));
-        steps.add(new MFAChallengeStep(RedirectHandler.create("/mfa/challenge"), ruleEngine, factorManager));
-        steps.add(new MFARecoveryCodeStep(RedirectHandler.create("/mfa/recovery_code"), ruleEngine, factorManager));
+        steps.add(new MFAEnrollStep(RedirectHandler.create("/mfa/enroll", true), ruleEngine, factorManager));
+        steps.add(new MFAChallengeStep(RedirectHandler.create("/mfa/challenge", true), ruleEngine, factorManager));
+        steps.add(new MFARecoveryCodeStep(RedirectHandler.create("/mfa/recovery_code", true), ruleEngine, factorManager));
         AuthenticationFlowChainHandler authenticationFlowChainHandler = new AuthenticationFlowChainHandler(steps);
 
         when(jwtService.encode(any(JWT.class), (CertificateProvider) eq(null))).thenReturn(Single.just("token"));

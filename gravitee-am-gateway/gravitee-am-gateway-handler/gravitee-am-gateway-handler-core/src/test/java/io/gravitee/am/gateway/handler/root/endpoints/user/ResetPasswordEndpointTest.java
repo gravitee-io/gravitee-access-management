@@ -44,7 +44,7 @@ public class ResetPasswordEndpointTest {
         domain.setId("domain-id");
 
         final ThymeleafTemplateEngine engine = mock(ThymeleafTemplateEngine.class);
-        var registrationConfirmation = new ResetPasswordEndpoint(engine, domain);
+        var registrationConfirmation = new ResetPasswordEndpoint(engine, domain, true);
 
         final SpyRoutingContext ctx = new SpyRoutingContext();
         ctx.setMethod(HttpMethod.GET);
@@ -66,7 +66,7 @@ public class ResetPasswordEndpointTest {
         domain.setId("domain-id");
 
         final ThymeleafTemplateEngine engine = mock(ThymeleafTemplateEngine.class);
-        var resetPassword = new ResetPasswordEndpoint(engine, domain);
+        var resetPassword = new ResetPasswordEndpoint(engine, domain, true);
 
         final SpyRoutingContext ctx = new SpyRoutingContext();
         ctx.setMethod(HttpMethod.GET);

@@ -70,7 +70,7 @@ public class LogoutCallbackEndpointHandlerTest extends RxWebTestBase {
 
         router.route(HttpMethod.GET, "/logout/callback")
                 .handler(new LogoutCallbackEndpoint(domain, clientSyncService, jwtService, userService, authenticationFlowContextService, certificateManager))
-                .failureHandler(new ErrorHandler("/error"));
+                .failureHandler(new ErrorHandler("/error", true));
     }
 
     @Test

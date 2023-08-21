@@ -38,9 +38,11 @@ public class RedirectHandlerImpl implements Handler<RoutingContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(RedirectHandlerImpl.class);
     private final String path;
+    private final boolean sanitizeParametersEncoding;
 
-    public RedirectHandlerImpl(String path) {
+    public RedirectHandlerImpl(String path, boolean sanitizeParametersEncoding) {
         this.path = path;
+        this.sanitizeParametersEncoding = sanitizeParametersEncoding;
     }
 
     @Override
@@ -61,7 +63,7 @@ public class RedirectHandlerImpl implements Handler<RoutingContext> {
                 if (!UriBuilder.decodeURIComponent(login_hint).equals(login_hint)
                         && login_hint.contains("@")
                         && login_hint.contains("+")) {
-                    queryParams.set(LOGIN_HINT, UriBuilder.encodeURIComponent(login_hint));
+                    queryParams.set(LOGIN_HINT, sanitizeParametersEncoding? UriBuilder.encodeURIComponent(login_hint) : login_hint);
                 }
             }
 
@@ -71,7 +73,7 @@ public class RedirectHandlerImpl implements Handler<RoutingContext> {
             }
 
             // Now redirect the user.
-            String uri = UriBuilderRequest.resolveProxyRequest(request, redirectUrl, queryParams, true);
+            String uri = UriBuilderRequest.resolveProxyRequest(request, redirectUrl, queryParams, true, sanitizeParametersEncoding);
             context.response()
                     .putHeader(HttpHeaders.LOCATION, uri)
                     .setStatusCode(302)

@@ -40,7 +40,7 @@ public class UriBuilderRequestTest {
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_HOST))).thenReturn("myhost");
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PORT))).thenReturn("8888");
 
-        final var generatedUri = UriBuilderRequest.resolveProxyRequest(request, path, params, true);
+        final var generatedUri = UriBuilderRequest.resolveProxyRequest(request, path, params, true, true);
         assertEquals("https://myhost:8888/my/path?param1=value1", generatedUri);
     }
 
@@ -50,7 +50,7 @@ public class UriBuilderRequestTest {
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_HOST))).thenReturn("myhost:9999");
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PORT))).thenReturn("8888");
 
-        final var generatedUri = UriBuilderRequest.resolveProxyRequest(request, path, params, true);
+        final var generatedUri = UriBuilderRequest.resolveProxyRequest(request, path, params, true, true);
         assertEquals("https://myhost:8888/my/path?param1=value1", generatedUri);
     }
 
@@ -60,13 +60,13 @@ public class UriBuilderRequestTest {
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_HOST))).thenReturn("myhost");
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PORT))).thenReturn("80");
 
-        assertEquals("http://myhost/my/path?param1=value1", UriBuilderRequest.resolveProxyRequest(request, path, params, true));
+        assertEquals("http://myhost/my/path?param1=value1", UriBuilderRequest.resolveProxyRequest(request, path, params, true, true));
 
         // default https port with http scheme should keep the forwarded port
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PROTO))).thenReturn("http");
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_HOST))).thenReturn("myhost");
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PORT))).thenReturn("443");
-        assertEquals("http://myhost:443/my/path?param1=value1", UriBuilderRequest.resolveProxyRequest(request, path, params, true));
+        assertEquals("http://myhost:443/my/path?param1=value1", UriBuilderRequest.resolveProxyRequest(request, path, params, true, true));
     }
 
 
@@ -76,13 +76,13 @@ public class UriBuilderRequestTest {
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_HOST))).thenReturn("myhost");
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PORT))).thenReturn("443");
 
-        assertEquals("https://myhost/my/path?param1=value1", UriBuilderRequest.resolveProxyRequest(request, path, params, true));
+        assertEquals("https://myhost/my/path?param1=value1", UriBuilderRequest.resolveProxyRequest(request, path, params, true, true));
 
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PROTO))).thenReturn("https");
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_HOST))).thenReturn("myhost");
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PORT))).thenReturn("80");
         // default http port with https scheme should keep the forwarded port
-        assertEquals("https://myhost:80/my/path?param1=value1", UriBuilderRequest.resolveProxyRequest(request, path, params, true));
+        assertEquals("https://myhost:80/my/path?param1=value1", UriBuilderRequest.resolveProxyRequest(request, path, params, true, true));
     }
 
     @Test
@@ -90,7 +90,7 @@ public class UriBuilderRequestTest {
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PROTO))).thenReturn("https");
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_HOST))).thenReturn("myhost:9999");
 
-        final var generatedUri = UriBuilderRequest.resolveProxyRequest(request, path, params, true);
+        final var generatedUri = UriBuilderRequest.resolveProxyRequest(request, path, params, true, true);
         assertEquals("https://myhost:9999/my/path?param1=value1", generatedUri);
     }
     @Test
@@ -98,7 +98,7 @@ public class UriBuilderRequestTest {
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PROTO))).thenReturn("https");
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_HOST))).thenReturn("myhost");
 
-        final var generatedUri = UriBuilderRequest.resolveProxyRequest(request, path, params, true);
+        final var generatedUri = UriBuilderRequest.resolveProxyRequest(request, path, params, true, true);
         assertEquals("https://myhost/my/path?param1=value1", generatedUri);
     }
 }

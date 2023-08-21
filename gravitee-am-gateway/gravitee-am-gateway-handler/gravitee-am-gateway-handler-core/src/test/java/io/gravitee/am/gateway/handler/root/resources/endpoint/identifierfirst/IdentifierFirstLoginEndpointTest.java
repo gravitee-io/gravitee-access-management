@@ -97,7 +97,7 @@ public class IdentifierFirstLoginEndpointTest extends RxWebTestBase {
         appClient.setDomain(domain.getId());
         when(clientSyncService.findByClientId(appClient.getClientId())).thenReturn(Maybe.just(appClient));
 
-        identifierFirstLoginEndpoint = new IdentifierFirstLoginEndpoint(templateEngine, domain, botDetectionManager);
+        identifierFirstLoginEndpoint = new IdentifierFirstLoginEndpoint(templateEngine, domain, botDetectionManager, true);
 
         router.route("/login/identifier")
                 .handler(clientRequestParseHandler)
@@ -346,7 +346,7 @@ public class IdentifierFirstLoginEndpointTest extends RxWebTestBase {
                     assertNotNull(routingContext.get(PARAM_CONTEXT_KEY));
                     final MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
                     assertEquals(routingContext.get(ACTION_KEY), resolveProxyRequest(routingContext.request(),
-                            routingContext.get(CONTEXT_PATH) + "/login/identifier", queryParams, true));
+                            routingContext.get(CONTEXT_PATH) + "/login/identifier", queryParams, true, true));
                 } catch (Exception e) {
                     e.printStackTrace();
                 } finally {

@@ -63,7 +63,7 @@ public class AuthorizationRequestEndUserConsentHandlerTest extends RxWebTestBase
                     context.setSession(new io.vertx.reactivex.ext.web.Session(session));
                     context.next();
                 })
-                .handler(new AuthorizationRequestEndUserConsentHandler(userConsentService))
+                .handler(new AuthorizationRequestEndUserConsentHandler(userConsentService, true))
                 .handler(rc -> rc.response().end())
                 .failureHandler(rc -> rc.response().setStatusCode(403).end());
     }

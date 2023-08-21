@@ -56,11 +56,11 @@ public class UriBuilderRequest {
      * @return request uri representation
      */
     public static String resolveProxyRequest(final HttpServerRequest request, final String path, final Map<String, String> parameters) {
-        return resolveProxyRequest(request, path, parameters, false);
+        return resolveProxyRequest(request, path, parameters, false, false);
     }
 
     public static String resolveProxyRequest(final HttpServerRequest request, final String path) {
-        return resolveProxyRequest(request, path, (MultiMap) null, false);
+        return resolveProxyRequest(request, path, (MultiMap) null, false, false);
     }
 
     /**
@@ -71,7 +71,7 @@ public class UriBuilderRequest {
      * @param encoded if request query params should be encoded
      * @return request uri representation
      */
-    public static String resolveProxyRequest(final HttpServerRequest request, final String path, final Map<String, String> parameters, boolean encoded) {
+    public static String resolveProxyRequest(final HttpServerRequest request, final String path, final Map<String, String> parameters, boolean encoded, boolean sanitizeParametersEncoding) {
 
         final MultiMap queryParameters;
 
@@ -82,7 +82,7 @@ public class UriBuilderRequest {
             queryParameters = null;
         }
 
-        return resolveProxyRequest(request, path, queryParameters, encoded);
+        return resolveProxyRequest(request, path, queryParameters, encoded, sanitizeParametersEncoding);
     }
 
     private static Map<String, String> getSafeParameters(Map<String, String> parameters) {
@@ -92,14 +92,14 @@ public class UriBuilderRequest {
     }
 
     public static String resolveProxyRequest(final HttpServerRequest request, final String path, final MultiMap parameters) {
-        return resolveProxyRequest(request, path, parameters, false);
+        return resolveProxyRequest(request, path, parameters, false, true);
     }
 
-    public static String resolveProxyRequest(final HttpServerRequest request, final String path, final MultiMap parameters, boolean encoded) {
-        return resolve(request, path, parameters, encoded);
+    public static String resolveProxyRequest(final HttpServerRequest request, final String path, final MultiMap parameters, boolean encoded, boolean sanitizeParametersEncoding) {
+        return resolve(request, path, parameters, encoded, sanitizeParametersEncoding);
     }
 
-    private static String resolve(final HttpServerRequest request, final String path, final MultiMap parameters, boolean encoded) {
+    private static String resolve(final HttpServerRequest request, final String path, final MultiMap parameters, boolean encoded, boolean sanitizeEncoding) {
         UriBuilder builder = UriBuilder.newInstance();
 
         // scheme
@@ -134,8 +134,12 @@ public class UriBuilderRequest {
         } else {
             if (parameters != null) {
                 parameters.forEach(entry -> {
-                    // some parameters can be already URL encoded, decode first
-                    builder.addParameter(entry.getKey(), UriBuilder.encodeURIComponent(UriBuilder.decodeURIComponent(entry.getValue())));
+                    var parameter = entry.getValue();
+                    if (sanitizeEncoding) {
+                        // some parameters can be already URL encoded, decode first
+                        parameter = UriBuilder.decodeURIComponent(parameter);
+                    }
+                    builder.addParameter(entry.getKey(), UriBuilder.encodeURIComponent(parameter));
                 });
             }
         }

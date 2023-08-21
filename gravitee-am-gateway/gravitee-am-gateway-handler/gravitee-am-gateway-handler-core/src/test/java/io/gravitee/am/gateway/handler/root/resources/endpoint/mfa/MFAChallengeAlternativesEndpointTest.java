@@ -94,7 +94,7 @@ public class MFAChallengeAlternativesEndpointTest extends RxWebTestBase {
     @Test
     public void mustNotInvokeMFAChallengeAlternativesEndpoint_noUser() throws Exception {
         router.route(HttpMethod.GET, "/mfa/challenge/alternatives")
-                .handler(new MFAChallengeAlternativesEndpoint(templateEngine, factorManager, domain));
+                .handler(new MFAChallengeAlternativesEndpoint(templateEngine, factorManager, domain, true));
 
         testRequest(
                 HttpMethod.GET, "/mfa/challenge/alternatives?client_id=test",
@@ -110,7 +110,7 @@ public class MFAChallengeAlternativesEndpointTest extends RxWebTestBase {
         });
 
         router.route(HttpMethod.GET, "/mfa/challenge/alternatives")
-                .handler(new MFAChallengeAlternativesEndpoint(templateEngine, factorManager, domain));
+                .handler(new MFAChallengeAlternativesEndpoint(templateEngine, factorManager, domain, true));
 
         testRequest(
                 HttpMethod.GET, "/mfa/challenge/alternatives?client_id=test",
@@ -127,7 +127,7 @@ public class MFAChallengeAlternativesEndpointTest extends RxWebTestBase {
         });
 
         router.route(HttpMethod.GET, "/mfa/challenge/alternatives")
-                .handler(new MFAChallengeAlternativesEndpoint(templateEngine, factorManager, domain));
+                .handler(new MFAChallengeAlternativesEndpoint(templateEngine, factorManager, domain, true));
 
         testRequest(
                 HttpMethod.GET, "/mfa/challenge/alternatives?client_id=test",
@@ -149,7 +149,7 @@ public class MFAChallengeAlternativesEndpointTest extends RxWebTestBase {
         });
 
         router.route(HttpMethod.GET, "/mfa/challenge/alternatives")
-                .handler(get200AssertMockRoutingContextHandler(new MFAChallengeAlternativesEndpoint(templateEngine, factorManager, domain)));
+                .handler(get200AssertMockRoutingContextHandler(new MFAChallengeAlternativesEndpoint(templateEngine, factorManager, domain, true)));
 
         testRequest(
                 HttpMethod.GET, "/mfa/challenge/alternatives?client_id=test",
@@ -162,9 +162,7 @@ public class MFAChallengeAlternativesEndpointTest extends RxWebTestBase {
                 try {
                     assertNotNull(routingContext.get(CLIENT_CONTEXT_KEY));
                     final MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
-                    assertEquals(routingContext.get(ACTION_KEY), resolveProxyRequest(routingContext.request(),"/mfa/challenge/alternatives", queryParams, true));
-                } catch (Exception e) {
-                    e.printStackTrace();
+                    assertEquals(routingContext.get(ACTION_KEY), resolveProxyRequest(routingContext.request(),"/mfa/challenge/alternatives", queryParams, true, true));
                 } finally {
                     routingContext.end();
                 }

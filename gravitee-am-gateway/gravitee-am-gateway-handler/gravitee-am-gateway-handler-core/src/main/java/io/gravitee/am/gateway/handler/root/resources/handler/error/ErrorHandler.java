@@ -40,8 +40,11 @@ import static java.util.Objects.isNull;
  */
 public class ErrorHandler extends AbstractErrorHandler {
 
-    public ErrorHandler(String errorPage) {
-        super(errorPage);
+    private final boolean sanitizeParametersEncoding;
+
+    public ErrorHandler(String errorPage, boolean sanitizeParametersEncoding) {
+        super(errorPage, sanitizeParametersEncoding);
+        this.sanitizeParametersEncoding = sanitizeParametersEncoding;
     }
 
     @Override
@@ -98,7 +101,7 @@ public class ErrorHandler extends AbstractErrorHandler {
             }
 
             // redirect
-            String proxiedErrorPage = UriBuilderRequest.resolveProxyRequest(request, errorPageURL, parameters, true);
+            String proxiedErrorPage = UriBuilderRequest.resolveProxyRequest(request, errorPageURL, parameters, true, sanitizeParametersEncoding);
             doRedirect(routingContext.response(), proxiedErrorPage);
         } catch (Exception e) {
             logger.error("Unable to handle root error response", e);

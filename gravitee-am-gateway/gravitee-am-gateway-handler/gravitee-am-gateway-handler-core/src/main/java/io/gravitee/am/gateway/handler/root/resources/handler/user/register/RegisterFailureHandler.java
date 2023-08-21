@@ -38,8 +38,11 @@ import static io.gravitee.am.common.utils.ConstantKeys.ERROR_PARAM_KEY;
  */
 public class RegisterFailureHandler extends AbstractErrorHandler {
 
-    public RegisterFailureHandler() {
-        super(RootProvider.PATH_ERROR);
+    private final boolean sanitizeParametersEncoding;
+
+    public RegisterFailureHandler(boolean sanitizeParametersEncoding) {
+        super(RootProvider.PATH_ERROR, sanitizeParametersEncoding);
+        this.sanitizeParametersEncoding = sanitizeParametersEncoding;
     }
 
     @Override
@@ -64,7 +67,7 @@ public class RegisterFailureHandler extends AbstractErrorHandler {
             if (exceptions != null && exceptions.length > 0) {
                 logger.debug("Error user actions : " + queryParams.get(ERROR_PARAM_KEY), exceptions[0]);
             }
-            String uri = UriBuilderRequest.resolveProxyRequest(context.request(), context.request().path(), queryParams, true);
+            String uri = UriBuilderRequest.resolveProxyRequest(context.request(), context.request().path(), queryParams, true, sanitizeParametersEncoding);
             doRedirect(context.response(), uri);
         } catch (Exception ex) {
             logger.error("An error occurs while redirecting to {}", context.request().absoluteURI(), ex);

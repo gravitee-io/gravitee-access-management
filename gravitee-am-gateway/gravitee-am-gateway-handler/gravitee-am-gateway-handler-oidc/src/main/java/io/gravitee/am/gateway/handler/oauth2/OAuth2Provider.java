@@ -103,6 +103,9 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
     @Value("${handlers.request.transaction.header:X-Gravitee-Transaction-Id}")
     private String transactionHeader;
 
+    @Value("${legacy.openid.sanitizeParametersEncoding:true}")
+    private boolean sanitizeParametersEncoding;
+
     @Autowired
     private Domain domain;
 
@@ -271,7 +274,7 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
                 .handler(new RiskAssessmentHandler(deviceService, userActivityService, vertx.eventBus(), objectMapper))
                 .handler(authenticationFlowHandler.create())
                 .handler(new AuthorizationRequestResolveHandler(scopeManager))
-                .handler(new AuthorizationRequestEndUserConsentHandler(userConsentService))
+                .handler(new AuthorizationRequestEndUserConsentHandler(userConsentService, sanitizeParametersEncoding))
                 .handler(new AuthorizationEndpoint(flow, thymeleafTemplateEngine, parService))
                 .failureHandler(new AuthorizationRequestFailureHandler(openIDDiscoveryService, jwtService, jweService, environment));
 
@@ -296,9 +299,9 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
                 .handler(userConsentPrepareContextHandler)
                 .handler(new UserConsentProcessHandler(userConsentService, domain))
                 .handler(policyChainHandler.create(ExtensionPoint.POST_CONSENT))
-                .handler(new UserConsentPostEndpoint());
+                .handler(new UserConsentPostEndpoint(sanitizeParametersEncoding));
         oauth2Router.route("/consent")
-                .failureHandler(new UserConsentFailureHandler());
+                .failureHandler(new UserConsentFailureHandler(sanitizeParametersEncoding));
 
         // Token endpoint
         oauth2Router.route(HttpMethod.OPTIONS, "/token")

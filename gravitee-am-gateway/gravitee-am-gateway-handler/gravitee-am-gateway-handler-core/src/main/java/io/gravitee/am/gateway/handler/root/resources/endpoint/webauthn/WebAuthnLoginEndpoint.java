@@ -48,15 +48,18 @@ public class WebAuthnLoginEndpoint extends AbstractEndpoint implements Handler<R
     private final Domain domain;
     private final DeviceIdentifierManager deviceIdentifierManager;
     private final UserActivityService userActivityService;
+    private final boolean sanitizeParametersEncoding;
 
     public WebAuthnLoginEndpoint(ThymeleafTemplateEngine engine,
                                  Domain domain,
                                  DeviceIdentifierManager deviceIdentifierManager,
-                                 UserActivityService userActivityService) {
+                                 UserActivityService userActivityService,
+                                 boolean sanitizeParametersEncoding) {
         super(engine);
         this.domain = domain;
         this.deviceIdentifierManager = deviceIdentifierManager;
         this.userActivityService = userActivityService;
+        this.sanitizeParametersEncoding = sanitizeParametersEncoding;
     }
 
     @Override
@@ -70,10 +73,10 @@ public class WebAuthnLoginEndpoint extends AbstractEndpoint implements Handler<R
             final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
 
             final MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
-            routingContext.put(ConstantKeys.ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams, true));
+            routingContext.put(ConstantKeys.ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams, true, sanitizeParametersEncoding));
 
             final String loginActionKey = routingContext.get(CONTEXT_PATH) + "/login";
-            routingContext.put(ConstantKeys.LOGIN_ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), loginActionKey, queryParams, true));
+            routingContext.put(ConstantKeys.LOGIN_ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), loginActionKey, queryParams, true, sanitizeParametersEncoding));
             var params = new HashMap<>();
             params.put(Parameters.CLIENT_ID, client.getClientId());
             routingContext.put(ConstantKeys.PARAM_CONTEXT_KEY, params);

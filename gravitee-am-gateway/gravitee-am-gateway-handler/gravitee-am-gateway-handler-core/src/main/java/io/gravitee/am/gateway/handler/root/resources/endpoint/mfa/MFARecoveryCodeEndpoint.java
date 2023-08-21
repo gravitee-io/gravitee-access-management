@@ -67,14 +67,17 @@ public class MFARecoveryCodeEndpoint extends AbstractEndpoint implements Handler
     private final UserService userService;
     private final FactorManager factorManager;
     private final ApplicationContext applicationContext;
+    private final boolean sanitizeParametersEncoding;
 
     public MFARecoveryCodeEndpoint(TemplateEngine templateEngine, Domain domain, UserService userService,
-                                   FactorManager factorManager, ApplicationContext applicationContext) {
+                                   FactorManager factorManager, ApplicationContext applicationContext,
+                                   boolean sanitizeParametersEncoding) {
         super(templateEngine);
         this.domain = domain;
         this.userService = userService;
         this.factorManager = factorManager;
         this.applicationContext = applicationContext;
+        this.sanitizeParametersEncoding = sanitizeParametersEncoding;
     }
 
     @Override
@@ -171,7 +174,7 @@ public class MFARecoveryCodeEndpoint extends AbstractEndpoint implements Handler
 
     private void doRedirect(RoutingContext routingContext) {
         final MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
-        final String returnUrl = getReturnUrl(routingContext, queryParams);
+        final String returnUrl = getReturnUrl(routingContext, queryParams, sanitizeParametersEncoding);
         routingContext.response()
                 .putHeader(io.vertx.core.http.HttpHeaders.LOCATION, returnUrl)
                 .setStatusCode(302)
@@ -226,7 +229,7 @@ public class MFARecoveryCodeEndpoint extends AbstractEndpoint implements Handler
         routingContext.put(recoveryCodes, codes);
         final MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
         final String recoveryCodeUrl = UriBuilderRequest.resolveProxyRequest(routingContext.request(),
-                routingContext.get(CONTEXT_PATH) + "/mfa/recovery_code", queryParams, true);
+                routingContext.get(CONTEXT_PATH) + "/mfa/recovery_code", queryParams, true, sanitizeParametersEncoding);
 
         routingContext.put("recoveryCodeURL", recoveryCodeUrl);
         // render the mfa recovery code page

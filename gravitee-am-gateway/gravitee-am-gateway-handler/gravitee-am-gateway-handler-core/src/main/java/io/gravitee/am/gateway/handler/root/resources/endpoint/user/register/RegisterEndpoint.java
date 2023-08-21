@@ -53,11 +53,13 @@ public class RegisterEndpoint extends AbstractEndpoint implements Handler<Routin
 
     private final Domain domain;
     private final BotDetectionManager botDetectionManager;
+    private final boolean sanitizeParametersEncoding;
 
-    public RegisterEndpoint(TemplateEngine engine, Domain domain, BotDetectionManager botDetectionManager) {
+    public RegisterEndpoint(TemplateEngine engine, Domain domain, BotDetectionManager botDetectionManager, boolean sanitizeParametersEncoding) {
         super(engine);
         this.domain = domain;
         this.botDetectionManager = botDetectionManager;
+        this.sanitizeParametersEncoding = sanitizeParametersEncoding;
     }
 
     @Override
@@ -88,8 +90,8 @@ public class RegisterEndpoint extends AbstractEndpoint implements Handler<Routin
 
         MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
         final String loginActionKey = routingContext.get(CONTEXT_PATH) + (isIdentifierFirstEnabled ? IDENTIFIER_FIRST_LOGIN.redirectUri() : LOGIN.redirectUri());
-        routingContext.put(ConstantKeys.ACTION_KEY, resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams, true));
-        routingContext.put(ConstantKeys.LOGIN_ACTION_KEY, resolveProxyRequest(routingContext.request(), loginActionKey, queryParams, true));
+        routingContext.put(ConstantKeys.ACTION_KEY, resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams, true, sanitizeParametersEncoding));
+        routingContext.put(ConstantKeys.LOGIN_ACTION_KEY, resolveProxyRequest(routingContext.request(), loginActionKey, queryParams, true, sanitizeParametersEncoding));
 
         final Map<String, Object> data = generateData(routingContext, domain, client);
         data.putAll(botDetectionManager.getTemplateVariables(domain, client));

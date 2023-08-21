@@ -53,6 +53,7 @@ public class CSRFHandlerImpl implements CSRFHandler {
     private static final Base64.Encoder BASE64 = Base64.getMimeEncoder();
 
     private final VertxContextPRNG RAND;
+    private final boolean sanitizeParametersEncoding;
     private final Mac mac;
 
     private boolean nagHttps;
@@ -63,8 +64,9 @@ public class CSRFHandlerImpl implements CSRFHandler {
     private String origin;
     private boolean httpOnly;
 
-    public CSRFHandlerImpl(Vertx vertx, final String secret) {
+    public CSRFHandlerImpl(Vertx vertx, final String secret, boolean sanitizeParametersEncoding) {
         this.RAND = VertxContextPRNG.current(vertx);
+        this.sanitizeParametersEncoding = sanitizeParametersEncoding;
         try {
             mac = Mac.getInstance("HmacSHA256");
             mac.init(new SecretKeySpec(secret.getBytes(), "HmacSHA256"));
@@ -166,7 +168,7 @@ public class CSRFHandlerImpl implements CSRFHandler {
         queryParams.set("error", "session_expired");
         queryParams.set("error_description", "Your session expired, please try again.");
 
-        final String uri = UriBuilderRequest.resolveProxyRequest(httpServerRequest, ctx.request().path(), queryParams, true);
+        final String uri = UriBuilderRequest.resolveProxyRequest(httpServerRequest, ctx.request().path(), queryParams, true, sanitizeParametersEncoding);
 
         ctx.response()
                 .putHeader(HttpHeaders.LOCATION, uri)

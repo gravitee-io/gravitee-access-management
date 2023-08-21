@@ -55,12 +55,15 @@ public class LoginFailureHandler extends LoginAbstractHandler {
     private final AuthenticationFlowContextService authenticationFlowContextService;
     private final Domain domain;
     private final IdentityProviderManager identityProviderManager;
+    private final boolean sanitizeParametersEncoding;
 
     public LoginFailureHandler(AuthenticationFlowContextService authenticationFlowContextService,
-                               Domain domain, IdentityProviderManager identityProviderManager) {
+                               Domain domain, IdentityProviderManager identityProviderManager,
+                               boolean sanitizeParametersEncoding) {
         this.authenticationFlowContextService = authenticationFlowContextService;
         this.domain = domain;
         this.identityProviderManager = identityProviderManager;
+        this.sanitizeParametersEncoding = sanitizeParametersEncoding;
     }
 
     @Override
@@ -168,9 +171,10 @@ public class LoginFailureHandler extends LoginAbstractHandler {
         }
         if (nonNull(context.request().getParam(Parameters.LOGIN_HINT)) && nonNull(context.request().getParam(ConstantKeys.USERNAME_PARAM_KEY))) {
             // encode login_hint parameter (to not replace '+' sign by a space ' ')
-            queryParams.set(Parameters.LOGIN_HINT, UriBuilder.encodeURIComponent(context.request().getParam(ConstantKeys.USERNAME_PARAM_KEY)));
+            queryParams.set(Parameters.LOGIN_HINT, sanitizeParametersEncoding? UriBuilder.encodeURIComponent(context.request().getParam(ConstantKeys.USERNAME_PARAM_KEY))
+                    :context.request().getParam(ConstantKeys.USERNAME_PARAM_KEY));
         }
-        String uri = UriBuilderRequest.resolveProxyRequest(req, req.path(), queryParams, true);
+        String uri = UriBuilderRequest.resolveProxyRequest(req, req.path(), queryParams, true, sanitizeParametersEncoding);
         doRedirect(resp, uri);
     }
 

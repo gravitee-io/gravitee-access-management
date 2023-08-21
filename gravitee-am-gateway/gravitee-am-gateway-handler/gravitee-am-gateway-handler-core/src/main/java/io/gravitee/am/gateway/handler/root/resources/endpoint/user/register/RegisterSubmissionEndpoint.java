@@ -39,9 +39,11 @@ public class RegisterSubmissionEndpoint implements Handler<RoutingContext> {
     public static final String GATEWAY_ENDPOINT_REGISTRATION_KEEP_PARAMS = "legacy.registration.keepParams";
 
     private final boolean keepParams;
+    private final boolean sanitizeParametersEncoding;
 
-    public RegisterSubmissionEndpoint(Environment environment) {
+    public RegisterSubmissionEndpoint(Environment environment, boolean sanitizeParametersEncoding) {
         this.keepParams = environment.getProperty(GATEWAY_ENDPOINT_REGISTRATION_KEEP_PARAMS, boolean.class, true);
+        this.sanitizeParametersEncoding = sanitizeParametersEncoding;
     }
 
     @Override
@@ -53,7 +55,7 @@ public class RegisterSubmissionEndpoint implements Handler<RoutingContext> {
         // no redirect uri has been set, redirect to the default page
         if (registrationResponse.getRedirectUri() == null || registrationResponse.getRedirectUri().isEmpty()) {
             queryParams.set(ConstantKeys.SUCCESS_PARAM_KEY, "registration_succeed");
-            String uri = UriBuilderRequest.resolveProxyRequest(context.request(), context.request().path(), queryParams, true);
+            String uri = UriBuilderRequest.resolveProxyRequest(context.request(), context.request().path(), queryParams, true, sanitizeParametersEncoding);
             doRedirect(context.response(), uri);
             return;
         }

@@ -46,7 +46,7 @@ import static org.mockito.Mockito.*;
 @RunWith(MockitoJUnitRunner.class)
 public class FormIdentifierFirstLoginStepTest {
 
-    private static final Handler<RoutingContext> redirectHandler = RedirectHandler.create("/login/identifier");
+    private static final Handler<RoutingContext> redirectHandler = RedirectHandler.create("/login/identifier", true);
 
     @Mock
     private RoutingContext routingContext;

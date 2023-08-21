@@ -87,10 +87,10 @@ public abstract class AbstractEndpoint {
         templateEngine.render(data, getTemplateFileName(client), handler);
     }
 
-    protected final String getReturnUrl(RoutingContext context, MultiMap queryParams) {
+    protected final String getReturnUrl(RoutingContext context, MultiMap queryParams, boolean sanitizeParametersEncoding) {
         return context.session().get(ConstantKeys.RETURN_URL_KEY) != null ?
                 context.session().get(ConstantKeys.RETURN_URL_KEY) :
-                UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH) + "/oauth/authorize", queryParams, true);
+                UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH) + "/oauth/authorize", queryParams, true, sanitizeParametersEncoding);
     }
 
 

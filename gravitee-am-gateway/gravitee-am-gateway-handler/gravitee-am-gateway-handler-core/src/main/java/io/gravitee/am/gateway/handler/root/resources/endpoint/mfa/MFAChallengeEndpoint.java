@@ -130,11 +130,12 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
     private final RateLimiterService rateLimiterService;
     private final VerifyAttemptService verifyAttemptService;
     private final EmailService emailService;
+    private final boolean sanitizeParametersEncoding;
 
     public MFAChallengeEndpoint(FactorManager factorManager, UserService userService, TemplateEngine engine, DeviceService deviceService,
                                 ApplicationContext applicationContext, Domain domain, CredentialService credentialService,
                                 FactorService factorService, RateLimiterService rateLimiterService,
-                                VerifyAttemptService verifyAttemptService, EmailService emailService) {
+                                VerifyAttemptService verifyAttemptService, EmailService emailService, boolean sanitizeParametersEncoding) {
         super(engine);
         this.applicationContext = applicationContext;
         this.factorManager = factorManager;
@@ -146,6 +147,7 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
         this.rateLimiterService = rateLimiterService;
         this.verifyAttemptService = verifyAttemptService;
         this.emailService = emailService;
+        this.sanitizeParametersEncoding = sanitizeParametersEncoding;
     }
 
     @Override
@@ -181,12 +183,12 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
 
             // prepare context
             final MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
-            final String action = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams, true);
+            final String action = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams, true, sanitizeParametersEncoding);
             routingContext.put(ConstantKeys.FACTOR_KEY, factor);
 
             if (factor.is(FIDO2)) {
                 final String webAuthnLoginPath = UriBuilderRequest.resolveProxyRequest(routingContext.request(),
-                        routingContext.get(CONTEXT_PATH) + "/webauthn/login", queryParams, true);
+                        routingContext.get(CONTEXT_PATH) + "/webauthn/login", queryParams, true, sanitizeParametersEncoding);
 
                 routingContext.put("webAuthnLoginPath", webAuthnLoginPath);
                 routingContext.put("userName", endUser.getUsername());
@@ -206,7 +208,7 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
             }
             if (enableAlternateMFAOptions(client, endUser)) {
                 routingContext.put(MFA_ALTERNATIVES_ENABLE_KEY, true);
-                routingContext.put(MFA_ALTERNATIVES_ACTION_KEY, resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/mfa/challenge/alternatives", queryParams, true));
+                routingContext.put(MFA_ALTERNATIVES_ACTION_KEY, resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/mfa/challenge/alternatives", queryParams, true, sanitizeParametersEncoding));
             }
 
             final FactorProvider factorProvider = factorManager.get(factor.getId());
@@ -359,7 +361,7 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
 
     private void redirectToAuthorize(RoutingContext routingContext, Client client) {
         final MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
-        final String returnURL = getReturnUrl(routingContext, queryParams);
+        final String returnURL = getReturnUrl(routingContext, queryParams, sanitizeParametersEncoding);
         //Register device if the device is active
         var rememberDeviceSettings = getRememberDeviceSettings(client);
         boolean rememberDeviceConsent = REMEMBER_DEVICE_CONSENT_ON.equalsIgnoreCase(routingContext.request().getParam(REMEMBER_DEVICE_CONSENT));
@@ -585,7 +587,7 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
         Map<String, String> parameters = new LinkedHashMap<>();
         parameters.putAll(queryStringDecoder.parameters().entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().get(0))));
         parameters.put(errorKey, errorValue);
-        String uri = UriBuilderRequest.resolveProxyRequest(req, req.path(), parameters, true);
+        String uri = UriBuilderRequest.resolveProxyRequest(req, req.path(), parameters, true, sanitizeParametersEncoding);
         doRedirect(resp, uri);
     }
 

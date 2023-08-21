@@ -69,6 +69,8 @@ public class AccountProvider extends AbstractService<ProtocolProvider> implement
     @Autowired
     private RateLimiterService rateLimiterService;
 
+    private boolean sanitizeParametersEncoding;
+
     @Override
     protected void doStart() throws Exception {
         super.doStart();
@@ -87,7 +89,7 @@ public class AccountProvider extends AbstractService<ProtocolProvider> implement
             accountRouter.route().handler(oAuth2AuthHandler);
 
             // Account profile routes
-            final AccountEndpointHandler accountHandler = new AccountEndpointHandler(accountService, domain);
+            final AccountEndpointHandler accountHandler = new AccountEndpointHandler(accountService, domain, sanitizeParametersEncoding);
             accountRouter.get(AccountRoutes.PROFILE.getRoute()).handler(accountHandler::getUser).handler(accountHandler::getProfile);
             accountRouter.put(AccountRoutes.PROFILE.getRoute()).handler(BodyHandler.create()).handler(accountHandler::getUser).handler(accountHandler::updateProfile);
             accountRouter.get(AccountRoutes.ACTIVITIES.getRoute()).handler(accountHandler::getUser).handler(accountHandler::getActivity);

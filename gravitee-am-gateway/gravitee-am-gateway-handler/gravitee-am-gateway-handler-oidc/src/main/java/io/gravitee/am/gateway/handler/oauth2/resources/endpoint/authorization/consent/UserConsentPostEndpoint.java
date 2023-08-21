@@ -37,13 +37,18 @@ import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderReques
 public class UserConsentPostEndpoint implements Handler<RoutingContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(UserConsentPostEndpoint.class);
+    private final boolean sanitizeParametersEncoding;
+
+    public UserConsentPostEndpoint(boolean sanitizeParametersEncoding) {
+        this.sanitizeParametersEncoding = sanitizeParametersEncoding;
+    }
 
     @Override
     public void handle(RoutingContext routingContext) {
         // consent has been processed, replay authorization request
         try {
             final String authorizationRequestUrl = UriBuilderRequest.resolveProxyRequest(routingContext.request(),
-                    routingContext.get(CONTEXT_PATH) + "/oauth/authorize", RequestUtils.getCleanedQueryParams(routingContext.request()), true);
+                    routingContext.get(CONTEXT_PATH) + "/oauth/authorize", RequestUtils.getCleanedQueryParams(routingContext.request()), true, sanitizeParametersEncoding);
             doRedirect(routingContext.response(), authorizationRequestUrl);
         } catch (Exception e) {
             logger.error("An error occurs while handling authorization approval request", e);

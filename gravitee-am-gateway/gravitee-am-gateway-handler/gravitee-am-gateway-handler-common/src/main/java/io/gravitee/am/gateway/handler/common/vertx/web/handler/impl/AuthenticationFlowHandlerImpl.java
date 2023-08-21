@@ -30,6 +30,7 @@ import io.gravitee.am.service.CredentialService;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -58,17 +59,20 @@ public class AuthenticationFlowHandlerImpl implements AuthenticationFlowHandler 
     @Autowired
     private WebAuthnCookieService webAuthnCookieService;
 
+    @Value("${legacy.openid.sanitizeParametersEncoding:true}")
+    private boolean sanitizeParametersEncoding;
+
     @Override
     public Handler<RoutingContext> create() {
         List<AuthenticationFlowStep> steps = new LinkedList<>();
-        steps.add(new SPNEGOStep(RedirectHandler.create("/login/SSO/SPNEGO"), identityProviderManager));
-        steps.add(new FormIdentifierFirstLoginStep(RedirectHandler.create("/login/identifier"), domain));
-        steps.add(new WebAuthnLoginStep(RedirectHandler.create("/webauthn/login"), domain, webAuthnCookieService));
-        steps.add(new FormLoginStep(RedirectHandler.create("/login")));
-        steps.add(new WebAuthnRegisterStep(domain, RedirectHandler.create("/webauthn/register"), factorManager, credentialService));
-        steps.add(new MFAEnrollStep(RedirectHandler.create("/mfa/enroll"), ruleEngine, factorManager));
-        steps.add(new MFAChallengeStep(RedirectHandler.create("/mfa/challenge"), ruleEngine, factorManager));
-        steps.add(new MFARecoveryCodeStep(RedirectHandler.create("/mfa/recovery_code"), ruleEngine, factorManager));
+        steps.add(new SPNEGOStep(RedirectHandler.create("/login/SSO/SPNEGO", sanitizeParametersEncoding), identityProviderManager));
+        steps.add(new FormIdentifierFirstLoginStep(RedirectHandler.create("/login/identifier", sanitizeParametersEncoding), domain));
+        steps.add(new WebAuthnLoginStep(RedirectHandler.create("/webauthn/login", sanitizeParametersEncoding), domain, webAuthnCookieService));
+        steps.add(new FormLoginStep(RedirectHandler.create("/login", sanitizeParametersEncoding)));
+        steps.add(new WebAuthnRegisterStep(domain, RedirectHandler.create("/webauthn/register", sanitizeParametersEncoding), factorManager, credentialService));
+        steps.add(new MFAEnrollStep(RedirectHandler.create("/mfa/enroll", sanitizeParametersEncoding), ruleEngine, factorManager));
+        steps.add(new MFAChallengeStep(RedirectHandler.create("/mfa/challenge", sanitizeParametersEncoding), ruleEngine, factorManager));
+        steps.add(new MFARecoveryCodeStep(RedirectHandler.create("/mfa/recovery_code", sanitizeParametersEncoding), ruleEngine, factorManager));
         return new AuthenticationFlowChainHandler(steps);
     }
 }

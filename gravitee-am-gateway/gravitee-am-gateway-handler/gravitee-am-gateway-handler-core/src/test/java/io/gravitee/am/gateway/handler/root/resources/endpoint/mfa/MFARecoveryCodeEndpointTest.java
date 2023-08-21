@@ -79,7 +79,7 @@ public class MFARecoveryCodeEndpointTest extends RxWebTestBase {
         client.setClientId(UUID.randomUUID().toString());
         final User user = new User();
         setFactorsFor(user);
-        mfaRecoveryCodeEndpoint = new MFARecoveryCodeEndpoint(templateEngine, domain, userService, factorManager, applicationContext);
+        mfaRecoveryCodeEndpoint = new MFARecoveryCodeEndpoint(templateEngine, domain, userService, factorManager, applicationContext, true);
 
         router.route()
                 .handler(ctx -> {

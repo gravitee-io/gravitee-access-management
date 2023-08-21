@@ -48,7 +48,7 @@ import static org.mockito.Mockito.*;
 @RunWith(MockitoJUnitRunner.class)
 public class WebAuthnLoginStepTest {
 
-    private static final Handler<RoutingContext> redirectHandler = RedirectHandler.create("/webauthn/login");
+    private static final Handler<RoutingContext> redirectHandler = RedirectHandler.create("/webauthn/login", true);
 
     @Mock
     private RoutingContext routingContext;

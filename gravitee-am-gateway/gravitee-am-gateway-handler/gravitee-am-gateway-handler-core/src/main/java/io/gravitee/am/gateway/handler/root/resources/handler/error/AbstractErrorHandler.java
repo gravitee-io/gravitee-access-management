@@ -47,9 +47,11 @@ public abstract class AbstractErrorHandler implements Handler<RoutingContext> {
 
     protected final Logger logger = LoggerFactory.getLogger(this.getClass());
     protected final String errorPage;
+    private final boolean sanitizeParametersEncoding;
 
-    public AbstractErrorHandler(String errorPage) {
+    public AbstractErrorHandler(String errorPage, boolean sanitizeParametersEncoding) {
         this.errorPage = errorPage;
+        this.sanitizeParametersEncoding = sanitizeParametersEncoding;
     }
 
     @Override
@@ -77,7 +79,7 @@ public abstract class AbstractErrorHandler implements Handler<RoutingContext> {
                 parameters.set(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, "Unexpected error occurred");
 
                 // redirect
-                String proxiedErrorPage = UriBuilderRequest.resolveProxyRequest(request, errorPageURL, parameters, true);
+                String proxiedErrorPage = UriBuilderRequest.resolveProxyRequest(request, errorPageURL, parameters, true, sanitizeParametersEncoding);
                 doRedirect(routingContext.response(), proxiedErrorPage);
             }
         }

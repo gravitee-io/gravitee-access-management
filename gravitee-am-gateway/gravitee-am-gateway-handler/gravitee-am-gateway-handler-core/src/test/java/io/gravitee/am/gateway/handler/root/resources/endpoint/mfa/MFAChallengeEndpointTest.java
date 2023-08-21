@@ -142,7 +142,7 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
                     ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
                     ctx.next();
                 })
-                .handler(new MFAChallengeEndpoint(factorManager, userService, engine, deviceService, applicationContext, domain, credentialService, factorService, rateLimiterService, verifyAttemptService, emailService));
+                .handler(new MFAChallengeEndpoint(factorManager, userService, engine, deviceService, applicationContext, domain, credentialService, factorService, rateLimiterService, verifyAttemptService, emailService, true));
 
         testRequest(
                 HttpMethod.POST,
@@ -188,8 +188,8 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
                     ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
                     ctx.next();
                 })
-                .handler(new MFAChallengeEndpoint(factorManager, userService, engine, deviceService, applicationContext, domain, credentialService, factorService, rateLimiterService, verifyAttemptService, emailService))
-                .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService));
+                .handler(new MFAChallengeEndpoint(factorManager, userService, engine, deviceService, applicationContext, domain, credentialService, factorService, rateLimiterService, verifyAttemptService, emailService, true))
+                .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService, true));
 
         testRequest(
                 HttpMethod.POST,
@@ -230,8 +230,8 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
               ctx.next();
           })
           .handler(new MFAChallengeEndpoint(factorManager, userService, engine, deviceService, applicationContext, domain, credentialService,
-                  factorService, rateLimiterService, verifyAttemptService, emailService))
-          .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService));
+                  factorService, rateLimiterService, verifyAttemptService, emailService, true))
+          .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService, true));
 
       testRequest(
           HttpMethod.GET,
@@ -266,8 +266,8 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
           ctx.next();
         })
         .handler(new MFAChallengeEndpoint(factorManager, userService, engine, deviceService, applicationContext, domain, credentialService,
-                factorService, rateLimiterService, verifyAttemptService, emailService))
-        .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService));
+                factorService, rateLimiterService, verifyAttemptService, emailService, true))
+        .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService, true));
 
     testRequest(
         HttpMethod.GET,
@@ -291,8 +291,8 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
           ctx.next();
         })
         .handler(new MFAChallengeEndpoint(factorManager, userService, engine, deviceService, applicationContext, domain, credentialService,
-                factorService, rateLimiterService, verifyAttemptService, emailService))
-        .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService));
+                factorService, rateLimiterService, verifyAttemptService, emailService, true))
+        .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService, true));
 
     testRequest(
         HttpMethod.GET,

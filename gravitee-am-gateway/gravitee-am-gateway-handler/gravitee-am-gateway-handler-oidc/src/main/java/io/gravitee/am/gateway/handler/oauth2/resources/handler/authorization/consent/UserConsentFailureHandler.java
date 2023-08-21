@@ -35,6 +35,11 @@ import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderReques
  */
 public class UserConsentFailureHandler implements Handler<RoutingContext> {
     private static final Logger logger = LoggerFactory.getLogger(UserConsentFailureHandler.class);
+    private final boolean sanitizeParametersEncoding;
+
+    public UserConsentFailureHandler(boolean sanitizeParametersEncoding) {
+        this.sanitizeParametersEncoding = sanitizeParametersEncoding;
+    }
 
     @Override
     public void handle(RoutingContext context) {
@@ -68,7 +73,7 @@ public class UserConsentFailureHandler implements Handler<RoutingContext> {
             }
 
             // go back to login page
-            String uri = UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH) + "/login", queryParams, true);
+            String uri = UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH) + "/login", queryParams, true, sanitizeParametersEncoding);
             doRedirect(context.response(), uri);
         } catch (Exception ex) {
             logger.error("An error occurs while redirecting to {}", context.request().absoluteURI(), ex);

@@ -31,10 +31,6 @@ import io.reactivex.Single;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.reactivex.core.buffer.Buffer;
 import io.vertx.reactivex.core.http.HttpClientRequest;
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.User;
-import io.reactivex.Single;
-import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.ext.web.handler.BodyHandler;
@@ -63,8 +59,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -93,7 +87,7 @@ public class AccountEndpointHandlerTest extends RxWebTestBase {
 
     private AccountEndpointHandler accountEndpointHandler;
 
-    private ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper mapper = new ObjectMapper();
 
     @Override
     public void setUp() throws Exception {
@@ -105,7 +99,7 @@ public class AccountEndpointHandlerTest extends RxWebTestBase {
         this.domain.setSelfServiceAccountManagementSettings(selfAccountSettings);
 
         when(user.getUsername()).thenReturn("user1");
-        accountEndpointHandler = new AccountEndpointHandler(accountService, domain);
+        accountEndpointHandler = new AccountEndpointHandler(accountService, domain, true);
 
         router.route()
                 .handler(ctx -> {

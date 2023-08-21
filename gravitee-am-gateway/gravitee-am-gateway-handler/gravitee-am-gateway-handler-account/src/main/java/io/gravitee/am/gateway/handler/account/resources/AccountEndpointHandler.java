@@ -69,10 +69,12 @@ public class AccountEndpointHandler {
     public static final String ERROR_MSG_ACCESS_TOKEN_TOO_OLD = "Access token does not conform with expiration period. Please generate a new token.";
     private final AccountService accountService;
     private final Domain domain;
+    private final boolean sanitizeParametersEncoding;
 
-    public AccountEndpointHandler(AccountService accountService, Domain domain) {
+    public AccountEndpointHandler(AccountService accountService, Domain domain, boolean sanitizeParametersEncoding) {
         this.accountService = accountService;
         this.domain = domain;
+        this.sanitizeParametersEncoding = sanitizeParametersEncoding;
     }
 
     public void getUser(RoutingContext routingContext) {
@@ -193,7 +195,7 @@ public class AccountEndpointHandler {
 
         final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         final String path = AccountRoutes.CHANGE_PASSWORD_REDIRECT.getRoute() + "?client_id=" + client.getClientId();
-        RedirectHandler.create(path).handle(routingContext);
+        RedirectHandler.create(path, sanitizeParametersEncoding).handle(routingContext);
     }
 
     public void updateProfile(RoutingContext routingContext) {

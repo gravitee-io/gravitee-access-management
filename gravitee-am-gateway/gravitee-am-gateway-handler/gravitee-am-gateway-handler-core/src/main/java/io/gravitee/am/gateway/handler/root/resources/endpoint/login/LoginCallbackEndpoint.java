@@ -17,10 +17,8 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.login;
 
 import com.google.common.net.HttpHeaders;
 import io.gravitee.am.common.utils.ConstantKeys;
-import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
 import io.vertx.core.Handler;
-import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerResponse;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.Session;
@@ -34,10 +32,16 @@ import static io.gravitee.am.common.utils.ConstantKeys.PARAM_CONTEXT_KEY;
  */
 public class LoginCallbackEndpoint extends AbstractEndpoint implements Handler<RoutingContext> {
 
+    private final boolean sanitizeParametersEncoding;
+
+    public LoginCallbackEndpoint(boolean sanitizeParametersEncoding) {
+        this.sanitizeParametersEncoding = sanitizeParametersEncoding;
+    }
+
     @Override
     public void handle(RoutingContext routingContext) {
         final Session session = routingContext.session();
-        final String returnURL = getReturnUrl(routingContext, routingContext.get(PARAM_CONTEXT_KEY));
+        final String returnURL = getReturnUrl(routingContext, routingContext.get(PARAM_CONTEXT_KEY), sanitizeParametersEncoding);
 
         // if we have an id_token, put in the session context for post step (mainly the user consent step)
         if (session != null) {

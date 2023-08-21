@@ -51,11 +51,13 @@ public class ForgotPasswordEndpoint extends AbstractEndpoint implements Handler<
     private static final Logger logger = LoggerFactory.getLogger(ForgotPasswordEndpoint.class);
     private final Domain domain;
     private final BotDetectionManager botDetectionManager;
+    private boolean sanitizeParametersEncoding;
 
-    public ForgotPasswordEndpoint(TemplateEngine engine, Domain domain, BotDetectionManager botDetectionManager) {
+    public ForgotPasswordEndpoint(TemplateEngine engine, Domain domain, BotDetectionManager botDetectionManager, boolean sanitizeParametersEncoding) {
         super(engine);
         this.domain = domain;
         this.botDetectionManager = botDetectionManager;
+        this.sanitizeParametersEncoding = sanitizeParametersEncoding;
     }
 
     @Override
@@ -82,8 +84,8 @@ public class ForgotPasswordEndpoint extends AbstractEndpoint implements Handler<
         routingContext.put(ConstantKeys.PARAM_CONTEXT_KEY, params);
 
         final MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
-        routingContext.put(ConstantKeys.ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams, true));
-        routingContext.put(ConstantKeys.LOGIN_ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/login", queryParams, true));
+        routingContext.put(ConstantKeys.ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams, true, sanitizeParametersEncoding));
+        routingContext.put(ConstantKeys.LOGIN_ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/login", queryParams, true, sanitizeParametersEncoding));
 
         AccountSettings settings = AccountSettings.getInstance(domain, client);
         if (settings != null && settings.isResetPasswordCustomForm()) {

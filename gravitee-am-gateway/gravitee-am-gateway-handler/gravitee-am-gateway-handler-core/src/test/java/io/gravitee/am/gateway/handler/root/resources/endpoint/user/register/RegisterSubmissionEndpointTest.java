@@ -64,8 +64,8 @@ public class RegisterSubmissionEndpointTest extends RxWebTestBase {
         router.route(HttpMethod.POST, "/register")
                 .handler(BodyHandler.create())
                 .handler(new RegisterProcessHandler(userService, domain))
-                .handler(new RegisterSubmissionEndpoint(environment))
-                .failureHandler(new RegisterFailureHandler());
+                .handler(new RegisterSubmissionEndpoint(environment, true))
+                .failureHandler(new RegisterFailureHandler(true));
     }
 
     @Test

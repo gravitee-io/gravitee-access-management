@@ -25,7 +25,7 @@ import io.vertx.reactivex.ext.web.RoutingContext;
  */
 public interface RedirectHandler {
 
-    static Handler<RoutingContext> create(String path) {
-        return new RedirectHandlerImpl(path);
+    static Handler<RoutingContext> create(String path, boolean sanitizeParametersEncoding) {
+        return new RedirectHandlerImpl(path, sanitizeParametersEncoding);
     }
 }

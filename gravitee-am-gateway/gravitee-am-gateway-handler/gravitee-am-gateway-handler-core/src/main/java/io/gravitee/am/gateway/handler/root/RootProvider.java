@@ -135,6 +135,7 @@ import io.vertx.reactivex.ext.web.handler.StaticHandler;
 import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 
 /**
@@ -290,6 +291,8 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
     @Autowired
     private EmailService emailService;
 
+    @Value("${legacy.openid.sanitizeParametersEncoding:true}")
+    private boolean sanitizeParametersEncoding;
 
     @Override
     protected void doStart() throws Exception {
@@ -352,7 +355,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(new LoginSocialAuthenticationHandler(identityProviderManager, jwtService, certificateManager))
                 .handler(policyChainHandler.create(ExtensionPoint.PRE_LOGIN_IDENTIFIER))
                 .handler(localeHandler)
-                .handler(new IdentifierFirstLoginEndpoint(thymeleafTemplateEngine, domain, botDetectionManager));
+                .handler(new IdentifierFirstLoginEndpoint(thymeleafTemplateEngine, domain, botDetectionManager, sanitizeParametersEncoding));
 
         rootRouter.post(PATH_IDENTIFIER_FIRST_LOGIN)
                 .handler(clientRequestParseHandler)
@@ -360,7 +363,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(new LoginSocialAuthenticationHandler(identityProviderManager, jwtService, certificateManager))
                 .handler(policyChainHandler.create(ExtensionPoint.POST_LOGIN_IDENTIFIER))
                 .handler(new LoginSelectionRuleHandler(true))
-                .handler(new IdentifierFirstLoginEndpoint(thymeleafTemplateEngine, domain, botDetectionManager));
+                .handler(new IdentifierFirstLoginEndpoint(thymeleafTemplateEngine, domain, botDetectionManager, sanitizeParametersEncoding));
 
         // login route
         rootRouter.get(PATH_LOGIN)
@@ -370,7 +373,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(new LoginHideFormHandler(domain))
                 .handler(new LoginSelectionRuleHandler(false))
                 .handler(localeHandler)
-                .handler(new LoginEndpoint(thymeleafTemplateEngine, domain, botDetectionManager, deviceIdentifierManager, userActivityService));
+                .handler(new LoginEndpoint(thymeleafTemplateEngine, domain, botDetectionManager, deviceIdentifierManager, userActivityService, sanitizeParametersEncoding));
 
         rootRouter.post(PATH_LOGIN)
                 .handler(clientRequestParseHandler)
@@ -381,10 +384,10 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(userActivityHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.POST_LOGIN))
                 .handler(loginPostWebAuthnHandler)
-                .handler(new LoginPostEndpoint());
+                .handler(new LoginPostEndpoint(sanitizeParametersEncoding));
 
         rootRouter.route(PATH_LOGIN)
-                .failureHandler(new LoginFailureHandler(authenticationFlowContextService, domain, identityProviderManager));
+                .failureHandler(new LoginFailureHandler(authenticationFlowContextService, domain, identityProviderManager, sanitizeParametersEncoding));
 
         // logout route
         rootRouter.route(PATH_LOGOUT)
@@ -397,7 +400,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         Handler<RoutingContext> loginCallbackParseHandler = new LoginCallbackParseHandler(clientSyncService, identityProviderManager, jwtService, certificateManager);
         Handler<RoutingContext> loginCallbackOpenIDConnectFlowHandler = new LoginCallbackOpenIDConnectFlowHandler(thymeleafTemplateEngine);
         Handler<RoutingContext> loginCallbackFailureHandler = new LoginCallbackFailureHandler(domain, authenticationFlowContextService, identityProviderManager);
-        Handler<RoutingContext> loginCallbackEndpoint = new LoginCallbackEndpoint();
+        Handler<RoutingContext> loginCallbackEndpoint = new LoginCallbackEndpoint(sanitizeParametersEncoding);
         Handler<RoutingContext> loginSSOPOSTEndpoint = new LoginSSOPOSTEndpoint(thymeleafTemplateEngine);
         rootRouter.get(PATH_LOGIN_CALLBACK)
                 .handler(loginCallbackOpenIDConnectFlowHandler)
@@ -419,30 +422,30 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(loginSSOPOSTEndpoint);
         rootRouter.get(PATH_LOGIN_SSO_SPNEGO)
                 .handler(policyChainHandler.create(ExtensionPoint.PRE_LOGIN))
-                .handler(new LoginNegotiateAuthenticationHandler(userAuthProvider, thymeleafTemplateEngine))
+                .handler(new LoginNegotiateAuthenticationHandler(userAuthProvider, thymeleafTemplateEngine, sanitizeParametersEncoding))
                 .handler(policyChainHandler.create(ExtensionPoint.POST_LOGIN))
-                .handler(new LoginPostEndpoint());
+                .handler(new LoginPostEndpoint(sanitizeParametersEncoding));
 
         // MFA route
         rootRouter.route(PATH_MFA_ENROLL)
                 .handler(clientRequestParseHandler)
                 .handler(localeHandler)
-                .handler(new MFAEnrollEndpoint(factorManager, thymeleafTemplateEngine, userService, domain));
+                .handler(new MFAEnrollEndpoint(factorManager, thymeleafTemplateEngine, userService, domain, sanitizeParametersEncoding));
         rootRouter.route(PATH_MFA_CHALLENGE)
                 .handler(clientRequestParseHandler)
                 .handler(rememberDeviceSettingsHandler)
                 .handler(localeHandler)
                 .handler(new MFAChallengeEndpoint(factorManager, userService, thymeleafTemplateEngine, deviceService, applicationContext,
-                        domain, credentialService, factorService, rateLimiterService, verifyAttemptService, emailService))
-                .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService));
+                        domain, credentialService, factorService, rateLimiterService, verifyAttemptService, emailService, sanitizeParametersEncoding))
+                .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService, sanitizeParametersEncoding));
         rootRouter.route(PATH_MFA_CHALLENGE_ALTERNATIVES)
                 .handler(clientRequestParseHandler)
                 .handler(localeHandler)
-                .handler(new MFAChallengeAlternativesEndpoint(thymeleafTemplateEngine, factorManager, domain));
+                .handler(new MFAChallengeAlternativesEndpoint(thymeleafTemplateEngine, factorManager, domain, sanitizeParametersEncoding));
         rootRouter.route(PATH_MFA_RECOVERY_CODE)
                 .handler(clientRequestParseHandler)
                 .handler(localeHandler)
-                .handler(new MFARecoveryCodeEndpoint(thymeleafTemplateEngine, domain, userService, factorManager, applicationContext));
+                .handler(new MFARecoveryCodeEndpoint(thymeleafTemplateEngine, domain, userService, factorManager, applicationContext, sanitizeParametersEncoding));
 
         // WebAuthn route
         Handler<RoutingContext> webAuthnAccessHandler = new WebAuthnAccessHandler(domain, factorManager);
@@ -451,13 +454,13 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(clientRequestParseHandler)
                 .handler(webAuthnAccessHandler)
                 .handler(localeHandler)
-                .handler(new WebAuthnRegisterEndpoint(thymeleafTemplateEngine, domain, factorManager));
+                .handler(new WebAuthnRegisterEndpoint(thymeleafTemplateEngine, domain, factorManager, sanitizeParametersEncoding));
         rootRouter.post(PATH_WEBAUTHN_REGISTER)
                 .handler(clientRequestParseHandler)
                 .handler(webAuthnAccessHandler)
                 .handler(new WebAuthnRegisterHandler(factorService, factorManager, domain, webAuthn, credentialService))
                 .handler(webAuthnRememberDeviceHandler)
-                .handler(new WebAuthnRegisterPostEndpoint());
+                .handler(new WebAuthnRegisterPostEndpoint(sanitizeParametersEncoding));
         rootRouter.route(PATH_WEBAUTHN_REGISTER_CREDENTIALS)
                 .handler(clientRequestParseHandler)
                 .handler(webAuthnAccessHandler)
@@ -467,7 +470,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(webAuthnAccessHandler)
                 .handler(new LoginSocialAuthenticationHandler(identityProviderManager, jwtService, certificateManager))
                 .handler(localeHandler)
-                .handler(new WebAuthnLoginEndpoint(thymeleafTemplateEngine, domain, deviceIdentifierManager, userActivityService));
+                .handler(new WebAuthnLoginEndpoint(thymeleafTemplateEngine, domain, deviceIdentifierManager, userActivityService, sanitizeParametersEncoding));
         rootRouter.post(PATH_WEBAUTHN_LOGIN)
                 .handler(clientRequestParseHandler)
                 .handler(webAuthnAccessHandler)
@@ -476,7 +479,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(userActivityHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.POST_LOGIN))
                 .handler(webAuthnRememberDeviceHandler)
-                .handler(new WebAuthnLoginPostEndpoint());
+                .handler(new WebAuthnLoginPostEndpoint(sanitizeParametersEncoding));
         rootRouter.route(PATH_WEBAUTHN_LOGIN_CREDENTIALS)
                 .handler(clientRequestParseHandler)
                 .handler(webAuthnAccessHandler)
@@ -487,7 +490,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(new WebAuthnResponseHandler(factorService, factorManager, domain, webAuthn, credentialService, userAuthenticationManager))
                 .handler(deviceIdentifierHandler)
                 .handler(userActivityHandler)
-                .handler(new WebAuthnResponseEndpoint());
+                .handler(new WebAuthnResponseEndpoint(sanitizeParametersEncoding));
 
         // Registration route
         Handler<RoutingContext> registerAccessHandler = new RegisterAccessHandler(domain);
@@ -497,7 +500,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(new LoginSocialAuthenticationHandler(identityProviderManager, jwtService, certificateManager))
                 .handler(policyChainHandler.create(ExtensionPoint.PRE_REGISTER))
                 .handler(localeHandler)
-                .handler(new RegisterEndpoint(thymeleafTemplateEngine, domain, botDetectionManager));
+                .handler(new RegisterEndpoint(thymeleafTemplateEngine, domain, botDetectionManager, sanitizeParametersEncoding));
         rootRouter.route(HttpMethod.POST, PATH_REGISTER)
                 .handler(new RegisterSubmissionRequestParseHandler())
                 .handler(clientRequestParseHandlerOptional)
@@ -506,9 +509,9 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(passwordPolicyRequestParseHandler)
                 .handler(new RegisterProcessHandler(userService, domain))
                 .handler(policyChainHandler.create(ExtensionPoint.POST_REGISTER))
-                .handler(new RegisterSubmissionEndpoint(environment));
+                .handler(new RegisterSubmissionEndpoint(environment, sanitizeParametersEncoding));
         rootRouter.route(PATH_REGISTER)
-                .failureHandler(new RegisterFailureHandler());
+                .failureHandler(new RegisterFailureHandler(sanitizeParametersEncoding));
 
         rootRouter.route(HttpMethod.GET, PATH_CONFIRM_REGISTRATION)
                 .handler(new RegisterConfirmationRequestParseHandler(userService))
@@ -525,12 +528,12 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
 
         // Forgot password route
         final var forgotPasswordAccessHandler = new ForgotPasswordAccessHandler(domain);
-        final var resetPasswordFailureHandler = new ErrorHandler(PATH_RESET_PASSWORD);
+        final var resetPasswordFailureHandler = new ErrorHandler(PATH_RESET_PASSWORD, sanitizeParametersEncoding);
         rootRouter.route(HttpMethod.GET, PATH_FORGOT_PASSWORD)
                 .handler(clientRequestParseHandler)
                 .handler(forgotPasswordAccessHandler)
                 .handler(localeHandler)
-                .handler(new ForgotPasswordEndpoint(thymeleafTemplateEngine, domain, botDetectionManager));
+                .handler(new ForgotPasswordEndpoint(thymeleafTemplateEngine, domain, botDetectionManager, sanitizeParametersEncoding));
         rootRouter.route(HttpMethod.POST, PATH_FORGOT_PASSWORD)
                 .handler(new ForgotPasswordSubmissionRequestParseHandler(domain))
                 .handler(clientRequestParseHandler)
@@ -544,7 +547,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(new ResetPasswordOneTimeTokenHandler())
                 .handler(localeHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.PRE_RESET_PASSWORD))
-                .handler(new ResetPasswordEndpoint(thymeleafTemplateEngine, domain));
+                .handler(new ResetPasswordEndpoint(thymeleafTemplateEngine, domain, sanitizeParametersEncoding));
         rootRouter.route(HttpMethod.POST, PATH_RESET_PASSWORD)
                 .handler(new ResetPasswordSubmissionRequestParseHandler())
                 .handler(userTokenRequestParseHandler)
@@ -771,7 +774,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
     }
 
     private void errorHandler(Router router) {
-        Handler<RoutingContext> errorHandler = new ErrorHandler(PATH_ERROR);
+        Handler<RoutingContext> errorHandler = new ErrorHandler(PATH_ERROR, sanitizeParametersEncoding);
         router.route(PATH_FORGOT_PASSWORD).failureHandler(errorHandler);
         router.route(PATH_LOGOUT).failureHandler(errorHandler);
         router.route(PATH_LOGOUT_CALLBACK).failureHandler(errorHandler);

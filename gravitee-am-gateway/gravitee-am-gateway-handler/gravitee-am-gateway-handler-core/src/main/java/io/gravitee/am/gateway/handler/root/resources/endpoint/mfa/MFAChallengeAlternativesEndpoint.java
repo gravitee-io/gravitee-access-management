@@ -53,12 +53,15 @@ public class MFAChallengeAlternativesEndpoint extends AbstractEndpoint implement
     private static final Logger logger = LoggerFactory.getLogger(MFAChallengeAlternativesEndpoint.class);
     private final FactorManager factorManager;
     private final Domain domain;
+    private final boolean sanitizeParametersEncoding;
 
     public MFAChallengeAlternativesEndpoint(TemplateEngine templateEngine,
-                                            FactorManager factorManager, Domain domain) {
+                                            FactorManager factorManager, Domain domain,
+                                            boolean sanitizeParametersEncoding) {
         super(templateEngine);
         this.factorManager = factorManager;
         this.domain = domain;
+        this.sanitizeParametersEncoding = sanitizeParametersEncoding;
     }
 
     @Override
@@ -99,7 +102,7 @@ public class MFAChallengeAlternativesEndpoint extends AbstractEndpoint implement
         final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         final List<Factor> factors = getEnabledFactors(client, endUser);
         final MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
-        final String action = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams, true);
+        final String action = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams, true, sanitizeParametersEncoding);
         routingContext.put(ConstantKeys.FACTORS_KEY, factors);
         routingContext.put(ConstantKeys.ACTION_KEY, action);
 
@@ -129,7 +132,7 @@ public class MFAChallengeAlternativesEndpoint extends AbstractEndpoint implement
 
         // redirect to MFA challenge step
         final MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
-        final String returnURL = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/mfa/challenge", queryParams, true);
+        final String returnURL = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/mfa/challenge", queryParams, true, sanitizeParametersEncoding);
         doRedirect(routingContext.response(), returnURL);
     }
 

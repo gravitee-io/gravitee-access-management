@@ -31,6 +31,12 @@ import io.vertx.reactivex.ext.web.RoutingContext;
  */
 public class WebAuthnLoginPostEndpoint extends AbstractEndpoint implements Handler<RoutingContext>  {
 
+    private final boolean sanitizeParametersEncoding;
+
+    public WebAuthnLoginPostEndpoint(boolean sanitizeParametersEncoding) {
+        this.sanitizeParametersEncoding = sanitizeParametersEncoding;
+    }
+
     @Override
     public void handle(RoutingContext ctx) {
         // support for potential cached javascript files
@@ -56,7 +62,7 @@ public class WebAuthnLoginPostEndpoint extends AbstractEndpoint implements Handl
         // at this stage the user has been authenticated
         // redirect the user to the original request
         final MultiMap queryParams = RequestUtils.getCleanedQueryParams(ctx.request());
-        final String redirectUri = getReturnUrl(ctx, queryParams);
+        final String redirectUri = getReturnUrl(ctx, queryParams, sanitizeParametersEncoding);
 
         ctx.response().putHeader(io.vertx.core.http.HttpHeaders.LOCATION, redirectUri)
                 .setStatusCode(302)
