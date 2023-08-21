@@ -26,8 +26,7 @@ import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.Suspended;
-
-import javax.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Kamiel Ahmadpour (kamiel.ahmadpour at graviteesource.com)
@@ -35,7 +34,7 @@ import javax.inject.Inject;
  */
 public class LicenseResource extends AbstractResource {
 
-    @Inject
+    @Autowired
     private NodeLicenseService licenseService;
 
     @GET
