@@ -28,12 +28,14 @@ export class ProviderCreationStep1Component implements OnInit {
   identities: IdentityProvider[];
   @Input() provider;
   filter: string;
+  filteredIdentities: IdentityProvider[];
 
   constructor(private organizationService: OrganizationService, private route: ActivatedRoute) {}
 
   ngOnInit() {
     this.filter = '';
     this.identities = this.route.snapshot.data['identities'];
+    this.filteredIdentities = this.getFilteredIdentities();
   }
 
   private initDomainWhitelist(idpType: string) {
@@ -46,10 +48,10 @@ export class ProviderCreationStep1Component implements OnInit {
     }
   }
 
-  selectProviderType({ id, external }) {
-    this.provider.external = external === true;
-    this.provider.type = id;
-    this.initDomainWhitelist(id);
+  selectProviderType(idp: IdentityProvider) {
+    this.provider.external = idp.external === true;
+    this.provider.type = idp.id;
+    this.initDomainWhitelist(idp.id);
   }
 
   displayName(identityProvider) {
@@ -64,7 +66,7 @@ export class ProviderCreationStep1Component implements OnInit {
     return `<i class="material-icons">storage</i>`;
   }
 
-  getFilteredIdentities() {
+  private getFilteredIdentities() {
     const identities = Object.values(this.identities);
     if (this.filter != null && this.filter.trim().length > 0) {
       return identities.filter((identity) => {
@@ -83,5 +85,9 @@ export class ProviderCreationStep1Component implements OnInit {
 
   clear() {
     this.filter = '';
+  }
+
+  onFilterChange() {
+    this.filteredIdentities = this.getFilteredIdentities();
   }
 }
