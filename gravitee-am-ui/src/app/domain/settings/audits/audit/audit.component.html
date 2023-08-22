@@ -24,8 +24,8 @@
         <mat-form-field *ngIf="audit.timestamp" appearance="outline" floatLabel="always">
           <mat-label>Status</mat-label>
           <mat-chip-list disabled="true">
-            <mat-chip [color]="audit.outcome?.status === 'SUCCESS'? 'accent':'warn'" selected>
-              {{audit.outcome?.status}}
+            <mat-chip [color]="audit.outcome?.status === 'SUCCESS' ? 'accent' : 'warn'" selected>
+              {{ audit.outcome?.status }}
             </mat-chip>
           </mat-chip-list>
           <mat-hint>Status of the event</mat-hint>

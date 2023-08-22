@@ -277,7 +277,7 @@ export const routes: Routes = [
               menu: {
                 label: 'Authentication',
                 section: 'Console',
-                level: 'level2'
+                level: 'level2',
               },
               perms: {
                 only: ['organization_settings_read'],
@@ -346,7 +346,7 @@ export const routes: Routes = [
               menu: {
                 label: 'Identity providers',
                 section: 'Console',
-                level: 'level2'
+                level: 'level2',
               },
               perms: {
                 only: ['organization_identity_provider_list'],
@@ -406,7 +406,7 @@ export const routes: Routes = [
               menu: {
                 label: 'Users',
                 section: 'User Management',
-                level: 'level2'
+                level: 'level2',
               },
               perms: {
                 only: ['organization_user_list'],
@@ -464,7 +464,7 @@ export const routes: Routes = [
               menu: {
                 label: 'Groups',
                 section: 'User Management',
-                level: 'level2'
+                level: 'level2',
               },
               perms: {
                 only: ['organization_group_list'],
@@ -519,7 +519,7 @@ export const routes: Routes = [
               menu: {
                 label: 'Roles',
                 section: 'User Management',
-                level: 'level2'
+                level: 'level2',
               },
               perms: {
                 only: ['organization_role_list'],
@@ -569,7 +569,7 @@ export const routes: Routes = [
               menu: {
                 label: 'Sharding tags',
                 section: 'Gateway',
-                level: 'level2'
+                level: 'level2',
               },
               perms: {
                 only: ['organization_tag_list'],
@@ -619,7 +619,7 @@ export const routes: Routes = [
               menu: {
                 label: 'Entrypoints',
                 section: 'Gateway',
-                level: 'level2'
+                level: 'level2',
               },
               perms: {
                 only: ['organization_entrypoint_list'],
@@ -657,11 +657,11 @@ export const routes: Routes = [
                     label: 'entrypoint.name',
                   },
                   perms: {
-                    only: ['organization_entrypoint_read']
-                  }
-                }
-              }
-            ]
+                    only: ['organization_entrypoint_read'],
+                  },
+                },
+              },
+            ],
           },
           {
             path: 'audits',
@@ -670,11 +670,11 @@ export const routes: Routes = [
               menu: {
                 label: 'Audit',
                 section: 'Audit',
-                level: 'level2'
+                level: 'level2',
               },
               perms: {
-                only: ['organization_audit_list']
-              }
+                only: ['organization_audit_list'],
+              },
             },
             children: [
               {
@@ -687,40 +687,40 @@ export const routes: Routes = [
                 component: AuditComponent,
                 canActivate: [AuthGuard],
                 resolve: {
-                  audit: AuditResolver
+                  audit: AuditResolver,
                 },
                 data: {
                   breadcrumb: {
-                    label: 'audit.id'
+                    label: 'audit.id',
                   },
                   perms: {
-                    only: ['organization_audit_read']
-                  }
-                }
-              }
-            ]
+                    only: ['organization_audit_read'],
+                  },
+                },
+              },
+            ],
           },
           {
             path: 'cockpit',
             component: CockpitComponent,
             canActivate: [AuthGuard],
             resolve: {
-              installation: InstallationResolver
+              installation: InstallationResolver,
             },
             data: {
               menu: {
                 label: 'Discover cockpit',
                 section: 'Cockpit',
-                level: 'level2'
+                level: 'level2',
               },
               perms: {
-                only: ['installation_read']
-              }
-            }
-          }
-        ]
-      }
-    ]
+                only: ['installation_read'],
+              },
+            },
+          },
+        ],
+      },
+    ],
   },
   {
     path: 'environments',
@@ -2565,10 +2565,10 @@ export const routes: Routes = [
                           },
                         },
                         resolve: {
-                          certificates: CertificatesResolver
-                        }
-                      }
-                    ]
+                          certificates: CertificatesResolver,
+                        },
+                      },
+                    ],
                   },
                   {
                     path: 'alerts',

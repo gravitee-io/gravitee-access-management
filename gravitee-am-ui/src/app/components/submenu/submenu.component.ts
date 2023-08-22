@@ -56,7 +56,7 @@ export class SubmenuComponent implements OnInit, OnDestroy {
   }
 
   goBack(): void {
-    this.router.navigate([''] );
+    this.router.navigate(['']);
   }
 }
 
