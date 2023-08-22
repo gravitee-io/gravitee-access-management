@@ -40,14 +40,10 @@ export class AppComponent implements OnInit {
   }
 
   displaySidenav(): boolean {
-    return this.router.url !== '/login' &&
-      this.router.url !== '/newsletter' &&
-      !this.router.url.startsWith('/settings');
+    return this.router.url !== '/login' && this.router.url !== '/newsletter' && !this.router.url.startsWith('/settings');
   }
 
   displayNavbar(): boolean {
-    return this.router.url !== '/login' &&
-      this.router.url !== '/newsletter' &&
-      !this.router.url.startsWith('/settings');
+    return this.router.url !== '/login' && this.router.url !== '/newsletter' && !this.router.url.startsWith('/settings');
   }
 }
