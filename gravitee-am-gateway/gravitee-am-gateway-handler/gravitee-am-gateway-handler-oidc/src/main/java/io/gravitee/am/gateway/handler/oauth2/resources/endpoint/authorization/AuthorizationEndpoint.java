@@ -23,6 +23,7 @@ import io.gravitee.am.gateway.handler.oauth2.exception.ServerErrorException;
 import io.gravitee.am.gateway.handler.oauth2.service.par.PushedAuthorizationRequestService;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.response.AuthorizationResponse;
+import io.gravitee.am.gateway.handler.oauth2.service.response.HybridResponse;
 import io.gravitee.am.gateway.handler.oidc.service.flow.Flow;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
@@ -116,7 +117,15 @@ public class AuthorizationEndpoint implements Handler<RoutingContext> {
             // In form_post mode, Authorization Response parameters are encoded as HTML form values that are auto-submitted in the User Agent,
             // and thus are transmitted via the HTTP POST method to the Client.
             // Prepare context to render post form.
+            logger.info("RequestUtils.getCleanedQueryParams");
             final MultiMap queryParams = RequestUtils.getCleanedQueryParams(redirectUri);
+            logger.info("queryParams.size {}", queryParams.size());
+            if (response instanceof HybridResponse) {
+                HybridResponse hybridResponse = (HybridResponse) response;
+                queryParams.add("code", hybridResponse.getCode());
+                queryParams.add("state", hybridResponse.getState());
+                queryParams.add("id_token", hybridResponse.getIdToken());
+            }
             context.put(ACTION_KEY, request.getRedirectUri());
             context.put(FORM_PARAMETERS, queryParams.remove(ACTION_KEY));
 
