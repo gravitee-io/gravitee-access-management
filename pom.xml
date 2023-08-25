@@ -92,7 +92,7 @@
         <angus-mail.version>2.0.2</angus-mail.version>
         <angus-activation.version>2.0.1</angus-activation.version>
         <mongodb-driver-reactivestreams.version>4.3.0</mongodb-driver-reactivestreams.version>
-        <embed.mongo.version>4.7.1</embed.mongo.version>
+        <embed.mongo.version>4.9.2</embed.mongo.version>
         <json-patch.version>1.9</json-patch.version>
         <guava.version>32.1.2-jre</guava.version>
         <zxing.version>3.4.1</zxing.version>
