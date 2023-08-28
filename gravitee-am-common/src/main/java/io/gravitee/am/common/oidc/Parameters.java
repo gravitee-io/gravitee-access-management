@@ -61,6 +61,10 @@ public interface Parameters {
      */
     String LOGIN_HINT = "login_hint";
     /**
+     * Hint to know if the user checked "remember me".
+     */
+    String REMEMBER_ME_HINT = "remember_me_hint";
+    /**
      * Requested Authentication Context Class Reference values.
      */
     String ACR_VALUES = "acr_values";

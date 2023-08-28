@@ -37,6 +37,13 @@
                 />
             </div>
 
+            <div class="checkbox" th:if="${rememberMeEnabled}">
+                <label for="rememberMe">
+                    <input type="checkbox" id="rememberMe" name="rememberMe" />
+                    <span th:text="#{login.label.remember.me}"/>
+                </label>
+            </div>
+
             <div class="header-description">
                 <span th:text="#{webauthn.login.tips}"/>
             </div>

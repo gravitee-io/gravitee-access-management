@@ -64,7 +64,7 @@
               type="number"
               placeholder="Login Attempts Reset Time"
               name="loginAttemptsResetTime"
-              [(ngModel)]="accountSettings.loginAttemptsResetTime"
+              [(ngModel)]="loginAttemptsResetTime.time"
               (ngModelChange)="updateModel()"
               [disabled]="!isBrutForceAuthenticationEnabled()"
               required
@@ -75,18 +75,12 @@
             <mat-select
               placeholder="Unit time"
               name="loginAttemptsResetTimeUnitTime"
-              [(ngModel)]="accountSettings.loginAttemptsResetTimeUnitTime"
+              [(ngModel)]="loginAttemptsResetTime.unit"
               (ngModelChange)="updateModel()"
               [disabled]="!isBrutForceAuthenticationEnabled()"
               required
             >
-              <mat-option value="seconds">SECONDS</mat-option>
-              <mat-option value="minutes">MINUTES</mat-option>
-              <mat-option value="hours">HOURS</mat-option>
-              <mat-option value="days">DAYS</mat-option>
-              <mat-option value="weeks">WEEKS</mat-option>
-              <mat-option value="months">MONTHS</mat-option>
-              <mat-option value="years">YEARS</mat-option>
+              <mat-option *ngFor="let unit of units" [value]="unit.id">{{ unit.name }}</mat-option>
             </mat-select>
           </mat-form-field>
         </div>
@@ -97,7 +91,7 @@
               type="number"
               placeholder="Account Blocked Duration"
               name="accountBlockedDuration"
-              [(ngModel)]="accountSettings.accountBlockedDuration"
+              [(ngModel)]="accountBlockedDuration.time"
               (ngModelChange)="updateModel()"
               [disabled]="!isBrutForceAuthenticationEnabled()"
               required
@@ -108,18 +102,12 @@
             <mat-select
               placeholder="Unit time"
               name="accountBlockedDurationUnitTime"
-              [(ngModel)]="accountSettings.accountBlockedDurationUnitTime"
+              [(ngModel)]="accountBlockedDuration.unit"
               (ngModelChange)="updateModel()"
               [disabled]="!isBrutForceAuthenticationEnabled()"
               required
             >
-              <mat-option value="seconds">SECONDS</mat-option>
-              <mat-option value="minutes">MINUTES</mat-option>
-              <mat-option value="hours">HOURS</mat-option>
-              <mat-option value="days">DAYS</mat-option>
-              <mat-option value="weeks">WEEKS</mat-option>
-              <mat-option value="months">MONTHS</mat-option>
-              <mat-option value="years">YEARS</mat-option>
+              <mat-option *ngFor="let unit of units" [value]="unit.id">{{ unit.name }}</mat-option>
             </mat-select>
           </mat-form-field>
         </div>
@@ -132,6 +120,41 @@
             Send account recovery email
           </mat-slide-toggle>
           <mat-hint style="font-size: 75%">Send an email if user account has been blocked.</mat-hint>
+        </div>
+        <mat-divider></mat-divider>
+        <div fxLayout="column" style="margin-top: 10px">
+          <mat-slide-toggle (change)="enableRememberMe($event)" [checked]="isRememberMeEnabled()" [disabled]="readonly">
+            Remember me - set duration for user login sessions
+          </mat-slide-toggle>
+          <mat-hint style="font-size: 75%">Allow users to remain logged in for a set duration of time.</mat-hint>
+          <div fxLayout="row">
+            <mat-form-field fxFlex="85" appearance="outline" floatLabel="always">
+              <input
+                matInput
+                type="number"
+                placeholder="Keep users logged in session duration"
+                name="rememberMeDuration"
+                [(ngModel)]="rememberMeDuration.time"
+                (ngModelChange)="updateModel()"
+                [disabled]="!isRememberMeEnabled()"
+                required
+              />
+              <mat-hint>Select the duration that you would like users to be who opt-in for this to be kept logged in.</mat-hint>
+            </mat-form-field>
+
+            <mat-form-field fxFlex style="margin-left: 20px" appearance="outline" floatLabel="always">
+              <mat-select
+                placeholder="Unit time"
+                name="rememberMeDurationUnitTime"
+                [(ngModel)]="rememberMeDuration.unit"
+                (ngModelChange)="updateModel()"
+                [disabled]="!isRememberMeEnabled()"
+                required
+              >
+                <mat-option *ngFor="let unit of units" [value]="unit.id">{{ unit.name }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
         </div>
       </div>
     </div>
@@ -177,7 +200,7 @@
               type="number"
               placeholder="MFA Attempts Reset Time"
               name="challengeAttemptsResetTime"
-              [(ngModel)]="accountSettings.mfaChallengeAttemptsResetTime"
+              [(ngModel)]="mfaChallengeAttemptsResetTime.time"
               (ngModelChange)="updateModel()"
               [disabled]="!isMFAChallengeBrutForceAuthenticationEnabled()"
               required
@@ -188,18 +211,12 @@
             <mat-select
               placeholder="Unit time"
               name="challengeAttemptsResetTimeUnit"
-              [(ngModel)]="accountSettings.mfaChallengeAttemptsResetTimeUnit"
+              [(ngModel)]="mfaChallengeAttemptsResetTime.unit"
               (ngModelChange)="updateModel()"
               [disabled]="!isMFAChallengeBrutForceAuthenticationEnabled()"
               required
             >
-              <mat-option value="seconds">SECONDS</mat-option>
-              <mat-option value="minutes">MINUTES</mat-option>
-              <mat-option value="hours">HOURS</mat-option>
-              <mat-option value="days">DAYS</mat-option>
-              <mat-option value="weeks">WEEKS</mat-option>
-              <mat-option value="months">MONTHS</mat-option>
-              <mat-option value="years">YEARS</mat-option>
+              <mat-option *ngFor="let unit of units" [value]="unit.id">{{ unit.name }}</mat-option>
             </mat-select>
           </mat-form-field>
         </div>

@@ -33,6 +33,7 @@ import {
 import { clearEmails, getLastEmail } from '@utils-commands/email-commands';
 import { TOTP } from 'otpauth';
 import * as faker from 'faker';
+import { initiateLoginFlow } from '@gateway-commands/login-commands';
 
 const cheerio = require('cheerio');
 
@@ -398,18 +399,6 @@ afterAll(async () => {
   }
 });
 
-const initiateLoginFlow = async (clientId, openIdConfiguration, domain) => {
-  const params = `?response_type=code&client_id=${clientId}&redirect_uri=https://auth-nightly.gravitee.io/myApp/callback`;
-
-  const authResponse = await performGet(openIdConfiguration.authorization_endpoint, params).expect(302);
-  const loginLocation = authResponse.headers['location'];
-
-  expect(loginLocation).toBeDefined();
-  expect(loginLocation).toContain(`${process.env.AM_GATEWAY_URL}/${domain.hrid}/login`);
-  expect(loginLocation).toContain(`client_id=${clientId}`);
-
-  return authResponse;
-};
 
 const login = async (authResponse, user, clientId) => {
   const loginResult = await extractXsrfTokenAndActionResponse(authResponse);

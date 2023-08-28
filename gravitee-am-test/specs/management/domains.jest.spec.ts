@@ -195,6 +195,24 @@ describe('Entrypoints: CORS settings - test strict configuration', () => {
   });
 });
 
+describe('Entrypoints: User accounts', () => {
+  it('should define the "remember me" amount of time', async () => {
+    const patchedDomain = await patchDomain(domain.id, accessToken, {
+      path: `${domain.path}`,
+      vhostMode: false,
+      vhosts: [],
+      accountSettings: {
+        rememberMe: true,
+        rememberMeDuration: 10,
+      },
+    });
+
+    const accountSettings = patchedDomain.accountSettings;
+    expect(accountSettings.rememberMe).toBe(true);
+    expect(accountSettings.rememberMeDuration).toBe(10);
+  });
+});
+
 afterAll(async () => {
   if (domain && domain.id) {
     await deleteDomain(domain.id, accessToken);

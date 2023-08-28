@@ -17,7 +17,7 @@ import fetch from 'cross-fetch';
 import * as faker from 'faker';
 import { afterAll, beforeAll, expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, deleteDomain, startDomain } from '@management-commands/domain-management-commands';
+import {createDomain, deleteDomain, patchDomain, startDomain} from '@management-commands/domain-management-commands';
 import {
   createApplication,
   deleteApplication,
@@ -140,6 +140,32 @@ describe('after creating applications', () => {
     expect(applicationPage.totalCount).toEqual(9);
     expect(applicationPage.data.length).toEqual(9);
     expect(applicationPage.data.find((app) => app.id === application.id)).toBeFalsy();
+  });
+});
+
+describe('Entrypoints: User accounts', () => {
+  it('should define the "remember me" amount of time', async () => {
+    const app = {
+      name: faker.commerce.productName(),
+      type: 'browser',
+      description: faker.lorem.paragraph(),
+    };
+
+    const createdApp = await createApplication(domain.id, accessToken, app);
+
+    const patchedApplication = await patchApplication(domain.id, accessToken, {
+      settings: {
+        account: {
+          inherited: false,
+          rememberMe: true,
+          rememberMeDuration: 7200,
+        },
+      },
+    }, createdApp.id);
+
+    const accountSettings = patchedApplication.settings.account;
+    expect(accountSettings.rememberMe).toBe(true);
+    expect(accountSettings.rememberMeDuration).toBe(7200);
   });
 });
 

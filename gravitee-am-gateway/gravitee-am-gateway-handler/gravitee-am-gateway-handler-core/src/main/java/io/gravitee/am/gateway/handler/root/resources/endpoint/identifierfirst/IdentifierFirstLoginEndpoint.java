@@ -25,6 +25,7 @@ import io.gravitee.am.gateway.handler.context.EvaluableRequest;
 import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.safe.ClientProperties;
@@ -40,20 +41,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-import static io.gravitee.am.common.utils.ConstantKeys.ACTION_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.ALLOW_FORGOT_PASSWORD_CONTEXT_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.ALLOW_PASSWORDLESS_CONTEXT_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.ALLOW_REGISTER_CONTEXT_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.DOMAIN_CONTEXT_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.ERROR_PARAM_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.FORGOT_ACTION_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.PARAM_CONTEXT_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.REGISTER_ACTION_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.REQUEST_CONTEXT_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.USERNAME_PARAM_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.WEBAUTHN_ACTION_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.*;
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.resolveProxyRequest;
@@ -106,10 +94,13 @@ public class IdentifierFirstLoginEndpoint extends AbstractEndpoint implements Ha
 
         // put login settings in context
         LoginSettings loginSettings = LoginSettings.getInstance(domain, client);
+        AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
         var optionalSettings = ofNullable(loginSettings).filter(Objects::nonNull);
+        var accountSettingsOptionalSettings = ofNullable(accountSettings).filter(Objects::nonNull);
         routingContext.put(ALLOW_FORGOT_PASSWORD_CONTEXT_KEY, optionalSettings.map(LoginSettings::isForgotPasswordEnabled).orElse(false));
         routingContext.put(ALLOW_REGISTER_CONTEXT_KEY, optionalSettings.map(LoginSettings::isRegisterEnabled).orElse(false));
         routingContext.put(ALLOW_PASSWORDLESS_CONTEXT_KEY, optionalSettings.map(LoginSettings::isPasswordlessEnabled).orElse(false));
+        routingContext.put(TEMPLATE_KEY_REMEMBER_ME_KEY, accountSettingsOptionalSettings.map(AccountSettings::isRememberMe).orElse(false));
 
         // put error in context
         final String error = request.getParam(ERROR_PARAM_KEY);
@@ -145,7 +136,11 @@ public class IdentifierFirstLoginEndpoint extends AbstractEndpoint implements Ha
         final MultiMap queryParams = RequestUtils.getCleanedQueryParams(request);
         // login_hint parameter can be duplicated from a previous step, remove it
         queryParams.remove(Parameters.LOGIN_HINT);
+        queryParams.remove(Parameters.REMEMBER_ME_HINT);
         queryParams.add(Parameters.LOGIN_HINT, UriBuilder.encodeURIComponent(request.getParam(USERNAME_PARAM_KEY)));
+        if (request.getParam(REMEMBER_ME_PARAM_KEY) != null) {
+            queryParams.add(Parameters.REMEMBER_ME_HINT, UriBuilder.encodeURIComponent(request.getParam(REMEMBER_ME_PARAM_KEY)));
+        }
         final String url = UriBuilderRequest.resolveProxyRequest(request, redirectUrl, queryParams, true);
         doRedirect0(routingContext, url);
     }

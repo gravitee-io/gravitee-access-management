@@ -88,6 +88,8 @@ import io.gravitee.am.gateway.handler.root.resources.handler.mfa.MFAChallengeUse
 import io.gravitee.am.gateway.handler.root.resources.handler.rememberdevice.DeviceIdentifierHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.rememberdevice.RememberDeviceSettingsHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.PasswordPolicyRequestParseHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.user.UserRememberMeRequestHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.user.UserRememberMeResponseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.UserTokenRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.activity.UserActivityHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.password.ForgotPasswordAccessHandler;
@@ -126,7 +128,10 @@ import io.vertx.rxjava3.ext.web.handler.StaticHandler;
 import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
+
+import static io.gravitee.am.common.utils.ConstantKeys.DEFAULT_REMEMBER_ME_COOKIE_NAME;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -284,6 +289,9 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
     @Autowired
     private EmailService emailService;
 
+    @Value("${http.cookie.rememberMe.name:"+ DEFAULT_REMEMBER_ME_COOKIE_NAME +"}")
+    private String rememberMeCookieName;
+
 
     @Override
     protected void doStart() throws Exception {
@@ -328,6 +336,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         Handler<RoutingContext> userActivityHandler = new UserActivityHandler(userActivityService);
         Handler<RoutingContext> localeHandler = new LocaleHandler(messageResolver);
         Handler<RoutingContext> loginPostWebAuthnHandler = new LoginPostWebAuthnHandler(webAuthnCookieService);
+        Handler<RoutingContext> userRememberMeHandler = new UserRememberMeRequestHandler(jwtService, domain, rememberMeCookieName);
 
         // Root policy chain handler
         rootRouter.route()
@@ -352,6 +361,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(clientRequestParseHandler)
                 .handler(botDetectionHandler)
                 .handler(new LoginSocialAuthenticationHandler(identityProviderManager, jwtService, certificateManager))
+                .handler(userRememberMeHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.POST_LOGIN_IDENTIFIER))
                 .handler(new LoginSelectionRuleHandler(true))
                 .handler(new IdentifierFirstLoginEndpoint(thymeleafTemplateEngine, domain, botDetectionManager));
@@ -371,6 +381,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(botDetectionHandler)
                 .handler(loginAttemptHandler)
                 .handler(new LoginFormHandler(userAuthProvider))
+                .handler(userRememberMeHandler)
                 .handler(deviceIdentifierHandler)
                 .handler(userActivityHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.POST_LOGIN))
@@ -382,6 +393,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
 
         // logout route
         rootRouter.route(PATH_LOGOUT)
+                .handler(new UserRememberMeResponseHandler(rememberMeCookieName))
                 .handler(new LogoutEndpoint(domain, clientSyncService, jwtService, userService, authenticationFlowContextService, identityProviderManager, certificateManager, webClient));
         rootRouter.route(PATH_LOGOUT_CALLBACK)
                 .handler(new LogoutCallbackEndpoint(domain, clientSyncService, jwtService, userService, authenticationFlowContextService, certificateManager));
@@ -400,6 +412,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(rememberDeviceSettingsHandler)
                 .handler(loginCallbackDeviceIdHandler)
                 .handler(socialAuthHandler)
+                .handler(userRememberMeHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.POST_LOGIN))
                 .handler(loginPostWebAuthnHandler)
                 .handler(loginCallbackEndpoint)
@@ -407,6 +420,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         rootRouter.post(PATH_LOGIN_CALLBACK)
                 .handler(loginCallbackOpenIDConnectFlowHandler)
                 .handler(loginCallbackParseHandler)
+                .handler(userRememberMeHandler)
                 .handler(socialAuthHandler)
                 .handler(deviceIdentifierHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.POST_LOGIN))
@@ -477,6 +491,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(clientRequestParseHandler)
                 .handler(webAuthnAccessHandler)
                 .handler(new WebAuthnLoginHandler(factorService, factorManager, domain, webAuthn, credentialService, userAuthenticationManager))
+                .handler(userRememberMeHandler)
                 .handler(deviceIdentifierHandler)
                 .handler(userActivityHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.POST_LOGIN))

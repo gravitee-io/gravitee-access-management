@@ -24,6 +24,7 @@ import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifier
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Template;
+import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.safe.ClientProperties;
@@ -50,6 +51,7 @@ import static io.gravitee.am.common.utils.ConstantKeys.TEMPLATE_KEY_HIDE_FORM_CO
 import static io.gravitee.am.common.utils.ConstantKeys.TEMPLATE_KEY_IDENTIFIER_FIRST_LOGIN_CONTEXT_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.TEMPLATE_KEY_BACK_LOGIN_IDENTIFIER_ACTION_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.TEMPLATE_KEY_REGISTER_ACTION_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.TEMPLATE_KEY_REMEMBER_ME_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.TEMPLATE_KEY_WEBAUTHN_ACTION_KEY;
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils.getCleanedQueryParams;
@@ -63,6 +65,7 @@ import static java.util.Optional.ofNullable;
  */
 public class LoginEndpoint extends AbstractEndpoint implements Handler<RoutingContext> {
     private static final Logger logger = LoggerFactory.getLogger(LoginEndpoint.class);
+    public static final String REMEMBER_ME_ON = "on";
 
     private final Domain domain;
     private final BotDetectionManager botDetectionManager;
@@ -96,13 +99,16 @@ public class LoginEndpoint extends AbstractEndpoint implements Handler<RoutingCo
         routingContext.put(ConstantKeys.DOMAIN_CONTEXT_KEY, domain);
         // put login settings in context data
         LoginSettings loginSettings = LoginSettings.getInstance(domain, client);
+        AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
         var optionalSettings = ofNullable(loginSettings).filter(Objects::nonNull);
+        var accountSettingsOptionalSettings = ofNullable(accountSettings).filter(Objects::nonNull);
         boolean isIdentifierFirstLoginEnabled = optionalSettings.map(LoginSettings::isIdentifierFirstEnabled).orElse(false);
         routingContext.put(TEMPLATE_KEY_ALLOW_FORGOT_PASSWORD_CONTEXT_KEY, optionalSettings.map(LoginSettings::isForgotPasswordEnabled).orElse(false));
         routingContext.put(TEMPLATE_KEY_ALLOW_REGISTER_CONTEXT_KEY, optionalSettings.map(LoginSettings::isRegisterEnabled).orElse(false));
         routingContext.put(TEMPLATE_KEY_ALLOW_PASSWORDLESS_CONTEXT_KEY, optionalSettings.map(LoginSettings::isPasswordlessEnabled).orElse(false));
         routingContext.put(TEMPLATE_KEY_HIDE_FORM_CONTEXT_KEY, optionalSettings.map(LoginSettings::isHideForm).orElse(false));
         routingContext.put(TEMPLATE_KEY_IDENTIFIER_FIRST_LOGIN_CONTEXT_KEY, isIdentifierFirstLoginEnabled);
+        routingContext.put(TEMPLATE_KEY_REMEMBER_ME_KEY, accountSettingsOptionalSettings.map(AccountSettings::isRememberMe).orElse(false));
         addUserActivityTemplateVariables(routingContext, userActivityService);
         addUserActivityConsentTemplateVariables(routingContext);
 
@@ -123,6 +129,10 @@ public class LoginEndpoint extends AbstractEndpoint implements Handler<RoutingCo
         final String loginHint = routingContext.request().getParam(Parameters.LOGIN_HINT);
         if (loginHint != null) {
             params.put(ConstantKeys.USERNAME_PARAM_KEY, loginHint);
+        }
+        final String rememberMeHint = routingContext.request().getParam(Parameters.REMEMBER_ME_HINT);
+        if (rememberMeHint != null) {
+            params.put(ConstantKeys.REMEMBER_ME_PARAM_KEY, REMEMBER_ME_ON.equals(rememberMeHint) ? Boolean.TRUE.toString() : Boolean.FALSE.toString());
         }
         routingContext.put(ConstantKeys.PARAM_CONTEXT_KEY, params);
 

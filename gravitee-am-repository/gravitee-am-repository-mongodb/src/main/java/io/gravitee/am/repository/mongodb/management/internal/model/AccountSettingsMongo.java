@@ -45,6 +45,8 @@ public class AccountSettingsMongo {
     private boolean deletePasswordlessDevicesAfterResetPassword;
     private boolean useBotDetection;
     private String botDetectionPlugin;
+    private boolean rememberMe;
+    private Integer rememberMeDuration;
     private boolean resetPasswordCustomForm;
     private List<FormFieldMongo> resetPasswordCustomFormFields;
     private boolean resetPasswordConfirmIdentity;
@@ -255,6 +257,22 @@ public class AccountSettingsMongo {
         this.sendVerifyRegistrationAccountEmail = sendVerifyRegistrationAccountEmail;
     }
 
+    public boolean isRememberMe() {
+        return rememberMe;
+    }
+
+    public void setRememberMe(boolean rememberMe) {
+        this.rememberMe = rememberMe;
+    }
+
+    public Integer getRememberMeDuration() {
+        return rememberMeDuration;
+    }
+
+    public void setRememberMeDuration(Integer rememberMeDuration) {
+        this.rememberMeDuration = rememberMeDuration;
+    }
+
     public AccountSettings convert() {
         AccountSettings accountSettings = new AccountSettings();
         accountSettings.setInherited(isInherited());
@@ -273,6 +291,8 @@ public class AccountSettingsMongo {
         accountSettings.setDeletePasswordlessDevicesAfterResetPassword(isDeletePasswordlessDevicesAfterResetPassword());
         accountSettings.setBotDetectionPlugin(getBotDetectionPlugin());
         accountSettings.setUseBotDetection(isUseBotDetection());
+        accountSettings.setRememberMe(isRememberMe());
+        accountSettings.setRememberMeDuration(getRememberMeDuration());
         accountSettings.setResetPasswordConfirmIdentity(isResetPasswordConfirmIdentity());
         accountSettings.setResetPasswordCustomForm(isResetPasswordCustomForm());
         ofNullable(getResetPasswordCustomFormFields())
@@ -308,6 +328,8 @@ public class AccountSettingsMongo {
         accountSettingsMongo.setDeletePasswordlessDevicesAfterResetPassword(accountSettings.isDeletePasswordlessDevicesAfterResetPassword());
         accountSettingsMongo.setBotDetectionPlugin(accountSettings.getBotDetectionPlugin());
         accountSettingsMongo.setUseBotDetection(accountSettings.isUseBotDetection());
+        accountSettingsMongo.setRememberMe(accountSettings.isRememberMe());
+        accountSettingsMongo.setRememberMeDuration(accountSettings.getRememberMeDuration());
         accountSettingsMongo.setResetPasswordConfirmIdentity(accountSettings.isResetPasswordConfirmIdentity());
         accountSettingsMongo.setResetPasswordCustomForm(accountSettings.isResetPasswordCustomForm());
         ofNullable(accountSettings.getResetPasswordCustomFormFields())

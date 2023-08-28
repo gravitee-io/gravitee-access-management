@@ -23,6 +23,7 @@ import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifier
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Template;
+import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.UserActivityService;
 import io.vertx.core.Handler;
@@ -33,9 +34,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
+import static io.gravitee.am.common.utils.ConstantKeys.TEMPLATE_KEY_REMEMBER_ME_KEY;
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
+import static java.util.Optional.ofNullable;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -78,6 +82,10 @@ public class WebAuthnLoginEndpoint extends AbstractEndpoint implements Handler<R
             routingContext.put(ConstantKeys.PARAM_CONTEXT_KEY, params);
             addUserActivityTemplateVariables(routingContext, userActivityService);
             addUserActivityConsentTemplateVariables(routingContext);
+
+            AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
+            var accountSettingsOptionalSettings = ofNullable(accountSettings).filter(Objects::nonNull);
+            routingContext.put(TEMPLATE_KEY_REMEMBER_ME_KEY, accountSettingsOptionalSettings.map(AccountSettings::isRememberMe).orElse(false));
 
             // put error in context
             final String error = routingContext.request().getParam(ConstantKeys.ERROR_PARAM_KEY);

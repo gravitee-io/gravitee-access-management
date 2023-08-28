@@ -15,10 +15,15 @@
  */
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import moment from 'moment';
+import moment, { unitOfTime } from 'moment';
 
 import { BotDetectionService } from '../../../services/bot-detection.service';
 import { ProviderService } from '../../../services/provider.service';
+
+interface Duration {
+  time: number;
+  unit: string;
+}
 
 @Component({
   selector: 'app-account-settings',
@@ -38,14 +43,16 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
 
   private domainId: string;
   private defaultMaxAttempts = 10;
-  private defaultLoginAttemptsResetTime = 12;
-  private defaultLoginAttemptsResetTimeUnit = 'hours';
-  private defaultAccountBlockedDuration = 2;
-  private defaultAccountBlockedDurationUnit = 'hours';
-
+  private defaultLoginAttemptsResetTimeInSecond = 43200; // 12 hours
+  private defaultAccountBlockedDurationInSecond = 7200; // 2 hours
+  private defaultMFAChallengeAttemptsResetTimeInSecond = 60; // 1 minutes
+  private defaultRememberMeDurationInSecond = 604800; // 7 days
   private defaultMFAChallengeMaxAttempts = 3;
-  private defaultMFAChallengeAttemptsResetTime = 1;
-  private defaultMFAChallengeAttemptsResetTimeUnit = 'minutes';
+
+  loginAttemptsResetTime: Duration = { time: null, unit: null };
+  accountBlockedDuration: Duration = { time: null, unit: null };
+  mfaChallengeAttemptsResetTime: Duration = { time: null, unit: null };
+  rememberMeDuration: Duration = { time: null, unit: null };
 
   availableFields = [
     { key: 'email', label: 'Email', type: 'email' },
@@ -55,6 +62,16 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
   newField = {};
 
   selectedFields = [];
+
+  public units = [
+    { id: 'seconds', name: 'SECONDS' },
+    { id: 'minutes', name: 'MINUTES' },
+    { id: 'hours', name: 'HOURS' },
+    { id: 'days', name: 'DAYS' },
+    { id: 'weeks', name: 'WEEKS' },
+    { id: 'months', name: 'MONTHS' },
+    { id: 'years', name: 'YEARS' },
+  ];
 
   constructor(private route: ActivatedRoute, private providerService: ProviderService, private botDetectionService: BotDetectionService) {}
 
@@ -85,16 +102,10 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
       accountSettings = { inherited: true };
     } else {
       // set duration values
-      accountSettings.loginAttemptsResetTime = this.getDuration(
-        accountSettings.loginAttemptsResetTime,
-        accountSettings.loginAttemptsResetTimeUnitTime,
-      );
-      accountSettings.accountBlockedDuration = this.getDuration(
-        accountSettings.accountBlockedDuration,
-        accountSettings.accountBlockedDurationUnitTime,
-      );
-      delete accountSettings.loginAttemptsResetTimeUnitTime;
-      delete accountSettings.accountBlockedDurationUnitTime;
+      accountSettings.loginAttemptsResetTime = this.getDuration(this.loginAttemptsResetTime);
+      accountSettings.accountBlockedDuration = this.getDuration(this.accountBlockedDuration);
+      accountSettings.mfaChallengeAttemptsResetTime = this.getDuration(this.mfaChallengeAttemptsResetTime);
+      accountSettings.rememberMeDuration = this.getDuration(this.rememberMeDuration);
 
       // set list of fields that will be used by the ForgotPassword Form
       if (accountSettings.resetPasswordCustomForm) {
@@ -107,13 +118,6 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
       if (!accountSettings.useBotDetection) {
         delete accountSettings.botDetectionPlugin;
       }
-
-      // set duration value for MFA challenge attempts
-      accountSettings.mfaChallengeAttemptsResetTime = this.getDuration(
-        accountSettings.mfaChallengeAttemptsResetTime,
-        accountSettings.mfaChallengeAttemptsResetTimeUnit,
-      );
-      delete accountSettings.mfaChallengeAttemptsResetTimeUnit;
     }
 
     this.onSavedAccountSettings.emit(accountSettings);
@@ -159,12 +163,12 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
 
     // apply default values
     this.accountSettings.maxLoginAttempts = this.accountSettings.maxLoginAttempts || this.defaultMaxAttempts;
-    this.accountSettings.loginAttemptsResetTime = this.accountSettings.loginAttemptsResetTime || this.defaultLoginAttemptsResetTime;
-    this.accountSettings.loginAttemptsResetTimeUnitTime =
-      this.accountSettings.loginAttemptsResetTimeUnitTime || this.defaultLoginAttemptsResetTimeUnit;
-    this.accountSettings.accountBlockedDuration = this.accountSettings.accountBlockedDuration || this.defaultAccountBlockedDuration;
-    this.accountSettings.accountBlockedDurationUnitTime =
-      this.accountSettings.accountBlockedDurationUnitTime || this.defaultAccountBlockedDurationUnit;
+    this.loginAttemptsResetTime = this.getHumanizeDuration(
+      this.getDuration(this.loginAttemptsResetTime) || this.defaultLoginAttemptsResetTimeInSecond,
+    );
+    this.accountBlockedDuration = this.getHumanizeDuration(
+      this.getDuration(this.accountBlockedDuration) || this.defaultAccountBlockedDurationInSecond,
+    );
   }
 
   isBrutForceAuthenticationEnabled() {
@@ -225,6 +229,17 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
     return this.accountSettings && this.accountSettings.sendRecoverAccountEmail;
   }
 
+  enableRememberMe(event) {
+    this.accountSettings.rememberMe = event.checked;
+    this.formChanged = true;
+
+    this.rememberMeDuration = this.getHumanizeDuration(this.getDuration(this.rememberMeDuration) || this.defaultRememberMeDurationInSecond);
+  }
+
+  isRememberMeEnabled() {
+    return this.accountSettings && this.accountSettings.rememberMe;
+  }
+
   enableDeletePasswordlessDevicesAfterResetPassword(event) {
     this.accountSettings.deletePasswordlessDevicesAfterResetPassword = event.checked;
     this.formChanged = true;
@@ -283,14 +298,14 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
       if (this.accountSettings.maxLoginAttempts < 1) {
         return false;
       }
-      if (this.accountSettings.loginAttemptsResetTime < 1) {
+      if (this.loginAttemptsResetTime.time < 1) {
         return false;
-      } else if (!this.accountSettings.loginAttemptsResetTimeUnitTime) {
+      } else if (!this.loginAttemptsResetTime.unit) {
         return false;
       }
-      if (this.accountSettings.accountBlockedDuration < 1) {
+      if (this.accountBlockedDuration.time < 1) {
         return false;
-      } else if (!this.accountSettings.accountBlockedDurationUnitTime) {
+      } else if (!this.accountBlockedDuration.unit) {
         return false;
       }
     }
@@ -303,10 +318,18 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
       if (this.accountSettings.mfaChallengeMaxAttempts < 1) {
         return false;
       }
-      if (this.accountSettings.mfaChallengeAttemptsResetTime < 1) {
+      if (this.mfaChallengeAttemptsResetTime.time < 1) {
         return false;
       }
-      if (!this.accountSettings.mfaChallengeAttemptsResetTimeUnit) {
+      if (!this.mfaChallengeAttemptsResetTime.unit) {
+        return false;
+      }
+    }
+
+    if (this.accountSettings.rememberMe) {
+      if (this.rememberMeDuration.time < 1) {
+        return false;
+      } else if (!this.rememberMeDuration.unit) {
         return false;
       }
     }
@@ -316,21 +339,25 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
 
   private initDateValues() {
     if (this.accountSettings.loginAttemptsResetTime > 0) {
-      const loginAttemptsResetTime = this.getHumanizeDuration(this.accountSettings.loginAttemptsResetTime);
-      this.accountSettings.loginAttemptsResetTime = loginAttemptsResetTime[0];
-      this.accountSettings.loginAttemptsResetTimeUnitTime = loginAttemptsResetTime[1];
+      this.loginAttemptsResetTime = this.getHumanizeDuration(
+        this.accountSettings.loginAttemptsResetTime || this.defaultLoginAttemptsResetTimeInSecond,
+      );
     }
 
     if (this.accountSettings.accountBlockedDuration > 0) {
-      const accountBlockedDuration = this.getHumanizeDuration(this.accountSettings.accountBlockedDuration);
-      this.accountSettings.accountBlockedDuration = accountBlockedDuration[0];
-      this.accountSettings.accountBlockedDurationUnitTime = accountBlockedDuration[1];
+      this.accountBlockedDuration = this.getHumanizeDuration(
+        this.accountSettings.accountBlockedDuration || this.defaultAccountBlockedDurationInSecond,
+      );
+    }
+
+    if (this.accountSettings.rememberMeDuration > 0) {
+      this.rememberMeDuration = this.getHumanizeDuration(this.accountSettings.rememberMeDuration || this.defaultRememberMeDurationInSecond);
     }
 
     if (this.accountSettings.mfaChallengeAttemptsResetTime > 0) {
-      const mfaChallengeAttemptsResetTime = this.getHumanizeDuration(this.accountSettings.mfaChallengeAttemptsResetTime);
-      this.accountSettings.mfaChallengeAttemptsResetTime = mfaChallengeAttemptsResetTime[0];
-      this.accountSettings.mfaChallengeAttemptsResetTimeUnit = mfaChallengeAttemptsResetTime[1];
+      this.mfaChallengeAttemptsResetTime = this.getHumanizeDuration(
+        this.accountSettings.mfaChallengeAttemptsResetTime || this.defaultMFAChallengeAttemptsResetTimeInSecond,
+      );
     }
   }
 
@@ -340,11 +367,10 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
     }
   }
 
-  private getHumanizeDuration(value) {
+  private getHumanizeDuration(value): Duration {
     const humanizeDate = moment.duration(value, 'seconds').humanize().split(' ');
-    const humanizeDateValue =
-      humanizeDate.length === 2 ? (humanizeDate[0] === 'a' || humanizeDate[0] === 'an' ? 1 : humanizeDate[0]) : value;
-    const humanizeDateUnit =
+    const time = humanizeDate.length === 2 ? (humanizeDate[0] === 'a' || humanizeDate[0] === 'an' ? 1 : humanizeDate[0]) : value;
+    const unit =
       humanizeDate.length === 2
         ? humanizeDate[1].endsWith('s')
           ? humanizeDate[1]
@@ -352,11 +378,11 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
         : humanizeDate[2].endsWith('s')
         ? humanizeDate[2]
         : humanizeDate[2] + 's';
-    return [humanizeDateValue, humanizeDateUnit];
+    return { time, unit };
   }
 
-  private getDuration(value, unit) {
-    return moment.duration(parseInt(value, 10), unit).asSeconds();
+  private getDuration(duration: Duration) {
+    return moment.duration(duration.time, <unitOfTime.DurationConstructor>duration.unit).asSeconds();
   }
 
   isMFAChallengeBrutForceAuthenticationEnabled() {
@@ -368,11 +394,10 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
     this.formChanged = true;
 
     // apply default values
-    this.accountSettings.mfaChallengeMaxAttempts = this.accountSettings.mfaChallengeMaxAttempts || this.defaultMFAChallengeMaxAttempts;
-    this.accountSettings.mfaChallengeAttemptsResetTime =
-      this.accountSettings.mfaChallengeAttemptsResetTime || this.defaultMFAChallengeAttemptsResetTime;
-    this.accountSettings.mfaChallengeAttemptsResetTimeUnit =
-      this.accountSettings.mfaChallengeAttemptsResetTimeUnit || this.defaultMFAChallengeAttemptsResetTimeUnit;
+    this.accountSettings.mfaChallengeMaxAttempts = this.defaultMFAChallengeMaxAttempts;
+    this.mfaChallengeAttemptsResetTime = this.getHumanizeDuration(
+      this.getDuration(this.mfaChallengeAttemptsResetTime) || this.defaultMFAChallengeAttemptsResetTimeInSecond,
+    );
   }
 
   enableMFAChallengeSendVerifyAlertEmail(event) {

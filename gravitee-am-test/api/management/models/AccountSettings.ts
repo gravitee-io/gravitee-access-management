@@ -136,6 +136,18 @@ export interface AccountSettings {
    * @type {boolean}
    * @memberof AccountSettings
    */
+  rememberMe?: boolean;
+  /**
+   *
+   * @type {number}
+   * @memberof AccountSettings
+   */
+  rememberMeDuration?: number;
+  /**
+   *
+   * @type {boolean}
+   * @memberof AccountSettings
+   */
   resetPasswordCustomForm?: boolean;
   /**
    *
@@ -212,6 +224,8 @@ export function AccountSettingsFromJSONTyped(json: any, ignoreDiscriminator: boo
       : json['deletePasswordlessDevicesAfterResetPassword'],
     useBotDetection: !exists(json, 'useBotDetection') ? undefined : json['useBotDetection'],
     botDetectionPlugin: !exists(json, 'botDetectionPlugin') ? undefined : json['botDetectionPlugin'],
+    rememberMe: !exists(json, 'rememberMe') ? undefined : json['rememberMe'],
+    rememberMeDuration: !exists(json, 'rememberMeDuration') ? undefined : json['rememberMeDuration'],
     resetPasswordCustomForm: !exists(json, 'resetPasswordCustomForm') ? undefined : json['resetPasswordCustomForm'],
     resetPasswordCustomFormFields: !exists(json, 'resetPasswordCustomFormFields')
       ? undefined
@@ -253,6 +267,8 @@ export function AccountSettingsToJSON(value?: AccountSettings | null): any {
     deletePasswordlessDevicesAfterResetPassword: value.deletePasswordlessDevicesAfterResetPassword,
     useBotDetection: value.useBotDetection,
     botDetectionPlugin: value.botDetectionPlugin,
+    rememberMe: value.rememberMe,
+    rememberMeDuration: value.rememberMeDuration,
     resetPasswordCustomForm: value.resetPasswordCustomForm,
     resetPasswordCustomFormFields:
       value.resetPasswordCustomFormFields === undefined

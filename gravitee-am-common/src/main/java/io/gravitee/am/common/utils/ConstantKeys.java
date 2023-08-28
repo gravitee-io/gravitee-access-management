@@ -53,6 +53,7 @@ public interface ConstantKeys {
     String TOKEN_TYPE_HINT_PARAM_KEY = "token_type_hint";
     String USERNAME_PARAM_KEY = "username";
     String PASSWORD_PARAM_KEY = "password";
+    String REMEMBER_ME_PARAM_KEY = "rememberMe";
     String PROVIDER_ID_PARAM_KEY = "providerId";
     String ACTION_KEY = "action";
     String LOGIN_ACTION_KEY = "loginAction";
@@ -197,6 +198,7 @@ public interface ConstantKeys {
     String TEMPLATE_KEY_REGISTER_ACTION_KEY = "registerAction";
     String TEMPLATE_KEY_WEBAUTHN_ACTION_KEY = "passwordlessAction";
     String TEMPLATE_KEY_BACK_LOGIN_IDENTIFIER_ACTION_KEY = "backToLoginIdentifierAction";
+    String TEMPLATE_KEY_REMEMBER_ME_KEY = "rememberMeEnabled";
     // MFA templates
     String TEMPLATE_KEY_RECOVERY_CODES_KEY = "recoveryCodes";
     String TEMPLATE_KEY_RECOVERY_CODES_URL_KEY = "recoveryCodeURL";
@@ -229,4 +231,7 @@ public interface ConstantKeys {
 
     String POLICY_CHAIN_ERROR_KEY_MFA_CHALLENGE_ERROR = "GATEWAY_POLICY_MFA_CHALLENGE_ERROR";
     String LINKED_ACCOUNT_ID_CONTEXT_KEY = "linkedAccountId";
+
+    String DEFAULT_REMEMBER_ME_COOKIE_NAME = "GRAVITEE_IO_REMEMBER_ME";
+    String USER_ID_KEY = "userId";
 }
