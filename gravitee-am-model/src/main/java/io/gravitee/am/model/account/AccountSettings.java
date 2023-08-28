@@ -108,6 +108,16 @@ public class AccountSettings {
     private String botDetectionPlugin;
 
     /**
+     * Remember me option, to avoid to sign in again during a predefined amount of time
+     */
+    private boolean rememberMe;
+
+    /**
+     * Amount of time while the cookie session is stored
+     */
+    private Integer rememberMeDuration;
+
+    /**
      * Used a custom form to generate ForgotPassword page
      */
     private boolean resetPasswordCustomForm;
@@ -169,6 +179,8 @@ public class AccountSettings {
         this.autoLoginAfterResetPassword = other.autoLoginAfterResetPassword;
         this.redirectUriAfterResetPassword = other.redirectUriAfterResetPassword;
         this.deletePasswordlessDevicesAfterResetPassword = other.deletePasswordlessDevicesAfterResetPassword;
+        this.rememberMe = other.rememberMe;
+        this.rememberMeDuration = other.rememberMeDuration;
         this.resetPasswordConfirmIdentity = other.resetPasswordConfirmIdentity;
         this.resetPasswordCustomForm = other.resetPasswordCustomForm;
         this.resetPasswordCustomFormFields = other.resetPasswordCustomFormFields;
@@ -381,6 +393,22 @@ public class AccountSettings {
 
     public void setSendVerifyRegistrationAccountEmail(boolean sendVerifyRegistrationAccountEmail) {
         this.sendVerifyRegistrationAccountEmail = sendVerifyRegistrationAccountEmail;
+    }
+
+    public boolean isRememberMe() {
+        return rememberMe;
+    }
+
+    public void setRememberMe(boolean rememberMe) {
+        this.rememberMe = rememberMe;
+    }
+
+    public Integer getRememberMeDuration() {
+        return rememberMeDuration;
+    }
+
+    public void setRememberMeDuration(Integer rememberMeDuration) {
+        this.rememberMeDuration = rememberMeDuration;
     }
 
     public static Optional<AccountSettings> getInstance(Client client, Domain domain) {

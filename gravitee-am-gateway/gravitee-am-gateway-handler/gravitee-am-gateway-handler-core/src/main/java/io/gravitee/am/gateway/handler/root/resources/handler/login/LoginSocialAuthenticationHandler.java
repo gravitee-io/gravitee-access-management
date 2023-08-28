@@ -40,9 +40,7 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static io.gravitee.am.common.utils.ConstantKeys.ACTION_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.SOCIAL_PROVIDER_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.*;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 
 /**
@@ -55,6 +53,7 @@ public class LoginSocialAuthenticationHandler implements Handler<RoutingContext>
 
     private static final Logger logger = LoggerFactory.getLogger(LoginSocialAuthenticationHandler.class);
     private static final Map<String, String> socialProviders;
+    public static final String REMEMBER_ME_ON = "on";
 
     static {
         Map<String, String> sMap = new HashMap<>();
@@ -164,6 +163,7 @@ public class LoginSocialAuthenticationHandler implements Handler<RoutingContext>
                     final JWT stateJwt = new JWT();
                     stateJwt.put("p", identityProviderId);
                     stateJwt.put("q", context.request().query());
+                    stateJwt.put("r", REMEMBER_ME_ON.equalsIgnoreCase(context.request().formAttributes().get(REMEMBER_ME_PARAM_KEY)));
 
                     return jwtService.encode(stateJwt, certificateManager.defaultCertificateProvider())
                             .flatMapMaybe(state -> {

@@ -188,6 +188,7 @@ public class PreviewBuilder {
                 variables.put(ConstantKeys.TEMPLATE_KEY_ALLOW_FORGOT_PASSWORD_CONTEXT_KEY, Boolean.TRUE.toString());
                 variables.put(ConstantKeys.TEMPLATE_KEY_IDENTIFIER_FIRST_LOGIN_CONTEXT_KEY, Boolean.FALSE.toString());
                 variables.put(ConstantKeys.TEMPLATE_KEY_BOT_DETECTION_CONFIGURATION, Map.of(SITE_KEY, EMPTY_STRING));
+                variables.put(ConstantKeys.TEMPLATE_KEY_REMEMBER_ME_KEY, Boolean.TRUE.toString());
                 break;
 
             case REGISTRATION:
@@ -247,6 +248,7 @@ public class PreviewBuilder {
 
             case WEBAUTHN_LOGIN:
                 variables.put(ConstantKeys.REMEMBER_DEVICE_IS_ACTIVE, Boolean.FALSE.toString());
+                variables.put(ConstantKeys.TEMPLATE_KEY_REMEMBER_ME_KEY, Boolean.TRUE.toString());
                 break;
 
             case ERROR:
@@ -259,13 +261,16 @@ public class PreviewBuilder {
                 variables.put(TEMPLATE_KEY_RECOVERY_CODES_URL_KEY, EMPTY_STRING);
                 break;
 
+            case IDENTIFIER_FIRST_LOGIN:
+                variables.put(ConstantKeys.TEMPLATE_KEY_REMEMBER_ME_KEY, Boolean.TRUE.toString());
+                break;
+
             // template without specific variables
             case RESET_PASSWORD:
             case OAUTH2_USER_CONSENT:
             case BLOCKED_ACCOUNT:
             case COMPLETE_PROFILE:
             case WEBAUTHN_REGISTER:
-            case IDENTIFIER_FIRST_LOGIN:
             case CERTIFICATE_EXPIRATION:
             default:
                 break;

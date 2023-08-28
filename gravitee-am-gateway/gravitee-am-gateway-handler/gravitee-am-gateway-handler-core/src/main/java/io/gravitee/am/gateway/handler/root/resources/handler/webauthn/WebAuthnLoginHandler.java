@@ -45,7 +45,7 @@ import org.thymeleaf.util.StringUtils;
 import java.time.Instant;
 import java.util.Date;
 
-import static io.gravitee.am.common.utils.ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -78,6 +78,7 @@ public class WebAuthnLoginHandler extends WebAuthnHandler {
     }
 
     private void authenticate(RoutingContext ctx) {
+
         try {
             // support for potential cached javascript files
             // see https://github.com/gravitee-io/issues/issues/7158

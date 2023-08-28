@@ -17,7 +17,9 @@ package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl;
 
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
+import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
+import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.AuthenticationFlowHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.RedirectHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.*;
@@ -30,9 +32,12 @@ import io.gravitee.am.service.CredentialService;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.util.LinkedList;
 import java.util.List;
+
+import static io.gravitee.am.common.utils.ConstantKeys.DEFAULT_REMEMBER_ME_COOKIE_NAME;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -58,9 +63,19 @@ public class AuthenticationFlowHandlerImpl implements AuthenticationFlowHandler 
     @Autowired
     private WebAuthnCookieService webAuthnCookieService;
 
+    @Autowired
+    private JWTService jwtService;
+
+    @Autowired
+    private UserService userService;
+
+    @Value("${http.cookie.rememberMe.name:"+ DEFAULT_REMEMBER_ME_COOKIE_NAME +"}")
+    private String rememberMeCookieName;
+
     @Override
     public Handler<RoutingContext> create() {
         List<AuthenticationFlowStep> steps = new LinkedList<>();
+        steps.add(new RememberMeStep(RedirectHandler.create("/login"), jwtService, userService, rememberMeCookieName));
         steps.add(new SPNEGOStep(RedirectHandler.create("/login/SSO/SPNEGO"), identityProviderManager));
         steps.add(new FormIdentifierFirstLoginStep(RedirectHandler.create("/login/identifier"), domain));
         steps.add(new WebAuthnLoginStep(RedirectHandler.create("/webauthn/login"), domain, webAuthnCookieService));

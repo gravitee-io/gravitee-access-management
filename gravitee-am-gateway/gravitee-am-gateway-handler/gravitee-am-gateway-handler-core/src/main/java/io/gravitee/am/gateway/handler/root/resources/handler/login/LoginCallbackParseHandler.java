@@ -115,6 +115,7 @@ public class LoginCallbackParseHandler implements Handler<RoutingContext> {
                     final MultiMap initialQueryParams = RequestUtils.getQueryParams((String) stateJwt.getOrDefault("q", ""), false);
                     context.put(ConstantKeys.PARAM_CONTEXT_KEY, initialQueryParams);
                     context.put(ConstantKeys.PROVIDER_ID_PARAM_KEY, stateJwt.get("p"));
+                    context.put(ConstantKeys.REMEMBER_ME_PARAM_KEY, stateJwt.get("r"));
                 })
                 .subscribe(
                         stateJwt -> handler.handle(Future.succeededFuture(true)),
