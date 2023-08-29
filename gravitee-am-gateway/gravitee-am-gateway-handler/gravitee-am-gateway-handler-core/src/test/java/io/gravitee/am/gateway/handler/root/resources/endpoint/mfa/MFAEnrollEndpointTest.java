@@ -29,6 +29,7 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.ext.web.Session;
 import io.vertx.rxjava3.core.buffer.Buffer;
 import io.vertx.rxjava3.ext.web.handler.BodyHandler;
 import io.vertx.rxjava3.ext.web.handler.SessionHandler;
@@ -42,6 +43,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.context.ApplicationContext;
 
 import java.util.Collections;
+import java.util.Map;
 
 import static io.vertx.core.http.HttpHeaders.APPLICATION_X_WWW_FORM_URLENCODED;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
@@ -72,13 +74,16 @@ public class MFAEnrollEndpointTest extends RxWebTestBase {
 
     private MFAEnrollEndpoint mfaEnrollEndpoint;
 
+    private LocalSessionStore localSessionStore;
+
     @Override
     public void setUp() throws Exception {
         super.setUp();
         mfaEnrollEndpoint = new MFAEnrollEndpoint(factorManager, templateEngine, userService, domain, applicationContext);
 
+        localSessionStore = LocalSessionStore.create(vertx);
         router.route()
-                .handler(SessionHandler.create(LocalSessionStore.create(vertx)))
+                .handler(SessionHandler.create(localSessionStore))
                 .handler(BodyHandler.create());
     }
 
@@ -237,6 +242,50 @@ public class MFAEnrollEndpointTest extends RxWebTestBase {
                 res -> {
                     String location = res.getHeader("Location");
                     Assert.assertTrue(location.endsWith("/oauth/authorize"));
+                },
+                302,
+                "Found", null);
+    }
+
+    @Test
+    public void shouldSaveEnrollment_nominalCase_extensionPhoneNumber() throws Exception {
+        router.post(REQUEST_PATH)
+                .handler(ctx -> {
+                    User user = new User();
+                    Client client = new Client();
+                    client.setFactors(Collections.singleton("factor-id"));
+                    ctx.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+                    ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+                    ctx.next();
+                })
+                .handler(mfaEnrollEndpoint);
+
+
+        FactorProvider factorProvider = mock(FactorProvider.class);
+        when(factorProvider.checkSecurityFactor(any())).thenReturn(true);
+        Factor factor = mock(Factor.class);
+        when(factor.getId()).thenReturn("factor-id");
+        when(factor.getFactorType()).thenReturn(FactorType.CALL);
+        when(factorManager.get(any())).thenReturn(factorProvider);
+        when(factorManager.getFactor(any())).thenReturn(factor);
+
+        testRequest(HttpMethod.POST,
+                REQUEST_PATH,
+                req -> {
+                    req.setChunked(true);
+                    req.putHeader(CONTENT_TYPE, APPLICATION_X_WWW_FORM_URLENCODED);
+                    req.write(Buffer.buffer("user_mfa_enrollment=true&factorId=factor-id&extensionPhoneNumber=1234"));
+                },
+                res -> {
+                    String location = res.getHeader("Location");
+                    Assert.assertTrue(location.endsWith("/oauth/authorize"));
+
+                    // check if extension phone number has been set in session
+                    String sessionId = res.cookies().get(0).split("=")[1].split(";")[0];
+                    Session session = localSessionStore.getDelegate().get(sessionId).result();
+                    Map<String, Object> data = session.data();
+                    Assert.assertNotNull(data.get(ConstantKeys.ENROLLED_FACTOR_EXTENSION_PHONE_NUMBER));
+                    Assert.assertEquals("1234", data.get(ConstantKeys.ENROLLED_FACTOR_EXTENSION_PHONE_NUMBER));
                 },
                 302,
                 "Found", null);

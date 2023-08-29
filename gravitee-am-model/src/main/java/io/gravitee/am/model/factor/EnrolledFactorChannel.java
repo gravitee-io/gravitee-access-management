@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.model.factor;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
@@ -22,6 +25,8 @@ package io.gravitee.am.model.factor;
 public class EnrolledFactorChannel {
     private Type type;
     private String target;
+
+    private Map<String, Object> additionalData = new HashMap<>();
 
     public EnrolledFactorChannel() {
     }
@@ -45,6 +50,14 @@ public class EnrolledFactorChannel {
 
     public void setTarget(String target) {
         this.target = target;
+    }
+
+    public Map<String, Object> getAdditionalData() {
+        return additionalData;
+    }
+
+    public void setAdditionalData(Map<String, Object> additionalData) {
+        this.additionalData = additionalData;
     }
 
     public enum Type {
