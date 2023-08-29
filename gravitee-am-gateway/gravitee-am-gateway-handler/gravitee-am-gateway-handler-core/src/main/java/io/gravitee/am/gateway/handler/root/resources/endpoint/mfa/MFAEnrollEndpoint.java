@@ -168,6 +168,7 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
         final String factorId = params.get(ConstantKeys.MFA_ENROLLMENT_FACTOR_ID);
         final String sharedSecret = params.get(ConstantKeys.MFA_ENROLLMENT_SHARED_SECRET);
         final String phoneNumber = params.get(ConstantKeys.MFA_ENROLLMENT_PHONE);
+        final String extensionPhoneNumber = params.get(ConstantKeys.MFA_ENROLLMENT_EXTENSION_PHONE_NUMBER);
         final String emailAddress = params.get(ConstantKeys.MFA_ENROLLMENT_EMAIL);
         final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
 
@@ -211,6 +212,9 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
             }
             if (phoneNumber != null) {
                 routingContext.session().put(ConstantKeys.ENROLLED_FACTOR_PHONE_NUMBER, phoneNumber);
+            }
+            if (extensionPhoneNumber != null) {
+                routingContext.session().put(ConstantKeys.ENROLLED_FACTOR_EXTENSION_PHONE_NUMBER, extensionPhoneNumber);
             }
             if (emailAddress != null) {
                 routingContext.session().put(ConstantKeys.ENROLLED_FACTOR_EMAIL_ADDRESS, emailAddress);

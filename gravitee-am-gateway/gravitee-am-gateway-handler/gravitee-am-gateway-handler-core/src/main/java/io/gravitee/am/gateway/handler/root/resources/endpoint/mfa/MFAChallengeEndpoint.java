@@ -553,6 +553,14 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
                 enrolledFactor.getSecurity().getAdditionalData().putAll(additionalData);
             }
 
+            // if there is an extension phone number, add it to the enrolled factor
+            final String extensionPhoneNumber = routingContext.session().get(ConstantKeys.ENROLLED_FACTOR_EXTENSION_PHONE_NUMBER);
+            if (extensionPhoneNumber != null && enrolledFactor.getChannel() != null) {
+                var additionalData = new HashMap<String, Object>();
+                additionalData.put(ConstantKeys.MFA_ENROLLMENT_EXTENSION_PHONE_NUMBER, extensionPhoneNumber);
+                enrolledFactor.getChannel().setAdditionalData(additionalData);
+            }
+
             enrolledFactor.setCreatedAt(new Date());
             enrolledFactor.setUpdatedAt(enrolledFactor.getCreatedAt());
             return enrolledFactor;
@@ -659,6 +667,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
         ctx.session().remove(ConstantKeys.ENROLLED_FACTOR_ID_KEY);
         ctx.session().remove(ConstantKeys.ENROLLED_FACTOR_SECURITY_VALUE_KEY);
         ctx.session().remove(ConstantKeys.ENROLLED_FACTOR_PHONE_NUMBER);
+        ctx.session().remove(ConstantKeys.ENROLLED_FACTOR_EXTENSION_PHONE_NUMBER);
         ctx.session().remove(ConstantKeys.ENROLLED_FACTOR_EMAIL_ADDRESS);
     }
 

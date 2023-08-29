@@ -81,6 +81,7 @@ public interface ConstantKeys {
     String ENROLLED_FACTOR_ID_KEY = "enrolledFactorId";
     String ENROLLED_FACTOR_SECURITY_VALUE_KEY = "enrolledFactorSecurityValue";
     String ENROLLED_FACTOR_PHONE_NUMBER = "enrolledFactorPhoneNumber";
+    String ENROLLED_FACTOR_EXTENSION_PHONE_NUMBER = "enrolledFactorExtensionPhoneNumber";
     String ENROLLED_FACTOR_EMAIL_ADDRESS = "enrolledFactorEmailAddress";
     String ALTERNATIVE_FACTOR_ID_KEY = "alternativeFactorId";
     String FACTORS_KEY = "factors";
@@ -97,6 +98,8 @@ public interface ConstantKeys {
     String MFA_ENROLLMENT_FACTOR_ID = "factorId";
     String MFA_ENROLLMENT_SHARED_SECRET = "sharedSecret";
     String MFA_ENROLLMENT_PHONE = "phone";
+
+    String MFA_ENROLLMENT_EXTENSION_PHONE_NUMBER = "extensionPhoneNumber";
     String MFA_ENROLLMENT_EMAIL = "email";
     long DEFAULT_ENROLLMENT_SKIP_TIME_SECONDS = 10 * 60 * 60; // ten hours
 
