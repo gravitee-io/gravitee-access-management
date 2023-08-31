@@ -111,6 +111,7 @@
         <json-path.version>2.8.0</json-path.version>
         <commons-io.version>2.11.0</commons-io.version>
         <common-text.version>1.10.0</common-text.version>
+        <commons-cli.version>1.4</commons-cli.version>
         <ognl.version>3.3.4</ognl.version>
         <mockito-jupiter.version>4.4.0</mockito-jupiter.version>
         <test-container.version>1.17.6</test-container.version>
@@ -450,6 +451,11 @@
                 <groupId>commons-lang</groupId>
                 <artifactId>commons-lang</artifactId>
                 <version>${commons-lang.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-cli</groupId>
+                <artifactId>commons-cli</artifactId>
+                <version>${commons-cli.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.freemarker</groupId>
