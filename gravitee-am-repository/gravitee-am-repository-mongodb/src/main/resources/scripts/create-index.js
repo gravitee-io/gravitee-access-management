@@ -359,7 +359,7 @@ db.alert_notifiers.reIndex();
 db.request_objects.dropIndexes();
 db.request_objects.createIndex( { "_id": 1 }, {"name": "_id1"} );
 db.request_objects.createIndex( { "expire_at" : 1 }, {"name": "e1", "expireAfterSeconds": 0});
-db.request_objects
+db.request_objects.reIndex();
 
 // "pushed_authorization_requests" collection
 db.pushed_authorization_requests.dropIndexes();
