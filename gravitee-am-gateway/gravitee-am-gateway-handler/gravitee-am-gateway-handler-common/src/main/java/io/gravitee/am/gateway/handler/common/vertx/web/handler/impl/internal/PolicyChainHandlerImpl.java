@@ -16,16 +16,15 @@
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal;
 
 import io.gravitee.am.common.policy.ExtensionPoint;
-import io.gravitee.am.gateway.handler.common.flow.FlowManager;
-import io.gravitee.am.gateway.handler.common.flow.ExecutionPredicate;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.flow.ExecutionPredicate;
+import io.gravitee.am.gateway.handler.common.flow.FlowManager;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerResponse;
 import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
 import io.gravitee.am.gateway.policy.Policy;
 import io.gravitee.am.gateway.policy.PolicyChainException;
 import io.gravitee.am.gateway.policy.PolicyChainProcessorFactory;
-import io.gravitee.am.gateway.policy.impl.processor.PolicyChainProcessorFailure;
 import io.gravitee.am.model.AuthenticationFlowContext;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.gateway.api.ExecutionContext;
@@ -117,7 +116,9 @@ public class PolicyChainHandlerImpl implements Handler<RoutingContext> {
                         if (failureCause instanceof PolicyChainException
                                 && POLICY_CHAIN_ERROR_KEY_MFA_CHALLENGE_ERROR.equals(((PolicyChainException) failureCause).key())) {
                             // need to set into the session the alternativeFactorId
-                            context.session().put(ALTERNATIVE_FACTOR_ID_KEY, ((PolicyChainException) failureCause).parameters().get(ALTERNATIVE_FACTOR_ID_KEY));
+                            if (((PolicyChainException) failureCause).parameters() != null) {
+                                context.session().put(ALTERNATIVE_FACTOR_ID_KEY, ((PolicyChainException) failureCause).parameters().get(ALTERNATIVE_FACTOR_ID_KEY));
+                            }
                         }
 
                         context.fail(failureCause);
