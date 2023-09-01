@@ -19,13 +19,12 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
-import io.vertx.core.json.Json;
 import io.vertx.core.json.jackson.DatabindCodec;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * <pre>
@@ -56,7 +55,7 @@ public class JWKSetDeserializerTest {
 
     @Test
     public void test_nullNode() {
-        assertNull("expecting null",new JWKSetDeserializer().convert((ObjectNode)null));
+        assertNull(new JWKSetDeserializer().convert((ObjectNode)null));
     }
 
     @Test
@@ -64,7 +63,7 @@ public class JWKSetDeserializerTest {
         ObjectNode node = DatabindCodec.mapper().createObjectNode().set("keys",null);
         Optional<JWKSet> result = new JWKSetDeserializer().convert(node);
 
-        assertFalse("Was expecting an empty result",result.isPresent());
+        assertFalse(result.isPresent(), "Was expecting an empty result");
     }
 
     @Test
@@ -72,11 +71,11 @@ public class JWKSetDeserializerTest {
         ObjectNode node = DatabindCodec.mapper().createObjectNode().put("keys","");
         Optional<JWKSet> result = new JWKSetDeserializer().convert(node);
 
-        assertFalse("Was expecting an empty result",result.isPresent());
+        assertFalse(result.isPresent(), "Was expecting an empty result");
     }
 
-    @Test(expected = InvalidClientMetadataException.class)
-    public void test_WrongKeyType() {
+    @Test
+    public void test_WrongKeyType_should_be_ignored() {
         ObjectNode rsaKey = DatabindCodec.mapper().createObjectNode()
                 .put("kty","wrongKeyType")
                 .put("kid","rsaKid")
@@ -87,10 +86,12 @@ public class JWKSetDeserializerTest {
         ArrayNode arrayNode = DatabindCodec.mapper().createArrayNode().add(rsaKey);
         ObjectNode root = DatabindCodec.mapper().createObjectNode().set("keys",arrayNode);
 
-        new JWKSetDeserializer().convert(root);
+        Optional<JWKSet> jwkSetOpt = new JWKSetDeserializer().convert(root);
+        assertTrue(jwkSetOpt.isPresent());
+        assertTrue(jwkSetOpt.get().getKeys().isEmpty());
     }
 
-    @Test(expected = InvalidClientMetadataException.class)
+    @Test
     public void test_WrongECCurve() {
         ObjectNode ecKey = DatabindCodec.mapper().createObjectNode()
                 .put("kty","EC")
@@ -103,7 +104,7 @@ public class JWKSetDeserializerTest {
         ArrayNode arrayNode = DatabindCodec.mapper().createArrayNode().add(ecKey);
         ObjectNode root = DatabindCodec.mapper().createObjectNode().set("keys",arrayNode);
 
-        new JWKSetDeserializer().convert(root);
+        assertThrows(InvalidClientMetadataException.class, () -> new JWKSetDeserializer().convert(root));
     }
 
     @Test
@@ -148,6 +149,6 @@ public class JWKSetDeserializerTest {
 
         Optional<JWKSet> result = new JWKSetDeserializer().convert(root);
 
-        assertTrue("Was expecting a result",result.isPresent());
+        assertTrue(result.isPresent(), "Was expecting a result");
     }
 }
