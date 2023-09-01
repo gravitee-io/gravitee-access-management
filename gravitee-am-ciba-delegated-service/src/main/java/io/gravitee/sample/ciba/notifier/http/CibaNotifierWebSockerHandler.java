@@ -29,6 +29,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.authentication.UsernamePasswordCredentials;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.client.WebClientOptions;
+import net.minidev.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,11 +48,11 @@ import static io.gravitee.sample.ciba.notifier.http.Constants.*;
 public class CibaNotifierWebSockerHandler implements Handler<ServerWebSocket> {
     private static final Logger LOGGER = LoggerFactory.getLogger(CibaNotifierWebSockerHandler.class);
 
-    private EventBus eventBus;
-    private WebClient webClient;
-    private CibaDomainManager domainManager;
+    private final EventBus eventBus;
+    private final WebClient webClient;
+    private final CibaDomainManager domainManager;
 
-    private Map<String, ServerWebSocket> serverWebSocket = new HashMap<>();
+    private final Map<String, ServerWebSocket> serverWebSocket = new HashMap<>();
 
     public CibaNotifierWebSockerHandler(Vertx vertx, CibaDomainManager domainManager) {
         this.eventBus = vertx.eventBus();
@@ -103,7 +104,7 @@ public class CibaNotifierWebSockerHandler implements Handler<ServerWebSocket> {
 
         try {
             final JOSEObject parsedJWT = JOSEObject.parse(state);
-            final String domainId = parsedJWT.getPayload().toJSONObject().getAsString("iss");
+            final String domainId = new JSONObject(parsedJWT.getPayload().toJSONObject()).getAsString("iss");
 
             final Optional<DomainReference> optCallback = this.domainManager.getDomainRef(domainId);
             if (optCallback.isPresent()) {

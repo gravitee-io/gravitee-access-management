@@ -32,7 +32,6 @@ import io.gravitee.am.common.exception.jwt.MalformedJWTException;
 import io.gravitee.am.common.exception.jwt.SignatureException;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
-import net.minidev.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -96,11 +95,10 @@ public class DefaultJWTBuilder implements JWTBuilder {
     @Override
     public String sign(JWT payload) {
         try {
-            JSONObject jsonObject = new JSONObject(payload);
-            if (issuer != null && !jsonObject.containsKey(Claims.iss)) {
-                jsonObject.put(Claims.iss, issuer);
+            if (issuer != null && !payload.containsKey(Claims.iss)) {
+                payload.setIss(issuer);
             }
-            SignedJWT signedJWT = new SignedJWT(header, JWTClaimsSet.parse(jsonObject));
+            SignedJWT signedJWT = new SignedJWT(header, JWTClaimsSet.parse(payload));
             signedJWT.sign(signer);
             return signedJWT.serialize();
         } catch (ParseException ex) {
