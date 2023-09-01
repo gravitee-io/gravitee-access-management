@@ -19,7 +19,6 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.PlainJWT;
 import io.gravitee.am.common.exception.jwt.MalformedJWTException;
 import io.gravitee.am.common.jwt.JWT;
-import net.minidev.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,13 +34,11 @@ public class NoJWTBuilder implements JWTBuilder {
 
     @Override
     public String sign(JWT payload) {
-        PlainJWT plainJWT;
         try {
-            plainJWT = new PlainJWT(JWTClaimsSet.parse(new JSONObject(payload)));
+            return new PlainJWT(JWTClaimsSet.parse(payload)).serialize();
         } catch (ParseException e) {
             logger.debug("Signing JWT token: {} has failed", payload);
             throw new MalformedJWTException("Failed to encode JWT token", e);
         }
-        return plainJWT.serialize();
     }
 }
