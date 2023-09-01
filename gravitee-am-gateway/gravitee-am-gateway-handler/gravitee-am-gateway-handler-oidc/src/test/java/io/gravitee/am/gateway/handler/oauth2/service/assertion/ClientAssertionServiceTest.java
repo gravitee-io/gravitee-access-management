@@ -39,13 +39,12 @@ import io.gravitee.am.model.jose.RSAKey;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.observers.TestObserver;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
@@ -56,9 +55,9 @@ import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.anyString;
@@ -69,7 +68,7 @@ import static org.mockito.Mockito.when;
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class ClientAssertionServiceTest {
 
     private static final String JWT_BEARER_TYPE = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer";
@@ -98,35 +97,31 @@ public class ClientAssertionServiceTest {
     
     @Test
     public void testAssertionTypeNotValid() {
-        TestObserver testObserver = clientAssertionService.assertClient("",null,null).test();
-
-        testObserver.assertError(InvalidClientException.class);
-        testObserver.assertNotComplete();
+        clientAssertionService.assertClient("",null,null).test()
+                .assertError(InvalidClientException.class)
+                .assertNotComplete();
     }
 
     @Test
     public void testUnsupportedAssertionType() {
-        TestObserver testObserver = clientAssertionService.assertClient("unsupported",null,null).test();
-
-        testObserver.assertError(InvalidClientException.class);
-        testObserver.assertNotComplete();
+        clientAssertionService.assertClient("unsupported",null,null).test()
+                .assertError(InvalidClientException.class)
+                .assertNotComplete();
     }
 
     @Test
     public void testAssertionNotValid() {
-        TestObserver testObserver = clientAssertionService.assertClient(JWT_BEARER_TYPE,"",null).test();
-
-        testObserver.assertError(InvalidClientException.class);
-        testObserver.assertNotComplete();
+        clientAssertionService.assertClient(JWT_BEARER_TYPE,"",null).test()
+                .assertError(InvalidClientException.class)
+                .assertNotComplete();
     }
 
     @Test
     public void testWithMissingClaims() {
         String assertion = new PlainJWT(new JWTClaimsSet.Builder().build()).serialize();
-        TestObserver testObserver = clientAssertionService.assertClient(JWT_BEARER_TYPE,assertion,null).test();
-
-        testObserver.assertError(InvalidClientException.class);
-        testObserver.assertNotComplete();
+        clientAssertionService.assertClient(JWT_BEARER_TYPE,assertion,null).test()
+                .assertError(InvalidClientException.class)
+                .assertNotComplete();
     }
 
     @Test
@@ -139,10 +134,9 @@ public class ClientAssertionServiceTest {
                         .expirationTime(Date.from(Instant.now().minus(1, ChronoUnit.DAYS)))
                         .build()
         ).serialize();
-        TestObserver testObserver = clientAssertionService.assertClient(JWT_BEARER_TYPE,assertion,null).test();
-
-        testObserver.assertError(InvalidClientException.class);
-        testObserver.assertNotComplete();
+        clientAssertionService.assertClient(JWT_BEARER_TYPE,assertion,null).test()
+                .assertError(InvalidClientException.class)
+                .assertNotComplete();
     }
 
     @Test
@@ -156,15 +150,13 @@ public class ClientAssertionServiceTest {
                         .build()
         ).serialize();
 
-        OpenIDProviderMetadata openIDProviderMetadata = Mockito.mock(OpenIDProviderMetadata.class);
         String basePath="/";
 
         when(openIDDiscoveryService.getConfiguration(basePath)).thenReturn(null);
 
-        TestObserver testObserver = clientAssertionService.assertClient(JWT_BEARER_TYPE,assertion,basePath).test();
-
-        testObserver.assertError(ServerErrorException.class);
-        testObserver.assertNotComplete();
+        clientAssertionService.assertClient(JWT_BEARER_TYPE,assertion,basePath).test()
+                .assertError(ServerErrorException.class)
+                .assertNotComplete();
     }
 
     @Test
@@ -184,10 +176,9 @@ public class ClientAssertionServiceTest {
         when(openIDProviderMetadata.getTokenEndpoint()).thenReturn(AUDIENCE);
         when(openIDDiscoveryService.getConfiguration(basePath)).thenReturn(openIDProviderMetadata);
 
-        TestObserver testObserver = clientAssertionService.assertClient(JWT_BEARER_TYPE,assertion,basePath).test();
-
-        testObserver.assertError(InvalidClientException.class);
-        testObserver.assertNotComplete();
+        clientAssertionService.assertClient(JWT_BEARER_TYPE,assertion,basePath).test()
+                .assertError(InvalidClientException.class)
+                .assertNotComplete();
     }
 
     @Test
@@ -207,42 +198,23 @@ public class ClientAssertionServiceTest {
         when(openIDProviderMetadata.getTokenEndpoint()).thenReturn(AUDIENCE);
         when(openIDDiscoveryService.getConfiguration(basePath)).thenReturn(openIDProviderMetadata);
 
-        TestObserver testObserver = clientAssertionService.assertClient(JWT_BEARER_TYPE,assertion,basePath).test();
-
-        testObserver.assertError(InvalidClientException.class);
-        testObserver.assertNotComplete();
+        clientAssertionService.assertClient(JWT_BEARER_TYPE,assertion,basePath).test()
+                .assertError(InvalidClientException.class)
+                .assertNotComplete();
     }
 
     @Test
-    public void testUnsignedJwt() throws NoSuchAlgorithmException, JOSEException {
+    public void testJwtWithoutSignature() throws NoSuchAlgorithmException, JOSEException {
         KeyPair rsaKey = generateRsaKeyPair();
 
-        RSAPublicKey publicKey = (RSAPublicKey) rsaKey.getPublic();
-        RSAPrivateKey privateKey = (RSAPrivateKey) rsaKey.getPrivate();
-
-        RSAKey key = new RSAKey();
-        key.setKty("RSA");
-        key.setKid(KID);
-        key.setE(Base64.getUrlEncoder().encodeToString(publicKey.getPublicExponent().toByteArray()));
-        key.setN(Base64.getUrlEncoder().encodeToString(publicKey.getModulus().toByteArray()));
-
-        Client client = generateClient(key);
-        client.setTokenEndpointAuthMethod(ClientAuthenticationMethod.PRIVATE_KEY_JWT);
-
-        String assertion = generateJWT(privateKey);
-        assertion = assertion.substring(0,assertion.lastIndexOf(".")+1);//remove signature
-        OpenIDProviderMetadata openIDProviderMetadata = Mockito.mock(OpenIDProviderMetadata.class);
+        String assertion = generateJWT((RSAPrivateKey) rsaKey.getPrivate());
+        assertion = assertion.substring(0, assertion.lastIndexOf(".") + 1); // remove signature
         String basePath="/";
 
-        when(clientSyncService.findByClientId(any())).thenReturn(Maybe.just(client));
-        when(openIDProviderMetadata.getTokenEndpoint()).thenReturn(AUDIENCE);
-        when(openIDDiscoveryService.getConfiguration(basePath)).thenReturn(openIDProviderMetadata);
-        when(jwkService.getKey(any(),any())).thenReturn(Maybe.just(key));
-
-        TestObserver testObserver = clientAssertionService.assertClient(JWT_BEARER_TYPE,assertion,basePath).test();
-
-        testObserver.assertError(InvalidClientException.class);
-        testObserver.assertNotComplete();
+        clientAssertionService.assertClient(JWT_BEARER_TYPE, assertion, basePath)
+                .test()
+                .assertError(InvalidClientException.class)
+                .assertNotComplete();
     }
 
     @Test
@@ -281,10 +253,9 @@ public class ClientAssertionServiceTest {
         when(jwkService.getKey(any(),any())).thenReturn(Maybe.just(key));
         when(jwsService.isValidSignature(any(),any())).thenReturn(true);
 
-        TestObserver testObserver = clientAssertionService.assertClient(JWT_BEARER_TYPE,assertion,basePath).test();
-
-        testObserver.assertNoErrors();
-        testObserver.assertValue(client);
+        clientAssertionService.assertClient(JWT_BEARER_TYPE,assertion,basePath).test()
+                .assertNoErrors()
+                .assertValue(client);
     }
 
     @Test
@@ -310,10 +281,9 @@ public class ClientAssertionServiceTest {
         when(openIDProviderMetadata.getTokenEndpoint()).thenReturn(AUDIENCE);
         when(openIDDiscoveryService.getConfiguration(basePath)).thenReturn(openIDProviderMetadata);
 
-        TestObserver testObserver = clientAssertionService.assertClient(JWT_BEARER_TYPE,assertion,basePath).test();
-
-        testObserver.assertError(InvalidClientException.class);
-        testObserver.assertNotComplete();
+        clientAssertionService.assertClient(JWT_BEARER_TYPE,assertion,basePath).test()
+                .assertError(InvalidClientException.class)
+                .assertNotComplete();
     }
 
     @Test
@@ -341,10 +311,9 @@ public class ClientAssertionServiceTest {
         when(jwkService.getKey(any(),any())).thenReturn(Maybe.just(key));
         when(jwsService.isValidSignature(any(),any())).thenReturn(true);
 
-        TestObserver testObserver = clientAssertionService.assertClient(JWT_BEARER_TYPE,assertion,basePath).test();
-
-        testObserver.assertNoErrors();
-        testObserver.assertValue(client);
+        clientAssertionService.assertClient(JWT_BEARER_TYPE,assertion,basePath).test()
+                .assertNoErrors()
+                .assertValue(client);
     }
 
     @Test
@@ -361,9 +330,9 @@ public class ClientAssertionServiceTest {
         when(openIDDiscoveryService.getConfiguration(basePath)).thenReturn(openIDProviderMetadata);
 
         when(domain.usePlainFapiProfile()).thenReturn(true);
-        TestObserver testObserver = clientAssertionService.assertClient(JWT_BEARER_TYPE,assertion,basePath).test();
-        testObserver.awaitDone(10, TimeUnit.SECONDS);
-        testObserver.assertError(InvalidClientException.class);
+        clientAssertionService.assertClient(JWT_BEARER_TYPE,assertion,basePath).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(InvalidClientException.class);
     }
 
     @Test
@@ -389,10 +358,9 @@ public class ClientAssertionServiceTest {
         when(openIDProviderMetadata.getTokenEndpoint()).thenReturn(AUDIENCE);
         when(openIDDiscoveryService.getConfiguration(basePath)).thenReturn(openIDProviderMetadata);
 
-        TestObserver testObserver = clientAssertionService.assertClient(JWT_BEARER_TYPE,assertion,basePath).test();
-
-        testObserver.assertError(InvalidClientException.class);
-        testObserver.assertNotComplete();
+        clientAssertionService.assertClient(JWT_BEARER_TYPE,assertion,basePath).test()
+                .assertError(InvalidClientException.class)
+                .assertNotComplete();
     }
 
     @Test
@@ -408,7 +376,7 @@ public class ClientAssertionServiceTest {
         key.setE(Base64.getUrlEncoder().encodeToString(publicKey.getPublicExponent().toByteArray()));
         key.setN(Base64.getUrlEncoder().encodeToString(publicKey.getModulus().toByteArray()));
         JWKSet jwkSet = new JWKSet();
-        jwkSet.setKeys(Arrays.asList(key));
+        jwkSet.setKeys(List.of(key));
 
         Client client = new Client();
         client.setClientId(CLIENT_ID);
@@ -425,14 +393,13 @@ public class ClientAssertionServiceTest {
         when(jwkService.getKey(any(),any())).thenReturn(Maybe.just(key));
         when(jwsService.isValidSignature(any(),any())).thenReturn(true);
 
-        TestObserver testObserver = clientAssertionService.assertClient(JWT_BEARER_TYPE,assertion,basePath).test();
-
-        testObserver.assertNoErrors();
-        testObserver.assertValue(client);
+        clientAssertionService.assertClient(JWT_BEARER_TYPE,assertion,basePath).test()
+                .assertNoErrors()
+                .assertValue(client);
     }
 
     @Test
-    public void testHmacJwt() throws NoSuchAlgorithmException, JOSEException {
+    public void testHmacJwt() throws JOSEException {
         // Generate random 256-bit (32-byte) shared secret
         SecureRandom random = new SecureRandom();
         byte[] sharedSecret = new byte[32];
@@ -454,14 +421,13 @@ public class ClientAssertionServiceTest {
         when(openIDProviderMetadata.getTokenEndpoint()).thenReturn(AUDIENCE);
         when(openIDDiscoveryService.getConfiguration(basePath)).thenReturn(openIDProviderMetadata);
 
-        TestObserver testObserver = clientAssertionService.assertClient(JWT_BEARER_TYPE,assertion,basePath).test();
-
-        testObserver.assertNoErrors();
-        testObserver.assertValue(client);
+        clientAssertionService.assertClient(JWT_BEARER_TYPE,assertion,basePath).test()
+                .assertNoErrors()
+                .assertValue(client);
     }
 
     @Test
-    public void testHmacJwt_RS256InvalidForFapi() throws NoSuchAlgorithmException, JOSEException {
+    public void testHmacJwt_RS256InvalidForFapi() throws JOSEException {
         // Generate random 256-bit (32-byte) shared secret
         SecureRandom random = new SecureRandom();
         byte[] sharedSecret = new byte[32];
@@ -480,13 +446,13 @@ public class ClientAssertionServiceTest {
 
         when(domain.usePlainFapiProfile()).thenReturn(true);
 
-        TestObserver testObserver = clientAssertionService.assertClient(JWT_BEARER_TYPE,assertion,basePath).test();
-        testObserver.awaitDone(10, TimeUnit.SECONDS);
-        testObserver.assertError(InvalidClientException.class);
+        clientAssertionService.assertClient(JWT_BEARER_TYPE,assertion,basePath).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(InvalidClientException.class);
     }
 
     @Test
-    public void testHmacJwt_invalidClientAuthMethod() throws NoSuchAlgorithmException, JOSEException {
+    public void testHmacJwt_invalidClientAuthMethod() throws JOSEException {
         // Generate random 256-bit (32-byte) shared secret
         SecureRandom random = new SecureRandom();
         byte[] sharedSecret = new byte[32];
@@ -508,10 +474,9 @@ public class ClientAssertionServiceTest {
         when(openIDProviderMetadata.getTokenEndpoint()).thenReturn(AUDIENCE);
         when(openIDDiscoveryService.getConfiguration(basePath)).thenReturn(openIDProviderMetadata);
 
-        TestObserver testObserver = clientAssertionService.assertClient(JWT_BEARER_TYPE,assertion,basePath).test();
-
-        testObserver.assertError(InvalidClientException.class);
-        testObserver.assertNotComplete();
+        clientAssertionService.assertClient(JWT_BEARER_TYPE,assertion,basePath).test()
+                .assertError(InvalidClientException.class)
+                .assertNotComplete();
     }
 
     @Test
@@ -527,7 +492,7 @@ public class ClientAssertionServiceTest {
         key.setE(Base64.getUrlEncoder().encodeToString(publicKey.getPublicExponent().toByteArray()));
         key.setN(Base64.getUrlEncoder().encodeToString(publicKey.getModulus().toByteArray()));
         JWKSet jwkSet = new JWKSet();
-        jwkSet.setKeys(Arrays.asList(key));
+        jwkSet.setKeys(List.of(key));
 
         Client client = new Client();
         client.setClientId(CLIENT_ID);
@@ -541,10 +506,9 @@ public class ClientAssertionServiceTest {
         when(openIDProviderMetadata.getTokenEndpoint()).thenReturn(AUDIENCE);
         when(openIDDiscoveryService.getConfiguration(basePath)).thenReturn(openIDProviderMetadata);
 
-        TestObserver testObserver = clientAssertionService.assertClient(JWT_BEARER_TYPE,assertion,basePath).test();
-
-        testObserver.assertError(InvalidClientException.class);
-        testObserver.assertNotComplete();
+        clientAssertionService.assertClient(JWT_BEARER_TYPE,assertion,basePath).test()
+                .assertError(InvalidClientException.class)
+                .assertNotComplete();
     }
 
     private KeyPair generateRsaKeyPair() throws NoSuchAlgorithmException{
@@ -587,7 +551,7 @@ public class ClientAssertionServiceTest {
 
     private Client generateClient(JWK jwk) {
         JWKSet jwks = new JWKSet();
-        jwks.setKeys(Arrays.asList(jwk));
+        jwks.setKeys(List.of(jwk));
         Client client = new Client();
         client.setClientId(CLIENT_ID);
         client.setJwks(jwks);

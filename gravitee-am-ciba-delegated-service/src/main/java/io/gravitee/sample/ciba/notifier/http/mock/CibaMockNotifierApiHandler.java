@@ -30,6 +30,7 @@ import io.vertx.ext.auth.authentication.UsernamePasswordCredentials;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.client.WebClientOptions;
+import net.minidev.json.JSONObject;
 import org.apache.commons.cli.CommandLine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,12 +41,12 @@ import java.util.concurrent.Executors;
 import static io.gravitee.sample.ciba.notifier.http.Constants.*;
 
 public class CibaMockNotifierApiHandler implements Handler<RoutingContext> {
-    private static Logger LOGGER = LoggerFactory.getLogger(CibaMockNotifierApiHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(CibaMockNotifierApiHandler.class);
 
     private final boolean accept;
     private final String authBearer;
-    private CibaDomainManager domainManager;
-    private WebClient webClient;
+    private final CibaDomainManager domainManager;
+    private final WebClient webClient;
 
     public CibaMockNotifierApiHandler(boolean accept, CommandLine parameters, CibaDomainManager domainManager, Vertx vertx) {
         this.accept = accept;
@@ -76,7 +77,7 @@ public class CibaMockNotifierApiHandler implements Handler<RoutingContext> {
             final String transactionId = routingContext.request().getFormAttribute(TRANSACTION_ID);
             final String state = routingContext.request().getFormAttribute(STATE);
             final JOSEObject parsedJWT = JOSEObject.parse(state);
-            final String domainId = parsedJWT.getPayload().toJSONObject().getAsString("iss");
+            final String domainId = new JSONObject(parsedJWT.getPayload().toJSONObject()).getAsString("iss");
 
             final Optional<DomainReference> optCallback = this.domainManager.getDomainRef(domainId);
             if (optCallback.isPresent()) {

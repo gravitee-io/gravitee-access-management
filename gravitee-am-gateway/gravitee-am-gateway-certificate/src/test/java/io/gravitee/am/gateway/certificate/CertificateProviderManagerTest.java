@@ -22,15 +22,14 @@ import io.gravitee.am.gateway.certificate.impl.CertificateProviderManagerImpl;
 import io.gravitee.am.model.jose.JWK;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import javax.crypto.spec.SecretKeySpec;
 import java.security.Key;
-import java.util.Collections;
-import java.util.Date;
-import java.util.Optional;
+import java.util.*;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
@@ -43,19 +42,17 @@ public class CertificateProviderManagerTest {
     private static final String signingKeyId = "default-gravitee-AM-key";
     private static final String defaultDigestAlgorithm = "SHA-256";
 
-    private CertificateProviderManager certificateProviderManager = new CertificateProviderManagerImpl();
+    private final CertificateProviderManager certificateProviderManager = new CertificateProviderManagerImpl();
 
     @Test
     public void noneAlgorithmCertificateProvider_nominalCase() {
         CertificateProvider certificateProvider = certificateProviderManager.create(noneProvider());
-        JWT jwt = new JWT();
-        jwt.setIss("iss");
-        jwt.setSub("sub");
 
-        assertEquals(
-                "non matching jwt with none algorithm",
-                "eyJhbGciOiJub25lIn0.eyJzdWIiOiJzdWIiLCJpc3MiOiJpc3MifQ.", certificateProvider.getJwtBuilder().sign(jwt)
-        );
+        JWT jwt = new JWT();
+        jwt.setSub("sub");
+        jwt.setIss("iss");
+
+        assertEquals("eyJhbGciOiJub25lIn0.eyJpc3MiOiJpc3MiLCJzdWIiOiJzdWIifQ.", certificateProvider.getJwtBuilder().sign(jwt));
     }
 
     @Test
@@ -74,8 +71,7 @@ public class CertificateProviderManagerTest {
         jwt.setSub("sub");
 
         assertEquals(
-                "non matching jwt with default certificateProvider",
-                "eyJraWQiOiJkZWZhdWx0LWdyYXZpdGVlLUFNLWtleSIsInR5cCI6IkpXVCIsImFsZyI6IkhTMjU2In0.eyJzdWIiOiJzdWIiLCJpc3MiOiJpc3MifQ.Ti366cJSMVSnvFW1wHYFMdc63zTdIpa42O6AOTWyGKk",
+                "eyJraWQiOiJkZWZhdWx0LWdyYXZpdGVlLUFNLWtleSIsInR5cCI6IkpXVCIsImFsZyI6IkhTMjU2In0.eyJpc3MiOiJpc3MiLCJzdWIiOiJzdWIifQ.BrJoRE3QH-4oNB6Off46x6-vLgS1Dk6Fi_IRmSmRMhA",
                 certificateProvider.getJwtBuilder().sign(jwt)
         );
     }
@@ -84,7 +80,7 @@ public class CertificateProviderManagerTest {
         CertificateMetadata certificateMetadata = new CertificateMetadata();
         certificateMetadata.setMetadata(Collections.singletonMap(CertificateMetadata.DIGEST_ALGORITHM_NAME, "none"));
 
-        io.gravitee.am.certificate.api.CertificateProvider noneProvider = new io.gravitee.am.certificate.api.CertificateProvider() {
+        return new io.gravitee.am.certificate.api.CertificateProvider() {
             @Override
             public Optional<Date> getExpirationDate() {
                 return Optional.empty();
@@ -120,7 +116,6 @@ public class CertificateProviderManagerTest {
                 return certificateMetadata;
             }
         };
-        return noneProvider;
     }
 
     private io.gravitee.am.certificate.api.CertificateProvider defaultProvider() {
@@ -131,7 +126,7 @@ public class CertificateProviderManagerTest {
         CertificateMetadata certificateMetadata = new CertificateMetadata();
         certificateMetadata.setMetadata(Collections.singletonMap(CertificateMetadata.DIGEST_ALGORITHM_NAME, defaultDigestAlgorithm));
 
-        io.gravitee.am.certificate.api.CertificateProvider defaultProvider = new io.gravitee.am.certificate.api.CertificateProvider() {
+        return new io.gravitee.am.certificate.api.CertificateProvider() {
             @Override
             public Optional<Date> getExpirationDate() {
                 return Optional.empty();
@@ -167,6 +162,5 @@ public class CertificateProviderManagerTest {
                 return certificateMetadata;
             }
         };
-        return defaultProvider;
     }
 }
