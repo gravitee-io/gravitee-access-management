@@ -103,7 +103,7 @@ public class IDTokenServiceImpl implements IDTokenService {
         return Single.fromCallable(() -> executionContext != null ? executionContext : createExecution(oAuth2Request, client, user))
                 .flatMap(executionContext1 -> {
                     // create JWT ID Token
-                    IDToken idToken = createIDTokenJWT(oAuth2Request, client, user, executionContext);
+                    IDToken idToken = createIDTokenJWT(oAuth2Request, client, user, executionContext1);
 
                     // sign ID Token
                     return certificateManager.findByAlgorithm(client.getIdTokenSignedResponseAlg())
