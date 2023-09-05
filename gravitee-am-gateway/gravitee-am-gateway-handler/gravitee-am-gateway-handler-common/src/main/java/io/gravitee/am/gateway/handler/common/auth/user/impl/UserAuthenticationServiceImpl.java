@@ -107,7 +107,7 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
                                     .andThen(Single.defer(() -> userService.enhance(user))));
                 })
                 // fire POST_CONNECT flow
-                .flatMap(endUser -> rulesEngine.fire(ExtensionPoint.POST_TOKEN, request, client, endUser).map(__ -> endUser));
+                .flatMap(endUser -> rulesEngine.fire(ExtensionPoint.POST_CONNECT, request, client, endUser).map(__ -> endUser));
     }
 
     @Override
