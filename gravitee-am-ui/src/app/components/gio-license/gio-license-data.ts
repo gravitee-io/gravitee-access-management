@@ -152,7 +152,7 @@ export const FeatureInfoData: Record<AmFeature, FeatureInfo> = {
       'SAML 2.0 IdP support is part of Gravitee Enterprise. SAML 2.0 allows you to exchange security information between online business partners.',
   },
   [AmFeature.ALERT_ENGINE]: {
-    image: 'assets/gio-license/alert-engine.png',
+    image: 'assets/gio-license/alert-engine.svg',
     description:
       'Alert Engine allows you to isolate, understand and remediate for API performance and security risks before they cause a problem for your customers.',
   },
