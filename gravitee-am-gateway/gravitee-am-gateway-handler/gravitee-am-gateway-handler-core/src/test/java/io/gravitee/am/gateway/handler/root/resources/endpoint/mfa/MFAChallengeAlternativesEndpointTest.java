@@ -163,8 +163,6 @@ public class MFAChallengeAlternativesEndpointTest extends RxWebTestBase {
                     assertNotNull(routingContext.get(CLIENT_CONTEXT_KEY));
                     final MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
                     assertEquals(routingContext.get(ACTION_KEY), resolveProxyRequest(routingContext.request(),"/mfa/challenge/alternatives", queryParams, true));
-                } catch (Exception e) {
-                    e.printStackTrace();
                 } finally {
                     routingContext.end();
                 }

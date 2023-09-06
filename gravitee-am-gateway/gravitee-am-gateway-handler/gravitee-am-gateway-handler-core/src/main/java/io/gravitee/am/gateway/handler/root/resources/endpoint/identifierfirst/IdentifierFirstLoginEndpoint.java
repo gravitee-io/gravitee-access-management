@@ -20,6 +20,7 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
+import io.gravitee.am.gateway.handler.common.utils.StaticEnvironmentProvider;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.context.EvaluableRequest;
 import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
@@ -145,8 +146,9 @@ public class IdentifierFirstLoginEndpoint extends AbstractEndpoint implements Ha
         final MultiMap queryParams = RequestUtils.getCleanedQueryParams(request);
         // login_hint parameter can be duplicated from a previous step, remove it
         queryParams.remove(Parameters.LOGIN_HINT);
-        queryParams.add(Parameters.LOGIN_HINT, UriBuilder.encodeURIComponent(request.getParam(USERNAME_PARAM_KEY)));
-        final String url = UriBuilderRequest.resolveProxyRequest(request, redirectUrl, queryParams, true);
+        // If parameters is sanitized when generating the redirect URL, then the login-hint requires an extra encoding
+        queryParams.add(Parameters.LOGIN_HINT, StaticEnvironmentProvider.sanitizeParametersEncoding() ? UriBuilder.encodeURIComponent(request.getParam(USERNAME_PARAM_KEY)) : request.getParam(USERNAME_PARAM_KEY));
+        final String url = resolveProxyRequest(request, redirectUrl, queryParams, true);
         doRedirect0(routingContext, url);
     }
 
