@@ -23,6 +23,7 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
+import io.gravitee.am.gateway.handler.common.utils.StaticEnvironmentProvider;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.policy.PolicyChainException;
 import io.gravitee.am.model.Domain;
@@ -168,7 +169,8 @@ public class LoginFailureHandler extends LoginAbstractHandler {
         }
         if (nonNull(context.request().getParam(Parameters.LOGIN_HINT)) && nonNull(context.request().getParam(ConstantKeys.USERNAME_PARAM_KEY))) {
             // encode login_hint parameter (to not replace '+' sign by a space ' ')
-            queryParams.set(Parameters.LOGIN_HINT, UriBuilder.encodeURIComponent(context.request().getParam(ConstantKeys.USERNAME_PARAM_KEY)));
+            queryParams.set(Parameters.LOGIN_HINT, StaticEnvironmentProvider.sanitizeParametersEncoding() ?
+                    UriBuilder.encodeURIComponent(context.request().getParam(ConstantKeys.USERNAME_PARAM_KEY)) : context.request().getParam(ConstantKeys.USERNAME_PARAM_KEY));
         }
         String uri = UriBuilderRequest.resolveProxyRequest(req, req.path(), queryParams, true);
         doRedirect(resp, uri);
