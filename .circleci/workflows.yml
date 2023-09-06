@@ -1084,13 +1084,9 @@ jobs:
       - run:
           name: "Maven Package and deploy to Artifactory [gravitee-snapshots] repository"
           command: |
-            mvn -s /tmp/.gravitee.settings.xml -P gio-artifactory-snapshot clean deploy
+            mvn -s /tmp/.gravitee.settings.xml -P gio-artifactory-snapshot clean install
       - save-maven-job-cache:
           jobName: pull_requests
-      - run:
-          name: "Maven Package and deploy to Nexus Snapshots"
-          command: |
-            mvn -s /tmp/.gravitee.settings.xml deploy -DskipTests
       - run:
           name: Save test results
           command: |
