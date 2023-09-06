@@ -16,7 +16,11 @@
 package io.gravitee.am.gateway.handler.common.vertx.utils;
 
 import io.gravitee.am.common.web.UriBuilder;
+<<<<<<< HEAD
 import io.gravitee.am.gateway.handler.common.vertx.core.http.GraviteeVertxHttpServerRequest;
+=======
+import io.gravitee.am.gateway.handler.common.utils.StaticEnvironmentProvider;
+>>>>>>> 962c67434d (fix: add sanitizeParametersEncoding toggle)
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.gateway.api.Request;
 import io.vertx.rxjava3.core.MultiMap;
@@ -124,8 +128,12 @@ public class UriBuilderRequest {
         } else {
             if (parameters != null) {
                 parameters.forEach(entry -> {
-                    // some parameters can be already URL encoded, decode first
-                    builder.addParameter(entry.getKey(), UriBuilder.encodeURIComponent(UriBuilder.decodeURIComponent(entry.getValue())));
+                    var parameter = entry.getValue();
+                    if (StaticEnvironmentProvider.sanitizeParametersEncoding()) {
+                        // some parameters can be already URL encoded, decode first
+                        parameter = UriBuilder.decodeURIComponent(parameter);
+                    }
+                    builder.addParameter(entry.getKey(), UriBuilder.encodeURIComponent(parameter));
                 });
             }
         }
