@@ -175,7 +175,7 @@ public class LoginEndpointHandlerTest extends RxWebTestBase {
         appIdp.setSelectionRule("true");
         appIdp.setIdentity("provider-id");
 
-        final TreeSet treeSet = new TreeSet();
+        final TreeSet<ApplicationIdentityProvider> treeSet = new TreeSet<>();
         treeSet.add(appIdp);
         appClient.setIdentityProviders(treeSet);
 
@@ -250,7 +250,7 @@ public class LoginEndpointHandlerTest extends RxWebTestBase {
             loginEndpoint.handle(context);
             context.next();
         });
-        ;
+
         when(clientSyncService.findByClientId(appClient.getClientId())).thenReturn(Maybe.just(appClient));
         testRequest(
                 HttpMethod.GET, "/login?client_id=" + appClient.getClientId() + "&response_type=code&redirect_uri=somewhere.com&username=",
@@ -312,9 +312,6 @@ public class LoginEndpointHandlerTest extends RxWebTestBase {
                     assertFalse(TRUE.equals(routingContext.get(ALLOW_PASSWORDLESS_CONTEXT_KEY)));
                     assertEquals(TRUE.equals(routingContext.get(HIDE_FORM_CONTEXT_KEY)), expectedHide);
                     assertEquals(TRUE.equals(routingContext.get(IDENTIFIER_FIRST_LOGIN_ENABLED)), expectedFirstIdentifier);
-
-                } catch (Exception e) {
-                    e.printStackTrace();
                 } finally {
                     routingContext.end();
                 }
@@ -347,8 +344,6 @@ public class LoginEndpointHandlerTest extends RxWebTestBase {
                 assertFalse(TRUE.equals(routingContext.get(ALLOW_PASSWORDLESS_CONTEXT_KEY)));
                 assertEquals(TRUE.equals(routingContext.get(HIDE_FORM_CONTEXT_KEY)), expectedHide);
                 assertEquals(TRUE.equals(routingContext.get(IDENTIFIER_FIRST_LOGIN_ENABLED)), expectedFirstIdentifier);
-            } catch (Exception e) {
-                e.printStackTrace();
             } finally {
                 routingContext.end();
             }
