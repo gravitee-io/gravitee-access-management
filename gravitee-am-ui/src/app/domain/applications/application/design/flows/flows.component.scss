@@ -1,0 +1,23 @@
+.design-flows {
+  &__inherit {
+    padding: 10px;
+  }
+
+  &__content {
+    background-color: white;
+    flex: 1 1 auto;
+    --gv-policy-studio--h: calc(100vh - 265px);
+
+    &.save-bar-opened {
+      --gv-policy-studio--pb: 84px;
+    }
+  }
+
+  &__save-bar {
+    position: absolute;
+    bottom: 25px;
+    width: 50%;
+    min-width: 580px; // keep save bar button on one line for small screen
+    margin: auto !important;
+  }
+}

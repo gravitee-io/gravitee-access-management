@@ -64,6 +64,7 @@ import { map, mergeMap } from 'rxjs/operators';
 import {
   GioLicenseModule,
   GioMenuModule,
+  GioSaveBarModule,
   GioSafePipeModule,
   GioSubmenuModule,
   GioTopBarLinkModule,
@@ -733,6 +734,7 @@ import { AppConfig } from '../config/app.config';
     GioSubmenuModule,
     GioLicenseModule,
     GioSafePipeModule,
+    GioSaveBarModule,
   ],
   providers: [
     DomainService,
