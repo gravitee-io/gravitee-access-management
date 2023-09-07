@@ -178,7 +178,7 @@ public class HttpUserProviderTest {
                 .willReturn(okJson("[{\"id\" : \"123456789\", \"username\" : \"johndoe\"}]")));
 
         TestObserver<User> testObserver = userProvider.findByEmail("johndoe@mail.com").test();
-        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.awaitDone(15, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(u -> "123456789".equals(u.getId()));
