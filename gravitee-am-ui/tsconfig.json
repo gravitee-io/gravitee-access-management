@@ -19,6 +19,7 @@
     "target": "es2015",
     "types": ["jest"],
     "lib": ["es2016", "dom"],
-    "module": "es2020"
+    "module": "es2020",
+    "skipLibCheck": true
   }
 }

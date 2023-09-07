@@ -38,6 +38,8 @@ export enum AmFeature {
   AM_GRAVITEE_RISK_ASSESSMENT = 'gravitee-risk-assessment',
   AM_IDP_SAML2 = 'am-idp-saml2',
   ALERT_ENGINE = 'alert-engine',
+  AM_POLICY_ACCOUNT_LINKING = 'am-policy-account-linking',
+  AM_POLICY = 'am-policy',
 }
 
 export const FeatureInfoData: Record<AmFeature, FeatureInfo> = {
@@ -153,6 +155,16 @@ export const FeatureInfoData: Record<AmFeature, FeatureInfo> = {
     image: 'assets/gio-license/alert-engine.png',
     description:
       'Alert Engine allows you to isolate, understand and remediate for API performance and security risks before they cause a problem for your customers.',
+  },
+  [AmFeature.AM_POLICY_ACCOUNT_LINKING]: {
+    image: 'assets/gio-license/account-linking.svg',
+    description:
+      'Account linking allows you to link user accounts from different Identity Providers. This enables users to sign in with other providers but still have the same user profile in your apps.',
+  },
+  [AmFeature.AM_POLICY]: {
+    image: 'assets/gio-license/policies.svg',
+    description:
+      'This policy is part of Gravitee Enterprise. Enterprise policies allows you to easily define and customise rules according to your evolving business needs.',
   },
 };
 
