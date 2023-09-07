@@ -7,6 +7,7 @@ This file documents all notable changes to [Gravitee.io Access Management 3.x](h
 **BREAKING CHANGE**: AM 4.1.0 upgrade to R2DBC 1.0, now the r2dbc drivers need to be in 1.x. Drivers in 0.x will not work anymore. 
 
 - [X] Default values for RDBMS connection pool have changed. (**warning**: timeout duration set to 0 doesn't mean infinite anymore, you have to define negative value)
+- Add podSecurityContext
 
 ### 4.0.0
 
