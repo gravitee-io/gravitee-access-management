@@ -74,7 +74,7 @@ import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.ACC
  */
 public class UMATokenGranter extends AbstractTokenGranter {
 
-    private static final List<String> CLAIM_TOKEN_FORMAT_SUPPORTED = Arrays.asList(TokenType.ID_TOKEN);
+    private static final List<String> CLAIM_TOKEN_FORMAT_SUPPORTED = List.of(TokenType.ID_TOKEN);
     private UserAuthenticationManager userAuthenticationManager;
     private PermissionTicketService permissionTicketService;
     private ResourceService resourceService;
@@ -146,9 +146,9 @@ public class UMATokenGranter extends AbstractTokenGranter {
 
         if(!StringUtils.isEmpty(claimTokenFormat) && !CLAIM_TOKEN_FORMAT_SUPPORTED.contains(claimTokenFormat)) {
             return Single.error(UmaException.needInfoBuilder(ticket)
-                    .requiredClaims(Arrays.asList(new RequiredClaims(CLAIM_TOKEN_FORMAT)
-                                    .setFriendlyName("supported claims token format")
-                                    .setClaimTokenFormat(CLAIM_TOKEN_FORMAT_SUPPORTED)
+                    .requiredClaims(List.of(new RequiredClaims(CLAIM_TOKEN_FORMAT)
+                            .setFriendlyName("supported claims token format")
+                            .setClaimTokenFormat(CLAIM_TOKEN_FORMAT_SUPPORTED)
                     ))
                     .build());
         }
@@ -176,7 +176,7 @@ public class UMATokenGranter extends AbstractTokenGranter {
                 .onErrorResumeNext(ex -> {
                     //If user
                     return Maybe.error(UmaException.needInfoBuilder(tokenRequest.getTicket())
-                            .requiredClaims(Arrays.asList(
+                            .requiredClaims(List.of(
                                     new RequiredClaims(CLAIM_TOKEN).setFriendlyName("Malformed or expired claim_token")
                             ))
                             .build());
@@ -196,8 +196,10 @@ public class UMATokenGranter extends AbstractTokenGranter {
      * Validates the request to ensure that Client Requested UMA scopes are well pre-registered.
      */
     private Single<TokenRequest> resolveRequestedScopes(TokenRequest tokenRequest, Client client) {
-        if(tokenRequest.getScopes()!=null && !tokenRequest.getScopes().isEmpty()) {
-            if(client.getScopeSettings()==null || client.getScopeSettings().isEmpty() || !client.getScopeSettings().stream().map(ApplicationScopeSettings::getScope).collect(Collectors.toList()).containsAll(tokenRequest.getScopes())) {
+        if (tokenRequest.getScopes() != null && !tokenRequest.getScopes().isEmpty()) {
+            if (client.getScopeSettings() == null ||
+                    client.getScopeSettings().isEmpty() ||
+                    !new HashSet<>(client.getScopeSettings().stream().map(ApplicationScopeSettings::getScope).toList()).containsAll(tokenRequest.getScopes())) {
                 //TokenRequest scopes are not null and not empty, already did the check in earlier step.
                 return Single.error(new InvalidScopeException("At least one of the scopes included in the request does not match client pre-registered scopes"));
             }
@@ -247,7 +249,7 @@ public class UMATokenGranter extends AbstractTokenGranter {
         //Else return each Permission Requests scopes such as RequestedScopes = PermissionTicket ∪ (ClientRegistered ∩ ClientRequested ∩ RSRegistered)
         return Single.just(requestedPermissions.stream()
                 .map(permissionRequest -> {
-                    Set<String> registeredScopes = new HashSet(fetchedResources.get(permissionRequest.getResourceId()).getResourceScopes());
+                    Set<String> registeredScopes = new HashSet<>(fetchedResources.get(permissionRequest.getResourceId()).getResourceScopes());
                     //RequestedScopes = PermissionTicket ∪ (ClientRequested ∩ RSRegistered) /!\ ClientRegistered scopes already have been checked earlier. (#resolveRequest)
                     permissionRequest.getResourceScopes().addAll(tokenRequest.getScopes().stream().filter(registeredScopes::contains).collect(Collectors.toSet()));
                     return permissionRequest;
@@ -287,35 +289,34 @@ public class UMATokenGranter extends AbstractTokenGranter {
     }
 
     private List<PermissionRequest> mergePermissions(JWT rpt, List<PermissionRequest> requested) {
-        if(rpt.get("permissions")!=null) {
+        if (rpt.get("permissions") != null) {
             //Build Map with current request
             Map<String, PermissionRequest> newRequestedPermission = requested.stream().collect(Collectors.toMap(PermissionRequest::getResourceId,pr->pr));
             //Build map with previous permissions from the old RPT (Requesting Party Token)
-            Map<String, PermissionRequest> rptPermission = convert(((List)rpt.get("permissions")));
+            Map<String, PermissionRequest> rptPermission = convert(((List<Map<String, Object>>)rpt.get("permissions")));
             //Merge both
-            return Stream.concat(newRequestedPermission.entrySet().stream(), rptPermission.entrySet().stream())
+            return new ArrayList<>(Stream.concat(newRequestedPermission.entrySet().stream(), rptPermission.entrySet().stream())
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (requestedPermission, fromRpt) -> {
                         requestedPermission.setResourceScopes(
                                 Stream.concat(
                                         requestedPermission.getResourceScopes().stream(),
                                         fromRpt.getResourceScopes().stream()
-                                ).distinct().collect(Collectors.toList())//Keep distinct values
+                                ).distinct().toList()//Keep distinct values
                         );
                         return requestedPermission;
                     }))
-                    .values().stream().collect(Collectors.toList());
+                    .values());
         }
 
         return requested;
     }
 
-    private Map<String, PermissionRequest> convert(List<HashMap> permissions) {
-        Map<String,PermissionRequest> result = new LinkedHashMap<>(permissions.size());
-        for(HashMap permission : permissions) {
-            JsonObject json = new JsonObject(permission);
-            PermissionRequest permissionRequest = json.mapTo(PermissionRequest.class);
-            result.put(permissionRequest.getResourceId(), permissionRequest);
-        }
+    private Map<String, PermissionRequest> convert(List<Map<String, Object>> permissions) {
+        Map<String, PermissionRequest> result = new LinkedHashMap<>(permissions.size());
+        permissions.stream()
+                .map(JsonObject::new)
+                .map(json -> json.mapTo(PermissionRequest.class))
+                .forEach(permissionRequest -> result.put(permissionRequest.getResourceId(), permissionRequest));
         return result;
     }
 
@@ -368,13 +369,11 @@ public class UMATokenGranter extends AbstractTokenGranter {
                 // map to rules
                 .map(accessPolicy -> {
                     Rule rule = new DefaultRule(accessPolicy);
-                    Optional<PermissionRequest> permission = permissionRequests
+                    permissionRequests
                             .stream()
                             .filter(permissionRequest -> permissionRequest.getResourceId().equals(accessPolicy.getResource()))
-                            .findFirst();
-                    if (permission.isPresent()) {
-                        ((DefaultRule) rule).setMetadata(Collections.singletonMap("permissionRequest", permission.get()));
-                    }
+                            .findFirst()
+                            .ifPresent(permissionRequest -> ((DefaultRule)rule).setMetadata(Collections.singletonMap("permissionRequest", permissionRequest)));
                     return rule;
                 })
                 .toList()
