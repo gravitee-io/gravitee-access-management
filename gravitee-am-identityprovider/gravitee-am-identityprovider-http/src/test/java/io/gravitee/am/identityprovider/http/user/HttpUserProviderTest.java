@@ -27,6 +27,7 @@ import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.common.http.HttpHeaders;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -55,8 +56,8 @@ public class HttpUserProviderTest {
     @Autowired
     private DefaultIdentityProviderMapper mapper;
 
-    @Rule
-    public WireMockRule wireMockRule = new WireMockRule(wireMockConfig().port(19998));
+    @ClassRule
+    public static WireMockRule wireMockRule = new WireMockRule(wireMockConfig().port(19998));
 
     @Before
     public void init() {
