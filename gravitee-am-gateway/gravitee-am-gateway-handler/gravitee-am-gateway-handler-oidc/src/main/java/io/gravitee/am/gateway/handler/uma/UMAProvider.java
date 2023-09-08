@@ -16,7 +16,7 @@
 package io.gravitee.am.gateway.handler.uma;
 
 import io.gravitee.am.common.oidc.Scope;
-import io.gravitee.am.gateway.handler.api.ProtocolProvider;
+import io.gravitee.am.gateway.handler.api.AbstractProtocolProvider;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
 import io.gravitee.am.gateway.handler.uma.resources.endpoint.PermissionEndpoint;
@@ -32,7 +32,6 @@ import io.gravitee.am.service.PermissionTicketService;
 import io.gravitee.am.service.ResourceService;
 import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.http.MediaType;
-import io.gravitee.common.service.AbstractService;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.ext.web.Router;
@@ -46,7 +45,7 @@ import static io.gravitee.am.gateway.handler.uma.constants.UMAConstants.*;
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
-public class UMAProvider extends AbstractService<ProtocolProvider> implements ProtocolProvider{
+public class UMAProvider extends AbstractProtocolProvider {
 
     @Autowired
     private Vertx vertx;

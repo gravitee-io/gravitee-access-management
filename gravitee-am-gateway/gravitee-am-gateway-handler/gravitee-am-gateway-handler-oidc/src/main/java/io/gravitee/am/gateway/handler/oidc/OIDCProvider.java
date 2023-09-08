@@ -16,11 +16,11 @@
 package io.gravitee.am.gateway.handler.oidc;
 
 import io.gravitee.am.common.oidc.Scope;
-import io.gravitee.am.gateway.handler.api.ProtocolProvider;
+import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.api.AbstractProtocolProvider;
 import io.gravitee.am.gateway.handler.ciba.CIBAProvider;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
-import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
 import io.gravitee.am.gateway.handler.oauth2.OAuth2Provider;
@@ -43,7 +43,6 @@ import io.gravitee.am.gateway.handler.uma.UMAProvider;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.UserService;
 import io.gravitee.common.http.MediaType;
-import io.gravitee.common.service.AbstractService;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.rxjava3.core.Vertx;
@@ -62,7 +61,7 @@ import static io.gravitee.am.common.oauth2.Parameters.CLIENT_ID;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class OIDCProvider extends AbstractService<ProtocolProvider> implements ProtocolProvider {
+public class OIDCProvider extends AbstractProtocolProvider {
 
     @Autowired
     private Vertx vertx;

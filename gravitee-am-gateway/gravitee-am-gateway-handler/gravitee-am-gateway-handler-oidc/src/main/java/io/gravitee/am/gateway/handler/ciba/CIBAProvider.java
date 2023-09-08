@@ -16,7 +16,7 @@
 package io.gravitee.am.gateway.handler.ciba;
 
 import io.gravitee.am.common.utils.ConstantKeys;
-import io.gravitee.am.gateway.handler.api.ProtocolProvider;
+import io.gravitee.am.gateway.handler.api.AbstractProtocolProvider;
 import io.gravitee.am.gateway.handler.ciba.resources.handler.AuthenticationRequestAcknowledgeHandler;
 import io.gravitee.am.gateway.handler.ciba.resources.handler.AuthenticationRequestCallbackHandler;
 import io.gravitee.am.gateway.handler.ciba.resources.handler.AuthenticationRequestParametersHandler;
@@ -35,7 +35,6 @@ import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.gateway.handler.oidc.service.jws.JWSService;
 import io.gravitee.am.gateway.handler.oidc.service.request.RequestObjectService;
 import io.gravitee.am.model.Domain;
-import io.gravitee.common.service.AbstractService;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.rxjava3.core.Vertx;
@@ -49,7 +48,7 @@ import org.springframework.core.env.Environment;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class CIBAProvider extends AbstractService<ProtocolProvider> implements ProtocolProvider {
+public class CIBAProvider extends AbstractProtocolProvider {
 
     public static final String CIBA_PATH = "/oidc/ciba";
 
