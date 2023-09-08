@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.users;
 
-import io.gravitee.am.gateway.handler.api.ProtocolProvider;
+import io.gravitee.am.gateway.handler.api.AbstractProtocolProvider;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
@@ -24,7 +24,6 @@ import io.gravitee.am.gateway.handler.users.resources.consents.UserConsentEndpoi
 import io.gravitee.am.gateway.handler.users.resources.consents.UserConsentsEndpointHandler;
 import io.gravitee.am.gateway.handler.users.service.UserService;
 import io.gravitee.am.model.Domain;
-import io.gravitee.common.service.AbstractService;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.ext.web.Router;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +32,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class UsersProvider extends AbstractService<ProtocolProvider> implements ProtocolProvider {
+public class UsersProvider extends AbstractProtocolProvider {
 
     @Autowired
     private Vertx vertx;

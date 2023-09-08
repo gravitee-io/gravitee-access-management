@@ -15,10 +15,9 @@
  */
 package io.gravitee.am.gateway.handler.saml2;
 
-import io.gravitee.am.gateway.handler.api.ProtocolProvider;
+import io.gravitee.am.gateway.handler.api.AbstractProtocolProvider;
 import io.gravitee.am.gateway.handler.saml2.resources.endpoint.ServiceProviderMetadataEndpoint;
 import io.gravitee.am.gateway.handler.saml2.service.sp.ServiceProviderService;
-import io.gravitee.common.service.AbstractService;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.ext.web.Router;
@@ -29,7 +28,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class SAML2Provider extends AbstractService<ProtocolProvider> implements ProtocolProvider {
+public class SAML2Provider extends AbstractProtocolProvider {
 
     @Autowired
     private Vertx vertx;
