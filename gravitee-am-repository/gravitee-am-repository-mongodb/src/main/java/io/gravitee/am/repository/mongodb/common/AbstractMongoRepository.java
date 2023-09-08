@@ -51,8 +51,9 @@ public abstract class AbstractMongoRepository {
     protected void createIndex(MongoCollection<?> collection, Document document, IndexOptions indexOptions, boolean ensure) {
         if (ensure) {
             Single.fromPublisher(collection.createIndex(document, indexOptions))
-                    .doOnSuccess(s -> logger.debug("Created an index named: {}", s))
-                    .doOnError(throwable -> logger.error("Error occurs during creation of index", throwable)).blockingGet();
+                    .subscribe(
+                            s -> logger.debug("Created an index named: {}", s),
+                            throwable -> logger.error("Error occurs during creation of index", throwable));
         }
     }
 }
