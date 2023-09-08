@@ -380,14 +380,18 @@ jobs:
       - restore-maven-job-cache:
           jobName: build_branch
       - run:
-          name: Maven Package
+          name: Maven Package & deploy on artifactory
           command: |
-            mvn -s /tmp/.gravitee.settings.xml install
+            mvn -s /tmp/.gravitee.settings.xml -P gio-artifactory-snapshot clean deploy
             cp ./gravitee-am-gateway/gravitee-am-gateway-standalone/gravitee-am-gateway-standalone-distribution/gravitee-am-gateway-standalone-distribution-zip/target/*.zip ~/
             cp ./gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-management-api-standalone-distribution/gravitee-am-management-api-standalone-distribution-zip/target/*.zip ~/
             cp ./gravitee-am-ui/target/*.zip ~/
       - save-maven-job-cache:
           jobName: build_branch
+      - run:
+          name: "Maven Package and deploy to Nexus Snapshots"
+          command: |
+            mvn -s /tmp/.gravitee.settings.xml deploy -DskipTests
       - persist_to_workspace:
           root: ~/
           paths:
@@ -1093,7 +1097,7 @@ jobs:
           jobName: pull_requests
       - mvn_git_commit_id
       - run:
-          name: "Maven Package and deploy to Artifactory [gravitee-snapshots] repository"
+          name: "Maven Package and install"
           command: |
             mvn -s /tmp/.gravitee.settings.xml -P gio-artifactory-snapshot clean install
       - save-maven-job-cache:
