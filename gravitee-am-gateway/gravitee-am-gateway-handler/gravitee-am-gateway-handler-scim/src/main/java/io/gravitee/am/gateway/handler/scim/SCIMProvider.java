@@ -16,7 +16,7 @@
 package io.gravitee.am.gateway.handler.scim;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.gravitee.am.gateway.handler.api.ProtocolProvider;
+import io.gravitee.am.gateway.handler.api.AbstractProtocolProvider;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
 import io.gravitee.am.gateway.handler.scim.resources.ErrorHandler;
@@ -29,7 +29,6 @@ import io.gravitee.am.gateway.handler.scim.service.GroupService;
 import io.gravitee.am.gateway.handler.scim.service.ServiceProviderConfigService;
 import io.gravitee.am.gateway.handler.scim.service.UserService;
 import io.gravitee.am.model.Domain;
-import io.gravitee.common.service.AbstractService;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.ext.web.Router;
 import io.vertx.rxjava3.ext.web.handler.CorsHandler;
@@ -39,7 +38,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class SCIMProvider extends AbstractService<ProtocolProvider> implements ProtocolProvider {
+public class SCIMProvider extends AbstractProtocolProvider {
 
     @Autowired
     private Router router;

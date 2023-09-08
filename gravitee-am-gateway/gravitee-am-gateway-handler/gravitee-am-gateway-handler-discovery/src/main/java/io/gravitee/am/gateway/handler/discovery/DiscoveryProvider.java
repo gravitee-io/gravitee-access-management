@@ -15,11 +15,10 @@
  */
 package io.gravitee.am.gateway.handler.discovery;
 
-import io.gravitee.am.gateway.handler.api.ProtocolProvider;
+import io.gravitee.am.gateway.handler.api.AbstractProtocolProvider;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.ErrorHandler;
 import io.gravitee.am.gateway.handler.discovery.resources.endpoint.ProviderConfigurationEndpoint;
 import io.gravitee.am.gateway.handler.discovery.service.DiscoveryService;
-import io.gravitee.common.service.AbstractService;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.ext.web.Router;
@@ -33,7 +32,7 @@ import static io.gravitee.am.gateway.handler.discovery.constants.DiscoveryConsta
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
-public class DiscoveryProvider extends AbstractService<ProtocolProvider> implements ProtocolProvider {
+public class DiscoveryProvider extends AbstractProtocolProvider {
 
     @Autowired
     private Vertx vertx;
