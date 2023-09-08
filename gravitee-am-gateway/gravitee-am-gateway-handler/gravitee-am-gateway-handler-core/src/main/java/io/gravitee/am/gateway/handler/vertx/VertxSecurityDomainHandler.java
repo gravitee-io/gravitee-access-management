@@ -48,6 +48,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.core.env.Environment;
 
 import java.util.ArrayList;
@@ -102,7 +104,21 @@ public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDom
         stopProtocols();
 
         super.doStop();
+
+        stopApplicationContext();
+
         logger.info("Security domain [" + domain.getName() + "] handler is now stopped", domain);
+    }
+
+    private void stopApplicationContext() {
+        if (applicationContext instanceof ConfigurableApplicationContext) {
+            try {
+                ((ConfigurableApplicationContext) applicationContext).close();
+            } catch (Exception e) {
+                logger.error("\t An error occurs while stopping the application context", e);
+                throw new IllegalStateException(e);
+            }
+        }
     }
 
     public Router router() {
