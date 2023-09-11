@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.vertx;
 
 import io.gravitee.am.gateway.handler.api.ProtocolProvider;
+import io.gravitee.am.gateway.handler.manager.authdevice.notifier.AuthenticationDeviceNotifierManager;
 import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
 import io.gravitee.am.gateway.handler.common.alert.AlertEventProcessor;
 import io.gravitee.am.gateway.handler.common.audit.AuditReporterManager;
@@ -30,6 +31,7 @@ import io.gravitee.am.gateway.handler.manager.dictionary.I18nDictionaryManager;
 import io.gravitee.am.gateway.handler.manager.domain.CrossDomainManager;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.manager.form.FormManager;
+import io.gravitee.am.gateway.handler.manager.resource.ResourceManager;
 import io.gravitee.am.gateway.handler.manager.theme.ThemeManager;
 import io.gravitee.am.gateway.handler.root.RootProvider;
 import io.gravitee.am.model.Domain;
@@ -99,6 +101,7 @@ public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDom
     @Override
     protected void doStop() throws Exception {
         logger.info("Security domain [" + domain.getName() + "] handler is now stopping, closing context...");
+
 
         stopComponents();
         stopProtocols();
@@ -189,6 +192,8 @@ public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDom
         components.add(DeviceIdentifierManager.class);
         components.add(I18nDictionaryManager.class);
         components.add(ThemeManager.class);
+        components.add(ResourceManager.class);
+        components.add(AuthenticationDeviceNotifierManager.class);
 
         components.forEach(componentClass -> {
             LifecycleComponent lifecyclecomponent = applicationContext.getBean(componentClass);
