@@ -15,11 +15,7 @@
  */
 package io.gravitee.am.management.service.impl;
 
-import freemarker.template.Configuration;
-import freemarker.template.DefaultObjectWrapperBuilder;
-import freemarker.template.SimpleHash;
-import freemarker.template.Template;
-import freemarker.template.TemplateException;
+import freemarker.template.*;
 import io.gravitee.am.common.email.Email;
 import io.gravitee.am.common.email.EmailBuilder;
 import io.gravitee.am.common.jwt.Claims;
@@ -59,7 +55,6 @@ import java.util.Map;
 
 import static io.gravitee.am.common.web.UriBuilder.encodeURIComponent;
 import static io.gravitee.am.service.utils.UserProfileUtils.preferredLanguage;
-import static org.springframework.ui.freemarker.FreeMarkerTemplateUtils.processTemplateIntoString;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
