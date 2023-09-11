@@ -1,1 +1,0 @@
-Remove this file after AM-693 task completed
