@@ -64,7 +64,7 @@ executors:
 parameters:
   gio_action:
     type: enum
-    enum: [ release, publish_maven_central, publish_rpms, publish_docker_images, pull_requests, release_notes_am, release_helm ]
+    enum: [ release, publish_maven_central, publish_rpms, publish_docker_images, pull_requests, release_notes_am, release_helm , publish-images-azure-registry]
     default: pull_requests
   gio_product:
     type: enum
@@ -710,7 +710,7 @@ jobs:
             echo $TAG > /tmp/docker-tag.txt
 
             # create a latest tag for the given branch to avoid flooding SNYK project
-            export TAG_LATEST=$(echo "${CIRCLE_BRANCH:0:15}-latest")
+            export TAG_LATEST=$(echo "${CIRCLE_BRANCH}-latest")
             echo "export TAG_LATEST=$TAG_LATEST" >> $BASH_ENV
       - create_docker_context
       - run:
@@ -1794,3 +1794,18 @@ workflows:
           context: cicd-orchestrator
           requires:
             - AM - Lint & Test
+
+  publish-images-azure-registry:
+    when:
+      equal: [ publish-images-azure-registry, << pipeline.parameters.gio_action >> ]
+    jobs:
+      - setup:
+          context:
+            - cicd-orchestrator
+      - build:
+          requires:
+            - setup
+      - publish-images-azure-registry:
+          context: cicd-orchestrator
+          requires:
+            - build
