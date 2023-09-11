@@ -23,17 +23,15 @@ import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static io.gravitee.am.common.utils.ConstantKeys.SOCIAL_PROVIDER_CONTEXT_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.USERNAME_PARAM_KEY;
 import static io.gravitee.am.gateway.handler.root.resources.handler.login.LoginSocialAuthenticationHandler.SOCIAL_AUTHORIZE_URL_CONTEXT_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.SOCIAL_PROVIDER_CONTEXT_KEY;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -71,7 +69,11 @@ public class LoginSelectionRuleHandler extends LoginAbstractHandler  {
 
                 if (fromIdentifierFirstLogin) {
                     // encode login_hint parameter for external provider (Azure AD replace the '+' sign by a space ' ')
-                    uriBuilder.addParameter(Parameters.LOGIN_HINT, UriBuilder.encodeURIComponent(routingContext.request().getParam(USERNAME_PARAM_KEY)));
+                    // we do not need to test the StaticEnvironmentProvider.sanitizeParametersEncoding() here as
+                    // we are not relying on the UriBuilderRequest.resolveProxyRequest method...
+                    uriBuilder.addParameter(Parameters.LOGIN_HINT,
+                            UriBuilder.encodeURIComponent(routingContext.request().getParam(USERNAME_PARAM_KEY))
+                    );
                 }
 
                 doRedirect(routingContext, uriBuilder.buildString());
