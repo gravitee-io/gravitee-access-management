@@ -29,10 +29,9 @@ public class StaticEnvironmentProvider {
     }
 
     public static boolean sanitizeParametersEncoding() {
-        if (sanitizeParametersEncoding != null) {
-            return sanitizeParametersEncoding;
+        if (sanitizeParametersEncoding == null) {
+            sanitizeParametersEncoding = getEnvironmentProperty("legacy.openid.sanitizeParametersEncoding", boolean.class, true);
         }
-        sanitizeParametersEncoding = getEnvironmentProperty("legacy.openid.sanitizeParametersEncoding", boolean.class, true);
         return sanitizeParametersEncoding;
     }
 
