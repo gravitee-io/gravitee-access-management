@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl;
 
 import io.gravitee.am.common.web.UriBuilder;
+import io.gravitee.am.gateway.handler.common.utils.StaticEnvironmentProvider;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.vertx.core.Handler;
@@ -61,7 +62,7 @@ public class RedirectHandlerImpl implements Handler<RoutingContext> {
                 if (!UriBuilder.decodeURIComponent(login_hint).equals(login_hint)
                         && login_hint.contains("@")
                         && login_hint.contains("+")) {
-                    queryParams.set(LOGIN_HINT, UriBuilder.encodeURIComponent(login_hint));
+                    queryParams.set(LOGIN_HINT, StaticEnvironmentProvider.sanitizeParametersEncoding() ? UriBuilder.encodeURIComponent(login_hint) : login_hint);
                 }
             }
 

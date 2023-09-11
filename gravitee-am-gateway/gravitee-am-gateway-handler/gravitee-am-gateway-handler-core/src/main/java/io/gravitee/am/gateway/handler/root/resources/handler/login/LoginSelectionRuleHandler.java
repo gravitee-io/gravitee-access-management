@@ -68,7 +68,11 @@ public class LoginSelectionRuleHandler extends LoginAbstractHandler  {
 
                 if (fromIdentifierFirstLogin) {
                     // encode login_hint parameter for external provider (Azure AD replace the '+' sign by a space ' ')
-                    uriBuilder.addParameter(Parameters.LOGIN_HINT, UriBuilder.encodeURIComponent(routingContext.request().getParam(USERNAME_PARAM_KEY)));
+                    // we do not need to test the StaticEnvironmentProvider.sanitizeParametersEncoding() here as
+                    // we are not relying on the UriBuilderRequest.resolveProxyRequest method...
+                    uriBuilder.addParameter(Parameters.LOGIN_HINT,
+                            UriBuilder.encodeURIComponent(routingContext.request().getParam(USERNAME_PARAM_KEY))
+                    );
                     if (routingContext.request().getParam(REMEMBER_ME_PARAM_KEY) != null){
                         uriBuilder.addParameter(Parameters.REMEMBER_ME_HINT, UriBuilder.encodeURIComponent(routingContext.request().getParam(REMEMBER_ME_PARAM_KEY)));
                     }

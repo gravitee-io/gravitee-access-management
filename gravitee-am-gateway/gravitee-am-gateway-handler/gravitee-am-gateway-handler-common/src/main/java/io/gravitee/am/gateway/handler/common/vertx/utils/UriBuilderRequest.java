@@ -16,11 +16,8 @@
 package io.gravitee.am.gateway.handler.common.vertx.utils;
 
 import io.gravitee.am.common.web.UriBuilder;
-<<<<<<< HEAD
 import io.gravitee.am.gateway.handler.common.vertx.core.http.GraviteeVertxHttpServerRequest;
-=======
 import io.gravitee.am.gateway.handler.common.utils.StaticEnvironmentProvider;
->>>>>>> 962c67434d (fix: add sanitizeParametersEncoding toggle)
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.gateway.api.Request;
 import io.vertx.rxjava3.core.MultiMap;
