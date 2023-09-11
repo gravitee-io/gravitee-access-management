@@ -36,7 +36,7 @@ public class StaticEnvironmentProviderTest {
     }
 
     @Test
-    public void sanitizeParametersEncoding_environment_returns_value() {
+    public void sanitizeParametersEncoding_environment_returns_cached_value() {
         assertFalse(StaticEnvironmentProvider.sanitizeParametersEncoding());
 
         // Call method twice to test cached value is used
