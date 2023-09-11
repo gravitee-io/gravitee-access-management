@@ -33,7 +33,6 @@ import io.gravitee.common.service.AbstractService;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.core.buffer.Buffer;
 import io.vertx.rxjava3.core.http.HttpServerResponse;
-import io.vertx.rxjava3.ext.web.Route;
 import io.vertx.rxjava3.ext.web.Router;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -128,10 +127,7 @@ public class DefaultReactor extends AbstractService implements Reactor, EventLis
     @Override
     public void unMountDomain(VertxSecurityDomainHandler domainHandler) {
 
-
-        domainHandler.router()
-                .getRoutes()
-                .forEach(Route::remove);
+        domainHandler.router().clear();
     }
 
     @Override
