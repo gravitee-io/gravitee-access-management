@@ -42,6 +42,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+import static io.gravitee.am.common.oidc.Parameters.REMEMBER_ME_HINT;
 import static io.gravitee.am.common.utils.ConstantKeys.*;
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
@@ -137,18 +138,13 @@ public class IdentifierFirstLoginEndpoint extends AbstractEndpoint implements Ha
         final MultiMap queryParams = RequestUtils.getCleanedQueryParams(request);
         // login_hint parameter can be duplicated from a previous step, remove it
         queryParams.remove(Parameters.LOGIN_HINT);
-<<<<<<< HEAD
-        queryParams.remove(Parameters.REMEMBER_ME_HINT);
-        queryParams.add(Parameters.LOGIN_HINT, UriBuilder.encodeURIComponent(request.getParam(USERNAME_PARAM_KEY)));
-        if (request.getParam(REMEMBER_ME_PARAM_KEY) != null) {
-            queryParams.add(Parameters.REMEMBER_ME_HINT, UriBuilder.encodeURIComponent(request.getParam(REMEMBER_ME_PARAM_KEY)));
-        }
-        final String url = UriBuilderRequest.resolveProxyRequest(request, redirectUrl, queryParams, true);
-=======
+        queryParams.remove(REMEMBER_ME_HINT);
         // If parameters is sanitized when generating the redirect URL, then the login-hint requires an extra encoding
         queryParams.add(Parameters.LOGIN_HINT, StaticEnvironmentProvider.sanitizeParametersEncoding() ? UriBuilder.encodeURIComponent(request.getParam(USERNAME_PARAM_KEY)) : request.getParam(USERNAME_PARAM_KEY));
+        if (request.getParam(REMEMBER_ME_PARAM_KEY) != null) {
+            queryParams.add(REMEMBER_ME_HINT, StaticEnvironmentProvider.sanitizeParametersEncoding() ? UriBuilder.encodeURIComponent(request.getParam(REMEMBER_ME_HINT)) : request.getParam(REMEMBER_ME_HINT));
+        }
         final String url = resolveProxyRequest(request, redirectUrl, queryParams, true);
->>>>>>> 962c67434d (fix: add sanitizeParametersEncoding toggle)
         doRedirect0(routingContext, url);
     }
 
