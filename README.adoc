@@ -1,4 +1,4 @@
-= Gravitee.io Access Management
+= Gravitee.io Access Management 
 
 image:https://img.shields.io/badge/License-Apache%202.0-blue.svg["License", link="https://github.com/gravitee-io/gravitee-access-management/blob/master/LICENSE.txt"]
 image:https://circleci.com/gh/gravitee-io/gravitee-access-management.svg?style=svg["CircleCI", link="https://circleci.com/gh/gravitee-io/gravitee-access-management"]
