@@ -781,8 +781,8 @@ jobs:
           name: Install Newman
           command: sudo npm i -g newman
       - run:
-          name: Wait for PSQL to be up and running
-          command: timeout 15s bash -c 'until nc -vz localhost 5432; do sleep 2; done'
+          name: Wait for MySQL to be up and running
+          command: timeout 15s bash -c 'until nc -vz localhost 3306; do sleep 2; done'
       - run:
           name: Run API, GW and Postman tests
           command: |
