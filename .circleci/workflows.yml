@@ -456,6 +456,8 @@ jobs:
             export GRAVITEE_MFA_RATE_TIMEPERIOD=1
             export GRAVITEE_MFA_RATE_TIMEUNIT=Minutes
             
+            # Reduce the sync frequency to avoid flaky test due to synchronization delay
+            export gravitee_services_sync_cron="*/2 * * * * *"
             
             # Start AM Management
             gravitee-am-management-api-standalone-${AM_VERSION}/bin/gravitee &
@@ -571,6 +573,9 @@ jobs:
             export GRAVITEE_OAUTH2_JDBC_USERNAME=postgres
             export GRAVITEE_OAUTH2_JDBC_PASSWORD=T0pS3cr3t
             
+            # Reduce the sync frequency to avoid flaky test due to synchronization delay
+            export gravitee_services_sync_cron="*/2 * * * * *"
+            
             # Start AM Management
             gravitee-am-management-api-standalone-${AM_VERSION}/bin/gravitee &
             # Start AM Gateway
@@ -631,6 +636,9 @@ jobs:
             
             # Environment Variables
             export GRAVITEE_EMAIL_ALLOWEDFROM_0="*@*.*"
+            
+            # Reduce the sync frequency to avoid flaky test due to synchronization delay
+            export gravitee_services_sync_cron="*/2 * * * * *"
             
             # Start AM Management
             gravitee-am-management-api-standalone-${AM_VERSION}/bin/gravitee &
@@ -723,6 +731,9 @@ jobs:
             export GRAVITEE_OAUTH2_JDBC_PASSWORD=T0pS3cr3t
             
             export GRAVITEE_EMAIL_ALLOWEDFROM_0="*@*.*"
+            
+            # Reduce the sync frequency to avoid flaky test due to synchronization delay
+            export gravitee_services_sync_cron="*/2 * * * * *"
             
             # Start AM Management
             gravitee-am-management-api-standalone-${AM_VERSION}/bin/gravitee &
