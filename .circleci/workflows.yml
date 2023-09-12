@@ -757,6 +757,105 @@ jobs:
           event: fail
           mentions: "@am_team"
           template: basic_fail_1
+
+  run_postman_tests_mysql:
+    parameters:
+      mysql_version:
+        type: string
+    docker:
+      - image: cimg/openjdk:17.0.8-node
+      - image: mysql:<< parameters.mysql_version >>
+        command: --default-authentication-plugin=mysql_native_password
+        environment:
+          MYSQL_ROOT_PASSWORD: T0pS3cr3t
+          MYSQL_DATABASE: graviteeam
+    resource_class: medium+
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - keeper/env-export:
+          secret-url: keeper://w8WBpALVCgYdxtV5pVrQsw/custom_field/base64
+          var-name: GRAVITEE_LICENSE_KEY
+      - run:
+          name: Install Newman
+          command: sudo npm i -g newman
+      - run:
+          name: Wait for PSQL to be up and running
+          command: timeout 15s bash -c 'until nc -vz localhost 5432; do sleep 2; done'
+      - run:
+          name: Run API, GW and Postman tests
+          command: |
+            # Prepare AM
+            unzip /tmp/workspace/gravitee-am-gateway-standalone-*.zip
+            unzip /tmp/workspace/gravitee-am-management-api-standalone-*.zip
+            export AM_VERSION=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
+            curl https://download.gravitee.io/plugins/services/gravitee-service-geoip/gravitee-service-geoip-2.1.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-2.1.0.zip
+            
+            cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
+            cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/
+            
+            cp /tmp/workspace/gravitee-am-factor-mock-*.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
+            cp /tmp/workspace/gravitee-am-factor-mock-*.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/
+            
+            # copy r2dbc & jdbc drivers
+            curl https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.33/mysql-connector-java-8.0.33.jar -o jdbc-drvier.jar
+            curl https://repo1.maven.org/maven2/io/asyncer/r2dbc-mysql/1.0.2/r2dbc-mysql-1.0.2.jar -o r2dbc-driver.jar
+
+            mkdir -p gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc
+            mkdir -p gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc
+
+            cp jdbc-driver.jar gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc/
+            cp r2dbc-driver.jar gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc/
+            cp r2dbc-driver.jar gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc/
+
+            cp jdbc-driver.jar gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc/
+            cp r2dbc-driver.jar gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc/
+            cp r2dbc-driver.jar gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc/
+            
+            export GRAVITEE_MANAGEMENT_TYPE=jdbc
+            export GRAVITEE_MANAGEMENT_JDBC_DRIVER=mysql
+            export GRAVITEE_MANAGEMENT_JDBC_HOST=localhost
+            export GRAVITEE_MANAGEMENT_JDBC_PORT=5432
+            export GRAVITEE_MANAGEMENT_JDBC_DATABASE=graviteeam
+            export GRAVITEE_MANAGEMENT_JDBC_USERNAME=root
+            export GRAVITEE_MANAGEMENT_JDBC_PASSWORD=T0pS3cr3t
+            export GRAVITEE_OAUTH2_TYPE=jdbc
+            export GRAVITEE_OAUTH2_JDBC_DRIVER=mysql
+            export GRAVITEE_OAUTH2_JDBC_HOST=localhost
+            export GRAVITEE_OAUTH2_JDBC_PORT=5432
+            export GRAVITEE_OAUTH2_JDBC_DATABASE=graviteeam
+            export GRAVITEE_OAUTH2_JDBC_USERNAME=root
+            export GRAVITEE_OAUTH2_JDBC_PASSWORD=T0pS3cr3t
+            
+            export GRAVITEE_EMAIL_ALLOWEDFROM_0="*@*.*"
+            
+            # Reduce the sync frequency to avoid flaky test due to synchronization delay
+            export gravitee_services_sync_cron="*/2 * * * * *"
+            
+            # Start AM Management
+            gravitee-am-management-api-standalone-${AM_VERSION}/bin/gravitee &
+            # Start AM Gateway
+            gravitee-am-gateway-standalone-${AM_VERSION}/bin/gravitee &
+            # build & start CIBA Delegated Service
+            mvn -P cicd -f gravitee-am-ciba-delegated-service/pom.xml package
+            java -jar gravitee-am-ciba-delegated-service/target/gravitee-am-ciba-delegated-service-${AM_VERSION}.jar &
+            sleep 30
+            # Wait for AM to be up and running
+            timeout 30s bash -c 'until nc -vz localhost 8093; do sleep 2; done'
+            timeout 30s bash -c 'until nc -vz localhost 8092; do sleep 2; done'
+            sleep 30
+            # Run Postman tests
+            make postman
+      - keeper/env-export:
+          secret-url: keeper://ZOz4db245GNaETVwmPBk8w/field/password
+          var-name: SLACK_ACCESS_TOKEN
+      - slack/notify:
+          branch_pattern: ".+"
+          event: fail
+          mentions: "@am_team"
+          template: basic_fail_1
+
   run_testcontainer_tests:
     executor:
       name: ubuntu
@@ -1681,28 +1780,6 @@ workflows:
           matrix:
             parameters:
               psql_version: ["11.18-bullseye", "15.1"]
-              ## TODO make MySQL/ Maria & SQLServer approval step
-      - run_postman_tests_mysql:
-          context: cicd-orchestrator
-          requires:
-            - approve-tests-mongo-psql
-          matrix:
-            parameters:
-              mysql_version: ["8.1"]
-      - run_postman_tests_maria:
-          context: cicd-orchestrator
-          requires:
-            - approve-tests-mongo-psql
-          matrix:
-            parameters:
-              maria_version: ["11"]
-      - run_postman_tests_sqlserver:
-          context: cicd-orchestrator
-          requires:
-            - approve-tests-mongo-psql
-          matrix:
-            parameters:
-              sqlserver_version: ["2017-latest", "2022-latest"]
       - run_jest_tests_mongo:
           context: cicd-orchestrator
           requires:
@@ -1717,6 +1794,31 @@ workflows:
           matrix:
             parameters:
               psql_version: ["11.18-bullseye", "15.1"]
+      - approve-tests-other-rdbms:
+          type: approval
+          requires:
+            - process_pull_request
+      - run_postman_tests_mysql:
+          context: cicd-orchestrator
+          requires:
+            - approve-tests-other-rdbms
+          matrix:
+            parameters:
+              mysql_version: ["8.1"]
+     # - run_postman_tests_maria:
+     #     context: cicd-orchestrator
+     #     requires:
+     #       - approve-tests-other-rdbms
+     #     matrix:
+     #       parameters:
+     #         maria_version: ["11"]
+     # - run_postman_tests_sqlserver:
+     #     context: cicd-orchestrator
+     #     requires:
+     #       - approve-tests-other-rdbms
+     #     matrix:
+     #       parameters:
+     #         sqlserver_version: ["2017-latest", "2022-latest"]
 
   testcontainer_tests:
     when: << pipeline.parameters.run-container-test >>
