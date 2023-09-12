@@ -799,7 +799,7 @@ jobs:
             cp /tmp/workspace/gravitee-am-factor-mock-*.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/
             
             # copy r2dbc & jdbc drivers
-            curl https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.33/mysql-connector-java-8.0.33.jar -o jdbc-drvier.jar
+            curl https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.33/mysql-connector-java-8.0.33.jar -o jdbc-driver.jar
             curl https://repo1.maven.org/maven2/io/asyncer/r2dbc-mysql/1.0.2/r2dbc-mysql-1.0.2.jar -o r2dbc-driver.jar
 
             mkdir -p gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc
@@ -816,14 +816,14 @@ jobs:
             export GRAVITEE_MANAGEMENT_TYPE=jdbc
             export GRAVITEE_MANAGEMENT_JDBC_DRIVER=mysql
             export GRAVITEE_MANAGEMENT_JDBC_HOST=localhost
-            export GRAVITEE_MANAGEMENT_JDBC_PORT=5432
+            export GRAVITEE_MANAGEMENT_JDBC_PORT=3306
             export GRAVITEE_MANAGEMENT_JDBC_DATABASE=graviteeam
             export GRAVITEE_MANAGEMENT_JDBC_USERNAME=root
             export GRAVITEE_MANAGEMENT_JDBC_PASSWORD=T0pS3cr3t
             export GRAVITEE_OAUTH2_TYPE=jdbc
             export GRAVITEE_OAUTH2_JDBC_DRIVER=mysql
             export GRAVITEE_OAUTH2_JDBC_HOST=localhost
-            export GRAVITEE_OAUTH2_JDBC_PORT=5432
+            export GRAVITEE_OAUTH2_JDBC_PORT=3306
             export GRAVITEE_OAUTH2_JDBC_DATABASE=graviteeam
             export GRAVITEE_OAUTH2_JDBC_USERNAME=root
             export GRAVITEE_OAUTH2_JDBC_PASSWORD=T0pS3cr3t
