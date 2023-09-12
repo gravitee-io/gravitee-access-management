@@ -46,7 +46,7 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
   private defaultLoginAttemptsResetTimeInSecond = 43200; // 12 hours
   private defaultAccountBlockedDurationInSecond = 7200; // 2 hours
   private defaultMFAChallengeAttemptsResetTimeInSecond = 60; // 1 minutes
-  private defaultRememberMeDurationInSecond = 604800; // 7 days
+  private defaultRememberMeDurationInSecond = 1209600; // 14 days
   private defaultMFAChallengeMaxAttempts = 3;
 
   loginAttemptsResetTime: Duration = { time: null, unit: null };
