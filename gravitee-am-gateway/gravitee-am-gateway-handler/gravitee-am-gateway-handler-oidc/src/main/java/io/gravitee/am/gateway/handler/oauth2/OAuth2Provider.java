@@ -72,8 +72,6 @@ import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.core.env.Environment;
 
 /**
@@ -324,24 +322,6 @@ public class OAuth2Provider extends AbstractProtocolProvider {
 
         // mount OAuth 2.0 router
         router.mountSubRouter(path(), oauth2Router);
-    }
-
-    @Override
-    protected void doStop() throws Exception {
-        super.doStop();
-        stopApplicationContext();
-    }
-
-    private void stopApplicationContext() {
-        if (applicationContext instanceof ConfigurableApplicationContext) {
-            try {
-                ((GenericApplicationContext) applicationContext).clearResourceCaches();
-                ((GenericApplicationContext) applicationContext).close();
-            } catch (Exception e) {
-                logger.error("\t An error occurs while stopping the application context", e);
-                throw new IllegalStateException(e);
-            }
-        }
     }
 
     @Override
