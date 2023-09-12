@@ -19,8 +19,6 @@ import io.gravitee.am.model.CorsSettings;
 import io.gravitee.am.model.Domain;
 import io.vertx.ext.web.handler.impl.CorsHandlerImpl;
 import io.vertx.rxjava3.ext.web.handler.CorsHandler;
-import java.util.Arrays;
-import java.util.stream.Collectors;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -30,19 +28,10 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.core.env.Environment;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import static io.gravitee.am.gateway.handler.vertx.cors.CorsHandlerFactory.DEFAULT_ALLOWED_HEADERS_VALUE;
-import static io.gravitee.am.gateway.handler.vertx.cors.CorsHandlerFactory.DEFAULT_ALLOW_CREDENTIAL_KEY;
-import static io.gravitee.am.gateway.handler.vertx.cors.CorsHandlerFactory.DEFAULT_ALLOW_CREDENTIAL_VALUE;
-import static io.gravitee.am.gateway.handler.vertx.cors.CorsHandlerFactory.DEFAULT_HTTP_METHODS_VALUE;
-import static io.gravitee.am.gateway.handler.vertx.cors.CorsHandlerFactory.DEFAULT_MAX_AGE_KEY;
-import static io.gravitee.am.gateway.handler.vertx.cors.CorsHandlerFactory.DEFAULT_MAX_AGE_VALUE;
-import static io.gravitee.am.gateway.handler.vertx.cors.CorsHandlerFactory.DEFAULT_ORIGIN_VALUE;
-import static java.util.Arrays.asList;
+import static io.gravitee.am.gateway.handler.vertx.cors.CorsHandlerFactory.*;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toSet;
 import static org.junit.Assert.assertEquals;
@@ -66,6 +55,7 @@ public class CorsHandlerFactoryTest {
 
     @Before
     public void setUp() throws Exception {
+        when(environment.getProperty(DEFAULT_ORIGIN_KEY, DEFAULT_ORIGIN_VALUE)).thenReturn(DEFAULT_ORIGIN_VALUE);
         when(environment.getProperty(DEFAULT_MAX_AGE_KEY, Integer.class, DEFAULT_MAX_AGE_VALUE)).thenReturn(DEFAULT_MAX_AGE_VALUE);
         when(environment.getProperty(DEFAULT_ALLOW_CREDENTIAL_KEY, Boolean.class, DEFAULT_ALLOW_CREDENTIAL_VALUE)).thenReturn(DEFAULT_ALLOW_CREDENTIAL_VALUE);
     }
@@ -134,10 +124,11 @@ public class CorsHandlerFactoryTest {
         assertEquals(corsSettings.getAllowedHeaders(), allowedHeaders);
 
         final Set<Pattern> relativeOrigins = (Set<Pattern>) ReflectionTestUtils.getField(corsHandler, "relativeOrigins");
+        // Note that regarding:
+        // io/vertx/vertx-web/4.4.4/vertx-web-4.4.4-sources.jar!/io/vertx/ext/web/handler/impl/CorsHandlerImpl.java:104
+        // default relative origin ".*" is like null (allow everything).
         if (relativeOrigins != null) {
-            LinkedHashSet<Pattern> originPattern = new LinkedHashSet<>();
-            originPattern.add(Pattern.compile(String.join(",", corsSettings.getAllowedOrigins())));
-            assertEquals(originPattern.toString(), relativeOrigins.toString());
+            assertEquals(corsSettings.getAllowedOrigins().toString(), relativeOrigins.toString());
         }
 
         return true;
