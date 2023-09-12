@@ -26,6 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -44,7 +45,7 @@ public class CorsHandlerFactory implements FactoryBean<CorsHandler> {
     protected static final String DEFAULT_MAX_AGE_KEY = "http.cors.max-age";
     protected static final String DEFAULT_ALLOW_CREDENTIAL_KEY = "http.cors.allow-credentials";
 
-    protected static final String DEFAULT_ORIGIN_VALUE = "*";
+    protected static final String DEFAULT_ORIGIN_VALUE = ".*";
     protected static final String DEFAULT_ALLOWED_HEADERS_VALUE = "Cache-Control, Pragma, Origin, Authorization, Content-Type, X-Requested-With, If-Match, x-xsrf-token";
     protected static final String DEFAULT_HTTP_METHODS_VALUE = "GET, POST, PUT, PATCH, DELETE";
     protected static final int DEFAULT_MAX_AGE_VALUE = 86400;
@@ -100,7 +101,7 @@ public class CorsHandlerFactory implements FactoryBean<CorsHandler> {
 
     private CorsSettings createDefaultCorsSettings() {
         final CorsSettings settings = new CorsSettings();
-        settings.setAllowedOrigins(getProperties(DEFAULT_ORIGIN_KEY, DEFAULT_ORIGIN_VALUE));
+        settings.setAllowedOrigins(Set.of(environment.getProperty(DEFAULT_ORIGIN_KEY, DEFAULT_ORIGIN_VALUE)));
         settings.setAllowedHeaders(getProperties(DEFAULT_ALLOWED_HEADERS_KEY, DEFAULT_ALLOWED_HEADERS_VALUE));
         settings.setAllowedMethods(getProperties(DEFAULT_HTTP_METHODS_KEY, DEFAULT_HTTP_METHODS_VALUE));
         settings.setMaxAge(environment.getProperty(DEFAULT_MAX_AGE_KEY, Integer.class, DEFAULT_MAX_AGE_VALUE));
@@ -111,10 +112,11 @@ public class CorsHandlerFactory implements FactoryBean<CorsHandler> {
     private CorsHandler createCorsHandler(CorsSettings settings) {
         return CorsHandler
                 .newInstance(io.vertx.ext.web.handler.CorsHandler
-                        .create(String.join(",", settings.getAllowedOrigins()))
+                        .create()
                         .allowedHeaders(settings.getAllowedHeaders())
                         .allowedMethods(getHttpMethods(settings.getAllowedMethods()))
-                        .maxAgeSeconds(settings.getMaxAge()))
+                        .maxAgeSeconds(settings.getMaxAge())
+                        .addRelativeOrigins(List.copyOf(settings.getAllowedOrigins())))
                 .allowCredentials(settings.isAllowCredentials());
     }
 }
