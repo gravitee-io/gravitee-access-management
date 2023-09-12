@@ -16,8 +16,6 @@
 package io.gravitee.am.gateway.handler.vertx;
 
 import io.gravitee.am.gateway.handler.api.ProtocolProvider;
-import io.gravitee.am.gateway.handler.manager.authdevice.notifier.AuthenticationDeviceNotifierManager;
-import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
 import io.gravitee.am.gateway.handler.common.alert.AlertEventProcessor;
 import io.gravitee.am.gateway.handler.common.audit.AuditReporterManager;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
@@ -25,11 +23,13 @@ import io.gravitee.am.gateway.handler.common.auth.listener.AuthenticationEventLi
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.client.ClientManager;
 import io.gravitee.am.gateway.handler.common.email.EmailManager;
+import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.flow.FlowManager;
+import io.gravitee.am.gateway.handler.manager.authdevice.notifier.AuthenticationDeviceNotifierManager;
+import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
 import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifierManager;
 import io.gravitee.am.gateway.handler.manager.dictionary.I18nDictionaryManager;
 import io.gravitee.am.gateway.handler.manager.domain.CrossDomainManager;
-import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.manager.form.FormManager;
 import io.gravitee.am.gateway.handler.manager.resource.ResourceManager;
 import io.gravitee.am.gateway.handler.manager.theme.ThemeManager;
@@ -50,10 +50,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.core.env.Environment;
 
+import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -114,12 +113,11 @@ public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDom
     }
 
     private void stopApplicationContext() {
-        if (applicationContext instanceof ConfigurableApplicationContext) {
+        if (applicationContext instanceof Closeable confCtx) {
             try {
-                ((ConfigurableApplicationContext) applicationContext).close();
+                confCtx.close();
             } catch (Exception e) {
                 logger.error("\t An error occurs while stopping the application context", e);
-                throw new IllegalStateException(e);
             }
         }
     }

@@ -18,8 +18,8 @@ package io.gravitee.am.gateway.handler.api;
 import io.gravitee.common.service.AbstractService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.support.GenericApplicationContext;
+
+import java.io.Closeable;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -36,12 +36,11 @@ public abstract class AbstractProtocolProvider extends AbstractService<ProtocolP
     }
 
     private void stopApplicationContext() {
-        if (applicationContext instanceof ConfigurableApplicationContext) {
+        if (applicationContext instanceof Closeable confCtx) {
             try {
-                ((ConfigurableApplicationContext) applicationContext).close();
+                confCtx.close();
             } catch (Exception e) {
                 logger.error("\t An error occurs while stopping the application context for protocol {}", this.getClass().getSimpleName(), e);
-                throw new IllegalStateException(e);
             }
         }
     }
