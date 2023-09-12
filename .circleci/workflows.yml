@@ -1681,6 +1681,28 @@ workflows:
           matrix:
             parameters:
               psql_version: ["11.18-bullseye", "15.1"]
+              ## TODO make MySQL/ Maria & SQLServer approval step
+      - run_postman_tests_mysql:
+          context: cicd-orchestrator
+          requires:
+            - approve-tests-mongo-psql
+          matrix:
+            parameters:
+              mysql_version: ["8.1"]
+      - run_postman_tests_maria:
+          context: cicd-orchestrator
+          requires:
+            - approve-tests-mongo-psql
+          matrix:
+            parameters:
+              maria_version: ["11"]
+      - run_postman_tests_sqlserver:
+          context: cicd-orchestrator
+          requires:
+            - approve-tests-mongo-psql
+          matrix:
+            parameters:
+              sqlserver_version: ["2017-latest", "2022-latest"]
       - run_jest_tests_mongo:
           context: cicd-orchestrator
           requires:
