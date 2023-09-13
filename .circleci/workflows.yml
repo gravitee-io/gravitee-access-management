@@ -709,7 +709,7 @@ jobs:
             echo $TAG > /tmp/docker-tag.txt
 
             # create a latest tag for the given branch to avoid flooding SNYK project
-            export TAG_LATEST=$(echo "${CIRCLE_BRANCH:0:15}-latest")
+            export TAG_LATEST=$(echo "${CIRCLE_BRANCH}-latest")
             echo "export TAG_LATEST=$TAG_LATEST" >> $BASH_ENV
       - create_docker_context
       - run:
