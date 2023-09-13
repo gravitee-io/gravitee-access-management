@@ -25,7 +25,7 @@ jobs:
     steps:
       - name: "Trigger publish_docker_images CircleCI workflow"
         run: |
-          export JSON_PAYLOAD="{ \"branch\": \"${BRANCH}\", \"parameters\": { \"gio_action\": \"publish_docker_images\" } }"
+          export JSON_PAYLOAD="{ \"branch\": \"${BRANCH}\", \"parameters\": { \"gio_action\": \"publish-images-azure-registry\" } }"
           
           echo "payload = $JSON_PAYLOAD"
           curl -X POST -d "${JSON_PAYLOAD}" \
