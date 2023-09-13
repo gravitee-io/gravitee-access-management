@@ -1773,5 +1773,13 @@ workflows:
     when:
       equal: [ publish-images-azure-registry, << pipeline.parameters.gio_action >> ]
     jobs:
+      - setup:
+          context:
+            - cicd-orchestrator
+      - build:
+          requires:
+            - setup
       - publish-images-azure-registry:
-          name: publish-images-azure-registry
+          context: cicd-orchestrator
+          requires:
+            - build
