@@ -1483,16 +1483,12 @@ jobs:
       - git_config
       - gh/setup
       - helm/install-helm-client
-      - when:
-          condition:
-            not: << pipeline.parameters.dry_run>>
-          steps:
-            - run:
-                name: Update Chart and App versions
-                command: |
-                  sed -i helm/Chart.yaml \
-                    -e "0,/^version:.*/s/^version:.*/version: ${VERSION}/" \
-                    -e "0,/^appVersion:.*/s/^appVersion:.*/appVersion: ${VERSION}/"
+      - run:
+          name: Update Chart and App versions
+          command: |
+            sed -i helm/Chart.yaml \
+              -e "0,/^version:.*/s/^version:.*/version: ${VERSION}/" \
+              -e "0,/^appVersion:.*/s/^appVersion:.*/appVersion: ${VERSION}/"
       - run:
           name: "build the Charts"
           working_directory: "./helm"
