@@ -63,7 +63,7 @@ executors:
 parameters:
   gio_action:
     type: enum
-    enum: [ release, publish_maven_central, publish_rpms, publish_docker_images, pull_requests, release_notes_am, release_helm ]
+    enum: [ release, publish_maven_central, publish_rpms, publish_docker_images, pull_requests, release_notes_am, release_helm , publish-images-azure-registry]
     default: pull_requests
   gio_product:
     type: enum
@@ -1768,3 +1768,10 @@ workflows:
           context: cicd-orchestrator
           requires:
             - AM - Lint & Test
+
+  publish-images-azure-registry:
+    when:
+      equal: [ publish-images-azure-registry, << pipeline.parameters.gio_action >> ]
+    jobs:
+      - publish-images-azure-registry
+          name: publish-images-azure-registry
