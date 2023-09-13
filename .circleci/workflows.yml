@@ -1608,8 +1608,9 @@ jobs:
             - run:
                 name: Update Chart and App versions
                 command: |
-                  sed "0,/version.*/s/version.*/version: ${VERSION}/" -i helm/Chart.yaml
-                  sed "0,/appVersion.*/s/appVersion.*/appVersion: ${VERSION}/" -i helm/Chart.yaml
+                  sed -i helm/Chart.yaml \
+                    -e "0,/^version:.*/s/^version:.*/version: ${VERSION}/" \
+                    -e "0,/^appVersion:.*/s/^appVersion:.*/appVersion: ${VERSION}/"
       - run:
           name: "build the Charts"
           working_directory: "./helm"
