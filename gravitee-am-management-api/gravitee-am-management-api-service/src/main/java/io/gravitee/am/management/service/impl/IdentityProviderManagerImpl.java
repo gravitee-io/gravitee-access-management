@@ -399,10 +399,11 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
                         identityProviders.remove(identityProvider.getId());
                         return Maybe.empty();
                     }
-                }).doOnError( ex -> {
-            logger.error("An error has occurred while loading user provider: {} [{}]", identityProvider.getName(), identityProvider.getType(), ex);
-            userProviders.remove(identityProvider.getId());
-            identityProviders.remove(identityProvider.getId());
-        });
+                }).onErrorResumeNext(ex -> {
+                    logger.error("An error has occurred while loading user provider: {} [{}]", identityProvider.getName(), identityProvider.getType(), ex);
+                    userProviders.remove(identityProvider.getId());
+                    identityProviders.remove(identityProvider.getId());
+                    return Maybe.empty();
+                });
     }
 }
