@@ -44,10 +44,6 @@ public abstract class AbstractMongoRepository {
         this.createIndex(collection, new Document(FIELD_ID, 1), new IndexOptions(), true);
     }
 
-    protected void createIndex(MongoCollection<?> collection, Document document, boolean ensure) {
-        this.createIndex(collection, document, new IndexOptions(), ensure);
-    }
-
     protected void createIndex(MongoCollection<?> collection, Document document, IndexOptions indexOptions, boolean ensure) {
         if (ensure) {
             Single.fromPublisher(collection.createIndex(document, indexOptions))
