@@ -61,8 +61,7 @@ public abstract class AbstractManagementMongoRepository extends AbstractMongoRep
     }
 
     protected void createIndex(MongoCollection<?> collection, Document document, IndexOptions indexOptions) {
-        // if we set an index options it means that we want to force the index creation
-        super.createIndex(collection, document, indexOptions, true);
+        super.createIndex(collection, document, indexOptions, ensureIndexOnStart);
     }
 
     protected final <TResult> AggregatePublisher<TResult> withMaxTime(AggregatePublisher<TResult> query) {
