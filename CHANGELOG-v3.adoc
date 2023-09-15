@@ -1,5 +1,18 @@
 # Change Log
 
+==  - 3.20.11 (2023-09-15)
+
+== What's new !
+
+The fix about duplicated user could need a cleanup of the database.
+More info into https://docs.gravitee.io/am/current/am_breaking_changes_3.20.11.html
+
+=== Other
+
+* Multiple concurrent requests creates users with duplicated usernames https://github.com/gravitee-io/issues/issues/9117[#9117]
+* Fix potential bug in IDTokenServiceImpl
+
+
 == AM - 3.19.17 (2023-09-15)
 
 == What's new !
