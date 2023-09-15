@@ -90,6 +90,9 @@ export class ProviderSettingsComponent implements OnInit {
       if (data) {
         // handle default null values
         Object.keys(this.providerSchema['properties']).forEach((key) => {
+          if (this.providerSchema['properties'][key].default && !this.providerConfiguration[key]) {
+            this.providerConfiguration[key] = this.providerSchema['properties'][key].default;
+          }
           this.providerSchema['properties'][key].default = '';
         });
       }
