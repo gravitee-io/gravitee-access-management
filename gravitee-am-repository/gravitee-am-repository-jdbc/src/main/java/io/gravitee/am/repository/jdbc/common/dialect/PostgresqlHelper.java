@@ -20,7 +20,6 @@ import io.gravitee.am.repository.jdbc.common.JSONMapper;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.r2dbc.postgresql.codec.Json;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
-import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.r2dbc.core.Parameter;
@@ -62,7 +61,7 @@ public class PostgresqlHelper extends AbstractDialectHelper {
         return spec;
     }
 
-    protected ScimUserSearch processJsonFilter(StringBuilder queryBuilder, FilterCriteria criteria, ScimUserSearch search) {
+    protected ScimSearch processJsonFilter(StringBuilder queryBuilder, FilterCriteria criteria, ScimSearch search) {
         String[] path = convertFieldName(criteria).split("\\.");
         final String operator = criteria.getOperator().toLowerCase().trim();
         final String value = criteria.getFilterValue();

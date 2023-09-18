@@ -16,10 +16,7 @@
 package io.gravitee.am.repository.jdbc.common.dialect;
 
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.repository.jdbc.management.api.model.JdbcApplication;
-import io.gravitee.am.repository.jdbc.management.api.model.JdbcUser;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
-import io.reactivex.rxjava3.core.Flowable;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.r2dbc.core.DatabaseClient;
 
@@ -37,7 +34,7 @@ public interface DatabaseDialectHelper {
 
     DatabaseClient.GenericExecuteSpec addJsonField(DatabaseClient.GenericExecuteSpec spec, String name, Object value);
 
-    ScimUserSearch prepareScimSearchUserQuery(StringBuilder queryBuilder, FilterCriteria filterCriteria, int page, int size);
+    ScimSearch prepareScimSearchQuery(StringBuilder queryBuilder, FilterCriteria filterCriteria, int page, int size, ScimRepository scimRepository);
 
     String buildFindUserByReferenceAndEmail(ReferenceType referenceType, String referenceId, String email, boolean strict);
 
@@ -70,4 +67,6 @@ public interface DatabaseDialectHelper {
     String buildPagingClause(int page, int size);
 
     String buildPagingClause(String field, int page, int size);
+
+    enum ScimRepository {GROUPS, ORGANIZATION_USERS, USERS}
 }
