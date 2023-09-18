@@ -19,11 +19,13 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Group;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.Page;
+import io.gravitee.am.repository.jdbc.common.dialect.ScimSearch;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcGroup;
 import io.gravitee.am.repository.jdbc.management.api.spring.group.SpringGroupMemberRepository;
 import io.gravitee.am.repository.jdbc.management.api.spring.group.SpringGroupRoleRepository;
 import io.gravitee.am.repository.management.api.GroupRepository;
+import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
@@ -40,7 +42,9 @@ import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
+import static io.gravitee.am.repository.jdbc.common.dialect.DatabaseDialectHelper.ScimRepository.GROUPS;
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.sql.SqlIdentifier.quoted;
 import static reactor.adapter.rxjava.RxJava2Adapter.*;
@@ -148,6 +152,40 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
                 .flatMap(group -> completeWithMembersAndRole(Maybe.just(group), group.getId()).toFlowable(), CONCURRENT_FLATMAP)
                 .toList()
                 .flatMap(content -> counter.map((count) -> new Page<Group>(content, page, count)));
+    }
+
+    @Override
+    public Single<Page<Group>> search(ReferenceType referenceType, String referenceId, FilterCriteria criteria, int page, int size) {
+        LOGGER.debug("search({}, {}, {}, {}, {})", referenceType, referenceId, criteria, page, size);
+
+        StringBuilder queryBuilder = new StringBuilder();
+        queryBuilder.append(" FROM " + databaseDialectHelper.toSql(quoted("groups"))  + " WHERE reference_id = :refId AND reference_type = :refType AND ");
+        ScimSearch search = this.databaseDialectHelper.prepareScimSearchQuery(queryBuilder, criteria, page, size, GROUPS);
+
+        // execute query
+        org.springframework.r2dbc.core.DatabaseClient.GenericExecuteSpec executeSelect = template.getDatabaseClient().sql(search.getSelectQuery());
+        executeSelect = executeSelect.bind("refType", referenceType.name()).bind("refId", referenceId);
+        for (Map.Entry<String, Object> entry : search.getBinding().entrySet()) {
+            executeSelect = executeSelect.bind(entry.getKey(), entry.getValue());
+        }
+
+        Flux<JdbcGroup> groupFlux = executeSelect.map(row -> rowMapper.read(JdbcGroup.class, row)).all();
+
+        // execute count to provide total in the Page
+        org.springframework.r2dbc.core.DatabaseClient.GenericExecuteSpec executeCount = template.getDatabaseClient().sql(search.getCountQuery());
+
+        executeCount = executeCount.bind("refType", referenceType.name()).bind("refId", referenceId);
+        for (Map.Entry<String, Object> entry : search.getBinding().entrySet()) {
+            executeCount = executeCount.bind(entry.getKey(), entry.getValue());
+        }
+        Mono<Long> groupCount = executeCount.map(row -> row.get(0, Long.class)).first();
+
+        return fluxToFlowable(groupFlux)
+                .map(this::toEntity)
+                .flatMap(group -> completeWithMembersAndRole(Maybe.just(group), group.getId()).toFlowable(), CONCURRENT_FLATMAP)
+                .toList()
+                .flatMap(list -> monoToSingle(groupCount).map(total -> new Page<Group>(list, page, total)));
+
     }
 
     @Override

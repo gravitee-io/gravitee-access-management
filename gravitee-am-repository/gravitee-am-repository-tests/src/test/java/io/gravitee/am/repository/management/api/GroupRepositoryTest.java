@@ -15,10 +15,13 @@
  */
 package io.gravitee.am.repository.management.api;
 
+import io.gravitee.am.common.scim.filter.Filter;
+import io.gravitee.am.common.scim.parser.SCIMFilterParser;
 import io.gravitee.am.model.Group;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.management.AbstractManagementTest;
+import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.reactivex.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,10 +55,13 @@ public class GroupRepositoryTest extends AbstractManagementTest {
     }
 
     private Group buildGroup() {
+        return buildGroup(UUID.randomUUID().toString());
+    }
+
+    private Group buildGroup(String random) {
         Group group = new Group();
-        String random = UUID.randomUUID().toString();
         group.setDescription("Description"+random);
-        group.setName("name"+random);
+        group.setName(random);
         group.setReferenceId("ref"+random);
         group.setReferenceType(ReferenceType.DOMAIN);
         group.setCreatedAt(new Date());
@@ -316,5 +322,26 @@ public class GroupRepositoryTest extends AbstractManagementTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertNoValues();
+    }
+
+    @Test
+    public void shouldSearch() {
+        Group planet = buildGroup("Planet");
+        planet.setReferenceId(DOMAIN_ID);
+        repository.create(planet).blockingGet();
+        Group animal = buildGroup("Animal");
+        animal.setReferenceId(DOMAIN_ID);
+        repository.create(animal).blockingGet();
+        Group flower = buildGroup("Flower");
+        flower.setReferenceId(DOMAIN_ID);
+        repository.create(flower).blockingGet();
+        Filter filter = SCIMFilterParser.parse("displayName eq \"Planet\"");
+
+        Page<Group> groupPage = repository.search(ReferenceType.DOMAIN, DOMAIN_ID, FilterCriteria.convert(filter), 0, 100).blockingGet();
+        Collection<Group> groupData = groupPage.getData();
+        Group resultGroup = groupData.stream().findFirst().get();
+
+        assertEquals(1, groupData.size());
+        assertEquals("Planet", resultGroup.getName());
     }
 }
