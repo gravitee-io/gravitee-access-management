@@ -21,7 +21,7 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.scim.Address;
 import io.gravitee.am.model.scim.Attribute;
-import io.gravitee.am.repository.jdbc.common.dialect.ScimUserSearch;
+import io.gravitee.am.repository.jdbc.common.dialect.ScimSearch;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcOrganizationUser;
 import io.gravitee.am.repository.jdbc.management.api.spring.user.SpringOrganizationUserAddressesRepository;
@@ -54,6 +54,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import static io.gravitee.am.repository.jdbc.common.dialect.DatabaseDialectHelper.ScimRepository.ORGANIZATION_USERS;
 import static java.util.stream.Stream.concat;
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static reactor.adapter.rxjava.RxJava3Adapter.fluxToFlowable;
@@ -285,7 +286,7 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
 
         StringBuilder queryBuilder = new StringBuilder();
         queryBuilder.append(" FROM organization_users WHERE reference_id = :refId AND reference_type = :refType AND ");
-        ScimUserSearch search = this.databaseDialectHelper.prepareScimSearchUserQuery(queryBuilder, criteria, page, size);
+        ScimSearch search = this.databaseDialectHelper.prepareScimSearchQuery(queryBuilder, criteria, page, size, ORGANIZATION_USERS);
 
         // execute query
         org.springframework.r2dbc.core.DatabaseClient.GenericExecuteSpec executeSelect = template.getDatabaseClient().sql(search.getSelectQuery()).bind("refType", referenceType.name()).bind("refId", referenceId);
@@ -315,7 +316,7 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
 
         StringBuilder queryBuilder = new StringBuilder();
         queryBuilder.append(" FROM organization_users WHERE reference_id = :refId AND reference_type = :refType AND ");
-        ScimUserSearch search = this.databaseDialectHelper.prepareScimSearchUserQuery(queryBuilder, criteria, -1, -1);
+        ScimSearch search = this.databaseDialectHelper.prepareScimSearchQuery(queryBuilder, criteria, -1, -1, ORGANIZATION_USERS);
 
         // execute query
         org.springframework.r2dbc.core.DatabaseClient.GenericExecuteSpec executeSelect = template.getDatabaseClient().sql(search.getSelectQuery()).bind("refType", referenceType.name()).bind("refId", referenceId);
