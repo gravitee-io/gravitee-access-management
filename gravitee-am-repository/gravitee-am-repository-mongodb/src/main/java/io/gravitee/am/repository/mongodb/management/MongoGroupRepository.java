@@ -22,10 +22,16 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Group;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.Page;
+import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.GroupRepository;
+import io.gravitee.am.repository.management.api.search.FilterCriteria;
+import io.gravitee.am.repository.mongodb.common.FilterCriteriaParser;
 import io.gravitee.am.repository.mongodb.management.internal.model.GroupMongo;
 import io.reactivex.rxjava3.core.*;
 import org.bson.Document;
+import org.bson.conversions.Bson;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import jakarta.annotation.PostConstruct;
@@ -40,8 +46,10 @@ import static com.mongodb.client.model.Filters.*;
  */
 @Component
 public class MongoGroupRepository extends AbstractManagementMongoRepository implements GroupRepository {
-
+    private final static Logger LOGGER = LoggerFactory.getLogger(MongoGroupRepository.class);
     private static final String FIELD_MEMBERS = "members";
+    private static final String FIELD_NAME = "name";
+    private static final String DISPLAY_NAME = "displayName";
     private MongoCollection<GroupMongo> groupsCollection;
 
     @PostConstruct
@@ -67,6 +75,28 @@ public class MongoGroupRepository extends AbstractManagementMongoRepository impl
         Single<Long> countOperation = Observable.fromPublisher(groupsCollection.countDocuments(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)), countOptions())).first(0l);
         Single<List<Group>> groupsOperation = Observable.fromPublisher(withMaxTime(groupsCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))).sort(new BasicDBObject(FIELD_NAME, 1)).skip(size * page).limit(size)).map(this::convert).collect(LinkedList::new, List::add);
         return Single.zip(countOperation, groupsOperation, (count, groups) -> new Page<>(groups, page, count));
+    }
+
+    @Override
+    public Single<Page<Group>> search(ReferenceType referenceType, String referenceId, FilterCriteria criteria, int page, int size) {
+        try {
+            final FilterCriteria mappedCriteria = mapCriteria(criteria);
+            BasicDBObject searchQuery = BasicDBObject.parse(FilterCriteriaParser.parse(mappedCriteria));
+
+            Bson mongoQuery = and(
+                    eq(FIELD_REFERENCE_TYPE, referenceType.name()),
+                    eq(FIELD_REFERENCE_ID, referenceId),
+                    searchQuery);
+            Single<Long> countOperation = Observable.fromPublisher(groupsCollection.countDocuments(mongoQuery, countOptions())).first(0l);
+            Single<List<Group>> groupsOperation = Observable.fromPublisher(withMaxTime(groupsCollection.find(mongoQuery)).sort(new BasicDBObject(FIELD_NAME, 1)).skip(size * page).limit(size)).map(this::convert).collect(LinkedList::new, List::add);
+            return Single.zip(countOperation, groupsOperation, (count, groups) -> new Page<>(groups, page, count));
+        } catch (Exception ex) {
+            if (ex instanceof IllegalArgumentException) {
+                return Single.error(ex);
+            }
+            LOGGER.error("An error has occurred while searching groups with criteria {}", criteria, ex);
+            return Single.error(new TechnicalException("An error has occurred while searching groups with filter criteria", ex));
+        }
     }
 
     @Override
@@ -145,5 +175,13 @@ public class MongoGroupRepository extends AbstractManagementMongoRepository impl
         groupMongo.setCreatedAt(group.getCreatedAt());
         groupMongo.setUpdatedAt(group.getUpdatedAt());
         return groupMongo;
+    }
+
+    private FilterCriteria mapCriteria(FilterCriteria criteria) {
+        if(DISPLAY_NAME.equals(criteria.getFilterName())) {
+            criteria.setFilterName(FIELD_NAME);
+        }
+
+        return criteria;
     }
 }

@@ -79,20 +79,20 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
     }
 
     @Override
-    public ScimUserSearch prepareScimSearchUserQuery(StringBuilder queryBuilder, FilterCriteria criteria, int page, int size) {
-        ScimUserSearch search = new ScimUserSearch();
-        processFilters(queryBuilder, criteria, search);
+    public ScimSearch prepareScimSearchQuery(StringBuilder queryBuilder, FilterCriteria criteria, int page, int size, ScimRepository scimRepository) {
+        ScimSearch search = new ScimSearch();
+        processFilters(queryBuilder, criteria, search, scimRepository);
         search.buildQueries(size > 0 ? buildPagingClause(page, size): "");
         return search;
     }
 
-    private ScimUserSearch processFilters(StringBuilder queryBuilder, FilterCriteria criteria, ScimUserSearch search) {
+    private ScimSearch processFilters(StringBuilder queryBuilder, FilterCriteria criteria, ScimSearch search, ScimRepository scimRepository) {
         if (criteria.getFilterComponents() != null && !criteria.getFilterComponents().isEmpty()) {
             queryBuilder.append("( ");
             Iterator<FilterCriteria> iterator = criteria.getFilterComponents().iterator();
             while(iterator.hasNext()) {
                 FilterCriteria operand = iterator.next();
-                search = processFilters(queryBuilder, operand, search);
+                search = processFilters(queryBuilder, operand, search, scimRepository);
                 queryBuilder = search.getQueryBuilder();
                 if (iterator.hasNext()) {
                     queryBuilder.append(operatorConverter(criteria));
@@ -103,7 +103,7 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
             if (isJsonField(criteria)) {
                 search = processJsonFilter(queryBuilder, criteria, search);
             } else {
-                String filterName = convertFieldName(criteria);
+                String filterName = ScimRepository.GROUPS.equals(scimRepository) ? convertGroupsFieldName(criteria) : convertFieldName(criteria);
                 Optional fieldValue = fieldValue(criteria);
                 if (fieldValue.isPresent()) {
                     String bindingName = search.addBinding(filterName, fieldValue.get());
@@ -119,23 +119,25 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
 
     private boolean isJsonField(FilterCriteria criteria) {
         String filterName = criteria.getFilterName();
-        if (filterName != null) {
-            switch (filterName) {
-                case "id":
-                case "userName":
-                case "active":
-                case "meta.created":
-                case "meta.lastModified":
-                case "emails.value":
-                    return false;
-                case "name.familyName":
-                case "name.givenName":
-                case "name.middleName":
-                case "profileUrl":
-                case "locale":
-                case "timezone":
-                    return true;
-            }
+        if (filterName == null) {
+            return false;
+        }
+
+        switch (filterName) {
+            case "id":
+            case "userName":
+            case "active":
+            case "meta.created":
+            case "meta.lastModified":
+            case "emails.value":
+                return false;
+            case "name.familyName":
+            case "name.givenName":
+            case "name.middleName":
+            case "profileUrl":
+            case "locale":
+            case "timezone":
+                return true;
         }
 
         return filterName.startsWith("additional_information.") || filterName.startsWith("additionalInformation.");
@@ -172,12 +174,34 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
                 return "enabled";
             case "emails.value":
                 return "email";
+            case "displayName":
+                return "display_name";
             default:
                 if (filterName.startsWith("additionalInformation.")) {
                     return filterName.replaceFirst("additionalInformation", "additional_information");
                 } else {
                     return filterName;
                 }
+        }
+    }
+
+    private String convertGroupsFieldName(FilterCriteria criteria) {
+        String filterName = criteria.getFilterName();
+        if (filterName == null) {
+            return null;
+        }
+
+        switch (filterName) {
+            case "id":
+                return "id";
+            case "meta.created":
+                return "created_at";
+            case "meta.lastModified":
+                return "updated_at";
+            case "displayName":
+                return "name";
+            default:
+                return filterName;
         }
     }
 
@@ -261,7 +285,7 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
         return "active".equals(filterName);
     }
 
-    protected abstract ScimUserSearch processJsonFilter(StringBuilder queryBuilder, FilterCriteria criteria, ScimUserSearch search);
+    protected abstract ScimSearch processJsonFilter(StringBuilder queryBuilder, FilterCriteria criteria, ScimSearch search);
 
     @Override
     public String buildSearchUserQuery(boolean wildcard, int page, int size, boolean organizationUser) {
