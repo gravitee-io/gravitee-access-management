@@ -159,6 +159,7 @@ public class MfaFilterContext {
             return false;
         }
         return endUser.getFactors().stream()
+                .filter(ef -> ef.getStatus() == ACTIVATED)
                 .map(EnrolledFactor::getFactorId)
                 .filter(this::isNotRecoveryCodeType)
                 .anyMatch(client.getFactors()::contains);
