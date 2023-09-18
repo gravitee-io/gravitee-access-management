@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.scim.service;
 
+import io.gravitee.am.common.scim.filter.Filter;
 import io.gravitee.am.gateway.handler.scim.model.Group;
 import io.gravitee.am.gateway.handler.scim.model.ListResponse;
 import io.gravitee.am.gateway.handler.scim.model.PatchOp;
@@ -23,15 +24,13 @@ import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
-import java.util.List;
-
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public interface GroupService {
 
-    Single<ListResponse<Group>> list(int page, int size, String baseUrl);
+    Single<ListResponse<Group>> list(Filter filter, int page, int size, String baseUrl);
 
     Flowable<Group> findByMember(String memberId);
 

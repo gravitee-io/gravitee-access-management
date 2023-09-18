@@ -70,7 +70,7 @@ public class GroupsEndpointTest extends RxWebTestBase {
 
     @Test
     public void shouldListGroups() throws Exception {
-        when(groupService.list(eq(0), eq(100), anyString())).thenReturn(Single.just(new ListResponse<>()));
+        when(groupService.list(any(), eq(0), eq(100), anyString())).thenReturn(Single.just(new ListResponse<>()));
         testRequest(
                 HttpMethod.GET,
                 "/Groups",

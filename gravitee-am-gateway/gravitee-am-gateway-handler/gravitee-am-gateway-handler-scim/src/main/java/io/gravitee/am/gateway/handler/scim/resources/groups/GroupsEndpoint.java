@@ -17,6 +17,8 @@ package io.gravitee.am.gateway.handler.scim.resources.groups;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.common.scim.filter.Filter;
+import io.gravitee.am.common.scim.parser.SCIMFilterParser;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidSyntaxException;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
@@ -70,8 +72,20 @@ public class GroupsEndpoint extends AbstractGroupEndpoint {
 
         }
 
+        // Filter results
+        Filter filter = null;
+        final String filterParam = context.request().getParam("filter");
+        if (filterParam != null && !filterParam.isEmpty()) {
+            try {
+                filter = SCIMFilterParser.parse(filterParam);
+            } catch (Exception ex) {
+                context.fail(new InvalidSyntaxException(ex.getMessage()));
+                return;
+            }
+        }
+
         // group service use 0-based index
-        groupService.list(page - 1, size, location(context.request()))
+        groupService.list(filter, page - 1, size, location(context.request()))
                 .subscribe(
                         groups -> context.response()
                                 .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")

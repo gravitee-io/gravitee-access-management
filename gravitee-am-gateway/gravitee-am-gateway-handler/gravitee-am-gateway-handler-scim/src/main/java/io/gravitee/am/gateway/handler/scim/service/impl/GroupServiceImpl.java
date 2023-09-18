@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.scim.service.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.common.scim.filter.Filter;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.gateway.handler.scim.exception.SCIMException;
 import io.gravitee.am.gateway.handler.scim.exception.UniquenessException;
@@ -25,8 +26,10 @@ import io.gravitee.am.gateway.handler.scim.model.*;
 import io.gravitee.am.gateway.handler.scim.service.GroupService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.management.api.GroupRepository;
 import io.gravitee.am.repository.management.api.UserRepository;
+import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.GroupNotFoundException;
@@ -68,10 +71,14 @@ public class GroupServiceImpl implements GroupService {
     private AuditService auditService;
 
     @Override
-    public Single<ListResponse<Group>> list(int page, int size, String baseUrl) {
+    public Single<ListResponse<Group>> list(Filter filter, int page, int size, String baseUrl) {
         LOGGER.debug("Find groups by domain : {}", domain.getId());
 
-        return groupRepository.findAll(ReferenceType.DOMAIN, domain.getId(), page, size)
+        Single<Page<io.gravitee.am.model.Group>> groupResult = filter != null ?
+                groupRepository.search(ReferenceType.DOMAIN, domain.getId(), FilterCriteria.convert(filter), page, size) :
+                groupRepository.findAll(ReferenceType.DOMAIN, domain.getId(), page, size);
+
+        return groupResult
                 .flatMap(groupPage -> {
                     // A negative value SHALL be interpreted as "0".
                     // A value of "0" indicates that no resource results are to be returned except for "totalResults".
