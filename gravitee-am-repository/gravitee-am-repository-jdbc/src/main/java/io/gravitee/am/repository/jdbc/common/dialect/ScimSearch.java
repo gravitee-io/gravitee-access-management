@@ -22,7 +22,7 @@ import java.util.Map;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class ScimUserSearch {
+public class ScimSearch {
     private StringBuilder queryBuilder;
     private String selectQuery;
     private String countQuery;

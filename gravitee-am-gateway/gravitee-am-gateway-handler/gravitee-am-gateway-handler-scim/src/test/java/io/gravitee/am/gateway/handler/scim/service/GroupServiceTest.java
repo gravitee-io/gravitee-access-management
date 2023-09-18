@@ -18,8 +18,12 @@ package io.gravitee.am.gateway.handler.scim.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
+import io.gravitee.am.common.scim.filter.AttributePath;
+import io.gravitee.am.common.scim.filter.Filter;
+import io.gravitee.am.common.scim.filter.Operator;
 import io.gravitee.am.gateway.handler.scim.exception.UniquenessException;
 import io.gravitee.am.gateway.handler.scim.model.Group;
+import io.gravitee.am.gateway.handler.scim.model.ListResponse;
 import io.gravitee.am.gateway.handler.scim.model.Member;
 import io.gravitee.am.gateway.handler.scim.model.Operation;
 import io.gravitee.am.gateway.handler.scim.model.PatchOp;
@@ -27,8 +31,10 @@ import io.gravitee.am.gateway.handler.scim.service.impl.GroupServiceImpl;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.management.api.GroupRepository;
 import io.gravitee.am.repository.management.api.UserRepository;
+import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.service.AuditService;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -229,5 +235,36 @@ public class GroupServiceTest {
         testObserver.assertComplete();
         testObserver.assertValue(g -> "my group 2".equals(g.getDisplayName()));
 
+    }
+
+    @Test
+    public void shouldListGroups() {
+        final io.gravitee.am.model.Group group = new io.gravitee.am.model.Group();
+        final Page page = new Page(List.of(group), 0, 1);
+        final String domainID = "any-domain-id";
+        when(domain.getId()).thenReturn(domainID);
+        when(groupRepository.findAll(ReferenceType.DOMAIN, domainID, 0, 10)).thenReturn(Single.just(page));
+
+        TestObserver<ListResponse<Group>> observer = groupService.list(null, 0, 10, "").test();
+        observer.assertNoErrors();
+        observer.assertComplete();
+
+        verify(groupRepository, times(1)).findAll(ReferenceType.DOMAIN, domainID, 0, 10);
+    }
+
+    @Test
+    public void shouldSearchGroups() {
+        final io.gravitee.am.model.Group group = new io.gravitee.am.model.Group();
+        final Page page = new Page(List.of(group), 0, 1);
+        final String domainID = "any-domain-id";
+        Filter dummyFilter = new Filter(Operator.EQUALITY, new AttributePath("", "", ""), "", false, null);
+        when(domain.getId()).thenReturn(domainID);
+        when(groupRepository.search(any(ReferenceType.class), anyString(), any(FilterCriteria.class), anyInt(), anyInt())).thenReturn(Single.just(page));
+
+        TestObserver<ListResponse<Group>> observer = groupService.list(dummyFilter, 0, 10, "").test();
+        observer.assertNoErrors();
+        observer.assertComplete();
+
+        verify(groupRepository, times(1)).search(any(ReferenceType.class), anyString(), any(FilterCriteria.class), anyInt(), anyInt());
     }
 }

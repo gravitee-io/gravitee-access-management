@@ -42,8 +42,8 @@ public class DatabaseDialectHelperTest {
         criteria.setFilterValue("test@acme.fr");
         criteria.setOperator("eq");
         final String BASE_CLAUSE = " FROM users WHERE reference_id = :refId AND reference_type = :refType AND ";
-        ScimUserSearch search = helper.prepareScimSearchUserQuery(new StringBuilder(BASE_CLAUSE),
-                criteria, 0, 10);
+        ScimSearch search = helper.prepareScimSearchQuery(new StringBuilder(BASE_CLAUSE),
+                criteria, 0, 10, DatabaseDialectHelper.ScimRepository.USERS);
 
         assertTrue("Query contains email clause", search.getSelectQuery().startsWith("SELECT * " + BASE_CLAUSE + "email = :email"));
         assertEquals("binding size should be 1", 1, search.getBinding().size());
@@ -60,8 +60,8 @@ public class DatabaseDialectHelperTest {
         criteria.setFilterValue("test@acme.fr");
         criteria.setOperator("pr");
         final String BASE_CLAUSE = " FROM users WHERE reference_id = :refId AND reference_type = :refType AND ";
-        ScimUserSearch search = helper.prepareScimSearchUserQuery(new StringBuilder(BASE_CLAUSE),
-                criteria, 0, 10);
+        ScimSearch search = helper.prepareScimSearchQuery(new StringBuilder(BASE_CLAUSE),
+                criteria, 0, 10, DatabaseDialectHelper.ScimRepository.USERS);
 
         assertTrue("query contains email NOT NULL", search.getSelectQuery().startsWith("SELECT * " + BASE_CLAUSE + "email IS NOT NULL "));
         assertTrue("binding size should be empty", search.getBinding().isEmpty());
@@ -87,7 +87,7 @@ public class DatabaseDialectHelperTest {
         or.setFilterComponents(Arrays.asList(emailEq, createdAfter));
 
         final String BASE_CLAUSE = " FROM users WHERE reference_id = :refId AND reference_type = :refType AND ";
-        ScimUserSearch search = helper.prepareScimSearchUserQuery(new StringBuilder(BASE_CLAUSE), or, 0, 10);
+        ScimSearch search = helper.prepareScimSearchQuery(new StringBuilder(BASE_CLAUSE), or, 0, 10, DatabaseDialectHelper.ScimRepository.USERS);
 
         assertTrue("Select clause contains OR operator", search.getSelectQuery().startsWith("SELECT * " + BASE_CLAUSE + "( email = :email OR created_at > :created_at )"));
         assertEquals("binding size should be 2", 2, search.getBinding().size());
@@ -115,7 +115,7 @@ public class DatabaseDialectHelperTest {
         or.setFilterComponents(Arrays.asList(emailEq, emailEq2));
 
         final String BASE_CLAUSE = " FROM users WHERE reference_id = :refId AND reference_type = :refType AND ";
-        ScimUserSearch search = helper.prepareScimSearchUserQuery(new StringBuilder(BASE_CLAUSE), or, 0, 10);
+        ScimSearch search = helper.prepareScimSearchQuery(new StringBuilder(BASE_CLAUSE), or, 0, 10, DatabaseDialectHelper.ScimRepository.USERS);
 
         assertTrue("Select clause contains OR operator", search.getSelectQuery().startsWith("SELECT * " + BASE_CLAUSE + "( email = :email OR email = :email_c0 )"));
         assertEquals("binding size should be 2", 2, search.getBinding().size());

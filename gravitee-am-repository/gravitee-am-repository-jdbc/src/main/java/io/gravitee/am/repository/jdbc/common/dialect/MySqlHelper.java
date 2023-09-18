@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.repository.jdbc.common.dialect;
 
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
 
@@ -36,7 +35,7 @@ public class MySqlHelper extends AbstractDialectHelper {
     }
 
     @Override
-    protected ScimUserSearch processJsonFilter(StringBuilder queryBuilder, FilterCriteria criteria, ScimUserSearch search) {
+    protected ScimSearch processJsonFilter(StringBuilder queryBuilder, FilterCriteria criteria, ScimSearch search) {
         String[] path = convertFieldName(criteria).split("\\.");
         final String operator = criteria.getOperator().toLowerCase().trim();
         final String value = criteria.getFilterValue();
