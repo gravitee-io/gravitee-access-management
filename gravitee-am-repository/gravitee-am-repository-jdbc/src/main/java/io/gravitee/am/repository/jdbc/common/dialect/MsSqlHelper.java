@@ -46,7 +46,7 @@ public class MsSqlHelper extends AbstractDialectHelper {
     }
 
     @Override
-    protected ScimUserSearch processJsonFilter(StringBuilder queryBuilder, FilterCriteria criteria, ScimUserSearch search) {
+    protected ScimSearch processJsonFilter(StringBuilder queryBuilder, FilterCriteria criteria, ScimSearch search) {
         String[] path = convertFieldName(criteria).split("\\.");
         final String operator = criteria.getOperator().toLowerCase().trim();
         final String value = criteria.getFilterValue();
