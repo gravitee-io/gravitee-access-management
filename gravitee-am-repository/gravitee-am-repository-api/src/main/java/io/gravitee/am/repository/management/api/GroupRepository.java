@@ -22,6 +22,8 @@ import io.gravitee.am.repository.common.CrudRepository;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.gravitee.am.repository.management.api.search.FilterCriteria;
+
 
 import java.util.List;
 
@@ -36,6 +38,8 @@ public interface GroupRepository extends CrudRepository<Group, String> {
     Flowable<Group> findAll(ReferenceType referenceType, String referenceId);
 
     Single<Page<Group>> findAll(ReferenceType referenceType, String referenceId, int page, int size);
+
+    Single<Page<Group>> search(ReferenceType referenceType, String referenceId, FilterCriteria criteria, int page, int size);
 
     Flowable<Group> findByIdIn(List<String> ids);
 
