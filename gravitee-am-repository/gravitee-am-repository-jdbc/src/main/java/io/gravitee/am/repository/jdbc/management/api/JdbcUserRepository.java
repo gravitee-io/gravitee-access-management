@@ -23,7 +23,7 @@ import io.gravitee.am.model.analytics.AnalyticsQuery;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.scim.Address;
 import io.gravitee.am.model.scim.Attribute;
-import io.gravitee.am.repository.jdbc.common.dialect.ScimUserSearch;
+import io.gravitee.am.repository.jdbc.common.dialect.ScimSearch;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcUser;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcUser.AbstractRole;
@@ -65,6 +65,7 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import static io.gravitee.am.model.ReferenceType.DOMAIN;
+import static io.gravitee.am.repository.jdbc.common.dialect.DatabaseDialectHelper.ScimRepository.USERS;
 import static java.time.ZoneOffset.UTC;
 import static java.util.stream.Stream.concat;
 import static org.springframework.data.relational.core.query.Criteria.where;
@@ -432,7 +433,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
 
         StringBuilder queryBuilder = new StringBuilder();
         queryBuilder.append(" FROM users WHERE reference_id = :refId AND reference_type = :refType AND ");
-        ScimUserSearch search = this.databaseDialectHelper.prepareScimSearchUserQuery(queryBuilder, criteria, page, size);
+        ScimSearch search = this.databaseDialectHelper.prepareScimSearchQuery(queryBuilder, criteria, page, size, USERS);
 
         // execute query
         org.springframework.r2dbc.core.DatabaseClient.GenericExecuteSpec executeSelect = template.getDatabaseClient().sql(search.getSelectQuery());
@@ -463,7 +464,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
 
         StringBuilder queryBuilder = new StringBuilder();
         queryBuilder.append(" FROM users WHERE reference_id = :refId AND reference_type = :refType AND ");
-        ScimUserSearch search = this.databaseDialectHelper.prepareScimSearchUserQuery(queryBuilder, criteria, -1, -1);
+        ScimSearch search = this.databaseDialectHelper.prepareScimSearchQuery(queryBuilder, criteria, -1, -1, USERS);
 
         // execute query
         org.springframework.r2dbc.core.DatabaseClient.GenericExecuteSpec executeSelect = template.getDatabaseClient().sql(search.getSelectQuery());
