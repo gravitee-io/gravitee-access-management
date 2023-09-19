@@ -23,5 +23,6 @@ annotations:
   # List of changes for the release in artifacthub.io
   # https://artifacthub.io/packages/helm/graviteeio/am?modal=changelog
   artifacthub.io/changes: |
-    - [BREAKING CHANGE]: AM 4.1.0 upgrade to R2DBC 1.0, now the r2dbc drivers need to be in 1.x. Drivers in 0.x will not work anymore.
-    - Default values for RDBMS connection pool have changed (warning: timeout duration set to 0 doesn't mean infinite anymore, you have to define negative value)
+    - Add podSecurityContext
+    - "[BREAKING CHANGE]: AM 4.1.0 upgrade to R2DBC 1.0, now the r2dbc drivers need to be in 1.x. Drivers in 0.x will not work anymore."
+    - "Default values for RDBMS connection pool have changed (warning: timeout duration set to 0 doesn't mean infinite anymore, you have to define negative value)"
