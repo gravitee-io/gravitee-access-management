@@ -35,11 +35,11 @@ public interface AuthorizationCodeRepository {
     Single<AuthorizationCode> create(AuthorizationCode authorizationCode);
 
     /**
-     * Look for an {@link AuthorizationCode} by id and delete it.
+     *  Delete {@link AuthorizationCode}.
      *
      * @param id The id to consume.
      */
-    Maybe<AuthorizationCode> delete(String id);
+    Completable delete(String id);
 
     /**
      * Find an {@link AuthorizationCode} by its code.
