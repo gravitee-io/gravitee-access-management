@@ -17,6 +17,7 @@ package io.gravitee.am.repository.oauth2.api;
 
 import io.gravitee.am.repository.oauth2.AbstractOAuthTest;
 import io.gravitee.am.repository.oauth2.model.AuthorizationCode;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
@@ -61,19 +62,25 @@ public class AuthorizationCodeRepositoryTest extends AbstractOAuthTest {
     }
 
     @Test
-    public void shouldRemoveCode() {
+    public void shouldRemoveCode() throws InterruptedException {
         String code = "testCode";
         AuthorizationCode authorizationCode = new AuthorizationCode();
         authorizationCode.setId(code);
         authorizationCode.setCode(code);
 
-        TestObserver<AuthorizationCode> testObserver = Completable.fromSingle(authorizationCodeRepository
-                .create(authorizationCode))
+        TestObserver<Void> testObserver = authorizationCodeRepository
+                .create(authorizationCode)
+                .ignoreElement()
                 .andThen(authorizationCodeRepository.delete(code))
                 .test();
+
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
-        testObserver.assertValue(v -> v.getId().equals(authorizationCode.getId()));
+
+        var deletionValidationObserver = authorizationCodeRepository.findByCode(code).test();
+        deletionValidationObserver.await(10, TimeUnit.SECONDS);
+        deletionValidationObserver.assertNoErrors();
+        deletionValidationObserver.assertNoValues();
     }
 
 }
