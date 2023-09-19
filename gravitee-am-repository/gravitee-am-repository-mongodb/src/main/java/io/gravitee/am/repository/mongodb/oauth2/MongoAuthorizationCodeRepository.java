@@ -23,6 +23,7 @@ import io.gravitee.am.repository.oauth2.api.AuthorizationCodeRepository;
 import io.gravitee.am.repository.oauth2.model.AuthorizationCode;
 import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.MultiValueMap;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
@@ -77,8 +78,8 @@ public class MongoAuthorizationCodeRepository extends AbstractOAuth2MongoReposit
     }
 
     @Override
-    public Maybe<AuthorizationCode> delete(String code) {
-        return Observable.fromPublisher(authorizationCodeCollection.findOneAndDelete(eq(FIELD_ID, code))).firstElement().map(this::convert);
+    public Completable delete(String code) {
+        return Completable.fromPublisher(authorizationCodeCollection.deleteOne(eq(FIELD_ID, code)));
     }
 
     @Override

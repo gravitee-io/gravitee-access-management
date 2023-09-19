@@ -17,6 +17,7 @@ package io.gravitee.am.repository.oauth2.api;
 
 import io.gravitee.am.repository.oauth2.AbstractOAuthTest;
 import io.gravitee.am.repository.oauth2.model.AuthorizationCode;
+import io.reactivex.Maybe;
 import io.reactivex.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,14 +65,19 @@ public class AuthorizationCodeRepositoryTest extends AbstractOAuthTest {
         authorizationCode.setId(code);
         authorizationCode.setCode(code);
 
-        TestObserver<AuthorizationCode> testObserver = authorizationCodeRepository
+        TestObserver<Void> testObserver = authorizationCodeRepository
                 .create(authorizationCode)
                 .toCompletable()
                 .andThen(authorizationCodeRepository.delete(code))
                 .test();
+
         testObserver.awaitTerminalEvent();
         testObserver.assertNoErrors();
-        testObserver.assertValue(v -> v.getId().equals(authorizationCode.getId()));
+
+        Maybe<AuthorizationCode> deletionValidationObserver = authorizationCodeRepository.findByCode(code);
+        testObserver.awaitTerminalEvent();
+        testObserver.assertNoErrors();
+        testObserver.assertEmpty();
     }
 
 }

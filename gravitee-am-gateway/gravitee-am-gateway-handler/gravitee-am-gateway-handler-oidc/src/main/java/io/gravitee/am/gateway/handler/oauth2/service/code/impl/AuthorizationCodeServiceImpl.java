@@ -83,7 +83,7 @@ public class AuthorizationCodeServiceImpl implements AuthorizationCodeService {
                     }
                     return Maybe.just(authorizationCode);
                 })
-                .flatMap(authorizationCode -> authorizationCodeRepository.delete(authorizationCode.getId()));
+                .flatMap(authorizationCode -> authorizationCodeRepository.delete(authorizationCode.getId()).andThen(Maybe.just(authorizationCode)));
     }
 
 
