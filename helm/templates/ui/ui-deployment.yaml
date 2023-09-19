@@ -61,6 +61,9 @@ spec:
         {{- end }}
         {{- end }}
     spec:
+      {{- if .Values.ui.deployment.podSecurityContext }}
+      securityContext: {{ toYaml .Values.ui.deployment.podSecurityContext | nindent 8 }}
+      {{- end }}
       affinity: {{ toYaml .Values.ui.deployment.affinity | nindent 8 }}
       nodeSelector: {{ toYaml .Values.ui.deployment.nodeSelector | nindent 8 }}
       topologySpreadConstraints: {{ toYaml .Values.ui.deployment.topologySpreadConstraints | nindent 8 }}
