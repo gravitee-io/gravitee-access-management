@@ -813,6 +813,13 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         router.route(PATH_WEBAUTHN_REGISTER).failureHandler(errorHandler);
         router.route(PATH_WEBAUTHN_REGISTER_SUCCESS).failureHandler(errorHandler);
         router.route(PATH_WEBAUTHN_RESPONSE).failureHandler(errorHandler);
+
         router.route(PATH_VERIFY_REGISTRATION).failureHandler(errorHandler);
+
+        router.route(PATH_MFA_ENROLL).failureHandler(errorHandler);
+        router.route(PATH_MFA_CHALLENGE_ALTERNATIVES).failureHandler(errorHandler);
+        router.route(PATH_MFA_RECOVERY_CODE).failureHandler(errorHandler);
+
+        router.route(PATH_CONFIRM_REGISTRATION).failureHandler(errorHandler);
     }
 }
