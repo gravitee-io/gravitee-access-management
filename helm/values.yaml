@@ -231,6 +231,12 @@ api:
     envFrom: []
     # - configMapRef:
     #     name: config-secret
+    # SecurityContext holds pod-level security attributes and common container settings.
+    # Field values of container.securityContext take precedence over field values of PodSecurityContext.
+    podSecurityContext:
+      #fsGroup: 1001
+      #runAsUser: 1001
+      #runAsNonRoot: true
     securityContext:
       runAsUser: 1001
       runAsNonRoot: true
@@ -513,6 +519,12 @@ gateway:
     envFrom: []
     # - configMapRef:
     #     name: config-secret
+    # SecurityContext holds pod-level security attributes and common container settings.
+    # Field values of container.securityContext take precedence over field values of PodSecurityContext.
+    podSecurityContext:
+      #fsGroup: 1001
+      #runAsUser: 1001
+      #runAsNonRoot: true
     securityContext:
       runAsUser: 1001
       runAsNonRoot: true
@@ -795,6 +807,12 @@ ui:
     envFrom: []
     # - configMapRef:
     #     name: config-secret
+    # SecurityContext holds pod-level security attributes and common container settings.
+    # Field values of container.securityContext take precedence over field values of PodSecurityContext.
+    podSecurityContext:
+      #fsGroup: 1001
+      #runAsUser: 1001
+      #runAsNonRoot: true
     securityContext:
       runAsUser: 101
       runAsGroup: 101
