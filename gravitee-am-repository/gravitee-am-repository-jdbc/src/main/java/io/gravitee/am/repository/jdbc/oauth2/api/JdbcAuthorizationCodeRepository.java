@@ -26,6 +26,7 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.ConcurrencyFailureException;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Repository;
@@ -114,18 +115,31 @@ public class JdbcAuthorizationCodeRepository extends AbstractJdbcRepository impl
     }
 
     @Override
-    public Maybe<AuthorizationCode> delete(String id) {
+    public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
-        return authorizationCodeRepository.findById(id).map(this::toEntity)
-                .flatMap(authCode ->
-                    monoToMaybe(getTemplate().delete(Query.query(where(COL_ID).is(id)), JdbcAuthorizationCode.class))
-                            .map(i -> authCode));
+        return monoToCompletable(getTemplate().delete(Query.query(where(COL_ID).is(id)), JdbcAuthorizationCode.class)
+                .onErrorResume(err -> {
+                    if (err instanceof ConcurrencyFailureException) {
+                        LOGGER.debug("Deletion of authorization_code {} fails due to {}, retry...", id, err.getClass().getSimpleName());
+                        return getTemplate().delete(Query.query(where(COL_ID).is(id)), JdbcAuthorizationCode.class);
+                    } else {
+                        return Mono.error(err);
+                    }
+                }));
     }
 
     @Override
     public Maybe<AuthorizationCode> findByCode(String code) {
         LOGGER.debug("findByCode({})", code);
         return authorizationCodeRepository.findByCode(code, LocalDateTime.now(UTC))
+                .onErrorResumeNext(err -> {
+                    if (err instanceof ConcurrencyFailureException) {
+                        LOGGER.debug("Unable to find authorization_code {} due to {}, retry...", code, err.getClass().getSimpleName());
+                        return authorizationCodeRepository.findByCode(code, LocalDateTime.now(UTC));
+                    } else {
+                        return Maybe.error(err);
+                    }
+                })
                 .map(this::toEntity)
                 .doOnError(error -> LOGGER.error("Unable to retrieve AuthorizationCode with code {}", code));
     }
