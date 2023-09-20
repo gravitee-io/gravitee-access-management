@@ -327,11 +327,6 @@ public class IDTokenServiceImpl implements IDTokenService {
         ExecutionContext simpleExecutionContext = new SimpleExecutionContext(request, null);
         ExecutionContext executionContext = executionContextFactory.create(simpleExecutionContext);
 
-        executionContext.setAttribute(ConstantKeys.CLIENT_CONTEXT_KEY, new ClientProperties(client));
-        if (user != null) {
-            executionContext.setAttribute(ConstantKeys.USER_CONTEXT_KEY, new UserProperties(user));
-        }
-
         // put auth flow policy context attributes in context
         Object authFlowAttributes = request.getContext().get(ConstantKeys.AUTH_FLOW_CONTEXT_ATTRIBUTES_KEY);
         if (authFlowAttributes != null) {
@@ -340,6 +335,11 @@ public class IDTokenServiceImpl implements IDTokenService {
         }
         // put oauth2 request execution context attributes in context
         executionContext.getAttributes().putAll(request.getExecutionContext());
+        executionContext.setAttribute(ConstantKeys.CLIENT_CONTEXT_KEY, new ClientProperties(client));
+        if (user != null) {
+            executionContext.setAttribute(ConstantKeys.USER_CONTEXT_KEY, new UserProperties(user));
+        }
+
         return executionContext;
     }
 }
