@@ -92,7 +92,7 @@ export class MaterialFileComponent implements OnInit {
         jsonFile['type'] = file.type;
         jsonFile['size'] = file.size;
         jsonFile['content'] = reader.result.toString().split(',')[1];
-        this.jsf.updateValue(self, JSON.stringify(jsonFile));
+        this.jsf.updateValue(this, JSON.stringify(jsonFile));
         this.editMode = false;
       };
       reader.onerror = (error) => {
