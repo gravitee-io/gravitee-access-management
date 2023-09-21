@@ -272,6 +272,7 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
         updateFields.add(Updates.set("newsletter", item.isNewsletter()));
         updateFields.add(Updates.set("registrationUserUri", item.getRegistrationUserUri()));
         updateFields.add(Updates.set("registrationAccessToken", item.getRegistrationAccessToken()));
+        updateFields.add(Updates.set("registrationCompleted", item.isRegistrationCompleted()));
         updateFields.add(Updates.set("referenceType", item.getReferenceType().name()));
         updateFields.add(Updates.set("referenceId", item.getReferenceId()));
         updateFields.add(Updates.set("source", item.getSource()));
