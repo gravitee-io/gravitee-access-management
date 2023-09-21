@@ -238,6 +238,7 @@ public class UserRepositoryTest extends AbstractManagementTest {
         Address addr = new Address();
         addr.setCountry("gb");
         userUpdated.setAddresses(Arrays.asList(addr));
+        userUpdated.setRegistrationCompleted(!userCreated.isRegistrationCompleted());
 
         Attribute attribute = new Attribute();
         attribute.setPrimary(true);
@@ -282,6 +283,7 @@ public class UserRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(u -> u.getFactors().size() == 1);
         testObserver.assertValue(u -> u.getFactors().get(0).getAppId().equals(userUpdated.getFactors().get(0).getAppId()));
         testObserver.assertValue(u -> u.getLastPasswordReset() != null);
+        testObserver.assertValue(u -> u.isRegistrationCompleted() == userUpdated.isRegistrationCompleted());
         // Should have changed too
         testObserver.assertValue(u -> Objects.equals(u.getRoles(), userUpdated.getRoles()));
         testObserver.assertValue(u -> Objects.equals(u.getDynamicRoles(), userUpdated.getDynamicRoles()));
@@ -297,10 +299,11 @@ public class UserRepositoryTest extends AbstractManagementTest {
     public void shouldUpdate_ProfileOnly() throws TechnicalException {
         // create user
         User user = buildUser();
-        userRepository.create(user).blockingGet();
+        User userCreated = userRepository.create(user).blockingGet();
 
         User userUpdated = buildUser();
         userUpdated.setId(user.getId());
+        userUpdated.setRegistrationCompleted(!userCreated.isRegistrationCompleted());
 
 
         Address addr = new Address();
@@ -352,6 +355,7 @@ public class UserRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(u -> u.getFactors().size() == 1);
         testObserver.assertValue(u -> u.getFactors().get(0).getAppId().equals(userUpdated.getFactors().get(0).getAppId()));
         testObserver.assertValue(u -> u.getLastPasswordReset() != null);
+        testObserver.assertValue(u -> u.isRegistrationCompleted() == userUpdated.isRegistrationCompleted());
         // Shouldn't have changed
         testObserver.assertValue(u -> Objects.equals(u.getRoles(), user.getRoles()));
         testObserver.assertValue(u -> Objects.equals(u.getDynamicRoles(), user.getDynamicRoles()));
