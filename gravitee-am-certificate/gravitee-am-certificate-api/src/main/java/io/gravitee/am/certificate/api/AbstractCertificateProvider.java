@@ -191,8 +191,11 @@ public abstract class AbstractCertificateProvider implements CertificateProvider
     }
 
     private Stream<JWK> convert(com.nimbusds.jose.jwk.JWK nimbusJwk, boolean includePrivate) {
-        final Set<String> useFor = getUse() == null || getUse().isEmpty() ? Set.of(KeyUse.SIGNATURE.getValue()) : getUse();
-        return useFor.stream().map(use -> createKey(nimbusJwk, includePrivate, use));
+        return getUse() == null || getUse().isEmpty() ?
+                // if the user doesn't provide usage, let the certificate define it or use "sig" as default
+                Stream.of(createKey(nimbusJwk, includePrivate, null)) :
+                // if there are usages defined by the user use them
+                getUse().stream().map(use -> createKey(nimbusJwk, includePrivate, use));
     }
 
     private JWK createKey(com.nimbusds.jose.jwk.JWK nimbusJwk, boolean includePrivate, String use) {
@@ -205,10 +208,12 @@ public abstract class AbstractCertificateProvider implements CertificateProvider
             jwk = new ECKey();
         }
 
-        if (nimbusJwk.getKeyUse() != null) {
+        if (use != null) {
+            jwk.setUse(use);
+        } else if (nimbusJwk.getKeyUse() != null) {
             jwk.setUse(nimbusJwk.getKeyUse().identifier());
         } else {
-            jwk.setUse(use);
+            jwk.setUse(KeyUse.SIGNATURE.getValue());
         }
 
         if (nimbusJwk.getKeyOperations() != null) {
