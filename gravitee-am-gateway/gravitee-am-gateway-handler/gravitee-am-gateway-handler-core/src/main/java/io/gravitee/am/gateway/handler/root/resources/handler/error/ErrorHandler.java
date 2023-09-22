@@ -66,7 +66,7 @@ public class ErrorHandler extends AbstractErrorHandler {
                 handleException(routingContext, "technical_error", "Invalid WebAuthn attestation, make sure your device is compliant with the platform requirements");
             } else {
                 logger.error("An exception occurs while handling incoming request", throwable);
-                handleException(routingContext, "unexpected_error", "An unexpected error occurs");
+                handleException(routingContext, "unexpected_error", "An unexpected error has occurred");
             }
         }
     }
