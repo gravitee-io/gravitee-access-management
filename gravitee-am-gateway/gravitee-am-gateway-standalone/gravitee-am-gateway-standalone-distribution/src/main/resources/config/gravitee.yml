@@ -224,9 +224,10 @@ email:
   password: password
   # List of allowed from
   allowedfrom:
-    - ${email.from}
+    - "*@*.*"
+    # - ${email.from}
     # - *@mydomain.org
-    # - *@*.*
+
 #  properties:
 #    auth: true
 #    starttls.enable: true
