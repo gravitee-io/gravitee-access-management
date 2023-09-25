@@ -452,7 +452,6 @@ jobs:
             export GRAVITEE_EMAIL_ENABLED=true
             export GRAVITEE_EMAIL_HOST=localhost
             export GRAVITEE_EMAIL_PORT=5025
-            export GRAVITEE_EMAIL_ALLOWEDFROM_0="*@*.*"
             
             # Export env var for MFA rate limit
             export GRAVITEE_MFA_RATE_ENABLED=true
@@ -553,7 +552,6 @@ jobs:
             export GRAVITEE_EMAIL_ENABLED=true
             export GRAVITEE_EMAIL_HOST=localhost
             export GRAVITEE_EMAIL_PORT=5025
-            export GRAVITEE_EMAIL_ALLOWEDFROM_0="*@*.*"
             
             # Export env var for MFA rate limit
             export GRAVITEE_MFA_RATE_ENABLED=true
@@ -638,8 +636,6 @@ jobs:
             cp /tmp/workspace/gravitee-am-factor-mock-*.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
             cp /tmp/workspace/gravitee-am-factor-mock-*.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/
             
-            # Environment Variables
-            export GRAVITEE_EMAIL_ALLOWEDFROM_0="*@*.*"
             
             # Reduce the sync frequency to avoid flaky test due to synchronization delay
             export gravitee_services_sync_cron="*/2 * * * * *"
@@ -734,11 +730,9 @@ jobs:
             export GRAVITEE_OAUTH2_JDBC_USERNAME=postgres
             export GRAVITEE_OAUTH2_JDBC_PASSWORD=T0pS3cr3t
             
-            export GRAVITEE_EMAIL_ALLOWEDFROM_0="*@*.*"
-            
             # Reduce the sync frequency to avoid flaky test due to synchronization delay
             export gravitee_services_sync_cron="*/2 * * * * *"
-            
+
             # Start AM Management
             gravitee-am-management-api-standalone-${AM_VERSION}/bin/gravitee &
             # Start AM Gateway
