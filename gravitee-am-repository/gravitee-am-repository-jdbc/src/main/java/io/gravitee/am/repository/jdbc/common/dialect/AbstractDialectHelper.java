@@ -176,6 +176,18 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
                 return "email";
             case "displayName":
                 return "display_name";
+            case "meta.loggedAt":
+                return "logged_at";
+            case "meta.lastLoginWithCredentials":
+                return "last_login_with_credentials";
+            case "meta.lastPasswordReset":
+                return "last_password_reset";
+            case "meta.mfaEnrollmentSkippedAt":
+                return "mfa_enrollment_skipped_at";
+            case "meta.accountLockedAt":
+                return "account_locked_at";
+            case "meta.accountLockedUntil":
+                return "account_locked_until";
             default:
                 if (filterName.startsWith("additionalInformation.")) {
                     return filterName.replaceFirst("additionalInformation", "additional_information");
@@ -278,7 +290,13 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
 
     private boolean isDateInput(String filterName) {
         return "meta.created".equals(filterName) ||
-                "meta.lastModified".equals(filterName);
+                "meta.lastModified".equals(filterName) ||
+                "meta.loggedAt".equals(filterName) ||
+                "meta.lastLoginWithCredentials".equals(filterName) ||
+                "meta.lastPasswordReset".equals(filterName) ||
+                "meta.mfaEnrollmentSkippedAt".equals(filterName) ||
+                "meta.accountLockedAt".equals(filterName) ||
+                "meta.accountLockedUntil".equals(filterName);
     }
 
     private boolean isBooleanInput(String filterName) {
