@@ -41,6 +41,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 import static java.time.ZoneOffset.UTC;
 
@@ -563,6 +564,225 @@ public class UserRepositoryTest extends AbstractManagementTest {
         testObserverP1.assertComplete();
         testObserverP1.assertNoErrors();
         testObserverP1.assertValue(users -> users.getData().size() == 1);
+    }
+
+    @Test
+    public void testScimSearch_Field_created() {
+        final String domain = "domain";
+        final Date now = new Date();
+
+        final User user1 = new User();
+        user1.setReferenceType(ReferenceType.DOMAIN);
+        user1.setReferenceId(domain);
+        user1.setUsername("testUsername1");
+        user1.setCreatedAt(now);
+        userRepository.create(user1).blockingGet();
+
+        final User user2 = new User();
+        user2.setReferenceType(ReferenceType.DOMAIN);
+        user2.setReferenceId(domain);
+        user2.setUsername("testUsername2");
+        user2.setCreatedAt(new Date(TimeUnit.MICROSECONDS.toMillis(1556175797428L))); //April 25, 2019
+        userRepository.create(user2).blockingGet();
+
+        final FilterCriteria criteria = new FilterCriteria();
+        criteria.setFilterName("meta.created");
+        criteria.setFilterValue(UTC_FORMATTER.format(LocalDateTime.now(UTC).minusSeconds(20)));
+        criteria.setOperator("gt");
+
+        final TestObserver<Page<User>> observer = userRepository.search(ReferenceType.DOMAIN, domain, criteria, 0, 1).test();
+        observer.awaitTerminalEvent();
+
+        observer.assertComplete();
+        observer.assertNoErrors();
+        observer.assertValue(users -> users.getData().size() == 1);
+        observer.assertValue(users -> {
+            Iterator<User> it = users.getData().iterator();
+            return it.next().getUsername().equals(user1.getUsername());
+        });
+    }
+
+    @Test
+    public void testScimSearch_Field_loggedAt() {
+        final String domain = "domain";
+        final Date now = new Date();
+
+        final User user1 = new User();
+        user1.setReferenceType(ReferenceType.DOMAIN);
+        user1.setReferenceId(domain);
+        user1.setUsername("testUsername1");
+        user1.setLoggedAt(now);
+        userRepository.create(user1).blockingGet();
+
+        final User user2 = new User();
+        user2.setReferenceType(ReferenceType.DOMAIN);
+        user2.setReferenceId(domain);
+        user2.setUsername("testUsername2");
+        user2.setLoggedAt(new Date(TimeUnit.MICROSECONDS.toMillis(1556175797428L))); //April 25, 2019
+        userRepository.create(user2).blockingGet();
+
+
+        final FilterCriteria criteria = new FilterCriteria();
+        criteria.setFilterName("meta.loggedAt");
+        criteria.setFilterValue(UTC_FORMATTER.format(LocalDateTime.now(UTC).minusSeconds(20)));
+        criteria.setOperator("gt");
+
+        final TestObserver<Page<User>> observer = userRepository.search(ReferenceType.DOMAIN, domain, criteria, 0, 1).test();
+        observer.awaitTerminalEvent();
+
+        observer.assertComplete();
+        observer.assertNoErrors();
+        observer.assertValue(users -> users.getData().size() == 1);
+        observer.assertValue(users -> {
+            Iterator<User> it = users.getData().iterator();
+            return it.next().getUsername().equals(user1.getUsername());
+        });
+    }
+
+    @Test
+    public void testScrimSearch_field_lastPasswordReset() {
+        final String domain = "domain";
+        final Date now = new Date();
+
+        final User user1 = new User();
+        user1.setReferenceType(ReferenceType.DOMAIN);
+        user1.setReferenceId(domain);
+        user1.setUsername("testUsername1");
+        user1.setLastPasswordReset(now);
+        userRepository.create(user1).blockingGet();
+
+        final User user2 = new User();
+        user2.setReferenceType(ReferenceType.DOMAIN);
+        user2.setReferenceId(domain);
+        user2.setUsername("testUsername2");
+        user2.setLastPasswordReset(new Date(TimeUnit.MICROSECONDS.toMillis(1556175797428L))); //April 25, 2019
+        userRepository.create(user2).blockingGet();
+
+        final FilterCriteria criteria = new FilterCriteria();
+        criteria.setFilterName("meta.lastPasswordReset");
+        criteria.setFilterValue(UTC_FORMATTER.format(LocalDateTime.now(UTC).minusSeconds(20)));
+        criteria.setOperator("gt");
+
+        final TestObserver<Page<User>> observer = userRepository.search(ReferenceType.DOMAIN, domain, criteria, 0, 1).test();
+        observer.awaitTerminalEvent();
+
+        observer.assertComplete();
+        observer.assertNoErrors();
+        observer.assertValue(users -> users.getData().size() == 1);
+        observer.assertValue(users -> {
+            Iterator<User> it = users.getData().iterator();
+            return it.next().getUsername().equals(user1.getUsername());
+        });
+    }
+
+    @Test
+    public void testScimSearch_field_mfaEnrollmentSkippedAt() {
+        final String domain = "domain";
+        final Date now = new Date();
+
+        final User user1 = new User();
+        user1.setReferenceType(ReferenceType.DOMAIN);
+        user1.setReferenceId(domain);
+        user1.setUsername("testUsername1");
+        user1.setMfaEnrollmentSkippedAt(now);
+        userRepository.create(user1).blockingGet();
+
+        final User user2 = new User();
+        user2.setReferenceType(ReferenceType.DOMAIN);
+        user2.setReferenceId(domain);
+        user2.setUsername("testUsername2");
+        user2.setMfaEnrollmentSkippedAt(new Date(TimeUnit.MICROSECONDS.toMillis(1556175797428L))); //April 25, 2019
+        userRepository.create(user2).blockingGet();
+
+
+        FilterCriteria criteria = new FilterCriteria();
+        criteria.setFilterName("meta.mfaEnrollmentSkippedAt");
+        criteria.setFilterValue(UTC_FORMATTER.format(LocalDateTime.now(UTC).minusSeconds(20)));
+        criteria.setOperator("gt");
+
+        TestObserver<Page<User>> observer = userRepository.search(ReferenceType.DOMAIN, domain, criteria, 0, 1).test();
+        observer.awaitTerminalEvent();
+
+        observer.assertComplete();
+        observer.assertNoErrors();
+        observer.assertValue(users -> users.getData().size() == 1);
+        observer.assertValue(users -> {
+            Iterator<User> it = users.getData().iterator();
+            return it.next().getUsername().equals(user1.getUsername());
+        });
+    }
+
+    @Test
+    public void scrimSearch_field_accountLockedAt() {
+        final String domain = "domain";
+        final Date now = new Date();
+
+        final User user1 = new User();
+        user1.setReferenceType(ReferenceType.DOMAIN);
+        user1.setReferenceId(domain);
+        user1.setUsername("testUsername1");
+        user1.setAccountLockedAt(now);
+        userRepository.create(user1).blockingGet();
+
+        final User user2 = new User();
+        user2.setReferenceType(ReferenceType.DOMAIN);
+        user2.setReferenceId(domain);
+        user2.setUsername("testUsername2");
+        user2.setAccountLockedAt(new Date(TimeUnit.MICROSECONDS.toMillis(1556175797428L))); //April 25, 2019
+        userRepository.create(user2).blockingGet();
+
+        final FilterCriteria criteria = new FilterCriteria();
+        criteria.setFilterName("meta.accountLockedAt");
+        criteria.setFilterValue(UTC_FORMATTER.format(LocalDateTime.now(UTC).minusSeconds(20)));
+        criteria.setOperator("gt");
+
+        final TestObserver<Page<User>> observer = userRepository.search(ReferenceType.DOMAIN, domain, criteria, 0, 1).test();
+        observer.awaitTerminalEvent();
+
+        observer.assertComplete();
+        observer.assertNoErrors();
+        observer.assertValue(users -> users.getData().size() == 1);
+        observer.assertValue(users -> {
+            Iterator<User> it = users.getData().iterator();
+            return it.next().getUsername().equals(user1.getUsername());
+        });
+    }
+
+    @Test
+    public void testScimSearch_field_accountLockedUntil() {
+        final String domain = "domain";
+        final Date now = new Date();
+
+        final User user1 = new User();
+        user1.setReferenceType(ReferenceType.DOMAIN);
+        user1.setReferenceId(domain);
+        user1.setUsername("testUsername1");
+        user1.setAccountLockedUntil(now);
+        userRepository.create(user1).blockingGet();
+
+        final User user2 = new User();
+        user2.setReferenceType(ReferenceType.DOMAIN);
+        user2.setReferenceId(domain);
+        user2.setUsername("testUsername2");
+        user2.setAccountLockedUntil(new Date(TimeUnit.MICROSECONDS.toMillis(1556175797428L))); //April 25, 2019
+        userRepository.create(user2).blockingGet();
+
+
+        final FilterCriteria criteria = new FilterCriteria();
+        criteria.setFilterName("meta.accountLockedUntil");
+        criteria.setFilterValue(UTC_FORMATTER.format(LocalDateTime.now(UTC).minusSeconds(20)));
+        criteria.setOperator("gt");
+
+        final TestObserver<Page<User>> observer = userRepository.search(ReferenceType.DOMAIN, domain, criteria, 0, 1).test();
+        observer.awaitTerminalEvent();
+
+        observer.assertComplete();
+        observer.assertNoErrors();
+        observer.assertValue(users -> users.getData().size() == 1);
+        observer.assertValue(users -> {
+            Iterator<User> it = users.getData().iterator();
+            return it.next().getUsername().equals(user1.getUsername());
+        });
     }
 
     @Test
