@@ -29,6 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -93,6 +94,29 @@ public class AlertTriggerRepositoryTest extends AbstractManagementTest {
         testObserver.assertNoErrors();
         testObserver.assertValue(updated -> updated.getId().equals(updatedAlertTrigger.getId())
                 && !updated.isEnabled());
+    }
+
+    @Test
+    public void testUpdate_RemoveNotifier() {
+        // create idp
+        AlertTrigger alertTrigger = buildAlertTrigger();
+        AlertTrigger alertTriggerCreated = alertTriggerRepository.create(alertTrigger).blockingGet();
+
+        // update idp
+        AlertTrigger updatedAlertTrigger = buildAlertTrigger();
+        updatedAlertTrigger.setId(alertTriggerCreated.getId());
+        updatedAlertTrigger.setEnabled(false);
+        updatedAlertTrigger.setAlertNotifiers(List.of());
+
+        TestObserver<AlertTrigger> testObserver = alertTriggerRepository.update(updatedAlertTrigger).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(updated -> updated.getId().equals(updatedAlertTrigger.getId())
+                && !updated.isEnabled()
+                && (updated.getAlertNotifiers() == null || updated.getAlertNotifiers().isEmpty())
+        );
     }
 
     @Test
