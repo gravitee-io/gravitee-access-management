@@ -1613,7 +1613,6 @@ jobs:
     steps:
       - checkout
       - git_config
-      - gh/setup
       - helm/install-helm-client
       - run:
           name: Update Chart and App versions
@@ -1636,7 +1635,7 @@ jobs:
             not: << pipeline.parameters.dry_run>>
           steps:
             - run:
-                name: "Open a PR to publish helm chart release into helm-charts repository"
+                name: "Publish helm chart release into helm-charts repository"
                 working_directory: "./release"
                 command: npm run zx -- ci-steps/release-helm.mjs --version=${VERSION}
       - when:
