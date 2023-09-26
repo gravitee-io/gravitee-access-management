@@ -1,6 +1,18 @@
 # Default values for Gravitee.io Access Management.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
+
+# -- Array of extra K8s manifests to deploy
+extraObjects: []
+  #- apiVersion: v1
+  #  kind: Secret
+  #    metadata:
+  #      name: gravitee-license
+  #      namespace: graviteeio
+  #    type: Opaque
+  #  data:
+  #    license.key: myLicenceKeyInBase64==
+
 am:
   name: am
   # Whether this chart should self-manage its service account, role, and associated role binding.
