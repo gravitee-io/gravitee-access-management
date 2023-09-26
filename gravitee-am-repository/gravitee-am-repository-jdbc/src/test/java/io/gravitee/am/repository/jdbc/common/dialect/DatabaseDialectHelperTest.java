@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.jdbc.common.dialect;
 
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
+import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
@@ -121,5 +122,22 @@ public class DatabaseDialectHelperTest {
         assertEquals("binding size should be 2", 2, search.getBinding().size());
         assertEquals("binding should contains email", "test@acme.fr", search.getBinding().get("email"));
         assertEquals("binding should contains email2", "test2@acme.fr", search.getBinding().get("email_c0"));
+    }
+
+    @Test
+    public void shouldPrepareScimSearchUserQuery_dateField() {
+        final R2dbcDialect dialect = Mockito.mock(R2dbcDialect.class);
+        PostgresqlHelper helper = new PostgresqlHelper(dialect, null);
+        final FilterCriteria criteria = new FilterCriteria();
+        criteria.setFilterName("meta.loggedAt");
+        criteria.setFilterValue("2023-09-05T10:36:11.571Z");
+        criteria.setOperator("eq");
+        String BASE_CLAUSE = " FROM users WHERE reference_id = :refId AND reference_type = :refType AND ";
+
+        ScimSearch search = helper.prepareScimSearchQuery(new StringBuilder(BASE_CLAUSE), criteria, 0, 1, DatabaseDialectHelper.ScimRepository.USERS);
+
+        Assert.assertTrue("Query contains logged_at clause", search.getSelectQuery().startsWith("SELECT *  FROM users WHERE reference_id = :refId AND reference_type = :refType AND logged_at = :logged_at"));
+        Assert.assertEquals("binding size should be 1", 1L, (long)search.getBinding().size());
+        Assert.assertEquals("binding should contains date value", "2023-09-05T10:36:11.571", search.getBinding().get("logged_at").toString());
     }
 }
