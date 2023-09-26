@@ -214,7 +214,7 @@ public class JdbcAlertTriggerRepository extends AbstractJdbcRepository implement
                     .ignoreElements();
         }
 
-        return Mono.empty();
+        return delete;
     }
 
     private Mono<Void> deleteAlertNotifiers(String alertTriggerId) {
