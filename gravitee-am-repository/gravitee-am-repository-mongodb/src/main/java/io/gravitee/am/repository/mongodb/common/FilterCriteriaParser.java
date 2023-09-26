@@ -164,6 +164,18 @@ public final class FilterCriteriaParser {
                 return "enabled";
             case "emails.value":
                 return "email";
+            case "meta.loggedAt":
+                return "loggedAt";
+            case "meta.lastLoginWithCredentials":
+                return "lastLoginWithCredentials";
+            case "meta.lastPasswordReset":
+                return "lastPasswordReset";
+            case "meta.mfaEnrollmentSkippedAt":
+                return "mfaEnrollmentSkippedAt";
+            case "meta.accountLockedAt":
+                return "accountLockedAt";
+            case "meta.accountLockedUntil":
+                return "accountLockedUntil";
             default:
                 return filterName;
         }
@@ -194,6 +206,12 @@ public final class FilterCriteriaParser {
 
     private static boolean isDateInput(String filterName) {
         return "createdAt".equals(filterName) ||
-                "updatedAt".equals(filterName);
+                "updatedAt".equals(filterName) ||
+                "loggedAt".equals(filterName) ||
+                "lastPasswordReset".equals(filterName) ||
+                "lastLoginWithCredentials".equals(filterName) ||
+                "mfaEnrollmentSkippedAt".equals(filterName) ||
+                "accountLockedAt".equals(filterName) ||
+                "accountLockedUntil".equals(filterName);
     }
 }
