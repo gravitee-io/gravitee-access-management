@@ -41,6 +41,7 @@ public class EmailConfiguration {
     private static final String EMAIL_ALLOW_LIST = "email.allowedfrom[%d]";
     private final static String EMAIL_PROPERTIES_PREFIX = "email.properties";
     private final static String MAILAPI_PROPERTIES_PREFIX = "mail.smtp.";
+    private static final String DEFAULT_ALLOWED_FORM = "*@*.*";
     private final boolean enabled;
     private final String host;
     private final String port;
@@ -158,7 +159,7 @@ public class EmailConfiguration {
             allowList.add(value);
         }
         if (allowList.isEmpty()) {
-            allowList.add(from);
+            allowList.add(DEFAULT_ALLOWED_FORM);
         }
         return allowList;
 

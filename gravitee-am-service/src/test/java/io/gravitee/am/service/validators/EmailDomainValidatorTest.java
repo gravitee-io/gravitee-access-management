@@ -72,8 +72,8 @@ public class EmailDomainValidatorTest {
     private static Stream<Arguments> params_that_must_validate_email_with_default_allow_list() {
         return Stream.of(
                 Arguments.of("test@example.com", true),
-                Arguments.of("another@mail.com", false),
-                Arguments.of("evil@mail.com", false),
+                Arguments.of("another@mail.com", true),
+                Arguments.of("evil@mail.com", true),
                 Arguments.of("invalid.email", false),
                 Arguments.of("", false),
                 Arguments.of(null, false)
