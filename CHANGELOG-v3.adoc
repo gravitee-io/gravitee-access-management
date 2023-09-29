@@ -1,6 +1,28 @@
 # Change Log
 
-==  - 3.21.6 (2023-09-14)
+== AM - 3.19.18 (2023-09-29)
+
+
+
+=== Gateway
+
+* Gravitee AM : search users using scim query https://github.com/gravitee-io/issues/issues/9109[#9109]
+* Filter is not implemented in SCIM groupendpoint https://github.com/gravitee-io/issues/issues/9183[#9183]
+* Key usage is always "enc" https://github.com/gravitee-io/issues/issues/9236[#9236]
+
+
+
+=== Console
+
+* After a migration, the IDP checkbox `Allow CRUD operation` is not shown as enabled in the UI (but is enabled in the backend) https://github.com/gravitee-io/issues/issues/9123[#9123]
+
+=== Other
+
+* Allow to bypass MongoDB indexes creation https://github.com/gravitee-io/issues/issues/9232[#9232]
+* Alerts Dashboard is not retaining the alert channel selection/deselection. https://github.com/gravitee-io/issues/issues/9253[#9253]
+
+
+== AM - 3.21.6 (2023-09-14)
 
 == What's new !
 
@@ -13,7 +35,7 @@ More info into https://docs.gravitee.io/am/current/am_breaking_changes_3.21.6.ht
 * fix potential bug in IDTokenServiceImpl
 
 
-==  - 3.20.11 (2023-09-15)
+== AM - 3.20.11 (2023-09-15)
 
 == What's new !
 
