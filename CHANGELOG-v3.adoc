@@ -1,5 +1,31 @@
 # Change Log
 
+== AM - 3.21.7 (2023-09-29)
+
+== What's new !
+
+=== Gateway
+
+* AM allows invalid emails during MFA enrol which prevents future logins and presents an attack vector. https://github.com/gravitee-io/issues/issues/8887[#8887]
+* Gravitee AM : search users using scim query https://github.com/gravitee-io/issues/issues/9109[#9109]
+* 500 internal server error due to invalid HTML template in enroll, login , challenge form https://github.com/gravitee-io/issues/issues/9111[#9111]
+* Invalid encoding value after multiple redirect https://github.com/gravitee-io/issues/issues/9154[#9154]
+* Filter is not implemented in SCIM groupendpoint https://github.com/gravitee-io/issues/issues/9183[#9183]
+* Key usage is always "enc" https://github.com/gravitee-io/issues/issues/9236[#9236]
+
+=== Management API
+
+=== Console
+
+* After a migration, the IDP checkbox `Allow CRUD operation` is not shown as enabled in the UI (but is enabled in the backend) https://github.com/gravitee-io/issues/issues/9123[#9123]
+
+=== Other
+
+* When pre-registration option is set we are not able to finish the registration properly https://github.com/gravitee-io/issues/issues/9221[#9221]
+* Allow to bypass MongoDB indexes creation https://github.com/gravitee-io/issues/issues/9232[#9232]
+* Alerts Dashboard is not retaining the alert channel selection/deselection. https://github.com/gravitee-io/issues/issues/9253[#9253]
+
+
 == AM - 3.20.12 (2023-09-29)
 
 == What's new !
