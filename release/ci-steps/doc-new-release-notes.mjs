@@ -13,7 +13,7 @@ const dateOptions = { year: 'numeric', month: 'long', day: 'numeric' };
 
 const docRepository = 'gravitee-platform-docs';
 const docRepositoryURL = `https://github.com/gravitee-io/${docRepository}`;
-const docAmChangelogFolder = 'docs/am/releases-and-changelogs/changelogs/';
+const docAmChangelogFolder = `docs/am/${versions.trimmed}/releases-and-changelog/changelogs/`;
 const docAmChangelogFile = `${docAmChangelogFolder}am-${versions.branch}-changelog.md`;
 const localTmpFolder = '.tmp';
 
