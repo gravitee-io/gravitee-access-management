@@ -106,6 +106,7 @@ try {
 } catch (e) {
   // Best effort to have no open PR before creating a new one
 }
+await $`git checkout -b ${gitBranch}`;
 await $`git add ./${docAmChangelogFile}`;
 await $`git commit -m "chore: add changelog for ${releasingVersion}"`;
 
@@ -127,6 +128,6 @@ process.env.PR_BODY = prBody;
 
 if (!dryRun) {
   const releaseNotesPrUrl =
-    await $`gh pr create --title "chore: Add changelog for new ${releasingVersion} release" --body "$PR_BODY" --base master --head ${gitBranch}`;
+    await $`gh pr create --title "chore: Add changelog for new ${releasingVersion} release" --body "$PR_BODY" --base main --head ${gitBranch}`;
   $`echo ${releaseNotesPrUrl.stdout} > /tmp/releaseNotesPrUrl.txt`;
 }
