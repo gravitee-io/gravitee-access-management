@@ -92,7 +92,7 @@ public class PreviewService implements InitializingBean {
         }
     }
 
-    public Maybe<PreviewResponse> previewDomainForm(String domainId, PreviewRequest previewRequest, Locale locale) {
+    public Maybe<PreviewResponse> previewDomainForm(String domainId, PreviewRequest previewRequest, Locale locale, String assetBaseUrl) {
         if (!isNullOrEmpty(previewRequest.getTemplate())) {
             try {
                 Template.parse(previewRequest.getTemplate());
@@ -112,7 +112,7 @@ public class PreviewService implements InitializingBean {
                         .flatMap(domain ->
                                 contentLookUp.map(content -> {
                                     previewRequest.setContent(content);
-                                    return new PreviewBuilder(templateEngine, templateResolver)
+                                    return new PreviewBuilder(templateEngine, templateResolver, assetBaseUrl)
                                             .withDomain(domain)
                                             .withRequest(previewRequest);
                                 })

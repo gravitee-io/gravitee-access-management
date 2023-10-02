@@ -350,28 +350,11 @@ export class DomainSettingsThemeComponent implements OnInit {
     });
   }
 
-  private fixAssetUrl(doc: any, tag: string, urlAttribute: string) {
-    const tags = doc.getElementsByTagName(tag);
-    for (let i = 0; i < tags.length; i++) {
-      for (const attribute of tags[i].attributes) {
-        if (attribute.name === urlAttribute) {
-          const url = attribute.value;
-          if (!url.startsWith('http')) {
-            attribute.value = '/' + url;
-          }
-        }
-      }
-    }
-  }
-
   private refreshPreview() {
     if (this.previewedTemplateContent && this.preview) {
       const doc = this.preview.nativeElement.contentDocument || this.preview.nativeElement.contentWindow;
       if (doc) {
         doc.documentElement.innerHTML = this.previewedTemplateContent;
-        this.fixAssetUrl(doc, 'link', 'href');
-        this.fixAssetUrl(doc, 'img', 'src');
-        this.fixAssetUrl(doc, 'script', 'src');
       }
     }
   }
