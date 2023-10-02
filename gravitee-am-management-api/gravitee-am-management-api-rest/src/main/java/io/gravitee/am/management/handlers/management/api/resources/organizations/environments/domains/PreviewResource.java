@@ -19,6 +19,7 @@ import io.gravitee.am.management.handlers.management.api.model.PreviewRequest;
 import io.gravitee.am.management.handlers.management.api.model.PreviewResponse;
 import io.gravitee.am.management.handlers.management.api.preview.PreviewService;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.management.handlers.management.api.utils.RedirectUtils;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.DomainService;
@@ -30,7 +31,11 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
+import org.springframework.web.util.UriComponentsBuilder;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
@@ -50,6 +55,9 @@ import java.util.Locale;
  */
 @Api(tags = {"form", "preview"})
 public class PreviewResource extends AbstractResource {
+
+    @Autowired
+    private Environment environment;
 
     @Autowired
     private DomainService domainService;
@@ -74,6 +82,7 @@ public class PreviewResource extends AbstractResource {
             @PathParam("domain") String domainId,
             @Valid @NotNull final PreviewRequest request,
             @Context HttpHeaders headers,
+            @Context HttpServletRequest httpRequest,
             @Suspended final AsyncResponse response) {
 
         final var locale = headers
@@ -85,8 +94,16 @@ public class PreviewResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_THEME, Acl.READ)
                 .andThen(domainService.findById(domainId)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
-                        .flatMap(domain -> this.previewService.previewDomainForm(domainId, request, locale))
+                        .flatMap(domain -> this.previewService.previewDomainForm(domainId, request, locale, buildAssetsBaseUrl(httpRequest)))
                         .map(preview -> Response.ok(preview).build()))
                 .subscribe(response::resume, response::resume);
+    }
+
+    private String buildAssetsBaseUrl(HttpServletRequest request) {
+        final var builder = RedirectUtils.preBuildLocationHeader(request);
+        // append context path
+        builder.path(request.getContextPath() == null ? environment.getProperty("http.api.entrypoint", "/management") : request.getContextPath());
+
+        return builder.build().toUriString();
     }
 }
