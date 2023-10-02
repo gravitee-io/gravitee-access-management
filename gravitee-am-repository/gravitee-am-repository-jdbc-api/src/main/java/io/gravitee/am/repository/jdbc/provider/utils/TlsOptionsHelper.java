@@ -30,25 +30,46 @@ import static io.r2dbc.spi.ConnectionFactoryOptions.SSL;
 public class TlsOptionsHelper {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TlsOptionsHelper.class);
+    private static final String POSTGRESQL = "postgresql";
+    private static final String MYSQL = "mysql";
+    private static final String MARIADB = "mariadb";
+    private static final String SQLSERVER = "sqlserver";
 
     public static ConnectionFactoryOptions.Builder setSSLOptions(ConnectionFactoryOptions.Builder builder, Environment environment, String prefix, String driver) {
         final boolean useSSL = Boolean.valueOf(environment.getProperty(prefix + "sslEnabled", "false"));
         if (useSSL) {
             switch (driver) {
-                case "postgresql":
+                case POSTGRESQL:
                     builder = postgresOptions(builder, environment, prefix);
                     break;
-                case "mysql":
+                case MYSQL:
                     builder = mysqlOptions(builder, environment, prefix);
                     break;
-                case "mariadb":
+                case MARIADB:
                     builder = mariadbOptions(builder, environment, prefix);
                     break;
-                case "sqlserver":
+                case SQLSERVER:
                     builder = sqlServerOptions(builder, environment, prefix);
                     break;
                 default:
                     LOGGER.warn("Unknown driver {}, skip SSL configuration", driver);
+            }
+        } else {
+            switch (driver) {
+                case POSTGRESQL:
+                    builder.option(SSL, false).option(Option.valueOf("sslMode"), "disable");
+                    break;
+                case MARIADB:
+                    builder.option(Option.valueOf("SslMode"), "disable");
+                    break;
+                case MYSQL:
+                    builder.option(Option.valueOf("sslMode"), "DISABLED");
+                    break;
+                case SQLSERVER:
+                    builder.option(Option.valueOf("encrypt"), "false");
+                    break;
+                default:
+                    LOGGER.warn("Unknown driver {}, skipping SSL disable configuration for JDBC url", driver);
             }
         }
 
@@ -101,20 +122,37 @@ public class TlsOptionsHelper {
 
         if (useSSL) {
             switch (driver) {
-                case "postgresql":
+                case POSTGRESQL:
                     jdbcUrlWithSSL = postgresOptions(jdbcUrl, environment, prefix);
                     break;
-                case "mysql":
+                case MYSQL:
                     jdbcUrlWithSSL = mysqlOptions(jdbcUrl, environment, prefix);
                     break;
-                case "mariadb":
+                case MARIADB:
                     jdbcUrlWithSSL = mariadbOptions(jdbcUrl, environment, prefix);
                     break;
-                case "sqlserver":
+                case SQLSERVER:
                     jdbcUrlWithSSL = sqlServerOptions(jdbcUrl, environment, prefix);
                     break;
                 default:
                     LOGGER.warn("Unknown driver {}, skip SSL configuration for JDBC url", driver);
+            }
+        } else {
+            switch (driver) {
+                case POSTGRESQL:
+                    jdbcUrlWithSSL = jdbcUrl + "?ssl=false&sslmode=disable";
+                    break;
+                case MYSQL:
+                    jdbcUrlWithSSL = jdbcUrl + "?useSSL=false&allowPublicKeyRetrieval=true";
+                    break;
+                case MARIADB:
+                    jdbcUrlWithSSL = jdbcUrl + "?sslMode=disable";
+                    break;
+                case SQLSERVER:
+                    jdbcUrlWithSSL = jdbcUrl + ";encrypt=false";
+                    break;
+                default:
+                    LOGGER.warn("Unknown driver {}, skipping SSL disable configuration for JDBC url", driver);
             }
         }
 
