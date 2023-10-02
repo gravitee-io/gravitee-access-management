@@ -34,6 +34,9 @@ import io.gravitee.am.model.safe.ClientProperties;
 import io.gravitee.am.model.safe.DomainProperties;
 import io.gravitee.am.model.safe.UserProperties;
 import io.gravitee.am.service.theme.ThemeResolution;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.thymeleaf.TemplateEngine;
@@ -41,13 +44,7 @@ import org.thymeleaf.exceptions.TemplateEngineException;
 import org.thymeleaf.exceptions.TemplateInputException;
 import org.thymeleaf.exceptions.TemplateProcessingException;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -85,10 +82,12 @@ public class PreviewBuilder {
     private Client client;
     private ThemeResolution theme;
     private Locale locale;
+    private String baseUrl;
 
-    public PreviewBuilder(TemplateEngine templateEngine, TemplateResolver templateResolver) {
+    public PreviewBuilder(TemplateEngine templateEngine, TemplateResolver templateResolver, String baseUrl) {
         this.templateEngine = templateEngine;
         this.templateResolver = templateResolver;
+        this.baseUrl = baseUrl;
     }
 
     public PreviewBuilder withDomain(Domain domain) {
@@ -147,7 +146,7 @@ public class PreviewBuilder {
         this.templateResolver.addForm(previewForm);
         try {
             final String processedTemplate = templateEngine.process(this.templateResolver.getTemplateKey(previewForm), context);
-            previewForm.setContent(processedTemplate);
+            previewForm.setContent(convertAssertsPath(processedTemplate, baseUrl));
         } catch (TemplateInputException e) {
             logger.debug("Preview error on domain {}", this.domain.getId(), e);
             throw new PreviewException("Preview error, document structure maybe invalid." +
@@ -163,6 +162,27 @@ public class PreviewBuilder {
         }
 
         return new PreviewResponse(previewForm.getContent(), this.request.getType(), this.request.getTemplate());
+    }
+
+    private String convertAssertsPath(String content, String baseUrl) {
+        final Document document = Jsoup.parse(content);
+
+        replaceAssetValueInHtmlElement(document, "img", "src", baseUrl);
+        replaceAssetValueInHtmlElement(document, "script", "src", baseUrl);
+        replaceAssetValueInHtmlElement(document, "link", "href", baseUrl);
+
+        return document.html();
+    }
+
+    private static void replaceAssetValueInHtmlElement(Document document,String elementName, String attrName, String baseUrl) {
+        final Elements imageElements = document.getElementsByTag(elementName);
+        imageElements.stream()
+                .filter(imageElement -> imageElement.hasAttr(attrName))
+                .filter(imageElement -> !imageElement.attr(attrName).startsWith("http"))
+                .forEach(imageElement -> {
+                    final String src = imageElement.attr(attrName).replaceAll("(..[/])*assets", baseUrl +"/auth/assets/preview");
+                    imageElement.attr(attrName, src);
+                });
     }
 
     private Map<String, Object> generateTemplateVariables(String template) {

@@ -78,14 +78,12 @@ import org.thymeleaf.TemplateEngine;
 
 import javax.annotation.Priority;
 import javax.inject.Named;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
-import javax.ws.rs.core.Application;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.SecurityContext;
+import javax.ws.rs.core.*;
 import java.io.IOException;
 import java.security.Principal;
 import java.util.List;
@@ -235,6 +233,7 @@ public abstract class JerseySpringTest {
 
     @Autowired
     protected PreviewService previewService;
+
     @Autowired
     protected I18nDictionaryService i18nDictionaryService;
 
@@ -246,6 +245,10 @@ public abstract class JerseySpringTest {
 
     @Autowired
     protected EmailTemplateValidator emailResourceValidator;
+
+    @Autowired
+    protected HttpServletRequest httpServletRequest;
+
     @Before
     public void init() {
         when(permissionService.hasPermission(any(User.class), any(PermissionAcls.class))).thenReturn(Single.just(true));
@@ -533,6 +536,11 @@ public abstract class JerseySpringTest {
         @Bean
         public TemplateResolver templateResolver() {
             return mock(TemplateResolver.class);
+        }
+
+        @Bean
+        public HttpServletRequest httpServletRequest() {
+            return mock(HttpServletRequest.class);
         }
 
     }
