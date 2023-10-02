@@ -19,6 +19,7 @@ import io.gravitee.am.management.handlers.management.api.model.PreviewRequest;
 import io.gravitee.am.management.handlers.management.api.model.PreviewResponse;
 import io.gravitee.am.management.handlers.management.api.preview.PreviewService;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.management.handlers.management.api.utils.RedirectUtils;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.DomainService;
@@ -32,6 +33,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.tags.Tags;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PathParam;
@@ -42,9 +45,9 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Locale;
 
 /**
@@ -53,6 +56,9 @@ import java.util.Locale;
  */
 @Tags({@Tag(name= "form"), @Tag(name= "preview")})
 public class PreviewResource extends AbstractResource {
+
+    @Autowired
+    private Environment environment;
 
     @Autowired
     private DomainService domainService;
@@ -79,6 +85,7 @@ public class PreviewResource extends AbstractResource {
             @PathParam("domain") String domainId,
             @Valid @NotNull final PreviewRequest request,
             @Context HttpHeaders headers,
+            @Context HttpServletRequest httpRequest,
             @Suspended final AsyncResponse response) {
 
         final var locale = headers
@@ -90,8 +97,16 @@ public class PreviewResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_THEME, Acl.READ)
                 .andThen(domainService.findById(domainId)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
-                        .flatMap(domain -> this.previewService.previewDomainForm(domainId, request, locale))
+                        .flatMap(domain -> this.previewService.previewDomainForm(domainId, request, locale, buildAssetsBaseUrl(httpRequest)))
                         .map(preview -> Response.ok(preview).build()))
                 .subscribe(response::resume, response::resume);
+    }
+
+    private String buildAssetsBaseUrl(HttpServletRequest request) {
+        final var builder = RedirectUtils.preBuildLocationHeader(request);
+        // append context path
+        builder.path(request.getContextPath() == null ? environment.getProperty("http.api.entrypoint", "/management") : request.getContextPath());
+
+        return builder.build().toUriString();
     }
 }

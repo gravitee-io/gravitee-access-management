@@ -60,6 +60,7 @@ import io.gravitee.am.service.validators.flow.FlowValidator;
 import io.gravitee.am.service.validators.user.UserValidator;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.annotation.Priority;
+import jakarta.servlet.http.HttpServletRequest;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
 import org.junit.After;
@@ -234,6 +235,7 @@ public abstract class JerseySpringTest {
 
     @Autowired
     protected PreviewService previewService;
+
     @Autowired
     protected I18nDictionaryService i18nDictionaryService;
 
@@ -245,6 +247,10 @@ public abstract class JerseySpringTest {
 
     @Autowired
     protected EmailTemplateValidator emailResourceValidator;
+
+    @Autowired
+    protected HttpServletRequest httpServletRequest;
+
     @Before
     public void init() {
         when(permissionService.hasPermission(any(User.class), any(PermissionAcls.class))).thenReturn(Single.just(true));
@@ -532,6 +538,11 @@ public abstract class JerseySpringTest {
         @Bean
         public TemplateResolver templateResolver() {
             return mock(TemplateResolver.class);
+        }
+
+        @Bean
+        public HttpServletRequest httpServletRequest() {
+            return mock(HttpServletRequest.class);
         }
 
     }
