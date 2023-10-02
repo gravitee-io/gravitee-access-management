@@ -19,6 +19,7 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.common.Request;
 import io.gravitee.am.identityprovider.api.social.SocialAuthenticationProvider;
 import io.gravitee.am.management.handlers.management.api.authentication.manager.idp.IdentityProviderManager;
+import io.gravitee.am.management.handlers.management.api.utils.RedirectUtils;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.service.OrganizationService;
 import io.gravitee.am.service.ReCaptchaService;
@@ -135,31 +136,7 @@ public class LoginController {
     }
 
     private String buildRedirectUri(HttpServletRequest request, String identity) {
-        UriComponentsBuilder builder = UriComponentsBuilder.newInstance();
-
-        String scheme = request.getHeader(HttpHeaders.X_FORWARDED_PROTO);
-        if (scheme != null && !scheme.isEmpty()) {
-            builder.scheme(scheme);
-        } else {
-            builder.scheme(request.getScheme());
-        }
-
-        String host = request.getHeader(HttpHeaders.X_FORWARDED_HOST);
-        if (host != null && !host.isEmpty()) {
-            if (host.contains(":")) {
-                // Forwarded host contains both host and port
-                String[] parts = host.split(":");
-                builder.host(parts[0]);
-                builder.port(parts[1]);
-            } else {
-                builder.host(host);
-            }
-        } else {
-            builder.host(request.getServerName());
-            if (request.getServerPort() != 80 && request.getServerPort() != 443) {
-                builder.port(request.getServerPort());
-            }
-        }
+        final var builder = RedirectUtils.preBuildLocationHeader(request);
         // append context path
         builder.path(request.getContextPath());
         builder.pathSegment("auth/login/callback");

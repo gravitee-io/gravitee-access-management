@@ -22,6 +22,7 @@ import io.gravitee.am.management.handlers.management.api.model.TemplateType;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.Theme;
+import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Maybe;
 import org.junit.Test;
@@ -31,8 +32,7 @@ import jakarta.ws.rs.core.Response;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.*;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -56,7 +56,10 @@ public class PreviewResourceTest extends JerseySpringTest {
         final PreviewResponse previewResponse = new PreviewResponse();
         previewResponse.setContent("OK");
         previewResponse.setTemplate(Template.LOGIN.template());
-        doReturn(Maybe.just(previewResponse)).when(previewService).previewDomainForm(any(), any(), any());
+        doReturn(Maybe.just(previewResponse)).when(previewService).previewDomainForm(any(), any(), any(), any());
+
+        when(httpServletRequest.getHeader(io.gravitee.common.http.HttpHeaders.X_FORWARDED_PROTO)).thenReturn("https");
+        when(httpServletRequest.getHeader(HttpHeaders.X_FORWARDED_HOST)).thenReturn("am.gravitee.io");
 
         final Response response = target("domains")
                 .path(domainId)
@@ -69,5 +72,7 @@ public class PreviewResourceTest extends JerseySpringTest {
         assertNotNull(entity);
         assertNotNull(entity.getContent());
         assertEquals("OK", entity.getContent());
+
+        verify(previewService).previewDomainForm(eq(domainId), any(), any(), eq("https://am.gravitee.io/management"));
     }
 }
