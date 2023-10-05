@@ -74,7 +74,7 @@ public class UserFactorsResource extends AbstractResource {
                     "or DOMAIN_USER[READ] permission on the specified environment " +
                     "or DOMAIN_USER[READ] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "User enrolled factors successfully fetched", response = EnrolledFactor.class, responseContainer = "List"),
+            @ApiResponse(code = 200, message = "User enrolled factors successfully fetched", response = EnrolledFactorEntity.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Internal server error")})
     public void list(
             @PathParam("organizationId") String organizationId,
