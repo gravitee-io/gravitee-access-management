@@ -74,7 +74,7 @@ public class UserFactorsResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "User enrolled factors successfully fetched",
                     content = @Content(mediaType =  "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = EnrolledFactor.class)))),
+                            array = @ArraySchema(schema = @Schema(implementation = EnrolledFactorEntity.class)))),
             @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void list(
             @PathParam("organizationId") String organizationId,
