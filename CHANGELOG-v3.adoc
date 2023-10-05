@@ -1,5 +1,23 @@
 # Change Log
 
+==  - 3.21.8 (2023-10-05)
+
+== What's new !
+
+
+
+=== Gateway
+
+* Upgrade thymeleaf to 3.1.2
+
+=== Management API
+
+* Theme Preview Does Not Load https://github.com/gravitee-io/issues/issues/9160[#9160]
+
+=== Other
+
+* MS SqlServer 10.2 onwards driver support https://github.com/gravitee-io/issues/issues/9178[#9178]
+
 == AM - 3.21.7 (2023-09-29)
 
 == What's new !
