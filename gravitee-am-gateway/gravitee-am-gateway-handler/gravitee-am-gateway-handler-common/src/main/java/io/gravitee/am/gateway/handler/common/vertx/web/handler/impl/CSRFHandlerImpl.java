@@ -59,13 +59,14 @@ public class CSRFHandlerImpl implements CSRFHandler {
     private String cookieName = DEFAULT_COOKIE_NAME;
     private String cookiePath = DEFAULT_COOKIE_PATH;
     private String headerName = DEFAULT_HEADER_NAME;
-    private long timeout = SessionHandler.DEFAULT_SESSION_TIMEOUT;
+    private long timeout;
     private String origin;
     private boolean httpOnly;
     private boolean cookieSecure;
 
-    public CSRFHandlerImpl(Vertx vertx, final String secret) {
+    public CSRFHandlerImpl(Vertx vertx, final String secret, final long timeout) {
         this.RAND = VertxContextPRNG.current(vertx);
+        this.timeout = timeout;
         try {
             mac = Mac.getInstance("HmacSHA256");
             mac.init(new SecretKeySpec(secret.getBytes(), "HmacSHA256"));
