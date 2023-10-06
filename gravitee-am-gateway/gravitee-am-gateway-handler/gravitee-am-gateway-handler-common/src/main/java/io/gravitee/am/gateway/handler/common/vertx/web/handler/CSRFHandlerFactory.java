@@ -22,6 +22,8 @@ import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
+import static io.vertx.ext.web.handler.SessionHandler.DEFAULT_SESSION_TIMEOUT;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -34,9 +36,12 @@ public class CSRFHandlerFactory implements FactoryBean<CSRFHandler> {
     @Autowired
     private Vertx vertx;
 
+    @Value("${http.cookie.session.timeout:" + DEFAULT_SESSION_TIMEOUT + "}")
+    private long timeout;
+
     @Override
     public CSRFHandler getObject() {
-        return CSRFHandler.newInstance(new CSRFHandlerImpl(vertx, csrfSecret));
+        return CSRFHandler.newInstance(new CSRFHandlerImpl(vertx, csrfSecret, timeout));
     }
 
     @Override
