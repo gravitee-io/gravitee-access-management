@@ -107,6 +107,14 @@ function getIdpCollectionName(source) {
     return configObj['usersCollection'];
 }
 
+/**
+ * Get the field name which contains the username
+ */
+function getIdpUsernameField(source) {
+    var configStr = db.getCollection('identities').find({'_id': source}).next().configuration;
+    var configObj = JSON.parse(configStr);
+    return configObj['usernameField'];
+}
 
 /*  =================
  *  ==== Processing :
@@ -146,6 +154,8 @@ Object.keys(duplicatesUsersGroupByUsernameAndSource).forEach(entry => {
 
     const referenceUser = dupUsers.shift();
     const idpId = getIdpCollectionName(referenceUser._id.source);
+    const usernameField = getIdpUsernameField(referenceUser._id.source);
+
     console.log("[INFO] Keep: user_id=" + referenceUser.result._id + " | externalId="+referenceUser.result.externalId);
 
     reportEntry['referenceUser'] = {
@@ -190,7 +200,9 @@ Object.keys(duplicatesUsersGroupByUsernameAndSource).forEach(entry => {
                 if (dryRun) {
                     console.log("[INFO] Skip user update (DRY RUN) mode");
                 } else {
-                    idpCollection.updateOne({"_id": entryToUpdate.result.externalId}, {"$set": {"username": updatedName}});
+                    var update = {$set:{}};
+                    update.$set[usernameField] = updatedName;
+                    idpCollection.updateOne({"_id": entryToUpdate.result.externalId}, update);
                     usersCollection.updateOne({"_id": entryToUpdate.result._id}, {"$set": {"username": updatedName}});
                 }
             }
