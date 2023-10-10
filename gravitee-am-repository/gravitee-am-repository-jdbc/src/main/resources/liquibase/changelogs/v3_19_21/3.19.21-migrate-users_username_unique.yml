@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 3.19.21-migrate-users-for-username-uniquess
+      author: GraviteeSource Team
+      changes:
+        #############################
+        # users Table, add unique constraints to the username field
+        ############################
+      -  customChange:  {
+        "class": "io.gravitee.am.repository.jdbc.liquibase.UsernameUniquenessMigration"}
