@@ -86,4 +86,6 @@ databaseChangeLog:
   - include:
       - file: liquibase/changelogs/v3_19_21/3.19.21-migrate-users_username_unique.yml
   - include:
+      - file: liquibase/changelogs/v3_19_21/3.19.21-alter-org_users_username_unique.yml
+  - include:
       - file: liquibase/changelogs/v3_19_21/3.19.21-alter-users_username_unique.yml
