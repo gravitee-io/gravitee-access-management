@@ -42,10 +42,8 @@ import java.util.*;
  */
 public class UsernameUniquenessMigration implements CustomSqlChange {
     public static final String TABLE_USERS = "users";
+    public static final String TABLE_ORGANIZATION_USERS = "organization_users";
     private final Logger logger = LoggerFactory.getLogger(UsernameUniquenessMigration.class);
-
-    private int counter = 0;
-
     private ObjectMapper mapper = new ObjectMapper();
 
     @Override
@@ -57,9 +55,7 @@ public class UsernameUniquenessMigration implements CustomSqlChange {
         try {
             JdbcConnection connection = (JdbcConnection) database.getConnection();
 
-            Map<String, List<User>> duplicatesUsersGroupByUsernameAndSource = searchDuplicatesGroupedByUsernameAndSource(connection);
-
-            logger.info("{} duplicate usernames found", counter);
+            Map<String, List<User>> duplicatesUsersGroupByUsernameAndSource = searchDuplicatesGroupedByUsernameAndSource(connection, TABLE_USERS);
 
             // boolean to keep in memory if the process must fail
             // in order to go through all the duplicates to see all potential errors.
@@ -100,6 +96,21 @@ public class UsernameUniquenessMigration implements CustomSqlChange {
                 }
             }
 
+            Map<String, List<User>> duplicatesOrgUsersGroupByUsernameAndSource = searchDuplicatesGroupedByUsernameAndSource(connection, TABLE_ORGANIZATION_USERS);
+            for (Map.Entry<String, List<User>> entries : duplicatesOrgUsersGroupByUsernameAndSource.entrySet()) {
+                List<User> duplicates = entries.getValue();
+                User referenceUser = duplicates.get(0);
+
+                if (!referenceUser.getSource().equalsIgnoreCase("gravitee") && !referenceUser.getSource().equalsIgnoreCase("cockpit")) {
+                    logger.error("Organization Username '{}' migration only manages gravitee & cockpit identity providers",
+                            referenceUser.getUsername(),
+                            referenceUser.getSource());
+                    needToFail = true;
+                } else {
+                    statements.addAll(generateStatementToRenameDuplicatedOrgUsers(database, duplicates));
+                }
+            }
+
             if (needToFail) {
                 throw new CustomChangeException("Some duplicates can't be processed automatically, liquibase will fail");
             }
@@ -111,8 +122,27 @@ public class UsernameUniquenessMigration implements CustomSqlChange {
         }
     }
 
+    private List<SqlStatement> generateStatementToRenameDuplicatedOrgUsers(Database database, List<User> duplicates) {
+        List<SqlStatement> statementsToApply = new ArrayList<>();
+        for (int i = 1; i < duplicates.size(); ++i) {
+            final User duplicateToUpdate = duplicates.get(i);
+            final String updatedUsername =  duplicateToUpdate.getUsername()+"_"+i+"_TO_RENAME_OR_DELETE";
+            logger.info("Renaming organization username '{}' to '{}' into tables '" + TABLE_ORGANIZATION_USERS + "' (user_id: {})",
+                    duplicateToUpdate.getUsername(),
+                    updatedUsername,
+                    duplicateToUpdate.getId());
+
+            SqlStatement updateUsersTable = new UpdateStatement(database.getDefaultCatalogName(), database.getDefaultSchemaName(), TABLE_ORGANIZATION_USERS)
+                    .addNewColumnValue("username", updatedUsername)
+                    .setWhereClause(String.format("id='%s'", duplicateToUpdate.getId()));
+            statementsToApply.add(updateUsersTable);
+        }
+        return statementsToApply;
+    }
+
     private List<SqlStatement> generateStatementToRenameDuplicatedUsers(Database database, List<User> duplicates, String idpTable, String usernameColumn, String idColumn) {
         List<SqlStatement> statementsToApply = new ArrayList<>();
+
         for (int i = 1; i < duplicates.size(); ++i) {
             final User duplicateToUpdate = duplicates.get(i);
             final String updatedUsername =  duplicateToUpdate.getUsername()+"_"+i+"_TO_RENAME_OR_DELETE";
@@ -136,12 +166,13 @@ public class UsernameUniquenessMigration implements CustomSqlChange {
         return statementsToApply;
     }
 
-    private Map<String, List<User>> searchDuplicatesGroupedByUsernameAndSource(JdbcConnection connection) throws SQLException, DatabaseException {
+    private Map<String, List<User>> searchDuplicatesGroupedByUsernameAndSource(JdbcConnection connection, String table) throws SQLException, DatabaseException {
+        int userCounter = 0;
         PreparedStatement searchDuplicates = connection.prepareStatement("select u.*\n" +
-                "from users u,\n" +
+                "from "+table+" u,\n" +
                 "(select username, source\n" +
                 "from (select username, source, count(username) as count\n" +
-                "from users\n" +
+                "from "+table + "\n" +
                 "group by source, username) as multiEntries\n" +
                 "where multiEntries.count > 1) duplicateUser\n" +
                 "where u.username = duplicateUser.username\n" +
@@ -167,17 +198,20 @@ public class UsernameUniquenessMigration implements CustomSqlChange {
             }
             duplicatesUsersGroupByUsernameAndSource.get(groupKey).add(currentUser);
 
-            counter++;
+            userCounter++;
         }
 
         duplicateUsers.close();
         searchDuplicates.close();
+
+        logger.info("{} duplicate usernames found into {} table", userCounter, table);
+
         return duplicatesUsersGroupByUsernameAndSource;
     }
 
     @Override
     public String getConfirmationMessage() {
-        return this.counter + " usernames processed successfully to avoid duplicates";
+        return "Usernames processed successfully to avoid duplicates";
     }
 
     @Override
