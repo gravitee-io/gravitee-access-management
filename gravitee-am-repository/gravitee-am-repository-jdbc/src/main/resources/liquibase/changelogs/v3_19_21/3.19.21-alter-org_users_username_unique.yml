@@ -1,0 +1,12 @@
+databaseChangeLog:
+  - changeSet:
+      id: 3.19.21-org-users-add-username-unique-constraints
+      author: GraviteeSource Team
+      changes:
+        #############################
+        # users Table, add unique constraints to the username field
+        ############################
+        - addUniqueConstraint:
+            tableName: organization_users
+            columnNames: username, source
+            constraintName: org_users_username_source_unique
