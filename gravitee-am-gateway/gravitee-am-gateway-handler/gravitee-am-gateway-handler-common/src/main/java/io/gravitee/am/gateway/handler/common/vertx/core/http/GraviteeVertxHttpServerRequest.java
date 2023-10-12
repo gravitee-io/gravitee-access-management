@@ -17,13 +17,16 @@ package io.gravitee.am.gateway.handler.common.vertx.core.http;
 
 import io.gravitee.gateway.api.Request;
 import io.netty.handler.codec.DecoderResult;
+import io.netty.handler.codec.http.HttpHeaderNames;
 import io.vertx.codegen.annotations.Nullable;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.MultiMap;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.*;
+import io.vertx.core.net.HostAndPort;
 import io.vertx.core.net.NetSocket;
+import io.vertx.core.net.impl.HostAndPortImpl;
 
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.security.cert.X509Certificate;
@@ -44,6 +47,7 @@ public class GraviteeVertxHttpServerRequest implements HttpServerRequest {
     private String uri;
     private String path;
     private String host;
+    private HostAndPort authority;
     private MultiMap headers;
     private MultiMap params;
     private MultiMap attributes;
@@ -62,6 +66,9 @@ public class GraviteeVertxHttpServerRequest implements HttpServerRequest {
         }
         if (request.parameters() != null) {
             params = MultiMap.caseInsensitiveMultiMap().addAll(request.parameters().toSingleValueMap());
+        }
+        if (host != null) {
+            authority = HostAndPortImpl.parseHostAndPort(host, -1);
         }
     }
 
@@ -85,6 +92,11 @@ public class GraviteeVertxHttpServerRequest implements HttpServerRequest {
     public HttpServerRequest resume() {
         delegate.resume();
         return this;
+    }
+
+    @Override
+    public @Nullable HostAndPort authority() {
+        return HostAndPort.create(this.host, -1);
     }
 
     @Override
