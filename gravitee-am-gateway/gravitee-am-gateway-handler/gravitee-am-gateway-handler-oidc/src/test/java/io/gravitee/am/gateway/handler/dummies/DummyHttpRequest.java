@@ -24,6 +24,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.MultiMap;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.*;
+import io.vertx.core.net.HostAndPort;
 import io.vertx.core.net.NetSocket;
 import io.vertx.core.net.SocketAddress;
 import io.vertx.core.streams.Pipe;
@@ -129,6 +130,11 @@ public class DummyHttpRequest implements HttpServerRequest {
 
     @Override
     public @Nullable String host() {
+        return null;
+    }
+
+    @Override
+    public @Nullable HostAndPort authority() {
         return null;
     }
 
