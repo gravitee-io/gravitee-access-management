@@ -23,6 +23,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.MultiMap;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.*;
+import io.vertx.core.net.HostAndPort;
 import io.vertx.core.streams.ReadStream;
 import java.util.Set;
 
@@ -227,6 +228,11 @@ public class DummyHttpResponse implements HttpServerResponse {
     @Override
     public void end(Buffer chunk, Handler<AsyncResult<Void>> handler) {
         this.ended = true;
+    }
+
+    @Override
+    public Future<HttpServerResponse> push(HttpMethod method, HostAndPort authority, String path, MultiMap headers) {
+        return null;
     }
 
     @Override
