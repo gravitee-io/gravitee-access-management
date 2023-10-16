@@ -1,5 +1,25 @@
 # Change Log
 
+==  - 3.21.9 (2023-10-16)
+
+== What's new !
+
+
+
+=== Gateway
+
+* Align XSRF token ttl to the user session ttl https://github.com/gravitee-io/issues/issues/9282[#9282]
+
+=== Management API
+
+* Wrong values returned by Gravitee AM management API https://github.com/gravitee-io/issues/issues/9141[#9141]
+* AM Management API should start even with missing or unknown Identity Provider plugins https://github.com/gravitee-io/issues/issues/9230[#9230]
+
+=== Other
+
+* Upgrade script of the 3.21.6 does not work as expected https://github.com/gravitee-io/issues/issues/9288[#9288]
+
+
 ==  - 3.20.13 (2023-10-16)
 
 == What's new !
