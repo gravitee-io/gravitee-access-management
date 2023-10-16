@@ -19,6 +19,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.exception.mfa.InvalidCodeException;
 import io.gravitee.am.common.exception.mfa.SendChallengeException;
+import io.gravitee.am.common.factor.FactorSecurityType;
 import io.gravitee.am.common.factor.FactorType;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.factor.api.Enrollment;
@@ -747,6 +748,50 @@ public class AccountFactorsEndpointHandlerTest extends RxWebTestBase {
         EnrolledFactor enrolledFactorCaptorValue = enrolledFactorCaptor.getValue();
         Assert.assertNotNull(enrolledFactorCaptorValue);
         Assert.assertEquals(SHARED_SECRET, enrolledFactorCaptorValue.getSecurity().getValue());
+    }
+
+    @Test
+    public void shouldEnrollFactor_withPhoneExtension() throws Exception {
+        Enrollment enrollment = mock(Enrollment.class);
+        Factor factor = mock(Factor.class);
+        when(factor.getFactorType()).thenReturn(FactorType.SMS);
+        FactorProvider factorProvider = mock(FactorProvider.class);
+        when(factorProvider.enroll(any(FactorContext.class))).thenReturn(Single.just(enrollment));
+        when(factorProvider.checkSecurityFactor(any())).thenReturn(true);
+        when(factorProvider.needChallengeSending()).thenReturn(false);
+        when(factorProvider.useVariableFactorSecurity(any())).thenReturn(false);
+        when(accountService.getFactor("factor-id")).thenReturn(Maybe.just(factor));
+        ArgumentCaptor<EnrolledFactor> enrolledFactorCaptor = ArgumentCaptor.forClass(EnrolledFactor.class);
+        when(accountService.upsertFactor(any(), enrolledFactorCaptor.capture(), any())).thenReturn(Single.just(new User()));
+        when(factorManager.get("factor-id")).thenReturn(factorProvider);
+
+        router.post(AccountRoutes.FACTORS.getRoute())
+                .handler(accountFactorsEndpointHandler::enrollFactor)
+                .handler(rc -> rc.response().end());
+
+        testRequest(HttpMethod.POST, "/api/factors",
+                req -> {
+                    Buffer buffer = Buffer.buffer();
+                    buffer.appendString("{\n" +
+                            "    \"factorId\": \"factor-id\",\n" +
+                            "    \"account\": {\n" +
+                            "        \"phoneNumber\": \"+33611111111\",\n" +
+                            "        \"extensionPhoneNumber\": \"1234\"\n" +
+                            "    }\n" +
+                            "}");
+                    req.headers().set("content-length", String.valueOf(buffer.length()));
+                    req.headers().set("content-type", "application/json");
+                    req.write(buffer);
+                },
+                null,
+                200,
+                "OK", null);
+
+        EnrolledFactor enrolledFactorCaptorValue = enrolledFactorCaptor.getValue();
+        Assert.assertNotNull(enrolledFactorCaptorValue);
+        Assert.assertEquals(EnrolledFactorChannel.Type.SMS, enrolledFactorCaptorValue.getChannel().getType());
+        Assert.assertEquals("+33611111111", enrolledFactorCaptorValue.getChannel().getTarget());
+        Assert.assertEquals("1234", enrolledFactorCaptorValue.getChannel().getAdditionalData().get(ConstantKeys.MFA_ENROLLMENT_EXTENSION_PHONE_NUMBER));
     }
 
     private void addFactors(User user) {
