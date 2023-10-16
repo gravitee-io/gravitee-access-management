@@ -27,6 +27,11 @@ public class EnrollmentAccount {
      * User phone number (if factor type is SMS or CALL)
      */
     private String phoneNumber;
+    /**
+     * User phone number extension (if factor type is SMS or CALL)
+     * The digits to send after a phone call is answered
+     */
+    private String extensionPhoneNumber;
 
     /**
      * User email (if factor type is EMAIL)
@@ -39,6 +44,14 @@ public class EnrollmentAccount {
 
     public void setPhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
+    }
+
+    public String getExtensionPhoneNumber() {
+        return extensionPhoneNumber;
+    }
+
+    public void setExtensionPhoneNumber(String extensionPhoneNumber) {
+        this.extensionPhoneNumber = extensionPhoneNumber;
     }
 
     public String getEmail() {
