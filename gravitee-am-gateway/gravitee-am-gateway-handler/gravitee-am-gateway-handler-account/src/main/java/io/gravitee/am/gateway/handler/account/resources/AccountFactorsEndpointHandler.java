@@ -64,6 +64,7 @@ import static io.gravitee.am.common.factor.FactorSecurityType.SHARED_SECRET;
 import static io.gravitee.am.factor.api.FactorContext.KEY_USER;
 import static io.gravitee.am.gateway.handler.common.utils.RoutingContextHelper.getEvaluableAttributes;
 import static java.util.Objects.isNull;
+import static java.util.Optional.ofNullable;
 import static org.springframework.util.StringUtils.isEmpty;
 
 /**
@@ -700,6 +701,12 @@ public class AccountFactorsEndpointHandler {
                 additionalData.put(FactorDataKeys.KEY_EXPIRE_AT, ef.getSecurity().getData(FactorDataKeys.KEY_EXPIRE_AT, Long.class));
             });
             enrolledFactor.setSecurity(new EnrolledFactorSecurity(SHARED_SECRET, enrollment.getKey(), additionalData));
+        }
+
+        if (account != null && account.getExtensionPhoneNumber() != null && enrolledFactor.getChannel() != null) {
+            var additionalData = ofNullable(enrolledFactor.getChannel().getAdditionalData()).map(HashMap::new).orElse(new HashMap<>());
+            additionalData.put(ConstantKeys.MFA_ENROLLMENT_EXTENSION_PHONE_NUMBER, account.getExtensionPhoneNumber());
+            enrolledFactor.getChannel().setAdditionalData(additionalData);
         }
 
         enrolledFactor.setCreatedAt(new Date());
