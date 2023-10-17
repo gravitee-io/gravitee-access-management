@@ -1684,7 +1684,7 @@ workflows:
             - approve-tests-mongo-psql
           matrix:
             parameters:
-              mongo_version: ["4.4", "6.0"]
+              mongo_version: ["4.4", "7.0"]
       - run_postman_tests_psql:
           context: cicd-orchestrator
           requires:
@@ -1698,7 +1698,7 @@ workflows:
             - approve-tests-mongo-psql
           matrix:
             parameters:
-              mongo_version: ["4.4", "6.0"]
+              mongo_version: ["4.4", "7.0"]
       - run_jest_tests_psql:
           context: cicd-orchestrator
           requires:
