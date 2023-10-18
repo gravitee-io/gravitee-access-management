@@ -21,6 +21,7 @@ import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.exception.InvalidPasswordException;
+import io.gravitee.am.service.validators.password.PasswordSettingsStatus;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
@@ -42,6 +43,7 @@ public interface PasswordService {
     }
 
     void validate(String password, PasswordSettings passwordSettings, User user);
+    PasswordSettingsStatus evaluate(String password, PasswordSettings passwordSettings, User user);
 
     boolean checkAccountPasswordExpiry(User user, Client client, Domain domain);
 
