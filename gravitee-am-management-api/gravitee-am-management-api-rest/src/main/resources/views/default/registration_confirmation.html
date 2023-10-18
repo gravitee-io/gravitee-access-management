@@ -109,8 +109,9 @@
         </span>
     </div>
 </div>
+
 <script th:src="@{assets/js/jquery-3.5.1.min.js}"></script>
-<script th:src="@{assets/js/password-validation-v2.js}"></script>
+<script th:src="@{assets/js/password-validation-v3.js}"></script>
 <script th:inline="javascript" th:attr="nonce=${script_inline_nonce}">
 
     $(function () {
@@ -128,6 +129,7 @@
     }
 
     const passwordSettings = /*[[${passwordSettings}]]*/ null;
+    const passwordValidation = /*[[${passwordValidation}]]*/ null;
 </script>
 </body>
 </html>

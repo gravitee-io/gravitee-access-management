@@ -37,8 +37,10 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.Map;
 
+import static io.gravitee.am.common.utils.ConstantKeys.PASSWORD_VALIDATION;
 import static io.gravitee.am.common.web.UriBuilder.encodeURIComponent;
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
+import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -94,6 +96,7 @@ public class RegisterConfirmationEndpoint extends UserRequestHandler {
 
         final Map<String, String> actionParams = (client != null) ? Map.of(Parameters.CLIENT_ID, encodeURIComponent(client.getClientId())) : Map.of();
         routingContext.put(ConstantKeys.ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), actionParams));
+        routingContext.put(PASSWORD_VALIDATION, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/passwordValidation", actionParams, true));
 
         // render the registration confirmation page
         engine.render(generateData(routingContext, domain, client), getTemplateFileName(client), res -> {
