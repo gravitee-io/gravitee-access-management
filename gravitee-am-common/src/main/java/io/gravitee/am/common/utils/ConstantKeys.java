@@ -124,6 +124,7 @@ public interface ConstantKeys {
     String FORGOT_PASSWORD_FIELDS_KEY = "forgotPwdFormFields";
     String FORGOT_PASSWORD_CONFIRM = "forgot_password_confirm";
     String PASSWORD_HISTORY = "passwordHistory";
+    String PASSWORD_VALIDATION = "passwordValidation";
 
     // Login keys.
     String USER_LOGIN_COMPLETED_KEY = "userLoginCompleted";

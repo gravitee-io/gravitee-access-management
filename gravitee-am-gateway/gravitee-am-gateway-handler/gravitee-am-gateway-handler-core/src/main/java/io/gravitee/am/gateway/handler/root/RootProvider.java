@@ -90,12 +90,7 @@ import io.gravitee.am.gateway.handler.root.resources.handler.rememberdevice.Reme
 import io.gravitee.am.gateway.handler.root.resources.handler.user.PasswordPolicyRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.UserTokenRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.activity.UserActivityHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.user.password.ForgotPasswordAccessHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.user.password.ForgotPasswordSubmissionRequestParseHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.user.password.PasswordHistoryHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.user.password.ResetPasswordOneTimeTokenHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.user.password.ResetPasswordRequestParseHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.user.password.ResetPasswordSubmissionRequestParseHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.user.password.*;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterAccessHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterConfirmationRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterConfirmationSubmissionRequestParseHandler;
@@ -558,6 +553,10 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         rootRouter.route(HttpMethod.POST, "/passwordHistory")
                   .handler(clientRequestParseHandlerOptional)
                   .handler(new PasswordHistoryHandler(passwordHistoryService, userService, domain));
+
+        rootRouter.route(HttpMethod.POST, "/passwordValidation")
+                  .handler(clientRequestParseHandlerOptional)
+                  .handler(new PasswordValidationHandler(passwordService, userService, domain));
 
         // error route
         rootRouter.route(HttpMethod.GET, PATH_ERROR)
