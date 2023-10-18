@@ -21,6 +21,7 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.password.dictionary.PasswordDictionary;
 import io.gravitee.am.service.PasswordService;
+import io.gravitee.am.service.validators.password.PasswordSettingsStatus;
 import io.gravitee.am.service.validators.password.PasswordValidator;
 import io.gravitee.am.service.validators.password.impl.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +33,7 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import static java.lang.Boolean.FALSE;
+import static java.lang.Boolean.TRUE;
 import static java.util.function.Predicate.not;
 
 /**
@@ -76,6 +78,33 @@ public class PasswordServiceImpl implements PasswordService {
                 throw validator.getCause();
             });
         }
+    }
+
+    @Override
+    public PasswordSettingsStatus evaluate(String password, PasswordSettings passwordSettings, User user) {
+        var result = new PasswordSettingsStatus();
+        if (password != null && passwordSettings != null) {
+            result.setMinLength(new MinLengthPasswordValidator(passwordSettings.getMinLength()).validate(password));
+            if (TRUE.equals(passwordSettings.isExcludePasswordsInDictionary())) {
+                result.setExcludePasswordsInDictionary(new DictionaryPasswordValidator(passwordSettings.isExcludePasswordsInDictionary(), passwordDictionary).validate(password));
+            }
+            if (TRUE.equals(passwordSettings.isIncludeNumbers())) {
+                result.setIncludeNumbers(new IncludeNumbersPasswordValidator(passwordSettings.isIncludeNumbers()).validate(password));
+            }
+            if (TRUE.equals(passwordSettings.isIncludeSpecialCharacters())) {
+                result.setIncludeSpecialCharacters(new IncludeSpecialCharactersPasswordValidator(passwordSettings.isIncludeSpecialCharacters()).validate(password));
+            }
+            if (TRUE.equals(passwordSettings.getLettersInMixedCase())) {
+                result.setLettersInMixedCase(new MixedCasePasswordValidator(passwordSettings.getLettersInMixedCase()).validate(password));
+            }
+            if (passwordSettings.getMaxConsecutiveLetters() != null) {
+                result.setMaxConsecutiveLetters(new ConsecutiveCharacterPasswordValidator(passwordSettings.getMaxConsecutiveLetters()).validate(password));
+            }
+            if (TRUE.equals(passwordSettings.isExcludeUserProfileInfoInPassword())) {
+                result.setExcludeUserProfileInfoInPassword(new UserProfilePasswordValidator(passwordSettings.isExcludeUserProfileInfoInPassword(), user).validate(password));
+            }
+        }
+        return result;
     }
 
     /**
