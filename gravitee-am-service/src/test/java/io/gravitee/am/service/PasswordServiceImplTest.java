@@ -21,6 +21,7 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.password.dictionary.PasswordDictionaryImpl;
 import io.gravitee.am.service.impl.PasswordServiceImpl;
+import io.gravitee.am.service.validators.password.PasswordSettingsStatus;
 import io.gravitee.am.service.validators.password.impl.DefaultPasswordValidatorImpl;
 import org.assertj.core.api.Assertions;
 import org.junit.Assert;
@@ -99,13 +100,37 @@ public class PasswordServiceImplTest {
         PasswordSettings passwordSettings = buildPasswordSettings(3, null, null, null, null, null, null);
         Optional<String> result = getValidationErrorKey("AB", passwordSettings);
         Assertions.assertThat(result).hasValue("invalid password minimum length");
+        var statuses = callEvaluate("AB", passwordSettings, null);
+        Assertions.assertThat(statuses).isNotNull();
+        Assertions.assertThat(statuses.isValid()).isFalse();
+        Assertions.assertThat(statuses.getMinLength()).isNotNull().isFalse();
+        Assertions.assertThat(statuses.getLettersInMixedCase()).isNull();
+        Assertions.assertThat(statuses.getIncludeNumbers()).isNull();
+        Assertions.assertThat(statuses.getIncludeSpecialCharacters()).isNull();
+        Assertions.assertThat(statuses.getMaxConsecutiveLetters()).isNull();
+        Assertions.assertThat(statuses.getExcludeUserProfileInfoInPassword()).isNull();
+        Assertions.assertThat(statuses.getExcludePasswordsInDictionary()).isNull();
     }
 
     @Test
     public void includeNumber() {
         PasswordSettings passwordSettings = buildPasswordSettings(2, true, null, null, null, null, null);
         Assertions.assertThat(getValidationErrorKey("ABC", passwordSettings)).hasValue("password must contains numbers");
+
+        var statuses = callEvaluate("ABC", passwordSettings, null);
+        Assertions.assertThat(statuses).isNotNull();
+        Assertions.assertThat(statuses.isValid()).isFalse();
+        Assertions.assertThat(statuses.getMinLength()).isNotNull().isTrue();
+        Assertions.assertThat(statuses.getIncludeNumbers()).isNotNull().isFalse();
+
         Assertions.assertThat(getValidationErrorKey("A234", passwordSettings)).isEmpty();
+
+        statuses = callEvaluate("A234", passwordSettings, null);
+        Assertions.assertThat(statuses).isNotNull();
+        Assertions.assertThat(statuses.isValid()).isTrue();
+        Assertions.assertThat(statuses.getMinLength()).isNotNull().isTrue();
+        Assertions.assertThat(statuses.getIncludeNumbers()).isNotNull().isTrue();
+
         Assertions.assertThat(getValidationErrorKey("1234", passwordSettings)).isEmpty();
     }
 
@@ -116,6 +141,20 @@ public class PasswordServiceImplTest {
         Assertions.assertThat(getValidationErrorKey("1234", passwordSettings)).hasValue("password must contains special characters");
         Assertions.assertThat(getValidationErrorKey("ABCD", passwordSettings)).hasValue("password must contains special characters");
         Assertions.assertThat(getValidationErrorKey("A$12", passwordSettings)).isEmpty();
+
+        var statuses = callEvaluate("AB12", passwordSettings, null);
+        Assertions.assertThat(statuses).isNotNull();
+        Assertions.assertThat(statuses.isValid()).isFalse();
+        Assertions.assertThat(statuses.getMinLength()).isTrue();
+        Assertions.assertThat(statuses.getIncludeNumbers()).isNull();
+        Assertions.assertThat(statuses.getIncludeSpecialCharacters()).isFalse();
+
+        statuses = callEvaluate("A$12", passwordSettings, null);
+        Assertions.assertThat(statuses).isNotNull();
+        Assertions.assertThat(statuses.isValid()).isTrue();
+        Assertions.assertThat(statuses.getMinLength()).isTrue();
+        Assertions.assertThat(statuses.getIncludeNumbers()).isNull();
+        Assertions.assertThat(statuses.getIncludeSpecialCharacters()).isTrue();
     }
 
     @Test
@@ -124,6 +163,18 @@ public class PasswordServiceImplTest {
         Assertions.assertThat(getValidationErrorKey("ABCD", passwordSettings)).hasValue("password must contains letters in mixed case");
         Assertions.assertThat(getValidationErrorKey("abcd", passwordSettings)).hasValue("password must contains letters in mixed case");
         Assertions.assertThat(getValidationErrorKey("ABcd", passwordSettings)).isEmpty();
+
+        var statuses = callEvaluate("ABCD", passwordSettings, null);
+        Assertions.assertThat(statuses).isNotNull();
+        Assertions.assertThat(statuses.isValid()).isFalse();
+        Assertions.assertThat(statuses.getMinLength()).isTrue();
+        Assertions.assertThat(statuses.getLettersInMixedCase()).isFalse();
+
+        statuses = callEvaluate("AbcD", passwordSettings, null);
+        Assertions.assertThat(statuses).isNotNull();
+        Assertions.assertThat(statuses.isValid()).isTrue();
+        Assertions.assertThat(statuses.getMinLength()).isTrue();
+        Assertions.assertThat(statuses.getLettersInMixedCase()).isTrue();
     }
 
     @Test
@@ -131,6 +182,18 @@ public class PasswordServiceImplTest {
         PasswordSettings passwordSettings = buildPasswordSettings(3, null, null, false, 3, null, null);
         Assertions.assertThat(getValidationErrorKey("ABBBBCD", passwordSettings)).hasValue("invalid max consecutive letters");
         Assertions.assertThat(getValidationErrorKey("ABBBcd", passwordSettings)).isEmpty();
+
+        var statuses = callEvaluate("ABBBBCD", passwordSettings, null);
+        Assertions.assertThat(statuses).isNotNull();
+        Assertions.assertThat(statuses.isValid()).isFalse();
+        Assertions.assertThat(statuses.getMinLength()).isTrue();
+        Assertions.assertThat(statuses.getMaxConsecutiveLetters()).isFalse();
+
+        statuses = callEvaluate("ABBBcd", passwordSettings, null);
+        Assertions.assertThat(statuses).isNotNull();
+        Assertions.assertThat(statuses.isValid()).isTrue();
+        Assertions.assertThat(statuses.getMinLength()).isTrue();
+        Assertions.assertThat(statuses.getMaxConsecutiveLetters()).isTrue();
     }
 
     @Test
@@ -138,6 +201,18 @@ public class PasswordServiceImplTest {
         PasswordSettings passwordSettings = buildPasswordSettings(3, null, null, false, null, true, null);
         Assertions.assertThat(getValidationErrorKey("trustno1", passwordSettings)).hasValue("invalid password, try something else");
         Assertions.assertThat(getValidationErrorKey("mY5tR0N9P@SsWoRd!", passwordSettings)).isEmpty();
+
+        var statuses = callEvaluate("trustno1", passwordSettings, null);
+        Assertions.assertThat(statuses).isNotNull();
+        Assertions.assertThat(statuses.isValid()).isFalse();
+        Assertions.assertThat(statuses.getMinLength()).isTrue();
+        Assertions.assertThat(statuses.getExcludePasswordsInDictionary()).isFalse();
+
+        statuses = callEvaluate("mY5tR0N9P@SsWoRd!", passwordSettings, null);
+        Assertions.assertThat(statuses).isNotNull();
+        Assertions.assertThat(statuses.isValid()).isTrue();
+        Assertions.assertThat(statuses.getMinLength()).isTrue();
+        Assertions.assertThat(statuses.getExcludePasswordsInDictionary()).isTrue();
     }
 
     @Test
@@ -147,6 +222,18 @@ public class PasswordServiceImplTest {
         user.setUsername("myUsername");
         Assertions.assertThat(getValidationErrorKey("MyUsErNaMe-and-a-suffix@@@", passwordSettings, user)).hasValue("invalid password user profile");
         Assertions.assertThat(getValidationErrorKey("mY5tR0N9P@SsWoRd!", passwordSettings, user)).isEmpty();
+
+        var statuses = callEvaluate("MyUsErNaMe-and-a-suffix@@@", passwordSettings, user);
+        Assertions.assertThat(statuses).isNotNull();
+        Assertions.assertThat(statuses.isValid()).isFalse();
+        Assertions.assertThat(statuses.getMinLength()).isTrue();
+        Assertions.assertThat(statuses.getExcludeUserProfileInfoInPassword()).isFalse();
+
+        statuses = callEvaluate("mY5tR0N9P@SsWoRd!", passwordSettings, user);
+        Assertions.assertThat(statuses).isNotNull();
+        Assertions.assertThat(statuses.isValid()).isTrue();
+        Assertions.assertThat(statuses.getMinLength()).isTrue();
+        Assertions.assertThat(statuses.getExcludeUserProfileInfoInPassword()).isTrue();
     }
 
     @Test
@@ -301,6 +388,10 @@ public class PasswordServiceImplTest {
         } catch (Exception e) {
             return Optional.of(e.getMessage());
         }
+    }
+
+    private PasswordSettingsStatus callEvaluate(String password, PasswordSettings passwordSettings, User user) {
+        return passwordService.evaluate(password, passwordSettings, user);
     }
 
     private static PasswordSettings buildPasswordSettings(Integer minLength,

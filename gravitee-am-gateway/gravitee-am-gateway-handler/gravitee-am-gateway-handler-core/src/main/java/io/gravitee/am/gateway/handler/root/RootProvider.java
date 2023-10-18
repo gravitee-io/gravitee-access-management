@@ -90,14 +90,20 @@ import io.gravitee.am.gateway.handler.root.resources.handler.rememberdevice.Reme
 import io.gravitee.am.gateway.handler.root.resources.handler.user.PasswordPolicyRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.UserTokenRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.activity.UserActivityHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.user.password.ForgotPasswordAccessHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.user.password.ForgotPasswordSubmissionRequestParseHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.user.password.PasswordHistoryHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.user.password.ResetPasswordOneTimeTokenHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.user.password.ResetPasswordRequestParseHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.user.password.ResetPasswordSubmissionRequestParseHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.user.register.*;
-import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.*;
+import io.gravitee.am.gateway.handler.root.resources.handler.user.password.*;
+import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterAccessHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterConfirmationRequestParseHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterConfirmationSubmissionRequestParseHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterFailureHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterProcessHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterSubmissionRequestParseHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterVerifyRequestParseHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnAccessHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnEnforcePasswordHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnLoginHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnRegisterHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnRememberDeviceHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnResponseHandler;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
@@ -574,6 +580,10 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         rootRouter.route(HttpMethod.POST, PASSWORD_HISTORY)
                   .handler(clientRequestParseHandlerOptional)
                   .handler(new PasswordHistoryHandler(passwordHistoryService, userService, domain));
+
+        rootRouter.route(HttpMethod.POST, "/passwordValidation")
+                  .handler(clientRequestParseHandlerOptional)
+                  .handler(new PasswordValidationHandler(passwordService, userService, domain));
 
         // error route
         rootRouter.route(HttpMethod.GET, PATH_ERROR)
