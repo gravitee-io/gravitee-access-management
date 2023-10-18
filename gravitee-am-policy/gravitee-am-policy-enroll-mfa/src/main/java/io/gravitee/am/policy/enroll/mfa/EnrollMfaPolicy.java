@@ -119,8 +119,12 @@ public class EnrollMfaPolicy {
             buildEnrolledFactor(factor, factorProvider, user, value, context)
                     .flatMap(enrolledFactor -> userService.addFactor(user.getId(), enrolledFactor, new DefaultUser(user)))
                     .subscribe(
-                            __ -> {
+                            updatedUser -> {
                                 LOGGER.debug("MFA factor with ID [{}] enrolled for user {}", factorId, user.getId());
+                                // update inner context user profile with the new list of factors.
+                                // this is important to avoid losing the factors information on
+                                // user updates in the further policies execution (https://github.com/gravitee-io/issues/issues/9161)
+                                user.setFactors(updatedUser.getFactors());
                                 policyChain.doNext(request, response);
                             },
                             error -> {
