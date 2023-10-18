@@ -45,10 +45,7 @@ import org.springframework.util.ObjectUtils;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.util.Collections;
-import java.util.Date;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import static io.gravitee.am.common.factor.FactorSecurityType.SHARED_SECRET;
 
@@ -119,14 +116,29 @@ public class EnrollMfaPolicy {
 
             // enroll the MFA factor
             buildEnrolledFactor(factor, factorProvider, user, value, context)
-                    .flatMap(enrolledFactor -> userService.addFactor(user.getId(), enrolledFactor, new DefaultUser(user)))
+                    .flatMap(enrolledFactor -> {
+                        // clone the enrolledFactor to preserve security attribute removed by addFactor method
+                        var cloneEnrolledFactor = new EnrolledFactor(enrolledFactor);
+                        return userService.addFactor(user.getId(), enrolledFactor, new DefaultUser(user)).map(updatedUser -> {
+                            // update inner context user profile with the new factor.
+                            // this is important to avoid losing the factors information on
+                            // user updates in the further policies execution (https://github.com/gravitee-io/issues/issues/9161)
+                            // we can't use the factors coming from the updatedUser as addFactor remove security entry from each factor
+                            // as we do not add a factor in this policy if it already exists in the user profile , we can safely add it to the list
+                            var userFactors = user.getFactors();
+                            if (userFactors == null) {
+                                userFactors = new ArrayList<>();
+                                user.setFactors(userFactors);
+                            }
+                            userFactors.add(cloneEnrolledFactor);
+
+                            // we return the updatedUser here to keep previous behaviour if any
+                            return updatedUser;
+                        });
+                    })
                     .subscribe(
-                            updatedUser -> {
+                            __ -> {
                                 LOGGER.debug("MFA factor with ID [{}] enrolled for user {}", factorId, user.getId());
-                                // update inner context user profile with the new list of factors.
-                                // this is important to avoid losing the factors information on
-                                // user updates in the further policies execution (https://github.com/gravitee-io/issues/issues/9161)
-                                user.setFactors(updatedUser.getFactors());
                                 policyChain.doNext(request, response);
                             },
                             error -> {
@@ -152,7 +164,7 @@ public class EnrollMfaPolicy {
                 // create the enrolled factor
                 EnrolledFactor enrolledFactor = new EnrolledFactor();
                 enrolledFactor.setFactorId(factor.getId());
-                enrolledFactor.setStatus(FactorStatus.PENDING_ACTIVATION);
+                enrolledFactor.setStatus(FactorStatus.ACTIVATED);
                 enrolledFactor.setPrimary(configuration.isPrimary());
                 switch (factor.getFactorType()) {
                     case OTP:
