@@ -37,6 +37,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
@@ -167,7 +168,7 @@ public class EnrollMfaPolicyTest {
 
         User user = mock(User.class);
         when(user.getId()).thenReturn("user-id");
-        when(user.getFactors()).thenReturn(Collections.emptyList());
+        when(user.getFactors()).thenReturn(new ArrayList<>());
         when(executionContext.getAttribute(ConstantKeys.USER_CONTEXT_KEY)).thenReturn(user);
         when(executionContext.getTemplateEngine()).thenReturn(templateEngine);
         when(templateEngine.getValue(configuration.getValue(), String.class)).thenReturn(null);
@@ -198,7 +199,7 @@ public class EnrollMfaPolicyTest {
         User user = mock(User.class);
         when(user.getId()).thenReturn("user-id");
         when(user.getUsername()).thenReturn("username");
-        when(user.getFactors()).thenReturn(Collections.emptyList());
+        when(user.getFactors()).thenReturn(new ArrayList<>());
         when(executionContext.getAttribute(ConstantKeys.USER_CONTEXT_KEY)).thenReturn(user);
         when(executionContext.getTemplateEngine()).thenReturn(templateEngine);
         when(templateEngine.getValue(configuration.getValue(), String.class)).thenReturn(null);
@@ -232,7 +233,7 @@ public class EnrollMfaPolicyTest {
 
         User user = mock(User.class);
         when(user.getId()).thenReturn("user-id");
-        when(user.getFactors()).thenReturn(Collections.emptyList());
+        when(user.getFactors()).thenReturn(null);
         when(executionContext.getAttribute(ConstantKeys.USER_CONTEXT_KEY)).thenReturn(user);
         when(executionContext.getTemplateEngine()).thenReturn(templateEngine);
         when(templateEngine.getValue(configuration.getValue(), String.class)).thenReturn("0102030405");
