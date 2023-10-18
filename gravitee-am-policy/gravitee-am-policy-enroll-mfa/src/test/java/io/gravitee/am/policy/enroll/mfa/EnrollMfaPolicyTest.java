@@ -243,6 +243,7 @@ public class EnrollMfaPolicyTest {
 
         executePolicy(configuration, request, response, executionContext, policyChain);
         verify(policyChain, times(1)).doNext(request, response);
+        verify(user).setFactors(any());
     }
 
     private void executePolicy(
