@@ -60,12 +60,16 @@ public class GraviteeMessageResolver extends AbstractMessageResolver {
         final String domainMessage = domainBasedDictionaryProvider.getDictionaryFor(locale).getProperty(key);
         final String message = Optional.ofNullable(domainMessage).orElse(dictionaryProvider.getDictionaryFor(locale).getProperty(key));
 
-        if (!isFormatCandidate(message)) {
-            return message;
-        }
+        String resolvedMessage = null;
+        if (message != null) {
+            if (!isFormatCandidate(message)) {
+                return message;
+            }
 
-        final MessageFormat messageFormat = new MessageFormat(message, locale);
-        return messageFormat.format(Optional.ofNullable(messageParameters).orElse(new Object[0]));
+            final MessageFormat messageFormat = new MessageFormat(message, locale);
+            resolvedMessage = messageFormat.format(Optional.ofNullable(messageParameters).orElse(new Object[0]));
+        }
+        return resolvedMessage;
     }
 
 
