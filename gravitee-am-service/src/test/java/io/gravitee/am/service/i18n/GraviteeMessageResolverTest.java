@@ -24,8 +24,10 @@ import org.thymeleaf.context.ITemplateContext;
 
 import java.util.Locale;
 import java.util.Properties;
+import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -47,6 +49,7 @@ public class GraviteeMessageResolverTest {
     private static final String MSG_WITHOUT_PARAM = "message-without-param";
     private static final String MSG_WITH_PARAM = "message-wit-param";
     private static final String MSG_WITH_MULTI_PARAM = "message-with-multi-param";
+    private static final String UNKNOWN_KEY = UUID.randomUUID().toString();
 
     private GraviteeMessageResolver messageResolver;
 
@@ -96,5 +99,11 @@ public class GraviteeMessageResolverTest {
         String message = messageResolver.resolveMessage(context, null, MSG_WITH_MULTI_PARAM, msgParams);
 
         assertEquals("Don't have an account user: Alice ? Use temporary name: Bob.",message);
+    }
+
+    @Test
+    public void shouldNoResolveMessage_with_Unknown_key() {
+        String message = messageResolver.resolveMessage(context, null, UNKNOWN_KEY, null);
+        assertNull(message);
     }
 }
