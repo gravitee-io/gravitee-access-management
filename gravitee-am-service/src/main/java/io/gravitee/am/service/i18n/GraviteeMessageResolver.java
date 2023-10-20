@@ -24,6 +24,8 @@ import java.text.MessageFormat;
 import java.util.Locale;
 import java.util.Optional;
 
+import static io.gravitee.am.service.i18n.MessageFormatSanitizer.sanitizeSingleQuote;
+
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -66,7 +68,7 @@ public class GraviteeMessageResolver extends AbstractMessageResolver {
                 return message;
             }
 
-            final MessageFormat messageFormat = new MessageFormat(message, locale);
+            final MessageFormat messageFormat = new MessageFormat(sanitizeSingleQuote(message), locale);
             resolvedMessage = messageFormat.format(Optional.ofNullable(messageParameters).orElse(new Object[0]));
         }
         return resolvedMessage;
