@@ -24,6 +24,7 @@ import freemarker.template.TemplateModelException;
 import java.util.List;
 import java.util.Properties;
 
+import static io.gravitee.am.service.i18n.MessageFormatSanitizer.sanitizeSingleQuote;
 import static java.text.MessageFormat.format;
 import static java.util.Optional.ofNullable;
 
@@ -46,7 +47,7 @@ public class FreemarkerMessageResolver implements TemplateMethodModelEx {
             try {
                 return ofNullable(messages.getProperty(key))
                         // double the single quote to avoid erasure by MessageFormatter.format
-                        .map(msg -> msg.replace("'", "''"))
+                        .map(MessageFormatSanitizer::sanitizeSingleQuote)
                         .map(msg -> format(msg, toArguments(list)))
                         .orElse(key);
             } catch (Exception e) {
