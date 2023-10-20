@@ -61,8 +61,9 @@ public class GraviteeMessageResolverTest {
         /*
           apostrophe should be added twice in message properties. For more info check:
           https://stackoverflow.com/questions/4449639/apostrophe-doesnt-get-translated-properly-when-placed-in-a-resource-bundle
+          The GraviteeMessageResolver will manage this case (see gravitee-io/issues#9326)
          */
-        properties.setProperty(MSG_WITH_MULTI_PARAM, "Don''t have an account user: {0} ? Use temporary name: {1}.");
+        properties.setProperty(MSG_WITH_MULTI_PARAM, "Don't have an account user: {0} ? Use temporary name: {1}.");
 
         messageResolver = new GraviteeMessageResolver(dictionaryProvider, domainBasedDictionaryProvider);
 
