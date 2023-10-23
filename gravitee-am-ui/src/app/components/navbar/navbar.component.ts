@@ -64,6 +64,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     });
     this.domainSubscription = this.navbarService.currentDomainObs$.subscribe(data => {
       this.currentDomain = data;
+      this.initNavLinks();
     });
     this.sidenavSubscription = this.sidenavService.resizeSidenavObservable.subscribe(reducedMode => this.reducedMode = reducedMode);
 
