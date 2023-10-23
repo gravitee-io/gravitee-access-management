@@ -74,6 +74,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
       .pipe(
         tap((currentDomain) => {
           this.currentDomain = currentDomain;
+          this.initNavLinks();
         }),
         takeUntil(this.unsubscribe$),
       )
