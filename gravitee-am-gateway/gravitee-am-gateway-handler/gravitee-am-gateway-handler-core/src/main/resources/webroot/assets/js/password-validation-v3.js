@@ -80,12 +80,15 @@ function validatePassword() {
 const checkPasswordHistory = () => {
     let passwordPromise = Promise.resolve();
     const isResetForm = document.getElementById("token");
-    if (isResetForm && passwordSettings && passwordSettings.passwordHistoryEnabled) {
+    if (isResetForm && passwordSettings && passwordSettings.passwordHistoryEnabled && passwordHistory) {
         const token = document.getElementById("token").getAttribute("value");
-        const csrfToken = document.getElementById("csrfToken").getAttribute("value");
         const formData = new FormData();
         formData.append('token', token);
-        formData.append('csrfToken', csrfToken);
+        const xsrfElt = document.getElementById("csrfToken");
+        if (xsrfElt) {
+            const csrfToken = xsrfElt.getAttribute("value");
+            formData.append('csrfToken', csrfToken);
+        }
         formData.append('password', passwordInput.value);
         passwordPromise = fetch(passwordHistory, {
             method: 'POST',
@@ -99,7 +102,7 @@ const checkPasswordHistory = () => {
 const checkPassword = () => {
     let passwordPromise = Promise.resolve();
     const isResetForm = document.getElementById("token");
-    if (isResetForm && passwordSettings) {
+    if (isResetForm && passwordSettings && passwordValidation) {
         const formData = new FormData();
         const token = document.getElementById("token").getAttribute("value");
         formData.append('token', token);
