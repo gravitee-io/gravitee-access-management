@@ -30,6 +30,8 @@ public class EnrollMfaPolicyConfiguration implements PolicyConfiguration {
     private String value;
     private boolean primary;
 
+    private boolean refresh;
+
     public String getFactorId() {
         return factorId;
     }
@@ -52,5 +54,13 @@ public class EnrollMfaPolicyConfiguration implements PolicyConfiguration {
 
     public void setPrimary(boolean primary) {
         this.primary = primary;
+    }
+
+    public boolean isRefresh() {
+        return refresh;
+    }
+
+    public void setRefresh(boolean refresh) {
+        this.refresh = refresh;
     }
 }
