@@ -47,6 +47,8 @@ import java.util.stream.Collectors;
 
 import static io.gravitee.am.management.service.permissions.Permissions.of;
 import static io.gravitee.am.management.service.permissions.Permissions.or;
+import static io.gravitee.am.repository.utils.RepositoryConstants.DEFAULT_MAX_CONCURRENCY;
+import static io.gravitee.am.repository.utils.RepositoryConstants.DELAY_ERRORS;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -95,7 +97,7 @@ public class DomainsResource extends AbstractDomainResource {
                         or(of(ReferenceType.DOMAIN, domain.getId(), Permission.DOMAIN, Acl.READ),
                                 of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN, Acl.READ),
                                 of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN, Acl.READ)))
-                        .filter(Boolean::booleanValue).map(permit -> domain))
+                        .filter(Boolean::booleanValue).map(permit -> domain), DELAY_ERRORS, DEFAULT_MAX_CONCURRENCY)
                 .map(this::filterDomainInfos)
                 .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
                 .toList()

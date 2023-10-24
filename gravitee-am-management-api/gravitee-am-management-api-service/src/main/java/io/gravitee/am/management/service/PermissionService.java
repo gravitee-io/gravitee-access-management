@@ -20,6 +20,7 @@ import io.gravitee.am.management.service.permissions.PermissionAcls;
 import io.gravitee.am.model.*;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.repository.management.api.search.MembershipCriteria;
+import io.gravitee.am.repository.utils.RepositoryConstants;
 import io.gravitee.am.service.*;
 import io.gravitee.am.service.exception.InvalidUserException;
 import io.reactivex.rxjava3.core.Flowable;
@@ -31,6 +32,8 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static io.gravitee.am.repository.utils.RepositoryConstants.DEFAULT_MAX_CONCURRENCY;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -187,7 +190,7 @@ public class PermissionService {
                     criteria.setLogicalOR(true);
 
                     // Get all user and group memberships.
-                    return Flowable.merge(referenceStream.map(p -> membershipService.findByCriteria(p.getKey(), p.getValue(), criteria)).collect(Collectors.toList()))
+                    return Flowable.merge(referenceStream.map(p -> membershipService.findByCriteria(p.getKey(), p.getValue(), criteria)).collect(Collectors.toList()), DEFAULT_MAX_CONCURRENCY)
                             .toList()
                             .flatMap(allMemberships -> {
 
@@ -196,7 +199,7 @@ public class PermissionService {
                                 }
 
                                 // Get all roles.
-                                return roleService.findByIdIn(allMemberships.stream().map(Membership::getRoleId).collect(Collectors.toList()))
+                                return roleService.findByIdIn(allMemberships.stream().map(Membership::getRoleId).distinct().collect(Collectors.toList()))
                                         .map(allRoles -> permissionsPerMembership(allMemberships, allRoles));
                             });
                 });
