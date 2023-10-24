@@ -150,6 +150,7 @@ public class UserServiceImpl implements UserService {
                 return Maybe.error(new UserAlreadyVerifiedException("The user [" + username + "] has already been verified!"));
             }
             userToken.getUser().setRegistrationCompleted(true);
+            userToken.getUser().setEnabled(true);
             return userService.update(userToken.getUser()).flatMapMaybe(__ -> Maybe.just(userToken));
         }).doOnSuccess(userToken -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class)
                 .type(EventType.REGISTRATION_VERIFY_ACCOUNT)
@@ -247,6 +248,7 @@ public class UserServiceImpl implements UserService {
             if (settings.isSendVerifyRegistrationAccountEmail()) {
                 user.setPreRegistration(true);
                 user.setRegistrationCompleted(false);
+                user.setEnabled(false);
                 user.setRegistrationUserUri(domainService.buildUrl(domain, REGISTRATION_VERIFY.redirectUri(), queryParams));
             }
         });
