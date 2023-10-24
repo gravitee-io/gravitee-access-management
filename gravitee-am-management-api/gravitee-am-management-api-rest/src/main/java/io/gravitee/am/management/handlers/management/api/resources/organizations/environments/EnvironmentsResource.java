@@ -36,6 +36,8 @@ import javax.ws.rs.core.Context;
 
 import static io.gravitee.am.management.service.permissions.Permissions.of;
 import static io.gravitee.am.management.service.permissions.Permissions.or;
+import static io.gravitee.am.repository.utils.RepositoryConstants.DEFAULT_MAX_CONCURRENCY;
+import static io.gravitee.am.repository.utils.RepositoryConstants.DELAY_ERRORS;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -71,7 +73,7 @@ public class EnvironmentsResource extends AbstractResource {
                 .flatMapMaybe(environment -> hasPermission(authenticatedUser,
                         or(of(ReferenceType.ENVIRONMENT, environment.getId(), Permission.ENVIRONMENT, Acl.READ),
                                 of(ReferenceType.ORGANIZATION, organizationId, Permission.ENVIRONMENT, Acl.READ)))
-                        .filter(Boolean::booleanValue).map(permit -> environment))
+                        .filter(Boolean::booleanValue).map(permit -> environment), DELAY_ERRORS, DEFAULT_MAX_CONCURRENCY)
                 .map(this::filterEnvironmentInfos)
                 .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
                 .toList()
