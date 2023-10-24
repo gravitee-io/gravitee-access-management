@@ -18,6 +18,12 @@
       "title": "Is this MFA factor your primary method ?",
       "type" : "boolean",
       "default" : false
+    },
+    "refresh" : {
+      "title": "Update factor information.",
+      "description": "Update factor information if the factor already exist (only for SMS, CALL or EMAIL factor).",
+      "type" : "boolean",
+      "default" : false
     }
   },"required": [
       "factorId"
