@@ -92,10 +92,14 @@ public class ResourceManagerImpl extends AbstractService implements ResourceMana
                 .subscribe(
                         res -> {
                             var providerConfiguration = new ProviderConfiguration(res.getType(), res.getConfiguration());
-                            ResourceProvider provider = resourcePluginManager.create(providerConfiguration);
-                            resourceProviders.put(res.getId(), provider);
-                            resources.put(res.getId(), res);
-                            logger.info("Resource {} loaded for domain {}", res.getName(), domain.getName());
+                            try {
+                                ResourceProvider provider = resourcePluginManager.create(providerConfiguration);
+                                resourceProviders.put(res.getId(), provider);
+                                resources.put(res.getId(), res);
+                                logger.info("Resource {} loaded for domain {}", res.getName(), domain.getName());
+                            } catch (Exception e) {
+                                logger.error("Resource {} not loaded for domain {} due to: {}", res.getName(), domain.getName(), e.getMessage());
+                            }
                         },
                         error -> logger.error("Unable to initialize resources for domain {}", domain.getName(), error)
                 );
