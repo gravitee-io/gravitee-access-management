@@ -41,6 +41,8 @@ import io.gravitee.am.service.i18n.GraviteeMessageResolver;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.EmailAuditBuilder;
 import io.vertx.rxjava3.core.MultiMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -50,8 +52,13 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
+import static io.gravitee.am.common.oauth2.Parameters.CLIENT_ID;
 import static io.gravitee.am.common.web.UriBuilder.encodeURIComponent;
 import static io.gravitee.am.service.utils.UserProfileUtils.preferredLanguage;
 
@@ -221,7 +228,7 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
                 .build();
     }
 
-    private Map<String, Object> prepareEmailParams(User user, Client client, Integer expiresAfter, String redirectUri, MultiMap queryParams) {
+    private Map<String, Object> prepareEmailParams(User user, Client client, Integer expiresAfter, String path, MultiMap queryParams) {
         // generate a JWT to store user's information and for security purpose
         final Map<String, Object> claims = new HashMap<>();
         Instant now = Instant.now();
@@ -232,8 +239,8 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
             claims.put(Claims.aud, client.getId());
         }
 
-        if (client != null) {
-            queryParams.add("client_id", encodeURIComponent(client.getClientId()));
+        if (client != null && !queryParams.contains(CLIENT_ID)) {
+            queryParams.add(CLIENT_ID, encodeURIComponent(client.getClientId()));
         }
 
         String token = jwtBuilder.sign(new JWT(claims));
@@ -249,7 +256,7 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
             params.put("client", new ClientProperties(client));
         }
 
-        params.put("url", domainService.buildUrl(domain, redirectUri, queryParams));
+        params.put("url", domainService.buildUrl(domain, path, queryParams));
 
         return params;
     }
@@ -335,4 +342,5 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
                 throw new IllegalArgumentException(template.template() + " not found");
         }
     }
+
 }
