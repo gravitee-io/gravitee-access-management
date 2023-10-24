@@ -1177,7 +1177,7 @@ public class UserServiceTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        testObserver.assertValue(userToken -> userToken.getUser().equals(user) && userToken.getClient().equals(client));
+        testObserver.assertValue(userToken -> userToken.getUser().equals(user) && userToken.getUser().isEnabled() && userToken.getClient().equals(client));
 
         verify(auditService, times(1)).report(any());
     }
@@ -1371,7 +1371,7 @@ public class UserServiceTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertValue(registrationResponse -> {
-            return !registrationResponse.isAutoLogin() && registrationResponse.getUser().equals(user);
+            return !registrationResponse.isAutoLogin() && registrationResponse.getUser().equals(user) && !registrationResponse.getUser().isEnabled();
         });
 
         verify(emailService, times(1)).send(any(), any(), any(), any());
