@@ -38,12 +38,18 @@ import io.gravitee.gateway.api.Response;
 import io.gravitee.policy.api.PolicyChain;
 import io.gravitee.policy.api.PolicyResult;
 import io.gravitee.policy.api.annotations.OnRequest;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.ObjectUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 import static io.gravitee.am.common.factor.FactorSecurityType.SHARED_SECRET;
 
@@ -55,6 +61,7 @@ public class EnrollMfaPolicy {
 
     static final String GATEWAY_POLICY_ENROLL_MFA_ERROR_KEY = "GATEWAY_POLICY_ENROLL_MFA_ERROR";
     private static Logger LOGGER = LoggerFactory.getLogger(EnrollMfaPolicy.class);
+    private static Set<FactorType> UPDATABLE_FACTORS = Set.of(FactorType.SMS, FactorType.EMAIL, FactorType.CALL);
     private final EnrollMfaPolicyConfiguration configuration;
 
     public EnrollMfaPolicy(EnrollMfaPolicyConfiguration configuration) {
@@ -92,16 +99,39 @@ public class EnrollMfaPolicy {
                 return;
             }
 
-            // no need to enroll the same factor
-            if (!ObjectUtils.isEmpty(user.getFactors())
-                    && user.getFactors().stream().anyMatch(enrolledFactor -> enrolledFactor.getFactorId().equals(factorId))) {
-                LOGGER.debug("MFA factor with ID [{}] already enrolled for the current user", factorId);
-                policyChain.doNext(request, response);
-                return;
+            final Factor factor = optFactor.get();
+            if (!ObjectUtils.isEmpty(user.getFactors())) {
+                boolean factorAlreadyExist = user.getFactors().stream().anyMatch(enrolledFactor -> enrolledFactor.getFactorId().equals(factorId));
+                if (!configuration.isRefresh() && factorAlreadyExist) {
+                    // no need to enroll the same factor
+                    LOGGER.debug("MFA factor with ID [{}] already enrolled for the current user", factorId);
+                    policyChain.doNext(request, response);
+                    return;
+                } else if (configuration.isRefresh() && factorAlreadyExist) {
+                    // factor already exist but may need to be updated
+                    LOGGER.debug("MFA factor with ID [{}] already enrolled for the current user, update the factor information", factorId);
+                    var existingFactorOpt = user.getFactors().stream().filter(enrolledFactor -> enrolledFactor.getFactorId().equals(factorId)).findFirst();
+                    refreshEnrolledFactor(existingFactorOpt.get(), factor, value, context)
+                            .flatMapSingle(enrolledFactor -> userService.updateFactor(user.getId(), enrolledFactor, new DefaultUser(user)).map(Optional::ofNullable))
+                            .switchIfEmpty(Single.just(Optional.empty()))
+                            .subscribe(
+                                    updatedUserOpt -> {
+                                        LOGGER.debug("MFA factor with ID [{}] enrolled for user {}", factorId, user.getId());
+                                        // update inner context user profile with the new list of factors.
+                                        // this is important to avoid losing the factors information on
+                                        // user updates in the further policies execution (https://github.com/gravitee-io/issues/issues/9161)
+                                        updatedUserOpt.ifPresent(updatedUser -> user.setFactors(updatedUser.getFactors()));
+                                        policyChain.doNext(request, response);
+                                    },
+                                    error -> {
+                                        LOGGER.error("Unable to enroll MFA factor with ID [{}]", factorId, error.getMessage());
+                                        policyChain.failWith(PolicyResult.failure(GATEWAY_POLICY_ENROLL_MFA_ERROR_KEY, error.getMessage()));
+                                    });
+                    return;
+                }
             }
 
             // value is mandatory for every factor except the HTTP and OTP factors
-            final Factor factor = optFactor.get();
             final FactorProvider factorProvider = factorManager.get(factorId);
 
             if (ObjectUtils.isEmpty(value) &&
@@ -196,6 +226,30 @@ public class EnrollMfaPolicy {
             } catch (Exception ex) {
                 LOGGER.error("An error has occurred when building the enrolled factor", ex);
                 return Single.error(ex);
+            }
+        });
+    }
+
+    private Maybe<EnrolledFactor> refreshEnrolledFactor(EnrolledFactor enrolledFactor, Factor factor, String value, ExecutionContext context) {
+        return Maybe.defer(() -> {
+            try {
+                // compute value
+                String enrollmentValue = (!ObjectUtils.isEmpty(value)) ? context.getTemplateEngine().getValue(value, String.class) : null;
+                if (!ObjectUtils.isEmpty(value) && ObjectUtils.isEmpty(enrollmentValue)) {
+                    LOGGER.warn("The expression language set up for Enroll MFA has returned nothing");
+                }
+                // create the enrolled factor
+                if (UPDATABLE_FACTORS.contains(factor.getFactorType()) && !ObjectUtils.isEmpty(enrollmentValue) && !enrolledFactor.getChannel().getTarget().equals(enrollmentValue)) {
+                    enrolledFactor.getChannel().setTarget(enrollmentValue);
+                    enrolledFactor.setUpdatedAt(new Date());
+                    return Maybe.just(enrolledFactor);
+                } else {
+                    LOGGER.debug("Only SMS/CALL/EMAIL factor can be refreshed by EnrollMfa Policy");
+                }
+                return Maybe.empty();
+            } catch (Exception ex) {
+                LOGGER.error("An error has occurred when building the enrolled factor", ex);
+                return Maybe.error(ex);
             }
         });
     }

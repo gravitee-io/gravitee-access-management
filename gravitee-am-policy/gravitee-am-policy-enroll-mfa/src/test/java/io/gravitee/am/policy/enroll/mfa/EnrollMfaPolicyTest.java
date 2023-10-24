@@ -24,6 +24,7 @@ import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
+import io.gravitee.am.model.factor.EnrolledFactorChannel;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.policy.enroll.mfa.configuration.EnrollMfaPolicyConfiguration;
 import io.gravitee.el.TemplateEngine;
@@ -39,6 +40,7 @@ import org.mockito.MockitoAnnotations;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -48,6 +50,7 @@ import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -126,8 +129,92 @@ public class EnrollMfaPolicyTest {
         when(user.getFactors()).thenReturn(Collections.singletonList(enrolledFactor));
         when(executionContext.getAttribute(ConstantKeys.USER_CONTEXT_KEY)).thenReturn(user);
 
+        UserService userService = mock(UserService.class);
+        when(userService.updateFactor(anyString(), any(), any())).thenReturn(Single.just(new User()));
+        when(executionContext.getComponent(UserService.class)).thenReturn(userService);
+
         executePolicy(configuration, request, response, executionContext, policyChain);
         verify(policyChain, times(1)).doNext(request, response);
+        verify(userService, never()).addFactor(anyString(), any(), any());
+        verify(userService, never()).updateFactor(anyString(), any(), any());
+    }
+
+    @Test
+    public void shouldUpdate_alreadyEnrolled() throws Exception {
+        final var newEmail = "new-user@email.com";
+        final var oldEmail = "old-user@email.com";
+        final var factorId = "factor-id";
+        when(configuration.getFactorId()).thenReturn(factorId);
+        when(configuration.getValue()).thenReturn(newEmail);
+        when(configuration.isRefresh()).thenReturn(true);
+
+        FactorManager factorManager = mock(FactorManager.class);
+        Factor factor = mock(Factor.class);
+        when(factor.getFactorType()).thenReturn(FactorType.EMAIL);
+        when(factorManager.getClientFactor(any(), eq(factorId))).thenReturn(Optional.of(factor));
+        FactorProvider factorProvider = mock(FactorProvider.class);
+        when(factorProvider.useVariableFactorSecurity()).thenReturn(false);
+        when(factorManager.get(eq(factorId))).thenReturn(factorProvider);
+
+        when(executionContext.getComponent(FactorManager.class)).thenReturn(factorManager);
+
+        EnrolledFactor enrolledFactor = new EnrolledFactor();
+        enrolledFactor.setFactorId(factorId);
+        enrolledFactor.setChannel(new EnrolledFactorChannel(EnrolledFactorChannel.Type.EMAIL, oldEmail));
+
+        User user = mock(User.class);
+        when(user.getId()).thenReturn("user-id");
+        when(user.getFactors()).thenReturn(List.of(enrolledFactor));
+        when(executionContext.getAttribute(ConstantKeys.USER_CONTEXT_KEY)).thenReturn(user);
+        when(executionContext.getTemplateEngine()).thenReturn(templateEngine);
+        when(templateEngine.getValue(configuration.getValue(), String.class)).thenReturn(newEmail);
+
+        UserService userService = mock(UserService.class);
+        when(userService.updateFactor(anyString(), any(), any())).thenReturn(Single.just(new User()));
+        when(executionContext.getComponent(UserService.class)).thenReturn(userService);
+
+        executePolicy(configuration, request, response, executionContext, policyChain);
+        verify(policyChain, times(1)).doNext(request, response);
+        verify(userService).updateFactor(anyString(), argThat(updatedEnrolledFact -> updatedEnrolledFact.getChannel().getTarget().equals(newEmail)), any());
+        verify(userService, never()).addFactor(anyString(), any(), any());
+    }
+
+    @Test
+    public void shouldContinue_alreadyEnrolled_NoChanges() throws Exception {
+        final var email = "user@email.com";
+        final var factorId = "factor-id";
+        when(configuration.getFactorId()).thenReturn(factorId);
+        when(configuration.getValue()).thenReturn(email);
+        when(configuration.isRefresh()).thenReturn(true);
+
+        FactorManager factorManager = mock(FactorManager.class);
+        Factor factor = mock(Factor.class);
+        when(factor.getFactorType()).thenReturn(FactorType.EMAIL);
+        when(factorManager.getClientFactor(any(), eq(factorId))).thenReturn(Optional.of(factor));
+        FactorProvider factorProvider = mock(FactorProvider.class);
+        when(factorProvider.useVariableFactorSecurity()).thenReturn(false);
+        when(factorManager.get(eq(factorId))).thenReturn(factorProvider);
+
+        when(executionContext.getComponent(FactorManager.class)).thenReturn(factorManager);
+
+        EnrolledFactor enrolledFactor = new EnrolledFactor();
+        enrolledFactor.setFactorId(factorId);
+        enrolledFactor.setChannel(new EnrolledFactorChannel(EnrolledFactorChannel.Type.EMAIL, email));
+
+        User user = mock(User.class);
+        when(user.getId()).thenReturn("user-id");
+        when(user.getFactors()).thenReturn(List.of(enrolledFactor));
+        when(executionContext.getAttribute(ConstantKeys.USER_CONTEXT_KEY)).thenReturn(user);
+        when(executionContext.getTemplateEngine()).thenReturn(templateEngine);
+        when(templateEngine.getValue(configuration.getValue(), String.class)).thenReturn(email);
+
+        UserService userService = mock(UserService.class);
+        when(executionContext.getComponent(UserService.class)).thenReturn(userService);
+
+        executePolicy(configuration, request, response, executionContext, policyChain);
+        verify(policyChain, times(1)).doNext(request, response);
+        verify(userService, never()).updateFactor(anyString(), any(), any());
+        verify(userService, never()).addFactor(anyString(), any(), any());
     }
 
     @Test
