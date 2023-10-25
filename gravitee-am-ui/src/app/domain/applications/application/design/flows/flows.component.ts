@@ -41,6 +41,7 @@ export class ApplicationFlowsComponent implements OnInit {
   isDirty = false;
 
   @ViewChild('gvDesignComponent', { static: true }) gvDesignComponent;
+  isInvalid: boolean;
 
   constructor(
     private route: ActivatedRoute,
@@ -91,9 +92,12 @@ export class ApplicationFlowsComponent implements OnInit {
   }
 
   @HostListener(':gv-design:change', ['$event.detail'])
-  onChange({ definition }) {
-    this.isDirty = true;
-    this.definition = definition;
+  onChange({ definition, errors, isDirty }) {
+    this.isInvalid = errors > 0 || definition == null;
+    this.isDirty = isDirty;
+    if (isDirty && !this.isInvalid) {
+      this.definition = definition;
+    }
   }
 
   onReset() {
@@ -107,7 +111,9 @@ export class ApplicationFlowsComponent implements OnInit {
     this.isDirty = false;
   }
 
-  onSubmit() {
+  async onSubmit() {
+    this.isInvalid = true;
+    await this.gvDesignComponent.nativeElement.validate();
     const flows = this.definition.flows.map((flow) => {
       delete flow.icon;
       delete flow.createdAt;
@@ -122,6 +128,7 @@ export class ApplicationFlowsComponent implements OnInit {
       this.definition = { ...this.definition, flows: updatedFlows };
       this.snackbarService.open('Flows updated');
       this.isDirty = false;
+      this.isInvalid = false;
     });
   }
 
