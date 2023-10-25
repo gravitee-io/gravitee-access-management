@@ -63,6 +63,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import static io.gravitee.am.service.validators.email.EmailValidatorImpl.EMAIL_PATTERN;
 import static io.gravitee.am.service.validators.user.UserValidatorImpl.NAME_LAX_PATTERN;
@@ -149,6 +150,7 @@ public class UserServiceTest {
         User newUser = mock(User.class);
         when(newUser.getSource()).thenReturn("unknown-idp");
         when(newUser.getUserName()).thenReturn("username");
+        when(newUser.getPassword()).thenReturn(null);
         when(domain.getId()).thenReturn(domainId);
         when(userRepository.findByUsernameAndSource(eq(ReferenceType.DOMAIN), anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
         when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(new IdentityProvider());
@@ -162,6 +164,7 @@ public class UserServiceTest {
         testObserver.assertComplete();
 
         assertFalse(newUserDefinition.getValue().isInternal());
+        assertTrue(newUserDefinition.getValue().isEnabled());
     }
 
     @Test
@@ -184,12 +187,26 @@ public class UserServiceTest {
 
     @Test
     public void shouldCreateUser() {
+        innerCreateUser(null);
+    }
+
+    @Test
+    public void shouldCreateUser_WithPassword() {
+        innerCreateUser(UUID.randomUUID().toString());
+    }
+
+    private void innerCreateUser(String pwd) {
         final String domainId = "domain";
 
         User newUser = mock(User.class);
         when(newUser.getSource()).thenReturn("unknown-idp");
         when(newUser.getUserName()).thenReturn("username");
+        when(newUser.getPassword()).thenReturn(pwd);
         when(newUser.getRoles()).thenReturn(Arrays.asList("role-1", "role-2"));
+
+        if (pwd != null) {
+            when(passwordService.isValid(any(), any(), any())).thenReturn(true);
+        }
 
         io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.User.class);
 
@@ -220,6 +237,11 @@ public class UserServiceTest {
         testObserver.assertComplete();
 
         assertTrue(newUserDefinition.getValue().isInternal());
+        if (pwd == null) {
+            assertFalse(newUserDefinition.getValue().isEnabled());
+        } else {
+            assertTrue(newUserDefinition.getValue().isEnabled());
+        }
     }
 
     @Test

@@ -197,7 +197,6 @@ public class UserServiceImpl implements UserService {
         // set user idp source
         final String source = user.getSource() != null ? user.getSource() : (idp != null ? idp : DEFAULT_IDP_PREFIX + domain.getId());
 
-
         io.gravitee.am.model.User userModel = UserMapper.convert(user);
         // set technical ID
         userModel.setId(RandomString.generate());
@@ -256,6 +255,8 @@ public class UserServiceImpl implements UserService {
                                             userModel.setInternal(false);
                                             // set external id
                                             userModel.setExternalId(user.getExternalId() != null ? user.getExternalId() : userModel.getId());
+                                            // enable the profile by default as password is not required in that case
+                                            userModel.setEnabled(true);
                                             return userRepository.create(userModel);
                                         }
                                         if (ex instanceof UserAlreadyExistsException) {
