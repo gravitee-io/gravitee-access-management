@@ -22,6 +22,7 @@ import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User;
 import io.gravitee.am.gateway.handler.root.resources.auth.handler.SocialAuthHandler;
 import io.gravitee.am.gateway.handler.root.resources.auth.provider.SocialAuthenticationProvider;
+import io.gravitee.am.gateway.policy.PolicyChainException;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
@@ -76,7 +77,7 @@ public class SocialAuthHandlerImpl implements SocialAuthHandler {
                 ctx.next();
             } else {
                 // to allow further processing if needed
-                processException(ctx, new HttpException(401, authN.cause()));
+                processException(ctx, authN.cause() instanceof PolicyChainException ? authN.cause() : new HttpException(401, authN.cause()));
             }
         });
     }
