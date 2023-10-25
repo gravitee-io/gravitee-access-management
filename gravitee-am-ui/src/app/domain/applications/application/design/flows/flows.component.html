@@ -23,6 +23,28 @@
     </div>
     <mat-hint style="font-size: 75%">Inherit Flows from the security domain.</mat-hint>
   </div>
-  <gv-policy-studio #studio [policies]="policies" [flowSchema]="flowSchema" [hasConditionalSteps]="true" [definition]="definition" can-add>
-  </gv-policy-studio>
+
+  <div class="design-flows__content" [class.save-bar-opened]="this.isDirty">
+    <gv-design
+      #gvDesignComponent
+      [policies]="policies"
+      [flowSchema]="flowSchema"
+      [hasConditionalSteps]="true"
+      [definition]="definition"
+      [isDirty]="isDirty"
+      can-add
+    >
+    </gv-design>
+  </div>
+
+  <gio-save-bar
+    *ngIf="this.isDirty"
+    class="design-flows__save-bar"
+    [opened]="this.isDirty"
+    [creationMode]="false"
+    (resetClicked)="onReset()"
+    (submitted)="onSubmit()"
+    [invalidState]="this.isInvalid"
+  >
+  </gio-save-bar>
 </div>

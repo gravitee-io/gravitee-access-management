@@ -15,8 +15,9 @@
  */
 import { Component, HostListener, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import '@gravitee/ui-components/wc/gv-policy-studio';
+import '@gravitee/ui-components/wc/gv-design';
 import { filter, switchMap, tap } from 'rxjs/operators';
+import _ from 'lodash';
 
 import { OrganizationService } from '../../../../../services/organization.service';
 import { SnackbarService } from '../../../../../services/snackbar.service';
@@ -35,8 +36,10 @@ export class ApplicationFlowsComponent implements OnInit {
   definition: any = {};
   flowSchema: string;
   documentation: string;
+  isDirty = false;
 
-  @ViewChild('studio', { static: true }) studio;
+  @ViewChild('gvDesignComponent', { static: true }) gvDesignComponent;
+  isInvalid: boolean;
 
   constructor(
     private route: ActivatedRoute,
@@ -54,19 +57,19 @@ export class ApplicationFlowsComponent implements OnInit {
     this.initPolicies();
   }
 
-  @HostListener(':gv-policy-studio:fetch-documentation', ['$event.detail'])
+  @HostListener(':gv-design:fetch-documentation', ['$event.detail'])
   onFetchDocumentation(detail) {
     const policy = detail.policy;
     this.organizationService.policyDocumentation(policy.id).subscribe(
       (response) => {
-        this.studio.nativeElement.documentation = {
+        this.gvDesignComponent.nativeElement.documentation = {
           content: response,
           image: policy.icon,
           id: policy.id,
         };
       },
       () => {
-        this.studio.nativeElement.documentation = null;
+        this.gvDesignComponent.nativeElement.documentation = null;
       },
     );
   }
@@ -79,9 +82,30 @@ export class ApplicationFlowsComponent implements OnInit {
     return step;
   }
 
-  @HostListener(':gv-policy-studio:save', ['$event.detail'])
-  onSave({ definition }) {
-    const flows = definition.flows.map((flow) => {
+  @HostListener(':gv-design:change', ['$event.detail'])
+  onChange({ definition, errors, isDirty }) {
+    this.isInvalid = errors > 0 || definition == null;
+    this.isDirty = isDirty;
+    if (isDirty && !this.isInvalid) {
+      this.definition = definition;
+    }
+  }
+
+  onReset() {
+    this.domainId = this.route.snapshot.data['domain']?.id;
+    this.application = this.route.snapshot.data['application'];
+    this.flowSchema = this.route.snapshot.data['flowSettingsForm'];
+    this.definition = {
+      flows: _.cloneDeep(this.route.snapshot.data['flows'] || []),
+    };
+    this.initPolicies();
+    this.isDirty = false;
+  }
+
+  async onSubmit() {
+    this.isInvalid = true;
+    await this.gvDesignComponent.nativeElement.validate();
+    const flows = this.definition.flows.map((flow) => {
       delete flow.icon;
       delete flow.createdAt;
       delete flow.updatedAt;
@@ -91,9 +115,11 @@ export class ApplicationFlowsComponent implements OnInit {
     });
 
     this.applicationService.updateFlows(this.domainId, this.application.id, flows).subscribe((updatedFlows) => {
-      this.studio.nativeElement.saved();
+      this.gvDesignComponent.nativeElement.saved();
       this.definition = { ...this.definition, flows: updatedFlows };
       this.snackbarService.open('Flows updated');
+      this.isDirty = false;
+      this.isInvalid = false;
     });
   }
 
@@ -145,13 +171,15 @@ export class ApplicationFlowsComponent implements OnInit {
   }
 
   private initPolicies() {
-    this.policies = this.route.snapshot.data['policies'] || [];
     const factors = this.route.snapshot.data['factors'] || [];
     const appFactorIds = this.application.factors || [];
     const filteredFactors = factors
       .filter((f) => appFactorIds.includes(f.id))
       .filter((f) => f.factorType && f.factorType.toUpperCase() !== 'RECOVERY_CODE');
-    this.policies.forEach((policy) => {
+    this.policies = (this.route.snapshot.data['policies'] || []).map((policy) => {
+      if (policy.schema == null) {
+        return policy;
+      }
       const policySchema = JSON.parse(policy.schema);
       if (policySchema.properties) {
         for (const key in policySchema.properties) {
@@ -169,6 +197,7 @@ export class ApplicationFlowsComponent implements OnInit {
         }
         policy.schema = JSON.stringify(policySchema);
       }
+      return policy;
     });
   }
 }
