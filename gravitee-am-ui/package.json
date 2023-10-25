@@ -36,7 +36,7 @@
     "@angular/platform-browser-dynamic": "13.4.0",
     "@angular/platform-server": "13.4.0",
     "@angular/router": "13.4.0",
-    "@gravitee/ui-components": "3.44.0",
+    "@gravitee/ui-components": "3.45.2",
     "@gravitee/ui-particles-angular": "7.29.2",
     "@ngx-formly/core": "6.1.8",
     "@ngx-formly/material": "6.1.8",

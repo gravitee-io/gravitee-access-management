@@ -65,6 +65,7 @@ import {
   GioLicenseModule,
   GioMenuModule,
   GioSafePipeModule,
+  GioSaveBarModule,
   GioSubmenuModule,
   GioTopBarLinkModule,
   GioTopBarMenuModule,
@@ -733,6 +734,7 @@ import { AppConfig } from '../config/app.config';
     GioSubmenuModule,
     GioLicenseModule,
     GioSafePipeModule,
+    GioSaveBarModule,
   ],
   providers: [
     DomainService,
