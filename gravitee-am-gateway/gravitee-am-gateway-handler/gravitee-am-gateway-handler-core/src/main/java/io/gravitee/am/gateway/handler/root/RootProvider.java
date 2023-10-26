@@ -833,7 +833,8 @@ public class RootProvider extends AbstractProtocolProvider {
     }
 
     private void bodyHandler(Router router) {
-        router.route().handler(BodyHandler.create());
+        router.route()
+                .handler(new io.gravitee.am.gateway.handler.root.resources.handler.BodyHandler(BodyHandler.create()));
     }
 
     private void errorHandler(Router router) {
