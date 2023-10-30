@@ -43,6 +43,7 @@ export class ApplicationFactorsComponent implements OnInit {
 
   adaptiveMfaRule = '';
   enrollment: any = {};
+  selectedMFAOption = '';
   private riskAssessment: any = {};
 
   constructor(
@@ -134,6 +135,7 @@ export class ApplicationFactorsComponent implements OnInit {
     this.adaptiveMfaRule = (options.adaptiveMfaRule || '').slice();
     this.riskAssessment = { ...options.riskAssessment };
     this.formChanged = true;
+    this.selectedMFAOption = options.selectedMFAOption;
   }
 
   updateStepUpRule(stepUpRule: string) {

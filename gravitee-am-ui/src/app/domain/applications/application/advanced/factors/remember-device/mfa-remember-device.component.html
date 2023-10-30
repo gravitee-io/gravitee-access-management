@@ -46,6 +46,18 @@
       Enable Remember Device
     </mat-slide-toggle>
   </div>
+  <div *ngIf="selectedMFAOption === 'Conditional' || isConditional" class="gv-form-section-description">
+    <mat-slide-toggle
+      matInput
+      placeholder="Skip Remember Device if conditional MFA evaluates no risk"
+      name="mfaSkipRememberDevice"
+      [disabled]="!isActive()"
+      (change)="onSkip($event)"
+      [checked]="skipRememberDevice"
+    >
+      Skip Remember Device if conditional MFA evaluates no risk
+    </mat-slide-toggle>
+  </div>
   <br />
   <form *ngIf="active" fxLayoutGap="10px">
     <mat-form-field appearance="outline" floatLabel="always" fxFlex="32">

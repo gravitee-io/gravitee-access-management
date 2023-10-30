@@ -22,6 +22,7 @@ package io.gravitee.am.model;
 public class RememberDeviceSettings {
 
     private boolean active;
+    private boolean skipRememberDevice;
     private Long expirationTimeSeconds;
     private String deviceIdentifierId;
 
@@ -36,6 +37,10 @@ public class RememberDeviceSettings {
 
     public boolean isActive() {
         return active;
+    }
+
+    public boolean isSkipRememberDevice() {
+        return skipRememberDevice;
     }
 
     public Long getExpirationTimeSeconds() {
@@ -56,5 +61,9 @@ public class RememberDeviceSettings {
 
     public void setDeviceIdentifierId(String deviceIdentifierId) {
         this.deviceIdentifierId = deviceIdentifierId;
+    }
+
+    public void setSkipRememberDevice(boolean skipRememberDevice) {
+        this.skipRememberDevice = skipRememberDevice;
     }
 }

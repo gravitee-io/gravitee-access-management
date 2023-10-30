@@ -38,6 +38,10 @@
           *ngIf="hasFactors() && hasSelectedFactors()"
           [rememberDevice]="mfa.rememberDevice"
           [deviceIdentifiers]="deviceIdentifiers"
+          [selectedMFAOption]="selectedMFAOption"
+          [enrollment]="mfa.enrollment"
+          [adaptiveMfaRule]="mfa.adaptiveAuthenticationRule"
+          [riskAssessment]="application.settings.riskAssessment"
           (settings-change)="updateRememberDevice($event)"
         ></mfa-remember-device>
 
