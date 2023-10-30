@@ -21,11 +21,16 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.UserIdentity;
 import io.gravitee.am.model.scim.Address;
 import io.gravitee.am.model.scim.Attribute;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static java.util.Optional.ofNullable;
+import static java.util.stream.Collectors.toList;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -53,6 +58,8 @@ public class UserProperties {
     private List<Attribute> photos;
     private List<String> entitlements;
     private List<Address> addresses;
+    private List<UserIdentity> identities;
+    private String lastIdentityUsed;
 
     public UserProperties() {
     }
@@ -77,15 +84,14 @@ public class UserProperties {
             roles = user.getRolesPermissions().stream().map(Role::getName).collect(Collectors.toSet());
         }
         // set claims
-        var userAdditionalInformation = Optional.ofNullable(user.getAdditionalInformation())
+        var userAdditionalInformation = ofNullable(user.getAdditionalInformation())
                 .orElse(new HashMap<>());
         claims = new HashMap<>(userAdditionalInformation);
         if (user.getLoggedAt() != null) {
             claims.put(Claims.auth_time, user.getLoggedAt().getTime() / 1000);
         }
-        // remove technical information that shouldn't be used in templates
-        claims.remove(ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY);
-        claims.remove(ConstantKeys.OIDC_PROVIDER_ID_ACCESS_TOKEN_KEY);
+
+        removeSensitiveClaims(claims);
 
         this.additionalInformation = claims; // use same ref as claims for additionalInfo to avoid regression on templates that used the User object before
         this.source = user.getSource();
@@ -96,6 +102,22 @@ public class UserProperties {
         this.photos = evaluateAttributes(user.getPhotos());
         this.entitlements = user.getEntitlements();
         this.addresses = evaluateAddresses(user.getAddresses());
+
+        this.lastIdentityUsed = user.getLastIdentityUsed();
+        this.identities = ofNullable(user.getIdentities()).map(identities ->
+                identities.stream().map(sourceIdentity -> {
+                    // filter sensitive date from the additionalInformation map linked
+                    // to the UserIdentity object
+                    var filteredIdentity = new UserIdentity(sourceIdentity);
+                    removeSensitiveClaims(filteredIdentity.getAdditionalInformation());
+                    return filteredIdentity;
+                }).collect(toList())).orElse(List.of());
+    }
+
+    private void removeSensitiveClaims(Map claimsToClean) {
+        // remove technical information that shouldn't be used in templates
+        claimsToClean.remove(ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY);
+        claimsToClean.remove(ConstantKeys.OIDC_PROVIDER_ID_ACCESS_TOKEN_KEY);
     }
 
     public String getId() {
@@ -258,6 +280,41 @@ public class UserProperties {
         this.addresses = addresses;
     }
 
+    public List<UserIdentity> getIdentities() {
+        return identities;
+    }
+
+    public void setIdentities(List<UserIdentity> identities) {
+        this.identities = identities;
+    }
+
+    public String getLastIdentityUsed() {
+        return lastIdentityUsed;
+    }
+
+    public void setLastIdentityUsed(String lastIdentityUsed) {
+        this.lastIdentityUsed = lastIdentityUsed;
+    }
+
+
+    public Map<String, Object> getLastIdentityInformation() {
+        if (this.lastIdentityUsed != null && this.identities != null) {
+            return this.identities.stream()
+                    .filter(userIdentity -> this.lastIdentityUsed.equals(userIdentity.getProviderId()))
+                    .findFirst()
+                    .map(UserIdentity::getAdditionalInformation)
+                    .orElse(getAdditionalInformation());
+        }
+        return getAdditionalInformation();
+    }
+
+    public Map<String, Object> getIdentitiesAsMap() {
+        if (this.identities != null) {
+            return this.identities.stream().collect(Collectors.toMap(UserIdentity::getProviderId, Function.identity()));
+        }
+        return Map.of();
+    }
+
     private String evaluatePreferredLanguage(User user) {
         if (user.getPreferredLanguage() == null) {
             // fall back to OIDC standard claims
@@ -278,7 +335,7 @@ public class UserProperties {
                 .map(attribute -> {
                     attribute.setPrimary(Boolean.TRUE.equals(attribute.isPrimary()));
                     return attribute;
-                }).collect(Collectors.toList());
+                }).collect(toList());
 
     }
 
@@ -292,6 +349,6 @@ public class UserProperties {
                 .map(address -> {
                     address.setPrimary(Boolean.TRUE.equals(address.isPrimary()));
                     return address;
-                }).collect(Collectors.toList());
+                }).collect(toList());
     }
 }
