@@ -30,6 +30,7 @@ import static java.util.Objects.isNull;
 public class PatchRememberDeviceSettings {
 
     private Optional<Boolean> active;
+    private Optional<Boolean> skipRememberDevice;
     private Optional<Long> expirationTimeSeconds;
     private Optional<String> deviceIdentifierId;
 
@@ -38,6 +39,7 @@ public class PatchRememberDeviceSettings {
 
     public PatchRememberDeviceSettings(PatchRememberDeviceSettings other) {
         this.active = other.active;
+        this.skipRememberDevice = other.skipRememberDevice;
         this.expirationTimeSeconds = other.expirationTimeSeconds;
         this.deviceIdentifierId = other.deviceIdentifierId;
     }
@@ -54,6 +56,10 @@ public class PatchRememberDeviceSettings {
         return deviceIdentifierId;
     }
 
+    public Optional<Boolean> getSkipRememberDevice() {
+        return skipRememberDevice;
+    }
+
     public void setActive(Optional<Boolean> active) {
         this.active = active;
     }
@@ -66,10 +72,15 @@ public class PatchRememberDeviceSettings {
         this.deviceIdentifierId = deviceIdentifierId;
     }
 
+    public void setSkipRememberDevice(Optional<Boolean> skipRememberDevice) {
+        this.skipRememberDevice = skipRememberDevice;
+    }
+
     public RememberDeviceSettings patch(RememberDeviceSettings _toPatch) {
         RememberDeviceSettings toPatch = _toPatch == null ? new RememberDeviceSettings() : new RememberDeviceSettings(_toPatch);
         SetterUtils.safeSet(toPatch::setDeviceIdentifierId, this.getDeviceIdentifierId());
         SetterUtils.safeSet(toPatch::setActive, this.getActive());
+        SetterUtils.safeSet(toPatch::setSkipRememberDevice, this.getSkipRememberDevice());
         final Optional<Long> expirationTimeSeconds = isNull(this.getExpirationTimeSeconds()) ? Optional.empty() : this.getExpirationTimeSeconds();
         SetterUtils.safeSet(toPatch::setExpirationTimeSeconds, expirationTimeSeconds.filter(Objects::nonNull).map(Math::abs));
         return toPatch;

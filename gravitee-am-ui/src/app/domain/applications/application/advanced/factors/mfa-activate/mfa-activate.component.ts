@@ -126,6 +126,7 @@ export class MfaActivateComponent implements OnInit, OnDestroy {
       enrollment: enrollment,
       adaptiveMfaRule: '',
       riskAssessment: this.getRiskAssessment(this.riskAssessment, false),
+      selectedMFAOption: MfaActivateComponent.modeOptions.OPTIONAL.label,
     });
   }
 
@@ -134,6 +135,7 @@ export class MfaActivateComponent implements OnInit, OnDestroy {
       enrollment: { forceEnrollment: true, skipTimeSeconds: enrollment.skipTimeSeconds },
       adaptiveMfaRule: '',
       riskAssessment: this.getRiskAssessment(this.riskAssessment, false),
+      selectedMFAOption: MfaActivateComponent.modeOptions.REQUIRED.label,
     });
   }
 
@@ -142,6 +144,7 @@ export class MfaActivateComponent implements OnInit, OnDestroy {
       enrollment: { forceEnrollment: true, skipTimeSeconds: this.enrollment.skipTimeSeconds },
       adaptiveMfaRule: adaptiveMfaRule,
       riskAssessment: this.getRiskAssessment(this.riskAssessment, false),
+      selectedMFAOption: MfaActivateComponent.modeOptions.CONDITIONAL.label,
     });
   }
 
@@ -151,6 +154,7 @@ export class MfaActivateComponent implements OnInit, OnDestroy {
       enrollment: { forceEnrollment: true, skipTimeSeconds: this.enrollment.skipTimeSeconds },
       adaptiveMfaRule: MfaActivateComponent.computeRiskAssessmentRule(safeRiskAssessment),
       riskAssessment: safeRiskAssessment,
+      selectedMFAOption: MfaActivateComponent.modeOptions.INTELLIGENT.label,
     };
     this.settingsChangeEmitter.emit(value);
   }

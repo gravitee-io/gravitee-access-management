@@ -26,6 +26,7 @@ import static java.lang.Boolean.TRUE;
 public class RememberDeviceSettingsMongo {
 
     private Boolean active;
+    private boolean skipRememberDevice;
     private Long expirationTimeSeconds;
     private String deviceIdentifierId;
 
@@ -34,6 +35,7 @@ public class RememberDeviceSettingsMongo {
 
     public RememberDeviceSettingsMongo(RememberDeviceSettingsMongo other) {
         this.active = other.active;
+        this.skipRememberDevice = other.skipRememberDevice;
         this.expirationTimeSeconds = other.expirationTimeSeconds;
         this.deviceIdentifierId = other.deviceIdentifierId;
     }
@@ -62,9 +64,18 @@ public class RememberDeviceSettingsMongo {
         this.deviceIdentifierId = deviceIdentifierId;
     }
 
+    public void setSkipRememberDevice(boolean skipRememberDevice) {
+        this.skipRememberDevice = skipRememberDevice;
+    }
+
+    public boolean isSkipRememberDevice() {
+        return skipRememberDevice;
+    }
+
     public RememberDeviceSettings convert() {
         var rememberDeviceSettings = new RememberDeviceSettings();
         rememberDeviceSettings.setActive(TRUE.equals(isActive()));
+        rememberDeviceSettings.setSkipRememberDevice(TRUE.equals(isSkipRememberDevice()));
         rememberDeviceSettings.setDeviceIdentifierId(deviceIdentifierId);
         rememberDeviceSettings.setExpirationTimeSeconds(expirationTimeSeconds);
         return rememberDeviceSettings;
@@ -73,6 +84,7 @@ public class RememberDeviceSettingsMongo {
     public static RememberDeviceSettingsMongo convert(RememberDeviceSettings rememberDevice) {
         var rememberDeviceSettingsMongo = new RememberDeviceSettingsMongo();
         rememberDeviceSettingsMongo.setActive(TRUE.equals(rememberDevice.isActive()));
+        rememberDeviceSettingsMongo.setSkipRememberDevice(TRUE.equals(rememberDevice.isSkipRememberDevice()));
         rememberDeviceSettingsMongo.setDeviceIdentifierId(rememberDevice.getDeviceIdentifierId());
         rememberDeviceSettingsMongo.setExpirationTimeSeconds(rememberDevice.getExpirationTimeSeconds());
         return rememberDeviceSettingsMongo;
