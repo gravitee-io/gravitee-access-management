@@ -216,7 +216,7 @@ public class LogoutEndpoint extends AbstractLogoutEndpoint {
 
         // generate the delegated OP logout request
         final Authentication authentication = new EndUserAuthentication(endUser, null, new SimpleAuthenticationContext(new VertxHttpServerRequest(routingContext.request().getDelegate())));
-        identityProviderManager.get(endUser.getSource())
+        identityProviderManager.get(endUser.getLastIdentityUsed())
                 .filter(provider -> provider instanceof SocialAuthenticationProvider)
                 .flatMap(provider -> ((SocialAuthenticationProvider) provider).signOutUrl(authentication))
                 .flatMap(logoutRequest -> generateLogoutCallback(routingContext, endUser, logoutRequest))
@@ -259,15 +259,15 @@ public class LogoutEndpoint extends AbstractLogoutEndpoint {
 
     private Maybe<String> generateLogoutCallback(RoutingContext routingContext, User endUser, Request endpoint) {
         // Single Logout can be done only if the endUser profile contains an IdToken.
-        if (endUser.getAdditionalInformation() == null) {
+        if (endUser.getLastIdentityInformation() == null) {
             return Maybe.empty();
         }
-        if (!endUser.getAdditionalInformation().containsKey(ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY)) {
+        if (!endUser.getLastIdentityInformation().containsKey(ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY)) {
             return Maybe.empty();
         }
         // Generate a state containing provider id and current query parameter string.
         // This state will be sent back to AM after social logout.
-        final String delegatedOpIdToken = (String) endUser.getAdditionalInformation().get(ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY);
+        final String delegatedOpIdToken = (String) endUser.getLastIdentityInformation().get(ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY);
         final JWT stateJwt = new JWT();
         stateJwt.put("c", endUser.getClient());
         stateJwt.put("p", endUser.getSource());

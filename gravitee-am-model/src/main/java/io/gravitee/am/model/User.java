@@ -23,6 +23,8 @@ import io.gravitee.am.model.scim.Certificate;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -654,6 +656,24 @@ public class User implements IUser {
 
     public Map<String, Object> getAdditionalInformation() {
         return additionalInformation;
+    }
+
+    public Map<String, Object> getLastIdentityInformation() {
+        if (this.lastIdentityUsed != null && this.identities != null) {
+            return this.identities.stream()
+                    .filter(userIdentity -> this.lastIdentityUsed.equals(userIdentity.getProviderId()))
+                    .findFirst()
+                    .map(UserIdentity::getAdditionalInformation)
+                    .orElse(getAdditionalInformation());
+        }
+        return getAdditionalInformation();
+    }
+
+    public Map<String, Object> getIdentitiesAsMap() {
+        if (this.identities != null) {
+            return this.identities.stream().collect(Collectors.toMap(UserIdentity::getProviderId, Function.identity()));
+        }
+        return Map.of();
     }
 
     public User putAdditionalInformation(String key, Object value) {
