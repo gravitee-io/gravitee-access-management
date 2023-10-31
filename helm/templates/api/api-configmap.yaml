@@ -248,7 +248,16 @@ data:
     notifiers:
       {{- if .Values.api.notifiers.email.enabled }}
       email:
+        {{- if .Values.smtp.enabled }}
+          {{- $rootEmail := omit .Values.smtp "properties" "allowedfrom" }}
+          {{- if .Values.smtp.properties }}
+          {{- $wantedProperties := omit .Values.smtp.properties "auth" "sslProtocols" "localhost" }}
+          {{- $rootEmail := merge $rootEmail $wantedProperties }}
+          {{- end }}
+        {{- .Values.api.notifiers.email | mergeOverwrite $rootEmail | toYaml | nindent 8 | replace "starttlsEnable:" "startTLSEnabled:" | replace "sslTrust:" "sslTrustAll:" }}
+        {{- else }}
         {{- .Values.api.notifiers.email | toYaml | nindent 8 }}
+        {{- end }}
       {{- end }}
       ui:
         enabled: {{ .Values.api.notifiers.ui.enabled }}
