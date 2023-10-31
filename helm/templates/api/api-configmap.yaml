@@ -246,65 +246,18 @@ data:
   {{- end }}
 
     notifiers:
-      email: 
-        enabled: {{ .Values.api.notifiers.email.enabled }}
-        {{- if or .Values.api.notifiers.email.enabled .Values.smtp.enabled }}
-        host: {{ .Values.api.notifiers.email.host | default .Values.smtp.host }}
-        subject: {{ .Values.api.notifiers.email.subject | default .Values.smtp.subject | quote }}
-        port: {{ .Values.api.notifiers.email.port | default .Values.smtp.port }}
-        from: {{ .Values.api.notifiers.email.from | default .Values.smtp.from }}
-        {{- if or .Values.api.notifiers.email.username .Values.api.notifiers.email.password }}
-        username: {{ .Values.api.notifiers.email.username }}
-        password: {{ .Values.api.notifiers.email.password }}
-        {{- else if or .Values.smtp.username .Values.smtp.password }}
-        username: {{ .Values.smtp.username }}
-        password: {{ .Values.smtp.password }}
-        {{- end }}
-        startTLSEnabled: {{ .Values.api.notifiers.email.startTLSEnabled | default .Values.smtp.properties.starttlsEnable }}
-        {{- if .Values.api.notifiers.email.sslTrustAll }}
-        sslTrustAll: {{ .Values.api.notifiers.email.sslTrustAll }}
-        {{- else if eq (.Values.smtp.properties.sslTrust | default "") "*" }}
-        sslTrustAll: true
-        {{- else }}
-        sslTrustAll: false
-        {{- end }}
-        {{- if .Values.api.notifiers.email.sslKeyStore }}
-        sslKeyStore: {{ .Values.api.notifiers.email.sslKeyStore }}
-        {{- end }}
-        {{- if .Values.api.notifiers.email.sslKeyStorePassword }}
-        sslKeyStorePassword: {{ .Values.api.notifiers.email.sslKeyStorePassword }}
-        {{- end }}
-        {{- end }}
+      {{- if .Values.api.notifiers.email.enabled }}
+      email:
+        {{- .Values.api.notifiers.email | toYaml | nindent 8 }}
+      {{- end }}
       ui:
         enabled: {{ .Values.api.notifiers.ui.enabled }}
-    
+
+    {{- if .Values.smtp }}
     # SMTP configuration used to send mails
     email:
-      enabled: {{ .Values.smtp.enabled }}
-      {{- if .Values.smtp.enabled }}
-      host: {{ .Values.smtp.host }}
-      subject: {{ .Values.smtp.subject | quote }}
-      port: {{ .Values.smtp.port }}
-      from: {{ .Values.smtp.from }}
-      allowedfrom:
-        {{ toYaml .Values.smtp.allowedfrom | nindent 8 | trim -}}
-      {{- if or .Values.smtp.username .Values.smtp.password }}
-      username: {{ .Values.smtp.username }}
-      password: {{ .Values.smtp.password }}
-      {{- end }}
-      properties:
-        auth: {{ .Values.smtp.properties.auth }}
-        starttls.enable: {{ .Values.smtp.properties.starttlsEnable }}
-        {{- if .Values.smtp.properties.localhost }}
-        localhost: {{ .Values.smtp.properties.localhost }}
-        {{- end }}
-        {{- if .Values.smtp.properties.sslTrust }}
-        ssl.trust: {{ .Values.smtp.properties.sslTrust }}
-        {{- end }}
-        {{- if .Values.smtp.properties.sslProtocols }}
-        ssl.protocols: {{ .Values.smtp.properties.sslProtocols }}
-        {{- end }}
-      {{- end }}
+      {{- .Values.smtp | toYaml | nindent 6 | replace "starttlsEnable" "starttls.enable" | replace "sslTrust" "ssl.trust" | replace "sslProtocols" "ssl.protocols" }}
+    {{- end }}
 
     domains:
       certificates:
@@ -435,7 +388,7 @@ data:
         enabled: false
     {{- end }}
   {{- end }}
-  {{- if .Values.api.logging.debug }}
+    {{- if .Values.api.logging.debug }}
   logback.xml: |
     <?xml version="1.0" encoding="UTF-8"?>
 

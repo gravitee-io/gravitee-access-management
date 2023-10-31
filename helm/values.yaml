@@ -60,20 +60,20 @@ chaos:
 
 smtp:
   enabled: true
-  host: smtp.example.com
-  port: 25
-  from: info@example.com
-  username: info@example.com
-  password: example.com
-  subject: "[gravitee] %s"
-  allowedfrom:
-    - ${email.from}
-  properties:
-    auth: true
-    starttlsEnable: false
-    #sslTrust: smtp.example.com
-    #sslProtocols: TLSv1.2
-    #localhost: am.example.com
+#  host: smtp.example.com
+#  port: 25
+#  from: info@example.com
+#  username: info@example.com
+#  password: example.com
+#  subject: "[gravitee] %s"
+#  allowedfrom:
+#    - ${email.from}
+#  properties:
+#    auth: true
+#    starttls.enable: false
+#    ssl.trust: smtp.example.com
+#    ssl.protocols: TLSv1.2
+#    localhost: am.example.com
 
 mongo:
   # uri: mongodb://mongo-mongodb-replicaset:27017/gravitee?connectTimeoutMS=30000
@@ -453,15 +453,15 @@ api:
   notifiers:
     email:
       enabled: false
-      #host: smtp.example.com
-      #port: 25
-      #from: info@example.com
-      #username: info@example.com
-      #password: example.com
-      #startTLSEnabled: false
-      #sslTrustAll: false
-      #sslKeyStore: /path/to/keystore
-      #sslKeyStorePassword: changeme
+#      host: smtp.example.com
+#      port: 25
+#      from: info@example.com
+#      username: info@example.com
+#      password: example.com
+#      startTLSEnabled: false
+#      sslTrustAll: false
+#      sslKeyStore: /path/to/keystore
+#      sslKeyStorePassword: changeme
     ui:
       enabled: true
 

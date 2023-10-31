@@ -1,0 +1,107 @@
+suite: Test Gateway configmap section email and notifiers
+templates:
+  - "gateway/gateway-configmap.yaml"
+tests:
+  - it: Define email host
+    template: gateway/gateway-configmap.yaml
+    set:
+      smtp:
+        enabled: true
+        host: smtp.example.com
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: |
+            email:
+              enabled: true
+              host: smtp.example.com
+
+  - it: Define all email attribute
+    template: gateway/gateway-configmap.yaml
+    set:
+      smtp:
+        enabled: true
+        host: smtp.example.com
+        port: 25
+        from: info@example.com
+        username: info@example.com
+        password: example.com
+        subject: "gravitee"
+        allowedfrom:
+          - email@from
+        properties:
+          auth: true
+          starttls.enable: false
+          ssl.trust: smtp.example.com
+          ssl.protocols: TLSv1.2
+          localhost: am.example.com
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: " *email:\n
+                     *  allowedfrom:\n
+                     *  - email@from\n
+                     *  enabled: true\n
+                     *  from: info@example.com\n
+                     *  host: smtp.example.com\n
+                     *  password: example.com\n
+                     *  port: 25\n
+                     *  properties:\n
+                     *    auth: true\n
+                     *    localhost: am.example.com\n
+                     *    ssl.protocols: TLSv1.2\n
+                     *    ssl.trust: smtp.example.com\n
+                     *    starttls.enable: false\n
+                     *  subject: gravitee\n
+                     *  username: info@example.com"
+
+  - it: Check backward compatibility with attribute startTLSEnabled, sslTrust, sslProtocols
+    template: gateway/gateway-configmap.yaml
+    set:
+      smtp:
+        enabled: true
+        host: smtp.example.com
+        port: 25
+        from: info@example.com
+        username: info@example.com
+        password: example.com
+        subject: "gravitee"
+        allowedfrom:
+          - email@from
+        properties:
+          auth: true
+          starttlsEnable: false
+          sslTrust: smtp.example.com
+          sslProtocols: TLSv1.2
+          localhost: am.example.com
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: " *email:\n
+                     *  allowedfrom:\n
+                     *  - email@from\n
+                     *  enabled: true\n
+                     *  from: info@example.com\n
+                     *  host: smtp.example.com\n
+                     *  password: example.com\n
+                     *  port: 25\n
+                     *  properties:\n
+                     *    auth: true\n
+                     *    localhost: am.example.com\n
+                     *    ssl.protocols: TLSv1.2\n
+                     *    ssl.trust: smtp.example.com\n
+                     *    starttls.enable: false\n
+                     *  subject: gravitee\n
+                     *  username: info@example.com"
