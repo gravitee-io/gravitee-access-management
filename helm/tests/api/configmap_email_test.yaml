@@ -185,3 +185,134 @@ tests:
                 sslTrustAll: false
                 startTLSEnabled: false
                 username: info@example.com
+
+  - it: Define notifiers with merged attributes from smtp.email
+    template: api/api-configmap.yaml
+    set:
+      api:
+        notifiers:
+          email:
+            enabled: true
+            host: smtp2.example.com
+            sslKeyStore: /path/to/keystore
+            sslKeyStorePassword: changeme
+      smtp:
+        enabled: true
+        host: smtp.example.com
+        port: 25
+        from: info@example.com
+        username: info@example.com
+        password: example.com
+        subject: "gravitee"
+        properties:
+          starttlsEnable: false
+          sslTrust: smtp.example.com
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: " *notifiers:\n
+                     * email:\n
+                     *   enabled: true\n
+                     *   from: info@example.com\n
+                     *   host: smtp2.example.com\n
+                     *   password: example.com\n
+                     *   port: 25\n
+                     *   sslKeyStore: /path/to/keystore\n
+                     *   sslKeyStorePassword: changeme\n
+                     *   sslTrustAll: smtp.example.com\n
+                     *   startTLSEnabled: false\n
+                     *   subject: gravitee\n
+                     *   username: info@example.com"
+
+  - it: Define notifiers with merged attributes from smtp.email without unneeded smtp values
+    template: api/api-configmap.yaml
+    set:
+      api:
+        notifiers:
+          email:
+            enabled: true
+            host: smtp2.example.com
+            sslKeyStore: /path/to/keystore
+            sslKeyStorePassword: changeme
+      smtp:
+        enabled: true
+        host: smtp.example.com
+        port: 25
+        from: info@example.com
+        username: info@example.com
+        password: example.com
+        subject: "gravitee"
+        allowedfrom:
+          - email@from
+        properties:
+          auth: true
+          starttlsEnable: false
+          sslTrust: smtp.example.com
+          sslProtocols: TLSv1.2
+          localhost: am.example.com
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: " *notifiers:\n
+                     * email:\n
+                     *   enabled: true\n
+                     *   from: info@example.com\n
+                     *   host: smtp2.example.com\n
+                     *   password: example.com\n
+                     *   port: 25\n
+                     *   sslKeyStore: /path/to/keystore\n
+                     *   sslKeyStorePassword: changeme\n
+                     *   sslTrustAll: smtp.example.com\n
+                     *   startTLSEnabled: false\n
+                     *   subject: gravitee\n
+                     *   username: info@example.com"
+
+  - it: Define notifiers with merged attributes from smtp.email in case of no smtp.properties
+    template: api/api-configmap.yaml
+    set:
+      api:
+        notifiers:
+          email:
+            enabled: true
+            startTLSEnabled: false
+            sslTrustAll: false
+            sslKeyStore: /path/to/keystore
+            sslKeyStorePassword: changeme
+      smtp:
+        enabled: true
+        host: smtp.example.com
+        port: 25
+        from: info@example.com
+        username: info@example.com
+        password: example.com
+        subject: "gravitee"
+        allowedfrom:
+          - email@from
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: " *notifiers:\n
+                     * email:\n
+                     *   enabled: true\n
+                     *   from: info@example.com\n
+                     *   host: smtp.example.com\n
+                     *   password: example.com\n
+                     *   port: 25\n
+                     *   sslKeyStore: /path/to/keystore\n
+                     *   sslKeyStorePassword: changeme\n
+                     *   sslTrustAll: false\n
+                     *   startTLSEnabled: false\n
+                     *   subject: gravitee\n
+                     *   username: info@example.com"
