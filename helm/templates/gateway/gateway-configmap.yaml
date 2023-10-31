@@ -273,32 +273,12 @@ data:
       # Allows to define if cookie secure only (default false)
       cookie-secure: {{ .Values.gateway.jwt.cookie.secure | default false }}
 
+    {{- if .Values.smtp }}
     # SMTP configuration used to send mails
     email:
-      enabled: {{ .Values.smtp.enabled }}
-      {{- if .Values.smtp.enabled }}
-      host: {{ .Values.smtp.host }}
-      subject: {{ .Values.smtp.subject | quote }}
-      port: {{ .Values.smtp.port }}
-      from: {{ .Values.smtp.from }}
-      {{- if or .Values.smtp.username .Values.smtp.password }}
-      username: {{ .Values.smtp.username }}
-      password: {{ .Values.smtp.password }}
-      {{- end }}
-      properties:
-        auth: {{ .Values.smtp.properties.auth }}
-        starttls.enable: {{ .Values.smtp.properties.starttlsEnable }}
-        {{- if .Values.smtp.properties.localhost }}
-        localhost: {{ .Values.smtp.properties.localhost }}
-        {{- end }}
-        {{- if .Values.smtp.properties.sslTrust }}
-        ssl.trust: {{ .Values.smtp.properties.sslTrust }}
-        {{- end }}
-        {{- if .Values.smtp.properties.sslProtocols }}
-        ssl.protocols: {{ .Values.smtp.properties.sslProtocols }}
-        {{- end }}
-      {{- end }}
-    
+      {{- .Values.smtp | toYaml | nindent 6 | replace "starttlsEnable" "starttls.enable" | replace "sslTrust" "ssl.trust" | replace "sslProtocols" "ssl.protocols" }}
+    {{- end }}
+
     {{- if .Values.userManagement }}
     user:
 {{ toYaml .Values.userManagement | indent 6 }}
