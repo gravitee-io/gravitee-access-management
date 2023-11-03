@@ -16,6 +16,7 @@
 package io.gravitee.am.policy.enroll.mfa;
 
 import io.gravitee.am.common.factor.FactorDataKeys;
+import io.gravitee.am.common.factor.FactorSecurityType;
 import io.gravitee.am.common.factor.FactorType;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.factor.api.FactorProvider;
@@ -304,7 +305,16 @@ public class EnrollMfaPolicyTest {
     }
 
     @Test
-    public void shouldContinue_nominalCase() throws Exception {
+    public void shouldContinue_nominalCase_SMS_NoVariableFactorSecurity() throws Exception {
+        shouldContinue_nominalCase_SMS(false);
+    }
+
+    @Test
+    public void shouldContinue_nominalCase_SMS_WithVariableFactorSecurity() throws Exception {
+        shouldContinue_nominalCase_SMS(true);
+    }
+
+    private void shouldContinue_nominalCase_SMS(boolean useVariableFactorSecurity) throws InterruptedException {
         when(configuration.getFactorId()).thenReturn("factor-id");
         when(configuration.getValue()).thenReturn("0102030405");
 
@@ -313,7 +323,7 @@ public class EnrollMfaPolicyTest {
         when(factor.getFactorType()).thenReturn(FactorType.SMS);
         when(factorManager.getClientFactor(any(), eq("factor-id"))).thenReturn(Optional.of(factor));
         FactorProvider factorProvider = mock(FactorProvider.class);
-        when(factorProvider.useVariableFactorSecurity()).thenReturn(false);
+        when(factorProvider.useVariableFactorSecurity()).thenReturn(useVariableFactorSecurity);
         when(factorManager.get(eq("factor-id"))).thenReturn(factorProvider);
 
         when(executionContext.getComponent(FactorManager.class)).thenReturn(factorManager);
@@ -332,6 +342,13 @@ public class EnrollMfaPolicyTest {
         executePolicy(configuration, request, response, executionContext, policyChain);
         verify(policyChain, times(1)).doNext(request, response);
         verify(user).setFactors(any());
+        if (useVariableFactorSecurity) {
+            verify(user).setFactors(argThat(enrolledFactors -> enrolledFactors.get(0).getSecurity() != null
+                    && FactorSecurityType.SHARED_SECRET.equals(enrolledFactors.get(0).getSecurity().getType())
+                    && enrolledFactors.get(0).getSecurity().getAdditionalData().containsKey(FactorDataKeys.KEY_MOVING_FACTOR)));
+        } else {
+            verify(user).setFactors(argThat(enrolledFactors -> enrolledFactors.get(0).getSecurity() == null));
+        }
     }
 
     private void executePolicy(

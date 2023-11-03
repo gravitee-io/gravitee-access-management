@@ -32,6 +32,7 @@ import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.factor.FactorStatus;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.policy.enroll.mfa.configuration.EnrollMfaPolicyConfiguration;
+import io.gravitee.am.service.exception.FactorConfigurationException;
 import io.gravitee.gateway.api.ExecutionContext;
 import io.gravitee.gateway.api.Request;
 import io.gravitee.gateway.api.Response;
@@ -204,14 +205,18 @@ public class EnrollMfaPolicy {
                         enrolledFactor.setSecurity(new EnrolledFactorSecurity(SHARED_SECRET, otpEnrollmentValue, otpAdditionalData));
                         break;
                     case SMS:
+                        initiateVariableFactorSecurity(factorProvider, user)
+                                .ifPresent(security -> enrolledFactor.setSecurity(security));
                         enrolledFactor.setChannel(new EnrolledFactorChannel(EnrolledFactorChannel.Type.SMS, enrollmentValue));
                         break;
                     case CALL:
+                        initiateVariableFactorSecurity(factorProvider, user)
+                                .ifPresent(security -> enrolledFactor.setSecurity(security));
                         enrolledFactor.setChannel(new EnrolledFactorChannel(EnrolledFactorChannel.Type.CALL, enrollmentValue));
                         break;
                     case EMAIL:
-                        Map<String, Object> additionalData = Collections.singletonMap(FactorDataKeys.KEY_MOVING_FACTOR, MovingFactorUtils.generateInitialMovingFactor(user.getId()));
-                        enrolledFactor.setSecurity(new EnrolledFactorSecurity(SHARED_SECRET, SharedSecret.generate(), additionalData));
+                        initiateVariableFactorSecurity(factorProvider, user)
+                                .ifPresent(security -> enrolledFactor.setSecurity(security));
                         enrolledFactor.setChannel(new EnrolledFactorChannel(EnrolledFactorChannel.Type.EMAIL, enrollmentValue));
                         break;
                     case HTTP:
@@ -228,6 +233,14 @@ public class EnrollMfaPolicy {
                 return Single.error(ex);
             }
         });
+    }
+
+    private static Optional<EnrolledFactorSecurity> initiateVariableFactorSecurity(FactorProvider factorProvider, User user) {
+        if (factorProvider.useVariableFactorSecurity()) {
+            Map<String, Object> additionalData = Collections.singletonMap(FactorDataKeys.KEY_MOVING_FACTOR, MovingFactorUtils.generateInitialMovingFactor(user.getId()));
+            return Optional.of(new EnrolledFactorSecurity(SHARED_SECRET, SharedSecret.generate(), additionalData));
+        }
+        return Optional.empty();
     }
 
     private Maybe<EnrolledFactor> refreshEnrolledFactor(EnrolledFactor enrolledFactor, Factor factor, String value, ExecutionContext context) {
