@@ -318,3 +318,20 @@ tests:
       - matchRegex:
           path: data.[gravitee.yml]
           pattern: "[ ]{12}- /path/to/default/keystore3.pem"
+
+
+  - it: should set consent section
+    set:
+      gateway.consent.ip: true
+      gateway.consent.user-agent: false
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: |
+            consent:
+              ip: true
+              user-agent: false

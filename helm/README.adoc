@@ -555,6 +555,10 @@ httpClient:
 
 |gateway.type |string |`+"Deployment"+` |
 
+| gateway.consent.ip | bool | `false` | Keep IP into audits log (implicit consent)
+
+| gateway.consent.user-agent | bool | `false` | Keep user-agent into audits log (implicit consent)
+
 |license.key |string |license.key file encoded in base64 |
 
 |mongo.auth.enabled |bool |`+false+` |

@@ -733,6 +733,10 @@ gateway:
     timePeriod: 15
     timeUnit: Minutes
 
+  consent:
+    ip: false
+    user-agent: false
+
 alerts:
   enabled: false
   endpoints:
