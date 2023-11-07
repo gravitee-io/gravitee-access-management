@@ -357,6 +357,11 @@ data:
 
     {{- end }}
 
+  {{- if .Values.gateway.consent }}
+    consent:
+{{ toYaml .Values.gateway.consent | indent 6  }}
+  {{- end }}
+
     {{- if or .Values.gateway.handlers }}
     handlers:
 {{ toYaml .Values.gateway.handlers | indent 6 }}
