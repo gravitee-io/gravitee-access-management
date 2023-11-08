@@ -15,9 +15,11 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl;
 
+import io.gravitee.am.common.exception.jwt.ExpiredJWTException;
+import io.gravitee.am.common.exception.jwt.PrematureJWTException;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
-import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User;
 import io.gravitee.am.model.CookieSettings;
 import io.gravitee.am.model.SessionSettings;
@@ -28,17 +30,17 @@ import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.core.http.Cookie;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.StringUtils;
 
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+
 import static io.vertx.ext.web.handler.SessionHandler.DEFAULT_SESSION_TIMEOUT;
 import static java.util.Objects.nonNull;
 import static java.util.function.Predicate.not;
-import static java.util.stream.Stream.ofNullable;
 
 /**
  * Session handler based on minimalistic jwt Cookie.
@@ -121,10 +123,20 @@ public class CookieSessionHandler implements Handler<RoutingContext> {
         }
 
         // Need to wait the session to be ready before invoking next.
+
         sessionObs
-                .doOnError(t -> logger.warn("Unable to restore the session", t))
                 .doFinally(context::next)
-                .subscribe();
+                .subscribe(
+                        success -> logger.trace("Session restored successfully"),
+                        error -> {
+                            final Throwable cause = error.getCause();
+                            if (cause instanceof PrematureJWTException | error instanceof ExpiredJWTException) {
+                                logger.info("Unable to restore the session: {}", cause.getMessage());
+                            } else {
+                                logger.warn("Unable to restore the session: {}", cause.getMessage());
+                            }
+                        }
+                );
     }
 
     private Single<CookieSession> cleanupSession(CookieSession currentSession) {
