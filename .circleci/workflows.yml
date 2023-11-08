@@ -389,16 +389,28 @@ jobs:
             cp ./gravitee-am-ui/target/*.zip ~/
       - save-maven-job-cache:
           jobName: build_branch
-      - run:
-          name: "Maven Package and deploy to Nexus Snapshots"
-          command: |
-            mvn -s /tmp/.gravitee.settings.xml deploy -DskipTests
       - persist_to_workspace:
           root: ~/
           paths:
             - ./gravitee-am-gateway-standalone-*.zip
             - ./gravitee-am-management-api-standalone-*.zip
             - ./gravitee-am-webui-*.zip
+  deploy-snapshot-on-nexus:
+    docker:
+      - image: cimg/openjdk:17.0.8
+    resource_class: medium
+    steps:
+      - attach_workspace:
+          at: /tmp
+      - checkout
+      - restore-maven-job-cache:
+          jobName: build_branch_nexus
+      - run:
+          name: "Maven Package and deploy to Nexus Snapshots"
+          command: |
+            mvn -s /tmp/.gravitee.settings.xml -Dlicense.skip=true -T2C deploy -DskipTests
+      - save-maven-job-cache:
+          jobName: build_branch_nexus
   run_jest_tests_mongo:
     parameters:
       mongo_version:
@@ -1762,7 +1774,16 @@ workflows:
               only:
                 - master
                 - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
-
+      - deploy-snapshot-on-nexus:
+          context: cicd-orchestrator
+          requires:
+            - build
+          filters:
+            branches:
+              only:
+                - master
+                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+                
       - publish-images-azure-registry:
           context: cicd-orchestrator
           requires:
