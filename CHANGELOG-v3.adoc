@@ -1,10 +1,8 @@
 # Change Log
 
-==  - 3.20.15 (2023-11-10)
+== AM - 3.21.11 (2023-11-10)
 
 == What's new !
-
-
 
 === Gateway
 
@@ -12,11 +10,25 @@
 
 === Management API
 
-
-
 === Console
 
+=== Other
 
+* Upgrade Groovy policy https://github.com/gravitee-io/issues/issues/9229[#9229]
+* EnrollmentMFA policy doesn't manage the useVariableFactorSecurity setting https://github.com/gravitee-io/issues/issues/9365[#9365]
+
+
+== AM - 3.20.15 (2023-11-10)
+
+== What's new !
+
+=== Gateway
+
+* Deadlock during generate AccessToken https://github.com/gravitee-io/issues/issues/9238[#9238]
+
+=== Management API
+
+=== Console
 
 === Other
 
