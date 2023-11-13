@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.model.oidc;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.ResponseType;
 import io.gravitee.am.common.oidc.ApplicationType;
@@ -22,6 +23,8 @@ import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.model.*;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
+import io.gravitee.am.model.application.ApplicationSecretSettings;
+import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.login.LoginSettings;
 
@@ -29,6 +32,7 @@ import io.gravitee.risk.assessment.api.assessment.settings.RiskAssessmentSetting
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -48,6 +52,12 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
     private String clientId;
 
     private String clientSecret;
+
+    @JsonIgnore
+    private List<ApplicationSecretSettings> secretSettings;
+
+    @JsonIgnore
+    private List<ClientSecret> clientSecrets;
 
     private List<String> redirectUris;
 
@@ -1046,6 +1056,22 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.disableRefreshTokenRotation = disableRefreshTokenRotation;
     }
 
+    public List<ApplicationSecretSettings> getSecretSettings() {
+        return secretSettings;
+    }
+
+    public void setSecretSettings(List<ApplicationSecretSettings> secretSettings) {
+        this.secretSettings = secretSettings;
+    }
+
+    public List<ClientSecret> getClientSecrets() {
+        return clientSecrets;
+    }
+
+    public void setClientSecrets(List<ClientSecret> clientSecrets) {
+        this.clientSecrets = clientSecrets;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -1075,7 +1101,8 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         clone.setFactors(this.getFactors() != null ? new HashSet<>(this.getFactors()) : null);
         clone.setJwks(this.getJwks() != null ? this.getJwks().clone() : null);
         Optional.ofNullable(this.passwordSettings).ifPresent(ps -> clone.setPasswordSettings(new PasswordSettings(ps)));
-
+        clone.setSecretSettings(this.getSecretSettings() != null ? new ArrayList<>(this.getSecretSettings()) : new ArrayList<>());
+        clone.setClientSecrets(this.getClientSecrets() != null ? this.getClientSecrets().stream().map(ClientSecret::new).collect(Collectors.toList()) : new ArrayList<>());
         return clone;
     }
 }

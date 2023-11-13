@@ -451,3 +451,12 @@ liquibase:
 #  limit: 5
 #  timePeriod: 15
 #  timeUnit: Minutes
+
+#applications:
+#  secret:
+#    # Algorithms used to hash the client secret.
+#    # Can be one of :
+#    # "PBKDF2", "BCrypt", "SHA-512", "SHA-256", "None"
+#    algorithm: None
+#    properties:
+#      rounds: 10

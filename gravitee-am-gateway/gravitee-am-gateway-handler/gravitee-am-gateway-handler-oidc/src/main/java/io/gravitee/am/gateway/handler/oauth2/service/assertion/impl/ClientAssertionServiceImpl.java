@@ -27,17 +27,21 @@ import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.gateway.handler.oauth2.exception.ServerErrorException;
+import io.gravitee.am.gateway.handler.oauth2.resources.auth.handler.ClientAuthHandler;
 import io.gravitee.am.gateway.handler.oauth2.service.assertion.ClientAssertionService;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDProviderMetadata;
 import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.gateway.handler.oidc.service.jws.JWSService;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.JWKSet;
+import io.gravitee.am.service.impl.ApplicationClientSecretService;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.MaybeSource;
 import io.reactivex.rxjava3.functions.Function;
+import io.vertx.core.Future;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,6 +53,7 @@ import java.util.List;
 
 import static io.gravitee.am.common.oidc.ClientAuthenticationMethod.JWT_BEARER;
 import static io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils.isSignAlgCompliantWithFapi;
+import static org.springframework.util.CollectionUtils.isEmpty;
 
 /**
  * Client assertion as described for <a href="https://tools.ietf.org/html/rfc7521#section-4.2">oauth2 assertion framework</a>
@@ -77,6 +82,9 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
 
     @Autowired
     private Domain domain;
+
+    @Autowired
+    private ApplicationClientSecretService appSecretService;
 
     @Override
     public Maybe<Client> assertClient(String assertionType, String assertion, String basePath) {
@@ -213,7 +221,19 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
                             // Ensure to validate JWT using client_secret_key only if client is authorized to use this auth method
                             if (client.getTokenEndpointAuthMethod() == null ||
                                     ClientAuthenticationMethod.CLIENT_SECRET_JWT.equalsIgnoreCase(client.getTokenEndpointAuthMethod())) {
-                                JWSVerifier verifier = new MACVerifier(client.getClientSecret());
+
+                                JWSVerifier verifier;
+                                if (!isEmpty(client.getClientSecrets())) {
+                                    // take the first one as for now, we do not manage multiple secrets
+                                    // no need to decode the secret as for client_scret_jwt, client can't
+                                    // generate secret using a hash algorithm
+                                    ClientSecret notHashedSecret = client.getClientSecrets().get(0);
+                                    verifier = new MACVerifier(notHashedSecret.getSecret());
+                                } else {
+                                    // Prior to 4.2, client secret where not hashed and directly stored into the clientSecret attribute
+                                    verifier = new MACVerifier(client.getClientSecret());
+                                }
+
                                 if (signedJWT.verify(verifier)) {
                                     return Maybe.just(client);
                                 }

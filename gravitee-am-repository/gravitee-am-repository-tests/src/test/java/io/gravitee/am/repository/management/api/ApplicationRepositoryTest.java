@@ -19,8 +19,10 @@ import io.gravitee.am.model.Application;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
+import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
+import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.login.LoginSettings;
@@ -189,7 +191,16 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(a -> a.getMetadata().containsKey("key1"));
         testObserver.assertValue(a -> a.getSettings() != null && a.getSettings().getAccount() != null );
         testObserver.assertValue(a -> a.getSettings().getAccount().isResetPasswordInvalidateTokens());
-
+        testObserver.assertValue(a -> a.getSecretSettings().size() == 1
+                && a.getSecretSettings().get(0).getAlgorithm().equals("BCrypt")
+                && a.getSecretSettings().get(0).getProperties().containsKey("rounds")
+                && Integer.valueOf(10).equals(a.getSecretSettings().get(0).getProperties().get("rounds")) );
+        testObserver.assertValue(a -> a.getSecrets().size() == 1
+                && a.getSecrets().get(0).getSecret().equals("secret value")
+                && a.getSecrets().get(0).getName().equals("secret name")
+                && a.getSecrets().get(0).getSettingsId().equals("settingId")
+                && a.getSecrets().get(0).getCreatedAt() != null
+                && a.getSecrets().get(0).getId() != null);
     }
 
     private static Application buildApplication() {
@@ -210,6 +221,8 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         app.setMetadata(metadata);
         app.setCreatedAt(new Date());
         app.setUpdatedAt(new Date());
+        app.setSecretSettings(List.of(buildApplicationSecretSettings()));
+        app.setSecrets(List.of(buildClientSecret()));
         return app;
     }
 
@@ -245,7 +258,27 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         final AccountSettings account = new AccountSettings();
         account.setResetPasswordInvalidateTokens(true);
         settings.setAccount(account);
+
         return settings;
+    }
+
+    private static ApplicationSecretSettings buildApplicationSecretSettings() {
+        var settings = new ApplicationSecretSettings();
+        settings.setId(UUID.randomUUID().toString());
+        settings.setAlgorithm("BCrypt");
+        settings.setProperties(Map.of("rounds", 10));
+        return settings;
+    }
+
+
+    private static ClientSecret buildClientSecret() {
+        var secret = new ClientSecret();
+        secret.setId(UUID.randomUUID().toString());
+        secret.setName("secret name");
+        secret.setSecret("secret value");
+        secret.setCreatedAt(new Date());
+        secret.setSettingsId("settingId");
+        return secret;
     }
 
     @Test

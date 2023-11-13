@@ -430,6 +430,7 @@ import { HelpTipsThemeComponent } from './domain/settings/theme/help-tips/help-t
 import { EmailTemplateFactoryService } from './services/email.template.factory.service';
 import { FormTemplateFactoryService } from './services/form.template.factory.service';
 import { LicenseGuard } from './guards/license-guard.service';
+import { ApplicationClientSecretDialogModule } from './domain/applications/client-secret/application-client-secret-dialog.module';
 
 import { AppConfig } from '../config/app.config';
 
@@ -735,6 +736,7 @@ import { AppConfig } from '../config/app.config';
     GioLicenseModule,
     GioSafePipeModule,
     GioSaveBarModule,
+    ApplicationClientSecretDialogModule,
   ],
   providers: [
     DomainService,

@@ -59,6 +59,7 @@ import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.DeviceService;
 import io.gravitee.am.service.UserActivityService;
 import io.gravitee.am.service.i18n.GraviteeMessageResolver;
+import io.gravitee.am.service.impl.ApplicationClientSecretService;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
@@ -189,6 +190,9 @@ public class OAuth2Provider extends AbstractProtocolProvider {
     @Qualifier("gwMessageResolver")
     private GraviteeMessageResolver messageResolver;
 
+    @Autowired
+    private ApplicationClientSecretService applicationClientSecretService;
+
     @Override
     protected void doStart() throws Exception {
         super.doStart();
@@ -214,7 +218,7 @@ public class OAuth2Provider extends AbstractProtocolProvider {
 
         // client auth handler
         final String certificateHeader = environment.getProperty(ConstantKeys.HTTP_SSL_CERTIFICATE_HEADER);
-        final Handler<RoutingContext> clientAuthHandler = ClientAuthHandler.create(clientSyncService, clientAssertionService, jwkService, domain, certificateHeader);
+        final Handler<RoutingContext> clientAuthHandler = ClientAuthHandler.create(clientSyncService, clientAssertionService, jwkService, domain, applicationClientSecretService, certificateHeader);
 
         // static handler
         staticHandler(oauth2Router);

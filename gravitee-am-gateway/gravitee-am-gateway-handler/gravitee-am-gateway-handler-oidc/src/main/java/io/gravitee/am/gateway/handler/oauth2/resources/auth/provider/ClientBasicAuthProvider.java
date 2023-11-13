@@ -18,7 +18,9 @@ package io.gravitee.am.gateway.handler.oauth2.resources.auth.provider;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.gateway.handler.oauth2.resources.auth.handler.ClientAuthHandler;
+import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.impl.ApplicationClientSecretService;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -30,6 +32,7 @@ import java.net.URLDecoder;
 import java.util.Base64;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.springframework.util.CollectionUtils.isEmpty;
 
 /**
  * Client Authentication method : client_secret_basic
@@ -43,6 +46,12 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public class ClientBasicAuthProvider implements ClientAuthProvider {
 
     private static final String TYPE = "Basic";
+
+    private final ApplicationClientSecretService appSecretService;
+
+    public ClientBasicAuthProvider(ApplicationClientSecretService appSecretService) {
+        this.appSecretService = appSecretService;
+    }
 
     @Override
     public boolean canHandle(Client client, RoutingContext context) {
@@ -72,10 +81,32 @@ public class ClientBasicAuthProvider implements ClientAuthProvider {
             }
             String clientId = urlDecode(decoded.substring(0, colonIdx));
             String clientSecret = urlDecode(decoded.substring(colonIdx + 1));
-            if (!client.getClientId().equals(clientId) || !client.getClientSecret().equals(clientSecret)) {
+
+            if (!client.getClientId().equals(clientId)) {
                 handler.handle(Future.failedFuture(new InvalidClientException(ClientAuthHandler.GENERIC_ERROR_MESSAGE, authenticationHeader())));
                 return;
             }
+
+            if (!isEmpty(client.getClientSecrets())) {
+                // take the first one as for now, we do not manage multiple secrets
+                ClientSecret hashedSecret = client.getClientSecrets().get(0);
+                var pwdEncoder = client.getSecretSettings()
+                        .stream().filter(settings -> settings.getId().equals(hashedSecret.getSettingsId()))
+                        .findFirst()
+                        .map(appSecretService::getOrCreatePasswordEncoder)
+                        .orElseGet(appSecretService::getOrCreateNoOpPasswordEncoder);
+
+                if (!pwdEncoder.matches(clientSecret, hashedSecret.getSecret())) {
+                    handler.handle(Future.failedFuture(new InvalidClientException(ClientAuthHandler.GENERIC_ERROR_MESSAGE, authenticationHeader())));
+                    return;
+                }
+
+            } else if (!client.getClientSecret().equals(clientSecret)) {
+                // Prior to 4.2, client secret where not hashed and directly stored into the clientSecret attribute
+                handler.handle(Future.failedFuture(new InvalidClientException(ClientAuthHandler.GENERIC_ERROR_MESSAGE, authenticationHeader())));
+                return;
+            }
+
             handler.handle(Future.succeededFuture(client));
         } catch (RuntimeException e) {
             handler.handle(Future.failedFuture(new InvalidClientException("Invalid client: missing or unsupported authentication method", e, authenticationHeader())));

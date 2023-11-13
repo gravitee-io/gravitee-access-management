@@ -233,6 +233,16 @@ domains:
 #        delay: 10
 #        timeUnit: MINUTES
 
+
+#applications:
+#  secret:
+#    # Algorithms used to hash the client secret.
+#    # Can be one of :
+#    # "PBKDF2", "BCrypt", "SHA-512", "SHA-256", "None"
+#    algorithm: None
+#    properties:
+#      rounds: 10
+
 # JWT used to generate signed token for management security mechanism (Bearer Token) and to verify emails
 jwt:
   secret: s3cR3t4grAv1t3310AMS1g1ingDftK3y # jwt secret used to sign JWT tokens (HMAC algorithm)

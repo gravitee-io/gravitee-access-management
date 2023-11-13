@@ -35,6 +35,7 @@ import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSAMLSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
+import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.common.Page;
@@ -71,6 +72,8 @@ import io.gravitee.am.service.model.PatchApplication;
 import io.gravitee.am.service.model.TopApplication;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.ApplicationAuditBuilder;
+import io.gravitee.am.service.spring.application.ApplicationSecretConfig;
+import io.gravitee.am.service.spring.application.SecretHashAlgorithm;
 import io.gravitee.am.service.utils.CertificateTimeComparator;
 import io.gravitee.am.service.utils.GrantTypeUtils;
 import io.gravitee.am.service.validators.accountsettings.AccountSettingsValidator;
@@ -84,9 +87,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
-import org.springframework.util.StringUtils;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -99,8 +100,12 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
+import static io.gravitee.am.common.oidc.ClientAuthenticationMethod.CLIENT_SECRET_JWT;
 import static io.gravitee.am.common.web.UriBuilder.isHttp;
 import static java.util.Objects.nonNull;
+import static java.util.Optional.ofNullable;
+import static org.springframework.util.CollectionUtils.isEmpty;
+import static org.springframework.util.StringUtils.hasText;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -154,6 +159,12 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Autowired
     private CertificateService certificateService;
+
+    @Autowired
+    private ApplicationSecretConfig applicationSecretConfig;
+
+    @Autowired
+    private ApplicationClientSecretService clientSecretService;
 
     @Override
     public Single<Page<Application>> findAll(int page, int size) {
@@ -379,6 +390,13 @@ public class ApplicationServiceImpl implements ApplicationService {
                 .flatMap(existingApplication -> {
                     Application toPatch = patchApplication.patch(existingApplication);
                     applicationTemplateManager.apply(toPatch);
+
+                    // since we manage hashed value for client secret, we do not initialize the
+                    // clientSecret during an update.
+                    if (toPatch.getSettings() != null && toPatch.getSettings().getOauth() != null) {
+                        toPatch.getSettings().getOauth().setClientSecret(null);
+                    }
+
                     final AccountSettings accountSettings = toPatch.getSettings().getAccount();
                     if (!accountSettingsValidator.validate(accountSettings)) {
                         return Single.error(new InvalidParameterException("Unexpected forgot password field"));
@@ -407,17 +425,46 @@ public class ApplicationServiceImpl implements ApplicationService {
                     if (application.getSettings().getOauth() == null) {
                         return Single.error(new IllegalStateException("Application OAuth 2.0 settings is undefined"));
                     }
-                    // update secret
-                    application.getSettings().getOauth().setClientSecret(SecureRandomString.generate());
+
+                    // Replace the SecretSettings into the App config if the settings are different
+                    // from the last time a secret has been generated for this app.
+                    // NOTE: remember to append the settings instead of replacing them when we will manage multiple secret.
+                    var secretSettings = this.applicationSecretConfig.toSecretSettings();
+                    if (!SecretHashAlgorithm.NONE.name().equals(secretSettings.getAlgorithm()) && CLIENT_SECRET_JWT.equals(application.getSettings().getOauth().getTokenEndpointAuthMethod()) ) {
+                        // client exist with client_secret_jwt authentication method,
+                        // we force the None algorithm to allow secret renewal
+                        secretSettings = ApplicationSecretConfig.buildNoneSecretSettings();
+                    }
+
+                    if (!doesAppReferenceSecretSettings(application, secretSettings)) {
+                        application.setSecretSettings(List.of(secretSettings));
+                    }
+
+                    // here the client_secret has been generated, we can generate the HashValue here
+                    // as we do not want to store the clear text value for the client Secret
+                    // we keep the value and force the value into OAuth setting to null
+                    // in order to restore it after the creation
+                    final var rawSecret = SecureRandomString.generate();
+                    var clientSecret = this.clientSecretService.generateClientSecret(rawSecret, secretSettings);
+                    application.setSecrets(List.of(clientSecret));
+                    application.getSettings().getOauth().setClientSecret(null);
                     application.setUpdatedAt(new Date());
-                    return applicationRepository.update(application);
+                    return applicationRepository.update(application).map(app -> {
+                        app.getSettings().getOauth().setClientSecret(rawSecret);
+                        return app;
+                    });
                 })
                 // create event for sync process
                 .flatMap(application1 -> {
                     Event event = new Event(Type.APPLICATION, new Payload(application1.getId(), ReferenceType.DOMAIN, application1.getDomain(), Action.UPDATE));
                     return eventService.create(event).flatMap(domain1 -> Single.just(application1));
                 })
-                .doOnSuccess(updatedApplication -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).type(EventType.APPLICATION_CLIENT_SECRET_RENEWED).application(updatedApplication)))
+                .doOnSuccess(updatedApplication -> {
+                    // make sure that the client secret is not displayed in clear text into the audits
+                    Application sanitizedApp = new Application(updatedApplication);
+                    sanitizedApp.getSettings().getOauth().setClientSecret(null);
+                    auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).type(EventType.APPLICATION_CLIENT_SECRET_RENEWED).application(sanitizedApp));
+                })
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).type(EventType.APPLICATION_CLIENT_SECRET_RENEWED).throwable(throwable)))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -427,6 +474,14 @@ public class ApplicationServiceImpl implements ApplicationService {
                     return Single.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to renew client secret for application %s and domain %s", id, domain), ex));
                 });
+    }
+
+    private static Boolean doesAppReferenceSecretSettings(Application application, ApplicationSecretSettings secretSettings) {
+        return ofNullable(application.getSecretSettings())
+                .map(settings -> settings
+                        .stream()
+                        .anyMatch(conf -> conf.getId() != null && conf.getId().equals(secretSettings.getId()))
+                ).orElse(false);
     }
 
     @Override
@@ -540,17 +595,41 @@ public class ApplicationServiceImpl implements ApplicationService {
         application.setCreatedAt(new Date());
         application.setUpdatedAt(application.getCreatedAt());
 
+        var secretSettings = this.applicationSecretConfig.toSecretSettings();
+        application.setSecretSettings(List.of(secretSettings));
+
+        // here the client_secret has been generated, we can generate the HashValue here
+        // as we do not want to store the clear text value for the client Secret
+        // we keep the value and force the value into OAuth setting to null
+        // in order to restore it after the creation
+        var applicationSettings = application.getSettings();
+        final var rawSecret = applicationSettings.getOauth().getClientSecret();
+        if (rawSecret != null) {
+            // PUBLIC client doesn't need to have secret, so wa have to test it before generated the hash
+            applicationSettings.getOauth().setClientSecret(null);
+            var clientSecret = this.clientSecretService.generateClientSecret(rawSecret, secretSettings);
+            application.setSecrets(List.of(clientSecret));
+        }
+
         // check uniqueness
         return checkApplicationUniqueness(domain, application)
                 // validate application metadata
                 .andThen(validateApplicationMetadata(application))
+                .flatMap(this::validateApplicationAuthMethod)
                 // set default certificate
                 .flatMap(this::setDefaultCertificate)
                 // create the application
-                .flatMap(applicationRepository::create)
+                .flatMap(applicationRepository::create).map(app -> {
+                    if (app.getSettings() != null && app.getSettings().getOauth() != null) {
+                        app.getSettings().getOauth().setClientSecret(rawSecret);
+                    } else {
+                        LOGGER.warn("Unable to restore the clientSecret into the application settings, settings are null.");
+                    }
+                    return app;
+                })
                 // create the owner
                 .flatMap(application1 -> {
-                    if (principal == null || principal.getAdditionalInformation() == null || StringUtils.isEmpty(principal.getAdditionalInformation().get(Claims.organization))) {
+                    if (principal == null || principal.getAdditionalInformation() == null || !hasText((String)principal.getAdditionalInformation().get(Claims.organization))) {
                         // There is no principal or we can not find the organization the user is attached to. Can't assign role.
                         return Single.just(application1);
                     }
@@ -566,15 +645,22 @@ public class ApplicationServiceImpl implements ApplicationService {
                                 membership.setReferenceType(ReferenceType.APPLICATION);
                                 membership.setRoleId(role.getId());
                                 return membershipService.addOrUpdate((String) principal.getAdditionalInformation().get(Claims.organization), membership)
-                                        .map(__ -> domain);
+                                        .map(updatedMembership -> application1);
                             });
                 })
                 // create event for sync process
                 .flatMap(application1 -> {
                     Event event = new Event(Type.APPLICATION, new Payload(application.getId(), ReferenceType.DOMAIN, application.getDomain(), Action.CREATE));
-                    return eventService.create(event).flatMap(domain1 -> Single.just(application));
+                    return eventService.create(event).flatMap(domain1 -> Single.just(application1));
                 })
-                .doOnSuccess(application1 -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).type(EventType.APPLICATION_CREATED).application(application1)))
+                .doOnSuccess(application1 -> {
+                    // make sure that the client secret is not displayed in clear text into the audits
+                    Application sanitizedApp = new Application(application1);
+                    if (sanitizedApp.getSettings() != null && sanitizedApp.getSettings().getOauth() != null) {
+                        sanitizedApp.getSettings().getOauth().setClientSecret(null);
+                    }
+                    auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).type(EventType.APPLICATION_CREATED).application(sanitizedApp));
+                })
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).type(EventType.APPLICATION_CREATED).throwable(throwable)));
     }
 
@@ -587,6 +673,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         return validateApplicationMetadata(applicationToUpdate)
                 // validate identity providers
                 .flatMap(this::validateApplicationIdentityProviders)
+                .flatMap(appToValidate -> validateApplicationAuthMethodUpdate(appToValidate, currentApplication))
                 // update application
                 .flatMap(applicationRepository::update)
                 // create event for sync process
@@ -666,6 +753,36 @@ public class ApplicationServiceImpl implements ApplicationService {
                 });
     }
 
+    private Single<Application> validateApplicationAuthMethodUpdate(Application toUpdateApp, Application existingApplication) {
+        if (isNotUsingClientSecretJwt(existingApplication) && clientSecretJwtWithHashedSecret(toUpdateApp)) {
+            LOGGER.debug("tokenEndpointAuthMethod can't be {} if the client secret is hashed", CLIENT_SECRET_JWT);
+            return Single.error(new InvalidClientMetadataException("client_secret_jwt can't be used by this application"));
+        }
+
+        return Single.just(toUpdateApp);
+    }
+
+    private static boolean clientSecretJwtWithHashedSecret(Application toUpdateApp) {
+        return isUsingClientSecretJwt(toUpdateApp)
+                && !isEmpty(toUpdateApp.getSecretSettings()) && toUpdateApp.getSecretSettings().stream().anyMatch(settings -> !SecretHashAlgorithm.NONE.name().equals(settings.getAlgorithm()));
+    }
+
+    private static boolean isUsingClientSecretJwt(Application app) {
+        return app.getSettings() != null && app.getSettings().getOauth() != null && CLIENT_SECRET_JWT.equals(app.getSettings().getOauth().getTokenEndpointAuthMethod());
+    }
+
+    private static boolean isNotUsingClientSecretJwt(Application app) {
+        return app.getSettings() != null && app.getSettings().getOauth() != null && !CLIENT_SECRET_JWT.equals(app.getSettings().getOauth().getTokenEndpointAuthMethod());
+    }
+
+    private Single<Application> validateApplicationAuthMethod(Application app) {
+        if (clientSecretJwtWithHashedSecret(app)) {
+            LOGGER.debug("tokenEndpointAuthMethod can't be {} if the client secret is hashed", CLIENT_SECRET_JWT);
+            return Single.error(new InvalidClientMetadataException("client_secret_jwt can't be used by this application"));
+        }
+
+        return Single.just(app);
+    }
     /**
      * <pre>
      * This function will return an error if :
@@ -700,7 +817,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                 .switchIfEmpty(Single.error(new DomainNotFoundException(application.getDomain())))
                 .flatMap(domain -> {
                     //check redirect_uri
-                    if (GrantTypeUtils.isRedirectUriRequired(oAuthSettings.getGrantTypes()) && CollectionUtils.isEmpty(oAuthSettings.getRedirectUris())) {
+                    if (GrantTypeUtils.isRedirectUriRequired(oAuthSettings.getGrantTypes()) && isEmpty(oAuthSettings.getRedirectUris())) {
                         // if client type is from V2, it means that the application has been created from an old client without redirect_uri control (via the upgrader)
                         // skip for now since it will be set in the next update operation
                         if (AM_V2_VERSION.equals(oAuthSettings.getSoftwareVersion())) {

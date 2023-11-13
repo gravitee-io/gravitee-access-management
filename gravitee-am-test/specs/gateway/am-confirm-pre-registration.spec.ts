@@ -79,7 +79,11 @@ beforeAll(async () => {
         identityProviders: [{ identity: defaultIdp, priority: -1 }],
       },
       app.id,
-    ),
+    ).then(updatedApp => {
+      // restore the clientSecret coming from the create order
+      updatedApp.settings.oauth.clientSecret = app.settings.oauth.clientSecret;
+      return updatedApp;
+    }),
   );
   expect(application).toBeDefined();
   clientId = application.settings.oauth.clientId;

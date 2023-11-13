@@ -348,6 +348,9 @@ public class ApplicationResource extends AbstractResource {
             }
         }
 
+        filteredApplication.setSecrets(application.getSecrets());
+        filteredApplication.setSecretSettings(application.getSecretSettings());
+
         return filteredApplication;
     }
 }

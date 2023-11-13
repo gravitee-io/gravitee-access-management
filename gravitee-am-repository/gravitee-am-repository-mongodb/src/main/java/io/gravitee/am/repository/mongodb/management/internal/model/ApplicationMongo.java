@@ -15,9 +15,12 @@
  */
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
+import io.gravitee.am.model.application.ApplicationSecretSettings;
+import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.repository.mongodb.common.model.Auditable;
 import org.bson.Document;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -39,6 +42,8 @@ public class ApplicationMongo extends Auditable {
     private Document metadata;
     private ApplicationSettingsMongo settings;
     private Set<ApplicationIdentityProviderMongo> identityProviders;
+    private List<ApplicationSecretSettingsMongo> secretSettings;
+    private List<ClientSecretMongo> secrets;
 
     public String getId() {
         return id;
@@ -142,5 +147,21 @@ public class ApplicationMongo extends Auditable {
 
     public void setIdentityProviders(Set<ApplicationIdentityProviderMongo> identityProviders) {
         this.identityProviders = identityProviders;
+    }
+
+    public List<ApplicationSecretSettingsMongo> getSecretSettings() {
+        return secretSettings;
+    }
+
+    public void setSecretSettings(List<ApplicationSecretSettingsMongo> secretSettings) {
+        this.secretSettings = secretSettings;
+    }
+
+    public List<ClientSecretMongo> getSecrets() {
+        return secrets;
+    }
+
+    public void setSecrets(List<ClientSecretMongo> secrets) {
+        this.secrets = secrets;
     }
 }

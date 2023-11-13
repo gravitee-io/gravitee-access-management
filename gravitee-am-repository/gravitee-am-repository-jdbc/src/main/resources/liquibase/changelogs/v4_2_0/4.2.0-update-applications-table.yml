@@ -1,0 +1,34 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.2.0-update-applications-table
+      author: GraviteeSource Team
+      changes:
+        - addColumn:
+            tableName: applications
+            columns:
+              - column: { name: secret_settings, type: clob, constraints: { nullable: true } }
+
+        - createTable:
+            tableName: application_client_secrets
+            columns:
+              - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: application_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: name, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: { name: settings_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: secret, type: nvarchar(374), constraints: { nullable: false } }
+
+
+        - addPrimaryKey:
+            constraintName: pk_application_client_secrets
+            columnNames: id, application_id
+            tableName: application_client_secrets
+
+        -  addForeignKeyConstraint:
+             baseColumnNames:  application_id
+             baseTableName:  application_client_secrets
+             constraintName:  fk_application_client_secrets_appid
+             onDelete: CASCADE
+             onUpdate: NO ACTION
+             referencedColumnNames: id
+             referencedTableName: applications
