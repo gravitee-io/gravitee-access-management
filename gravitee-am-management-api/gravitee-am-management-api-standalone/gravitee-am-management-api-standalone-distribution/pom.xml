@@ -394,6 +394,14 @@
             <groupId>com.jayway.jsonpath</groupId>
             <artifactId>json-path</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>io.gravitee.secretprovider</groupId>
+            <artifactId>gravitee-secret-provider-kubernetes</artifactId>
+            <version>${gravitee-secretprovider-kubernetes.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -709,6 +717,13 @@
                                     <version>${gravitee-notifier-slack.version}</version>
                                     <type>zip</type>
                                 </artifactItem>
+                                <artifactItem>
+                                    <groupId>io.gravitee.secretprovider</groupId>
+                                    <artifactId>gravitee-secret-provider-kubernetes</artifactId>
+                                    <version>${gravitee-secretprovider-kubernetes.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+
                                 <!-- AM EE plugins -->
                                 <artifactItem>
                                     <groupId>com.graviteesource.am.identityprovider</groupId>

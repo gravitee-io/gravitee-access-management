@@ -27,6 +27,14 @@
 # Please have a look to https://docs.gravitee.io/ for more options and fine-grained granularity
 ############################################################################################################
 
+# Secret managers config in order to use secret
+#secrets:
+#  kubernetes:
+#    enabled: false
+#    namespace: default   # if left empty will assume the namespace is the current namespace in which gravitee is deployed
+#    kubeConfigFile: #location of the kubernetes config file
+#    timeoutMs: 3000      # client timeout
+
 # Gateway HTTP server
 #http:
 #  port: 8092
