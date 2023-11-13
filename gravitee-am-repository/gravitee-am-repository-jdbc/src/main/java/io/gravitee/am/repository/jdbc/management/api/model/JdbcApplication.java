@@ -20,6 +20,7 @@ import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -45,10 +46,11 @@ public class JdbcApplication {
     private String metadata;
     private String settings;
 
+    private String secretSettings;
     public JdbcApplication() {
     }
 
-    public JdbcApplication(String id, String name, String type, String description, String domain, boolean enabled, boolean template, String certificate, LocalDateTime createdAt, LocalDateTime updatedAt, String metadata, String settings) {
+    public JdbcApplication(String id, String name, String type, String description, String domain, boolean enabled, boolean template, String certificate, LocalDateTime createdAt, LocalDateTime updatedAt, String metadata, String settings, String secretSettings) {
         this.id = id;
         this.name = name;
         this.type = type;
@@ -61,6 +63,7 @@ public class JdbcApplication {
         this.updatedAt = updatedAt;
         this.metadata = metadata;
         this.settings = settings;
+        this.secretSettings = secretSettings;
     }
 
     public String getId() {
@@ -159,6 +162,14 @@ public class JdbcApplication {
         this.settings = settings;
     }
 
+    public String getSecretSettings() {
+        return secretSettings;
+    }
+
+    public void setSecretSettings(String secretSettings) {
+        this.secretSettings = secretSettings;
+    }
+
     @Table("application_identities")
     public static class Identity {
         @Column("application_id")
@@ -190,6 +201,69 @@ public class JdbcApplication {
 
         public int getPriority() {
             return priority;
+        }
+    }
+
+    @Table("application_client_secrets")
+    public static class ClientSecret {
+        @Column("application_id")
+        private String applicationId;
+
+        private String id;
+
+        @Column("settings_id")
+        private String settingsId;
+        private String name;
+        private String secret;
+        @Column("created_at")
+        private LocalDateTime createdAt;
+
+        public String getApplicationId() {
+            return applicationId;
+        }
+
+        public void setApplicationId(String applicationId) {
+            this.applicationId = applicationId;
+        }
+
+        public String getId() {
+            return id;
+        }
+
+        public void setId(String id) {
+            this.id = id;
+        }
+
+        public String getSettingsId() {
+            return settingsId;
+        }
+
+        public void setSettingsId(String settingsId) {
+            this.settingsId = settingsId;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public String getSecret() {
+            return secret;
+        }
+
+        public void setSecret(String secret) {
+            this.secret = secret;
+        }
+
+        public LocalDateTime getCreatedAt() {
+            return createdAt;
+        }
+
+        public void setCreatedAt(LocalDateTime createdAt) {
+            this.createdAt = createdAt;
         }
     }
 

@@ -15,13 +15,25 @@
  */
 package io.gravitee.am.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
+import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.oidc.Client;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.SchemaProperty;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.stream.Collectors;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -88,6 +100,10 @@ public class Application implements Resource, PasswordSettingsAware {
     @Schema(type = "java.lang.Long")
     private Date updatedAt;
 
+    private List<ApplicationSecretSettings> secretSettings;
+
+    private List<ClientSecret> secrets;
+
     public Application() {
     }
 
@@ -106,6 +122,8 @@ public class Application implements Resource, PasswordSettingsAware {
         this.identityProviders = other.identityProviders;
         this.createdAt = other.createdAt;
         this.updatedAt = other.updatedAt;
+        this.secretSettings = other.secretSettings;
+        this.secrets = other.getSecrets().stream().map(ClientSecret::new).collect(Collectors.toList());
     }
 
     public String getId() {
@@ -220,6 +238,25 @@ public class Application implements Resource, PasswordSettingsAware {
         this.updatedAt = updatedAt;
     }
 
+    public List<ApplicationSecretSettings> getSecretSettings() {
+        return secretSettings;
+    }
+
+    public void setSecretSettings(List<ApplicationSecretSettings> secretSettings) {
+        this.secretSettings = secretSettings;
+    }
+
+    public List<ClientSecret> getSecrets() {
+        if (secrets == null) {
+            this.secrets = new ArrayList<>();
+        }
+        return secrets;
+    }
+
+    public void setSecrets(List<ClientSecret> secrets) {
+        this.secrets = secrets;
+    }
+
     public Client toClient() {
         Client client = new Client();
         client.setId(this.id);
@@ -233,6 +270,8 @@ public class Application implements Resource, PasswordSettingsAware {
         client.setCreatedAt(this.createdAt);
         client.setUpdatedAt(this.updatedAt);
         Optional.ofNullable(settings).ifPresent(s -> s.copyTo(client));
+        client.setSecretSettings(this.secretSettings);
+        client.setClientSecrets(this.getSecrets());
         return client;
     }
 

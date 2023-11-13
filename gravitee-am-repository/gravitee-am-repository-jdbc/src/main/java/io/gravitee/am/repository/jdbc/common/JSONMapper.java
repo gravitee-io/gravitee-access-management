@@ -20,7 +20,13 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.jose.JWK;
+
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -74,9 +80,64 @@ public class JSONMapper {
         return result;
     }
 
+    public static String secretSettingsToJson(List<ApplicationSecretSettings> secretSettingsList) {
+        String result = null;
+        if (secretSettingsList != null) {
+            try {
+                result = mapper.writeValueAsString(secretSettingsList.stream().map(JdbcApplicationSecretSettings::new).collect(Collectors.toList()));
+            } catch (JsonProcessingException e) {
+                throw new JsonMapperException("Unable to serialize Bean " + secretSettingsList.getClass().getName(), e);
+            }
+        }
+        return result;
+    }
+
     public static class JsonMapperException extends RuntimeException {
         public JsonMapperException(String message, Throwable cause) {
             super(message, cause);
+        }
+    }
+
+
+    public static class JdbcApplicationSecretSettings {
+
+        private String id;
+
+        private String algorithm;
+
+        private Map<String, Object> properties = new TreeMap<>();
+
+        public JdbcApplicationSecretSettings() {
+        }
+
+        public JdbcApplicationSecretSettings(ApplicationSecretSettings settings) {
+            this.id = settings.getId();
+            this.algorithm = settings.getAlgorithm();
+            this.properties = settings.getProperties() != null ? new TreeMap<>(settings.getProperties()) : new TreeMap<>();
+        }
+
+        public String getId() {
+            return id;
+        }
+
+        public void setId(String id) {
+            this.id = id;
+        }
+
+        public String getAlgorithm() {
+            return algorithm;
+        }
+
+        public void setAlgorithm(String algorithm) {
+            this.algorithm = algorithm;
+        }
+
+        public Map<String, Object> getProperties() {
+            return properties;
+        }
+
+        public void setProperties(Map<String, Object> properties) {
+            this.properties = properties;
         }
     }
 }

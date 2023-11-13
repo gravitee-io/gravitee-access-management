@@ -20,11 +20,14 @@ import io.gravitee.am.model.Application;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
+import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
+import io.gravitee.am.repository.jdbc.common.JSONMapper;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcApplication;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcApplication.Identity;
+import io.gravitee.am.repository.jdbc.management.api.spring.application.SpringApplicationClientSecretRepository;
 import io.gravitee.am.repository.jdbc.management.api.spring.application.SpringApplicationFactorRepository;
 import io.gravitee.am.repository.jdbc.management.api.spring.application.SpringApplicationIdentityRepository;
 import io.gravitee.am.repository.jdbc.management.api.spring.application.SpringApplicationRepository;
@@ -75,6 +78,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
     public static final String COL_UPDATED_AT = "updated_at";
     public static final String COL_METADATA = "metadata";
     public static final String COL_SETTINGS = "settings";
+    public static final String COL_SECRET_SETTINGS = "secret_settings";
 
     private static final List<String> columns = List.of(COL_ID,
             COL_TYPE,
@@ -87,13 +91,17 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
             COL_CREATED_AT,
             COL_UPDATED_AT,
             COL_METADATA,
-            COL_SETTINGS);
+            COL_SETTINGS,
+            COL_SECRET_SETTINGS);
 
     @Autowired
     private SpringApplicationRepository applicationRepository;
 
     @Autowired
     private SpringApplicationFactorRepository factorRepository;
+
+    @Autowired
+    private SpringApplicationClientSecretRepository clientSecretRepository;
 
     @Autowired
     private SpringApplicationScopeRepository scopeRepository;
@@ -129,6 +137,11 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         ).flatMap(app ->
                 factorRepository.findAllByApplicationId(app.getId()).map(JdbcApplication.Factor::getFactor).toList().map(factors -> {
                     app.setFactors(new HashSet<>(factors));
+                    return app;
+                })
+        ).flatMap(app ->
+                clientSecretRepository.findAllByApplicationId(app.getId()).map(jdbcClientSecret -> mapper.map(jdbcClientSecret, ClientSecret.class)).toList().map(secrets -> {
+                    app.setSecrets(secrets);
                     return app;
                 })
         ).flatMap(app ->
@@ -317,6 +330,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         sql = addQuotedField(sql, COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
         sql = databaseDialectHelper.addJsonField(sql, COL_METADATA, item.getMetadata());
         sql = databaseDialectHelper.addJsonField(sql, COL_SETTINGS, item.getSettings());
+        sql = addQuotedField(sql, COL_SECRET_SETTINGS, JSONMapper.secretSettingsToJson(item.getSecretSettings()), String.class);
 
         Mono<Long> insertAction = sql.fetch().rowsUpdated();
         insertAction = persistChildEntities(insertAction, item);
@@ -344,6 +358,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         sql = addQuotedField(sql, COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
         sql = databaseDialectHelper.addJsonField(sql, COL_METADATA, item.getMetadata());
         sql = databaseDialectHelper.addJsonField(sql, COL_SETTINGS, item.getSettings());
+        sql = addQuotedField(sql, COL_SECRET_SETTINGS, JSONMapper.secretSettingsToJson(item.getSecretSettings()), String.class);
 
         Mono<Long> updateAction = sql.fetch().rowsUpdated();
         updateAction = deleteChildEntities(item.getId()).then(updateAction);
@@ -364,14 +379,33 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
 
     private Mono<Long> deleteChildEntities(String appId) {
         final Query criteria = query(where("application_id").is(appId));
+        Mono<Long> secrets = getTemplate().delete(criteria, JdbcApplication.ClientSecret.class);
         Mono<Long> identities = getTemplate().delete(criteria, JdbcApplication.Identity.class);
         Mono<Long> factors = getTemplate().delete(criteria, JdbcApplication.Factor.class);
         Mono<Long> grants = getTemplate().delete(criteria, JdbcApplication.Grant.class);
         Mono<Long> scopeSettings = getTemplate().delete(criteria, JdbcApplication.ScopeSettings.class);
-        return factors.then(identities).then(grants).then(scopeSettings);
+        return factors.then(secrets).then(identities).then(grants).then(scopeSettings);
     }
 
     private Mono<Long> persistChildEntities(Mono<Long> actionFlow, Application app) {
+        var secrets = app.getSecrets();
+        if (secrets != null && !secrets.isEmpty()) {
+            actionFlow = actionFlow.then(Flux.fromIterable(secrets).concatMap(secret -> {
+                String INSERT_STMT = "INSERT INTO application_client_secrets" +
+                        "(id, application_id, name, created_at, settings_id, secret) " +
+                        "VALUES (:id, :application_id, :name, :created_at, :settings_id, :secret)";
+                final DatabaseClient.GenericExecuteSpec sql = getTemplate().getDatabaseClient()
+                        .sql(INSERT_STMT)
+                        .bind("id", secret.getId())
+                        .bind("application_id", app.getId())
+                        .bind("name", secret.getName())
+                        .bind("created_at", dateConverter.convertTo(secret.getCreatedAt(), null))
+                        .bind("settings_id", secret.getSettingsId())
+                        .bind("secret", secret.getSecret());
+                return sql.fetch().rowsUpdated();
+            }).reduce(Long::sum));
+        }
+
         var identities = app.getIdentityProviders();
         if (identities != null && !identities.isEmpty()) {
             actionFlow = actionFlow.then(Flux.fromIterable(identities).concatMap(idp -> {

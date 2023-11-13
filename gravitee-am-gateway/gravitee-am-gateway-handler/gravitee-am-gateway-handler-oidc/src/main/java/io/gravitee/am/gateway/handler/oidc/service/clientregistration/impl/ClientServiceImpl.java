@@ -152,6 +152,9 @@ public class ClientServiceImpl implements ClientService {
         application.setType(getType(client));
         // set application settings
         application.setSettings(getSettings(client));
+        // preserve client secret hash
+        application.setSecrets(client.getClientSecrets());
+        application.setSecretSettings(client.getSecretSettings());
         return application;
     }
 

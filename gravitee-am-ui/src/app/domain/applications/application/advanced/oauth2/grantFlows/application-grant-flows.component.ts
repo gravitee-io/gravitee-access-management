@@ -199,6 +199,16 @@ export class ApplicationGrantFlowsComponent implements OnInit {
       });
       this.tokenEndpointAuthMethods = updatedAuthMethods;
     }
+    // hide client_secret_jwt if the app has at least one secret hashed.
+    // For now, as we only manage one secret we don't have to go through secrets
+    // but when multiple secret will be available, we will have to check if a secret
+    // is not using the NONE alg.
+    const secretSettings = this.application.secretSettings || [];
+    const hashIds = secretSettings.filter((settings) => settings.algorithm.toUpperCase() !== 'NONE').map((settings) => settings.id);
+    if (hashIds && hashIds.length !== 0 && this.application.settings.oauth.tokenEndpointAuthMethod !== 'client_secret_jwt') {
+      const updatedAuthMethods = this.tokenEndpointAuthMethods.filter((item) => item.value !== 'client_secret_jwt');
+      this.tokenEndpointAuthMethods = updatedAuthMethods;
+    }
   }
 
   private initGrantTypes() {

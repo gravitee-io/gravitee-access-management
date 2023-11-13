@@ -218,6 +218,8 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationMongo.setIdentities(applicationMongo.getIdentityProviders().stream().map(ApplicationIdentityProviderMongo::getIdentity).collect(toSet()));
         applicationMongo.setCreatedAt(other.getCreatedAt());
         applicationMongo.setUpdatedAt(other.getUpdatedAt());
+        applicationMongo.setSecretSettings(convertToSecretSettingsMongo(other.getSecretSettings()));
+        applicationMongo.setSecrets(convertToClientSecretMongo(other.getSecrets()));
 
         return applicationMongo;
     }
@@ -239,8 +241,73 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         application.setIdentityProviders(convert(other.getIdentityProviders()));
         application.setCreatedAt(other.getCreatedAt());
         application.setUpdatedAt(other.getUpdatedAt());
-
+        application.setSecretSettings(convertToSecretSettings(other.getSecretSettings()));
+        application.setSecrets(convertToClientSecret(other.getSecrets()));
         return application;
+    }
+
+    private static List<ClientSecretMongo> convertToClientSecretMongo(List<ClientSecret> clientSecrets) {
+        List<ClientSecretMongo> result = null;
+        if (clientSecrets != null) {
+            result = clientSecrets.stream().map(secret -> {
+                if (secret.getId() == null) {
+                    secret.setId(UUID.randomUUID().toString());
+                }
+
+                ClientSecretMongo mongoSecret = new ClientSecretMongo();
+                mongoSecret.setId(secret.getId());
+                mongoSecret.setSecret(secret.getSecret());
+                mongoSecret.setName(secret.getName());
+                mongoSecret.setSettingsId(secret.getSettingsId());
+                mongoSecret.setCreatedAt(secret.getCreatedAt());
+                return mongoSecret;
+            }).collect(Collectors.toList());
+        }
+        return result;
+    }
+
+    private static List<ClientSecret> convertToClientSecret(List<ClientSecretMongo> clientSecretMongos) {
+        List<ClientSecret> result = null;
+        if (clientSecretMongos != null) {
+            result = clientSecretMongos.stream().map(mongoSecret -> {
+                ClientSecret secret = new ClientSecret();
+                secret.setId(mongoSecret.getId());
+                secret.setSecret(mongoSecret.getSecret());
+                secret.setName(mongoSecret.getName());
+                secret.setSettingsId(mongoSecret.getSettingsId());
+                secret.setCreatedAt(mongoSecret.getCreatedAt());
+                return secret;
+            }).collect(Collectors.toList());
+        }
+        return result;
+    }
+
+    private static List<ApplicationSecretSettings> convertToSecretSettings(List<ApplicationSecretSettingsMongo> secretSettingsMongo) {
+        List<ApplicationSecretSettings> result = null;
+        if (secretSettingsMongo != null) {
+            result = secretSettingsMongo.stream().map(ssm -> {
+                ApplicationSecretSettings secretSettings = new ApplicationSecretSettings();
+                secretSettings.setId(ssm.getId());
+                secretSettings.setAlgorithm(ssm.getAlgorithm());
+                secretSettings.setProperties(ofNullable(ssm.getProperties()).map(TreeMap::new).orElse(null));
+                return secretSettings;
+            }).collect(Collectors.toList());
+        }
+        return result;
+    }
+
+    private static List<ApplicationSecretSettingsMongo> convertToSecretSettingsMongo(List<ApplicationSecretSettings> secretSettings) {
+        List<ApplicationSecretSettingsMongo> result = null;
+        if (secretSettings != null) {
+            result = secretSettings.stream().map(ssm -> {
+                ApplicationSecretSettingsMongo secretSettingsMongo = new ApplicationSecretSettingsMongo();
+                secretSettingsMongo.setId(ssm.getId());
+                secretSettingsMongo.setAlgorithm(ssm.getAlgorithm());
+                secretSettingsMongo.setProperties(ofNullable(ssm.getProperties()).map(Document::new).orElse(null));
+                return secretSettingsMongo;
+            }).collect(Collectors.toList());
+        }
+        return result;
     }
 
     private static ApplicationSettingsMongo convert(ApplicationSettings other) {

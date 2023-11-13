@@ -23,6 +23,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.assertion.ClientAssertionSe
 import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.impl.ApplicationClientSecretService;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Maybe;
 import io.vertx.core.http.HttpMethod;
@@ -30,6 +31,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -55,12 +57,16 @@ public class ClientAuthHandlerTest extends RxWebTestBase {
     @Mock
     private Domain domain;
 
+    @Mock
+    private ApplicationClientSecretService applicationClientSecretService;
+
+
     @Override
     public void setUp() throws Exception {
         super.setUp();
 
         router.post("/oauth/token")
-                .handler(ClientAuthHandler.create(clientSyncService, clientAssertionService, jwkService, domain, null))
+                .handler(ClientAuthHandler.create(clientSyncService, clientAssertionService, jwkService, domain, applicationClientSecretService, null))
                 .handler(rc -> rc.response().setStatusCode(200).end())
                 .failureHandler(new ExceptionHandler());
     }

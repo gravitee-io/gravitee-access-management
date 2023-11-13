@@ -102,7 +102,6 @@ public class JWTAuthenticationFilter extends AbstractAuthenticationProcessingFil
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
         String authToken;
-
         // first check Authorization request header
         final String authorization = request.getHeader(AUTHORIZATION);
         if (authorization != null && authorization.startsWith(BEARER_PREFIX)) {

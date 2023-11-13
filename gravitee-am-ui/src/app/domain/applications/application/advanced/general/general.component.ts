@@ -17,11 +17,24 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import * as _ from 'lodash';
 import { filter, switchMap, tap } from 'rxjs/operators';
+import { MatDialog } from '@angular/material/dialog';
+import { GIO_DIALOG_WIDTH } from '@gravitee/ui-particles-angular';
+import { Subject } from 'rxjs';
 
 import { SnackbarService } from '../../../../../services/snackbar.service';
 import { ApplicationService } from '../../../../../services/application.service';
 import { DialogService } from '../../../../../services/dialog.service';
 import { AuthService } from '../../../../../services/auth.service';
+import {
+  ApplicationClientSecretCopyDialogComponent,
+  ApplicationClientSecretCopyDialogData,
+  ApplicationClientSecretCopyDialogResult,
+} from '../../../client-secret/application-client-secret-copy-dialog.component';
+import {
+  ApplicationClientSecretRenewDialogComponent,
+  ApplicationClientSecretRenewDialogData,
+  ApplicationClientSecretRenewDialogResult,
+} from '../../../client-secret/application-client-secret-renew-dialog.component';
 
 @Component({
   selector: 'application-general',
@@ -76,6 +89,7 @@ export class ApplicationGeneralComponent implements OnInit {
     private applicationService: ApplicationService,
     private authService: AuthService,
     private dialogService: DialogService,
+    private readonly matDialog: MatDialog,
   ) {}
 
   ngOnInit() {
@@ -146,14 +160,54 @@ export class ApplicationGeneralComponent implements OnInit {
 
   renewClientSecret(event) {
     event.preventDefault();
-    this.dialogService
-      .confirm('Renew Client secret', 'Are you sure you want to renew the client secret ?')
+    this.matDialog
+      .open<ApplicationClientSecretRenewDialogComponent, ApplicationClientSecretRenewDialogData, ApplicationClientSecretRenewDialogResult>(
+        ApplicationClientSecretRenewDialogComponent,
+        {
+          width: GIO_DIALOG_WIDTH.MEDIUM,
+          disableClose: true,
+          role: 'alertdialog',
+          id: 'applicationClientSecretRenewDialog',
+        },
+      )
+      .afterClosed()
       .pipe(
-        filter((res) => res),
-        switchMap(() => this.applicationService.renewClientSecret(this.domainId, this.application.id)),
-        tap((data) => {
-          this.application = data;
-          this.snackbarService.open('Client secret updated');
+        switchMap((action: any) => {
+          if (action === 'proceed') {
+            return this.applicationService.renewClientSecret(this.domainId, this.application.id).pipe(
+              tap((data) => {
+                this.application = data;
+                this.snackbarService.open('Client secret updated');
+              }),
+              switchMap(() =>
+                this.matDialog
+                  .open<
+                    ApplicationClientSecretCopyDialogComponent,
+                    ApplicationClientSecretCopyDialogData,
+                    ApplicationClientSecretCopyDialogResult
+                  >(ApplicationClientSecretCopyDialogComponent, {
+                    width: GIO_DIALOG_WIDTH.MEDIUM,
+                    disableClose: true,
+                    data: {
+                      secret: this.application.settings.oauth.clientSecret,
+                      renew: true,
+                    },
+                    role: 'alertdialog',
+                    id: 'applicationClientSecretCopyDialog',
+                  })
+                  .afterClosed()
+                  .pipe(
+                    tap(() => {
+                      // reset client secret as it should be available only into the
+                      // copy modal
+                      this.application.settings.oauth.clientSecret = null;
+                    }),
+                  ),
+              ),
+            );
+          } else {
+            return new Subject();
+          }
         }),
       )
       .subscribe();

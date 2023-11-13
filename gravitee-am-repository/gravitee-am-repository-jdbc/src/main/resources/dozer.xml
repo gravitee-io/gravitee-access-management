@@ -133,6 +133,10 @@
             <a>settings</a>
             <b>settings</b>
         </field>
+        <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.AppSecretSettingsConverter">
+            <a>secretSettings</a>
+            <b>secretSettings</b>
+        </field>
     </mapping>
 
     <mapping map-null="false">

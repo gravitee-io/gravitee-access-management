@@ -20,20 +20,42 @@ import io.gravitee.am.common.oauth2.ClientType;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.identityprovider.api.DefaultUser;
-import io.gravitee.am.model.*;
+import io.gravitee.am.model.Application;
+import io.gravitee.am.model.Certificate;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Email;
+import io.gravitee.am.model.Form;
+import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.Membership;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.Role;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.account.FormField;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
+import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.ApplicationRepository;
-import io.gravitee.am.service.exception.*;
+import io.gravitee.am.service.exception.ApplicationAlreadyExistsException;
+import io.gravitee.am.service.exception.ApplicationNotFoundException;
+import io.gravitee.am.service.exception.InvalidClientMetadataException;
+import io.gravitee.am.service.exception.InvalidParameterException;
+import io.gravitee.am.service.exception.InvalidRedirectUriException;
+import io.gravitee.am.service.exception.InvalidTargetUrlException;
+import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.impl.ApplicationClientSecretService;
 import io.gravitee.am.service.impl.ApplicationServiceImpl;
-import io.gravitee.am.service.model.*;
+import io.gravitee.am.service.model.NewApplication;
+import io.gravitee.am.service.model.PatchApplication;
+import io.gravitee.am.service.model.PatchApplicationIdentityProvider;
+import io.gravitee.am.service.model.PatchApplicationOAuthSettings;
+import io.gravitee.am.service.model.PatchApplicationSettings;
+import io.gravitee.am.service.spring.application.ApplicationSecretConfig;
+import io.gravitee.am.service.spring.application.SecretHashAlgorithm;
 import io.gravitee.am.service.validators.accountsettings.AccountSettingsValidator;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
@@ -47,16 +69,37 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.core.env.ConfigurableEnvironment;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import static org.apache.commons.lang3.StringUtils.isEmpty;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -66,6 +109,7 @@ import static org.mockito.Mockito.*;
 public class ApplicationServiceTest {
 
     public static final String ORGANIZATION_ID = "DEFAULT";
+    public static final String CLIENT_ID = "client_id";
 
     @InjectMocks
     private final ApplicationService applicationService = new ApplicationServiceImpl();
@@ -108,6 +152,15 @@ public class ApplicationServiceTest {
 
     @Mock
     private CertificateService certificateService;
+
+    @Spy
+    private ApplicationSecretConfig applicationSecretConfig = new ApplicationSecretConfig("BCrypt", mock(ConfigurableEnvironment.class));
+
+    @Spy
+    private ApplicationClientSecretService applicationClientSecretService = new ApplicationClientSecretService();
+
+    @Mock
+    private ClientSecret clientSecret;
 
     private final static String DOMAIN = "domain1";
 
@@ -375,6 +428,14 @@ public class ApplicationServiceTest {
     public void shouldCreate_noCertificate() {
         NewApplication newClient = prepareCreateApp();
         when(certificateService.findByDomain(DOMAIN)).thenReturn(Flowable.empty());
+        doAnswer(invocation -> {
+            Application mock = invocation.getArgument(0);
+            mock.getSettings().getOauth().setGrantTypes(Collections.singletonList(GrantType.CLIENT_CREDENTIALS));
+            mock.getSettings().getOauth().setClientId(CLIENT_ID);
+            mock.getSettings().getOauth().setClientSecret("client_secret");
+            return mock;
+        }).when(applicationTemplateManager).apply(any());
+        when(applicationRepository.findByDomainAndClientId(eq(DOMAIN), eq(CLIENT_ID))).thenReturn(Maybe.empty());
 
         DefaultUser user = new DefaultUser("username");
         user.setAdditionalInformation(Collections.singletonMap(Claims.organization, ORGANIZATION_ID));
@@ -385,8 +446,42 @@ public class ApplicationServiceTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(applicationRepository, times(1)).findByDomainAndClientId(DOMAIN, null);
+        verify(applicationRepository, times(1)).findByDomainAndClientId(DOMAIN, CLIENT_ID);
         verify(applicationRepository, times(1)).create(any(Application.class));
+        verify(membershipService).addOrUpdate(eq(ORGANIZATION_ID), any());
+    }
+
+    @Test
+    public void shouldCreate_WithClientSecretHash() {
+        NewApplication newClient = prepareCreateApp();
+        when(certificateService.findByDomain(DOMAIN)).thenReturn(Flowable.empty());
+        doAnswer(invocation -> {
+            Application mock = invocation.getArgument(0);
+            mock.getSettings().getOauth().setGrantTypes(Collections.singletonList(GrantType.CLIENT_CREDENTIALS));
+            mock.getSettings().getOauth().setClientId(CLIENT_ID);
+            mock.getSettings().getOauth().setClientSecret("client_secret");
+            return mock;
+        }).when(applicationTemplateManager).apply(any());
+        when(applicationRepository.findByDomainAndClientId(DOMAIN, CLIENT_ID)).thenReturn(Maybe.empty());
+
+        DefaultUser user = new DefaultUser("username");
+        user.setAdditionalInformation(Collections.singletonMap(Claims.organization, ORGANIZATION_ID));
+
+        TestObserver<Application> testObserver = applicationService.create(DOMAIN, newClient, user).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(applicationRepository, times(1)).findByDomainAndClientId(DOMAIN, CLIENT_ID);
+        verify(applicationRepository, times(1)).create(argThat(app ->
+            app.getSecretSettings() != null &&
+                    app.getSecretSettings().size() == 1 &&
+                    !isEmpty(app.getSecretSettings().get(0).getId()) &&
+                    app.getSecretSettings().get(0).getAlgorithm().equals(SecretHashAlgorithm.BCRYPT.name()) &&
+                    app.getSecretSettings().get(0).getProperties().containsKey("rounds")
+        ));
+
         verify(membershipService).addOrUpdate(eq(ORGANIZATION_ID), any());
     }
 
@@ -419,13 +514,22 @@ public class ApplicationServiceTest {
         DefaultUser user = new DefaultUser("username");
         user.setAdditionalInformation(Collections.singletonMap(Claims.organization, ORGANIZATION_ID));
 
+        doAnswer(invocation -> {
+            Application mock = invocation.getArgument(0);
+            mock.getSettings().getOauth().setGrantTypes(Collections.singletonList(GrantType.CLIENT_CREDENTIALS));
+            mock.getSettings().getOauth().setClientId(CLIENT_ID);
+            mock.getSettings().getOauth().setClientSecret("client_secret");
+            return mock;
+        }).when(applicationTemplateManager).apply(any());
+        when(applicationRepository.findByDomainAndClientId(DOMAIN, CLIENT_ID)).thenReturn(Maybe.empty());
+
         TestObserver<Application> testObserver = applicationService.create(DOMAIN, newClient, user).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(applicationRepository, times(1)).findByDomainAndClientId(DOMAIN, null);
+        verify(applicationRepository, times(1)).findByDomainAndClientId(DOMAIN,  CLIENT_ID);
         verify(applicationRepository, times(1)).create(any(Application.class));
         verify(applicationRepository, times(1)).create(argThat(app -> app.getCertificate().equalsIgnoreCase(lastestDefaultCert.getId())));
         verify(membershipService).addOrUpdate(eq(ORGANIZATION_ID), any());
@@ -460,13 +564,23 @@ public class ApplicationServiceTest {
         DefaultUser user = new DefaultUser("username");
         user.setAdditionalInformation(Collections.singletonMap(Claims.organization, ORGANIZATION_ID));
 
+        doAnswer(invocation -> {
+            Application mock = invocation.getArgument(0);
+            mock.getSettings().getOauth().setGrantTypes(Collections.singletonList(GrantType.CLIENT_CREDENTIALS));
+            mock.getSettings().getOauth().setClientId(CLIENT_ID);
+            mock.getSettings().getOauth().setClientSecret("client_secret");
+            return mock;
+        }).when(applicationTemplateManager).apply(any());
+        when(applicationRepository.findByDomainAndClientId(eq(DOMAIN), eq(CLIENT_ID))).thenReturn(Maybe.empty());
+        when(applicationRepository.create(any(Application.class))).thenAnswer(args -> Single.just(args.getArguments()[0]));
+
         TestObserver<Application> testObserver = applicationService.create(DOMAIN, newClient, user).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(applicationRepository, times(1)).findByDomainAndClientId(DOMAIN, null);
+        verify(applicationRepository, times(1)).findByDomainAndClientId(DOMAIN, CLIENT_ID);
         verify(applicationRepository, times(1)).create(any(Application.class));
         verify(applicationRepository, times(1)).create(argThat(app -> app.getCertificate().equalsIgnoreCase(firstDefaultCert.getId())));
         verify(membershipService).addOrUpdate(eq(ORGANIZATION_ID), any());
@@ -495,13 +609,22 @@ public class ApplicationServiceTest {
         DefaultUser user = new DefaultUser("username");
         user.setAdditionalInformation(Collections.singletonMap(Claims.organization, ORGANIZATION_ID));
 
+        doAnswer(invocation -> {
+            Application mock = invocation.getArgument(0);
+            mock.getSettings().getOauth().setGrantTypes(Collections.singletonList(GrantType.CLIENT_CREDENTIALS));
+            mock.getSettings().getOauth().setClientId(CLIENT_ID);
+            mock.getSettings().getOauth().setClientSecret("client_secret");
+            return mock;
+        }).when(applicationTemplateManager).apply(any());
+        when(applicationRepository.findByDomainAndClientId(DOMAIN, CLIENT_ID)).thenReturn(Maybe.empty());
+
         TestObserver<Application> testObserver = applicationService.create(DOMAIN, newClient, user).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(applicationRepository, times(1)).findByDomainAndClientId(DOMAIN, null);
+        verify(applicationRepository, times(1)).findByDomainAndClientId(DOMAIN, CLIENT_ID);
         verify(applicationRepository, times(1)).create(any(Application.class));
         verify(applicationRepository, times(1)).create(argThat(app -> app.getCertificate().equalsIgnoreCase(customCert.getId())));
         verify(membershipService).addOrUpdate(eq(ORGANIZATION_ID), any());
@@ -512,16 +635,10 @@ public class ApplicationServiceTest {
         Application createClient = Mockito.mock(Application.class);
         when(newClient.getName()).thenReturn("my-client");
         when(newClient.getType()).thenReturn(ApplicationType.SERVICE);
-        when(applicationRepository.findByDomainAndClientId(DOMAIN, null)).thenReturn(Maybe.empty());
         when(applicationRepository.create(any(Application.class))).thenReturn(Single.just(createClient));
         when(domainService.findById(anyString())).thenReturn(Maybe.just(new Domain()));
         when(scopeService.validateScope(anyString(), any())).thenReturn(Single.just(true));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
-        doAnswer(invocation -> {
-            Application mock = invocation.getArgument(0);
-            mock.getSettings().getOauth().setGrantTypes(Collections.singletonList(GrantType.CLIENT_CREDENTIALS));
-            return mock;
-        }).when(applicationTemplateManager).apply(any());
         when(membershipService.addOrUpdate(eq(ORGANIZATION_ID), any())).thenReturn(Single.just(new Membership()));
         when(roleService.findSystemRole(SystemRole.APPLICATION_PRIMARY_OWNER, ReferenceType.APPLICATION)).thenReturn(Maybe.just(new Role()));
         return newClient;
@@ -531,7 +648,14 @@ public class ApplicationServiceTest {
     public void shouldCreate_technicalException() {
         NewApplication newClient = Mockito.mock(NewApplication.class);
         when(newClient.getName()).thenReturn("my-client");
-        when(applicationRepository.findByDomainAndClientId(DOMAIN, null)).thenReturn(Maybe.error(TechnicalException::new));
+        doAnswer(invocation -> {
+            Application mock = invocation.getArgument(0);
+            mock.getSettings().getOauth().setGrantTypes(Collections.singletonList(GrantType.CLIENT_CREDENTIALS));
+            mock.getSettings().getOauth().setClientId(CLIENT_ID);
+            mock.getSettings().getOauth().setClientSecret("client_secret");
+            return mock;
+        }).when(applicationTemplateManager).apply(any());
+        when(applicationRepository.findByDomainAndClientId(DOMAIN, CLIENT_ID)).thenReturn(Maybe.error(TechnicalException::new));
 
         TestObserver<Application> testObserver = new TestObserver<>();
         applicationService.create(DOMAIN, newClient).subscribe(testObserver);
@@ -548,11 +672,14 @@ public class ApplicationServiceTest {
         when(newClient.getName()).thenReturn("my-client");
         when(newClient.getRedirectUris()).thenReturn(null);
         when(newClient.getType()).thenReturn(ApplicationType.SERVICE);
+
         doAnswer(invocation -> {
             Application mock = invocation.getArgument(0);
             mock.getSettings().getOauth().setGrantTypes(Collections.singletonList(GrantType.CLIENT_CREDENTIALS));
+            mock.getSettings().getOauth().setClientSecret(UUID.randomUUID().toString());
             return mock;
         }).when(applicationTemplateManager).apply(any());
+
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
         when(scopeService.validateScope(anyString(), any())).thenReturn(Single.just(true));
         when(certificateService.findByDomain(DOMAIN)).thenReturn(Flowable.empty());
@@ -571,14 +698,21 @@ public class ApplicationServiceTest {
     public void shouldCreate_clientAlreadyExists() {
         NewApplication newClient = Mockito.mock(NewApplication.class);
         when(newClient.getName()).thenReturn("my-client");
-        when(applicationRepository.findByDomainAndClientId(DOMAIN, null)).thenReturn(Maybe.just(new Application()));
+        doAnswer(invocation -> {
+            Application mock = invocation.getArgument(0);
+            mock.getSettings().getOauth().setGrantTypes(Collections.singletonList(GrantType.CLIENT_CREDENTIALS));
+            mock.getSettings().getOauth().setClientId(CLIENT_ID);
+            mock.getSettings().getOauth().setClientSecret("client_secret");
+            return mock;
+        }).when(applicationTemplateManager).apply(any());
+        when(applicationRepository.findByDomainAndClientId(DOMAIN, CLIENT_ID)).thenReturn(Maybe.just(new Application()));
 
         TestObserver<Application> testObserver = new TestObserver<>();
         applicationService.create(DOMAIN, newClient).subscribe(testObserver);
 
         testObserver.assertError(ApplicationAlreadyExistsException.class);
         testObserver.assertNotComplete();
-        verify(applicationRepository, times(1)).findByDomainAndClientId(DOMAIN, null);
+        verify(applicationRepository, times(1)).findByDomainAndClientId(DOMAIN, CLIENT_ID);
         verify(applicationRepository, never()).create(any(Application.class));
     }
 
@@ -612,12 +746,34 @@ public class ApplicationServiceTest {
     }
 
     @Test
+    public void shouldNot_create_with_client_secret_jwt_when_bcrypt_used_to_hash_client_secret() {
+        when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
+        when(applicationRepository.findByDomainAndClientId(DOMAIN, null)).thenReturn(Maybe.empty());
+        when(scopeService.validateScope(any(), any())).thenReturn(Single.just(true));
+
+        Application toCreate = new Application();
+        toCreate.setDomain(DOMAIN);
+        ApplicationSettings settings = new ApplicationSettings();
+        ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
+        oAuthSettings.setGrantTypes(List.of("implicit"));
+        oAuthSettings.setTokenEndpointAuthMethod(ClientAuthenticationMethod.CLIENT_SECRET_JWT);
+        settings.setOauth(oAuthSettings);
+        toCreate.setSettings(settings);
+
+        TestObserver testObserver = applicationService.create(toCreate).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertNotComplete();
+        testObserver.assertError(InvalidClientMetadataException.class);
+    }
+
+    @Test
     public void create_generateUuidAsClientId() {
         NewApplication newClient = Mockito.mock(NewApplication.class);
         Application createClient = Mockito.mock(Application.class);
         when(newClient.getName()).thenReturn("my-client");
         when(newClient.getType()).thenReturn(ApplicationType.SERVICE);
-        when(applicationRepository.findByDomainAndClientId(DOMAIN, "client_id")).thenReturn(Maybe.empty());
+        when(applicationRepository.findByDomainAndClientId(DOMAIN, CLIENT_ID)).thenReturn(Maybe.empty());
         when(applicationRepository.create(any(Application.class))).thenReturn(Single.just(createClient));
         when(domainService.findById(anyString())).thenReturn(Maybe.just(new Domain()));
         when(scopeService.validateScope(anyString(), any())).thenReturn(Single.just(true));
@@ -625,7 +781,7 @@ public class ApplicationServiceTest {
         doAnswer(invocation -> {
             Application mock = invocation.getArgument(0);
             mock.getSettings().getOauth().setGrantTypes(Collections.singletonList(GrantType.CLIENT_CREDENTIALS));
-            mock.getSettings().getOauth().setClientId("client_id");
+            mock.getSettings().getOauth().setClientId(CLIENT_ID);
             mock.getSettings().getOauth().setClientSecret("client_secret");
             return mock;
         }).when(applicationTemplateManager).apply(any());
@@ -640,7 +796,8 @@ public class ApplicationServiceTest {
         ArgumentCaptor<Application> captor = ArgumentCaptor.forClass(Application.class);
         verify(applicationRepository, times(1)).create(captor.capture());
         assertNotNull("client_id must be generated", captor.getValue().getSettings().getOauth().getClientId());
-        assertNotNull("client_secret must be generated", captor.getValue().getSettings().getOauth().getClientSecret());
+        assertEquals("client_secret must be generated", 1, captor.getValue().getSecrets().size());
+        assertNull("client_secret must not be in clear text into OAuth Settings", captor.getValue().getSettings().getOauth().getClientSecret());
     }
 
     @Test
@@ -855,6 +1012,82 @@ public class ApplicationServiceTest {
 
         verify(applicationRepository, times(1)).findById(any());
         verify(applicationRepository, times(1)).update(any(Application.class));
+    }
+
+    @Test
+    public void update_tokenEndpointAuthMethod_to_client_secret_jwt_if_app_with_none_hashed_secret() {
+        Application existingApp = new Application();
+        existingApp.setDomain(DOMAIN);
+        ApplicationSettings existingAppSettings = new ApplicationSettings();
+        ApplicationOAuthSettings existingOAuthSettings = new ApplicationOAuthSettings();
+        existingOAuthSettings.setGrantTypes(Arrays.asList("client_credentials"));
+        existingOAuthSettings.setResponseTypes(Arrays.asList());
+        existingOAuthSettings.setTokenEndpointAuthMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
+        existingAppSettings.setOauth(existingOAuthSettings);
+        existingApp.setSettings(existingAppSettings);
+
+        when(applicationRepository.findById(any())).thenReturn(Maybe.just(existingApp));
+        when(applicationRepository.update(any(Application.class))).thenReturn(Single.just(new Application()));
+        when(domainService.findById(any())).thenReturn(Maybe.just(new Domain()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(scopeService.validateScope(any(), any())).thenReturn(Single.just(true));
+
+        Application toPatch = new Application();
+        toPatch.setDomain(DOMAIN);
+        ApplicationSettings settings = new ApplicationSettings();
+        ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
+        oAuthSettings.setGrantTypes(Arrays.asList("client_credentials"));
+        oAuthSettings.setResponseTypes(Arrays.asList());
+        oAuthSettings.setTokenEndpointAuthMethod(ClientAuthenticationMethod.CLIENT_SECRET_JWT);
+        settings.setOauth(oAuthSettings);
+        toPatch.setSecretSettings(List.of(ApplicationSecretConfig.buildNoneSecretSettings()));// None
+        toPatch.setSettings(settings);
+
+        TestObserver testObserver = applicationService.update(toPatch).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(applicationRepository, times(1)).findById(any());
+        verify(applicationRepository, times(1)).update(any(Application.class));
+    }
+
+    @Test
+    public void shoudNot_update_tokenEndpointAuthMethod_to_client_secret_jwt_if_app_with_bcrypt_hashed_secret() {
+        Application existingApp = new Application();
+        existingApp.setDomain(DOMAIN);
+        ApplicationSettings existingAppSettings = new ApplicationSettings();
+        ApplicationOAuthSettings existingOAuthSettings = new ApplicationOAuthSettings();
+        existingOAuthSettings.setGrantTypes(Arrays.asList("client_credentials"));
+        existingOAuthSettings.setResponseTypes(Arrays.asList());
+        existingOAuthSettings.setTokenEndpointAuthMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
+        existingAppSettings.setOauth(existingOAuthSettings);
+        existingApp.setSettings(existingAppSettings);
+
+        when(applicationRepository.findById(any())).thenReturn(Maybe.just(existingApp));
+        when(domainService.findById(any())).thenReturn(Maybe.just(new Domain()));
+        when(scopeService.validateScope(any(), any())).thenReturn(Single.just(true));
+
+        Application toPatch = new Application();
+        toPatch.setDomain(DOMAIN);
+        ApplicationSettings settings = new ApplicationSettings();
+        ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
+        oAuthSettings.setGrantTypes(Arrays.asList("client_credentials"));
+        oAuthSettings.setResponseTypes(Arrays.asList());
+        oAuthSettings.setTokenEndpointAuthMethod(ClientAuthenticationMethod.CLIENT_SECRET_JWT);
+        settings.setOauth(oAuthSettings);
+        toPatch.setSecretSettings(List.of(applicationSecretConfig.toSecretSettings()));// BCrypt
+        toPatch.setSettings(settings);
+
+        TestObserver testObserver = applicationService.update(toPatch).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertNotComplete();
+        testObserver.assertError(InvalidClientMetadataException.class);
+
+        verify(applicationRepository, times(1)).findById(any());
+        verify(applicationRepository, never()).update(any(Application.class));
     }
 
     @Test
@@ -1365,7 +1598,7 @@ public class ApplicationServiceTest {
 
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(client));
-        when(applicationRepository.update(any(Application.class))).thenReturn(Single.just(new Application()));
+        when(applicationRepository.update(any(Application.class))).thenReturn(Single.just(client));
 
         TestObserver testObserver = applicationService.renewClientSecret(DOMAIN, "my-client").test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -1375,6 +1608,48 @@ public class ApplicationServiceTest {
 
         verify(applicationRepository, times(1)).findById(anyString());
         verify(applicationRepository, times(1)).update(any(Application.class));
+        verify(applicationRepository, times(1)).update(argThat(app ->
+                app.getSettings() != null &&
+                    app.getSecrets() != null &&
+                    !app.getSecrets().isEmpty())
+        );
+    }
+
+    /**
+     * Since we introduce the client secret hashing, the renew secret action for an existing application
+     * using client_secret_jwt as auth method will generate a None hashed secret as we need it to validate
+     * the jwt signature. (for this Test Class default algo for client secret hash is BCrypt)
+     */
+    @Test
+    public void shouldRenewSecret_withNone_If_client_secret_jwt_method() {
+        Application client = new Application();
+        client.setDomain(DOMAIN);
+        ApplicationSettings applicationSettings = new ApplicationSettings();
+        ApplicationOAuthSettings applicationOAuthSettings = new ApplicationOAuthSettings();
+        applicationOAuthSettings.setTokenEndpointAuthMethod(ClientAuthenticationMethod.CLIENT_SECRET_JWT);
+        applicationSettings.setOauth(applicationOAuthSettings);
+        client.setSecretSettings(List.of(ApplicationSecretConfig.buildNoneSecretSettings()));// None
+        client.setSettings(applicationSettings);
+
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(client));
+        when(applicationRepository.update(any(Application.class))).thenReturn(Single.just(client));
+
+        TestObserver testObserver = applicationService.renewClientSecret(DOMAIN, "my-client").test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(applicationRepository, times(1)).findById(anyString());
+        verify(applicationRepository, times(1)).update(any(Application.class));
+        verify(applicationRepository, times(1)).update(argThat(app ->
+                app.getSettings() != null &&
+                    app.getSecretSettings() != null &&
+                    app.getSecretSettings().get(0).getAlgorithm().equalsIgnoreCase("none") &&
+                    app.getSecrets() != null &&
+                    !app.getSecrets().isEmpty())
+        );
     }
 
     @Test

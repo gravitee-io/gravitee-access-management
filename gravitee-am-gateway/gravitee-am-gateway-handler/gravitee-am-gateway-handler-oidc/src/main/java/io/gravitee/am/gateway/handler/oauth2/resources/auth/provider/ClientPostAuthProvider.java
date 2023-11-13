@@ -19,12 +19,16 @@ import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.gateway.handler.oauth2.resources.auth.handler.ClientAuthHandler;
+import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.impl.ApplicationClientSecretService;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
+
+import static org.springframework.util.CollectionUtils.isEmpty;
 
 /**
  * Client Authentication method : client_secret_post
@@ -36,6 +40,12 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
  * @author GraviteeSource Team
  */
 public class ClientPostAuthProvider implements ClientAuthProvider {
+
+    private final ApplicationClientSecretService appSecretService;
+
+    public ClientPostAuthProvider(ApplicationClientSecretService appSecretService) {
+        this.appSecretService = appSecretService;
+    }
 
     @Override
     public boolean canHandle(Client client, RoutingContext context) {
@@ -54,10 +64,31 @@ public class ClientPostAuthProvider implements ClientAuthProvider {
         final String clientId = getClientId(context.request());
         final String clientSecret = getClientSecret(context.request());
 
-        if (!client.getClientId().equals(clientId) || !client.getClientSecret().equals(clientSecret)) {
+        if (!client.getClientId().equals(clientId)) {
             handler.handle(Future.failedFuture(new InvalidClientException(ClientAuthHandler.GENERIC_ERROR_MESSAGE)));
             return;
         }
+
+        if (!isEmpty(client.getClientSecrets())) {
+            // take the first one as for now, we do not manage multiple secrets
+            ClientSecret hashedSecret = client.getClientSecrets().get(0);
+            var pwdEncoder = client.getSecretSettings()
+                    .stream().filter(settings -> settings.getId().equals(hashedSecret.getSettingsId()))
+                    .findFirst()
+                    .map(appSecretService::getOrCreatePasswordEncoder)
+                    .orElseGet(appSecretService::getOrCreateNoOpPasswordEncoder);
+
+            if (!pwdEncoder.matches(clientSecret, hashedSecret.getSecret())) {
+                handler.handle(Future.failedFuture(new InvalidClientException(ClientAuthHandler.GENERIC_ERROR_MESSAGE)));
+                return;
+            }
+
+        } else if (!client.getClientSecret().equals(clientSecret)) {
+            // Prior to 4.2, client secret where not hashed and directly stored into the clientSecret attribute
+            handler.handle(Future.failedFuture(new InvalidClientException(ClientAuthHandler.GENERIC_ERROR_MESSAGE)));
+            return;
+        }
+
         handler.handle(Future.succeededFuture(client));
     }
 

@@ -42,6 +42,7 @@ import io.gravitee.am.gateway.handler.oidc.service.request.RequestObjectService;
 import io.gravitee.am.gateway.handler.uma.UMAProvider;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.UserService;
+import io.gravitee.am.service.impl.ApplicationClientSecretService;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
@@ -116,6 +117,9 @@ public class OIDCProvider extends AbstractProtocolProvider {
 
     @Autowired
     private Environment environment;
+
+    @Autowired
+    private ApplicationClientSecretService applicationClientSecretService;
 
     @Override
     protected void doStart() throws Exception {
@@ -268,7 +272,7 @@ public class OIDCProvider extends AbstractProtocolProvider {
 
         // client auth handler
         final String certificateHeader = environment.getProperty(ConstantKeys.HTTP_SSL_CERTIFICATE_HEADER);
-        final Handler<RoutingContext> clientAuthHandler = ClientAuthHandler.create(clientSyncService, clientAssertionService, jwkService, domain, certificateHeader);
+        final Handler<RoutingContext> clientAuthHandler = ClientAuthHandler.create(clientSyncService, clientAssertionService, jwkService, domain, applicationClientSecretService, certificateHeader);
 
         // Request object registration
         oidcRouter

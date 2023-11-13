@@ -21,6 +21,7 @@ import io.gravitee.am.gateway.handler.oauth2.resources.auth.provider.*;
 import io.gravitee.am.gateway.handler.oauth2.service.assertion.ClientAssertionService;
 import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.service.impl.ApplicationClientSecretService;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 
@@ -37,10 +38,10 @@ public interface ClientAuthHandler {
 
     String GENERIC_ERROR_MESSAGE = "Client authentication failed due to unknown or invalid client";
 
-    static Handler<RoutingContext> create(ClientSyncService clientSyncService, ClientAssertionService clientAssertionService, JWKService jwkService, Domain domain, String certHeader) {
+    static Handler<RoutingContext> create(ClientSyncService clientSyncService, ClientAssertionService clientAssertionService, JWKService jwkService, Domain domain, ApplicationClientSecretService appSecretService, String certHeader) {
         List<ClientAuthProvider> clientAuthProviders = new ArrayList<>();
-        clientAuthProviders.add(new ClientBasicAuthProvider());
-        clientAuthProviders.add(new ClientPostAuthProvider());
+        clientAuthProviders.add(new ClientBasicAuthProvider(appSecretService));
+        clientAuthProviders.add(new ClientPostAuthProvider(appSecretService));
         clientAuthProviders.add(new ClientAssertionAuthProvider(clientAssertionService));
         clientAuthProviders.add(new ClientCertificateAuthProvider(certHeader));
         clientAuthProviders.add(new ClientSelfSignedAuthProvider(jwkService, certHeader));

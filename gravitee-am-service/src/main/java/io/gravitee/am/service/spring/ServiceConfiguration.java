@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service.spring;
 
+import io.gravitee.am.service.spring.application.ApplicationSecretConfig;
 import io.gravitee.am.service.spring.email.EmailConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -29,7 +30,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
  */
 @Configuration
 @ComponentScan("io.gravitee.am.service")
-@Import({EmailConfiguration.class})
+@Import({EmailConfiguration.class, ApplicationSecretConfig.class})
 public class ServiceConfiguration {
 
     @Bean
