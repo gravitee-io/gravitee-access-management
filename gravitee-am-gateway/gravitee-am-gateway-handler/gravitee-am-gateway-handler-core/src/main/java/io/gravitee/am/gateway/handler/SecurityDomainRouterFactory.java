@@ -80,7 +80,7 @@ public class SecurityDomainRouterFactory {
         context.setEnvironment((ConfigurableEnvironment) gatewayApplicationContext.getEnvironment());
 
         PropertySourcesPlaceholderConfigurer configurer = new PropertySourcesPlaceholderConfigurer();
-        configurer.setIgnoreUnresolvablePlaceholders(true);
+        configurer.setIgnoreUnresolvablePlaceholders(false);
         configurer.setEnvironment(gatewayApplicationContext.getEnvironment());
         context.addBeanFactoryPostProcessor(configurer);
 

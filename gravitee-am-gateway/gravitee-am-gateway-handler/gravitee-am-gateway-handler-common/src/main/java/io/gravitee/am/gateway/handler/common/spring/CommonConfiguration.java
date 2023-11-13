@@ -200,19 +200,19 @@ public class CommonConfiguration {
     }
 
     @Bean
-    public EmailService emailService(
-            @Value("${email.enabled:false}") boolean enabled,
-            @Value("${user.resetPassword.email.subject:Please reset your password}") String resetPasswordSubject,
-            @Value("${user.resetPassword.token.expire-after:300}") int resetPasswordExpireAfter,
-            @Value("${user.blockedAccount.email.subject:Account has been locked}") String blockedAccountSubject,
-            @Value("${user.blockedAccount.token.expire-after:86400}") int blockedAccountExpireAfter,
-            @Value("${user.mfaChallenge.email.subject:Verification Code}") String mfaChallengeSubject,
-            @Value("${user.mfaChallenge.token.expire-after:300}") int mfaChallengeExpireAfter,
-            @Value("${user.mfaVerifyAttempt.email.subject:${msg('email.verify_attempt.subject')}}") String mfaVerifyAttemptSubject,
-            @Value("${user.registration.verify.email.subject:${msg('email.registration_verify.subject')}}") String registrationVerifySubject,
-            @Value("${user.registration.verify.time.value:7}") int userRegistrationVerifyTimeValue,
-            @Value("${user.registration.verify.time.unit:DAYS}") TimeUnit userRegistrationVerifyTimeUnit
-    ) {
+    public EmailService emailService() {
+        final boolean enabled = environment.getProperty("email.enabled", Boolean.class, false);
+        final String resetPasswordSubject = environment.getProperty("user.resetPassword.email.subject", String.class, "Please reset your password");
+        final int resetPasswordExpireAfter = environment.getProperty("user.resetPassword.token.expire-after", Integer.class, 300);
+        final String blockedAccountSubject = environment.getProperty("user.blockedAccount.email.subject", String.class, "Account has been locked");
+        final int blockedAccountExpireAfter = environment.getProperty("user.blockedAccount.token.expire-after", Integer.class, 86400);
+        final String mfaChallengeSubject = environment.getProperty("user.mfaChallenge.email.subject", String.class, "Verification Code");
+        final int mfaChallengeExpireAfter = environment.getProperty("user.mfaChallenge.token.expire-after", Integer.class, 300);
+        final String mfaVerifyAttemptSubject = environment.getProperty("user.mfaVerifyAttempt.email.subject", String.class, "${msg('email.verify_attempt.subject')}");
+        final String registrationVerifySubject = environment.getProperty("user.registration.verify.email.subject", String.class, "${msg('email.registration_verify.subject')");
+        final int userRegistrationVerifyTimeValue = environment.getProperty("user.registration.verify.time.value", Integer.class, 7);
+        final TimeUnit userRegistrationVerifyTimeUnit = environment.getProperty("user.registration.verify.time.unit", TimeUnit.class, TimeUnit.DAYS);
+
         return new EmailServiceImpl(
                 enabled,
                 resetPasswordSubject,
