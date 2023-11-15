@@ -97,6 +97,10 @@ function searchDuplicates(collection) {
     ]).toArray()
 };
 
+function isExternalIdp(source) {
+    var idp = db.getCollection('identities').find({'_id': source}).next();
+    return idp.external;
+}
 
 /**
  * the source represent the IDP name on which we have to look into to get the idp collection
@@ -152,6 +156,7 @@ Object.keys(duplicatesUsersGroupByUsernameAndSource).forEach(entry => {
     const dupUsers = duplicatesUsersGroupByUsernameAndSource[entry];
 
     const referenceUser = dupUsers.shift();
+    const isExternal = isExternalIdp(referenceUser._id.source);
     const idpId = getIdpCollectionName(referenceUser._id.source);
     const usernameField = getIdpUsernameField(referenceUser._id.source);
 
@@ -203,6 +208,36 @@ Object.keys(duplicatesUsersGroupByUsernameAndSource).forEach(entry => {
                     update.$set[usernameField] = updatedName;
                     idpCollection.updateOne({"_id": entryToUpdate.result.externalId}, update);
                     usersCollection.updateOne({"_id": entryToUpdate.result._id}, {"$set": {"username": updatedName}});
+                }
+            }
+        } else if (isExternal) {
+            // rename remaining users
+            for (i = 0; i < dupUsers.length; ++i) {
+                const entryToUpdate = dupUsers[i];
+                const updatedName = entryToUpdate._id.username + "_" + i + "_TO_RENAME_OR_DELETE";
+                const updatedExternalId = entryToUpdate.result.externalId + "_" + i + "_TO_RENAME_OR_DELETE";
+
+                const renamedEntityDesc = {
+                    username: entryToUpdate.result.username,
+                    createdAt: entryToUpdate.result.createdAt,
+                    loggedAt: entryToUpdate.result.loggedAt,
+                    loginsCount: entryToUpdate.result.loginsCount,
+                    userId: entryToUpdate.result._id,
+                    externalId: entryToUpdate.result.externalId,
+                    idpId: idpId,
+                    idpName: entryToUpdate._id.source,
+                    domainId: entryToUpdate.result.referenceId,
+                    renameTo: updatedName,
+                    externalIdRenameTo: updatedExternalId
+                };
+
+                reportEntry['renamedUsers'].push(renamedEntityDesc);
+                console.log("[INFO] Renaming (only on users as linked to External IDP)... " + JSON.stringify(renamedEntityDesc));
+
+                if (dryRun) {
+                    console.log("[INFO] Duplicate on external IDP, Skip user update (DRY RUN) mode");
+                } else {
+                    usersCollection.updateOne({"_id": entryToUpdate.result._id}, {"$set": {"username": updatedName, "externalId" : updatedExternalId}});
                 }
             }
         } else {
