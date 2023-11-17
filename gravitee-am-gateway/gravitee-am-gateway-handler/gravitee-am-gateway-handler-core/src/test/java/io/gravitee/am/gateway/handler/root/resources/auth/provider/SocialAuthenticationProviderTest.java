@@ -22,7 +22,7 @@ import io.gravitee.am.gateway.handler.common.auth.event.AuthenticationEvent;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
-import io.gravitee.am.identityprovider.api.AuthenticationProvider;
+import io.gravitee.am.identityprovider.api.social.CloseSessionMode;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
@@ -41,11 +41,14 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import static io.gravitee.am.common.utils.ConstantKeys.ID_TOKEN_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.*;
@@ -64,7 +67,7 @@ public class SocialAuthenticationProviderTest {
     private UserAuthenticationManager userAuthenticationManager;
 
     @Mock
-    private AuthenticationProvider authenticationProvider;
+    private io.gravitee.am.identityprovider.api.social.SocialAuthenticationProvider authenticationProvider;
 
     @Mock
     private RoutingContext routingContext;
@@ -159,6 +162,62 @@ public class SocialAuthenticationProviderTest {
         assertTrue(latch.await(10, TimeUnit.SECONDS));
         verify(userAuthenticationManager, times(1)).connect(any(), any(), any());
         verify(eventManager).publishEvent(argThat(evt -> evt == AuthenticationEvent.SUCCESS), any());
+    }
+
+    @Test
+    public void shouldAuthenticateUser_sso_keep_id_token_if_close_session_after_signIn() throws Exception {
+        common_keep_id_token_if_close_session_after_signIn(CloseSessionMode.REDIRECT);
+    }
+
+    @Test
+    public void shouldAuthenticateUser_sso_not_keep_id_token_if_keep_session_active_after_signIn() throws Exception {
+        common_keep_id_token_if_close_session_after_signIn(CloseSessionMode.KEEP_ACTIVE);
+    }
+
+    private void common_keep_id_token_if_close_session_after_signIn(CloseSessionMode keepAlive) throws InterruptedException {
+        JsonObject credentials = new JsonObject();
+        credentials.put("username", "my-user-id");
+        credentials.put("password", "my-user-password");
+        credentials.put("provider", "idp");
+        credentials.put("additionalParameters", Collections.emptyMap());
+
+        io.gravitee.am.identityprovider.api.User user = new io.gravitee.am.identityprovider.api.DefaultUser("username");
+
+        Client client = new Client();
+        client.setSingleSignOut(false);
+
+        IdentityProvider identityProvider = mock(IdentityProvider.class);
+        when(identityProvider.getDomainWhitelist()).thenReturn(null);
+
+
+        Map<String, Object> contextDataMap = new HashMap<>();
+        contextDataMap.put(ID_TOKEN_KEY, "idp_id_token_value");
+
+        when(userAuthenticationManager.connect(any(), any(), any())).thenReturn(Single.just(new User()));
+        when(identityProviderManager.getIdentityProvider("idp")).thenReturn(identityProvider);
+        when(authenticationProvider.loadUserByUsername(any(EndUserAuthentication.class))).thenReturn(Maybe.just(user));
+        when(authenticationProvider.closeSessionAfterSignIn()).thenReturn(keepAlive);
+        when(routingContext.get("client")).thenReturn(client);
+        when(routingContext.get("provider")).thenReturn(authenticationProvider);
+        when(routingContext.get("providerId")).thenReturn("idp");
+        when(routingContext.request()).thenReturn(httpServerRequest);
+        when(routingContext.data()).thenReturn(contextDataMap);
+
+        final io.vertx.core.http.HttpServerRequest delegateRequest = mock(io.vertx.core.http.HttpServerRequest.class);
+        when(httpServerRequest.getDelegate()).thenReturn(delegateRequest);
+        when(delegateRequest.method()).thenReturn(HttpMethod.POST);
+
+        CountDownLatch latch = new CountDownLatch(1);
+        authProvider.authenticate(routingContext, credentials, userAsyncResult -> {
+            latch.countDown();
+            Assert.assertNotNull(userAsyncResult);
+            Assert.assertNotNull(userAsyncResult.result());
+        });
+
+        assertTrue(latch.await(10, TimeUnit.SECONDS));
+        verify(userAuthenticationManager, times(1)).connect(any(), any(), any());
+        verify(eventManager).publishEvent(argThat(evt -> evt == AuthenticationEvent.SUCCESS), any());
+        verify(routingContext, keepAlive == CloseSessionMode.KEEP_ACTIVE ? never() : times(1)).put(OIDC_PROVIDER_ID_TOKEN_KEY, "idp_id_token_value");
     }
 
     @Test

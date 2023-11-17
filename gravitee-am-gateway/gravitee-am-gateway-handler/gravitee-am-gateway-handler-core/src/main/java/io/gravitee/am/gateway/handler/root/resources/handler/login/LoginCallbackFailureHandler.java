@@ -15,28 +15,33 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.handler.login;
 
-import com.google.common.base.Strings;
-import com.google.common.net.HttpHeaders;
 import io.gravitee.am.common.exception.authentication.AuthenticationException;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
+import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
+import io.gravitee.am.gateway.handler.common.auth.user.EndUserAuthentication;
+import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
+import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.policy.PolicyChainException;
+import io.gravitee.am.identityprovider.api.Authentication;
+import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
+import io.gravitee.am.identityprovider.api.social.CloseSessionMode;
+import io.gravitee.am.identityprovider.api.social.SocialAuthenticationProvider;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.idp.ApplicationIdentityProvider;
+import io.gravitee.am.model.User;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.common.http.HttpStatusCode;
-import io.vertx.core.Handler;
+import io.reactivex.rxjava3.core.Maybe;
 import io.vertx.rxjava3.core.MultiMap;
-import io.vertx.rxjava3.core.http.HttpServerResponse;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,7 +53,18 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import static io.gravitee.am.common.utils.ConstantKeys.CLAIM_ISSUING_REASON;
+import static io.gravitee.am.common.utils.ConstantKeys.CLAIM_PROVIDER_ID;
+import static io.gravitee.am.common.utils.ConstantKeys.CLAIM_STATUS;
+import static io.gravitee.am.common.utils.ConstantKeys.CLAIM_TARGET;
+import static io.gravitee.am.common.utils.ConstantKeys.ISSUING_REASON_CLOSE_IDP_SESSION;
+import static io.gravitee.am.common.utils.ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.PARAM_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.STATUS_FAILURE;
+import static io.gravitee.am.common.web.UriBuilder.encodeURIComponent;
+import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
+import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.LOGGER;
+import static io.gravitee.am.gateway.handler.root.RootProvider.PATH_LOGIN_CALLBACK;
 import static io.gravitee.am.service.utils.ResponseTypeUtils.isHybridFlow;
 import static io.gravitee.am.service.utils.ResponseTypeUtils.isImplicitFlow;
 
@@ -62,13 +78,19 @@ public class LoginCallbackFailureHandler extends LoginAbstractHandler {
     private final Domain domain;
     private final AuthenticationFlowContextService authenticationFlowContextService;
     private final IdentityProviderManager identityProviderManager;
+    private final JWTService jwtService;
+    private final CertificateManager certificateManager;
 
     public LoginCallbackFailureHandler(Domain domain,
                                        AuthenticationFlowContextService authenticationFlowContextService,
-                                       IdentityProviderManager identityProviderManager) {
+                                       IdentityProviderManager identityProviderManager,
+                                       JWTService jwtService,
+                                       CertificateManager certificateManager) {
         this.domain = domain;
         this.authenticationFlowContextService = authenticationFlowContextService;
         this.identityProviderManager = identityProviderManager;
+        this.jwtService = jwtService;
+        this.certificateManager = certificateManager;
     }
 
     @Override
@@ -99,8 +121,16 @@ public class LoginCallbackFailureHandler extends LoginAbstractHandler {
 
     private void redirect(RoutingContext context, Throwable throwable) {
         try {
+
+
+            Authentication authentication;
             // logout user if exists
             if (context.user() != null) {
+                // prepare the authentication object to be able to
+                // log out from IDP after the AM session clean up
+                final User endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) context.user().getDelegate()).getUser();
+                authentication = new EndUserAuthentication(endUser, null, new SimpleAuthenticationContext(new VertxHttpServerRequest(context.request().getDelegate())));
+
                 // clear AuthenticationFlowContext. data of this context have a TTL so we can fire and forget in case on error.
                 authenticationFlowContextService.clearContext(context.session().get(ConstantKeys.TRANSACTION_ID_KEY))
                         .doOnError((error) -> logger.info("Deletion of some authentication flow data fails '{}'", error.getMessage()))
@@ -108,6 +138,8 @@ public class LoginCallbackFailureHandler extends LoginAbstractHandler {
 
                 context.clearUser();
                 context.session().destroy();
+            } else {
+                authentication = new EndUserAuthentication(null, null, new SimpleAuthenticationContext(new VertxHttpServerRequest(context.request().getDelegate())));
             }
 
             // redirect the user to either the login page or the SP redirect uri if hide login option is enabled
@@ -136,9 +168,9 @@ public class LoginCallbackFailureHandler extends LoginAbstractHandler {
                     .count();
 
             if ((loginSettings != null && loginSettings.isHideForm() && externalIdentities == 1) || selectedExternalIdp > 0) {
-                redirectToSP(originalParams, client, context, throwable);
+                redirectToSP(originalParams, client, context, authentication, throwable);
             } else {
-                redirectToLoginPage(originalParams, client, context, throwable);
+                redirectToLoginPage(originalParams, client, context, authentication, throwable);
             }
 
         } catch (Exception ex) {
@@ -153,6 +185,7 @@ public class LoginCallbackFailureHandler extends LoginAbstractHandler {
     private void redirectToSP(MultiMap originalParams,
                               Client client,
                               RoutingContext context,
+                              Authentication authentication,
                               Throwable throwable) throws URISyntaxException {
         // Get the SP redirect_uri
         final String spRedirectUri = (originalParams != null && originalParams.get(Parameters.REDIRECT_URI) != null) ?
@@ -186,16 +219,60 @@ public class LoginCallbackFailureHandler extends LoginAbstractHandler {
 
         // append error parameters in "application/x-www-form-urlencoded" format
         if (fragment) {
-            query.forEach((k, v) -> template.addFragmentParameter(k, UriBuilder.encodeURIComponent(v)));
+            query.forEach((k, v) -> template.addFragmentParameter(k, encodeURIComponent(v)));
         } else {
-            query.forEach((k, v) -> template.addParameter(k, UriBuilder.encodeURIComponent(v)));
+            query.forEach((k, v) -> template.addParameter(k, encodeURIComponent(v)));
         }
-        doRedirect(context, template.build().toString());
+
+        closeRemoteSessionAndRedirect(context, authentication, template.build().toString());
+    }
+
+    private void closeRemoteSessionAndRedirect(RoutingContext context, Authentication authentication, String redirectUrl) {
+        AuthenticationProvider authProvider = context.get(ConstantKeys.PROVIDER_CONTEXT_KEY);
+        // the login process is done and we want to close the session after the authentication
+        if (authProvider instanceof SocialAuthenticationProvider socialIdp && socialIdp.closeSessionAfterSignIn() == CloseSessionMode.REDIRECT) {
+            final var logoutRequest = socialIdp.signOutUrl(authentication);
+
+            final var stateJwt = new JWT();
+
+            stateJwt.put(CLAIM_TARGET, redirectUrl);
+            stateJwt.put(CLAIM_PROVIDER_ID, context.get(ConstantKeys.PROVIDER_ID_PARAM_KEY));
+            stateJwt.put(CLAIM_ISSUING_REASON, ISSUING_REASON_CLOSE_IDP_SESSION);
+            stateJwt.put(CLAIM_STATUS, STATUS_FAILURE);
+
+            jwtService.encode(stateJwt, certificateManager.defaultCertificateProvider())
+                    .flatMapMaybe(state ->
+                            logoutRequest.map(req -> {
+                                var callbackUri = UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH) + PATH_LOGIN_CALLBACK);
+                                return UriBuilder.fromHttpUrl(req.getUri())
+                                        .addParameter(io.gravitee.am.common.oidc.Parameters.ID_TOKEN_HINT, encodeURIComponent(context.get(OIDC_PROVIDER_ID_TOKEN_KEY)))
+                                        .addParameter(Parameters.STATE, encodeURIComponent(state))
+                                        .addParameter(io.gravitee.am.common.oidc.Parameters.POST_LOGOUT_REDIRECT_URI, encodeURIComponent(callbackUri))
+                                        .buildString();
+                            })
+                    )
+                    // if the Maybe is empty, we redirect the user to the original request
+                    .switchIfEmpty(Maybe.just(redirectUrl))
+                    .subscribe(
+                            url -> {
+                                LOGGER.debug("Call logout on provider '{}'", (String) context.get(ConstantKeys.PROVIDER_ID_PARAM_KEY));
+                                doRedirect(context, url);
+                            },
+                            err -> {
+                                LOGGER.error("Session can't be closed on provider '{}': {}", context.get(ConstantKeys.PROVIDER_ID_PARAM_KEY), err);
+                                doRedirect(context, redirectUrl);
+                            });
+        } else {
+            // the login process is done
+            // redirect the user to the original request
+            doRedirect(context, redirectUrl);
+        }
     }
 
     private void redirectToLoginPage(MultiMap originalParams,
                                      Client client,
                                      RoutingContext context,
+                                     Authentication authentication,
                                      Throwable throwable) {
         final MultiMap params = MultiMap.caseInsensitiveMultiMap();
         if (originalParams != null) {
@@ -203,9 +280,9 @@ public class LoginCallbackFailureHandler extends LoginAbstractHandler {
         }
         params.set(Parameters.CLIENT_ID, client.getClientId());
         params.set(ConstantKeys.ERROR_PARAM_KEY, "social_authentication_failed");
-        params.set(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, UriBuilder.encodeURIComponent(throwable.getCause() != null ? throwable.getCause().getMessage() : throwable.getMessage()));
+        params.set(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, encodeURIComponent(throwable.getCause() != null ? throwable.getCause().getMessage() : throwable.getMessage()));
         String uri = getUri(context, params);
-        doRedirect(context, uri);
+        closeRemoteSessionAndRedirect(context, authentication, uri);
     }
 
     private String getUri(RoutingContext context, MultiMap params) {

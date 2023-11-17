@@ -31,12 +31,12 @@ import io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
+import io.gravitee.am.identityprovider.api.social.CloseSessionMode;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.common.event.EventManager;
-import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
@@ -143,6 +143,13 @@ public class SocialAuthenticationProvider implements UserAuthProvider {
                     } else if (accessToken.isEmpty()) {
                         // unless isStoreOriginalToken is enabled (e.g access_token isPresent) we can remove id_token from the profile
                         additionalInformation.remove(OIDC_PROVIDER_ID_TOKEN_KEY);
+                    }
+
+                    if (authenticationProvider instanceof io.gravitee.am.identityprovider.api.social.SocialAuthenticationProvider socialIdp && socialIdp.closeSessionAfterSignIn() != CloseSessionMode.KEEP_ACTIVE) {
+                        // if the IDP require to close the user session after the AccessManagement SignIn,
+                        // we keep the idToken into the routing context to be able to call OIDC logout
+                        // endpoint by providing the id_token as parameter.
+                        idToken.ifPresent(token -> context.put(OIDC_PROVIDER_ID_TOKEN_KEY, token));
                     }
 
                     ((DefaultUser) user).setAdditionalInformation(additionalInformation);

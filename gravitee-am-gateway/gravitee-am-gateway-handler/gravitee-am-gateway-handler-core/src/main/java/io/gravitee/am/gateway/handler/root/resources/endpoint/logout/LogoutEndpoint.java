@@ -32,6 +32,7 @@ import io.gravitee.am.gateway.handler.root.service.user.model.UserToken;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.identityprovider.api.common.Request;
+import io.gravitee.am.identityprovider.api.social.CloseSessionMode;
 import io.gravitee.am.identityprovider.api.social.SocialAuthenticationProvider;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
@@ -218,6 +219,7 @@ public class LogoutEndpoint extends AbstractLogoutEndpoint {
         final Authentication authentication = new EndUserAuthentication(endUser, null, new SimpleAuthenticationContext(new VertxHttpServerRequest(routingContext.request().getDelegate())));
         identityProviderManager.get(endUser.getLastIdentityUsed())
                 .filter(provider -> provider instanceof SocialAuthenticationProvider)
+                .filter(provider -> ((SocialAuthenticationProvider) provider).closeSessionAfterSignIn() == CloseSessionMode.KEEP_ACTIVE)
                 .flatMap(provider -> ((SocialAuthenticationProvider) provider).signOutUrl(authentication))
                 .flatMap(logoutRequest -> generateLogoutCallback(routingContext, endUser, logoutRequest))
                 .subscribe(
