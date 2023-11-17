@@ -35,6 +35,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
+import static io.gravitee.am.common.utils.ConstantKeys.CLAIM_ISSUING_REASON;
+import static io.gravitee.am.common.utils.ConstantKeys.CLAIM_PROVIDER_ID;
+import static io.gravitee.am.common.utils.ConstantKeys.CLAIM_QUERY_PARAM;
+import static io.gravitee.am.common.utils.ConstantKeys.CLAIM_REMEMBER_ME;
+import static io.gravitee.am.common.utils.ConstantKeys.CLAIM_STATUS;
+import static io.gravitee.am.common.utils.ConstantKeys.CLAIM_TARGET;
+import static io.gravitee.am.common.utils.ConstantKeys.ISSUING_REASON_CLOSE_IDP_SESSION;
 import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.STATE;
 
 /**
@@ -66,6 +73,16 @@ public class LoginCallbackParseHandler implements Handler<RoutingContext> {
 
             if (next.failed()) {
                 context.fail(next.cause());
+                return;
+            }
+
+            if (!context.get(ConstantKeys.CONTINUE_CALLBACK_PROCESSING, true)) {
+                logger.debug("Login Callback called by IDP post logout redirection");
+                String redirectUrl = context.get(ConstantKeys.RETURN_URL_KEY);
+                context.response()
+                        .putHeader(io.vertx.core.http.HttpHeaders.LOCATION, redirectUrl)
+                        .setStatusCode(302)
+                        .end();
                 return;
             }
 
@@ -112,10 +129,17 @@ public class LoginCallbackParseHandler implements Handler<RoutingContext> {
 
         jwtService.decodeAndVerify(state, certificateManager.defaultCertificateProvider(), STATE)
                 .doOnSuccess(stateJwt -> {
-                    final MultiMap initialQueryParams = RequestUtils.getQueryParams((String) stateJwt.getOrDefault("q", ""), false);
+                    final MultiMap initialQueryParams = RequestUtils.getQueryParams((String) stateJwt.getOrDefault(CLAIM_QUERY_PARAM, ""), false);
                     context.put(ConstantKeys.PARAM_CONTEXT_KEY, initialQueryParams);
-                    context.put(ConstantKeys.PROVIDER_ID_PARAM_KEY, stateJwt.get("p"));
-                    context.put(ConstantKeys.REMEMBER_ME_PARAM_KEY, stateJwt.get("r"));
+                    context.put(ConstantKeys.PROVIDER_ID_PARAM_KEY, stateJwt.get(CLAIM_PROVIDER_ID));
+                    context.put(ConstantKeys.REMEMBER_ME_PARAM_KEY, stateJwt.get(CLAIM_REMEMBER_ME));
+
+                    if (ISSUING_REASON_CLOSE_IDP_SESSION.equals(stateJwt.get(CLAIM_ISSUING_REASON))) {
+                        context.put(ConstantKeys.CONTINUE_CALLBACK_PROCESSING, false);
+                        context.put(ConstantKeys.RETURN_URL_KEY, stateJwt.get(CLAIM_TARGET));
+                    } else {
+                        context.put(ConstantKeys.CONTINUE_CALLBACK_PROCESSING, true);
+                    }
                 })
                 .subscribe(
                         stateJwt -> handler.handle(Future.succeededFuture(true)),

@@ -235,4 +235,17 @@ public interface ConstantKeys {
 
     String DEFAULT_REMEMBER_ME_COOKIE_NAME = "GRAVITEE_IO_REMEMBER_ME";
     String USER_ID_KEY = "userId";
+
+    String CLAIM_QUERY_PARAM = "q";
+    String CLAIM_PROVIDER_ID = "p";
+    String CLAIM_REMEMBER_ME = "r";
+    String CLAIM_TARGET = "t";
+    String CLAIM_STATUS = "s";
+    String STATUS_SIGNED_IN = "signed-in";
+    String STATUS_FAILURE = "failure";
+    String CLAIM_ISSUING_REASON = "ir";
+    String ISSUING_REASON_CLOSE_IDP_SESSION = "close_idp_session";
+
+    String CONTINUE_CALLBACK_PROCESSING = "continueCallbackProcess";
+
 }

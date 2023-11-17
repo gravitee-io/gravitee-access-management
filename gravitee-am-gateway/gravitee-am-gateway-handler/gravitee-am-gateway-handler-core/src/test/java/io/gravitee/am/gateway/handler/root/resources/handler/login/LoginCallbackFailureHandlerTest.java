@@ -15,12 +15,19 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.handler.login;
 
+import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oauth2.ResponseType;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.certificate.CertificateProvider;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
+import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
+import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.policy.PolicyChainException;
+import io.gravitee.am.identityprovider.api.common.Request;
+import io.gravitee.am.identityprovider.api.social.CloseSessionMode;
+import io.gravitee.am.identityprovider.api.social.SocialAuthenticationProvider;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
@@ -28,9 +35,12 @@ import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.common.http.HttpStatusCode;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.rxjava3.core.MultiMap;
 import java.util.TreeSet;
+import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.junit.Test;
@@ -38,7 +48,9 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import static io.gravitee.am.common.utils.ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.PARAM_CONTEXT_KEY;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -59,13 +71,19 @@ public class LoginCallbackFailureHandlerTest extends RxWebTestBase {
     @Mock
     private IdentityProviderManager identityProviderManager;
 
+    @Mock
+    private JWTService jwtService;
+
+    @Mock
+    private CertificateManager certificateManager;
+
     @Override
     public void setUp() throws Exception {
         super.setUp();
 
         router.route(HttpMethod.GET, "/login/callback")
                 .handler(rc -> rc.fail(new PolicyChainException("policy_exception")))
-                .failureHandler(new LoginCallbackFailureHandler(domain, authenticationFlowContextService, identityProviderManager));
+                .failureHandler(new LoginCallbackFailureHandler(domain, authenticationFlowContextService, identityProviderManager, jwtService, certificateManager));
     }
 
     @Test
@@ -73,6 +91,70 @@ public class LoginCallbackFailureHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(routingContext -> {
             Client client = new Client();
             routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+            routingContext.next();
+        });
+
+        testRequest(
+                HttpMethod.GET, "/login/callback",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.contains("/login?error=social_authentication_failed&error_description=policy_exception"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldNotRedirectToLoginPage_onPolicyError__whenSocialIdp_not_preserve_sessions() throws Exception {
+        var authenticationProvider = mock(SocialAuthenticationProvider.class);
+        when(authenticationProvider.closeSessionAfterSignIn()).thenReturn(CloseSessionMode.REDIRECT);
+        var signOutRequest = new Request();
+        signOutRequest.setUri("http://idp/signout");
+        when(authenticationProvider.signOutUrl(any())).thenReturn(Maybe.just(signOutRequest));
+
+        when(certificateManager.defaultCertificateProvider()).thenReturn(mock(CertificateProvider.class));
+        when(jwtService.encode(any(JWT.class), any(CertificateProvider.class))).thenReturn(Single.just("failure_state"));
+
+        router.route().order(-1).handler(routingContext -> {
+            Client client = new Client();
+            routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+            routingContext.put(ConstantKeys.PROVIDER_CONTEXT_KEY, authenticationProvider);
+            routingContext.put(OIDC_PROVIDER_ID_TOKEN_KEY, "op_id_token_value");
+            routingContext.next();
+        });
+
+        testRequest(
+                HttpMethod.GET, "/login/callback",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.startsWith("http://idp/signout"));
+                    assertTrue(location.contains("state=failure_state"));
+                    assertTrue(location.contains("id_token_hint=op_id_token_value"));
+                    assertTrue(location.contains("post_logout_redirect_uri="));
+                    assertTrue(location.contains("%2Flogin%2Fcallback"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldRedirectToLoginPage_onPolicyError__whenSocialIdp_not_preserve_sessions_But_StateProcessingFails() throws Exception {
+        var authenticationProvider = mock(SocialAuthenticationProvider.class);
+        when(authenticationProvider.closeSessionAfterSignIn()).thenReturn(CloseSessionMode.REDIRECT);
+        var signOutRequest = new Request();
+        signOutRequest.setUri("http://idp/signout");
+        when(authenticationProvider.signOutUrl(any())).thenReturn(Maybe.just(signOutRequest));
+
+        when(certificateManager.defaultCertificateProvider()).thenReturn(mock(CertificateProvider.class));
+        when(jwtService.encode(any(JWT.class), any(CertificateProvider.class))).thenReturn(Single.error(new IllegalArgumentException()));
+
+        router.route().order(-1).handler(routingContext -> {
+            Client client = new Client();
+            routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+            routingContext.put(ConstantKeys.PROVIDER_CONTEXT_KEY, authenticationProvider);
+            routingContext.put(OIDC_PROVIDER_ID_TOKEN_KEY, "op_id_token_value");
             routingContext.next();
         });
 
@@ -101,7 +183,7 @@ public class LoginCallbackFailureHandlerTest extends RxWebTestBase {
         });
 
         IdentityProvider idp = mock(IdentityProvider.class);
-        when(idp.isExternal()).thenReturn(false);
+        when(idp.isExternal()).thenReturn(true);
         when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(idp);
 
         testRequest(
