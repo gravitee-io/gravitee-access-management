@@ -20,8 +20,6 @@ import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.common.Request;
 import io.reactivex.rxjava3.core.Maybe;
 
-import java.util.Optional;
-
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -63,5 +61,13 @@ public interface SocialAuthenticationProvider extends AuthenticationProvider {
      */
     default Maybe<Request> signOutUrl(Authentication authentication) {
         return Maybe.empty();
+    }
+
+    /**
+     * Specify if the session on the IDP needs to be closed just after the AM SignIn process and using which mode.
+     * @return
+     */
+    default CloseSessionMode closeSessionAfterSignIn(){
+        return CloseSessionMode.KEEP_ACTIVE;
     }
 }

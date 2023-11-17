@@ -161,9 +161,9 @@ public class LoginSocialAuthenticationHandler implements Handler<RoutingContext>
                 .flatMap(authenticationProvider -> {
                     // Generate a state containing provider id and current query parameter string. This state will be sent back to AM after social authentication.
                     final JWT stateJwt = new JWT();
-                    stateJwt.put("p", identityProviderId);
-                    stateJwt.put("q", context.request().query());
-                    stateJwt.put("r", REMEMBER_ME_ON.equalsIgnoreCase(context.request().formAttributes().get(REMEMBER_ME_PARAM_KEY)));
+                    stateJwt.put(CLAIM_PROVIDER_ID, identityProviderId);
+                    stateJwt.put(CLAIM_QUERY_PARAM, context.request().query());
+                    stateJwt.put(CLAIM_REMEMBER_ME, REMEMBER_ME_ON.equalsIgnoreCase(context.request().formAttributes().get(REMEMBER_ME_PARAM_KEY)));
 
                     return jwtService.encode(stateJwt, certificateManager.defaultCertificateProvider())
                             .flatMapMaybe(state -> {

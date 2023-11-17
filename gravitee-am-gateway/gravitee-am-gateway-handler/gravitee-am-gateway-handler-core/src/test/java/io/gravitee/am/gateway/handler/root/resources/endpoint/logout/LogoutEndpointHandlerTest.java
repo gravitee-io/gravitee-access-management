@@ -28,6 +28,7 @@ import io.gravitee.am.gateway.handler.root.resources.handler.error.ErrorHandler;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.gateway.handler.root.service.user.model.UserToken;
 import io.gravitee.am.identityprovider.api.common.Request;
+import io.gravitee.am.identityprovider.api.social.CloseSessionMode;
 import io.gravitee.am.identityprovider.api.social.SocialAuthenticationProvider;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
@@ -48,6 +49,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -55,6 +57,8 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -489,6 +493,7 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
         req.setUri("https://oidc/logout");
         req.setMethod(io.gravitee.common.http.HttpMethod.GET);
         when(authProvider.signOutUrl(any())).thenReturn(Maybe.just(req));
+        when(authProvider.closeSessionAfterSignIn()).thenReturn(CloseSessionMode.KEEP_ACTIVE);
         when(identityProviderManager.get(any())).thenReturn(Maybe.just(authProvider));
 
         router.route().order(-1).handler(routingContext -> {
@@ -533,6 +538,7 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
         req.setUri("https://oidc/logout");
         req.setMethod(io.gravitee.common.http.HttpMethod.GET);
         when(authProvider.signOutUrl(any())).thenReturn(Maybe.just(req));
+        when(authProvider.closeSessionAfterSignIn()).thenReturn(CloseSessionMode.KEEP_ACTIVE);
         when(identityProviderManager.get(any())).thenReturn(Maybe.just(authProvider));
 
         router.route().order(-1).handler(routingContext -> {
@@ -559,6 +565,46 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
     }
 
     @Test
+    public void shouldNotInvokeExternalOIDCLogoutEndpoint_targetUrlOk_butRemoteSessionClosed() throws Exception {
+        JWT jwt = new JWT();
+        jwt.setAud("client-id");
+
+        Client client = new Client();
+        client.setClientId("client-id");
+        client.setPostLogoutRedirectUris(Arrays.asList("https://dev"));
+        client.setSingleSignOut(true);
+
+        when(clientSyncService.findById("client-id")).thenReturn(Maybe.empty());
+        when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+        when(userService.logout(any(), anyBoolean(), any())).thenReturn(Completable.complete());
+
+        final SocialAuthenticationProvider authProvider = mock(SocialAuthenticationProvider.class);
+        when(identityProviderManager.get(any())).thenReturn(Maybe.just(authProvider));
+
+        router.route().order(-1).handler(routingContext -> {
+            User endUser = new User();
+            endUser.setClient("client-id");
+            final HashMap<String, Object> additionalInformation = new HashMap<>();
+            additionalInformation.put(ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY, "opidtokenvalue");
+            endUser.setAdditionalInformation(additionalInformation);
+            routingContext.put(UriBuilderRequest.CONTEXT_PATH, "/domain");
+            routingContext.getDelegate().setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
+            routingContext.next();
+        });
+
+        testRequest(
+                HttpMethod.GET, "/logout?target_url=https%3A%2F%2Fdev",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.startsWith("https://dev"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+        verify(authProvider, never()).signOutUrl(any());
+    }
+
+    @Test
     public void shouldInvokeExternalOIDCLogoutEndpoint_noTargetUrl() throws Exception {
         JWT jwt = new JWT();
         jwt.setAud("client-id");
@@ -579,6 +625,7 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
         req.setUri("https://oidc/logout");
         req.setMethod(io.gravitee.common.http.HttpMethod.GET);
         when(authProvider.signOutUrl(any())).thenReturn(Maybe.just(req));
+        when(authProvider.closeSessionAfterSignIn()).thenReturn(CloseSessionMode.KEEP_ACTIVE);
         when(identityProviderManager.get(any())).thenReturn(Maybe.just(authProvider));
 
         io.vertx.rxjava3.ext.web.client.HttpRequest<io.vertx.rxjava3.core.buffer.Buffer> httpRequest = mock(io.vertx.rxjava3.ext.web.client.HttpRequest.class);

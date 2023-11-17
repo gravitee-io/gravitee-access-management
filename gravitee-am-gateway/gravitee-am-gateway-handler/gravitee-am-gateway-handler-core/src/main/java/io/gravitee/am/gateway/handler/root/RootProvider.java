@@ -418,8 +418,8 @@ public class RootProvider extends AbstractProtocolProvider {
         Handler<RoutingContext> loginCallbackParseHandler = new LoginCallbackParseHandler(clientSyncService, identityProviderManager, jwtService, certificateManager);
         Handler<RoutingContext> loginCallbackOpenIDConnectFlowHandler = new LoginCallbackOpenIDConnectFlowHandler(thymeleafTemplateEngine);
         Handler<RoutingContext> loginCallbackDeviceIdHandler = new LoginCallbackDeviceIdHandler(thymeleafTemplateEngine, deviceIdentifierManager);
-        Handler<RoutingContext> loginCallbackFailureHandler = new LoginCallbackFailureHandler(domain, authenticationFlowContextService, identityProviderManager);
-        Handler<RoutingContext> loginCallbackEndpoint = new LoginCallbackEndpoint();
+        Handler<RoutingContext> loginCallbackFailureHandler = new LoginCallbackFailureHandler(domain, authenticationFlowContextService, identityProviderManager, jwtService, certificateManager);
+        Handler<RoutingContext> loginCallbackEndpoint = new LoginCallbackEndpoint(jwtService, certificateManager);
         Handler<RoutingContext> loginSSOPOSTEndpoint = new LoginSSOPOSTEndpoint(thymeleafTemplateEngine);
         rootRouter.get(PATH_LOGIN_CALLBACK)
                 .handler(loginCallbackOpenIDConnectFlowHandler)
