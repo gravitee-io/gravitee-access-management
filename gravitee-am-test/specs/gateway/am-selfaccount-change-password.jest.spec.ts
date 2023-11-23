@@ -33,7 +33,7 @@ let openIdConfiguration;
 let application;
 let user = {
   username: 'SelfAccountUser',
-  password: 'Test123!',
+  password: 'SomeP@ssw0rd',
   firstName: 'SelfAccount',
   lastName: 'User',
   email: 'selfaccountuser@acme.fr',
@@ -135,7 +135,7 @@ describe('SelfAccount - Change Password', () => {
   describe('With default settings', () => {
     describe('End User', () => {
       it('must be able to change his password', async () => {
-        user.password = 'Test1234!!';
+        user.password = 'SomeP@ssw0rd!';
 
         await performPost(
           `${process.env.AM_GATEWAY_URL}/${domain.hrid}/account/api/changePassword`,
