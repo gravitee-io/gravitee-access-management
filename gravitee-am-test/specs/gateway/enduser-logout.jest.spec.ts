@@ -37,7 +37,7 @@ let openIdConfiguration;
 let application;
 let user = {
   username: 'LogoutUser',
-  password: 'Test123!',
+  password: 'SomeP@ssw0rd',
   firstName: 'Logout',
   lastName: 'User',
   email: 'logoutuser@acme.fr',

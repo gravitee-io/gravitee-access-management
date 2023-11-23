@@ -369,7 +369,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\"firstName\":\"Alice\",\"lastName\":\"Wonder\",\"email\":\"alice@acme.fr\",\"username\":\"alice\",\"password\": \"Test123!\"}",
+							"raw": "{\"firstName\":\"Alice\",\"lastName\":\"Wonder\",\"email\":\"alice@acme.fr\",\"username\":\"alice\",\"password\": \"SomeP@ssw0rd\"}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1711,7 +1711,7 @@
 												},
 												{
 													"key": "password",
-													"value": "Test123!",
+													"value": "SomeP@ssw0rd",
 													"type": "text"
 												}
 											]

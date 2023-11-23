@@ -27,7 +27,7 @@ public class PasswordSettings {
     /**
      * See https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html
      */
-    public static final int PASSWORD_MAX_LENGTH = 64;
+    public static final int PASSWORD_MAX_LENGTH = 128;
     public static final int PASSWORD_MIN_LENGTH = 8;
 
     /**

@@ -200,7 +200,7 @@ describe('AM - User Pre-Registration - Reset Password to confirm', () => {
       expect(confirmationLink).toBeDefined();
       await clearEmails();
 
-      await resetPassword(confirmationLink, 'Test123!');
+      await resetPassword(confirmationLink, 'SomeP@ssw0rd');
     });
 
     it('must be enabled', async () => {
