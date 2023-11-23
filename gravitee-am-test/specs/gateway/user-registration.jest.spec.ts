@@ -107,7 +107,7 @@ describe('Register User on domain', () => {
         lastName: faker.name.lastName(),
         username: '$£êê',
         email: faker.internet.email(),
-        password: 'P@ssw0rd!',
+        password: 'P@ssw0rd!123',
       };
       await register(user, 'warning=invalid_user_information');
 
@@ -122,7 +122,7 @@ describe('Register User on domain', () => {
         lastName: faker.name.lastName(),
         username: faker.name.firstName(),
         email: faker.random.word(),
-        password: 'P@ssw0rd!',
+        password: 'P@ssw0rd!123',
       };
       await register(user, 'warning=invalid_email');
 
@@ -131,7 +131,7 @@ describe('Register User on domain', () => {
       expect(usersPage.totalCount).toEqual(0);
     });
 
-    it('Should not be able to register with invalid email address', async () => {
+    it('Should not be able to register with invalid password', async () => {
       const user = {
         firstName: faker.name.firstName(),
         lastName: faker.name.lastName(),
@@ -152,7 +152,7 @@ describe('Register User on domain', () => {
         lastName: faker.name.lastName(),
         username: faker.name.firstName(),
         email: faker.internet.email(),
-        password: 'P@ssw0rd!',
+        password: 'P@ssw0rd!123',
       };
       await register(user, 'success=registration_succeed');
 
@@ -201,7 +201,7 @@ describe('Register User on domain', () => {
         lastName: faker.name.lastName(),
         username: faker.name.firstName(),
         email: faker.internet.email(),
-        password: 'P@ssw0rd!',
+        password: 'P@ssw0rd!123',
       };
       await register(user, 'success=registration_succeed');
 
@@ -250,7 +250,7 @@ describe('Register User on domain', () => {
         lastName: faker.name.lastName(),
         username: faker.name.firstName(),
         email: faker.internet.email(),
-        password: 'P@ssw0rd!',
+        password: 'P@ssw0rd!123',
       };
 
       await register(user, `https://acustom/web/site?client_id=${clientId}`, true);

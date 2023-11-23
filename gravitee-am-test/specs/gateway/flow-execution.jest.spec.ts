@@ -48,7 +48,7 @@ let openIdConfiguration;
 let application;
 let user = {
   username: 'FlowUser',
-  password: 'Test123!',
+  password: 'SomeP@ssw0rd',
   firstName: 'Flow',
   lastName: 'User',
   email: 'flowuser@acme.fr',
