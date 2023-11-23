@@ -73,16 +73,16 @@ beforeAll(async () => {
 describe('multiple user', () => {
     const contractValue = '1234';
     let user1;
-    const user1Password = 'Zxc123!!';
+    const user1Password = 'ZxcPrm7123!!';
     let user2;
-    const commonPassword = 'Asd123!!';
+    const commonPassword = 'AsdPrm7123!!';
     const commonEmail = 'common@test.com';
     let user3; //user3 has same password as user2
     let user4;
-    const user4Password = 'Qwe123!!';
+    const user4Password = 'QwePrm7123!!';
     let user5;
     let user6;
-    const secondCommonPassword = 'Phd123!!';
+    const secondCommonPassword = 'PhdPrm7123!!';
     const secondCommonEmail = 'second.common@test.com';
 
     beforeAll(async () => {

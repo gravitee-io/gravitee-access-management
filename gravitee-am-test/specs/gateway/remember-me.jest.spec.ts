@@ -37,7 +37,7 @@ let openIdConfiguration;
 let user;
 
 const contractValue = '1234';
-const password = 'Zxc123!!';
+const password = 'ZxcPrm7123!!';
 
 jest.setTimeout(200000);
 
