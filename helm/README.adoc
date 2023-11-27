@@ -446,6 +446,8 @@ httpClient:
 
 |api.ssl.enabled |bool |`+false+` |
 
+|api.type |string |`+"Deployment"+` |
+
 |api.updateStrategy.rollingUpdate.maxUnavailable |int |`+1+` |
 
 |api.updateStrategy.type |string |`+"RollingUpdate"+` |
@@ -719,7 +721,7 @@ httpClient:
 
 === Gravitee.io Alert trigger & settings
 
-When alerts are enabled, you may want to define your own settings the alert triggers and for the risk_assessment settings. 
+When alerts are enabled, you may want to define your own settings the alert triggers and for the risk_assessment settings.
 To do so, you wan define triggers and settings under the alerts section of the values.yaml.
 
 

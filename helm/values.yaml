@@ -31,12 +31,12 @@ am:
         - get
         - list
         - watch
-        
+
 chaos:
   enabled: false
 
 #####
-## Proxy settings to apply on HttpClient used by Management API and Gateway 
+## Proxy settings to apply on HttpClient used by Management API and Gateway
 ## to perform external calls
 #####
 #httpClient:
@@ -96,14 +96,14 @@ mongo:
     username:
     password:
 #  keystore:
-#    path:                      
-#    type:                      
-#    password:                  
-#    keyPassword:               
+#    path:
+#    type:
+#    password:
+#    keyPassword:
 #  truststore:
-#    path:                      
-#    type:                      
-#    password:     
+#    path:
+#    type:
+#    password:
 
 mongodb-replicaset:
   initContainers:
@@ -151,9 +151,9 @@ jdbc:
     maxCreateConnectionTime: 5000
 #  sslEnabled: false
 #  sslMode: verify-ca
-#  sslServerCert: 
+#  sslServerCert:
 #  trustServerCertificate:
-#  disableSslHostnameVerification: 
+#  disableSslHostnameVerification:
 #  trustStore:
 #    path:
 #    password:
@@ -167,18 +167,18 @@ oauth2:
 # Support for Gravitee.io Cockpit (cockpit.gravitee.io)
 cockpit:
   enabled: false
-  keystore: 
+  keystore:
     value: "base64 encoded value of the keystore provided by Cockpit (required)"
     password:
       #value: "keystores password provided by Cockpit"
-      #valueFrom: 
+      #valueFrom:
         #secretKeyRef:
         #configMapKeyRef:
-  #truststore: 
+  #truststore:
     #value: base64 encoded value of the truststore provided by Cockpit (optional)
     #password:
       #value: "truststore password provided by Cockpit"
-      #valueFrom: 
+      #valueFrom:
         #secretKeyRef:
         #configMapKeyRef:
   url: https://cockpit.gravitee.io
@@ -190,6 +190,7 @@ api:
   enabled: true
   upgrader: false
   name: management-api
+  type: Deployment
   logging:
     debug: false
     stdout:
@@ -361,7 +362,7 @@ api:
 #       on an accessible host outside of the pod: api.http.services.core.http.host
           enabled: false
 #         type: ClusterIP
-#         externalPort: 18083      
+#         externalPort: 18083
   jwt:
     secret: s3cR3t4grAv1t3310AMS1g1ingDftK3y
     kid: default-gravitee-AM-key
@@ -478,10 +479,11 @@ api:
         refresh:
           delay: 10
           timeUnit: MINUTES
-          
+
 gateway:
   enabled: true
   name: gateway
+  type: Deployment
 
   http:
     maxHeaderSize: 8192
@@ -550,7 +552,7 @@ gateway:
     # revisionHistoryLimit: 10
 
   livenessProbe:
-    tcpSocket:  
+    tcpSocket:
       port: http
     initialDelaySeconds: 30
     periodSeconds: 30

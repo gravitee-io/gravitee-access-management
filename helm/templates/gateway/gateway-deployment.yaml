@@ -3,7 +3,7 @@
 {{- $serviceAccount := include "am.serviceAccount" . -}}
 {{- $logbackVolumeName := include "gateway.logbackVolumeName" . -}}
 apiVersion: apps/v1
-kind: Deployment
+kind: {{ .Values.gateway.type }}
 metadata:
   name: {{ template "gravitee.gateway.fullname" . }}
   labels:
@@ -34,7 +34,7 @@ spec:
   {{- end }}
   {{- if not .Values.gateway.autoscaling.enabled }}
   replicas: {{ .Values.gateway.replicaCount }}
-  {{- end }} 
+  {{- end }}
   strategy: {{ toYaml .Values.gateway.deployment.strategy | nindent 4 }}
   selector:
     matchLabels:
@@ -64,7 +64,7 @@ spec:
         {{- range $key, $value := .Values.labels }}
         {{ $key }}: {{ $value | quote }}
         {{- end }}
-        {{- end }}  
+        {{- end }}
     spec:
       {{- if .Values.gateway.deployment.podSecurityContext }}
       securityContext: {{ toYaml .Values.gateway.deployment.podSecurityContext | nindent 8 }}

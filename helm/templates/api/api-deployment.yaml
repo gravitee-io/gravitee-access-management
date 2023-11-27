@@ -3,7 +3,7 @@
 {{- $serviceAccount := include "am.serviceAccount" . -}}
 {{- $logbackVolumeName := include "api.logbackVolumeName" . -}}
 apiVersion: apps/v1
-kind: Deployment
+kind: {{ .Values.api.type }}
 metadata:
   name: {{ template "gravitee.api.fullname" . }}
   labels:

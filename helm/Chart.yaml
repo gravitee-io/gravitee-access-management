@@ -2,7 +2,7 @@ apiVersion: v1
 name: am
 # When the version is modified, make sure the artifacthub.io/changes list is updated
 # Also update CHANGELOG.md
-version: 4.1.0
+version: 4.1.6
 appVersion: 4.1.0
 description: Official Gravitee.io Helm chart for Access Management
 home: https://gravitee.io
@@ -27,4 +27,3 @@ annotations:
     - Manage consent setting to log IP & User-Agent into the audits.
     - Allow users to define extra manifests
     - refactoring of email configuration now `smtp.email` and `api.notifiers.email` transpose helm values to `gravitee.yml` with some process to be backward compatible.
-

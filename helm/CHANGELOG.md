@@ -2,6 +2,10 @@
 
 This file documents all notable changes to [Gravitee.io Access Management 3.x](https://github.com/gravitee-io/helm-charts/tree/master/am/) Helm Chart. The release numbering uses [semantic versioning](http://semver.org).
 
+### 4.1.6
+
+- [X] Allow user to choose the deployment type for the api and the gateway
+
 ### 4.1.5
 
 - [X] Make optional HTTP2 request processing via `gateway.http.alpn` set at `true` by default.
@@ -9,7 +13,7 @@ This file documents all notable changes to [Gravitee.io Access Management 3.x](h
 
 ### 4.1.0
 
-**BREAKING CHANGE**: AM 4.1.0 upgrade to R2DBC 1.0, now the r2dbc drivers need to be in 1.x. Drivers in 0.x will not work anymore. 
+**BREAKING CHANGE**: AM 4.1.0 upgrade to R2DBC 1.0, now the r2dbc drivers need to be in 1.x. Drivers in 0.x will not work anymore.
 
 - [X] Default values for RDBMS connection pool have changed. (**warning**: timeout duration set to 0 doesn't mean infinite anymore, you have to define negative value)
 
@@ -123,7 +127,7 @@ It means Helm Chart and AM should always be aligned.
 
 - [X] Ease the integration of Gravitee.io Cockpit
 - [X] Allow configuration of cookie properties
-- [X] Introduce values to enable and configure notification about domain certificates expiry 
+- [X] Introduce values to enable and configure notification about domain certificates expiry
 - [X] Allow to configure ssl.trust and ssl.protocols through the values.yaml
 - [X] Allow to configure user management settings (resetPassword token TTL, username pattern...) in the values.yaml
 - [X] Allow to define gateway http section through values instead of environment variables (csp, xframe, cors, csrf)
@@ -156,7 +160,7 @@ It means Helm Chart and AM should always be aligned.
 
 ### 1.0.30
 
-- [X] Allow to configure metrics endpoint in the configmap template for AM Gateway & API 
+- [X] Allow to configure metrics endpoint in the configmap template for AM Gateway & API
 
 ### 1.0.29
 
@@ -203,14 +207,14 @@ It means Helm Chart and AM should always be aligned.
 
 ### 1.0.19
 
-- [X] Add validation on baseURL value 
+- [X] Add validation on baseURL value
 - [X] Add support for JDBC Connection pool
 - Update gravitee.io AM v3.9.0
 
 ### 1.0.18
 
 - [X] Correctly evaluate ingress properties to customize constants.json file
-- [X] Remove duplicate gateway.url value in AM 
+- [X] Remove duplicate gateway.url value in AM
 
 ### 1.0.17
 
