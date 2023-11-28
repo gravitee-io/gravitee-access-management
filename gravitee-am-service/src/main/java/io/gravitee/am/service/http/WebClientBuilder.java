@@ -23,7 +23,6 @@ import io.vertx.rxjava3.ext.web.client.WebClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.Environment;
 
@@ -51,54 +50,6 @@ public class WebClientBuilder {
     private static final String SSL_KEYSTORE_STORE_PASSWORD = "httpClient.ssl.keystore.password";
     private static final Pattern WILDCARD_PATTERN = Pattern.compile("\\*\\.");
 
-    @Value("${httpClient.timeout:10000}")
-    private int httpClientTimeout;
-
-    @Value("${httpClient.proxy.type:HTTP}")
-    private String httpClientProxyType;
-
-    @Value("${httpClient.proxy.http.host:#{systemProperties['http.proxyHost'] ?: 'localhost'}}")
-    private String httpClientProxyHttpHost;
-
-    @Value("${httpClient.proxy.http.port:#{systemProperties['http.proxyPort'] ?: 3128}}")
-    private int httpClientProxyHttpPort;
-
-    @Value("${httpClient.proxy.http.username:#{null}}")
-    private String httpClientProxyHttpUsername;
-
-    @Value("${httpClient.proxy.http.password:#{null}}")
-    private String httpClientProxyHttpPassword;
-
-    @Value("${httpClient.proxy.https.host:#{systemProperties['https.proxyHost'] ?: 'localhost'}}")
-    private String httpClientProxyHttpsHost;
-
-    @Value("${httpClient.proxy.https.port:#{systemProperties['https.proxyPort'] ?: 3128}}")
-    private int httpClientProxyHttpsPort;
-
-    @Value("${httpClient.proxy.https.username:#{null}}")
-    private String httpClientProxyHttpsUsername;
-
-    @Value("${httpClient.proxy.https.password:#{null}}")
-    private String httpClientProxyHttpsPassword;
-
-    @Value("${httpClient.proxy.enabled:false}")
-    private boolean isProxyConfigured;
-
-    @Value("${httpClient.ssl.enabled:false}")
-    private boolean isSSLEnabled;
-
-    @Value("${httpClient.ssl.trustAll:false}")
-    private boolean isSSLTrustAllEnabled;
-
-    @Value("${httpClient.ssl.verifyHost:true}")
-    private boolean isSSLVerifyHostEnabled;
-
-    @Value("${httpClient.ssl.truststore.type:#{null}}")
-    private String sslTrustStoreType;
-
-    @Value("${httpClient.ssl.keystore.type:#{null}}")
-    private String sslKeyStoreType;
-
     @Autowired
     private Environment environment;
 
@@ -112,7 +63,7 @@ public class WebClientBuilder {
                 .setKeepAlive(true)
                 .setMaxPoolSize(10)
                 .setTcpKeepAlive(true)
-                .setConnectTimeout(httpClientTimeout)
+                .setConnectTimeout(httpClientTimeout())
                 .setSsl(url.getProtocol().equals(HTTPS_SCHEME));
 
         return createWebClient(vertx, options);
@@ -130,48 +81,46 @@ public class WebClientBuilder {
 
     private void setProxySettings(WebClientOptions options, String url) {
 
-        if (this.isProxyConfigured && !isExcludedHost(url)) {
+        if (this.isProxyConfigured() && !isExcludedHost(url)) {
             ProxyOptions proxyOptions = new ProxyOptions();
-            proxyOptions.setType(ProxyType.valueOf(httpClientProxyType));
+            proxyOptions.setType(ProxyType.valueOf(httpClientProxyType()));
             if (options.isSsl()) {
-                proxyOptions.setHost(httpClientProxyHttpsHost);
-                proxyOptions.setPort(httpClientProxyHttpsPort);
-                proxyOptions.setUsername(httpClientProxyHttpsUsername);
-                proxyOptions.setPassword(httpClientProxyHttpsPassword);
+                proxyOptions.setHost(httpClientProxyHttpsHost());
+                proxyOptions.setPort(httpClientProxyHttpsPort());
+                proxyOptions.setUsername(httpClientProxyHttpsUsername());
+                proxyOptions.setPassword(httpClientProxyHttpsPassword());
             } else {
-                proxyOptions.setHost(httpClientProxyHttpHost);
-                proxyOptions.setPort(httpClientProxyHttpPort);
-                proxyOptions.setUsername(httpClientProxyHttpUsername);
-                proxyOptions.setPassword(httpClientProxyHttpPassword);
+                proxyOptions.setHost(httpClientProxyHttpHost());
+                proxyOptions.setPort(httpClientProxyHttpPort());
+                proxyOptions.setUsername(httpClientProxyHttpUsername());
+                proxyOptions.setPassword(httpClientProxyHttpPassword());
             }
             options.setProxyOptions(proxyOptions);
         }
     }
 
     private void setSSLSettings(WebClientOptions options) {
-        if (isSSLEnabled) {
-            options.setTrustAll(isSSLTrustAllEnabled);
-            options.setVerifyHost(isSSLVerifyHostEnabled);
-            if (sslTrustStoreType != null) {
-                switch (sslTrustStoreType) {
+        if (isSSLEnabled()) {
+            options.setTrustAll(isSSLTrustAllEnabled());
+            options.setVerifyHost(isSSLVerifyHostEnabled());
+            if (sslTrustStoreType() != null) {
+                switch (sslTrustStoreType()) {
                     case JKS_KEYSTORE_TYPE -> setJksTrustOptions(options);
                     case PKCS12_KEYSTORE_TYPE -> setPfxTrustOptions(options);
                     case PEM_KEYSTORE_TYPE -> setPemTrustOptions(options);
-                    default ->
-                            LOGGER.error("No suitable httpClient SSL TrustStore type found for : " + sslTrustStoreType);
+                    default -> LOGGER.error("No suitable httpClient SSL TrustStore type found for : " + sslTrustStoreType());
                 }
             }
-            if (sslKeyStoreType != null) {
-                switch (sslKeyStoreType) {
+            if (sslKeyStoreType() != null) {
+                switch (sslKeyStoreType()) {
                     case JKS_KEYSTORE_TYPE -> setJksKeyOptions(options);
                     case PKCS12_KEYSTORE_TYPE -> setPfxKeyOptions(options);
                     case PEM_KEYSTORE_TYPE -> setPemKeyOptions(options);
-                    default -> LOGGER.error("No suitable httpClient SSL KeyStore type found for : " + sslKeyStoreType);
+                    default -> LOGGER.error("No suitable httpClient SSL KeyStore type found for : " + sslKeyStoreType());
                 }
             }
         }
     }
-
 
     private void setJksTrustOptions(WebClientOptions options) {
         JksOptions jksOptions = new JksOptions();
@@ -227,7 +176,7 @@ public class WebClientBuilder {
                     .map(String::valueOf)
                     .collect(Collectors.toList());
 
-            if(url.contains("?")) {
+            if (url.contains("?")) {
                 // Remove the query part as it could contain invalid characters such as those used in El expression.
                 url = url.substring(0, url.indexOf('?'));
             }
@@ -245,5 +194,90 @@ public class WebClientBuilder {
             LOGGER.error("An error has occurred when calculating proxy excluded hosts", ex);
             return false;
         }
+    }
+
+    private Integer httpClientTimeout() {
+        return environment.getProperty("httpClient.timeout", Integer.class, 10000);
+    }
+
+    private String httpClientProxyType() {
+        return environment.getProperty("httpClient.proxy.type", "HTTP");
+    }
+
+    private String httpClientProxyHttpHost() {
+        return environment.getProperty("httpClient.proxy.http.host", System.getProperty("http.proxyHost", "localhost"));
+    }
+
+    private Integer httpClientProxyHttpPort() {
+        return environment.getProperty(
+                "httpClient.proxy.http.port",
+                Integer.class,
+                Integer.valueOf(System.getProperty("http.proxyPort", "3128"))
+        );
+    }
+
+    private String httpClientProxyHttpUsername() {
+        return environment.getProperty("httpClient.proxy.http.username");
+    }
+
+    private String httpClientProxyHttpPassword() {
+        return environment.getProperty("httpClient.proxy.http.password");
+    }
+
+    private String httpClientProxyHttpsHost() {
+        return environment.getProperty("httpClient.proxy.https.host", System.getProperty("https.proxyHost", "localhost"));
+    }
+
+    private Integer httpClientProxyHttpsPort() {
+        return environment.getProperty(
+                "httpClient.proxy.https.port",
+                Integer.class,
+                Integer.valueOf(System.getProperty("https.proxyPort", "3128"))
+        );
+    }
+
+    private String httpClientProxyHttpsUsername() {
+        return environment.getProperty("httpClient.proxy.https.username");
+    }
+
+    private String httpClientProxyHttpsPassword() {
+        return environment.getProperty("httpClient.proxy.https.password");
+    }
+
+    private Boolean isProxyConfigured() {
+        return environment.getProperty(
+                "httpClient.proxy.enabled",
+                Boolean.class,
+                false);
+    }
+
+    private Boolean isSSLEnabled() {
+        return environment.getProperty(
+                "httpClient.ssl.enabled",
+                Boolean.class,
+                false);
+    }
+
+    private boolean isSSLTrustAllEnabled() {
+        return environment.getProperty(
+                "httpClient.ssl.trustAll",
+                Boolean.class,
+                false);
+    }
+
+    private boolean isSSLVerifyHostEnabled() {
+        return environment.getProperty(
+                "httpClient.ssl.verifyHost",
+                Boolean.class,
+                true);
+    }
+
+
+    private String sslTrustStoreType() {
+        return environment.getProperty("httpClient.ssl.truststore.type");
+    }
+
+    private String sslKeyStoreType() {
+        return environment.getProperty("httpClient.ssl.keystore.type");
     }
 }

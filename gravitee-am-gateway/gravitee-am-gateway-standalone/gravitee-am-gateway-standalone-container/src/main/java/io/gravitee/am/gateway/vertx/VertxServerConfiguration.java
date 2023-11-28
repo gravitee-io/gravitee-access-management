@@ -25,6 +25,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Scope;
 import org.springframework.core.env.Environment;
 
@@ -37,6 +38,7 @@ public class VertxServerConfiguration {
 
     private static final String HTTP_PREFIX = "http";
 
+    @Lazy
     @Bean
     public VertxHttpServerOptions httpServerConfiguration(
             Environment environment,

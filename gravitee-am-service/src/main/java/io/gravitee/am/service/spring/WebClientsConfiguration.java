@@ -21,6 +21,7 @@ import io.vertx.rxjava3.ext.web.client.WebClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -29,14 +30,9 @@ import java.net.URI;
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Lazy
 @Configuration
 public class WebClientsConfiguration {
-
-    @Value("${reCaptcha.serviceUrl:https://www.google.com/recaptcha/api/siteverify}")
-    private String recaptchaServiceUrl;
-
-    @Value("${newsletter.url:https://newsletter.gravitee.io}")
-    private String newsletterURL;
 
     @Bean
     protected WebClientBuilder webClientBuilder() {
@@ -44,12 +40,14 @@ public class WebClientsConfiguration {
     }
 
     @Bean("recaptchaWebClient")
-    protected WebClient recaptchaWebClient(Vertx vertx, WebClientBuilder webClientBuilder) throws MalformedURLException {
+    protected WebClient recaptchaWebClient(Vertx vertx, WebClientBuilder webClientBuilder, io.gravitee.node.api.configuration.Configuration configuration) throws MalformedURLException {
+        final String recaptchaServiceUrl = configuration.getProperty("reCaptcha.serviceUrl", "https://www.google.com/recaptcha/api/siteverify");
         return webClientBuilder.createWebClient(vertx, URI.create(recaptchaServiceUrl).toURL());
     }
 
     @Bean("newsletterWebClient")
-    protected WebClient newsletterWebClient(Vertx vertx, WebClientBuilder webClientBuilder) throws MalformedURLException {
+    protected WebClient newsletterWebClient(Vertx vertx, WebClientBuilder webClientBuilder, io.gravitee.node.api.configuration.Configuration configuration) throws MalformedURLException {
+        final String newsletterURL =  configuration.getProperty("newsletter.url", "https://newsletter.gravitee.io");
         return webClientBuilder.createWebClient(vertx, URI.create(newsletterURL).toURL());
     }
 }

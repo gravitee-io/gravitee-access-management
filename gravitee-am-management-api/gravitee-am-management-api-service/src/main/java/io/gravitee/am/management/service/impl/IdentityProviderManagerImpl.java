@@ -40,7 +40,6 @@ import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -76,30 +75,6 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
 
     private final ConcurrentMap<String, UserProvider> userProviders = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, IdentityProvider> identityProviders = new ConcurrentHashMap<>();
-
-    @Value("${management.type:mongodb}")
-    private String managementBackend;
-
-    @Value("${management.jdbc.host:localhost}")
-    private String jdbcHost;
-
-    @Value("${management.jdbc.port:#{null}}")
-    private String jdbcPort;
-
-    @Value("${management.jdbc.driver:postgresql}")
-    private String jdbcDriver;
-
-    @Value("${management.jdbc.database:gravitee_am}")
-    private String jdbcDatabase;
-
-    @Value("${management.jdbc.username:postgres}")
-    private String jdbcUser;
-
-    @Value("${management.jdbc.password:#{null}}")
-    private String jdbcPassword;
-
-    @Value("${management.jdbc.identityProvider.provisioning:true}")
-    private boolean idpProvisioning;
 
     @Autowired
     private IdentityProviderPluginManager identityProviderPluginManager;
@@ -166,7 +141,7 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
         return Completable.complete();
     }
 
-    private List<IdentityProvider> loadProvidersFromConfig(){
+    private List<IdentityProvider> loadProvidersFromConfig() {
         List<IdentityProvider> providers = new ArrayList<>();
         boolean found = true;
         int idx = 0;
@@ -203,7 +178,7 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
         provider.setConfiguration("{}");
         return provider;
     }
-    
+
     @Override
     public Maybe<UserProvider> getUserProvider(String userProvider) {
         if (userProvider == null) {
@@ -246,7 +221,7 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
             newIdentityProvider.setType(DEFAULT_JDBC_IDP_TYPE);
             newIdentityProvider.setConfiguration(createProviderConfiguration(referenceId, newIdentityProvider));
         } else {
-            return Single.error(new IllegalStateException("Unable to create Default IdentityProvider with " + managementBackend + " backend"));
+            return Single.error(new IllegalStateException("Unable to create Default IdentityProvider with " + managementBackend() + " backend"));
         }
         return identityProviderService.create(referenceType, referenceId, newIdentityProvider, null, true);
     }
@@ -271,9 +246,9 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
 
             String defaultMongoUri = "mongodb://";
             if (!StringUtils.isEmpty(username) && !StringUtils.isEmpty(password)) {
-                defaultMongoUri += username +":"+ password +"@";
+                defaultMongoUri += username + ":" + password + "@";
             }
-            defaultMongoUri += addOptionsToURI(mongoServers.orElse(mongoHost+":"+mongoPort));
+            defaultMongoUri += addOptionsToURI(mongoServers.orElse(mongoHost + ":" + mongoPort));
 
             String mongoUri = environment.getProperty("management.mongodb.uri", defaultMongoUri);
             providerConfig = "{\"uri\":\"" + mongoUri + ((mongoHost != null) ? "\",\"host\":\"" + mongoHost : "")
@@ -296,17 +271,17 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
                 }
             }
 
-            providerConfig = "{\"host\":\""+jdbcHost+"\"," +
-                    "\"port\":"+jdbcPort+"," +
-                    "\"protocol\":\""+jdbcDriver+"\"," +
-                    "\"database\":\""+jdbcDatabase+"\"," +
+            providerConfig = "{\"host\":\"" + jdbcHost() + "\"," +
+                    "\"port\":" + jdbcPort() + "," +
+                    "\"protocol\":\"" + jdbcDriver() + "\"," +
+                    "\"database\":\"" + jdbcDatabase() + "\"," +
                     // dash are forbidden in table name, replace them in domainName by underscore
-                    "\"usersTable\":\"idp_users_"+ tableSuffix +"\"," +
-                    "\"user\":\""+ jdbcUser +"\"," +
-                    "\"password\":"+ (jdbcPassword == null ? null : "\"" + jdbcPassword + "\"") + "," +
-                    "\"autoProvisioning\":"+ idpProvisioning +"," +
-                    "\"selectUserByUsernameQuery\":\"SELECT * FROM idp_users_"+ tableSuffix +" WHERE username = %s\"," +
-                    "\"selectUserByEmailQuery\":\"SELECT * FROM idp_users_"+ tableSuffix +" WHERE email = %s\"," +
+                    "\"usersTable\":\"idp_users_" + tableSuffix + "\"," +
+                    "\"user\":\"" + jdbcUser() + "\"," +
+                    "\"password\":" + (jdbcPassword() == null ? null : "\"" + jdbcPassword() + "\"") + "," +
+                    "\"autoProvisioning\":" + idpProvisioning() + "," +
+                    "\"selectUserByUsernameQuery\":\"SELECT * FROM idp_users_" + tableSuffix + " WHERE username = %s\"," +
+                    "\"selectUserByEmailQuery\":\"SELECT * FROM idp_users_" + tableSuffix + " WHERE email = %s\"," +
                     "\"identifierAttribute\":\"id\"," +
                     "\"usernameAttribute\":\"username\"," +
                     "\"passwordAttribute\":\"password\"," +
@@ -328,14 +303,14 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
             int serverPort = environment.getProperty("management.mongodb.servers[" + (idx++) + "].port", int.class, 27017);
             found = (serverHost != null);
             if (found) {
-                endpoints.add(serverHost+":"+serverPort);
+                endpoints.add(serverHost + ":" + serverPort);
             }
         }
 
         return endpoints.isEmpty() ? Optional.empty() : Optional.of(endpoints.stream().collect(Collectors.joining(",")));
     }
 
-    public  String addOptionsToURI(String mongoUri) {
+    public String addOptionsToURI(String mongoUri) {
         Integer connectTimeout = environment.getProperty("management.mongodb.connectTimeout", Integer.class, 1000);
         Integer socketTimeout = environment.getProperty("management.mongodb.socketTimeout", Integer.class, 1000);
         Integer maxConnectionIdleTime = environment.getProperty("management.mongodb.maxConnectionIdleTime", Integer.class);
@@ -344,29 +319,29 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
         String authSource = environment.getProperty("management.mongodb.authSource", String.class);
 
         mongoUri += mongoUri.endsWith("/") ? "" : "/";
-        mongoUri += "?connectTimeoutMS="+connectTimeout+"&socketTimeoutMS="+socketTimeout;
+        mongoUri += "?connectTimeoutMS=" + connectTimeout + "&socketTimeoutMS=" + socketTimeout;
         if (authSource != null) {
-            mongoUri += "&authSource="+authSource;
+            mongoUri += "&authSource=" + authSource;
         }
         if (maxConnectionIdleTime != null) {
-            mongoUri += "&maxIdleTimeMS="+maxConnectionIdleTime;
+            mongoUri += "&maxIdleTimeMS=" + maxConnectionIdleTime;
         }
         if (heartbeatFrequency != null) {
-            mongoUri += "&heartbeatFrequencyMS="+heartbeatFrequency;
+            mongoUri += "&heartbeatFrequencyMS=" + heartbeatFrequency;
         }
         if (sslEnabled != null) {
-            mongoUri += "&ssl="+sslEnabled;
+            mongoUri += "&ssl=" + sslEnabled;
         }
 
         return mongoUri;
     }
 
     protected boolean useMongoRepositories() {
-        return "mongodb".equalsIgnoreCase(managementBackend);
+        return "mongodb".equalsIgnoreCase(managementBackend());
     }
 
     protected boolean useJdbcRepositories() {
-        return "jdbc".equalsIgnoreCase(managementBackend);
+        return "jdbc".equalsIgnoreCase(managementBackend());
     }
 
     @Override
@@ -414,5 +389,37 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
             return Completable.error(PluginNotDeployedException.forType(type));
         }
         return Completable.complete();
+    }
+
+    private String managementBackend() {
+        return environment.getProperty("management.type", "mongodb");
+    }
+
+    private String jdbcHost() {
+        return environment.getProperty("management.jdbc.host", "localhost");
+    }
+
+    private String jdbcPort() {
+        return environment.getProperty("management.jdbc.port");
+    }
+
+    private String jdbcDriver() {
+        return environment.getProperty("management.jdbc.driver", "postgresql");
+    }
+
+    private String jdbcDatabase() {
+        return environment.getProperty("management.jdbc.database", "gravitee_am");
+    }
+
+    private String jdbcUser() {
+        return environment.getProperty("management.jdbc.username", "postgres");
+    }
+
+    private String jdbcPassword() {
+        return environment.getProperty("management.jdbc.password");
+    }
+
+    private boolean idpProvisioning() {
+        return environment.getProperty("management.jdbc.identityProvider.provisioning", Boolean.class, true);
     }
 }

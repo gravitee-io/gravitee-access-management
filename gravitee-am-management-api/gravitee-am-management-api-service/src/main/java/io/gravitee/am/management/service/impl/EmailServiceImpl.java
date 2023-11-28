@@ -47,6 +47,7 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -97,7 +98,7 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
             io.gravitee.am.service.EmailService emailService,
             Configuration freemarkerConfiguration,
             AuditService auditService,
-            @Qualifier("managementJwtBuilder") JWTBuilder jwtBuilder,
+            @Lazy @Qualifier("managementJwtBuilder") JWTBuilder jwtBuilder, // Need to be lazy loaded to ensure jwt builder is instantiated with all resolved configuration included eventual secrets.
             DomainService domainService,
             I18nDictionaryService i18nDictionaryService,
             @Value("${email.enabled:false}") boolean enabled,

@@ -21,13 +21,13 @@ import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.node.api.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.env.Environment;
 
 import jakarta.servlet.http.Cookie;
 import java.time.Instant;
@@ -64,9 +64,6 @@ public class JWTGenerator implements InitializingBean {
             AM_CLAIMS_LOGINS
             );
 
-    @Value("${jwt.secret:s3cR3t4grAv1t3310AMS1g1ingDftK3y}")
-    private String signingKeySecret;
-
     @Value("${jwt.cookie-name:Auth-Graviteeio-AM}")
     private String authCookieName;
 
@@ -75,23 +72,22 @@ public class JWTGenerator implements InitializingBean {
     private JWTBuilder jwtBuilder;
 
     @Autowired
-    private Environment environment;
-
+    private Configuration configuration;
 
     public Cookie generateCookie(final String name, final String value, final boolean httpOnly) {
 
         final Cookie cookie = new Cookie(name, value);
         cookie.setHttpOnly(httpOnly);
-        cookie.setSecure(environment.getProperty("jwt.cookie-secure", Boolean.class, DEFAULT_JWT_COOKIE_SECURE));
-        cookie.setPath(environment.getProperty("jwt.cookie-path", DEFAULT_JWT_COOKIE_PATH));
-        cookie.setDomain(environment.getProperty("jwt.cookie-domain", DEFAULT_JWT_COOKIE_DOMAIN));
-        cookie.setMaxAge(value == null ? 0 : environment.getProperty("jwt.expire-after", Integer.class, DEFAULT_JWT_EXPIRE_AFTER));
+        cookie.setSecure(configuration.getProperty("jwt.cookie-secure", Boolean.class, DEFAULT_JWT_COOKIE_SECURE));
+        cookie.setPath(configuration.getProperty("jwt.cookie-path", DEFAULT_JWT_COOKIE_PATH));
+        cookie.setDomain(configuration.getProperty("jwt.cookie-domain", DEFAULT_JWT_COOKIE_DOMAIN));
+        cookie.setMaxAge(value == null ? 0 : configuration.getProperty("jwt.expire-after", Integer.class, DEFAULT_JWT_EXPIRE_AFTER));
 
         return cookie;
     }
 
     public Cookie generateCookie(final User user) {
-        int expiresAfter = environment.getProperty("jwt.expire-after", Integer.class, DEFAULT_JWT_EXPIRE_AFTER);
+        int expiresAfter = configuration.getProperty("jwt.expire-after", Integer.class, DEFAULT_JWT_EXPIRE_AFTER);
         Date expirationDate = new Date(System.currentTimeMillis() + expiresAfter * 1000);
         String jwtToken  = generateToken(user, expirationDate);
 
@@ -102,7 +98,7 @@ public class JWTGenerator implements InitializingBean {
     }
 
     public Map<String, Object> generateToken(final User user) {
-        int expiresAfter = environment.getProperty("jwt.expire-after", Integer.class, DEFAULT_JWT_EXPIRE_AFTER);
+        int expiresAfter = configuration.getProperty("jwt.expire-after", Integer.class, DEFAULT_JWT_EXPIRE_AFTER);
         Date expirationDate = new Date(System.currentTimeMillis() + expiresAfter * 1000);
         String jwtToken  = generateToken(user, expirationDate);
 
@@ -136,10 +132,10 @@ public class JWTGenerator implements InitializingBean {
 
     public Cookie getClearCookie() {
 
-        Cookie cookie = new Cookie(environment.getProperty("jwt.cookie-name", DEFAULT_JWT_COOKIE_NAME), null);
-        cookie.setSecure(environment.getProperty("jwt.cookie-secure", Boolean.class, DEFAULT_JWT_COOKIE_SECURE));
-        cookie.setPath(environment.getProperty("jwt.cookie-path", DEFAULT_JWT_COOKIE_PATH));
-        cookie.setDomain(environment.getProperty("jwt.cookie-domain", DEFAULT_JWT_COOKIE_DOMAIN));
+        Cookie cookie = new Cookie(configuration.getProperty("jwt.cookie-name", DEFAULT_JWT_COOKIE_NAME), null);
+        cookie.setSecure(configuration.getProperty("jwt.cookie-secure", Boolean.class, DEFAULT_JWT_COOKIE_SECURE));
+        cookie.setPath(configuration.getProperty("jwt.cookie-path", DEFAULT_JWT_COOKIE_PATH));
+        cookie.setDomain(configuration.getProperty("jwt.cookie-domain", DEFAULT_JWT_COOKIE_DOMAIN));
         cookie.setMaxAge(0);
 
         return cookie;
@@ -148,7 +144,7 @@ public class JWTGenerator implements InitializingBean {
     @Override
     public void afterPropertiesSet() {
         //Warning if the secret is still the default one
-        if ("s3cR3t4grAv1t3310AMS1g1ingDftK3y".equals(signingKeySecret)) {
+        if ("s3cR3t4grAv1t3310AMS1g1ingDftK3y".equals(signingKeySecret())) {
             LOGGER.warn("");
             LOGGER.warn("##############################################################");
             LOGGER.warn("#                      SECURITY WARNING                      #");
@@ -161,5 +157,9 @@ public class JWTGenerator implements InitializingBean {
             LOGGER.warn("##############################################################");
             LOGGER.warn("");
         }
+    }
+
+    private String signingKeySecret() {
+        return configuration.getProperty("jwt.secret", "s3cR3t4grAv1t3310AMS1g1ingDftK3y");
     }
 }

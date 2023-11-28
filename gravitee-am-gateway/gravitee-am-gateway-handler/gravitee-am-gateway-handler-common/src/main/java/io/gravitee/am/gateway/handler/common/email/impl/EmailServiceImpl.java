@@ -46,6 +46,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Lazy;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -93,6 +94,7 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
     @Autowired
     private AuditService auditService;
 
+    @Lazy // Need to be lazy loaded to ensure jwt buider is instantiated with all resolved configuration included eventual secrets.
     @Autowired
     @Qualifier("managementJwtBuilder")
     private JWTBuilder jwtBuilder;

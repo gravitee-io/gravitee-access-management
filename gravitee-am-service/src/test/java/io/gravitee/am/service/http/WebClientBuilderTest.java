@@ -24,7 +24,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.env.Environment;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -48,14 +47,16 @@ public class WebClientBuilderTest {
         io.vertx.core.Vertx vertDelegate = mock(io.vertx.core.Vertx.class);
         vertx = mock(Vertx.class);
         when(vertx.getDelegate()).thenReturn(vertDelegate);
-
+        lenient().when(environment.getProperty(anyString(), eq(Boolean.class), anyBoolean())).thenReturn(false);
+        lenient().when(environment.getProperty("httpClient.ssl.truststore.type")).thenReturn(null);
     }
 
     @Test
     public void shouldApplySSLOptions_trustAll() {
         WebClientOptions webClientOptions = new WebClientOptions();
-        ReflectionTestUtils.setField(webClientBuilder, "isSSLEnabled", true);
-        ReflectionTestUtils.setField(webClientBuilder, "isSSLTrustAllEnabled", true);
+        when(environment.getProperty("httpClient.ssl.enabled", Boolean.class, false)).thenReturn(true);
+        when(environment.getProperty("httpClient.ssl.trustAll", Boolean.class, false)).thenReturn(true);
+
         webClientBuilder.createWebClient(vertx, webClientOptions);
 
         assertTrue(webClientOptions.isTrustAll());
@@ -64,9 +65,10 @@ public class WebClientBuilderTest {
     @Test
     public void shouldApplySSLOptions_invalidTrustStoreType() {
         WebClientOptions webClientOptions = new WebClientOptions();
-        ReflectionTestUtils.setField(webClientBuilder, "isSSLEnabled", true);
-        ReflectionTestUtils.setField(webClientBuilder, "isSSLTrustAllEnabled", false);
-        ReflectionTestUtils.setField(webClientBuilder, "sslTrustStoreType", "unknown");
+        when(environment.getProperty("httpClient.ssl.enabled", Boolean.class, false)).thenReturn(true);
+        when(environment.getProperty("httpClient.ssl.trustAll", Boolean.class, false)).thenReturn(false);
+        when(environment.getProperty("httpClient.ssl.truststore.type")).thenReturn("unknown");
+
         webClientBuilder.createWebClient(vertx, webClientOptions);
 
         assertFalse(webClientOptions.isTrustAll());
@@ -78,9 +80,9 @@ public class WebClientBuilderTest {
     @Test
     public void shouldApplySSLOptions_jksTrustStore() {
         WebClientOptions webClientOptions = new WebClientOptions();
-        ReflectionTestUtils.setField(webClientBuilder, "isSSLEnabled", true);
-        ReflectionTestUtils.setField(webClientBuilder, "isSSLTrustAllEnabled", false);
-        ReflectionTestUtils.setField(webClientBuilder, "sslTrustStoreType", "jks");
+        when(environment.getProperty("httpClient.ssl.enabled", Boolean.class, false)).thenReturn(true);
+        when(environment.getProperty("httpClient.ssl.trustAll", Boolean.class, false)).thenReturn(false);
+        when(environment.getProperty("httpClient.ssl.truststore.type")).thenReturn("jks");
         when(environment.getProperty("httpClient.ssl.truststore.path")).thenReturn("/truststore.jks");
         when(environment.getProperty("httpClient.ssl.truststore.password")).thenReturn("password");
         webClientBuilder.createWebClient(vertx, webClientOptions);
@@ -94,9 +96,9 @@ public class WebClientBuilderTest {
     @Test
     public void shouldApplySSLOptions_pfxTrustStore() {
         WebClientOptions webClientOptions = new WebClientOptions();
-        ReflectionTestUtils.setField(webClientBuilder, "isSSLEnabled", true);
-        ReflectionTestUtils.setField(webClientBuilder, "isSSLTrustAllEnabled", false);
-        ReflectionTestUtils.setField(webClientBuilder, "sslTrustStoreType", "pkcs12");
+        when(environment.getProperty("httpClient.ssl.enabled", Boolean.class, false)).thenReturn(true);
+        when(environment.getProperty("httpClient.ssl.trustAll", Boolean.class, false)).thenReturn(false);
+        when(environment.getProperty("httpClient.ssl.truststore.type")).thenReturn("pkcs12");
         when(environment.getProperty("httpClient.ssl.truststore.path")).thenReturn("/truststore.p12");
         when(environment.getProperty("httpClient.ssl.truststore.password")).thenReturn("password");
         webClientBuilder.createWebClient(vertx, webClientOptions);
@@ -110,9 +112,9 @@ public class WebClientBuilderTest {
     @Test
     public void shouldApplySSLOptions_pemTrustStore() {
         WebClientOptions webClientOptions = new WebClientOptions();
-        ReflectionTestUtils.setField(webClientBuilder, "isSSLEnabled", true);
-        ReflectionTestUtils.setField(webClientBuilder, "isSSLTrustAllEnabled", false);
-        ReflectionTestUtils.setField(webClientBuilder, "sslTrustStoreType", "pem");
+        when(environment.getProperty("httpClient.ssl.enabled", Boolean.class, false)).thenReturn(true);
+        when(environment.getProperty("httpClient.ssl.trustAll", Boolean.class, false)).thenReturn(false);
+        when(environment.getProperty("httpClient.ssl.truststore.type")).thenReturn("pem");
         when(environment.getProperty("httpClient.ssl.truststore.path")).thenReturn("/truststore.pem");
         webClientBuilder.createWebClient(vertx, webClientOptions);
 
@@ -125,9 +127,9 @@ public class WebClientBuilderTest {
     @Test
     public void shouldApplySSLOptions_invalidKeyStoreType() {
         WebClientOptions webClientOptions = new WebClientOptions();
-        ReflectionTestUtils.setField(webClientBuilder, "isSSLEnabled", true);
-        ReflectionTestUtils.setField(webClientBuilder, "isSSLTrustAllEnabled", false);
-        ReflectionTestUtils.setField(webClientBuilder, "sslKeyStoreType", "unknown");
+        when(environment.getProperty("httpClient.ssl.enabled", Boolean.class, false)).thenReturn(true);
+        when(environment.getProperty("httpClient.ssl.trustAll", Boolean.class, false)).thenReturn(false);
+        when(environment.getProperty("httpClient.ssl.keystore.type")).thenReturn("unknown");
         webClientBuilder.createWebClient(vertx, webClientOptions);
 
         assertFalse(webClientOptions.isTrustAll());
@@ -139,9 +141,9 @@ public class WebClientBuilderTest {
     @Test
     public void shouldApplySSLOptions_jksKeyStore() {
         WebClientOptions webClientOptions = new WebClientOptions();
-        ReflectionTestUtils.setField(webClientBuilder, "isSSLEnabled", true);
-        ReflectionTestUtils.setField(webClientBuilder, "isSSLTrustAllEnabled", false);
-        ReflectionTestUtils.setField(webClientBuilder, "sslKeyStoreType", "jks");
+        when(environment.getProperty("httpClient.ssl.enabled", Boolean.class, false)).thenReturn(true);
+        when(environment.getProperty("httpClient.ssl.trustAll", Boolean.class, false)).thenReturn(false);
+        when(environment.getProperty("httpClient.ssl.keystore.type")).thenReturn("jks");
         when(environment.getProperty("httpClient.ssl.keystore.path")).thenReturn("/keystore.jks");
         when(environment.getProperty("httpClient.ssl.keystore.password")).thenReturn("password");
         webClientBuilder.createWebClient(vertx, webClientOptions);
@@ -155,9 +157,9 @@ public class WebClientBuilderTest {
     @Test
     public void shouldApplySSLOptions_pfxKeyStore() {
         WebClientOptions webClientOptions = new WebClientOptions();
-        ReflectionTestUtils.setField(webClientBuilder, "isSSLEnabled", true);
-        ReflectionTestUtils.setField(webClientBuilder, "isSSLTrustAllEnabled", false);
-        ReflectionTestUtils.setField(webClientBuilder, "sslKeyStoreType", "pkcs12");
+        when(environment.getProperty("httpClient.ssl.enabled", Boolean.class, false)).thenReturn(true);
+        when(environment.getProperty("httpClient.ssl.trustAll", Boolean.class, false)).thenReturn(false);
+        when(environment.getProperty("httpClient.ssl.keystore.type")).thenReturn("pkcs12");
         when(environment.getProperty("httpClient.ssl.keystore.path")).thenReturn("/keystore.p12");
         when(environment.getProperty("httpClient.ssl.keystore.password")).thenReturn("password");
         webClientBuilder.createWebClient(vertx, webClientOptions);
@@ -171,9 +173,9 @@ public class WebClientBuilderTest {
     @Test
     public void shouldApplySSLOptions_pemKeyStore() {
         WebClientOptions webClientOptions = new WebClientOptions();
-        ReflectionTestUtils.setField(webClientBuilder, "isSSLEnabled", true);
-        ReflectionTestUtils.setField(webClientBuilder, "isSSLTrustAllEnabled", false);
-        ReflectionTestUtils.setField(webClientBuilder, "sslKeyStoreType", "pem");
+        when(environment.getProperty("httpClient.ssl.enabled", Boolean.class, false)).thenReturn(true);
+        when(environment.getProperty("httpClient.ssl.trustAll", Boolean.class, false)).thenReturn(false);
+        when(environment.getProperty("httpClient.ssl.keystore.type")).thenReturn("pem");
         when(environment.getProperty("httpClient.ssl.keystore.path")).thenReturn("/certificate.key");
         when(environment.getProperty("httpClient.ssl.keystore.keyPath")).thenReturn("/private.key");
         webClientBuilder.createWebClient(vertx, webClientOptions);
