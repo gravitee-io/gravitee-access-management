@@ -65,6 +65,8 @@ import static io.gravitee.am.common.web.UriBuilder.encodeURIComponent;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.LOGGER;
 import static io.gravitee.am.gateway.handler.root.RootProvider.PATH_LOGIN_CALLBACK;
+import static io.gravitee.am.common.utils.ConstantKeys.PROTOCOL_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.RETURN_URL_KEY;
 import static io.gravitee.am.service.utils.ResponseTypeUtils.isHybridFlow;
 import static io.gravitee.am.service.utils.ResponseTypeUtils.isImplicitFlow;
 
@@ -122,7 +124,6 @@ public class LoginCallbackFailureHandler extends LoginAbstractHandler {
     private void redirect(RoutingContext context, Throwable throwable) {
         try {
 
-
             Authentication authentication;
             // logout user if exists
             if (context.user() != null) {
@@ -131,13 +132,22 @@ public class LoginCallbackFailureHandler extends LoginAbstractHandler {
                 final User endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) context.user().getDelegate()).getUser();
                 authentication = new EndUserAuthentication(endUser, null, new SimpleAuthenticationContext(new VertxHttpServerRequest(context.request().getDelegate())));
 
-                // clear AuthenticationFlowContext. data of this context have a TTL so we can fire and forget in case on error.
-                authenticationFlowContextService.clearContext(context.session().get(ConstantKeys.TRANSACTION_ID_KEY))
-                        .doOnError((error) -> logger.info("Deletion of some authentication flow data fails '{}'", error.getMessage()))
-                        .subscribe();
-
-                context.clearUser();
-                context.session().destroy();
+                final String protocol = context.session().get(ConstantKeys.PROTOCOL_KEY);
+                if (ConstantKeys.PROTOCOL_VALUE_SAML_REDIRECT.equals(protocol)) {
+                    final var returnUrl = context.session().get(ConstantKeys.RETURN_URL_KEY);
+                    clearSession(context, true);
+                    context.session().put(RETURN_URL_KEY, returnUrl);
+                    context.session().put(PROTOCOL_KEY, protocol);
+                } else if (ConstantKeys.PROTOCOL_VALUE_SAML_POST.equals(protocol)) {
+                    final var returnUrl = context.session().get(RETURN_URL_KEY);
+                    final var transactionId = context.session().get(ConstantKeys.TRANSACTION_ID_KEY);
+                    clearSession(context, false);
+                    context.session().put(ConstantKeys.TRANSACTION_ID_KEY, transactionId);
+                    context.session().put(RETURN_URL_KEY, returnUrl);
+                    context.session().put(PROTOCOL_KEY, protocol);
+                } else {
+                    clearSession(context, true);
+                }
             } else {
                 authentication = new EndUserAuthentication(null, null, new SimpleAuthenticationContext(new VertxHttpServerRequest(context.request().getDelegate())));
             }
@@ -182,13 +192,27 @@ public class LoginCallbackFailureHandler extends LoginAbstractHandler {
         }
     }
 
+    private void clearSession(RoutingContext context, boolean clearAuthFlow) {
+        if (clearAuthFlow) {
+            // clear AuthenticationFlowContext. data of this context have a TTL so we can fire and forget in case on error.
+            authenticationFlowContextService.clearContext(context.session().get(ConstantKeys.TRANSACTION_ID_KEY))
+                    .doOnError((error) -> logger.info("Deletion of some authentication flow data fails '{}'", error.getMessage()))
+                    .subscribe();
+        }
+        context.clearUser();
+        context.session().destroy();
+    }
+
     private void redirectToSP(MultiMap originalParams,
                               Client client,
                               RoutingContext context,
                               Authentication authentication,
                               Throwable throwable) throws URISyntaxException {
         // Get the SP redirect_uri
-        final String spRedirectUri = (originalParams != null && originalParams.get(Parameters.REDIRECT_URI) != null) ?
+
+        final String protocol = context.session() != null ? context.session().get(ConstantKeys.PROTOCOL_KEY) : null;
+        final String samlEndpoint = ConstantKeys.PROTOCOL_VALUE_SAML_REDIRECT.equals(protocol) || ConstantKeys.PROTOCOL_VALUE_SAML_POST.equals(protocol) ? context.session().get(RETURN_URL_KEY) : null;
+        final String spRedirectUri = samlEndpoint != null ? samlEndpoint : (originalParams != null && originalParams.get(Parameters.REDIRECT_URI) != null) ?
                 originalParams.get(Parameters.REDIRECT_URI) :
                 client.getRedirectUris().get(0);
 
