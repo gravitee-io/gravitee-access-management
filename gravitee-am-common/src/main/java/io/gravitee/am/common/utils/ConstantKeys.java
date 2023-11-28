@@ -219,4 +219,8 @@ public interface ConstantKeys {
         Claims.auth_time,
         Claims.updated_at
     );
+
+    String PROTOCOL_KEY = "protocol";
+    String PROTOCOL_VALUE_SAML_REDIRECT = "SAML/HTTP-Redirect";
+    String PROTOCOL_VALUE_SAML_POST = "SAML/HTTP-POST";
 }

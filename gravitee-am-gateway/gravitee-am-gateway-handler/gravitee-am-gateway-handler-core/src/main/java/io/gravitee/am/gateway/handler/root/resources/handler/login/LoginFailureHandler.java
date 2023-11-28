@@ -42,6 +42,8 @@ import java.net.URI;
 import java.util.*;
 
 import static io.gravitee.am.common.utils.ConstantKeys.PARAM_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.PROTOCOL_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.RETURN_URL_KEY;
 import static io.gravitee.am.service.utils.ResponseTypeUtils.isHybridFlow;
 import static io.gravitee.am.service.utils.ResponseTypeUtils.isImplicitFlow;
 import static java.util.Objects.nonNull;
@@ -185,13 +187,33 @@ public class LoginFailureHandler extends LoginAbstractHandler {
 
     private void logoutUser(RoutingContext context){
         if (context.user() != null) {
+            final String protocol = context.session().get(ConstantKeys.PROTOCOL_KEY);
+            if (ConstantKeys.PROTOCOL_VALUE_SAML_REDIRECT.equals(protocol)) {
+                final var returnUrl = context.session().get(ConstantKeys.RETURN_URL_KEY);
+                clearSession(context, true);
+                context.session().put(RETURN_URL_KEY, returnUrl);
+                context.session().put(PROTOCOL_KEY, protocol);
+            } else if (ConstantKeys.PROTOCOL_VALUE_SAML_POST.equals(protocol)) {
+                final var returnUrl = context.session().get(RETURN_URL_KEY);
+                final var transactionId = context.session().get(ConstantKeys.TRANSACTION_ID_KEY);
+                clearSession(context, false);
+                context.session().put(ConstantKeys.TRANSACTION_ID_KEY, transactionId);
+                context.session().put(RETURN_URL_KEY, returnUrl);
+                context.session().put(PROTOCOL_KEY, protocol);
+            } else {
+                clearSession(context, true);
+            }
+        }
+    }
+
+    private void clearSession(RoutingContext context, boolean clearAuthFlow) {
+        if (clearAuthFlow) {
             // clear AuthenticationFlowContext. data of this context have a TTL so we can fire and forget in case on error.
             authenticationFlowContextService.clearContext(context.session().get(ConstantKeys.TRANSACTION_ID_KEY))
                     .doOnError((error) -> LOGGER.info("Deletion of some authentication flow data fails '{}'", error.getMessage()))
                     .subscribe();
-
-            context.clearUser();
-            context.session().destroy();
         }
+        context.clearUser();
+        context.session().destroy();
     }
 }
