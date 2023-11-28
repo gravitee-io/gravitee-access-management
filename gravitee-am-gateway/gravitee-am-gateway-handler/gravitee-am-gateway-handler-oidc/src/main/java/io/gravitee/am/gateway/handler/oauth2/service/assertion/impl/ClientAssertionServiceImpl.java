@@ -213,7 +213,6 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
             SignedJWT signedJWT = (SignedJWT) jwt;
 
 
-
             return this.clientSyncService.findByClientId(clientId)
                     .switchIfEmpty(Maybe.error(new InvalidClientException("Missing or invalid client")))
                     .flatMap(client -> {

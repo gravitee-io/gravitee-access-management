@@ -233,6 +233,7 @@ public interface ConstantKeys {
         Claims.auth_time,
         Claims.updated_at
     );
+
     String REGISTRATION_VERIFY_SUCCESS = "registration_verify_success";
 
     String POLICY_CHAIN_ERROR_KEY_MFA_CHALLENGE_ERROR = "GATEWAY_POLICY_MFA_CHALLENGE_ERROR";
@@ -253,4 +254,7 @@ public interface ConstantKeys {
 
     String CONTINUE_CALLBACK_PROCESSING = "continueCallbackProcess";
 
+    String PROTOCOL_KEY = "protocol";
+    String PROTOCOL_VALUE_SAML_REDIRECT = "SAML/HTTP-Redirect";
+    String PROTOCOL_VALUE_SAML_POST = "SAML/HTTP-POST";
 }
