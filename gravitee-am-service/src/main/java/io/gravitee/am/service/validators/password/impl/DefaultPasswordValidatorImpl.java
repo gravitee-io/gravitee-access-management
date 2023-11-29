@@ -32,7 +32,7 @@ import static io.gravitee.am.model.PasswordSettings.PASSWORD_MAX_LENGTH;
 @Component("defaultPasswordValidator")
 public class DefaultPasswordValidatorImpl implements PasswordValidator {
 
-    private static final String DEFAULT_PASSWORD_PATTERN_VALUE = "^(?=.*[0-9])(?=.*[A-Z])(?=.*[a-z])(?=.*[!~<>.,;:_=?/*+\\\\-#\\\\\\\"'&§`£€%°()|\\\\[\\\\]$^@])(?!.*(.)\\\\1{2,}).{12,128}$";
+    private static final String DEFAULT_PASSWORD_PATTERN_VALUE = "^(?=.*[0-9])(?=.*[A-Z])(?=.*[a-z])(?=.*[!~<>.,;:_=?/*+\\-#\\\"'&§`£€%°()|\\[\\]$^@])(?!.*(.)\\1{2,}).{12,128}$";
 
     private static final String MESSAGE = "Field [password] is invalid";
     private static final String ERROR_KEY = "invalid_password_value";
