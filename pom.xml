@@ -76,7 +76,7 @@
         <gravitee-bom.version>6.0.14</gravitee-bom.version>
         <gravitee-common.version>2.1.0</gravitee-common.version>
         <gravitee-plugin.version>2.2.0</gravitee-plugin.version>
-        <gravitee-node.version>4.6.1-archi-299-defer-resolve-values-SNAPSHOT</gravitee-node.version>
+        <gravitee-node.version>4.6.1</gravitee-node.version>
         <gravitee-reporter.version>1.17.1</gravitee-reporter.version>
         <gravitee-gateway-api.version>3.0.0</gravitee-gateway-api.version>
         <gravitee-expression-language.version>3.1.0</gravitee-expression-language.version>
@@ -131,6 +131,7 @@
         <gravitee-alert-api.version>1.8.0</gravitee-alert-api.version>
         <gravitee-notifier-api.version>1.4.1</gravitee-notifier-api.version>
         <gravitee-risk-assessment-api.version>2.0.0</gravitee-risk-assessment-api.version>
+        <gravitee-secretprovider-kubernetes.version>1.0.0-alpha.4</gravitee-secretprovider-kubernetes.version>
 
         <!-- EE plugin included in default bundle -->
         <gravitee-am-idp-saml2.version>3.0.0</gravitee-am-idp-saml2.version>

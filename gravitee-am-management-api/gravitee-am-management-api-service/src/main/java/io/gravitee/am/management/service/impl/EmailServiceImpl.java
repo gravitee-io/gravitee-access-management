@@ -15,7 +15,11 @@
  */
 package io.gravitee.am.management.service.impl;
 
-import freemarker.template.*;
+import freemarker.template.Configuration;
+import freemarker.template.DefaultObjectWrapperBuilder;
+import freemarker.template.SimpleHash;
+import freemarker.template.Template;
+import freemarker.template.TemplateException;
 import io.gravitee.am.common.email.Email;
 import io.gravitee.am.common.email.EmailBuilder;
 import io.gravitee.am.common.jwt.Claims;
@@ -37,17 +41,15 @@ import io.gravitee.am.service.i18n.ThreadLocalDomainDictionaryProvider;
 import io.gravitee.am.service.impl.I18nDictionaryService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.EmailAuditBuilder;
-import io.gravitee.am.service.validators.email.EmailDomainValidator;
 import io.netty.handler.codec.http.QueryStringDecoder;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.vertx.rxjava3.core.MultiMap;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -93,6 +95,9 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
 
     private final ThreadLocalDomainDictionaryProvider dictionaryProvider;
 
+    private final Environment environment;
+
+    @Lazy
     public EmailServiceImpl(
             EmailManager emailManager,
             io.gravitee.am.service.EmailService emailService,
@@ -101,26 +106,23 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
             @Lazy @Qualifier("managementJwtBuilder") JWTBuilder jwtBuilder, // Need to be lazy loaded to ensure jwt builder is instantiated with all resolved configuration included eventual secrets.
             DomainService domainService,
             I18nDictionaryService i18nDictionaryService,
-            @Value("${email.enabled:false}") boolean enabled,
-            @Value("${user.registration.email.subject:New user registration}") String registrationSubject,
-            @Value("${user.registration.token.expire-after:86400}")  Integer registrationExpireAfter,
-            @Value("${user.registration.verify.email.subject:New user registration}") String registrationVerifySubject,
-            @Value("${user.registration.verify.token.expire-after:604800}")  Integer registrationVerifyExpireAfter,
-            @Value("${services.certificate.expiryEmailSubject:Certificate will expire soon}") String certificateExpirySubject) {
+            Environment environment) {
         this.emailManager = emailManager;
         this.emailService = emailService;
         this.freemarkerConfiguration = freemarkerConfiguration;
         this.auditService = auditService;
         this.jwtBuilder = jwtBuilder;
         this.domainService = domainService;
-        this.enabled = enabled;
-        this.registrationSubject = registrationSubject;
-        this.registrationExpireAfter = registrationExpireAfter;
-        this.registrationVerifySubject = registrationVerifySubject;
-        this.registrationVerifyExpireAfter = registrationVerifyExpireAfter;
-        this.certificateExpirySubject = certificateExpirySubject;
+        this.environment = environment;
+        this.enabled = enabled();
+        this.registrationSubject = registrationSubject();
+        this.registrationExpireAfter = registrationExpireAfter();
+        this.registrationVerifySubject = registrationVerifySubject();
+        this.registrationVerifyExpireAfter = registrationVerifyExpireAfter();
+        this.certificateExpirySubject = certificateExpirySubject();
         this.dictionaryProvider = new ThreadLocalDomainDictionaryProvider();
         this.i18nDictionaryService = i18nDictionaryService;
+
     }
 
     @Override
@@ -306,4 +308,29 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
                 throw new IllegalArgumentException(template.template() + " not found");
         }
     }
-}
+
+    private Boolean enabled(){
+        return Boolean.valueOf(environment.getProperty("email.enabled", "false"));
+    }
+
+    private String registrationSubject(){
+        return environment.getProperty("user.registration.email.subject", "New user registration");
+    }
+
+    private Integer registrationExpireAfter() {
+        return Integer.valueOf(environment.getProperty("user.registration.token.expire-after", "86400"));
+    }
+
+    private String registrationVerifySubject() {
+        return environment.getProperty("user.registration.verify.email.subject", "New user registration");
+    }
+
+    private Integer registrationVerifyExpireAfter() {
+        return Integer.valueOf(environment.getProperty("user.registration.verify.token.expire-after", "604800"));
+    }
+
+    private String certificateExpirySubject() {
+        return environment.getProperty("services.certificate.expiryEmailSubject", "Certificate will expire soon");
+    }
+
+    }

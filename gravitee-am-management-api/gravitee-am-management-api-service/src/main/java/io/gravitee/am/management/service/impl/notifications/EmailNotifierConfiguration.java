@@ -52,7 +52,7 @@ public class EmailNotifierConfiguration {
         this.to = other.getTo();
         this.subject = other.getSubject();
         this.body = other.getBody();
-        this.startTLSEnabled = other.startTLSEnabled;
+        this.startTLSEnabled = other.isStartTLSEnabled();
         this.sslTrustAll = other.isSslTrustAll();
         this.sslKeyStore = other.getSslKeyStore();
         this.sslKeyStorePassword = other.getSslKeyStorePassword();
@@ -116,7 +116,7 @@ public class EmailNotifierConfiguration {
 
     public boolean isStartTLSEnabled() {
         if (configuration == null) {
-            return isStartTLSEnabled();
+            return startTLSEnabled;
         }
         return configuration.getProperty("notifiers.email.startTLSEnabled", Boolean.class, false);
     }

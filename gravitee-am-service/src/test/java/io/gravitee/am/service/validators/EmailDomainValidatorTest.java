@@ -81,15 +81,6 @@ public class EmailDomainValidatorTest {
     }
 
     private EmailConfiguration getEmailConfiguration() {
-        return new EmailConfiguration(
-                true,
-                "localhost",
-                "12345",
-                "username",
-                "password",
-                "smtp",
-                "test@example.com",
-                environment
-        );
+        return new EmailConfiguration(environment);
     }
 }

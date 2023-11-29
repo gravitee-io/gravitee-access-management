@@ -22,6 +22,7 @@ import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
@@ -42,48 +43,29 @@ public class EmailConfiguration {
     private final static String EMAIL_PROPERTIES_PREFIX = "email.properties";
     private final static String MAILAPI_PROPERTIES_PREFIX = "mail.smtp.";
     private static final String DEFAULT_ALLOWED_FORM = "*@*.*";
-    private final boolean enabled;
-    private final String host;
-    private final String port;
-    private final String username;
-    private final String password;
-    private final String protocol;
-    private final String from;
 
     private final ConfigurableEnvironment environment;
     private final List<String> allowedFrom;
+    private io.gravitee.node.api.configuration.Configuration configuration;
 
-    public EmailConfiguration(
-            @Value("${email.enabled:false}") boolean enabled,
-            @Value("${email.host}") String host,
-            @Value("${email.port}") String port,
-            @Value("${email.username:#{null}}") String username,
-            @Value("${email.password:#{null}}") String password,
-            @Value("${email.protocol:smtp}") String protocol,
-            @Value("${email.from}") String from,
-            ConfigurableEnvironment environment) {
-        this.enabled = enabled;
-        this.host = host;
-        this.port = port;
-        this.username = username;
-        this.password = password;
-        this.protocol = protocol;
-        this.from = from;
+    public EmailConfiguration(ConfigurableEnvironment environment) {
         this.environment = environment;
         this.allowedFrom = initializeAllowList();
     }
 
+    @Lazy
     @Bean
-    public JavaMailSender mailSender() {
+    public JavaMailSender mailSender(io.gravitee.node.api.configuration.Configuration configuration) {
+        this.configuration = configuration;
         final JavaMailSenderImpl javaMailSender = new JavaMailSenderImpl();
-        javaMailSender.setHost(host);
+        javaMailSender.setHost(host());
         try {
-            javaMailSender.setPort(Integer.valueOf(this.port));
+            javaMailSender.setPort(Integer.valueOf(this.port()));
         } catch (Exception e) {
         }
-        javaMailSender.setUsername(username);
-        javaMailSender.setPassword(password);
-        javaMailSender.setProtocol(protocol);
+        javaMailSender.setUsername(username());
+        javaMailSender.setPassword(password());
+        javaMailSender.setProtocol(protocol());
         javaMailSender.setJavaMailProperties(loadProperties());
         return javaMailSender;
     }
@@ -100,31 +82,31 @@ public class EmailConfiguration {
     }
 
     public String getHost() {
-        return host;
+        return host();
     }
 
     public String getPort() {
-        return port;
+        return port();
     }
 
     public String getUsername() {
-        return username;
+        return username();
     }
 
     public String getPassword() {
-        return password;
+        return password();
     }
 
     public String getProtocol() {
-        return protocol;
+        return protocol();
     }
 
     public String getFrom() {
-        return from;
+        return from();
     }
 
     public boolean isEnabled() {
-        return enabled;
+        return enabled();
     }
 
     public List<String> getAllowedFrom() {
@@ -163,5 +145,33 @@ public class EmailConfiguration {
         }
         return allowList;
 
+    }
+
+    private Boolean enabled(){
+        return Boolean.valueOf(configuration.getProperty("email.enabled", "false"));
+    }
+
+    private String host(){
+        return configuration.getProperty("email.host" );
+    }
+
+    private String port(){
+        return configuration.getProperty("email.port");
+    }
+
+    private String username(){
+        return configuration.getProperty("email.username", "#{null}");
+    }
+
+    private String password(){
+        return configuration.getProperty("email.password", "#{null}");
+    }
+
+    private String protocol() {
+        return configuration.getProperty("email.protocol:smtp");
+    }
+
+    private String from(){
+        return configuration.getProperty("email.from");
     }
 }

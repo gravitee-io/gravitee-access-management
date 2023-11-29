@@ -23,6 +23,7 @@ import io.gravitee.am.service.i18n.FileSystemDictionaryProvider;
 import io.gravitee.am.service.utils.EmailSender;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Component;
 
@@ -44,7 +45,7 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
     private DictionaryProvider defaultDictionaryProvider;
     private DictionaryProvider dictionaryProvider;
 
-    public EmailServiceImpl(JavaMailSender mailSender, @Value("${templates.path:${gravitee.home}/templates}") String templatesPath) {
+    public EmailServiceImpl(@Lazy JavaMailSender mailSender, @Value("${templates.path:${gravitee.home}/templates}") String templatesPath) {
         this.mailSender = mailSender;
         this.templatesPath = templatesPath;
     }
