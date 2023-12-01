@@ -156,6 +156,11 @@ public interface ConstantKeys {
     String DEVICE_IDENTIFIER_PROVIDER_KEY = "deviceIdentifierProvider";
 
     // ------
+    // Default secret value used in gravitee.yaml
+    // ------
+    String DEFAULT_JWT_OR_CSRF_SECRET = "s3cR3t4grAv1t3310AMS1g1ingDftK3y";
+
+    // ------
     // Values used to find key into gravitee.yaml
     // ------
 

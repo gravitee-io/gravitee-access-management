@@ -22,14 +22,13 @@ import io.gravitee.am.jwt.DefaultJWTParser;
 import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.jwt.JWTParser;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Lazy;
 
-import javax.crypto.SecretKey;
 import java.security.InvalidKeyException;
 import java.security.Key;
+
+import static io.gravitee.am.common.utils.ConstantKeys.DEFAULT_JWT_OR_CSRF_SECRET;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -54,7 +53,7 @@ public class JWTConfiguration {
     }
 
     private String signingKeySecret(io.gravitee.node.api.configuration.Configuration configuration) {
-        return configuration.getProperty("jwt.secret", "s3cR3t4grAv1t3310AMS1g1ingDftK3y");
+        return configuration.getProperty("jwt.secret", DEFAULT_JWT_OR_CSRF_SECRET);
     }
 
     private String issuer(io.gravitee.node.api.configuration.Configuration configuration) {

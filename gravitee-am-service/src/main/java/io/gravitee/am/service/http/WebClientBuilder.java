@@ -244,14 +244,14 @@ public class WebClientBuilder {
         return environment.getProperty("httpClient.proxy.https.password");
     }
 
-    private Boolean isProxyConfigured() {
+    private boolean isProxyConfigured() {
         return environment.getProperty(
                 "httpClient.proxy.enabled",
                 Boolean.class,
                 false);
     }
 
-    private Boolean isSSLEnabled() {
+    private boolean isSSLEnabled() {
         return environment.getProperty(
                 "httpClient.ssl.enabled",
                 Boolean.class,

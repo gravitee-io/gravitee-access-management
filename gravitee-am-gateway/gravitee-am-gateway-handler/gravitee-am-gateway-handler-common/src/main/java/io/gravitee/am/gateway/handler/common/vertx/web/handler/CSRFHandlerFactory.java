@@ -22,6 +22,7 @@ import io.vertx.rxjava3.ext.web.handler.CSRFHandler;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import static io.gravitee.am.common.utils.ConstantKeys.DEFAULT_JWT_OR_CSRF_SECRET;
 import static io.vertx.ext.web.handler.SessionHandler.DEFAULT_SESSION_TIMEOUT;
 
 /**
@@ -47,7 +48,7 @@ public class CSRFHandlerFactory implements FactoryBean<CSRFHandler> {
     }
 
     private String csrfSecret() {
-        return configuration.getProperty("http.csrf.secret", "s3cR3t4grAv1t3310AMS1g1ingDftK3y");
+        return configuration.getProperty("http.csrf.secret", DEFAULT_JWT_OR_CSRF_SECRET);
     }
 
     private long timeout() {

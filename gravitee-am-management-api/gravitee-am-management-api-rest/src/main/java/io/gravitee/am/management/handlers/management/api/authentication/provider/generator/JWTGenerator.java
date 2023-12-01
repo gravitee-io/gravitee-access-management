@@ -36,6 +36,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import static io.gravitee.am.common.utils.ConstantKeys.DEFAULT_JWT_OR_CSRF_SECRET;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -44,6 +46,7 @@ public class JWTGenerator implements InitializingBean {
 
     public static final String AM_CLAIMS_ORG = "org";
     public static final String AM_CLAIMS_LOGINS = "login_count";
+    public static final String JWT_EXPIRE_AFTER_KEY = "jwt.expire-after";
 
     private final Logger LOGGER = LoggerFactory.getLogger(JWTGenerator.class);
 
@@ -81,13 +84,13 @@ public class JWTGenerator implements InitializingBean {
         cookie.setSecure(configuration.getProperty("jwt.cookie-secure", Boolean.class, DEFAULT_JWT_COOKIE_SECURE));
         cookie.setPath(configuration.getProperty("jwt.cookie-path", DEFAULT_JWT_COOKIE_PATH));
         cookie.setDomain(configuration.getProperty("jwt.cookie-domain", DEFAULT_JWT_COOKIE_DOMAIN));
-        cookie.setMaxAge(value == null ? 0 : configuration.getProperty("jwt.expire-after", Integer.class, DEFAULT_JWT_EXPIRE_AFTER));
+        cookie.setMaxAge(value == null ? 0 : configuration.getProperty(JWT_EXPIRE_AFTER_KEY, Integer.class, DEFAULT_JWT_EXPIRE_AFTER));
 
         return cookie;
     }
 
     public Cookie generateCookie(final User user) {
-        int expiresAfter = configuration.getProperty("jwt.expire-after", Integer.class, DEFAULT_JWT_EXPIRE_AFTER);
+        int expiresAfter = configuration.getProperty(JWT_EXPIRE_AFTER_KEY, Integer.class, DEFAULT_JWT_EXPIRE_AFTER);
         Date expirationDate = new Date(System.currentTimeMillis() + expiresAfter * 1000);
         String jwtToken  = generateToken(user, expirationDate);
 
@@ -98,7 +101,7 @@ public class JWTGenerator implements InitializingBean {
     }
 
     public Map<String, Object> generateToken(final User user) {
-        int expiresAfter = configuration.getProperty("jwt.expire-after", Integer.class, DEFAULT_JWT_EXPIRE_AFTER);
+        int expiresAfter = configuration.getProperty(JWT_EXPIRE_AFTER_KEY, Integer.class, DEFAULT_JWT_EXPIRE_AFTER);
         Date expirationDate = new Date(System.currentTimeMillis() + expiresAfter * 1000);
         String jwtToken  = generateToken(user, expirationDate);
 
@@ -144,7 +147,7 @@ public class JWTGenerator implements InitializingBean {
     @Override
     public void afterPropertiesSet() {
         //Warning if the secret is still the default one
-        if ("s3cR3t4grAv1t3310AMS1g1ingDftK3y".equals(signingKeySecret())) {
+        if (DEFAULT_JWT_OR_CSRF_SECRET.equals(signingKeySecret())) {
             LOGGER.warn("");
             LOGGER.warn("##############################################################");
             LOGGER.warn("#                      SECURITY WARNING                      #");
@@ -160,6 +163,6 @@ public class JWTGenerator implements InitializingBean {
     }
 
     private String signingKeySecret() {
-        return configuration.getProperty("jwt.secret", "s3cR3t4grAv1t3310AMS1g1ingDftK3y");
+        return configuration.getProperty("jwt.secret", DEFAULT_JWT_OR_CSRF_SECRET);
     }
 }

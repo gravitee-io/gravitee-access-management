@@ -52,6 +52,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
+import static io.gravitee.am.common.utils.ConstantKeys.DEFAULT_JWT_OR_CSRF_SECRET;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -317,7 +319,7 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
     }
 
     private String signingKeySecret() {
-        return configuration.getProperty("jwt.secret", "s3cR3t4grAv1t3310AMS1g1ingDftK3y");
+        return configuration.getProperty("jwt.secret", DEFAULT_JWT_OR_CSRF_SECRET);
     }
 
     private String signingKeyId() {
