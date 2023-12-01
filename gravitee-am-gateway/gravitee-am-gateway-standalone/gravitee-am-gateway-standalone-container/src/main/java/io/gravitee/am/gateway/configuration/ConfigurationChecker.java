@@ -15,10 +15,13 @@
  */
 package io.gravitee.am.gateway.configuration;
 
+import io.gravitee.node.api.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import static io.gravitee.am.common.utils.ConstantKeys.DEFAULT_JWT_OR_CSRF_SECRET;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -28,12 +31,12 @@ public class ConfigurationChecker implements InitializingBean {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ConfigurationChecker.class);
 
-    @Value("${http.csrf.secret:s3cR3t4grAv1t3310AMS1g1ingDftK3y}")
-    private String csrfSecret;
+    @Autowired
+    private Configuration configuration;
 
     void check() {
         //Warning if the secret is still the default one
-        if ("s3cR3t4grAv1t3310AMS1g1ingDftK3y".equals(csrfSecret)) {
+        if (DEFAULT_JWT_OR_CSRF_SECRET.equals(csrfSecret())) {
             LOGGER.warn("");
             LOGGER.warn("##############################################################");
             LOGGER.warn("#                      SECURITY WARNING                      #");
@@ -51,5 +54,9 @@ public class ConfigurationChecker implements InitializingBean {
     @Override
     public void afterPropertiesSet() {
         check();
+    }
+
+    private String csrfSecret() {
+        return configuration.getProperty("http.csrf.secret", DEFAULT_JWT_OR_CSRF_SECRET);
     }
 }

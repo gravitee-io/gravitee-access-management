@@ -26,6 +26,7 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -54,6 +55,7 @@ public class NewsletterServiceImpl implements NewsletterService, InitializingBea
     @Autowired
     private ObjectMapper mapper;
 
+    @Lazy // Need to be lazy loaded to ensure webclient is instantiated with all resolved configuration included eventual secrets.
     @Autowired
     @Qualifier("newsletterWebClient")
     private WebClient client;

@@ -16,12 +16,13 @@
 package io.gravitee.am.gateway.handler.common.vertx.web.handler;
 
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CSRFHandlerImpl;
+import io.gravitee.node.api.configuration.Configuration;
 import io.vertx.core.Vertx;
 import io.vertx.rxjava3.ext.web.handler.CSRFHandler;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 
+import static io.gravitee.am.common.utils.ConstantKeys.DEFAULT_JWT_OR_CSRF_SECRET;
 import static io.vertx.ext.web.handler.SessionHandler.DEFAULT_SESSION_TIMEOUT;
 
 /**
@@ -30,22 +31,27 @@ import static io.vertx.ext.web.handler.SessionHandler.DEFAULT_SESSION_TIMEOUT;
  */
 public class CSRFHandlerFactory implements FactoryBean<CSRFHandler> {
 
-    @Value("${http.csrf.secret:s3cR3t4grAv1t3310AMS1g1ingDftK3y}")
-    private String csrfSecret;
+    @Autowired
+    private Configuration configuration;
 
     @Autowired
     private Vertx vertx;
 
-    @Value("${http.cookie.session.timeout:" + DEFAULT_SESSION_TIMEOUT + "}")
-    private long timeout;
-
     @Override
     public CSRFHandler getObject() {
-        return CSRFHandler.newInstance(new CSRFHandlerImpl(vertx, csrfSecret, timeout));
+        return CSRFHandler.newInstance(new CSRFHandlerImpl(vertx, csrfSecret(), timeout()));
     }
 
     @Override
     public Class<?> getObjectType() {
         return CSRFHandler.class;
+    }
+
+    private String csrfSecret() {
+        return configuration.getProperty("http.csrf.secret", DEFAULT_JWT_OR_CSRF_SECRET);
+    }
+
+    private long timeout() {
+        return configuration.getProperty("http.cookie.session.timeout", Long.class, DEFAULT_SESSION_TIMEOUT);
     }
 }

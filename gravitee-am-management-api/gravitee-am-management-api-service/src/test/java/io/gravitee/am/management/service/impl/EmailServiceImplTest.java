@@ -50,6 +50,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.core.env.Environment;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 
 import java.io.File;
@@ -84,6 +85,10 @@ public class EmailServiceImplTest {
 
     @Mock
     private AuditService auditService;
+
+    @Mock
+    private Environment environment;
+
 
     JavaMailSenderImpl mailSender;
 
@@ -120,7 +125,13 @@ public class EmailServiceImplTest {
 
         this.i18nDictionaryService = mock(I18nDictionaryService.class);
         when(i18nDictionaryService.findAll(any(), any())).thenReturn(Flowable.empty());
-        
+        when(environment.getProperty("email.enabled", "false")).thenReturn("true");
+        when(environment.getProperty("user.registration.email.subject", "New user registration")).thenReturn("New user registration");
+        when(environment.getProperty("user.registration.token.expire-after", "86400")).thenReturn("86400");
+        when(environment.getProperty("user.registration.verify.email.subject", "New user registration")).thenReturn("New user registration");
+        when(environment.getProperty("user.registration.verify.token.expire-after", "604800")).thenReturn("604800");
+        when(environment.getProperty("services.certificate.expiryEmailSubject", "Certificate will expire soon")).thenReturn("Certificate will expire soon");
+
         var cut = new EmailServiceImpl(
                 emailManager,
                 emailService,
@@ -129,12 +140,7 @@ public class EmailServiceImplTest {
                 jwtBuilder,
                 new DomainServiceImpl("http://localhost:1234/unittest/"),
                 i18nDictionaryService,
-                true,
-                "New user registration",
-                86400,
-                "New user registration",
-                604800,
-                "Certificate will expire soon"
+                environment
         );
 
 
@@ -172,6 +178,12 @@ public class EmailServiceImplTest {
 
     @Test
     public void must_not_send_email_when_feature_is_disabled() throws Exception {
+        when(environment.getProperty("email.enabled", "false")).thenReturn("false");
+        when(environment.getProperty("user.registration.email.subject", "New user registration")).thenReturn("New user registration");
+        when(environment.getProperty("user.registration.token.expire-after", "86400")).thenReturn("86400");
+        when(environment.getProperty("user.registration.verify.email.subject", "New user registration")).thenReturn("New user registration");
+        when(environment.getProperty("user.registration.verify.token.expire-after", "604800")).thenReturn("604800");
+        when(environment.getProperty("services.certificate.expiryEmailSubject", "Certificate will expire soon")).thenReturn("Certificate will expire soon");
 
         var cut = new EmailServiceImpl(
                 emailManager,
@@ -181,12 +193,7 @@ public class EmailServiceImplTest {
                 jwtBuilder,
                 new DomainServiceImpl("http://localhost:1234/unittest/"),
                 i18nDictionaryService,
-                false,
-                "New user registration",
-                86400,
-                "New user registration",
-                604800,
-                "Certificate will expire soon"
+                environment
         );
 
         cut.send(createDomain(), null, Template.REGISTRATION_CONFIRMATION, createUser("en")).test().await().assertComplete();

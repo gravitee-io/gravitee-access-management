@@ -18,6 +18,7 @@ package io.gravitee.am.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.service.impl.ReCaptchaServiceImpl;
 import io.gravitee.common.http.HttpStatusCode;
+import io.gravitee.node.api.configuration.Configuration;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.schedulers.TestScheduler;
@@ -59,19 +60,20 @@ public class ReCaptchaServiceImplTest {
     @Mock
     protected HttpResponse httpResponse;
 
+    @Mock
+    private Configuration configuration;
+
     private ObjectMapper objectMapper = new ObjectMapper();
 
     @Before
     public void before() {
-
         ReflectionTestUtils.setField(reCaptchaService, "objectMapper", objectMapper);
-        ReflectionTestUtils.setField(reCaptchaService, "serviceUrl", "https://verif");
+        when(configuration.getProperty(eq("reCaptcha.serviceUrl"), anyString())).thenReturn("https://verif");
     }
 
     @Test
     public void isValidWhenDisabled() {
-
-        ReflectionTestUtils.setField(reCaptchaService, "enabled", false);
+        when(configuration.getProperty("reCaptcha.enabled", Boolean.class, false)).thenReturn(false);
 
         TestObserver<Boolean> obs = reCaptchaService.isValid(null).test();
         obs.awaitDone(10, TimeUnit.SECONDS);
@@ -88,8 +90,7 @@ public class ReCaptchaServiceImplTest {
 
     @Test
     public void isNotValidIfNoToken() {
-
-        ReflectionTestUtils.setField(reCaptchaService, "enabled", true);
+        when(configuration.getProperty("reCaptcha.enabled", Boolean.class, false)).thenReturn(true);
 
         TestObserver<Boolean> obs = reCaptchaService.isValid(null).test();
         obs.awaitDone(10, TimeUnit.SECONDS);
@@ -102,9 +103,8 @@ public class ReCaptchaServiceImplTest {
 
     @Test
     public void isValid() {
-
-        ReflectionTestUtils.setField(reCaptchaService, "minScore", 0.5d);
-        ReflectionTestUtils.setField(reCaptchaService, "enabled", true);
+        when(configuration.getProperty("reCaptcha.minScore", Double.class, 0.5)).thenReturn(0.5);
+        when(configuration.getProperty("reCaptcha.enabled", Boolean.class, false)).thenReturn(true);
 
         when(httpResponse.bodyAsString())
                 .thenReturn(new JsonObject().put("success", true).put("score", 0.9d).toString());
@@ -118,9 +118,8 @@ public class ReCaptchaServiceImplTest {
 
     @Test
     public void isValidAboveMinScore() {
-
-        ReflectionTestUtils.setField(reCaptchaService, "minScore", 0.5d);
-        ReflectionTestUtils.setField(reCaptchaService, "enabled", true);
+        when(configuration.getProperty("reCaptcha.minScore", Double.class, 0.5)).thenReturn(0.5);
+        when(configuration.getProperty("reCaptcha.enabled", Boolean.class, false)).thenReturn(true);
 
         when(httpResponse.bodyAsString())
                 .thenReturn(new JsonObject().put("success", true).put("score", 1.0d).toString());
@@ -134,9 +133,8 @@ public class ReCaptchaServiceImplTest {
 
     @Test
     public void isNotValidBelowMinScore() {
-
-        ReflectionTestUtils.setField(reCaptchaService, "minScore", 0.5d);
-        ReflectionTestUtils.setField(reCaptchaService, "enabled", true);
+        when(configuration.getProperty("reCaptcha.minScore", Double.class, 0.5)).thenReturn(0.5);
+        when(configuration.getProperty("reCaptcha.enabled", Boolean.class, false)).thenReturn(true);
 
         when(httpResponse.bodyAsString())
                 .thenReturn(new JsonObject().put("success", true).put("score", 0.4d).toString());
@@ -150,9 +148,7 @@ public class ReCaptchaServiceImplTest {
 
     @Test
     public void isNotValidNoSuccess() {
-
-        ReflectionTestUtils.setField(reCaptchaService, "minScore", 0.5d);
-        ReflectionTestUtils.setField(reCaptchaService, "enabled", true);
+        when(configuration.getProperty("reCaptcha.enabled", Boolean.class, false)).thenReturn(true);
 
         when(httpResponse.bodyAsString())
                 .thenReturn(new JsonObject().put("success", false).put("score", 0.0d).toString());
@@ -166,8 +162,7 @@ public class ReCaptchaServiceImplTest {
 
     @Test
     public void isNotEnabled() {
-
-        ReflectionTestUtils.setField(reCaptchaService, "enabled", false);
+        when(configuration.getProperty("reCaptcha.enabled", Boolean.class, false)).thenReturn(false);
         assertFalse(reCaptchaService.isEnabled());
     }
 
@@ -179,8 +174,7 @@ public class ReCaptchaServiceImplTest {
 
     @Test
     public void getSiteKey() {
-
-        ReflectionTestUtils.setField(reCaptchaService, "siteKey", "test");
+        when(configuration.getProperty("reCaptcha.siteKey")).thenReturn("test");
 
         assertEquals("test", reCaptchaService.getSiteKey());
     }
@@ -189,7 +183,7 @@ public class ReCaptchaServiceImplTest {
     public void beforeEach() {
         ((WebClientInternal) client.getDelegate()).addInterceptor(event -> {
 
-            if(event.phase() == ClientPhase.PREPARE_REQUEST) {
+            if (event.phase() == ClientPhase.PREPARE_REQUEST) {
                 // By pass send request and jump directly to dispatch phase with the mocked http response.
                 event.dispatchResponse(httpResponse);
             }

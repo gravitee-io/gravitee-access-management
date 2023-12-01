@@ -22,13 +22,13 @@ import io.gravitee.am.jwt.DefaultJWTParser;
 import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.jwt.JWTParser;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import javax.crypto.SecretKey;
 import java.security.InvalidKeyException;
 import java.security.Key;
+
+import static io.gravitee.am.common.utils.ConstantKeys.DEFAULT_JWT_OR_CSRF_SECRET;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -36,29 +36,31 @@ import java.security.Key;
  */
 @Configuration
 public class JWTConfiguration {
-
-    @Value("${jwt.secret:s3cR3t4grAv1t3310AMS1g1ingDftK3y}")
-    private String signingKeySecret;
-
-    @Value("${jwt.issuer:https://gravitee.am}")
-    private String issuer;
-
-    @Value("${jwt.kid:default-gravitee-AM-key}")
-    private String kid;
-
     @Bean("managementSecretKey")
-    protected Key key() throws InvalidKeyException {
-        return Keys.hmacShaKeyFor(signingKeySecret.getBytes());
+    protected Key key(io.gravitee.node.api.configuration.Configuration configuration) throws InvalidKeyException {
+        return Keys.hmacShaKeyFor(signingKeySecret(configuration).getBytes());
     }
 
     @Bean("managementJwtBuilder")
-    protected JWTBuilder jwtBuilder(@Qualifier("managementSecretKey") Key key) throws InvalidKeyException {
-        SignatureAlgorithm signatureAlgorithm = Keys.hmacShaSignatureAlgorithmFor(signingKeySecret.getBytes());
-        return new DefaultJWTBuilder(key, signatureAlgorithm.getValue(), kid, issuer);
+    protected JWTBuilder jwtBuilder(@Qualifier("managementSecretKey") Key key, io.gravitee.node.api.configuration.Configuration configuration) throws InvalidKeyException {
+        SignatureAlgorithm signatureAlgorithm = Keys.hmacShaSignatureAlgorithmFor(signingKeySecret(configuration).getBytes());
+        return new DefaultJWTBuilder(key, signatureAlgorithm.getValue(), kid(configuration), issuer(configuration));
     }
 
     @Bean("managementJwtParser")
     protected JWTParser jwtParser(@Qualifier("managementSecretKey") Key key) throws InvalidKeyException {
-        return new DefaultJWTParser((SecretKey) key);
+        return new DefaultJWTParser(key);
+    }
+
+    private String signingKeySecret(io.gravitee.node.api.configuration.Configuration configuration) {
+        return configuration.getProperty("jwt.secret", DEFAULT_JWT_OR_CSRF_SECRET);
+    }
+
+    private String issuer(io.gravitee.node.api.configuration.Configuration configuration) {
+        return configuration.getProperty("jwt.issuer", "https://gravitee.am");
+    }
+
+    private String kid(io.gravitee.node.api.configuration.Configuration configuration) {
+        return configuration.getProperty("jwt.kid", "default-gravitee-AM-key");
     }
 }

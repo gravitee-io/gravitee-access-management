@@ -33,15 +33,14 @@ import io.gravitee.am.repository.management.api.CertificateRepository;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
+import io.gravitee.node.api.configuration.Configuration;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 
 import java.security.InvalidKeyException;
 import java.security.Key;
@@ -53,19 +52,18 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
+import static io.gravitee.am.common.utils.ConstantKeys.DEFAULT_JWT_OR_CSRF_SECRET;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class CertificateManagerImpl extends AbstractService implements CertificateManager, EventListener<CertificateEvent, Payload>, InitializingBean {
+public class CertificateManagerImpl extends AbstractService implements CertificateManager, EventListener<CertificateEvent, Payload> {
 
     private static final Logger logger = LoggerFactory.getLogger(CertificateManagerImpl.class);
 
-    @Value("${jwt.secret:s3cR3t4grAv1t3310AMS1g1ingDftK3y}")
-    private String signingKeySecret;
-
-    @Value("${jwt.kid:default-gravitee-AM-key}")
-    private String signingKeyId;
+    @Autowired
+    private Configuration configuration;
 
     @Autowired
     private Domain domain;
@@ -84,29 +82,6 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
     private CertificateProvider noneAlgorithmCertificateProvider;
 
     private final ConcurrentMap<String, Certificate> certificates = new ConcurrentHashMap<>();
-
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        logger.info("Initializing default certificate provider for domain {}", domain.getName());
-        initDefaultCertificateProvider();
-        logger.info("Default certificate loaded for domain {}", domain.getName());
-
-        logger.info("Initializing none algorithm certificate provider for domain {}", domain.getName());
-        initNoneAlgorithmCertificateProvider();
-        logger.info("None algorithm certificate loaded for domain {}", domain.getName());
-
-        logger.info("Initializing certificates for domain {}", domain.getName());
-        certificateRepository.findByDomain(domain.getId())
-                .subscribeOn(Schedulers.io())
-                .subscribe(
-                        certificate -> {
-                            certificateProviderManager.create(certificate);
-                            certificates.put(certificate.getId(), certificate);
-                            logger.info("Certificate {} loaded for domain {}", certificate.getName(), domain.getName());
-                        },
-                        error -> logger.error("An error has occurred when loading certificates for domain {}", domain.getName(), error)
-                );
-    }
 
     @Override
     public void onEvent(Event<CertificateEvent, Payload> event) {
@@ -128,8 +103,32 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
     protected void doStart() throws Exception {
         super.doStart();
 
+        initialize();
+
         logger.info("Register event listener for certificate events for domain {}", domain.getName());
         eventManager.subscribeForEvents(this, CertificateEvent.class, domain.getId());
+    }
+
+    private void initialize() throws Exception {
+        logger.info("Initializing default certificate provider for domain {}", domain.getName());
+        initDefaultCertificateProvider();
+        logger.info("Default certificate loaded for domain {}", domain.getName());
+
+        logger.info("Initializing none algorithm certificate provider for domain {}", domain.getName());
+        initNoneAlgorithmCertificateProvider();
+        logger.info("None algorithm certificate loaded for domain {}", domain.getName());
+
+        logger.info("Initializing certificates for domain {}", domain.getName());
+        certificateRepository.findByDomain(domain.getId())
+                .subscribeOn(Schedulers.io())
+                .subscribe(
+                        certificate -> {
+                            certificateProviderManager.create(certificate);
+                            certificates.put(certificate.getId(), certificate);
+                            logger.info("Certificate {} loaded for domain {}", certificate.getName(), domain.getName());
+                        },
+                        error -> logger.error("An error has occurred when loading certificates for domain {}", domain.getName(), error)
+                );
     }
 
     @Override
@@ -228,10 +227,10 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
 
     private void initDefaultCertificateProvider() throws InvalidKeyException {
         // create default signing HMAC key
-        byte[] keySecretBytes = signingKeySecret.getBytes();
+        byte[] keySecretBytes = signingKeySecret().getBytes();
         Key key = Keys.hmacShaKeyFor(keySecretBytes);
         SignatureAlgorithm signatureAlgorithm = Keys.hmacShaSignatureAlgorithmFor(keySecretBytes);
-        io.gravitee.am.certificate.api.Key certificateKey = new DefaultKey(signingKeyId, key);
+        io.gravitee.am.certificate.api.Key certificateKey = new DefaultKey(signingKeyId(), key);
 
         // create default certificate provider
         CertificateMetadata certificateMetadata = new CertificateMetadata();
@@ -317,5 +316,13 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
             }
         };
         this.noneAlgorithmCertificateProvider = certificateProviderManager.create(noneProvider);
+    }
+
+    private String signingKeySecret() {
+        return configuration.getProperty("jwt.secret", DEFAULT_JWT_OR_CSRF_SECRET);
+    }
+
+    private String signingKeyId() {
+        return configuration.getProperty("jwt.kid", "default-gravitee-AM-key");
     }
 }

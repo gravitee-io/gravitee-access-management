@@ -17,6 +17,7 @@ package io.gravitee.am.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.service.ReCaptchaService;
+import io.gravitee.node.api.configuration.Configuration;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.rxjava3.core.MultiMap;
 import io.vertx.rxjava3.ext.web.client.WebClient;
@@ -24,7 +25,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
@@ -40,21 +40,10 @@ public class ReCaptchaServiceImpl implements ReCaptchaService {
 
     private static final Logger logger = LoggerFactory.getLogger(ReCaptchaServiceImpl.class);
 
-    @Value("${reCaptcha.enabled:false}")
-    private boolean enabled;
+    @Autowired
+    private Configuration configuration;
 
-    @Value("${reCaptcha.siteKey}")
-    private String siteKey;
-
-    @Value("${reCaptcha.secretKey}")
-    private String secretKey;
-
-    @Value("${reCaptcha.minScore:0.5}")
-    private Double minScore;
-
-    @Value("${reCaptcha.serviceUrl:https://www.google.com/recaptcha/api/siteverify}")
-    private String serviceUrl;
-
+    @Lazy // Need to be lazy loaded to ensure webclient is instantiated with all resolved configuration included eventual secrets.
     @Autowired
     @Qualifier("recaptchaWebClient")
     private WebClient client;
@@ -77,8 +66,8 @@ public class ReCaptchaServiceImpl implements ReCaptchaService {
             return Single.just(false);
         }
 
-        return client.post(URI.create(serviceUrl).toString())
-                .rxSendForm(MultiMap.caseInsensitiveMultiMap().set("secret", secretKey).set("response", token))
+        return client.post(URI.create(serviceUrl()).toString())
+                .rxSendForm(MultiMap.caseInsensitiveMultiMap().set("secret", secretKey()).set("response", token))
                 .map(buffer -> {
                     Map res = objectMapper.readValue(buffer.bodyAsString(), Map.class);
 
@@ -88,7 +77,7 @@ public class ReCaptchaServiceImpl implements ReCaptchaService {
                     logger.debug("ReCaptchaService success: {} score: {}", success, score);
 
                     // Result should be successful and score above 0.5.
-                    return (success && score >= minScore);
+                    return (success && score >= minScore());
                 })
                 .onErrorResumeNext(throwable -> {
                     logger.error("An error occurred when trying to validate ReCaptcha token.", throwable);
@@ -97,10 +86,30 @@ public class ReCaptchaServiceImpl implements ReCaptchaService {
     }
 
     public boolean isEnabled() {
-        return enabled;
+        return enabled();
     }
 
     public String getSiteKey() {
-        return siteKey;
+        return siteKey();
+    }
+
+    private boolean enabled() {
+        return configuration.getProperty("reCaptcha.enabled", Boolean.class, false);
+    }
+
+    private String siteKey() {
+        return configuration.getProperty("reCaptcha.siteKey");
+    }
+
+    private String secretKey() {
+        return configuration.getProperty("reCaptcha.secretKey");
+    }
+
+    private Double minScore() {
+        return configuration.getProperty("reCaptcha.minScore", Double.class, 0.5);
+    }
+
+    private String serviceUrl() {
+        return configuration.getProperty("reCaptcha.serviceUrl", "https://www.google.com/recaptcha/api/siteverify");
     }
 }

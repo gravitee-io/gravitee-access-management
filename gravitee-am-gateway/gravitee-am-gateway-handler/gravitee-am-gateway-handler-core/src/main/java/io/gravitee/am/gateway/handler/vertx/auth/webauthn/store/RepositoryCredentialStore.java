@@ -30,6 +30,7 @@ import io.reactivex.rxjava3.core.Single;
 import io.vertx.ext.auth.webauthn.Authenticator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Lazy;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -46,6 +47,7 @@ public class RepositoryCredentialStore {
     @Autowired
     private CredentialService credentialService;
 
+    @Lazy // Need to be lazy loaded to ensure jwt builder is instantiated with all resolved configuration included eventual secrets.
     @Autowired
     @Qualifier("managementJwtBuilder")
     private JWTBuilder jwtBuilder;

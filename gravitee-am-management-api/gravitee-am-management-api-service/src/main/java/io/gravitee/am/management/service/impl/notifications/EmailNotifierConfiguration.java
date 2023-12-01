@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.management.service.impl.notifications;
 
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 
 /**
@@ -24,34 +24,21 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 public class EmailNotifierConfiguration {
+    @Autowired
+    private io.gravitee.node.api.configuration.Configuration configuration;
 
-    @Value("${notifiers.email.host:#{null}}")
     private String host;
-    @Value("${notifiers.email.port:587}")
     private int port;
-    @Value("${notifiers.email.username:#{null}}")
     private String username;
-    @Value("${notifiers.email.password:#{null}}")
     private String password;
-
-    @Value("${notifiers.email.from:#{null}}")
     private String from;
-    @Value("${notifiers.email.to:#{null}}")
     private String to;
-    @Value("${notifiers.email.subject:#{null}}")
     private String subject;
-    @Value("${notifiers.email.body:#{null}}")
     private String body;
-
-    @Value("${notifiers.email.startTLSEnabled:false}")
     private boolean startTLSEnabled;
-    @Value("${notifiers.email.sslTrustAll:false}")
     private boolean sslTrustAll;
-    @Value("${notifiers.email.sslKeyStore:#{null}}")
     private String sslKeyStore;
-    @Value("${notifiers.email.sslKeyStorePassword:#{null}}")
     private String sslKeyStorePassword;
-
 
     public EmailNotifierConfiguration() {
     }
@@ -65,105 +52,125 @@ public class EmailNotifierConfiguration {
         this.to = other.getTo();
         this.subject = other.getSubject();
         this.body = other.getBody();
-        this.startTLSEnabled = other.startTLSEnabled;
+        this.startTLSEnabled = other.isStartTLSEnabled();
         this.sslTrustAll = other.isSslTrustAll();
         this.sslKeyStore = other.getSslKeyStore();
         this.sslKeyStorePassword = other.getSslKeyStorePassword();
     }
 
     public String getHost() {
-        return host;
+        if (configuration == null) {
+            return host;
+        }
+        return configuration.getProperty("notifiers.email.host");
+    }
+
+    public int getPort() {
+        if (configuration == null) {
+            return port;
+        }
+        return configuration.getProperty("notifiers.email.port", Integer.class, 587);
+    }
+
+    public String getUsername() {
+        if (configuration == null) {
+            return username;
+        }
+        return configuration.getProperty("notifiers.email.username");
+    }
+
+    public String getPassword() {
+        if (configuration == null) {
+            return password;
+        }
+        return configuration.getProperty("notifiers.email.password");
+    }
+
+    public String getFrom() {
+        if (configuration == null) {
+            return from;
+        }
+        return configuration.getProperty("notifiers.email.from");
+    }
+
+    public String getTo() {
+        if (configuration == null) {
+            return to;
+        }
+        return configuration.getProperty("notifiers.email.to");
+    }
+
+    public String getSubject() {
+        if (configuration == null) {
+            return subject;
+        }
+        return configuration.getProperty("notifiers.email.subject");
+    }
+
+    public String getBody() {
+        if (configuration == null) {
+            return body;
+        }
+        return configuration.getProperty("notifiers.email.body");
+    }
+
+    public boolean isStartTLSEnabled() {
+        if (configuration == null) {
+            return startTLSEnabled;
+        }
+        return configuration.getProperty("notifiers.email.startTLSEnabled", Boolean.class, false);
+    }
+
+    public boolean isSslTrustAll() {
+        if (configuration == null) {
+            return sslTrustAll;
+        }
+        return configuration.getProperty("notifiers.email.sslTrustAll", Boolean.class, false);
+    }
+
+    public String getSslKeyStore() {
+        if (configuration == null) {
+            return sslKeyStore;
+        }
+        return configuration.getProperty("notifiers.email.sslKeyStore");
+    }
+
+    public String getSslKeyStorePassword() {
+        if (configuration == null) {
+            return sslKeyStorePassword;
+        }
+        return configuration.getProperty("notifiers.email.sslKeyStorePassword");
     }
 
     public void setHost(String host) {
         this.host = host;
     }
 
-    public int getPort() {
-        return port;
-    }
-
     public void setPort(int port) {
         this.port = port;
-    }
-
-    public String getUsername() {
-        return username;
     }
 
     public void setUsername(String username) {
         this.username = username;
     }
 
-    public String getPassword() {
-        return password;
-    }
-
     public void setPassword(String password) {
         this.password = password;
-    }
-
-    public String getFrom() {
-        return from;
     }
 
     public void setFrom(String from) {
         this.from = from;
     }
 
-    public String getTo() {
-        return to;
-    }
-
     public void setTo(String to) {
         this.to = to;
-    }
-
-    public String getSubject() {
-        return subject;
     }
 
     public void setSubject(String subject) {
         this.subject = subject;
     }
 
-    public String getBody() {
-        return body;
-    }
-
     public void setBody(String body) {
         this.body = body;
-    }
-
-    public boolean isStartTLSEnabled() {
-        return startTLSEnabled;
-    }
-
-    public void setStartTLSEnabled(boolean startTLSEnabled) {
-        this.startTLSEnabled = startTLSEnabled;
-    }
-
-    public boolean isSslTrustAll() {
-        return sslTrustAll;
-    }
-
-    public void setSslTrustAll(boolean sslTrustAll) {
-        this.sslTrustAll = sslTrustAll;
-    }
-
-    public String getSslKeyStore() {
-        return sslKeyStore;
-    }
-
-    public void setSslKeyStore(String sslKeyStore) {
-        this.sslKeyStore = sslKeyStore;
-    }
-
-    public String getSslKeyStorePassword() {
-        return sslKeyStorePassword;
-    }
-
-    public void setSslKeyStorePassword(String sslKeyStorePassword) {
-        this.sslKeyStorePassword = sslKeyStorePassword;
     }
 }
