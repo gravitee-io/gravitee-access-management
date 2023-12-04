@@ -23,8 +23,7 @@ annotations:
   # List of changes for the release in artifacthub.io
   # https://artifacthub.io/packages/helm/graviteeio/am?modal=changelog
   artifacthub.io/changes: |
-    - Make optional HTTP2 request processing via `gateway.http.alpn` set at `true` by default.
     - Manage consent setting to log IP & User-Agent into the audits.
     - Allow users to define extra manifests
     - refactoring of email configuration now `smtp.email` and `api.notifiers.email` transpose helm values to `gravitee.yml` with some process to be backward compatible.
-
+    - 'fix: license deleted after helm upgrade'
