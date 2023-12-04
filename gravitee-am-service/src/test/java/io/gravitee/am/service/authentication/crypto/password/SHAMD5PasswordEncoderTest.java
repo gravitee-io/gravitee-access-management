@@ -24,20 +24,13 @@ import java.security.SecureRandom;
  * @@author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class SHAMD5PasswordEncoderTest {
+public class SHAMD5PasswordEncoderTest extends AbstractPasswordEncoderTest {
 
     private MessageDigestPasswordEncoder messageDigestPasswordEncoder = new SHAMD5PasswordEncoder("SHA-256");
 
-    @Test
-    public void testPassword_match_not_equals() {
-        String encodedPassword = messageDigestPasswordEncoder.encode("myPassword");
-        Assert.assertFalse(messageDigestPasswordEncoder.matches("wrongPassword", encodedPassword));
-    }
-
-    @Test
-    public void testPassword_match_equals() {
-        String encodedPassword = messageDigestPasswordEncoder.encode("myPassword");
-        Assert.assertTrue(messageDigestPasswordEncoder.matches("myPassword", encodedPassword));
+    @Override
+    protected PasswordEncoder getEncoder() {
+        return this.messageDigestPasswordEncoder;
     }
 
     @Test

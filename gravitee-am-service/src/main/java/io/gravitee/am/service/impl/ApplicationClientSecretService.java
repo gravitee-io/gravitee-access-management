@@ -19,6 +19,7 @@ package io.gravitee.am.service.impl;
 import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.service.authentication.crypto.password.NoOpPasswordEncoder;
+import io.gravitee.am.service.authentication.crypto.password.PBKDF2PasswordEncoder;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
 import io.gravitee.am.service.authentication.crypto.password.SHAPasswordEncoder;
 import io.gravitee.am.service.authentication.crypto.password.bcrypt.BCryptPasswordEncoder;
@@ -29,11 +30,13 @@ import org.springframework.stereotype.Component;
 
 import java.util.Date;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static io.gravitee.am.service.spring.application.SecretHashAlgorithm.PropertyKeys.BCRYPT_ROUNDS;
+import static io.gravitee.am.service.spring.application.SecretHashAlgorithm.PropertyKeys.PBKDF2_KEY_ALG;
+import static io.gravitee.am.service.spring.application.SecretHashAlgorithm.PropertyKeys.PBKDF2_ROUNDS;
+import static io.gravitee.am.service.spring.application.SecretHashAlgorithm.PropertyKeys.PBKDF2_SALT;
 import static java.util.Objects.isNull;
 
 /**
@@ -67,6 +70,11 @@ public class ApplicationClientSecretService {
             switch (algorithm) {
                 case BCRYPT:
                     pwdEncoder = new BCryptPasswordEncoder((int)settings.getProperties().get(BCRYPT_ROUNDS.getKey()));
+                    break;
+                case PBKDF2:
+                    pwdEncoder = new PBKDF2PasswordEncoder((int)settings.getProperties().get(PBKDF2_SALT.getKey()),
+                            (int)settings.getProperties().get(PBKDF2_ROUNDS.getKey()),
+                            (String) settings.getProperties().get(PBKDF2_KEY_ALG.getKey()));
                     break;
                 case SHA_512, SHA_256:
                     pwdEncoder = new SHAPasswordEncoder(algorithm.getAlgorithm());

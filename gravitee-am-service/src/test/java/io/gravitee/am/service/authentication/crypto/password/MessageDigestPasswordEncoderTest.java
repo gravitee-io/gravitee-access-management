@@ -26,25 +26,19 @@ import java.util.Base64;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public abstract class MessageDigestPasswordEncoderTest {
+public abstract class MessageDigestPasswordEncoderTest extends AbstractPasswordEncoderTest {
 
     private final Base64.Encoder encoder = Base64.getEncoder();
     private final MessageDigestPasswordEncoder digester;
 
     public MessageDigestPasswordEncoderTest(MessageDigestPasswordEncoder digester) {
+        super();
         this.digester = digester;
     }
 
-    @Test
-    public void testPassword_match_not_equals() {
-        String encodedPassword = digester.encode("myPassword");
-        Assert.assertFalse(digester.matches("wrongPassword", encodedPassword));
-    }
-
-    @Test
-    public void testPassword_match_equals() {
-        String encodedPassword = digester.encode("myPassword");
-        Assert.assertTrue(digester.matches("myPassword", encodedPassword));
+    @Override
+    protected PasswordEncoder getEncoder() {
+        return this.digester;
     }
 
     @Test

@@ -23,6 +23,9 @@ public enum SecretHashAlgorithm {
     BCRYPT("BCrypt", Map.of(PropertyKeys.BCRYPT_ROUNDS.key, PropertyKeys.BCRYPT_ROUNDS.value)),
     SHA_512("SHA-512", Map.of()),
     SHA_256("SHA-256", Map.of()),
+    PBKDF2("PBKDF2", Map.of(PropertyKeys.PBKDF2_ROUNDS.key, PropertyKeys.PBKDF2_ROUNDS.value,
+            PropertyKeys.PBKDF2_SALT.key, PropertyKeys.PBKDF2_SALT.value,
+            PropertyKeys.PBKDF2_KEY_ALG.key, PropertyKeys.PBKDF2_KEY_ALG.value)),
     NONE("None", Map.of());
 
     private final String algorithm;
@@ -40,7 +43,7 @@ public enum SecretHashAlgorithm {
 
     public static SecretHashAlgorithm fromAlgorithmName(String name) {
         for (SecretHashAlgorithm algo : values()) {
-            if (algo.algorithm.equals(name)) {
+            if (algo.algorithm.equalsIgnoreCase(name)) {
                 return algo;
             }
         }
@@ -61,7 +64,10 @@ public enum SecretHashAlgorithm {
 
     public enum PropertyKeys {
 
-        BCRYPT_ROUNDS("rounds", 10, Integer.class);
+        BCRYPT_ROUNDS("rounds", 10, Integer.class),
+        PBKDF2_ROUNDS("rounds", 600000, Integer.class),
+        PBKDF2_SALT("salt", 16, Integer.class),
+        PBKDF2_KEY_ALG("algorithm", "PBKDF2WithHmacSHA256", String.class);
 
         private final String key;
         private final Object value;
