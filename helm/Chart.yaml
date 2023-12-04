@@ -23,4 +23,5 @@ annotations:
   # List of changes for the release in artifacthub.io
   # https://artifacthub.io/packages/helm/graviteeio/am?modal=changelog
   artifacthub.io/changes: |
-    - Make optional HTTP2 request processing via `gateway.http.alpn` set at `true` by default.
+    - 'fix: license deleted after helm upgrade'
+
