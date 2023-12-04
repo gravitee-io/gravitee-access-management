@@ -80,6 +80,7 @@
         <gravitee-expression-language.version>1.5.0</gravitee-expression-language.version>
         <gravitee-platform-repository-api.version>1.0.0</gravitee-platform-repository-api.version>
         <gravitee-cockpit-api.version>1.9.0</gravitee-cockpit-api.version>
+        <logback.version>1.2.13</logback.version>
         <jetty.version>9.4.53.v20231009</jetty.version>
         <spring.version>5.3.26</spring.version>
         <spring-security.version>5.5.7</spring-security.version>
@@ -251,6 +252,18 @@
                 <groupId>io.gravitee.gateway</groupId>
                 <artifactId>gravitee-gateway-api</artifactId>
                 <version>${gravitee-gateway-api.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-classic</artifactId>
+                <version>${logback.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-core</artifactId>
+                <version>${logback.version}</version>
             </dependency>
 
             <!-- Nimbus jose+jwt -->
