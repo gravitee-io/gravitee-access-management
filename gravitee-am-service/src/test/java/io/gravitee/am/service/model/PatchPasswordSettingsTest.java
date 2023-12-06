@@ -18,7 +18,10 @@ package io.gravitee.am.service.model;
 import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.service.exception.InvalidParameterException;
 import org.junit.Assert;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
@@ -72,5 +75,30 @@ public class PatchPasswordSettingsTest {
 
         Assert.assertEquals(Integer.valueOf(8), updatedSettings.getMinLength());
         Assert.assertEquals(Integer.valueOf(10), updatedSettings.getMaxLength());
+    }
+
+    @Test
+    public void shouldUpdatePasswordPolicyInherit() {
+        final var settings = new PatchPasswordSettings();
+        settings.setInherited(Optional.of(false));
+
+        final var updatedSettings = settings.patch(null);
+
+        assertEquals(Integer.valueOf(8), updatedSettings.getMinLength());
+        assertEquals(Integer.valueOf(128), updatedSettings.getMaxLength());
+        assertFalse(updatedSettings.isInherited());
+        assertFalse(updatedSettings.isPasswordHistoryEnabled());
+    }
+
+    @Test
+    public void shouldEnablePasswordHistory() {
+        final var settings = new PatchPasswordSettings();
+        settings.setInherited(Optional.of(false));
+        settings.setPasswordHistoryEnabled(Optional.of(true));
+        settings.setOldPasswords(Optional.of(Short.valueOf("2")));
+
+        final var updatedSettings = settings.patch(null);
+
+        assertTrue(updatedSettings.isPasswordHistoryEnabled());
     }
 }

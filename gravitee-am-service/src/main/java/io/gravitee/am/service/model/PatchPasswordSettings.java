@@ -29,7 +29,7 @@ public class PatchPasswordSettings {
 
     public static final int MAX_PASSWORD_HISTORY = 24;
     public static final int MIN_PASSWORD_HISTORY = 1;
-    
+
     private Optional<Boolean> inherited;
     private Optional<Integer> minLength;
     private Optional<Integer> maxLength;
@@ -152,9 +152,11 @@ public class PatchPasswordSettings {
         SetterUtils.safeSet(toPatch::setExcludePasswordsInDictionary, this.excludePasswordsInDictionary);
         SetterUtils.safeSet(toPatch::setExcludeUserProfileInfoInPassword, this.excludeUserProfileInfoInPassword);
         SetterUtils.safeSet(toPatch::setExpiryDuration, this.expiryDuration);
-        SetterUtils.safeSet(toPatch::setPasswordHistoryEnabled, this.passwordHistoryEnabled);
         SetterUtils.safeSet(toPatch::setOldPasswords, this.oldPasswords);
 
+        if (passwordHistoryEnabled != null) {
+            getPasswordHistoryEnabled().ifPresent(toPatch::setPasswordHistoryEnabled);
+        }
         if (toPatch.isPasswordHistoryEnabled() && (toPatch.getOldPasswords() == null || toPatch.getOldPasswords() > MAX_PASSWORD_HISTORY || toPatch.getOldPasswords() < MIN_PASSWORD_HISTORY)) {
             throw new InvalidParameterException("Number of old passwords must be within the range  ["+MIN_PASSWORD_HISTORY+", "+MAX_PASSWORD_HISTORY+"]");
         }
