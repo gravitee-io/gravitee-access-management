@@ -140,6 +140,23 @@ public class PatchDomainTest {
         assertEquals(24, result.getPasswordSettings().getOldPasswords().shortValue());
     }
 
+    @Test
+    public void testPatchWithPasswordPolicyInheritDefault() {
+        PatchPasswordSettings pwdPolicyPatcher = new PatchPasswordSettings();
+        pwdPolicyPatcher.setInherited(Optional.of(true));
+
+        PatchDomain patch = new PatchDomain();
+        patch.setPasswordSettings(Optional.of(pwdPolicyPatcher));
+
+        Domain toPatch = new Domain();
+        toPatch.setPasswordSettings(new PasswordSettings());
+
+        Domain result = patch.patch(toPatch);
+
+        assertNotNull("was expecting a domain", result);
+        assertNull(result.getPasswordSettings());
+    }
+
     @Test(expected = InvalidParameterException.class)
     public void testPatchWithPasswordPolicy_missingOldPassword() {
         //Build patcher

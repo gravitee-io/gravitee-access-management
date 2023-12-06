@@ -17,6 +17,7 @@ package io.gravitee.am.service.model;
 
 import io.gravitee.am.model.CorsSettings;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.SelfServiceAccountManagementSettings;
 import io.gravitee.am.model.VirtualHost;
 import io.gravitee.am.model.account.AccountSettings;
@@ -220,8 +221,14 @@ public class PatchDomain {
             }
         }
 
-        if (this.passwordSettings != null) {
-            this.passwordSettings.ifPresent(ps -> toPatch.setPasswordSettings(ps.patch(toPatch.getPasswordSettings())));
+        if (passwordSettings != null && passwordSettings.isPresent()) {
+            var ps = passwordSettings.get();
+            if (ps.getInherited() != null && ps.getInherited().isPresent() && Boolean.TRUE.equals(ps.getInherited().get())) {
+                toPatch.setPasswordSettings(null);
+                setPasswordSettings(Optional.empty());
+            } else {
+                toPatch.setPasswordSettings(ps.patch(toPatch.getPasswordSettings()));
+            }
         }
 
         if (this.getSaml() != null && this.getSaml().isPresent()) {
@@ -260,7 +267,7 @@ public class PatchDomain {
             requiredPermissions.add(Permission.DOMAIN_SETTINGS);
         }
 
-        if(alertEnabled != null && alertEnabled.isPresent()) {
+        if (alertEnabled != null && alertEnabled.isPresent()) {
             requiredPermissions.add(Permission.DOMAIN_ALERT);
         }
 

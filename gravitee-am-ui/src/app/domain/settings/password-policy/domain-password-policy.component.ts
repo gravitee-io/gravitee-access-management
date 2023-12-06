@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 
 import { AuthService } from '../../../services/auth.service';
 import { DomainService } from '../../../services/domain.service';
 import { SnackbarService } from '../../../services/snackbar.service';
+import { DialogService } from '../../../services/dialog.service';
 
 @Component({
   selector: 'password-policy',
@@ -41,16 +42,15 @@ export class DomainPasswordPolicyComponent implements OnInit {
   excludePasswordsInDictionary: boolean;
   excludeUserProfileInfoInPassword: boolean;
   expiryDuration: number;
-
-  passwordHistoryEnabled: number;
+  passwordHistoryEnabled: boolean;
   oldPasswords: number;
 
   constructor(
     private route: ActivatedRoute,
-    private router: Router,
     private authService: AuthService,
     private snackbarService: SnackbarService,
     private domainService: DomainService,
+    private dialogService: DialogService,
   ) {}
 
   ngOnInit() {
@@ -120,6 +120,7 @@ export class DomainPasswordPolicyComponent implements OnInit {
     }
 
     data.passwordSettings = {
+      inherited: false,
       minLength: this.minLength,
       maxLength: this.maxLength,
       includeNumbers: this.includeNumbers,
@@ -132,12 +133,38 @@ export class DomainPasswordPolicyComponent implements OnInit {
       passwordHistoryEnabled: this.passwordHistoryEnabled,
       oldPasswords: this.oldPasswords,
     };
-    this.domainService.patchPasswordSettings(this.domainId, data).subscribe((data) => {
-      this.passwordSettings = data.passwordSettings;
+    this.domainService.patchPasswordSettings(this.domainId, data).subscribe((response) => {
+      this.passwordSettings = response.passwordSettings;
       this.domain['passwordSettings'] = this.passwordSettings;
       this.form.reset(this.passwordSettings);
       this.formChanged = false;
       this.snackbarService.open('Password settings configuration updated');
+    });
+  }
+  confirmResetDialog(event: any): void {
+    event.preventDefault();
+    this.dialogService
+      .confirm('Reset password policy', 'Are you sure you want to reset your password policy settings and use the default one?')
+      .subscribe((res) => {
+        if (res) {
+          this.reset();
+        }
+      });
+  }
+  reset(): void {
+    this.domainService.patchPasswordSettings(this.domainId, { passwordSettings: { inherited: true } }).subscribe(() => {
+      this.includeNumbers = false;
+      this.includeSpecialCharacters = false;
+      this.lettersInMixedCase = false;
+      this.excludePasswordsInDictionary = false;
+      this.excludeUserProfileInfoInPassword = false;
+      this.passwordHistoryEnabled = false;
+      this.maxConsecutiveLetters = undefined;
+      this.passwordSettings = {};
+      this.domain['passwordSettings'] = this.passwordSettings;
+      this.form.reset(this.passwordSettings);
+      this.formChanged = false;
+      this.snackbarService.open('Password policy settings reset');
     });
   }
 }

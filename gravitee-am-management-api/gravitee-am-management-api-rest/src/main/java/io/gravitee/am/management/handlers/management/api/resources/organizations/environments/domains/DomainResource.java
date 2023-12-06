@@ -308,8 +308,7 @@ public class DomainResource extends AbstractDomainResource {
             response.resume(new BadRequestException("You need to specify at least one value to update."));
         } else {
             Completable.merge(requiredPermissions.stream()
-                    .map(permission -> checkAnyPermission(organizationId, environmentId, domainId, permission, Acl.UPDATE))
-                    .collect(Collectors.toList()))
+                    .map(permission -> checkAnyPermission(organizationId, environmentId, domainId, permission, Acl.UPDATE)).toList())
                     .andThen(domainService.patch(domainId, patchDomain, authenticatedUser)
                             .flatMap(domain -> findAllPermissions(authenticatedUser, organizationId, environmentId, domainId)
                                     .map(userPermissions -> filterDomainInfos(domain, userPermissions))))
