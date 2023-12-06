@@ -13,6 +13,11 @@ metadata:
 data:
   {{- if not (include "api.externalConfig" .)}}
   gravitee.yml: |
+    {{- if .Values.secrets }}
+    # Kubernetes secret resolver config
+    secrets:
+      {{- .Values.secrets | toYaml | nindent 6 }}
+    {{- end }}
     jetty:
       host: {{ .Values.api.http.host | default "0.0.0.0" }}
       port: {{ .Values.api.http.port | default 8093 }}
@@ -70,7 +75,7 @@ data:
 
     liquibase:
       enabled: {{ .Values.api.liquibase.enabled }}
-  
+
     management:
       type: {{ .Values.management.type | default "mongodb" }}
       {{- if or (eq .Values.management.type "mongodb") (kindIs "invalid" .Values.management.type) }}
@@ -226,7 +231,7 @@ data:
 {{ toYaml .Values.api.http.services.metrics.prometheus | indent 10 }}
         {{- end }}
       {{- end }}
-      
+
   {{- if .Values.api.services }}
     {{- if .Values.api.services.notifier }}
       notifier:
@@ -303,10 +308,10 @@ data:
       cookie-secure: {{ .Values.api.jwt.cookie.secure | default false }}
 
     {{- if .Values.userManagement }}
-    
+
     # User management configuration
     user:
-    
+
     {{- if .Values.userManagement.activity }}
       activity:
 {{ toYaml .Values.userManagement.activity | indent 8 }}
@@ -336,13 +341,13 @@ data:
       registration:
 {{ toYaml .Values.userManagement.registration | indent 8 }}
     {{- end }}
-      
+
     {{- if .Values.userManagement.resetPassword }}
       resetPassword:
 {{ toYaml .Values.userManagement.resetPassword | indent 8 }}
     {{- end }}
 
-    {{- if .Values.userManagement.blockedAccount }}      
+    {{- if .Values.userManagement.blockedAccount }}
       blockedAccount:
 {{ toYaml .Values.userManagement.blockedAccount | indent 8 }}
     {{- end }}
@@ -362,7 +367,7 @@ data:
       url: https://{{index .Values.gateway.ingress.hosts 0 }}{{ .Values.gateway.ingress.path }}
     {{- end }}
       # Alert Engine communication
-    
+
     # Alert Engine communication
     {{ if .Values.alerts.enabled }}
     alerts:
@@ -373,7 +378,7 @@ data:
         {{- if .Values.alerts.engines }}
         engines:
           {{ toYaml .Values.alerts.engines | nindent 10 | trim -}}
-        {{- end }}        
+        {{- end }}
         ws:
           discovery: true
           {{- if .Values.alerts.options }}

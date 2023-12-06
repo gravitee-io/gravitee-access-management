@@ -619,3 +619,23 @@ tests:
                      *  - specific@email\\.com\n
                      *  enabled: true"
 
+  - it: should set kubernetes secret config
+    set:
+      secrets.kubernetes.enabled: false
+      secrets.kubernetes.namespace: install-space
+      secrets.kubernetes.kubeConfigFile: /config/context
+      secrets.kubernetes.timeoutMS: 400
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: |
+            secrets:
+              kubernetes:
+                enabled: false
+                kubeConfigFile: /config/context
+                namespace: install-space
+                timeoutMS: 400
