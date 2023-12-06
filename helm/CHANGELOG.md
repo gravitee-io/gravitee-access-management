@@ -2,6 +2,10 @@
 
 This file documents all notable changes to [Gravitee.io Access Management 3.x](https://github.com/gravitee-io/helm-charts/tree/master/am/) Helm Chart. The release numbering uses [semantic versioning](http://semver.org).
 
+### 4.2.0
+
+- [X] Added kubernetes secret configuration
+
 ### 4.1.5
 
 - [X] Make optional HTTP2 request processing via `gateway.http.alpn` set at `true` by default.

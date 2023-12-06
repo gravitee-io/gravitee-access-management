@@ -13,6 +13,11 @@ metadata:
 data:
   {{- if not (include "gateway.externalConfig" .)}}
   gravitee.yml: |
+    {{- if .Values.secrets }}
+    # Kubernetes secret resolver config
+    secrets:
+      {{- .Values.secrets | toYaml | nindent 6 }}
+    {{- end }}  
     # Gateway HTTP server
     http:
     {{- if .Values.gateway.http.cookie }}
@@ -319,13 +324,13 @@ data:
       registration:
 {{ toYaml .Values.userManagement.registration | indent 8 }}
     {{- end }}
-      
+
     {{- if .Values.userManagement.resetPassword }}
       resetPassword:
 {{ toYaml .Values.userManagement.resetPassword | indent 8 }}
     {{- end }}
 
-    {{- if .Values.userManagement.blockedAccount }}      
+    {{- if .Values.userManagement.blockedAccount }}
       blockedAccount:
 {{ toYaml .Values.userManagement.blockedAccount | indent 8 }}
     {{- end }}

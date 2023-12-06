@@ -1,4 +1,4 @@
-suite: test that Gateway configmap 
+suite: test that Gateway configmap
 templates:
   - "gateway/gateway-configmap.yaml"
 tests:
@@ -141,7 +141,7 @@ tests:
         - /path/to/keystore1.cert
         - /path/to/keystore2.cert
         - /path/to/keystore3.cert
-      alerts.options.ssl.keystore.keys: 
+      alerts.options.ssl.keystore.keys:
         - /path/to/keystore1.pem
         - /path/to/keystore2.pem
         - /path/to/keystore3.pem
@@ -151,19 +151,19 @@ tests:
       alerts.security.enabled: true
       alerts.security.username: a_username
       alerts.security.password: a_password
-      alerts.endpoints: 
+      alerts.endpoints:
         - https://www.host1.com
         - https://www.host2.com
       alerts.engines.default.security.username: a_default_username
       alerts.engines.default.security.password: a_default_password
-      alerts.engines.default.endpoints: 
+      alerts.engines.default.endpoints:
         - https://www.default.host1.com
         - https://www.default.host2.com
       alerts.engines.default.ssl.keystore.certs:
         - /path/to/default/keystore1.cert
         - /path/to/default/keystore2.cert
         - /path/to/default/keystore3.cert
-      alerts.engines.default.ssl.keystore.keys: 
+      alerts.engines.default.ssl.keystore.keys:
         - /path/to/default/keystore1.pem
         - /path/to/default/keystore2.pem
         - /path/to/default/keystore3.pem
@@ -174,7 +174,7 @@ tests:
       alerts.engines.default.ssl.truststore.path: /path/to/default/keystore.p12
       alerts.engines.default.ssl.truststore.password: default_changeme_p12
 
-    
+
     asserts:
       - hasDocuments:
           count: 1
@@ -335,3 +335,24 @@ tests:
             consent:
               ip: true
               user-agent: false
+
+  - it: should set kubernetes secret config
+    set:
+      secrets.kubernetes.enabled: false
+      secrets.kubernetes.namespace: install-space
+      secrets.kubernetes.kubeConfigFile: /config/context
+      secrets.kubernetes.timeoutMS: 400
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: |
+            secrets:
+              kubernetes:
+                enabled: false
+                kubeConfigFile: /config/context
+                namespace: install-space
+                timeoutMS: 400
