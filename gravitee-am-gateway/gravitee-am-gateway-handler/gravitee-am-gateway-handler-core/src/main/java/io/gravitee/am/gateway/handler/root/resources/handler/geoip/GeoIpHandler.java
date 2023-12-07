@@ -31,6 +31,8 @@ import static io.gravitee.am.common.utils.ConstantKeys.GEOIP_KEY;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils.remoteAddress;
 import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
@@ -39,6 +41,7 @@ import static java.util.Optional.ofNullable;
 public class GeoIpHandler implements Handler<RoutingContext> {
 
     private static final String GEOIP_SERVICE = "service:geoip";
+    private final Logger logger = LoggerFactory.getLogger(GeoIpHandler.class);
     private final EventBus eventBus;
     private final UserActivityService userActivityService;
 
@@ -59,7 +62,7 @@ public class GeoIpHandler implements Handler<RoutingContext> {
         if ((!adaptiveRule.isEmpty() || userActivityService.canSaveUserActivity()) && isNull(routingContext.data().get(GEOIP_KEY))) {
             var ip = remoteAddress(routingContext.request());
             if (!isNullOrEmpty(ip)) {
-                getGeoipData(routingContext, ip);
+                getGeoIpData(routingContext, ip);
             } else {
                 routingContext.next();
             }
@@ -68,9 +71,11 @@ public class GeoIpHandler implements Handler<RoutingContext> {
         }
     }
 
-    private void getGeoipData(RoutingContext routingContext, String ip) {
+    private void getGeoIpData(RoutingContext routingContext, String ip) {
         eventBus.<JsonObject>request(GEOIP_SERVICE, ip)
                 .doOnSuccess(jsonObjectMessage -> routingContext.data().put(GEOIP_KEY, jsonObjectMessage.body().getMap()))
+                .doOnError(error -> logger.warn("Plugin GeoIp is not available, message: {}", error.getMessage()))
+                .onErrorComplete()
                 .doFinally(routingContext::next)
                 .subscribe();
     }
