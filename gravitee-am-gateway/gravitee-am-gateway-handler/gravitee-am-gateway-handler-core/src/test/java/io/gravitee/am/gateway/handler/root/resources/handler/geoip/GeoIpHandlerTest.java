@@ -19,6 +19,7 @@ package io.gravitee.am.gateway.handler.root.resources.handler.geoip;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.root.resources.handler.dummies.MockHttpServerRequest;
 import io.gravitee.am.gateway.handler.root.resources.handler.dummies.SpyRoutingContext;
+import io.gravitee.am.gateway.handler.root.resources.handler.error.AsyncErrorCollector;
 import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.UserActivityService;
@@ -29,6 +30,7 @@ import io.vertx.rxjava3.core.eventbus.EventBus;
 import io.vertx.rxjava3.core.eventbus.Message;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -46,6 +48,9 @@ import static org.mockito.Mockito.*;
  */
 @RunWith(MockitoJUnitRunner.class)
 public class GeoIpHandlerTest {
+
+    @Rule
+    public AsyncErrorCollector asyncErrorCollector = new AsyncErrorCollector();
 
     @Mock
     private EventBus eventBus;
@@ -126,4 +131,12 @@ public class GeoIpHandlerTest {
                 any(), anyString());
     }
 
+    @Test
+    public void mustNotPerformGeoIpWithNoErrorsWhenServiceIsUnavailable() {
+        when(eventBus.request(anyString(), anyString())).thenReturn(Single.error(new Exception("No handlers for address service:geoip")));
+        doReturn(true).when(userActivityService).canSaveUserActivity();
+        request.getDelegate().headers().add(HttpHeaders.X_FORWARDED_FOR, "55.55.55.55");
+        geoIpHandler.handle(routingContext);
+        verify(eventBus, times(1)).request(any(), anyString());
+    }
 }
