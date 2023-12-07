@@ -19,6 +19,7 @@ import io.reactivex.rxjava3.plugins.RxJavaPlugins;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -46,7 +47,7 @@ public class AsyncErrorCollector implements TestRule {
 
     static class AsyncErrors extends Throwable {
         public AsyncErrors(List<Throwable> errors) {
-            super(errors.stream().map(Throwable::getMessage).toList().toString(), errors.isEmpty() ? null : errors.get(0));
+            super(errors.stream().map(Throwable::getMessage).collect(Collectors.toList()).toString(), errors.isEmpty() ? null : errors.get(0));
         }
     }
 }
