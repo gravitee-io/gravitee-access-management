@@ -29,7 +29,7 @@ import io.gravitee.am.performance.utils.SimulationSettings._
  * - mng_password: password to request an access token to the Management REST API (default: adminadmin)
  * - domain: the domain name targeted by the simulation (default: gatling-domain)
  */
-class CreateDomain extends Simulation {
+class CreateSCIMDomain extends Simulation {
 
   val httpProtocol = http
     .userAgentHeader("Gatling - Create SCIM Domain")
