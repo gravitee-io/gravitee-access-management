@@ -58,8 +58,11 @@ class LoginPasswordFlow extends Simulation {
 
   val scn = scnWithoutIntrospect
 
-  setUp(scn.inject(constantUsersPerSec(AGENTS.floatValue()).during(INJECTION_DURATION.seconds)))
-    .protocols(httpProtocol)
-    .throttle(reachRps(REQUEST_PER_SEC).in(REQUEST_RAMP_DURATION.seconds),holdFor(REQUEST_HOLD_DURING.seconds))
-
+  setUp(
+    scn.inject(
+      rampConcurrentUsers(1).to(AGENTS.intValue()).during(60),
+      constantConcurrentUsers(AGENTS.intValue()).during(INJECTION_DURATION.seconds),
+      rampConcurrentUsers(AGENTS.intValue()).to(1).during(60)
+    )
+  )
 }
