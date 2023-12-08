@@ -17,7 +17,8 @@ data:
     # Kubernetes secret resolver config
     secrets:
       {{- .Values.secrets | toYaml | nindent 6 }}
-    {{- end }}  
+    {{- end }}
+
     # Gateway HTTP server
     http:
     {{- if .Values.gateway.http.cookie }}
@@ -287,6 +288,11 @@ data:
     {{- if .Values.userManagement }}
     user:
 {{ toYaml .Values.userManagement | indent 6 }}
+    {{- end }}
+
+    {{- if .Values.applications }}
+    applications:
+      {{- .Values.applications | toYaml | nindent 6 }}
     {{- end }}
 
     # Gateway entry point used in emails

@@ -175,6 +175,28 @@ httpClient:
       password: secret
 ```
 
+### Application client secret configuration
+
+Since AM 4.2.0, the client secret can be hashed when stored into the database. To specify which hash algorithm is in used, you have to adapt this section into the values.yaml:
+
+```yaml
+applications:
+  secret:
+    # Algorithms used to hash the client secret.
+    # Can be one of :
+    # "PBKDF2", "BCrypt", "SHA-512", "SHA-256", "None"
+    algorithm: None
+    #properties:
+    #  rounds: 4
+```
+
+For BCrypt, the number of rounds can be specified using the `rounds` property (default set to 10).
+
+For PBKDF2, the number of iterations, the salt length and the algorithm can be specified using :
+* the `rounds` property (default set to 600000)
+* the `salt` property (default set to 16)
+* the `algorithm` property (default set to PBKDF2WithHmacSHA256, possible value PBKDF2WithHmacSHA256 & PBKDF2WithHmacSHA512)
+
 ### Gravitee.io Configuration
 
 | Key                                                                          | Type                                  | Default                                                                                                                                                                                                                                                                                                                                                                                            | Description                                        |
