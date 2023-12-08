@@ -26,6 +26,7 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.rxjava3.core.MultiMap;
 
+import java.net.URI;
 import java.util.Collection;
 import java.util.List;
 
@@ -71,6 +72,8 @@ public interface DomainService {
     }
 
     String buildUrl(Domain domain, String path, MultiMap queryParams);
+
+    URI gatewayUrl();
 
     default String buildUrl(Domain domain, String path) {
         return buildUrl(domain, path, MultiMap.caseInsensitiveMultiMap());

@@ -41,8 +41,6 @@ import io.gravitee.am.service.i18n.GraviteeMessageResolver;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.EmailAuditBuilder;
 import io.vertx.rxjava3.core.MultiMap;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -79,6 +77,7 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
     private final String mfaVerifyAttemptSubject;
     private final String registrationVerifySubject;
     private final int userRegistrationExpireAfter;
+
     @Autowired
     private EmailManager emailManager;
 
@@ -253,6 +252,7 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
         params.put("token", token);
         params.put("expireAfterSeconds", expiresAfter);
         params.put("domain", new DomainProperties(domain));
+        params.put("gatewayHost", domainService.gatewayUrl().getHost().replaceFirst("^www\\.", ""));
 
         if (client != null) {
             params.put("client", new ClientProperties(client));

@@ -73,12 +73,15 @@ public class EntrypointServiceTest {
     @Mock
     private VirtualHostValidator virtualHostValidator;
 
+    @Mock
+    private DomainService domainService;
+
     private EntrypointService cut;
 
     @Before
     public void before() {
 
-        cut = new EntrypointServiceImpl(entrypointRepository, organizationService, auditService, virtualHostValidator);
+        cut = new EntrypointServiceImpl(entrypointRepository, organizationService, auditService, virtualHostValidator, "https://gravitee.io");
     }
 
     @Test
@@ -121,10 +124,9 @@ public class EntrypointServiceTest {
 
         Organization organization = new Organization();
         organization.setId(ORGANIZATION_ID);
-
         when(organizationService.findById(ORGANIZATION_ID)).thenReturn(Single.just(organization));
         when(entrypointRepository.create(any(Entrypoint.class))).thenAnswer(i -> Single.just(i.getArgument(0)));
-        doReturn(true).when(virtualHostValidator).isValidDomainOrSubDomain("auth.company.com", null);
+        doReturn(true).when(virtualHostValidator).isValidDomainOrSubDomain("gravitee.io", null);
 
         TestSubscriber<Entrypoint> obs = cut.createDefaults(organization).test();
 
@@ -188,11 +190,11 @@ public class EntrypointServiceTest {
         newEntrypoint.setName("name");
         newEntrypoint.setDescription("description");
         newEntrypoint.setTags(Arrays.asList("tag#1", "tags#2"));
-        newEntrypoint.setUrl("https://auth.company.com");
+        newEntrypoint.setUrl("https://auth.gravitee.io");
 
         when(organizationService.findById(ORGANIZATION_ID)).thenReturn(Single.just(organization));
         when(entrypointRepository.create(any(Entrypoint.class))).thenAnswer(i -> Single.just(i.getArgument(0)));
-        doReturn(true).when(virtualHostValidator).isValidDomainOrSubDomain("auth.company.com", null);
+        doReturn(true).when(virtualHostValidator).isValidDomainOrSubDomain("auth.gravitee.io", null);
         TestObserver<Entrypoint> obs = cut.create(ORGANIZATION_ID, newEntrypoint, user).test();
 
         obs.awaitDone(10, TimeUnit.SECONDS);
@@ -251,12 +253,12 @@ public class EntrypointServiceTest {
         updateEntrypoint.setName("name");
         updateEntrypoint.setDescription("description");
         updateEntrypoint.setTags(Arrays.asList("tag#1", "tags#2"));
-        updateEntrypoint.setUrl("https://auth.company.com");
+        updateEntrypoint.setUrl("https://auth.gravitee.io");
 
         when(organizationService.findById(ORGANIZATION_ID)).thenReturn(Single.just(new Organization()));
         when(entrypointRepository.findById(ENTRYPOINT_ID, ORGANIZATION_ID)).thenReturn(Maybe.just(existingEntrypoint));
         when(entrypointRepository.update(any(Entrypoint.class))).thenAnswer(i -> Single.just(i.getArgument(0)));
-        doReturn(true).when(virtualHostValidator).isValidDomainOrSubDomain("auth.company.com", null);
+        doReturn(true).when(virtualHostValidator).isValidDomainOrSubDomain("auth.gravitee.io", null);
 
         TestObserver<Entrypoint> obs = cut.update(ENTRYPOINT_ID, ORGANIZATION_ID, updateEntrypoint, user).test();
 

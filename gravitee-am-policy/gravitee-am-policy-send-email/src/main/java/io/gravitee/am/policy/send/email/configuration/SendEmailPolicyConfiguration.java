@@ -28,7 +28,7 @@ public class SendEmailPolicyConfiguration implements PolicyConfiguration {
      */
     private String template;
     /**
-     * The email's FROM address. Example: no-reply@mycompany.com
+     * The email's FROM address. Example: no-reply@gravitee.io
      */
     private String from;
     /**
