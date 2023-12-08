@@ -33,6 +33,7 @@ object SimulationSettings {
 
   val DOMAIN_NAME = System.getProperty("domain", "gatling-domain")
   val IDENTITY_PROVIDER_NAME = System.getProperty("idp", "Default Identity Provider")
+  val MULTI_DOMAIN_NAMES = System.getProperty("multiDomains", "gatling-domain").split(",")
 
   val MIN_USER_INDEX = Integer.getInteger("min_user_index", 1)
   val NUMBER_OF_USERS = Integer.getInteger("number_of_users", 2000)
@@ -89,6 +90,17 @@ object SimulationSettings {
           "firstname" -> s"first${index}",
           "lastname" -> s"last${index}",
           "password" -> "B3nchUs3rs!",
+          "index" -> index)
+      })
+  }
+
+  def domainFeeder() = {
+
+    val iterator = Iterator.continually(Random.between(0, MULTI_DOMAIN_NAMES.length))
+
+    iterator
+      .map(index => {
+        Map("currentDomain" -> s"${MULTI_DOMAIN_NAMES(index)}",
           "index" -> index)
       })
   }
