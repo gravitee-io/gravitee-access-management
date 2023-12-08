@@ -639,3 +639,34 @@ tests:
                 kubeConfigFile: /config/context
                 namespace: install-space
                 timeoutMS: 400
+
+  - it: should set default client secret hashing method
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: |
+            applications:
+              secret:
+                algorithm: None
+
+  - it: should set custom client secret hashing method
+    set:
+      applications.secret.algorithm: BCrypt
+      applications.secret.properties.rounds: 10
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: |
+            applications:
+              secret:
+                algorithm: BCrypt
+                properties:
+                  rounds: 10
