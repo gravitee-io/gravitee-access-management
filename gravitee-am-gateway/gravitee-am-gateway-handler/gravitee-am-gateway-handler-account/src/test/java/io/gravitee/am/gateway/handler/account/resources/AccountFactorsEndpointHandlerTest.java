@@ -19,7 +19,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.exception.mfa.InvalidCodeException;
 import io.gravitee.am.common.exception.mfa.SendChallengeException;
-import io.gravitee.am.common.factor.FactorSecurityType;
 import io.gravitee.am.common.factor.FactorType;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.factor.api.Enrollment;
@@ -30,7 +29,7 @@ import io.gravitee.am.gateway.handler.account.services.AccountService;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.ErrorHandler;
-import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.User;
@@ -87,13 +86,16 @@ public class AccountFactorsEndpointHandlerTest extends RxWebTestBase {
     @Mock
     RateLimiterService rateLimiterService;
 
+    @Mock
+    AuditService auditService;
+
     private AccountFactorsEndpointHandler accountFactorsEndpointHandler;
     private User user;
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        accountFactorsEndpointHandler = new AccountFactorsEndpointHandler(accountService, factorManager, applicationContext, rateLimiterService);
+        accountFactorsEndpointHandler = new AccountFactorsEndpointHandler(accountService, factorManager, applicationContext, rateLimiterService, auditService);
         user = new User();
         user.setId("xxx-xxx-xxx");
         user.setUsername("username");
@@ -376,6 +378,8 @@ public class AccountFactorsEndpointHandlerTest extends RxWebTestBase {
                 },
                 403,
                 "Forbidden", null);
+
+        verify(auditService, times(1)).report(any());
     }
 
     @Test
@@ -425,6 +429,7 @@ public class AccountFactorsEndpointHandlerTest extends RxWebTestBase {
                 "OK", null);
 
         verify(factorProvider, times(1)).changeVariableFactorSecurity(any());
+        verify(auditService, times(1)).report(any());
     }
 
     @Test
@@ -511,6 +516,7 @@ public class AccountFactorsEndpointHandlerTest extends RxWebTestBase {
         when(factorProvider.sendChallenge(any())).thenReturn(Completable.error(new SendChallengeException("unable to send the challenge")));
         when(accountService.getFactor("factor-id")).thenReturn(Maybe.just(factor));
         when(factorManager.get("factor-id")).thenReturn(factorProvider);
+        when(factorManager.getFactor("factor-id")).thenReturn(factor);
 
         router.post(AccountRoutes.FACTORS_SEND_CHALLENGE.getRoute())
                 .handler(rc -> {
@@ -573,6 +579,8 @@ public class AccountFactorsEndpointHandlerTest extends RxWebTestBase {
         when(factorProvider.sendChallenge(any())).thenReturn(Completable.complete());
         when(accountService.getFactor("factor-id")).thenReturn(Maybe.just(factor));
         when(factorManager.get("factor-id")).thenReturn(factorProvider);
+        when(factorManager.getFactor("factor-id")).thenReturn(factor);
+        when(factor.getId()).thenReturn("any-factor-id");
 
         router.post(AccountRoutes.FACTORS_SEND_CHALLENGE.getRoute())
                 .handler(rc -> {
@@ -603,6 +611,8 @@ public class AccountFactorsEndpointHandlerTest extends RxWebTestBase {
                 },
                 200,
                 "OK", null);
+
+        verify(auditService, times(1)).report(any());
     }
 
     @Test
@@ -723,6 +733,8 @@ public class AccountFactorsEndpointHandlerTest extends RxWebTestBase {
         ArgumentCaptor<EnrolledFactor> enrolledFactorCaptor = ArgumentCaptor.forClass(EnrolledFactor.class);
         when(accountService.upsertFactor(any(), enrolledFactorCaptor.capture(), any())).thenReturn(Single.just(new User()));
         when(factorManager.get("factor-id")).thenReturn(factorProvider);
+        when(factorManager.getFactor("any-factor-id")).thenReturn(factor);
+        when(factor.getId()).thenReturn("any-factor-id");
 
         router.post(AccountRoutes.FACTORS.getRoute())
                 .handler(accountFactorsEndpointHandler::enrollFactor)
@@ -748,6 +760,7 @@ public class AccountFactorsEndpointHandlerTest extends RxWebTestBase {
         EnrolledFactor enrolledFactorCaptorValue = enrolledFactorCaptor.getValue();
         Assert.assertNotNull(enrolledFactorCaptorValue);
         Assert.assertEquals(SHARED_SECRET, enrolledFactorCaptorValue.getSecurity().getValue());
+        verify(auditService, times(1)).report(any());
     }
 
     @Test

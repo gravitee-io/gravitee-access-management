@@ -42,6 +42,7 @@ import io.gravitee.am.model.factor.EnrolledFactorChannel.Type;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.factor.FactorStatus;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.DeviceService;
 import io.gravitee.am.service.FactorService;
@@ -49,6 +50,8 @@ import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.service.VerifyAttemptService;
 import io.gravitee.am.service.exception.FactorNotFoundException;
 import io.gravitee.am.service.exception.MFAValidationAttemptException;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import io.gravitee.am.service.reporter.builder.MFAAuditBuilder;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.util.Maps;
 import io.gravitee.gateway.api.el.EvaluableRequest;
@@ -81,6 +84,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
+import static io.gravitee.am.common.audit.EventType.MFA_ENROLLMENT;
+import static io.gravitee.am.common.audit.EventType.MFA_MAX_ATTEMPT_REACHED;
+import static io.gravitee.am.common.audit.EventType.MFA_CHALLENGE;
+import static io.gravitee.am.common.audit.EventType.MFA_CHALLENGE_SENT;
 import static io.gravitee.am.common.factor.FactorSecurityType.RECOVERY_CODE;
 import static io.gravitee.am.common.factor.FactorSecurityType.SHARED_SECRET;
 import static io.gravitee.am.common.factor.FactorSecurityType.WEBAUTHN_CREDENTIAL;
@@ -127,6 +134,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
     private final RateLimiterService rateLimiterService;
     private final VerifyAttemptService verifyAttemptService;
     private final EmailService emailService;
+    private final AuditService auditService;
 
     public MFAChallengeEndpoint(FactorManager factorManager,
                                 UserService userService,
@@ -138,7 +146,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
                                 FactorService factorService,
                                 RateLimiterService rateLimiterService,
                                 VerifyAttemptService verifyAttemptService,
-                                EmailService emailService) {
+                                EmailService emailService, AuditService auditService) {
         super(engine);
         this.applicationContext = applicationContext;
         this.factorManager = factorManager;
@@ -150,6 +158,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
         this.rateLimiterService = rateLimiterService;
         this.verifyAttemptService = verifyAttemptService;
         this.emailService = emailService;
+        this.auditService = auditService;
     }
 
     @Override
@@ -265,7 +274,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
         factorCtx.registerData(FactorContext.KEY_CODE, code);
         factorCtx.registerData(FactorContext.KEY_REQUEST, new EvaluableRequest(new VertxHttpServerRequest(routingContext.request().getDelegate())));
 
-        if(factor.is(FIDO2)){
+        if (factor.is(FIDO2)) {
             factorCtx.registerData(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY, routingContext.session().get(PASSWORDLESS_CHALLENGE_KEY));
             factorCtx.registerData(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY, routingContext.session().get(PASSWORDLESS_CHALLENGE_USERNAME_KEY));
             factorCtx.registerData(ConstantKeys.PASSWORDLESS_ORIGIN, getOrigin(domain.getWebAuthnSettings()));
@@ -281,6 +290,8 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
                                 if (verifyAttemptService.shouldSendEmail(client, domain)) {
                                     emailService.send(Template.VERIFY_ATTEMPT, endUser, client);
                                 }
+                                updateAuditLog(MFA_MAX_ATTEMPT_REACHED, endUser, client, factor, factorCtx, error);
+                                logger.warn("MFA verification limit reached for the user: {}", endUser.getUsername());
                                 handleException(routingContext, VERIFY_ATTEMPT_ERROR_PARAM_KEY, "maximum_verify_limit");
                             } else {
                                 logger.error("Could not check verify attempts", error);
@@ -300,37 +311,43 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
                                                      FactorContext factorContext) {
         return h -> {
             if (h.failed()) {
+                String failureReason = isEnrolling(routingContext, factorProvider, factorContext) ? MFA_ENROLLMENT : MFA_CHALLENGE;
+                updateAuditLog(failureReason, endUser, client, factor, factorContext, h.cause());
                 handleException(routingContext, ERROR_PARAM_KEY, "mfa_challenge_failed");
                 return;
             }
 
             if (factor.is(FIDO2)) {
-                handleFido2Factor(routingContext, client, endUser, code, h);
+                handleFido2Factor(routingContext, client, endUser, code, factor, factorContext, h);
                 return;
             }
             // save enrolled factor if needed and redirect to the original url
             routingContext.session().put(ConstantKeys.MFA_FACTOR_ID_CONTEXT_KEY, factorId);
-            if (routingContext.session().get(ConstantKeys.ENROLLED_FACTOR_ID_KEY) != null || factorProvider.useVariableFactorSecurity(factorContext)) {
+            if (isEnrolling(routingContext, factorProvider, factorContext)) {
                 enrolledFactor.setStatus(FactorStatus.ACTIVATED);
                 saveFactor(endUser, factorProvider.changeVariableFactorSecurity(enrolledFactor), fh -> {
                     if (fh.failed()) {
                         logger.error("An error occurs while saving enrolled factor for the current user", fh.cause());
+                        updateAuditLog(MFA_ENROLLMENT, endUser, client, factor, factorContext, fh.cause());
                         handleException(routingContext, ERROR_PARAM_KEY, "mfa_challenge_failed");
                         return;
                     }
 
                     cleanSession(routingContext);
                     updateStrongAuthStatus(routingContext);
+                    updateAuditLog(MFA_ENROLLMENT, endUser, client, factor, factorContext, null);
                     redirectToAuthorize(routingContext, client, endUser);
                 });
             } else {
+                updateAuditLog(MFA_CHALLENGE, endUser, client, factor, factorContext, null);
                 updateStrongAuthStatus(routingContext);
                 redirectToAuthorize(routingContext, client, endUser);
             }
         };
     }
 
-    private void handleFido2Factor(RoutingContext routingContext, Client client, User endUser, String code, AsyncResult<Void> h) {
+    private void handleFido2Factor(RoutingContext routingContext, Client client, User endUser, String code,
+                                   Factor factor, FactorContext factorContext, AsyncResult<Void> h) {
         final String userId = endUser.getId();
         final JsonObject webauthnResp = new JsonObject(code);
         final String credentialId = webauthnResp.getString("id");
@@ -339,11 +356,13 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
             if (ch.failed()) {
                 final String username = routingContext.session().get(PASSWORDLESS_CHALLENGE_USERNAME_KEY);
                 logger.error("An error has occurred while updating credential for the user {}", username, h.cause());
+                updateAuditLog(MFA_CHALLENGE, endUser, client, factor, factorContext, h.cause());
                 routingContext.fail(401);
                 return;
             }
 
             updateStrongAuthStatus(routingContext);
+            updateAuditLog(MFA_CHALLENGE, endUser, client, factor, factorContext, null);
             // set the credentialId in session
             routingContext.session().put(ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY, credentialId);
 
@@ -366,7 +385,6 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
                         );
             }
         });
-        return;
     }
 
     private void redirectToAuthorize(RoutingContext routingContext, Client client, User user) {
@@ -435,11 +453,11 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
         factorContext.registerData(FactorContext.KEY_REQUEST, new EvaluableRequest(new VertxHttpServerRequest(routingContext.request().getDelegate())));
         factorContext.registerData(FactorContext.KEY_ENROLLED_FACTOR, enrolledFactor);
 
-        if(rateLimiterService.isRateLimitEnabled()) {
+        if (rateLimiterService.isRateLimitEnabled()) {
             rateLimiterService.tryConsume(endUser.getId(), factor.getId(), endUser.getClient(), client.getDomain())
                     .subscribe(allowRequest -> {
                                 if (allowRequest) {
-                                    sendChallenge(factorProvider, factorContext, handler);
+                                    sendChallenge(factorProvider, factorContext,endUser, client, factor, handler);
                                 } else {
                                     handleException(routingContext, RATE_LIMIT_ERROR_PARAM_KEY, "mfa_request_limit_exceed");
                                     return;
@@ -448,16 +466,23 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
                             error -> handler.handle(Future.failedFuture(error))
                     );
         } else {
-            sendChallenge(factorProvider, factorContext, handler);
+            sendChallenge(factorProvider, factorContext, endUser, client, factor, handler);
         }
     }
 
-    private void sendChallenge(FactorProvider factorProvider, FactorContext factorContext, Handler<AsyncResult<Void>> handler){
+    private void sendChallenge(FactorProvider factorProvider, FactorContext factorContext, User endUser, Client client, Factor factor, Handler<AsyncResult<Void>> handler) {
         factorProvider.sendChallenge(factorContext)
                 .subscribeOn(Schedulers.io())
                 .subscribe(
-                        () -> handler.handle(Future.succeededFuture()),
-                        error -> handler.handle(Future.failedFuture(error))
+                        () -> {
+                            updateAuditLog(MFA_CHALLENGE_SENT, endUser, client, factor, factorContext, null);
+                            handler.handle(Future.succeededFuture());
+                        },
+                        error -> {
+                            updateAuditLog(MFA_CHALLENGE_SENT, endUser, client, factor, factorContext, error);
+                            handler.handle(Future.failedFuture(error));
+
+                        }
                 );
     }
 
@@ -707,5 +732,26 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
                 .filter(enrolledFactor -> factorManager.get(enrolledFactor.getFactorId()) != null)
                 .filter(enrolledFactor -> clientFactorIds.contains(enrolledFactor.getFactorId()))
                 .count() > 1L;
+    }
+
+    private static boolean isEnrolling(RoutingContext routingContext, FactorProvider factorProvider, FactorContext factorContext) {
+        return routingContext.session().get(ConstantKeys.ENROLLED_FACTOR_ID_KEY) != null ||
+                factorProvider.useVariableFactorSecurity(factorContext);
+    }
+
+    private void updateAuditLog(String type, User endUser, Client client, Factor factor, FactorContext factorContext, Throwable cause) {
+        final EnrolledFactor enrolledFactor = factorContext.getData(FactorContext.KEY_ENROLLED_FACTOR, EnrolledFactor.class);
+        final EnrolledFactorChannel channel = enrolledFactor.getChannel();
+
+        final MFAAuditBuilder builder = AuditBuilder.builder(MFAAuditBuilder.class)
+                .user(endUser)
+                .factor(factor)
+                .type(type)
+                .channel(channel)
+                .client(client)
+                .domain(domain.getId())
+                .throwable(cause, channel);
+
+        auditService.report(builder);
     }
 }

@@ -22,14 +22,13 @@ import io.gravitee.am.gateway.handler.account.resources.AccountWebAuthnCredentia
 import io.gravitee.am.gateway.handler.account.resources.util.AccountRoutes;
 import io.gravitee.am.gateway.handler.account.services.AccountService;
 import io.gravitee.am.gateway.handler.api.AbstractProtocolProvider;
-import io.gravitee.am.gateway.handler.api.ProtocolProvider;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.ErrorHandler;
+import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.model.Domain;
-import io.gravitee.common.service.AbstractService;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.ext.web.Router;
 import io.vertx.rxjava3.ext.web.handler.BodyHandler;
@@ -70,6 +69,9 @@ public class AccountProvider extends AbstractProtocolProvider {
     @Autowired
     private RateLimiterService rateLimiterService;
 
+    @Autowired
+    private AuditService auditService;
+
     @Override
     protected void doStart() throws Exception {
         super.doStart();
@@ -99,7 +101,7 @@ public class AccountProvider extends AbstractProtocolProvider {
 
             // Account factors routes
             AccountFactorsEndpointHandler accountFactorsEndpointHandler =
-                    new AccountFactorsEndpointHandler(accountService, factorManager, applicationContext, rateLimiterService);
+                    new AccountFactorsEndpointHandler(accountService, factorManager, applicationContext, rateLimiterService, auditService);
 
             accountRouter.get(AccountRoutes.FACTORS.getRoute())
                     .handler(accountHandler::getUser)
