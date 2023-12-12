@@ -17,6 +17,7 @@ package io.gravitee.am.identityprovider.jdbc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.identityprovider.jdbc.configuration.JdbcIdentityProviderConfiguration;
+import io.gravitee.am.identityprovider.jdbc.utils.ParametersUtils;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.repository.jdbc.provider.impl.R2DBCConnectionProvider;
 import io.gravitee.am.repository.provider.ConnectionProvider;
@@ -24,7 +25,13 @@ import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
 import io.gravitee.common.component.LifecycleComponent;
 import io.gravitee.common.service.AbstractService;
 import io.r2dbc.pool.ConnectionPool;
+import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactory;
+import io.r2dbc.spi.Result;
+import io.r2dbc.spi.Statement;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -106,4 +113,49 @@ public class JdbcAbstractProvider<T extends LifecycleComponent<T>> extends Abstr
         } catch (Exception e) {
         }
     }
+
+    protected final Flowable<Result> query(String sql, Object... args) {
+        return Single.fromPublisher(connectionPool.create())
+                .toFlowable()
+                .flatMap(connection ->
+                        query(connection, sql, args)
+                                .doFinally(() -> Completable.fromPublisher(connection.close()).subscribe()));
+    }
+
+    /**
+     * !!WARNING!! This method shouldn't be used in subclass.
+     *
+     * This method execute the sql query with provided arguments on the connection present a first argument.
+     * This method shouldn't be used by subclasses of JdbcAbstractProvider in favor of {@link #query(String, Object...)} that will
+     * automatically close/release the connection.
+     *
+     * Currently, only the {@link io.gravitee.am.identityprovider.jdbc.user.JdbcUserProvider} class uses this method to initialize
+     * the IDP Schema into the RDBMS.
+     *
+     * @param connection
+     * @param sql
+     * @param args
+     * @return
+     */
+    protected final Flowable<Result> query(Connection connection, String sql, Object... args) {
+        Statement statement = connection.createStatement(sql);
+        for (int i = 0; i < args.length; i++) {
+            Object arg = args[i];
+            bind(statement, i, arg, arg != null ? arg.getClass() : String.class);
+        }
+        return Flowable.fromPublisher(statement.execute());
+    }
+
+    protected final void bind(Statement statement, int index, Object value, Class type) {
+        if (value != null) {
+            statement.bind(index, value);
+        } else {
+            statement.bindNull(index, type);
+        }
+    }
+
+    protected final String getIndexParameter(int index, String field) {
+        return ParametersUtils.getIndexParameter(configuration.getProtocol(), index, field);
+    }
+
 }
