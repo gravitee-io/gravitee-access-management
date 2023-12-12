@@ -106,6 +106,7 @@ public class UserMapper {
                         .entrySet()
                         .stream()
                         .filter(a -> !StandardClaims.claims().contains(a.getKey()) && !restrictedClaims().contains(a.getKey()))
+                        .filter(a -> a.getValue() != null)
                         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
         if (!customClaims.isEmpty()) {
             scimUser.setSchemas(GraviteeUser.SCHEMAS);
