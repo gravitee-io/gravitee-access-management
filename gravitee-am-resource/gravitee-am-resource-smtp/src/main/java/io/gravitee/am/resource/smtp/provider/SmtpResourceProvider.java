@@ -21,8 +21,6 @@ import io.gravitee.am.resource.api.email.EmailSenderProvider;
 import io.gravitee.am.resource.smtp.SmtpResourceConfiguration;
 import io.gravitee.am.service.utils.EmailSender;
 import io.reactivex.rxjava3.core.Completable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -38,7 +36,6 @@ import java.util.concurrent.Executors;
  * @author GraviteeSource Team
  */
 public class SmtpResourceProvider implements EmailSenderProvider {
-    private static final Logger LOGGER = LoggerFactory.getLogger(SmtpResourceProvider.class);
 
     private final static String MAILAPI_PROPERTIES_PREFIX = "mail.";
 
@@ -96,16 +93,13 @@ public class SmtpResourceProvider implements EmailSenderProvider {
 
     @Override
     public Completable sendMessage(Email message, boolean overrideFrom) {
-        executorService.execute(() -> {
-            try {
-                if (overrideFrom) {
-                    message.setFrom(this.configuration.getFrom());
-                }
-                this.mailSender.send(message);
-            } catch (Exception e) {
-                LOGGER.error("Message emission fails", e);
-            }
-        });
-        return Completable.complete();
+        return Completable.fromFuture(
+                executorService.submit(() -> {
+                            if (overrideFrom) {
+                                message.setFrom(this.configuration.getFrom());
+                            }
+                            this.mailSender.send(message);
+                        }
+                ));
     }
 }

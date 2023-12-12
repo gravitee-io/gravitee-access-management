@@ -16,7 +16,6 @@
 package io.gravitee.am.gateway.handler.root.resources.endpoint.mfa;
 
 import io.gravitee.am.common.exception.mfa.SendChallengeException;
-import io.gravitee.am.common.factor.FactorSecurityType;
 import io.gravitee.am.common.factor.FactorType;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.factor.api.FactorProvider;
@@ -24,24 +23,24 @@ import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
-import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.DeviceService;
 import io.gravitee.am.service.FactorService;
 import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.service.VerifyAttemptService;
+import io.gravitee.common.event.EventManager;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import io.reactivex.rxjava3.observers.TestObserver;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.Session;
 import io.vertx.rxjava3.core.buffer.Buffer;
@@ -62,10 +61,10 @@ import java.util.Map;
 
 import static io.vertx.core.http.HttpHeaders.APPLICATION_X_WWW_FORM_URLENCODED;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -99,6 +98,9 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
     private EmailService emailService;
     @Mock
     private AuthenticationFlowContextService authenticationFlowContextService;
+    @Mock
+    private AuditService auditService;
+
     private LocalSessionStore localSessionStore;
     private MFAChallengeEndpoint mfaChallengeEndpoint;
 
@@ -109,7 +111,7 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
         localSessionStore = LocalSessionStore.create(vertx);
         mfaChallengeEndpoint =
                 new MFAChallengeEndpoint(factorManager, userService, templateEngine, deviceService, applicationContext,
-                        domain, credentialService, factorService, rateLimiterService, verifyAttemptService, emailService);
+                        domain, credentialService, factorService, rateLimiterService, verifyAttemptService, emailService, auditService);
 
         router.route("/mfa/challenge")
                 .handler(SessionHandler.create(localSessionStore))
@@ -166,6 +168,8 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
                     Assert.assertEquals("credentialId", data.get(ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
+
+        verify(auditService, times(1)).report(any());
     }
 
     @Test
@@ -219,6 +223,7 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
 
+        verify(auditService, times(1)).report(any());
     }
 
     @Test
@@ -324,6 +329,8 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
                 },
                 302,
                 "Found", null);
+
+        verify(auditService, times(1)).report(any());
     }
 
     @Test
