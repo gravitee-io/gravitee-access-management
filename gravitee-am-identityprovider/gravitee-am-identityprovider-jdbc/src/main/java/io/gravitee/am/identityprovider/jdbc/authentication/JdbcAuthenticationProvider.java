@@ -32,8 +32,6 @@ import io.gravitee.am.identityprovider.jdbc.JdbcAbstractProvider;
 import io.gravitee.am.identityprovider.jdbc.authentication.spring.JdbcAuthenticationProviderConfiguration;
 import io.gravitee.am.identityprovider.jdbc.utils.ColumnMapRowMapper;
 import io.gravitee.am.identityprovider.jdbc.utils.ParametersUtils;
-import io.r2dbc.spi.Statement;
-import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -120,16 +118,12 @@ public class JdbcAuthenticationProvider extends JdbcAbstractProvider<Authenticat
         String rawQuery = configuration.getSelectUserByMultipleFieldsQuery() != null ? configuration.getSelectUserByMultipleFieldsQuery() : configuration.getSelectUserByUsernameQuery();
         String[] args = prepareIndexParameters(rawQuery);
         final String sql = String.format(rawQuery, args);
-        return Flowable.fromPublisher(connectionPool.create())
-                .flatMap(connection -> {
-                    Statement statement = connection.createStatement(sql);
-                    for (int i = 0; i < args.length; ++i) {
-                        statement = statement.bind(i, username);
-                    }
-                    return Flowable.fromPublisher(statement.execute())
-                            .doFinally(() -> Completable.fromPublisher(connection.close()).subscribe());
-                })
-                .flatMap(result -> result.map(ColumnMapRowMapper::mapRow));
+
+        String[] values = new String[args.length];
+        for(int i = 0; i < values.length; ++i) {
+            values[i] = username;
+        }
+        return query(sql, values).flatMap(result -> result.map(ColumnMapRowMapper::mapRow));
     }
 
     private String[] prepareIndexParameters(String rawQuery) {
@@ -149,9 +143,7 @@ public class JdbcAuthenticationProvider extends JdbcAbstractProvider<Authenticat
 
     private Maybe<Map<String, Object>> selectUserByUsername(String username) {
         final String sql = String.format(configuration.getSelectUserByUsernameQuery(), getIndexParameter(configuration.getUsernameAttribute()));
-        return Flowable.fromPublisher(connectionPool.create())
-                .flatMap(connection -> Flowable.fromPublisher(connection.createStatement(sql).bind(0, username).execute())
-                        .doFinally(() -> Completable.fromPublisher(connection.close()).subscribe()))
+        return query(sql, username)
                 .flatMap(result -> result.map(ColumnMapRowMapper::mapRow))
                 .firstElement();
     }
