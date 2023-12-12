@@ -25,12 +25,10 @@ import io.gravitee.am.identityprovider.api.encoding.BinaryToTextEncoder;
 import io.gravitee.am.identityprovider.jdbc.JdbcAbstractProvider;
 import io.gravitee.am.identityprovider.jdbc.user.spring.JdbcUserProviderConfiguration;
 import io.gravitee.am.identityprovider.jdbc.utils.ColumnMapRowMapper;
-import io.gravitee.am.identityprovider.jdbc.utils.ParametersUtils;
 import io.gravitee.am.service.exception.UserAlreadyExistsException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.Result;
-import io.r2dbc.spi.Statement;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -199,77 +197,66 @@ public class JdbcUserProvider extends JdbcAbstractProvider<UserProvider> impleme
     public Single<User> create(User user) {
         // set technical id
         ((DefaultUser) user).setId(user.getId() != null ? user.getId() : RandomString.generate());
+        return selectUserByUsername(user.getUsername())
+                .isEmpty()
+                .flatMap(isEmpty -> {
+                    if (!isEmpty) {
+                        return Single.error(new UserAlreadyExistsException(user.getUsername()));
+                    } else {
+                        String sql;
+                        Object[] args;
+                        if (configuration.isUseDedicatedSalt()) {
+                            sql = String.format("INSERT INTO %s (%s, %s, %s, %s, %s, %s) VALUES (%s, %s, %s, %s, %s, %s)",
+                                    configuration.getUsersTable(),
+                                    configuration.getIdentifierAttribute(),
+                                    configuration.getUsernameAttribute(),
+                                    configuration.getPasswordAttribute(),
+                                    configuration.getPasswordSaltAttribute(),
+                                    configuration.getEmailAttribute(),
+                                    configuration.getMetadataAttribute(),
+                                    getIndexParameter(1, configuration.getIdentifierAttribute()),
+                                    getIndexParameter(2, configuration.getUsernameAttribute()),
+                                    getIndexParameter(3, configuration.getPasswordAttribute()),
+                                    getIndexParameter(4, configuration.getPasswordSaltAttribute()),
+                                    getIndexParameter(5, configuration.getEmailAttribute()),
+                                    getIndexParameter(6, configuration.getMetadataAttribute()));
 
-        return Single.fromPublisher(connectionPool.create())
-                .flatMap(cnx -> {
-                    return selectUserByUsername(cnx, user.getUsername())
-                            .isEmpty()
-                            .flatMap(isEmpty -> {
-                                if (!isEmpty) {
-                                    return Single.error(new UserAlreadyExistsException(user.getUsername()));
-                                } else {
-                                    String sql;
-                                    Object[] args;
-                                    if (configuration.isUseDedicatedSalt()) {
-                                        sql = String.format("INSERT INTO %s (%s, %s, %s, %s, %s, %s) VALUES (%s, %s, %s, %s, %s, %s)",
-                                                configuration.getUsersTable(),
-                                                configuration.getIdentifierAttribute(),
-                                                configuration.getUsernameAttribute(),
-                                                configuration.getPasswordAttribute(),
-                                                configuration.getPasswordSaltAttribute(),
-                                                configuration.getEmailAttribute(),
-                                                configuration.getMetadataAttribute(),
-                                                getIndexParameter(1, configuration.getIdentifierAttribute()),
-                                                getIndexParameter(2, configuration.getUsernameAttribute()),
-                                                getIndexParameter(3, configuration.getPasswordAttribute()),
-                                                getIndexParameter(4, configuration.getPasswordSaltAttribute()),
-                                                getIndexParameter(5, configuration.getEmailAttribute()),
-                                                getIndexParameter(6, configuration.getMetadataAttribute()));
+                            args = new Object[6];
+                            byte[] salt = createSalt();
+                            args[0] = user.getId();
+                            args[1] = user.getUsername();
+                            args[2] = user.getCredentials() != null ? passwordEncoder.encode(user.getCredentials(), salt) : null;
+                            args[3] = user.getCredentials() != null ? binaryToTextEncoder.encode(salt) : null;
+                            args[4] = user.getEmail();
+                            args[5] = user.getAdditionalInformation() != null ? objectMapper.writeValueAsString(user.getAdditionalInformation()) : null;
+                        } else {
+                            sql = String.format("INSERT INTO %s (%s, %s, %s, %s, %s) VALUES (%s, %s, %s, %s, %s)",
+                                    configuration.getUsersTable(),
+                                    configuration.getIdentifierAttribute(),
+                                    configuration.getUsernameAttribute(),
+                                    configuration.getPasswordAttribute(),
+                                    configuration.getEmailAttribute(),
+                                    configuration.getMetadataAttribute(),
+                                    getIndexParameter(1, configuration.getIdentifierAttribute()),
+                                    getIndexParameter(2, configuration.getUsernameAttribute()),
+                                    getIndexParameter(3, configuration.getPasswordAttribute()),
+                                    getIndexParameter(4, configuration.getEmailAttribute()),
+                                    getIndexParameter(5, configuration.getMetadataAttribute()));
 
-                                        args = new Object[6];
-                                        byte[] salt = createSalt();
-                                        args[0] = user.getId();
-                                        args[1] = user.getUsername();
-                                        args[2] = user.getCredentials() != null ? passwordEncoder.encode(user.getCredentials(), salt) : null;
-                                        args[3] = user.getCredentials() != null ? binaryToTextEncoder.encode(salt) : null;
-                                        args[4] = user.getEmail();
-                                        args[5] = user.getAdditionalInformation() != null ? objectMapper.writeValueAsString(user.getAdditionalInformation()) : null;
-                                    } else {
-                                        sql = String.format("INSERT INTO %s (%s, %s, %s, %s, %s) VALUES (%s, %s, %s, %s, %s)",
-                                                configuration.getUsersTable(),
-                                                configuration.getIdentifierAttribute(),
-                                                configuration.getUsernameAttribute(),
-                                                configuration.getPasswordAttribute(),
-                                                configuration.getEmailAttribute(),
-                                                configuration.getMetadataAttribute(),
-                                                getIndexParameter(1, configuration.getIdentifierAttribute()),
-                                                getIndexParameter(2, configuration.getUsernameAttribute()),
-                                                getIndexParameter(3, configuration.getPasswordAttribute()),
-                                                getIndexParameter(4, configuration.getEmailAttribute()),
-                                                getIndexParameter(5, configuration.getMetadataAttribute()));
+                            args = new Object[5];
+                            args[0] = user.getId();
+                            args[1] = user.getUsername();
+                            args[2] = user.getCredentials() != null ? passwordEncoder.encode(user.getCredentials()) : null;
+                            args[3] = user.getEmail();
+                            args[4] = user.getAdditionalInformation() != null ? objectMapper.writeValueAsString(user.getAdditionalInformation()) : null;
+                        }
 
-                                        args = new Object[5];
-                                        args[0] = user.getId();
-                                        args[1] = user.getUsername();
-                                        args[2] = user.getCredentials() != null ? passwordEncoder.encode(user.getCredentials()) : null;
-                                        args[3] = user.getEmail();
-                                        args[4] = user.getAdditionalInformation() != null ? objectMapper.writeValueAsString(user.getAdditionalInformation()) : null;
-                                    }
-
-                                    return query(cnx, sql, args)
-                                            .flatMap(Result::getRowsUpdated)
-                                            .first(0l)
-                                            .map(result -> user);
-                                }
-                            }).doFinally(() -> Completable.fromPublisher(cnx.close()).subscribe());
+                        return query(sql, args)
+                                .flatMap(Result::getRowsUpdated)
+                                .first(0l)
+                                .map(result -> user);
+                    }
                 });
-    }
-
-    private Maybe<Map<String, Object>> selectUserByUsername(Connection cnx, String username) {
-        final String sql = String.format(configuration.getSelectUserByUsernameQuery(), getIndexParameter(1, configuration.getUsernameAttribute()));
-        return query(cnx, sql, username)
-                .flatMap(result -> result.map(ColumnMapRowMapper::mapRow))
-                .firstElement();
     }
 
     @Override
@@ -439,23 +426,6 @@ public class JdbcUserProvider extends JdbcAbstractProvider<UserProvider> impleme
                 .firstElement();
     }
 
-    private Flowable<Result> query(Connection connection, String sql, Object... args) {
-        Statement statement = connection.createStatement(sql);
-        for (int i = 0; i < args.length; i++) {
-            Object arg = args[i];
-            bind(statement, i, arg, arg != null ? arg.getClass() : String.class);
-        }
-        return Flowable.fromPublisher(statement.execute());
-    }
-
-    private Flowable<Result> query(String sql, Object... args) {
-        return Single.fromPublisher(connectionPool.create())
-                .toFlowable()
-                .flatMap(connection ->
-                        query(connection, sql, args)
-                                .doFinally(() -> Completable.fromPublisher(connection.close()).subscribe()));
-    }
-
     private User createUser(Map<String, Object> claims) {
         // get username
         String username = (String) claims.get(configuration.getUsernameAttribute());
@@ -488,18 +458,6 @@ public class JdbcUserProvider extends JdbcAbstractProvider<UserProvider> impleme
         user.setAdditionalInformation(additionalInformation);
 
         return user;
-    }
-
-    private void bind(Statement statement, int index, Object value, Class type) {
-        if (value != null) {
-            statement.bind(index, value);
-        } else {
-            statement.bindNull(index, type);
-        }
-    }
-
-    private String getIndexParameter(int index, String field) {
-        return ParametersUtils.getIndexParameter(configuration.getProtocol(), index, field);
     }
 
     private String convert(Map<String, Object> claims) {
