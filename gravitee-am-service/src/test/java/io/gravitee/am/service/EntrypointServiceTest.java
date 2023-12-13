@@ -73,9 +73,6 @@ public class EntrypointServiceTest {
     @Mock
     private VirtualHostValidator virtualHostValidator;
 
-    @Mock
-    private DomainService domainService;
-
     private EntrypointService cut;
 
     @Before
@@ -124,6 +121,7 @@ public class EntrypointServiceTest {
 
         Organization organization = new Organization();
         organization.setId(ORGANIZATION_ID);
+
         when(organizationService.findById(ORGANIZATION_ID)).thenReturn(Single.just(organization));
         when(entrypointRepository.create(any(Entrypoint.class))).thenAnswer(i -> Single.just(i.getArgument(0)));
         doReturn(true).when(virtualHostValidator).isValidDomainOrSubDomain("gravitee.io", null);

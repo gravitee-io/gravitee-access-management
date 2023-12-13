@@ -49,8 +49,6 @@ import io.gravitee.common.utils.IdGenerator;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.*;
 import io.vertx.rxjava3.core.MultiMap;
-import java.net.MalformedURLException;
-import java.net.URL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -89,7 +87,7 @@ public class DomainServiceImpl implements DomainService {
 
     private static final Pattern SCHEME_PATTERN = Pattern.compile("^(https?://).*$");
 
-    private final String gatewayUrl;
+    private String gatewayUrl;
 
     @Lazy
     @Autowired
@@ -185,12 +183,7 @@ public class DomainServiceImpl implements DomainService {
     @Autowired
     private VerifyAttemptService verifyAttemptService;
 
-    public DomainServiceImpl(@Value("${gateway.url:http://localhost:8092}") String gatewayUrl)  {
-        try {
-            new URL(gatewayUrl).toURI();
-        } catch (MalformedURLException | URISyntaxException e) {
-            throw new InvalidParameterException("Gateway url is not correct");
-        }
+    public DomainServiceImpl(@Value("${gateway.url:http://localhost:8092}") String gatewayUrl) {
         this.gatewayUrl = gatewayUrl;
     }
 
@@ -583,11 +576,6 @@ public class DomainServiceImpl implements DomainService {
         }
 
         return uri;
-    }
-
-    @Override
-    public URI gatewayUrl() {
-        return URI.create(gatewayUrl);
     }
 
     private Single<Domain> createDefaultCertificate(Domain domain) {

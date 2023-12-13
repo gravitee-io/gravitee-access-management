@@ -29,7 +29,6 @@ import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.i18n.DictionaryProvider;
 import io.vertx.rxjava3.core.MultiMap;
-import java.net.URI;
 import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -96,8 +95,6 @@ public class EmailServiceImplTest {
         emailServiceSpy = Mockito.spy(emailService);
         MockitoAnnotations.openMocks(this);
 
-        when(domainService.gatewayUrl()).thenReturn(URI.create("http://localhost:8092"));
-
         emailServiceSpy.send(Template.RESET_PASSWORD, Mockito.mock(User.class), Mockito.mock(Client.class));
 
         verify(freemarkerConfiguration, times(0)).getTemplate(anyString());
@@ -121,7 +118,6 @@ public class EmailServiceImplTest {
                 Long.valueOf(DAYS.toSeconds(7)).intValue());
         emailServiceSpy = Mockito.spy(emailService);
         MockitoAnnotations.openMocks(this);
-        when(domainService.gatewayUrl()).thenReturn(URI.create("http://localhost:8092"));
 
         final Email email = buildEmail();
 
@@ -170,7 +166,6 @@ public class EmailServiceImplTest {
                 Long.valueOf(DAYS.toSeconds(7)).intValue());
         emailServiceSpy = Mockito.spy(emailService);
         MockitoAnnotations.openMocks(this);
-        when(domainService.gatewayUrl()).thenReturn(URI.create("http://localhost:8092"));
 
         final Email email = buildEmail();
 

@@ -52,7 +52,6 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
-import static org.junit.Assert.assertNull;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -928,18 +927,5 @@ public class DomainServiceTest {
         domainService.update("any-id", domain).test().assertComplete().assertNoErrors();
 
         verify(domainRepository, times(1)).update(any(Domain.class));
-    }
-
-    @Test
-    public void shouldReturnGatewayUrl() {
-        var url = "https://gravitee.io/test";
-        var domain = new DomainServiceImpl(url);
-        assertEquals(url, domain.gatewayUrl().toString());
-        assertEquals("gravitee.io", domain.gatewayUrl().getHost());
-    }
-
-    @Test(expected = InvalidParameterException.class)
-    public void shouldNotCreateDomainServiceWhenGatewayUrlIsInvalid() {
-        new DomainServiceImpl("gravitee.io");
     }
 }
