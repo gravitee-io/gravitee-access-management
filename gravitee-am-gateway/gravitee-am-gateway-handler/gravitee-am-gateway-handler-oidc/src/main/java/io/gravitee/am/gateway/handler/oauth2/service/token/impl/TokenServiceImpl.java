@@ -155,7 +155,6 @@ public class TokenServiceImpl implements TokenService {
                                     .token(TokenTypeHint.ACCESS_TOKEN, accessToken.getJti())
                                     .token(TokenTypeHint.REFRESH_TOKEN,  refreshToken != null ? refreshToken.getJti() : null)
                                     .tokenTarget(client)));
-
                 })
                 .doOnError(error -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class).tokenTarget(client).throwable(error)));
     }
@@ -193,17 +192,11 @@ public class TokenServiceImpl implements TokenService {
                     return refreshTokenRepository.delete(refreshToken1.getValue())
                             .andThen(Single.just(refreshToken1));
                 })
-                .doOnSuccess(token -> jwtService.decode(token.getValue(), ACCESS_TOKEN).toMaybe().map(Optional::of).map(o -> o.map(JWT::getJti))
-                        .doOnSuccess(tokenId -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
-                                .token(TokenTypeHint.ACCESS_TOKEN, tokenId.orElse(null))
+                .doOnEvent((token, error) -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
+                                .token(TokenTypeHint.REFRESH_TOKEN, token != null ? token.getValue() : null)
                                 .tokenTarget(client)
                                 .revoked()
-                        )).ignoreElement().subscribe())
-                .doOnError(error -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
-                        .tokenTarget(client)
-                        .revoked()
-                        .throwable(error)
-                  ));
+                                .throwable(error)));
     }
 
     @Override

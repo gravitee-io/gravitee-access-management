@@ -16,9 +16,6 @@
 package io.gravitee.am.gateway.handler.oauth2.service.revocation.impl;
 
 import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
-import io.gravitee.am.common.jwt.JWT;
-import io.gravitee.am.gateway.handler.common.jwt.JWTService;
-import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.ACCESS_TOKEN;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.service.revocation.RevocationTokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.revocation.RevocationTokenService;
@@ -30,7 +27,6 @@ import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.ClientTokenAuditBuilder;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
-import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,9 +44,6 @@ public class RevocationTokenServiceImpl implements RevocationTokenService {
 
     @Autowired
     private AuditService auditService;
-
-    @Autowired
-    private JWTService jwtService;
 
     @Override
     public Completable revoke(RevocationTokenRequest request, Client client) {
@@ -149,12 +142,10 @@ public class RevocationTokenServiceImpl implements RevocationTokenService {
                     }
 
                     return tokenService.deleteAccessToken(accessToken.getValue())
-                            .doOnComplete(() -> jwtService.decode(accessToken.getValue(), ACCESS_TOKEN).toMaybe().map(Optional::of).map(o -> o.map(JWT::getJti))
-                                    .doOnSuccess(tokenId -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
-                                            .token(TokenTypeHint.ACCESS_TOKEN, tokenId.orElse(null))
+                            .doOnComplete(() -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
+                                            .token(TokenTypeHint.ACCESS_TOKEN, accessToken.getValue())
                                             .tokenTarget(client)
-                                            .revoked()))
-                                    .ignoreElement().subscribe());
+                                            .revoked()));
                 });
     }
 
@@ -169,12 +160,10 @@ public class RevocationTokenServiceImpl implements RevocationTokenService {
                         return Completable.error(new InvalidGrantException("Cannot revoke tokens issued to other clients."));
                     }
                     return tokenService.deleteRefreshToken(refreshToken.getValue())
-                            .doOnComplete(() -> jwtService.decode(refreshToken.getValue(), ACCESS_TOKEN).toMaybe().map(Optional::of).map(o -> o.map(JWT::getJti))
-                                    .doOnSuccess(access -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
-                                            .token(TokenTypeHint.REFRESH_TOKEN, access.orElse(null))
+                            .doOnComplete(() -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
+                                            .token(TokenTypeHint.REFRESH_TOKEN, refreshToken.getValue())
                                             .tokenTarget(client)
-                                            .revoked()))
-                                    .ignoreElement().subscribe());
+                                            .revoked()));
                 });
     }
 }

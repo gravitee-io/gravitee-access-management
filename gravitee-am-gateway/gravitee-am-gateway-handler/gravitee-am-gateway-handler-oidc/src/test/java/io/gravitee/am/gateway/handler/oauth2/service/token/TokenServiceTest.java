@@ -277,7 +277,6 @@ public class TokenServiceTest {
         when(jwtService.decodeAndVerify(any(), any(Client.class), any())).thenReturn(Single.just(jwt));
         when(refreshTokenRepository.findByToken(any())).thenReturn(Maybe.just(refreshToken));
         when(refreshTokenRepository.delete(anyString())).thenReturn(Completable.complete());
-        when(jwtService.decode(any(), any())).thenReturn(Single.just(jwt));
 
         TestObserver<Token> testObserver = tokenService.refresh(refreshToken.getToken(), tokenRequest, client).test();
         testObserver.assertComplete();
@@ -313,7 +312,6 @@ public class TokenServiceTest {
         when(jwtService.decodeAndVerify(any(), any(Client.class), any())).thenReturn(Single.just(jwt));
         when(refreshTokenRepository.findByToken(any())).thenReturn(Maybe.just(refreshToken));
         when(refreshTokenRepository.delete(anyString())).thenReturn(Completable.complete());
-        when(jwtService.decode(any(), any())).thenReturn(Single.just(jwt));
 
         TestObserver<Token> testObserver = tokenService.refresh(refreshToken.getToken(), tokenRequest, client).test();
         testObserver.assertComplete();
@@ -480,7 +478,6 @@ public class TokenServiceTest {
 
         when(jwtService.decodeAndVerify(any(), any(Client.class), any())).thenReturn(Single.just(jwt));
         when(refreshTokenRepository.findByToken(any())).thenReturn(Maybe.just(refreshToken));
-        when(jwtService.decode(any(), any())).thenReturn(Single.just(jwt));
 
         TestObserver<Token> testObserver = tokenService.refresh(refreshToken.getToken(), tokenRequest, client).test();
         testObserver.assertComplete();
