@@ -92,7 +92,7 @@ public class EntrypointResourceTest extends JerseySpringTest {
 
         UpdateEntrypoint updateEntrypoint = new UpdateEntrypoint();
         updateEntrypoint.setName("name");
-        updateEntrypoint.setUrl("https://auth.company.com");
+        updateEntrypoint.setUrl("https://auth.gravitee.io");
         updateEntrypoint.setTags(Collections.emptyList());
 
         final Entrypoint mockEntrypoint = new Entrypoint();
@@ -119,7 +119,7 @@ public class EntrypointResourceTest extends JerseySpringTest {
 
         UpdateEntrypoint updateEntrypoint = new UpdateEntrypoint();
         updateEntrypoint.setName("name");
-        updateEntrypoint.setUrl("https://auth.company.com");
+        updateEntrypoint.setUrl("https://auth.gravitee.io");
         updateEntrypoint.setTags(Collections.emptyList());
 
         doReturn(Single.error(new EntrypointNotFoundException(ENTRYPOINT_ID))).when(entrypointService).update(eq(ENTRYPOINT_ID), eq(ORGANIZATION_ID), any(UpdateEntrypoint.class), any(User.class));

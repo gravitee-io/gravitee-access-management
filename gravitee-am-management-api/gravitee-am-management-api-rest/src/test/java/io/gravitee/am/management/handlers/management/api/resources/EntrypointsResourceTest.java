@@ -83,7 +83,7 @@ public class EntrypointsResourceTest extends JerseySpringTest {
     public void shouldCreate() {
         NewEntrypoint newEntrypoint = new NewEntrypoint();
         newEntrypoint.setName("name");
-        newEntrypoint.setUrl("https://auth.company.com");
+        newEntrypoint.setUrl("https://auth.gravitee.io");
         newEntrypoint.setTags(Collections.emptyList());
 
         Entrypoint entrypoint = new Entrypoint();
