@@ -102,11 +102,6 @@
 #       - "style-src 'self' 'unsafe-inline';"
 #       - "frame-ancestors 'none';"
 #       - "frame-src 'self' https://www.google.com;"
-<<<<<<< HEAD
-=======
-#       - "report-uri 'self' http://report-csp.gravitee.io;" # if reportOnly is true, use this callback URL to report
-#       - "report-to 'self' 'security@gravitee.io';" # if reportOnly is true, use this email to report
->>>>>>> 12c6efa872 (AM-688: Do not refer to company.com (#3275))
 #  # xframe section allows to activate the X-Frame-Options header
 #  # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options
 #  # if not action (DENY or SAMEORIGIN) is specified, the X-Frame-Options header will no be set into the response
@@ -454,15 +449,3 @@ liquibase:
 #  limit: 5
 #  timePeriod: 15
 #  timeUnit: Minutes
-<<<<<<< HEAD
-=======
-
-#applications:
-#  secret:
-#    # Algorithms used to hash the client secret.
-#    # Can be one of :
-#    # "PBKDF2", "BCrypt", "SHA-512", "SHA-256", "None"
-#    algorithm: None
-#    properties:
-#      rounds: 10
->>>>>>> 12c6efa872 (AM-688: Do not refer to company.com (#3275))

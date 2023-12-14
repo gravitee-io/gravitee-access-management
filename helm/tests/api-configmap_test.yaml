@@ -598,18 +598,11 @@ tests:
 
   - it: should set allowed from with custom values
     set:
-<<<<<<< HEAD
-      smtp.enabled: true
-      smtp.allowedfrom:
-        - "*@company.com"
-        - "specific@email.com"
-=======
       smtp:
         allowedfrom:
           - '*@gravitee.io'
           - specific@email.com
         enabled: true
->>>>>>> 12c6efa872 (AM-688: Do not refer to company.com (#3275))
     asserts:
       - hasDocuments:
           count: 1
@@ -617,19 +610,11 @@ tests:
           of: ConfigMap
       - matchRegex:
           path: data.[gravitee.yml]
-<<<<<<< HEAD
           pattern: "[ ]{2}allowedfrom:"
       - matchRegex:
           path: data.[gravitee.yml]
-          pattern: "[ ]{3}- '\\*@company\\.com'"
+          pattern: "[ ]{3}- '\\*@gravitee\\.io'"
       - matchRegex:
           path: data.[gravitee.yml]
           pattern: "[ ]{3}- specific@email\\.com"
-=======
-          pattern: " *email:\n
-                     *  allowedfrom:\n
-                     *  - '\\*@gravitee\\.io'\n
-                     *  - specific@email\\.com\n
-                     *  enabled: true"
->>>>>>> 12c6efa872 (AM-688: Do not refer to company.com (#3275))
 
