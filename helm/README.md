@@ -161,7 +161,7 @@ httpClient:
     enabled: false
     exclude-hosts: # list of hosts to exclude from proxy (wildcard hosts are supported)
       - '*.internal.com'
-      - internal.mycompany.com
+      - internal.gravitee.io
     type: HTTP #HTTP, SOCK4, SOCK5
     http:
       host: localhost

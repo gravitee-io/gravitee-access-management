@@ -255,7 +255,7 @@ tests:
           pattern: "[ ]{2}clientAuth: true"
       - matchRegex:
           path: data.[gravitee.yml]
-          pattern: "[ ]{3}type: jks"      
+          pattern: "[ ]{3}type: jks"
       - matchRegex:
           path: data.[gravitee.yml]
           pattern: "[ ]{3}path: /keystore/path"
@@ -264,7 +264,7 @@ tests:
           pattern: "[ ]{3}password: \\\"keystorePassword\\\""
       - matchRegex:
           path: data.[gravitee.yml]
-          pattern: "[ ]{3}type: pem"      
+          pattern: "[ ]{3}type: pem"
       - matchRegex:
           path: data.[gravitee.yml]
           pattern: "[ ]{3}path: /truststore/path"
@@ -310,14 +310,14 @@ tests:
 
   - it: should set userManagement activity
     set:
-      userManagement.activity.enabled: true  
+      userManagement.activity.enabled: true
       userManagement.activity.anon.algorithm: SHA512
       userManagement.activity.anon.salt: someSalt
       userManagement.activity.retention.time: 12
       userManagement.activity.retention.unit: WEEKS
       userManagement.activity.geolocation.variation.latitude: 0.09
       userManagement.activity.geolocation.variation.longitude: 0.07
-    
+
     asserts:
       - hasDocuments:
           count: 1
@@ -344,7 +344,7 @@ tests:
       - matchRegex:
           path: data.[gravitee.yml]
           pattern: "[ ]{5}longitude: 0.07"
-  
+
 
   - it: should set default alert engine values disabled
     asserts:
@@ -402,7 +402,7 @@ tests:
         - /path/to/keystore1.cert
         - /path/to/keystore2.cert
         - /path/to/keystore3.cert
-      alerts.options.ssl.keystore.keys: 
+      alerts.options.ssl.keystore.keys:
         - /path/to/keystore1.pem
         - /path/to/keystore2.pem
         - /path/to/keystore3.pem
@@ -412,19 +412,19 @@ tests:
       alerts.security.enabled: true
       alerts.security.username: a_username
       alerts.security.password: a_password
-      alerts.endpoints: 
+      alerts.endpoints:
         - https://www.host1.com
         - https://www.host2.com
       alerts.engines.default.security.username: a_default_username
       alerts.engines.default.security.password: a_default_password
-      alerts.engines.default.endpoints: 
+      alerts.engines.default.endpoints:
         - https://www.default.host1.com
         - https://www.default.host2.com
       alerts.engines.default.ssl.keystore.certs:
         - /path/to/default/keystore1.cert
         - /path/to/default/keystore2.cert
         - /path/to/default/keystore3.cert
-      alerts.engines.default.ssl.keystore.keys: 
+      alerts.engines.default.ssl.keystore.keys:
         - /path/to/default/keystore1.pem
         - /path/to/default/keystore2.pem
         - /path/to/default/keystore3.pem
@@ -435,7 +435,7 @@ tests:
       alerts.engines.default.ssl.truststore.path: /path/to/default/keystore.p12
       alerts.engines.default.ssl.truststore.password: default_changeme_p12
 
-    
+
     asserts:
       - hasDocuments:
           count: 1
