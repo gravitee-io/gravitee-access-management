@@ -36,8 +36,22 @@
     <div class="gv-form-section">
       <mat-form-field appearance="outline" floatLabel="always">
         <mat-label>From</mat-label>
+<<<<<<< HEAD
         <input matInput type="email" placeholder="From" name="from" [(ngModel)]="email.from" required [disabled]="!isEnabled()" [readonly]="!canEdit()">
         <mat-hint>The email's FROM address. Example: no-reply@mycompany.com</mat-hint>
+=======
+        <input
+          matInput
+          type="email"
+          placeholder="From"
+          name="from"
+          [(ngModel)]="email.from"
+          required
+          [disabled]="!isEnabled()"
+          [readonly]="!canEdit()"
+        />
+        <mat-hint>The email's FROM address. Example: no-reply@gravitee.io</mat-hint>
+>>>>>>> 12c6efa872 (AM-688: Do not refer to company.com (#3275))
       </mat-form-field>
       <mat-form-field appearance="outline" floatLabel="always">
         <mat-label>From name</mat-label>

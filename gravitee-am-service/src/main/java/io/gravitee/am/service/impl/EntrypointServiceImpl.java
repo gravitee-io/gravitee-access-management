@@ -36,6 +36,7 @@ import io.reactivex.Flowable;
 import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -60,15 +61,18 @@ public class EntrypointServiceImpl implements EntrypointService {
     private final OrganizationService organizationService;
     private final AuditService auditService;
     private final VirtualHostValidator virtualHostValidator;
+    private final String gatewayUrl;
 
     public EntrypointServiceImpl(@Lazy EntrypointRepository entrypointRepository,
                                  @Lazy OrganizationService organizationService,
                                  AuditService auditService,
-                                 VirtualHostValidator virtualHostValidator) {
+                                 VirtualHostValidator virtualHostValidator,
+                                 @Value("${gateway.url:http://localhost:8092}") String gatewayUrl) {
         this.entrypointRepository = entrypointRepository;
         this.organizationService = organizationService;
         this.auditService = auditService;
         this.virtualHostValidator = virtualHostValidator;
+        this.gatewayUrl = gatewayUrl;
     }
 
     @Override
@@ -112,7 +116,7 @@ public class EntrypointServiceImpl implements EntrypointService {
             Entrypoint toCreate = new Entrypoint();
             toCreate.setName("Default");
             toCreate.setDescription("Default entrypoint");
-            toCreate.setUrl("https://auth.company.com");
+            toCreate.setUrl(gatewayUrl);
             toCreate.setTags(Collections.emptyList());
             toCreate.setOrganizationId(organization.getId());
             toCreate.setDefaultEntrypoint(true);
