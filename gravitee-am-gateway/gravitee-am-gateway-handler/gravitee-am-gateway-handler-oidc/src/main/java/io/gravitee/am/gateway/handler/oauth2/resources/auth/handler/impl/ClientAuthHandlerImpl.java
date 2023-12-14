@@ -23,6 +23,9 @@ import io.gravitee.am.gateway.handler.oauth2.resources.auth.handler.ClientAuthHa
 import io.gravitee.am.gateway.handler.oauth2.resources.auth.provider.ClientAuthProvider;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import io.gravitee.am.service.reporter.builder.ClientAuthAuditBuilder;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -48,16 +51,19 @@ import static io.gravitee.am.gateway.handler.oauth2.resources.auth.provider.Cert
  * @author GraviteeSource Team
  */
 public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
+    private static final String INVALID_CLIENT_MESSAGE = "Invalid client: missing or unsupported authentication method";
     private final ClientSyncService clientSyncService;
     private final List<ClientAuthProvider> clientAuthProviders;
     private final Domain domain;
     private final String certificateHeader;
+    private final AuditService auditService;
 
-    public ClientAuthHandlerImpl(ClientSyncService clientSyncService, List<ClientAuthProvider> clientAuthProviders, Domain domain, String certificateHeader) {
+    public ClientAuthHandlerImpl(ClientSyncService clientSyncService, List<ClientAuthProvider> clientAuthProviders, Domain domain, String certificateHeader, AuditService auditService) {
         this.clientSyncService = clientSyncService;
         this.clientAuthProviders = clientAuthProviders;
         this.domain = domain;
         this.certificateHeader = certificateHeader;
+        this.auditService = auditService;
     }
 
     @Override
@@ -67,7 +73,9 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
         // fetch client
         resolveClient(request, handler -> {
             if (handler.failed()) {
-                routingContext.fail(handler.cause());
+                Throwable cause = handler.cause();
+                routingContext.fail(cause);
+                auditService.report(AuditBuilder.builder(ClientAuthAuditBuilder.class).throwable(cause));
                 return;
             }
             // authenticate client
@@ -81,6 +89,7 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
                             routingContext.response().putHeader("WWW-Authenticate", authenticateHeader);
                         }
                     }
+                    auditService.report(AuditBuilder.builder(ClientAuthAuditBuilder.class).clientTarget(client).throwable(throwable));
                     routingContext.fail(authHandler.cause());
                     return;
                 }
@@ -107,6 +116,7 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
                 // put client in context and continue
                 routingContext.put(CLIENT_CONTEXT_KEY, authenticatedClient);
                 routingContext.next();
+                auditService.report(ClientAuthAuditBuilder.builder(ClientAuthAuditBuilder.class).clientTarget(client));
             });
 
         });
@@ -118,7 +128,7 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
                     .stream()
                     .filter(clientAuthProvider -> clientAuthProvider.canHandle(client, context))
                     .findFirst()
-                    .orElseThrow(() -> new InvalidClientException("Invalid client: missing or unsupported authentication method"))
+                    .orElseThrow(() -> new InvalidClientException(INVALID_CLIENT_MESSAGE))
                     .handle(client, context, handler);
         } catch (Exception ex) {
             handler.handle(Future.failedFuture(ex));
@@ -152,17 +162,17 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
 
     private void parseClientId(HttpServerRequest request, Handler<AsyncResult<String>> handler) {
         final String authorization = request.headers().get(HttpHeaders.AUTHORIZATION);
-        String clientId = null;
+        String clientId;
         try {
             if (authorization != null) {
                 // authorization header has been found check the value
                 int idx = authorization.indexOf(' ');
                 if (idx <= 0) {
-                    handler.handle(Future.failedFuture(new InvalidClientException("Invalid client: missing or unsupported authentication method")));
+                    handler.handle(Future.failedFuture(new InvalidClientException(INVALID_CLIENT_MESSAGE)));
                     return;
                 }
                 if (!"Basic".equalsIgnoreCase(authorization.substring(0, idx))) {
-                    handler.handle(Future.failedFuture(new InvalidClientException("Invalid client: missing or unsupported authentication method")));
+                    handler.handle(Future.failedFuture(new InvalidClientException(INVALID_CLIENT_MESSAGE)));
                     return;
                 }
                 String clientAuthentication = new String(Base64.getDecoder().decode(authorization.substring(idx + 1)));
@@ -178,13 +188,13 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
                 clientId = request.getParam(Parameters.CLIENT_ID);
                 // client_id can be null if client authentication method is private_jwt
                 if (clientId == null && request.getParam(Parameters.CLIENT_ASSERTION_TYPE) == null && request.getParam(Parameters.CLIENT_ASSERTION) == null) {
-                    handler.handle(Future.failedFuture(new InvalidClientException("Invalid client: missing or unsupported authentication method")));
+                    handler.handle(Future.failedFuture(new InvalidClientException(INVALID_CLIENT_MESSAGE)));
                     return;
                 }
                 handler.handle(Future.succeededFuture(clientId));
             }
         } catch (RuntimeException e) {
-            handler.handle(Future.failedFuture(new InvalidClientException("Invalid client: missing or unsupported authentication method")));
+            handler.handle(Future.failedFuture(new InvalidClientException(INVALID_CLIENT_MESSAGE)));
         }
     }
 }

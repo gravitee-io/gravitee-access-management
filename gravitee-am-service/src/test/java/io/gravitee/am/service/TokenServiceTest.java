@@ -16,6 +16,7 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.model.Application;
+import io.gravitee.am.model.User;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.repository.exceptions.TechnicalException;
@@ -25,10 +26,13 @@ import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.TokenServiceImpl;
 import io.gravitee.am.service.model.TotalToken;
 import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import static org.mockito.ArgumentMatchers.any;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -59,7 +63,19 @@ public class TokenServiceTest {
     @Mock
     private ApplicationService applicationService;
 
+    @Mock
+    private UserService userService;
+    @Mock
+    private AuditService auditService;
+
     private final static String DOMAIN = "domain1";
+
+    @Before
+    public void setUp() {
+        var user = new User();
+        user.setClient("client1");
+        when(userService.findById(any())).thenReturn(Maybe.just(user));
+    }
 
     @Test
     public void shouldFindTotalTokensByDomain() {

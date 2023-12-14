@@ -27,6 +27,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
 import io.gravitee.am.gateway.handler.oauth2.service.token.impl.AccessToken;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.AuditService;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Handler;
@@ -58,6 +59,9 @@ public class TokenEndpointTest extends RxWebTestBase {
 
     @Mock
     private TokenGranter tokenGranter;
+
+    @Mock
+    private AuditService auditService;
 
     @Override
     public void setUp() throws Exception {

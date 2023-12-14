@@ -17,14 +17,20 @@ package io.gravitee.am.gateway.handler.oauth2.resources.auth.handler;
 
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.oauth2.resources.auth.handler.impl.ClientAuthHandlerImpl;
-import io.gravitee.am.gateway.handler.oauth2.resources.auth.provider.*;
+import io.gravitee.am.gateway.handler.oauth2.resources.auth.provider.ClientAssertionAuthProvider;
+import io.gravitee.am.gateway.handler.oauth2.resources.auth.provider.ClientAuthProvider;
+import io.gravitee.am.gateway.handler.oauth2.resources.auth.provider.ClientBasicAuthProvider;
+import io.gravitee.am.gateway.handler.oauth2.resources.auth.provider.ClientCertificateAuthProvider;
+import io.gravitee.am.gateway.handler.oauth2.resources.auth.provider.ClientNoneAuthProvider;
+import io.gravitee.am.gateway.handler.oauth2.resources.auth.provider.ClientPostAuthProvider;
+import io.gravitee.am.gateway.handler.oauth2.resources.auth.provider.ClientSelfSignedAuthProvider;
 import io.gravitee.am.gateway.handler.oauth2.service.assertion.ClientAssertionService;
 import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.impl.ApplicationClientSecretService;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,7 +44,7 @@ public interface ClientAuthHandler {
 
     String GENERIC_ERROR_MESSAGE = "Client authentication failed due to unknown or invalid client";
 
-    static Handler<RoutingContext> create(ClientSyncService clientSyncService, ClientAssertionService clientAssertionService, JWKService jwkService, Domain domain, ApplicationClientSecretService appSecretService, String certHeader) {
+    static Handler<RoutingContext> create(ClientSyncService clientSyncService, ClientAssertionService clientAssertionService, JWKService jwkService, Domain domain, ApplicationClientSecretService appSecretService, String certHeader, AuditService auditService) {
         List<ClientAuthProvider> clientAuthProviders = new ArrayList<>();
         clientAuthProviders.add(new ClientBasicAuthProvider(appSecretService));
         clientAuthProviders.add(new ClientPostAuthProvider(appSecretService));
@@ -46,6 +52,6 @@ public interface ClientAuthHandler {
         clientAuthProviders.add(new ClientCertificateAuthProvider(certHeader));
         clientAuthProviders.add(new ClientSelfSignedAuthProvider(jwkService, certHeader));
         clientAuthProviders.add(new ClientNoneAuthProvider());
-        return new ClientAuthHandlerImpl(clientSyncService, clientAuthProviders, domain, certHeader);
+        return new ClientAuthHandlerImpl(clientSyncService, clientAuthProviders, domain, certHeader, auditService);
     }
 }

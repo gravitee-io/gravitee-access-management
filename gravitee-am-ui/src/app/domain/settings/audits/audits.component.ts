@@ -97,8 +97,8 @@ export class AuditsComponent implements OnInit {
     this.searchAudits();
   }
 
-  isUnknownActor(row) {
-    return row.outcome.status === 'FAILURE' && row.type === 'USER_LOGIN';
+  isUnknownActor(row): boolean {
+    return row.actor?.id === undefined;
   }
 
   hasActorUrl(row) {

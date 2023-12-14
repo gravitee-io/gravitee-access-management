@@ -43,6 +43,9 @@ import io.gravitee.am.model.safe.UserProperties;
 import io.gravitee.am.model.uma.PermissionRequest;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
+import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import io.gravitee.am.service.reporter.builder.ClientTokenAuditBuilder;
 import io.gravitee.common.util.Maps;
 import io.gravitee.common.util.MultiValueMap;
 import io.gravitee.gateway.api.ExecutionContext;
@@ -98,6 +101,9 @@ public class TokenServiceImpl implements TokenService {
     @Autowired
     private IntrospectionTokenService introspectionTokenService;
 
+    @Autowired
+    private AuditService auditService;
+
     @Override
     public Maybe<Token> getAccessToken(String token, Client client) {
         return jwtService.decodeAndVerify(token, client, ACCESS_TOKEN)
@@ -144,7 +150,11 @@ public class TokenServiceImpl implements TokenService {
                             (refreshToken != null ? jwtService.encode(refreshToken, client).map(Optional::of) : Single.just(Optional.<String>empty())),
                             (encodedAccessToken, optionalEncodedRefreshToken) -> convert(accessToken, encodedAccessToken, optionalEncodedRefreshToken.orElse(null), oAuth2Request))
                             .flatMap(accessToken1 -> tokenEnhancer.enhance(accessToken1, oAuth2Request, client, endUser, executionContext))
-                            .flatMap(enhancedToken -> storeTokens(accessToken, refreshToken, oAuth2Request).toSingle(() -> enhancedToken));
+                            .flatMap(enhancedToken -> storeTokens(accessToken, refreshToken, oAuth2Request).toSingle(() -> enhancedToken))
+                            .doOnSuccess(enhancedToken -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
+                                    .token(TokenTypeHint.ACCESS_TOKEN, accessToken.getJti())
+                                    .token(TokenTypeHint.REFRESH_TOKEN,  refreshToken != null ? refreshToken.getJti() : null)
+                                    .tokenTarget(client)));
 
                 });
     }
@@ -181,7 +191,13 @@ public class TokenServiceImpl implements TokenService {
                     // else, refresh token is used only once
                     return refreshTokenRepository.delete(refreshToken1.getValue())
                             .andThen(Single.just(refreshToken1));
-                });
+                })
+                .doOnSuccess(token -> jwtService.decode(token.getValue(), ACCESS_TOKEN).toMaybe().map(Optional::of).map(o -> o.map(JWT::getJti))
+                        .doOnSuccess(access -> access.ifPresent(id -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
+                                .token(TokenTypeHint.ACCESS_TOKEN, id)
+                                .revoked()
+                                .tokenTarget(client))))
+                        .ignoreElement().subscribe());
     }
 
     @Override

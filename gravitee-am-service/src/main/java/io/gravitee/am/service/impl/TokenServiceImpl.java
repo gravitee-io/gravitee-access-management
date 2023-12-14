@@ -19,9 +19,13 @@ import io.gravitee.am.model.Application;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
 import io.gravitee.am.service.ApplicationService;
+import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.TokenService;
+import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.TotalToken;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import io.gravitee.am.service.reporter.builder.ClientTokenAuditBuilder;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
@@ -50,6 +54,12 @@ public class TokenServiceImpl implements TokenService {
     @Lazy
     @Autowired
     private RefreshTokenRepository refreshTokenRepository;
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private AuditService auditService;
 
     @Override
     public Single<TotalToken> findTotalTokensByDomain(String domain) {
@@ -90,7 +100,7 @@ public class TokenServiceImpl implements TokenService {
     public Single<TotalToken> findTotalTokens() {
         LOGGER.debug("Find total tokens");
         return applicationService.findAll()
-                .flatMapObservable(pagedApplications -> Observable.fromIterable(pagedApplications))
+                .flatMapObservable(Observable::fromIterable)
                 .flatMapSingle(this::countByClientId)
                 .toList()
                 .flatMap(totalAccessTokens -> {
@@ -109,6 +119,12 @@ public class TokenServiceImpl implements TokenService {
         LOGGER.debug("Delete tokens by user : {}", userId);
         return accessTokenRepository.deleteByUserId(userId)
                 .andThen(refreshTokenRepository.deleteByUserId(userId))
+                .doOnComplete(() -> userService.findById(userId).doOnEvent((user, error) ->
+                        auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
+                                .token(userId)
+                                .revoked()
+                                .tokenTarget(user)))
+                        .ignoreElement().subscribe())
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to delete tokens by user {}", userId, ex);
                     return Completable.error(new TechnicalManagementException(

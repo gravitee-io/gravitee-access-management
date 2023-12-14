@@ -32,6 +32,8 @@ import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.reporter.api.audit.model.Audit;
+import io.gravitee.am.service.AuditService;
 import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.MultiValueMap;
 import io.gravitee.el.TemplateEngine;
@@ -83,6 +85,9 @@ public class IDTokenServiceTest {
 
     @Mock
     private ExecutionContextFactory executionContextFactory;
+
+    @Mock
+    private AuditService auditService;
 
     private ObjectMapper objectMapper = new ObjectMapper();
 

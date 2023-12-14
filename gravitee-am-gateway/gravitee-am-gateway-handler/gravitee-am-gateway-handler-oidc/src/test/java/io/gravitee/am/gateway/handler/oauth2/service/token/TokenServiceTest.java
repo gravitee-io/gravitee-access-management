@@ -36,6 +36,7 @@ import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
 import io.gravitee.am.repository.oauth2.model.RefreshToken;
+import io.gravitee.am.service.AuditService;
 import io.gravitee.el.TemplateEngine;
 import io.gravitee.gateway.api.ExecutionContext;
 import io.reactivex.rxjava3.core.Completable;
@@ -100,6 +101,9 @@ public class TokenServiceTest {
 
     @Mock
     private TokenManager tokenManager;
+
+    @Mock
+    private AuditService auditService;
 
     @Test
     public void shouldCreate() {
@@ -242,6 +246,7 @@ public class TokenServiceTest {
         when(jwtService.decodeAndVerify(any(), any(Client.class), any())).thenReturn(Single.just(jwt));
         when(refreshTokenRepository.findByToken(any())).thenReturn(Maybe.just(refreshToken));
         when(refreshTokenRepository.delete(anyString())).thenReturn(Completable.complete());
+        when(jwtService.decode(any(), any())).thenReturn(Single.just(jwt));
 
         TestObserver<Token> testObserver = tokenService.refresh(refreshToken.getToken(), tokenRequest, client).test();
         testObserver.assertComplete();
@@ -277,6 +282,7 @@ public class TokenServiceTest {
         when(jwtService.decodeAndVerify(any(), any(Client.class), any())).thenReturn(Single.just(jwt));
         when(refreshTokenRepository.findByToken(any())).thenReturn(Maybe.just(refreshToken));
         when(refreshTokenRepository.delete(anyString())).thenReturn(Completable.complete());
+        when(jwtService.decode(any(), any())).thenReturn(Single.just(jwt));
 
         TestObserver<Token> testObserver = tokenService.refresh(refreshToken.getToken(), tokenRequest, client).test();
         testObserver.assertComplete();
@@ -443,6 +449,7 @@ public class TokenServiceTest {
 
         when(jwtService.decodeAndVerify(any(), any(Client.class), any())).thenReturn(Single.just(jwt));
         when(refreshTokenRepository.findByToken(any())).thenReturn(Maybe.just(refreshToken));
+        when(jwtService.decode(any(), any())).thenReturn(Single.just(jwt));
 
         TestObserver<Token> testObserver = tokenService.refresh(refreshToken.getToken(), tokenRequest, client).test();
         testObserver.assertComplete();
