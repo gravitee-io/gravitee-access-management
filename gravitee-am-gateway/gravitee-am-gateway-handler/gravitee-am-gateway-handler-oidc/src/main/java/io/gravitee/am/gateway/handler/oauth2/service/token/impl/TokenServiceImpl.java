@@ -156,7 +156,8 @@ public class TokenServiceImpl implements TokenService {
                                     .token(TokenTypeHint.REFRESH_TOKEN,  refreshToken != null ? refreshToken.getJti() : null)
                                     .tokenTarget(client)));
 
-                });
+                })
+                .doOnError(error -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class).tokenTarget(client).throwable(error)));
     }
 
     @Override
@@ -179,7 +180,7 @@ public class TokenServiceImpl implements TokenService {
                         return Single.error(new InvalidGrantException("Refresh token was issued to another client"));
                     }
                     // Propagate UMA 2.0 permissions
-                    if(refreshToken1.getAdditionalInformation().get("permissions")!=null) {
+                    if (refreshToken1.getAdditionalInformation().get("permissions") != null) {
                         tokenRequest.setPermissions((List<PermissionRequest>)refreshToken1.getAdditionalInformation().get("permissions"));
                     }
 
@@ -193,11 +194,16 @@ public class TokenServiceImpl implements TokenService {
                             .andThen(Single.just(refreshToken1));
                 })
                 .doOnSuccess(token -> jwtService.decode(token.getValue(), ACCESS_TOKEN).toMaybe().map(Optional::of).map(o -> o.map(JWT::getJti))
-                        .doOnSuccess(access -> access.ifPresent(id -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
-                                .token(TokenTypeHint.ACCESS_TOKEN, id)
+                        .doOnSuccess(tokenId -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
+                                .token(TokenTypeHint.ACCESS_TOKEN, tokenId.orElse(null))
+                                .tokenTarget(client)
                                 .revoked()
-                                .tokenTarget(client))))
-                        .ignoreElement().subscribe());
+                        )).ignoreElement().subscribe())
+                .doOnError(error -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
+                        .tokenTarget(client)
+                        .revoked()
+                        .throwable(error)
+                  ));
     }
 
     @Override

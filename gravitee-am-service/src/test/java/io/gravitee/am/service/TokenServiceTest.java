@@ -29,12 +29,15 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import static org.mockito.ArgumentMatchers.any;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Arrays;
@@ -65,6 +68,7 @@ public class TokenServiceTest {
 
     @Mock
     private UserService userService;
+
     @Mock
     private AuditService auditService;
 
@@ -221,6 +225,8 @@ public class TokenServiceTest {
         TestObserver testObserver = tokenService.deleteByUserId("userId").test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
+
+        verify(auditService, times(1)).report(any());
     }
 
 }

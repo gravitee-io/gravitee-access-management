@@ -87,10 +87,16 @@ public class RevocationTokenServiceImpl implements RevocationTokenService {
                         // Log the result anyway for posterity.
                         if (throwable instanceof InvalidTokenException) {
                             logger.debug("No access token {} found in the token store.", token);
+                            auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
+                                    .token(token)
+                                    .revoked());
                             return Completable.complete();
                         }
                         return Completable.error(throwable);
-                    });
+                    })
+                    .doOnError(error -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
+                            .throwable(error)
+                            .revoked()));
         }
 
         // The user didn't hint that this is a refresh token, so it MAY be an access
@@ -123,10 +129,16 @@ public class RevocationTokenServiceImpl implements RevocationTokenService {
                     // Log the result anyway for posterity.
                     if (throwable instanceof InvalidTokenException) {
                         logger.debug("No refresh token {} found in the token store.", token);
+                        auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
+                                .token(token)
+                                .revoked());
                         return Completable.complete();
                     }
                     return Completable.error(throwable);
-                });
+                })
+                .doOnError(error -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
+                        .throwable(error)
+                        .revoked()));
 
     }
 
@@ -142,11 +154,11 @@ public class RevocationTokenServiceImpl implements RevocationTokenService {
 
                     return tokenService.deleteAccessToken(accessToken.getValue())
                             .doOnComplete(() -> jwtService.decode(accessToken.getValue(), ACCESS_TOKEN).toMaybe().map(Optional::of).map(o -> o.map(JWT::getJti))
-                                    .doOnSuccess(access -> access.ifPresent(id -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
-                                            .token(TokenTypeHint.ACCESS_TOKEN, id)
+                                    .doOnSuccess(tokenId -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
+                                            .token(TokenTypeHint.ACCESS_TOKEN, tokenId.orElse(null))
                                             .tokenTarget(client)
                                             .revoked()
-                                    )))
+                                    ))
                                     .ignoreElement().subscribe());
                 });
     }
@@ -163,10 +175,10 @@ public class RevocationTokenServiceImpl implements RevocationTokenService {
                     }
                     return tokenService.deleteRefreshToken(refreshToken.getValue())
                             .doOnComplete(() -> jwtService.decode(refreshToken.getValue(), ACCESS_TOKEN).toMaybe().map(Optional::of).map(o -> o.map(JWT::getJti))
-                                    .doOnSuccess(access -> access.ifPresent(id -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
-                                            .token(TokenTypeHint.REFRESH_TOKEN, id)
+                                    .doOnSuccess(access -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
+                                            .token(TokenTypeHint.REFRESH_TOKEN, access.orElse(null))
                                             .tokenTarget(client)
-                                            .revoked())))
+                                            .revoked()))
                                     .ignoreElement().subscribe());
                 });
     }

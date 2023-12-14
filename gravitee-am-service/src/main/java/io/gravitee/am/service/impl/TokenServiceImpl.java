@@ -119,17 +119,17 @@ public class TokenServiceImpl implements TokenService {
         LOGGER.debug("Delete tokens by user : {}", userId);
         return accessTokenRepository.deleteByUserId(userId)
                 .andThen(refreshTokenRepository.deleteByUserId(userId))
-                .doOnComplete(() -> userService.findById(userId).doOnEvent((user, error) ->
-                        auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
-                                .token(userId)
-                                .revoked()
-                                .tokenTarget(user)))
-                        .ignoreElement().subscribe())
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to delete tokens by user {}", userId, ex);
                     return Completable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find total tokens by user: %s", userId), ex));
-                });
+                })
+                .doOnEvent(error -> userService.findById(userId).doOnEvent((user, er) ->
+                                auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
+                                        .tokenTarget(user)
+                                        .revoked()
+                                        .throwable(error)))
+                        .ignoreElement().subscribe());
     }
 
     private Single<Long> countByClientId(Application application) {

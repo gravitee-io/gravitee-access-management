@@ -131,19 +131,22 @@ public class IDTokenServiceImpl implements IDTokenService {
                                         }
                                     });
                                 }
-                                return jwtService.encode(idToken, certificateProvider)
-                                        .doOnSuccess(encoded -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
-                                                .token(TokenTypeHint.ID_TOKEN, idToken.getJti())
-                                                .revoked()
-                                                .tokenTarget(client)));
+                                return jwtService.encode(idToken, certificateProvider);
                             })
                             .flatMap(signedIdToken -> {
                                 if (client.getIdTokenEncryptedResponseAlg() != null) {
                                     return jweService.encryptIdToken(signedIdToken, client);
                                 }
                                 return Single.just(signedIdToken);
-                            });
-                });
+                            })
+                            .doOnSuccess(encoded -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
+                                    .token(TokenTypeHint.ID_TOKEN, idToken.getJti())
+                                    .tokenTarget(client)));
+                })
+                .doOnError(error -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
+                        .tokenTarget(client)
+                        .throwable(error)
+                ));
     }
 
     @Override

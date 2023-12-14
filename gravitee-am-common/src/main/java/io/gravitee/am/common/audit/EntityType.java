@@ -52,6 +52,5 @@ public interface EntityType {
     String CREDENTIAL = "CREDENTIAL";
     String I18N_DICTIONARY = "I18N_DICTIONARY";
     String THEME = "THEME";
-    String TOKEN = "TOKEN";
     String VERIFY_ATTEMPT = "VERIFY_ATTEMPT";
 }

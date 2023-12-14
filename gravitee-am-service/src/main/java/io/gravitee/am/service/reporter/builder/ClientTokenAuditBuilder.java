@@ -17,13 +17,11 @@ package io.gravitee.am.service.reporter.builder;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.audit.EntityType;
-import io.gravitee.am.common.audit.EventType;
 import static io.gravitee.am.common.audit.EventType.TOKEN_ACTIVATED;
 import static io.gravitee.am.common.audit.EventType.TOKEN_REVOKED;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
-import io.gravitee.am.model.factor.FactorStatus;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.reporter.api.audit.model.Audit;
 import java.util.Arrays;
@@ -44,21 +42,20 @@ public class ClientTokenAuditBuilder extends AuditBuilder<ClientTokenAuditBuilde
         return this;
     }
 
+    public ClientTokenAuditBuilder token(String tokenId) {
+        token(null, tokenId);
+        return this;
+    }
+
     public ClientTokenAuditBuilder token(TokenTypeHint tokenTypeHint, String tokenId) {
         if (tokenId != null) {
             var entry = new HashMap<String, String>();
             entry.put("token_id", tokenId);
-            entry.put("token_type", tokenTypeHint.name());
+            if (tokenTypeHint != null) {
+                entry.put("token_type", tokenTypeHint.name());
+            }
             tokenNewValue.put(tokenId, entry);
         }
-        return this;
-    }
-
-    public ClientTokenAuditBuilder token(String userId) {
-        var entry = new HashMap<String, String>();
-        entry.put("user_id", userId);
-        entry.put("token_type", Arrays.toString(TokenTypeHint.values()));
-        tokenNewValue.put(userId, entry);
         return this;
     }
 
@@ -73,6 +70,10 @@ public class ClientTokenAuditBuilder extends AuditBuilder<ClientTokenAuditBuilde
 
     public ClientTokenAuditBuilder tokenTarget(User user) {
         if (user != null) {
+            var entry = new HashMap<String, String>();
+            entry.put("user_id", user.getId());
+            entry.put("token_type", Arrays.toString(TokenTypeHint.values()));
+            tokenNewValue.put(user.getId(), entry);
             setTarget(user.getId(), EntityType.USER, user.getUsername(), user.getDisplayName(), user.getReferenceType(), user.getReferenceId());
         }
         return this;

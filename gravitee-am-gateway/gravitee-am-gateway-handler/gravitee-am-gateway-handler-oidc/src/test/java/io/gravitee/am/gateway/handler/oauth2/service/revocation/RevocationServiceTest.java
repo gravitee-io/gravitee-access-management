@@ -30,6 +30,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
+import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -57,6 +58,11 @@ public class RevocationServiceTest {
 
     @Mock
     private JWTService jwtService;
+
+    @After
+    public void after() {
+        verify(auditService, times(1)).report(any());
+    }
 
     @Test
     public void shouldNotRevoke_WrongRequestedClientId() {
