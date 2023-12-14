@@ -23,9 +23,9 @@ import {createDomain, deleteDomain, getDomainFlows, startDomain, updateDomainFlo
 import {getAllIdps} from "@management-commands/idp-management-commands";
 import {createUser} from "@management-commands/user-management-commands";
 import {
-    createApplication, 
-    getApplicationFlows, 
-    patchApplication, 
+    createApplication,
+    getApplicationFlows,
+    patchApplication,
     updateApplication,
 		updateApplicationFlows
 } from "@management-commands/application-management-commands";
@@ -62,7 +62,7 @@ beforeAll(async () => {
     const adminTokenResponse = await requestAdminAccessToken();
     managementApiAccessToken = adminTokenResponse.body.access_token;
     expect(managementApiAccessToken).toBeDefined();
-    
+
 		const createdDomain = await createDomain(managementApiAccessToken, "jest-flow-exec", "test end-user logout");
     expect(createdDomain).toBeDefined();
     expect(createdDomain.id).toBeDefined();
@@ -70,7 +70,7 @@ beforeAll(async () => {
 
     await startDomain(domain.id, managementApiAccessToken);
 
-    // Create the application 
+    // Create the application
     const idpSet = await getAllIdps(domain.id, managementApiAccessToken);
     application = await createApplication(domain.id, managementApiAccessToken, {
         "name": "my-client",
@@ -96,13 +96,13 @@ beforeAll(async () => {
 
     const result = await getWellKnownOpenIdConfiguration(domain.hrid).expect(200);
     openIdConfiguration = result.body
-    expect(openIdConfiguration).toBeDefined();  
+    expect(openIdConfiguration).toBeDefined();
 });
 
 describe("Flows Execution - authorization_code flow", () => {
 
 	describe("Only Domain Flows", () => {
-	
+
 		it('Define Domain flows', async () => {
 			const flows = await getDomainFlows(domain.id, managementApiAccessToken);
 			// Define Groovy policy set attribute into the context on ALL flow
@@ -237,7 +237,7 @@ describe("Flows Execution - authorization_code flow", () => {
 	});
 
 	describe("App Flows", () => {
-		
+
 		it('Define ALL flow - ', async () => {
 			const flows = await getApplicationFlows(domain.id, managementApiAccessToken, application.id);
 			// Define Groovy policy set attribute into the context on ALL flow
@@ -330,7 +330,7 @@ describe("Flows Execution - authorization_code flow", () => {
 
 			const tokenResponse = await requestToken(application, openIdConfiguration, postLoginRedirect)
 			const accessToken = assertGeneratedTokenAndGet(tokenResponse.body);
-			
+
 			const JWT = decodeJwt(accessToken);
 			expect(JWT['domain-groovy-from-profile']).toBeDefined();
 			expect(JWT['domain-groovy-from-profile']).toEqual("domainRootInfoUpdated");
@@ -385,50 +385,9 @@ describe("Flows Execution - authorization_code flow", () => {
 
 	});
 
-<<<<<<< HEAD
+
 	describe("App Flows with New Conditional Flow", () => {
 		const EMAIL_SUBJECT = "Email Send Under Condition"
-=======
-      appFlows.push({
-        name: 'Conditionnal Login',
-        pre: [],
-        post: [
-          {
-            name: 'HTTP Callout',
-            policy: 'policy-http-callout',
-            description: '',
-            condition: '',
-            enabled: true,
-            configuration: JSON.stringify({
-              method: 'GET',
-              fireAndForget: false,
-              exitOnError: false,
-              errorCondition: '{#calloutResponse.status >= 400 and #calloutResponse.status <= 599}',
-              errorStatusCode: 500,
-              url: `${openIdConfiguration.issuer}/.well-known/openid-configuration`,
-              variables: [{ value: "{#jsonPath(#calloutResponse.content, '$.jwks_uri')}", name: 'jwks_uri_from_callout' }],
-            }),
-          },
-          {
-            name: 'Send email',
-            policy: 'policy-am-send-email',
-            description: '',
-            condition: '',
-            enabled: true,
-            configuration: JSON.stringify({
-              template: 'TEST JEST',
-              from: 'no-reply@gravitee.io',
-              fromName: 'Test',
-              to: '${user.email}',
-              subject: EMAIL_SUBJECT,
-              content: '<a href="${jwks_uri_from_callout}">jwks_uri</a>',
-            }),
-          },
-        ],
-        type: FlowEntityTypeEnum.Login,
-        condition: "{#request.params['callout'] != null && #request.params['callout'][0].equals('true') }",
-      });
->>>>>>> 12c6efa872 (AM-688: Do not refer to company.com (#3275))
 
 		it('Define new LOGIN flow with condition - ', async () => {
 			const appFlows = await getApplicationFlows(domain.id, managementApiAccessToken, application.id);
@@ -463,7 +422,7 @@ describe("Flows Execution - authorization_code flow", () => {
 									"configuration": JSON.stringify({
 										template: "TEST JEST",
 										from:"no-reply@mycompany.com",
-										fromName: "Test", 
+										fromName: "Test",
 										to: "${user.email}",
 										subject:EMAIL_SUBJECT,
 										content:"<a href=\"${jwks_uri_from_callout}\">jwks_uri</a>"
