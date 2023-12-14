@@ -30,7 +30,7 @@ public class ClientAuthAuditBuilder extends AuditBuilder<ClientAuthAuditBuilder>
         if (client != null) {
             var domainId = client.getDomain();
             setTarget(client.getId(), EntityType.APPLICATION, client.getClientName(), client.getClientName(), ReferenceType.DOMAIN, domainId);
-            super.client(client.getClientId());
+            super.client(client);
             super.domain(domainId);
         }
         return this;

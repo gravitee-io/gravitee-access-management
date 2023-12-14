@@ -42,11 +42,6 @@ public class ClientTokenAuditBuilder extends AuditBuilder<ClientTokenAuditBuilde
         return this;
     }
 
-    public ClientTokenAuditBuilder token(String tokenId) {
-        token(null, tokenId);
-        return this;
-    }
-
     public ClientTokenAuditBuilder token(TokenTypeHint tokenTypeHint, String tokenId) {
         if (tokenId != null) {
             var entry = new HashMap<String, String>();
@@ -62,7 +57,7 @@ public class ClientTokenAuditBuilder extends AuditBuilder<ClientTokenAuditBuilde
     public ClientTokenAuditBuilder tokenTarget(Client client) {
         if (client != null) {
             setTarget(client.getId(), EntityType.APPLICATION, client.getClientName(), client.getClientName(), ReferenceType.DOMAIN, client.getDomain());
-            super.client(client.getClientId());
+            super.client(client);
             super.domain(client.getDomain());
         }
         return this;
@@ -75,13 +70,18 @@ public class ClientTokenAuditBuilder extends AuditBuilder<ClientTokenAuditBuilde
             entry.put("token_type", Arrays.toString(TokenTypeHint.values()));
             tokenNewValue.put(user.getId(), entry);
             setTarget(user.getId(), EntityType.USER, user.getUsername(), user.getDisplayName(), user.getReferenceType(), user.getReferenceId());
+            if (ReferenceType.DOMAIN.equals(user.getReferenceType())) {
+                super.domain(user.getReferenceId());
+            }
         }
         return this;
     }
 
     @Override
     public Audit build(ObjectMapper mapper) {
-        setNewValue(tokenNewValue);
+        if (!tokenNewValue.isEmpty()) {
+            setNewValue(tokenNewValue);
+        }
         return super.build(mapper);
     }
 }

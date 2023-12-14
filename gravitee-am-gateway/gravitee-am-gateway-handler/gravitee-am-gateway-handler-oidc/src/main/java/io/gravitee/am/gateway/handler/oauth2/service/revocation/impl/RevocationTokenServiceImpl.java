@@ -87,9 +87,7 @@ public class RevocationTokenServiceImpl implements RevocationTokenService {
                         // Log the result anyway for posterity.
                         if (throwable instanceof InvalidTokenException) {
                             logger.debug("No access token {} found in the token store.", token);
-                            auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
-                                    .token(token)
-                                    .revoked());
+                            auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class).revoked());
                             return Completable.complete();
                         }
                         return Completable.error(throwable);
@@ -129,9 +127,7 @@ public class RevocationTokenServiceImpl implements RevocationTokenService {
                     // Log the result anyway for posterity.
                     if (throwable instanceof InvalidTokenException) {
                         logger.debug("No refresh token {} found in the token store.", token);
-                        auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
-                                .token(token)
-                                .revoked());
+                        auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class).revoked());
                         return Completable.complete();
                     }
                     return Completable.error(throwable);
@@ -157,8 +153,7 @@ public class RevocationTokenServiceImpl implements RevocationTokenService {
                                     .doOnSuccess(tokenId -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
                                             .token(TokenTypeHint.ACCESS_TOKEN, tokenId.orElse(null))
                                             .tokenTarget(client)
-                                            .revoked()
-                                    ))
+                                            .revoked()))
                                     .ignoreElement().subscribe());
                 });
     }
