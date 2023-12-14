@@ -82,14 +82,14 @@ public class WebAuthnFactoryTest {
     public void testCustom_partialSettings() {
         WebAuthnSettings webAuthnSettings = mock(WebAuthnSettings.class);
         when(webAuthnSettings.getRelyingPartyName()).thenReturn("Custom RP name");
-        when(webAuthnSettings.getOrigin()).thenReturn("https://auth.mycompany.com:8443");
+        when(webAuthnSettings.getOrigin()).thenReturn("https://auth.gravitee.io:8443");
         when(domain.getWebAuthnSettings()).thenReturn(webAuthnSettings);
         WebAuthn webAuthn = webAuthnFactory.getObject();
         RelyingParty relyingParty = webAuthnFactory.getRelyingParty();
         Assert.assertNotNull(webAuthn);
         Assert.assertNotNull(relyingParty);
         Assert.assertEquals("Custom RP name", relyingParty.getName());
-        Assert.assertEquals("auth.mycompany.com", relyingParty.getId());
+        Assert.assertEquals("auth.gravitee.io", relyingParty.getId());
     }
 
     @Test

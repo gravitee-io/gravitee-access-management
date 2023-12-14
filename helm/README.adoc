@@ -229,7 +229,7 @@ httpClient:
     enabled: false
     exclude-hosts: # list of hosts to exclude from proxy (wildcard hosts are supported)
       - '*.internal.com'
-      - internal.mycompany.com
+      - internal.gravitee.io
     type: HTTP #HTTP, SOCK4, SOCK5
     http:
       host: localhost
@@ -743,7 +743,7 @@ For PBKDF2, the number of iterations, the salt length and the algorithm can be s
 
 === Gravitee.io Alert trigger & settings
 
-When alerts are enabled, you may want to define your own settings the alert triggers and for the risk_assessment settings. 
+When alerts are enabled, you may want to define your own settings the alert triggers and for the risk_assessment settings.
 To do so, you wan define triggers and settings under the alerts section of the values.yaml.
 
 
