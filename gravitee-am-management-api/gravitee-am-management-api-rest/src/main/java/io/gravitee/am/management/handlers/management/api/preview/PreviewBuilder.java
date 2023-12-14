@@ -301,7 +301,7 @@ public class PreviewBuilder {
     private UserProperties generateFakeUser() {
         final UserProperties fakeUser = new UserProperties();
         fakeUser.setDomain(this.domain.getId());
-        fakeUser.setEmail("john.doe@mycompany.com");
+        fakeUser.setEmail("john.doe@gravitee.io");
         fakeUser.setFirstName("John");
         fakeUser.setLastName("Doe");
         fakeUser.setClaims(Map.of());

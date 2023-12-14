@@ -437,7 +437,7 @@ describe('Flows Execution - authorization_code flow', () => {
             enabled: true,
             configuration: JSON.stringify({
               template: 'TEST JEST',
-              from: 'no-reply@mycompany.com',
+              from: 'no-reply@gravitee.io',
               fromName: 'Test',
               to: '${user.email}',
               subject: EMAIL_SUBJECT,
