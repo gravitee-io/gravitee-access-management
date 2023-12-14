@@ -385,8 +385,50 @@ describe("Flows Execution - authorization_code flow", () => {
 
 	});
 
+<<<<<<< HEAD
 	describe("App Flows with New Conditional Flow", () => {
 		const EMAIL_SUBJECT = "Email Send Under Condition"
+=======
+      appFlows.push({
+        name: 'Conditionnal Login',
+        pre: [],
+        post: [
+          {
+            name: 'HTTP Callout',
+            policy: 'policy-http-callout',
+            description: '',
+            condition: '',
+            enabled: true,
+            configuration: JSON.stringify({
+              method: 'GET',
+              fireAndForget: false,
+              exitOnError: false,
+              errorCondition: '{#calloutResponse.status >= 400 and #calloutResponse.status <= 599}',
+              errorStatusCode: 500,
+              url: `${openIdConfiguration.issuer}/.well-known/openid-configuration`,
+              variables: [{ value: "{#jsonPath(#calloutResponse.content, '$.jwks_uri')}", name: 'jwks_uri_from_callout' }],
+            }),
+          },
+          {
+            name: 'Send email',
+            policy: 'policy-am-send-email',
+            description: '',
+            condition: '',
+            enabled: true,
+            configuration: JSON.stringify({
+              template: 'TEST JEST',
+              from: 'no-reply@gravitee.io',
+              fromName: 'Test',
+              to: '${user.email}',
+              subject: EMAIL_SUBJECT,
+              content: '<a href="${jwks_uri_from_callout}">jwks_uri</a>',
+            }),
+          },
+        ],
+        type: FlowEntityTypeEnum.Login,
+        condition: "{#request.params['callout'] != null && #request.params['callout'][0].equals('true') }",
+      });
+>>>>>>> 12c6efa872 (AM-688: Do not refer to company.com (#3275))
 
 		it('Define new LOGIN flow with condition - ', async () => {
 			const appFlows = await getApplicationFlows(domain.id, managementApiAccessToken, application.id);

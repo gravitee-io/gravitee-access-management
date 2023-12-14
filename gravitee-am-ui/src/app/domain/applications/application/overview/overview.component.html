@@ -194,9 +194,17 @@ String codeChallenge = Base64.getUrlEncoder().withoutPadding().encodeToString(md
             Most of your applications require data from APIs. Some of those resources have restricted access, so that only authenticated users with sufficient privileges can access them.
           </p>
           <div class="code">
+<<<<<<< HEAD
             <pre class="multiline">curl -X GET \
   https://api.mycompany.com/api/v1/data \
   -H 'Authorization: Bearer access_token'</pre>
+=======
+            <pre class="multiline">
+curl -X GET \
+  https://api.gravitee.io/api/v1/data \
+  -H 'Authorization: Bearer access_token'</pre
+            >
+>>>>>>> 12c6efa872 (AM-688: Do not refer to company.com (#3275))
           </div>
 
           <h2>Log the User Out</h2>
@@ -262,8 +270,14 @@ String codeChallenge = Base64.getUrlEncoder().withoutPadding().encodeToString(md
           <h2>Call your APIs</h2>
           <p>Use your access_token in your request via the Authorization HTTP header to obtain authorized access to the APIs.</p>
           <div class="code">
+<<<<<<< HEAD
             <pre class="multiline">curl -X GET \
   https://api.mycompany.com/api/v1/data \
+=======
+            <pre class="multiline">
+curl -X GET \
+  https://api.gravitee.io/api/v1/data \
+>>>>>>> 12c6efa872 (AM-688: Do not refer to company.com (#3275))
   -H 'Authorization: Bearer access_token'
             </pre>
           </div>
