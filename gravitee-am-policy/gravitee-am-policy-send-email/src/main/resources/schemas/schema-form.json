@@ -10,7 +10,7 @@
     "from" : {
       "type" : "string",
       "title": "From",
-      "description": "The email's FROM address (support freemarker). Example: no-reply@mycompany.com"
+      "description": "The email's FROM address (support freemarker). Example: no-reply@gravitee.io"
     },
     "fromName" : {
       "type" : "string",
