@@ -23,9 +23,9 @@ import {createDomain, deleteDomain, getDomainFlows, startDomain, updateDomainFlo
 import {getAllIdps} from "@management-commands/idp-management-commands";
 import {createUser} from "@management-commands/user-management-commands";
 import {
-    createApplication, 
-    getApplicationFlows, 
-    patchApplication, 
+    createApplication,
+    getApplicationFlows,
+    patchApplication,
     updateApplication,
 		updateApplicationFlows
 } from "@management-commands/application-management-commands";
@@ -62,7 +62,7 @@ beforeAll(async () => {
     const adminTokenResponse = await requestAdminAccessToken();
     managementApiAccessToken = adminTokenResponse.body.access_token;
     expect(managementApiAccessToken).toBeDefined();
-    
+
 		const createdDomain = await createDomain(managementApiAccessToken, "jest-flow-exec", "test end-user logout");
     expect(createdDomain).toBeDefined();
     expect(createdDomain.id).toBeDefined();
@@ -70,7 +70,7 @@ beforeAll(async () => {
 
     await startDomain(domain.id, managementApiAccessToken);
 
-    // Create the application 
+    // Create the application
     const idpSet = await getAllIdps(domain.id, managementApiAccessToken);
     application = await createApplication(domain.id, managementApiAccessToken, {
         "name": "my-client",
@@ -96,13 +96,13 @@ beforeAll(async () => {
 
     const result = await getWellKnownOpenIdConfiguration(domain.hrid).expect(200);
     openIdConfiguration = result.body
-    expect(openIdConfiguration).toBeDefined();  
+    expect(openIdConfiguration).toBeDefined();
 });
 
 describe("Flows Execution - authorization_code flow", () => {
 
 	describe("Only Domain Flows", () => {
-	
+
 		it('Define Domain flows', async () => {
 			const flows = await getDomainFlows(domain.id, managementApiAccessToken);
 			// Define Groovy policy set attribute into the context on ALL flow
@@ -237,7 +237,7 @@ describe("Flows Execution - authorization_code flow", () => {
 	});
 
 	describe("App Flows", () => {
-		
+
 		it('Define ALL flow - ', async () => {
 			const flows = await getApplicationFlows(domain.id, managementApiAccessToken, application.id);
 			// Define Groovy policy set attribute into the context on ALL flow
@@ -330,7 +330,7 @@ describe("Flows Execution - authorization_code flow", () => {
 
 			const tokenResponse = await requestToken(application, openIdConfiguration, postLoginRedirect)
 			const accessToken = assertGeneratedTokenAndGet(tokenResponse.body);
-			
+
 			const JWT = decodeJwt(accessToken);
 			expect(JWT['domain-groovy-from-profile']).toBeDefined();
 			expect(JWT['domain-groovy-from-profile']).toEqual("domainRootInfoUpdated");
@@ -385,6 +385,7 @@ describe("Flows Execution - authorization_code flow", () => {
 
 	});
 
+
 	describe("App Flows with New Conditional Flow", () => {
 		const EMAIL_SUBJECT = "Email Send Under Condition"
 
@@ -421,7 +422,7 @@ describe("Flows Execution - authorization_code flow", () => {
 									"configuration": JSON.stringify({
 										template: "TEST JEST",
 										from:"no-reply@mycompany.com",
-										fromName: "Test", 
+										fromName: "Test",
 										to: "${user.email}",
 										subject:EMAIL_SUBJECT,
 										content:"<a href=\"${jwks_uri_from_callout}\">jwks_uri</a>"
