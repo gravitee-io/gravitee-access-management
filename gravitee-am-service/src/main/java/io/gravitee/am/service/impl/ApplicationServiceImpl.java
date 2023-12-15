@@ -393,7 +393,8 @@ public class ApplicationServiceImpl implements ApplicationService {
 
                     // since we manage hashed value for client secret, we do not initialize the
                     // clientSecret during an update.
-                    if (toPatch.getSettings() != null && toPatch.getSettings().getOauth() != null) {
+                    if (!hasClientSecret(existingApplication)
+                            && toPatch.getSettings() != null && toPatch.getSettings().getOauth() != null) {
                         toPatch.getSettings().getOauth().setClientSecret(null);
                     }
 
@@ -410,6 +411,10 @@ public class ApplicationServiceImpl implements ApplicationService {
                     LOGGER.error("An error occurs while trying to patch an application", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to patch an application", ex));
                 });
+    }
+
+    private static boolean hasClientSecret(Application existingApplication) {
+        return existingApplication.getSettings() != null && existingApplication.getSettings().getOauth() != null && existingApplication.getSettings().getOauth().getClientSecret() != null;
     }
 
     @Override
