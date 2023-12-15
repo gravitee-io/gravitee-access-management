@@ -1015,6 +1015,42 @@ public class ApplicationServiceTest {
     }
 
     @Test
+    public void update_clientCredentials_keep_clientSecret() {
+        // if application has been created before 4.2, the clientSecret field must be preserved until
+        final String APP_ID = "appId";
+        Application existingApp = new Application();
+        existingApp.setSettings(new ApplicationSettings());
+        existingApp.getSettings().setOauth(new ApplicationOAuthSettings());
+        String clientSecret = "something";
+        existingApp.getSettings().getOauth().setClientSecret(clientSecret);
+        when(applicationRepository.findById(eq(APP_ID))).thenReturn(Maybe.just(existingApp));
+        when(applicationRepository.update(any(Application.class))).thenReturn(Single.just(new Application()));
+        when(domainService.findById(any())).thenReturn(Maybe.just(new Domain()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(scopeService.validateScope(any(), any())).thenReturn(Single.just(true));
+        when(accountSettingsValidator.validate(any())).thenReturn(true);
+
+        PatchApplication toPatch = new PatchApplication();
+        PatchApplicationSettings settings = new PatchApplicationSettings();
+        PatchApplicationOAuthSettings oAuthSettings = new PatchApplicationOAuthSettings();
+        oAuthSettings.setGrantTypes(Optional.of(Arrays.asList("client_credentials")));
+        oAuthSettings.setResponseTypes(Optional.of(Arrays.asList()));
+        settings.setOauth(Optional.of(oAuthSettings));
+        toPatch.setSettings(Optional.of(settings));
+
+        TestObserver testObserver = applicationService.patch(DOMAIN, APP_ID, toPatch).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(applicationRepository, times(1)).findById(any());
+        verify(applicationRepository, times(1)).update(argThat(app -> app.getSettings() != null &&
+                app.getSettings().getOauth() != null &&
+                clientSecret.equals(app.getSettings().getOauth().getClientSecret())));
+    }
+
+    @Test
     public void update_tokenEndpointAuthMethod_to_client_secret_jwt_if_app_with_none_hashed_secret() {
         Application existingApp = new Application();
         existingApp.setDomain(DOMAIN);
