@@ -70,6 +70,7 @@ import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
 import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.gateway.handler.oidc.service.request.RequestObjectService;
 import io.gravitee.am.gateway.handler.root.resources.handler.LocaleHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.common.RedirectUriValidationHandler;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.DeviceService;
@@ -254,6 +255,7 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
         xssHandler(oauth2Router);
 
         AuthenticationFlowContextHandler authenticationFlowContextHandler = new AuthenticationFlowContextHandler(authenticationFlowContextService, environment);
+        RedirectUriValidationHandler redirectUriValidationHandler = new RedirectUriValidationHandler(domain);
         Handler<RoutingContext> localeHandler = new LocaleHandler(messageResolver);
 
         // Authorization endpoint
@@ -269,6 +271,7 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
                 .handler(new AuthorizationRequestParseRequestObjectHandler(requestObjectService, domain, parService, authenticationFlowContextService))
                 .handler(new AuthorizationRequestParseIdTokenHintHandler(idTokenService))
                 .handler(new AuthorizationRequestParseParametersHandler(domain))
+                .handler(redirectUriValidationHandler)
                 .handler(new RiskAssessmentHandler(deviceService, userActivityService, vertx.eventBus(), objectMapper))
                 .handler(authenticationFlowHandler.create())
                 .handler(new AuthorizationRequestResolveHandler(scopeManager))
@@ -285,6 +288,7 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
                 .handler(authenticationFlowContextHandler)
                 .handler(new AuthorizationRequestParseRequestObjectHandler(requestObjectService, domain, parService, authenticationFlowContextService))
                 .handler(new AuthorizationRequestResolveHandler(scopeManager))
+                .handler(redirectUriValidationHandler)
                 .handler(userConsentPrepareContextHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.PRE_CONSENT))
                 .handler(localeHandler)
@@ -295,6 +299,7 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
                 .handler(authenticationFlowContextHandler)
                 .handler(new AuthorizationRequestParseRequestObjectHandler(requestObjectService, domain, parService, authenticationFlowContextService))
                 .handler(new AuthorizationRequestResolveHandler(scopeManager))
+                .handler(redirectUriValidationHandler)
                 .handler(userConsentPrepareContextHandler)
                 .handler(new UserConsentProcessHandler(userConsentService, domain))
                 .handler(policyChainHandler.create(ExtensionPoint.POST_CONSENT))
