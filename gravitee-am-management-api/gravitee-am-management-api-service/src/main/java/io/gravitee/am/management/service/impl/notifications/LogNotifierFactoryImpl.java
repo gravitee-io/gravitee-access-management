@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.management.service.impl.notifications;
 
-import io.gravitee.am.management.service.UserNotificationService;
 import io.gravitee.am.management.service.impl.LogNotificationService;
 import io.gravitee.node.api.notifier.NotificationDefinition;
 import io.gravitee.node.notifier.plugin.impl.NotifierPluginFactoryImpl;
@@ -25,27 +24,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.util.Optional;
 
 /**
- * @author Eric LELEU (eric.leleu at graviteesource.com)
+ * @author Ashraful Hasan (ashraful.hasan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class PlatformNotifierPluginFactoryImpl extends NotifierPluginFactoryImpl {
-
-    @Autowired
-    private UserNotificationService userNotificationService;
+public class LogNotifierFactoryImpl extends NotifierPluginFactoryImpl {
 
     @Autowired
     private LogNotificationService logNotificationService;
 
     @Override
     public Optional<Notifier> create(NotificationDefinition notification) {
-        if (notification.getType().equals(NotificationDefinitionUtils.TYPE_UI_NOTIFIER)) {
-            return Optional.of(this.userNotificationService);
-        }
-
         if (notification.getType().equals(NotificationDefinitionUtils.TYPE_LOG_NOTIFIER)) {
             return Optional.of(logNotificationService);
         }
-
         return super.create(notification);
     }
 }

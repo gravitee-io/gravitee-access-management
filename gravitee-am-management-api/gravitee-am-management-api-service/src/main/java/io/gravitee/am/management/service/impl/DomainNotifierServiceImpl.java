@@ -64,6 +64,7 @@ import java.util.stream.Collectors;
 import static io.gravitee.am.management.service.impl.notifications.ManagementUINotifierConfiguration.CERTIFICATE_EXPIRY_TPL;
 import static io.gravitee.am.management.service.impl.notifications.NotificationDefinitionUtils.RESOURCE_TYPE_CERTIFICATE;
 import static io.gravitee.am.management.service.impl.notifications.NotificationDefinitionUtils.TYPE_EMAIL_NOTIFIER;
+import static io.gravitee.am.management.service.impl.notifications.NotificationDefinitionUtils.TYPE_LOG_NOTIFIER;
 import static io.gravitee.am.management.service.impl.notifications.NotificationDefinitionUtils.TYPE_UI_NOTIFIER;
 
 /**
@@ -88,6 +89,9 @@ public class DomainNotifierServiceImpl implements DomainNotifierService, Initial
 
     @Value("${services.certificate.enabled:true}")
     private boolean certificateNotificationEnabled = true;
+
+    @Value("${notifiers.log.enabled:true}")
+    private boolean isLogNotifierEnabled;
 
     @Autowired
     private org.springframework.core.env.Environment env;
@@ -142,7 +146,8 @@ public class DomainNotifierServiceImpl implements DomainNotifierService, Initial
                                     .flatMap(user -> {
                                         final Flowable<NotificationDefinition> emailNotificationDef = buildEmailNotificationDefinition(certificate, domain, user).toFlowable();
                                         final Flowable<NotificationDefinition> uiNotificationDef = buildUINotificationDefinition(certificate, domain, user).toFlowable();
-                                        return Flowable.mergeArray(emailNotificationDef, uiNotificationDef);
+                                        final Flowable<NotificationDefinition> logNotificationDef = buildLogNotificationDefinition(certificate, domain).toFlowable();
+                                        return Flowable.mergeArray(emailNotificationDef, uiNotificationDef, logNotificationDef);
                                     }))
                     .subscribe(definition ->
                         notifierService.register(definition,
@@ -271,6 +276,28 @@ public class DomainNotifierServiceImpl implements DomainNotifierService, Initial
         } else {
             LOGGER.debug("Ignore email notification for certificate {}, email is disabled or email address is missing", certificate.getId());
         }
+        return Maybe.empty();
+    }
+
+    private Maybe<NotificationDefinition> buildLogNotificationDefinition(Certificate certificate, Domain domain) {
+        if (isLogNotifierEnabled) {
+            final Map<String, Object> data = new NotificationDefinitionUtils.ParametersBuilder()
+                    .withDomain(domain)
+                    .withCertificate(certificate)
+                    .build();
+
+            final NotificationDefinition definition = new NotificationDefinition();
+            definition.setType(TYPE_LOG_NOTIFIER);
+            definition.setResourceId(certificate.getId());
+            definition.setResourceType(RESOURCE_TYPE_CERTIFICATE);
+            definition.setCron(this.certificateCronExpression);
+            definition.setData(data);
+
+            return Maybe.just(definition);
+        } else {
+            LOGGER.debug("Ignoring log notification for certificate {}, log notification is disabled.", certificate.getId());
+        }
+
         return Maybe.empty();
     }
 }

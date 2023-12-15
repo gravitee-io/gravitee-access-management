@@ -244,4 +244,25 @@ public class DomainNotificationServiceTest {
         verify(notifierService, never()).register(any(), any(), any());
         verify(userService, never()).findById(any(), any(), any());
     }
+
+    @Test
+    public void shouldNotifyLog() throws InterruptedException {
+        final Membership member = new Membership();
+        member.setMemberType(MemberType.USER);
+        member.setMemberId("userid");
+        when(membershipService.findByCriteria(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), any())).thenReturn(Flowable.just(member), Flowable.empty());
+
+        final User user = new User();
+        user.setEmail("user@acme.fr");
+        when(userService.findById(ReferenceType.ORGANIZATION, env.getOrganizationId(), member.getMemberId())).thenReturn(Single.just(user));
+
+        ReflectionTestUtils.setField(cut, "isLogNotifierEnabled", true);
+        ReflectionTestUtils.setField(cut, "emailNotifierEnabled", false);
+
+
+        cut.registerCertificateExpiration(certificate);
+        Thread.sleep(1000); // wait subscription execution
+
+        verify(notifierService, times(1)).register(any(), any(), any());
+    }
 }
