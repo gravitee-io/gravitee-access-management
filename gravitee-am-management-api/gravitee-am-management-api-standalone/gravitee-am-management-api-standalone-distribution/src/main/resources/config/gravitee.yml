@@ -224,7 +224,11 @@ notifiers:
     #sslKeyStore: /path/to/keystore
     #sslKeyStorePassword: changeme
   ui:
+    enabled: false
+
+  log:
     enabled: true
+
 
 domains:
   certificates:
