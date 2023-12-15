@@ -23,7 +23,7 @@ import io.gravitee.am.model.oidc.Client;
 public class ClientAuthAuditBuilder extends AuditBuilder<ClientAuthAuditBuilder> {
     public ClientAuthAuditBuilder() {
         super();
-        type(EventType.CLIENT_USER_LOGIN);
+        type(EventType.CLIENT_AUTHENTICATION);
     }
 
     public ClientAuthAuditBuilder clientTarget(Client client) {

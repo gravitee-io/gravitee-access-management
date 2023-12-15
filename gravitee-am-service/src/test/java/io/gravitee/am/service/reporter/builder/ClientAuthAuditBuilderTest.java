@@ -16,7 +16,7 @@
 package io.gravitee.am.service.reporter.builder;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import static io.gravitee.am.common.audit.EventType.CLIENT_USER_LOGIN;
+import static io.gravitee.am.common.audit.EventType.CLIENT_AUTHENTICATION;
 import static io.gravitee.am.common.audit.Status.FAILURE;
 import static io.gravitee.am.common.audit.Status.SUCCESS;
 import io.gravitee.am.model.ReferenceType;
@@ -34,7 +34,7 @@ class ClientAuthAuditBuilderTest {
                 .clientTarget(null)
                 .throwable(null)
                 .build(objectMapper);
-        assertEquals(CLIENT_USER_LOGIN, audit.getType());
+        assertEquals(CLIENT_AUTHENTICATION, audit.getType());
         assertEquals(SUCCESS, audit.getOutcome().getStatus());
         assertNull(audit.getOutcome().getMessage());
     }
@@ -62,7 +62,7 @@ class ClientAuthAuditBuilderTest {
         assertEquals(clientName, audit.getTarget().getDisplayName());
         assertEquals(clientName, audit.getTarget().getAlternativeId());
         assertEquals(SUCCESS, audit.getOutcome().getStatus());
-        assertEquals(CLIENT_USER_LOGIN, audit.getType());
+        assertEquals(CLIENT_AUTHENTICATION, audit.getType());
     }
 
     @Test
@@ -90,6 +90,6 @@ class ClientAuthAuditBuilderTest {
         assertEquals(clientName, audit.getTarget().getAlternativeId());
         assertEquals(FAILURE, audit.getOutcome().getStatus());
         assertEquals(errorMessage, audit.getOutcome().getMessage());
-        assertEquals(CLIENT_USER_LOGIN, audit.getType());
+        assertEquals(CLIENT_AUTHENTICATION, audit.getType());
     }
 }

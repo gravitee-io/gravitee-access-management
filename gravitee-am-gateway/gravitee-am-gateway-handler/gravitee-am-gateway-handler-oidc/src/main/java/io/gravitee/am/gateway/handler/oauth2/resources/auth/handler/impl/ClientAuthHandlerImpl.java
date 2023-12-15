@@ -52,6 +52,7 @@ import static io.gravitee.am.gateway.handler.oauth2.resources.auth.provider.Cert
  */
 public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
     private static final String INVALID_CLIENT_MESSAGE = "Invalid client: missing or unsupported authentication method";
+    private static final String CERTIFICATE_ERROR = "Missing or invalid peer certificate";
     private final ClientSyncService clientSyncService;
     private final List<ClientAuthProvider> clientAuthProviders;
     private final Domain domain;
@@ -74,7 +75,7 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
         resolveClient(request, handler -> {
             if (handler.failed()) {
                 Throwable cause = handler.cause();
-                auditService.report(AuditBuilder.builder(ClientAuthAuditBuilder.class).throwable(cause));
+                auditService.report(AuditBuilder.builder(ClientAuthAuditBuilder.class).domain(domain.getId()).throwable(cause));
                 routingContext.fail(cause);
                 return;
             }
@@ -103,14 +104,14 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
                     if (peerCertificate.isPresent()) {
                         routingContext.put(ConstantKeys.PEER_CERTIFICATE_THUMBPRINT, getThumbprint(peerCertificate.get(), "SHA-256"));
                     } else if (authenticatedClient.isTlsClientCertificateBoundAccessTokens() || domain.usePlainFapiProfile()) {
-                        var error = new InvalidClientException("Missing or invalid peer certificate");
+                        var error = new InvalidClientException(CERTIFICATE_ERROR);
                         auditService.report(AuditBuilder.builder(ClientAuthAuditBuilder.class).clientTarget(client).throwable(error));
                         routingContext.fail(error);
                         return;
                     }
                 } catch (SSLPeerUnverifiedException | NoSuchAlgorithmException | CertificateException ce ) {
                     if (authenticatedClient.isTlsClientCertificateBoundAccessTokens() || domain.usePlainFapiProfile()) {
-                        var error = new InvalidClientException("Missing or invalid peer certificate");
+                        var error = new InvalidClientException(CERTIFICATE_ERROR);
                         auditService.report(AuditBuilder.builder(ClientAuthAuditBuilder.class).clientTarget(client).throwable(error));
                         routingContext.fail(error);
                         return;

@@ -80,12 +80,13 @@ public class RevocationTokenServiceImpl implements RevocationTokenService {
                         // Log the result anyway for posterity.
                         if (throwable instanceof InvalidTokenException) {
                             logger.debug("No access token {} found in the token store.", token);
-                            auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class).revoked());
+                            auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class).tokenTarget(client).revoked());
                             return Completable.complete();
                         }
                         return Completable.error(throwable);
                     })
                     .doOnError(error -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
+                            .tokenTarget(client)
                             .throwable(error)
                             .revoked()));
         }
@@ -126,9 +127,9 @@ public class RevocationTokenServiceImpl implements RevocationTokenService {
                     return Completable.error(throwable);
                 })
                 .doOnError(error -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
+                        .tokenTarget(client)
                         .throwable(error)
                         .revoked()));
-
     }
 
     private Completable revokeAccessToken(String token, Client client) {

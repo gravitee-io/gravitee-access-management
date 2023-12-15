@@ -16,7 +16,7 @@
 package io.gravitee.am.service.reporter.builder;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import static io.gravitee.am.common.audit.EventType.TOKEN_ACTIVATED;
+import static io.gravitee.am.common.audit.EventType.TOKEN_CREATED;
 import static io.gravitee.am.common.audit.EventType.TOKEN_REVOKED;
 import static io.gravitee.am.common.audit.Status.FAILURE;
 import static io.gravitee.am.common.audit.Status.SUCCESS;
@@ -36,7 +36,7 @@ class ClientTokenAuditBuilderTest {
     @Test
     void shouldBuildDefault() {
         var audit = AuditBuilder.builder(ClientTokenAuditBuilder.class).build(objectMapper);
-        assertEquals(TOKEN_ACTIVATED, audit.getType());
+        assertEquals(TOKEN_CREATED, audit.getType());
         assertEquals(SUCCESS, audit.getOutcome().getStatus());
     }
     @Test
@@ -47,7 +47,7 @@ class ClientTokenAuditBuilderTest {
                 .tokenTarget((Client) null)
                 .tokenTarget((User) null)
                 .build(objectMapper);
-        assertEquals(TOKEN_ACTIVATED, audit.getType());
+        assertEquals(TOKEN_CREATED, audit.getType());
         assertEquals(SUCCESS, audit.getOutcome().getStatus());
         assertNull(audit.getOutcome().getMessage());
     }
@@ -58,12 +58,20 @@ class ClientTokenAuditBuilderTest {
         assertEquals(TOKEN_REVOKED, audit.getType());
         assertEquals(SUCCESS, audit.getOutcome().getStatus());
     }
+    @Test
+    void shouldBuildRevokedWithReason() {
+        var reason = "revoked-reason";
+        var audit = AuditBuilder.builder(ClientTokenAuditBuilder.class).revoked(reason).build(objectMapper);
+        assertEquals(TOKEN_REVOKED, audit.getType());
+        assertEquals(SUCCESS, audit.getOutcome().getStatus());
+        assertTrue(audit.getOutcome().getMessage().contains(reason));
+    }
 
     @Test
     void tokenShouldBuildNoToken() {
         var audit = AuditBuilder.builder(ClientTokenAuditBuilder.class).token(TokenTypeHint.REFRESH_TOKEN, null).build(objectMapper);
         assertEquals(SUCCESS, audit.getOutcome().getStatus());
-        assertEquals(TOKEN_ACTIVATED, audit.getType());
+        assertEquals(TOKEN_CREATED, audit.getType());
         assertNull(audit.getOutcome().getMessage());
     }
 
@@ -72,9 +80,9 @@ class ClientTokenAuditBuilderTest {
         var tokenId = "token-id";
         var tokenType = TokenTypeHint.REFRESH_TOKEN;
         var audit = AuditBuilder.builder(ClientTokenAuditBuilder.class).token(tokenType, tokenId).build(objectMapper);
-        assertEquals("[{\"op\":\"add\",\"path\":\"/token-id\",\"value\":{\"token_id\":\"" + tokenId + "\",\"token_type\":\"" + tokenType + "\"}}]", audit.getOutcome().getMessage());
+        assertEquals("[{\"op\":\"add\",\"path\":\"/token-id\",\"value\":{\"tokenId\":\"" + tokenId + "\",\"tokenType\":\"" + tokenType + "\"}}]", audit.getOutcome().getMessage());
         assertEquals(SUCCESS, audit.getOutcome().getStatus());
-        assertEquals(TOKEN_ACTIVATED, audit.getType());
+        assertEquals(TOKEN_CREATED, audit.getType());
     }
 
     @Test
@@ -92,7 +100,7 @@ class ClientTokenAuditBuilderTest {
         assertTrue(audit.getOutcome().getMessage().contains(refreshTokenId));
         assertTrue(audit.getOutcome().getMessage().contains(refreshTokenType.name()));
         assertEquals(SUCCESS, audit.getOutcome().getStatus());
-        assertEquals(TOKEN_ACTIVATED, audit.getType());
+        assertEquals(TOKEN_CREATED, audit.getType());
     }
 
     @Test
@@ -118,8 +126,8 @@ class ClientTokenAuditBuilderTest {
         assertEquals(username, audit.getTarget().getAlternativeId());
         assertEquals(userDisplayName, audit.getTarget().getDisplayName());
         assertEquals(SUCCESS, audit.getOutcome().getStatus());
-        assertEquals("[{\"op\":\"add\",\"path\":\"/" + userId + "\",\"value\":{\"user_id\":\"" + userId + "\",\"token_type\":\"[ACCESS_TOKEN, REFRESH_TOKEN, ID_TOKEN]\"}}]", audit.getOutcome().getMessage());
-        assertEquals(TOKEN_ACTIVATED, audit.getType());
+        assertEquals("[{\"op\":\"add\",\"path\":\"/" + userId + "\",\"value\":{\"userId\":\"" + userId + "\"}}]", audit.getOutcome().getMessage());
+        assertEquals(TOKEN_CREATED, audit.getType());
     }
 
     @Test
@@ -145,7 +153,7 @@ class ClientTokenAuditBuilderTest {
         assertEquals(clientName, audit.getTarget().getDisplayName());
         assertEquals(clientName, audit.getTarget().getAlternativeId());
         assertEquals(SUCCESS, audit.getOutcome().getStatus());
-        assertEquals(TOKEN_ACTIVATED, audit.getType());
+        assertEquals(TOKEN_CREATED, audit.getType());
     }
 
     @Test
@@ -154,6 +162,6 @@ class ClientTokenAuditBuilderTest {
         var audit = AuditBuilder.builder(ClientTokenAuditBuilder.class).throwable(new Exception(message)).build(objectMapper);
         assertEquals(FAILURE, audit.getOutcome().getStatus());
         assertEquals(message, audit.getOutcome().getMessage());
-        assertEquals(TOKEN_ACTIVATED, audit.getType());
+        assertEquals(TOKEN_CREATED, audit.getType());
     }
 }

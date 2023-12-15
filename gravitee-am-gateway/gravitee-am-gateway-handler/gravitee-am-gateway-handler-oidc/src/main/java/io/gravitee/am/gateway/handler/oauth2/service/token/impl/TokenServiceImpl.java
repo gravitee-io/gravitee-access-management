@@ -195,7 +195,7 @@ public class TokenServiceImpl implements TokenService {
                 .doOnEvent((token, error) -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
                                 .token(TokenTypeHint.REFRESH_TOKEN, token != null ? token.getValue() : null)
                                 .tokenTarget(client)
-                                .revoked()
+                                .revoked("Refresh token is used to generate new token")
                                 .throwable(error)));
     }
 

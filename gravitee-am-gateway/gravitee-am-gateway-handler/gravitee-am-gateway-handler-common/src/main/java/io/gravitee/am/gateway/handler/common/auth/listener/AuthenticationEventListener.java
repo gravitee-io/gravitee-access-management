@@ -19,7 +19,6 @@ import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.gateway.handler.common.auth.AuthenticationDetails;
 import io.gravitee.am.gateway.handler.common.auth.event.AuthenticationEvent;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.AuthenticationAuditBuilder;
@@ -40,9 +39,6 @@ public class AuthenticationEventListener extends AbstractService implements Even
 
     @Autowired
     private EventManager eventManager;
-
-    @Autowired
-    private UserRepository userRepository;
 
     @Autowired
     private AuditService auditService;
@@ -72,15 +68,11 @@ public class AuthenticationEventListener extends AbstractService implements Even
     }
 
     private void onAuthenticationFailure(AuthenticationDetails authenticationDetails) {
-        userRepository.findByUsernameAndDomain(authenticationDetails.getDomain().getId(), authenticationDetails.getPrincipal().getPrincipal().toString())
-                .doOnEvent((user, error) -> auditService.report(AuditBuilder.builder(AuthenticationAuditBuilder.class)
-                        .principal(authenticationDetails.getPrincipal())
-                        .domain(authenticationDetails.getDomain().getId())
-                        .client(authenticationDetails.getClient())
-                        .user(user)
-                        .throwable(authenticationDetails.getThrowable())))
-                .ignoreElement()
-                .subscribe();
+        auditService.report(AuditBuilder.builder(AuthenticationAuditBuilder.class)
+                .principal(authenticationDetails.getPrincipal())
+                .domain(authenticationDetails.getDomain().getId())
+                .client(authenticationDetails.getClient())
+                .throwable(authenticationDetails.getThrowable()));
     }
 
     @Override

@@ -17,37 +17,47 @@ package io.gravitee.am.service.reporter.builder;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.audit.EntityType;
-import static io.gravitee.am.common.audit.EventType.TOKEN_ACTIVATED;
+import static io.gravitee.am.common.audit.EventType.TOKEN_CREATED;
 import static io.gravitee.am.common.audit.EventType.TOKEN_REVOKED;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.reporter.api.audit.model.Audit;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
 public class ClientTokenAuditBuilder extends AuditBuilder<ClientTokenAuditBuilder> {
+    private static final String ADDITIONAL_INFO = "additionalInfo";
     private final Map<String, Map<String, String>> tokenNewValue;
 
     public ClientTokenAuditBuilder() {
         super();
         tokenNewValue = new HashMap<>();
-        type(TOKEN_ACTIVATED);
+        type(TOKEN_CREATED);
     }
 
     public ClientTokenAuditBuilder revoked() {
+        revoked(null);
+        return this;
+    }
+
+    public ClientTokenAuditBuilder revoked(String message) {
         type(TOKEN_REVOKED);
+        if (message != null) {
+            var additionalInfo = tokenNewValue.get(ADDITIONAL_INFO) != null ? tokenNewValue.get(ADDITIONAL_INFO) : new HashMap<String, String>();
+            additionalInfo.put("revokedMessage", message);
+            tokenNewValue.put(ADDITIONAL_INFO, additionalInfo);
+        }
         return this;
     }
 
     public ClientTokenAuditBuilder token(TokenTypeHint tokenTypeHint, String tokenId) {
         if (tokenId != null) {
             var entry = new HashMap<String, String>();
-            entry.put("token_id", tokenId);
+            entry.put("tokenId", tokenId);
             if (tokenTypeHint != null) {
-                entry.put("token_type", tokenTypeHint.name());
+                entry.put("tokenType", tokenTypeHint.name());
             }
             tokenNewValue.put(tokenId, entry);
         }
@@ -66,8 +76,7 @@ public class ClientTokenAuditBuilder extends AuditBuilder<ClientTokenAuditBuilde
     public ClientTokenAuditBuilder tokenTarget(User user) {
         if (user != null) {
             var entry = new HashMap<String, String>();
-            entry.put("user_id", user.getId());
-            entry.put("token_type", Arrays.toString(TokenTypeHint.values()));
+            entry.put("userId", user.getId());
             tokenNewValue.put(user.getId(), entry);
             setTarget(user.getId(), EntityType.USER, user.getUsername(), user.getDisplayName(), user.getReferenceType(), user.getReferenceId());
             if (ReferenceType.DOMAIN.equals(user.getReferenceType())) {
