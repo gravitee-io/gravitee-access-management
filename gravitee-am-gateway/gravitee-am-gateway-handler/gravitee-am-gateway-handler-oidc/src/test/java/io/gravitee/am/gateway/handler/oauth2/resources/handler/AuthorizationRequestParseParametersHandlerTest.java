@@ -22,6 +22,7 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestParseParametersHandler;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDProviderMetadata;
+import io.gravitee.am.gateway.handler.root.resources.handler.common.RedirectUriValidationHandler;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpStatusCode;
@@ -52,6 +53,7 @@ public class AuthorizationRequestParseParametersHandlerTest extends RxWebTestBas
         super.setUp();
         router.route(HttpMethod.GET, "/oauth/authorize")
                 .handler(new AuthorizationRequestParseParametersHandler(domain))
+                .handler(new RedirectUriValidationHandler(domain))
                 .handler(rc -> rc.response().end())
                 .failureHandler(rc -> rc.response().setStatusCode(400).end());
     }
@@ -73,6 +75,30 @@ public class AuthorizationRequestParseParametersHandlerTest extends RxWebTestBas
                 "/oauth/authorize?response_type=code&redirect_uri=https://callback&claims={\"id_token\":{\"acr\":{\"value\":\"urn:mace:incommon:iap:silver\",\"essential\":true}}}",
                 null,
                 HttpStatusCode.BAD_REQUEST_400, "Bad Request", null);
+    }
+
+    @Test
+    public void shouldRejectRequest_uriMismatch() throws Exception {
+        doReturn(false).when(domain).isRedirectUriStrictMatching();
+        OpenIDProviderMetadata openIDProviderMetadata = new OpenIDProviderMetadata();
+        openIDProviderMetadata.setAcrValuesSupported(Collections.singletonList(AcrValues.IN_COMMON_SILVER));
+        openIDProviderMetadata.setResponseTypesSupported(Arrays.asList(ResponseType.CODE));
+        Client client = new Client();
+        client.setAuthorizedGrantTypes(Collections.singletonList(GrantType.AUTHORIZATION_CODE));
+        client.setResponseTypes(Collections.singletonList(ResponseType.CODE));
+        client.setRedirectUris(List.of("https://callback"));
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+            routingContext.put(ConstantKeys.PROVIDER_METADATA_CONTEXT_KEY, openIDProviderMetadata);
+            routingContext.next();
+        });
+
+        testRequest(
+                HttpMethod.GET,
+                "/oauth/authorize?response_type=code&redirect_uri=https://notCallback&claims={\"id_token\":{\"acr\":{\"value\":\"urn:mace:incommon:iap:silver\",\"essential\":true}}}",
+                null,
+                HttpStatusCode.BAD_REQUEST_400, "Bad Request", null);
+
     }
 
     @Test
