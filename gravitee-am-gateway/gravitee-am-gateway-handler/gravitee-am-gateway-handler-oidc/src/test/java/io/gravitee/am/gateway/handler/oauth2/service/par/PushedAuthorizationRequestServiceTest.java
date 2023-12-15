@@ -50,10 +50,16 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.text.ParseException;
 import java.time.Instant;
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.anyBoolean;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -100,13 +106,58 @@ public class PushedAuthorizationRequestServiceTest {
     }
 
     @Test
-    public void shouldPersist_ParametersWithoutRequest() {
+    public void shouldNotPersist_RedirectUriMismatch() {
+        final Client client = new Client();
+        client.setClientId("clientid");
+        client.setRedirectUris(List.of("https://valid/redirect/uri"));
+
+        final PushedAuthorizationRequest par = new PushedAuthorizationRequest();
+        final LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add("scope", "openid");
+        parameters.add("response_type", "code");
+        parameters.add("client_id", client.getClientId());
+        parameters.add("redirect_uri", "https://invalid/redirect/uri");
+        par.setParameters(parameters);
+
+        final TestObserver<PushedAuthorizationRequestResponse> observer = cut.registerParameters(par, client).test();
+
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertError(InvalidRequestObjectException.class);
+        verify(repository, never()).create(any());
+    }
+
+    @Test
+    public void shouldNotPersist_ParametersWithoutRedirectUri() {
         final Client client = createClient();
 
         final LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.add("scope", "openid");
         parameters.add("response_type", "code");
         parameters.add("client_id", client.getClientId());
+
+        final PushedAuthorizationRequest par = new PushedAuthorizationRequest();
+        par.setParameters(parameters);
+        par.setId("parid");
+        par.setClient(client.getId());
+
+        final TestObserver<PushedAuthorizationRequestResponse> observer = cut.registerParameters(par, client).test();
+
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertError(InvalidRequestException.class);
+
+        verify(repository, never()).create(any());
+    }
+
+    @Test
+    public void shouldPersist_ParametersWithoutRequest() {
+        final Client client = createClient();
+        client.setRedirectUris(List.of("https://valid/redirect/uri"));
+
+        final LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add("scope", "openid");
+        parameters.add("response_type", "code");
+        parameters.add("client_id", client.getClientId());
+        parameters.add("redirect_uri", "https://valid/redirect/uri");
 
         final PushedAuthorizationRequest par = new PushedAuthorizationRequest();
         par.setParameters(parameters);
