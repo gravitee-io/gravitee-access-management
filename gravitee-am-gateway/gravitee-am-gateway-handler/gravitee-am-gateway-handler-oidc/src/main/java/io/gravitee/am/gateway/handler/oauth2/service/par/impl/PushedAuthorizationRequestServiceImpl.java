@@ -31,6 +31,7 @@ import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDProviderMetad
 import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
 import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.gateway.handler.oidc.service.jws.JWSService;
+import io.gravitee.am.gateway.handler.root.service.RedirectUriValidator;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.jose.JWK;
 import io.gravitee.am.model.oidc.Client;
@@ -85,6 +86,8 @@ public class PushedAuthorizationRequestServiceImpl implements PushedAuthorizatio
 
     @Autowired
     private JWKService jwkService;
+
+    private RedirectUriValidator redirectUriValidator = new RedirectUriValidator();
 
     @Override
     public Single<JWT> readFromURI(String requestUri, Client client, OpenIDProviderMetadata oidcMetadata) {
@@ -149,7 +152,7 @@ public class PushedAuthorizationRequestServiceImpl implements PushedAuthorizatio
                             .map(jwt -> checkRedirectUriParameter(jwt, client))))
                     .ignoreElement();
         } else {
-            registrationValidation.andThen(Completable.fromAction(() -> checkRedirectUriParameter(par, client)));
+            registrationValidation = registrationValidation.andThen(Completable.fromAction(() -> checkRedirectUriParameter(par, client)));
         }
 
         return registrationValidation.andThen(Single.defer(() -> parRepository.create(par))).map(parPersisted -> {
@@ -252,27 +255,7 @@ public class PushedAuthorizationRequestServiceImpl implements PushedAuthorizatio
     }
 
     private void checkRedirectUri(Client client, String requestedRedirectUri) {
-        final List<String> registeredClientRedirectUris = client.getRedirectUris();
-        final boolean hasRegisteredClientRedirectUris = registeredClientRedirectUris != null && !registeredClientRedirectUris.isEmpty();
-        final boolean hasRequestedRedirectUri = requestedRedirectUri != null && !requestedRedirectUri.isEmpty();
-
-        // if no requested redirect_uri and no registered client redirect_uris
-        // throw invalid request exception
-        if (!hasRegisteredClientRedirectUris && !hasRequestedRedirectUri) {
-            throw new InvalidRequestException("A redirect_uri must be supplied");
-        }
-
-        // if no requested redirect_uri and more than one registered client redirect_uris
-        // throw invalid request exception
-        if (!hasRequestedRedirectUri && (registeredClientRedirectUris != null && registeredClientRedirectUris.size() > 1)) {
-            throw new InvalidRequestException("Unable to find suitable redirect_uri, a redirect_uri must be supplied");
-        }
-
-        // if requested redirect_uri doesn't match registered client redirect_uris
-        // throw redirect mismatch exception
-        if (hasRequestedRedirectUri && hasRegisteredClientRedirectUris) {
-            checkMatchingRedirectUri(requestedRedirectUri, registeredClientRedirectUris);
-        }
+        this.redirectUriValidator.validate(client, requestedRedirectUri, this::checkMatchingRedirectUri);
     }
 
     private void checkMatchingRedirectUri(String requestedRedirect, List<String> registeredClientRedirectUris) {
