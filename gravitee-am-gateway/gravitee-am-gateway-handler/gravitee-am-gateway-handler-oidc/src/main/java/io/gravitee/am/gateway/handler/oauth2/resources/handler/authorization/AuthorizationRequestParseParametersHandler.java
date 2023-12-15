@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization;
 
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
+import io.gravitee.am.common.exception.oauth2.RedirectMismatchException;
 import io.gravitee.am.common.oauth2.CodeChallengeMethod;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.ResponseType;
@@ -23,7 +24,6 @@ import io.gravitee.am.common.oidc.Parameters;
 import io.gravitee.am.common.oidc.idtoken.Claims;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.oauth2.exception.LoginRequiredException;
-import io.gravitee.am.gateway.handler.oauth2.exception.RedirectMismatchException;
 import io.gravitee.am.gateway.handler.oauth2.exception.UnauthorizedClientException;
 import io.gravitee.am.gateway.handler.oauth2.exception.UnsupportedResponseModeException;
 import io.gravitee.am.gateway.handler.oauth2.service.pkce.PKCEUtils;
@@ -97,9 +97,6 @@ public class AuthorizationRequestParseParametersHandler extends AbstractAuthoriz
 
         // proceed response_type parameter
         parseResponseTypeParameter(context, client);
-
-        // proceed redirect_uri parameter
-        parseRedirectUriParameter(context, client);
 
         context.next();
     }
@@ -298,31 +295,6 @@ public class AuthorizationRequestParseParametersHandler extends AbstractAuthoriz
         }
     }
 
-    private void parseRedirectUriParameter(RoutingContext context, Client client) {
-        String requestedRedirectUri = getOAuthParameter(context, io.gravitee.am.common.oauth2.Parameters.REDIRECT_URI);
-        final List<String> registeredClientRedirectUris = client.getRedirectUris();
-        final boolean hasRegisteredClientRedirectUris = registeredClientRedirectUris != null && !registeredClientRedirectUris.isEmpty();
-        final boolean hasRequestedRedirectUri = requestedRedirectUri != null && !requestedRedirectUri.isEmpty();
-
-        // if no requested redirect_uri and no registered client redirect_uris
-        // throw invalid request exception
-        if (!hasRegisteredClientRedirectUris && !hasRequestedRedirectUri) {
-            throw new InvalidRequestException("A redirect_uri must be supplied");
-        }
-
-        // if no requested redirect_uri and more than one registered client redirect_uris
-        // throw invalid request exception
-        if (!hasRequestedRedirectUri && (registeredClientRedirectUris != null && registeredClientRedirectUris.size() > 1)) {
-            throw new InvalidRequestException("Unable to find suitable redirect_uri, a redirect_uri must be supplied");
-        }
-
-        // if requested redirect_uri doesn't match registered client redirect_uris
-        // throw redirect mismatch exception
-        if (hasRequestedRedirectUri && hasRegisteredClientRedirectUris) {
-            checkMatchingRedirectUri(requestedRedirectUri, registeredClientRedirectUris);
-        }
-    }
-
     private boolean returnFromLoginPage(RoutingContext context) {
        return Boolean.TRUE.equals(context.session().get(ConstantKeys.USER_LOGIN_COMPLETED_KEY));
     }
@@ -331,13 +303,5 @@ public class AuthorizationRequestParseParametersHandler extends AbstractAuthoriz
         return authorizedGrantTypes.stream()
                 .anyMatch(authorizedGrantType -> GrantType.AUTHORIZATION_CODE.equals(authorizedGrantType)
                         || GrantType.IMPLICIT.equals(authorizedGrantType));
-    }
-
-    private void checkMatchingRedirectUri(String requestedRedirect, List<String> registeredClientRedirectUris) {
-        if (registeredClientRedirectUris
-                .stream()
-                .noneMatch(registeredClientUri -> redirectMatches(requestedRedirect, registeredClientUri, this.domain.isRedirectUriStrictMatching() || this.domain.usePlainFapiProfile()))) {
-            throw new RedirectMismatchException(String.format("The redirect_uri [ %s ] MUST match the registered callback URL for this application", requestedRedirect));
-        }
     }
 }
