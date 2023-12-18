@@ -27,16 +27,9 @@ import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.util.Maps;
-<<<<<<< HEAD
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-=======
-import io.reactivex.rxjava3.core.Completable;
-import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.core.Single;
-import java.util.ArrayList;
->>>>>>> 73404c0936 (AM-690: fix unable to list users)
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
