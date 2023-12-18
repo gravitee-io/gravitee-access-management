@@ -91,11 +91,6 @@ public class IDTokenServiceTest {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @After
-    public void after() {
-        verify(auditService, times(1)).report(any());
-    }
-
     @Test
     public void shouldCreateIDToken_clientOnly_clientIdTokenCertificate() {
         OAuth2Request oAuth2Request = new OAuth2Request();
@@ -128,6 +123,40 @@ public class IDTokenServiceTest {
         verify(certificateManager, times(1)).get(anyString());
         verify(certificateManager, times(1)).defaultCertificateProvider();
         verify(jwtService, times(1)).encode(any(), eq(idTokenCert));
+    }
+
+    @Test
+    public void shouldCreateIDTokenThrowError() {
+        OAuth2Request oAuth2Request = new OAuth2Request();
+        oAuth2Request.setClientId("client-id");
+        oAuth2Request.setScopes(Collections.singleton("openid"));
+
+        Client client = new Client();
+        client.setCertificate("client-certificate");
+
+        io.gravitee.am.gateway.certificate.CertificateProvider idTokenCert = new io.gravitee.am.gateway.certificate.CertificateProvider(certificateProvider);
+        io.gravitee.am.gateway.certificate.CertificateProvider clientCert = new io.gravitee.am.gateway.certificate.CertificateProvider(certificateProvider);
+        io.gravitee.am.gateway.certificate.CertificateProvider defaultCert = new io.gravitee.am.gateway.certificate.CertificateProvider(defaultCertificateProvider);
+
+        ExecutionContext executionContext = mock(ExecutionContext.class);
+
+        var error = new Exception("test");
+
+        when(certificateManager.findByAlgorithm(any())).thenReturn(Maybe.just(idTokenCert));
+        when(certificateManager.get(anyString())).thenReturn(Maybe.just(clientCert));
+        when(certificateManager.defaultCertificateProvider()).thenReturn(defaultCert);
+        when(jwtService.encode(any(), any(io.gravitee.am.gateway.certificate.CertificateProvider.class))).thenReturn(Single.error(error));
+        when(executionContextFactory.create(any())).thenReturn(executionContext);
+
+        TestObserver<String> testObserver = idTokenService.create(oAuth2Request, client, null).test();
+
+        testObserver.assertError(error);
+
+        verify(certificateManager, times(1)).findByAlgorithm(any());
+        verify(certificateManager, times(1)).get(anyString());
+        verify(certificateManager, times(1)).defaultCertificateProvider();
+        verify(jwtService, times(1)).encode(any(), eq(idTokenCert));
+        verify(auditService, times(1)).report(any());
     }
 
     @Test

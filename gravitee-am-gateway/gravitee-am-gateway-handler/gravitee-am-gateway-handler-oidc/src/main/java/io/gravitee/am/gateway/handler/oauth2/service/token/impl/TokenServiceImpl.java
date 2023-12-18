@@ -153,10 +153,12 @@ public class TokenServiceImpl implements TokenService {
                             .flatMap(enhancedToken -> storeTokens(accessToken, refreshToken, oAuth2Request).toSingle(() -> enhancedToken))
                             .doOnSuccess(enhancedToken -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
                                     .token(TokenTypeHint.ACCESS_TOKEN, accessToken.getJti())
-                                    .token(TokenTypeHint.REFRESH_TOKEN,  refreshToken != null ? refreshToken.getJti() : null)
-                                    .tokenTarget(client)));
+                                    .token(TokenTypeHint.REFRESH_TOKEN, refreshToken != null ? refreshToken.getJti() : null)
+                                    .token(TokenTypeHint.ID_TOKEN, enhancedToken.getAdditionalInformation().getOrDefault("id_token", null) != null ? endUser : null)
+                                    .tokenActor(client)
+                                    .tokenTarget(endUser)));
                 })
-                .doOnError(error -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class).tokenTarget(client).throwable(error)));
+                .doOnError(error -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class).tokenActor(client).throwable(error)));
     }
 
     @Override
@@ -194,8 +196,8 @@ public class TokenServiceImpl implements TokenService {
                 })
                 .doOnEvent((token, error) -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
                                 .token(TokenTypeHint.REFRESH_TOKEN, token != null ? token.getValue() : null)
-                                .tokenTarget(client)
-                                .revoked("Refresh token is used to generate new token")
+                                .tokenActor(client)
+                                .revoked("Refresh token used to generate new token")
                                 .throwable(error)));
     }
 

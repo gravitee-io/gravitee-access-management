@@ -113,7 +113,7 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
                 .firstElement()
                 .switchIfEmpty(Single.error(() -> new UnsupportedGrantTypeException("Unsupported grant type: " + tokenRequest.getGrantType())))
                 .flatMap(tokenGranter -> tokenGranter.grant(tokenRequest, client))
-                .doOnError(error -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class).tokenTarget(client).throwable(error)));
+                .doOnError(error -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class).tokenActor(client).tokenActor(client).throwable(error)));
     }
 
 

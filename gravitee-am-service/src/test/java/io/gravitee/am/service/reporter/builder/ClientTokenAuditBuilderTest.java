@@ -42,10 +42,9 @@ class ClientTokenAuditBuilderTest {
     @Test
     void shouldBuildDefaultWhenNulls() {
         var audit = AuditBuilder.builder(ClientTokenAuditBuilder.class)
-                .token(null, null)
                 .throwable(null)
-                .tokenTarget((Client) null)
-                .tokenTarget((User) null)
+                .tokenActor(null)
+                .tokenTarget(null)
                 .build(objectMapper);
         assertEquals(TOKEN_CREATED, audit.getType());
         assertEquals(SUCCESS, audit.getOutcome().getStatus());
@@ -68,8 +67,16 @@ class ClientTokenAuditBuilderTest {
     }
 
     @Test
-    void tokenShouldBuildNoToken() {
-        var audit = AuditBuilder.builder(ClientTokenAuditBuilder.class).token(TokenTypeHint.REFRESH_TOKEN, null).build(objectMapper);
+    void tokenShouldBuildNoTokenId() {
+        var audit = AuditBuilder.builder(ClientTokenAuditBuilder.class).token(TokenTypeHint.REFRESH_TOKEN, (String) null).build(objectMapper);
+        assertEquals(SUCCESS, audit.getOutcome().getStatus());
+        assertEquals(TOKEN_CREATED, audit.getType());
+        assertNull(audit.getOutcome().getMessage());
+    }
+
+    @Test
+    void tokenShouldBuildNoUser() {
+        var audit = AuditBuilder.builder(ClientTokenAuditBuilder.class).token(TokenTypeHint.REFRESH_TOKEN, (User) null).build(objectMapper);
         assertEquals(SUCCESS, audit.getOutcome().getStatus());
         assertEquals(TOKEN_CREATED, audit.getType());
         assertNull(audit.getOutcome().getMessage());
@@ -81,6 +88,18 @@ class ClientTokenAuditBuilderTest {
         var tokenType = TokenTypeHint.REFRESH_TOKEN;
         var audit = AuditBuilder.builder(ClientTokenAuditBuilder.class).token(tokenType, tokenId).build(objectMapper);
         assertEquals("[{\"op\":\"add\",\"path\":\"/token-id\",\"value\":{\"tokenId\":\"" + tokenId + "\",\"tokenType\":\"" + tokenType + "\"}}]", audit.getOutcome().getMessage());
+        assertEquals(SUCCESS, audit.getOutcome().getStatus());
+        assertEquals(TOKEN_CREATED, audit.getType());
+    }
+
+    @Test
+    void shouldBuildIdToken() {
+        var tokenId = "token-id";
+        var tokenType = TokenTypeHint.ID_TOKEN;
+        var user = new User();
+        user.setId("user-id-1");
+        var audit = AuditBuilder.builder(ClientTokenAuditBuilder.class).token(tokenType, user).build(objectMapper);
+        assertEquals("[{\"op\":\"add\",\"path\":\"/user-id-1\",\"value\":{\"tokenType\":\"" + tokenType + "\",\"userId\":\"user-id-1\"}}]", audit.getOutcome().getMessage());
         assertEquals(SUCCESS, audit.getOutcome().getStatus());
         assertEquals(TOKEN_CREATED, audit.getType());
     }
@@ -126,7 +145,6 @@ class ClientTokenAuditBuilderTest {
         assertEquals(username, audit.getTarget().getAlternativeId());
         assertEquals(userDisplayName, audit.getTarget().getDisplayName());
         assertEquals(SUCCESS, audit.getOutcome().getStatus());
-        assertEquals("[{\"op\":\"add\",\"path\":\"/" + userId + "\",\"value\":{\"userId\":\"" + userId + "\"}}]", audit.getOutcome().getMessage());
         assertEquals(TOKEN_CREATED, audit.getType());
     }
 
@@ -142,16 +160,16 @@ class ClientTokenAuditBuilderTest {
         client.setClientName(clientName);
         client.setDomain(domainId);
 
-        var audit = AuditBuilder.builder(ClientTokenAuditBuilder.class).tokenTarget(client).build(objectMapper);
+        var audit = AuditBuilder.builder(ClientTokenAuditBuilder.class).tokenActor(client).build(objectMapper);
 
         assertEquals(domainId, audit.getReferenceId());
         assertEquals(applicationId, audit.getAccessPoint().getId());
         assertEquals(clientId, audit.getAccessPoint().getAlternativeId());
         assertEquals(clientName, audit.getAccessPoint().getDisplayName());
         assertEquals(ReferenceType.DOMAIN, audit.getReferenceType());
-        assertEquals(applicationId, audit.getTarget().getId());
-        assertEquals(clientName, audit.getTarget().getDisplayName());
-        assertEquals(clientName, audit.getTarget().getAlternativeId());
+        assertEquals(applicationId, audit.getActor().getId());
+        assertEquals(clientName, audit.getActor().getDisplayName());
+        assertEquals(clientName, audit.getActor().getAlternativeId());
         assertEquals(SUCCESS, audit.getOutcome().getStatus());
         assertEquals(TOKEN_CREATED, audit.getType());
     }

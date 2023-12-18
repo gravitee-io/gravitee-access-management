@@ -64,9 +64,22 @@ public class ClientTokenAuditBuilder extends AuditBuilder<ClientTokenAuditBuilde
         return this;
     }
 
-    public ClientTokenAuditBuilder tokenTarget(Client client) {
+    public ClientTokenAuditBuilder token(TokenTypeHint tokenTypeHint, User user) {
+        if (user != null && user.getId() != null) {
+            var entry = new HashMap<String, String>();
+            var userId = user.getId();
+            entry.put("userId", userId);
+            if (tokenTypeHint != null) {
+                entry.put("tokenType", tokenTypeHint.name());
+            }
+            tokenNewValue.put(userId, entry);
+        }
+        return this;
+    }
+
+    public ClientTokenAuditBuilder tokenActor(Client client) {
         if (client != null) {
-            setTarget(client.getId(), EntityType.APPLICATION, client.getClientName(), client.getClientName(), ReferenceType.DOMAIN, client.getDomain());
+            setActor(client.getId(), EntityType.APPLICATION, client.getClientName(), client.getClientName(), ReferenceType.DOMAIN, client.getDomain());
             super.client(client);
             super.domain(client.getDomain());
         }
@@ -75,9 +88,6 @@ public class ClientTokenAuditBuilder extends AuditBuilder<ClientTokenAuditBuilde
 
     public ClientTokenAuditBuilder tokenTarget(User user) {
         if (user != null) {
-            var entry = new HashMap<String, String>();
-            entry.put("userId", user.getId());
-            tokenNewValue.put(user.getId(), entry);
             setTarget(user.getId(), EntityType.USER, user.getUsername(), user.getDisplayName(), user.getReferenceType(), user.getReferenceId());
             if (ReferenceType.DOMAIN.equals(user.getReferenceType())) {
                 super.domain(user.getReferenceId());

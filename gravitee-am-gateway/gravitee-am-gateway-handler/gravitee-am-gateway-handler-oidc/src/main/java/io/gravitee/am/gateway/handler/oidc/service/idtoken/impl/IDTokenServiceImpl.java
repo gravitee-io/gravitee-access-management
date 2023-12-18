@@ -138,15 +138,9 @@ public class IDTokenServiceImpl implements IDTokenService {
                                     return jweService.encryptIdToken(signedIdToken, client);
                                 }
                                 return Single.just(signedIdToken);
-                            })
-                            .doOnSuccess(encoded -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
-                                    .token(TokenTypeHint.ID_TOKEN, idToken.getJti())
-                                    .tokenTarget(client)));
+                            });
                 })
-                .doOnError(error -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
-                        .tokenTarget(client)
-                        .throwable(error)
-                ));
+                .doOnError(error -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class).tokenActor(client).throwable(error)));
     }
 
     @Override

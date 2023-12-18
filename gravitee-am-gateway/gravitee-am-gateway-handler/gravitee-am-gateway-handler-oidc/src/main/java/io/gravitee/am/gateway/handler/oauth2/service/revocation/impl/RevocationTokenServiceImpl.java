@@ -80,13 +80,13 @@ public class RevocationTokenServiceImpl implements RevocationTokenService {
                         // Log the result anyway for posterity.
                         if (throwable instanceof InvalidTokenException) {
                             logger.debug("No access token {} found in the token store.", token);
-                            auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class).tokenTarget(client).revoked());
+                            auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class).tokenActor(client).revoked());
                             return Completable.complete();
                         }
                         return Completable.error(throwable);
                     })
                     .doOnError(error -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
-                            .tokenTarget(client)
+                            .tokenActor(client)
                             .throwable(error)
                             .revoked()));
         }
@@ -121,13 +121,13 @@ public class RevocationTokenServiceImpl implements RevocationTokenService {
                     // Log the result anyway for posterity.
                     if (throwable instanceof InvalidTokenException) {
                         logger.debug("No refresh token {} found in the token store.", token);
-                        auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class).revoked());
+                        auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class).tokenActor(client).revoked());
                         return Completable.complete();
                     }
                     return Completable.error(throwable);
                 })
                 .doOnError(error -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
-                        .tokenTarget(client)
+                        .tokenActor(client)
                         .throwable(error)
                         .revoked()));
     }
@@ -145,7 +145,7 @@ public class RevocationTokenServiceImpl implements RevocationTokenService {
                     return tokenService.deleteAccessToken(accessToken.getValue())
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
                                             .token(TokenTypeHint.ACCESS_TOKEN, accessToken.getValue())
-                                            .tokenTarget(client)
+                                            .tokenActor(client)
                                             .revoked()));
                 });
     }
@@ -163,7 +163,7 @@ public class RevocationTokenServiceImpl implements RevocationTokenService {
                     return tokenService.deleteRefreshToken(refreshToken.getValue())
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
                                             .token(TokenTypeHint.REFRESH_TOKEN, refreshToken.getValue())
-                                            .tokenTarget(client)
+                                            .tokenActor(client)
                                             .revoked()));
                 });
     }
