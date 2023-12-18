@@ -105,7 +105,7 @@ public class UsersResource extends AbstractUsersResource {
                                 hasAnyPermission(authenticatedUser, organizationId, environmentId, domain, Permission.DOMAIN_USER, Acl.READ)
                                         .flatMap(hasPermission -> Observable.fromIterable(pagedUsers.getData())
                                                 .flatMapSingle(user -> filterUserInfos(hasPermission, user))
-                                                .toSortedList(Comparator.comparing(User::getUsername))
+                                                .toSortedList(Comparator.comparing(User::getUsername, Comparator.nullsLast(Comparator.naturalOrder())))
                                                 .map(users -> new UserPage(users, pagedUsers.getCurrentPage(), pagedUsers.getTotalCount())))))
                 .subscribe(response::resume, response::resume);
     }
