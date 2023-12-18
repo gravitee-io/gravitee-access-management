@@ -2,8 +2,8 @@ apiVersion: v1
 name: am
 # When the version is modified, make sure the artifacthub.io/changes list is updated
 # Also update CHANGELOG.md
-version: 3.20.11
-appVersion: 3.20.11
+version: 3.20.17
+appVersion: 3.20.17
 description: Official Gravitee.io Helm chart for Access Management
 home: https://gravitee.io
 sources:
@@ -23,5 +23,5 @@ annotations:
   # List of changes for the release in artifacthub.io
   # https://artifacthub.io/packages/helm/graviteeio/am?modal=changelog
   artifacthub.io/changes: |
-    - 'fix: license deleted after helm upgrade'
+    - 'add networkPolicy'
 

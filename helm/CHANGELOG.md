@@ -2,6 +2,10 @@
 
 This file documents all notable changes to [Gravitee.io Access Management 3.x](https://github.com/gravitee-io/helm-charts/tree/master/am/) Helm Chart. The release numbering uses [semantic versioning](http://semver.org).
 
+### 3.20.17
+
+- add networkPolicy
+
 ### 3.20.11
 
 To ensure the compatibility between the AM product and the AM Helm Chart, the versioning of the latter is changed.
