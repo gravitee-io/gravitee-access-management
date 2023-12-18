@@ -7,7 +7,8 @@ This file documents all notable changes to [Gravitee.io Access Management 3.x](h
 - [X] Added kubernetes secret configuration
 - [X] Added application client secret hash
 - [X] Refactoring of email configuration now `smtp.email` and `api.notifiers.email` transpose helm values to `gravitee.yml` with some process to be backward compatible.
-- [X] Fix: license deleted after helm upgrade 
+- [X] Fix: license deleted after helm upgrade
+- [X] add networkPolicy
 
 ### 4.1.5
 
