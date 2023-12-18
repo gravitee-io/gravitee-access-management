@@ -86,7 +86,7 @@ public class UsersResource extends AbstractUsersResource {
                                         .flatMap(pagedUsers ->
                                                 Observable.fromIterable(pagedUsers.getData())
                                                         .flatMapSingle(user -> filterUserInfos(organizationPermissions, user))
-                                                        .toSortedList(Comparator.comparing(User::getUsername))
+                                                        .toSortedList(Comparator.comparing(User::getUsername, Comparator.nullsLast(Comparator.naturalOrder())))
                                                         .map(users -> new Page<>(users, pagedUsers.getCurrentPage(), pagedUsers.getTotalCount())))))
                 .subscribe(response::resume, response::resume);
     }
