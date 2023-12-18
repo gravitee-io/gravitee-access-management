@@ -90,41 +90,29 @@
             <p>An extra step is required if the response_type=code, exchange the authorization_code for an access_token.</p>
             <p><b>Note:</b> remember to adapt the request to use the client secret you copied during the application creation</p>
           </blockquote>
-          <div class="code">
-            <button
-              mat-icon-button
-              matSuffix
-              matTooltip="Copy to clipboard"
-              (click)="copyToClipboard(pre_authorization_code_exchange, authorizationHeader)"
-            >
+          <div class="code" *ngIf="!displayAuthPostExample()">
+            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(pre_authorization_code_exchange)">
               <mat-icon>content_copy</mat-icon>
-            </button>
-            <button
-              *ngIf="!isHidden(safeAuthorizationHeader)"
-              mat-icon-button
-              matSuffix
-              matTooltip="Hide sensitive data"
-              (click)="safeAuthorizationHeader = hidden"
-            >
-              <mat-icon>visibility_off</mat-icon>
-            </button>
-            <button
-              *ngIf="isHidden(safeAuthorizationHeader)"
-              mat-icon-button
-              matSuffix
-              matTooltip="Reveal sensitive data"
-              (click)="safeAuthorizationHeader = authorizationHeader"
-            >
-              <mat-icon>visibility</mat-icon>
             </button>
 
             <pre #pre_authorization_code_exchange class="multiline">
 curl -X POST \
-  {{ baseUrl }}/oauth/token \
-  -H 'Authorization: Basic {{ safeAuthorizationHeader }}' \
+              {{ baseUrl }}/oauth/token \
+  -u '{{ clientId }}:&lt;<i>client_secret</i>&gt;' \
   -H 'Content-Type: application/x-www-form-urlencoded' \
   -d 'grant_type=authorization_code&code=|code|&redirect_uri={{ redirectUri }}&client_id={{ getEncodedClientId()
               }}{{ getCodeVerifier() }}'</pre
+            >
+          </div>
+          <div class="code" *ngIf="displayAuthPostExample()">
+            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(pre_post_token)">
+              <mat-icon>content_copy</mat-icon>
+            </button>
+            <pre #pre_post_token class="multiline">
+curl -X POST \
+              {{ baseUrl }}/oauth/token \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -d 'grant_type=client_credentials&client_id={{ clientId }}&client_secret=&lt;<i>client_secret</i>&gt;'</pre
             >
           </div>
 
@@ -143,21 +131,21 @@ curl -X POST \
             <pre class="multiline">
 // utils
 function base64URLEncode(str) {{ '{' }}
-  btoa(str)
+              btoa(str)
     .replace(/\+/g, '-')
     .replace(/\//g, '_')
     .replace(/=/g, '');
-{{ '}' }}
+              {{ '}' }}
 
-function bufferToString(buffer: Uint8Array) {{ '{' }}
-  const CHARSET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+              function bufferToString(buffer: Uint8Array) {{ '{' }}
+              const CHARSET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   const state = [];
   for (let i = 0; i < buffer.byteLength; i += 1) {{ '{' }}
-    const index = buffer[i] % this.CHARSET.length;
+              const index = buffer[i] % this.CHARSET.length;
     state.push(this.CHARSET[index]);
-  {{ '}' }}
-  return state.join('');
-{{ '}' }}</pre
+              {{ '}' }}
+              return state.join('');
+              {{ '}' }}</pre
             >
           </div>
 
@@ -177,12 +165,12 @@ const encoder = new TextEncoder();
 const data = encoder.encode(codeVerifier);
 window.crypto.subtle.digest('SHA-256', data)
   .then(buffer => {{ '{' }}
-      const bufferToString = String.fromCharCode.apply(null, new Uint8Array(buffer));
+              const bufferToString = String.fromCharCode.apply(null, new Uint8Array(buffer));
       return base64URLEncode(bufferToString);
-  {{ '}' }})
+              {{ '}' }})
   .then(str => {{ '{' }}
-      const codeChallenge = str;
-  {{ '}' }});</pre
+              const codeChallenge = str;
+              {{ '}' }});</pre
             >
           </div>
 
@@ -214,7 +202,7 @@ String codeChallenge = Base64.getUrlEncoder().withoutPadding().encodeToString(md
             </button>
             <pre #pre_userinfo class="multiline">
 curl -X GET \
-  {{ baseUrl }}/oidc/userinfo \
+              {{ baseUrl }}/oidc/userinfo \
   -H 'Authorization: Bearer access_token'</pre
             >
           </div>
@@ -260,68 +248,28 @@ curl -X GET \
 
           <h2>Getting an access token</h2>
           <p>You can request an access token using the OAuth 2.0 client credentials grant type.</p>
+          <p><b>Note:</b> remember to adapt the request to use the client secret you copied during the application creation</p>
           <div class="code" *ngIf="displayAuthBasicExample()">
-            <button
-              mat-icon-button
-              matSuffix
-              matTooltip="Copy to clipboard"
-              (click)="copyToClipboard(pre_auth_basic_token, authorizationHeader)"
-            >
+            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(pre_auth_basic_token)">
               <mat-icon>content_copy</mat-icon>
-            </button>
-            <button
-              *ngIf="!isHidden(safeAuthorizationHeader)"
-              mat-icon-button
-              matSuffix
-              matTooltip="Hide sensitive data"
-              (click)="safeAuthorizationHeader = hidden"
-            >
-              <mat-icon>visibility_off</mat-icon>
-            </button>
-            <button
-              *ngIf="isHidden(safeAuthorizationHeader)"
-              mat-icon-button
-              matSuffix
-              matTooltip="Reveal sensitive data"
-              (click)="safeAuthorizationHeader = authorizationHeader"
-            >
-              <mat-icon>visibility</mat-icon>
             </button>
             <pre #pre_auth_basic_token class="multiline">
 curl -X POST \
               {{ baseUrl }}/oauth/token \
   -H 'Content-Type: application/x-www-form-urlencoded' \
-  -H 'Authorization: Basic {{ safeAuthorizationHeader }}' \
+              -u '{{ clientId }}:&lt;<i>client_secret</i>&gt;' \
   -d 'grant_type=client_credentials'</pre
             >
           </div>
           <div class="code" *ngIf="!displayAuthBasicExample()">
-            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(pre_post_token, clientSecret)">
+            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(pre_post_token)">
               <mat-icon>content_copy</mat-icon>
-            </button>
-            <button
-              *ngIf="!isHidden(safeClientSecret)"
-              mat-icon-button
-              matSuffix
-              matTooltip="Hide sensitive data"
-              (click)="safeClientSecret = hidden"
-            >
-              <mat-icon>visibility_off</mat-icon>
-            </button>
-            <button
-              *ngIf="isHidden(safeClientSecret)"
-              mat-icon-button
-              matSuffix
-              matTooltip="Reveal sensitive data"
-              (click)="safeClientSecret = clientSecret"
-            >
-              <mat-icon>visibility</mat-icon>
             </button>
             <pre #pre_post_token class="multiline">
 curl -X POST \
               {{ baseUrl }}/oauth/token \
   -H 'Content-Type: application/x-www-form-urlencoded' \
-  -d 'grant_type=client_credentials&client_id={{ clientId }}&client_secret={{ safeClientSecret }}'</pre
+  -d 'grant_type=client_credentials&client_id={{ clientId }}&client_secret=&lt;<i>client_secret</i>&gt;'</pre
             >
           </div>
           <p>If the request is valid, the authorization server will issue an access token to make authorized calls to the APIs.</p>
