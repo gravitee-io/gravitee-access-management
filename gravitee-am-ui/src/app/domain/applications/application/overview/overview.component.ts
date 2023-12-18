@@ -32,11 +32,6 @@ export class ApplicationOverviewComponent implements OnInit {
   encodedRedirectUri: string;
   grantTypes: string[] = [];
   clientId: string;
-  clientSecret: string;
-  safeClientSecret: string;
-  hidden = '********';
-  safeAuthorizationHeader: string;
-  authorizationHeader: string;
   entrypoint: any;
   baseUrl: string;
   tokenEndpointAuthMethod: string;
@@ -57,27 +52,21 @@ export class ApplicationOverviewComponent implements OnInit {
     this.domain = this.route.snapshot.data['domain'];
     this.entrypoint = this.route.snapshot.data['entrypoint'];
     this.application = this.route.snapshot.data['application'];
-    this.safeClientSecret = this.hidden;
-    this.safeAuthorizationHeader = this.hidden;
     const applicationOAuthSettings = this.application.settings == null ? {} : this.application.settings.oauth || {};
 
     if (this.authService.hasPermissions(['application_openid_read'])) {
       this.grantTypes = applicationOAuthSettings.grantTypes;
       this.clientId = applicationOAuthSettings.clientId;
-      this.clientSecret = applicationOAuthSettings.clientSecret;
       this.redirectUri =
         applicationOAuthSettings.redirectUris && applicationOAuthSettings.redirectUris[0] !== undefined
           ? applicationOAuthSettings.redirectUris[0]
           : 'Not defined';
       this.encodedRedirectUri = encodeURIComponent(this.redirectUri);
-      this.authorizationHeader = btoa(this.getEncodedClientId() + ':' + encodeURIComponent(this.clientSecret));
       this.tokenEndpointAuthMethod = applicationOAuthSettings.tokenEndpointAuthMethod;
       this.forcePKCE = applicationOAuthSettings.forcePKCE;
     } else {
       this.clientId = 'Insufficient permission';
-      this.clientSecret = 'Insufficient permission';
       this.redirectUri = 'Insufficient permission';
-      this.authorizationHeader = 'Insufficient permission';
     }
     this.baseUrl = this.entrypointService.resolveBaseUrl(this.entrypoint, this.domain);
     if (this.forcePKCE) {
@@ -98,15 +87,11 @@ export class ApplicationOverviewComponent implements OnInit {
     this.snackbarService.open(message);
   }
 
-  copyToClipboard(element: HTMLElement, sensitiveReplacement?) {
-    this.copyText.nativeElement.value = element.textContent.replace(this.hidden, sensitiveReplacement ? sensitiveReplacement : '');
+  copyToClipboard(element: HTMLElement) {
+    this.copyText.nativeElement.value = element.textContent;
     this.copyText.nativeElement.select();
     document.execCommand('copy');
     this.valueCopied('Copied to clipboard');
-  }
-
-  isHidden(value): boolean {
-    return value === this.hidden;
   }
 
   getAuthorizationFlowResponseType(): string {
@@ -160,6 +145,10 @@ export class ApplicationOverviewComponent implements OnInit {
 
   displayAuthBasicExample(): boolean {
     return !this.tokenEndpointAuthMethod || this.tokenEndpointAuthMethod === 'client_secret_basic';
+  }
+
+  displayAuthPostExample(): boolean {
+    return !this.tokenEndpointAuthMethod || this.tokenEndpointAuthMethod === 'client_secret_post';
   }
 
   getEncodedClientId() {
