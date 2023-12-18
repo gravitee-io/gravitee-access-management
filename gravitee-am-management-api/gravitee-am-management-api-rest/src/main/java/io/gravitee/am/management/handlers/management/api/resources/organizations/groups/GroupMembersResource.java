@@ -93,7 +93,7 @@ public class GroupMembersResource extends AbstractResource {
                                         }
                                         return Single.just(member);
                                     })
-                                    .toSortedList(Comparator.comparing(User::getUsername))
+                                    .toSortedList(Comparator.comparing(User::getUsername, Comparator.nullsLast(Comparator.naturalOrder())))
                                     .map(members -> new Page<>(members, pagedMembers.getCurrentPage(), pagedMembers.getTotalCount()));
                         }))
                 .subscribe(response::resume, response::resume);
