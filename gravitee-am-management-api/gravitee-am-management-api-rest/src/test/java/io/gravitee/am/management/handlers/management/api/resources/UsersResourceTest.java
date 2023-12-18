@@ -29,6 +29,7 @@ import io.gravitee.common.util.Maps;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -102,6 +103,41 @@ public class UsersResourceTest extends JerseySpringTest {
     }
 
     @Test
+    public void shouldGetUsersOneWithNoUsername() {
+        final String domainId = "domain-1";
+        final Domain mockDomain = new Domain();
+        mockDomain.setId(domainId);
+
+        final User mockUser = new User();
+        mockUser.setId("user-id-1");
+        mockUser.setUsername("username-1");
+        mockUser.setReferenceType(ReferenceType.DOMAIN);
+        mockUser.setReferenceId(domainId);
+
+        final User mockUser2 = new User();
+        mockUser2.setId("domain-id-2");
+        mockUser2.setUsername(null);
+        mockUser2.setReferenceType(ReferenceType.DOMAIN);
+        mockUser2.setReferenceId(domainId);
+
+        final Set<User> users = new HashSet<>(Arrays.asList(mockUser, mockUser2));
+        final Page<User> pagedUsers = new Page<>(users, 0, 2);
+
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+        doReturn(Single.just(pagedUsers)).when(userService).findAll(ReferenceType.DOMAIN, domainId, 0, 10);
+
+        final Response response = target("domains")
+                .path(domainId)
+                .path("users")
+                .queryParam("page", 0)
+                .queryParam("size", 10)
+                .request()
+                .get();
+
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+    }
+
+    @Test
     public void shouldGetOrganizationUsers() {
         final String organizationId = "DEFAULT";
 
@@ -148,8 +184,59 @@ public class UsersResourceTest extends JerseySpringTest {
         assertTrue(getFilteredElements(data, User::getPassword).isEmpty());
     }
 
+    @Test
+    public void shouldGetOrganizationUsersOneWithNoUsername() {
+        final String organizationId = "DEFAULT";
+
+        final User mockUser = new User();
+        mockUser.setId("user-id-1");
+        mockUser.setUsername(null);
+        mockUser.setPassword("SomePassWord-1");
+        mockUser.setReferenceType(ORGANIZATION);
+        mockUser.setReferenceId(organizationId);
+
+        final User mockUser2 = new User();
+        mockUser2.setId("domain-id-2");
+        mockUser2.setUsername("username-2");
+        mockUser2.setPassword("SomePassWord-2");
+        mockUser2.setReferenceType(ORGANIZATION);
+        mockUser2.setReferenceId(organizationId);
+
+        final Set<User> users = new HashSet<>(Arrays.asList(mockUser, mockUser2));
+        final Page<User> pagedUsers = new Page<>(users, 0, 2);
+
+        final Map<Permission, Set<Acl>> permissions = Maps.<Permission, Set<Acl>>builder().put(Permission.ORGANIZATION_USER, Sets.newHashSet(Acl.LIST)).build();
+        when(permissionService.findAllPermissions(any(), eq(ORGANIZATION), eq(organizationId))).thenReturn(Single.just(permissions));
+        doReturn(Single.just(pagedUsers)).when(organizationUserService).findAll(ORGANIZATION, organizationId, 0, 10);
+
+        final Response response = target("organizations")
+                .path("DEFAULT")
+                .path("users")
+                .queryParam("page", 0)
+                .queryParam("size", 10)
+                .request()
+                .get();
+
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+
+        Page<User> values = readEntity(response, new TypeReference<>() {
+        });
+
+        assertEquals(values.getCurrentPage(), 0);
+        assertEquals(values.getTotalCount(), 2);
+        final Collection<User> data = values.getData();
+
+        assertTrue(getFilteredElements(data, User::getId).containsAll(List.of("user-id-1", "domain-id-2")));
+        assertEquals(Arrays.asList("username-2", null), getFilteredElements(data, User::getUsername, true));
+        assertTrue(getFilteredElements(data, User::getPassword).isEmpty());
+    }
+
     private static <T> List<T> getFilteredElements(Collection<User> data, Function<User, T> mapper) {
-        return data.stream().map(mapper).filter(Objects::nonNull).distinct().collect(toList());
+        return getFilteredElements(data, mapper, false);
+    }
+
+    private static <T> List<T> getFilteredElements(Collection<User> data, Function<User, T> mapper, boolean withNulls) {
+        return data.stream().map(mapper).filter(i -> withNulls || i != null).distinct().collect(toList());
     }
 
     @Test
