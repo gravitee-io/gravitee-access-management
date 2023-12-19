@@ -43,7 +43,7 @@ class ClientTokenAuditBuilderTest {
     void shouldBuildDefaultWhenNulls() {
         var audit = AuditBuilder.builder(ClientTokenAuditBuilder.class)
                 .throwable(null)
-                .tokenActor(null)
+                .tokenActor((Client) null)
                 .tokenTarget(null)
                 .build(objectMapper);
         assertEquals(TOKEN_CREATED, audit.getType());
@@ -83,6 +83,22 @@ class ClientTokenAuditBuilderTest {
     }
 
     @Test
+    void tokenShouldBuildActorUser() {
+        var userId = "user-id-1";
+        var referenceId = "reference-id-1";
+        var user = new User();
+        user.setId(userId);
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId(referenceId);
+        var audit = AuditBuilder.builder(ClientTokenAuditBuilder.class).tokenActor(user).build(objectMapper);
+        assertEquals(SUCCESS, audit.getOutcome().getStatus());
+        assertEquals(TOKEN_CREATED, audit.getType());
+        assertEquals(userId, audit.getActor().getId());
+        assertEquals(referenceId, audit.getReferenceId());
+        assertNull(audit.getOutcome().getMessage());
+    }
+
+    @Test
     void shouldBuildToken() {
         var tokenId = "token-id";
         var tokenType = TokenTypeHint.REFRESH_TOKEN;
@@ -94,7 +110,6 @@ class ClientTokenAuditBuilderTest {
 
     @Test
     void shouldBuildIdToken() {
-        var tokenId = "token-id";
         var tokenType = TokenTypeHint.ID_TOKEN;
         var user = new User();
         user.setId("user-id-1");

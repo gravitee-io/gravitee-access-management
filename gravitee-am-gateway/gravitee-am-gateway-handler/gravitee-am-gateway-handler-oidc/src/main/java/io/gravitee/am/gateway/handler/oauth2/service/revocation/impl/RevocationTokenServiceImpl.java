@@ -80,7 +80,7 @@ public class RevocationTokenServiceImpl implements RevocationTokenService {
                         // Log the result anyway for posterity.
                         if (throwable instanceof InvalidTokenException) {
                             logger.debug("No access token {} found in the token store.", token);
-                            auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class).tokenActor(client).revoked());
+                            auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class).tokenActor(client).revoked("token not found"));
                             return Completable.complete();
                         }
                         return Completable.error(throwable);
@@ -121,7 +121,7 @@ public class RevocationTokenServiceImpl implements RevocationTokenService {
                     // Log the result anyway for posterity.
                     if (throwable instanceof InvalidTokenException) {
                         logger.debug("No refresh token {} found in the token store.", token);
-                        auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class).tokenActor(client).revoked());
+                        auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class).tokenActor(client).revoked("token not found"));
                         return Completable.complete();
                     }
                     return Completable.error(throwable);

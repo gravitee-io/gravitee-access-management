@@ -158,7 +158,7 @@ public class TokenServiceImpl implements TokenService {
                                     .tokenActor(client)
                                     .tokenTarget(endUser)));
                 })
-                .doOnError(error -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class).tokenActor(client).throwable(error)));
+                .doOnError(error -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class).tokenActor(client).tokenTarget(endUser).throwable(error)));
     }
 
     @Override

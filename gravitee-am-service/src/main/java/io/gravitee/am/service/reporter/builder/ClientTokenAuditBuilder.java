@@ -86,6 +86,16 @@ public class ClientTokenAuditBuilder extends AuditBuilder<ClientTokenAuditBuilde
         return this;
     }
 
+    public ClientTokenAuditBuilder tokenActor(User user) {
+        if (user != null) {
+            setActor(user.getId(), EntityType.USER, user.getUsername(), user.getDisplayName(), user.getReferenceType(), user.getReferenceId());
+            if (ReferenceType.DOMAIN.equals(user.getReferenceType())) {
+                super.domain(user.getReferenceId());
+            }
+        }
+        return this;
+    }
+
     public ClientTokenAuditBuilder tokenTarget(User user) {
         if (user != null) {
             setTarget(user.getId(), EntityType.USER, user.getUsername(), user.getDisplayName(), user.getReferenceType(), user.getReferenceId());

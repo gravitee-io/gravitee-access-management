@@ -126,7 +126,7 @@ public class TokenServiceImpl implements TokenService {
                 })
                 .doOnEvent(error -> userService.findById(userId).doOnEvent((user, er) ->
                                 auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
-                                        .tokenTarget(user)
+                                        .tokenActor(user)
                                         .revoked("All tokens are revoked for user: " + userId)
                                         .throwable(error)))
                         .ignoreElement().subscribe());

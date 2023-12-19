@@ -140,7 +140,7 @@ public class IDTokenServiceImpl implements IDTokenService {
                                 return Single.just(signedIdToken);
                             });
                 })
-                .doOnError(error -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class).tokenActor(client).throwable(error)));
+                .doOnError(error -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class).tokenActor(client).tokenTarget(user).throwable(error)));
     }
 
     @Override
