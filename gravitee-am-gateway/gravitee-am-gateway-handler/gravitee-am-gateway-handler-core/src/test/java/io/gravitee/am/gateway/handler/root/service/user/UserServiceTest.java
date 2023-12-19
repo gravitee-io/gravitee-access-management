@@ -200,7 +200,7 @@ public class UserServiceTest {
         testObserver.assertNoErrors();
 
         verify(credentialService, never()).deleteByUserId(any(), any(), any());
-        verify(tokenService, never()).deleteByUserId(any());
+        verify(tokenService, never()).deleteByUser(any());
         verify(loginAttemptService).reset(argThat(criteria -> criteria.client().equals(clientIdFromClient)));
     }
 
@@ -230,7 +230,7 @@ public class UserServiceTest {
         testObserver.assertNoErrors();
 
         verify(credentialService, never()).deleteByUserId(any(), any(), any());
-        verify(tokenService, never()).deleteByUserId(any());
+        verify(tokenService, never()).deleteByUser(any());
     }
 
     @Test
@@ -259,7 +259,7 @@ public class UserServiceTest {
         testObserver.assertNoErrors();
 
         verify(credentialService, never()).deleteByUserId(any(), any(), any());
-        verify(tokenService, never()).deleteByUserId(any());
+        verify(tokenService, never()).deleteByUser(any());
     }
 
     @Test
@@ -292,7 +292,7 @@ public class UserServiceTest {
         testObserver.assertNoErrors();
         verify(userProvider, times(1)).create(any());
         verify(credentialService, never()).deleteByUserId(any(), any(), any());
-        verify(tokenService, never()).deleteByUserId(any());
+        verify(tokenService, never()).deleteByUser(any());
     }
 
     @Test
@@ -317,7 +317,7 @@ public class UserServiceTest {
         testObserver.assertError(AccountInactiveException.class);
 
         verify(credentialService, never()).deleteByUserId(any(), any(), any());
-        verify(tokenService, never()).deleteByUserId(any());
+        verify(tokenService, never()).deleteByUser(any());
     }
 
     @Test
@@ -369,7 +369,7 @@ public class UserServiceTest {
         testObserver.assertNoErrors();
 
         verify(credentialService, never()).deleteByUserId(any(), any(), any());
-        verify(tokenService, never()).deleteByUserId(any());
+        verify(tokenService, never()).deleteByUser(any());
     }
 
     @Test
@@ -395,7 +395,7 @@ public class UserServiceTest {
         var testObserver = userService.forgotPassword(user.getEmail(), client).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        verify(tokenService, never()).deleteByUserId(any());
+        verify(tokenService, never()).deleteByUser(any());
     }
 
     @Test
@@ -421,7 +421,7 @@ public class UserServiceTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         verify(commonUserService, never()).update(any());
-        verify(tokenService, never()).deleteByUserId(any());
+        verify(tokenService, never()).deleteByUser(any());
 
     }
 
@@ -451,7 +451,7 @@ public class UserServiceTest {
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        verify(tokenService, never()).deleteByUserId(any());
+        verify(tokenService, never()).deleteByUser(any());
     }
 
     @Test
@@ -472,7 +472,7 @@ public class UserServiceTest {
 
         testObserver.assertNotComplete();
         testObserver.assertError(EnforceUserIdentityException.class);
-        verify(tokenService, never()).deleteByUserId(any());
+        verify(tokenService, never()).deleteByUser(any());
     }
 
     @Test
@@ -647,7 +647,7 @@ public class UserServiceTest {
 
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
-        verify(tokenService, never()).deleteByUserId(any());
+        verify(tokenService, never()).deleteByUser(any());
         verify(emailService).send(any(), any(), any());
         verify(auditService).report(argThat(builder -> {
             final Audit audit = builder.build(new ObjectMapper());
@@ -680,7 +680,7 @@ public class UserServiceTest {
 
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(EnforceUserIdentityException.class);
-        verify(tokenService, never()).deleteByUserId(any());
+        verify(tokenService, never()).deleteByUser(any());
         verify(emailService, never()).send(any(), any(), any());
         verify(auditService).report(argThat(builder -> {
             final Audit audit = builder.build(new ObjectMapper());
@@ -717,7 +717,7 @@ public class UserServiceTest {
         testObserver.assertNoErrors();
         verify(commonUserService, times(1)).create(any());
         verify(commonUserService, never()).update(any());
-        verify(tokenService, never()).deleteByUserId(any());
+        verify(tokenService, never()).deleteByUser(any());
     }
 
     @Test
@@ -748,7 +748,7 @@ public class UserServiceTest {
         verify(commonUserService, never()).findByDomainAndExternalIdAndSource(anyString(), anyString(), anyString());
         verify(commonUserService, never()).create(any());
         verify(commonUserService, times(1)).update(any());
-        verify(tokenService, never()).deleteByUserId(any());
+        verify(tokenService, never()).deleteByUser(any());
     }
 
     @Test
@@ -765,7 +765,7 @@ public class UserServiceTest {
         var testObserver = userService.forgotPassword(user.getEmail(), client).test();
         testObserver.assertNotComplete();
         testObserver.assertError(UserNotFoundException.class);
-        verify(tokenService, never()).deleteByUserId(any());
+        verify(tokenService, never()).deleteByUser(any());
 
     }
 
@@ -786,7 +786,7 @@ public class UserServiceTest {
         var testObserver = userService.forgotPassword(user.getEmail(), client).test();
         testObserver.assertNotComplete();
         testObserver.assertError(UserNotFoundException.class);
-        verify(tokenService, never()).deleteByUserId(any());
+        verify(tokenService, never()).deleteByUser(any());
 
     }
 
@@ -809,7 +809,7 @@ public class UserServiceTest {
         var testObserver = userService.forgotPassword(user.getEmail(), client).test();
         testObserver.assertNotComplete();
         testObserver.assertError(UserNotFoundException.class);
-        verify(tokenService, never()).deleteByUserId(any());
+        verify(tokenService, never()).deleteByUser(any());
 
     }
 
@@ -854,7 +854,7 @@ public class UserServiceTest {
         testObserver.assertNoErrors();
 
         verify(credentialService, times(1)).deleteByUserId(any(), any(), any());
-        verify(tokenService, never()).deleteByUserId(any());
+        verify(tokenService, never()).deleteByUser(any());
     }
 
     @Test
@@ -881,13 +881,13 @@ public class UserServiceTest {
         when(commonUserService.update(any())).thenReturn(Single.just(user));
         when(commonUserService.enhance(any())).thenReturn(Single.just(user));
         when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
-        when(tokenService.deleteByUserId(any())).thenReturn(Completable.complete());
+        when(tokenService.deleteByUser(any())).thenReturn(Completable.complete());
 
         var testObserver = userService.resetPassword(client, user).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(tokenService, times(1)).deleteByUserId(any());
+        verify(tokenService, times(1)).deleteByUser(any());
         verify(credentialService, never()).deleteByUserId(any(), any(), any());
     }
 
@@ -1039,7 +1039,7 @@ public class UserServiceTest {
         testObserver.assertNoErrors();
 
         verify(credentialService, never()).deleteByUserId(any(), any(), any());
-        verify(tokenService, never()).deleteByUserId(any());
+        verify(tokenService, never()).deleteByUser(any());
     }
 
     @Test

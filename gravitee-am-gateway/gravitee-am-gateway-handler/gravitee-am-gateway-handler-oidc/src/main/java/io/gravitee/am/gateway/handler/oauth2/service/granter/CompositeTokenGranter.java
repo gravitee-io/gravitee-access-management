@@ -36,9 +36,12 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.PermissionTicketService;
 import io.gravitee.am.service.ResourceService;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import io.gravitee.am.service.reporter.builder.ClientTokenAuditBuilder;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.InitializingBean;
@@ -97,6 +100,9 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
     @Autowired
     private AuthenticationRequestService authenticationRequestService;
 
+    @Autowired
+    private AuditService auditService;
+
     public CompositeTokenGranter() { }
 
     @Override
@@ -106,7 +112,8 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
                 .filter(tokenGranter -> tokenGranter.handle(tokenRequest.getGrantType(), client))
                 .firstElement()
                 .switchIfEmpty(Single.error(() -> new UnsupportedGrantTypeException("Unsupported grant type: " + tokenRequest.getGrantType())))
-                .flatMap(tokenGranter -> tokenGranter.grant(tokenRequest, client));
+                .flatMap(tokenGranter -> tokenGranter.grant(tokenRequest, client))
+                .doOnError(error -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class).tokenActor(client).tokenActor(client).throwable(error)));
     }
 
 

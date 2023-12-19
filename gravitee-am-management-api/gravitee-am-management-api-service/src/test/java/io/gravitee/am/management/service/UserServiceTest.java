@@ -418,7 +418,7 @@ public class UserServiceTest {
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
         when(commonUserService.update(any())).thenReturn(Single.just(user));
         when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
-        when(tokenService.deleteByUserId(any())).thenReturn(Completable.complete());
+        when(tokenService.deleteByUser(any())).thenReturn(Completable.complete());
         when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any(), any(), any())).thenReturn(Maybe.just(new PasswordHistory()));
 
 
@@ -427,7 +427,7 @@ public class UserServiceTest {
                 .assertComplete()
                 .assertNoErrors();
 
-        verify(tokenService).deleteByUserId(any());
+        verify(tokenService).deleteByUser(any());
     }
 
     @Test
@@ -451,7 +451,7 @@ public class UserServiceTest {
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
         when(commonUserService.update(any())).thenReturn(Single.just(user));
         when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
-        when(tokenService.deleteByUserId(any())).thenReturn(Completable.complete());
+        when(tokenService.deleteByUser(any())).thenReturn(Completable.complete());
         when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any(), any(), any())).thenReturn(Maybe.just(new PasswordHistory()));
 
         userService.resetPassword(domain, user.getId(), PASSWORD, null)
@@ -459,7 +459,7 @@ public class UserServiceTest {
                 .assertComplete()
                 .assertNoErrors();
         verify(userProvider, times(1)).create(any());
-        verify(tokenService).deleteByUserId(any());
+        verify(tokenService).deleteByUser(any());
     }
 
     @Test

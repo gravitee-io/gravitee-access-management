@@ -22,6 +22,9 @@ import io.gravitee.am.gateway.handler.oauth2.service.revocation.RevocationTokenS
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import io.gravitee.am.service.reporter.builder.ClientTokenAuditBuilder;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import org.slf4j.Logger;
@@ -38,6 +41,9 @@ public class RevocationTokenServiceImpl implements RevocationTokenService {
 
     @Autowired
     private TokenService tokenService;
+
+    @Autowired
+    private AuditService auditService;
 
     @Override
     public Completable revoke(RevocationTokenRequest request, Client client) {
@@ -74,10 +80,15 @@ public class RevocationTokenServiceImpl implements RevocationTokenService {
                         // Log the result anyway for posterity.
                         if (throwable instanceof InvalidTokenException) {
                             logger.debug("No access token {} found in the token store.", token);
+                            auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class).tokenActor(client).revoked("token not found"));
                             return Completable.complete();
                         }
                         return Completable.error(throwable);
-                    });
+                    })
+                    .doOnError(error -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
+                            .tokenActor(client)
+                            .throwable(error)
+                            .revoked()));
         }
 
         // The user didn't hint that this is a refresh token, so it MAY be an access
@@ -110,11 +121,15 @@ public class RevocationTokenServiceImpl implements RevocationTokenService {
                     // Log the result anyway for posterity.
                     if (throwable instanceof InvalidTokenException) {
                         logger.debug("No refresh token {} found in the token store.", token);
+                        auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class).tokenActor(client).revoked("token not found"));
                         return Completable.complete();
                     }
                     return Completable.error(throwable);
-                });
-
+                })
+                .doOnError(error -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
+                        .tokenActor(client)
+                        .throwable(error)
+                        .revoked()));
     }
 
     private Completable revokeAccessToken(String token, Client client) {
@@ -127,9 +142,14 @@ public class RevocationTokenServiceImpl implements RevocationTokenService {
                         return Completable.error(new InvalidGrantException("Cannot revoke tokens issued to other clients."));
                     }
 
-                    return tokenService.deleteAccessToken(accessToken.getValue());
+                    return tokenService.deleteAccessToken(accessToken.getValue())
+                            .doOnComplete(() -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
+                                            .token(TokenTypeHint.ACCESS_TOKEN, accessToken.getValue())
+                                            .tokenActor(client)
+                                            .revoked()));
                 });
     }
+
 
     private Completable revokeRefreshToken(String token, Client client) {
         return tokenService.getRefreshToken(token, client)
@@ -140,8 +160,11 @@ public class RevocationTokenServiceImpl implements RevocationTokenService {
                         logger.debug("Revoke FAILED: requesting client = {}, token's client = {}.", client.getClientId(), tokenClientId);
                         return Completable.error(new InvalidGrantException("Cannot revoke tokens issued to other clients."));
                     }
-
-                    return tokenService.deleteRefreshToken(refreshToken.getValue());
+                    return tokenService.deleteRefreshToken(refreshToken.getValue())
+                            .doOnComplete(() -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
+                                            .token(TokenTypeHint.REFRESH_TOKEN, refreshToken.getValue())
+                                            .tokenActor(client)
+                                            .revoked()));
                 });
     }
 }

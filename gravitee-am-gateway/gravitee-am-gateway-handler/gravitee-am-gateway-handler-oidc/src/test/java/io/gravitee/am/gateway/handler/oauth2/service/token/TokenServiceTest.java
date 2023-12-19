@@ -36,12 +36,14 @@ import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
 import io.gravitee.am.repository.oauth2.model.RefreshToken;
+import io.gravitee.am.service.AuditService;
 import io.gravitee.el.TemplateEngine;
 import io.gravitee.gateway.api.ExecutionContext;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
+import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -101,6 +103,14 @@ public class TokenServiceTest {
     @Mock
     private TokenManager tokenManager;
 
+    @Mock
+    private AuditService auditService;
+
+    @After
+    public void after() {
+        verify(auditService, times(1)).report(any());
+    }
+
     @Test
     public void shouldCreate() {
         OAuth2Request oAuth2Request = new OAuth2Request();
@@ -112,6 +122,31 @@ public class TokenServiceTest {
 
         when(jwtService.encode(any(), any(Client.class))).thenReturn(Single.just(""));
         when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenReturn(Single.just(new AccessToken("token-id")));
+        when(executionContextFactory.create(any())).thenReturn(executionContext);
+        doReturn(Completable.complete()).when(tokenManager).storeAccessToken(any());
+        TestObserver<Token> testObserver = tokenService.create(oAuth2Request, client, null).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(tokenManager, times(1)).storeAccessToken(any());
+        verify(accessTokenRepository, never()).delete(anyString());
+        verify(refreshTokenRepository, never()).delete(anyString());
+    }
+
+    @Test
+    public void shouldCreateAccessTokenWithRefreshToken() {
+        OAuth2Request oAuth2Request = new OAuth2Request();
+
+        Client client = new Client();
+        client.setClientId("my-client-id");
+
+        AccessToken accessToken = new AccessToken("token-value");
+        accessToken.setRefreshToken("refresh-token-value");
+
+        ExecutionContext executionContext = mock(ExecutionContext.class);
+
+        when(jwtService.encode(any(), any(Client.class))).thenReturn(Single.just(""));
+        when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenReturn(Single.just(accessToken));
         when(executionContextFactory.create(any())).thenReturn(executionContext);
         doReturn(Completable.complete()).when(tokenManager).storeAccessToken(any());
         TestObserver<Token> testObserver = tokenService.create(oAuth2Request, client, null).test();

@@ -43,7 +43,7 @@ public class AuditServiceImpl implements AuditService, InitializingBean, Disposa
     private ExecutorService executorService;
 
     @Override
-    public void report(AuditBuilder auditBuilder) {
+    public void report(AuditBuilder<?> auditBuilder) {
         executorService.execute(() -> auditReporterService.report(auditBuilder.build(objectMapper)));
     }
 

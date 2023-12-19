@@ -32,6 +32,7 @@ import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.AuditService;
 import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.MultiValueMap;
 import io.gravitee.el.TemplateEngine;
@@ -39,6 +40,7 @@ import io.gravitee.gateway.api.ExecutionContext;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
+import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -84,7 +86,10 @@ public class IDTokenServiceTest {
     @Mock
     private ExecutionContextFactory executionContextFactory;
 
-    private ObjectMapper objectMapper = new ObjectMapper();
+    @Mock
+    private AuditService auditService;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
     public void shouldCreateIDToken_clientOnly_clientIdTokenCertificate() {
@@ -119,7 +124,6 @@ public class IDTokenServiceTest {
         verify(certificateManager, times(1)).defaultCertificateProvider();
         verify(jwtService, times(1)).encode(any(), eq(idTokenCert));
     }
-
     @Test
     public void shouldCreateIDToken_clientOnly_clientCertificate() {
         OAuth2Request oAuth2Request = new OAuth2Request();

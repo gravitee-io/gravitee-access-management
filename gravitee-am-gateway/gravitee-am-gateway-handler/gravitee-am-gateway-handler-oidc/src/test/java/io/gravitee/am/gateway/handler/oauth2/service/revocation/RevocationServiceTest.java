@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.revocation;
 
+import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.service.revocation.impl.RevocationTokenServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
@@ -23,9 +25,12 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.impl.AccessToken;
 import io.gravitee.am.gateway.handler.oauth2.service.token.impl.RefreshToken;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.AuditService;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
+import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -48,6 +53,14 @@ public class RevocationServiceTest {
     @Mock
     private TokenService tokenService;
 
+    @Mock
+    private AuditService auditService;
+
+    @After
+    public void after() {
+        verify(auditService, times(1)).report(any());
+    }
+
     @Test
     public void shouldNotRevoke_WrongRequestedClientId() {
         final RevocationTokenRequest revocationTokenRequest = new RevocationTokenRequest("token");
@@ -57,6 +70,8 @@ public class RevocationServiceTest {
 
         Client client = new Client();
         client.setClientId("wrong-client-id");
+        client.setClientName("wrong-client-id");
+        client.setDomain("domain-id");
 
         when(tokenService.getAccessToken("token", client)).thenReturn(Maybe.just(accessToken));
 
@@ -77,6 +92,8 @@ public class RevocationServiceTest {
 
         Client client = new Client();
         client.setClientId("client-id");
+        client.setClientName("client-id");
+        client.setDomain("domain-id");
 
         when(tokenService.getAccessToken("token", client)).thenReturn(Maybe.empty());
         when(tokenService.getRefreshToken("token", client)).thenReturn(Maybe.empty());
@@ -99,10 +116,11 @@ public class RevocationServiceTest {
 
         Client client = new Client();
         client.setClientId("client-id");
+        client.setClientName("client-id");
+        client.setDomain("domain-id");
 
         AccessToken accessToken = new AccessToken("token");
         accessToken.setClientId("client-id");
-
         when(tokenService.getAccessToken("token", client)).thenReturn(Maybe.just(accessToken));
         when(tokenService.deleteAccessToken("token")).thenReturn(Completable.complete());
 

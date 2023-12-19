@@ -23,15 +23,19 @@ import io.gravitee.am.gateway.handler.oauth2.service.assertion.ClientAssertionSe
 import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.impl.ApplicationClientSecretService;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Maybe;
 import io.vertx.core.http.HttpMethod;
+import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import static org.mockito.ArgumentMatchers.any;
 import org.mockito.Mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -60,15 +64,23 @@ public class ClientAuthHandlerTest extends RxWebTestBase {
     @Mock
     private ApplicationClientSecretService applicationClientSecretService;
 
+    @Mock
+    private AuditService auditService;
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
 
         router.post("/oauth/token")
-                .handler(ClientAuthHandler.create(clientSyncService, clientAssertionService, jwkService, domain, applicationClientSecretService, null))
+                .handler(ClientAuthHandler.create(clientSyncService, clientAssertionService, jwkService, domain, applicationClientSecretService, null, auditService))
                 .handler(rc -> rc.response().setStatusCode(200).end())
                 .failureHandler(new ExceptionHandler());
+    }
+
+    @After
+    public void after() throws Exception {
+        verify(auditService, times(1)).report(any());
+        super.after();
     }
 
     @Test
@@ -158,7 +170,6 @@ public class ClientAuthHandlerTest extends RxWebTestBase {
 
     @Test
     public void shouldInvoke_clientCredentials_privateJWT_privateJWTTokenAuthMethod() throws Exception {
-        final String clientId = "client-id";
         Client client = mock(Client.class);
         when(clientAssertionService.assertClient(eq("type"), eq("myToken"), anyString())).thenReturn(Maybe.just(client));
 
@@ -171,7 +182,6 @@ public class ClientAuthHandlerTest extends RxWebTestBase {
 
     @Test
     public void shouldNotInvoke_clientCredentials_privateJWT_privateJWTTokenAuthMethod_MissingSSLCert() throws Exception {
-        final String clientId = "client-id";
         Client client = mock(Client.class);
         when(client.isTlsClientCertificateBoundAccessTokens()).thenReturn(true);
 
@@ -185,7 +195,6 @@ public class ClientAuthHandlerTest extends RxWebTestBase {
 
     @Test
     public void shouldInvoke_clientCredentials_clientSecret_clientSecretJWTTokenAuthMethod() throws Exception {
-        final String clientId = "client-id";
         Client client = mock(Client.class);
         when(clientAssertionService.assertClient(eq("type"), eq("myToken"), anyString())).thenReturn(Maybe.just(client));
 

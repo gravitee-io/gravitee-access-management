@@ -23,5 +23,5 @@ import io.gravitee.am.service.reporter.builder.AuditBuilder;
  */
 public interface AuditService {
 
-    void report(AuditBuilder auditBuilder);
+    void report(AuditBuilder<?> auditBuilder);
 }
