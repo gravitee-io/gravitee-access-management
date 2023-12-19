@@ -27,7 +27,6 @@ import io.vertx.ext.auth.VertxContextPRNG;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.Session;
 import io.vertx.ext.web.handler.CSRFHandler;
-import io.vertx.ext.web.handler.SessionHandler;
 import io.vertx.rxjava3.core.MultiMap;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 
@@ -207,10 +206,7 @@ public class CSRFHandlerImpl implements CSRFHandler {
                     // when there's no token in the session, then we behave just like when there is no session
                     // create a new token, but we also store it in the session for the next runs
                     if (sessionToken == null) {
-                        token = generateToken();
-                        // storing will include the session id too. The reason is that if a session is upgraded
-                        // we don't want to allow the token to be valid anymore
-                        session.put(headerName, session.id() + "/" + token);
+                        token = generateAndStoreToken(ctx);
                     } else {
                         // attempt to parse the value
                         int idx = sessionToken.indexOf('/');
@@ -218,18 +214,22 @@ public class CSRFHandlerImpl implements CSRFHandler {
                             String sid = sessionToken.substring(0, idx);
                             if (sid.equals(session.id())) {
                                 // we're still on the same session, no need to regenerate the token
-                                token = sessionToken.substring(idx + 1);
-                                // in this case specifically we don't issue the token as it is unchanged
-                                // the user agent still has it from the previous interaction.
+                                final String currentToken = sessionToken.substring(idx + 1);
+                                if (!validateToken(currentToken, ctx.request().getCookie(cookieName))) {
+                                    // XSRF token has expired, regenerate a new one to not block the user
+                                    token = generateAndStoreToken(ctx);
+                                } else {
+                                    // in this case specifically we don't issue the token as it is unchanged
+                                    // the user agent still has it from the previous interaction.
+                                    token = currentToken;
+                                }
                             } else {
                                 // session has been upgraded, don't trust the token and regenerate
-                                token = generateToken();
-                                session.put(headerName, session.id() + "/" + token);
+                                token = generateAndStoreToken(ctx);
                             }
                         } else {
                             // cannot parse the value from the session
-                            token = generateToken();
-                            session.put(headerName, session.id() + "/" + token);
+                            token = generateAndStoreToken(ctx);
                        }
                     }
                 }
@@ -258,6 +258,15 @@ public class CSRFHandlerImpl implements CSRFHandler {
                 ctx.next();
                 break;
         }
+    }
+
+    private String generateAndStoreToken(RoutingContext context) {
+        var token = generateToken();
+        // storing will include the session id too. The reason is that if a session is upgraded
+        // we don't want to allow the token to be valid anymore
+        var session = context.session();
+        session.put(headerName, session.id() + "/" + token);
+        return token;
     }
 
     private void enhanceContext(RoutingContext ctx) {
