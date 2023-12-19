@@ -29,7 +29,6 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -73,13 +72,6 @@ public class TokenServiceTest {
     private AuditService auditService;
 
     private final static String DOMAIN = "domain1";
-
-    @Before
-    public void setUp() {
-        var user = new User();
-        user.setClient("client1");
-        when(userService.findById(any())).thenReturn(Maybe.just(user));
-    }
 
     @Test
     public void shouldFindTotalTokensByDomain() {
@@ -221,8 +213,9 @@ public class TokenServiceTest {
     public void shouldDeleteTokensByUser() {
         when(accessTokenRepository.deleteByUserId("userId")).thenReturn(Completable.complete());
         when(refreshTokenRepository.deleteByUserId("userId")).thenReturn(Completable.complete());
-
-        TestObserver testObserver = tokenService.deleteByUserId("userId").test();
+        var user = new User();
+        user.setId("userId");
+        TestObserver<Void> testObserver = tokenService.deleteByUser(user).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 

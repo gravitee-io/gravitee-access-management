@@ -404,7 +404,7 @@ public class UserServiceImpl implements UserService {
                 })
                 .flatMap(user1 -> {
                     if (accountSettings != null && accountSettings.isResetPasswordInvalidateTokens()) {
-                        return tokenService.deleteByUserId(user1.getId())
+                        return tokenService.deleteByUser(user1)
                                 .toSingleDefault(user1)
                                 .onErrorResumeNext(err -> {
                                     logger.warn("Tokens not invalidated for user {} due to : {}", user1.getId(), err.getMessage());
@@ -587,7 +587,7 @@ public class UserServiceImpl implements UserService {
                     return userService.update(user1)
                             .flatMapCompletable(user2 -> {
                                 if (invalidateTokens) {
-                                    return tokenService.deleteByUserId(user2.getId());
+                                    return tokenService.deleteByUser(user2);
                                 }
                                 return complete();
                             });

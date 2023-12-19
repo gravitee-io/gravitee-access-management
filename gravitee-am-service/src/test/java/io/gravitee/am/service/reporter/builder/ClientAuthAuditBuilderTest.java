@@ -31,7 +31,7 @@ class ClientAuthAuditBuilderTest {
     @Test
     void shouldBuildDefaultWhenNulls() {
         var audit = AuditBuilder.builder(ClientAuthAuditBuilder.class)
-                .clientTarget(null)
+                .clientActor(null)
                 .throwable(null)
                 .build(objectMapper);
         assertEquals(CLIENT_AUTHENTICATION, audit.getType());
@@ -51,16 +51,16 @@ class ClientAuthAuditBuilderTest {
         c.setClientName(clientName);
         c.setDomain(domainId);
 
-        var audit = AuditBuilder.builder(ClientAuthAuditBuilder.class).clientTarget(c).build(objectMapper);
+        var audit = AuditBuilder.builder(ClientAuthAuditBuilder.class).clientActor(c).build(objectMapper);
 
         assertEquals(domainId, audit.getReferenceId());
         assertEquals(applicationId, audit.getAccessPoint().getId());
         assertEquals(clientId, audit.getAccessPoint().getAlternativeId());
         assertEquals(clientName, audit.getAccessPoint().getDisplayName());
         assertEquals(ReferenceType.DOMAIN, audit.getReferenceType());
-        assertEquals(applicationId, audit.getTarget().getId());
-        assertEquals(clientName, audit.getTarget().getDisplayName());
-        assertEquals(clientName, audit.getTarget().getAlternativeId());
+        assertEquals(applicationId, audit.getActor().getId());
+        assertEquals(clientName, audit.getActor().getDisplayName());
+        assertEquals(clientName, audit.getActor().getAlternativeId());
         assertEquals(SUCCESS, audit.getOutcome().getStatus());
         assertEquals(CLIENT_AUTHENTICATION, audit.getType());
     }
@@ -78,16 +78,16 @@ class ClientAuthAuditBuilderTest {
         client.setClientName(clientName);
         client.setDomain(domainId);
 
-        var audit = AuditBuilder.builder(ClientAuthAuditBuilder.class).clientTarget(client).throwable(new Exception(errorMessage)).build(objectMapper);
+        var audit = AuditBuilder.builder(ClientAuthAuditBuilder.class).clientActor(client).throwable(new Exception(errorMessage)).build(objectMapper);
 
         assertEquals(domainId, audit.getReferenceId());
         assertEquals(applicationId, audit.getAccessPoint().getId());
         assertEquals(clientId, audit.getAccessPoint().getAlternativeId());
         assertEquals(clientName, audit.getAccessPoint().getDisplayName());
         assertEquals(ReferenceType.DOMAIN, audit.getReferenceType());
-        assertEquals(applicationId, audit.getTarget().getId());
-        assertEquals(clientName, audit.getTarget().getDisplayName());
-        assertEquals(clientName, audit.getTarget().getAlternativeId());
+        assertEquals(applicationId, audit.getActor().getId());
+        assertEquals(clientName, audit.getActor().getDisplayName());
+        assertEquals(clientName, audit.getActor().getAlternativeId());
         assertEquals(FAILURE, audit.getOutcome().getStatus());
         assertEquals(errorMessage, audit.getOutcome().getMessage());
         assertEquals(CLIENT_AUTHENTICATION, audit.getType());

@@ -16,6 +16,7 @@
 package io.gravitee.am.service.impl;
 
 import io.gravitee.am.model.Application;
+import io.gravitee.am.model.User;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
 import io.gravitee.am.service.ApplicationService;
@@ -115,8 +116,9 @@ public class TokenServiceImpl implements TokenService {
     }
 
     @Override
-    public Completable deleteByUserId(String userId) {
-        LOGGER.debug("Delete tokens by user : {}", userId);
+    public Completable deleteByUser(User user) {
+        LOGGER.debug("Delete tokens by user : {}", user.getId());
+        var userId = user.getId();
         return accessTokenRepository.deleteByUserId(userId)
                 .andThen(refreshTokenRepository.deleteByUserId(userId))
                 .onErrorResumeNext(ex -> {
@@ -124,12 +126,10 @@ public class TokenServiceImpl implements TokenService {
                     return Completable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find total tokens by user: %s", userId), ex));
                 })
-                .doOnEvent(error -> userService.findById(userId).doOnEvent((user, er) ->
-                                auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
+                .doOnEvent(error -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
                                         .tokenActor(user)
                                         .revoked("All tokens are revoked for user: " + userId)
-                                        .throwable(error)))
-                        .ignoreElement().subscribe());
+                                        .throwable(error)));
     }
 
     private Single<Long> countByClientId(Application application) {

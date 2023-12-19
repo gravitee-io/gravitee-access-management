@@ -16,6 +16,7 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.model.Application;
+import io.gravitee.am.model.User;
 import io.gravitee.am.service.model.TotalToken;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
@@ -32,5 +33,5 @@ public interface TokenService {
 
     Single<TotalToken> findTotalTokens();
 
-    Completable deleteByUserId(String userId);
+    Completable deleteByUser(User user);
 }

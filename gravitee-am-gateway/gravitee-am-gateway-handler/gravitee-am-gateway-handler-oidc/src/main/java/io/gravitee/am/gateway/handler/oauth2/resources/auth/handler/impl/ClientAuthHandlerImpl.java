@@ -90,7 +90,7 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
                             routingContext.response().putHeader("WWW-Authenticate", authenticateHeader);
                         }
                     }
-                    auditService.report(AuditBuilder.builder(ClientAuthAuditBuilder.class).clientTarget(client).throwable(throwable));
+                    auditService.report(AuditBuilder.builder(ClientAuthAuditBuilder.class).clientActor(client).throwable(throwable));
                     routingContext.fail(authHandler.cause());
                     return;
                 }
@@ -105,20 +105,20 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
                         routingContext.put(ConstantKeys.PEER_CERTIFICATE_THUMBPRINT, getThumbprint(peerCertificate.get(), "SHA-256"));
                     } else if (authenticatedClient.isTlsClientCertificateBoundAccessTokens() || domain.usePlainFapiProfile()) {
                         var error = new InvalidClientException(CERTIFICATE_ERROR);
-                        auditService.report(AuditBuilder.builder(ClientAuthAuditBuilder.class).clientTarget(client).throwable(error));
+                        auditService.report(AuditBuilder.builder(ClientAuthAuditBuilder.class).clientActor(client).throwable(error));
                         routingContext.fail(error);
                         return;
                     }
                 } catch (SSLPeerUnverifiedException | NoSuchAlgorithmException | CertificateException ce ) {
                     if (authenticatedClient.isTlsClientCertificateBoundAccessTokens() || domain.usePlainFapiProfile()) {
                         var error = new InvalidClientException(CERTIFICATE_ERROR);
-                        auditService.report(AuditBuilder.builder(ClientAuthAuditBuilder.class).clientTarget(client).throwable(error));
+                        auditService.report(AuditBuilder.builder(ClientAuthAuditBuilder.class).clientActor(client).throwable(error));
                         routingContext.fail(error);
                         return;
                     }
                 }
 
-                auditService.report(AuditBuilder.builder(ClientAuthAuditBuilder.class).clientTarget(client));
+                auditService.report(AuditBuilder.builder(ClientAuthAuditBuilder.class).clientActor(client));
                 // put client in context and continue
                 routingContext.put(CLIENT_CONTEXT_KEY, authenticatedClient);
                 routingContext.next();

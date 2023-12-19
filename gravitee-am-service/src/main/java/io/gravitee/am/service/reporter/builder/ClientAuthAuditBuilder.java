@@ -26,10 +26,10 @@ public class ClientAuthAuditBuilder extends AuditBuilder<ClientAuthAuditBuilder>
         type(EventType.CLIENT_AUTHENTICATION);
     }
 
-    public ClientAuthAuditBuilder clientTarget(Client client) {
+    public ClientAuthAuditBuilder clientActor(Client client) {
         if (client != null) {
             var domainId = client.getDomain();
-            setTarget(client.getId(), EntityType.APPLICATION, client.getClientName(), client.getClientName(), ReferenceType.DOMAIN, domainId);
+            setActor(client.getId(), EntityType.APPLICATION, client.getClientName(), client.getClientName(), ReferenceType.DOMAIN, domainId);
             super.client(client);
             super.domain(domainId);
         }

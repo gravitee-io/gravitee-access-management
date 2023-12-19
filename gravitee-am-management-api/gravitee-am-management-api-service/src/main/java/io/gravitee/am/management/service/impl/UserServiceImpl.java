@@ -300,7 +300,7 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
                                                                           return userService.update(user);
                                                                       })// after audit, invalidate tokens whatever is the domain or app settings
                                                                                        // as it is an admin action here, we want to force the user to login
-                                                                                       .flatMap(updatedUser -> Single.defer(() -> tokenService.deleteByUserId(updatedUser.getId())
+                                                                                       .flatMap(updatedUser -> Single.defer(() -> tokenService.deleteByUser(updatedUser)
                                                                                                                              .toSingleDefault(updatedUser)
                                                                                                                              .onErrorResumeNext(err -> {
                                                                                                                                  logger.warn("Tokens not invalidated for user {} due to : {}", userId, err.getMessage());
