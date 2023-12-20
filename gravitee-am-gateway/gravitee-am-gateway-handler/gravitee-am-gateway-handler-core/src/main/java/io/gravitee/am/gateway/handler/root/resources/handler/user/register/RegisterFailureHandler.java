@@ -16,19 +16,14 @@
 package io.gravitee.am.gateway.handler.root.resources.handler.user.register;
 
 import io.gravitee.am.common.utils.ConstantKeys;
-import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.root.RootProvider;
 import io.gravitee.am.gateway.handler.root.resources.handler.error.AbstractErrorHandler;
 import io.gravitee.am.service.exception.EmailFormatInvalidException;
 import io.gravitee.am.service.exception.InvalidUserException;
-import io.gravitee.common.http.HttpHeaders;
-import io.vertx.core.Handler;
+import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.vertx.rxjava3.core.MultiMap;
-import io.vertx.rxjava3.core.http.HttpServerResponse;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static io.gravitee.am.common.utils.ConstantKeys.ERROR_PARAM_KEY;
 

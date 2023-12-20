@@ -17,8 +17,8 @@ package io.gravitee.am.gateway.handler.root.resources.handler.login;
 
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifierManager;
-import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
@@ -32,7 +32,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static io.gravitee.am.common.utils.ConstantKeys.ACTION_KEY;
-import static io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils.getCleanedQueryParams;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.resolveProxyRequest;
 import static java.lang.Boolean.TRUE;
 
@@ -66,7 +65,7 @@ public class LoginCallbackDeviceIdHandler implements Handler<RoutingContext> {
 
         // add context data
         Map<String, Object> data = new HashMap<>(routingContext.data());
-        final MultiMap queryParams = getCleanedQueryParams(routingContext.request());
+        final MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
         data.put(ACTION_KEY, resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams, true));
         data.putAll(deviceIdentifierManager.getTemplateVariables(client));
 

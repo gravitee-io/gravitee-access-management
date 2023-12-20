@@ -17,7 +17,6 @@ package io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.co
 
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.utils.ConstantKeys;
-import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User;
 import io.gravitee.am.gateway.handler.oauth2.service.consent.UserConsentService;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
@@ -25,7 +24,7 @@ import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.service.impl.user.activity.utils.ConsentUtils;
+import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;

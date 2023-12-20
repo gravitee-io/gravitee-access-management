@@ -29,7 +29,7 @@ import io.gravitee.am.service.EmailService;
 import io.gravitee.am.service.VerifyAttemptService;
 import io.gravitee.am.service.exception.MFAValidationAttemptException;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
-import io.gravitee.am.service.reporter.builder.management.VerifyAttemptAuditBuilder;
+import io.gravitee.am.service.reporter.builder.gateway.VerifyAttemptAuditBuilder;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import org.slf4j.Logger;

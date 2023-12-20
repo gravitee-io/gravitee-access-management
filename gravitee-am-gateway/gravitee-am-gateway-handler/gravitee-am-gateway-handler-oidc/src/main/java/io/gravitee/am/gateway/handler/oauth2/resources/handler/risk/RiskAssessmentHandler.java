@@ -38,21 +38,20 @@ import io.gravitee.risk.assessment.api.devices.Devices;
 import io.gravitee.risk.assessment.api.geovelocity.GeoTimeCoordinate;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.functions.Function;
-import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.core.eventbus.EventBus;
 import io.vertx.rxjava3.core.eventbus.Message;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import java.util.List;
-import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
+import java.util.Optional;
+
 import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ID;
-import static io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils.remoteAddress;
+import static io.gravitee.am.service.utils.vertx.RequestUtils.remoteAddress;
 import static io.gravitee.risk.assessment.api.assessment.Assessment.NONE;
-import static java.lang.Enum.valueOf;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
