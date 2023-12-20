@@ -18,7 +18,6 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.user.password;
 import io.gravitee.am.common.exception.authentication.AccountStatusException;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.utils.ConstantKeys;
-import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.UserRequestHandler;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.gateway.handler.root.service.user.model.ForgotPasswordParameters;
@@ -29,7 +28,7 @@ import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.exception.EnforceUserIdentityException;
 import io.gravitee.am.service.exception.UserNotFoundException;
-import io.gravitee.am.service.impl.user.activity.utils.ConsentUtils;
+import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.vertx.rxjava3.core.MultiMap;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 

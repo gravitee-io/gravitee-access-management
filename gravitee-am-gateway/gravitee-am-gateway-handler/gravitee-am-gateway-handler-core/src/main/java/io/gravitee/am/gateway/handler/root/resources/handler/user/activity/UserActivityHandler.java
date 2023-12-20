@@ -17,15 +17,16 @@
 package io.gravitee.am.gateway.handler.root.resources.handler.user.activity;
 
 import io.gravitee.am.common.jwt.Claims;
-import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserActivity.Type;
 import io.gravitee.am.service.UserActivityService;
+import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import java.util.HashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.HashMap;
 
 import static io.gravitee.am.common.utils.ConstantKeys.GEOIP_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.LOGIN_ATTEMPT_KEY;

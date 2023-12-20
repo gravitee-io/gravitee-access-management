@@ -17,10 +17,13 @@ package io.gravitee.am.gateway.handler.root.resources.handler.user;
 
 import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
 import io.gravitee.am.common.utils.ConstantKeys;
-import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.gateway.handler.root.service.user.model.UserToken;
+<<<<<<< HEAD
 import io.reactivex.rxjava3.core.Maybe;
+=======
+import io.gravitee.am.service.utils.vertx.RequestUtils;
+>>>>>>> 48f65e3221 (chore: refactor the code to be able to provide IP and UserAgent in audit logs)
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
