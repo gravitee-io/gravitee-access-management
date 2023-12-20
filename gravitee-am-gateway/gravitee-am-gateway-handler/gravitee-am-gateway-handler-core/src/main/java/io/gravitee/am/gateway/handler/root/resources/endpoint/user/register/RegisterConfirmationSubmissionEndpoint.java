@@ -16,13 +16,13 @@
 package io.gravitee.am.gateway.handler.root.resources.endpoint.user.register;
 
 import io.gravitee.am.common.utils.ConstantKeys;
-import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.UserRequestHandler;
 import io.gravitee.am.gateway.handler.root.service.response.RegistrationResponse;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
