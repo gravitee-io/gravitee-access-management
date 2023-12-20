@@ -17,13 +17,13 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.mfa;
 
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.common.utils.ConstantKeys;
-import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.gravitee.common.http.HttpHeaders;
 import io.vertx.ext.web.handler.HttpException;
 import io.vertx.rxjava3.core.MultiMap;

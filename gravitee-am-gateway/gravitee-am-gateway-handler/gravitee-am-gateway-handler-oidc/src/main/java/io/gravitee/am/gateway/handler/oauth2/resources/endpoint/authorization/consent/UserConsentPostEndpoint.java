@@ -15,18 +15,14 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.consent;
 
-import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
+import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.Handler;
-import io.vertx.rxjava3.core.MultiMap;
 import io.vertx.rxjava3.core.http.HttpServerResponse;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 

@@ -41,68 +41,9 @@ public abstract class ManagementAuditBuilder<T> extends AuditBuilder<T> {
         setActor(SYSTEM, SYSTEM, SYSTEM, SYSTEM, ReferenceType.PLATFORM, Platform.DEFAULT);
     }
 
-    public T principal(User principal) {
-        if (principal != null) {
-            setActor(principal.getId(), EntityType.USER, principal.getUsername(), getDisplayName(principal), getReferenceType(principal), getReferenceId(principal));
-            if (principal.getAdditionalInformation() != null) {
-                if (principal.getAdditionalInformation().containsKey(Claims.ip_address)) {
-                    ipAddress((String) principal.getAdditionalInformation().get(Claims.ip_address));
-                }
-                if (principal.getAdditionalInformation().containsKey(Claims.user_agent)) {
-                    userAgent((String) principal.getAdditionalInformation().get(Claims.user_agent));
-                }
-            }
-        }
-        return (T) this;
-    }
-
     public T systemPrincipal() {
         setActor(SYSTEM, SYSTEM, SYSTEM, SYSTEM, ReferenceType.PLATFORM, Platform.DEFAULT);
         return (T) this;
     }
 
-    private String getDisplayName(User user) {
-        final String displayName =
-                // display name
-                user.getAdditionalInformation() != null && user.getAdditionalInformation().containsKey(StandardClaims.NAME) ?
-                        (String) user.getAdditionalInformation().get(StandardClaims.NAME) :
-                        // default to username
-                        user.getUsername();
-
-        return displayName;
-    }
-
-
-    private ReferenceType getReferenceType(User user) {
-        if (user.getAdditionalInformation() == null) {
-            return null;
-        }
-
-        if (user.getAdditionalInformation().containsKey(Claims.domain)) {
-            return ReferenceType.DOMAIN;
-        }
-
-        if (user.getAdditionalInformation().containsKey(Claims.organization)) {
-            return ReferenceType.ORGANIZATION;
-        }
-
-        return null;
-    }
-
-    private String getReferenceId(User user) {
-
-        if (user.getAdditionalInformation() == null) {
-            return null;
-        }
-
-        if (user.getAdditionalInformation().containsKey(Claims.domain)) {
-            return (String) user.getAdditionalInformation().get(Claims.domain);
-        }
-
-        if (user.getAdditionalInformation().containsKey(Claims.organization)) {
-            return (String) user.getAdditionalInformation().get(Claims.organization);
-        }
-
-        return null;
-    }
 }
