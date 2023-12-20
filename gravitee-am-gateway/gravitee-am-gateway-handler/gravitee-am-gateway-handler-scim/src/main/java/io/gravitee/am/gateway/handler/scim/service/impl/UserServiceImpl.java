@@ -239,6 +239,16 @@ public class UserServiceImpl implements UserService {
                                                 .switchIfEmpty(Single.error(() -> new UserProviderNotFoundException(source)))
                                                 .flatMap(userProvider -> userProvider.create(UserMapper.convert(userModel)));
                                     })
+                                    .flatMap(idUser ->
+                                            userRepository.findByExternalIdAndSource(ReferenceType.DOMAIN, domain.getId(), idUser.getId(), source)
+                                                    .isEmpty()
+                                                    .map(isEmpty -> {
+                                                        if (FALSE.equals(isEmpty)) {
+                                                            throw new UniquenessException("User with externalId [" + idUser.getId() + "] already exists");
+                                                        }
+                                                        return idUser;
+                                                    })
+                                    )
                                     .flatMap(idpUser -> {
                                         // AM 'users' collection is not made for authentication (but only management stuff)
                                         // clear password
