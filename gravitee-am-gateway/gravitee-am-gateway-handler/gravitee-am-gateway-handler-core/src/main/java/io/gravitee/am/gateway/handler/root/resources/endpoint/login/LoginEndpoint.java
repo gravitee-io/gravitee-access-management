@@ -28,6 +28,7 @@ import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.safe.ClientProperties;
 import io.gravitee.am.service.UserActivityService;
+import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.core.MultiMap;
 import io.vertx.rxjava3.ext.web.RoutingContext;
@@ -52,7 +53,6 @@ import static io.gravitee.am.common.utils.ConstantKeys.TEMPLATE_KEY_BACK_LOGIN_I
 import static io.gravitee.am.common.utils.ConstantKeys.TEMPLATE_KEY_REGISTER_ACTION_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.TEMPLATE_KEY_WEBAUTHN_ACTION_KEY;
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
-import static io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils.getCleanedQueryParams;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.resolveProxyRequest;
 import static java.util.Optional.ofNullable;
@@ -127,7 +127,7 @@ public class LoginEndpoint extends AbstractEndpoint implements Handler<RoutingCo
         routingContext.put(ConstantKeys.PARAM_CONTEXT_KEY, params);
 
         // put action urls in context
-        final MultiMap queryParams = getCleanedQueryParams(routingContext.request());
+        final MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
         routingContext.put(ACTION_KEY, resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams, true));
         routingContext.put(TEMPLATE_KEY_FORGOT_ACTION_KEY, resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/forgotPassword", queryParams, true));
         routingContext.put(TEMPLATE_KEY_REGISTER_ACTION_KEY, resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/register", queryParams, true));

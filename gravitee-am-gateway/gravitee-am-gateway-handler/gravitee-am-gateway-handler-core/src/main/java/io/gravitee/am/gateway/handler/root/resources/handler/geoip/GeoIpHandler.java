@@ -20,6 +20,7 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.UserActivityService;
+import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.rxjava3.core.eventbus.EventBus;
@@ -28,7 +29,6 @@ import java.util.Optional;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static io.gravitee.am.common.utils.ConstantKeys.GEOIP_KEY;
-import static io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils.remoteAddress;
 import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
 import org.slf4j.Logger;
@@ -60,7 +60,7 @@ public class GeoIpHandler implements Handler<RoutingContext> {
                 .map(MFASettings::getAdaptiveAuthenticationRule)
                 .orElse("");
         if ((!adaptiveRule.isEmpty() || userActivityService.canSaveUserActivity()) && isNull(routingContext.data().get(GEOIP_KEY))) {
-            var ip = remoteAddress(routingContext.request());
+            var ip = RequestUtils.remoteAddress(routingContext.request());
             if (!isNullOrEmpty(ip)) {
                 getGeoIpData(routingContext, ip);
             } else {

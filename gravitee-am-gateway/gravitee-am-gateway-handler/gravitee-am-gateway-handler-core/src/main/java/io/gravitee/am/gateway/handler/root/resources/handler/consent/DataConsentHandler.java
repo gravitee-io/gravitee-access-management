@@ -58,8 +58,9 @@ public class DataConsentHandler implements Handler<RoutingContext> {
     public void handle(RoutingContext context) {
         final HttpServerRequest request = context.request();
         if (context.session() != null) {
-            context.session().put(USER_CONSENT_IP_LOCATION, IMPLICIT_IP_CONSENT);
-            context.session().put(USER_CONSENT_USER_AGENT, IMPLICIT_USER_AGENT_CONSENT);
+            // keep consent for IP & Agent along the session life, so put the value only if present
+            context.session().putIfAbsent(USER_CONSENT_IP_LOCATION, IMPLICIT_IP_CONSENT);
+            context.session().putIfAbsent(USER_CONSENT_USER_AGENT, IMPLICIT_USER_AGENT_CONSENT);
 
             CONSENT_KEYS.forEach(key -> ofNullable(request.params())
                     .filter(params -> params.contains(key))
