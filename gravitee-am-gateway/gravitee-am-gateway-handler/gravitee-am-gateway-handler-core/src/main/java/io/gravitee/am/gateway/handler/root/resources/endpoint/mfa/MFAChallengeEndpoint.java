@@ -23,7 +23,6 @@ import io.gravitee.am.factor.api.FactorProvider;
 import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
-import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.identityprovider.api.DefaultUser;
@@ -50,8 +49,12 @@ import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.service.VerifyAttemptService;
 import io.gravitee.am.service.exception.FactorNotFoundException;
 import io.gravitee.am.service.exception.MFAValidationAttemptException;
+<<<<<<< HEAD
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.MFAAuditBuilder;
+=======
+import io.gravitee.am.service.utils.vertx.RequestUtils;
+>>>>>>> 48f65e3221 (chore: refactor the code to be able to provide IP and UserAgent in audit logs)
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.util.Maps;
 import io.gravitee.gateway.api.el.EvaluableRequest;

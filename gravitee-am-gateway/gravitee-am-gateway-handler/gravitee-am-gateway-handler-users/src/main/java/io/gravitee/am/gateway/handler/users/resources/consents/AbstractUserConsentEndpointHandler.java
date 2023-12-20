@@ -17,14 +17,13 @@ package io.gravitee.am.gateway.handler.users.resources.consents;
 
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
-import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.common.utils.ConstantKeys;
-import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
+import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.users.service.UserService;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.service.impl.user.activity.utils.ConsentUtils;
+import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 

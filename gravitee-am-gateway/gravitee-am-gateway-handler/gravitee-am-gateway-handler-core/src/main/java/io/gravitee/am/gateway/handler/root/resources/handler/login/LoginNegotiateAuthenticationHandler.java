@@ -19,10 +19,10 @@ import io.gravitee.am.common.exception.authentication.NegotiateContinueException
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
-import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.UserAuthProvider;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User;
+import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
