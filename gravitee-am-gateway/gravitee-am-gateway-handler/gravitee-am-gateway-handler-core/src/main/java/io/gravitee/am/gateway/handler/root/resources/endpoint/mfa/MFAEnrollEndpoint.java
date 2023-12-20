@@ -15,20 +15,27 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.endpoint.mfa;
 
+import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.factor.FactorSecurityType;
+import io.gravitee.am.common.factor.FactorType;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.factor.api.Enrollment;
 import io.gravitee.am.factor.api.FactorProvider;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
-import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
-import io.gravitee.am.model.*;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.EnrollmentSettings;
+import io.gravitee.am.model.MFASettings;
+import io.gravitee.am.model.Template;
+import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorChannel;
 import io.gravitee.am.model.factor.EnrolledFactorChannel.Type;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
+import io.gravitee.am.model.factor.FactorStatus;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
 import io.reactivex.Observable;
@@ -46,10 +53,12 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
 import static java.util.Optional.ofNullable;
+import static org.apache.commons.lang3.ObjectUtils.isNotEmpty;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -153,7 +162,7 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
 
     private void saveEnrollment(RoutingContext routingContext) {
         MultiMap params = routingContext.request().formAttributes();
-        final Boolean acceptEnrollment = Boolean.valueOf(params.get(ConstantKeys.USER_MFA_ENROLLMENT));
+        final boolean acceptEnrollment = Boolean.parseBoolean(params.get(ConstantKeys.USER_MFA_ENROLLMENT));
         final String factorId = params.get(ConstantKeys.MFA_ENROLLMENT_FACTOR_ID);
         final String sharedSecret = params.get(ConstantKeys.MFA_ENROLLMENT_SHARED_SECRET);
         final String phoneNumber = params.get(ConstantKeys.MFA_ENROLLMENT_PHONE);
@@ -181,6 +190,19 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
             return;
         }
 
+        if (routingContext.user() == null) {
+            logger.warn("User must be authenticated to enroll MFA challenge.");
+            routingContext.fail(401);
+            return;
+        }
+
+        final var endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
+        if (userAlreadyHasFactor(endUser, client)){
+            logger.warn("User already has active factor, enrollment of factor '{}' rejected", factorId);
+            routingContext.fail(new InvalidRequestException("factor already enrolled"));
+            return;
+        }
+
         // manage enrolled factors
         FactorProvider provider = optFactor.get().getValue();
         if (provider.checkSecurityFactor(getSecurityFactor(params, optFactor.get().getKey()))) {
@@ -200,6 +222,14 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
             // parameters are invalid
             routingContext.fail(400);
         }
+    }
+
+    private boolean userAlreadyHasFactor(User endUser, Client client) {
+        final var recoveryCodeFactors = getRecoveryFactorIds(client);
+        return isNotEmpty(endUser.getFactors()) &&
+                endUser.getFactors().stream()
+                        .filter(enrolledFactor -> !recoveryCodeFactors.contains(enrolledFactor.getFactorId()))
+                        .anyMatch(enrolledFactor -> enrolledFactor.getStatus() == FactorStatus.ACTIVATED);
     }
 
     private void redirectToAuthorize(RoutingContext routingContext) {
@@ -224,6 +254,9 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
                 enrolledFactor.setSecurity(new EnrolledFactorSecurity(FactorSecurityType.SHARED_SECRET, params.get("sharedSecret")));
                 enrolledFactor.setChannel(new EnrolledFactorChannel(Type.EMAIL, params.get("email")));
                 break;
+            default:
+                logger.error("{} factor not managed in enrollment endpoint", factor.getFactorType());
+                throw new IllegalArgumentException(factor.getFactorType() + " factor not managed in enrollment endpoint");
         }
         return enrolledFactor;
     }
@@ -244,6 +277,13 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
                 .stream()
                 .filter(f -> factorManager.get(f) != null)
                 .collect(Collectors.toMap(factorManager::getFactor, factorManager::get));
+    }
+
+    private Set<String> getRecoveryFactorIds(Client client) {
+        return client.getFactors()
+                .stream()
+                .filter(f -> factorManager.getFactor(f) != null && FactorType.RECOVERY_CODE.equals(factorManager.getFactor(f).getFactorType()))
+                .collect(Collectors.toSet());
     }
 
     @Override
