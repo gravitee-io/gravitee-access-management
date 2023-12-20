@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.common.vertx.utils;
+package io.gravitee.am.service.utils.vertx;
 
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.common.http.HttpHeaders;

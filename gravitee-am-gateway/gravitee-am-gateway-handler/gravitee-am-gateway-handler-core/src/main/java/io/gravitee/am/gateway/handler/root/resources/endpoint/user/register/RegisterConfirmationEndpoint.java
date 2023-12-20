@@ -17,7 +17,6 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.user.register;
 
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
-import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.manager.form.FormManager;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.UserRequestHandler;
@@ -25,6 +24,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.vertx.rxjava3.core.MultiMap;
