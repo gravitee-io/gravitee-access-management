@@ -216,11 +216,15 @@ public class UserServiceImpl implements UserService {
         final var rawPassword = user.getPassword();
 
         // check if user is unique
-        return userRepository.findByUsernameAndSource(ReferenceType.DOMAIN, domain.getId(), user.getUserName(), source)
-                .isEmpty()
-                .map(isEmpty -> {
-                    if (FALSE.equals(isEmpty)) {
+        return Single.zip(
+                userRepository.findByUsernameAndSource(ReferenceType.DOMAIN, domain.getId(), user.getUserName(), source).isEmpty(),
+                userRepository.findByExternalIdAndSource(ReferenceType.DOMAIN, domain.getId(), user.getExternalId(), source).isEmpty(),
+                (isNoUsername, isNoExternalId) -> {
+                    if (FALSE.equals(isNoUsername)) {
                         throw new UniquenessException("User with username [" + user.getUserName() + "] already exists");
+                    }
+                    if (FALSE.equals(isNoExternalId)) {
+                        throw new UniquenessException("User with externalId [" + user.getExternalId() + "] already exists");
                     }
                     return true;
                 })
@@ -239,16 +243,6 @@ public class UserServiceImpl implements UserService {
                                                 .switchIfEmpty(Single.error(() -> new UserProviderNotFoundException(source)))
                                                 .flatMap(userProvider -> userProvider.create(UserMapper.convert(userModel)));
                                     })
-                                    .flatMap(idUser ->
-                                            userRepository.findByExternalIdAndSource(ReferenceType.DOMAIN, domain.getId(), idUser.getId(), source)
-                                                    .isEmpty()
-                                                    .map(isEmpty -> {
-                                                        if (FALSE.equals(isEmpty)) {
-                                                            throw new UniquenessException("User with externalId [" + idUser.getId() + "] already exists");
-                                                        }
-                                                        return idUser;
-                                                    })
-                                    )
                                     .flatMap(idpUser -> {
                                         // AM 'users' collection is not made for authentication (but only management stuff)
                                         // clear password
@@ -499,7 +493,7 @@ public class UserServiceImpl implements UserService {
                             .andThen(verifyAttemptService.deleteByUser(user))
                             .andThen(userRepository.delete(userId))
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).domain(domain.getId()).type(EventType.USER_DELETED).user(user)))
-                            .doOnError((error) -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).domain(domain.getId()).type(EventType.USER_DELETED).throwable(error)));
+                            .doOnError(error -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).domain(domain.getId()).type(EventType.USER_DELETED).throwable(error)));
                 });
     }
 

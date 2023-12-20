@@ -205,6 +205,9 @@ public class UserServiceTest {
         var pwd = UUID.randomUUID().toString();
 
         when(userRepository.findByExternalIdAndSource(any(), any(), any(), any())).thenReturn(Maybe.just(user));
+        when(userRepository.findByUsernameAndSource(eq(ReferenceType.DOMAIN), anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(passwordService.isValid(any(), any(), any())).thenReturn(true);
+        when(domain.getId()).thenReturn("domain");
 
         User newUser = mock(User.class);
         when(newUser.getSource()).thenReturn("unknown-idp");
@@ -212,28 +215,6 @@ public class UserServiceTest {
         when(newUser.getPassword()).thenReturn(pwd);
         when(newUser.getExternalId()).thenReturn(externalId);
         when(newUser.getRoles()).thenReturn(Arrays.asList("role-1", "role-2"));
-        when(passwordService.isValid(any(), any(), any())).thenReturn(true);
-
-        io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.User.class);
-
-        UserProvider userProvider = mock(UserProvider.class);
-        when(userProvider.create(any())).thenReturn(Single.just(idpUser));
-
-        io.gravitee.am.model.User createdUser = mock(io.gravitee.am.model.User.class);
-
-        Set<Role> roles = new HashSet<>();
-        Role role1 = new Role();
-        role1.setId("role-1");
-        Role role2 = new Role();
-        role2.setId("role-2");
-        roles.add(role1);
-        roles.add(role2);
-
-        when(domain.getId()).thenReturn("domain");
-        when(userRepository.findByUsernameAndSource(eq(ReferenceType.DOMAIN), anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
-        when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(new IdentityProvider());
-        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
-        when(roleService.findByIdIn(newUser.getRoles())).thenReturn(Single.just(roles));
 
         TestObserver<User> testObserver = userService.create(newUser, null, "/", null, new Client()).test();
         testObserver.assertError(UniquenessException.class);
