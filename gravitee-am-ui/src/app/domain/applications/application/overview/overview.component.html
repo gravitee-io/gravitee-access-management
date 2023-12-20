@@ -98,7 +98,7 @@
             <pre #pre_authorization_code_exchange class="multiline">
 curl -X POST \
               {{ baseUrl }}/oauth/token \
-  -u '{{ clientId }}:&lt;<i>client_secret</i>&gt;' \
+  -u '{{ clientId }}:|client_secret|' \
   -H 'Content-Type: application/x-www-form-urlencoded' \
   -d 'grant_type=authorization_code&code=|code|&redirect_uri={{ redirectUri }}&client_id={{ getEncodedClientId()
               }}{{ getCodeVerifier() }}'</pre
@@ -112,7 +112,9 @@ curl -X POST \
 curl -X POST \
               {{ baseUrl }}/oauth/token \
   -H 'Content-Type: application/x-www-form-urlencoded' \
-  -d 'grant_type=client_credentials&client_id={{ clientId }}&client_secret=&lt;<i>client_secret</i>&gt;'</pre
+  -d 'grant_type=authorization_code&code=|code|&redirect_uri={{ redirectUri }}&client_id={{ clientId }}&client_secret=|client_secret|{{
+                getCodeVerifier()
+              }}'</pre
             >
           </div>
 
@@ -257,7 +259,7 @@ curl -X GET \
 curl -X POST \
               {{ baseUrl }}/oauth/token \
   -H 'Content-Type: application/x-www-form-urlencoded' \
-              -u '{{ clientId }}:&lt;<i>client_secret</i>&gt;' \
+              -u '{{ clientId }}:|client_secret|' \
   -d 'grant_type=client_credentials'</pre
             >
           </div>
@@ -269,7 +271,7 @@ curl -X POST \
 curl -X POST \
               {{ baseUrl }}/oauth/token \
   -H 'Content-Type: application/x-www-form-urlencoded' \
-  -d 'grant_type=client_credentials&client_id={{ clientId }}&client_secret=&lt;<i>client_secret</i>&gt;'</pre
+  -d 'grant_type=client_credentials&client_id={{ clientId }}&client_secret=|client_secret|'</pre
             >
           </div>
           <p>If the request is valid, the authorization server will issue an access token to make authorized calls to the APIs.</p>
