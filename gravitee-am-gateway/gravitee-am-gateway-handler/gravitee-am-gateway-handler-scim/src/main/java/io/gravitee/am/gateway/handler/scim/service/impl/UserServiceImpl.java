@@ -67,6 +67,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import java.text.MessageFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -90,7 +91,7 @@ import static java.util.Optional.ofNullable;
  * @author GraviteeSource Team
  */
 public class UserServiceImpl implements UserService {
-
+    private static final String PARAMETER_EXIST_ERROR = "User with {0} [{1}] already exists";
     private static final Logger LOGGER = LoggerFactory.getLogger(UserServiceImpl.class);
     private static final String DEFAULT_IDP_PREFIX = "default-idp-";
     public static final String FIELD_PASSWORD_IS_INVALID = "Field [password] is invalid";
@@ -221,10 +222,10 @@ public class UserServiceImpl implements UserService {
                 userRepository.findByExternalIdAndSource(ReferenceType.DOMAIN, domain.getId(), user.getExternalId(), source).isEmpty(),
                 (isNoUsername, isNoExternalId) -> {
                     if (FALSE.equals(isNoUsername)) {
-                        throw new UniquenessException("User with username [" + user.getUserName() + "] already exists");
+                        throw new UniquenessException(MessageFormat.format(PARAMETER_EXIST_ERROR, "username", user.getUserName()));
                     }
                     if (FALSE.equals(isNoExternalId)) {
-                        throw new UniquenessException("User with externalId [" + user.getExternalId() + "] already exists");
+                        throw new UniquenessException(MessageFormat.format(PARAMETER_EXIST_ERROR, "externalId", user.getExternalId()));
                     }
                     return true;
                 })
@@ -264,7 +265,7 @@ public class UserServiceImpl implements UserService {
                                             return userRepository.create(userModel);
                                         }
                                         if (ex instanceof UserAlreadyExistsException) {
-                                            return Single.error(new UniquenessException("User with username [" + user.getUserName() + "] already exists"));
+                                            return Single.error(new UniquenessException(MessageFormat.format(PARAMETER_EXIST_ERROR, "username", user.getUserName())));
                                         }
                                         return Single.error(ex);
                                     }))
@@ -443,7 +444,7 @@ public class UserServiceImpl implements UserService {
                 .flatMap(userContainer -> {
                     ObjectNode node = objectMapper.convertValue(userContainer.getScimUser(), ObjectNode.class);
                     patchOp.getOperations().forEach(operation -> operation.apply(node));
-                    boolean isCustomGraviteeUser = GraviteeUser.SCHEMAS.stream().anyMatch(schema -> node.has(schema));
+                    boolean isCustomGraviteeUser = GraviteeUser.SCHEMAS.stream().anyMatch(node::has);
                     User userToPatch = isCustomGraviteeUser ?
                             objectMapper.treeToValue(node, GraviteeUser.class) :
                             objectMapper.treeToValue(node, User.class);

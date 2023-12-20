@@ -198,8 +198,32 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldNotCreateUserWhenExternalIdAlreadyUsed() {
+    public void shouldNotCreateUserWhenUsernameAlreadyUsed() {
         var externalId = "external-id";
+        var user = new io.gravitee.am.model.User();
+        user.setExternalId(externalId);
+        var pwd = UUID.randomUUID().toString();
+
+        when(userRepository.findByUsernameAndSource(eq(ReferenceType.DOMAIN), anyString(), anyString(), anyString())).thenReturn(Maybe.just(user));
+        when(passwordService.isValid(any(), any(), any())).thenReturn(true);
+        when(domain.getId()).thenReturn("domain");
+
+        User newUser = mock(User.class);
+        when(newUser.getSource()).thenReturn("unknown-idp");
+        when(newUser.getUserName()).thenReturn("username-1");
+        when(newUser.getPassword()).thenReturn(pwd);
+        when(newUser.getExternalId()).thenReturn(externalId);
+        when(newUser.getRoles()).thenReturn(Arrays.asList("role-1", "role-2"));
+
+        TestObserver<User> testObserver = userService.create(newUser, null, "/", null, new Client()).test();
+        testObserver.assertError(UniquenessException.class);
+
+        verify(userRepository, never()).create(any());
+    }
+    
+    @Test
+    public void shouldNotCreateUserWhenExternalIdAlreadyUsed() {
+        var externalId = "external-id-3";
         var user = new io.gravitee.am.model.User();
         user.setExternalId(externalId);
         var pwd = UUID.randomUUID().toString();
@@ -211,7 +235,7 @@ public class UserServiceTest {
 
         User newUser = mock(User.class);
         when(newUser.getSource()).thenReturn("unknown-idp");
-        when(newUser.getUserName()).thenReturn("username");
+        when(newUser.getUserName()).thenReturn("username-1");
         when(newUser.getPassword()).thenReturn(pwd);
         when(newUser.getExternalId()).thenReturn(externalId);
         when(newUser.getRoles()).thenReturn(Arrays.asList("role-1", "role-2"));
