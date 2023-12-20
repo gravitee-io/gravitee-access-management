@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service.reporter.builder.management;
+package io.gravitee.am.service.reporter.builder.gateway;
 
 import io.gravitee.am.common.audit.EntityType;
 import io.gravitee.am.common.audit.EventType;
@@ -25,7 +25,7 @@ import io.gravitee.am.model.VerifyAttempt;
  * @author GraviteeSource Team
  */
 
-public class VerifyAttemptAuditBuilder extends ManagementAuditBuilder<VerifyAttemptAuditBuilder> {
+public class VerifyAttemptAuditBuilder extends GatewayAuditBuilder<VerifyAttemptAuditBuilder> {
     public VerifyAttemptAuditBuilder() {
         super();
     }
