@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.handler.user;
 
-import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
+import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.rxjava3.core.MultiMap;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
