@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.endpoint.mfa;
 
+import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.factor.FactorDataKeys;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.common.utils.MovingFactorUtils;
@@ -41,6 +42,7 @@ import io.gravitee.am.model.factor.EnrolledFactorChannel.Type;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.factor.FactorStatus;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.DeviceService;
 import io.gravitee.am.service.FactorService;
@@ -48,6 +50,8 @@ import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.service.VerifyAttemptService;
 import io.gravitee.am.service.exception.FactorNotFoundException;
 import io.gravitee.am.service.exception.MFAValidationAttemptException;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import io.gravitee.am.service.reporter.builder.gateway.VerifyAttemptAuditBuilder;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.util.Maps;
@@ -67,6 +71,7 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 
 import java.util.Comparator;
@@ -127,6 +132,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
     private final RateLimiterService rateLimiterService;
     private final VerifyAttemptService verifyAttemptService;
     private final EmailService emailService;
+    private final AuditService auditService;
 
     public MFAChallengeEndpoint(FactorManager factorManager,
                                 UserService userService,
@@ -138,7 +144,8 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
                                 FactorService factorService,
                                 RateLimiterService rateLimiterService,
                                 VerifyAttemptService verifyAttemptService,
-                                EmailService emailService) {
+                                EmailService emailService,
+                                AuditService auditService) {
         super(engine);
         this.applicationContext = applicationContext;
         this.factorManager = factorManager;
@@ -150,6 +157,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
         this.rateLimiterService = rateLimiterService;
         this.verifyAttemptService = verifyAttemptService;
         this.emailService = emailService;
+        this.auditService = auditService;
     }
 
     @Override
@@ -278,6 +286,15 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
                                 verifyHandler(routingContext, client, endUser, factor, code, factorId, factorProvider, enrolledFactor, factorCtx)),
                         error -> {
                             if (error instanceof MFAValidationAttemptException) {
+
+                                auditService.report(AuditBuilder.builder(VerifyAttemptAuditBuilder.class)
+                                        .type(EventType.MFA_VERIFICATION_LIMIT_EXCEED)
+                                        .verifyAttempt(((MFAValidationAttemptException) error).getVerifyAttempt())
+                                        .ipAddress(routingContext)
+                                        .userAgent(routingContext)
+                                        .client(client)
+                                        .user(endUser));
+
                                 if (verifyAttemptService.shouldSendEmail(client, domain)) {
                                     emailService.send(Template.VERIFY_ATTEMPT, endUser, client);
                                 }

@@ -15,11 +15,11 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.endpoint.user.register;
 
-import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;

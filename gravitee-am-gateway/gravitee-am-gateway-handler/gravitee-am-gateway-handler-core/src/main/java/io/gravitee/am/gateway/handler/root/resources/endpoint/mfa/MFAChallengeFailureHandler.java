@@ -19,10 +19,6 @@ import io.gravitee.am.common.exception.mfa.SendChallengeException;
 import io.gravitee.am.common.oidc.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.common.web.UriBuilder;
-<<<<<<< HEAD
-import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
-=======
->>>>>>> 48f65e3221 (chore: refactor the code to be able to provide IP and UserAgent in audit logs)
 import io.gravitee.am.gateway.handler.common.utils.StaticEnvironmentProvider;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.root.RootProvider;
