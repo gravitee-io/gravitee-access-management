@@ -17,9 +17,9 @@ package io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization;
 
 import io.gravitee.am.common.oidc.Prompt;
 import io.gravitee.am.common.utils.ConstantKeys;
-import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
+import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.rxjava3.core.MultiMap;
