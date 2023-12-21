@@ -473,7 +473,7 @@ jobs:
             export GRAVITEE_MFA_RATE_TIMEUNIT=Minutes
             
             # Reduce the sync frequency to avoid flaky test due to synchronization delay
-            export gravitee_services_sync_cron="*/2 * * * * *"
+            export gravitee_services_sync_cron="* * * * * *"
             
             # Start AM Management
             gravitee-am-management-api-standalone-${AM_VERSION}/bin/gravitee &
@@ -589,7 +589,7 @@ jobs:
             export GRAVITEE_OAUTH2_JDBC_PASSWORD=T0pS3cr3t
             
             # Reduce the sync frequency to avoid flaky test due to synchronization delay
-            export gravitee_services_sync_cron="*/2 * * * * *"
+            export gravitee_services_sync_cron="* * * * * *"
             
             # Start AM Management
             gravitee-am-management-api-standalone-${AM_VERSION}/bin/gravitee &
@@ -651,7 +651,7 @@ jobs:
             
             
             # Reduce the sync frequency to avoid flaky test due to synchronization delay
-            export gravitee_services_sync_cron="*/2 * * * * *"
+            export gravitee_services_sync_cron="* * * * * *"
             
             # Start AM Management
             gravitee-am-management-api-standalone-${AM_VERSION}/bin/gravitee &
@@ -744,7 +744,7 @@ jobs:
             export GRAVITEE_OAUTH2_JDBC_PASSWORD=T0pS3cr3t
             
             # Reduce the sync frequency to avoid flaky test due to synchronization delay
-            export gravitee_services_sync_cron="*/2 * * * * *"
+            export gravitee_services_sync_cron="* * * * * *"
 
             # Start AM Management
             gravitee-am-management-api-standalone-${AM_VERSION}/bin/gravitee &
@@ -1783,7 +1783,7 @@ workflows:
               only:
                 - master
                 - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
-                
+
       - publish-images-azure-registry:
           context: cicd-orchestrator
           requires:
