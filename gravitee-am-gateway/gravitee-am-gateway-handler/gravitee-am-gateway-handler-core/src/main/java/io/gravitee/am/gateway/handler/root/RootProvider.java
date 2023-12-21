@@ -305,12 +305,11 @@ public class RootProvider extends AbstractProtocolProvider {
 
     @Autowired
     private EmailService emailService;
+    @Autowired
+    private AuditService auditService;
 
     @Value("${http.cookie.rememberMe.name:"+ DEFAULT_REMEMBER_ME_COOKIE_NAME +"}")
     private String rememberMeCookieName;
-
-    @Autowired
-    AuditService auditService;
 
     @Override
     protected void doStart() throws Exception {
