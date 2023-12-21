@@ -49,6 +49,7 @@ import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
+import java.util.UUID;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -184,18 +185,6 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldCreateUser() {
-<<<<<<< HEAD
-=======
-        innerCreateUser(null);
-    }
-
-    @Test
-    public void shouldCreateUser_WithPassword() {
-        innerCreateUser(UUID.randomUUID().toString());
-    }
-
-    @Test
     public void shouldNotCreateUserWhenUsernameAlreadyUsed() {
         var externalId = "external-id";
         var user = new io.gravitee.am.model.User();
@@ -218,7 +207,7 @@ public class UserServiceTest {
 
         verify(userRepository, never()).create(any());
     }
-    
+
     @Test
     public void shouldNotCreateUserWhenExternalIdAlreadyUsed() {
         var externalId = "external-id-3";
@@ -244,8 +233,8 @@ public class UserServiceTest {
         verify(userRepository, never()).create(any());
     }
 
-    private void innerCreateUser(String pwd) {
->>>>>>> 8999492afb (AM-1174: add correct error on duplicate externalId (#3334))
+    @Test
+    public void shouldCreateUser() {
         final String domainId = "domain";
 
         User newUser = mock(User.class);
