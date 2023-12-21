@@ -254,9 +254,6 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
                 enrolledFactor.setSecurity(new EnrolledFactorSecurity(FactorSecurityType.SHARED_SECRET, params.get("sharedSecret")));
                 enrolledFactor.setChannel(new EnrolledFactorChannel(Type.EMAIL, params.get("email")));
                 break;
-            default:
-                logger.error("{} factor not managed in enrollment endpoint", factor.getFactorType());
-                throw new IllegalArgumentException(factor.getFactorType() + " factor not managed in enrollment endpoint");
         }
         return enrolledFactor;
     }
