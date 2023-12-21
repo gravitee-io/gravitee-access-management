@@ -24,10 +24,7 @@ import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
-<<<<<<< HEAD
-=======
 import io.gravitee.am.service.utils.vertx.RequestUtils;
->>>>>>> 48f65e3221 (chore: refactor the code to be able to provide IP and UserAgent in audit logs)
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
