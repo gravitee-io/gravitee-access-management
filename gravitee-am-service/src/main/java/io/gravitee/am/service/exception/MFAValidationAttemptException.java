@@ -15,18 +15,27 @@
  */
 package io.gravitee.am.service.exception;
 
+import io.gravitee.am.model.VerifyAttempt;
+
 /**
  * @author Ashraful Hasan (ashraful.hasan at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class MFAValidationAttemptException extends AbstractManagementException{
 
-    public MFAValidationAttemptException(String message) {
+    private final VerifyAttempt verifyAttempt;
+
+    public MFAValidationAttemptException(VerifyAttempt verifyAttempt, String message) {
         super(message);
+        this.verifyAttempt = verifyAttempt;
     }
 
     @Override
     public int getHttpStatusCode() {
         return 0;
+    }
+
+    public VerifyAttempt getVerifyAttempt() {
+        return verifyAttempt;
     }
 }

@@ -67,9 +67,6 @@ public class VerifyAttemptServiceImplTest {
     private Client client;
 
     @Mock
-    private AuditService auditService;
-
-    @Mock
     User  user;
 
     private final String userId = "any-user-id";
@@ -219,7 +216,6 @@ public class VerifyAttemptServiceImplTest {
         verifyAttempt.setAllowRequest(false);
         verifyAttempt.setAttempts(666);
         when(repository.findByCriteria(any())).thenReturn(Maybe.just(verifyAttempt));
-        doNothing().when(auditService).report(any());
 
         TestObserver<VerifyAttempt> observer = verifyAttemptService.checkVerifyAttempt(user, factorId, client, domain).test();
 
