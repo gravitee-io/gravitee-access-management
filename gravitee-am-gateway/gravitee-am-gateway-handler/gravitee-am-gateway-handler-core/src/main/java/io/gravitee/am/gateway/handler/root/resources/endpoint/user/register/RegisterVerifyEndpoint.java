@@ -15,11 +15,11 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.endpoint.user.register;
 
-import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
@@ -27,11 +27,19 @@ import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static io.gravitee.am.common.utils.ConstantKeys.*;
+import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.ERROR_PARAM_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.LOGIN_ACTION_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.REGISTRATION_VERIFY_SUCCESS;
+import static io.gravitee.am.common.utils.ConstantKeys.SUCCESS_PARAM_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.TOKEN_PARAM_KEY;
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.resolveProxyRequest;
-import static io.gravitee.am.model.Template.*;
+import static io.gravitee.am.model.Template.IDENTIFIER_FIRST_LOGIN;
+import static io.gravitee.am.model.Template.LOGIN;
+import static io.gravitee.am.model.Template.REGISTRATION_VERIFY;
 import static io.vertx.core.http.HttpMethod.GET;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;

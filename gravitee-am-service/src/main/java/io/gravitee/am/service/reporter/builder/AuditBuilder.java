@@ -164,14 +164,10 @@ public abstract class AuditBuilder<T> {
     }
 
     private String getDisplayName(User user) {
-        final String displayName =
-                // display name
-                user.getAdditionalInformation() != null && user.getAdditionalInformation().containsKey(StandardClaims.NAME) ?
-                        (String) user.getAdditionalInformation().get(StandardClaims.NAME) :
-                        // default to username
-                        user.getUsername();
-
-        return displayName;
+       return user.getAdditionalInformation() != null && user.getAdditionalInformation().containsKey(StandardClaims.NAME) ?
+                (String) user.getAdditionalInformation().get(StandardClaims.NAME) :
+                // default to username
+                user.getUsername();
     }
 
     private ReferenceType getReferenceType(User user) {
