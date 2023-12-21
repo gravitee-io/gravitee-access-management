@@ -67,6 +67,7 @@ import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
+import java.text.MessageFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -89,7 +90,7 @@ import static java.util.Optional.ofNullable;
  * @author GraviteeSource Team
  */
 public class UserServiceImpl implements UserService {
-
+    private static final String PARAMETER_EXIST_ERROR = "User with {0} [{1}] already exists";
     private static final Logger LOGGER = LoggerFactory.getLogger(UserServiceImpl.class);
     private static final String DEFAULT_IDP_PREFIX = "default-idp-";
     public static final String FIELD_PASSWORD_IS_INVALID = "Field [password] is invalid";
@@ -211,11 +212,15 @@ public class UserServiceImpl implements UserService {
         final var rawPassword = user.getPassword();
 
         // check if user is unique
-        return userRepository.findByUsernameAndSource(ReferenceType.DOMAIN, domain.getId(), user.getUserName(), source)
-                .isEmpty()
-                .map(isEmpty -> {
-                    if (FALSE.equals(isEmpty)) {
-                        throw new UniquenessException("User with username [" + user.getUserName() + "] already exists");
+        return Single.zip(
+                userRepository.findByUsernameAndSource(ReferenceType.DOMAIN, domain.getId(), user.getUserName(), source).isEmpty(),
+                userRepository.findByExternalIdAndSource(ReferenceType.DOMAIN, domain.getId(), user.getExternalId(), source).isEmpty(),
+                (isNoUsername, isNoExternalId) -> {
+                    if (FALSE.equals(isNoUsername)) {
+                        throw new UniquenessException(MessageFormat.format(PARAMETER_EXIST_ERROR, "username", user.getUserName()));
+                    }
+                    if (FALSE.equals(isNoExternalId)) {
+                        throw new UniquenessException(MessageFormat.format(PARAMETER_EXIST_ERROR, "externalId", user.getExternalId()));
                     }
                     return true;
                 })
@@ -253,7 +258,7 @@ public class UserServiceImpl implements UserService {
                                             return userRepository.create(userModel);
                                         }
                                         if (ex instanceof UserAlreadyExistsException) {
-                                            return Single.error(new UniquenessException("User with username [" + user.getUserName() + "] already exists"));
+                                            return Single.error(new UniquenessException(MessageFormat.format(PARAMETER_EXIST_ERROR, "username", user.getUserName())));
                                         }
                                         return Single.error(ex);
                                     }))
@@ -432,7 +437,7 @@ public class UserServiceImpl implements UserService {
                 .flatMap(user -> {
                     ObjectNode node = objectMapper.convertValue(user, ObjectNode.class);
                     patchOp.getOperations().forEach(operation -> operation.apply(node));
-                    boolean isCustomGraviteeUser = GraviteeUser.SCHEMAS.stream().anyMatch(schema -> node.has(schema));
+                    boolean isCustomGraviteeUser = GraviteeUser.SCHEMAS.stream().anyMatch(node::has);
                     User userToPatch = isCustomGraviteeUser ?
                             objectMapper.treeToValue(node, GraviteeUser.class) :
                             objectMapper.treeToValue(node, User.class);
@@ -482,7 +487,7 @@ public class UserServiceImpl implements UserService {
                             .andThen(verifyAttemptService.deleteByUser(user))
                             .andThen(userRepository.delete(userId))
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).domain(domain.getId()).type(EventType.USER_DELETED).user(user)))
-                            .doOnError((error) -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).domain(domain.getId()).type(EventType.USER_DELETED).throwable(error)));
+                            .doOnError(error -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).domain(domain.getId()).type(EventType.USER_DELETED).throwable(error)));
                 });
     }
 

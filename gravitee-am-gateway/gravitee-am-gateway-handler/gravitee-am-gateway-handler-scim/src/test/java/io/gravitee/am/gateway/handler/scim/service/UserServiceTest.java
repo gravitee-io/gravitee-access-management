@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.node.TextNode;
 import io.gravitee.am.common.scim.Schema;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
+import io.gravitee.am.gateway.handler.scim.exception.UniquenessException;
 import io.gravitee.am.gateway.handler.scim.model.GraviteeUser;
 import io.gravitee.am.gateway.handler.scim.model.Operation;
 import io.gravitee.am.gateway.handler.scim.model.PatchOp;
@@ -48,6 +49,7 @@ import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
+import java.util.UUID;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -138,7 +140,8 @@ public class UserServiceTest {
 
     @Before
     public void setUp() {
-        when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any() , any(), any())).thenReturn(Maybe.just(new PasswordHistory()));
+        when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any(), any(), any())).thenReturn(Maybe.just(new PasswordHistory()));
+        when(userRepository.findByExternalIdAndSource(any(), any(), any(), any())).thenReturn(Maybe.empty());
     }
 
     @Test
@@ -179,6 +182,55 @@ public class UserServiceTest {
         TestObserver<User> testObserver = userService.create(newUser, null, "/", null, new Client()).test();
         testObserver.assertNotComplete();
         testObserver.assertError(InvalidValueException.class);
+    }
+
+    @Test
+    public void shouldNotCreateUserWhenUsernameAlreadyUsed() {
+        var externalId = "external-id";
+        var user = new io.gravitee.am.model.User();
+        user.setExternalId(externalId);
+        var pwd = UUID.randomUUID().toString();
+
+        when(userRepository.findByUsernameAndSource(eq(ReferenceType.DOMAIN), anyString(), anyString(), anyString())).thenReturn(Maybe.just(user));
+        when(passwordService.isValid(any(), any(), any())).thenReturn(true);
+        when(domain.getId()).thenReturn("domain");
+
+        User newUser = mock(User.class);
+        when(newUser.getSource()).thenReturn("unknown-idp");
+        when(newUser.getUserName()).thenReturn("username-1");
+        when(newUser.getPassword()).thenReturn(pwd);
+        when(newUser.getExternalId()).thenReturn(externalId);
+        when(newUser.getRoles()).thenReturn(Arrays.asList("role-1", "role-2"));
+
+        TestObserver<User> testObserver = userService.create(newUser, null, "/", null, new Client()).test();
+        testObserver.assertError(UniquenessException.class);
+
+        verify(userRepository, never()).create(any());
+    }
+
+    @Test
+    public void shouldNotCreateUserWhenExternalIdAlreadyUsed() {
+        var externalId = "external-id-3";
+        var user = new io.gravitee.am.model.User();
+        user.setExternalId(externalId);
+        var pwd = UUID.randomUUID().toString();
+
+        when(userRepository.findByExternalIdAndSource(any(), any(), any(), any())).thenReturn(Maybe.just(user));
+        when(userRepository.findByUsernameAndSource(eq(ReferenceType.DOMAIN), anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(passwordService.isValid(any(), any(), any())).thenReturn(true);
+        when(domain.getId()).thenReturn("domain");
+
+        User newUser = mock(User.class);
+        when(newUser.getSource()).thenReturn("unknown-idp");
+        when(newUser.getUserName()).thenReturn("username-1");
+        when(newUser.getPassword()).thenReturn(pwd);
+        when(newUser.getExternalId()).thenReturn(externalId);
+        when(newUser.getRoles()).thenReturn(Arrays.asList("role-1", "role-2"));
+
+        TestObserver<User> testObserver = userService.create(newUser, null, "/", null, new Client()).test();
+        testObserver.assertError(UniquenessException.class);
+
+        verify(userRepository, never()).create(any());
     }
 
     @Test
