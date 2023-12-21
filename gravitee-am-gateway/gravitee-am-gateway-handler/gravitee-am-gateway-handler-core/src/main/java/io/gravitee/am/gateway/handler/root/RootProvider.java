@@ -103,6 +103,7 @@ import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.*;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
+import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.DeviceService;
@@ -282,6 +283,8 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
 
     @Autowired
     private EmailService emailService;
+    @Autowired
+    private AuditService auditService;
 
 
     @Override
@@ -437,7 +440,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(rememberDeviceSettingsHandler)
                 .handler(localeHandler)
                 .handler(new MFAChallengeEndpoint(factorManager, userService, thymeleafTemplateEngine, deviceService, applicationContext,
-                        domain, credentialService, factorService, rateLimiterService, verifyAttemptService, emailService))
+                        domain, credentialService, factorService, rateLimiterService, verifyAttemptService, emailService, auditService))
                 .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService));
         rootRouter.route(PATH_MFA_CHALLENGE_ALTERNATIVES)
                 .handler(clientRequestParseHandler)
