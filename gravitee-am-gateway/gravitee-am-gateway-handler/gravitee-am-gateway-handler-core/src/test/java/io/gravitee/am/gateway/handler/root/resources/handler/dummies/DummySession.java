@@ -128,4 +128,10 @@ public class DummySession extends Session {
         data.put(key, obj);
         return this;
     }
+
+    @Override
+    public Session putIfAbsent(String key, Object obj) {
+        data.putIfAbsent(key, obj);
+        return this;
+    }
 }

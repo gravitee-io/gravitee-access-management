@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.service.impl;
 
-import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
@@ -24,12 +23,9 @@ import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.management.api.VerifyAttemptRepository;
 import io.gravitee.am.repository.management.api.search.VerifyAttemptCriteria;
-import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EmailService;
 import io.gravitee.am.service.VerifyAttemptService;
 import io.gravitee.am.service.exception.MFAValidationAttemptException;
-import io.gravitee.am.service.reporter.builder.AuditBuilder;
-import io.gravitee.am.service.reporter.builder.gateway.VerifyAttemptAuditBuilder;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import org.slf4j.Logger;
@@ -48,9 +44,6 @@ import java.util.Optional;
 @Component
 public class VerifyAttemptServiceImpl implements VerifyAttemptService {
     private static final Logger LOGGER = LoggerFactory.getLogger(VerifyAttemptServiceImpl.class);
-
-    @Autowired
-    AuditService auditService;
 
     @Autowired
     EmailService emailService;
@@ -73,12 +66,7 @@ public class VerifyAttemptServiceImpl implements VerifyAttemptService {
                 .doOnSuccess(verifyAttempt -> {
                     LOGGER.debug("VerifyAttempt value: [{}]", verifyAttempt);
                     if (!verifyAttempt.isAllowRequest()) {
-                        auditService.report(AuditBuilder.builder(VerifyAttemptAuditBuilder.class)
-                                .type(EventType.MFA_VERIFICATION_LIMIT_EXCEED)
-                                .verifyAttempt(verifyAttempt)
-                                .user(user));
-
-                        throw new MFAValidationAttemptException("Maximum verification limit exceed");
+                        throw new MFAValidationAttemptException(verifyAttempt, "Maximum verification limit exceed");
                     }
                 });
     }

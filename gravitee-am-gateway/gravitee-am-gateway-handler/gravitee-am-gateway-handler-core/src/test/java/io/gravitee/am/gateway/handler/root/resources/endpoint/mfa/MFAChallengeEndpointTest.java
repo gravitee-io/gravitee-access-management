@@ -26,6 +26,7 @@ import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.VerifyAttempt;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.oidc.Client;
@@ -36,7 +37,8 @@ import io.gravitee.am.service.DeviceService;
 import io.gravitee.am.service.FactorService;
 import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.service.VerifyAttemptService;
-import io.gravitee.common.event.EventManager;
+import io.gravitee.am.service.exception.MFAValidationAttemptException;
+import io.gravitee.am.service.reporter.builder.gateway.VerifyAttemptAuditBuilder;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -62,7 +64,9 @@ import java.util.Map;
 import static io.vertx.core.http.HttpHeaders.APPLICATION_X_WWW_FORM_URLENCODED;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -97,9 +101,9 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
     @Mock
     private EmailService emailService;
     @Mock
-    private AuthenticationFlowContextService authenticationFlowContextService;
-    @Mock
     private AuditService auditService;
+    @Mock
+    private AuthenticationFlowContextService authenticationFlowContextService;
 
     private LocalSessionStore localSessionStore;
     private MFAChallengeEndpoint mfaChallengeEndpoint;
@@ -334,6 +338,44 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
     }
 
     @Test
+    public void shouldVerifyCode_TooManyAttempt() throws Exception {
+        router.route().order(-1).handler(routingContext -> {
+            Client client = new Client();
+            client.setFactors(Collections.singleton("factor"));
+            User endUser = new User();
+            EnrolledFactor enrolledFactor = new EnrolledFactor();
+            enrolledFactor.setFactorId("factor");
+            endUser.setFactors(Collections.singletonList(enrolledFactor));
+            routingContext.getDelegate().setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
+            routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+            routingContext.next();
+        });
+
+        Factor factor = mock(Factor.class);
+        when(factor.getId()).thenReturn("factor");
+        FactorProvider factorProvider = mock(FactorProvider.class);
+        when(factorManager.getFactor("factor")).thenReturn(factor);
+        when(factorManager.get("factor")).thenReturn(factorProvider);
+        when(verifyAttemptService.checkVerifyAttempt(any(), any(), any(), any())).thenReturn(Maybe.error(new MFAValidationAttemptException(new VerifyAttempt(), "too many attempts")));
+
+        testRequest(HttpMethod.POST,
+                "/mfa/challenge",
+                req -> {
+                    req.setChunked(true);
+                    req.putHeader(CONTENT_TYPE, APPLICATION_X_WWW_FORM_URLENCODED);
+                    req.write(Buffer.buffer("code=123456&factorId=factor"));
+                },
+                res -> {
+                    String location = res.getHeader("Location");
+                    Assert.assertTrue(location.contains("/mfa/challenge"));
+                },
+                302,
+                "Found", null);
+
+        verify(auditService).report(argThat(builder -> builder instanceof VerifyAttemptAuditBuilder));
+    }
+
+    @Test
     public void shouldRedirectToMfaChallenge_errorCouldNotSendCode() throws Exception {
         FactorProvider factorProvider = mock(FactorProvider.class);
         when(factorProvider.needChallengeSending()).thenReturn(true);
@@ -353,7 +395,10 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
                     ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
                     ctx.next();
                 })
-                .handler(mfaChallengeEndpoint);
+                .handler(SessionHandler.create(localSessionStore))
+                .handler(new MFAChallengeEndpoint(factorManager, userService, templateEngine, deviceService, applicationContext, domain, credentialService,
+                        factorService, rateLimiterService, verifyAttemptService, emailService, auditService))
+                .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService));
 
         testRequest(
                 HttpMethod.GET,
@@ -369,16 +414,18 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
 
   @Test
   public void shouldRedirectToError_unexpectedError() throws Exception {
-        router.route(HttpMethod.GET, "/mfa/challenge")
-                .handler(ctx -> {
-                    User user = createUser();
-                    Client client = new Client();
-                    client.setFactors(Collections.singleton("factorId"));
-                    ctx.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
-                    ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-                    ctx.next();
-                })
-                .handler(mfaChallengeEndpoint);
+    router.route(HttpMethod.GET, "/mfa/challenge").order(-1)
+        .handler(ctx -> {
+          User user = createUser();
+          Client client = new Client();
+          client.setFactors(Collections.singleton("factorId"));
+          ctx.setUser(new io.vertx.rxjava3.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+          ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+          ctx.next();
+        })
+        .handler(new MFAChallengeEndpoint(factorManager, userService, templateEngine, deviceService, applicationContext, domain, credentialService,
+                factorService, rateLimiterService, verifyAttemptService, emailService, auditService))
+        .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService));
 
         testRequest(
                 HttpMethod.GET,
@@ -394,14 +441,16 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
 
   @Test
   public void shouldRedirectToError_userNotPresentMFASendChallenge() throws Exception {
-        router.route(HttpMethod.GET, "/mfa/challenge")
-                .handler(ctx -> {
-                    Client client = new Client();
-                    client.setFactors(Collections.singleton("factorId"));
-                    ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-                    ctx.next();
-                })
-                .handler(mfaChallengeEndpoint);
+    router.route(HttpMethod.GET, "/mfa/challenge")
+        .handler(ctx -> {
+          Client client = new Client();
+          client.setFactors(Collections.singleton("factorId"));
+          ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+          ctx.next();
+        })
+        .handler(new MFAChallengeEndpoint(factorManager, userService, templateEngine, deviceService, applicationContext, domain, credentialService,
+                factorService, rateLimiterService, verifyAttemptService, emailService, auditService))
+        .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService));
 
         testRequest(
                 HttpMethod.GET,
