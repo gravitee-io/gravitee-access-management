@@ -471,11 +471,8 @@ jobs:
             export GRAVITEE_MFA_RATE_TIMEPERIOD=1
             export GRAVITEE_MFA_RATE_TIMEUNIT=Minutes
             
-<<<<<<< HEAD
-=======
             # Reduce the sync frequency to avoid flaky test due to synchronization delay
             export gravitee_services_sync_cron="* * * * * *"
->>>>>>> 59b3e707e7 (AM-13: sync every 1 sec)
             
             # Start AM Management
             gravitee-am-management-api-standalone-${AM_VERSION}/bin/gravitee &
@@ -590,12 +587,9 @@ jobs:
             export GRAVITEE_OAUTH2_JDBC_USERNAME=postgres
             export GRAVITEE_OAUTH2_JDBC_PASSWORD=T0pS3cr3t
             
-<<<<<<< HEAD
-=======
             # Reduce the sync frequency to avoid flaky test due to synchronization delay
             export gravitee_services_sync_cron="* * * * * *"
             
->>>>>>> 59b3e707e7 (AM-13: sync every 1 sec)
             # Start AM Management
             gravitee-am-management-api-standalone-${AM_VERSION}/bin/gravitee &
             # Start AM Gateway
@@ -654,13 +648,9 @@ jobs:
             cp /tmp/workspace/gravitee-am-factor-mock-*.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
             cp /tmp/workspace/gravitee-am-factor-mock-*.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/
             
-            
-<<<<<<< HEAD
-=======
             # Reduce the sync frequency to avoid flaky test due to synchronization delay
             export gravitee_services_sync_cron="* * * * * *"
             
->>>>>>> 59b3e707e7 (AM-13: sync every 1 sec)
             # Start AM Management
             gravitee-am-management-api-standalone-${AM_VERSION}/bin/gravitee &
             # Start AM Gateway
@@ -751,12 +741,9 @@ jobs:
             export GRAVITEE_OAUTH2_JDBC_USERNAME=postgres
             export GRAVITEE_OAUTH2_JDBC_PASSWORD=T0pS3cr3t
             
-<<<<<<< HEAD
-=======
             # Reduce the sync frequency to avoid flaky test due to synchronization delay
             export gravitee_services_sync_cron="* * * * * *"
-
->>>>>>> 59b3e707e7 (AM-13: sync every 1 sec)
+            
             # Start AM Management
             gravitee-am-management-api-standalone-${AM_VERSION}/bin/gravitee &
             # Start AM Gateway
