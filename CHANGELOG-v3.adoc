@@ -1,10 +1,8 @@
 # Change Log
 
-==  - 3.20.17 (2023-12-22)
+== AM - 3.21.13 (2023-12-22)
 
 == What's new !
-
-
 
 === Gateway
 
@@ -18,18 +16,31 @@
 
 === Console
 
+=== Other
 
+
+== AM - 3.20.17 (2023-12-22)
+
+== What's new !
+
+=== Gateway
+
+* Session expired problem - X-XRF-TOKEN https://github.com/gravitee-io/issues/issues/9398[#9398]
+* 500 response received on creating user with /scim endpoint with duplicate externalId https://github.com/gravitee-io/issues/issues/9421[#9421]
+* Exclude null value from SCIM UserMapper https://github.com/gravitee-io/issues/issues/9427[#9427]
+
+=== Management API
+
+* Unable to list users  https://github.com/gravitee-io/issues/issues/9125[#9125]
+
+=== Console
 
 === Other
 
 
-
-
-==  - 3.21.12 (2023-12-11)
+== AM - 3.21.12 (2023-12-11)
 
 == What's new !
-
-
 
 === Gateway
 
@@ -39,20 +50,16 @@
 
 === Management API
 
-
 === Console
-
 
 === Other
 
 * Invalid value in Issuer for Response https://github.com/gravitee-io/issues/issues/9409[#9409]
 * Configuration files are beeing overwritten during yum update https://github.com/gravitee-io/issues/issues/9368[#9368]
 
-==  - 3.20.16 (2023-12-11)
+== AM - 3.20.16 (2023-12-11)
 
 == What's new !
-
-
 
 === Gateway
 
@@ -61,11 +68,7 @@
 
 === Management API
 
-
-
 === Console
-
-
 
 === Other
 
