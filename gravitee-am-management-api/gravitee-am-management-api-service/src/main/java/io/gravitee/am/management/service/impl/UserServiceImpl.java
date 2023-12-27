@@ -34,10 +34,10 @@ import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
-import io.gravitee.am.service.validators.email.EmailValidator;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -63,9 +63,6 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
 
     @Value("${user.registration.token.expire-after:86400}")
     private Integer expireAfter;
-
-    @Autowired
-    private EmailValidator emailValidator;
 
     @Autowired
     private EmailService emailService;
@@ -125,6 +122,9 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
 
     @Override
     public Single<User> create(Domain domain, NewUser newUser, io.gravitee.am.identityprovider.api.User principal) {
+        if (StringUtils.isBlank(newUser.getUsername())) {
+            return Single.error(new UserInvalidException("Field [username] is required"));
+        }
         // user must have a password in no pre registration mode
         if (newUser.getPassword() == null && FALSE.equals(newUser.isPreRegistration())) {
             return Single.error(new UserInvalidException("Field [password] is required"));

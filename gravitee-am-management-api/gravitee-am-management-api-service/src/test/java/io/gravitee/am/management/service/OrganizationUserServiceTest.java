@@ -192,6 +192,19 @@ public class OrganizationUserServiceTest {
     }
 
     @Test
+    public void shouldNotCreateOrganizationUserWhenUsernameIsNull() {
+        NewUser newUser = newOrganizationUser();
+        newUser.setUsername(null);
+        newUser.setSource("gravitee");
+        newUser.setPassword("Test123!");
+        newUser.setEmail("email@acme.fr");
+
+        TestObserver<User> testObserver = organizationUserService.createGraviteeUser(new Organization(), newUser, null).test();
+        testObserver.assertError(UserInvalidException.class);
+    }
+
+
+    @Test
     public void shouldNotCreateOrganizationUser_NotGraviteeSource() {
         NewUser newUser = newOrganizationUser();
         newUser.setSource("toto");
@@ -397,6 +410,32 @@ public class OrganizationUserServiceTest {
 
             return true;
         });
+    }
+
+    @Test
+    public void shouldNotCreateUserWHenUsernameIsNull() {
+        NewUser newUser = new NewUser();
+        newUser.setExternalId("user#1");
+        newUser.setSource("source");
+        newUser.setUsername(null);
+        newUser.setFirstName("Firstname");
+        newUser.setLastName("Lastname");
+        newUser.setEmail("email@gravitee.io");
+
+        HashMap<String, Object> additionalInformation = new HashMap<>();
+        additionalInformation.put("info1", "value1");
+        additionalInformation.put("info2", "value2");
+        additionalInformation.put(StandardClaims.PICTURE, "https://gravitee.io/my-picture");
+        newUser.setAdditionalInformation(additionalInformation);
+
+        when(commonUserService.findByExternalIdAndSource(ReferenceType.ORGANIZATION, "orga#1", newUser.getExternalId(), newUser.getSource())).thenReturn(Maybe.empty());
+        when(commonUserService.findByUsernameAndSource(ReferenceType.ORGANIZATION, "orga#1", newUser.getUsername(), newUser.getSource())).thenReturn(Maybe.empty());
+
+
+        TestObserver<User> obs = organizationUserService.createOrUpdate(ReferenceType.ORGANIZATION, "orga#1", newUser).test();
+        obs.assertError(UserInvalidException.class);
+
+        verify(commonUserService, never()).create(any(User.class));
     }
 
     @Test

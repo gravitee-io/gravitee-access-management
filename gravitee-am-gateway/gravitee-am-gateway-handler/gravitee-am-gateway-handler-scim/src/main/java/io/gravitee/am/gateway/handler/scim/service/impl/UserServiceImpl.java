@@ -68,6 +68,7 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import java.text.MessageFormat;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -194,7 +195,9 @@ public class UserServiceImpl implements UserService {
     @Override
     public Single<User> create(User user, String idp, String baseUrl, io.gravitee.am.identityprovider.api.User principal, Client client) {
         LOGGER.debug("Create a new user {} for domain {}", user.getUserName(), domain.getName());
-
+        if (StringUtils.isBlank(user.getUserName())) {
+            return Single.error(new UserInvalidException("Field [username] is required"));
+        }
         // set user idp source
         final String source = user.getSource() != null ? user.getSource() : (idp != null ? idp : DEFAULT_IDP_PREFIX + domain.getId());
 
@@ -208,7 +211,6 @@ public class UserServiceImpl implements UserService {
         userModel.setCreatedAt(new Date());
         userModel.setUpdatedAt(userModel.getCreatedAt());
         userModel.setEnabled(userModel.getPassword() != null);
-
         // check password
         if (isInvalidUserPassword(user.getPassword(), userModel)) {
             return Single.error(new InvalidValueException(FIELD_PASSWORD_IS_INVALID));
@@ -548,7 +550,7 @@ public class UserServiceImpl implements UserService {
 
     private static class UserContainer {
         private User scimUser;
-        private io.gravitee.am.model.User amUser;
+        private final io.gravitee.am.model.User amUser;
 
         public UserContainer(User scimUser, io.gravitee.am.model.User amUser) {
             this.scimUser = scimUser;

@@ -56,6 +56,21 @@ public class UserValidatorTest {
     }
 
     @Test
+    public void validateErrorWhenUsernameEmpty() {
+        User user = getValidUser();
+        user.setUsername("");
+
+        userValidator.validate(user).test().assertError(InvalidUserException.class);
+    }
+
+    @Test
+    public void validateWhenUsernameNull() {
+        User user = getValidUser();
+        user.setUsername(null);
+        userValidator.validate(user).test().assertNoErrors();
+    }
+
+    @Test
     public void validate_displayNameEmail() {
         User user = getValidUser();
         user.setDisplayName("user.valid+1-test@gravitee.io");

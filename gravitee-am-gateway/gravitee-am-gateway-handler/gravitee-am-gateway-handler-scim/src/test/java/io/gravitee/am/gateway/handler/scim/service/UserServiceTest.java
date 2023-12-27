@@ -41,6 +41,7 @@ import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.UserActivityService;
 import io.gravitee.am.service.VerifyAttemptService;
+import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.gravitee.am.service.validators.email.EmailValidatorImpl;
 import io.gravitee.am.service.validators.user.UserValidator;
@@ -198,6 +199,18 @@ public class UserServiceTest {
     }
 
     @Test
+    public void shouldNotCreateUserWhenUsernameIsNull() {
+        User newUser = mock(User.class);
+        when(newUser.getUserName()).thenReturn(null);
+
+        TestObserver<User> testObserver = userService.create(newUser, null, "/", null, new Client()).test();
+        testObserver.assertError(UserInvalidException.class);
+
+        verify(userRepository, never()).create(any());
+        verify(userRepository, never()).findByUsernameAndSource(eq(ReferenceType.DOMAIN), anyString(), anyString(), anyString());
+        verify(userRepository, never()).findByExternalIdAndSource(eq(ReferenceType.DOMAIN), anyString(), anyString(), anyString());
+    }
+    @Test
     public void shouldNotCreateUserWhenUsernameAlreadyUsed() {
         var externalId = "external-id";
         var user = new io.gravitee.am.model.User();
@@ -220,7 +233,7 @@ public class UserServiceTest {
 
         verify(userRepository, never()).create(any());
     }
-    
+
     @Test
     public void shouldNotCreateUserWhenExternalIdAlreadyUsed() {
         var externalId = "external-id-3";

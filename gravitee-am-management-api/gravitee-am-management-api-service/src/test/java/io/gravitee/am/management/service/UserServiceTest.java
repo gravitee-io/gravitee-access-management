@@ -225,6 +225,27 @@ public class UserServiceTest {
     }
 
     @Test
+    void shouldNotCreateUserWhenUsernameIsNull() {
+        String domainId = "domain";
+
+        Domain domain = new Domain();
+        domain.setId(domainId);
+
+        NewUser newUser = new NewUser();
+        newUser.setUsername(null);
+        newUser.setSource("idp");
+        newUser.setClient("client");
+        newUser.setPassword("MyPassword");
+
+        userService.create(domain, newUser, null)
+                .test()
+                .assertNotComplete()
+                .assertError(UserInvalidException.class);
+        verify(commonUserService, never()).findByDomainAndUsernameAndSource(any(), any(), any());
+        verify(commonUserService, never()).create(any());
+    }
+
+    @Test
     public void shouldNotCreateUser_user_already_exists() {
         String domainId = "domain";
         String clientId = "clientId";
