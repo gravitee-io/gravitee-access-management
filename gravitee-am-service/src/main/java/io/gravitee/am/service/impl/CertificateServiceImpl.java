@@ -119,7 +119,6 @@ public class CertificateServiceImpl implements CertificateService {
     private static final String CONTENT = "content";
     private static final String STORE_PASS = "storepass";
     private static final String ALIAS = "alias";
-    private static final String TYPE = "type";
     private static final String NAME = "name";
     private static final String PKCS_12_CERTIFICATE = "pkcs12-am-certificate";
     private static final String JAVA_KEYSTORE_CERTIFICATE = "javakeystore-am-certificate";
