@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, Input, EventEmitter, Output, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, EventEmitter, Output, OnChanges, SimpleChanges, ChangeDetectorRef } from '@angular/core';
 
 import { MaterialFileComponent } from '../../../../../components/json-schema-form/material-file.component';
 
@@ -25,6 +25,7 @@ import { MaterialFileComponent } from '../../../../../components/json-schema-for
 export class CertificateFormComponent implements OnChanges {
   @Input('certificateConfiguration') configuration: any = {};
   @Input('certificateSchema') certificateSchema: any;
+  @Input() reset = false;
   @Output() configurationCompleted = new EventEmitter<any>();
   displayForm = false;
   data: any = {};
@@ -32,10 +33,12 @@ export class CertificateFormComponent implements OnChanges {
     file: MaterialFileComponent,
   };
 
+  constructor(private changeDetector: ChangeDetectorRef) {}
+
   ngOnChanges(changes: SimpleChanges) {
     if (changes.certificateSchema) {
       const _certificateSchema = changes.certificateSchema.currentValue;
-      if (_certificateSchema && _certificateSchema.id) {
+      if (_certificateSchema?.id) {
         this.displayForm = true;
       }
     }
@@ -46,10 +49,20 @@ export class CertificateFormComponent implements OnChanges {
         this.data = _certificateConfiguration;
       }
     }
+
+    if (this.reset) {
+      this.clearForm();
+      this.reset = false;
+    }
   }
 
   onChanges(certificateConfiguration) {
     this.configuration = certificateConfiguration;
+  }
+
+  clearForm(): void {
+    this.data = null;
+    this.customWidgets.file = MaterialFileComponent;
   }
 
   isValid(isValid: boolean) {

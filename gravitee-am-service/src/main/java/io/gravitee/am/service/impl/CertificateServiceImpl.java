@@ -55,6 +55,13 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.core.SingleSource;
 import io.reactivex.rxjava3.functions.Function;
+import io.reactivex.rxjava3.schedulers.Schedulers;
+import java.io.ByteArrayInputStream;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
+import java.time.Instant;
+import java.util.Map;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.BasicConstraints;
@@ -110,6 +117,13 @@ public class CertificateServiceImpl implements CertificateService {
     private final Logger LOGGER = LoggerFactory.getLogger(CertificateServiceImpl.class);
     private static final String RSA = "RSA";
     private static final String EC = "EC";
+    private static final String CONTENT = "content";
+    private static final String STORE_PASS = "storepass";
+    private static final String ALIAS = "alias";
+    private static final String TYPE = "type";
+    private static final String NAME = "name";
+    private static final String APPLICATION_PKCS_12 = "application/pkcs12";
+    private static final String APPLICATION_X_JAVA_KEYSTORE = "application/x-java-keystore";
 
     @Lazy
     @Autowired
@@ -180,71 +194,57 @@ public class CertificateServiceImpl implements CertificateService {
     @Override
     public Single<Certificate> create(String domain, NewCertificate newCertificate, User principal, boolean isSystem) {
         LOGGER.debug("Create a new certificate {} for domain {}", newCertificate, domain);
-
-        Single<Certificate> certificateSingle = certificatePluginService
+        return certificatePluginService
                 .getSchema(newCertificate.getType())
                 .switchIfEmpty(Single.error(new CertificatePluginSchemaNotFoundException(newCertificate.getType())))
                 .map(schema -> objectMapper.readValue(schema, CertificateSchema.class))
-                .flatMap(new Function<CertificateSchema, SingleSource<Certificate>>() {
-                    @Override
-                    public SingleSource<Certificate> apply(CertificateSchema certificateSchema) throws Exception {
-
-                        return Single.create(emitter -> {
-                            String certificateId = RandomString.generate();
-                            Certificate certificate = new Certificate();
-                            certificate.setId(certificateId);
-                            certificate.setDomain(domain);
-                            certificate.setName(newCertificate.getName());
-                            certificate.setType(newCertificate.getType());
-                            certificate.setSystem(isSystem);
-
-                            // handle file
-                            try {
-                                JsonNode certificateConfiguration = objectMapper.readTree(newCertificate.getConfiguration());
-
-                                certificateSchema.getProperties()
-                                        .entrySet()
-                                        .stream()
-                                        .filter(map -> map.getValue().getWidget() != null && "file".equals(map.getValue().getWidget()))
-                                        .map(map -> map.getKey())
-                                        .forEach(key -> {
-                                            try {
-                                                JsonNode file = objectMapper.readTree(certificateConfiguration.get(key).asText());
-                                                byte[] data = Base64.getDecoder().decode(file.get("content").asText());
-                                                certificate.setMetadata(Collections.singletonMap(CertificateMetadata.FILE, data));
-
-                                                // update configuration to set the file name
-                                                ((ObjectNode) certificateConfiguration).put(key, file.get("name").asText());
-                                                newCertificate.setConfiguration(objectMapper.writeValueAsString(certificateConfiguration));
-                                            } catch (IOException ex) {
-                                                LOGGER.error("An error occurs while trying to create certificate binaries", ex);
-                                                emitter.onError(ex);
-                                            }
-                                        });
-
-                                certificate.setConfiguration(newCertificate.getConfiguration());
-                                certificate.setCreatedAt(new Date());
-                                certificate.setUpdatedAt(certificate.getCreatedAt());
-                            } catch (Exception ex) {
-                                LOGGER.error("An error occurs while trying to create certificate configuration", ex);
-                                emitter.onError(ex);
-                            }
-                            emitter.onSuccess(certificate);
-                        });
+                .flatMap(certificateSchema -> {
+                    var certificate = new Certificate();
+                    certificate.setId(RandomString.generate());
+                    certificate.setDomain(domain);
+                    certificate.setName(newCertificate.getName());
+                    certificate.setType(newCertificate.getType());
+                    certificate.setSystem(isSystem);
+                    // handle file
+                    var certificateConfiguration = objectMapper.readTree(newCertificate.getConfiguration());
+                    var fileKey = certificateSchema.getProperties()
+                            .entrySet()
+                            .stream()
+                            .filter(map -> map.getValue().getWidget() != null && "file".equals(map.getValue().getWidget()))
+                            .map(Map.Entry::getKey)
+                            .findFirst().orElse(null);
+                    try {
+                        if (fileKey == null || !certificateConfiguration.has(fileKey)) {
+                            return Single.error(new CertificateException("Certification file is not found"));
+                        }
+                        var file = objectMapper.readTree(certificateConfiguration.get(fileKey).asText());
+                        var fileContent = Base64.getDecoder().decode(file.get(CONTENT).asText());
+                        var expiryDate = checkCertificateExireDate(file.get(TYPE).asText(), certificateConfiguration.get(STORE_PASS).asText(), certificateConfiguration.get(ALIAS).asText(), fileContent);
+                        certificate.setExpiresAt(expiryDate);
+                        certificate.setMetadata(Collections.singletonMap(CertificateMetadata.FILE, fileContent));
+                        // update configuration to set the file name
+                        ((ObjectNode) certificateConfiguration).put(fileKey, file.get(NAME).asText());
+                        newCertificate.setConfiguration(objectMapper.writeValueAsString(certificateConfiguration));
+                        certificate.setConfiguration(newCertificate.getConfiguration());
+                        certificate.setCreatedAt(new Date());
+                        certificate.setUpdatedAt(certificate.getCreatedAt());
+                        certificate.setUpdatedAt(certificate.getExpiresAt());
+                        return Single.just(certificate);
+                    } catch (KeyStoreException ex) {
+                        LOGGER.error("Cannot read a certificate", ex);
+                        return Single.error(new CertificateException("Cannot read a certificate", ex));
+                    } catch (NoSuchAlgorithmException | IOException ex) {
+                        LOGGER.error("An error occurs while trying to create certificate configuration", ex);
+                        return Single.error(new TechnicalManagementException("An error occurs while trying to create a certificate", ex));
                     }
-                });
-
-        return certificateSingle
+                })
                 .flatMap(certificate -> certificateRepository.create(certificate))
                 // create event for sync process
                 .flatMap(certificate -> {
                     Event event = new Event(Type.CERTIFICATE, new Payload(certificate.getId(), ReferenceType.DOMAIN, certificate.getDomain(), Action.CREATE));
                     return eventService.create(event).flatMap(__ -> Single.just(certificate));
                 })
-                .doOnError(ex -> {
-                    LOGGER.error("An error occurs while trying to create a certificate", ex);
-                    throw new TechnicalManagementException("An error occurs while trying to create a certificate", ex);
-                });
+                .doOnError(ex -> LOGGER.error("An error occurs while trying to create a certificate", ex));
     }
 
     private static class CertificateWithSchema {
@@ -271,19 +271,9 @@ public class CertificateServiceImpl implements CertificateService {
 
         return certificateRepository.findById(id)
                 .switchIfEmpty(Single.error(new CertificateNotFoundException(id)))
-                .flatMap(new Function<Certificate, SingleSource<CertificateWithSchema>>() {
-                    @Override
-                    public SingleSource<CertificateWithSchema> apply(Certificate certificate) throws Exception {
-                        return certificatePluginService.getSchema(certificate.getType())
-                                .switchIfEmpty(Single.error(new CertificatePluginSchemaNotFoundException(certificate.getType())))
-                                .flatMap(new Function<String, SingleSource<? extends CertificateWithSchema>>() {
-                                    @Override
-                                    public SingleSource<? extends CertificateWithSchema> apply(String schema) throws Exception {
-                                        return Single.just(new CertificateWithSchema(certificate, objectMapper.readValue(schema, CertificateSchema.class)));
-                                    }
-                                });
-                    }
-                })
+                .flatMap((Function<Certificate, SingleSource<CertificateWithSchema>>) certificate -> certificatePluginService.getSchema(certificate.getType())
+                        .switchIfEmpty(Single.error(new CertificatePluginSchemaNotFoundException(certificate.getType())))
+                        .flatMap(schema -> Single.just(new CertificateWithSchema(certificate, objectMapper.readValue(schema, CertificateSchema.class)))))
                 .flatMap(oldCertificate -> {
                     Single<Certificate> certificateSingle = Single.create(emitter -> {
                         Certificate certificateToUpdate = new Certificate(oldCertificate.getCertificate());
@@ -302,7 +292,7 @@ public class CertificateServiceImpl implements CertificateService {
                                         .entrySet()
                                         .stream()
                                         .filter(map -> map.getValue().getWidget() != null && "file".equals(map.getValue().getWidget()))
-                                        .map(map -> map.getKey())
+                                        .map(Map.Entry::getKey)
                                         .forEach(key -> {
                                             try {
                                                 String oldFileInformation = oldCertificateConfiguration.get(key).asText();
@@ -310,11 +300,11 @@ public class CertificateServiceImpl implements CertificateService {
                                                 // file has changed, let's update it
                                                 if (!oldFileInformation.equals(fileInformation)) {
                                                     JsonNode file = objectMapper.readTree(certificateConfiguration.get(key).asText());
-                                                    byte[] data = Base64.getDecoder().decode(file.get("content").asText());
+                                                    byte[] data = Base64.getDecoder().decode(file.get(CONTENT).asText());
                                                     certificateToUpdate.setMetadata(Collections.singletonMap(CertificateMetadata.FILE, data));
 
                                                     // update configuration to set the file path
-                                                    ((ObjectNode) certificateConfiguration).put(key, file.get("name").asText());
+                                                    ((ObjectNode) certificateConfiguration).put(key, file.get(NAME).asText());
                                                     updateCertificate.setConfiguration(objectMapper.writeValueAsString(certificateConfiguration));
                                                 }
                                             } catch (IOException ex) {
@@ -343,7 +333,7 @@ public class CertificateServiceImpl implements CertificateService {
                             })
                             .onErrorResumeNext(ex -> {
                                 LOGGER.error("An error occurs while trying to update a certificate", ex);
-                                throw new TechnicalManagementException("An error occurs while trying to update a certificate", ex);
+                                return Single.error(new TechnicalManagementException("An error occurs while trying to update a certificate", ex));
                             });
                 });
     }
@@ -356,7 +346,7 @@ public class CertificateServiceImpl implements CertificateService {
                 .flatMapSingle(certificate -> applicationService.findByCertificate(certificateId).count()
                         .flatMap(applications -> {
                             if (applications > 0) {
-                                throw new CertificateWithApplicationsException();
+                                return Single.error(new CertificateWithApplicationsException());
                             }
                             return Single.just(certificate);
                         })
@@ -413,33 +403,21 @@ public class CertificateServiceImpl implements CertificateService {
                     final String keyPass = environment.getProperty("domains.certificates.default.keypass", String.class, DEFAULT_CERT_PWD);
                     final String storePass = environment.getProperty("domains.certificates.default.storepass", String.class, DEFAULT_CERT_PWD);
 
-                    KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(getAlgorithmCategory(sigAlgName));
-                    keyPairGenerator.initialize(keySize);
-                    KeyPair keyPair = keyPairGenerator.generateKeyPair();
-
-                    java.security.cert.Certificate[] chain = {
-                            generateCertificate(name, keyPair, validity, sigAlgName)
-                    };
-
-                    KeyStore ks = KeyStore.getInstance("pkcs12");
-                    ks.load(null, null);
-                    ks.setKeyEntry(alias, keyPair.getPrivate(), keyPass.toCharArray(), chain);
-
-                    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                    ks.store(outputStream, storePass.toCharArray());
+                    ByteArrayOutputStream generateCertificate = generateCertificate(sigAlgName, keySize, name, validity, alias, keyPass, storePass);
 
                     ObjectNode certificateNode = objectMapper.createObjectNode();
 
                     ObjectNode contentNode = objectMapper.createObjectNode();
-                    contentNode.put("content", new String(Base64.getEncoder().encode(outputStream.toByteArray())));
-                    contentNode.put("name", domain + ".p12");
-                    certificateNode.put("content", objectMapper.writeValueAsString(contentNode));
-                    certificateNode.put("alias", alias);
-                    certificateNode.put("storepass", storePass);
+                    contentNode.put(CONTENT, new String(Base64.getEncoder().encode(generateCertificate.toByteArray())));
+                    contentNode.put(NAME, domain + ".p12");
+                    contentNode.put(TYPE, APPLICATION_PKCS_12);
+                    certificateNode.put(CONTENT, objectMapper.writeValueAsString(contentNode));
+                    certificateNode.put(ALIAS, alias);
+                    certificateNode.put(STORE_PASS, storePass);
                     certificateNode.put("keypass", keyPass);
 
                     return objectMapper.writeValueAsString(certificateNode);
-                }).flatMap((Function<String, SingleSource<Certificate>>) configuration -> {
+                }).flatMap(configuration -> {
                     certificate.setConfiguration(configuration);
                     return create(domain, certificate, true);
                 });
@@ -490,48 +468,57 @@ public class CertificateServiceImpl implements CertificateService {
                         .referenceType(ReferenceType.DOMAIN)
                         .type(EventType.CERTIFICATE_CREATED).throwable(error)));
     }
-
+    private Date checkCertificateExireDate(String type, String storePass, String alias, byte[] cert) throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException {
+        var store = switch(type) {
+            case APPLICATION_X_JAVA_KEYSTORE -> KeyStore.getInstance("JKS");
+            case APPLICATION_PKCS_12 -> KeyStore.getInstance("PKCS12");
+            default -> throw new CertificateException("Unsupported certification type: " + type);
+        };
+        store.load(new ByteArrayInputStream(cert), storePass.toCharArray());
+        var expiryDate = ((X509Certificate) store.getCertificate(alias)).getNotAfter();
+        if (Instant.now().isAfter(expiryDate.toInstant())) {
+            throw new CertificateException("Uploading certificate is already expired");
+        }
+        store.deleteEntry(alias);
+        return expiryDate;
+    }
     private String generateCertificateConfiguration(String domain, String previousConfig, LocalDateTime now) throws Exception {
-
         final var suffix = DateTimeFormatter.ofPattern("-yyyyMMddHHmmss").format(now);
-        final String alias = environment.getProperty("domains.certificates.default.alias", String.class, DEFAULT_CERT_ALIAS) + suffix;
 
         final int keySize = environment.getProperty("domains.certificates.default.keysize", int.class, DEFAULT_CERT_KEYSIZE);
         final int validity = environment.getProperty("domains.certificates.default.validity", int.class, DEFAULT_CERT_VALIDITY_IN_DAYS);
         final String name = environment.getProperty("domains.certificates.default.name", String.class, DEFAULT_CERT_CN_NAME);
+        final String alias = environment.getProperty("domains.certificates.default.alias", String.class, DEFAULT_CERT_ALIAS) + suffix;
         final String sigAlgName = environment.getProperty("domains.certificates.default.algorithm", String.class, DEFAULT_CERT_ALGO);
         final String keyPass = environment.getProperty("domains.certificates.default.keypass", String.class, DEFAULT_CERT_PWD);
         final String storePass = environment.getProperty("domains.certificates.default.storepass", String.class, DEFAULT_CERT_PWD);
 
-        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(getAlgorithmCategory(sigAlgName));
-        keyPairGenerator.initialize(keySize);
-        KeyPair keyPair = keyPairGenerator.generateKeyPair();
-
-        java.security.cert.Certificate[] chain = {
-                generateCertificate(name, keyPair, validity, sigAlgName)
-        };
-
-        KeyStore ks = KeyStore.getInstance("pkcs12");
-        ks.load(null, null);
-        ks.setKeyEntry(alias, keyPair.getPrivate(), keyPass.toCharArray(), chain);
-
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        ks.store(outputStream, storePass.toCharArray());
-
-
+        ByteArrayOutputStream generateCertificate = generateCertificate(sigAlgName, keySize, name, validity, alias, keyPass, storePass);
         // create configuration based on the previous one
         // to keep settings that maybe set after the certificate creation
         ObjectNode certificateNode = objectMapper.readValue(previousConfig, ObjectNode.class);
-
         ObjectNode contentNode = objectMapper.createObjectNode();
-        contentNode.put("content", new String(Base64.getEncoder().encode(outputStream.toByteArray())));
-        contentNode.put("name", domain + suffix + ".p12");
-        certificateNode.put("content", objectMapper.writeValueAsString(contentNode));
-        certificateNode.put("alias", alias);
-        certificateNode.put("storepass", storePass);
+        contentNode.put(CONTENT, new String(Base64.getEncoder().encode(generateCertificate.toByteArray())));
+        contentNode.put(NAME, domain + suffix + ".p12");
+        contentNode.put(TYPE, APPLICATION_PKCS_12);
+        certificateNode.put(CONTENT, objectMapper.writeValueAsString(contentNode));
+        certificateNode.put(ALIAS, alias);
+        certificateNode.put(STORE_PASS, storePass);
         certificateNode.put("keypass", keyPass);
 
         return objectMapper.writeValueAsString(certificateNode);
+    }
+    private ByteArrayOutputStream generateCertificate(String sigAlgName, int keySize, String name, int validity, String alias, String keyPass, String storePass) throws GeneralSecurityException, IOException, OperatorCreationException {
+        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(getAlgorithmCategory(sigAlgName));
+        keyPairGenerator.initialize(keySize);
+        KeyPair keyPair = keyPairGenerator.generateKeyPair();
+        java.security.cert.Certificate[] chain = {generateCertificate(name, keyPair, validity, sigAlgName)};
+        KeyStore ks = KeyStore.getInstance("pkcs12");
+        ks.load(null, null);
+        ks.setKeyEntry(alias, keyPair.getPrivate(), keyPass.toCharArray(), chain);
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        ks.store(outputStream, storePass.toCharArray());
+        return outputStream;
     }
 
     private String getAlgorithmCategory(String sigAlgName) {

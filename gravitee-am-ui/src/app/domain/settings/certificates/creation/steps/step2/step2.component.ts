@@ -28,6 +28,7 @@ export class CertificateCreationStep2Component implements OnInit {
   @Output('configurationIsValidChange') configurationIsValidChange: EventEmitter<boolean> = new EventEmitter<boolean>();
   configuration: any;
   certificateSchema: any = {};
+  @Input() reset = false;
 
   constructor(private organizationService: OrganizationService) {}
 

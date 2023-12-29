@@ -17,7 +17,6 @@
 -->
 <div fxLayout="column">
   <p class="gv-plugin-creation-description">Configure your certificate.</p>
-
   <div class="certificate-creation-step2-content">
     <form class="certificate-creation-step2-form" fxLayout="column">
       <div class="gv-form-section">
@@ -38,6 +37,7 @@
             [certificateConfiguration]="configuration"
             [certificateSchema]="certificateSchema"
             (configurationCompleted)="enableCertificateCreation($event)"
+            [reset]="reset"
           ></certificate-form>
         </div>
       </div>
