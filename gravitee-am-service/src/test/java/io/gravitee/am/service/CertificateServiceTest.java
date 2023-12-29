@@ -16,14 +16,12 @@
 package io.gravitee.am.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.common.event.Event;
-import io.gravitee.am.plugins.certificate.core.schema.CertificateSchema;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.CertificateRepository;
 import io.gravitee.am.service.exception.CertificateNotFoundException;
@@ -42,12 +40,10 @@ import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
-import java.security.KeyStoreException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
 import static java.time.temporal.ChronoUnit.HOURS;
-import java.time.temporal.TemporalUnit;
 import java.util.Base64;
 import static org.junit.Assert.assertEquals;
 import org.junit.Before;
@@ -69,14 +65,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.Collections;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static io.gravitee.am.service.impl.CertificateServiceImpl.DEFAULT_CERTIFICATE_PLUGIN;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
@@ -287,7 +281,6 @@ public class CertificateServiceTest {
         var contentNode = objectMapper.createObjectNode();
         contentNode.put("content", EXPIRED_CERT);
         contentNode.put("name", "test.p12");
-        contentNode.put("type", "application/pkcs12");
         certificateNode.put("content", objectMapper.writeValueAsString(contentNode));
         certificateNode.put("alias", "am-server");
         certificateNode.put("storepass", "server-secret");
@@ -331,7 +324,6 @@ public class CertificateServiceTest {
         var contentNode = objectMapper.createObjectNode();
         contentNode.put("content", Base64.getEncoder().encode("file-content-cert".getBytes(StandardCharsets.UTF_8)));
         contentNode.put("name", "test.p12");
-        contentNode.put("type", "application/pkcs12");
         certificateNode.put("content", objectMapper.writeValueAsString(contentNode));
         certificateNode.put("alias", "am-server");
         certificateNode.put("storepass", "server-secret");

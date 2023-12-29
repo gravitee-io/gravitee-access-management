@@ -55,7 +55,6 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.core.SingleSource;
 import io.reactivex.rxjava3.functions.Function;
-import io.reactivex.rxjava3.schedulers.Schedulers;
 import java.io.ByteArrayInputStream;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -122,8 +121,8 @@ public class CertificateServiceImpl implements CertificateService {
     private static final String ALIAS = "alias";
     private static final String TYPE = "type";
     private static final String NAME = "name";
-    private static final String APPLICATION_PKCS_12 = "application/pkcs12";
-    private static final String APPLICATION_X_JAVA_KEYSTORE = "application/x-java-keystore";
+    private static final String PKCS_12_CERTIFICATE = "pkcs12-am-certificate";
+    private static final String JAVA_KEYSTORE_CERTIFICATE = "javakeystore-am-certificate";
 
     @Lazy
     @Autowired
@@ -219,7 +218,7 @@ public class CertificateServiceImpl implements CertificateService {
                         }
                         var file = objectMapper.readTree(certificateConfiguration.get(fileKey).asText());
                         var fileContent = Base64.getDecoder().decode(file.get(CONTENT).asText());
-                        var expiryDate = checkCertificateExireDate(file.get(TYPE).asText(), certificateConfiguration.get(STORE_PASS).asText(), certificateConfiguration.get(ALIAS).asText(), fileContent);
+                        var expiryDate = checkCertificateExireDate(newCertificate.getType(), certificateConfiguration.get(STORE_PASS).asText(), certificateConfiguration.get(ALIAS).asText(), fileContent);
                         certificate.setExpiresAt(expiryDate);
                         certificate.setMetadata(Collections.singletonMap(CertificateMetadata.FILE, fileContent));
                         // update configuration to set the file name
@@ -410,7 +409,6 @@ public class CertificateServiceImpl implements CertificateService {
                     ObjectNode contentNode = objectMapper.createObjectNode();
                     contentNode.put(CONTENT, new String(Base64.getEncoder().encode(generateCertificate.toByteArray())));
                     contentNode.put(NAME, domain + ".p12");
-                    contentNode.put(TYPE, APPLICATION_PKCS_12);
                     certificateNode.put(CONTENT, objectMapper.writeValueAsString(contentNode));
                     certificateNode.put(ALIAS, alias);
                     certificateNode.put(STORE_PASS, storePass);
@@ -470,8 +468,8 @@ public class CertificateServiceImpl implements CertificateService {
     }
     private Date checkCertificateExireDate(String type, String storePass, String alias, byte[] cert) throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException {
         var store = switch(type) {
-            case APPLICATION_X_JAVA_KEYSTORE -> KeyStore.getInstance("JKS");
-            case APPLICATION_PKCS_12 -> KeyStore.getInstance("PKCS12");
+            case JAVA_KEYSTORE_CERTIFICATE -> KeyStore.getInstance("JKS");
+            case PKCS_12_CERTIFICATE -> KeyStore.getInstance("PKCS12");
             default -> throw new CertificateException("Unsupported certification type: " + type);
         };
         store.load(new ByteArrayInputStream(cert), storePass.toCharArray());
@@ -500,7 +498,6 @@ public class CertificateServiceImpl implements CertificateService {
         ObjectNode contentNode = objectMapper.createObjectNode();
         contentNode.put(CONTENT, new String(Base64.getEncoder().encode(generateCertificate.toByteArray())));
         contentNode.put(NAME, domain + suffix + ".p12");
-        contentNode.put(TYPE, APPLICATION_PKCS_12);
         certificateNode.put(CONTENT, objectMapper.writeValueAsString(contentNode));
         certificateNode.put(ALIAS, alias);
         certificateNode.put(STORE_PASS, storePass);
