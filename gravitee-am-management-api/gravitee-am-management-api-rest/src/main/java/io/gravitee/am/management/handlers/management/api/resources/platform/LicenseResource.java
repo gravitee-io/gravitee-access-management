@@ -39,7 +39,7 @@ public class LicenseResource extends AbstractResource {
     @Autowired
     private LicenseManager licenseManager;
 
-    @Value("${notifiers.licenseExpiration.enabled:true}")
+    @Value("${license.expire-notification.enabled:true}")
     private boolean isLicenseExpirationNotifierEnabled = true;
 
     @GET
