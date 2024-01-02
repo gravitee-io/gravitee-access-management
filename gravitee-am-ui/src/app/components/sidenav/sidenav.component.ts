@@ -97,7 +97,7 @@ export class SidenavComponent implements OnInit, OnDestroy {
   }
 
   getLicenseColor(): string {
-    if (this.expirationDays === undefined || this.expirationDays > 30) {
+    if (this.expirationDays === undefined) {
       return '';
     } else if (this.expirationDays > 15) {
       return 'color: #0482c7; background-color: #E7F8FF;';

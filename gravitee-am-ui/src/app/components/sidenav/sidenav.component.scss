@@ -7,6 +7,17 @@ a {
   text-decoration: none;
 }
 
+.license {
+  background-color: white;
+  border-radius: 10px;
+}
+
+.license-message {
+  padding: 10px;
+  border-top-left-radius: 9px;
+  border-top-right-radius: 9px;
+}
+
 :host ::ng-deep.gio-menu-header {
   padding: 0 !important;
 }

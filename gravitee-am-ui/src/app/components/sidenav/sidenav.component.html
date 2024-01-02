@@ -41,13 +41,8 @@
     </gio-menu-list>
     <gio-menu-footer *ngIf="showExpirationMessage() && canDisplayOrganizationSettings()">
       <gio-menu-header>
-        <div
-          style="background-color: white; border-radius: 10px; align-self: flex-end"
-          fxLayout="column"
-          fxLayoutAlign="center"
-          fxLayoutGap="10px"
-        >
-          <div [style]="getLicenseColor() + 'padding: 10px; border-top-left-radius: 9px; border-top-right-radius: 9px;'">
+        <div class="license" fxLayout="column" fxLayoutAlign="center" fxLayoutGap="10px">
+          <div [style]="getLicenseColor()" class="license-message">
             {{ licenseExpirationMessage }}
           </div>
           <div style="padding: 1px 10px 10px">
