@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 import { Component, OnDestroy, OnInit, Pipe, PipeTransform } from '@angular/core';
-import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
+import { NavigationEnd, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { filter, tap } from 'rxjs/operators';
-import { GioLicenseService } from '@gravitee/ui-particles-angular';
-
-import { SidenavService } from './sidenav.service';
+import { filter, take, tap } from 'rxjs/operators';
+import { GioLicenseService, License } from '@gravitee/ui-particles-angular';
 
 import { AppConfig } from '../../../config/app.config';
 import { MenuItem, NavigationService } from '../../services/navigation.service';
@@ -36,7 +34,6 @@ export class SidenavComponent implements OnInit, OnDestroy {
 
   title = AppConfig.settings.portalTitle;
   version = AppConfig.settings.version;
-  reducedMode = false;
   isGlobalSettings = false;
   topMenuItems: MenuItem[] = [];
   footerMenuItems: any[] = [
@@ -51,13 +48,13 @@ export class SidenavComponent implements OnInit, OnDestroy {
   itemsSubscription: Subscription;
   currentEnvironment: any;
   environments: any[] = [];
+  licenseExpirationMessage: string;
   private rawEnvironments: any[] = [];
+  private expirationDays: number;
 
   constructor(
     private router: Router,
-    private route: ActivatedRoute,
     private navigationService: NavigationService,
-    private sidenavService: SidenavService,
     private environmentService: EnvironmentService,
     private authService: AuthService,
     private licenseService: GioLicenseService,
@@ -75,6 +72,40 @@ export class SidenavComponent implements OnInit, OnDestroy {
     });
 
     this.itemsSubscription = this.navigationService.topMenuItemsObs$.subscribe((items) => (this.topMenuItems = items));
+
+    this.licenseService
+      .getLicense$()
+      .pipe(take(1))
+      .subscribe((license: GraviteeLicense) => this.setLicenseExpirationMessage(license));
+  }
+
+  private setLicenseExpirationMessage(licenseObj: GraviteeLicense) {
+    if (licenseObj.expirationDate) {
+      const now = new Date();
+      const expirationDate = new Date(licenseObj.expirationDate);
+      this.expirationDays = this.dateDiffDays(expirationDate, now);
+      if (this.expirationDays > 0) {
+        this.licenseExpirationMessage = `Your license will expire in ${this.expirationDays} days`;
+      } else {
+        this.licenseExpirationMessage = `Your license is expired`;
+      }
+    }
+  }
+
+  showExpirationMessage() {
+    return this.expirationDays < 31;
+  }
+
+  getLicenseColor(): string {
+    if (this.expirationDays === undefined || this.expirationDays > 30) {
+      return '';
+    } else if (this.expirationDays > 15) {
+      return 'color: #0482c7; background-color: #E7F8FF;';
+    } else if (this.expirationDays > 0) {
+      return 'color: #ebe175; background-color: #8f8301;';
+    } else {
+      return 'color: red; background-color: black;';
+    }
   }
 
   ngOnDestroy() {
@@ -83,9 +114,8 @@ export class SidenavComponent implements OnInit, OnDestroy {
     this.itemsSubscription.unsubscribe();
   }
 
-  resize() {
-    this.reducedMode = !this.reducedMode;
-    this.sidenavService.resize(this.reducedMode);
+  dateDiffDays(date1: Date, date2: Date): number {
+    return parseInt(String((date1.getTime() - date2.getTime()) / (1000 * 60 * 60 * 24)), 10);
   }
 
   switchEnvironment($event: any) {
@@ -134,4 +164,8 @@ export class DisplayableItemPipe implements PipeTransform {
     }
     return items.filter((item) => item.display);
   }
+}
+
+interface GraviteeLicense extends License {
+  expirationDate: number;
 }

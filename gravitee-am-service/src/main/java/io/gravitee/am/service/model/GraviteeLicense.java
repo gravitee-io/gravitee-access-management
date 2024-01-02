@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service.model;
 
+import java.util.Date;
 import java.util.Set;
 import lombok.*;
 
@@ -38,4 +39,6 @@ public class GraviteeLicense {
 
     @Builder.Default
     private Set<String> features = Set.of();
+
+    private Date expirationDate;
 }

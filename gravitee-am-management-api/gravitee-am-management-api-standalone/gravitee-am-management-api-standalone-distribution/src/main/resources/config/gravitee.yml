@@ -223,6 +223,8 @@ notifiers:
     sslTrustAll: false
     #sslKeyStore: /path/to/keystore
     #sslKeyStorePassword: changeme
+  licenseExpiration:
+    enabled: true
   ui:
     enabled: false
 

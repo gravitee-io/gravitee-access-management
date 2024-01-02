@@ -6,3 +6,7 @@
 a {
   text-decoration: none;
 }
+
+:host ::ng-deep.gio-menu-header {
+  padding: 0 !important;
+}
