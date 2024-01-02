@@ -18,10 +18,12 @@ package io.gravitee.am.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.common.event.Event;
+import io.gravitee.am.plugins.certificate.core.CertificatePluginManager;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.CertificateRepository;
 import io.gravitee.am.service.exception.CertificateNotFoundException;
@@ -39,22 +41,18 @@ import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import java.nio.charset.StandardCharsets;
-import java.security.KeyStore;
 import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.time.Instant;
 import static java.time.temporal.ChronoUnit.HOURS;
 import java.util.Base64;
-import static org.junit.Assert.assertEquals;
+import java.util.Optional;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockedStatic;
 import org.mockito.Mockito;
-import static org.mockito.Mockito.mockStatic;
 import org.mockito.Spy;
 import org.mockito.internal.util.io.IOUtil;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -119,11 +117,9 @@ public class CertificateServiceTest {
     private TaskManager taskManager;
 
     @Mock
-    private KeyStore keyStore;
+    private CertificatePluginManager certificatePluginManager;
 
     private final static String DOMAIN = "domain1";
-
-    private final static String EXPIRED_CERT = "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";
 
     @BeforeClass
     public static void readCertificateSchemaDefinition() throws Exception {
@@ -279,7 +275,7 @@ public class CertificateServiceTest {
                 .thenReturn(Maybe.just(certificateSchemaDefinition));
         var certificateNode = objectMapper.createObjectNode();
         var contentNode = objectMapper.createObjectNode();
-        contentNode.put("content", EXPIRED_CERT);
+        contentNode.put("content", Base64.getEncoder().encode("file-content-cert".getBytes(StandardCharsets.UTF_8)));
         contentNode.put("name", "test.p12");
         certificateNode.put("content", objectMapper.writeValueAsString(contentNode));
         certificateNode.put("alias", "am-server");
@@ -289,6 +285,10 @@ public class CertificateServiceTest {
         newCertificate.setName("expired-certificate");
         newCertificate.setType(DEFAULT_CERTIFICATE_PLUGIN);
         newCertificate.setConfiguration(certificateNode.toString());
+        var certificateProvider = mock(CertificateProvider.class);
+        when(certificateProvider.getExpirationDate()).thenReturn(Optional.of(new Date(Instant.now().minus(1, HOURS).toEpochMilli())));
+        when(certificatePluginManager.create(any())).thenReturn(certificateProvider);
+
         TestObserver<Certificate> testObserver = certificateService.create(DOMAIN_NAME, newCertificate, Mockito.mock(User.class)).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(error -> error instanceof CertificateException && "Uploading certificate is already expired".equals(error.getMessage()));
@@ -317,7 +317,7 @@ public class CertificateServiceTest {
     }
 
     private TestObserver<Certificate> defaultCertificate(int keySize, String algorithm, boolean shouldBeSuccessful) throws Exception {
-        TestObserver<Certificate> testObserver;
+
         initializeCertificatSettings(keySize, algorithm);
         when(certificatePluginService.getSchema(CertificateServiceImpl.DEFAULT_CERTIFICATE_PLUGIN)).thenReturn(Maybe.just(certificateSchemaDefinition));
         var certificateNode = objectMapper.createObjectNode();
@@ -334,18 +334,13 @@ public class CertificateServiceTest {
         doReturn(mock(ObjectNode.class)).when(objectMapper).createObjectNode();
         when(certificatePluginService.getSchema(CertificateServiceImpl.DEFAULT_CERTIFICATE_PLUGIN))
                 .thenReturn(Maybe.just(certificateSchemaDefinition));
-        var certificate = mock(X509Certificate.class);
-        doReturn(certificate).when(keyStore).getCertificate(any());
-        when(certificate.getNotAfter()).thenReturn(new Date(Instant.now().plus(1, HOURS).toEpochMilli()));
-         try (MockedStatic<KeyStore> mocked = mockStatic(KeyStore.class)) {
-            mocked.when(() -> KeyStore.getInstance(any())).thenReturn(keyStore);
-            assertEquals(keyStore, KeyStore.getInstance("123"));
+        var certificateProvider = mock(CertificateProvider.class);
+        when(certificateProvider.getExpirationDate()).thenReturn(Optional.of(new Date(Instant.now().plus(1, HOURS).toEpochMilli())));
+        when(certificatePluginManager.create(any())).thenReturn(certificateProvider);
 
-            testObserver = certificateService.create(DOMAIN_NAME).test();
-            testObserver.awaitDone(10, TimeUnit.SECONDS);
+        TestObserver<Certificate> testObserver = certificateService.create(DOMAIN_NAME).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
 
-            mocked.verify(() -> KeyStore.getInstance("PKCS12"), times(shouldBeSuccessful ? 1 : 0));
-        }
         if (shouldBeSuccessful) {
             verify(certificateRepository).create(argThat(cert -> cert.isSystem()
                     && cert.getDomain().equals(DOMAIN_NAME)
@@ -418,6 +413,10 @@ public class CertificateServiceTest {
         when(certificatePluginService.getSchema(DEFAULT_CERTIFICATE_PLUGIN))
                 .thenReturn(Maybe.just(certificateSchemaDefinition));
 
+        var certificateProvider = mock(CertificateProvider.class);
+        when(certificateProvider.getExpirationDate()).thenReturn(Optional.of(new Date(Instant.now().plus(1, HOURS).toEpochMilli())));
+        when(certificatePluginManager.create(any())).thenReturn(certificateProvider);
+
         TestObserver<Certificate> testObserver = certificateService.rotate(DOMAIN, mock(User.class)).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
@@ -466,6 +465,10 @@ public class CertificateServiceTest {
 
         when(certificatePluginService.getSchema(DEFAULT_CERTIFICATE_PLUGIN))
                 .thenReturn(Maybe.just(certificateSchemaDefinition));
+
+        var certificateProvider = mock(CertificateProvider.class);
+        when(certificateProvider.getExpirationDate()).thenReturn(Optional.of(new Date(Instant.now().plus(1, HOURS).toEpochMilli())));
+        when(certificatePluginManager.create(any())).thenReturn(certificateProvider);
 
         TestObserver<Certificate> testObserver = certificateService.rotate(DOMAIN, mock(User.class)).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
