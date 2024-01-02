@@ -126,6 +126,8 @@ public class OrganizationUserServiceTest {
         NewUser newUser = new NewUser();
         newUser.setEmail("invalid");
 
+        when(userRepository.findByUsernameAndSource(any(), any(), any(), any())).thenReturn(Maybe.empty());
+
         TestObserver<User> testObserver = userService.create(ReferenceType.ORGANIZATION, ORG, newUser).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 

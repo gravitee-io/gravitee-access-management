@@ -182,9 +182,6 @@ public abstract class AbstractUserService<T extends CommonUserRepository> implem
     @Override
     public Single<User> create(ReferenceType referenceType, String referenceId, NewUser newUser) {
         LOGGER.debug("Create a new user {} for {} {}", newUser, referenceType, referenceId);
-        if (StringUtils.isBlank(newUser.getUsername())) {
-            return Single.error(new UserInvalidException("Field [username] is required"));
-        }
         return getUserRepository().findByUsernameAndSource(referenceType, referenceId, newUser.getUsername(), newUser.getSource())
                 .isEmpty()
                 .flatMap(isEmpty -> {
@@ -231,7 +228,7 @@ public abstract class AbstractUserService<T extends CommonUserRepository> implem
     public Single<User> create(User user) {
         LOGGER.debug("Create a user {}", user);
         if (StringUtils.isBlank(user.getUsername())) {
-            return Single.error(new UserInvalidException("Field [username] is required"));
+            return Single.error(() -> new UserInvalidException("Field [username] is required"));
         }
         user.setCreatedAt(new Date());
         user.setUpdatedAt(user.getCreatedAt());

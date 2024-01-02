@@ -196,7 +196,7 @@ public class UserServiceImpl implements UserService {
     public Single<User> create(User user, String idp, String baseUrl, io.gravitee.am.identityprovider.api.User principal, Client client) {
         LOGGER.debug("Create a new user {} for domain {}", user.getUserName(), domain.getName());
         if (StringUtils.isBlank(user.getUserName())) {
-            return Single.error(new UserInvalidException("Field [username] is required"));
+            return Single.error(() -> new UserInvalidException("Field [username] is required"));
         }
         // set user idp source
         final String source = user.getSource() != null ? user.getSource() : (idp != null ? idp : DEFAULT_IDP_PREFIX + domain.getId());

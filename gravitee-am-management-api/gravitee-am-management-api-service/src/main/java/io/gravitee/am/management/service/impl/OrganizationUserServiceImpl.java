@@ -89,7 +89,7 @@ public class OrganizationUserServiceImpl extends AbstractUserService<io.gravitee
                 })
                 .switchIfEmpty(Single.defer(() -> {
                     if (StringUtils.isBlank(newUser.getUsername())) {
-                        return Single.error(new UserInvalidException("Field [username] is required"));
+                        return Single.error(() -> new UserInvalidException("Field [username] is required"));
                     }
                     User user = transform(newUser, referenceType, referenceId);
                     return userService.create(user);
@@ -98,7 +98,7 @@ public class OrganizationUserServiceImpl extends AbstractUserService<io.gravitee
 
     public Single<User> createGraviteeUser(Organization organization, NewUser newUser, io.gravitee.am.identityprovider.api.User principal) {
         if (StringUtils.isBlank(newUser.getUsername())) {
-            return Single.error(new UserInvalidException("Field [username] is required"));
+            return Single.error(() -> new UserInvalidException("Field [username] is required"));
         }
         // Organization user are linked to the Gravitee Idp only
         if (!Strings.isNullOrEmpty(newUser.getSource()) && !IDP_GRAVITEE.equals(newUser.getSource())) {

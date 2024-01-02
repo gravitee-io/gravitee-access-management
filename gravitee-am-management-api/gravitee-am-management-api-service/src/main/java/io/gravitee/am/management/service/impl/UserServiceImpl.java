@@ -123,7 +123,7 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
     @Override
     public Single<User> create(Domain domain, NewUser newUser, io.gravitee.am.identityprovider.api.User principal) {
         if (StringUtils.isBlank(newUser.getUsername())) {
-            return Single.error(new UserInvalidException("Field [username] is required"));
+            return Single.error(() -> new UserInvalidException("Field [username] is required"));
         }
         // user must have a password in no pre registration mode
         if (newUser.getPassword() == null && FALSE.equals(newUser.isPreRegistration())) {
