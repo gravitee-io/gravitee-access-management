@@ -230,14 +230,8 @@ public class CertificateServiceImpl implements CertificateService {
                         return Single.error(() -> new TechnicalManagementException("An error occurs while trying to create a certificate", ex));
                     }
                 })
-                .flatMap(certificate -> {
-                    try {
-                        isValid(certificate);
-                        return certificateRepository.create(certificate);
-                    } catch (Exception e) {
-                        return Single.error(e);
-                    }
-                })
+                .map(this::getValid)
+                .flatMap(certificate -> certificateRepository.create(certificate))
                 // create event for sync process
                 .flatMap(certificate -> {
                     Event event = new Event(Type.CERTIFICATE, new Payload(certificate.getId(), ReferenceType.DOMAIN, certificate.getDomain(), Action.CREATE));
@@ -310,14 +304,8 @@ public class CertificateServiceImpl implements CertificateService {
                     }
                     return Single.just(certificateToUpdate);
                 })
-                .flatMap(certificate -> {
-                    try {
-                        isValid(certificate);
-                        return certificateRepository.update(certificate);
-                    } catch (Exception e) {
-                        return Single.error(e);
-                    }
-                })
+                .map(this::getValid)
+                .flatMap(certificate -> certificateRepository.update(certificate))
                 // create event for sync process
                 .flatMap(certificate1 -> {
                     Event event = new Event(Type.CERTIFICATE, new Payload(certificate1.getId(), ReferenceType.DOMAIN, certificate1.getDomain(), Action.UPDATE));
@@ -533,7 +521,7 @@ public class CertificateServiceImpl implements CertificateService {
         return new JcaX509CertificateConverter().setProvider(BouncyCastleProviderSingleton.getInstance()).getCertificate(certBuilder.build(contentSigner));
     }
 
-    private void isValid(Certificate certificate) throws CertificateException {
+    private Certificate getValid(Certificate certificate) throws CertificateException {
         var providerConfig = new CertificateProviderConfiguration(certificate);
         var certificateProvider = certificatePluginManager.create(providerConfig);
         if (certificateProvider == null) {
@@ -541,5 +529,6 @@ public class CertificateServiceImpl implements CertificateService {
         } else if (certificateProvider.getExpirationDate().isPresent() && Instant.now().isAfter(certificateProvider.getExpirationDate().get().toInstant())) {
             throw new CertificateException("Uploading certificate is already expired");
         }
+        return certificate;
     }
 }

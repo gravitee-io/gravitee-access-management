@@ -295,6 +295,29 @@ public class CertificateServiceTest {
     }
 
     @Test
+    public void shouldNotCreateWhenIncorrectCertificatePassword() throws JsonProcessingException {
+        when(certificatePluginService.getSchema(CertificateServiceImpl.DEFAULT_CERTIFICATE_PLUGIN))
+                .thenReturn(Maybe.just(certificateSchemaDefinition));
+        var certificateNode = objectMapper.createObjectNode();
+        var contentNode = objectMapper.createObjectNode();
+        contentNode.put("content", Base64.getEncoder().encode("file-content-cert".getBytes(StandardCharsets.UTF_8)));
+        contentNode.put("name", "test.p12");
+        certificateNode.put("content", objectMapper.writeValueAsString(contentNode));
+        certificateNode.put("alias", "am-server");
+        certificateNode.put("storepass", "server-secret");
+        certificateNode.put("keypass", "incorrect password");
+        var newCertificate = new NewCertificate();
+        newCertificate.setName("certificate");
+        newCertificate.setType(DEFAULT_CERTIFICATE_PLUGIN);
+        newCertificate.setConfiguration(certificateNode.toString());
+        when(certificatePluginManager.create(any())).thenReturn(null);
+
+        TestObserver<Certificate> testObserver = certificateService.create(DOMAIN_NAME, newCertificate, Mockito.mock(User.class)).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertError(error -> error instanceof CertificateException && "Incorrect certification data".equals(error.getMessage()));
+    }
+
+    @Test
     public void shouldNotCreateWhenCertificateFileIsNotFound(){
         when(certificatePluginService.getSchema(CertificateServiceImpl.DEFAULT_CERTIFICATE_PLUGIN)).thenReturn(Maybe.just(certificateSchemaDefinition));
         var certificateNode = objectMapper.createObjectNode();
