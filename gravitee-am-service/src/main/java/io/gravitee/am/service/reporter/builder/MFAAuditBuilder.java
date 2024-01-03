@@ -21,10 +21,11 @@ import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactorChannel;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.reporter.builder.gateway.GatewayAuditBuilder;
 
 import static io.gravitee.am.common.audit.EntityType.MFA_FACTOR;
 
-public class MFAAuditBuilder extends AuditBuilder<MFAAuditBuilder> {
+public class MFAAuditBuilder extends GatewayAuditBuilder<MFAAuditBuilder> {
 
     private record ChanelData(String type, String target) {
     }

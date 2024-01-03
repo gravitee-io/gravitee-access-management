@@ -19,8 +19,9 @@ import io.gravitee.am.common.audit.EntityType;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.reporter.builder.gateway.GatewayAuditBuilder;
 
-public class ClientAuthAuditBuilder extends AuditBuilder<ClientAuthAuditBuilder> {
+public class ClientAuthAuditBuilder extends GatewayAuditBuilder<ClientAuthAuditBuilder> {
     public ClientAuthAuditBuilder() {
         super();
         type(EventType.CLIENT_AUTHENTICATION);
