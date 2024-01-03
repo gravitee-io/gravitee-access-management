@@ -17,7 +17,7 @@
 -->
 <div class="gio-side-nav mat mat-typography mat-app-background">
   <gio-menu>
-    <gio-menu-header style="padding: 0 16px">
+    <gio-menu-header class="header">
       <gio-menu-selector
         *ngIf="canDisplayEnvironments()"
         [selectedItemValue]="currentEnvironment.id"
@@ -39,18 +39,18 @@
         <gio-menu-item [icon]="item.icon" [active]="rla.isActive" [iconRight]="item?.iconRight$ | async">{{ item.label }}</gio-menu-item>
       </a>
     </gio-menu-list>
-    <gio-menu-footer *ngIf="showExpirationMessage() && canDisplayOrganizationSettings()">
+    <gio-menu-footer *ngIf="canDisplayLicence() && showExpirationMessage()">
       <gio-menu-header>
         <div class="license" fxLayout="column" fxLayoutAlign="center" fxLayoutGap="10px">
           <div [style]="getLicenseColor()" class="license-message">
             {{ licenseExpirationMessage }}
           </div>
-          <div style="padding: 1px 10px 10px">
-            <div fxFlex="50%" style="color: #767676">Learn more</div>
+          <div class="license-bottom">
+            <div fxFlex="50%" class="license-learn-more">Learn more</div>
             <span class="material-icons"></span>
             <div fxFlex="50%" fxLayoutAlign="end start">
               <a href="https://www.gravitee.io/pricing" target="_blank">
-                <mat-icon style="border: 1px solid #767676; border-radius: 12px; color: #767676">navigate_next </mat-icon>
+                <mat-icon class="license-learn-more-icon">navigate_next</mat-icon>
               </a>
             </div>
           </div>

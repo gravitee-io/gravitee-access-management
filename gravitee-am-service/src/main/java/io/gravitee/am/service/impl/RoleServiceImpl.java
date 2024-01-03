@@ -408,6 +408,7 @@ public class RoleServiceImpl implements RoleService {
         organizationPrimaryOwnerPermissions.put(Permission.ORGANIZATION_SETTINGS, Acl.of(READ, UPDATE));
         organizationPrimaryOwnerPermissions.put(Permission.ORGANIZATION_AUDIT, Acl.of(READ, LIST));
         organizationPrimaryOwnerPermissions.put(Permission.ENVIRONMENT, Acl.of(READ, LIST));
+        organizationPrimaryOwnerPermissions.put(Permission.LICENSE_NOTIFICATION, Acl.of(READ));
 
         environmentPrimaryOwnerPermissions.put(Permission.ENVIRONMENT, Acl.of(READ));
 
@@ -441,6 +442,7 @@ public class RoleServiceImpl implements RoleService {
         organizationOwnerPermissions.put(Permission.ORGANIZATION_SETTINGS, Acl.of(READ, UPDATE));
         organizationOwnerPermissions.put(Permission.ORGANIZATION_AUDIT, Acl.of(READ, LIST));
         organizationOwnerPermissions.put(Permission.ENVIRONMENT, Acl.of(READ, LIST));
+        organizationOwnerPermissions.put(Permission.LICENSE_NOTIFICATION, Acl.of(READ));
 
         environmentOwnerPermissions.put(Permission.ENVIRONMENT, Acl.of(READ));
 

@@ -16,7 +16,6 @@
 package io.gravitee.am.management.handlers.management.api.resources.platform;
 
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.service.PermissionService;
 import io.gravitee.am.service.model.GraviteeLicense;
 import io.gravitee.common.http.MediaType;
 import io.gravitee.node.api.license.License;

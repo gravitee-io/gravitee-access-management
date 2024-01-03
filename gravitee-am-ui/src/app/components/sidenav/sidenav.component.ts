@@ -128,6 +128,10 @@ export class SidenavComponent implements OnInit, OnDestroy {
     return this.environments && this.environments.length > 0 && !this.router.url.startsWith('/settings');
   }
 
+  canDisplayLicence(): boolean {
+    return !this.router.url.startsWith('/settings') && this.authService.hasPermissions(['license_notification_read']);
+  }
+
   canDisplayOrganizationSettings(): boolean {
     return !this.router.url.startsWith('/settings') && this.authService.hasPermissions(['organization_settings_read']);
   }
