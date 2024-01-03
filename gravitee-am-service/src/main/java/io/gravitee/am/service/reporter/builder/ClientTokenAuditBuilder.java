@@ -17,17 +17,20 @@ package io.gravitee.am.service.reporter.builder;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.audit.EntityType;
-import static io.gravitee.am.common.audit.EventType.TOKEN_CREATED;
-import static io.gravitee.am.common.audit.EventType.TOKEN_REVOKED;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.reporter.api.audit.model.Audit;
+import io.gravitee.am.service.reporter.builder.gateway.GatewayAuditBuilder;
+
 import java.util.HashMap;
 import java.util.Map;
 
-public class ClientTokenAuditBuilder extends AuditBuilder<ClientTokenAuditBuilder> {
+import static io.gravitee.am.common.audit.EventType.TOKEN_CREATED;
+import static io.gravitee.am.common.audit.EventType.TOKEN_REVOKED;
+
+public class ClientTokenAuditBuilder extends GatewayAuditBuilder<ClientTokenAuditBuilder> {
     private static final String ADDITIONAL_INFO = "additionalInfo";
     private final Map<String, Map<String, String>> tokenNewValue;
 

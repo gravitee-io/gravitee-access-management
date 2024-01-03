@@ -75,7 +75,11 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
         resolveClient(request, handler -> {
             if (handler.failed()) {
                 Throwable cause = handler.cause();
-                auditService.report(AuditBuilder.builder(ClientAuthAuditBuilder.class).domain(domain.getId()).throwable(cause));
+                auditService.report(AuditBuilder.builder(ClientAuthAuditBuilder.class)
+                        .domain(domain.getId())
+                        .ipAddress(routingContext)
+                        .userAgent(routingContext)
+                        .throwable(cause));
                 routingContext.fail(cause);
                 return;
             }
@@ -90,7 +94,10 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
                             routingContext.response().putHeader("WWW-Authenticate", authenticateHeader);
                         }
                     }
-                    auditService.report(AuditBuilder.builder(ClientAuthAuditBuilder.class).clientActor(client).throwable(throwable));
+                    auditService.report(AuditBuilder.builder(ClientAuthAuditBuilder.class).clientActor(client)
+                            .ipAddress(routingContext)
+                            .userAgent(routingContext)
+                            .throwable(throwable));
                     routingContext.fail(authHandler.cause());
                     return;
                 }
@@ -105,20 +112,29 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
                         routingContext.put(ConstantKeys.PEER_CERTIFICATE_THUMBPRINT, getThumbprint(peerCertificate.get(), "SHA-256"));
                     } else if (authenticatedClient.isTlsClientCertificateBoundAccessTokens() || domain.usePlainFapiProfile()) {
                         var error = new InvalidClientException(CERTIFICATE_ERROR);
-                        auditService.report(AuditBuilder.builder(ClientAuthAuditBuilder.class).clientActor(client).throwable(error));
+                        auditService.report(AuditBuilder.builder(ClientAuthAuditBuilder.class).clientActor(client)
+                                .ipAddress(routingContext)
+                                .userAgent(routingContext)
+                                .throwable(error));
                         routingContext.fail(error);
                         return;
                     }
                 } catch (SSLPeerUnverifiedException | NoSuchAlgorithmException | CertificateException ce ) {
                     if (authenticatedClient.isTlsClientCertificateBoundAccessTokens() || domain.usePlainFapiProfile()) {
                         var error = new InvalidClientException(CERTIFICATE_ERROR);
-                        auditService.report(AuditBuilder.builder(ClientAuthAuditBuilder.class).clientActor(client).throwable(error));
+                        auditService.report(AuditBuilder.builder(ClientAuthAuditBuilder.class).clientActor(client)
+                                .ipAddress(routingContext)
+                                .userAgent(routingContext)
+                                .throwable(error));
                         routingContext.fail(error);
                         return;
                     }
                 }
 
-                auditService.report(AuditBuilder.builder(ClientAuthAuditBuilder.class).clientActor(client));
+                auditService.report(AuditBuilder.builder(ClientAuthAuditBuilder.class).clientActor(client)
+                        .ipAddress(routingContext)
+                        .userAgent(routingContext)
+                );
                 // put client in context and continue
                 routingContext.put(CLIENT_CONTEXT_KEY, authenticatedClient);
                 routingContext.next();

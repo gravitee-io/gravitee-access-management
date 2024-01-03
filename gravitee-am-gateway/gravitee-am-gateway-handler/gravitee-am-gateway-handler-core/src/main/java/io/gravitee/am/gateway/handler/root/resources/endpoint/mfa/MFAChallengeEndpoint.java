@@ -302,7 +302,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
                                 if (verifyAttemptService.shouldSendEmail(client, domain)) {
                                     emailService.send(Template.VERIFY_ATTEMPT, endUser, client);
                                 }
-                                updateAuditLog(MFA_MAX_ATTEMPT_REACHED, endUser, client, factor, factorCtx, error);
+                                updateAuditLog(routingContext, MFA_MAX_ATTEMPT_REACHED, endUser, client, factor, factorCtx, error);
                                 logger.warn("MFA verification limit reached for the user: {}", endUser.getUsername());
                                 handleException(routingContext, VERIFY_ATTEMPT_ERROR_PARAM_KEY, "maximum_verify_limit");
                             } else {
@@ -324,7 +324,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
         return h -> {
             if (h.failed()) {
                 String failureReason = isEnrolling(routingContext, factorProvider, factorContext) ? MFA_ENROLLMENT : MFA_CHALLENGE;
-                updateAuditLog(failureReason, endUser, client, factor, factorContext, h.cause());
+                updateAuditLog(routingContext, failureReason, endUser, client, factor, factorContext, h.cause());
                 handleException(routingContext, ERROR_PARAM_KEY, "mfa_challenge_failed");
                 return;
             }
@@ -340,18 +340,18 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
                 saveFactor(endUser, factorProvider.changeVariableFactorSecurity(enrolledFactor), fh -> {
                     if (fh.failed()) {
                         logger.error("An error occurs while saving enrolled factor for the current user", fh.cause());
-                        updateAuditLog(MFA_ENROLLMENT, endUser, client, factor, factorContext, fh.cause());
+                        updateAuditLog(routingContext, MFA_ENROLLMENT, endUser, client, factor, factorContext, fh.cause());
                         handleException(routingContext, ERROR_PARAM_KEY, "mfa_challenge_failed");
                         return;
                     }
 
                     cleanSession(routingContext);
                     updateStrongAuthStatus(routingContext);
-                    updateAuditLog(MFA_ENROLLMENT, endUser, client, factor, factorContext, null);
+                    updateAuditLog(routingContext, MFA_ENROLLMENT, endUser, client, factor, factorContext, null);
                     redirectToAuthorize(routingContext, client, endUser);
                 });
             } else {
-                updateAuditLog(MFA_CHALLENGE, endUser, client, factor, factorContext, null);
+                updateAuditLog(routingContext, MFA_CHALLENGE, endUser, client, factor, factorContext, null);
                 updateStrongAuthStatus(routingContext);
                 redirectToAuthorize(routingContext, client, endUser);
             }
@@ -368,13 +368,13 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
             if (ch.failed()) {
                 final String username = routingContext.session().get(PASSWORDLESS_CHALLENGE_USERNAME_KEY);
                 logger.error("An error has occurred while updating credential for the user {}", username, h.cause());
-                updateAuditLog(MFA_CHALLENGE, endUser, client, factor, factorContext, h.cause());
+                updateAuditLog(routingContext, MFA_CHALLENGE, endUser, client, factor, factorContext, h.cause());
                 routingContext.fail(401);
                 return;
             }
 
             updateStrongAuthStatus(routingContext);
-            updateAuditLog(MFA_CHALLENGE, endUser, client, factor, factorContext, null);
+            updateAuditLog(routingContext, MFA_CHALLENGE, endUser, client, factor, factorContext, null);
             // set the credentialId in session
             routingContext.session().put(ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY, credentialId);
 
@@ -469,7 +469,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
             rateLimiterService.tryConsume(endUser.getId(), factor.getId(), endUser.getClient(), client.getDomain())
                     .subscribe(allowRequest -> {
                                 if (allowRequest) {
-                                    sendChallenge(factorProvider, factorContext,endUser, client, factor, handler);
+                                    sendChallenge(routingContext, factorProvider, factorContext,endUser, client, factor, handler);
                                 } else {
                                     handleException(routingContext, RATE_LIMIT_ERROR_PARAM_KEY, "mfa_request_limit_exceed");
                                     return;
@@ -478,20 +478,20 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
                             error -> handler.handle(Future.failedFuture(error))
                     );
         } else {
-            sendChallenge(factorProvider, factorContext, endUser, client, factor, handler);
+            sendChallenge(routingContext, factorProvider, factorContext, endUser, client, factor, handler);
         }
     }
 
-    private void sendChallenge(FactorProvider factorProvider, FactorContext factorContext, User endUser, Client client, Factor factor, Handler<AsyncResult<Void>> handler) {
+    private void sendChallenge(RoutingContext routingContext, FactorProvider factorProvider, FactorContext factorContext, User endUser, Client client, Factor factor, Handler<AsyncResult<Void>> handler) {
         factorProvider.sendChallenge(factorContext)
                 .subscribeOn(Schedulers.io())
                 .subscribe(
                         () -> {
-                            updateAuditLog(MFA_CHALLENGE_SENT, endUser, client, factor, factorContext, null);
+                            updateAuditLog(routingContext, MFA_CHALLENGE_SENT, endUser, client, factor, factorContext, null);
                             handler.handle(Future.succeededFuture());
                         },
                         error -> {
-                            updateAuditLog(MFA_CHALLENGE_SENT, endUser, client, factor, factorContext, error);
+                            updateAuditLog(routingContext, MFA_CHALLENGE_SENT, endUser, client, factor, factorContext, error);
                             handler.handle(Future.failedFuture(error));
 
                         }
@@ -751,7 +751,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
                 factorProvider.useVariableFactorSecurity(factorContext);
     }
 
-    private void updateAuditLog(String type, User endUser, Client client, Factor factor, FactorContext factorContext, Throwable cause) {
+    private void updateAuditLog(RoutingContext routingContext, String type, User endUser, Client client, Factor factor, FactorContext factorContext, Throwable cause) {
         final EnrolledFactor enrolledFactor = factorContext.getData(FactorContext.KEY_ENROLLED_FACTOR, EnrolledFactor.class);
         final EnrolledFactorChannel channel = enrolledFactor.getChannel();
 
@@ -762,6 +762,8 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
                 .channel(channel)
                 .client(client)
                 .domain(domain.getId())
+                .ipAddress(routingContext)
+                .userAgent(routingContext)
                 .throwable(cause, channel);
 
         auditService.report(builder);

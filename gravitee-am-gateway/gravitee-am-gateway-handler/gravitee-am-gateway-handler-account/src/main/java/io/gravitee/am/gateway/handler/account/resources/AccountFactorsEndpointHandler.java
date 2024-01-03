@@ -60,7 +60,13 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.springframework.context.ApplicationContext;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static io.gravitee.am.common.audit.EventType.MFA_CHALLENGE_SENT;
@@ -299,14 +305,14 @@ public class AccountFactorsEndpointHandler {
                 final EnrolledFactor enrolledFactor = optionalEnrolledFactor.get();
                 verifyFactor(code, enrolledFactor, factorProvider, vh -> {
                     if (vh.failed()) {
-                        updateAuditLog(EventType.MFA_ENROLLMENT, user, client, h.result(), enrolledFactor, vh.cause());
+                        updateAuditLog(routingContext, EventType.MFA_ENROLLMENT, user, client, h.result(), enrolledFactor, vh.cause());
                         routingContext.fail(vh.cause());
                         return;
                     }
 
                     // verify successful, change the EnrolledFactor status and increment moving factor
                     enrolledFactor.setStatus(FactorStatus.ACTIVATED);
-                    updateAuditLog(MFA_ENROLLMENT, user, client, h.result(), enrolledFactor, null);
+                    updateAuditLog(routingContext, MFA_ENROLLMENT, user, client, h.result(), enrolledFactor, null);
 
                     factorProvider.changeVariableFactorSecurity(enrolledFactor)
                             .flatMap(eF -> accountService.upsertFactor(user.getId(), eF, new DefaultUser(user)).map(__ -> eF))
@@ -656,7 +662,7 @@ public class AccountFactorsEndpointHandler {
             rateLimiterService.tryConsume(endUser.getId(), factor.getId(), endUser.getClient(), client.getDomain())
                     .subscribe(allowRequest -> {
                                 if (allowRequest) {
-                                    sendChallenge(factorProvider, factorContext, endUser, client, enrolledFactor, factor, handler);
+                                    sendChallenge(routingContext, factorProvider, factorContext, endUser, client, enrolledFactor, factor, handler);
                                 } else {
                                     RateLimitException exception = new RateLimitException("Please try again later.");
                                     handler.handle(Future.failedFuture(exception));
@@ -665,22 +671,22 @@ public class AccountFactorsEndpointHandler {
                             error -> handler.handle(Future.failedFuture(error))
                     );
         }else {
-            sendChallenge(factorProvider, factorContext, endUser, client, enrolledFactor, factor, handler);
+            sendChallenge(routingContext, factorProvider, factorContext, endUser, client, enrolledFactor, factor, handler);
         }
     }
 
-    private void sendChallenge(FactorProvider factorProvider, FactorContext factorContext, User user, Client client,
+    private void sendChallenge(RoutingContext routingContext, FactorProvider factorProvider, FactorContext factorContext, User user, Client client,
                                EnrolledFactor enrolledFactor, Factor factor, Handler<AsyncResult<Void>> handler){
         factorProvider.sendChallenge(factorContext)
                 .subscribeOn(Schedulers.io())
                 .subscribe(
                         () -> {
-                            updateAuditLog(MFA_CHALLENGE_SENT, user, client, factor, enrolledFactor, null);
+                            updateAuditLog(routingContext, MFA_CHALLENGE_SENT, user, client, factor, enrolledFactor, null);
                             handler.handle(Future.succeededFuture());
                         },
                         error ->
                         {
-                            updateAuditLog(MFA_CHALLENGE_SENT, user, client, factor, enrolledFactor, error);
+                            updateAuditLog(routingContext, MFA_CHALLENGE_SENT, user, client, factor, enrolledFactor, error);
                             handler.handle(Future.failedFuture(error));
                         }
                 );
@@ -769,7 +775,7 @@ public class AccountFactorsEndpointHandler {
                 .collect(Collectors.toList());
     }
 
-    private void updateAuditLog(String type, User endUser, Client client, Factor factor, EnrolledFactor enrolledFactor, Throwable cause) {
+    private void updateAuditLog(RoutingContext routingContext, String type, User endUser, Client client, Factor factor, EnrolledFactor enrolledFactor, Throwable cause) {
         final EnrolledFactorChannel channel = enrolledFactor.getChannel();
 
         final MFAAuditBuilder builder = AuditBuilder.builder(MFAAuditBuilder.class)
@@ -779,6 +785,8 @@ public class AccountFactorsEndpointHandler {
                 .client(client)
                 .domainFrom(client)
                 .channel(channel)
+                .ipAddress(routingContext)
+                .userAgent(routingContext)
                 .throwable(cause, channel);
 
         auditService.report(builder);
