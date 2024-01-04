@@ -24,8 +24,10 @@ import io.gravitee.am.service.authentication.crypto.password.MD5PasswordEncoder;
 import io.gravitee.am.service.authentication.crypto.password.MessageDigestPasswordEncoder;
 import io.gravitee.am.service.authentication.crypto.password.NoOpPasswordEncoder;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
+import io.gravitee.am.service.authentication.crypto.password.PasswordEncoderOptions;
 import io.gravitee.am.service.authentication.crypto.password.SHAMD5PasswordEncoder;
 import io.gravitee.am.service.authentication.crypto.password.SHAPasswordEncoder;
+import io.gravitee.am.service.authentication.crypto.password.bcrypt.BCrypt;
 import io.gravitee.am.service.authentication.crypto.password.bcrypt.BCryptPasswordEncoder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -36,6 +38,7 @@ import java.util.regex.Pattern;
 import static io.gravitee.am.identityprovider.mongo.utils.PasswordEncoder.BCRYPT;
 import static io.gravitee.am.identityprovider.mongo.utils.PasswordEncoder.MD5;
 import static io.gravitee.am.identityprovider.mongo.utils.PasswordEncoder.SHA;
+import static java.util.Optional.ofNullable;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -54,7 +57,11 @@ public class MongoAuthenticationProviderConfiguration {
         }
 
         if (BCRYPT.equals(configuration.getPasswordEncoder())) {
-            return new BCryptPasswordEncoder();
+            return ofNullable(configuration.getPasswordEncoderOptions())
+                    .filter(opts -> opts.getRounds() > 0)
+                    .map(PasswordEncoderOptions::getRounds)
+                    .map(BCryptPasswordEncoder::new)
+                    .orElseGet(BCryptPasswordEncoder::new);
         }
 
         if (MD5.equals(configuration.getPasswordEncoder())) {

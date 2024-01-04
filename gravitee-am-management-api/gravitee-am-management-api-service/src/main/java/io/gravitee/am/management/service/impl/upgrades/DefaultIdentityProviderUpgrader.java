@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.management.service.impl.upgrades;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.service.IdentityProviderService;
@@ -25,6 +27,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
+
+import java.util.Map;
 
 /**
  * @author Islem TRIKI (islem.triki at graviteesource.com)
@@ -40,6 +44,8 @@ public class DefaultIdentityProviderUpgrader implements Upgrader, Ordered {
 
     @Autowired
     private IdentityProviderManager identityProviderManager;
+
+    private ObjectMapper mapper = new ObjectMapper();
 
     @Override
     public boolean upgrade() {
@@ -58,7 +64,15 @@ public class DefaultIdentityProviderUpgrader implements Upgrader, Ordered {
         updateIdentityProvider.setMappers(identityProvider.getMappers());
         updateIdentityProvider.setName(identityProvider.getName());
         updateIdentityProvider.setRoleMapper(identityProvider.getRoleMapper());
-        updateIdentityProvider.setConfiguration(identityProviderManager.createProviderConfiguration(identityProvider.getReferenceId(), null));
+        Map<String, Object> configMap = identityProviderManager.createProviderConfiguration(identityProvider.getReferenceId(), null);
+        try {
+            Map<String, Object> existingConfigMap = mapper.readValue(identityProvider.getConfiguration(), Map.class);
+            configMap.put("passwordEncoder", existingConfigMap.get("passwordEncoder"));
+            configMap.put("passwordEncoderOptions", existingConfigMap.get("passwordEncoderOptions"));
+            updateIdentityProvider.setConfiguration(mapper.writeValueAsString(configMap));
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Unable to serialize the default idp configuration for domain '" + identityProvider.getReferenceId() + "'", e);
+        }
 
         return identityProviderService.update(identityProvider.getReferenceId(), identityProvider.getId(), updateIdentityProvider, true);
     }

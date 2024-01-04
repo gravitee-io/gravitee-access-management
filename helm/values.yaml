@@ -498,6 +498,16 @@ api:
       enabled: true
 
   domains:
+    identities:
+      default:
+        passwordEncoder:
+           # Algorithms used to hash the user password.
+           # Can be one of :
+           # "BCrypt", "SHA", "SHA-1", "SHA-256", "SHA-384", "SHA-512", "MD5", "SHA-256+MD5", "None"
+          algorithm: BCrypt
+          properties:
+          # Number of rounds used by BCrypt
+            rounds: 10
     certificates:
       default:
         keysize: 2048

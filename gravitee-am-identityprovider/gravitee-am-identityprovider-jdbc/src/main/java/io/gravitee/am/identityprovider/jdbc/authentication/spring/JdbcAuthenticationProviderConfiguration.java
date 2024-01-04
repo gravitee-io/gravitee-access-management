@@ -26,9 +26,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 import static io.gravitee.am.identityprovider.jdbc.utils.PasswordEncoder.*;
+import static java.util.Optional.ofNullable;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -47,7 +49,11 @@ public class JdbcAuthenticationProviderConfiguration {
         }
 
         if (BCRYPT.equals(configuration.getPasswordEncoder())) {
-            return new BCryptPasswordEncoder();
+            return ofNullable(configuration.getPasswordEncoderOptions())
+                    .filter(opts -> opts.getRounds() > 0)
+                    .map(PasswordEncoderOptions::getRounds)
+                    .map(BCryptPasswordEncoder::new)
+                    .orElseGet(BCryptPasswordEncoder::new);
         }
 
         if (MD5.equals(configuration.getPasswordEncoder())) {

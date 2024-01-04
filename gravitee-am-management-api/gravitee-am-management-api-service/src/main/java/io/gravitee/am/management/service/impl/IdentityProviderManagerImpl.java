@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.management.service.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.BaseEncoding;
 import io.gravitee.am.common.event.IdentityProviderEvent;
 import io.gravitee.am.identityprovider.api.UserProvider;
@@ -28,6 +30,7 @@ import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.plugins.idp.core.IdentityProviderPluginManager;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.RoleService;
+import io.gravitee.am.service.authentication.crypto.password.PasswordEncoderOptions;
 import io.gravitee.am.service.exception.PluginNotDeployedException;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.common.event.Event;
@@ -47,8 +50,12 @@ import org.springframework.util.StringUtils;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
@@ -62,6 +69,7 @@ import static io.gravitee.am.service.utils.BackendConfigurationUtils.getMongoDat
  */
 @Component
 public class IdentityProviderManagerImpl extends AbstractService<IdentityProviderManager> implements IdentityProviderManager, EventListener<IdentityProviderEvent, Payload> {
+    private static final Set SUPPORTED_PASSWORD_ENCODER = Set.of("BCrypt", "SHA-256", "SHA-384", "SHA-512", "SHA-256+MD5");
     public static final String IDP_GRAVITEE = "gravitee";
 
     private static final Logger logger = LoggerFactory.getLogger(IdentityProviderManagerImpl.class);
@@ -216,18 +224,35 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
         newIdentityProvider.setName(DEFAULT_IDP_NAME);
         if (useMongoRepositories()) {
             newIdentityProvider.setType(DEFAULT_MONGO_IDP_TYPE);
-            newIdentityProvider.setConfiguration(createProviderConfiguration(referenceId, null));
+            newIdentityProvider.setConfiguration(createProviderConfig(referenceId, null));
         } else if (useJdbcRepositories()) {
             newIdentityProvider.setType(DEFAULT_JDBC_IDP_TYPE);
-            newIdentityProvider.setConfiguration(createProviderConfiguration(referenceId, newIdentityProvider));
+            newIdentityProvider.setConfiguration(createProviderConfig(referenceId, newIdentityProvider));
         } else {
             return Single.error(new IllegalStateException("Unable to create Default IdentityProvider with " + managementBackend() + " backend"));
         }
         return identityProviderService.create(referenceType, referenceId, newIdentityProvider, null, true);
     }
 
+    private String createProviderConfig(String referenceId, NewIdentityProvider identityProvider) {
+        final Map<String, Object> configMap = createProviderConfiguration(referenceId, identityProvider);
+        try {
+            return new ObjectMapper().writeValueAsString(configMap);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Unable to serialize the default idp configuration for domain '" + referenceId + "'", e);
+        }
+    }
+
     @Override
-    public String createProviderConfiguration(String referenceId, NewIdentityProvider identityProvider) {
+    public Map<String, Object> createProviderConfiguration(String referenceId, NewIdentityProvider identityProvider) {
+        final Map<String, Object> configMap = new LinkedHashMap<>();
+
+        final String encoder = environment.getProperty("domains.identities.default.passwordEncoder.algorithm", "BCrypt");
+        final String rounds = environment.getProperty("domains.identities.default.passwordEncoder.properties.rounds", "10");
+
+        if (!SUPPORTED_PASSWORD_ENCODER.contains(encoder)) {
+            throw new IllegalArgumentException("Invalid password encoder value '" + encoder + "'");
+        }
 
         String providerConfig = null;
         String lowerCaseId = referenceId.toLowerCase();
@@ -251,11 +276,22 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
             defaultMongoUri += addOptionsToURI(mongoServers.orElse(mongoHost + ":" + mongoPort));
 
             String mongoUri = environment.getProperty("management.mongodb.uri", defaultMongoUri);
-            providerConfig = "{\"uri\":\"" + mongoUri + ((mongoHost != null) ? "\",\"host\":\"" + mongoHost : "")
-                    + "\",\"port\":" + mongoPort + ",\"enableCredentials\":false,\"database\":\"" + mongoDBName
-                    + "\",\"usersCollection\":\"idp_users_" + lowerCaseId
-                    + "\",\"findUserByUsernameQuery\":\"{username: ?}\",\"findUserByEmailQuery\":\"{email: ?}\"" +
-                    ",\"usernameField\":\"username\",\"passwordField\":\"password\",\"passwordEncoder\":\"BCrypt\"}";
+
+            configMap.put("uri", mongoUri);
+            configMap.put("host", (mongoHost != null) ? mongoHost : "");
+            configMap.put("port",  mongoPort);
+            configMap.put("enableCredentials",  false);
+            configMap.put("database",  mongoDBName);
+            configMap.put("usersCollection",  "idp_users_" + lowerCaseId);
+            configMap.put("findUserByUsernameQuery", "{username: ?}");
+            configMap.put("findUserByEmailQuery", "{email: ?}");
+            configMap.put("usernameField", "username");
+            configMap.put("passwordField", "password");
+            configMap.put("passwordEncoder", encoder);
+            if ("bcrypt".equalsIgnoreCase(encoder)) {
+                configMap.put("passwordEncoderOptions", new PasswordEncoderOptions(Integer.parseInt(rounds)));
+            }
+
         } else if (useJdbcRepositories()) {
             String tableSuffix = lowerCaseId.replaceAll("-", "_");
             if ((tableSuffix).length() > TABLE_NAME_MAX_LENGTH) {
@@ -271,24 +307,26 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
                 }
             }
 
-            providerConfig = "{\"host\":\"" + jdbcHost() + "\"," +
-                    "\"port\":" + jdbcPort() + "," +
-                    "\"protocol\":\"" + jdbcDriver() + "\"," +
-                    "\"database\":\"" + jdbcDatabase() + "\"," +
-                    // dash are forbidden in table name, replace them in domainName by underscore
-                    "\"usersTable\":\"idp_users_" + tableSuffix + "\"," +
-                    "\"user\":\"" + jdbcUser() + "\"," +
-                    "\"password\":" + (jdbcPassword() == null ? null : "\"" + jdbcPassword() + "\"") + "," +
-                    "\"autoProvisioning\":" + idpProvisioning() + "," +
-                    "\"selectUserByUsernameQuery\":\"SELECT * FROM idp_users_" + tableSuffix + " WHERE username = %s\"," +
-                    "\"selectUserByEmailQuery\":\"SELECT * FROM idp_users_" + tableSuffix + " WHERE email = %s\"," +
-                    "\"identifierAttribute\":\"id\"," +
-                    "\"usernameAttribute\":\"username\"," +
-                    "\"passwordAttribute\":\"password\"," +
-                    "\"passwordEncoder\":\"BCrypt\"}";
+            configMap.put("host", jdbcHost());
+            configMap.put("port", jdbcPort());
+            configMap.put("protocol", jdbcDriver());
+            configMap.put("database", jdbcDatabase());
+            // dash are forbidden in table name, replace them in domainName by underscore
+            configMap.put("usersTable", "idp_users_" + tableSuffix);
+            configMap.put("user", jdbcUser());
+            configMap.put("password", (jdbcPassword() == null ? null :  jdbcPassword()));
+            configMap.put("autoProvisioning", idpProvisioning());
+            configMap.put("selectUserByUsernameQuery", "SELECT * FROM idp_users_" + tableSuffix + " WHERE username = %s");
+            configMap.put("selectUserByEmailQuery", "SELECT * FROM idp_users_" + tableSuffix + " WHERE email = %s");
+            configMap.put("identifierAttribute", "id");
+            configMap.put("usernameAttribute", "username");
+            configMap.put("passwordAttribute", "password");
+            configMap.put("passwordEncoder", encoder);
+            if ("bcrypt".equalsIgnoreCase(encoder)) {
+                configMap.put("passwordEncoderOptions", new PasswordEncoderOptions(Integer.parseInt(rounds)));
+            }
         }
-
-        return providerConfig;
+        return configMap;
     }
 
     private Optional<String> getMongoServers() {
