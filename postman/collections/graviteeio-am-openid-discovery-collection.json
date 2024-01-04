@@ -164,7 +164,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"type\": \"javakeystore-am-certificate\",\n  \"configuration\": \"{\\\"jks\\\":\\\"{\\\\\\\"name\\\\\\\":\\\\\\\"server.jks\\\\\\\",\\\\\\\"type\\\\\\\":\\\\\\\"\\\\\\\",\\\\\\\"size\\\\\\\":2237,\\\\\\\"content\\\\\\\":\\\\\\\"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\\\\\\\"}\\\",\\\"storepass\\\":\\\"changeme\\\",\\\"alias\\\":\\\"mytestkey\\\",\\\"keypass\\\":\\\"letmein\\\"}\",\n  \"name\": \"Test\"\n}"
+							"raw": "{\n  \"type\": \"javakeystore-am-certificate\",\n  \"configuration\": \"{\\\"jks\\\":\\\"{\\\\\\\"name\\\\\\\":\\\\\\\"server.jks\\\\\\\",\\\\\\\"type\\\\\\\":\\\\\\\"\\\\\\\",\\\\\\\"size\\\\\\\":2237,\\\\\\\"content\\\\\\\":\\\\\\\"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\\\\\\\"}\\\",\\\"storepass\\\":\\\"letmein\\\",\\\"alias\\\":\\\"my4096key\\\",\\\"keypass\\\":\\\"changeme\\\"}\",\n  \"name\": \"my4096key\"\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/certificates",
@@ -228,6 +228,130 @@
 								"{{defaultEnvironmentId}}",
 								"domains",
 								"{{domain}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Discovery",
+			"item": [
+				{
+					"name": "well-known/openid-configuration",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Check discovery endpoints\", function () {",
+									"    pm.response.to.be.header('Content-Type', 'application/json');",
+									"    var body = pm.response.json();",
+									"    ",
+									"    pm.expect(body).to.have.property(\"authorization_endpoint\");",
+									"    pm.expect(body).to.have.property(\"token_endpoint\");",
+									"    pm.expect(body).to.have.property(\"userinfo_endpoint\");",
+									"    pm.expect(body).to.have.property(\"jwks_uri\");",
+									"    pm.expect(body).to.have.property(\"end_session_endpoint\");",
+									"    pm.expect(body).to.have.property(\"revocation_endpoint\");",
+									"    pm.expect(body).to.have.property(\"introspection_endpoint\");",
+									"    pm.expect(body).to.have.property(\"registration_endpoint\");",
+									"    ",
+									"    pm.environment.set('authorizationEndpoint', body.authorization_endpoint);",
+									"    pm.environment.set('tokenEndpoint', body.token_endpoint);",
+									"    pm.environment.set('userinfoEndpoint', body.userinfo_endpoint);",
+									"    pm.environment.set('jwksUriEndpoint', body.jwks_uri);",
+									"    pm.environment.set('logoutEndpoint', body.end_session_endpoint);",
+									"    pm.environment.set('revocationEndpoint', body.revocation_endpoint);",
+									"    pm.environment.set('introspectionEndpoint', body.introspection_endpoint);",
+									"    pm.environment.set('registrationEndpoint', body.registration_endpoint);",
+									"});",
+									"",
+									"pm.test(\"Check discovery properties\", function () {",
+									"    var body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"issuer\");",
+									"",
+									"    pm.expect(body).to.have.property(\"scopes_supported\");",
+									"    pm.expect(body).to.have.property(\"response_types_supported\");",
+									"    pm.expect(body).to.have.property(\"id_token_signing_alg_values_supported\");",
+									"    pm.expect(body).to.have.property(\"id_token_encryption_alg_values_supported\");",
+									"    pm.expect(body).to.have.property(\"id_token_encryption_enc_values_supported\");",
+									"    pm.expect(body).to.have.property(\"userinfo_signing_alg_values_supported\");",
+									"    pm.expect(body).to.have.property(\"userinfo_encryption_alg_values_supported\");",
+									"    pm.expect(body).to.have.property(\"userinfo_encryption_enc_values_supported\");",
+									"    pm.expect(body).to.have.property(\"token_endpoint_auth_methods_supported\");",
+									"    pm.expect(body).to.have.property(\"claim_types_supported\");",
+									"    pm.expect(body).to.have.property(\"claims_supported\");",
+									"    pm.expect(body).to.have.property(\"code_challenge_methods_supported\");",
+									"    pm.expect(body).to.have.property(\"claims_parameter_supported\");",
+									"    pm.expect(body).to.have.property(\"request_parameter_supported\");",
+									"    pm.expect(body).to.have.property(\"request_uri_parameter_supported\");",
+									"    pm.expect(body).to.have.property(\"require_request_uri_registration\");",
+									"    ",
+									"    pm.expect(body.code_challenge_methods_supported).to.eql([ 'plain','S256' ]);",
+									"    pm.expect(body.scopes_supported).to.eql([ 'address','email','full_profile', 'groups','offline_access','openid','phone','profile','roles']);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{gateway_url}}/{{domainHrid}}/oidc/.well-known/openid-configuration",
+							"host": [
+								"{{gateway_url}}"
+							],
+							"path": [
+								"{{domainHrid}}",
+								"oidc",
+								".well-known",
+								"openid-configuration"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "jwks",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Check keys\", function () {",
+									"    var body = pm.response.json();",
+									"    pm.expect(body).to.have.property('keys');",
+									"    ",
+									"    //Key are not always returned in the same order",
+									"    tests['Contains two RS key'] = body.keys[0].kty === 'RSA' && body.keys[1].kty === 'RSA';",
+									"    tests['Contains RSA512'] = body.keys[0].alg === 'RS512' || body.keys[1].alg === 'RS512';",
+									"    tests['Contains RSA256'] = body.keys[0].alg === 'RS256' || body.keys[1].alg === 'RS256';",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{jwksUriEndpoint}}",
+							"host": [
+								"{{jwksUriEndpoint}}"
 							]
 						}
 					},

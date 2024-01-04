@@ -526,7 +526,9 @@ public class CertificateServiceImpl implements CertificateService {
         var certificateProvider = certificatePluginManager.create(providerConfig);
         if (certificateProvider == null) {
             throw new CertificateException("Incorrect certification data");
-        } else if (certificateProvider.getExpirationDate().isPresent() && Instant.now().isAfter(certificateProvider.getExpirationDate().get().toInstant())) {
+        }
+        var expiryDate = certificateProvider.getExpirationDate().orElse(null);
+        if (expiryDate != null && Instant.now().isAfter(expiryDate.toInstant())) {
             throw new CertificateException("Uploading certificate is already expired");
         }
         return certificate;

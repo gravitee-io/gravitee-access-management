@@ -28,8 +28,6 @@ export class CertificateCreationStep2Component implements OnChanges {
   @Output('configurationIsValidChange') configurationIsValidChange: EventEmitter<boolean> = new EventEmitter<boolean>();
   configuration: any;
   certificateSchema: any = {};
-  @Input() reset = false;
-
   constructor(private organizationService: OrganizationService) {}
 
   ngOnChanges(changes: SimpleChanges) {

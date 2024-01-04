@@ -94,7 +94,7 @@ describe('after creating certificates', () => {
     const publicKey = await getPublicKey(domain.id, accessToken, certificate.id);
     expect(publicKey).toBeDefined();
     expect(publicKey).toEqual(
-      'AAAAB3NzaC1yc2EAAAADAQABAAABAQCrviVm3+KD98U899xIF5w9I4C/3JTv/ZVduRhcMoGkfBe6sz2pJ2kf6bMjtWnEb91H63GHWdv554ez3HIYxBZsYddaU93YtiqrsbCCQc3GMmFB120WgUWfjqsvPOMcz3PyFy3yw+XLAiND0Pl2lv8K6ejJvfwmTRhy1DI5PQGvRWz57IdoCxjZE8H+Lr79dc/eFhcu6Fksxa2tugv86tyO38sA9v1L2CCQjsqQL8TnMHbDV8ahGK6Abv43KMjHV6tgFhOhHc1a2YaYCtEI0yKKH2t0K3hrHRwUfgqu4Q5xqWpBkEFX05YW8ygrWivXfDwGjqcMyiHEYlRvDcrRP0Jh',
+      'AAAAB3NzaC1yc2EAAAADAQABAAABAQChjv1u2Z56gjSMRDi7jiLE10ro8CCZbq5//J+1iO8urUH7vnRmmXwOqgoILRXsqq+sufS6qKEIa8HbQEWNb56qegrL/kh1gPxtTnNIh20ucWNawH46N5X2TK0hTNj9BaIYB8fbEgRAqALNI/fOS3KCOj7xIKWrbEfZVGuYtq+Wn3bdBijtsld2PYzi58i8qi+LpUPWyxZA4EQYYrLZLOVST+ttwKOmY4qmOEZ/NI6X5hIr98TkfbTlNHqT4scsRJAqq0JpBa7289piu+GfZ0PFFGQXKxu+ODIXRxR2kiLRlPPhpNX1FkAARokl1sM1CQcYbj66ilVWta4Uk3tFgxX9'
     );
   });
 
