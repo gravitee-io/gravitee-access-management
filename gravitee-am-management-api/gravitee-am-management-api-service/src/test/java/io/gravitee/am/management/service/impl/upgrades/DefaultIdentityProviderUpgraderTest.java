@@ -27,8 +27,19 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.anyBoolean;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.isNull;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Islem TRIKI (islem.triki at graviteesource.com)
@@ -51,17 +62,21 @@ public class DefaultIdentityProviderUpgraderTest {
 
     @Test
     public void shouldUpdateDefaultIdp(){
-
+        Map<String, Object> cfg = new HashMap<>(Map.of("new-config", "created"));
         when(identityProviderService.findAll()).thenReturn(Flowable.just(systemIdentityProvider));
-        when(identityProviderManager.createProviderConfiguration(anyString(), isNull())).thenReturn("new-config-created");
+        when(identityProviderManager.createProviderConfiguration(anyString(), isNull())).thenReturn(cfg);
         when(identityProviderService.update(anyString(), anyString(), any(UpdateIdentityProvider.class), eq(true))).thenReturn(changeIdpConfig(true));
 
         defaultIdentityProviderUpgrader.upgrade();
 
         verify(identityProviderService, times(1)).findAll();
         verify(identityProviderService, times(1))
-                .update(anyString(), anyString(), argThat(upIdp -> upIdp.getConfiguration().equals("new-config-created")), anyBoolean());
-
+                .update(anyString(),
+                        anyString(),
+                        argThat(upIdp -> upIdp.getConfiguration().contains("\"new-config\"") && upIdp.getConfiguration().contains("\"created\"") &&
+                                // password encoder and linked options are immutable
+                                upIdp.getConfiguration().contains("\"existing passwordEncoder\"") && upIdp.getConfiguration().contains("\"existing options\"")),
+                        anyBoolean());
     }
 
     @Test
@@ -78,9 +93,25 @@ public class DefaultIdentityProviderUpgraderTest {
 
     private Single<IdentityProvider> changeIdpConfig(boolean system){
         if (system){
-            systemIdentityProvider.setConfiguration("changed-system-config");
+            systemIdentityProvider.setConfiguration("""
+                    {
+                      "attribute":"changed-system-config", 
+                      "passwordEncoder":"existing passwordEncoder", 
+                      "passwordEncoderOptions": {
+                        "options":"existing options"
+                        }
+                    }
+                    """);
         } else {
-            nonSystemIdentityProvider.setConfiguration("changed-non-system-config");
+            nonSystemIdentityProvider.setConfiguration("""
+                    {
+                      "attribute":"changed-non-system-config", 
+                      "passwordEncoder":"existing passwordEncoder", 
+                      "passwordEncoderOptions": {
+                        "options":"existing options"
+                        }
+                    }
+                    """);
         }
 
         return Single.just(system ? systemIdentityProvider : nonSystemIdentityProvider);
@@ -91,7 +122,7 @@ public class DefaultIdentityProviderUpgraderTest {
         identityProvider.setName("Default test IDP");
         identityProvider.setSystem(system);
         identityProvider.setId("test-idp-id");
-        identityProvider.setConfiguration("configuration-test-idp");
+        identityProvider.setConfiguration("{\"attribute\":\"existing attribute\", \"passwordEncoder\":\"existing passwordEncoder\", \"passwordEncoderOptions\":{\"options\":\"existing options\"}}");
         identityProvider.setReferenceId("domain-id");
         identityProvider.setExternal(false);
 
