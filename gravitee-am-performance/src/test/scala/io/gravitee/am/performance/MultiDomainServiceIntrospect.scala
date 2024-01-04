@@ -17,45 +17,47 @@ package io.gravitee.am.performance
 
 import io.gatling.core.Predef._
 import io.gatling.http.Predef._
-
 import io.gravitee.am.performance.utils.SimulationSettings._
-import io.gravitee.am.performance.utils.GatewayCalls._
 
 /**
- * Purpose of this simulation is to create a amount of user in a IdentityProvider
+ * Purpose of this simulation is to generate a token for service app and call introspect endpoint (to simulate an API Gateway usage)
  * Possible arguments:
  * - gw_url: base URL of the Management REST API (default: http://localhost:8093)
  * - domain: the domain name prefix targeted by the simulation (default: gatling-domain)
  * - min_domain_index: minimal value of the domain index
  * - number_of_domains: size of the users range used to randomly select a domain between min_domain_index and (min_domain_index + number_of_domains) (default: 10)
- * - min_user_index: minimal value of the user index
- * - number_of_users: size of the users range used to randomly select a user between min_user_index and (min_user_index + number_of_users) (default: 2000)
- * - agents: number of agent loaded per seconds (default: 10)
+ * - app: the application/client_id to use (clientSecret should be equals to clientId)
  * - inject-during: duration (in sec) of the agents load (default: 300 => 5 minutes)
  * - introspect: do we have to request token introspection (default: false)
  * - number_of_introspections: number of token introspection (default: 10)
  */
-class MultiDomainLoginPasswordFlow extends Simulation {
+class MultiDomainServiceIntrospect extends Simulation {
 
   val httpProtocol = http
-    .userAgentHeader("Gatling - Multiple Domain Pwd Login Flow")
+    .userAgentHeader("Gatling - Multi Domain Introspect")
     .disableFollowRedirect
 
-  val userGenerator = userFeeder(WORKLOAD)
   val domainGenerator = multiDomainsFeeder(WORKLOAD)
   val introspect = introspectFeeder()
 
-  val scn = scenario("Multi Domain Password Login Flow")
+  val scn = scenario("Multi Domain Service Simulation")
     .feed(introspect)
-    .feed(userGenerator)
     .feed(domainGenerator)
-    .exec(requestAccessTokenWithUserCredentials("#{domainName}"))
+    .exec(http("Ask Token")
+      .post(GATEWAY_BASE_URL + "/#{domainName}/oauth/token")
+      .basicAuth(APP_NAME, APP_NAME)
+      .formParam("grant_type", "client_credentials")
+      .check(status.is(200))
+      .check(jsonPath("$.access_token").saveAs("access_token")))
     .doIf("#{introspect_enabled}")(
-      pause(1)
-      .exec(introspectToken("#{domainName}"))
-      .pause(12)
-      .repeat("#{introspections}") {
-        exec(introspectToken("#{domainName}"))
+      pause(10)
+        .repeat("#{introspections}") {
+        exec(http("Introspect Access Token")
+          .post(GATEWAY_BASE_URL + "/#{domainName}/oauth/introspect")
+          .basicAuth(APP_NAME, APP_NAME)
+          .formParam("token", "${access_token}")
+          .check(status.is(200))
+          .check(jsonPath("$.active").is("true")))
       }
     )
 
@@ -65,5 +67,6 @@ class MultiDomainLoginPasswordFlow extends Simulation {
       constantConcurrentUsers(AGENTS.intValue()).during(INJECTION_DURATION.seconds),
       rampConcurrentUsers(AGENTS.intValue()).to(1).during(60)
     )
-  )
+  ).protocols(httpProtocol)
+
 }

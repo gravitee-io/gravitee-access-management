@@ -15,9 +15,6 @@
  */
 package io.gravitee.am.performance.utils
 
-import io.gatling.core.Predef.constantUsersPerSec
-import scala.concurrent.duration._
-
 import scala.util.Random
 
 object SimulationSettings {
@@ -34,6 +31,10 @@ object SimulationSettings {
   val DOMAIN_NAME = System.getProperty("domain", "gatling-domain")
   val IDENTITY_PROVIDER_NAME = System.getProperty("idp", "Default Identity Provider")
   val MULTI_DOMAIN_NAMES = System.getProperty("multiDomains", "gatling-domain").split(",")
+
+  val MIN_DOMAIN_INDEX = Integer.getInteger("min_domain_index", 1)
+  val NUMBER_OF_DOMAINS = Integer.getInteger("number_of_domains", 10)
+  val MAX_DOMAIN_INDEX = MIN_DOMAIN_INDEX + NUMBER_OF_DOMAINS
 
   val MIN_USER_INDEX = Integer.getInteger("min_user_index", 1)
   val NUMBER_OF_USERS = Integer.getInteger("number_of_users", 2000)
@@ -65,39 +66,64 @@ object SimulationSettings {
   val OPERATOR = System.getProperty("operator", "")
   val VALUE = System.getProperty("value", "")
   val CONDITION = System.getProperty("condition", "")
-  val PWD_INTROSPECT_ENABLED = System.getProperty("pwd-introspect", "false")
+  val INTROSPECT_ENABLED = System.getProperty("introspect", "false")
+  val INTROSPECTIONS = Integer.getInteger("number_of_introspections", 10)
 
 
   // ========================================
   // User Feeder
   // ========================================
 
-  sealed trait UserFeederMode
-  case object DATALOAD extends UserFeederMode
-  case object WORKLOAD extends UserFeederMode
+  sealed trait FeederMode
+  case object DATALOAD extends FeederMode
+  case object WORKLOAD extends FeederMode
 
-  def userFeeder(mode: UserFeederMode) = {
+  def introspectFeeder() = {
+    Iterator.continually(
+      Map(
+        "introspect_enabled" -> INTROSPECT_ENABLED,
+        "introspections" -> INTROSPECTIONS)
+    )
+  }
+
+  def userFeeder(mode: FeederMode) = {
 
     val iterator = if (mode == DATALOAD)
       Iterator.from(MIN_USER_INDEX, 1)
     else
       Iterator.continually(Random.between(MIN_USER_INDEX, MAX_USER_INDEX))
 
-    iterator
-      .map(index => {
+    iterator.map(singleUser)
+  }
+
+  def singleUser(index: Int) = {
         Map("email" -> s"${USER_PREFIX}${index}@acme.fr",
           "username" -> s"${USER_PREFIX}${index}",
           "firstname" -> s"first${index}",
           "lastname" -> s"last${index}",
-          "password" -> "B3nchUs3rs!",
-          "index" -> index)
+          "password" -> "Gr@v1t33B3nchUs3rs!",
+          "index" -> index,
+          "continueUserCreation" -> (index < MAX_USER_INDEX))
+  }
+
+  def multiDomainsFeeder(mode: FeederMode) = {
+
+    val iterator = if (mode == DATALOAD)
+      Iterator.from(MIN_DOMAIN_INDEX, 1)
+    else
+      Iterator.continually(Random.between(MIN_DOMAIN_INDEX, MAX_DOMAIN_INDEX))
+
+    iterator
+      .map(index => {
+        Map("domainName" -> s"${DOMAIN_NAME}-${index}",
+          "domainIndex" -> index,
+          "continueUserCreation" -> true,
+          "continueDomainCreation" -> (index < MAX_DOMAIN_INDEX))
       })
   }
 
   def domainFeeder() = {
-
     val iterator = Iterator.continually(Random.between(0, MULTI_DOMAIN_NAMES.length))
-
     iterator
       .map(index => {
         Map("currentDomain" -> s"${MULTI_DOMAIN_NAMES(index)}",
