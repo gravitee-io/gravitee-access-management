@@ -670,3 +670,29 @@ tests:
                 algorithm: BCrypt
                 properties:
                   rounds: 10
+
+  - it: should set custom password encoder for default idp
+    set:
+      api:
+        domains:
+          identities:
+            default:
+              passwordEncoder:
+                algorithm: BCrypt
+                properties:
+                  rounds: 8
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: |
+            domains:
+              identities:
+                default:
+                  passwordEncoder:
+                    algorithm: BCrypt
+                    properties:
+                      rounds: 8

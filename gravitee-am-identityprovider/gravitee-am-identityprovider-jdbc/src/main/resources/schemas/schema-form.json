@@ -92,6 +92,19 @@
       "title": "Password encoder",
       "description": "The encoding mechanism used to store user password value."
     },
+    "passwordEncoderOptions": {
+      "type": "object",
+      "id": "urn:jsonschema:io:gravitee:am:identityprovider:jdbc:PasswordEncoderOptions",
+      "htmlClass": "resource",
+      "title": "Password Encoder Options",
+      "properties": {
+        "rounds": {
+          "type": "number",
+          "title": "Rounds",
+          "description": "Number of iterations (useful only for BCrypt)"
+        }
+      }
+    },
     "passwordEncoding" : {
       "type": "string",
       "title": "Password binary-to-text encoding",
