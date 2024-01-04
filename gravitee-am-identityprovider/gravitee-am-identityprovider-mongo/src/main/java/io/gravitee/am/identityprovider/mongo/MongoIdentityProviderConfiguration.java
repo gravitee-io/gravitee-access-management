@@ -19,6 +19,7 @@ import io.gravitee.am.common.password.PasswordSaltFormat;
 import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.mongo.utils.PasswordEncoder;
 import io.gravitee.am.repository.mongodb.provider.MongoConnectionConfiguration;
+import io.gravitee.am.service.authentication.crypto.password.PasswordEncoderOptions;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -52,6 +53,8 @@ public class MongoIdentityProviderConfiguration implements IdentityProviderConfi
     private boolean userProvider = true;
 
     private boolean usernameCaseSensitive = false;
+
+    private PasswordEncoderOptions passwordEncoderOptions;
 
     @Override
     public boolean userProvider() {
@@ -228,5 +231,13 @@ public class MongoIdentityProviderConfiguration implements IdentityProviderConfi
 
     public void setUsernameCaseSensitive(boolean usernameCaseSensitive) {
         this.usernameCaseSensitive = usernameCaseSensitive;
+    }
+
+    public PasswordEncoderOptions getPasswordEncoderOptions() {
+        return passwordEncoderOptions;
+    }
+
+    public void setPasswordEncoderOptions(PasswordEncoderOptions passwordEncoderOptions) {
+        this.passwordEncoderOptions = passwordEncoderOptions;
     }
 }

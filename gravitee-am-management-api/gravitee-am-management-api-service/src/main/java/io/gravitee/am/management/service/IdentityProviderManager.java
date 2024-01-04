@@ -24,6 +24,8 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 
+import java.util.Map;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -36,7 +38,7 @@ public interface IdentityProviderManager extends Service<IdentityProviderManager
 
     Single<IdentityProvider> create(String domain);
 
-    String createProviderConfiguration(String referenceId, NewIdentityProvider identityProvider);
+    Map<String, Object> createProviderConfiguration(String referenceId, NewIdentityProvider identityProvider);
 
     void setListener(InMemoryIdentityProviderListener listener);
 

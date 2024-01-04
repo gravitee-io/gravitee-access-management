@@ -19,6 +19,7 @@ import io.gravitee.am.common.password.PasswordSaltFormat;
 import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.jdbc.utils.PasswordEncoder;
 import io.gravitee.am.repository.jdbc.provider.R2DBCConnectionConfiguration;
+import io.gravitee.am.service.authentication.crypto.password.PasswordEncoderOptions;
 
 import java.util.List;
 import java.util.Map;
@@ -58,6 +59,8 @@ public class JdbcIdentityProviderConfiguration implements IdentityProviderConfig
     private boolean autoProvisioning = false;
 
     private boolean userProvider = true;
+
+    private PasswordEncoderOptions passwordEncoderOptions;
 
     @Override
     public boolean userProvider() {
@@ -248,4 +251,11 @@ public class JdbcIdentityProviderConfiguration implements IdentityProviderConfig
         this.autoProvisioning = autoProvisioning;
     }
 
+    public PasswordEncoderOptions getPasswordEncoderOptions() {
+        return passwordEncoderOptions;
+    }
+
+    public void setPasswordEncoderOptions(PasswordEncoderOptions passwordEncoderOptions) {
+        this.passwordEncoderOptions = passwordEncoderOptions;
+    }
 }
