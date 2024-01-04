@@ -24,25 +24,25 @@ import java.net.URL
 
 object GatewayCalls {
 
-  def initCodeFlow = {
+  def initCodeFlow(domain: String = DOMAIN_NAME) = {
     http("Get Authorization Endpoint")
-      .get(GATEWAY_BASE_URL + s"/${DOMAIN_NAME}/oauth/authorize?client_id=${APP_NAME}&response_type=code&redirect_uri=https%3A%2F%2Fcallback-${APP_NAME}")
+      .get(GATEWAY_BASE_URL + s"/${domain}/oauth/authorize?client_id=${APP_NAME}&response_type=code&redirect_uri=https%3A%2F%2Fcallback-${APP_NAME}")
       .check(status.is(302))
       .check(header(Location).transform(headerValue => headerValue.contains("error")).is(false))
   }
 
-  def renderLoginForm = {
+  def renderLoginForm(domain: String = DOMAIN_NAME) = {
     http("Get Login Form")
-      .get(GATEWAY_BASE_URL + s"/${DOMAIN_NAME}/login?client_id=${APP_NAME}&response_type=code&redirect_uri=https://callback-${APP_NAME}")
+      .get(GATEWAY_BASE_URL + s"/${domain}/login?client_id=${APP_NAME}&response_type=code&redirect_uri=https://callback-${APP_NAME}")
       .check(status.is(200))
       // should use getCookieValue instead but our cookie doesn't have domain value that seems to be problematic for gatling
       // so extract the value from the form
       .check(css("input[name='X-XSRF-TOKEN']", "value").find.saveAs("XSRF-TOKEN"))
   }
 
-  def submitLoginForm = {
+  def submitLoginForm(domain: String = DOMAIN_NAME) = {
     http("Post Login Form")
-      .post(GATEWAY_BASE_URL + s"/${DOMAIN_NAME}/login?client_id=${APP_NAME}&response_type=code&redirect_uri=https://callback-${APP_NAME}")
+      .post(GATEWAY_BASE_URL + s"/${domain}/login?client_id=${APP_NAME}&response_type=code&redirect_uri=https://callback-${APP_NAME}")
       .formParam("X-XSRF-TOKEN", "${XSRF-TOKEN}")
       .formParam("username", "${username}")
       .formParam("password", "${password}")
@@ -66,9 +66,9 @@ object GatewayCalls {
       ).saveAs("code"))
   }
 
-  def requestAccessToken = {
+  def requestAccessToken(domain: String = DOMAIN_NAME) = {
     http("Ask Token")
-      .post(GATEWAY_BASE_URL + s"/${DOMAIN_NAME}/oauth/token")
+      .post(GATEWAY_BASE_URL + s"/${domain}/oauth/token")
       .basicAuth(APP_NAME, APP_NAME)
       .formParam("code", "${code}")
       .formParam("grant_type", "authorization_code")
@@ -78,9 +78,9 @@ object GatewayCalls {
       .check(jsonPath("$.access_token").saveAs("access_token"))
   }
 
-  def requestAccessTokenWithUserCredentials = {
+  def requestAccessTokenWithUserCredentials(domain: String = DOMAIN_NAME) = {
     http("Ask Token")
-      .post(GATEWAY_BASE_URL + s"/${DOMAIN_NAME}/oauth/token")
+      .post(GATEWAY_BASE_URL + s"/${domain}/oauth/token")
       .basicAuth(APP_NAME, APP_NAME)
       .formParam("grant_type", "password")
       .formParam("redirect_uri", s"https://callback-${APP_NAME}")
@@ -91,37 +91,15 @@ object GatewayCalls {
       .check(jsonPath("$.access_token").saveAs("access_token"))
   }
 
-  def requestAccessTokenWithUserCredentialsOnDomain = {
-    http("Ask Token")
-      .post(GATEWAY_BASE_URL + "/${currentDomain}/oauth/token")
-      .basicAuth(APP_NAME, APP_NAME)
-      .formParam("grant_type", "password")
-      .formParam("redirect_uri", s"https://callback-${APP_NAME}")
-      .formParam("client_id", APP_NAME)
-      .formParam("username", "${username}")
-      .formParam("password", "${password}")
-      .check(status.is(200))
-      .check(jsonPath("$.access_token").saveAs("access_token"))
-  }
-
-  def logout = {
+  def logout(domain: String = DOMAIN_NAME) = {
     http("logout")
-      .get(GATEWAY_BASE_URL + s"/${DOMAIN_NAME}/logout")
+      .get(GATEWAY_BASE_URL + s"/${domain}/logout")
       .check(status.is(302))
   }
 
-  def introspectToken = {
+  def introspectToken(domain: String = DOMAIN_NAME) = {
     http("Introspect Access Token")
-      .post(GATEWAY_BASE_URL + s"/${DOMAIN_NAME}/oauth/introspect")
-      .basicAuth(APP_NAME, APP_NAME)
-      .formParam("token", "${access_token}")
-      .check(status.is(200))
-      .check(jsonPath("$.active").is("true"))
-  }
-
-  def introspectTokenOnDomain = {
-    http("Introspect Access Token")
-      .post(GATEWAY_BASE_URL + "/${currentDomain}/oauth/introspect")
+      .post(s"${GATEWAY_BASE_URL}/${domain}/oauth/introspect")
       .basicAuth(APP_NAME, APP_NAME)
       .formParam("token", "${access_token}")
       .check(status.is(200))

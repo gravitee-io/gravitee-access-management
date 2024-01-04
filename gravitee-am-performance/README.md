@@ -1,8 +1,8 @@
 # Create Dataset
 
-There are two simulations to create a dataset.
+Here are simulations to create a dataset.
 
-## Create Domain
+## Create Single Domain
 
 The CreateDomain simulation will create a domain with two applications and a single default IDP.
 
@@ -19,7 +19,8 @@ The CreateDomain simulation accept some JavaOpts as parameters:
 * `mng_password`: password to request an access token to the Management REST API (default: adminadmin)
 * `domain`: the domain name targeted by the simulation (default: gatling-domain)
 
-## Load users
+
+## Load users linked to a domain
 
 The CreateUsers simulation will populate the domain IDP with the given number of users
 
@@ -40,6 +41,32 @@ The CreateUsers simulation accept some JavaOpts as parameters:
 * `number_of_users`: how many users the simulation will create (default: 2000)
 * `agents`: number of agents used to create users (default: 10)
 
+
+## Create Multiple Domain
+
+The CreateMultipleDomains simulation will create multiple domains using the same prefix with :
+* 3 applications (Web, SPA, Service) and a single default IDP
+* users attached to the default IDP
+
+```
+mvn gatling:test -Dgatling.simulationClass=io.gravitee.am.performance.CreateMultipleDomains
+```
+
+### Parameters
+
+The CreateMultipleDomains simulation accept some JavaOpts as parameters:
+
+* mng_url: base URL of the Management REST API (default: http://localhost:8093)
+* mng_user: username to request an access token to the Management REST API (default: admin)
+* mng_password: password to request an access token to the Management REST API (default: adminadmin)
+* domain: the prefix for domain name targeted by the simulation on which a index will be added (default: gatling-domain)
+* min_domain_index: first value of the index used to create domains (default: 1)
+* number_of_domains: how many domains the simulation will create (default: 10)
+* number_of_users: how many users the simulation will create (default: 2000)
+* agents: number of agents for the simulation (default: 10)
+
+
+# Runtime simulation based on Dataset
 
 ## Search Audit Logs
 
@@ -90,7 +117,9 @@ mvn gatling:test -Dgatling.simulationClass=io.gravitee.am.performance.search.Sea
 
 # Workload Simulations
 
-We currently only have a single simulation to test a simple login flow using the authorization code flow.
+## BasicLoginFlow
+
+Basic simulation to authenticate users using code flow and request token
 
 ```
 mvn gatling:test -Dgatling.simulationClass=io.gravitee.am.performance.BasicLoginFlow -Dagents=100
@@ -107,3 +136,60 @@ mvn gatling:test -Dgatling.simulationClass=io.gravitee.am.performance.BasicLogin
 * `requests`: number of requests per seconds to reach (default: 100)
 * `req-ramp-during`: ramp duration (in sec)  (default: 10)
 * `req-hold-during`: duration (in sec) of the simulation at the given rate of requests (default: 1800 => 30 minutes)
+
+
+## MultiDomainServiceIntrospect
+
+Basic simulation to generate token using client_credentials flow and call 10 introspects on domain which is randomly selected
+
+```
+mvn gatling:test -Dgatling.simulationClass=io.gravitee.am.performance.MultiDomainServiceIntrospect  -Ddomain=perf -Dnumber_of_domains=3 -Dagents=5 -Dapp=appservice
+```
+
+### Parameters
+* `gw_url`: base URL of the Management REST API (default: http://localhost:8093)
+* `domain`: the domain name prefix targeted by the simulation (default: gatling-domain)
+* `min_domain_index`: minimal value of the domain index
+* `number_of_domains`: size of the users range used to randomly select a domain between min_domain_index and (min_domain_index + number_of_domains) (default: 10)
+* `app`: the application/client_id to use (clientSecret should be equals to clientId)
+* `inject-during`: duration (in sec) of the agents load (default: 300 => 5 minutes)
+* `introspect`: do we have to request token introspection (default: false)
+* `number_of_introspections`: number of token introspection (default: 10)
+
+## MultiDomainBasicLoginFlow
+
+Basic simulation to authenticate users using code flow and generate access_token on domain which is randomly selected
+
+```
+mvn gatling:test -Dgatling.simulationClass=io.gravitee.am.performance.MultiDomainBasicLoginFlow  -Ddomain=perf -Dnumber_of_domains=3 -Dagents=5 
+```
+
+### Parameters
+* `gw_url`: base URL of the Management REST API (default: http://localhost:8093)
+* `domain`: the domain name prefix targeted by the simulation (default: gatling-domain)
+* `min_domain_index`: minimal value of the domain index
+* `number_of_domains`: size of the users range used to randomly select a domain between min_domain_index and (min_domain_index + number_of_domains) (default: 10)
+* `min_user_index`: minimal value of the user index
+* `number_of_users`: size of the users range used to randomly select a user between min_user_index and (min_user_index + number_of_users) (default: 2000)
+* `agents`: number of agent loaded per seconds (default: 10)
+* `inject-during`: duration (in sec) of the agents load (default: 300 => 5 minutes)
+
+## MultiDomainLoginPasswordFlow
+
+Basic simulation to authenticate users using password flow and generate access_token on domain which is randomly selected. Introspection on token is optional
+
+```
+mvn gatling:test -Dgatling.simulationClass=io.gravitee.am.performance.MultiDomainLoginPasswordFlow  -Ddomain=perf -Dnumber_of_domains=3 -Dagents=5 
+```
+
+### Parameters
+* `gw_url`: base URL of the Management REST API (default: http://localhost:8093)
+* `domain`: the domain name prefix targeted by the simulation (default: gatling-domain)
+* `min_domain_index`: minimal value of the domain index
+* `number_of_domains`: size of the users range used to randomly select a domain between min_domain_index and (min_domain_index + number_of_domains) (default: 10)
+* `min_user_index`: minimal value of the user index
+* `number_of_users`: size of the users range used to randomly select a user between min_user_index and (min_user_index + number_of_users) (default: 2000)
+* `agents`: number of agent loaded per seconds (default: 10)
+* `inject-during`: duration (in sec) of the agents load (default: 300 => 5 minutes)
+* `introspect`: do we have to request token introspection (default: false)
+* `number_of_introspections`: number of token introspection (default: 10)
