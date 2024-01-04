@@ -39,6 +39,7 @@ class CreateSCIMDomain extends Simulation {
     .exec(login)
     .exec(createDomain(DOMAIN_NAME))
     .exec(enableCurrentDomain)
+    .exec(activateScimOnDomain)
     .exec(createApplication("appservice", "SERVICE"))
     .exec(addScopesToApp("appservice", Array(ScopeSettings("scim"))))
 
