@@ -33,6 +33,7 @@ import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -80,7 +81,6 @@ public class OrganizationUserServiceImpl extends AbstractUserService<io.gravitee
 
     @Override
     public Single<User> createOrUpdate(ReferenceType referenceType, String referenceId, NewUser newUser) {
-
         return userService.findByExternalIdAndSource(referenceType, referenceId, newUser.getExternalId(), newUser.getSource())
                 .switchIfEmpty(Maybe.defer(() -> userService.findByUsernameAndSource(referenceType, referenceId, newUser.getUsername(), newUser.getSource())))
                 .flatMap(existingUser -> {
@@ -88,12 +88,18 @@ public class OrganizationUserServiceImpl extends AbstractUserService<io.gravitee
                     return userService.update(existingUser).toMaybe();
                 })
                 .switchIfEmpty(Single.defer(() -> {
+                    if (StringUtils.isBlank(newUser.getUsername())) {
+                        return Single.error(() -> new UserInvalidException("Field [username] is required"));
+                    }
                     User user = transform(newUser, referenceType, referenceId);
                     return userService.create(user);
                 }));
     }
 
     public Single<User> createGraviteeUser(Organization organization, NewUser newUser, io.gravitee.am.identityprovider.api.User principal) {
+        if (StringUtils.isBlank(newUser.getUsername())) {
+            return Single.error(() -> new UserInvalidException("Field [username] is required"));
+        }
         // Organization user are linked to the Gravitee Idp only
         if (!Strings.isNullOrEmpty(newUser.getSource()) && !IDP_GRAVITEE.equals(newUser.getSource())) {
             return Single.error(new UserInvalidException("Invalid identity provider for ['"+newUser.getUsername()+"']"));
@@ -105,7 +111,7 @@ public class OrganizationUserServiceImpl extends AbstractUserService<io.gravitee
         return userService.findByUsernameAndSource(ReferenceType.ORGANIZATION, organization.getId(), newUser.getUsername(), newUser.getSource())
                 .isEmpty()
                 .flatMap(isEmpty -> {
-                    if (!isEmpty) {
+                    if (Boolean.FALSE.equals(isEmpty)) {
                         return Single.error(new UserAlreadyExistsException(newUser.getUsername()));
                     } else {
                         // check user provider

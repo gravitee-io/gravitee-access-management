@@ -32,6 +32,7 @@ import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.exception.UserAlreadyExistsException;
+import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
@@ -43,10 +44,10 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -66,6 +67,7 @@ import static io.gravitee.am.service.utils.UserProfileUtils.hasGeneratedDisplayN
  */
 public abstract class AbstractUserService<T extends CommonUserRepository> implements CommonUserService {
 
+    private static final String CREATE_USER_ERROR = "An error occurs while trying to create a user";
     protected final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
@@ -183,7 +185,7 @@ public abstract class AbstractUserService<T extends CommonUserRepository> implem
         return getUserRepository().findByUsernameAndSource(referenceType, referenceId, newUser.getUsername(), newUser.getSource())
                 .isEmpty()
                 .flatMap(isEmpty -> {
-                    if (!isEmpty) {
+                    if (Boolean.FALSE.equals(isEmpty)) {
                         return Single.error(new UserAlreadyExistsException(newUser.getUsername()));
                     } else {
                         String userId = RandomString.generate();
@@ -216,19 +218,20 @@ public abstract class AbstractUserService<T extends CommonUserRepository> implem
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
                     } else {
-                        LOGGER.error("An error occurs while trying to create a user", ex);
-                        return Single.error(new TechnicalManagementException("An error occurs while trying to create a user", ex));
+                        LOGGER.error(CREATE_USER_ERROR, ex);
+                        return Single.error(new TechnicalManagementException(CREATE_USER_ERROR, ex));
                     }
                 });
     }
 
     @Override
     public Single<User> create(User user) {
-
         LOGGER.debug("Create a user {}", user);
+        if (StringUtils.isBlank(user.getUsername())) {
+            return Single.error(() -> new UserInvalidException("Field [username] is required"));
+        }
         user.setCreatedAt(new Date());
         user.setUpdatedAt(user.getCreatedAt());
-
         return userValidator.validate(user)
                 .andThen(getUserRepository().create(user))
                 .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).type(EventType.USER_CREATED).user(user1)))
@@ -236,8 +239,8 @@ public abstract class AbstractUserService<T extends CommonUserRepository> implem
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
                     }
-                    LOGGER.error("An error occurs while trying to create a user", ex);
-                    return Single.error(new TechnicalManagementException("An error occurs while trying to create a user", ex));
+                    LOGGER.error(CREATE_USER_ERROR, ex);
+                    return Single.error(new TechnicalManagementException(CREATE_USER_ERROR, ex));
                 });
     }
 

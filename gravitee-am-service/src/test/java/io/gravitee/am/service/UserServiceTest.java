@@ -31,6 +31,7 @@ import io.gravitee.am.service.exception.EmailFormatInvalidException;
 import io.gravitee.am.service.exception.InvalidUserException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.exception.UserAlreadyExistsException;
+import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.impl.UserServiceImpl;
 import io.gravitee.am.service.model.NewUser;
@@ -230,20 +231,22 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldNotCreate_emailFormatInvalidException() {
+    public void shouldNotCreateWhenUserInvalidException() {
         User user = new User();
         user.setReferenceType(ReferenceType.DOMAIN);
         user.setReferenceId(DOMAIN);
 
         NewUser newUser = new NewUser();
         newUser.setEmail("invalid");
-        when(userRepository.findByUsernameAndSource(ReferenceType.DOMAIN, DOMAIN, newUser.getUsername(), newUser.getSource())).thenReturn(Maybe.empty());
-        when(userRepository.create(any(User.class))).thenReturn(Single.just(user));
+
+        when(userRepository.findByUsernameAndSource(any(), any(), any(), any())).thenReturn(Maybe.empty());
 
         TestObserver<User> testObserver = userService.create(DOMAIN, newUser).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
-        testObserver.assertError(EmailFormatInvalidException.class);
+        testObserver.assertError(UserInvalidException.class);
+
+        verify(userRepository, never()).create(any(User.class));
     }
 
     @Test
