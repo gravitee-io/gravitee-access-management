@@ -264,10 +264,8 @@ curl -X GET \
           <h2>Call your APIs</h2>
           <p>Use your access_token in your request via the Authorization HTTP header to obtain authorized access to the APIs.</p>
           <div class="code">
-            <pre class="multiline">
-curl -X GET \
-  https://api.gravitee.io/api/v1/data \
->>>>>>> 12c6efa872 (AM-688: Do not refer to company.com (#3275))
+            <pre class="multiline">curl -X GET \
+  https://api.mycompany.com/api/v1/data \
   -H 'Authorization: Bearer access_token'
             </pre>
           </div>

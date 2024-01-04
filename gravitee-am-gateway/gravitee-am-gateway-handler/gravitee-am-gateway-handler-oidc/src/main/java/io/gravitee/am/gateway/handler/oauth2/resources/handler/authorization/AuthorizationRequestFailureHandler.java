@@ -50,6 +50,7 @@ import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import static io.gravitee.am.common.oauth2.GrantType.CLIENT_CREDENTIALS;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static io.gravitee.am.service.utils.ResponseTypeUtils.isHybridFlow;
 import static io.gravitee.am.service.utils.ResponseTypeUtils.isImplicitFlow;
@@ -167,10 +168,7 @@ public class AuthorizationRequestFailureHandler implements Handler<RoutingContex
             authorizationRequest.setRedirectUri(defaultErrorURL);
         }
         // check if the redirect_uri request parameter is allowed
-        if (client != null
-                && client.getRedirectUris() != null
-                && authorizationRequest.getRedirectUri() != null
-                && !client.getRedirectUris().contains(authorizationRequest.getRedirectUri())) {
+        if (isForbiddenRedirectUri(client, authorizationRequest) || invalidParamRedirectURI(client, authorizationRequest.getRedirectUri())) {
             authorizationRequest.setRedirectUri(defaultErrorURL);
         }
         // InvalidRequestObjectException without the RequestObject present into the Context means that the JWT can't be decoded
@@ -288,5 +286,24 @@ public class AuthorizationRequestFailureHandler implements Handler<RoutingContex
     private void doRedirect(RoutingContext context, String url) {
         cleanSession(context);
         context.response().putHeader(HttpHeaders.LOCATION, url).setStatusCode(302).end();
+    }
+
+    private boolean isForbiddenRedirectUri(Client client, AuthorizationRequest authorizationRequest) {
+        return client != null
+                && client.getRedirectUris() != null
+                && authorizationRequest.getRedirectUri() != null
+                && !client.getRedirectUris().contains(authorizationRequest.getRedirectUri());
+    }
+
+    /**
+     * Application, only with 'client_credentials' grant type cannot have
+     * `redirect_uri` in the request
+     */
+    private boolean invalidParamRedirectURI(Client client, String redirectURI) {
+        return client != null
+                && client.getAuthorizedGrantTypes() != null
+                && client.getAuthorizedGrantTypes().size() == 1
+                && client.getAuthorizedGrantTypes().contains(CLIENT_CREDENTIALS)
+                && redirectURI != null;
     }
 }
