@@ -17,9 +17,8 @@ package io.gravitee.am.performance
 
 import io.gatling.core.Predef._
 import io.gatling.http.Predef._
-
-import io.gravitee.am.performance.utils.SimulationSettings._
 import io.gravitee.am.performance.utils.GatewayCalls._
+import io.gravitee.am.performance.utils.SimulationSettings._
 
 /**
  * Purpose of this simulation is to create a amount of user in a IdentityProvider
@@ -32,38 +31,35 @@ import io.gravitee.am.performance.utils.GatewayCalls._
  * - number_of_users: size of the users range used to randomly select a user between min_user_index and (min_user_index + number_of_users) (default: 2000)
  * - agents: number of agent loaded per seconds (default: 10)
  * - inject-during: duration (in sec) of the agents load (default: 300 => 5 minutes)
- * - introspect: do we have to request token introspection (default: false)
- * - number_of_introspections: number of token introspection (default: 10)
  */
-class MultiDomainLoginPasswordFlow extends Simulation {
+class MultiDomainBasicLoginFlow extends Simulation {
 
   val httpProtocol = http
-    .userAgentHeader("Gatling - Multiple Domain Pwd Login Flow")
+    .userAgentHeader("Gatling - Basic Login Flow")
     .disableFollowRedirect
 
   val userGenerator = userFeeder(WORKLOAD)
   val domainGenerator = multiDomainsFeeder(WORKLOAD)
-  val introspect = introspectFeeder()
 
-  val scn = scenario("Multi Domain Password Login Flow")
-    .feed(introspect)
-    .feed(userGenerator)
+  val scn = scenario("Basic Login Flow")
     .feed(domainGenerator)
-    .exec(requestAccessTokenWithUserCredentials("#{domainName}"))
-    .doIf("#{introspect_enabled}")(
-      pause(1)
-      .exec(introspectToken("#{domainName}"))
-      .pause(12)
-      .repeat("#{introspections}") {
-        exec(introspectToken("#{domainName}"))
-      }
-    )
+    .feed(userGenerator)
+    .exec(initCodeFlow("#{domainName}"))
+    .exec(renderLoginForm("#{domainName}"))
+    .pause(1)
+    .exec(submitLoginForm("#{domainName}"))
+    .exec(callPostLoginRedirect)
+    .exec(requestAccessToken("#{domainName}"))
+    .pause(1)
+    .exec(introspectToken("#{domainName}"))
+    .exec(logout("#{domainName}"))
 
   setUp(
     scn.inject(
-      rampConcurrentUsers(1).to(AGENTS.intValue()).during(60),
-      constantConcurrentUsers(AGENTS.intValue()).during(INJECTION_DURATION.seconds),
-      rampConcurrentUsers(AGENTS.intValue()).to(1).during(60)
-    )
-  )
+    rampConcurrentUsers(1).to(AGENTS.intValue()).during(60),
+    constantConcurrentUsers(AGENTS.intValue()).during(INJECTION_DURATION.seconds),
+    rampConcurrentUsers(AGENTS.intValue()).to(1).during(60)
+  ))
+    .protocols(httpProtocol)
+
 }

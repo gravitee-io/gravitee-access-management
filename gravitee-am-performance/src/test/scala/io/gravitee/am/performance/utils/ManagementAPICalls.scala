@@ -93,6 +93,14 @@ object ManagementAPICalls {
       .check(status.is(200))
   }
 
+  def activateScimOnDomain = {
+    http("Enable SCIM on Domain")
+      .patch(MANAGEMENT_BASE_URL + "/management/organizations/DEFAULT/environments/DEFAULT/domains/${domainId}")
+      .header("Authorization", "Bearer ${auth-token}")
+      .body(StringBody(s"""{"scim":{"enabled":true,"idpSelectionEnabled":false}}""")).asJson
+      .check(status.is(200))
+  }
+
   def createUser = {
     http("Create User")
       .post(MANAGEMENT_BASE_URL + "/management/organizations/DEFAULT/environments/DEFAULT/domains/${domainId}/users")

@@ -44,17 +44,17 @@ class LoginPasswordFlow extends Simulation {
 
   val scnWithIntrospect = scenario("Password Login Flow")
     .feed(userGenerator)
-    .exec(requestAccessTokenWithUserCredentials)
+    .exec(requestAccessTokenWithUserCredentials())
     .pause(1)
-    .exec(introspectToken)
+    .exec(introspectToken())
     .pause(12)
     .repeat(10) {
-      exec(introspectToken)
+      exec(introspectToken())
     }
 
   val scnWithoutIntrospect = scenario("Password Login Flow")
     .feed(userGenerator)
-    .exec(requestAccessTokenWithUserCredentials)
+    .exec(requestAccessTokenWithUserCredentials())
 
   val scn = scnWithoutIntrospect
 
