@@ -63,7 +63,10 @@ import org.springframework.core.env.Environment;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 
+import static io.gravitee.am.common.oauth2.GrantType.AUTHORIZATION_CODE;
+import static io.gravitee.am.common.oauth2.GrantType.CLIENT_CREDENTIALS;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
@@ -1368,6 +1371,71 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
                     assertTrue(location.endsWith("/test/oauth/error?client_id=client-id&error=invalid_request&error_description=Parameter+%255Bresponse_type%255D+is+included+more+than+once"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldNotInvokeAuthorizationEndpoint_ClientCredentials_withRedirectUri() throws Exception {
+        final Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+        client.setAuthorizedGrantTypes(List.of(CLIENT_CREDENTIALS));
+        client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.put(CLIENT_CONTEXT_KEY, client);
+            routingContext.next();
+        });
+
+        testRequest(
+                HttpMethod.GET,
+                "/oauth/authorize?client_id=client-id&redirect_uri=http://dummy",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.endsWith("/test/oauth/error?client_id=client-id&error=invalid_request&error_description=Missing+parameter%253A+response_type"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldInvokeAuthorizationEndpoint_withRedirectUri() throws Exception {
+        io.gravitee.am.model.User user = new io.gravitee.am.model.User();
+
+        final Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+        client.setAuthorizedGrantTypes(List.of(AUTHORIZATION_CODE));
+        client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
+
+        AuthorizationRequest authorizationRequest = new AuthorizationRequest();
+        authorizationRequest.setApproved(true);
+        authorizationRequest.setResponseType(ResponseType.CODE);
+        authorizationRequest.setRedirectUri("http://localhost:9999/callback");
+
+        AuthorizationResponse authorizationResponse = new AuthorizationCodeResponse();
+        authorizationResponse.setRedirectUri(authorizationRequest.getRedirectUri());
+        ((AuthorizationCodeResponse) authorizationResponse).setCode("test-code");
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.put(CLIENT_CONTEXT_KEY, client);
+            routingContext.setUser(new User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+            routingContext.next();
+        });
+
+        when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+        when(flow.run(any(), any(), any())).thenReturn(Single.just(authorizationResponse));
+
+        testRequest(
+                HttpMethod.GET,
+                "/oauth/authorize?response_type=code&client_id=client-id&redirect_uri=http://localhost:9999/callback",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertEquals("http://localhost:9999/callback?code=test-code", location);
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
