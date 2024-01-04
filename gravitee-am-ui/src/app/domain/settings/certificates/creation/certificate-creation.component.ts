@@ -30,7 +30,6 @@ export class CertificateCreationComponent implements OnInit, AfterViewChecked {
   private domainId: string;
   configurationIsValid = false;
   @ViewChild('stepper', { static: true }) stepper: MatStepper;
-  reset = false;
 
   constructor(
     private certificateService: CertificateService,
@@ -51,7 +50,9 @@ export class CertificateCreationComponent implements OnInit, AfterViewChecked {
         this.snackbarService.open('Certificate ' + data.name + ' created');
         this.router.navigate(['..', data.id], { relativeTo: this.route });
       },
-      (_) => (this.reset = true),
+      (_) => {
+        this.certificate = { ...this.certificate, configuration: null };
+      },
     );
   }
 
