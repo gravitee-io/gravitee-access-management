@@ -87,7 +87,7 @@ export class SidenavComponent implements OnInit, OnDestroy {
       if (this.expirationDays > 0) {
         this.licenseExpirationMessage = `Your license will expire in ${this.expirationDays} days`;
       } else {
-        this.licenseExpirationMessage = `Your license is expired`;
+        this.licenseExpirationMessage = `Your license has expired`;
       }
     }
   }
@@ -102,9 +102,9 @@ export class SidenavComponent implements OnInit, OnDestroy {
     } else if (this.expirationDays > 15) {
       return 'color: #0482c7; background-color: #E7F8FF;';
     } else if (this.expirationDays > 0) {
-      return 'color: #ebe175; background-color: #8f8301;';
+      return 'color: #9C4626; background-color: #FDEDE5;';
     } else {
-      return 'color: red; background-color: black;';
+      return 'color: #9E2C64; background-color: #FDE9F4;';
     }
   }
 
@@ -129,7 +129,7 @@ export class SidenavComponent implements OnInit, OnDestroy {
   }
 
   canDisplayLicence(): boolean {
-    return !this.router.url.startsWith('/settings') && this.authService.hasPermissions(['license_notification_read']);
+    return this.authService.hasPermissions(['license_notification_read']);
   }
 
   canDisplayOrganizationSettings(): boolean {
