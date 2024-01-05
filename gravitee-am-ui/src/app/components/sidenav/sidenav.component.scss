@@ -6,3 +6,36 @@
 a {
   text-decoration: none;
 }
+
+.header {
+  padding: 0 16px;
+}
+
+.license {
+  background-color: white;
+  border-radius: 10px;
+}
+
+.license-message {
+  padding: 10px;
+  border-top-left-radius: 9px;
+  border-top-right-radius: 9px;
+}
+
+.license-bottom {
+  padding: 1px 10px 10px;
+}
+
+.license-learn-more {
+  color: #44435a;
+}
+
+.license-learn-more-icon {
+  border: 1px solid #767676;
+  border-radius: 12px;
+  color: #44435a;
+}
+
+:host ::ng-deep.gio-menu-header {
+  padding: 0 !important;
+}

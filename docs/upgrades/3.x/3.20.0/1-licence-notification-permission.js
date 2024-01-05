@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,32 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service.model;
-
-import java.util.Date;
-import java.util.Set;
-import lombok.*;
-
-/**
- * @author Antoine CORDIER (antoine.cordier at graviteesource.com)
- * @author GraviteeSource Team
- */
-@Getter
-@Setter
-@ToString
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@EqualsAndHashCode
-public class GraviteeLicense {
-
-    private String tier;
-
-    @Builder.Default
-    private Set<String> packs = Set.of();
-
-    @Builder.Default
-    private Set<String> features = Set.of();
-
-    private Date expirationDate;
-}
+db.getCollection("roles").updateMany(
+    {
+        name: {$in: ["ORGANIZATION_PRIMARY_ONWER", "ORGANIZATION_OWNER"]},
+        "permissionAcls.LICENSE_NOTIFICATION": {$exists: false},
+    },
+    {
+        $set: {"permissionAcls.LICENSE_NOTIFICATION": ["READ"]},
+    }
+);
