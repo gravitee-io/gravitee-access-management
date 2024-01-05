@@ -428,7 +428,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"type\": \"javakeystore-am-certificate\",\n  \"configuration\": \"{\\\"jks\\\":\\\"{\\\\\\\"name\\\\\\\":\\\\\\\"server.jks\\\\\\\",\\\\\\\"type\\\\\\\":\\\\\\\"\\\\\\\",\\\\\\\"size\\\\\\\":2237,\\\\\\\"content\\\\\\\":\\\\\\\"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\\\\\\\"}\\\",\\\"storepass\\\":\\\"letmein\\\",\\\"alias\\\":\\\"mytestkey\\\",\\\"keypass\\\":\\\"changeme\\\"}\",\n  \"name\": \"Test\"\n}"
+							"raw": "{\n  \"type\": \"javakeystore-am-certificate\",\n  \"configuration\": \"{\\\"jks\\\":\\\"{\\\\\\\"name\\\\\\\":\\\\\\\"server.jks\\\\\\\",\\\\\\\"type\\\\\\\":\\\\\\\"\\\\\\\",\\\\\\\"size\\\\\\\":2237,\\\\\\\"content\\\\\\\":\\\\\\\"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\\\\\\\"}\\\",\\\"storepass\\\":\\\"letmein\\\",\\\"alias\\\":\\\"mytestkey\\\",\\\"keypass\\\":\\\"changeme\\\", \\\"use\\\" : [\\\"enc\\\", \\\"sig\\\"]}\",\n  \"name\": \"Test\"\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/certificates",
@@ -449,7 +449,65 @@
 					},
 					"response": []
 				},
-
+				{
+					"name": "Create jks certificate rs256 for encrypted RequetObject",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Extension Grant - create jks certificate\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.environment.set('certificateJks', jsonData.id);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"type\":\"pkcs12-am-certificate\",\"configuration\":\"{\\\"content\\\":\\\"{\\\\\\\"name\\\\\\\":\\\\\\\"client1.jwks.pkcs12\\\\\\\",\\\\\\\"type\\\\\\\":\\\\\\\"\\\\\\\",\\\\\\\"size\\\\\\\":2734,\\\\\\\"content\\\\\\\":\\\\\\\"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\\\\\\\"}\\\",\\\"storepass\\\":\\\"changeit\\\",\\\"alias\\\":\\\"client1-jwks\\\",\\\"keypass\\\":\\\"changeit\\\",\\\"algorithm\\\":\\\"RS256\\\", \\\"use\\\" : [\\\"enc\\\", \\\"sig\\\"]}\",\"name\":\"client1-jwks\"}"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/certificates",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"organizations",
+								"{{defaultOrganizationId}}",
+								"environments",
+								"{{defaultEnvironmentId}}",
+								"domains",
+								"{{domain}}",
+								"certificates"
+							]
+						}
+					},
+					"response": []
+				},
 				{
 					"name": "Create jks certificate rs512",
 					"event": [
@@ -1099,7 +1157,7 @@
 								},
 								{
 									"key": "request",
-									"value": "eyJraWQiOiJyc2Etc2lnbmF0dXJlIiwiYWxnIjoiUlMyNTYifQ.eyJzdWIiOiJhbGljZSIsImlzcyI6Imh0dHBzOlwvXC9jMmlkLmNvbSIsImV4cCI6MTU4ODY4NTc2MX0.sx-QW8xbhMuousR5_j7wNg_HQ-2I4T38uQcvUq7RXh0JaWPEoerMMZVXi6UG_-q_kbF4n93G9hxyVCVzcGKrmyNLE5AaNjmFUe2WgYe4JEO59aUjP9QZ3jdw5O3KhEaH6emUDr05gR1ZdI9XR6R4BxzCKaiCUK16cTl_-_0Hwo4oIKO6lj-1DdpS9sVJ_AyvxrQ8JEdjjTKnZTcTx4wiB7-qYBkmWD8HpeO_621i3dxBms4FbFIp9VfbcPrI9_w8aoLd02Gq9GnQaOqekGSeIW3sX1pWOvUdjbSuWJkREhZZJSO00b48UQdLAJgb8mn-Bl9Jvt7JFy-9erXxi6fU_w"
+									"value": "eyJlbmMiOiJBMTI4Q0JDLUhTMjU2IiwiYWxnIjoiUlNBLU9BRVAtMjU2In0.bxamyCBh3pGbKbUARGC7G53RV0cqhJCpe-IRYP8eC_7mnoZEMQBQGhGKeAJSEXEAWwftSLUhVspJjDX_76_FmmpeTAa7oCdHKaHwAMAP8oqZmlnQwXR8nsmuaz_kPCnsaQbIdKpG90uXOVVNqH6vho9wtqV_WjbFZkDa7y52ox5e2BII2fjHq_LbpIaFuMgepPiQ3u6q9n3SKCsjrxAVac8xFVip_8BpQQ2N64rWAv-oT1WdzQJrJjiq08AU9vWY_zv7efxGJVeVAUBRjOaBev4mtmB5yA48SySJZ07fKXfqfPIy_3vRiOYqzh-OmvJDDBW1ae8ohZDUUdGhUxxBcrC9LiLB_oBfaIen3pFn5hpap6KDv3flKXQcPv6uGSOA4EJ7dMW57YkBBSKIyDFjmUNGRc8ORK-y2Mom4KSz7DJUZdzzmDZ8yLEEWym-SC5qRX12WJkGRu-D5AwUbaY3yS3AVLHtyItbHwbt0rU95fyWYGjxPeV4SxGhAquE8SVD-2VIBOTTYcpd6fxpeN0fayTTYkTuwVJxiOESkq8lhLK4v53x0zKkh5xgY6Iuo1Ruw6Iqza7u8q8aSip3CjnfY6sBHJqvbJXdXHSH3PAqBINvoZ1y-_QmtO_lBpkO_LFXPiWSOL5PDk3_DRUCMYgVisFtLUJDm9AW1FoSy_v5Z78.CfO3odeR-Xy1usX-wyETdw.QLOzyczHALX3rU0jQcP6057qHnGtQ80O6M5bIOuhyZ5Uj4iQxrdh2OSjuebHTSs2oeP3waBrKNIVCfrn26asho3s4xgL1_HmYbhhTDsWvAtLSKjqXW3lonshBiv0WkqRpm0OlZ_6adowfWEJhHIRZkYyKClETf4kYRn3oWrhB5NLatexz3zDxxfccLJL7IIEJLnIJGZxZvlFGwQcWV65u2ioZ3irrxl6Bi8tpcRZGaIfTVNFMhyviIHj2ogiXf37J2ImqWaNtWVAl1XiFmKqNaTSq7ZVe8n2xVlfZ51VlLQse-xPO2oHxUCWeVXUB3IQ.IvTA1DphtWuceEj5pb2hpQ"
 								},
 								{
 									"key": "scope",
@@ -1235,7 +1293,7 @@
 								},
 								{
 									"key": "request",
-									"value": "eyJraWQiOiJyc2Etc2lnbmF0dXJlIiwiYWxnIjoiUlMyNTYifQ.eyJzdWIiOiJhbGljZSIsImlzcyI6Imh0dHBzOlwvXC9jMmlkLmNvbSIsImV4cCI6MTU4ODY4NTg3NiwiY2xpZW50X2lkIjoidW5rbm93bl9jbGllbnQifQ.XN-Fgy6M9aBJPwWsatQ9qgtf0sfWCo0hzDqe2-HHeMzJHFpj3pe0Yp--VLxlSG1LxzpqfCBL6QuHzUH6Rslz_tYhobOY13054-xkuQMDdbtjgFlKtdoMh15tKdPJCqPIMdaWpsi9bV2qiXYPVIYuE9ywmt_UETh5Hs166IgZ_SkITxfPf1LOuk0jQVkr-eppe1qymqHCzXBSXeVcVyP55sPTjEpNk5d-hsv3Z35Q6sdG3tpg688k-157coJHCpoMKGwLAVC9RscgqaDf30Mhyg4uejqLyenMb-ImWkIhc1i7HWfbwea5-d7o0NeVjKpE2HYORbp93QRKZrDXN8ckxw"
+									"value": "eyJlbmMiOiJBMTI4Q0JDLUhTMjU2IiwiYWxnIjoiUlNBLU9BRVAtMjU2In0.bxamyCBh3pGbKbUARGC7G53RV0cqhJCpe-IRYP8eC_7mnoZEMQBQGhGKeAJSEXEAWwftSLUhVspJjDX_76_FmmpeTAa7oCdHKaHwAMAP8oqZmlnQwXR8nsmuaz_kPCnsaQbIdKpG90uXOVVNqH6vho9wtqV_WjbFZkDa7y52ox5e2BII2fjHq_LbpIaFuMgepPiQ3u6q9n3SKCsjrxAVac8xFVip_8BpQQ2N64rWAv-oT1WdzQJrJjiq08AU9vWY_zv7efxGJVeVAUBRjOaBev4mtmB5yA48SySJZ07fKXfqfPIy_3vRiOYqzh-OmvJDDBW1ae8ohZDUUdGhUxxBcrC9LiLB_oBfaIen3pFn5hpap6KDv3flKXQcPv6uGSOA4EJ7dMW57YkBBSKIyDFjmUNGRc8ORK-y2Mom4KSz7DJUZdzzmDZ8yLEEWym-SC5qRX12WJkGRu-D5AwUbaY3yS3AVLHtyItbHwbt0rU95fyWYGjxPeV4SxGhAquE8SVD-2VIBOTTYcpd6fxpeN0fayTTYkTuwVJxiOESkq8lhLK4v53x0zKkh5xgY6Iuo1Ruw6Iqza7u8q8aSip3CjnfY6sBHJqvbJXdXHSH3PAqBINvoZ1y-_QmtO_lBpkO_LFXPiWSOL5PDk3_DRUCMYgVisFtLUJDm9AW1FoSy_v5Z78.CfO3odeR-Xy1usX-wyETdw.QLOzyczHALX3rU0jQcP6057qHnGtQ80O6M5bIOuhyZ5Uj4iQxrdh2OSjuebHTSs2oeP3waBrKNIVCfrn26asho3s4xgL1_HmYbhhTDsWvAtLSKjqXW3lonshBiv0WkqRpm0OlZ_6adowfWEJhHIRZkYyKClETf4kYRn3oWrhB5NLatexz3zDxxfccLJL7IIEJLnIJGZxZvlFGwQcWV65u2ioZ3irrxl6Bi8tpcRZGaIfTVNFMhyviIHj2ogiXf37J2ImqWaNtWVAl1XiFmKqNaTSq7ZVe8n2xVlfZ51VlLQse-xPO2oHxUCWeVXUB3IQ.IvTA1DphtWuceEj5pb2hpQ"
 								},
 								{
 									"key": "scope",
@@ -1709,7 +1767,7 @@
 								},
 								{
 									"key": "request",
-									"value": "eyJraWQiOiJyc2Etc2lnbmF0dXJlIiwiYWxnIjoiUlMyNTYifQ.eyJzdWIiOiJhbGljZSIsImlzcyI6Imh0dHBzOlwvXC9jMmlkLmNvbSIsInN0YXRlIjoib3ZlcnJpZGUtc3RhdGUiLCJleHAiOjE1ODg2ODExMDAsIm5vbmNlIjoib3ZlcnJpZGUtbm9uY2UifQ.uQLxFiaReQwWqT-TnMXPNrIMdEaHMDlar90iuv_ub3njH1hTNIYV_IdRWs-2Skx5e9tYxnSNt7swHPE1aLKnnmylo52sa2-d7gOxkIiGzsnET8io-_AQsSocl25x8IiXP6IYyUSclVHFUNc_hjcbWkgw2oNXH8f6gx_z7nMahMbEW0L2XlA7fq7SZXzZE78hd9VZ3IaVVUHV90CafYt7kf_Y3Y7VpqoNPXpmfjLQKGWi9tXwmwfoS2OgqlrnXr5kVUiPhbO1OernunlZW7E3er3hBtguhYNzgtXU2iZQEjUD-rPfrnEJdNxdCxq8DnSgKJxBIzabjaJLG5BdgVD7qw"
+									"value": "eyJlbmMiOiJBMTI4Q0JDLUhTMjU2IiwiYWxnIjoiUlNBLU9BRVAtMjU2In0.bxamyCBh3pGbKbUARGC7G53RV0cqhJCpe-IRYP8eC_7mnoZEMQBQGhGKeAJSEXEAWwftSLUhVspJjDX_76_FmmpeTAa7oCdHKaHwAMAP8oqZmlnQwXR8nsmuaz_kPCnsaQbIdKpG90uXOVVNqH6vho9wtqV_WjbFZkDa7y52ox5e2BII2fjHq_LbpIaFuMgepPiQ3u6q9n3SKCsjrxAVac8xFVip_8BpQQ2N64rWAv-oT1WdzQJrJjiq08AU9vWY_zv7efxGJVeVAUBRjOaBev4mtmB5yA48SySJZ07fKXfqfPIy_3vRiOYqzh-OmvJDDBW1ae8ohZDUUdGhUxxBcrC9LiLB_oBfaIen3pFn5hpap6KDv3flKXQcPv6uGSOA4EJ7dMW57YkBBSKIyDFjmUNGRc8ORK-y2Mom4KSz7DJUZdzzmDZ8yLEEWym-SC5qRX12WJkGRu-D5AwUbaY3yS3AVLHtyItbHwbt0rU95fyWYGjxPeV4SxGhAquE8SVD-2VIBOTTYcpd6fxpeN0fayTTYkTuwVJxiOESkq8lhLK4v53x0zKkh5xgY6Iuo1Ruw6Iqza7u8q8aSip3CjnfY6sBHJqvbJXdXHSH3PAqBINvoZ1y-_QmtO_lBpkO_LFXPiWSOL5PDk3_DRUCMYgVisFtLUJDm9AW1FoSy_v5Z78.CfO3odeR-Xy1usX-wyETdw.QLOzyczHALX3rU0jQcP6057qHnGtQ80O6M5bIOuhyZ5Uj4iQxrdh2OSjuebHTSs2oeP3waBrKNIVCfrn26asho3s4xgL1_HmYbhhTDsWvAtLSKjqXW3lonshBiv0WkqRpm0OlZ_6adowfWEJhHIRZkYyKClETf4kYRn3oWrhB5NLatexz3zDxxfccLJL7IIEJLnIJGZxZvlFGwQcWV65u2ioZ3irrxl6Bi8tpcRZGaIfTVNFMhyviIHj2ogiXf37J2ImqWaNtWVAl1XiFmKqNaTSq7ZVe8n2xVlfZ51VlLQse-xPO2oHxUCWeVXUB3IQ.IvTA1DphtWuceEj5pb2hpQ"
 								},
 								{
 									"key": "scope",
@@ -1748,6 +1806,124 @@
 									"    const action = responseHTML('form').attr('action');",
 									"    pm.environment.set('xsrf', xsrfToken);",
 									"    pm.environment.set('action', action);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{redirection}}",
+							"host": [
+								"{{redirection}}"
+							]
+						},
+						"description": "The client does not have a redirect_uri define"
+					},
+					"response": []
+				},
+				{
+					"name": "Post login form",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 302\", function () {",
+									"    pm.response.to.have.status(302);",
+									"});",
+									"",
+									"pm.test(\"Should be redirected\", function () {",
+									"    pm.response.to.be.redirection;",
+									"    pm.response.to.have.header('Location');",
+									"",
+									"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "X-XSRF-TOKEN",
+									"value": "{{xsrf}}",
+									"type": "text"
+								},
+								{
+									"key": "client_id",
+									"value": "{{ro_client_id}}",
+									"type": "text"
+								},
+								{
+									"key": "username",
+									"value": "user",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "#CoMpL3X-P@SsW0Rd",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{action}}",
+							"host": [
+								"{{action}}"
+							]
+						},
+						"description": "The client does not have a redirect_uri define"
+					},
+					"response": []
+				},
+				{
+					"name": "Redirect after login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 302\", function () {",
+									"    pm.response.to.have.status(302);",
+									"});",
+									"",
+									"pm.test(\"Should be redirected\", function () {",
+									"    pm.response.to.be.redirection;",
+									"    pm.response.to.have.header('Location');",
+									"",
+									"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
 									"});"
 								],
 								"type": "text/javascript"
@@ -1821,6 +1997,217 @@
 							]
 						},
 						"description": "The client does not have a redirect_uri define"
+					},
+					"response": []
+				},
+				{
+					"name": "Post consent form",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 302\", function () {",
+									"    pm.response.to.have.status(302);",
+									"});",
+									"",
+									"pm.test(\"Should be redirected\", function () {",
+									"    pm.response.to.be.redirection;",
+									"    pm.response.to.have.header('Location');",
+									"",
+									"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "X-XSRF-TOKEN",
+									"value": "{{xsrf}}",
+									"type": "text"
+								},
+								{
+									"key": "scope.openid",
+									"value": "true",
+									"type": "text"
+								},
+								{
+									"key": "user_oauth_approval",
+									"value": "true",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{action}}",
+							"host": [
+								"{{action}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Redirect after consent",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 302\", function () {",
+									"    pm.response.to.have.status(302);",
+									"});",
+									"",
+									"pm.test(\"Should be redirected to client app\", function () {",
+									"    pm.response.to.be.redirection;",
+									"    pm.response.to.have.header('Location');",
+									"",
+									"   const location = postman.getResponseHeader(\"Location\");",
+									"",
+									"    // State must come from request object",
+									"    tests['Contains the request object state'] = location.includes('state=override-state');",
+									"    ",
+									"    // Redirect uri must match the one specified in query params.",
+									"    tests['Redirect to query param redirect_uri'] = location.includes('https://op-test-from-query-param:60001/authz_cb');",
+									"",
+									"    // Redirect uri must match the one specified in query params.",
+									"    tests['Contains a code'] = location.includes('code=');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{redirection}}",
+							"host": [
+								"{{redirection}}"
+							]
+						},
+						"description": "The client does not have a redirect_uri define"
+					},
+					"response": []
+				},
+				{
+					"name": "Use redirect_uri from request_object",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 302\", function () {",
+									"    pm.response.to.have.status(302);",
+									"});",
+									"",
+									"pm.test(\"Should be redirected\", function () {",
+									"    pm.response.to.be.redirection;",
+									"    pm.response.to.have.header('Location');",
+									"});",
+									"",
+									"pm.test(\"Should be redirected to client app\", function () {",
+									"    pm.response.to.be.redirection;",
+									"    pm.response.to.have.header('Location');",
+									"",
+									"   const location = postman.getResponseHeader(\"Location\");",
+									"",
+									"    // State must come from request object",
+									"    tests['Contains the request object state'] = location.includes('state=1234-5678-9876');",
+									"    ",
+									"    // Redirect uri must match the one specified in query params.",
+									"    tests['Redirect to query param redirect_uri'] = location.includes('https://op-test:60001/authz_cb');",
+									"",
+									"    // Redirect uri must match the one specified in query params.",
+									"    tests['Contains a code'] = location.includes('code=');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{authorizationEndpoint}}?response_type=code&client_id={{ro_client_id}}&redirect_uri=http://unknown_but_overriden_uri/&state=1234-5678-9876&request=eyJraWQiOiJyc2Etc2lnbmF0dXJlIiwiYWxnIjoiUlMyNTYifQ.eyJzdWIiOiJhbGljZSIsImlzcyI6Imh0dHBzOlwvXC9jMmlkLmNvbSIsInJlZGlyZWN0X3VyaSI6Imh0dHBzOlwvXC9vcC10ZXN0OjYwMDAxXC9hdXRoel9jYiIsImV4cCI6MTU4ODY4MTEzNX0.anyAlDScD_4qQjaj2mejrgG7sV_t9Dbhw9aloaCv7zNhZ0OL1BHBemvQ4zN6yXwvCd9IXOM7_uC6ayquxENnBF8bl53ukNVgzE3x52TEBap6ckXoDEaIdWWB7JukrofH_X0vXwBa2QH3tYSp4BRnXUCbvctADm-gTGv_qNDvZHOCmhSMYdN7HwVkWX5yfYDthQ-F7eS-ZbUH1jQqOAk5QI597p-wxdUq7k6IppQ3_g_x9K-bTZ2FfqkG4izHG0USl3VoyP5_gItPi7m6htKASw6y_L9l1twWAfEdI-uJbdYC4P-3p3fR92tlc_TPBLgpiLe6D4gt8CeUM5jBIsUZkw&scope=openid&nonce=n-0S6_WzA2Mj",
+							"host": [
+								"{{authorizationEndpoint}}"
+							],
+							"query": [
+								{
+									"key": "response_type",
+									"value": "code"
+								},
+								{
+									"key": "client_id",
+									"value": "{{ro_client_id}}"
+								},
+								{
+									"key": "redirect_uri",
+									"value": "http://unknown_but_overriden_uri/"
+								},
+								{
+									"key": "state",
+									"value": "1234-5678-9876"
+								},
+								{
+									"key": "request",
+									"value": "eyJlbmMiOiJBMTI4Q0JDLUhTMjU2IiwiYWxnIjoiUlNBLU9BRVAtMjU2In0.bxamyCBh3pGbKbUARGC7G53RV0cqhJCpe-IRYP8eC_7mnoZEMQBQGhGKeAJSEXEAWwftSLUhVspJjDX_76_FmmpeTAa7oCdHKaHwAMAP8oqZmlnQwXR8nsmuaz_kPCnsaQbIdKpG90uXOVVNqH6vho9wtqV_WjbFZkDa7y52ox5e2BII2fjHq_LbpIaFuMgepPiQ3u6q9n3SKCsjrxAVac8xFVip_8BpQQ2N64rWAv-oT1WdzQJrJjiq08AU9vWY_zv7efxGJVeVAUBRjOaBev4mtmB5yA48SySJZ07fKXfqfPIy_3vRiOYqzh-OmvJDDBW1ae8ohZDUUdGhUxxBcrC9LiLB_oBfaIen3pFn5hpap6KDv3flKXQcPv6uGSOA4EJ7dMW57YkBBSKIyDFjmUNGRc8ORK-y2Mom4KSz7DJUZdzzmDZ8yLEEWym-SC5qRX12WJkGRu-D5AwUbaY3yS3AVLHtyItbHwbt0rU95fyWYGjxPeV4SxGhAquE8SVD-2VIBOTTYcpd6fxpeN0fayTTYkTuwVJxiOESkq8lhLK4v53x0zKkh5xgY6Iuo1Ruw6Iqza7u8q8aSip3CjnfY6sBHJqvbJXdXHSH3PAqBINvoZ1y-_QmtO_lBpkO_LFXPiWSOL5PDk3_DRUCMYgVisFtLUJDm9AW1FoSy_v5Z78.CfO3odeR-Xy1usX-wyETdw.QLOzyczHALX3rU0jQcP6057qHnGtQ80O6M5bIOuhyZ5Uj4iQxrdh2OSjuebHTSs2oeP3waBrKNIVCfrn26asho3s4xgL1_HmYbhhTDsWvAtLSKjqXW3lonshBiv0WkqRpm0OlZ_6adowfWEJhHIRZkYyKClETf4kYRn3oWrhB5NLatexz3zDxxfccLJL7IIEJLnIJGZxZvlFGwQcWV65u2ioZ3irrxl6Bi8tpcRZGaIfTVNFMhyviIHj2ogiXf37J2ImqWaNtWVAl1XiFmKqNaTSq7ZVe8n2xVlfZ51VlLQse-xPO2oHxUCWeVXUB3IQ.IvTA1DphtWuceEj5pb2hpQ"
+								},
+								{
+									"key": "scope",
+									"value": "openid"
+								},
+								{
+									"key": "nonce",
+									"value": "n-0S6_WzA2Mj"
+								}
+							]
+						}
 					},
 					"response": []
 				},
@@ -2099,7 +2486,90 @@
 								},
 								{
 									"key": "request",
-									"value": "eyJjdHkiOiJKV1QiLCJlbmMiOiJBMsdsdsdsdsdsdsdsdsdjU2R0NNIiwiYWxnIjoiUlNBLU9BRVAtMjU2In0.Q8YdOlXu9-hdrokTnaYHyTyuRoBGIVde7Qp-jjP_UxKbZS3v_9FxJPqUuoDI-wWTfIR3Wq3VGYhBzcR3B2HZGyNlJIJ1LXNODzFXbNwWX1eW3LJhbgsqPNirwUy0YkxTjDVwj5JZoBIWRy8jGnwxNCariJlrKzcxvCWpLa64XPSm4GhmtcKLSbGm6YIUPZuj_xqse3PQdDs_4gGifq4Ed3_hURHL0j4ihK7Z-Uwh5vueYu8oF553rryW2ZyFUpRKULazpF7aj5NJpb_GLeYKP3wxG5BjtFeLPaNHIZdolJsqbRAq-NFiYy8UUIyOy60pk6JElApexchjBnMk1f04vA.LKb0taFx1TqLCfVp.1IoGyozBGF40N_h1ipetBbcvfDHI_YYIeh6cvFt_tk9K3Qx7Dv_ZfQHLhox1CwA0WcNEj7GFWZzFpZ0I4YWORW17J54PQ4bzuFNP_0mpuI7dFBO8fyMZHRr7UaFrzV1_sAQzXFHxGuZTzRG4L0uRNUd5H_pH7RM99i-rFwLUGEYNQBm2SG9118qQmNU9Ia2gafIsxjc9A3vsQmlnv2JfH-JBWYoDGSwEw6o0CjbCIzjkKzOQG6dosPoaKThL3WxRC72UY08qD_JsI8NynVEq--IhOnxpj2QSPXhcYSACZKbiQ6ARlx-mU524hb6jskEyUvukLpGkGfrTHmAtjlSo1NN1SjF5sS_MORGEmDorG0_DZkrvMpFnXO008Y8po-7epgl4jSCcpUFG4c96JWi7FkuF5vBXztjzIMXcH0GwVmlpLnMmgYgzAK3SRswgOzQXz5h90IDj90BCMXz9VoEf1llsZ50ezc9dMKYzsimNscApvC99py0j89R3lVTeq0vaSwU2g-egi8_7sLsPtuPzU9feh99HzILLi8wcxr3_BKgL_zOjBU5D2ds-yu8TgIbo2ifjDPPKKwCdi2yQA30XPxT7U2_ofcRFKbO8lJvnuh2Pje5ZmtKgXRZKl6AFPQHC2tpsN-m1e_O1DYPrQPAzyV8g3szgTY300rLx0pV-thSTI5frnV8kFmXzVQolzZAcd1_o7Y-TMu9JBWAeuA.vx3kYTK7lT1ZwI4xLZq99A"
+									"value": "eyJlbmMiOiJBMTI4Q0JDLUhTMjU2IiwiYWxnIjoiUlNBLU9BRVAtMjU2In0.bxamyCBh3pGbKbUARGC7G53RV0cqhJCpe-IRYP8eC_7mnoZEMQBQGhGKeAJSEXEAWwftSLUhVspJjDX_76_FmmpeTAa7oCdHKaHwAMAP8oqZmlnQwXR8nsmuaz_kPCnsaQbIdKpG90uXOVVNqH6vho9wtqV_WjbFZkDa7y52ox5e2BII2fjHq_LbpIaFuMgepPiQ3u6q9n3SKCsjrxAVac8xFVip_8BpQQ2N64rWAv-oT1WdzQJrJjiq08AU9vWY_zv7efxGJVeVAUBRjOaBev4mtmB5yA48SySJZ07fKXfqfPIy_3vRiOYqzh-OmvJDDBW1ae8ohZDUUdGhUxxBcrC9LiLB_oBfaIen3pFn5hpap6KDv3flKXQcPv6uGSOA4EJ7dMW57YkBBSKIyDFjmUNGRc8ORK-y2Mom4KSz7DJUZdzzmDZ8yLEEWym-SC5qRX12WJkGRu-D5AwUbaY3yS3AVLHtyItbHwbt0rU95fyWYGjxPeV4SxGhAquE8SVD-2VIBOTTYcpd6fxpeN0fayTTYkTuwVJxiOESkq8lhLK4v53x0zKkh5xgY6Iuo1Ruw6Iqza7u8q8aSip3CjnfY6sBHJqvbJXdXHSH3PAqBINvoZ1y-_QmtO_lBpkO_LFXPiWSOL5PDk3_DRUCMYgVisFtLUJDm9AW1FoSy_v5Z78.CfO3odeR-Xy1usX-wyETdw.QLOzyczHALX3rU0jQcP6057qHnGtQ80O6M5bIOuhyZ5Uj4iQxrdh2OSjuebHTSs2oeP3waBrKNIVCfrn26asho3s4xgL1_HmYbhhTDsWvAtLSKjqXW3lonshBiv0WkqRpm0OlZ_6adowfWEJhHIRZkYyKClETf4kYRn3oWrhB5NLatexz3zDxxfccLJL7IIEJLnIJGZxZvlFGwQcWV65u2ioZ3irrxl6Bi8tpcRZGaIfTVNFMhyviIHj2ogiXf37J2ImqWaNtWVAl1XiFmKqNaTSq7ZVe8n2xVlfZ51VlLQse-xPO2oHxUCWeVXUB3IQ.IvTA1DphtWuceEj5pb2hpQ"
+								},
+								{
+									"key": "scope",
+									"value": "openid"
+								},
+								{
+									"key": "nonce",
+									"value": "n-0S6_WzA2Mj"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Do not override state and nonce",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 302\", function () {",
+									"    pm.response.to.have.status(302);",
+									"});",
+									"",
+									"pm.test(\"Should be redirected\", function () {",
+									"    pm.response.to.be.redirection;",
+									"    pm.response.to.have.header('Location');",
+									"});",
+									"",
+									"pm.test(\"Should redirect to login\", function() {",
+									"    var location = postman.getResponseHeader('Location');",
+									"    let domain = pm.environment.get(\"domainHrid\");",
+									"    ",
+									"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=' + pm.environment.get('ro_client_id'));",
+									"    ",
+									"    pm.environment.set('redirection', location);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{authorizationEndpoint}}?response_type=code&client_id={{ro_client_id}}&redirect_uri=https://op-test-from-query-param:60001/authz_cb&state=1234-5678-9876&request=eyJlbmMiOiJBMTI4Q0JDLUhTMjU2IiwiYWxnIjoiUlNBLU9BRVAtMjU2In0.R2qPjURyi8NCdkn30k6c5EtrB5D1pSmCFWHtAzQwlCmMfMfWz_VWCyjdCmkET9itOxfgwCLU1VudpyfCGeLyqEtynYDMep0WAiMUwv6dXltBEwRPOR5m3N5kRQi21Mz4BxE0X9-N9xLXUeijOv1Wqpu5OSYrV4MKEjjO3HgYmq5yualnSTjLnUXnbaDbEcrACTxKpwlAt-7PNSsvSyQxMcFwu1pIYRNO3jUDPGhq9WTq-1HNUUbc7rxeT07xmlwuOu-jkFhn6uL7Lfonhoxsey6TqEWdxiBr13h2cGoyPKM_fTkzhA6UNBnWhN2weC8mk60dhh7nTaxQk8ju8jiPgg.oPepurOABjkd2H_JN7ng7A.CgBT5YD0QkohRsU55Mqxlu6QJAqCypXZqUYwL97uYPtIclY_DoYdQwMWWQYOwRvwDdXzAyqSak3bCsvmFh2IRk-LV9mdJrHOwNu72MjUY5q-UAS82lYo08qn32rLR6iRrojtbMaH6n4wElgCfACxFpC5g89JznXhCfs_7D-3wnt0LnCOvV0a0E032BbuXLL596IWhcwhJGOdVtLK-Ea9G0P-Jw6nujbe6B1JHTP7lbM4yfIVdlUyLN7zP0_TRXB9s5THLPuc3_KHZasbRbLdfWQyljomt0Zp3XOXdKgFkzQ8dLr5pUhl-OFjQn01o7V42YichHt95b99fWZj88D5pqEpOcy_9zFV7PhzwJg34c0if7DYZnXbfk6RfQg8tp5wpIeSBQbXhB9wKNv2VGWS5tD5GqrY2hhgv0H9An4WDtt3S4JuGk9xWt2rCHNRTgjvkXR00STNgooCDTzSk8soII7QsZNuRCU0MUNb3LYw-_vluTU7UzhYrGeK0y6FOyNaTdnf2oQVgVAUSArXFTWtTBv37mXUwT5a0YEkywZJ9AJJkuFTPF7aUMLjvh4Ry_XbCg4zFV6vjM03QnF3mctRe8FwJnDqgBpRmCOUlYd-vY_ecMNxc4J0_PUem2MOUbBi3dmFyLA4NI_i0BxcRpxWCr_nh7MxzJcYgMh_Gmg_kkSJd8rAgTIjoE7mc11FU6X_hF7INsKnSr4IL-4wE5OeEQ.Lw1oia2hUbgZQ9Zj3H9FVA&scope=openid&nonce=n-0S6_WzA2Mj",
+							"host": [
+								"{{authorizationEndpoint}}"
+							],
+							"query": [
+								{
+									"key": "response_type",
+									"value": "code"
+								},
+								{
+									"key": "client_id",
+									"value": "{{ro_client_id}}"
+								},
+								{
+									"key": "redirect_uri",
+									"value": "https://op-test-from-query-param:60001/authz_cb"
+								},
+								{
+									"key": "state",
+									"value": "1234-5678-9876"
+								},
+								{
+									"key": "request",
+									"value": "eyJlbmMiOiJBMTI4Q0JDLUhTMjU2IiwiYWxnIjoiUlNBLU9BRVAtMjU2In0.bxamyCBh3pGbKbUARGC7G53RV0cqhJCpe-IRYP8eC_7mnoZEMQBQGhGKeAJSEXEAWwftSLUhVspJjDX_76_FmmpeTAa7oCdHKaHwAMAP8oqZmlnQwXR8nsmuaz_kPCnsaQbIdKpG90uXOVVNqH6vho9wtqV_WjbFZkDa7y52ox5e2BII2fjHq_LbpIaFuMgepPiQ3u6q9n3SKCsjrxAVac8xFVip_8BpQQ2N64rWAv-oT1WdzQJrJjiq08AU9vWY_zv7efxGJVeVAUBRjOaBev4mtmB5yA48SySJZ07fKXfqfPIy_3vRiOYqzh-OmvJDDBW1ae8ohZDUUdGhUxxBcrC9LiLB_oBfaIen3pFn5hpap6KDv3flKXQcPv6uGSOA4EJ7dMW57YkBBSKIyDFjmUNGRc8ORK-y2Mom4KSz7DJUZdzzmDZ8yLEEWym-SC5qRX12WJkGRu-D5AwUbaY3yS3AVLHtyItbHwbt0rU95fyWYGjxPeV4SxGhAquE8SVD-2VIBOTTYcpd6fxpeN0fayTTYkTuwVJxiOESkq8lhLK4v53x0zKkh5xgY6Iuo1Ruw6Iqza7u8q8aSip3CjnfY6sBHJqvbJXdXHSH3PAqBINvoZ1y-_QmtO_lBpkO_LFXPiWSOL5PDk3_DRUCMYgVisFtLUJDm9AW1FoSy_v5Z78.CfO3odeR-Xy1usX-wyETdw.QLOzyczHALX3rU0jQcP6057qHnGtQ80O6M5bIOuhyZ5Uj4iQxrdh2OSjuebHTSs2oeP3waBrKNIVCfrn26asho3s4xgL1_HmYbhhTDsWvAtLSKjqXW3lonshBiv0WkqRpm0OlZ_6adowfWEJhHIRZkYyKClETf4kYRn3oWrhB5NLatexz3zDxxfccLJL7IIEJLnIJGZxZvlFGwQcWV65u2ioZ3irrxl6Bi8tpcRZGaIfTVNFMhyviIHj2ogiXf37J2ImqWaNtWVAl1XiFmKqNaTSq7ZVe8n2xVlfZ51VlLQse-xPO2oHxUCWeVXUB3IQ.IvTA1DphtWuceEj5pb2hpQ"
 								},
 								{
 									"key": "scope",
@@ -2159,6 +2629,383 @@
 							]
 						},
 						"description": "The client does not have a redirect_uri define"
+					},
+					"response": []
+				},
+				{
+					"name": "Post login form",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 302\", function () {",
+									"    pm.response.to.have.status(302);",
+									"});",
+									"",
+									"pm.test(\"Should be redirected\", function () {",
+									"    pm.response.to.be.redirection;",
+									"    pm.response.to.have.header('Location');",
+									"",
+									"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "X-XSRF-TOKEN",
+									"value": "{{xsrf}}",
+									"type": "text"
+								},
+								{
+									"key": "client_id",
+									"value": "{{ro_client_id}}",
+									"type": "text"
+								},
+								{
+									"key": "username",
+									"value": "user",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "#CoMpL3X-P@SsW0Rd",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{action}}",
+							"host": [
+								"{{action}}"
+							]
+						},
+						"description": "The client does not have a redirect_uri define"
+					},
+					"response": []
+				},
+				{
+					"name": "Redirect after login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 302\", function () {",
+									"    pm.response.to.have.status(302);",
+									"});",
+									"",
+									"pm.test(\"Should be redirected\", function () {",
+									"    pm.response.to.be.redirection;",
+									"    pm.response.to.have.header('Location');",
+									"",
+									"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{redirection}}",
+							"host": [
+								"{{redirection}}"
+							]
+						},
+						"description": "The client does not have a redirect_uri define"
+					},
+					"response": []
+				},
+				{
+					"name": "Redirect to consent",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Should be ok\", function () {",
+									"    pm.response.to.be.ok;",
+									"    ",
+									"    // Extract the XSRF token to send it with the next request.",
+									"    var responseHTML = cheerio.load(pm.response.text());",
+									"    var xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
+									"    const action = responseHTML('form').attr('action');",
+									"    pm.environment.set('xsrf', xsrfToken);",
+									"    pm.environment.set('action', action);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{redirection}}",
+							"host": [
+								"{{redirection}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Post consent form",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 302\", function () {",
+									"    pm.response.to.have.status(302);",
+									"});",
+									"",
+									"pm.test(\"Should be redirected\", function () {",
+									"    pm.response.to.be.redirection;",
+									"    pm.response.to.have.header('Location');",
+									"",
+									"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "X-XSRF-TOKEN",
+									"value": "{{xsrf}}",
+									"type": "text"
+								},
+								{
+									"key": "scope.openid",
+									"value": "true",
+									"type": "text"
+								},
+								{
+									"key": "user_oauth_approval",
+									"value": "true",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{action}}",
+							"host": [
+								"{{action}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Redirect after consent",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 302\", function () {",
+									"    pm.response.to.have.status(302);",
+									"});",
+									"",
+									"pm.test(\"Should be redirected to client app\", function () {",
+									"    pm.response.to.be.redirection;",
+									"    pm.response.to.have.header('Location');",
+									"",
+									"   const location = postman.getResponseHeader(\"Location\");",
+									"",
+									"    // State must come from request params",
+									"    tests['Contains the request object state'] = location.includes('state=override-state');",
+									"    ",
+									"    // Redirect uri must match the one specified in request object.",
+									"    tests['Redirect to query param redirect_uri'] = location.includes('https://op-test-from-query-param:60001/authz_cb');",
+									"",
+									"    // Redirect uri must match the one specified in query params.",
+									"    tests['Contains a code'] = location.includes('code=');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{redirection}}",
+							"host": [
+								"{{redirection}}"
+							]
+						},
+						"description": "The client does not have a redirect_uri define"
+					},
+					"response": []
+				},
+				{
+					"name": "Use redirect_uri from request_object",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 302\", function () {",
+									"    pm.response.to.have.status(302);",
+									"});",
+									"",
+									"pm.test(\"Should be redirected\", function () {",
+									"    pm.response.to.be.redirection;",
+									"    pm.response.to.have.header('Location');",
+									"});",
+									"",
+									"",
+									"pm.test(\"Should be redirected to client app\", function () {",
+									"    pm.response.to.be.redirection;",
+									"    pm.response.to.have.header('Location');",
+									"",
+									"   const location = postman.getResponseHeader(\"Location\");",
+									"",
+									"    // State must come from request object",
+									"    tests['Contains the request object state'] = location.includes('state=1234-5678-9876');",
+									"    ",
+									"    // Redirect uri must match the one specified in query params.",
+									"    tests['Redirect to query param redirect_uri'] = location.includes('https://op-test:60001/authz_cb');",
+									"",
+									"    // Redirect uri must match the one specified in query params.",
+									"    tests['Contains a code'] = location.includes('code=');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{authorizationEndpoint}}?response_type=code&client_id={{ro_client_id}}&redirect_uri=http://unknown_but_overriden_uri/&state=1234-5678-9876&request=eyJlbmMiOiJBMTI4Q0JDLUhTMjU2IiwiYWxnIjoiUlNBLU9BRVAtMjU2In0.VTdmd_ScLpsGB_pAZAZHiiUG8K3I9Rs9Y1dVZCog9uDtg_8dCoH-tDvt-rdSM1dYEfD0_nkhwlThaRsHqSKGlBjO6F5u15bBlFI7-pwyG11zeX82b6PQic_AEloKTRDwY1bovPUPuNgD-Qi-Txp5xZEYMw3etnqTLc7lFHMjE6SAdgDu6q-yzJLwN5WYB5s_BAczG1NwnL6x6QfNTzARABY76seXEOrq0EvD0Y4-XvBw06o7Ogk19qXihGfDFn1hGXZYSvP7xBWyc0iKTXFep7ma_uFO6sq9WQ6bZceNLgNfP1LJ-xjiiVbMdUw6eA_t-uRbnNfYzDYN0mipra_hWA.IKY3Bs5Bj7vc4HqnaIelbg.aAN4Z3Rwg0XikvG9Vf-CFOr__jCSYYXkDcCrnpGLTWXrQpwjJt_5MbQguvCIh5pp-B7Yr8MUw6YY27pWcXLsIwue5fqC4VcTznXWIFKv3tKxLhZSp_Z47UTDNRKDuNZXNp6IBz6G_WKMLhWmu-UfCnWSa4Zmg5vXcwZfTa14eO-Xc1zATUa8Tna1hosutApIICvLyEgtZAexwQrxDPSluYqlF68i8rA1iLtzsBzS9RLzVSSvTgDoTSBobm4lTYIsc7cQi8QdQF_x4Yx5adKptAvfHQpmcUeBWpw7X37uKV7bkMQJ_uKUr0KqcAZNPMEHb4JvQYNXWrGJWxy-g1VsRRnmFP179R0APwiXqmUHJ3kiDBv3LUOl7k5vFv80aeONBva0lKtHLjYxFwQGfDQWgLw8VIGaESQGNeaifOjHBAKDzMor_DAxgcVKwS3soTecf1Tf_gPB1MvC0zAATjlCtf6nR0CB_v4T8VU3uAhytd77OdgfPML9UT-JwUEztFZQLs8MfZ1A-Y-F_gcw1KLTb4zGa46rW5kolEpWEfn-KK4FoxoDzS15n9BEK4gHw6huX9DWmcTiJeCDBOOfGYK9wU2BsbTED3VlPyEAC6NEYn_i8lqSWONYfozd54n-4STaQ5YGd38EGqoq_vNm3tbihYTxFIXcL9nlrbooseSRJ1Mq3S8BLbH9AyGGJkI4j--V3FMbjBXa5LKPSrkhmFaKuw.dRRCDgoIp2UEudWVY18ZuA&scope=openid&nonce=n-0S6_WzA2Mj",
+							"host": [
+								"{{authorizationEndpoint}}"
+							],
+							"query": [
+								{
+									"key": "response_type",
+									"value": "code"
+								},
+								{
+									"key": "client_id",
+									"value": "{{ro_client_id}}"
+								},
+								{
+									"key": "redirect_uri",
+									"value": "http://unknown_but_overriden_uri/"
+								},
+								{
+									"key": "state",
+									"value": "1234-5678-9876"
+								},
+								{
+									"key": "request",
+									"value": "eyJlbmMiOiJBMTI4Q0JDLUhTMjU2IiwiYWxnIjoiUlNBLU9BRVAtMjU2In0.bxamyCBh3pGbKbUARGC7G53RV0cqhJCpe-IRYP8eC_7mnoZEMQBQGhGKeAJSEXEAWwftSLUhVspJjDX_76_FmmpeTAa7oCdHKaHwAMAP8oqZmlnQwXR8nsmuaz_kPCnsaQbIdKpG90uXOVVNqH6vho9wtqV_WjbFZkDa7y52ox5e2BII2fjHq_LbpIaFuMgepPiQ3u6q9n3SKCsjrxAVac8xFVip_8BpQQ2N64rWAv-oT1WdzQJrJjiq08AU9vWY_zv7efxGJVeVAUBRjOaBev4mtmB5yA48SySJZ07fKXfqfPIy_3vRiOYqzh-OmvJDDBW1ae8ohZDUUdGhUxxBcrC9LiLB_oBfaIen3pFn5hpap6KDv3flKXQcPv6uGSOA4EJ7dMW57YkBBSKIyDFjmUNGRc8ORK-y2Mom4KSz7DJUZdzzmDZ8yLEEWym-SC5qRX12WJkGRu-D5AwUbaY3yS3AVLHtyItbHwbt0rU95fyWYGjxPeV4SxGhAquE8SVD-2VIBOTTYcpd6fxpeN0fayTTYkTuwVJxiOESkq8lhLK4v53x0zKkh5xgY6Iuo1Ruw6Iqza7u8q8aSip3CjnfY6sBHJqvbJXdXHSH3PAqBINvoZ1y-_QmtO_lBpkO_LFXPiWSOL5PDk3_DRUCMYgVisFtLUJDm9AW1FoSy_v5Z78.CfO3odeR-Xy1usX-wyETdw.QLOzyczHALX3rU0jQcP6057qHnGtQ80O6M5bIOuhyZ5Uj4iQxrdh2OSjuebHTSs2oeP3waBrKNIVCfrn26asho3s4xgL1_HmYbhhTDsWvAtLSKjqXW3lonshBiv0WkqRpm0OlZ_6adowfWEJhHIRZkYyKClETf4kYRn3oWrhB5NLatexz3zDxxfccLJL7IIEJLnIJGZxZvlFGwQcWV65u2ioZ3irrxl6Bi8tpcRZGaIfTVNFMhyviIHj2ogiXf37J2ImqWaNtWVAl1XiFmKqNaTSq7ZVe8n2xVlfZ51VlLQse-xPO2oHxUCWeVXUB3IQ.IvTA1DphtWuceEj5pb2hpQ"
+								},
+								{
+									"key": "scope",
+									"value": "openid"
+								},
+								{
+									"key": "nonce",
+									"value": "n-0S6_WzA2Mj"
+								}
+							]
+						}
 					},
 					"response": []
 				}
