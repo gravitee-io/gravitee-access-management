@@ -35,7 +35,7 @@ export class CertificateFormComponent implements OnChanges {
   ngOnChanges(changes: SimpleChanges) {
     if (changes.certificateSchema) {
       const _certificateSchema = changes.certificateSchema.currentValue;
-      if (_certificateSchema && _certificateSchema.id) {
+      if (_certificateSchema?.id) {
         this.displayForm = true;
       }
     }

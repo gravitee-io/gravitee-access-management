@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, ViewChild, AfterViewChecked } from '@angular/core';
 import { MatStepper } from '@angular/material/stepper';
 import { ActivatedRoute, Router } from '@angular/router';
 
@@ -25,7 +25,7 @@ import { SnackbarService } from '../../../../services/snackbar.service';
   templateUrl: './certificate-creation.component.html',
   styleUrls: ['./certificate-creation.component.scss'],
 })
-export class CertificateCreationComponent {
+export class CertificateCreationComponent implements OnInit, AfterViewChecked {
   public certificate: any = {};
   private domainId: string;
   configurationIsValid = false;
@@ -36,6 +36,7 @@ export class CertificateCreationComponent {
     private snackbarService: SnackbarService,
     private router: Router,
     private route: ActivatedRoute,
+    private changeDetector: ChangeDetectorRef,
   ) {}
 
   ngOnInit() {
@@ -44,13 +45,22 @@ export class CertificateCreationComponent {
 
   create() {
     this.certificate.configuration = JSON.stringify(this.certificate.configuration);
-    this.certificateService.create(this.domainId, this.certificate).subscribe((data) => {
-      this.snackbarService.open('Certificate ' + data.name + ' created');
-      this.router.navigate(['..', data.id], { relativeTo: this.route });
-    });
+    this.certificateService.create(this.domainId, this.certificate).subscribe(
+      (data) => {
+        this.snackbarService.open('Certificate ' + data.name + ' created');
+        this.router.navigate(['..', data.id], { relativeTo: this.route });
+      },
+      (_) => {
+        this.certificate = { ...this.certificate, configuration: null };
+      },
+    );
   }
 
   stepperValid() {
-    return this.certificate && this.certificate.name && this.configurationIsValid;
+    return this.certificate?.name && this.configurationIsValid;
+  }
+
+  ngAfterViewChecked(): void {
+    this.changeDetector.detectChanges();
   }
 }

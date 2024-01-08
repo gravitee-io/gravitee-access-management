@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 
 import { OrganizationService } from '../../../../../../services/organization.service';
 
@@ -22,17 +22,18 @@ import { OrganizationService } from '../../../../../../services/organization.ser
   templateUrl: './step2.component.html',
   styleUrls: ['./step2.component.scss'],
 })
-export class CertificateCreationStep2Component implements OnInit {
+export class CertificateCreationStep2Component implements OnChanges {
   @Input('certificate') certificate: any;
   @Input('configurationIsValid') configurationIsValid: boolean;
   @Output('configurationIsValidChange') configurationIsValidChange: EventEmitter<boolean> = new EventEmitter<boolean>();
   configuration: any;
   certificateSchema: any = {};
-
   constructor(private organizationService: OrganizationService) {}
 
-  ngOnInit() {
-    this.organizationService.certificateSchema(this.certificate.type).subscribe((data) => (this.certificateSchema = data));
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes.certificate) {
+      this.organizationService.certificateSchema(this.certificate.type).subscribe((data) => (this.certificateSchema = data));
+    }
   }
 
   enableCertificateCreation(configurationWrapper) {
