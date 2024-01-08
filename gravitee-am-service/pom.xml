@@ -180,6 +180,11 @@
             <groupId>jakarta.inject</groupId>
             <artifactId>jakarta.inject-api</artifactId>
         </dependency>
+        <!-- Need to keep javax until all dependencies we are using are migrate to JDK17 -->
+        <dependency>
+            <groupId>javax.annotation</groupId>
+            <artifactId>javax.annotation-api</artifactId>
+        </dependency>
         <!-- Freemarker -->
         <dependency>
             <groupId>org.freemarker</groupId>
