@@ -70,6 +70,7 @@ import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnR
 import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnRegisterPostEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnRegisterSuccessEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnResponseEndpoint;
+import io.gravitee.am.gateway.handler.root.resources.handler.ConditionalBodyHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.LocaleHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.botdetection.BotDetectionHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.client.ClientRequestParseHandler;
@@ -139,7 +140,6 @@ import io.vertx.rxjava3.ext.auth.webauthn.WebAuthn;
 import io.vertx.rxjava3.ext.web.Router;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.client.WebClient;
-import io.vertx.rxjava3.ext.web.handler.BodyHandler;
 import io.vertx.rxjava3.ext.web.handler.CSRFHandler;
 import io.vertx.rxjava3.ext.web.handler.StaticHandler;
 import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
@@ -850,7 +850,8 @@ public class RootProvider extends AbstractProtocolProvider {
     }
 
     private void bodyHandler(Router router) {
-        router.route().handler(BodyHandler.create());
+        router.route()
+                .handler(new ConditionalBodyHandler(environment));
     }
 
     private void errorHandler(Router router) {
