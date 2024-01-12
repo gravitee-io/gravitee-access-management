@@ -35,14 +35,13 @@ import io.gravitee.am.plugins.resource.spring.ResourceSpringConfiguration;
 import io.gravitee.common.event.EventManager;
 import io.gravitee.common.event.impl.EventManagerImpl;
 import io.gravitee.el.ExpressionLanguageInitializer;
+import io.gravitee.node.api.Node;
 import io.gravitee.node.api.NodeMetadataResolver;
 import io.gravitee.node.api.cluster.ClusterManager;
 import io.gravitee.node.certificates.spring.NodeCertificatesConfiguration;
-import io.gravitee.node.container.NodeFactory;
 import io.gravitee.node.plugin.cluster.standalone.StandaloneClusterManager;
 import io.gravitee.node.vertx.spring.VertxConfiguration;
 import io.gravitee.platform.repository.api.RepositoryScopeProvider;
-import io.gravitee.plugin.alert.spring.AlertPluginConfiguration;
 import io.gravitee.plugin.core.spring.PluginConfiguration;
 import io.vertx.rxjava3.core.Vertx;
 import org.springframework.context.annotation.Bean;
@@ -70,7 +69,6 @@ import org.springframework.context.annotation.Import;
         NotifierConfiguration.class,
         FactorSpringConfiguration.class,
         ResourceSpringConfiguration.class,
-        AlertPluginConfiguration.class,
         BotDetectionSpringConfiguration.class,
         DeviceIdentifierSpringConfiguration.class,
         PasswordDictionaryConfiguration.class,
@@ -85,8 +83,8 @@ public class StandaloneConfiguration {
     }
 
     @Bean
-    public NodeFactory node() {
-        return new NodeFactory(ManagementNode.class);
+    public Node node() {
+        return new ManagementNode();
     }
 
     @Bean

@@ -56,7 +56,7 @@ public class ManagementNode extends JettyNode {
 
     @Override
     public Map<String, Object> metadata() {
-        if(metadata == null) {
+        if (metadata == null) {
             metadata = nodeMetadataResolver.resolve();
         }
 

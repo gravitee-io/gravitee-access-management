@@ -16,17 +16,14 @@
 package io.gravitee.am.plugins.notifier.spring;
 
 import io.gravitee.am.plugins.notifier.core.NotifierPluginManager;
-import io.gravitee.plugin.notifier.spring.NotifierPluginConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Configuration
-@Import(NotifierPluginConfiguration.class)
 public class NotifierConfiguration {
 
     @Bean
