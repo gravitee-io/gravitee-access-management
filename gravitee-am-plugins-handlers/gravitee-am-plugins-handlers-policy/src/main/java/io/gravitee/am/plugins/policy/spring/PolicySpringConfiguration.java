@@ -19,17 +19,14 @@ import io.gravitee.am.plugins.handlers.api.core.ConfigurationFactory;
 import io.gravitee.am.plugins.handlers.api.core.impl.ConfigurationFactoryImpl;
 import io.gravitee.am.plugins.policy.core.PolicyPluginManager;
 import io.gravitee.am.plugins.policy.core.impl.PolicyPluginManagerImpl;
-import io.gravitee.plugin.policy.spring.PolicyPluginConfiguration;
 import io.gravitee.policy.api.PolicyConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Import(PolicyPluginConfiguration.class)
 @Configuration
 public class PolicySpringConfiguration {
 

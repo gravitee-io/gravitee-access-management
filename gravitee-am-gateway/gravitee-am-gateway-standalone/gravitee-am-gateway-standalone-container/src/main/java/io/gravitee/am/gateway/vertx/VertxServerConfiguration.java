@@ -16,12 +16,13 @@
 package io.gravitee.am.gateway.vertx;
 
 import io.gravitee.am.gateway.reactor.Reactor;
-import io.gravitee.node.certificates.KeyStoreLoaderManager;
+import io.gravitee.node.api.server.DefaultServerManager;
+import io.gravitee.node.api.server.ServerManager;
+import io.gravitee.node.vertx.server.VertxServer;
+import io.gravitee.node.vertx.server.VertxServerFactory;
+import io.gravitee.node.vertx.server.VertxServerOptions;
 import io.gravitee.node.vertx.server.http.VertxHttpServer;
-import io.gravitee.node.vertx.server.http.VertxHttpServerFactory;
 import io.gravitee.node.vertx.server.http.VertxHttpServerOptions;
-import io.vertx.rxjava3.core.Vertx;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -38,34 +39,30 @@ public class VertxServerConfiguration {
 
     private static final String HTTP_PREFIX = "http";
 
-    @Lazy
     @Bean
-    public VertxHttpServerOptions httpServerConfiguration(
-            Environment environment,
-            KeyStoreLoaderManager keyStoreLoaderManager
+    public ServerManager serverManager(
+            VertxServerFactory<VertxServer<?, VertxServerOptions>, VertxServerOptions> serverFactory,
+            Environment environment
     ) {
-        return VertxHttpServerOptions.builder()
+        final DefaultServerManager serverManager = new DefaultServerManager();
+        final VertxHttpServerOptions options = VertxHttpServerOptions.builder()
                 .prefix(HTTP_PREFIX)
                 .environment(environment)
                 .port(environment.getProperty(HTTP_PREFIX + ".port", Integer.class, 8092))
-                .keyStoreLoaderManager(keyStoreLoaderManager)
                 .id(HTTP_PREFIX)
                 .build();
-    }
+        serverManager.register(serverFactory.create(options));
 
-    @Bean("gatewayHttpServer")
-    @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
-    public VertxHttpServer vertxHttpServerFactory(Vertx vertx, VertxHttpServerOptions options) {
-        return new VertxHttpServerFactory(vertx).create(options);
+        return serverManager;
     }
 
     @Bean
     @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
     public GraviteeVerticle graviteeVerticle(
-            @Qualifier("gatewayHttpServer") VertxHttpServer httpServer,
-            Reactor reactor,
-            VertxHttpServerOptions httpServerConfiguration) {
-        return new GraviteeVerticle(httpServer, reactor, httpServerConfiguration);
+            ServerManager serverManager,
+            Reactor reactor) {
+        final VertxHttpServer server = serverManager.servers(VertxHttpServer.class).get(0);
+        return new GraviteeVerticle(server, reactor);
     }
 
     @Bean
