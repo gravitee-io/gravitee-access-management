@@ -31,12 +31,25 @@
   <div fxLayout="column">
     <div *ngIf="hasFactors()">
       <ngx-datatable class="material" [columnMode]="'flex'" [headerHeight]="40" [footerHeight]="40" [rowHeight]="50" [rows]="factors">
-        <ngx-datatable-column name="Factors" [flexGrow]="4">
+        <ngx-datatable-column name="Factors" [flexGrow]="1">
           <ng-template let-row="row" ngx-datatable-cell-template>
             {{ row.name }}
           </ng-template>
         </ngx-datatable-column>
-        <ngx-datatable-column name="" [flexGrow]="1">
+        <ngx-datatable-column name="Selection Rule" [flexGrow]="1">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            <span (click)="addSelectionRule(row.id)" class="wrapper" style="cursor: pointer">
+                <span
+                  [matTooltip]="row.selectionRule ? 'Selection rule' : 'New selection rule'"
+                  [style]="row.selectionRule ? 'color: green' : 'color: grey'"
+                  class="mat-icon notranslate material-icons mat-icon-no-color"
+                >
+                  {{ row.selectionRule ? 'playlist_add_check' : 'playlist_add_plus' }}
+                </span>
+              </span>
+          </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column name="Type" [flexGrow]="1">
           <ng-template let-row="row" ngx-datatable-cell-template>
             <span class="factor-cell-title">
               <mat-icon>{{ getFactorTypeIcon(row.factorType) }}</mat-icon>
@@ -44,10 +57,16 @@
             </span>
           </ng-template>
         </ngx-datatable-column>
-        <ngx-datatable-column name="" [flexGrow]="1">
+        <ngx-datatable-column name="Status" [flexGrow]="1">
           <ng-template let-row="row" ngx-datatable-cell-template>
             <mat-slide-toggle (change)="selectFactor($event, row.id)" [checked]="isFactorSelected(row.id)" [disabled]="!editMode">
             </mat-slide-toggle>
+          </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column name="Default" [flexGrow]="1">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            <mat-radio-button (change)="selectFactor($event, row.id)" [checked]="isFactorSelected(row.id)" [disabled]="!editMode">
+            </mat-radio-button>
           </ng-template>
         </ngx-datatable-column>
       </ngx-datatable>

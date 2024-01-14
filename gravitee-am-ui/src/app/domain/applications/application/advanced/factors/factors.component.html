@@ -26,6 +26,10 @@
           (select-factor)="selectFactor($event)"
         ></mfa-select>
 
+        <mfa-eligibility>
+
+        </mfa-eligibility>
+
         <mfa-activate
           *ngIf="hasFactors() && hasSelectedFactors()"
           [enrollment]="mfa.enrollment"
@@ -33,6 +37,10 @@
           [riskAssessment]="application.settings.riskAssessment"
           (settings-change)="updateActivateMfa($event)"
         ></mfa-activate>
+
+        <mfa-challenge>
+
+        </mfa-challenge>
 
         <mfa-remember-device
           *ngIf="hasFactors() && hasSelectedFactors()"
