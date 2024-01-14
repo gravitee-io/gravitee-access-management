@@ -15,29 +15,35 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa;
 
+import io.gravitee.am.common.factor.FactorType;
 import io.gravitee.am.common.utils.ConstantKeys;
-import static io.gravitee.am.common.utils.ConstantKeys.MFA_ENROLLMENT_COMPLETED_KEY;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.AuthenticationFlowChain;
-import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.challengeConditionSatisfied;
-import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.continueMfaFlow;
-import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.evaluateRule;
-import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.executeFlowStep;
-import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.getChallengeSettings;
-import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.getEnrollSettings;
-import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.hasFactors;
-import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.isChallengeActive;
-import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.stepUpRequired;
-import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.stopMfaFlow;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils;
+import io.gravitee.am.model.ChallengeSettings;
 import io.gravitee.am.model.EnrollSettings;
+import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.MFASettings;
-import io.gravitee.am.model.MfaChallengeType;
+import io.gravitee.am.model.MfaType;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import static java.util.Optional.ofNullable;
 
+import java.util.Optional;
+import java.util.Set;
+
+import static com.google.common.base.Strings.isNullOrEmpty;
+import static io.gravitee.am.common.utils.ConstantKeys.MFA_ALTERNATIVES_ENABLE_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.MFA_CHALLENGE_CONDITION_SATISFIED;
+import static io.gravitee.am.common.utils.ConstantKeys.MFA_ENROLLMENT_CONDITION_SATISFIED;
+import static java.util.Objects.isNull;
+
+/**
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Rémi SULTAN (remi.sultan at graviteesource.com)
+ * @author GraviteeSource Team
+ */
 public class MFAEnrollStep extends MFAStep {
 
     private final FactorManager factorManager;
@@ -49,97 +55,162 @@ public class MFAEnrollStep extends MFAStep {
 
     @Override
     public void execute(RoutingContext routingContext, AuthenticationFlowChain flow) {
+        /*EnrollSettings enrollSettings = new EnrollSettings();
+        enrollSettings.setActive(false);
+        enrollSettings.setForceEnrollment(true);
+        enrollSettings.setType(MfaType.CONDITIONAL);
+        enrollSettings.setSkipTimeSeconds(60L);
+        enrollSettings.setEnrollmentRule("{#context.attributes['user']['additionalInformation']['bypassFlag'] == 'false'}");
+
+        ChallengeSettings challengeSettings = new ChallengeSettings();
+        challengeSettings.setActive(true);
+        challengeSettings.setType(MfaType.RISK_BASED);
+        challengeSettings.setChallengeRule("{#context.attributes['user']['additionalInformation']['bypassFlag'] == 'false'}");
+
+
+        MFASettings mfaSettings = client.getMfaSettings();
+        mfaSettings.setEnroll(enrollSettings);
+        mfaSettings.setChallenge(challengeSettings);
+        client.setMfaSettings(mfaSettings);*/
         final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
-        final MfaFilterContext context = new MfaFilterContext(routingContext, client, factorManager);
-        if (hasFactors(client, factorManager)) {
-            if (stepUpRequired(context, client, ruleEngine)) {
-                required(routingContext, flow, context);
-            } else if (isEnrollActive(client)) {
-                switch (getEnrollSettings(client).getType()) {
-                    case OPTIONAL -> optional(routingContext, flow, context);
-                    case REQUIRED -> required(routingContext, flow, context);
-                    case CONDITIONAL -> conditional(routingContext, flow, client, context);
-                }
-            } else if (isChallengeActive(client)) {
-                enrollIfChallengeRequires(routingContext, flow, client, context);
-            } else {
-                stop(routingContext, flow);
+
+
+        var filterContext = new MfaFilterContext(routingContext, client, factorManager);
+
+        final boolean skipMFA = noFactor(client) || userHasFactor(filterContext) || isMfaSkipped(filterContext);
+        if (skipMFA) {
+            flow.doNext(routingContext);
+            return;
+        }
+
+        if (isEnrollActive(client) && !userHasFactor(filterContext)) {
+            if (isEnrollRequired(client)) {
+                flow.exit(this);
+                return;
+            } else if (isEnrollConditional(client) && enrollConditionNotSatisfied(client, filterContext, routingContext) && !isMfaSkipped(filterContext)) {
+                flow.exit(this);
+                return;
+            } else if (isEnrollOptional(client) && !isMfaSkipped(filterContext)) {
+                flow.exit(this);
+                return;
             }
-        } else {
-            stop(routingContext, flow);
-        }
-    }
+            else {
+                flow.doNext(routingContext);
+                return;
+            }
 
-    private void required(RoutingContext routingContext, AuthenticationFlowChain flow, MfaFilterContext context) {
-        if (userHasFactor(context)) {
-            continueFlow(routingContext, flow);
-        } else {
-            enrollment(routingContext, flow);
         }
-    }
 
-    private void conditional(RoutingContext routingContext, AuthenticationFlowChain flow, Client client, MfaFilterContext context) {
-        if (enrollConditionSatisfied(client, context)) {
-            stop(routingContext, flow);
-        } else if (userHasFactor(context)) {
-            continueFlow(routingContext, flow);
-        } else { //todo AM-1140 skip conditional not implemented
-            enrollment(routingContext, flow);
-        }
-    }
-
-    private void optional(RoutingContext routingContext, AuthenticationFlowChain flow, MfaFilterContext context) {
-        if (context.isEnrollSkipped()) {
-            stop(routingContext, flow);
-        } else {
-            if (userHasFactor(context)) {
-                continueFlow(routingContext, flow);
-            } else {
-                enrollment(routingContext, flow);
+        if (MfaUtils.isChallengeActive(client) && !userHasFactor(filterContext)) {
+            if (isChallengeRequired(client)) {
+                flow.exit(this);
+                return;
+            } else if (isChallengeConditional(client) && challengeConditionNotSatisfied(client, filterContext, routingContext)) {
+                flow.exit(this);
+                return;
+            } else if (isChallengeRiskBased(client) && challengeConditionNotSatisfied(client, filterContext, routingContext)) {
+                flow.exit(this);
+                return;
             }
         }
+
+        flow.doNext(routingContext);
     }
 
-    private void enrollIfChallengeRequires(RoutingContext routingContext, AuthenticationFlowChain flow, Client client, MfaFilterContext context) {
-        if (MfaChallengeType.CONDITIONAL.equals(getChallengeSettings(client).getType())) {
-            if (challengeConditionSatisfied(client, context, ruleEngine)) {
-                stop(routingContext, flow);
-            } else {
-                enrollment(routingContext, flow);
-            }
-        } else {
-            required(routingContext, flow, context);
+
+    private boolean isEnrollOptional(Client client) {
+        final EnrollSettings settings = MfaUtils.getEnrollSettings(client);
+        return MfaType.OPTIONAL == settings.getType();
+    }
+
+    private boolean isEnrollRequired(Client client) {
+        final EnrollSettings settings = MfaUtils.getEnrollSettings(client);
+        return MfaType.REQUIRED == settings.getType();
+    }
+
+    private boolean isEnrollConditional(Client client) {
+        final EnrollSettings settings = MfaUtils.getEnrollSettings(client);
+        return MfaType.CONDITIONAL == settings.getType();
+    }
+
+    private boolean enrollConditionNotSatisfied(Client client, MfaFilterContext context, RoutingContext routingContext) {
+        final EnrollSettings settings = MfaUtils.getEnrollSettings(client);
+        Boolean result = ruleEngine.evaluate(Optional.ofNullable(settings.getEnrollmentRule()).orElse("{}"),
+                context.getEvaluableContext(), Boolean.class, false);
+        routingContext.session().put(MFA_ENROLLMENT_CONDITION_SATISFIED, result);
+        return !result;
+    }
+
+    private boolean isRisk(Client client, MfaFilterContext context) {
+        if (hasAdaptiveAuthAuthRule(client)) {
+            final String adaptiveAuthRule = MfaUtils.getAdaptiveMfaStepUpRule(client);
+            return ruleEngine.evaluate(adaptiveAuthRule, context.getEvaluableContext(), Boolean.class, false);
         }
+
+        //todo need to check this
+        return false;
     }
 
-    private void enrollment(RoutingContext routingContext, AuthenticationFlowChain flow) {
-        executeFlowStep(routingContext, flow, this);
+    private boolean isChallengeRequired(Client client) {
+        ChallengeSettings settings = MfaUtils.getChallengeSettings(client);
+        return settings.getType() == MfaType.REQUIRED;
     }
 
-    private boolean enrollConditionSatisfied(Client client, MfaFilterContext context) {
-        return evaluateRule(getEnrollSettings(client).getEnrollmentRule(), context, ruleEngine);
+    private boolean isChallengeConditional(Client client) {
+        ChallengeSettings settings = MfaUtils.getChallengeSettings(client);
+        return settings.getType() == MfaType.CONDITIONAL;
+    }
+
+    private boolean isChallengeRiskBased(Client client) {
+        ChallengeSettings settings = MfaUtils.getChallengeSettings(client);
+        return settings.getType() == MfaType.RISK_BASED;
+    }
+
+    private boolean challengeConditionNotSatisfied(Client client, MfaFilterContext context, RoutingContext routingContext) {
+        final ChallengeSettings settings = MfaUtils.getChallengeSettings(client);
+        Boolean result = ruleEngine.evaluate(Optional.ofNullable(settings.getChallengeRule()).orElse("{}"),
+                context.getEvaluableContext(), Boolean.class, false);
+        routingContext.session().put(MFA_CHALLENGE_CONDITION_SATISFIED, result);
+        return !result;
+    }
+
+    private boolean hasAdaptiveAuthAuthRule(Client client) {
+        final String adaptiveAuthRule = MfaUtils.getAdaptiveMfaStepUpRule(client);
+        return !isNullOrEmpty(adaptiveAuthRule) && !adaptiveAuthRule.isBlank();
     }
 
     private boolean isEnrollActive(Client client) {
-        return ofNullable(client.getMfaSettings()).map(MFASettings::getEnroll).map(EnrollSettings::isActive).orElse(false);
+        Optional<MFASettings> optMfaSettings = Optional.of(client.getMfaSettings());
+        if (optMfaSettings.isEmpty()) {
+            return false;
+        }
+        MFASettings mfaSettings = optMfaSettings.get();
+        EnrollSettings enroll = mfaSettings.getEnroll();
+        return enroll != null && enroll.isActive();
+    }
+
+    private boolean noFactor(Client client) {
+        final Set<String> factors = client.getFactors();
+        return isNull(factors) || factors.isEmpty() || onlyRecoveryCodeFactor(factors);
+    }
+
+    private boolean onlyRecoveryCodeFactor(Set<String> factors) {
+        if (factors.size() == 1) {
+            final String factorId = factors.stream().findFirst().get();
+            final Factor factor = factorManager.getFactor(factorId);
+            return factor.getFactorType().equals(FactorType.RECOVERY_CODE);
+        }
+        return false;
     }
 
     private boolean userHasFactor(MfaFilterContext context) {
-        return context.isEndUserEnrolling() || context.userHasMatchingActivatedFactors();
+        return context.hasEndUserAlreadyEnrolled() || context.userHasMatchingFactors();
     }
 
-    private static void continueFlow(RoutingContext routingContext, AuthenticationFlowChain flow) {
-        routingContext.session().put(MFA_ENROLLMENT_COMPLETED_KEY, true);
-        continueMfaFlow(routingContext, flow);
-    }
-
-    private static void stop(RoutingContext routingContext, AuthenticationFlowChain flow) {
-        routingContext.session().put(MFA_ENROLLMENT_COMPLETED_KEY, true);
-        stopMfaFlow(routingContext, flow);
-    }
-
-    public boolean canUserSkip(Client client, MfaFilterContext context) {
-        var enrollRule = ofNullable(client.getMfaSettings()).map(MFASettings::getEnroll).map(EnrollSettings::getEnrollmentRule).orElse(null);
-        return evaluateRule(enrollRule, context, ruleEngine);
+    public boolean isMfaSkipped(MfaFilterContext context) {
+        // We need to check whether the AMFA rule is false since we don't know
+        final boolean mfaSkipped = context.isMfaSkipped();
+        final String mfaStepUpRule = context.getStepUpRule();
+        return isNullOrEmpty(mfaStepUpRule) && mfaSkipped;
     }
 }

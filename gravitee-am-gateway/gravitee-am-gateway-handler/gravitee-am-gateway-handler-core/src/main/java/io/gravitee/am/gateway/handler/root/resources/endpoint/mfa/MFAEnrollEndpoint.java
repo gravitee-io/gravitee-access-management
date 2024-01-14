@@ -28,6 +28,7 @@ import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.EnrollSettings;
+import io.gravitee.am.model.EnrollmentSettings;
 import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;

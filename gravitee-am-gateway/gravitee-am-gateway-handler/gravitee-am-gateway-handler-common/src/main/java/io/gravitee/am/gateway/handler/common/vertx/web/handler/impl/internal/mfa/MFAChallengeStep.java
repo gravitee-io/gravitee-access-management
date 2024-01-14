@@ -15,25 +15,34 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa;
 
+import io.gravitee.am.common.factor.FactorType;
 import io.gravitee.am.common.utils.ConstantKeys;
-import static io.gravitee.am.common.utils.ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.AuthenticationFlowChain;
-import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.challengeConditionSatisfied;
-import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.continueMfaFlow;
-import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.evaluateRule;
-import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.executeFlowStep;
-import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.getAdaptiveMfaStepUpRule;
-import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.getChallengeSettings;
-import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.isChallengeActive;
-import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.isMfaFlowStopped;
-import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.stepUpRequired;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils;
+import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 
+import java.util.Optional;
+import java.util.Set;
+
+import static io.gravitee.am.common.utils.ConstantKeys.MFA_ALTERNATIVES_ENABLE_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.MFA_CHALLENGE_CONDITION_SATISFIED;
+import static io.gravitee.am.common.utils.ConstantKeys.MFA_ENROLLMENT_CONDITION_SATISFIED;
+import static java.util.Objects.isNull;
+
+/**
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Rémi SULTAN (remi.sultan at graviteesource.com)
+ * @author GraviteeSource Team
+ */
 public class MFAChallengeStep extends MFAStep {
+    private static final boolean SAFE = true;
+    private static final boolean UNSAFE = false;
+
     private final FactorManager factorManager;
 
     public MFAChallengeStep(Handler<RoutingContext> wrapper, RuleEngine ruleEngine, FactorManager factorManager) {
@@ -44,64 +53,138 @@ public class MFAChallengeStep extends MFAStep {
     @Override
     public void execute(RoutingContext routingContext, AuthenticationFlowChain flow) {
         final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
-        final MfaFilterContext context = new MfaFilterContext(routingContext, client, factorManager);
-        if (!isMfaFlowStopped(routingContext)) {
-            if (stepUpRequired(context, client, ruleEngine) || context.isEndUserEnrolling()) {
-                challenge(routingContext, flow);
-            } else if (isChallengeActive(client)) {
-                switch (getChallengeSettings(client).getType()) {
-                    case REQUIRED -> required(routingContext, flow, context);
-                    case CONDITIONAL -> conditional(routingContext, flow, client, context);
-                    case RISK_BASED -> riskBased(routingContext, flow, client, context);
-                }
-            } else {
-                continueFlow(routingContext, flow);
+        var context = new MfaFilterContext(routingContext, client, factorManager);
+
+        final boolean skipMFA = isNull(client) || noFactor(client) || context.isMfaChallengeComplete()
+                || isAdaptiveMfa(context) || isStepUp(context) || isRememberDevice(context) || isEnrollSkipRuleSatisfied(routingContext)
+                || isStronglyAuthenticated(context) || !MfaUtils.isChallengeActive(client) || isChallengeSkipRuleSatisfied(routingContext);
+
+        if (skipMFA) {
+            flow.doNext(routingContext);
+        } else {
+            flow.exit(this);
+        }
+    }
+
+    private boolean noFactor(Client client) {
+        final Set<String> factors = client.getFactors();
+        return isNull(factors) || factors.isEmpty() || onlyRecoveryCodeFactor(factors);
+    }
+
+    private boolean onlyRecoveryCodeFactor(Set<String> factors) {
+        if (factors.size() == 1) {
+            final String factorId = factors.stream().findFirst().get();
+            final Factor factor = factorManager.getFactor(factorId);
+            return factor.getFactorType().equals(FactorType.RECOVERY_CODE);
+        }
+        return false;
+    }
+
+    private boolean isAdaptiveMfa(MfaFilterContext context) {
+        if (!context.isAmfaActive()) {
+            return false;
+        }
+
+        if (context.isMfaSkipped() && !context.hasEndUserAlreadyEnrolled() && !context.userHasMatchingFactors()) {
+            return false;
+        }
+
+        // We make sure that the rule can be triggered if we come from an already enrolled user
+        // And that the user is not trying to challenge to an alternative factor
+        if (context.userHasMatchingActivatedFactors() && !context.hasUserChosenAlternativeFactor()) {
+            // We are retaining the value since other features will use it in the chain
+            context.setAmfaRuleTrue(ruleEngine.evaluate(context.getAmfaRule(), context.getEvaluableContext(), Boolean.class, false));
+        }
+
+        // If one of the other filter is active. We want to make sure that
+        // if Adaptive MFA skips (rule == true) we want other MFA methods to trigger
+        var rememberDevice = context.getRememberDeviceSettings();
+        return !rememberDevice.isActive() && !context.isStepUpActive() && context.isAmfaRuleTrue();
+    }
+
+    private boolean isStepUp(MfaFilterContext context) {
+        // If Adaptive MFA is active and KO (rule == false) we bypass this filter
+        // Because it could return true and skip MFA
+        if (!context.isMfaSkipped() && context.isAmfaActive() && !context.isAmfaRuleTrue()) {
+            return false;
+        }
+        String mfaStepUpRule = context.getStepUpRule();
+        if (context.isStepUpActive()) {
+            context.setStepUpRuleTrue(isStepUpAuthentication(mfaStepUpRule, context));
+        }
+        return !context.isAmfaActive() &&
+                context.isStepUpActive() &&
+                !context.isStepUpRuleTrue() &&
+                (context.isUserStronglyAuth() || context.isMfaSkipped());
+    }
+
+    private boolean isStepUpAuthentication(String selectionRule, MfaFilterContext context) {
+        return ruleEngine.evaluate(selectionRule, context.getEvaluableContext(), Boolean.class, false);
+    }
+
+    private boolean isRememberDevice(MfaFilterContext context) {
+        // If Adaptive MFA is active and KO (rule == false) we bypass this filter
+        // Because the device could be known and skip MFA
+        final boolean mfaSkipped = context.isMfaSkipped();
+        var rememberDeviceSettings = context.getRememberDeviceSettings();
+
+        if (!mfaSkipped && context.isAmfaActive()) {
+            if (context.isAmfaRuleTrue() && rememberDeviceSettings.isSkipRememberDevice()) {
+                return SAFE;
+            } else if (!context.isAmfaRuleTrue()) {
+                return UNSAFE;
             }
-        } else {
-            continueFlow(routingContext, flow);
         }
-    }
 
-    private void required(RoutingContext routingContext, AuthenticationFlowChain flow, MfaFilterContext context) {
-        if (context.isChallengeOnceCompleted() && isRememberDeviceOrSkipped(context)) {
-            continueFlow(routingContext, flow);
-        } else {
-            challenge(routingContext, flow);
+        // Step up might be active
+        final boolean userStronglyAuth = context.isUserStronglyAuth();
+        if (context.isStepUpActive() && (userStronglyAuth || mfaSkipped)) {
+            return UNSAFE;
         }
-    }
 
-    private void conditional(RoutingContext routingContext, AuthenticationFlowChain flow, Client client, MfaFilterContext context) {
-        if (context.isChallengeOnceCompleted() || challengeConditionSatisfied(client, context, ruleEngine)) {
-            continueFlow(routingContext, flow);
-        } else {
-            challenge(routingContext, flow);
+        // We don't want device risk assessment to interfere
+        if (context.isDeviceRiskAssessmentEnabled()) {
+            return UNSAFE;
         }
+
+        return context.userHasMatchingActivatedFactors() && rememberDeviceSettings.isActive() && context.deviceAlreadyExists();
     }
 
-    private void riskBased(RoutingContext routingContext, AuthenticationFlowChain flow, Client client, MfaFilterContext context) {
-        if (context.isChallengeOnceCompleted() || isSafe(client, context)) {
-            continueFlow(routingContext, flow);
-        } else {
-            challenge(routingContext, flow);
+    private boolean isStronglyAuthenticated(MfaFilterContext context) {
+        final boolean userStronglyAuth = context.isUserStronglyAuth();
+        final boolean mfaSkipped = context.isMfaSkipped();
+        //If user has not matching activated factors, we enforce MFA
+        if (!mfaSkipped && !context.userHasMatchingActivatedFactors()) {
+            return false;
         }
+        // We need to check whether the AMFA, Device and Step Up rule is false since we don't know of other MFA return False
+        else if (
+            // Whether Adaptive MFA is not true
+                !mfaSkipped && context.isAmfaActive() && !context.isAmfaRuleTrue() ||
+                        // Or We don't remember the device and there is
+                        // no device assessment active and that mfa is not skipped
+                        !context.isDeviceRiskAssessmentEnabled() && !mfaSkipped && context.getRememberDeviceSettings().isActive() && !context.deviceAlreadyExists() ||
+                        // Or that Step up authentication is active and user is strongly auth or mfa is skipped
+                        context.isStepUpActive() && context.isStepUpRuleTrue() && (userStronglyAuth || mfaSkipped)) {
+            return false;
+        } else if (
+            // We need to make sure we come from a place where the user is not trying to challenge a new device
+            // AND Adaptive MFA may be active and may return true, we return true
+                context.userHasMatchingActivatedFactors()
+                        && !context.hasUserChosenAlternativeFactor()
+                        && context.isAmfaActive() && context.isAmfaRuleTrue()
+        ) {
+            return true;
+        }
+        // We check then if StepUp is not active and of user is strongly auth or mfa is skipped to skip MFA
+        return !context.isStepUpActive() && (userStronglyAuth || mfaSkipped);
     }
 
-    private void challenge(RoutingContext routingContext, AuthenticationFlowChain flow) {
-        executeFlowStep(routingContext, flow, this);
+    private boolean isEnrollSkipRuleSatisfied(RoutingContext context) {
+        return Optional.ofNullable((Boolean)context.session().get(MFA_ENROLLMENT_CONDITION_SATISFIED)).orElse(Boolean.FALSE);
     }
 
-    private boolean isSafe(Client client, MfaFilterContext context) {
-        return !evaluateRule(getAdaptiveMfaStepUpRule(client), context, ruleEngine);
-    }
-
-    private boolean isRememberDeviceOrSkipped(MfaFilterContext context) {
-        return !context.isDeviceRiskAssessmentEnabled()
-                && (!context.getRememberDeviceSettings().isActive() || (context.deviceAlreadyExists() || context.getRememberDeviceSettings().isSkipRememberDevice()));
-    }
-
-    private static void continueFlow(RoutingContext routingContext, AuthenticationFlowChain flow) {
-        routingContext.session().put(MFA_CHALLENGE_COMPLETED_KEY, true);
-        continueMfaFlow(routingContext, flow);
+    private boolean isChallengeSkipRuleSatisfied(RoutingContext context) {
+        return Optional.ofNullable((Boolean)context.session().get(MFA_CHALLENGE_CONDITION_SATISFIED)).orElse(Boolean.FALSE);
     }
 }
-
