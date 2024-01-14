@@ -20,14 +20,23 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.AuthenticationFlowChain;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils;
+import io.gravitee.am.model.ChallengeSettings;
+import io.gravitee.am.model.EnrollSettings;
 import io.gravitee.am.model.Factor;
+import io.gravitee.am.model.MFASettings;
+import io.gravitee.am.model.MfaType;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 
+import java.util.Optional;
 import java.util.Set;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
+import static io.gravitee.am.common.utils.ConstantKeys.MFA_ALTERNATIVES_ENABLE_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.MFA_CHALLENGE_CONDITION_SATISFIED;
+import static io.gravitee.am.common.utils.ConstantKeys.MFA_ENROLLMENT_CONDITION_SATISFIED;
 import static java.util.Objects.isNull;
 
 /**
@@ -46,15 +55,138 @@ public class MFAEnrollStep extends MFAStep {
 
     @Override
     public void execute(RoutingContext routingContext, AuthenticationFlowChain flow) {
-        final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
-        var context = new MfaFilterContext(routingContext, client, factorManager);
+        /*EnrollSettings enrollSettings = new EnrollSettings();
+        enrollSettings.setActive(false);
+        enrollSettings.setForceEnrollment(true);
+        enrollSettings.setType(MfaType.CONDITIONAL);
+        enrollSettings.setSkipTimeSeconds(60L);
+        enrollSettings.setEnrollmentRule("{#context.attributes['user']['additionalInformation']['bypassFlag'] == 'false'}");
 
-        final boolean skipMFA = isNull(client) || noFactor(client) || userHasFactor(context) || isMfaSkipped(context);
+        ChallengeSettings challengeSettings = new ChallengeSettings();
+        challengeSettings.setActive(true);
+        challengeSettings.setType(MfaType.RISK_BASED);
+        challengeSettings.setChallengeRule("{#context.attributes['user']['additionalInformation']['bypassFlag'] == 'false'}");
+
+
+        MFASettings mfaSettings = client.getMfaSettings();
+        mfaSettings.setEnroll(enrollSettings);
+        mfaSettings.setChallenge(challengeSettings);
+        client.setMfaSettings(mfaSettings);*/
+        final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
+
+
+        var filterContext = new MfaFilterContext(routingContext, client, factorManager);
+
+        final boolean skipMFA = noFactor(client) || userHasFactor(filterContext) || isMfaSkipped(filterContext);
         if (skipMFA) {
             flow.doNext(routingContext);
-        } else {
-            flow.exit(this);
+            return;
         }
+
+        if (isEnrollActive(client) && !userHasFactor(filterContext)) {
+            if (isEnrollRequired(client)) {
+                flow.exit(this);
+                return;
+            } else if (isEnrollConditional(client) && enrollConditionNotSatisfied(client, filterContext, routingContext) && !isMfaSkipped(filterContext)) {
+                flow.exit(this);
+                return;
+            } else if (isEnrollOptional(client) && !isMfaSkipped(filterContext)) {
+                flow.exit(this);
+                return;
+            }
+            else {
+                flow.doNext(routingContext);
+                return;
+            }
+
+        }
+
+        if (MfaUtils.isChallengeActive(client) && !userHasFactor(filterContext)) {
+            if (isChallengeRequired(client)) {
+                flow.exit(this);
+                return;
+            } else if (isChallengeConditional(client) && challengeConditionNotSatisfied(client, filterContext, routingContext)) {
+                flow.exit(this);
+                return;
+            } else if (isChallengeRiskBased(client) && challengeConditionNotSatisfied(client, filterContext, routingContext)) {
+                flow.exit(this);
+                return;
+            }
+        }
+
+        flow.doNext(routingContext);
+    }
+
+
+    private boolean isEnrollOptional(Client client) {
+        final EnrollSettings settings = MfaUtils.getEnrollSettings(client);
+        return MfaType.OPTIONAL == settings.getType();
+    }
+
+    private boolean isEnrollRequired(Client client) {
+        final EnrollSettings settings = MfaUtils.getEnrollSettings(client);
+        return MfaType.REQUIRED == settings.getType();
+    }
+
+    private boolean isEnrollConditional(Client client) {
+        final EnrollSettings settings = MfaUtils.getEnrollSettings(client);
+        return MfaType.CONDITIONAL == settings.getType();
+    }
+
+    private boolean enrollConditionNotSatisfied(Client client, MfaFilterContext context, RoutingContext routingContext) {
+        final EnrollSettings settings = MfaUtils.getEnrollSettings(client);
+        Boolean result = ruleEngine.evaluate(Optional.ofNullable(settings.getEnrollmentRule()).orElse("{}"),
+                context.getEvaluableContext(), Boolean.class, false);
+        routingContext.session().put(MFA_ENROLLMENT_CONDITION_SATISFIED, result);
+        return !result;
+    }
+
+    private boolean isRisk(Client client, MfaFilterContext context) {
+        if (hasAdaptiveAuthAuthRule(client)) {
+            final String adaptiveAuthRule = MfaUtils.getAdaptiveMfaStepUpRule(client);
+            return ruleEngine.evaluate(adaptiveAuthRule, context.getEvaluableContext(), Boolean.class, false);
+        }
+
+        //todo need to check this
+        return false;
+    }
+
+    private boolean isChallengeRequired(Client client) {
+        ChallengeSettings settings = MfaUtils.getChallengeSettings(client);
+        return settings.getType() == MfaType.REQUIRED;
+    }
+
+    private boolean isChallengeConditional(Client client) {
+        ChallengeSettings settings = MfaUtils.getChallengeSettings(client);
+        return settings.getType() == MfaType.CONDITIONAL;
+    }
+
+    private boolean isChallengeRiskBased(Client client) {
+        ChallengeSettings settings = MfaUtils.getChallengeSettings(client);
+        return settings.getType() == MfaType.RISK_BASED;
+    }
+
+    private boolean challengeConditionNotSatisfied(Client client, MfaFilterContext context, RoutingContext routingContext) {
+        final ChallengeSettings settings = MfaUtils.getChallengeSettings(client);
+        Boolean result = ruleEngine.evaluate(Optional.ofNullable(settings.getChallengeRule()).orElse("{}"),
+                context.getEvaluableContext(), Boolean.class, false);
+        routingContext.session().put(MFA_CHALLENGE_CONDITION_SATISFIED, result);
+        return !result;
+    }
+
+    private boolean hasAdaptiveAuthAuthRule(Client client) {
+        final String adaptiveAuthRule = MfaUtils.getAdaptiveMfaStepUpRule(client);
+        return !isNullOrEmpty(adaptiveAuthRule) && !adaptiveAuthRule.isBlank();
+    }
+
+    private boolean isEnrollActive(Client client) {
+        Optional<MFASettings> optMfaSettings = Optional.of(client.getMfaSettings());
+        if (optMfaSettings.isEmpty()) {
+            return false;
+        }
+        MFASettings mfaSettings = optMfaSettings.get();
+        EnrollSettings enroll = mfaSettings.getEnroll();
+        return enroll != null && enroll.isActive();
     }
 
     private boolean noFactor(Client client) {

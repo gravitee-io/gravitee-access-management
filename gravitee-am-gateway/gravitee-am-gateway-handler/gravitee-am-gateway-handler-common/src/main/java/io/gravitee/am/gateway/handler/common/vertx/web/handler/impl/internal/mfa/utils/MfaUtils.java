@@ -26,6 +26,7 @@ import io.gravitee.am.model.oidc.Client;
 import io.vertx.rxjava3.ext.web.Session;
 
 import java.util.Objects;
+import java.util.Optional;
 
 import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ALREADY_EXISTS_KEY;
 import static java.lang.Boolean.TRUE;
@@ -86,5 +87,14 @@ public class MfaUtils {
 
     public static String getEnrollmentRule(Client client) {
         return ofNullable(client.getMfaSettings()).orElse(new MFASettings()).getEnroll().getEnrollmentRule();
+    }
+
+    public static String getEnrollRule(Client client) {
+        return ofNullable(client.getMfaSettings()).orElse(new MFASettings()).getEnroll().getEnrollmentRule();
+    }
+
+    public static boolean isChallengeActive(Client client) {
+        ChallengeSettings challenge = getChallengeSettings(client);
+        return Optional.of(challenge.isActive()).orElse(Boolean.FALSE);
     }
 }

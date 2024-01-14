@@ -27,6 +27,7 @@ import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.EnrollSettings;
 import io.gravitee.am.model.EnrollmentSettings;
 import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.Template;
@@ -180,8 +181,8 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
     }
 
     private boolean isForceMfaActive(Client client) {
-        var enrollmentSettings = ofNullable(client.getMfaSettings()).orElse(new MFASettings()).getEnrollment();
-        return ofNullable(enrollmentSettings).map(EnrollmentSettings::getForceEnrollment).orElse(false);
+        final EnrollSettings enrollmentSettings = ofNullable(client.getMfaSettings()).orElse(new MFASettings()).getEnroll();
+        return ofNullable(enrollmentSettings).map(EnrollSettings::getForceEnrollment).orElse(false);
     }
 
     private void saveEnrollment(RoutingContext routingContext) {

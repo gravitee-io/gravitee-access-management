@@ -20,13 +20,18 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.AuthenticationFlowChain;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils;
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 
+import java.util.Optional;
 import java.util.Set;
 
+import static io.gravitee.am.common.utils.ConstantKeys.MFA_ALTERNATIVES_ENABLE_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.MFA_CHALLENGE_CONDITION_SATISFIED;
+import static io.gravitee.am.common.utils.ConstantKeys.MFA_ENROLLMENT_CONDITION_SATISFIED;
 import static java.util.Objects.isNull;
 
 /**
@@ -51,8 +56,8 @@ public class MFAChallengeStep extends MFAStep {
         var context = new MfaFilterContext(routingContext, client, factorManager);
 
         final boolean skipMFA = isNull(client) || noFactor(client) || context.isMfaChallengeComplete()
-                || isAdaptiveMfa(context) || isStepUp(context) || isRememberDevice(context)
-                || isStronglyAuthenticated(context);
+                || isAdaptiveMfa(context) || isStepUp(context) || isRememberDevice(context) || isEnrollSkipRuleSatisfied(routingContext)
+                || isStronglyAuthenticated(context) || !MfaUtils.isChallengeActive(client) || isChallengeSkipRuleSatisfied(routingContext);
 
         if (skipMFA) {
             flow.doNext(routingContext);
@@ -173,5 +178,13 @@ public class MFAChallengeStep extends MFAStep {
         }
         // We check then if StepUp is not active and of user is strongly auth or mfa is skipped to skip MFA
         return !context.isStepUpActive() && (userStronglyAuth || mfaSkipped);
+    }
+
+    private boolean isEnrollSkipRuleSatisfied(RoutingContext context) {
+        return Optional.ofNullable((Boolean)context.session().get(MFA_ENROLLMENT_CONDITION_SATISFIED)).orElse(Boolean.FALSE);
+    }
+
+    private boolean isChallengeSkipRuleSatisfied(RoutingContext context) {
+        return Optional.ofNullable((Boolean)context.session().get(MFA_CHALLENGE_CONDITION_SATISFIED)).orElse(Boolean.FALSE);
     }
 }
