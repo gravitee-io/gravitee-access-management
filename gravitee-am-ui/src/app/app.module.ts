@@ -433,6 +433,8 @@ import { LicenseGuard } from './guards/license-guard.service';
 import { ApplicationClientSecretDialogModule } from './domain/applications/client-secret/application-client-secret-dialog.module';
 
 import { AppConfig } from '../config/app.config';
+import { MfaEligibilityComponent } from './domain/applications/application/advanced/factors/mfa-eligibility/mfa-eligibility.component';
+import { MfaChallengeComponent } from './domain/applications/application/advanced/factors/mfa-challenge/mfa-challenge.component';
 
 @NgModule({
   declarations: [
@@ -681,6 +683,8 @@ import { AppConfig } from '../config/app.config';
     AssessmentComponent,
     HelpTipsThemeComponent,
     DisplayableItemPipe,
+    MfaEligibilityComponent,
+    MfaChallengeComponent,
   ],
   imports: [
     BrowserModule,

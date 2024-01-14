@@ -75,4 +75,8 @@ export class MfaSelectComponent {
       this.selectFactorEmitter.emit({ checked: $event.checked, factorId: factorId });
     }
   }
+
+  addSelectionRule(id) {
+
+  }
 }
