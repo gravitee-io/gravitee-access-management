@@ -15,19 +15,20 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa;
 
+import io.gravitee.am.common.factor.FactorType;
 import io.gravitee.am.common.utils.ConstantKeys;
-import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
+import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.AuthenticationFlowChain;
-import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.chain.MfaFilterChain;
-import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter.ClientNullFilter;
-import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter.EndUserEnrolledFilter;
-import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter.MfaSkipFilter;
-import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter.NoFactorFilter;
+import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 
+import java.util.Set;
+
+import static com.google.common.base.Strings.isNullOrEmpty;
+import static java.util.Objects.isNull;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -48,13 +49,36 @@ public class MFAEnrollStep extends MFAStep {
         final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         var context = new MfaFilterContext(routingContext, client, factorManager);
 
-        // Rules that makes you skip MFA enroll
-        var mfaFilterChain = new MfaFilterChain(
-                new ClientNullFilter(client),
-                new NoFactorFilter(client.getFactors(), factorManager),
-                new EndUserEnrolledFilter(context),
-                new MfaSkipFilter(context)
-        );
-        mfaFilterChain.doFilter(this, flow, routingContext);
+        final boolean skipMFA = isNull(client) || noFactor(client) || userHasFactor(context) || isMfaSkipped(context);
+        if (skipMFA) {
+            flow.doNext(routingContext);
+        } else {
+            flow.exit(this);
+        }
+    }
+
+    private boolean noFactor(Client client) {
+        final Set<String> factors = client.getFactors();
+        return isNull(factors) || factors.isEmpty() || onlyRecoveryCodeFactor(factors);
+    }
+
+    private boolean onlyRecoveryCodeFactor(Set<String> factors) {
+        if (factors.size() == 1) {
+            final String factorId = factors.stream().findFirst().get();
+            final Factor factor = factorManager.getFactor(factorId);
+            return factor.getFactorType().equals(FactorType.RECOVERY_CODE);
+        }
+        return false;
+    }
+
+    private boolean userHasFactor(MfaFilterContext context) {
+        return context.hasEndUserAlreadyEnrolled() || context.userHasMatchingFactors();
+    }
+
+    public boolean isMfaSkipped(MfaFilterContext context) {
+        // We need to check whether the AMFA rule is false since we don't know
+        final boolean mfaSkipped = context.isMfaSkipped();
+        final String mfaStepUpRule = context.getStepUpRule();
+        return isNullOrEmpty(mfaStepUpRule) && mfaSkipped;
     }
 }
