@@ -27,6 +27,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import static org.mockito.Mockito.times;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
@@ -44,7 +45,7 @@ import static org.mockito.Mockito.when;
  * @author GraviteeSource Team
  */
 @ExtendWith(MockitoExtension.class)
-public class SyncManagerTest {
+class SyncManagerTest {
 
     @Mock
     private EventService eventService;
@@ -56,26 +57,36 @@ public class SyncManagerTest {
     private SyncManager cut;
 
     @BeforeEach
-    public void init() throws Exception {
+    public void init() {
         cut.afterPropertiesSet();
     }
 
     @Test
-    public void should_publish_valid_event() throws Exception {
+    void should_publish_valid_event() {
         var event = new Event(Type.APPLICATION, new Payload(Map.of("action", Action.CREATE)));
         event.setId(UUID.randomUUID().toString());
         when(eventService.findByTimeFrame(anyLong(), anyLong())).thenReturn(Single.just(List.of(event)));
         cut.refresh();
-        verify(eventManager).publishEvent(any(), any());
+        verify(eventManager, times(1)).publishEvent(any(), any());
     }
 
     @Test
-    public void should_not_publish_invalid_event() {
+    void should_not_publish_invalid_event() {
         var event = new Event(Type.USER, new Payload(Map.of("action", Action.CREATE)));
         event.setId(UUID.randomUUID().toString());
         when(eventService.findByTimeFrame(anyLong(), anyLong())).thenReturn(Single.just(List.of(event)));
         cut.refresh();
         verify(eventManager, never()).publishEvent(any(), any());
+    }
+
+    @Test
+    void shouldPublishDistinctEvent() {
+        var event = new Event(Type.APPLICATION, new Payload(Map.of("action", Action.CREATE)));
+        event.setId(UUID.randomUUID().toString());
+        when(eventService.findByTimeFrame(anyLong(), anyLong())).thenReturn(Single.just(List.of(event)));
+        cut.refresh();
+        cut.refresh();
+        verify(eventManager, times(1)).publishEvent(any(), any());
     }
 
 }

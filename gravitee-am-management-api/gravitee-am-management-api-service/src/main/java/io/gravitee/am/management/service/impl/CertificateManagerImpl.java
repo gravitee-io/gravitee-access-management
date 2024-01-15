@@ -47,8 +47,8 @@ import java.util.concurrent.ConcurrentMap;
 public class CertificateManagerImpl extends AbstractService<CertificateManager> implements CertificateManager, EventListener<CertificateEvent, Payload> {
 
     private static final Logger logger = LoggerFactory.getLogger(CertificateManagerImpl.class);
-    private static final long retryTimeout = 10000;
-    private ConcurrentMap<String, CertificateProvider> certificateProviders = new ConcurrentHashMap<>();
+    private static final long RETRY_TIMEOUT = 10000;
+    private final ConcurrentMap<String, CertificateProvider> certificateProviders = new ConcurrentHashMap<>();
 
     @Autowired
     private CertificatePluginManager certificatePluginManager;
@@ -112,7 +112,7 @@ public class CertificateManagerImpl extends AbstractService<CertificateManager> 
                 return Maybe.empty();
             }
             // retry
-            while (certificateProvider == null && System.currentTimeMillis() - startTime < retryTimeout) {
+            while (certificateProvider == null && System.currentTimeMillis() - startTime < RETRY_TIMEOUT) {
                 certificateProvider = certificateProviders.get(certificateId);
             }
             return certificateProvider == null ? Maybe.empty() : Maybe.just(certificateProvider);
@@ -126,7 +126,7 @@ public class CertificateManagerImpl extends AbstractService<CertificateManager> 
         logger.info("Management API has received a deploy certificate event for {}", certificateId);
         certificateService.findById(certificateId)
                 .subscribe(
-                        certificate -> loadCertificate(certificate),
+                        this::loadCertificate,
                         error -> logger.error("Unable to deploy certificate {}", certificateId, error),
                         () -> logger.error("No certificate found with id {}", certificateId));
     }
