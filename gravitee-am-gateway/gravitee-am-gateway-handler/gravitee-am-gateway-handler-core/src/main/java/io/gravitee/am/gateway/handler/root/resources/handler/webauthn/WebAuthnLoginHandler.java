@@ -203,6 +203,10 @@ public class WebAuthnLoginHandler extends WebAuthnHandler {
                             // the user has upgraded from unauthenticated to authenticated
                             // session should be upgraded as recommended by owasp
                             session.regenerateId();
+                            // keep the webauthn action into session to be able to do distinction
+                            // between login or registration action
+                            session.put(PASSWORDLESS_AUTH_ACTION_KEY, PASSWORDLESS_AUTH_ACTION_VALUE_LOGIN);
+                            ctx.put(PASSWORDLESS_AUTH_ACTION_KEY, PASSWORDLESS_AUTH_ACTION_VALUE_LOGIN);
                             // manage FIDO2 device enrollment if needed and continue
                             manageFido2FactorEnrollment(ctx, client, credentialId, user.getUser());
                         },

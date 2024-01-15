@@ -275,6 +275,8 @@ public class AuthorizationRequestFailureHandler implements Handler<RoutingContex
             context.session().remove(ConstantKeys.TRANSACTION_ID_KEY);
             context.session().remove(ConstantKeys.USER_CONSENT_COMPLETED_KEY);
             context.session().remove(ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY);
+            context.session().remove(ConstantKeys.PASSWORDLESS_AUTH_COMPLETED_KEY);
+            context.session().remove(ConstantKeys.PASSWORDLESS_AUTH_ACTION_KEY);
             context.session().remove(ConstantKeys.MFA_FACTOR_ID_CONTEXT_KEY);
             context.session().remove(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY);
             context.session().remove(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY);
