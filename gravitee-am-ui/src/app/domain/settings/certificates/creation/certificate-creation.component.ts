@@ -47,7 +47,7 @@ export class CertificateCreationComponent implements OnInit, AfterViewChecked {
     this.certificate.configuration = JSON.stringify(this.certificate.configuration);
     this.certificateService.create(this.domainId, this.certificate).subscribe(
       (data) => {
-        this.snackbarService.open('Certificate ' + data.name + ' created');
+        this.snackbarService.open('The certificate ' + data.name + ' has been successfully created.');
         this.router.navigate(['..', data.id], { relativeTo: this.route });
       },
       (_) => {
