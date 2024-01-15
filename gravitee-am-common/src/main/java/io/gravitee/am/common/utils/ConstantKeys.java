@@ -105,6 +105,9 @@ public interface ConstantKeys {
     String WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY = "webAuthnCredentialId";
     String PARAM_AUTHENTICATOR_ATTACHMENT_KEY = "authenticatorAttachment";
     String PASSWORDLESS_AUTH_COMPLETED_KEY = "passwordlessAuthCompleted";
+    String PASSWORDLESS_AUTH_ACTION_KEY = "passwordlessAuthAction";
+    String PASSWORDLESS_AUTH_ACTION_VALUE_LOGIN = "login";
+    String PASSWORDLESS_AUTH_ACTION_VALUE_REGISTER = "register";
     String PASSWORDLESS_CHALLENGE_KEY = "challenge";
     String PASSWORDLESS_CHALLENGE_USERNAME_KEY = "passwordlessUsername";
     String PASSWORDLESS_ORIGIN = "passwordlessOrigin";
