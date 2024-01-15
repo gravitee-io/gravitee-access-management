@@ -452,7 +452,7 @@ jobs:
             # Prepare AM
             unzip /tmp/workspace/gravitee-am-gateway-standalone-*.zip
             unzip /tmp/workspace/gravitee-am-management-api-standalone-*.zip
-            export AM_VERSION=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
+            export AM_VERSION=$(mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
             curl --retry 4 --retry-delay 10 --retry-all-errors https://download.gravitee.io/plugins/services/gravitee-service-geoip-1.2.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-1.2.0.zip
             
             cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
@@ -481,7 +481,7 @@ jobs:
             # Start AM Gateway
             gravitee-am-gateway-standalone-${AM_VERSION}/bin/gravitee &
             # build & start CIBA Delegated Service
-            mvn -P cicd -f gravitee-am-ciba-delegated-service/pom.xml package
+            mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -P cicd -f gravitee-am-ciba-delegated-service/pom.xml package
             java -jar gravitee-am-ciba-delegated-service/target/gravitee-am-ciba-delegated-service-${AM_VERSION}.jar &
             
             echo "Wait for AM to be up and running..."
@@ -544,7 +544,7 @@ jobs:
             # Prepare AM
             unzip /tmp/workspace/gravitee-am-gateway-standalone-*.zip
             unzip /tmp/workspace/gravitee-am-management-api-standalone-*.zip
-            export AM_VERSION=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
+            export AM_VERSION=$(mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
             curl --retry 4 --retry-delay 10 --retry-all-errors https://download.gravitee.io/plugins/services/gravitee-service-geoip-1.2.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-1.2.0.zip
             
             cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
@@ -614,7 +614,7 @@ jobs:
             gravitee-am-gateway-standalone-${AM_VERSION}/bin/gravitee &
             
             # build & start CIBA Delegated Service
-            mvn -P cicd -f gravitee-am-ciba-delegated-service/pom.xml package
+            mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -P cicd -f gravitee-am-ciba-delegated-service/pom.xml package
             java -jar gravitee-am-ciba-delegated-service/target/gravitee-am-ciba-delegated-service-${AM_VERSION}.jar &
             echo "Wait for AM to be up and running..."
             timeout 120s bash -c 'until nc -z localhost 8092; do sleep 2; done'
@@ -661,7 +661,7 @@ jobs:
             # Prepare AM
             unzip /tmp/workspace/gravitee-am-gateway-standalone-*.zip
             unzip /tmp/workspace/gravitee-am-management-api-standalone-*.zip
-            export AM_VERSION=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
+            export AM_VERSION=$(mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
             curl --retry 4 --retry-delay 10 --retry-all-errors https://download.gravitee.io/plugins/services/gravitee-service-geoip-1.2.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-1.2.0.zip
             
             cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
@@ -679,7 +679,7 @@ jobs:
             # Start AM Gateway
             gravitee-am-gateway-standalone-${AM_VERSION}/bin/gravitee &
             # build & start CIBA Delegated Service
-            mvn -P cicd -f gravitee-am-ciba-delegated-service/pom.xml package
+            mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -P cicd -f gravitee-am-ciba-delegated-service/pom.xml package
             java -jar gravitee-am-ciba-delegated-service/target/gravitee-am-ciba-delegated-service-${AM_VERSION}.jar &
             
             echo "Wait for AM to be up and running..."
@@ -730,7 +730,7 @@ jobs:
             # Prepare AM
             unzip /tmp/workspace/gravitee-am-gateway-standalone-*.zip
             unzip /tmp/workspace/gravitee-am-management-api-standalone-*.zip
-            export AM_VERSION=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
+            export AM_VERSION=$(mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
             curl --retry 4 --retry-delay 10 --retry-all-errors https://download.gravitee.io/plugins/services/gravitee-service-geoip-1.2.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-1.2.0.zip
             
             cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
@@ -786,7 +786,7 @@ jobs:
             # Start AM Gateway
             gravitee-am-gateway-standalone-${AM_VERSION}/bin/gravitee &
             # build & start CIBA Delegated Service
-            mvn -P cicd -f gravitee-am-ciba-delegated-service/pom.xml package
+            mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -P cicd -f gravitee-am-ciba-delegated-service/pom.xml package
             java -jar gravitee-am-ciba-delegated-service/target/gravitee-am-ciba-delegated-service-${AM_VERSION}.jar &
            
             echo "Wait for AM to be up and running..."
@@ -820,7 +820,7 @@ jobs:
       - run:
           name: Build
           command: |
-            mvn install -pl \!gravitee-am-ui -Pcicd -DskipTests -Dmaven.javadoc.skip=true -s /tmp/.gravitee.settings.xml
+            mvn install -pl \!gravitee-am-ui -P gio-artifactory-snapshot -Pcicd -DskipTests -Dmaven.javadoc.skip=true -s /tmp/.gravitee.settings.xml
       - save-maven-job-cache:
           jobName: run_testcontainer_tests
   publish-images-azure-registry:
@@ -1062,7 +1062,7 @@ jobs:
       - run:
           name: Maven Package
           command: |
-            export AM_VERSION=$(mvn -U -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
+            export AM_VERSION=$(mvn -s /tmp/.gravitee.settings.xml -P gio-artifactory-snapshot -U -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
             echo $AM_VERSION > am.version
             echo $AM_VERSION
             mvn -s /tmp/.gravitee.settings.xml verify -pl \!gravitee-am-ui
@@ -1087,7 +1087,7 @@ jobs:
       - run:
           name: Maven Package
           command: |
-            export AM_VERSION=$(mvn -U -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
+            export AM_VERSION=$(mvn -s /tmp/.gravitee.settings.xml -P gio-artifactory-snapshot -U -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
             echo $AM_VERSION > gravitee-am-ui/am.version
             echo $AM_VERSION
       - persist_to_workspace:
