@@ -16,37 +16,19 @@
 package io.gravitee.am.model;
 
 /**
- * @author Rémi SULTAN (remi.sultan at graviteesource.com)
+ * @author Ashraful HASAN (ashraful.hasan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class EnrollmentSettings {
+public class StepUpAuthenticationSettings {
     private Boolean active;
-    private Boolean forceEnrollment;
-    private Long skipTimeSeconds;
+    private String stepUpAuthenticationRule;
 
-    public EnrollmentSettings() {
+    public StepUpAuthenticationSettings() {
     }
 
-    public EnrollmentSettings(EnrollmentSettings enrollment) {
-        this.forceEnrollment = enrollment.forceEnrollment;
-        this.skipTimeSeconds = enrollment.skipTimeSeconds;
-        this.active = enrollment.active;
-    }
-
-    public Boolean getForceEnrollment() {
-        return forceEnrollment;
-    }
-
-    public void setForceEnrollment(Boolean forceEnrollment) {
-        this.forceEnrollment = forceEnrollment;
-    }
-
-    public Long getSkipTimeSeconds() {
-        return skipTimeSeconds;
-    }
-
-    public void setSkipTimeSeconds(Long skipTimeSeconds) {
-        this.skipTimeSeconds = skipTimeSeconds;
+    public StepUpAuthenticationSettings(StepUpAuthenticationSettings other) {
+        this.active = other.active;
+        this.stepUpAuthenticationRule = other.stepUpAuthenticationRule;
     }
 
     public Boolean getActive() {
@@ -55,5 +37,13 @@ public class EnrollmentSettings {
 
     public void setActive(Boolean active) {
         this.active = active;
+    }
+
+    public String getStepUpAuthenticationRule() {
+        return stepUpAuthenticationRule;
+    }
+
+    public void setStepUpAuthenticationRule(String stepUpAuthenticationRule) {
+        this.stepUpAuthenticationRule = stepUpAuthenticationRule;
     }
 }

@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.gravitee.am.model.application.ApplicationFactorSettings;
 import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
@@ -23,7 +23,6 @@ import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.oidc.Client;
 import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.media.SchemaProperty;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -70,9 +69,17 @@ public class Application implements Resource, PasswordSettingsAware {
      */
     private boolean template;
     /**
+     * Deprecated since 4.3
+     * Instead use factorSettings
      * Factors used for authentication
      */
+    @Deprecated
     private Set<String> factors;
+    /**
+     * Introduced in 4.3
+     * Factors used for authentication
+     */
+    private Set<ApplicationFactorSettings> factorSettings;
     /**
      * Certificate use to sign the tokens
      */
@@ -124,6 +131,7 @@ public class Application implements Resource, PasswordSettingsAware {
         this.updatedAt = other.updatedAt;
         this.secretSettings = other.secretSettings;
         this.secrets = other.getSecrets().stream().map(ClientSecret::new).collect(Collectors.toList());
+        this.factorSettings = other.factorSettings;
     }
 
     public String getId() {
@@ -244,6 +252,14 @@ public class Application implements Resource, PasswordSettingsAware {
 
     public void setSecretSettings(List<ApplicationSecretSettings> secretSettings) {
         this.secretSettings = secretSettings;
+    }
+
+    public Set<ApplicationFactorSettings> getFactorSettings() {
+        return factorSettings;
+    }
+
+    public void setFactorSettings(Set<ApplicationFactorSettings> factorSettings) {
+        this.factorSettings = factorSettings;
     }
 
     public List<ClientSecret> getSecrets() {

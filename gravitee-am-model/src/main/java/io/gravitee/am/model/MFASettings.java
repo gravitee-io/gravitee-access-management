@@ -26,10 +26,14 @@ import static java.util.Optional.ofNullable;
 public class MFASettings {
 
     private String loginRule;
+    //deprecated since 4.3. use stepUpAuthentication instead
+    @Deprecated
     private String stepUpAuthenticationRule;
+    private StepUpAuthenticationSettings stepUpAuthentication;
     private String adaptiveAuthenticationRule;
     private RememberDeviceSettings rememberDevice;
     private EnrollmentSettings enrollment;
+    private ChallengeSettings challenge;
 
     public MFASettings() {
     }
@@ -46,6 +50,15 @@ public class MFASettings {
                 .filter(Objects::nonNull)
                 .map(EnrollmentSettings::new)
                 .orElse(new EnrollmentSettings());
+
+        this.challenge = ofNullable(other.challenge)
+                .filter(Objects::nonNull)
+                .map(ChallengeSettings::new)
+                .orElse(new ChallengeSettings());
+        this.stepUpAuthentication = ofNullable(other.stepUpAuthentication)
+                .filter(Objects::nonNull)
+                .map(StepUpAuthenticationSettings::new)
+                .orElse(new StepUpAuthenticationSettings());
     }
 
     public String getLoginRule() {
@@ -86,5 +99,21 @@ public class MFASettings {
 
     public void setEnrollment(EnrollmentSettings enrollment) {
         this.enrollment = enrollment;
+    }
+
+    public ChallengeSettings getChallenge() {
+        return challenge;
+    }
+
+    public void setChallenge(ChallengeSettings challenge) {
+        this.challenge = challenge;
+    }
+
+    public StepUpAuthenticationSettings getStepUpAuthentication() {
+        return stepUpAuthentication;
+    }
+
+    public void setStepUpAuthentication(StepUpAuthenticationSettings stepUpAuthentication) {
+        this.stepUpAuthentication = stepUpAuthentication;
     }
 }
