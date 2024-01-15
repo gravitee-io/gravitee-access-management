@@ -25,7 +25,9 @@ import java.util.List;
 import java.util.Map;
 
 import static io.gravitee.am.common.utils.ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.PASSWORDLESS_AUTH_ACTION_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.RISK_ASSESSMENT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -57,6 +59,12 @@ public class RoutingContextHelper {
             }
             if (routingContext.session().get(MFA_CHALLENGE_COMPLETED_KEY) != null) {
                 contextData.put(MFA_CHALLENGE_COMPLETED_KEY, routingContext.session().get(MFA_CHALLENGE_COMPLETED_KEY));
+            }
+            if (routingContext.session().get(WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY) != null) {
+                contextData.put(WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY, routingContext.session().get(WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY));
+            }
+            if (routingContext.session().get(PASSWORDLESS_AUTH_ACTION_KEY) != null) {
+                contextData.put(PASSWORDLESS_AUTH_ACTION_KEY, routingContext.session().get(PASSWORDLESS_AUTH_ACTION_KEY));
             }
         }
 
