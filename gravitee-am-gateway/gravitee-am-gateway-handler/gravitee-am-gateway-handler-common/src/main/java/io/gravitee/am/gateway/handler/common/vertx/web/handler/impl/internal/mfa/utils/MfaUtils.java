@@ -17,6 +17,8 @@
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils;
 
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.model.ChallengeSettings;
+import io.gravitee.am.model.EnrollSettings;
 import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.EnrollmentSettings;
@@ -62,5 +64,27 @@ public class MfaUtils {
                 .filter(Objects::nonNull)
                 .map(MFASettings::getEnrollment)
                 .orElse(new EnrollmentSettings());
+    }
+
+    public static ChallengeSettings getChallengeSettings(Client client) {
+        return ofNullable(client.getMfaSettings())
+                .filter(Objects::nonNull)
+                .map(MFASettings::getChallenge)
+                .orElse(new ChallengeSettings());
+    }
+
+    public static EnrollSettings getEnrollSettings(Client client) {
+        return ofNullable(client.getMfaSettings())
+                .filter(Objects::nonNull)
+                .map(MFASettings::getEnroll)
+                .orElse(new EnrollSettings());
+    }
+
+    public static MFASettings getMfaSettings(Client client) {
+        return ofNullable(client.getMfaSettings()).orElse(new MFASettings());
+    }
+
+    public static String getEnrollmentRule(Client client) {
+        return ofNullable(client.getMfaSettings()).orElse(new MFASettings()).getEnrollment().getEnrollmentRule();
     }
 }
