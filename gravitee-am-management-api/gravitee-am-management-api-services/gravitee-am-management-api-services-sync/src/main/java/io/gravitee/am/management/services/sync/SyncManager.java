@@ -57,7 +57,7 @@ public class SyncManager implements InitializingBean {
     private EventManager eventManager;
 
     @Value("${services.sync.timeframeBeforeDelay:" + TIMEFRAME_BEFORE_DELAY + "}")
-    private long timeframeBeforeDelay = 30000L;
+    private long timeframeBeforeDelay = TIMEFRAME_BEFORE_DELAY;
 
     @Value("${services.sync.timeframeAfterDelay:" + TIMEFRAME_AFTER_DELAY + "}")
     private long timeframeAfterDelay = 30000L;
