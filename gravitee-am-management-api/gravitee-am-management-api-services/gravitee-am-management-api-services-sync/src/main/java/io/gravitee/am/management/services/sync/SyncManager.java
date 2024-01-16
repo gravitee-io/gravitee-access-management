@@ -60,7 +60,7 @@ public class SyncManager implements InitializingBean {
     private long timeframeBeforeDelay = TIMEFRAME_BEFORE_DELAY;
 
     @Value("${services.sync.timeframeAfterDelay:" + TIMEFRAME_AFTER_DELAY + "}")
-    private long timeframeAfterDelay = 30000L;
+    private long timeframeAfterDelay = TIMEFRAME_AFTER_DELAY;
 
     private long lastRefreshAt = System.currentTimeMillis();
 
