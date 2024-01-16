@@ -52,11 +52,11 @@ export class CertificateCreationComponent implements OnInit, AfterViewChecked {
       },
       (_) => {
         const configuration: any =  JSON.parse(this.certificate.configuration);
-        configuration.content = null;
+        configuration.content = '';
         configuration.storepass = '';
         configuration.keypass = '';
         configuration.alias = '';
-        this.certificate = { ...this.certificate, name: '', configuration: JSON.stringify(configuration) };
+        this.certificate = { ...this.certificate, name: '', configuration: JSON.stringify(configuration) }
       },
     );
   }
