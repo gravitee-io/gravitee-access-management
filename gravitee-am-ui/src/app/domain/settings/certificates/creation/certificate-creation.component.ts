@@ -51,7 +51,12 @@ export class CertificateCreationComponent implements OnInit, AfterViewChecked {
         this.router.navigate(['..', data.id], { relativeTo: this.route });
       },
       (_) => {
-        this.certificate = { ...this.certificate, configuration: null };
+        const configuration: any =  JSON.parse(this.certificate.configuration);
+        configuration.content = null;
+        configuration.storepass = '';
+        configuration.keypass = '';
+        configuration.alias = '';
+        this.certificate = { ...this.certificate, name: '', configuration: JSON.stringify(configuration) };
       },
     );
   }
