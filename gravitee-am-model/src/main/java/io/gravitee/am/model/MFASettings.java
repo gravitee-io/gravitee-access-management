@@ -39,8 +39,11 @@ public class MFASettings {
     private String skipStepUpAuthentication;
     private String adaptiveAuthenticationRule;
     private RememberDeviceSettings rememberDevice;
+    //deprecated since 4.3. use enroll instead
+    @Deprecated
     private EnrollmentSettings enrollment;
     private ChallengeSettings challenge;
+    private EnrollSettings enroll;
 
     public MFASettings(MFASettings other) {
         this.loginRule = other.loginRule;
@@ -64,5 +67,73 @@ public class MFASettings {
                 .filter(Objects::nonNull)
                 .map(StepUpAuthenticationSettings::new)
                 .orElse(new StepUpAuthenticationSettings());
+        this.enroll = ofNullable(other.enroll)
+                .filter(Objects::nonNull)
+                .map(EnrollSettings::new)
+                .orElse(new EnrollSettings());
+    }
+
+    public String getLoginRule() {
+        return loginRule;
+    }
+
+    public void setLoginRule(String loginRule) {
+        this.loginRule = loginRule;
+    }
+
+    public String getStepUpAuthenticationRule() {
+        return stepUpAuthenticationRule;
+    }
+
+    public void setStepUpAuthenticationRule(String stepUpAuthenticationRule) {
+        this.stepUpAuthenticationRule = stepUpAuthenticationRule;
+    }
+
+    public String getAdaptiveAuthenticationRule() {
+        return adaptiveAuthenticationRule;
+    }
+
+    public void setAdaptiveAuthenticationRule(String adaptiveAuthenticationRule) {
+        this.adaptiveAuthenticationRule = adaptiveAuthenticationRule;
+    }
+
+    public RememberDeviceSettings getRememberDevice() {
+        return rememberDevice;
+    }
+
+    public void setRememberDevice(RememberDeviceSettings rememberDevice) {
+        this.rememberDevice = rememberDevice;
+    }
+
+    public EnrollmentSettings getEnrollment() {
+        return enrollment;
+    }
+
+    public void setEnrollment(EnrollmentSettings enrollment) {
+        this.enrollment = enrollment;
+    }
+
+    public ChallengeSettings getChallenge() {
+        return challenge;
+    }
+
+    public void setChallenge(ChallengeSettings challenge) {
+        this.challenge = challenge;
+    }
+
+    public StepUpAuthenticationSettings getStepUpAuthentication() {
+        return stepUpAuthentication;
+    }
+
+    public void setStepUpAuthentication(StepUpAuthenticationSettings stepUpAuthentication) {
+        this.stepUpAuthentication = stepUpAuthentication;
+    }
+
+    public EnrollSettings getEnroll() {
+        return enroll;
+    }
+
+    public void setEnroll(EnrollSettings enroll) {
+        this.enroll = enroll;
     }
 }

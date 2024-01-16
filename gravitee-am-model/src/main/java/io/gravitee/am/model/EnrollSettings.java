@@ -15,25 +15,34 @@
  */
 package io.gravitee.am.model;
 
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
 /**
- * @author Rémi SULTAN (remi.sultan at graviteesource.com)
+ * @author Ashraful HASAN (ashraful.hasan at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Getter
-@Setter
-@NoArgsConstructor
-public class EnrollmentSettings {
-
+public class EnrollSettings {
+    private boolean active;
     private Boolean forceEnrollment;
+    private String enrollmentRule;
     private Long skipTimeSeconds;
+    private MfaType type;
 
-    public EnrollmentSettings(EnrollmentSettings enrollment) {
-        this.forceEnrollment = enrollment.forceEnrollment;
-        this.skipTimeSeconds = enrollment.skipTimeSeconds;
+    public EnrollSettings() {
+    }
+
+    public EnrollSettings(EnrollSettings enroll) {
+        this.forceEnrollment = enroll.forceEnrollment;
+        this.skipTimeSeconds = enroll.skipTimeSeconds;
+        this.active = enroll.active;
+        this.enrollmentRule = enroll.enrollmentRule;
+        this.type = enroll.type;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
     }
 
     public Boolean getForceEnrollment() {
@@ -44,6 +53,14 @@ public class EnrollmentSettings {
         this.forceEnrollment = forceEnrollment;
     }
 
+    public String getEnrollmentRule() {
+        return enrollmentRule;
+    }
+
+    public void setEnrollmentRule(String enrollmentRule) {
+        this.enrollmentRule = enrollmentRule;
+    }
+
     public Long getSkipTimeSeconds() {
         return skipTimeSeconds;
     }
@@ -52,4 +69,11 @@ public class EnrollmentSettings {
         this.skipTimeSeconds = skipTimeSeconds;
     }
 
+    public MfaType getType() {
+        return type;
+    }
+
+    public void setType(MfaType type) {
+        this.type = type;
+    }
 }
