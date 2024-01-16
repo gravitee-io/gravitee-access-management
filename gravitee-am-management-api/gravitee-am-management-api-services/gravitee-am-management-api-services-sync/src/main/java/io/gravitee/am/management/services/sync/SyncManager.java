@@ -17,6 +17,7 @@ package io.gravitee.am.management.services.sync;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import static io.gravitee.am.common.event.Event.valueOf;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.monitoring.metrics.Constants;
 import io.gravitee.am.monitoring.metrics.GaugeHelper;
@@ -33,8 +34,6 @@ import java.util.AbstractMap;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BinaryOperator;
 
@@ -57,25 +56,25 @@ public class SyncManager implements InitializingBean {
     @Autowired
     private EventManager eventManager;
 
-    @Value("${services.sync.timeframeBeforeDelay:"+TIMEFRAME_BEFORE_DELAY+"}")
-    private int timeframeBeforeDelay;
+    @Value("${services.sync.timeframeBeforeDelay:" + TIMEFRAME_BEFORE_DELAY + "}")
+    private long timeframeBeforeDelay = TIMEFRAME_BEFORE_DELAY;
 
-    @Value("${services.sync.timeframeAfterDelay:"+TIMEFRAME_AFTER_DELAY+"}")
-    private int timeframeAfterDelay;
+    @Value("${services.sync.timeframeAfterDelay:" + TIMEFRAME_AFTER_DELAY + "}")
+    private long timeframeAfterDelay = TIMEFRAME_AFTER_DELAY;
 
     private long lastRefreshAt = System.currentTimeMillis();
 
     private long lastDelay = 0;
 
-    private GaugeHelper eventsGauge = new GaugeHelper(Constants.METRICS_EVENTS_SYNC);
+    private final GaugeHelper eventsGauge = new GaugeHelper(Constants.METRICS_EVENTS_SYNC);
 
     @Value("${services.sync.eventsTimeOutMillis:30000}")
-    private int eventsTimeOut = 30000;
+    private long eventsTimeOut = 30000;
 
     private Cache<String, String> processedEventIds;
 
     @Override
-    public void afterPropertiesSet() throws Exception {
+    public void afterPropertiesSet() {
         this.processedEventIds = CacheBuilder.newBuilder()
                 .expireAfterWrite(timeframeBeforeDelay + timeframeAfterDelay, TimeUnit.MILLISECONDS)
                 .build();
@@ -83,7 +82,6 @@ public class SyncManager implements InitializingBean {
 
     public void refresh() {
         logger.debug("Refreshing sync state...");
-
         try {
             processEvents();
         } catch (Exception ex) {
@@ -92,12 +90,9 @@ public class SyncManager implements InitializingBean {
     }
 
     private void processEvents() {
-
         long nextLastRefreshAt = System.currentTimeMillis();
-
         // search for events and compute them
         logger.debug("Events synchronization");
-
         final long from = (lastRefreshAt - lastDelay) - timeframeBeforeDelay;
         final long to = nextLastRefreshAt + timeframeAfterDelay;
         Single<List<Event>> eventsProcessing = eventService.findByTimeFrame(from, to);
@@ -105,11 +100,10 @@ public class SyncManager implements InitializingBean {
             eventsProcessing = eventsProcessing.timeout(eventsTimeOut, TimeUnit.MILLISECONDS);
         }
         List<Event> events = eventsProcessing.blockingGet();
-
-        if (events != null && !events.isEmpty()) {
+        if (!events.isEmpty()) {
             eventsGauge.updateValue(events.size());
             // Extract only the latest events by type and id
-            Map<AbstractMap.SimpleEntry, Event> sortedEvents = events
+            var sortedEvents = events
                     .stream()
                     .collect(
                             toMap(
@@ -119,24 +113,22 @@ public class SyncManager implements InitializingBean {
         } else {
             eventsGauge.updateValue(0);
         }
-
         lastRefreshAt = nextLastRefreshAt;
         lastDelay = System.currentTimeMillis() - nextLastRefreshAt;
-
     }
 
     private void computeEvents(Collection<Event> events) {
         events.forEach(event -> {
-            if (Objects.isNull(processedEventIds.getIfPresent(event.getId()))) {
+            var payload = processedEventIds.getIfPresent(event.getId());
+            if (payload == null || !event.getPayload().toString().equals(payload)) {
                 logger.debug("Compute event id : {}, with type : {} and timestamp : {} and payload : {}", event.getId(), event.getType(), event.getCreatedAt(), event.getPayload());
-
-                final var commonEvent = io.gravitee.am.common.event.Event.valueOf(event.getType(), event.getPayload().getAction());
-                if(commonEvent == null){
+                final var commonEvent = valueOf(event.getType(), event.getPayload().getAction());
+                if (commonEvent == null) {
                     logger.debug("Cannot publish event {} as type is null", event.getId());
-                    return;
+                } else {
+                    eventManager.publishEvent(commonEvent, event.getPayload());
                 }
-
-                eventManager.publishEvent(commonEvent, event.getPayload());
+                processedEventIds.put(event.getId(), event.getPayload().toString());
             } else {
                 logger.debug("Event id {} already processed", event.getId());
             }
