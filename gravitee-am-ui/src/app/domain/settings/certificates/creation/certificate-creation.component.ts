@@ -56,7 +56,7 @@ export class CertificateCreationComponent implements OnInit, AfterViewChecked {
         configuration.storepass = '';
         configuration.keypass = '';
         configuration.alias = '';
-        this.certificate = { ...this.certificate, name: '', configuration: JSON.stringify(configuration) }
+        this.certificate = { ...this.certificate, name: '', configuration: configuration }
       },
     );
   }
