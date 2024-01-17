@@ -1,8 +1,15 @@
-# Create Dataset
+# Overview
+
+This module contains gatling scripts to run performance tests on AccessManagement.
+In this README, you will find documentation to execute the tests locally using maven or using Docker.  
+
+# Maven execution
+
+## Create Dataset
 
 Here are simulations to create a dataset.
 
-## Create Single Domain
+### Create Single Domain
 
 The CreateDomain simulation will create a domain with two applications and a single default IDP.
 
@@ -10,7 +17,7 @@ The CreateDomain simulation will create a domain with two applications and a sin
 mvn gatling:test -Dgatling.simulationClass=io.gravitee.am.performance.CreateDomain
 ```
 
-### Parameters
+#### Parameters
 
 The CreateDomain simulation accept some JavaOpts as parameters:
 
@@ -20,7 +27,7 @@ The CreateDomain simulation accept some JavaOpts as parameters:
 * `domain`: the domain name targeted by the simulation (default: gatling-domain)
 
 
-## Load users linked to a domain
+### Load users linked to a domain
 
 The CreateUsers simulation will populate the domain IDP with the given number of users
 
@@ -28,7 +35,7 @@ The CreateUsers simulation will populate the domain IDP with the given number of
 mvn gatling:test -Dgatling.simulationClass=io.gravitee.am.performance.CreateUsers -Dnumber_of_users=100000
 ```
 
-### Parameters
+#### Parameters
 
 The CreateUsers simulation accept some JavaOpts as parameters:
 
@@ -42,7 +49,7 @@ The CreateUsers simulation accept some JavaOpts as parameters:
 * `agents`: number of agents used to create users (default: 10)
 
 
-## Create Multiple Domain
+### Create Multiple Domain
 
 The CreateMultipleDomains simulation will create multiple domains using the same prefix with :
 * 3 applications (Web, SPA, Service) and a single default IDP
@@ -52,7 +59,7 @@ The CreateMultipleDomains simulation will create multiple domains using the same
 mvn gatling:test -Dgatling.simulationClass=io.gravitee.am.performance.CreateMultipleDomains
 ```
 
-### Parameters
+#### Parameters
 
 The CreateMultipleDomains simulation accept some JavaOpts as parameters:
 
@@ -66,9 +73,9 @@ The CreateMultipleDomains simulation accept some JavaOpts as parameters:
 * agents: number of agents for the simulation (default: 10)
 
 
-# Runtime simulation based on Dataset
+## Runtime simulation based on Dataset
 
-## Search Audit Logs
+### Search Audit Logs
 
 This simulation searches audit logs under domain context.
 
@@ -82,7 +89,7 @@ or with default parameter the following command searches USER_LOGIN and USER_LOG
 mvn gatling:test -Dgatling.simulationClass=io.gravitee.am.performance.search.SearchAuditLog
 ```
 
-### Parameters
+#### Parameters
 
 * `mng_url`: base URL of the Management REST API (default: http://localhost:8093)
 * `mng_user`: username to request an access token to the Management REST API (default: admin)
@@ -95,7 +102,7 @@ mvn gatling:test -Dgatling.simulationClass=io.gravitee.am.performance.search.Sea
 * `event`: comma seperated list of supported events such as (USER_UPDATED,USER_DELETED)
 
 
-## Search Users
+### Search Users
 
 This simulation perform search in domain user context.
 
@@ -103,7 +110,7 @@ This simulation perform search in domain user context.
 mvn gatling:test -Dgatling.simulationClass=io.gravitee.am.performance.search.SearchUser -Dfield=email,username,firstName  -Doperator=co -Dcondition=or
 ```
 
-### Parameters
+#### Parameters
 
 * `mng_url`: base URL of the Management REST API (default: http://localhost:8093)
 * `mng_user`: username to request an access token to the Management REST API (default: admin)
@@ -115,9 +122,9 @@ mvn gatling:test -Dgatling.simulationClass=io.gravitee.am.performance.search.Sea
 * `condition`: logical condition such as "and" and "or"
 
 
-# Workload Simulations
+## Workload Simulations
 
-## BasicLoginFlow
+### BasicLoginFlow
 
 Basic simulation to authenticate users using code flow and request token
 
@@ -125,7 +132,7 @@ Basic simulation to authenticate users using code flow and request token
 mvn gatling:test -Dgatling.simulationClass=io.gravitee.am.performance.BasicLoginFlow -Dagents=100
 ```
 
-### Parameters
+#### Parameters
 
 * `gw_url`: base URL of the Management REST API (default: http://localhost:8093)
 * `domain`: the domain name targeted by the simulation (default: gatling-domain)
@@ -138,7 +145,7 @@ mvn gatling:test -Dgatling.simulationClass=io.gravitee.am.performance.BasicLogin
 * `req-hold-during`: duration (in sec) of the simulation at the given rate of requests (default: 1800 => 30 minutes)
 
 
-## MultiDomainServiceIntrospect
+### MultiDomainServiceIntrospect
 
 Basic simulation to generate token using client_credentials flow and call 10 introspects on domain which is randomly selected
 
@@ -146,7 +153,7 @@ Basic simulation to generate token using client_credentials flow and call 10 int
 mvn gatling:test -Dgatling.simulationClass=io.gravitee.am.performance.MultiDomainServiceIntrospect  -Ddomain=perf -Dnumber_of_domains=3 -Dagents=5 -Dapp=appservice
 ```
 
-### Parameters
+#### Parameters
 * `gw_url`: base URL of the Management REST API (default: http://localhost:8093)
 * `domain`: the domain name prefix targeted by the simulation (default: gatling-domain)
 * `min_domain_index`: minimal value of the domain index
@@ -156,7 +163,7 @@ mvn gatling:test -Dgatling.simulationClass=io.gravitee.am.performance.MultiDomai
 * `introspect`: do we have to request token introspection (default: false)
 * `number_of_introspections`: number of token introspection (default: 10)
 
-## MultiDomainBasicLoginFlow
+### MultiDomainBasicLoginFlow
 
 Basic simulation to authenticate users using code flow and generate access_token on domain which is randomly selected
 
@@ -164,7 +171,7 @@ Basic simulation to authenticate users using code flow and generate access_token
 mvn gatling:test -Dgatling.simulationClass=io.gravitee.am.performance.MultiDomainBasicLoginFlow  -Ddomain=perf -Dnumber_of_domains=3 -Dagents=5 
 ```
 
-### Parameters
+#### Parameters
 * `gw_url`: base URL of the Management REST API (default: http://localhost:8093)
 * `domain`: the domain name prefix targeted by the simulation (default: gatling-domain)
 * `min_domain_index`: minimal value of the domain index
@@ -174,7 +181,7 @@ mvn gatling:test -Dgatling.simulationClass=io.gravitee.am.performance.MultiDomai
 * `agents`: number of agent loaded per seconds (default: 10)
 * `inject-during`: duration (in sec) of the agents load (default: 300 => 5 minutes)
 
-## MultiDomainLoginPasswordFlow
+### MultiDomainLoginPasswordFlow
 
 Basic simulation to authenticate users using password flow and generate access_token on domain which is randomly selected. Introspection on token is optional
 
@@ -182,7 +189,7 @@ Basic simulation to authenticate users using password flow and generate access_t
 mvn gatling:test -Dgatling.simulationClass=io.gravitee.am.performance.MultiDomainLoginPasswordFlow  -Ddomain=perf -Dnumber_of_domains=3 -Dagents=5 
 ```
 
-### Parameters
+#### Parameters
 * `gw_url`: base URL of the Management REST API (default: http://localhost:8093)
 * `domain`: the domain name prefix targeted by the simulation (default: gatling-domain)
 * `min_domain_index`: minimal value of the domain index
@@ -193,3 +200,36 @@ mvn gatling:test -Dgatling.simulationClass=io.gravitee.am.performance.MultiDomai
 * `inject-during`: duration (in sec) of the agents load (default: 300 => 5 minutes)
 * `introspect`: do we have to request token introspection (default: false)
 * `number_of_introspections`: number of token introspection (default: 10)
+
+# Docker
+
+## Build Docker Image
+
+A docker image that embeds all the simulations can be created.
+```bash
+$ docker build -t am-gatling-runner .
+```
+
+Once the image is available, you can run a simulation by providing the simulation class as parameter and extra parameter to adapt the simulation behaviour 
+```bash
+docker run --rm am-gatling-runner "io.gravitee.am.performance.MultiDomainBasicLoginFlow" "-Dnumber_of_domains=10 -Dagents=600 -Dgw_url=https://am-perf.gateway.4-2-x.team-am.gravitee.dev"
+```
+
+You can also run it in interaction mode to execute gatling manually.
+```bash
+docker run -it --rm am-gatling-runner 
+$> root@77f37ff72533:/opt/gatling# gatling.sh 
+GATLING_HOME is set to /opt/gatling
+Do you want to run the simulation locally, on Gatling Enterprise, or just package it?
+Type the number corresponding to your choice and press enter
+[0] <Quit>
+[1] Run the Simulation locally
+[2] Package and upload the Simulation to Gatling Enterprise Cloud, and run it there
+[3] Package the Simulation for Gatling Enterprise
+[4] Show help and exit
+```
+
+```bash
+docker run -it --rm am-gatling-runner 
+$> root@77f37ff72533:/opt/gatling# gatling.sh --run-mode local -s io.gravitee.am.performance.MultiDomainBasicLoginFlow -erjo "-Dnumber_of_domains=10 -Dagents=600 -Dgw_url=https://am-perf.gateway.4-2-x.team-am.gravitee.dev" 
+```
