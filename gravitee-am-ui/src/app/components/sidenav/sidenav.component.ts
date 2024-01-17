@@ -99,12 +99,24 @@ export class SidenavComponent implements OnInit, OnDestroy {
   getLicenseColor(): string {
     if (this.expirationDays === undefined) {
       return '';
-    } else if (this.expirationDays > 15) {
-      return 'color: #0482c7; background-color: #E7F8FF;';
+    } else if (this.expirationDays > 5) {
+      return 'color: #006FB9; background-color: #E9F6FF;';
     } else if (this.expirationDays > 0) {
-      return 'color: #9C4626; background-color: #FDEDE5;';
+      return 'color: #983611; background-color: #FFECE5;';
     } else {
-      return 'color: #9E2C64; background-color: #FDE9F4;';
+      return 'color: #930101; background-color: #FFE5EA;';
+    }
+  }
+
+  getLicenseIconColor(): string {
+    if (this.expirationDays === undefined) {
+      return '';
+    } else if (this.expirationDays > 5) {
+      return 'filter: opacity(0.1) drop-shadow(0 0 0 #006FB9);';
+    } else if (this.expirationDays > 0) {
+      return 'filter: opacity(0.1) drop-shadow(0 0 0 #983611);';
+    } else {
+      return 'filter: opacity(0.1) drop-shadow(0 0 0 #930101);';
     }
   }
 

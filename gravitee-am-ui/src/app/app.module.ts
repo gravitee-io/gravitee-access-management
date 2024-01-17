@@ -71,6 +71,7 @@ import {
   GioTopBarMenuModule,
   GioTopBarModule,
 } from '@gravitee/ui-particles-angular';
+import { NgOptimizedImageModule } from '@angular/common';
 
 import { CertificateCreationStep2Component } from './domain/settings/certificates/creation/steps/step2/step2.component';
 import { ExtensionGrantResolver } from './resolvers/extension-grant.resolver';
@@ -737,6 +738,7 @@ import { AppConfig } from '../config/app.config';
     GioSafePipeModule,
     GioSaveBarModule,
     ApplicationClientSecretDialogModule,
+    NgOptimizedImageModule,
   ],
   providers: [
     DomainService,
