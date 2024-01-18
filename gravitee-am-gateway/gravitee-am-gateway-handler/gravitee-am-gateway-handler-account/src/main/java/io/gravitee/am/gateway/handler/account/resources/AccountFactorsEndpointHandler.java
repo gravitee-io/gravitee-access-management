@@ -69,12 +69,14 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static io.gravitee.am.common.audit.EventType.MFA_CHALLENGE;
 import static io.gravitee.am.common.audit.EventType.MFA_CHALLENGE_SENT;
 import static io.gravitee.am.common.audit.EventType.MFA_ENROLLMENT;
 import static io.gravitee.am.common.factor.FactorSecurityType.RECOVERY_CODE;
 import static io.gravitee.am.common.factor.FactorSecurityType.SHARED_SECRET;
 import static io.gravitee.am.factor.api.FactorContext.KEY_USER;
 import static io.gravitee.am.gateway.handler.common.utils.RoutingContextHelper.getEvaluableAttributes;
+import static io.gravitee.am.model.factor.FactorStatus.PENDING_ACTIVATION;
 import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
 import static org.springframework.util.StringUtils.isEmpty;
@@ -303,16 +305,17 @@ public class AccountFactorsEndpointHandler {
 
                 // verify factor
                 final EnrolledFactor enrolledFactor = optionalEnrolledFactor.get();
+                final String auditLogType = enrolledFactor.getStatus() == PENDING_ACTIVATION ? MFA_ENROLLMENT : MFA_CHALLENGE;
                 verifyFactor(code, enrolledFactor, factorProvider, vh -> {
                     if (vh.failed()) {
-                        updateAuditLog(routingContext, EventType.MFA_ENROLLMENT, user, client, h.result(), enrolledFactor, vh.cause());
+                        updateAuditLog(routingContext, auditLogType, user, client, h.result(), enrolledFactor, vh.cause());
                         routingContext.fail(vh.cause());
                         return;
                     }
 
                     // verify successful, change the EnrolledFactor status and increment moving factor
                     enrolledFactor.setStatus(FactorStatus.ACTIVATED);
-                    updateAuditLog(routingContext, MFA_ENROLLMENT, user, client, h.result(), enrolledFactor, null);
+                    updateAuditLog(routingContext, auditLogType, user, client, h.result(), enrolledFactor, null);
 
                     factorProvider.changeVariableFactorSecurity(enrolledFactor)
                             .flatMap(eF -> accountService.upsertFactor(user.getId(), eF, new DefaultUser(user)).map(__ -> eF))

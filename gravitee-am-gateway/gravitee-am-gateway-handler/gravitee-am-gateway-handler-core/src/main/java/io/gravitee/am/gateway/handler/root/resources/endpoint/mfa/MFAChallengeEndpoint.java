@@ -323,19 +323,19 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
                                                      FactorContext factorContext) {
         return h -> {
             if (h.failed()) {
-                String failureReason = isEnrolling(routingContext, factorProvider, factorContext) ? MFA_ENROLLMENT : MFA_CHALLENGE;
+                String failureReason = isEnrolling(enrolledFactor) ? MFA_ENROLLMENT : MFA_CHALLENGE;
                 updateAuditLog(routingContext, failureReason, endUser, client, factor, factorContext, h.cause());
                 handleException(routingContext, ERROR_PARAM_KEY, "mfa_challenge_failed");
                 return;
             }
 
             if (factor.is(FIDO2)) {
-                handleFido2Factor(routingContext, client, endUser, code, factor, factorContext, h);
+                handleFido2Factor(routingContext, client, endUser, code, factor, factorContext, enrolledFactor, h);
                 return;
             }
             // save enrolled factor if needed and redirect to the original url
             routingContext.session().put(ConstantKeys.MFA_FACTOR_ID_CONTEXT_KEY, factorId);
-            if (isEnrolling(routingContext, factorProvider, factorContext)) {
+            if (isEnrolling(enrolledFactor)) {
                 enrolledFactor.setStatus(FactorStatus.ACTIVATED);
                 saveFactor(endUser, factorProvider.changeVariableFactorSecurity(enrolledFactor), fh -> {
                     if (fh.failed()) {
@@ -359,22 +359,22 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
     }
 
     private void handleFido2Factor(RoutingContext routingContext, Client client, User endUser, String code,
-                                   Factor factor, FactorContext factorContext, AsyncResult<Void> h) {
+                                   Factor factor, FactorContext factorContext, EnrolledFactor enrolledFactor, AsyncResult<Void> h) {
         final String userId = endUser.getId();
         final JsonObject webauthnResp = new JsonObject(code);
         final String credentialId = webauthnResp.getString("id");
         updateCredential(routingContext.request(), credentialId, userId, ch -> {
-
+            final String auditLogType = isEnrolling(enrolledFactor) ? MFA_ENROLLMENT : MFA_CHALLENGE;
             if (ch.failed()) {
                 final String username = routingContext.session().get(PASSWORDLESS_CHALLENGE_USERNAME_KEY);
                 logger.error("An error has occurred while updating credential for the user {}", username, h.cause());
-                updateAuditLog(routingContext, MFA_CHALLENGE, endUser, client, factor, factorContext, h.cause());
+                updateAuditLog(routingContext, auditLogType, endUser, client, factor, factorContext, h.cause());
                 routingContext.fail(401);
                 return;
             }
 
             updateStrongAuthStatus(routingContext);
-            updateAuditLog(routingContext, MFA_CHALLENGE, endUser, client, factor, factorContext, null);
+            updateAuditLog(routingContext, auditLogType, endUser, client, factor, factorContext, null);
             // set the credentialId in session
             routingContext.session().put(ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY, credentialId);
 
@@ -746,9 +746,8 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
                 .count() > 1L;
     }
 
-    private static boolean isEnrolling(RoutingContext routingContext, FactorProvider factorProvider, FactorContext factorContext) {
-        return routingContext.session().get(ConstantKeys.ENROLLED_FACTOR_ID_KEY) != null ||
-                factorProvider.useVariableFactorSecurity(factorContext);
+    private static boolean isEnrolling(EnrolledFactor enrolledFactor) {
+        return enrolledFactor.getStatus() == PENDING_ACTIVATION;
     }
 
     private void updateAuditLog(RoutingContext routingContext, String type, User endUser, Client client, Factor factor, FactorContext factorContext, Throwable cause) {
