@@ -31,8 +31,12 @@ export class CertificateCreationStep2Component implements OnChanges {
   constructor(private organizationService: OrganizationService) {}
 
   ngOnChanges(changes: SimpleChanges) {
-    if (changes.certificate) {
+    if (changes.certificate && !changes.certificate.previousValue) {
       this.organizationService.certificateSchema(this.certificate.type).subscribe((data) => (this.certificateSchema = data));
+    }
+    if (changes.certificate?.previousValue && changes.certificate.currentValue?.configuration) {
+      this.certificate = changes.certificate.currentValue;
+      this.configuration = changes.certificate.currentValue.configuration;
     }
   }
 

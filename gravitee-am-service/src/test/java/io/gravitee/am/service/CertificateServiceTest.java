@@ -291,7 +291,7 @@ public class CertificateServiceTest {
 
         TestObserver<Certificate> testObserver = certificateService.create(DOMAIN_NAME, newCertificate, Mockito.mock(User.class)).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
-        testObserver.assertError(error -> error instanceof CertificateException && "Uploading certificate is already expired".equals(error.getMessage()));
+        testObserver.assertError(error -> error instanceof CertificateException && "The certificate you uploaded has already expired. Please select a different certificate to upload.".equals(error.getMessage()));
     }
 
     @Test
@@ -314,7 +314,7 @@ public class CertificateServiceTest {
 
         TestObserver<Certificate> testObserver = certificateService.create(DOMAIN_NAME, newCertificate, Mockito.mock(User.class)).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
-        testObserver.assertError(error -> error instanceof CertificateException && "Incorrect certification data".equals(error.getMessage()));
+        testObserver.assertError(error -> error instanceof CertificateException && "The configuration details entered are incorrect. Please check those and try again.".equals(error.getMessage()));
     }
 
     @Test
@@ -330,7 +330,7 @@ public class CertificateServiceTest {
         newCertificate.setConfiguration(certificateNode.toString());
         TestObserver<Certificate> testObserver = certificateService.create(DOMAIN_NAME, newCertificate, Mockito.mock(User.class)).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
-        testObserver.assertError(error -> error instanceof CertificateException && "Certification file is not found".equals(error.getMessage()));
+        testObserver.assertError(error -> error instanceof CertificateException && "A valid certificate file was not uploaded. Please make sure to attach one.".equals(error.getMessage()));
     }
 
     @Test

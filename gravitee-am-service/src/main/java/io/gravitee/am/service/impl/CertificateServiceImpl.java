@@ -212,7 +212,7 @@ public class CertificateServiceImpl implements CertificateService {
                             .map(Map.Entry::getKey)
                             .findFirst().orElse(null);
                     if (fileKey == null || !certificateConfiguration.has(fileKey)) {
-                        return Single.error(() -> new CertificateException("Certification file is not found"));
+                        return Single.error(() -> new CertificateException("A valid certificate file was not uploaded. Please make sure to attach one."));
                     }
                     try {
                         var file = objectMapper.readTree(certificateConfiguration.get(fileKey).asText());
@@ -525,11 +525,11 @@ public class CertificateServiceImpl implements CertificateService {
         var providerConfig = new CertificateProviderConfiguration(certificate);
         var certificateProvider = certificatePluginManager.create(providerConfig);
         if (certificateProvider == null) {
-            throw new CertificateException("Incorrect certification data");
+            throw new CertificateException("The configuration details entered are incorrect. Please check those and try again.");
         }
         var expiryDate = certificateProvider.getExpirationDate().orElse(null);
         if (expiryDate != null && Instant.now().isAfter(expiryDate.toInstant())) {
-            throw new CertificateException("Uploading certificate is already expired");
+            throw new CertificateException("The certificate you uploaded has already expired. Please select a different certificate to upload.");
         }
         return certificate;
     }
