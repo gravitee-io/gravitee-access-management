@@ -495,6 +495,7 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(redirectUriValidationHandler)
                 .handler(webAuthnAccessHandler)
                 .handler(localeHandler)
+                .handler(policyChainHandler.create(ExtensionPoint.PRE_WEBAUTHN_REGISTER))
                 .handler(new WebAuthnRegisterEndpoint(thymeleafTemplateEngine, domain, factorManager));
         rootRouter.post(PATH_WEBAUTHN_REGISTER)
                 .handler(clientRequestParseHandler)
@@ -502,6 +503,7 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(webAuthnAccessHandler)
                 .handler(new WebAuthnRegisterHandler(factorService, factorManager, domain, webAuthn, credentialService))
                 .handler(webAuthnRememberDeviceHandler)
+                .handler(policyChainHandler.create(ExtensionPoint.POST_WEBAUTHN_REGISTER))
                 .handler(new WebAuthnRegisterPostEndpoint(domain));
         rootRouter.route(PATH_WEBAUTHN_REGISTER_CREDENTIALS)
                 .handler(clientRequestParseHandler)
