@@ -39,5 +39,7 @@ public enum ExtensionPoint {
     PRE_TOKEN,
     POST_TOKEN,
     PRE_CONNECT,
-    POST_CONNECT
+    POST_CONNECT,
+    PRE_WEBAUTHN_REGISTER,
+    POST_WEBAUTHN_REGISTER
 }
