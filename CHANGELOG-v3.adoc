@@ -1,5 +1,19 @@
 # Change Log
 
+== AM - 3.21.14 (2024-01-19)
+
+== What's new !
+
+=== Gateway
+
+* Avoid BodyHandler processing for GET request https://github.com/gravitee-io/issues/issues/9352[#9352]
+
+=== Management API
+
+=== Console
+
+=== Other
+
 == AM - 3.21.13 (2023-12-22)
 
 == What's new !
