@@ -161,6 +161,8 @@ public class FlowEntity {
                 return "shopping:ticket";
             case CONNECT:
                 return "general:scale";
+            case WEBAUTHN_REGISTER:
+                return "action:fingerprint";
             default:
                 return "communication:shield-thunder";
         }
