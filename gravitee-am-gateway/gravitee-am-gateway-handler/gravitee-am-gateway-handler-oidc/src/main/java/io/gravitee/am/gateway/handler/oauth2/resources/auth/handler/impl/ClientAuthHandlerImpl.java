@@ -94,7 +94,9 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
                             routingContext.response().putHeader("WWW-Authenticate", authenticateHeader);
                         }
                     }
-                    auditService.report(AuditBuilder.builder(ClientAuthAuditBuilder.class).clientActor(client)
+                    auditService.report(AuditBuilder.builder(ClientAuthAuditBuilder.class)
+                            .domain(this.domain.getId())// client may be null, we have to provide the domainId
+                            .clientActor(client)
                             .ipAddress(routingContext)
                             .userAgent(routingContext)
                             .throwable(throwable));
