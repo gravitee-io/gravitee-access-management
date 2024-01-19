@@ -74,7 +74,8 @@ public class FlowManagerImpl extends AbstractService implements FlowManager, Ini
                 Type.REGISTER, List.of(PRE_REGISTER, POST_REGISTER),
                 Type.RESET_PASSWORD, List.of(PRE_RESET_PASSWORD, POST_RESET_PASSWORD),
                 Type.REGISTRATION_CONFIRMATION, List.of(PRE_REGISTRATION_CONFIRMATION, POST_REGISTRATION_CONFIRMATION),
-                Type.TOKEN, List.of(PRE_TOKEN, POST_TOKEN)
+                Type.TOKEN, List.of(PRE_TOKEN, POST_TOKEN),
+                Type.WEBAUTHN_REGISTER, List.of(PRE_WEBAUTHN_REGISTER, POST_WEBAUTHN_REGISTER)
         );
     }
 
@@ -249,6 +250,10 @@ public class FlowManagerImpl extends AbstractService implements FlowManager, Ini
             case CONNECT:
                 addExecutionFlow(PRE_CONNECT, flow, prePolicies);
                 addExecutionFlow(POST_CONNECT, flow, postPolicies);
+                break;
+            case WEBAUTHN_REGISTER:
+                addExecutionFlow(PRE_WEBAUTHN_REGISTER, flow, prePolicies);
+                addExecutionFlow(POST_WEBAUTHN_REGISTER, flow, postPolicies);
                 break;
             default:
                 throw new IllegalArgumentException("No suitable flow type found for : " + flow.getType());
