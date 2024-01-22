@@ -48,9 +48,8 @@ export class SidenavComponent implements OnInit, OnDestroy {
   itemsSubscription: Subscription;
   currentEnvironment: any;
   environments: any[] = [];
-  licenseExpirationMessage: string;
   private rawEnvironments: any[] = [];
-  private expirationDays: number;
+  public licenseExpirationDate: Date;
 
   constructor(
     private router: Router,
@@ -76,58 +75,17 @@ export class SidenavComponent implements OnInit, OnDestroy {
     this.licenseService
       .getLicense$()
       .pipe(take(1))
-      .subscribe((license: GraviteeLicense) => this.setLicenseExpirationMessage(license));
-  }
-
-  private setLicenseExpirationMessage(licenseObj: GraviteeLicense) {
-    if (licenseObj.expirationDate) {
-      const now = new Date();
-      const expirationDate = new Date(licenseObj.expirationDate);
-      this.expirationDays = this.dateDiffDays(expirationDate, now);
-      if (this.expirationDays > 0) {
-        this.licenseExpirationMessage = `Your license will expire in ${this.expirationDays} days`;
-      } else {
-        this.licenseExpirationMessage = `Your license has expired`;
-      }
-    }
-  }
-
-  showExpirationMessage() {
-    return this.expirationDays < 31;
-  }
-
-  getLicenseColor(): string {
-    if (this.expirationDays === undefined) {
-      return '';
-    } else if (this.expirationDays > 5) {
-      return 'color: #006FB9; background-color: #E9F6FF;';
-    } else if (this.expirationDays > 0) {
-      return 'color: #983611; background-color: #FFECE5;';
-    } else {
-      return 'color: #930101; background-color: #FFE5EA;';
-    }
-  }
-
-  getLicenseIconColor(): string {
-    if (this.expirationDays === undefined) {
-      return '';
-    } else if (this.expirationDays > 5) {
-      return 'filter: opacity(0.1) drop-shadow(0 0 0 #006FB9);';
-    } else if (this.expirationDays > 0) {
-      return 'filter: opacity(0.1) drop-shadow(0 0 0 #983611);';
-    } else {
-      return 'filter: opacity(0.1) drop-shadow(0 0 0 #930101);';
-    }
+      .subscribe((license: GraviteeLicense) => {
+        if (this.licenseExpirationDate) {
+          this.licenseExpirationDate = new Date(license.expirationDate);
+        }
+      });
   }
 
   ngOnDestroy() {
     this.environmentSubscription.unsubscribe();
     this.navSubscription.unsubscribe();
     this.itemsSubscription.unsubscribe();
-  }
-
-  dateDiffDays(date1: Date, date2: Date): number {
-    return parseInt(String((date1.getTime() - date2.getTime()) / (1000 * 60 * 60 * 24)), 10);
   }
 
   switchEnvironment($event: any) {

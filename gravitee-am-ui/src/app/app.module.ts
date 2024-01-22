@@ -62,6 +62,7 @@ import { HighchartsChartModule } from 'highcharts-angular';
 import { ClipboardModule } from 'ngx-clipboard';
 import { map, mergeMap } from 'rxjs/operators';
 import {
+  GioLicenseExpirationNotificationModule,
   GioLicenseModule,
   GioMenuModule,
   GioSafePipeModule,
@@ -71,7 +72,6 @@ import {
   GioTopBarMenuModule,
   GioTopBarModule,
 } from '@gravitee/ui-particles-angular';
-import { NgOptimizedImageModule } from '@angular/common';
 
 import { CertificateCreationStep2Component } from './domain/settings/certificates/creation/steps/step2/step2.component';
 import { ExtensionGrantResolver } from './resolvers/extension-grant.resolver';
@@ -738,7 +738,7 @@ import { AppConfig } from '../config/app.config';
     GioSafePipeModule,
     GioSaveBarModule,
     ApplicationClientSecretDialogModule,
-    NgOptimizedImageModule,
+    GioLicenseExpirationNotificationModule,
   ],
   providers: [
     DomainService,

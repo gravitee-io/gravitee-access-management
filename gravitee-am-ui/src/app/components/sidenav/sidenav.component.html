@@ -17,7 +17,7 @@
 -->
 <div class="gio-side-nav mat mat-typography mat-app-background">
   <gio-menu>
-    <gio-menu-header class="header">
+    <gio-menu-header>
       <gio-menu-selector
         *ngIf="canDisplayEnvironments()"
         [selectedItemValue]="currentEnvironment.id"
@@ -39,31 +39,10 @@
         <gio-menu-item [icon]="item.icon" [active]="rla.isActive" [iconRight]="item?.iconRight$ | async">{{ item.label }}</gio-menu-item>
       </a>
     </gio-menu-list>
-    <gio-menu-footer *ngIf="canDisplayLicence() && showExpirationMessage()">
-      <gio-menu-header>
-        <div [style]="getLicenseColor()" class="license-message">
-          <img
-            [style]="getLicenseIconColor()"
-            ngSrc="assets/license-icon.png"
-            alt="license-icon"
-            class="license-icon"
-            width="192"
-            height="96"
-          />
-          <div class="license-message-text">{{ licenseExpirationMessage }}</div>
-        </div>
-        <div class="license-bottom">
-          <a href="https://www.gravitee.io/contact-us-licence" target="_blank">
-            <div fxFlex="95%" class="license-action">Contact Gravitee</div>
-            <div class="license-link-icon-circle"></div>
-            <div fxFlex="5%" fxLayoutAlign="end start">
-              <mat-icon class="license-link-icon">navigate_next</mat-icon>
-            </div>
-          </a>
-        </div>
-      </gio-menu-header>
-    </gio-menu-footer>
-    <gio-menu-footer *ngIf="canDisplayOrganizationSettings()" class="border">
+    <gio-menu-license-expiration-notification *ngIf="canDisplayLicence()">
+      <gio-license-expiration-notification [expirationDate]="licenseExpirationDate"></gio-license-expiration-notification>
+    </gio-menu-license-expiration-notification>
+    <gio-menu-footer *ngIf="canDisplayOrganizationSettings()">
       <a *ngFor="let item of footerMenuItems" [routerLink]="item.path" [matTooltip]="item.tooltip" [matTooltipPosition]="'right'">
         <gio-menu-item [icon]="item.icon">{{ item.label }}</gio-menu-item>
       </a>
