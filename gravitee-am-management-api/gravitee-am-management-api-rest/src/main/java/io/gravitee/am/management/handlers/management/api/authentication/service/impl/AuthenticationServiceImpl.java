@@ -38,9 +38,11 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -67,6 +69,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Autowired
     private AuditService auditService;
 
+    @Value("${http.blockingGet.timeoutMillis:120000}")
+    private long blockingGetTimeoutMillis = 120000;
+
     @Override
     public User onAuthenticationSuccess(Authentication auth) {
         final DefaultUser principal = (DefaultUser) auth.getPrincipal();
@@ -77,71 +82,78 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         String organizationId = details.get(Claims.organization);
 
         final String source = details.get(SOURCE);
-        io.gravitee.am.model.User endUser = userService.findByExternalIdAndSource(ReferenceType.ORGANIZATION, organizationId, principal.getId(), source)
-                .switchIfEmpty(Maybe.defer(() -> userService.findByUsernameAndSource(ReferenceType.ORGANIZATION, organizationId, principal.getUsername(), source)))
-                .switchIfEmpty(Single.error(new UserNotFoundException(principal.getUsername())))
-                .flatMap(existingUser -> {
-                    existingUser.setSource(details.get(SOURCE));
-                    existingUser.setLoggedAt(new Date());
-                    existingUser.setLoginsCount(existingUser.getLoginsCount() + 1);
-                    if (existingUser.getAdditionalInformation() != null) {
-                        existingUser.getAdditionalInformation().putAll(principal.getAdditionalInformation());
-                    } else {
-                        existingUser.setAdditionalInformation(new HashMap<>(principal.getAdditionalInformation()));
-                    }
-                    return userService.update(existingUser)
-                            .flatMap(user -> updateRoles(principal, existingUser).andThen(Single.just(user)));
-                })
-                .onErrorResumeNext(ex -> {
-                    if (ex instanceof UserNotFoundException) {
-                        final io.gravitee.am.model.User newUser = new io.gravitee.am.model.User();
-                        newUser.setInternal(false);
-                        newUser.setExternalId(principal.getId());
-                        newUser.setUsername(principal.getUsername());
-                        newUser.setSource(details.get(SOURCE));
-                        newUser.setReferenceType(ReferenceType.ORGANIZATION);
-                        newUser.setReferenceId(organizationId);
-                        newUser.setLoggedAt(new Date());
-                        newUser.setLoginsCount(1L);
-                        newUser.setAdditionalInformation(principal.getAdditionalInformation());
-                        return userService.create(newUser)
-                                .flatMap(user -> userService.setRoles(principal, user).andThen(Single.just(user)));
-                    }
-                    return Single.error(ex);
-                })
-                .flatMap(userService::enhance)
-                .doOnSuccess(user -> auditService.report(AuditBuilder.builder(AuthenticationAuditBuilder.class)
-                        .principal(authentication)
-                        .referenceType(ReferenceType.ORGANIZATION)
-                        .referenceId(organizationId).user(user)
-                        .ipAddress(details.get(IP_ADDRESS_KEY))
-                        .userAgent(details.get(USER_AGENT_KEY)))
-                )
-                .blockingGet();
+        try {
+            Single<io.gravitee.am.model.User> userSingle = userService.findByExternalIdAndSource(ReferenceType.ORGANIZATION, organizationId, principal.getId(), source)
+                    .switchIfEmpty(Maybe.defer(() -> userService.findByUsernameAndSource(ReferenceType.ORGANIZATION, organizationId, principal.getUsername(), source)))
+                    .switchIfEmpty(Single.error(new UserNotFoundException(principal.getUsername())))
+                    .flatMap(existingUser -> {
+                        existingUser.setSource(details.get(SOURCE));
+                        existingUser.setLoggedAt(new Date());
+                        existingUser.setLoginsCount(existingUser.getLoginsCount() + 1);
+                        if (existingUser.getAdditionalInformation() != null) {
+                            existingUser.getAdditionalInformation().putAll(principal.getAdditionalInformation());
+                        } else {
+                            existingUser.setAdditionalInformation(new HashMap<>(principal.getAdditionalInformation()));
+                        }
+                        return userService.update(existingUser)
+                                .flatMap(user -> updateRoles(principal, existingUser).andThen(Single.just(user)));
+                    })
+                    .onErrorResumeNext(ex -> {
+                        if (ex instanceof UserNotFoundException) {
+                            final io.gravitee.am.model.User newUser = new io.gravitee.am.model.User();
+                            newUser.setInternal(false);
+                            newUser.setExternalId(principal.getId());
+                            newUser.setUsername(principal.getUsername());
+                            newUser.setSource(details.get(SOURCE));
+                            newUser.setReferenceType(ReferenceType.ORGANIZATION);
+                            newUser.setReferenceId(organizationId);
+                            newUser.setLoggedAt(new Date());
+                            newUser.setLoginsCount(1L);
+                            newUser.setAdditionalInformation(principal.getAdditionalInformation());
+                            return userService.create(newUser)
+                                    .flatMap(user -> userService.setRoles(principal, user).andThen(Single.just(user)));
+                        }
+                        return Single.error(ex);
+                    })
+                    .flatMap(userService::enhance)
+                    .doOnSuccess(user -> auditService.report(AuditBuilder.builder(AuthenticationAuditBuilder.class)
+                            .principal(authentication)
+                            .referenceType(ReferenceType.ORGANIZATION)
+                            .referenceId(organizationId).user(user)
+                            .ipAddress(details.get(IP_ADDRESS_KEY))
+                            .userAgent(details.get(USER_AGENT_KEY)))
+                    );
+            if (blockingGetTimeoutMillis > 0) {
+                userSingle = userSingle.timeout(blockingGetTimeoutMillis, TimeUnit.MILLISECONDS);
+            }
+            io.gravitee.am.model.User endUser = userSingle.blockingGet();
+            principal.setId(endUser.getId());
+            principal.setUsername(endUser.getUsername());
 
-        principal.setId(endUser.getId());
-        principal.setUsername(endUser.getUsername());
+            if (endUser.getAdditionalInformation()!= null) {
+                principal.getAdditionalInformation().putAll(endUser.getAdditionalInformation());
+            }
 
-        if (endUser.getAdditionalInformation()!= null) {
-            principal.getAdditionalInformation().putAll(endUser.getAdditionalInformation());
+            principal.getAdditionalInformation().put(StandardClaims.SUB, endUser.getId());
+            principal.getAdditionalInformation().put(StandardClaims.PREFERRED_USERNAME, endUser.getUsername());
+            principal.getAdditionalInformation().put(Claims.organization, endUser.getReferenceId());
+            principal.getAdditionalInformation().put("login_count", endUser.getLoginsCount());
+            principal.getAdditionalInformation().computeIfAbsent(StandardClaims.EMAIL, val -> endUser.getEmail());
+            principal.getAdditionalInformation().computeIfAbsent(StandardClaims.NAME, val -> endUser.getDisplayName());
+
+            // set roles
+            Set<String> roles = endUser.getRoles() != null ? new HashSet<>(endUser.getRoles()) : new HashSet<>();
+            if (principal.getRoles() != null) {
+                roles.addAll(principal.getRoles());
+            }
+
+            principal.getAdditionalInformation().put(CustomClaims.ROLES, roles);
+
+            return principal;
+        } catch (Exception e) {
+            throw new IllegalStateException("Unable to read user information");
         }
 
-        principal.getAdditionalInformation().put(StandardClaims.SUB, endUser.getId());
-        principal.getAdditionalInformation().put(StandardClaims.PREFERRED_USERNAME, endUser.getUsername());
-        principal.getAdditionalInformation().put(Claims.organization, endUser.getReferenceId());
-        principal.getAdditionalInformation().put("login_count", endUser.getLoginsCount());
-        principal.getAdditionalInformation().computeIfAbsent(StandardClaims.EMAIL, val -> endUser.getEmail());
-        principal.getAdditionalInformation().computeIfAbsent(StandardClaims.NAME, val -> endUser.getDisplayName());
-
-        // set roles
-        Set<String> roles = endUser.getRoles() != null ? new HashSet<>(endUser.getRoles()) : new HashSet<>();
-        if (principal.getRoles() != null) {
-            roles.addAll(principal.getRoles());
-        }
-
-        principal.getAdditionalInformation().put(CustomClaims.ROLES, roles);
-
-        return principal;
     }
 
     /**
