@@ -22,9 +22,11 @@ import io.gravitee.am.management.handlers.management.api.authentication.web.WebA
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.service.OrganizationService;
+import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
@@ -35,6 +37,7 @@ import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -51,6 +54,9 @@ public class ManagementAuthenticationProvider implements AuthenticationProvider 
 
     @Autowired
     private OrganizationService organizationService;
+
+    @Value("${http.blockingGet.timeoutMillis:120000}")
+    private long blockingGetTimeoutMillis = 120000;
 
     private IdentityProviderManager identityProviderManager;
 
@@ -69,7 +75,17 @@ public class ManagementAuthenticationProvider implements AuthenticationProvider 
         String organizationId = details.get(Claims.organization);
 
         // get organization identity providers
-        Organization organization = organizationService.findById(organizationId).blockingGet();
+        Organization organization = null;
+        try {
+            Single<Organization> organizationSingle = organizationService.findById(organizationId);
+            if (blockingGetTimeoutMillis > 0) {
+                organizationSingle = organizationSingle.timeout(blockingGetTimeoutMillis, TimeUnit.MILLISECONDS);
+            }
+            organization = organizationSingle.blockingGet();
+        } catch (Exception e) {
+            throw new InternalAuthenticationServiceException("Unable to find organization when trying to authenticate the end-user");
+        }
+
         if (organization == null) {
             throw new InternalAuthenticationServiceException("No organization found when trying to authenticate the end-user");
         }
