@@ -15,9 +15,9 @@
  */
 import { Component, OnDestroy, OnInit, Pipe, PipeTransform } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
-import { Subscription } from 'rxjs';
-import { filter, take, tap } from 'rxjs/operators';
-import { GioLicenseService, License } from '@gravitee/ui-particles-angular';
+import { Observable, Subscription } from 'rxjs';
+import { filter, map, take, tap } from 'rxjs/operators';
+import { GioLicenseService } from '@gravitee/ui-particles-angular';
 
 import { AppConfig } from '../../../config/app.config';
 import { MenuItem, NavigationService } from '../../services/navigation.service';
@@ -49,7 +49,7 @@ export class SidenavComponent implements OnInit, OnDestroy {
   currentEnvironment: any;
   environments: any[] = [];
   private rawEnvironments: any[] = [];
-  public licenseExpirationDate: Date;
+  public licenseExpirationDate$: Observable<Date>;
 
   constructor(
     private router: Router,
@@ -72,14 +72,10 @@ export class SidenavComponent implements OnInit, OnDestroy {
 
     this.itemsSubscription = this.navigationService.topMenuItemsObs$.subscribe((items) => (this.topMenuItems = items));
 
-    this.licenseService
-      .getLicense$()
-      .pipe(take(1))
-      .subscribe((license: GraviteeLicense) => {
-        if (this.licenseExpirationDate) {
-          this.licenseExpirationDate = new Date(license.expirationDate);
-        }
-      });
+    this.licenseExpirationDate$ = this.licenseService.getExpirationDate$().pipe(
+      take(1),
+      map((d) => (d ? new Date(d) : undefined)),
+    );
   }
 
   ngOnDestroy() {
@@ -138,8 +134,4 @@ export class DisplayableItemPipe implements PipeTransform {
     }
     return items.filter((item) => item.display);
   }
-}
-
-interface GraviteeLicense extends License {
-  expirationDate: number;
 }

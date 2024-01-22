@@ -40,7 +40,7 @@
       </a>
     </gio-menu-list>
     <gio-menu-license-expiration-notification *ngIf="canDisplayLicence()">
-      <gio-license-expiration-notification [expirationDate]="licenseExpirationDate"></gio-license-expiration-notification>
+      <gio-license-expiration-notification [expirationDate]="licenseExpirationDate$ | async"></gio-license-expiration-notification>
     </gio-menu-license-expiration-notification>
     <gio-menu-footer *ngIf="canDisplayOrganizationSettings()">
       <a *ngFor="let item of footerMenuItems" [routerLink]="item.path" [matTooltip]="item.tooltip" [matTooltipPosition]="'right'">
