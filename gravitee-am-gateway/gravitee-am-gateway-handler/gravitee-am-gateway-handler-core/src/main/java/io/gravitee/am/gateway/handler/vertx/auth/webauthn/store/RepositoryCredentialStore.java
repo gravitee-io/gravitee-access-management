@@ -156,8 +156,13 @@ public class RepositoryCredentialStore {
         credential.setCredentialId(authenticator.getCredID());
         credential.setPublicKey(authenticator.getPublicKey());
         credential.setCounter(authenticator.getCounter());
-        credential.setAaguid(authenticator.getAaguid());
         credential.setAttestationStatementFormat(authenticator.getFmt());
+        if ("none".equalsIgnoreCase(authenticator.getFmt())) {
+            // none format, force the AAGUID to preserve privacy
+            credential.setAaguid("00000000-0000-0000-0000-000000000000");
+        } else {
+            credential.setAaguid(authenticator.getAaguid());
+        }
         credential.setAttestationStatement(authenticator.getAttestationCertificates().toString());
         credential.setCreatedAt(new Date());
         credential.setUpdatedAt(credential.getCreatedAt());
