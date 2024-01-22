@@ -29,6 +29,7 @@ import io.gravitee.am.gateway.handler.account.services.AccountService;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.ErrorHandler;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.model.Factor;
@@ -58,6 +59,7 @@ import java.util.Map;
 import static io.gravitee.am.common.factor.FactorSecurityType.RECOVERY_CODE;
 import static io.gravitee.am.common.factor.FactorSecurityType.SHARED_SECRET;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.when;
@@ -805,6 +807,39 @@ public class AccountFactorsEndpointHandlerTest extends RxWebTestBase {
         Assert.assertEquals(EnrolledFactorChannel.Type.SMS, enrolledFactorCaptorValue.getChannel().getType());
         Assert.assertEquals("+33611111111", enrolledFactorCaptorValue.getChannel().getTarget());
         Assert.assertEquals("1234", enrolledFactorCaptorValue.getChannel().getAdditionalData().get(ConstantKeys.MFA_ENROLLMENT_EXTENSION_PHONE_NUMBER));
+    }
+
+    @Test
+    public void shouldAuditLog_rateLimit() throws Exception {
+        Factor factor = mock(Factor.class);
+        Client client = mock(Client.class);
+        user.setClient("any-client-id");
+        FactorProvider factorProvider = mock(FactorProvider.class);
+        when(factorProvider.needChallengeSending()).thenReturn(true);
+        when(accountService.getFactor("factor-id")).thenReturn(Maybe.just(factor));
+        when(factorManager.get("factor-id")).thenReturn(factorProvider);
+        when(factorManager.getFactor("factor-id")).thenReturn(factor);
+        when(factor.getId()).thenReturn("any-factor-id");
+        when(rateLimiterService.isRateLimitEnabled()).thenReturn(true);
+        when(rateLimiterService.tryConsume(anyString(), anyString(), anyString(), anyString())).thenReturn(Single.just(Boolean.FALSE));
+        when(client.getDomain()).thenReturn("any-domain-id");
+
+        router.post(AccountRoutes.FACTORS_SEND_CHALLENGE.getRoute())
+                .handler(rc -> {
+                    User user = rc.get(ConstantKeys.USER_CONTEXT_KEY);
+                    EnrolledFactor enrolledFactor = new EnrolledFactor();
+                    enrolledFactor.setFactorId("factor-id");
+                    user.setFactors(Collections.singletonList(enrolledFactor));
+                    rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+                    rc.next();
+                })
+                .handler(accountFactorsEndpointHandler::sendChallenge)
+                .handler(rc -> rc.response().end());
+
+        testRequest(HttpMethod.POST, "/api/factors/factor-id/sendChallenge", null,
+                429, "Too Many Requests", null);
+
+        verify(auditService, times(1)).report(any());
     }
 
     private void addFactors(User user) {
