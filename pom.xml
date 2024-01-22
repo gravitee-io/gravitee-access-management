@@ -109,7 +109,7 @@
         <wiremock.version>3.0.0-beta-10</wiremock.version>
         <embedded-ldap-junit.version>0.7</embedded-ldap-junit.version>
         <reactor-netty.version>1.0.15</reactor-netty.version>
-        <json-path.version>2.8.0</json-path.version>
+        <json-path.version>2.9.0</json-path.version>
         <commons-io.version>2.11.0</commons-io.version>
         <common-text.version>1.10.0</common-text.version>
         <commons-cli.version>1.4</commons-cli.version>
