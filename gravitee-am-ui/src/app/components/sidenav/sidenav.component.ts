@@ -72,10 +72,7 @@ export class SidenavComponent implements OnInit, OnDestroy {
 
     this.itemsSubscription = this.navigationService.topMenuItemsObs$.subscribe((items) => (this.topMenuItems = items));
 
-    this.licenseExpirationDate$ = this.licenseService.getExpirationDate$().pipe(
-      take(1),
-      map((d) => (d ? new Date(d) : undefined)),
-    );
+    this.licenseExpirationDate$ = this.licenseService.getExpiresAt$().pipe(take(1));
   }
 
   ngOnDestroy() {
