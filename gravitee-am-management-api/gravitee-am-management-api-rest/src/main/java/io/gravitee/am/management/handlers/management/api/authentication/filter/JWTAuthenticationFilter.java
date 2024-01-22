@@ -26,6 +26,7 @@ import io.gravitee.am.management.service.OrganizationUserService;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.common.http.HttpHeaders;
+import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -56,6 +57,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import static io.gravitee.gateway.api.http.HttpHeaderNames.AUTHORIZATION;
 import static java.util.Optional.ofNullable;
@@ -80,6 +82,9 @@ public class JWTAuthenticationFilter extends AbstractAuthenticationProcessingFil
 
     @Value("${jwt.cookie-domain:}")
     private String jwtCookieDomain;
+
+    @Value("${http.blockingGet.timeoutMillis:120000}")
+    private long blockingGetTimeoutMillis = 120000;
 
     @Autowired
     @Qualifier("managementJwtParser")
@@ -129,7 +134,11 @@ public class JWTAuthenticationFilter extends AbstractAuthenticationProcessingFil
             Map<String, Object> claims = new HashMap<>(payload);
             claims.put(Claims.ip_address, remoteAddress(request));
             claims.put(Claims.user_agent, userAgent(request));
-            User orgUser = userService.findById(ReferenceType.ORGANIZATION, (String) payload.get("org"), (String) claims.get(StandardClaims.SUB)).blockingGet();
+            Single<User> userSingle = userService.findById(ReferenceType.ORGANIZATION, (String) payload.get("org"), (String) claims.get(StandardClaims.SUB));
+            if (blockingGetTimeoutMillis > 0) {
+                userSingle = userSingle.timeout(blockingGetTimeoutMillis, TimeUnit.MILLISECONDS);
+            }
+            User orgUser = userSingle.blockingGet();
 
             var dates = List.of(
                     // We check the last logout of the user
