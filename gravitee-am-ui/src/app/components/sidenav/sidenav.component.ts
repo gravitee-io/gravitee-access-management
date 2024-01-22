@@ -16,7 +16,7 @@
 import { Component, OnDestroy, OnInit, Pipe, PipeTransform } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { Observable, Subscription } from 'rxjs';
-import { filter, map, take, tap } from 'rxjs/operators';
+import { filter, take, tap } from 'rxjs/operators';
 import { GioLicenseService } from '@gravitee/ui-particles-angular';
 
 import { AppConfig } from '../../../config/app.config';
