@@ -72,6 +72,7 @@ import java.util.stream.Collectors;
 import static io.gravitee.am.common.audit.EventType.MFA_CHALLENGE;
 import static io.gravitee.am.common.audit.EventType.MFA_CHALLENGE_SENT;
 import static io.gravitee.am.common.audit.EventType.MFA_ENROLLMENT;
+import static io.gravitee.am.common.audit.EventType.MFA_RATE_LIMIT_REACHED;
 import static io.gravitee.am.common.factor.FactorSecurityType.RECOVERY_CODE;
 import static io.gravitee.am.common.factor.FactorSecurityType.SHARED_SECRET;
 import static io.gravitee.am.factor.api.FactorContext.KEY_USER;
@@ -667,7 +668,8 @@ public class AccountFactorsEndpointHandler {
                                 if (allowRequest) {
                                     sendChallenge(routingContext, factorProvider, factorContext, endUser, client, enrolledFactor, factor, handler);
                                 } else {
-                                    RateLimitException exception = new RateLimitException("Please try again later.");
+                                    RateLimitException exception = new RateLimitException("MFA rate limit reached");
+                                    updateAuditLog(routingContext, MFA_RATE_LIMIT_REACHED, endUser, client, factor, enrolledFactor, exception);
                                     handler.handle(Future.failedFuture(exception));
                                 }
                             },

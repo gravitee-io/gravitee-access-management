@@ -90,6 +90,7 @@ import static io.gravitee.am.common.audit.EventType.MFA_CHALLENGE;
 import static io.gravitee.am.common.audit.EventType.MFA_CHALLENGE_SENT;
 import static io.gravitee.am.common.audit.EventType.MFA_ENROLLMENT;
 import static io.gravitee.am.common.audit.EventType.MFA_MAX_ATTEMPT_REACHED;
+import static io.gravitee.am.common.audit.EventType.MFA_RATE_LIMIT_REACHED;
 import static io.gravitee.am.common.factor.FactorSecurityType.RECOVERY_CODE;
 import static io.gravitee.am.common.factor.FactorSecurityType.SHARED_SECRET;
 import static io.gravitee.am.common.factor.FactorSecurityType.WEBAUTHN_CREDENTIAL;
@@ -471,8 +472,8 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
                                 if (allowRequest) {
                                     sendChallenge(routingContext, factorProvider, factorContext,endUser, client, factor, handler);
                                 } else {
+                                    updateAuditLog(routingContext, MFA_RATE_LIMIT_REACHED, endUser, client, factor, factorContext, new Throwable("MFA rate limit reached"));
                                     handleException(routingContext, RATE_LIMIT_ERROR_PARAM_KEY, "mfa_request_limit_exceed");
-                                    return;
                                 }
                             },
                             error -> handler.handle(Future.failedFuture(error))
