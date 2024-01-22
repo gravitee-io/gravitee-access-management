@@ -40,5 +40,5 @@ public class GraviteeLicense {
     @Builder.Default
     private Set<String> features = Set.of();
 
-    private Date expirationDate;
+    private Date expiresAt;
 }

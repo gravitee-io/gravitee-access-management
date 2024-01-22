@@ -15,9 +15,9 @@
  */
 import { Component, OnDestroy, OnInit, Pipe, PipeTransform } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { filter, take, tap } from 'rxjs/operators';
-import { GioLicenseService, License } from '@gravitee/ui-particles-angular';
+import { GioLicenseService } from '@gravitee/ui-particles-angular';
 
 import { AppConfig } from '../../../config/app.config';
 import { MenuItem, NavigationService } from '../../services/navigation.service';
@@ -48,9 +48,8 @@ export class SidenavComponent implements OnInit, OnDestroy {
   itemsSubscription: Subscription;
   currentEnvironment: any;
   environments: any[] = [];
-  licenseExpirationMessage: string;
   private rawEnvironments: any[] = [];
-  private expirationDays: number;
+  public licenseExpirationDate$: Observable<Date>;
 
   constructor(
     private router: Router,
@@ -73,61 +72,13 @@ export class SidenavComponent implements OnInit, OnDestroy {
 
     this.itemsSubscription = this.navigationService.topMenuItemsObs$.subscribe((items) => (this.topMenuItems = items));
 
-    this.licenseService
-      .getLicense$()
-      .pipe(take(1))
-      .subscribe((license: GraviteeLicense) => this.setLicenseExpirationMessage(license));
-  }
-
-  private setLicenseExpirationMessage(licenseObj: GraviteeLicense) {
-    if (licenseObj.expirationDate) {
-      const now = new Date();
-      const expirationDate = new Date(licenseObj.expirationDate);
-      this.expirationDays = this.dateDiffDays(expirationDate, now);
-      if (this.expirationDays > 0) {
-        this.licenseExpirationMessage = `Your license will expire in ${this.expirationDays} days`;
-      } else {
-        this.licenseExpirationMessage = `Your license has expired`;
-      }
-    }
-  }
-
-  showExpirationMessage() {
-    return this.expirationDays < 31;
-  }
-
-  getLicenseColor(): string {
-    if (this.expirationDays === undefined) {
-      return '';
-    } else if (this.expirationDays > 5) {
-      return 'color: #006FB9; background-color: #E9F6FF;';
-    } else if (this.expirationDays > 0) {
-      return 'color: #983611; background-color: #FFECE5;';
-    } else {
-      return 'color: #930101; background-color: #FFE5EA;';
-    }
-  }
-
-  getLicenseIconColor(): string {
-    if (this.expirationDays === undefined) {
-      return '';
-    } else if (this.expirationDays > 5) {
-      return 'filter: opacity(0.1) drop-shadow(0 0 0 #006FB9);';
-    } else if (this.expirationDays > 0) {
-      return 'filter: opacity(0.1) drop-shadow(0 0 0 #983611);';
-    } else {
-      return 'filter: opacity(0.1) drop-shadow(0 0 0 #930101);';
-    }
+    this.licenseExpirationDate$ = this.licenseService.getExpiresAt$().pipe(take(1));
   }
 
   ngOnDestroy() {
     this.environmentSubscription.unsubscribe();
     this.navSubscription.unsubscribe();
     this.itemsSubscription.unsubscribe();
-  }
-
-  dateDiffDays(date1: Date, date2: Date): number {
-    return parseInt(String((date1.getTime() - date2.getTime()) / (1000 * 60 * 60 * 24)), 10);
   }
 
   switchEnvironment($event: any) {
@@ -180,8 +131,4 @@ export class DisplayableItemPipe implements PipeTransform {
     }
     return items.filter((item) => item.display);
   }
-}
-
-interface GraviteeLicense extends License {
-  expirationDate: number;
 }

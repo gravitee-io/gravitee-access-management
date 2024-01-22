@@ -51,7 +51,7 @@ public class LicenseResource extends AbstractResource {
                 .tier(platformLicense.getTier())
                 .packs(platformLicense.getPacks())
                 .features(platformLicense.getFeatures())
-                .expirationDate(isLicenseExpirationNotifierEnabled ? platformLicense.getExpirationDate() : null)
+                .expiresAt(isLicenseExpirationNotifierEnabled ? platformLicense.getExpirationDate() : null)
                 .build();
         response.resume(license);
     }
