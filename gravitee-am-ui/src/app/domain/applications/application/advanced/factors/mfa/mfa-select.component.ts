@@ -24,7 +24,7 @@ export class MfaSelectComponent {
   @Input() factors: any[];
   @Input() applicationFactors: any[];
   @Input() editMode: boolean;
-  @Output('select-factor') selectFactorEmitter = new EventEmitter<any>();
+  @Output() settingsChange = new EventEmitter<any>();
 
   private factorTypes: any = {
     OTP: 'TOTP',
@@ -46,7 +46,7 @@ export class MfaSelectComponent {
     FIDO2: 'fingerprint',
   };
 
-  getFactorTypeIcon(type) {
+  getFactorTypeIcon(type: any): string {
     const factorType = type.toUpperCase();
     if (this.factorIcons[factorType]) {
       return this.factorIcons[factorType];
@@ -54,7 +54,7 @@ export class MfaSelectComponent {
     return 'donut_large';
   }
 
-  displayFactorType(type) {
+  displayFactorType(type: any): string {
     const factorType = type.toUpperCase();
     if (this.factorTypes[factorType]) {
       return this.factorTypes[factorType];
@@ -62,21 +62,19 @@ export class MfaSelectComponent {
     return 'Custom';
   }
 
-  hasFactors() {
+  hasFactors(): boolean {
     return this.factors && this.factors.length > 0;
   }
 
-  isFactorSelected(factorId: string) {
-    return this.applicationFactors !== undefined && this.applicationFactors.includes(factorId);
+  isFactorSelected(factorId: string): boolean {
+    return this.applicationFactors?.includes(factorId);
   }
 
-  selectFactor($event, factorId: string) {
+  selectFactor($event: any, factorId: string): void {
     if (this.editMode) {
-      this.selectFactorEmitter.emit({ checked: $event.checked, factorId: factorId });
+      this.settingsChange.emit({ checked: $event.checked, factorId: factorId });
     }
   }
 
-  addSelectionRule(id) {
-
-  }
+  addSelectionRule(id) {}
 }

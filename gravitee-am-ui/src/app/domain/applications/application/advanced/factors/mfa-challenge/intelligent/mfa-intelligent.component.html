@@ -15,26 +15,30 @@
     limitations under the License.
 
 -->
-
+<info-banner
+  link="https://documentation.gravitee.io/am/guides/login/risk-based-mfa"
+  text="To use Risk-based MFA, ensure to install GeoIP service and Risk Assessment plugins on your application."
+>
+</info-banner>
 <div class="mfa-intelligent-container">
   <assessment
     title="Associated Devices"
     [assessment]="currentDeviceAssessment"
     [options]="deviceAssessments"
-    (on-assessment-change)="deviceAssessmentChange($event)"
+    (settingsChange)="deviceAssessmentChange($event)"
   ></assessment>
 
   <assessment
     title="Ip reputation score"
     [assessment]="currentIpReputationAssessment"
     [options]="ipReputationAssessments"
-    (on-assessment-change)="ipReputationAssessmentChange($event)"
+    (settingsChange)="ipReputationAssessmentChange($event)"
   ></assessment>
 
   <assessment
     title="Geolocation Velocity"
     [assessment]="currentGeoVelocityAssessment"
     [options]="geoVelocityAssessments"
-    (on-assessment-change)="geoVelocityAssessmentChange($event)"
+    (settingsChange)="geoVelocityAssessmentChange($event)"
   ></assessment>
 </div>

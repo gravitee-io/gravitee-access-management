@@ -15,8 +15,12 @@
     limitations under the License.
 
 -->
-<form>
-  <mat-form-field appearance="outline" floatLabel="always" fxFlex="50">
+
+<div class="title">
+  {{ title }}
+</div>
+<div>
+  <mat-form-field appearance="outline" floatLabel="always" fxFlex="25">
     <input
       matInput
       type="number"
@@ -28,7 +32,7 @@
       (keyup)="onSkipTimeInEvent($event)"
     />
   </mat-form-field>
-  <mat-form-field appearance="outline" floatLabel="always" fxFlex="50" style="margin-left: 5px">
+  <mat-form-field appearance="outline" floatLabel="always" fxFlex="25" style="margin-left: 5px">
     <mat-select placeholder="Unit" name="skipTimeUnit" [value]="displaySkipUnit()" (selectionChange)="onSkipTimeUnitEvent($event)">
       <mat-option value="seconds">SECONDS</mat-option>
       <mat-option value="minutes">MINUTES</mat-option>
@@ -39,4 +43,4 @@
       <mat-option value="years">YEARS</mat-option>
     </mat-select>
   </mat-form-field>
-</form>
+</div>

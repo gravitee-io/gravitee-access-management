@@ -15,35 +15,24 @@
  */
 package io.gravitee.am.model;
 
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 /**
  * @author Ashraful HASAN (ashraful.hasan at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Getter
+@Setter
+@NoArgsConstructor
 public class ChallengeSettings {
     private Boolean active;
     private Boolean forceEnrollment;
-
-    public ChallengeSettings() {
-    }
+    private String option;
 
     public ChallengeSettings(ChallengeSettings other) {
         this.active = other.active;
         this.forceEnrollment = other.forceEnrollment;
-    }
-
-    public Boolean getActive() {
-        return active;
-    }
-
-    public void setActive(Boolean active) {
-        this.active = active;
-    }
-
-    public Boolean getForceEnrollment() {
-        return forceEnrollment;
-    }
-
-    public void setForceEnrollment(Boolean forceEnrollment) {
-        this.forceEnrollment = forceEnrollment;
     }
 }

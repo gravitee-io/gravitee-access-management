@@ -24,7 +24,7 @@ export class AssessmentComponent implements OnInit {
   @Input() title: string;
   @Input() assessment: any;
   @Input() options: any[];
-  @Output('on-assessment-change') assessmentChangeEmmit: EventEmitter<any> = new EventEmitter<any>();
+  @Output() settingsChange: EventEmitter<any> = new EventEmitter<any>();
 
   current: any;
 
@@ -45,8 +45,8 @@ export class AssessmentComponent implements OnInit {
     return this.options[0];
   }
 
-  selectElement(assessment) {
+  selectElement(assessment: any): void {
     this.current = assessment;
-    this.assessmentChangeEmmit.emit(assessment);
+    this.settingsChange.emit(assessment);
   }
 }

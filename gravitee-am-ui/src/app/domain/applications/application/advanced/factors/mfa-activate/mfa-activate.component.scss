@@ -57,3 +57,30 @@ blockquote {
     letter-spacing: 0.6px;
   }
 }
+
+.section-body {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 0 0 44px;
+}
+.options {
+  gap: 8px;
+  padding: 5px 0 0 44px;
+}
+
+.options-title {
+  color: #606274;
+  padding: 0 0 0 44px;
+}
+
+.description {
+  border: 1px solid #313133;
+  border-radius: 4px;
+  padding: 20px;
+  gap: 4px;
+  background: #f7f8fd;
+}
+
+.config-section {
+  padding: 10px 0 0 44px;
+}

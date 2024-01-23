@@ -16,23 +16,24 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import moment from 'moment';
 
-import { TimeConverterService } from '../../../../../../../services/time-converter.service';
+import { TimeConverterService } from '../../../../../../services/time-converter.service';
 
 @Component({
-  selector: 'mfa-optional',
-  templateUrl: './mfa-optional.component.html',
-  styleUrls: ['./mfa-optional.component.scss'],
+  selector: 'time-period-picker',
+  templateUrl: './time-period-picker.component.html',
+  styleUrls: ['./time-period-picker.component.scss'],
 })
-export class MfaOptionalComponent implements OnInit {
+export class TimePeriodPickerComponent implements OnInit {
   private humanTime: { skipTime: any; skipUnit: any };
 
-  @Input() enrollment: any;
-  @Output('settings-change') settingsChangeEmitter: EventEmitter<any> = new EventEmitter<any>();
+  @Input() defaultTimeSec: number;
+  @Input() title: string;
+  @Output() settingsChange: EventEmitter<any> = new EventEmitter<any>();
 
   constructor(private timeConverterService: TimeConverterService) {}
 
   ngOnInit(): void {
-    const time = this.enrollment && this.enrollment.skipTimeSeconds ? this.enrollment.skipTimeSeconds : 36000; // Default 10h
+    const time = this.defaultTimeSec ? this.defaultTimeSec : 36000; // Default 10h
     this.humanTime = {
       skipTime: this.timeConverterService.getTime(time),
       skipUnit: this.timeConverterService.getUnitTime(time),
@@ -47,24 +48,25 @@ export class MfaOptionalComponent implements OnInit {
     return this.humanTime.skipUnit;
   }
 
-  onSkipTimeInEvent($event) {
+  onSkipTimeInEvent($event: any): void {
+    console.log('skip time', $event.target.value);
     this.humanTime.skipTime = $event.target.value;
-    this.updateOptionalEnrollement();
+    this.update();
   }
 
-  onSkipTimeUnitEvent($event) {
+  onSkipTimeUnitEvent($event: any): void {
     this.humanTime.skipUnit = $event.value;
-    this.updateOptionalEnrollement();
+    this.update();
   }
 
-  private updateOptionalEnrollement() {
-    this.settingsChangeEmitter.emit({
-      forceEnrollment: false,
+  private update(): void {
+    console.log(' update ', this.humanTimeToSeconds());
+    this.settingsChange.emit({
       skipTimeSeconds: this.humanTimeToSeconds(),
     });
   }
 
-  private humanTimeToSeconds() {
+  private humanTimeToSeconds(): number {
     return moment.duration(this.humanTime.skipTime, this.humanTime.skipUnit).asSeconds();
   }
 }
