@@ -20,7 +20,11 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
   templateUrl: './mfa-risk-based.component.html',
   styleUrls: ['./mfa-risk-based.component.scss'],
 })
+<<<<<<<< HEAD:gravitee-am-ui/src/app/domain/applications/application/advanced/factors/mfa-challenge/risk-based/mfa-risk-based.component.ts
 export class MfaRiskBasedComponent implements OnInit {
+========
+export class MfaIntelligentComponent implements OnInit {
+>>>>>>>> d5013dde45 (AM-1227: manage mfa):gravitee-am-ui/src/app/domain/applications/application/advanced/factors/mfa-challenge/intelligent/mfa-intelligent.component.ts
   /* Arbitrary score */
   private static devicesOptions = {
     DISABLED: { label: 'Disabled', value: null, threshold: NaN, tooltip: 'Disabled' },
@@ -63,6 +67,7 @@ export class MfaRiskBasedComponent implements OnInit {
     return { enabled: false, thresholds: {} };
   }
   ngOnInit(): void {
+<<<<<<<< HEAD:gravitee-am-ui/src/app/domain/applications/application/advanced/factors/mfa-challenge/risk-based/mfa-risk-based.component.ts
     this.currentDeviceAssessment = this.riskAssessment.deviceAssessment || MfaRiskBasedComponent.disabledAssessment();
     this.currentIpReputationAssessment = this.riskAssessment.ipReputationAssessment || MfaRiskBasedComponent.disabledAssessment();
     this.currentGeoVelocityAssessment = this.riskAssessment.geoVelocityAssessment || MfaRiskBasedComponent.disabledAssessment();
@@ -102,6 +107,47 @@ export class MfaRiskBasedComponent implements OnInit {
   }
 
   private update(): void {
+========
+    this.currentDeviceAssessment = this.riskAssessment.deviceAssessment || MfaIntelligentComponent.disabledAssessment();
+    this.currentIpReputationAssessment = this.riskAssessment.ipReputationAssessment || MfaIntelligentComponent.disabledAssessment();
+    this.currentGeoVelocityAssessment = this.riskAssessment.geoVelocityAssessment || MfaIntelligentComponent.disabledAssessment();
+  }
+
+  get deviceAssessments() {
+    return Object.values(MfaIntelligentComponent.devicesOptions);
+  }
+
+  get ipReputationAssessments() {
+    return Object.values(MfaIntelligentComponent.ipReputationOptions);
+  }
+
+  get geoVelocityAssessments() {
+    return Object.values(MfaIntelligentComponent.geoVelocityOptions);
+  }
+
+  deviceAssessmentChange(assessment: any): void {
+    this.currentDeviceAssessment = MfaIntelligentComponent.buildAssessment(assessment, MfaIntelligentComponent.devicesOptions.DISABLED);
+    this.emitRiskAssessmentChange();
+  }
+
+  ipReputationAssessmentChange(assessment: any): void {
+    this.currentIpReputationAssessment = MfaIntelligentComponent.buildAssessment(
+      assessment,
+      MfaIntelligentComponent.ipReputationOptions.DISABLED,
+    );
+    this.emitRiskAssessmentChange();
+  }
+
+  geoVelocityAssessmentChange(assessment: any): void {
+    this.currentGeoVelocityAssessment = MfaIntelligentComponent.buildAssessment(
+      assessment,
+      MfaIntelligentComponent.geoVelocityOptions.DISABLED,
+    );
+    this.emitRiskAssessmentChange();
+  }
+
+  private emitRiskAssessmentChange(): void {
+>>>>>>>> d5013dde45 (AM-1227: manage mfa):gravitee-am-ui/src/app/domain/applications/application/advanced/factors/mfa-challenge/intelligent/mfa-intelligent.component.ts
     this.settingsChange.emit({
       deviceAssessment: this.currentDeviceAssessment,
       ipReputationAssessment: this.currentIpReputationAssessment,

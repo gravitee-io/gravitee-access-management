@@ -35,6 +35,7 @@ public class PatchMFASettings {
     private Optional<String> stepUpAuthenticationRule;
     private Optional<PatchStepUpAuthentication> stepUpAuthentication;
     private Optional<String> adaptiveAuthenticationRule;
+    private Optional<String> skipAdaptiveAuthenticationRule;
     private Optional<PatchRememberDeviceSettings> rememberDevice;
     @Deprecated
     private Optional<PatchEnrollmentSettings> enrollment;
@@ -45,6 +46,7 @@ public class PatchMFASettings {
         SetterUtils.safeSet(toPatch::setLoginRule, this.getLoginRule());
         SetterUtils.safeSet(toPatch::setStepUpAuthenticationRule, this.getStepUpAuthenticationRule());
         SetterUtils.safeSet(toPatch::setAdaptiveAuthenticationRule, this.getAdaptiveAuthenticationRule());
+        SetterUtils.safeSet(toPatch::setSkipStepUpAuthentication, this.getSkipAdaptiveAuthenticationRule());
 
         if (nonNull(this.getStepUpAuthentication()) && this.getStepUpAuthentication().isPresent()) {
             toPatch.setStepUpAuthentication(this.getStepUpAuthentication().get().patch(toPatch.getStepUpAuthentication()));

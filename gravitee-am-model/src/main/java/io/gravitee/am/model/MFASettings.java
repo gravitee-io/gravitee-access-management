@@ -36,6 +36,7 @@ public class MFASettings {
     @Deprecated
     private String stepUpAuthenticationRule;
     private StepUpAuthenticationSettings stepUpAuthentication;
+    private String skipStepUpAuthentication;
     private String adaptiveAuthenticationRule;
     private RememberDeviceSettings rememberDevice;
     //deprecated since 4.3. use enroll instead
@@ -48,6 +49,7 @@ public class MFASettings {
         this.loginRule = other.loginRule;
         this.stepUpAuthenticationRule = other.stepUpAuthenticationRule;
         this.adaptiveAuthenticationRule = other.adaptiveAuthenticationRule;
+        this.skipStepUpAuthentication = other.skipStepUpAuthentication;
         this.rememberDevice = ofNullable(other.rememberDevice)
                 .filter(Objects::nonNull)
                 .map(RememberDeviceSettings::new)
