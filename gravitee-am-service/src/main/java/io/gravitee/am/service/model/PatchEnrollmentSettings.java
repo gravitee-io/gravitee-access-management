@@ -35,14 +35,19 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 public class PatchEnrollmentSettings {
+    private Optional<Boolean> active;
     private Optional<Boolean> forceEnrollment;
     private Optional<Long> skipTimeSeconds;
+    private Optional<String> option;
+
     public EnrollmentSettings patch(EnrollmentSettings _toPatch) {
         EnrollmentSettings toPatch = _toPatch == null ? new EnrollmentSettings() : new EnrollmentSettings(_toPatch);
+        SetterUtils.safeSet(toPatch::setActive, this.getActive());
         SetterUtils.safeSet(toPatch::setForceEnrollment, this.getForceEnrollment());
         final Optional<Long> skipTimeSeconds = isNull(this.getSkipTimeSeconds()) ? Optional.empty() :
                 this.getSkipTimeSeconds().filter(Objects::nonNull).map(Math::abs);
         SetterUtils.safeSet(toPatch::setSkipTimeSeconds, skipTimeSeconds);
+        SetterUtils.safeSet(toPatch::setOption, getOption());
         return toPatch;
     }
 }
