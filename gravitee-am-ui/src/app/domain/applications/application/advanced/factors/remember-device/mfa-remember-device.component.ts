@@ -15,6 +15,7 @@
  */
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import moment from 'moment';
+import { ActivatedRoute } from '@angular/router';
 
 import { TimeConverterService } from '../../../../../../services/time-converter.service';
 
@@ -31,7 +32,7 @@ export class MfaRememberDeviceComponent implements OnInit, OnChanges {
   @Input() adaptiveMfaRule: string;
   @Input() riskAssessment: any;
 
-  @Output('settings-change') settingsChangeEmitter: EventEmitter<any> = new EventEmitter<any>();
+  @Output() settingsChange: EventEmitter<any> = new EventEmitter<any>();
 
   private humanTime: { expirationTime: any; expirationUnit: any };
   active: boolean;
@@ -39,7 +40,12 @@ export class MfaRememberDeviceComponent implements OnInit, OnChanges {
   selectedDeviceIdentifier: any;
   isConditional: any;
 
-  constructor(private timeConverterService: TimeConverterService) {}
+  skipIfNoRisk: boolean;
+
+  domainName: string;
+  environment: string;
+
+  constructor(private timeConverterService: TimeConverterService, private route: ActivatedRoute) {}
 
   ngOnInit(): void {
     this.active = this.rememberDevice ? this.rememberDevice.active : false;
@@ -53,27 +59,33 @@ export class MfaRememberDeviceComponent implements OnInit, OnChanges {
       expirationTime: this.timeConverterService.getTime(time, 'seconds'),
       expirationUnit: this.timeConverterService.getUnitTime(time, 'seconds'),
     };
+    this.domainName = this.route.snapshot.data['domain']?.hrid;
+    this.environment = this.route.snapshot.data['domain']?.referenceId;
   }
 
-  ngOnChanges(changes: SimpleChanges) {
+  getDeviceIdentifierLink(): string {
+    return `/environments/${this.environment}/domains/${this.domainName}/settings/device-identifier`;
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
     if (changes.selectedMFAOption) {
       this.isConditional = changes.selectedMFAOption.currentValue === 'Conditional';
     }
   }
 
-  displayExpiresIn() {
+  displayExpiresIn(): any {
     return this.humanTime.expirationTime;
   }
 
-  displayUnitTime() {
+  displayUnitTime(): any {
     return this.humanTime.expirationUnit;
   }
 
-  hasDeviceIdentifierPlugins() {
+  hasDeviceIdentifierPlugins(): boolean {
     return this.deviceIdentifiers && this.deviceIdentifiers.length > 0;
   }
 
-  updateDeviceIdentifierId($event) {
+  updateDeviceIdentifierId($event: any): void {
     this.selectedDeviceIdentifier = $event.value;
     this.updateRememberDeviceSettings({
       active: this.active,
@@ -83,7 +95,7 @@ export class MfaRememberDeviceComponent implements OnInit, OnChanges {
     });
   }
 
-  onToggle($event) {
+  onToggle($event: any): void {
     this.active = $event.checked;
     (this.skipRememberDevice = !this.active ? false : this.skipRememberDevice),
       this.updateRememberDeviceSettings({
@@ -94,7 +106,7 @@ export class MfaRememberDeviceComponent implements OnInit, OnChanges {
       });
   }
 
-  onSkip($event) {
+  onSkip($event: any): void {
     this.skipRememberDevice = $event.checked;
     this.updateRememberDeviceSettings({
       active: this.active,
@@ -104,7 +116,7 @@ export class MfaRememberDeviceComponent implements OnInit, OnChanges {
     });
   }
 
-  onTimeChange($event) {
+  onTimeChange($event: any): void {
     this.humanTime.expirationTime = Math.abs($event.target.value);
     this.updateRememberDeviceSettings({
       active: this.active,
@@ -114,7 +126,7 @@ export class MfaRememberDeviceComponent implements OnInit, OnChanges {
     });
   }
 
-  onUnitChange($event) {
+  onUnitChange($event: any): void {
     this.humanTime.expirationUnit = $event.value;
     this.updateRememberDeviceSettings({
       active: this.active,
@@ -124,25 +136,27 @@ export class MfaRememberDeviceComponent implements OnInit, OnChanges {
     });
   }
 
-  private humanTimeToSeconds() {
+  private humanTimeToSeconds(): number {
     return moment.duration(this.humanTime.expirationTime, this.humanTime.expirationUnit).asSeconds();
   }
 
-  private updateRememberDeviceSettings(rememberDevice) {
+  private updateRememberDeviceSettings(rememberDevice: any): void {
     if (this.hasDeviceIdentifierPlugins()) {
-      this.settingsChangeEmitter.emit(rememberDevice);
+      this.settingsChange.emit(rememberDevice);
     }
   }
 
-  isActive() {
+  isActive(): boolean {
     return this.active;
   }
 
-  isConditionalConfig() {
-    if (this.riskAssessment && this.riskAssessment.enabled) {
+  isConditionalConfig(): boolean {
+    if (this.riskAssessment?.enabled) {
       return false;
     } else {
       return this.adaptiveMfaRule && this.adaptiveMfaRule !== '';
     }
   }
+
+  onToggleSkipIfNoRisk($event: any): void {}
 }

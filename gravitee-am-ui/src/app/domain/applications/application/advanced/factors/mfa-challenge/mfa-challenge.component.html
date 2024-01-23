@@ -25,9 +25,55 @@
     </div>
     <div class="mfa-title">
       <h5>MFA Challenge</h5>
-      <small>Description text</small>
+      <small>Once enrolled, users will be challenged based on the selected factors.</small>
     </div>
-    <mat-slide-toggle></mat-slide-toggle>
+    <mat-slide-toggle (change)="switchEnable()" [checked]="enable"></mat-slide-toggle>
   </div>
+  <div *ngIf="enable">
+    <div fxLayout="row">
+      <div fxFlex="50">
+        <span class="options-title">Options</span>
+        <div *ngFor="let opt of modes" class="options">
+          <mat-radio-button name="mfa-challenge" (change)="selectChallengeOption(opt)" [checked]="isChallengeChecked(opt)">
+            {{ opt.label }}
+          </mat-radio-button>
+        </div>
+      </div>
+      <div class="description" fxFlex="50">{{ currentMode.message }}</div>
+    </div>
 
+    <div class="config-section">
+      <div class="mfa-section-body" *ngIf="this.currentMode === modeOptions.CONDITIONAL">
+        <p>Conditional Rules</p>
+        <mat-form-field appearance="outline" floatLabel="always">
+          <input
+            matInput
+            placeholder="Enter eligibility rule using Gravitee Expression Language."
+            name="adaptiveMfaRule"
+            [(ngModel)]="conditionalRules"
+            (keyup)="updateConditional($event)"
+          />
+          <button
+            mat-icon-button
+            matSuffix
+            disableRipple
+            matTooltipPosition="below"
+            matTooltip="More about Adaptive MFA conditions"
+            (click)="openInfoDialog($event)"
+          >
+            <mat-icon>info_outline</mat-icon>
+          </button>
+          <mat-hint
+            ><a href="https://documentation.gravitee.io/apim/guides/gravitee-expression-language" target="_blank"
+              ><p class="link">Read more about Gravitee Expression Language</p></a
+            >
+          </mat-hint>
+        </mat-form-field>
+      </div>
+
+      <div class="mfa-section-body" *ngIf="this.currentMode === modeOptions.INTELLIGENT">
+        <mfa-intelligent [riskAssessment]="riskAssessment" (settingsChange)="updateRiskAssessment($event)"> </mfa-intelligent>
+      </div>
+    </div>
+  </div>
 </div>

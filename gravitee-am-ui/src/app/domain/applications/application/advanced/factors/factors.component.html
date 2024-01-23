@@ -23,23 +23,23 @@
           [factors]="factors"
           [applicationFactors]="application.factors"
           [editMode]="editMode"
-          (select-factor)="selectFactor($event)"
+          (settingsChange)="selectFactor($event)"
         ></mfa-select>
-
-        <mfa-eligibility>
-
-        </mfa-eligibility>
 
         <mfa-activate
           *ngIf="hasFactors() && hasSelectedFactors()"
           [enrollment]="mfa.enrollment"
           [adaptiveMfaRule]="mfa.adaptiveAuthenticationRule"
-          [riskAssessment]="application.settings.riskAssessment"
-          (settings-change)="updateActivateMfa($event)"
+          [skipAdaptiveMfaRule]="mfa.skipAdaptiveAuthenticationRule"
+          (settingsChange)="updateActivateMfa($event)"
         ></mfa-activate>
 
-        <mfa-challenge>
-
+        <mfa-challenge
+          *ngIf="hasFactors() && hasSelectedFactors()"
+          [enrollment]="mfa.enrollment"
+          [riskAssessment]="application.settings.riskAssessment"
+          (settingsChange)="updateChallenge($event)"
+        >
         </mfa-challenge>
 
         <mfa-remember-device
@@ -50,13 +50,13 @@
           [enrollment]="mfa.enrollment"
           [adaptiveMfaRule]="mfa.adaptiveAuthenticationRule"
           [riskAssessment]="application.settings.riskAssessment"
-          (settings-change)="updateRememberDevice($event)"
+          (settingsChange)="updateRememberDevice($event)"
         ></mfa-remember-device>
 
         <mfa-step-up
           *ngIf="hasFactors() && hasSelectedFactors()"
           [stepUpRule]="mfa.stepUpAuthenticationRule"
-          (on-rule-change)="updateStepUpRule($event)"
+          (settingsChange)="updateStepUpRule($event)"
         ></mfa-step-up>
 
         <div fxLayout="row" style="margin-top: 20px" *hasPermission="['application_factor_update']">

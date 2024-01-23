@@ -39,14 +39,14 @@
         <ngx-datatable-column name="Selection Rule" [flexGrow]="1">
           <ng-template let-row="row" ngx-datatable-cell-template>
             <span (click)="addSelectionRule(row.id)" class="wrapper" style="cursor: pointer">
-                <span
-                  [matTooltip]="row.selectionRule ? 'Selection rule' : 'New selection rule'"
-                  [style]="row.selectionRule ? 'color: green' : 'color: grey'"
-                  class="mat-icon notranslate material-icons mat-icon-no-color"
-                >
-                  {{ row.selectionRule ? 'playlist_add_check' : 'playlist_add_plus' }}
-                </span>
+              <span
+                [matTooltip]="row.selectionRule ? 'Selection rule' : 'New selection rule'"
+                [style]="row.selectionRule ? 'color: green' : 'color: grey'"
+                class="mat-icon notranslate material-icons mat-icon-no-color"
+              >
+                {{ row.selectionRule ? 'playlist_add_check' : 'playlist_add_plus' }}
               </span>
+            </span>
           </ng-template>
         </ngx-datatable-column>
         <ngx-datatable-column name="Type" [flexGrow]="1">

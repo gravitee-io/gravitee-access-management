@@ -20,6 +20,7 @@ import { ApplicationService } from '../../../../../services/application.service'
 import { SnackbarService } from '../../../../../services/snackbar.service';
 import { FactorService } from '../../../../../services/factor.service';
 import { AuthService } from '../../../../../services/auth.service';
+import { MfaChallengeComponent } from './mfa-challenge/mfa-challenge.component';
 
 @Component({
   selector: 'app-application-factors',
@@ -28,24 +29,32 @@ import { AuthService } from '../../../../../services/auth.service';
 })
 export class ApplicationFactorsComponent implements OnInit {
   private domainId: string;
+  private riskAssessment: any = undefined;
 
   application: any;
   formChanged = false;
   factors: any[];
   editMode: boolean;
-
   deviceIdentifiers: any[];
-
   mfa: any;
-
   mfaStepUpRule = '';
   rememberDevice: any = {};
-
   adaptiveMfaRule = '';
+  skipAdaptiveMfaRule = '';
   enrollment: any = {};
   selectedMFAOption = '';
-  private riskAssessment: any = {};
+  selectedChallengeMFAOption = '';
+  challengeActive: boolean;
+  skipChallengeRule: string;
 
+  private static getDefaultRiskAssessment(): any {
+    return {
+      enabled: false,
+      deviceAssessment: { enabled: false },
+      ipReputationAssessment: { enabled: false },
+      geoVelocityAssessment: { enabled: false },
+    };
+  }
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -66,9 +75,11 @@ export class ApplicationFactorsComponent implements OnInit {
         : {
             forceEnrollment: false,
             skipTimeSeconds: null,
+            option: 'REQUIRED',
           }),
     };
     this.mfaStepUpRule = this.mfa.stepUpAuthenticationRule ? this.mfa.stepUpAuthenticationRule.slice() : '';
+    console.log('mfaStepUpRule', this.mfaStepUpRule)
     this.adaptiveMfaRule = this.mfa.adaptiveAuthenticationRule ? this.mfa.adaptiveAuthenticationRule.slice() : '';
     this.rememberDevice = { ...this.mfa.rememberDevice };
     this.enrollment = { ...this.mfa.enrollment };
@@ -79,32 +90,35 @@ export class ApplicationFactorsComponent implements OnInit {
 
     this.editMode = this.authService.hasPermissions(['application_settings_update']);
     this.factorService.findByDomain(this.domainId).subscribe((response) => (this.factors = [...response]));
-  }
-
-  private static getDefaultRiskAssessment() {
-    return {
-      enabled: false,
-      deviceAssessment: { enabled: false },
-      ipReputationAssessment: { enabled: false },
-      geoVelocityAssessment: { enabled: false },
-    };
+    this.challengeActive = this.application.settings.challenge.active;
   }
 
   patch(): void {
+    console.log('risk ', this.riskAssessment);
     const data = {
       factors: this.application.factors,
       settings: {
         riskAssessment: this.riskAssessment,
         mfa: {
           stepUpAuthenticationRule: this.mfaStepUpRule,
+          // stepUpAuthentication: {
+          //   active: true,
+          //   stepUpAuthenticationRule: this.mfaStepUpRule,
+          // },
           adaptiveAuthenticationRule: this.adaptiveMfaRule,
+          skipAdaptiveAuthenticationRule: '',
           rememberDevice: this.rememberDevice,
           enrollment: this.enrollment,
+          challenge: {
+            active: this.challengeActive,
+            skipChallengeRule: this.skipChallengeRule,
+            option: this.selectedChallengeMFAOption
+          },
         },
       },
     };
-    this.applicationService.patch(this.domainId, this.application.id, data).subscribe((data) => {
-      this.application = data;
+    this.applicationService.patch(this.domainId, this.application.id, data).subscribe((response) => {
+      this.application = response;
       this.formChanged = false;
       this.mfa = this.application.settings == null ? {} : this.application.settings.mfa || {};
       this.snackbarService.open('Application updated');
@@ -112,7 +126,7 @@ export class ApplicationFactorsComponent implements OnInit {
     });
   }
 
-  selectFactor(selectFactorEvent) {
+  selectFactor(selectFactorEvent: any): void {
     if (selectFactorEvent.checked) {
       this.application.factors = this.application.factors || [];
       this.application.factors.push(selectFactorEvent.factorId);
@@ -122,7 +136,7 @@ export class ApplicationFactorsComponent implements OnInit {
     this.formChanged = true;
   }
 
-  updateRememberDevice(rememberDevice) {
+  updateRememberDevice(rememberDevice: any): void {
     this.rememberDevice = { ...rememberDevice };
     if (!this.rememberDevice.deviceIdentifierId) {
       this.rememberDevice.deviceIdentifierId = this.deviceIdentifiers[0].id;
@@ -130,24 +144,34 @@ export class ApplicationFactorsComponent implements OnInit {
     this.formChanged = true;
   }
 
-  updateActivateMfa(options) {
+  updateActivateMfa(options: any): void {
+    console.log('update active mfa ', options);
     this.enrollment = { ...options.enrollment };
-    this.adaptiveMfaRule = (options.adaptiveMfaRule || '').slice();
-    this.riskAssessment = { ...options.riskAssessment };
+    this.adaptiveMfaRule = (options.adaptiveMfaRule.adaptiveMfaRule || '').slice();
+    this.skipAdaptiveMfaRule = (options.adaptiveMfaRule.skipAdaptiveMfaRule || '').slice();
     this.formChanged = true;
     this.selectedMFAOption = options.selectedMFAOption;
   }
 
-  updateStepUpRule(stepUpRule: string) {
+  updateStepUpRule(stepUpRule: string): void {
     this.mfaStepUpRule = stepUpRule.slice();
     this.formChanged = true;
   }
 
-  hasFactors() {
+  hasFactors(): boolean {
     return this.factors && this.factors.length > 0;
   }
 
-  hasSelectedFactors() {
+  hasSelectedFactors(): boolean {
     return this.application.factors && this.application.factors.length > 0;
+  }
+
+  updateChallenge(challenge: any): void {
+    console.log('challenge ', challenge);
+    this.skipChallengeRule = (challenge.mfaChallengeConditionalRules || '').slice();
+    this.riskAssessment = challenge.riskAssessment ? { ...challenge.riskAssessment } : undefined;
+    this.selectedChallengeMFAOption = challenge.selectedChallengeMFAOption;
+    this.challengeActive = challenge.active;
+    this.formChanged = true;
   }
 }

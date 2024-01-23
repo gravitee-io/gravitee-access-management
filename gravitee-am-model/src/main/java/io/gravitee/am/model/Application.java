@@ -131,7 +131,7 @@ public class Application implements Resource, PasswordSettingsAware {
         this.updatedAt = other.updatedAt;
         this.secretSettings = other.secretSettings;
         this.secrets = other.getSecrets().stream().map(ClientSecret::new).collect(Collectors.toList());
-        this.factorSettings = other.factorSettings;
+        //this.factorSettings = other.factorSettings;
     }
 
     public String getId() {

@@ -16,23 +16,11 @@
 
 -->
 <div>
-  <h1 matDialogTitle>MFA step up authentication condition</h1>
+  <h1 matDialogTitle>Expression language examples</h1>
   <mat-dialog-content>
-    <h5>Information</h5>
-    <mat-divider></mat-divider>
-    <mat-list dense>
-      <mat-list-item>
-        <mat-icon matListIcon>info</mat-icon>
-        <h3 matLine>You can use <b>Expression Language</b> to set the MFA step up authentication condition.</h3>
-      </mat-list-item>
-    </mat-list>
-    <h5>Condition examples</h5>
-    <mat-divider></mat-divider>
-    <pre>
-<![CDATA[{#request.params['scope'][0] == 'write'}
-{#request.params['audience'][0] == 'https://myapi.com'}
-]]>
-    </pre>
+    <h3 matLine>You can use expression language to set conditions and rules.</h3>
+    <h5>Condition examples:</h5>
+    <pre>{{ getInfo() }}</pre>
   </mat-dialog-content>
   <mat-dialog-actions>
     <span fxFlex></span>
