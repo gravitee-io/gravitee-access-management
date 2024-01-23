@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { MatDialog } from '@angular/material/dialog';
+
+import { ExpressionInfoDialog } from '../../expression-info-dialog/expression-info-dialog.component';
 
 @Component({
   selector: 'mfa-conditional',
@@ -23,26 +25,43 @@ import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 })
 export class MfaConditionalComponent {
   @Input() adaptiveMfaRule: string;
-  @Output('on-rule-change') amfaRuleEmitter: EventEmitter<string> = new EventEmitter<string>();
+  @Input() skipAdaptiveMfaRule: string;
+  @Output() settingsChange: EventEmitter<any> = new EventEmitter<any>();
+
+  skipConditional = false;
 
   constructor(private dialog: MatDialog) {}
 
-  openAMFADialog($event) {
+  openInfoDialog($event: any): void {
     $event.preventDefault();
-    this.dialog.open(AdaptiveMfaDialog, { width: '700px' });
+    this.dialog.open(ExpressionInfoDialog, { width: '700px' });
   }
 
-  updateAdaptiveMfaRule($event) {
+  updateAdaptiveMfaRule($event: any): void {
     if ($event.target) {
-      this.amfaRuleEmitter.emit($event.target.value);
+      this.adaptiveMfaRule = $event.target.value;
+      console.log('e', this.adaptiveMfaRule);
+      this.settingsChange.emit({
+        adaptiveMfaRule: this.adaptiveMfaRule,
+      });
     }
   }
-}
-
-@Component({
-  selector: 'adaptive-mfa-dialog',
-  templateUrl: './dialog/adaptive-mfa-info.component.html',
-})
-export class AdaptiveMfaDialog {
-  constructor(public dialogRef: MatDialogRef<AdaptiveMfaDialog>) {}
+  updateSkipAdaptiveMfaRule($event: any): void {
+    if ($event.target) {
+      this.skipAdaptiveMfaRule = $event.target.value;
+      console.log('e2', this.skipAdaptiveMfaRule);
+      this.settingsChange.emit({
+        skipAdaptiveMfaRule: $event.target.value,
+      });
+    }
+  }
+  switchSkipConditional(): void {
+    this.skipConditional = !this.skipConditional;
+  }
+  onSettingChange($event: any): void {
+    if ($event.target) {
+      console.log('on change mfa conditional ', $event);
+      this.settingsChange.emit($event);
+    }
+  }
 }

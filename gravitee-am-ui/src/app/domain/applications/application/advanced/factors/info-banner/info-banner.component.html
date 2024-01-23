@@ -16,17 +16,11 @@
 
 -->
 
-<div class="assessment-container">
-  <h3>{{ title }}</h3>
-  <mat-button-toggle-group name="fontStyle" aria-label="Font Style" [value]="this.current">
-    <ng-template ngFor let-assessment [ngForOf]="options" let-i="index">
-      <mat-button-toggle
-        (click)="selectElement(assessment)"
-        [matTooltip]="assessment.tooltip"
-        matTooltipPosition="below"
-        [value]="assessment"
-        >{{ assessment.label }}</mat-button-toggle
-      >
-    </ng-template>
-  </mat-button-toggle-group>
+<div *ngIf="showInfo" fxLayout="row" fxLayoutAlign="center center" class="show-info" [style]="getColors()">
+  <div fxFlex="5" style="padding: 10px"><mat-icon>info_outline</mat-icon></div>
+  <div fxFlex="70" style="gap: 4px">{{ text }}</div>
+  <div fxFlex="10">
+    <button (click)="goToLink(link)" mat-raised-button class="more-info-button">{{ buttonName }}</button>
+  </div>
+  <div fxFlex="15" fxLayoutAlign="end center" class="close-info"><mat-icon (click)="closeInfo()">close</mat-icon></div>
 </div>

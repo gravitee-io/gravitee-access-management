@@ -15,45 +15,27 @@
  */
 package io.gravitee.am.model;
 
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Getter
+@Setter
+@NoArgsConstructor
 public class EnrollmentSettings {
     private Boolean active;
     private Boolean forceEnrollment;
     private Long skipTimeSeconds;
-
-    public EnrollmentSettings() {
-    }
+    private String option;
 
     public EnrollmentSettings(EnrollmentSettings enrollment) {
         this.forceEnrollment = enrollment.forceEnrollment;
         this.skipTimeSeconds = enrollment.skipTimeSeconds;
         this.active = enrollment.active;
-    }
-
-    public Boolean getForceEnrollment() {
-        return forceEnrollment;
-    }
-
-    public void setForceEnrollment(Boolean forceEnrollment) {
-        this.forceEnrollment = forceEnrollment;
-    }
-
-    public Long getSkipTimeSeconds() {
-        return skipTimeSeconds;
-    }
-
-    public void setSkipTimeSeconds(Long skipTimeSeconds) {
-        this.skipTimeSeconds = skipTimeSeconds;
-    }
-
-    public Boolean getActive() {
-        return active;
-    }
-
-    public void setActive(Boolean active) {
-        this.active = active;
+        this.option = enrollment.option;
     }
 }

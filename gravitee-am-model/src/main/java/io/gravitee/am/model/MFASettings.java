@@ -18,11 +18,17 @@ package io.gravitee.am.model;
 import java.util.Objects;
 
 import static java.util.Optional.ofNullable;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Getter
+@Setter
+@NoArgsConstructor
 public class MFASettings {
 
     private String loginRule;
@@ -30,18 +36,17 @@ public class MFASettings {
     @Deprecated
     private String stepUpAuthenticationRule;
     private StepUpAuthenticationSettings stepUpAuthentication;
+    private String skipStepUpAuthentication;
     private String adaptiveAuthenticationRule;
     private RememberDeviceSettings rememberDevice;
     private EnrollmentSettings enrollment;
     private ChallengeSettings challenge;
 
-    public MFASettings() {
-    }
-
     public MFASettings(MFASettings other) {
         this.loginRule = other.loginRule;
         this.stepUpAuthenticationRule = other.stepUpAuthenticationRule;
         this.adaptiveAuthenticationRule = other.adaptiveAuthenticationRule;
+        this.skipStepUpAuthentication = other.skipStepUpAuthentication;
         this.rememberDevice = ofNullable(other.rememberDevice)
                 .filter(Objects::nonNull)
                 .map(RememberDeviceSettings::new)
@@ -59,61 +64,5 @@ public class MFASettings {
                 .filter(Objects::nonNull)
                 .map(StepUpAuthenticationSettings::new)
                 .orElse(new StepUpAuthenticationSettings());
-    }
-
-    public String getLoginRule() {
-        return loginRule;
-    }
-
-    public void setLoginRule(String loginRule) {
-        this.loginRule = loginRule;
-    }
-
-    public String getStepUpAuthenticationRule() {
-        return stepUpAuthenticationRule;
-    }
-
-    public void setStepUpAuthenticationRule(String stepUpAuthenticationRule) {
-        this.stepUpAuthenticationRule = stepUpAuthenticationRule;
-    }
-
-    public String getAdaptiveAuthenticationRule() {
-        return adaptiveAuthenticationRule;
-    }
-
-    public void setAdaptiveAuthenticationRule(String adaptiveAuthenticationRule) {
-        this.adaptiveAuthenticationRule = adaptiveAuthenticationRule;
-    }
-
-    public RememberDeviceSettings getRememberDevice() {
-        return rememberDevice;
-    }
-
-    public void setRememberDevice(RememberDeviceSettings rememberDevice) {
-        this.rememberDevice = rememberDevice;
-    }
-
-    public EnrollmentSettings getEnrollment() {
-        return enrollment;
-    }
-
-    public void setEnrollment(EnrollmentSettings enrollment) {
-        this.enrollment = enrollment;
-    }
-
-    public ChallengeSettings getChallenge() {
-        return challenge;
-    }
-
-    public void setChallenge(ChallengeSettings challenge) {
-        this.challenge = challenge;
-    }
-
-    public StepUpAuthenticationSettings getStepUpAuthentication() {
-        return stepUpAuthentication;
-    }
-
-    public void setStepUpAuthentication(StepUpAuthenticationSettings stepUpAuthentication) {
-        this.stepUpAuthentication = stepUpAuthentication;
     }
 }

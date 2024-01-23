@@ -21,28 +21,11 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
   styleUrls: ['./mfa-intelligent.component.scss'],
 })
 export class MfaIntelligentComponent implements OnInit {
-  @Input() riskAssessment: any = {};
-  @Output('on-settings-change') settingsChangeEmitter: EventEmitter<any> = new EventEmitter<any>();
-
-  currentDeviceAssessment: any;
-  currentIpReputationAssessment: any;
-  currentGeoVelocityAssessment: any;
-
-  ngOnInit(): void {
-    this.currentDeviceAssessment = this.riskAssessment.deviceAssessment || MfaIntelligentComponent.disabledAssessment();
-    this.currentIpReputationAssessment = this.riskAssessment.ipReputationAssessment || MfaIntelligentComponent.disabledAssessment();
-    this.currentGeoVelocityAssessment = this.riskAssessment.geoVelocityAssessment || MfaIntelligentComponent.disabledAssessment();
-  }
-
   /* Arbitrary score */
   private static devicesOptions = {
     DISABLED: { label: 'Disabled', value: null, threshold: NaN, tooltip: 'Disabled' },
     UNKNOWN: { label: 'Unknown', value: 'HIGH', threshold: 1.0, tooltip: 'No device found' },
   };
-
-  get deviceAssessments() {
-    return Object.values(MfaIntelligentComponent.devicesOptions);
-  }
 
   /* Values are in % */
   private static ipReputationOptions = {
@@ -52,10 +35,6 @@ export class MfaIntelligentComponent implements OnInit {
     HIGH: { label: 'High', value: 'HIGH', threshold: 70.0, tooltip: 'between 70% and 100%' },
   };
 
-  get ipReputationAssessments() {
-    return Object.values(MfaIntelligentComponent.ipReputationOptions);
-  }
-
   /* Values are in m/s */
   private static geoVelocityOptions = {
     DISABLED: { label: 'Disabled', value: null, threshold: NaN, tooltip: 'Disabled' },
@@ -64,32 +43,14 @@ export class MfaIntelligentComponent implements OnInit {
     HIGH: { label: 'High', value: 'HIGH', threshold: 625.0 / 9.0, tooltip: '250 km/h and more' } /* 250 km/h */,
   };
 
-  get geoVelocityAssessments() {
-    return Object.values(MfaIntelligentComponent.geoVelocityOptions);
-  }
+  @Input() riskAssessment: any = {};
+  @Output() settingsChange: EventEmitter<any> = new EventEmitter<any>();
 
-  deviceAssessmentChange(assessment) {
-    this.currentDeviceAssessment = MfaIntelligentComponent.buildAssessment(assessment, MfaIntelligentComponent.devicesOptions.DISABLED);
-    this.emitRiskAssessmentChange();
-  }
+  currentDeviceAssessment: any;
+  currentIpReputationAssessment: any;
+  currentGeoVelocityAssessment: any;
 
-  ipReputationAssessmentChange(assessment) {
-    this.currentIpReputationAssessment = MfaIntelligentComponent.buildAssessment(
-      assessment,
-      MfaIntelligentComponent.ipReputationOptions.DISABLED,
-    );
-    this.emitRiskAssessmentChange();
-  }
-
-  geoVelocityAssessmentChange(assessment) {
-    this.currentGeoVelocityAssessment = MfaIntelligentComponent.buildAssessment(
-      assessment,
-      MfaIntelligentComponent.geoVelocityOptions.DISABLED,
-    );
-    this.emitRiskAssessmentChange();
-  }
-
-  private static buildAssessment(assessment, option) {
+  private static buildAssessment(assessment: any, option: any) {
     if (option !== assessment) {
       const thresholds = {};
       thresholds[assessment.value] = assessment.threshold;
@@ -101,9 +62,47 @@ export class MfaIntelligentComponent implements OnInit {
   private static disabledAssessment() {
     return { enabled: false, thresholds: {} };
   }
+  ngOnInit(): void {
+    this.currentDeviceAssessment = this.riskAssessment.deviceAssessment || MfaIntelligentComponent.disabledAssessment();
+    this.currentIpReputationAssessment = this.riskAssessment.ipReputationAssessment || MfaIntelligentComponent.disabledAssessment();
+    this.currentGeoVelocityAssessment = this.riskAssessment.geoVelocityAssessment || MfaIntelligentComponent.disabledAssessment();
+  }
 
-  private emitRiskAssessmentChange() {
-    this.settingsChangeEmitter.emit({
+  get deviceAssessments() {
+    return Object.values(MfaIntelligentComponent.devicesOptions);
+  }
+
+  get ipReputationAssessments() {
+    return Object.values(MfaIntelligentComponent.ipReputationOptions);
+  }
+
+  get geoVelocityAssessments() {
+    return Object.values(MfaIntelligentComponent.geoVelocityOptions);
+  }
+
+  deviceAssessmentChange(assessment: any): void {
+    this.currentDeviceAssessment = MfaIntelligentComponent.buildAssessment(assessment, MfaIntelligentComponent.devicesOptions.DISABLED);
+    this.emitRiskAssessmentChange();
+  }
+
+  ipReputationAssessmentChange(assessment: any): void {
+    this.currentIpReputationAssessment = MfaIntelligentComponent.buildAssessment(
+      assessment,
+      MfaIntelligentComponent.ipReputationOptions.DISABLED,
+    );
+    this.emitRiskAssessmentChange();
+  }
+
+  geoVelocityAssessmentChange(assessment: any): void {
+    this.currentGeoVelocityAssessment = MfaIntelligentComponent.buildAssessment(
+      assessment,
+      MfaIntelligentComponent.geoVelocityOptions.DISABLED,
+    );
+    this.emitRiskAssessmentChange();
+  }
+
+  private emitRiskAssessmentChange(): void {
+    this.settingsChange.emit({
       deviceAssessment: this.currentDeviceAssessment,
       ipReputationAssessment: this.currentIpReputationAssessment,
       geoVelocityAssessment: this.currentGeoVelocityAssessment,

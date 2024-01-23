@@ -25,16 +25,8 @@
     </div>
     <div class="mfa-title">
       <h5>Remember Device</h5>
-      <small>Remember Device will skip MFA if the user's device is known.</small>
+      <small>Remember Device will skip MFA if the user’s device has been authenticated.</small>
     </div>
-  </div>
-  <blockquote class="warning" *ngIf="!hasDeviceIdentifierPlugins()">
-    <p>
-      <mat-icon>warning_outline</mat-icon>
-      You need to create a <b> device identifier </b> plugin to use the remember device feature.
-    </p>
-  </blockquote>
-  <div class="gv-form-section-description">
     <mat-slide-toggle
       matInput
       placeholder="Remember device"
@@ -42,54 +34,80 @@
       [disabled]="!hasDeviceIdentifierPlugins()"
       (change)="onToggle($event)"
       [checked]="active"
-    >
-      Enable Remember Device
-    </mat-slide-toggle>
+    ></mat-slide-toggle>
   </div>
-  <div *ngIf="selectedMFAOption === 'Conditional' || isConditional" class="gv-form-section-description">
-    <mat-slide-toggle
-      matInput
-      placeholder="Skip Remember Device if conditional MFA evaluates no risk"
-      name="mfaSkipRememberDevice"
-      [disabled]="!isActive()"
-      (change)="onSkip($event)"
-      [checked]="skipRememberDevice"
+  <div class="config-section">
+    <info-banner
+      *ngIf="!hasDeviceIdentifierPlugins()"
+      [link]="getDeviceIdentifierLink()"
+      text="To use the Remember Device feature, you need to first create a Device Identifier Plugin."
+      type="warning"
+      buttonName="Add device identifier"
     >
-      Skip Remember Device if conditional MFA evaluates no risk
-    </mat-slide-toggle>
-  </div>
-  <br />
-  <form *ngIf="active" fxLayoutGap="10px">
-    <mat-form-field appearance="outline" floatLabel="always" fxFlex="32">
-      <mat-label>Select your device identifier provider</mat-label>
-      <mat-select (selectionChange)="updateDeviceIdentifierId($event)" [(value)]="this.selectedDeviceIdentifier" name="deviceIdentifierId">
-        <mat-option *ngFor="let rd of deviceIdentifiers; index as i" [value]="rd.id">{{ rd.name }}</mat-option>
-      </mat-select>
-    </mat-form-field>
-    <mat-form-field appearance="outline" floatLabel="always" fxFlex="32">
-      <input
+    </info-banner>
+    <div *ngIf="selectedMFAOption === 'Conditional' || isConditional" class="gv-form-section-description">
+      <mat-slide-toggle
         matInput
-        type="number"
-        placeholder="Duration"
-        name="expirationTimeSeconds"
-        min="0"
-        [min]="0"
-        [value]="displayExpiresIn()"
-        (keyup)="onTimeChange($event)"
-      />
-      <mat-hint>Default time is 10 hours</mat-hint>
-    </mat-form-field>
-    <mat-form-field appearance="outline" floatLabel="always" fxFlex="32">
-      <mat-select placeholder="Unit" name="expirationTimeUnit" [value]="displayUnitTime()" (selectionChange)="onUnitChange($event)">
-        <mat-option value="seconds">SECONDS</mat-option>
-        <mat-option value="minutes">MINUTES</mat-option>
-        <mat-option value="hours">HOURS</mat-option>
-        <mat-option value="days">DAYS</mat-option>
-        <mat-option value="weeks">WEEKS</mat-option>
-        <mat-option value="months">MONTHS</mat-option>
-        <mat-option value="years">YEARS</mat-option>
-      </mat-select>
-      <mat-hint>Period of time users can trust devices</mat-hint>
-    </mat-form-field>
-  </form>
+        placeholder="Skip Remember Device if conditional MFA evaluates no risk"
+        name="mfaSkipRememberDevice"
+        [disabled]="!isActive()"
+        (change)="onSkip($event)"
+        [checked]="skipRememberDevice"
+      >
+        Skip Remember Device if conditional MFA evaluates no risk
+      </mat-slide-toggle>
+    </div>
+    <br />
+    <form *ngIf="active" fxLayoutGap="10px">
+      <div class="trusted-title">
+        <p>Configure the duration your device will be trusted</p>
+      </div>
+      <div>
+        <mat-form-field appearance="outline" floatLabel="always" fxFlex="32">
+          <mat-label>Select your device identifier provider</mat-label>
+          <mat-select
+            (selectionChange)="updateDeviceIdentifierId($event)"
+            [(value)]="this.selectedDeviceIdentifier"
+            name="deviceIdentifierId"
+          >
+            <mat-option *ngFor="let rd of deviceIdentifiers; index as i" [value]="rd.id">{{ rd.name }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline" floatLabel="always" fxFlex="32" style="margin-left: 5px">
+          <input
+            matInput
+            type="number"
+            placeholder="Duration"
+            name="expirationTimeSeconds"
+            min="0"
+            [min]="0"
+            [value]="displayExpiresIn()"
+            (keyup)="onTimeChange($event)"
+          />
+          <mat-hint>Default time is 10 hours</mat-hint>
+        </mat-form-field>
+        <mat-form-field appearance="outline" floatLabel="always" fxFlex="32" style="margin-left: 5px">
+          <mat-select placeholder="Unit" name="expirationTimeUnit" [value]="displayUnitTime()" (selectionChange)="onUnitChange($event)">
+            <mat-option value="seconds">SECONDS</mat-option>
+            <mat-option value="minutes">MINUTES</mat-option>
+            <mat-option value="hours">HOURS</mat-option>
+            <mat-option value="days">DAYS</mat-option>
+            <mat-option value="weeks">WEEKS</mat-option>
+            <mat-option value="months">MONTHS</mat-option>
+            <mat-option value="years">YEARS</mat-option>
+          </mat-select>
+          <mat-hint>Period of time users can trust devices</mat-hint>
+        </mat-form-field>
+      </div>
+
+      <mat-slide-toggle
+        [disabled]="true"
+        matInput
+        name="mfaRememberDeviceSkipIfNoRisk"
+        (change)="onToggleSkipIfNoRisk($event)"
+        [checked]="skipIfNoRisk"
+        >Skip Remember Device if conditional MFA evaluates to no risk.
+      </mat-slide-toggle>
+    </form>
+  </div>
 </div>
