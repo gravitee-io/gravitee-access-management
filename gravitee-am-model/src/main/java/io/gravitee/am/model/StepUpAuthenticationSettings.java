@@ -15,35 +15,23 @@
  */
 package io.gravitee.am.model;
 
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 /**
  * @author Ashraful HASAN (ashraful.hasan at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Getter
+@Setter
+@NoArgsConstructor
 public class StepUpAuthenticationSettings {
     private Boolean active;
     private String stepUpAuthenticationRule;
 
-    public StepUpAuthenticationSettings() {
-    }
-
     public StepUpAuthenticationSettings(StepUpAuthenticationSettings other) {
         this.active = other.active;
         this.stepUpAuthenticationRule = other.stepUpAuthenticationRule;
-    }
-
-    public Boolean getActive() {
-        return active;
-    }
-
-    public void setActive(Boolean active) {
-        this.active = active;
-    }
-
-    public String getStepUpAuthenticationRule() {
-        return stepUpAuthenticationRule;
-    }
-
-    public void setStepUpAuthenticationRule(String stepUpAuthenticationRule) {
-        this.stepUpAuthenticationRule = stepUpAuthenticationRule;
     }
 }
