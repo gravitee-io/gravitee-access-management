@@ -29,9 +29,9 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
 import java.util.Optional;
 import java.util.Set;
 
-import static io.gravitee.am.common.utils.ConstantKeys.MFA_ALTERNATIVES_ENABLE_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.MFA_CHALLENGE_CONDITION_SATISFIED;
 import static io.gravitee.am.common.utils.ConstantKeys.MFA_ENROLLMENT_CONDITION_SATISFIED;
+import static io.gravitee.am.common.utils.ConstantKeys.MFA_ENROLLMENT_USER_ENROLLING;
 import static java.util.Objects.isNull;
 
 /**
@@ -57,7 +57,7 @@ public class MFAChallengeStep extends MFAStep {
 
         final boolean skipMFA = isNull(client) || noFactor(client) || context.isMfaChallengeComplete()
                 || isAdaptiveMfa(context) || isStepUp(context) || isRememberDevice(context) || isEnrollSkipRuleSatisfied(routingContext)
-                || isStronglyAuthenticated(context) || !MfaUtils.isChallengeActive(client) || isChallengeSkipRuleSatisfied(routingContext);
+                || isStronglyAuthenticated(context) || skipIfChallengeInactiveOrUserNotEnrolling(client, routingContext) || isChallengeSkipRuleSatisfied(routingContext);
 
         if (skipMFA) {
             flow.doNext(routingContext);
@@ -186,5 +186,17 @@ public class MFAChallengeStep extends MFAStep {
 
     private boolean isChallengeSkipRuleSatisfied(RoutingContext context) {
         return Optional.ofNullable((Boolean)context.session().get(MFA_CHALLENGE_CONDITION_SATISFIED)).orElse(Boolean.FALSE);
+    }
+
+    private boolean isUserEnrolling(RoutingContext context) {
+        return Optional.ofNullable((Boolean)context.session().get(MFA_ENROLLMENT_USER_ENROLLING)).orElse(Boolean.FALSE);
+    }
+
+    private boolean skipIfChallengeInactiveOrUserNotEnrolling(Client client, RoutingContext context) {
+        if (isUserEnrolling(context) || MfaUtils.isChallengeActive(client)) {
+            return false;
+        } else {
+            return true;
+        }
     }
 }

@@ -107,6 +107,7 @@ public interface ConstantKeys {
 
     String MFA_ENROLLMENT_CONDITION_SATISFIED="mfaEnrollmentConditionSatisfied";
     String MFA_CHALLENGE_CONDITION_SATISFIED="mfaChallengeConditionSatisfied";
+    String MFA_ENROLLMENT_USER_ENROLLING="mfaEnrollmentUserEnrolling";
 
     // Passwordless keys.
     String WEBAUTHN_SKIPPED_KEY = "webAuthnRegistrationSkipped";
