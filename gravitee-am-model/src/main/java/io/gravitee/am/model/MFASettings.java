@@ -36,7 +36,6 @@ public class MFASettings {
     @Deprecated
     private String stepUpAuthenticationRule;
     private StepUpAuthenticationSettings stepUpAuthentication;
-    private String skipStepUpAuthentication;
     private String adaptiveAuthenticationRule;
     private RememberDeviceSettings rememberDevice;
     //deprecated since 4.3. use enroll instead
