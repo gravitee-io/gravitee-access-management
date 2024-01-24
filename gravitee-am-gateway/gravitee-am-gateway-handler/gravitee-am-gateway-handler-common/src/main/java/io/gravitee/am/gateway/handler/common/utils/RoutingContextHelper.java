@@ -24,10 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static io.gravitee.am.common.utils.ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.PASSWORDLESS_AUTH_ACTION_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.RISK_ASSESSMENT_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.*;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -35,6 +32,15 @@ import static io.gravitee.am.common.utils.ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CO
  */
 public class RoutingContextHelper {
     private static final List<String> BLACKLIST_CONTEXT_ATTRIBUTES = Arrays.asList("X-XSRF-TOKEN", "_csrf", "__body-handled");
+    private static final List<String> SESSION_ATTRIBUTES =
+            Arrays.asList(
+                    RISK_ASSESSMENT_KEY,
+                    MFA_ENROLLMENT_COMPLETED_KEY,
+                    ENROLLED_FACTOR_ID_KEY,
+                    MFA_CHALLENGE_COMPLETED_KEY,
+                    STRONG_AUTH_COMPLETED_KEY,
+                    WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY,
+                    PASSWORDLESS_AUTH_ACTION_KEY);
 
     /**
      * Return the {@link RoutingContext#data()} entries without technical attributes defined in {@link #BLACKLIST_CONTEXT_ATTRIBUTES}
@@ -54,23 +60,15 @@ public class RoutingContextHelper {
         }
 
         if (routingContext.session() != null) {
-            if (routingContext.session().get(RISK_ASSESSMENT_KEY) != null) {
-                contextData.put(RISK_ASSESSMENT_KEY, routingContext.session().get(RISK_ASSESSMENT_KEY));
-            }
-            if (routingContext.session().get(MFA_CHALLENGE_COMPLETED_KEY) != null) {
-                contextData.put(MFA_CHALLENGE_COMPLETED_KEY, routingContext.session().get(MFA_CHALLENGE_COMPLETED_KEY));
-            }
-            if (routingContext.session().get(WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY) != null) {
-                contextData.put(WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY, routingContext.session().get(WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY));
-            }
-            if (routingContext.session().get(PASSWORDLESS_AUTH_ACTION_KEY) != null) {
-                contextData.put(PASSWORDLESS_AUTH_ACTION_KEY, routingContext.session().get(PASSWORDLESS_AUTH_ACTION_KEY));
-            }
+            SESSION_ATTRIBUTES.forEach(attribute -> {
+                if (routingContext.session().get(attribute) != null) {
+                    contextData.put(attribute, routingContext.session().get(attribute));
+                }
+            });
         }
 
         // remove technical attributes
         BLACKLIST_CONTEXT_ATTRIBUTES.forEach(attribute -> contextData.remove(attribute));
         return contextData;
     }
-
 }
