@@ -16,9 +16,20 @@
 
 package io.gravitee.am.gateway.handler.root.resources.endpoint;
 
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.PlainJWT;
+import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.model.AuthenticationFlowContext;
+import io.vertx.rxjava3.core.http.HttpServerRequest;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.junit.Test;
+import org.mockito.Mockito;
+
+import java.util.Map;
 
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class ParamUtilsTest {
 
@@ -84,5 +95,62 @@ public class ParamUtilsTest {
 
         final String requestRedirectUriParamQuery = "https://test.com/people?v=123";
         assertFalse(ParamUtils.redirectMatches(requestRedirectUriParamQuery, registeredRedirectUri, true));
+    }
+
+    @Test
+    public void should_getOAuthParameter_from_requestParam() {
+        RoutingContext ctx = Mockito.mock(RoutingContext.class);
+        HttpServerRequest request = mock(HttpServerRequest.class);
+        when(ctx.request()).thenReturn(request);
+
+        final String paramName = "scope";
+        final String paramValue = "scopeFromRequest";
+        when(request.getParam(paramName)).thenReturn(paramValue);
+
+        assertEquals(paramValue, ParamUtils.getOAuthParameter(ctx, paramName));
+    }
+
+    @Test
+    public void should_getOAuthParameter_from_requestObject() {
+        RoutingContext ctx = Mockito.mock(RoutingContext.class);
+        HttpServerRequest request = mock(HttpServerRequest.class);
+        when(ctx.request()).thenReturn(request);
+
+        final String paramName = "scope";
+        final String paramValue = "scopeFromJwtObject";
+        when(ctx.get(ConstantKeys.REQUEST_OBJECT_KEY)).thenReturn(new PlainJWT(new JWTClaimsSet.Builder().claim(paramName, paramValue).build()));
+
+        assertEquals(paramValue, ParamUtils.getOAuthParameter(ctx, paramName));
+    }
+
+    @Test
+    public void should_getOAuthParameter_from_authenticationFlowContext() {
+        RoutingContext ctx = Mockito.mock(RoutingContext.class);
+        HttpServerRequest request = mock(HttpServerRequest.class);
+        when(ctx.request()).thenReturn(request);
+
+        final String paramName = "scope";
+        final String paramValue = "scopeFromAuthFlowCtx";
+        AuthenticationFlowContext flowCtx = new AuthenticationFlowContext();
+        flowCtx.setData(Map.of(ConstantKeys.REQUEST_PARAMETERS_KEY, Map.of(paramName, paramValue)));
+        when(ctx.get(ConstantKeys.AUTH_FLOW_CONTEXT_KEY)).thenReturn(flowCtx);
+
+        assertEquals(paramValue, ParamUtils.getOAuthParameter(ctx, paramName));
+    }
+
+    @Test
+    public void should_getOAuthParameter_from_requestParam_fallback() {
+        RoutingContext ctx = Mockito.mock(RoutingContext.class);
+        HttpServerRequest request = mock(HttpServerRequest.class);
+        when(ctx.request()).thenReturn(request);
+
+        final String paramName = "scope";
+        final String paramValue = "scopeFromRequest";
+        when(request.getParam(paramName)).thenReturn(paramValue);
+        // set the AuthFlow without RequestObject key to test branching condition and fallback
+        AuthenticationFlowContext flowCtx = new AuthenticationFlowContext();
+        when(ctx.get(ConstantKeys.AUTH_FLOW_CONTEXT_KEY)).thenReturn(flowCtx);
+
+        assertEquals(paramValue, ParamUtils.getOAuthParameter(ctx, paramName));
     }
 }
