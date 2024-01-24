@@ -85,6 +85,6 @@ public class MfaUtils {
     }
 
     public static String getEnrollmentRule(Client client) {
-        return ofNullable(client.getMfaSettings()).orElse(new MFASettings()).getEnrollment().getEnrollmentRule();
+        return ofNullable(client.getMfaSettings()).orElse(new MFASettings()).getEnroll().getEnrollmentRule();
     }
 }
