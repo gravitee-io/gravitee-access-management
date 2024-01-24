@@ -33,7 +33,6 @@ public class PatchChallengeSettings {
     public ChallengeSettings patch(ChallengeSettings _toPatch) {
         var toPatch = _toPatch == null ? new ChallengeSettings() : new ChallengeSettings(_toPatch);
         SetterUtils.safeSet(toPatch::setActive, this.getActive());
-        SetterUtils.safeSet(toPatch::setOption, this.getOption());
         return toPatch;
     }
 }
