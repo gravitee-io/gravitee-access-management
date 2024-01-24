@@ -28,13 +28,11 @@ import lombok.Setter;
 @NoArgsConstructor
 public class ChallengeSettings {
     private boolean active;
-    private boolean forceChallenge;
     private String challengeRule;
     private MfaType type;
 
     public ChallengeSettings(ChallengeSettings other) {
         this.active = other.active;
-        this.forceChallenge = other.forceChallenge;
         this.challengeRule = other.challengeRule;
         this.type = other.type;
     }
