@@ -21,6 +21,7 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.identityprovider.common.oauth2.utils.URLEncodedUtils;
 import io.gravitee.am.service.utils.WildcardUtils;
+import io.gravitee.am.model.AuthenticationFlowContext;
 import io.vertx.core.json.Json;
 import io.vertx.rxjava3.core.MultiMap;
 import io.vertx.rxjava3.ext.web.RoutingContext;
@@ -34,11 +35,13 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
+import static io.gravitee.am.common.utils.ConstantKeys.REQUEST_PARAMETERS_KEY;
 import static java.util.Objects.nonNull;
 
 /**
@@ -62,28 +65,37 @@ public class ParamUtils {
     public static String getOAuthParameter(RoutingContext context, String paramName) {
         Optional<String> value = Optional.empty();
         final JWT requestObject = context.get(ConstantKeys.REQUEST_OBJECT_KEY);
+        final AuthenticationFlowContext authFlowContext = context.get(ConstantKeys.AUTH_FLOW_CONTEXT_KEY);
         if (requestObject != null) {
             try {
                 // return parameter from the request object first as When the request parameter (or request_uri) is used,
                 // the OpenID Connect request parameter values contained in the JWT supersede those passed using the OAuth 2.0 request syntax.
                 final Object claim = requestObject.getJWTClaimsSet().getClaim(paramName);
-                if (Parameters.CLAIMS.equals(paramName) && claim != null) {
-                    value = Optional.ofNullable(Json.encode(claim));
-                } else {
-                    if (claim != null) {
-                        // request_expiry may be an integer so get Generic object type and convert it in string
-                        value = Optional.ofNullable(claim.toString());
-                    } else {
-                        value = Optional.empty();
-                    }
-                }
+                value = extractParamFromRequestObject(paramName, claim);
             } catch (ParseException e) {
                 LOGGER.warn("Unable to extract parameter '{}' from RequestObject", paramName);
             }
+        } else if (authFlowContext != null && authFlowContext.getData().containsKey(REQUEST_PARAMETERS_KEY)) {
+            // if parameter have been provided using PAR, then we may have to go into the AuthenticationFlowContext
+            // to get these parameters as for endpoint like '/login' or '/mfa/challenge' the RequestObject is not available
+            final Object claim = ((Map<String, Object>)authFlowContext.getData().get(REQUEST_PARAMETERS_KEY)).get(paramName);
+            value = extractParamFromRequestObject(paramName, claim);
         }
+
         // if parameter is missing from the request object (or if the extract fails)
         // return the value provided through query parameters
         return value.orElse(context.request().getParam(paramName));
+    }
+
+    private static Optional<String> extractParamFromRequestObject(String paramName, Object claim) {
+        Optional<String> value = Optional.empty();
+        if (Parameters.CLAIMS.equals(paramName) && claim != null) {
+            value = Optional.ofNullable(Json.encode(claim));
+        } else if (claim != null) {
+            // request_expiry may be an integer so get Generic object type and convert it in string
+            value = Optional.ofNullable(claim.toString());
+        }
+        return value;
     }
 
     public static boolean redirectMatches(String requestedRedirect, String registeredClientUri, boolean uriStrictMatch) {
