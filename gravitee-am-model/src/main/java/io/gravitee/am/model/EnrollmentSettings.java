@@ -27,7 +27,6 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 public class EnrollmentSettings {
-
     private Boolean forceEnrollment;
     private Long skipTimeSeconds;
 
@@ -35,21 +34,4 @@ public class EnrollmentSettings {
         this.forceEnrollment = enrollment.forceEnrollment;
         this.skipTimeSeconds = enrollment.skipTimeSeconds;
     }
-
-    public Boolean getForceEnrollment() {
-        return forceEnrollment;
-    }
-
-    public void setForceEnrollment(Boolean forceEnrollment) {
-        this.forceEnrollment = forceEnrollment;
-    }
-
-    public Long getSkipTimeSeconds() {
-        return skipTimeSeconds;
-    }
-
-    public void setSkipTimeSeconds(Long skipTimeSeconds) {
-        this.skipTimeSeconds = skipTimeSeconds;
-    }
-
 }

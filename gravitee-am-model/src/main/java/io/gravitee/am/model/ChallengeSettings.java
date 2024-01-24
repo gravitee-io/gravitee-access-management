@@ -27,50 +27,15 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 public class ChallengeSettings {
-    private String option;
     private boolean active;
     private boolean forceChallenge;
     private String challengeRule;
     private MfaType type;
-
 
     public ChallengeSettings(ChallengeSettings other) {
         this.active = other.active;
         this.forceChallenge = other.forceChallenge;
         this.challengeRule = other.challengeRule;
         this.type = other.type;
-    }
-
-
-    public boolean isActive() {
-        return active;
-    }
-
-    public void setActive(boolean active) {
-        this.active = active;
-    }
-
-    public boolean isForceChallenge() {
-        return forceChallenge;
-    }
-
-    public void setForceChallenge(boolean forceChallenge) {
-        this.forceChallenge = forceChallenge;
-    }
-
-    public String getChallengeRule() {
-        return challengeRule;
-    }
-
-    public void setChallengeRule(String challengeRule) {
-        this.challengeRule = challengeRule;
-    }
-
-    public MfaType getType() {
-        return type;
-    }
-
-    public void setType(MfaType type) {
-        this.type = type;
     }
 }
