@@ -34,9 +34,9 @@ import java.util.Optional;
 import java.util.Set;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
-import static io.gravitee.am.common.utils.ConstantKeys.MFA_ALTERNATIVES_ENABLE_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.MFA_CHALLENGE_CONDITION_SATISFIED;
 import static io.gravitee.am.common.utils.ConstantKeys.MFA_ENROLLMENT_CONDITION_SATISFIED;
+import static io.gravitee.am.common.utils.ConstantKeys.MFA_ENROLLMENT_USER_ENROLLING;
 import static java.util.Objects.isNull;
 
 /**
@@ -85,12 +85,15 @@ public class MFAEnrollStep extends MFAStep {
 
         if (isEnrollActive(client) && !userHasFactor(filterContext)) {
             if (isEnrollRequired(client)) {
+                routingContext.session().put(MFA_ENROLLMENT_USER_ENROLLING, true);
                 flow.exit(this);
                 return;
             } else if (isEnrollConditional(client) && enrollConditionNotSatisfied(client, filterContext, routingContext) && !isMfaSkipped(filterContext)) {
+                routingContext.session().put(MFA_ENROLLMENT_USER_ENROLLING, true);
                 flow.exit(this);
                 return;
             } else if (isEnrollOptional(client) && !isMfaSkipped(filterContext)) {
+                routingContext.session().put(MFA_ENROLLMENT_USER_ENROLLING, true);
                 flow.exit(this);
                 return;
             }

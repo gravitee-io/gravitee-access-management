@@ -608,11 +608,11 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Completable setMfaEnrollmentSkippedTime(Client client, User user) {
-        var mfaEnrollmentSettings = getMfaEnrollmentSettings(client);
-        final Boolean active = Optional.ofNullable(mfaEnrollmentSettings.getForceEnrollment()).orElse(false);
+        EnrollSettings mfaEnrollSettings = getMfaEnrollmentSettings(client);
+        final Boolean active = Optional.ofNullable(mfaEnrollSettings.getForceEnrollment()).orElse(false);
         if (FALSE.equals(active) && nonNull(user)) {
             Date now = new Date();
-            long skipTime = ofNullable(mfaEnrollmentSettings.getSkipTimeSeconds()).orElse(ConstantKeys.DEFAULT_ENROLLMENT_SKIP_TIME_SECONDS) * 1000L;
+            long skipTime = ofNullable(mfaEnrollSettings.getSkipTimeSeconds()).orElse(ConstantKeys.DEFAULT_ENROLLMENT_SKIP_TIME_SECONDS) * 1000L;
             if (isNull(user.getMfaEnrollmentSkippedAt()) || user.getMfaEnrollmentSkippedAt().getTime() + skipTime < now.getTime()) {
                 user.setMfaEnrollmentSkippedAt(now);
                 return userService.update(user).ignoreElement();
@@ -621,11 +621,11 @@ public class UserServiceImpl implements UserService {
         return complete();
     }
 
-    private EnrollmentSettings getMfaEnrollmentSettings(Client client) {
+    private EnrollSettings getMfaEnrollmentSettings(Client client) {
         return ofNullable(client)
                 .map(Client::getMfaSettings)
-                .map(MFASettings::getEnrollment)
-                .orElse(new EnrollmentSettings());
+                .map(MFASettings::getEnroll)
+                .orElse(new EnrollSettings());
     }
 
     private Maybe<Optional<Client>> clientSource(String audience) {
