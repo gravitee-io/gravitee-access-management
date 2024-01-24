@@ -43,7 +43,6 @@ public class PatchMFASettings {
         SetterUtils.safeSet(toPatch::setLoginRule, this.getLoginRule());
         SetterUtils.safeSet(toPatch::setStepUpAuthenticationRule, this.getStepUpAuthenticationRule());
         SetterUtils.safeSet(toPatch::setAdaptiveAuthenticationRule, this.getAdaptiveAuthenticationRule());
-        SetterUtils.safeSet(toPatch::setSkipStepUpAuthentication, this.getSkipAdaptiveAuthenticationRule());
 
         if (nonNull(this.getRememberDevice()) && this.getRememberDevice().isPresent()) {
             toPatch.setRememberDevice(this.getRememberDevice().get().patch(toPatch.getRememberDevice()));
