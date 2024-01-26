@@ -42,8 +42,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Arrays;
 import java.util.List;
 
-import static io.gravitee.am.common.utils.ConstantKeys.ALTERNATIVE_FACTOR_ID_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.POLICY_CHAIN_ERROR_KEY_MFA_CHALLENGE_ERROR;
+import static io.gravitee.am.common.utils.ConstantKeys.*;
 import static io.gravitee.am.gateway.handler.common.utils.RoutingContextHelper.getEvaluableAttributes;
 
 /**
@@ -116,8 +115,12 @@ public class PolicyChainHandlerImpl implements Handler<RoutingContext> {
                         if (failureCause instanceof PolicyChainException
                                 && POLICY_CHAIN_ERROR_KEY_MFA_CHALLENGE_ERROR.equals(((PolicyChainException) failureCause).key())) {
                             // need to set into the session the alternativeFactorId
-                            if (((PolicyChainException) failureCause).parameters() != null) {
-                                context.session().put(ALTERNATIVE_FACTOR_ID_KEY, ((PolicyChainException) failureCause).parameters().get(ALTERNATIVE_FACTOR_ID_KEY));
+                            PolicyChainException policyChainException = (PolicyChainException) failureCause;
+                            if (policyChainException.parameters() != null) {
+                                context.session().put(ALTERNATIVE_FACTOR_ID_KEY, policyChainException.parameters().get(ALTERNATIVE_FACTOR_ID_KEY));
+                                if (policyChainException.parameters().containsKey(MFA_FORCE_ENROLLMENT)) {
+                                    context.session().put(MFA_FORCE_ENROLLMENT, policyChainException.parameters().get(MFA_FORCE_ENROLLMENT));
+                                }
                             }
                         }
 
