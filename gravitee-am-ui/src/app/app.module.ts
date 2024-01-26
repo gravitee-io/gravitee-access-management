@@ -415,8 +415,8 @@ import { MfaStepUpComponent } from './domain/applications/application/advanced/f
 import { MfaActivateComponent } from './domain/applications/application/advanced/factors/mfa-activate/mfa-activate.component';
 import { TimePeriodPickerComponent } from './domain/applications/application/advanced/factors/time-period-picker/time-period-picker.component';
 import { MfaConditionalComponent } from './domain/applications/application/advanced/factors/mfa-activate/conditional/mfa-conditional.component';
-import { MfaIntelligentComponent } from './domain/applications/application/advanced/factors/mfa-challenge/intelligent/mfa-intelligent.component';
-import { AssessmentComponent } from './domain/applications/application/advanced/factors/mfa-challenge/intelligent/assessment/assessment.component';
+import { MfaRiskBasedComponent } from './domain/applications/application/advanced/factors/mfa-challenge/risk-based/mfa-risk-based.component';
+import { AssessmentComponent } from './domain/applications/application/advanced/factors/mfa-challenge/risk-based/assessment/assessment.component';
 import { DomainSettingsDictionariesComponent } from './domain/settings/texts/dictionaries.component';
 import { DictionaryDialog } from './components/dialog/dictionary/dictionary-dialog.component';
 import { DictionariesResolver } from './resolvers/dictionaries.resolver';
@@ -678,7 +678,7 @@ import { AppConfig } from '../config/app.config';
     MfaActivateComponent,
     TimePeriodPickerComponent,
     MfaConditionalComponent,
-    MfaIntelligentComponent,
+    MfaRiskBasedComponent,
     AssessmentComponent,
     HelpTipsThemeComponent,
     DisplayableItemPipe,

@@ -15,34 +15,34 @@
  */
 package io.gravitee.am.service.model;
 
-import io.gravitee.am.model.EnrollmentSettings;
+import io.gravitee.am.model.EnrollSettings;
+import io.gravitee.am.model.MfaType;
 import io.gravitee.am.service.utils.SetterUtils;
-
 import java.util.Objects;
-import java.util.Optional;
-
 import static java.util.Objects.isNull;
+import java.util.Optional;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/**
- * @author Rémi SULTAN (remi.sultan at graviteesource.com)
- * @author GraviteeSource Team
- */
-
 @Getter
 @Setter
 @NoArgsConstructor
-public class PatchEnrollmentSettings {
+public class PatchEnrollSettings {
+    private Optional<Boolean> active;
     private Optional<Boolean> forceEnrollment;
     private Optional<Long> skipTimeSeconds;
-    public EnrollmentSettings patch(EnrollmentSettings _toPatch) {
-        EnrollmentSettings toPatch = _toPatch == null ? new EnrollmentSettings() : new EnrollmentSettings(_toPatch);
+    private Optional<String> enrollmentRule;
+    private Optional<MfaType> type;
+    public EnrollSettings patch(EnrollSettings _toPatch) {
+        EnrollSettings toPatch = _toPatch == null ? new EnrollSettings() : new EnrollSettings(_toPatch);
         SetterUtils.safeSet(toPatch::setForceEnrollment, this.getForceEnrollment());
         final Optional<Long> skipTimeSeconds = isNull(this.getSkipTimeSeconds()) ? Optional.empty() :
                 this.getSkipTimeSeconds().filter(Objects::nonNull).map(Math::abs);
         SetterUtils.safeSet(toPatch::setSkipTimeSeconds, skipTimeSeconds);
+        SetterUtils.safeSet(toPatch::setActive, getActive());
+        SetterUtils.safeSet(toPatch::setEnrollmentRule, getEnrollmentRule());
+        SetterUtils.safeSet(toPatch::setType, getType());
         return toPatch;
     }
 }
