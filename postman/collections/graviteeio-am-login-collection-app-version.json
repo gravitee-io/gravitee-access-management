@@ -1,9 +1,9 @@
 {
 	"info": {
-		"_postman_id": "060853b0-ec64-4e88-a1d5-94531aaa1a24",
+		"_postman_id": "ca389c6a-c2af-4f1e-a5f6-3148bd351843",
 		"name": "Gravitee.io - AM - Login - app version",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "7568294"
+		"_exporter_id": "11431568"
 	},
 	"item": [
 		{
@@ -3278,7 +3278,7 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n    \"factors\": [\n       \"{{mfaFactorId}}\"\n    ],\n    \"settings\": {\n        \"mfa\": {\n            \"enrollment\" : {\n                \"forceEnrollment\" : true            \n            }\n        }\n    }\n}"
+											"raw": "{\n    \"factors\": [\n       \"{{mfaFactorId}}\"\n    ],\n    \"settings\": {\n        \"mfa\": {\n            \"enroll\" : {\n                \"active\": true,\n                \"forceEnrollment\" : true,\n                \"type\": \"REQUIRED\"            \n            }\n        }\n    }\n}"
 										},
 										"url": {
 											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app4}}",
@@ -3860,7 +3860,7 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n    \"factors\": [\n       \"{{mfaFactorId}}\"\n    ],\n    \"settings\": {\n        \"mfa\": {\n            \"enrollment\" : {\n                \"forceEnrollment\" : false,\n                \"skipTimeSeconds\" : 5\n            }\n        }\n    }\n}"
+											"raw": "{\n    \"factors\": [\n       \"{{mfaFactorId}}\"\n    ],\n    \"settings\": {\n        \"mfa\": {\n            \"enroll\" : {\n                \"active\": true,\n                \"forceEnrollment\" : false,\n                \"skipTimeSeconds\" : 5,\n                \"type\": \"OPTIONAL\"\n            }\n        }\n    }\n}"
 										},
 										"url": {
 											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app4}}",
@@ -4516,7 +4516,7 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n    \"factors\": [\n       \"{{mfaFactorId}}\"\n    ],\n    \"settings\": {\n        \"mfa\": {}\n    }\n}"
+											"raw": "{\n    \"factors\": [\n       \"{{mfaFactorId}}\"\n    ],\n    \"settings\": {\n        \"mfa\": {\n            \"enroll\" : {\n                \"active\": true,\n                \"forceEnrollment\" : true,       \n                \"type\": \"REQUIRED\"\n            },\n            \"challenge\" : {\n                \"active\": true,\n                \"type\": \"REQUIRED\"\n            }\n        }\n    }\n}"
 										},
 										"url": {
 											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app4}}",
@@ -5304,7 +5304,7 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n    \"factors\": [\n       \"{{mfaFactorId}}\",\n       \"{{recoveryCodeFactorId}}\"\n    ],\n    \"settings\": {\n        \"mfa\": {}\n    }\n}"
+											"raw": "{\n    \"factors\": [\n       \"{{mfaFactorId}}\",\n       \"{{recoveryCodeFactorId}}\"\n    ],\n    \"settings\": {\n        \"mfa\": {\n            \"enroll\" : {\n                \"active\": true,\n                \"forceEnrollment\" : true,\n                \"type\": \"REQUIRED\"\n            },\n            \"challenge\" : {\n                \"active\": true,\n                \"type\": \"REQUIRED\"\n            }\n        }\n    }\n}"
 										},
 										"url": {
 											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app4}}",
@@ -6829,7 +6829,7 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n    \"factors\": [\n        \"{{mfaFactorId}}\"\n    ],\n    \"settings\": {\n        \"mfa\": {\n            \"stepUpAuthenticationRule\": \"{#request.params['redirect_uri'][0].contains('4000')}\"\n        },\n        \"account\": {\n            \"inherited\": true\n        }\n    }\n\n}"
+											"raw": "{\n    \"factors\": [\n        \"{{mfaFactorId}}\"\n    ],\n    \"settings\": {\n        \"mfa\": {\n            \"stepUpAuthenticationRule\": \"{#request.params['redirect_uri'][0].contains('4000')}\",\n            \"enroll\" : {\n                \"active\": true,\n                \"forceEnrollment\" : true,\n                \"type\": \"REQUIRED\"\n            },\n            \"challenge\" : {\n                \"active\": true,\n                \"type\": \"REQUIRED\"\n            }\n        },\n        \"account\": {\n            \"inherited\": true\n        }\n    }\n\n}"
 										},
 										"url": {
 											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app4}}",
@@ -7975,7 +7975,7 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n    \"factors\": [\n        \"{{mfaFactorId}}\"\n    ],\n    \"settings\": {\n        \"mfa\": {\n            \"adaptiveAuthenticationRule\": \"{#context.attributes['login_attempts'] < 3}\"\n        },\n        \"account\": {\n            \"inherited\": false,\n            \"loginAttemptsDetectionEnabled\": true,\n            \"maxLoginAttempts\": 10,\n            \"loginAttemptsResetTime\": 43200,\n            \"accountBlockedDuration\": 7200\n        }\n    }\n}"
+											"raw": "{\n    \"factors\": [\n        \"{{mfaFactorId}}\"\n    ],\n    \"settings\": {\n        \"mfa\": {\n            \"enroll\" : {\n                \"active\": true,\n                \"forceEnrollment\" : true,\n                \"type\": \"REQUIRED\"\n            },\n            \"challenge\" : {\n                \"active\": true,\n                \"type\": \"CONDITIONAL\",\n                \"challengeRule\": \"{#context.attributes['login_attempts'] < 3}\"\n            }\n        },\n        \"account\": {\n            \"inherited\": false,\n            \"loginAttemptsDetectionEnabled\": true,\n            \"maxLoginAttempts\": 10,\n            \"loginAttemptsResetTime\": 43200,\n            \"accountBlockedDuration\": 7200\n        }\n    }\n}"
 										},
 										"url": {
 											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app4}}",
@@ -8980,7 +8980,7 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n    \"factors\": [\n        \"{{mfaFactorId}}\"\n    ],\n    \"settings\": {\n        \"mfa\": {\n            \"adaptiveAuthenticationRule\": \"{#context.attributes['geoip']['country_iso_code'] == 'US'}\"\n        },\n        \"account\": {\n            \"inherited\": true\n        }\n    }\n}"
+											"raw": "{\n    \"factors\": [\n        \"{{mfaFactorId}}\"\n    ],\n    \"settings\": {\n        \"mfa\": {\n            \"enroll\" : {\n                \"active\": true,\n                \"forceEnrollment\" : true,\n                \"type\": \"REQUIRED\"\n            },\n            \"challenge\" : {\n                \"active\": true,\n                \"type\": \"REQUIRED\",\n                \"challengeRule\": \"{#context.attributes['geoip']['country_iso_code'] == 'US'}\"\n            }\n        },\n        \"account\": {\n            \"inherited\": true\n        }\n    }\n}"
 										},
 										"url": {
 											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app4}}",
@@ -9814,7 +9814,7 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n    \"factors\": [\n        \"{{mfaFactorId}}\"\n    ],\n    \"settings\": {\n        \"mfa\": {\n            \"rememberDevice\": {\n                \"active\": true,\n                \"deviceIdentifierId\": \"{{app4DeviceIdentifierId}}\",\n                \"expirationTimeSeconds\": 7200\n            }\n        },\n        \"account\": {\n            \"inherited\": true\n        }\n    }\n}"
+											"raw": "{\n    \"factors\": [\n        \"{{mfaFactorId}}\"\n    ],\n    \"settings\": {\n        \"mfa\": {\n            \"rememberDevice\": {\n                \"active\": true,\n                \"deviceIdentifierId\": \"{{app4DeviceIdentifierId}}\",\n                \"expirationTimeSeconds\": 7200\n            },\n            \"enroll\" : {\n                \"active\": true,\n                \"forceEnrollment\" : true,\n                \"type\": \"REQUIRED\"\n            },\n            \"challenge\" : {\n                \"active\": true,\n                \"type\": \"REQUIRED\"\n            }\n        },\n        \"account\": {\n            \"inherited\": true\n        }\n    }\n}"
 										},
 										"url": {
 											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app4}}",
@@ -11477,7 +11477,7 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n    \"factors\": [\n        \"{{mfaFactorId}}\"\n    ],\n    \"settings\": {\n        \"mfa\": {\n            \"adaptiveAuthenticationRule\": \"{#context.attributes['geoip']['country_iso_code'] == 'US' && #context.attributes['login_attempts'] < 3}\",\n            \"stepUpAuthenticationRule\": \"{#request.params['redirect_uri'][0].contains('4001')}\",\n             \"rememberDevice\": {\n                \"active\": true,\n                \"deviceIdentifierId\": \"{{app4DeviceIdentifierId}}\",\n                \"expirationTimeSeconds\": 7200\n            }\n        },\n        \"account\": {\n            \"inherited\": false,\n            \"loginAttemptsDetectionEnabled\": true,\n            \"maxLoginAttempts\": 10,\n            \"loginAttemptsResetTime\": 43200,\n            \"accountBlockedDuration\": 7200\n        }\n    }\n}"
+											"raw": "{\n    \"factors\": [\n        \"{{mfaFactorId}}\"\n    ],\n    \"settings\": {\n        \"mfa\": {\n            \"stepUpAuthenticationRule\": \"{#request.params['redirect_uri'][0].contains('4001')}\",\n             \"rememberDevice\": {\n                \"active\": true,\n                \"deviceIdentifierId\": \"{{app4DeviceIdentifierId}}\",\n                \"expirationTimeSeconds\": 7200\n            },\n            \"enroll\" : {\n                \"active\": true,\n                \"forceEnrollment\" : true,\n                \"type\": \"REQUIRED\"\n            },\n            \"challenge\" : {\n                \"active\": true,\n                \"type\": \"CONDITIONAL\",\n                \"challengeRule\": \"{#context.attributes['geoip']['country_iso_code'] == 'US' && #context.attributes['login_attempts'] < 3}\"\n            }\n        },\n        \"account\": {\n            \"inherited\": false,\n            \"loginAttemptsDetectionEnabled\": true,\n            \"maxLoginAttempts\": 10,\n            \"loginAttemptsResetTime\": 43200,\n            \"accountBlockedDuration\": 7200\n        }\n    }\n}"
 										},
 										"url": {
 											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app4}}",
