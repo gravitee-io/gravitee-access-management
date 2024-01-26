@@ -351,6 +351,8 @@ public class MFAEnrollEndpointTest extends RxWebTestBase {
                 302,
                 "Found", null);
     }
+
+    @Test
     public void shouldAcceptEnrollment_IgnoreRecoveryCode() throws Exception {
         final var RECOVERY_FACTOR_ID = UUID.randomUUID().toString();
         final var ENROLL_FACTOR_ID = UUID.randomUUID().toString();
@@ -598,6 +600,78 @@ public class MFAEnrollEndpointTest extends RxWebTestBase {
                     assertNotNull(location);
                     assertTrue(location.contains("/error"));
                     assertTrue(location.contains("factor+already+enrolled"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldAcceptEnrollment_MFAForceEnrollment() throws Exception {
+        final var USER_FACTOR_ID = UUID.randomUUID().toString();
+        final var ENROLL_FACTOR_ID = UUID.randomUUID().toString();
+        final var EMAIL_ADDR = "fake@acme.com";
+
+        Factor emailFactor = new Factor();
+        emailFactor.setId(ENROLL_FACTOR_ID);
+        emailFactor.setFactorType(FactorType.EMAIL);
+
+        Factor smsFactor = new Factor();
+        smsFactor.setId(USER_FACTOR_ID);
+        smsFactor.setFactorType(FactorType.SMS);
+
+        FactorProvider provider = mock(FactorProvider.class);
+        when(provider.checkSecurityFactor(any())).thenReturn(true);
+
+        when(factorManager.getFactor(ENROLL_FACTOR_ID)).thenReturn(emailFactor);
+        when(factorManager.get(ENROLL_FACTOR_ID)).thenReturn(provider);
+
+        when(factorManager.getFactor(USER_FACTOR_ID)).thenReturn(smsFactor);
+        when(factorManager.get(USER_FACTOR_ID)).thenReturn(provider);
+
+        router.route(HttpMethod.POST, REQUEST_PATH)
+                .handler(ctx -> {
+                    User user = new User();
+                    user.setId("userId");
+                    EnrolledFactor enrolledFactor = new EnrolledFactor();
+                    EnrolledFactorSecurity enrolledFactorSecurity = new EnrolledFactorSecurity();
+                    enrolledFactor.setFactorId(USER_FACTOR_ID);
+                    enrolledFactor.setStatus(FactorStatus.ACTIVATED);
+                    enrolledFactor.setSecurity(enrolledFactorSecurity);
+                    user.setFactors(Collections.singletonList(enrolledFactor));
+
+                    Client client = new Client();
+                    client.setFactors(Set.of(ENROLL_FACTOR_ID, USER_FACTOR_ID));
+                    ctx.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+                    ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+
+                    // force MFA enrollment
+                    ctx.session().put(ConstantKeys.MFA_FORCE_ENROLLMENT, true);
+
+                    ctx.next();
+                })
+                .handler(new MFAEnrollEndpoint(factorManager, engine, userService, domain, applicationContext))
+                .failureHandler(new ErrorHandler(RootProvider.PATH_ERROR));
+
+        testRequest(
+                HttpMethod.POST,
+                REQUEST_PATH,
+                req -> {
+                    Buffer buffer = Buffer.buffer();
+                    buffer
+                            .appendString("factorId="+ENROLL_FACTOR_ID)
+                            .appendString("&")
+                            .appendString(ConstantKeys.USER_MFA_ENROLLMENT+"="+true)
+                            .appendString("&")
+                            .appendString(ConstantKeys.MFA_ENROLLMENT_SHARED_SECRET+"="+UUID.randomUUID())
+                            .appendString("&")
+                            .appendString(ConstantKeys.MFA_ENROLLMENT_EMAIL+"="+EMAIL_ADDR);
+                    req.headers().set("content-length", String.valueOf(buffer.length()));
+                    req.headers().set("content-type", "application/x-www-form-urlencoded");
+                    req.write(buffer);
+                },
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.contains("/authorize"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
