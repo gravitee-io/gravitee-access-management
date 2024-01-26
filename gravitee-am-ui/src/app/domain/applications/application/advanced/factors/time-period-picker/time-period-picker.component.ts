@@ -49,7 +49,6 @@ export class TimePeriodPickerComponent implements OnInit {
   }
 
   onSkipTimeInEvent($event: any): void {
-    console.log('skip time', $event.target.value);
     this.humanTime.skipTime = $event.target.value;
     this.update();
   }
@@ -60,10 +59,7 @@ export class TimePeriodPickerComponent implements OnInit {
   }
 
   private update(): void {
-    console.log(' update ', this.humanTimeToSeconds());
-    this.settingsChange.emit({
-      skipTimeSeconds: this.humanTimeToSeconds(),
-    });
+    this.settingsChange.emit(this.humanTimeToSeconds());
   }
 
   private humanTimeToSeconds(): number {

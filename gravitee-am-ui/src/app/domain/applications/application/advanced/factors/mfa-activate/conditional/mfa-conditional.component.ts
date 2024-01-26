@@ -24,10 +24,11 @@ import { ExpressionInfoDialog } from '../../expression-info-dialog/expression-in
   styleUrls: ['./mfa-conditional.component.scss'],
 })
 export class MfaConditionalComponent {
-  @Input() adaptiveMfaRule: string;
-  @Input() skipAdaptiveMfaRule: string;
+  @Input() enrollmentRule: string;
+  @Input() skipEnrollmentRule: string;
   @Output() settingsChange: EventEmitter<any> = new EventEmitter<any>();
 
+  skipTimeSeconds: any;
   skipConditional = false;
 
   constructor(private dialog: MatDialog) {}
@@ -37,22 +38,16 @@ export class MfaConditionalComponent {
     this.dialog.open(ExpressionInfoDialog, { width: '700px' });
   }
 
-  updateAdaptiveMfaRule($event: any): void {
+  updateRule($event: any): void {
     if ($event.target) {
-      this.adaptiveMfaRule = $event.target.value;
-      console.log('e', this.adaptiveMfaRule);
-      this.settingsChange.emit({
-        adaptiveMfaRule: this.adaptiveMfaRule,
-      });
+      this.enrollmentRule = $event.target.value;
+      this.update();
     }
   }
-  updateSkipAdaptiveMfaRule($event: any): void {
+  updateSkipRule($event: any): void {
     if ($event.target) {
-      this.skipAdaptiveMfaRule = $event.target.value;
-      console.log('e2', this.skipAdaptiveMfaRule);
-      this.settingsChange.emit({
-        skipAdaptiveMfaRule: $event.target.value,
-      });
+      this.skipEnrollmentRule = $event.target.value;
+      this.update();
     }
   }
   switchSkipConditional(): void {
@@ -60,8 +55,15 @@ export class MfaConditionalComponent {
   }
   onSettingChange($event: any): void {
     if ($event.target) {
-      console.log('on change mfa conditional ', $event);
-      this.settingsChange.emit($event);
+      this.skipTimeSeconds = $event.target.value;
+      this.update();
     }
+  }
+  private update(): void {
+    this.settingsChange.emit({
+      enrollmentRule: this.enrollmentRule,
+      skipEnrollmentRule: this.skipEnrollmentRule,
+      skipTimeSeconds: this.skipTimeSeconds,
+    });
   }
 }

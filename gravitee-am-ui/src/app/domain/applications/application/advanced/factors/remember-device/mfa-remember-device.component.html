@@ -45,19 +45,6 @@
       buttonName="Add device identifier"
     >
     </info-banner>
-    <div *ngIf="selectedMFAOption === 'Conditional' || isConditional" class="gv-form-section-description">
-      <mat-slide-toggle
-        matInput
-        placeholder="Skip Remember Device if conditional MFA evaluates no risk"
-        name="mfaSkipRememberDevice"
-        [disabled]="!isActive()"
-        (change)="onSkip($event)"
-        [checked]="skipRememberDevice"
-      >
-        Skip Remember Device if conditional MFA evaluates no risk
-      </mat-slide-toggle>
-    </div>
-    <br />
     <form *ngIf="active" fxLayoutGap="10px">
       <div class="trusted-title">
         <p>Configure the duration your device will be trusted</p>
@@ -99,15 +86,18 @@
           <mat-hint>Period of time users can trust devices</mat-hint>
         </mat-form-field>
       </div>
-
-      <mat-slide-toggle
-        [disabled]="true"
-        matInput
-        name="mfaRememberDeviceSkipIfNoRisk"
-        (change)="onToggleSkipIfNoRisk($event)"
-        [checked]="skipIfNoRisk"
-        >Skip Remember Device if conditional MFA evaluates to no risk.
-      </mat-slide-toggle>
+      <div *ngIf="isConditional()" class="gv-form-section-description">
+        <mat-slide-toggle
+          matInput
+          placeholder="Skip Remember Device if conditional MFA evaluates no risk"
+          name="mfaSkipRememberDevice"
+          [disabled]="!active"
+          (change)="onSkip($event)"
+          [checked]="skipRememberDevice"
+        >
+          Skip Remember Device if conditional MFA evaluates to no risk.
+        </mat-slide-toggle>
+      </div>
     </form>
   </div>
 </div>

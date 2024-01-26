@@ -14,17 +14,9 @@
  * limitations under the License.
  */
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { Observable } from 'rxjs';
-import { GioLicenseService, LicenseOptions } from '@gravitee/ui-particles-angular';
+import { GioLicenseService } from '@gravitee/ui-particles-angular';
 
-interface ModeOption {
-  label: string;
-  message: string;
-  licenseOptions?: LicenseOptions;
-  isMissingFeature$?: Observable<boolean>;
-  warning?: string;
-  warningLink?: string;
-}
+import { Enroll, ModeOption } from '../model';
 
 @Component({
   selector: 'mfa-activate',
@@ -35,15 +27,18 @@ export class MfaActivateComponent implements OnInit {
   private static modeOptions: Record<string, ModeOption> = {
     OPTIONAL: {
       label: 'Optional',
+      value: 'OPTIONAL',
       message:
         'Users will be given the option to use MFA when signing in. You can specify the period of time during which enrollment can be skipped.',
     },
     REQUIRED: {
       label: 'Required',
+      value: 'REQUIRED',
       message: 'All users will be required to enrol with MFA during sign-in.',
     },
     CONDITIONAL: {
       label: 'Conditional',
+      value: 'CONDITIONAL',
       message:
         'Conditional allows you to configure the rules on how users will be enrolled to use MFA. This is done using Expression Language.',
       warning: 'To use the GeoIP based variables, ensure to install GeoIP service plugins on your application.',
@@ -51,81 +46,61 @@ export class MfaActivateComponent implements OnInit {
     },
   };
 
-  @Input() enrollment: any;
-  @Input() adaptiveMfaRule: string;
-  @Input() skipAdaptiveMfaRule: string;
-  @Output() settingsChange: EventEmitter<any> = new EventEmitter<any>();
+  @Input() enrollment: Enroll;
+  @Output() settingsChange = new EventEmitter<Enroll>();
 
   currentMode: any;
   modes: any[];
-  enable = false;
   constructor(private licenseService: GioLicenseService) {}
 
   ngOnInit(): void {
     this.initModes();
-    this.currentMode = MfaActivateComponent.modeOptions.OPTIONAL;
+    this.currentMode = this.enrollment.type
+      ? MfaActivateComponent.modeOptions[this.enrollment.type.toUpperCase()]
+      : MfaActivateComponent.modeOptions.OPTIONAL;
   }
   switchEnable(): void {
-    this.enable = !this.enable;
-    this.applyModeChange(this.currentMode);
+    this.enrollment.active = !this.enrollment.active;
+    this.onOptionChange(this.currentMode);
   }
-
   get modeOptions() {
     return MfaActivateComponent.modeOptions;
   }
-
-  applyModeChange(option: ModeOption): void {
-    console.log('apply ', option);
+  onOptionChange(option: ModeOption): void {
     this.currentMode = option;
-    switch (this.currentMode) {
-      case MfaActivateComponent.modeOptions.OPTIONAL:
-        this.updateOptional({ forceEnrollment: false, skipTimeSeconds: this.enrollment.skipTimeSeconds });
-        break;
-      case MfaActivateComponent.modeOptions.REQUIRED:
-        this.updateRequired(this.enrollment);
-        break;
-      case MfaActivateComponent.modeOptions.CONDITIONAL:
-        this.updateConditional(this.adaptiveMfaRule);
-        break;
-    }
+    this.update();
   }
+
+  onSkipChange(skipTime: number): void {
+    this.enrollment.skipTimeSeconds = skipTime;
+    this.update();
+  }
+  onConditionalChange(conditional: any): void {
+    this.enrollment.enrollmentRule = conditional.enrollmentRule;
+    this.update();
+  }
+
   isChecked(option: ModeOption): boolean {
     return this.currentMode === option;
   }
 
-  updateOptional(timePicker: any): void {
-    console.log('update optional', timePicker);
-    this.settingsChange.emit({
-      enrollment: { active: this.enable, forceEnrollment: false, skipTimeSeconds: timePicker?.skipTimeSeconds },
-      adaptiveMfaRule: '',
-      selectedMFAOption: MfaActivateComponent.modeOptions.OPTIONAL.label,
-    });
-  }
-
-  updateRequired(enrollment: any): void {
-    this.settingsChange.emit({
-      enrollment: { active: this.enable, forceEnrollment: true, skipTimeSeconds: enrollment.skipTimeSeconds },
-      adaptiveMfaRule: '',
-      selectedMFAOption: MfaActivateComponent.modeOptions.REQUIRED.label,
-    });
-  }
-
-  updateConditional(adaptiveMfaRule: any): void {
-    console.log('mfa adaptive', adaptiveMfaRule);
-    if (adaptiveMfaRule) {
-      this.settingsChange.emit({
-        enrollment: {active: this.enable, forceEnrollment: true, skipTimeSeconds: this.enrollment.skipTimeSeconds},
-        adaptiveMfaRule: adaptiveMfaRule,
-        selectedMFAOption: MfaActivateComponent.modeOptions.CONDITIONAL.label,
-      });
-    }
-  }
-
-  private initModes() {
+  private initModes(): void {
     this.modes = Object.keys(MfaActivateComponent.modeOptions).map((key) => {
       const option = MfaActivateComponent.modeOptions[key];
       option.isMissingFeature$ = this.licenseService.isMissingFeature$(option.licenseOptions);
       return option;
     });
+  }
+
+  private update(): void {
+    const update = {
+      active: this.enrollment.active,
+      forceEnrollment: this.currentMode !== MfaActivateComponent.modeOptions.OPTIONAL,
+      skipTimeSeconds: this.enrollment.skipTimeSeconds,
+      enrollmentRule: this.currentMode === MfaActivateComponent.modeOptions.CONDITIONAL ? this.enrollment.enrollmentRule : '',
+      // skipEnrollmentRule: this.currentMode === MfaActivateComponent.modeOptions.CONDITIONAL ? this.enrollment.skipEnrollmentRule : '',
+      type: this.currentMode.value,
+    };
+    this.settingsChange.emit(update);
   }
 }

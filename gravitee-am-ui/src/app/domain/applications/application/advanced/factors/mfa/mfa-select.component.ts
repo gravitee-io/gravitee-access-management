@@ -76,5 +76,7 @@ export class MfaSelectComponent {
     }
   }
 
-  addSelectionRule(id) {}
+  // addSelectionRule(id: string): void {
+  //   return;
+  // }
 }
