@@ -32,11 +32,15 @@ import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.factor.FactorStatus;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Single;
+import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.Session;
+import io.vertx.rxjava3.core.MultiMap;
 import io.vertx.rxjava3.core.buffer.Buffer;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
 import io.vertx.rxjava3.ext.web.handler.BodyHandler;
 import io.vertx.rxjava3.ext.web.handler.SessionHandler;
@@ -46,20 +50,19 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.context.ApplicationContext;
 
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
+import static io.gravitee.am.common.utils.ConstantKeys.ACTION_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
+import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.resolveProxyRequest;
 import static io.vertx.core.http.HttpHeaders.APPLICATION_X_WWW_FORM_URLENCODED;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.anyMap;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -139,6 +142,52 @@ public class MFAEnrollEndpointTest extends RxWebTestBase {
                 REQUEST_PATH,
                 200,
                 "OK");
+    }
+
+    @Test
+    public void shouldRenderPage_displayOnlyTheAlternativeId() throws Exception {
+        router.route(REQUEST_PATH)
+                .handler(ctx -> {
+                    User user = new User();
+                    Client client = new Client();
+                    client.setFactors(Set.of("factor-id", "other-factor-id"));
+                    ctx.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+                    ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+                    ctx.session().put(ConstantKeys.ALTERNATIVE_FACTOR_ID_KEY, "factor-id");
+                    ctx.next();
+                })
+                .handler(checkFactorList(mfaEnrollEndpoint))
+                .handler(rc -> rc.response().end());
+
+        Enrollment enrollment = mock(Enrollment.class);
+        FactorProvider factorProvider = mock(FactorProvider.class);
+        when(factorProvider.enroll(any(FactorContext.class))).thenReturn(Single.just(enrollment));
+        Factor emailFactor = mock(Factor.class);
+        when(emailFactor.getId()).thenReturn("factor-id");
+        when(emailFactor.getFactorType()).thenReturn(FactorType.EMAIL);
+        when(factorManager.get("factor-id")).thenReturn(factorProvider);
+        when(factorManager.getFactor("factor-id")).thenReturn(emailFactor);
+
+        Factor smsFactor = mock(Factor.class);
+        when(smsFactor.getId()).thenReturn("other-factor-id");
+        when(smsFactor.getFactorType()).thenReturn(FactorType.SMS);
+        when(factorManager.get("other-factor-id")).thenReturn(factorProvider);
+        when(factorManager.getFactor("other-factor-id")).thenReturn(smsFactor);
+
+        testRequest(HttpMethod.GET,
+                REQUEST_PATH,
+                200,
+                "OK");
+    }
+
+    private Handler<RoutingContext> checkFactorList(Handler handler) {
+        return routingContext -> {
+            doAnswer(answer -> {
+                assertTrue(((List) routingContext.get("factors")).size() == 1);
+                return Single.just(Buffer.buffer());
+            }).when(templateEngine).render(Mockito.<Map<String, Object>>any(), Mockito.any());
+            handler.handle(routingContext);
+        };
     }
 
     @Test
