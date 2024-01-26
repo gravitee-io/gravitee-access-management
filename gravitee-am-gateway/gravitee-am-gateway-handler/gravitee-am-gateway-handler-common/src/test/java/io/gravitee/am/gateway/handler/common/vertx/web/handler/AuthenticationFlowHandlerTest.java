@@ -32,8 +32,11 @@ import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.Aut
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.MFAChallengeStep;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.MFAEnrollStep;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.MFARecoveryCodeStep;
+import io.gravitee.am.model.ChallengeSettings;
+import io.gravitee.am.model.EnrollSettings;
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.MFASettings;
+import io.gravitee.am.model.MfaType;
 import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
@@ -122,6 +125,10 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(rc -> {
             // set client
             Client client = new Client();
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(false, MfaType.REQUIRED, "");
+            MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
+            client.setMfaSettings(mfaSettings);
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             // set user
@@ -144,12 +151,15 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToMFAEnrollmentPage_adaptiveMFA() throws Exception {
         router.route().order(-1).handler(rc -> {
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
+            MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-            MFASettings mfaSettings = new MFASettings();
             mfaSettings.setAdaptiveAuthenticationRule("{context.attributes['geoip']['country_iso_code'] == 'FR'");
+            client.setMfaSettings(mfaSettings);
             rc.put(ConstantKeys.GEOIP_KEY, new JsonObject().put("country_iso_code", "US").getMap());
             // set user
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
@@ -171,12 +181,15 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToMFAEnrollmentPage_adaptiveMFA_no_enroll() throws Exception {
         router.route().order(-1).handler(rc -> {
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
+            MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-            MFASettings mfaSettings = new MFASettings();
             mfaSettings.setAdaptiveAuthenticationRule("{context.attributes['geoip']['country_iso_code'] == 'FR'");
+            client.setMfaSettings(mfaSettings);
             rc.put(ConstantKeys.GEOIP_KEY, new JsonObject().put("country_iso_code", "FR").getMap());
             // set user
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
@@ -198,11 +211,14 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldNoRedirectToMFAChallengePage_adaptiveMFA_no_active_enroll_and_endUser_not_enrolled() throws Exception {
         router.route().order(-1).handler(rc -> {
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
+            MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-            MFASettings mfaSettings = new MFASettings();
+            //MFASettings mfaSettings = new MFASettings();
             mfaSettings.setAdaptiveAuthenticationRule("{context.attributes['geoip']['country_iso_code'] == 'FR'");
             client.setMfaSettings(mfaSettings);
             rc.put(ConstantKeys.GEOIP_KEY, new JsonObject().put("country_iso_code", "FR").getMap());
@@ -227,14 +243,17 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
+
     @Test
     public void shouldRedirectToMFAChallengePage_adaptiveMFA_no_active_enroll_and_endUser_is_enrolling() throws Exception {
         router.route().order(-1).handler(rc -> {
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
+            MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-            MFASettings mfaSettings = new MFASettings();
             mfaSettings.setAdaptiveAuthenticationRule("{context.attributes['geoip']['country_iso_code'] == 'FR'");
             client.setMfaSettings(mfaSettings);
             rc.put(ConstantKeys.GEOIP_KEY, new JsonObject().put("country_iso_code", "FR").getMap());
@@ -262,13 +281,15 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     }
 
     @Test
-    public void shouldRedirectToMFAEnrollmentPage_device_unknown() throws Exception {
+    public void shouldRedirectToMFAEnrollmentPage_device_unknown_enrollFalse_challengeActiveAndRequired() throws Exception {
         router.route().order(-1).handler(rc -> {
             // set client
             Client client = new Client();
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-            MFASettings mfaSettings = new MFASettings();
+            EnrollSettings enrollSettings = createEnrollSettings(false, false, MfaType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
+            MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             final RememberDeviceSettings rememberDevice = new RememberDeviceSettings();
             rememberDevice.setActive(true);
             mfaSettings.setRememberDevice(rememberDevice);
@@ -295,8 +316,12 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     public void shouldRedirectToMFAChallengePage_nominalCase_no_enrolled_factor() throws Exception {
         router.route().order(-1).handler(rc -> {
             // set client
+            EnrollSettings enrollSettings = createEnrollSettings(false, false, MfaType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
+            MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             Client client = new Client();
             client.setFactors(Collections.singleton("factor-1"));
+            client.setMfaSettings(mfaSettings);
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             rc.session().put(ENROLLED_FACTOR_ID_KEY, "factor-1");
             // set user
@@ -319,9 +344,13 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToMFAChallengePage_nominalCase() throws Exception {
         router.route().order(-1).handler(rc -> {
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
+            MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
             client.setFactors(Collections.singleton("factor-1"));
+            client.setMfaSettings(mfaSettings);
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             // set user
             EnrolledFactor enrolledFactor = new EnrolledFactor();
@@ -403,12 +432,14 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldNoRedirectToMFAChallengePage_device_remembered_but_no_matching_active_factor_and_endUser_not_enrolled() throws Exception {
         router.route().order(-1).handler(rc -> {
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
+            MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             // set user
-            MFASettings mfaSettings = new MFASettings();
             final RememberDeviceSettings rememberDevice = new RememberDeviceSettings();
             rememberDevice.setActive(true);
             mfaSettings.setRememberDevice(rememberDevice);
@@ -436,15 +467,18 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
                 HttpStatusCode.FOUND_302, "Found", null);
     }
 
+    //todo: need to talk to John
     @Test
     public void shouldRedirectToMFAChallengePage_device_remembered_but_no_matching_active_factor_and_endUser_is_enrolling() throws Exception {
         router.route().order(-1).handler(rc -> {
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
+            MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             // set user
-            MFASettings mfaSettings = new MFASettings();
             final RememberDeviceSettings rememberDevice = new RememberDeviceSettings();
             rememberDevice.setActive(true);
             mfaSettings.setRememberDevice(rememberDevice);
@@ -476,12 +510,14 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldNoRedirectToMFAChallengePage_device_remembered_but_active_factor_is_recovery_code_and_endUser_not_enrolled() throws Exception {
         router.route().order(-1).handler(rc -> {
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
+            MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
             client.setFactors(Set.of("factor-recovery-code", "factor-id"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             // set user
-            MFASettings mfaSettings = new MFASettings();
             final RememberDeviceSettings rememberDevice = new RememberDeviceSettings();
             rememberDevice.setActive(true);
             mfaSettings.setRememberDevice(rememberDevice);
@@ -518,12 +554,15 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToMFAChallengePage_device_remembered_but_active_factor_is_recovery_code_and_endUser_is_enrolling() throws Exception {
         router.route().order(-1).handler(rc -> {
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
+            MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
             client.setFactors(Set.of("factor-recovery-code", "factor-id"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             // set user
-            MFASettings mfaSettings = new MFASettings();
+
             final RememberDeviceSettings rememberDevice = new RememberDeviceSettings();
             rememberDevice.setActive(true);
             mfaSettings.setRememberDevice(rememberDevice);
@@ -562,12 +601,15 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToChallenge_user_device_known_and_step_up_active_strongly_auth() throws Exception {
         router.route().order(-1).handler(rc -> {
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
+            MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             // set user
-            MFASettings mfaSettings = new MFASettings();
+
             mfaSettings.setStepUpAuthenticationRule("{#request.params['scope'][0] == 'write'}");
             final RememberDeviceSettings rememberDevice = new RememberDeviceSettings();
             rememberDevice.setActive(true);
@@ -600,12 +642,15 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldContinue_user_device_known_and_step_up_active_not_strongly_auth() throws Exception {
         router.route().order(-1).handler(rc -> {
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
+            MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             // set user
-            MFASettings mfaSettings = new MFASettings();
+
             mfaSettings.setStepUpAuthenticationRule("{true}");
             final RememberDeviceSettings rememberDevice = new RememberDeviceSettings();
             rememberDevice.setActive(true);
@@ -656,11 +701,13 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToMFAChallengePage_stepUp_authentication() throws Exception {
         router.route().order(-1).handler(rc -> {
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
+            MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-            MFASettings mfaSettings = new MFASettings();
             mfaSettings.setStepUpAuthenticationRule("{#request.params['scope'][0] == 'write'}");
             client.setMfaSettings(mfaSettings);
             // set user
@@ -688,11 +735,13 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToMFAChallengePage_adaptiveMFA() throws Exception {
         router.route().order(-1).handler(rc -> {
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
+            MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-            MFASettings mfaSettings = new MFASettings();
             mfaSettings.setAdaptiveAuthenticationRule("{#context.attributes['geoip']['country_iso_code'] == 'FR'}");
             rc.put(ConstantKeys.GEOIP_KEY, new JsonObject().put("country_iso_code", "US").getMap());
             client.setMfaSettings(mfaSettings);
@@ -721,11 +770,13 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToMFAChallengePage_adaptiveMFA_with_step_up_true_strong_auth_true() throws Exception {
         router.route().order(-1).handler(rc -> {
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
+            MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-            MFASettings mfaSettings = new MFASettings();
             final RememberDeviceSettings rememberDevice = new RememberDeviceSettings();
             rememberDevice.setActive(true);
             mfaSettings.setRememberDevice(rememberDevice);
@@ -759,11 +810,13 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldContinue_adaptiveMFA_with_step_up_false_strong_auth_true_device_known() throws Exception {
         router.route().order(-1).handler(rc -> {
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
+            MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-            MFASettings mfaSettings = new MFASettings();
             final RememberDeviceSettings rememberDevice = new RememberDeviceSettings();
             rememberDevice.setActive(true);
             mfaSettings.setRememberDevice(rememberDevice);
@@ -791,11 +844,13 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToMFAChallengePage_rememberDevice() throws Exception {
         router.route().order(-1).handler(rc -> {
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
+            MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-            MFASettings mfaSettings = new MFASettings();
             final RememberDeviceSettings rememberDevice = new RememberDeviceSettings();
             rememberDevice.setActive(true);
             mfaSettings.setRememberDevice(rememberDevice);
@@ -863,6 +918,9 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToMFAChallengePage_rememberDevice_with_risk_assessment_but_no_device() throws Exception {
         router.route().order(-1).handler(rc -> {
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
+            MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
             client.setFactors(Collections.singleton("factor-1"));
@@ -870,7 +928,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             client.setRiskAssessment(
                     new RiskAssessmentSettings()
             );
-            MFASettings mfaSettings = new MFASettings();
+
             final RememberDeviceSettings rememberDevice = new RememberDeviceSettings();
             rememberDevice.setActive(true);
             mfaSettings.setRememberDevice(rememberDevice);
@@ -900,11 +958,13 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToMFAChallengePage_stepUp_authentication_2() throws Exception {
         router.route().order(-1).handler(rc -> {
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
+            MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-            MFASettings mfaSettings = new MFASettings();
             mfaSettings.setStepUpAuthenticationRule("{#request.params['scope'][0].contains('write')}");
             client.setMfaSettings(mfaSettings);
             // set user
@@ -932,11 +992,13 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToMFAChallengePage_adaptiveMFA_2() throws Exception {
         router.route().order(-1).handler(rc -> {
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
+            MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-            MFASettings mfaSettings = new MFASettings();
             mfaSettings.setAdaptiveAuthenticationRule("{#context.attributes['geoip']['country_iso_code'] == 'FR'}");
             rc.put(ConstantKeys.GEOIP_KEY, new JsonObject().put("country_iso_code", "US").getMap());
             client.setMfaSettings(mfaSettings);
@@ -965,11 +1027,13 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToMFAChallengePage_adaptiveMFA_2_user_auth() throws Exception {
         router.route().order(-1).handler(rc -> {
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
+            MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-            MFASettings mfaSettings = new MFASettings();
             mfaSettings.setAdaptiveAuthenticationRule("{#context.attributes['geoip']['country_iso_code'] == 'FR'}");
             rc.put(ConstantKeys.GEOIP_KEY, new JsonObject().put("country_iso_code", "US").getMap());
             client.setMfaSettings(mfaSettings);
@@ -998,11 +1062,13 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToMFAChallengePage_adaptiveMFA_3_factor_is_pending() throws Exception {
         router.route().order(-1).handler(rc -> {
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
+            MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-            MFASettings mfaSettings = new MFASettings();
             mfaSettings.setAdaptiveAuthenticationRule("{#context.attributes['geoip']['country_iso_code'] == 'FR'}");
             rc.put(ConstantKeys.GEOIP_KEY, new JsonObject().put("country_iso_code", "FR").getMap());
             client.setMfaSettings(mfaSettings);
@@ -1063,11 +1129,13 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToMFAChallengePage_adaptiveMFA_3_alternate_factor_id() throws Exception {
         router.route().order(-1).handler(rc -> {
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
+            MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-            MFASettings mfaSettings = new MFASettings();
             mfaSettings.setAdaptiveAuthenticationRule("{#context.attributes['geoip']['country_iso_code'] == 'FR'}");
             rc.put(ConstantKeys.GEOIP_KEY, new JsonObject().put("country_iso_code", "FR").getMap());
             client.setMfaSettings(mfaSettings);
@@ -1223,5 +1291,33 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         testRequest(
                 HttpMethod.GET, "/login",
                 HttpStatusCode.OK_200, "OK");
+    }
+
+    private MFASettings createMFASettings(EnrollSettings enrollSettings, ChallengeSettings challengeSettings) {
+        final MFASettings mfaSettings = new MFASettings();
+        mfaSettings.setEnroll(enrollSettings);
+        mfaSettings.setChallenge(challengeSettings);
+
+        return mfaSettings;
+    }
+
+    private ChallengeSettings createChallengeSettings(boolean active, MfaType type, String challengeRule) {
+        final ChallengeSettings settings = new ChallengeSettings();
+        settings.setActive(active);
+        settings.setType(type);
+        settings.setChallengeRule(challengeRule);
+
+        return settings;
+    }
+
+    private EnrollSettings createEnrollSettings(boolean active, boolean forceEnrollment, MfaType type, long skipTime, String enrollmentRule) {
+        final EnrollSettings settings = new EnrollSettings();
+        settings.setActive(active);
+        settings.setForceEnrollment(forceEnrollment);
+        settings.setType(type);
+        settings.setSkipTimeSeconds(skipTime);
+        settings.setEnrollmentRule(enrollmentRule);
+
+        return settings;
     }
 }

@@ -57,7 +57,8 @@ public class MFAChallengeStep extends MFAStep {
 
         final boolean skipMFA = isNull(client) || noFactor(client) || context.isMfaChallengeComplete()
                 || isAdaptiveMfa(context) || isStepUp(context) || isRememberDevice(context) || isEnrollSkipRuleSatisfied(routingContext)
-                || isStronglyAuthenticated(context) || skipIfChallengeInactiveOrUserNotEnrolling(client, routingContext) || isChallengeSkipRuleSatisfied(routingContext);
+                || isStronglyAuthenticated(context) /*|| isUserStronglyAuthenticated(context)*/
+                || skipIfChallengeInactiveOrUserNotEnrolling(client, routingContext) || isChallengeSkipRuleSatisfied(routingContext);
 
         if (skipMFA) {
             flow.doNext(routingContext);
@@ -148,6 +149,10 @@ public class MFAChallengeStep extends MFAStep {
         }
 
         return context.userHasMatchingActivatedFactors() && rememberDeviceSettings.isActive() && context.deviceAlreadyExists();
+    }
+
+    private boolean isUserStronglyAuthenticated(MfaFilterContext context) {
+        return context.isUserStronglyAuth();
     }
 
     private boolean isStronglyAuthenticated(MfaFilterContext context) {
