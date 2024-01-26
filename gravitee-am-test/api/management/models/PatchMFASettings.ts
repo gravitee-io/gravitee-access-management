@@ -92,7 +92,7 @@ export function PatchMFASettingsFromJSON(json: any): PatchMFASettings {
 }
 
 export function PatchMFASettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): PatchMFASettings {
-    if (json == null) {
+    if ((json === undefined) || (json === null)) {
         return json;
     }
     return {
@@ -108,8 +108,11 @@ export function PatchMFASettingsFromJSONTyped(json: any, ignoreDiscriminator: bo
 }
 
 export function PatchMFASettingsToJSON(value?: PatchMFASettings | null): any {
-    if (value == null) {
-        return value;
+    if (value === undefined) {
+        return undefined;
+    }
+    if (value === null) {
+        return null;
     }
     return {
         
