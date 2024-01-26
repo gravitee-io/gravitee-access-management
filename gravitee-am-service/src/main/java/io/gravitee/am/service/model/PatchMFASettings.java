@@ -35,7 +35,6 @@ public class PatchMFASettings {
     private Optional<String> stepUpAuthenticationRule;
     private Optional<PatchStepUpAuthentication> stepUpAuthentication;
     private Optional<String> adaptiveAuthenticationRule;
-    private Optional<String> skipAdaptiveAuthenticationRule;
     private Optional<PatchRememberDeviceSettings> rememberDevice;
     @Deprecated
     private Optional<PatchEnrollmentSettings> enrollment;
