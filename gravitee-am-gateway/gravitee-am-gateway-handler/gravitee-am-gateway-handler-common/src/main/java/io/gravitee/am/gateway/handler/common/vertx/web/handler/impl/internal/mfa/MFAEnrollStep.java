@@ -183,13 +183,9 @@ public class MFAEnrollStep extends MFAStep {
     }
 
     private boolean isEnrollActive(Client client) {
-        Optional<MFASettings> optMfaSettings = Optional.of(client.getMfaSettings());
-        if (optMfaSettings.isEmpty()) {
-            return false;
-        }
-        MFASettings mfaSettings = optMfaSettings.get();
-        EnrollSettings enroll = mfaSettings.getEnroll();
-        return enroll != null && enroll.isActive();
+        final MFASettings mfaSettings = Optional.ofNullable(client.getMfaSettings()).orElse(new MFASettings());
+        final EnrollSettings enroll = Optional.ofNullable(mfaSettings.getEnroll()).orElse(new EnrollSettings());
+        return enroll.isActive();
     }
 
     private boolean noFactor(Client client) {
