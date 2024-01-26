@@ -583,6 +583,17 @@ const createMfaApp = async (domain, accessToken, factors: Array<number>) => {
               },
             ],
           },
+          mfa: {
+            enroll: {
+              active: true,
+              forceEnrollment: true,
+              type: "REQUIRED"
+            },
+            challenge: {
+              active: true,
+              type: "REQUIRED"
+            }
+          }
         },
         account: {
           inherited: false,
@@ -631,6 +642,17 @@ const createBruteForceTestApp = async (smsFactor, domain, accessToken, mfaChalle
             mfaChallengeMaxAttempts: 2,
             mfaChallengeAttemptsResetTime: mfaChallengeAttemptsResetTime,
           },
+          mfa: {
+            enroll: {
+              active: true,
+              forceEnrollment: true,
+              type: "REQUIRED"
+            },
+            challenge: {
+              active: true,
+              type: "REQUIRED"
+            }
+          }
         },
         identityProviders: [{ identity: `default-idp-${domain.id}`, priority: -1 }],
         factors: [smsFactor.id],
