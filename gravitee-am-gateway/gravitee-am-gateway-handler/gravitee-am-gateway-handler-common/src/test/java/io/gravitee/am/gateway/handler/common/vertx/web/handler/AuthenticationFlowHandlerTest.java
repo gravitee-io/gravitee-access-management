@@ -18,18 +18,12 @@ package io.gravitee.am.gateway.handler.common.vertx.web.handler;
 import io.gravitee.am.common.factor.FactorSecurityType;
 import io.gravitee.am.common.factor.FactorType;
 import io.gravitee.am.common.jwt.JWT;
-import io.gravitee.am.common.utils.ConstantKeys;
-import static io.gravitee.am.common.utils.ConstantKeys.ALTERNATIVE_FACTOR_ID_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ALREADY_EXISTS_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.ENROLLED_FACTOR_ID_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.RISK_ASSESSMENT_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.STRONG_AUTH_COMPLETED_KEY;
 import io.gravitee.am.gateway.certificate.CertificateProvider;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.ruleengine.SpELRuleEngine;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieSessionHandler;
@@ -42,14 +36,10 @@ import io.gravitee.am.model.ChallengeSettings;
 import io.gravitee.am.model.EnrollSettings;
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.MFASettings;
-import io.gravitee.am.model.MfaChallengeType;
-import io.gravitee.am.model.MfaEnrollType;
+import io.gravitee.am.model.MfaType;
 import io.gravitee.am.model.RememberDeviceSettings;
-import io.gravitee.am.model.StepUpAuthenticationSettings;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
-import static io.gravitee.am.model.factor.FactorStatus.ACTIVATED;
-import static io.gravitee.am.model.factor.FactorStatus.PENDING_ACTIVATION;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.UserService;
 import io.gravitee.common.http.HttpStatusCode;
@@ -61,18 +51,25 @@ import io.gravitee.risk.assessment.api.assessment.settings.RiskAssessmentSetting
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Set;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import org.mockito.Mock;
-import static org.mockito.Mockito.when;
 import org.mockito.junit.MockitoJUnitRunner;
+
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+
+import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ALREADY_EXISTS_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.RISK_ASSESSMENT_KEY;
+import static org.mockito.ArgumentMatchers.*;
+import static io.gravitee.am.common.utils.ConstantKeys.*;
+import static io.gravitee.am.model.factor.FactorStatus.ACTIVATED;
+import static io.gravitee.am.model.factor.FactorStatus.PENDING_ACTIVATION;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -89,6 +86,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     private UserService userService;
     @Mock
     private FactorManager factorManager;
+
     private SpELRuleEngine ruleEngine = new SpELRuleEngine();
 
     @Override
@@ -127,8 +125,8 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(rc -> {
             // set client
             Client client = new Client();
-            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED, 0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(false, MfaChallengeType.REQUIRED, "");
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(false, MfaType.REQUIRED, "");
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             client.setMfaSettings(mfaSettings);
             client.setFactors(Collections.singleton("factor-1"));
@@ -153,8 +151,8 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToMFAEnrollmentPage_adaptiveMFA() throws Exception {
         router.route().order(-1).handler(rc -> {
-            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED, 0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
@@ -183,8 +181,8 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToMFAEnrollmentPage_adaptiveMFA_no_enroll() throws Exception {
         router.route().order(-1).handler(rc -> {
-            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED, 0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
@@ -213,13 +211,14 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldNoRedirectToMFAChallengePage_adaptiveMFA_no_active_enroll_and_endUser_not_enrolled() throws Exception {
         router.route().order(-1).handler(rc -> {
-            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED, 0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+            //MFASettings mfaSettings = new MFASettings();
             mfaSettings.setAdaptiveAuthenticationRule("{context.attributes['geoip']['country_iso_code'] == 'FR'");
             client.setMfaSettings(mfaSettings);
             rc.put(ConstantKeys.GEOIP_KEY, new JsonObject().put("country_iso_code", "FR").getMap());
@@ -248,8 +247,8 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToMFAChallengePage_adaptiveMFA_no_active_enroll_and_endUser_is_enrolling() throws Exception {
         router.route().order(-1).handler(rc -> {
-            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED, 0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
@@ -282,14 +281,14 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     }
 
     @Test
-    public void shouldRedirectToMFAEnrollmentPage_device_unknown() throws Exception {
+    public void shouldRedirectToMFAEnrollmentPage_device_unknown_enrollFalse_challengeActiveAndRequired() throws Exception {
         router.route().order(-1).handler(rc -> {
             // set client
             Client client = new Client();
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-            EnrollSettings enrollSettings = createEnrollSettings(false, false, MfaEnrollType.REQUIRED, 0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
+            EnrollSettings enrollSettings = createEnrollSettings(false, false, MfaType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             final RememberDeviceSettings rememberDevice = new RememberDeviceSettings();
             rememberDevice.setActive(true);
@@ -317,8 +316,8 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     public void shouldRedirectToMFAChallengePage_nominalCase_no_enrolled_factor() throws Exception {
         router.route().order(-1).handler(rc -> {
             // set client
-            EnrollSettings enrollSettings = createEnrollSettings(false, false, MfaEnrollType.REQUIRED, 0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
+            EnrollSettings enrollSettings = createEnrollSettings(false, false, MfaType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             Client client = new Client();
             client.setFactors(Collections.singleton("factor-1"));
@@ -345,8 +344,8 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToMFAChallengePage_nominalCase() throws Exception {
         router.route().order(-1).handler(rc -> {
-            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED, 0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
@@ -388,7 +387,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
-            rc.session().put(STRONG_AUTH_COMPLETED_KEY, true);
+            rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
             rc.next();
         });
 
@@ -419,7 +418,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
-            rc.session().put(STRONG_AUTH_COMPLETED_KEY, true);
+            rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
             rc.next();
         });
 
@@ -433,8 +432,8 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldNoRedirectToMFAChallengePage_device_remembered_but_no_matching_active_factor_and_endUser_not_enrolled() throws Exception {
         router.route().order(-1).handler(rc -> {
-            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED, 0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
@@ -453,7 +452,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
-            rc.session().put(STRONG_AUTH_COMPLETED_KEY, true);
+            rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
             rc.next();
         });
 
@@ -468,11 +467,12 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
                 HttpStatusCode.FOUND_302, "Found", null);
     }
 
+    //todo: need to talk to John
     @Test
     public void shouldRedirectToMFAChallengePage_device_remembered_but_no_matching_active_factor_and_endUser_is_enrolling() throws Exception {
         router.route().order(-1).handler(rc -> {
-            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED, 0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
@@ -491,7 +491,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
-            rc.session().put(STRONG_AUTH_COMPLETED_KEY, true);
+            rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
             rc.session().put(ENROLLED_FACTOR_ID_KEY, "factor-1");
             rc.next();
         });
@@ -510,8 +510,8 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldNoRedirectToMFAChallengePage_device_remembered_but_active_factor_is_recovery_code_and_endUser_not_enrolled() throws Exception {
         router.route().order(-1).handler(rc -> {
-            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED, 0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
@@ -537,7 +537,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(List.of(enrolledRecovery, enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
-            rc.session().put(STRONG_AUTH_COMPLETED_KEY, false);
+            rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, false);
             rc.next();
         });
 
@@ -551,12 +551,11 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
-
     @Test
     public void shouldRedirectToMFAChallengePage_device_remembered_but_active_factor_is_recovery_code_and_endUser_is_enrolling() throws Exception {
         router.route().order(-1).handler(rc -> {
-            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED, 0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
@@ -583,7 +582,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(List.of(enrolledRecovery, enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
-            rc.session().put(STRONG_AUTH_COMPLETED_KEY, false);
+            rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, false);
             rc.session().put(ENROLLED_FACTOR_ID_KEY, "factor-id");
             rc.next();
         });
@@ -602,8 +601,8 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToChallenge_user_device_known_and_step_up_active_strongly_auth() throws Exception {
         router.route().order(-1).handler(rc -> {
-            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED, 0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
@@ -611,11 +610,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             // set user
 
-            var stepUpAuthenticationRule = "{#request.params['scope'][0] == 'write'}";
-            var stepUpAuthentication = new StepUpAuthenticationSettings();
-            stepUpAuthentication.setActive(true);
-            stepUpAuthentication.setStepUpAuthenticationRule(stepUpAuthenticationRule);
-            mfaSettings.setStepUpAuthentication(stepUpAuthentication);
+            mfaSettings.setStepUpAuthenticationRule("{#request.params['scope'][0] == 'write'}");
             final RememberDeviceSettings rememberDevice = new RememberDeviceSettings();
             rememberDevice.setActive(true);
             mfaSettings.setRememberDevice(rememberDevice);
@@ -628,7 +623,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
-            rc.session().put(STRONG_AUTH_COMPLETED_KEY, true);
+            rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
             rc.next();
         });
 
@@ -645,22 +640,18 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
 
 
     @Test
-    public void shouldRedirectToChallenge_user_device_known_and_step_up_active_not_strongly_auth() throws Exception {
+    public void shouldContinue_user_device_known_and_step_up_active_not_strongly_auth() throws Exception {
         router.route().order(-1).handler(rc -> {
-            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED, 0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+            // set user
 
-            var stepUpAuthenticationRule = "{true}";
-            var stepUpAuthentication = new StepUpAuthenticationSettings();
-            stepUpAuthentication.setActive(true);
-            stepUpAuthentication.setStepUpAuthenticationRule(stepUpAuthenticationRule);
-            mfaSettings.setStepUpAuthentication(stepUpAuthentication);
-
+            mfaSettings.setStepUpAuthenticationRule("{true}");
             final RememberDeviceSettings rememberDevice = new RememberDeviceSettings();
             rememberDevice.setActive(true);
             mfaSettings.setRememberDevice(rememberDevice);
@@ -673,53 +664,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
-            rc.session().put(STRONG_AUTH_COMPLETED_KEY, false);
-            rc.session().put(MFA_CHALLENGE_COMPLETED_KEY, true);
-            rc.next();
-        });
-
-        testRequest(
-                HttpMethod.GET, "/login",
-                null,
-                resp -> {
-                    String location = resp.headers().get("location");
-                    assertNotNull(location);
-                    assertTrue(location.endsWith("/mfa/challenge"));
-                },
-                HttpStatusCode.FOUND_302, "Found", null);
-    }
-
-    @Test
-    public void shouldContinue_user_device_known_and_step_up_active_strongly_auth() throws Exception {
-        router.route().order(-1).handler(rc -> {
-            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED, 0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
-            MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
-            // set client
-            Client client = new Client();
-            client.setFactors(Collections.singleton("factor-1"));
-            rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-
-            var stepUpAuthenticationRule = "{true}";
-            var stepUpAuthentication = new StepUpAuthenticationSettings();
-            stepUpAuthentication.setActive(true);
-            stepUpAuthentication.setStepUpAuthenticationRule(stepUpAuthenticationRule);
-            mfaSettings.setStepUpAuthentication(stepUpAuthentication);
-
-            final RememberDeviceSettings rememberDevice = new RememberDeviceSettings();
-            rememberDevice.setActive(true);
-            mfaSettings.setRememberDevice(rememberDevice);
-            rc.session().put(DEVICE_ALREADY_EXISTS_KEY, true);
-            client.setMfaSettings(mfaSettings);
-            // set user
-            EnrolledFactor enrolledFactor = new EnrolledFactor();
-            enrolledFactor.setFactorId("factor-1");
-            enrolledFactor.setStatus(ACTIVATED);
-            io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
-            endUser.setFactors(Collections.singletonList(enrolledFactor));
-            rc.getDelegate().setUser(new User(endUser));
-            rc.session().put(STRONG_AUTH_COMPLETED_KEY, true);
-            rc.session().put(MFA_CHALLENGE_COMPLETED_KEY, true);
+            rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, false);
             rc.next();
         });
 
@@ -756,20 +701,14 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToMFAChallengePage_stepUp_authentication() throws Exception {
         router.route().order(-1).handler(rc -> {
-            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED, 0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-
-            var stepUpAuthenticationRule = "{#request.params['scope'][0] == 'write'}";
-            var stepUpAuthentication = new StepUpAuthenticationSettings();
-            stepUpAuthentication.setActive(true);
-            stepUpAuthentication.setStepUpAuthenticationRule(stepUpAuthenticationRule);
-
-            mfaSettings.setStepUpAuthentication(stepUpAuthentication);
+            mfaSettings.setStepUpAuthenticationRule("{#request.params['scope'][0] == 'write'}");
             client.setMfaSettings(mfaSettings);
             // set user
             EnrolledFactor enrolledFactor = new EnrolledFactor();
@@ -778,7 +717,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
-            rc.session().put(STRONG_AUTH_COMPLETED_KEY, true);
+            rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
             rc.next();
         });
 
@@ -796,8 +735,8 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToMFAChallengePage_adaptiveMFA() throws Exception {
         router.route().order(-1).handler(rc -> {
-            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED, 0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
@@ -813,7 +752,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
-            rc.session().put(STRONG_AUTH_COMPLETED_KEY, false);
+            rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, false);
             rc.next();
         });
 
@@ -831,8 +770,8 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToMFAChallengePage_adaptiveMFA_with_step_up_true_strong_auth_true() throws Exception {
         router.route().order(-1).handler(rc -> {
-            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED, 0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.RISK_BASED, "");
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
@@ -842,13 +781,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             rememberDevice.setActive(true);
             mfaSettings.setRememberDevice(rememberDevice);
             rc.session().put(DEVICE_ALREADY_EXISTS_KEY, true);
-
-            var stepUpAuthenticationRule = "{#request.params['scope'][0].contains('write')}";
-            var stepUpAuthentication = new StepUpAuthenticationSettings();
-            stepUpAuthentication.setActive(true);
-            stepUpAuthentication.setStepUpAuthenticationRule(stepUpAuthenticationRule);
-            mfaSettings.setStepUpAuthentication(stepUpAuthentication);
-
+            mfaSettings.setStepUpAuthenticationRule("{#request.params['scope'][0].contains('write')}");
             mfaSettings.setAdaptiveAuthenticationRule("{#context.attributes['geoip']['country_iso_code'] == 'FR'}");
             rc.put(ConstantKeys.GEOIP_KEY, new JsonObject().put("country_iso_code", "FR").getMap());
             client.setMfaSettings(mfaSettings);
@@ -859,7 +792,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
-            rc.session().put(STRONG_AUTH_COMPLETED_KEY, true);
+            rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
             rc.next();
         });
 
@@ -877,8 +810,8 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldContinue_adaptiveMFA_with_step_up_false_strong_auth_true_device_known() throws Exception {
         router.route().order(-1).handler(rc -> {
-            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED, 0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.RISK_BASED, "");
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
@@ -888,13 +821,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             rememberDevice.setActive(true);
             mfaSettings.setRememberDevice(rememberDevice);
             rc.session().put(DEVICE_ALREADY_EXISTS_KEY, true);
-
-            var stepUpAuthenticationRule = "{#request.params['scope'][0].contains('write')}";
-            var stepUpAuthentication = new StepUpAuthenticationSettings();
-            stepUpAuthentication.setActive(true);
-            stepUpAuthentication.setStepUpAuthenticationRule(stepUpAuthenticationRule);
-            mfaSettings.setStepUpAuthentication(stepUpAuthentication);
-
+            mfaSettings.setStepUpAuthenticationRule("{#request.params['scope'][0].contains('write')}");
             mfaSettings.setAdaptiveAuthenticationRule("{#context.attributes['geoip']['country_iso_code'] == 'FR'}");
             rc.put(ConstantKeys.GEOIP_KEY, new JsonObject().put("country_iso_code", "FR").getMap());
             client.setMfaSettings(mfaSettings);
@@ -905,8 +832,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
-            rc.session().put(STRONG_AUTH_COMPLETED_KEY, true);
-            rc.session().put(MFA_CHALLENGE_COMPLETED_KEY, true);
+            rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
             rc.next();
         });
 
@@ -918,8 +844,8 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToMFAChallengePage_rememberDevice() throws Exception {
         router.route().order(-1).handler(rc -> {
-            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED, 0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
@@ -992,8 +918,8 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToMFAChallengePage_rememberDevice_with_risk_assessment_but_no_device() throws Exception {
         router.route().order(-1).handler(rc -> {
-            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED, 0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
@@ -1032,20 +958,14 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToMFAChallengePage_stepUp_authentication_2() throws Exception {
         router.route().order(-1).handler(rc -> {
-            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED, 0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-
-            var stepUpAuthenticationRule = "{#request.params['scope'][0].contains('write')}";
-            var stepUpAuthentication = new StepUpAuthenticationSettings();
-            stepUpAuthentication.setActive(true);
-            stepUpAuthentication.setStepUpAuthenticationRule(stepUpAuthenticationRule);
-            mfaSettings.setStepUpAuthentication(stepUpAuthentication);
-
+            mfaSettings.setStepUpAuthenticationRule("{#request.params['scope'][0].contains('write')}");
             client.setMfaSettings(mfaSettings);
             // set user
             EnrolledFactor enrolledFactor = new EnrolledFactor();
@@ -1054,7 +974,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
-            rc.session().put(STRONG_AUTH_COMPLETED_KEY, true);
+            rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
             rc.next();
         });
 
@@ -1072,8 +992,8 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToMFAChallengePage_adaptiveMFA_2() throws Exception {
         router.route().order(-1).handler(rc -> {
-            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED, 0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
@@ -1089,7 +1009,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
-            rc.session().put(STRONG_AUTH_COMPLETED_KEY, false);
+            rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, false);
             rc.next();
         });
 
@@ -1107,8 +1027,8 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToMFAChallengePage_adaptiveMFA_2_user_auth() throws Exception {
         router.route().order(-1).handler(rc -> {
-            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED, 0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
@@ -1142,8 +1062,8 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToMFAChallengePage_adaptiveMFA_3_factor_is_pending() throws Exception {
         router.route().order(-1).handler(rc -> {
-            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED, 0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
@@ -1209,8 +1129,8 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToMFAChallengePage_adaptiveMFA_3_alternate_factor_id() throws Exception {
         router.route().order(-1).handler(rc -> {
-            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED, 0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
@@ -1256,13 +1176,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             MFASettings mfaSettings = new MFASettings();
-
-            var stepUpAuthenticationRule = "{#request.params['scope'][0] == 'write'}";
-            var stepUpAuthentication = new StepUpAuthenticationSettings();
-            stepUpAuthentication.setActive(true);
-            stepUpAuthentication.setStepUpAuthenticationRule(stepUpAuthenticationRule);
-            mfaSettings.setStepUpAuthentication(stepUpAuthentication);
-
+            mfaSettings.setStepUpAuthenticationRule("{#request.params['scope'][0] == 'write'}");
             client.setMfaSettings(mfaSettings);
             // set user
             EnrolledFactor enrolledFactor = new EnrolledFactor();
@@ -1271,7 +1185,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
-            rc.session().put(STRONG_AUTH_COMPLETED_KEY, true);
+            rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
             rc.next();
         });
 
@@ -1298,7 +1212,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
-            rc.session().put(STRONG_AUTH_COMPLETED_KEY, true);
+            rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
             rc.next();
         });
 
@@ -1318,7 +1232,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             final Factor recoveryFactor = new Factor();
             recoveryFactor.setFactorType(FactorType.RECOVERY_CODE);
             recoveryFactor.setId("factor-2");
-            when(factorManager.getFactor("factor-2")).thenReturn(recoveryFactor);
+            when(factorManager.getFactor(eq("factor-2"))).thenReturn(recoveryFactor);
 
             client.setFactors(Set.of("factor-1", "factor-2"));
             // set user
@@ -1332,7 +1246,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             endUser.setFactors(List.of(enrolledFactor, factorRecovery));
             rc.getDelegate().setUser(new User(endUser));
 
-            rc.session().put(STRONG_AUTH_COMPLETED_KEY, true);
+            rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
             rc.next();
         });
 
@@ -1370,7 +1284,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             endUser.setFactors(List.of(enrolledFactor, factorRecovery));
             rc.getDelegate().setUser(new User(endUser));
 
-            rc.session().put(STRONG_AUTH_COMPLETED_KEY, true);
+            rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
             rc.next();
         });
 
@@ -1387,7 +1301,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         return mfaSettings;
     }
 
-    private ChallengeSettings createChallengeSettings(boolean active, MfaChallengeType type, String challengeRule) {
+    private ChallengeSettings createChallengeSettings(boolean active, MfaType type, String challengeRule) {
         final ChallengeSettings settings = new ChallengeSettings();
         settings.setActive(active);
         settings.setType(type);
@@ -1396,7 +1310,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         return settings;
     }
 
-    private EnrollSettings createEnrollSettings(boolean active, boolean forceEnrollment, MfaEnrollType type, long skipTime, String enrollmentRule) {
+    private EnrollSettings createEnrollSettings(boolean active, boolean forceEnrollment, MfaType type, long skipTime, String enrollmentRule) {
         final EnrollSettings settings = new EnrollSettings();
         settings.setActive(active);
         settings.setForceEnrollment(forceEnrollment);
