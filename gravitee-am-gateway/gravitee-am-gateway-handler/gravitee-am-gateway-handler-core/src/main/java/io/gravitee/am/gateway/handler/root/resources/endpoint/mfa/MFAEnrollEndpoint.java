@@ -231,7 +231,7 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
         }
 
         final var endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
-        if (userAlreadyHasFactor(endUser, client)){
+        if (userAlreadyHasFactor(endUser, client, routingContext.session())){
             logger.warn("User already has active factor, enrollment of factor '{}' rejected", factorId);
             routingContext.fail(new InvalidRequestException("factor already enrolled"));
             return;
@@ -264,7 +264,13 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
         }
     }
 
-    private boolean userAlreadyHasFactor(User endUser, Client client) {
+    private boolean userAlreadyHasFactor(User endUser, Client client, Session session) {
+        // check if MFA force enroll is enabled
+        if (Boolean.TRUE.equals(session.get(ConstantKeys.MFA_FORCE_ENROLLMENT))) {
+            return false;
+        }
+
+        // verify that the user has no enrolled factor
         final var recoveryCodeFactors = getRecoveryFactorIds(client);
         return isNotEmpty(endUser.getFactors()) &&
                 endUser.getFactors().stream()
