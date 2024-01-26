@@ -14,20 +14,12 @@
  * limitations under the License.
  */
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { GioLicenseService, LicenseOptions } from '@gravitee/ui-particles-angular';
-import { Observable } from 'rxjs';
+import { GioLicenseService } from '@gravitee/ui-particles-angular';
 import { MatDialog } from '@angular/material/dialog';
 
 import { AmFeature } from '../../../../../../components/gio-license/gio-license-data';
 import { ExpressionInfoDialog } from '../expression-info-dialog/expression-info-dialog.component';
-
-interface ModeOption {
-  label: string;
-  message: string;
-  licenseOptions?: LicenseOptions;
-  isMissingFeature$?: Observable<boolean>;
-  warning?: string;
-}
+import { Challenge, ModeOption } from '../model';
 
 @Component({
   selector: 'mfa-challenge',
@@ -44,39 +36,44 @@ export class MfaChallengeComponent implements OnInit {
 {#context.attributes['geoip']['continent_name'] == 'North America'}
 {#context.attributes['geoip']['region_name'] == 'Washington'}`;
   private static modeOptions: Record<string, ModeOption> = {
-    INTELLIGENT: {
+    RISK_BASED: {
       label: 'Risk-based',
+      value: 'RISK_BASED',
       message: 'Configure how users will be challenged based on specific risks.',
-      warning: 'You need to install the <b> GeoIP service </b> and <b> Risk Assessment </b> plugins to use Risk-based MFA',
+      warning: 'You need to install the GeoIP service and Risk Assessment plugins to use Risk-based MFA',
       licenseOptions: {
         feature: AmFeature.AM_GRAVITEE_RISK_ASSESSMENT,
       },
     },
     REQUIRED: {
       label: 'Required',
+      value: 'REQUIRED',
       message: 'MFA challenges will always be displayed and required during sign-in.',
     },
     CONDITIONAL: {
       label: 'Conditional',
+      value: 'CONDITIONAL',
       message: 'Use Gravitee Expression Language to configure MFA challenges based on specific rules.',
-      warning: 'You need to install the <b> GeoIP service </b> plugin to use the geoip based variables',
+      warning: 'You need to install the GeoIP service plugin to use the geoip based variables',
+      warningLink: 'https://docs.gravitee.io/am/current/am_userguide_mfa_amfa.html',
     },
   };
-
-  @Output() settingsChange: EventEmitter<any> = new EventEmitter<any>();
-  @Input() enrollment: any;
+  @Input() challenge: Challenge;
   @Input() riskAssessment: any;
+  @Output() settingsChange = new EventEmitter<Challenge>();
 
-  enable = false;
   currentMode: any;
   modes: any[];
-  conditionalRules: string;
+  adaptiveMfaRule: string;
+  assessments: any;
 
   constructor(private licenseService: GioLicenseService, private dialog: MatDialog) {}
 
   ngOnInit(): void {
     this.initModes();
-    this.currentMode = MfaChallengeComponent.modeOptions.INTELLIGENT;
+    this.currentMode = this.challenge.type
+      ? MfaChallengeComponent.modeOptions[this.challenge.type.toUpperCase()]
+      : MfaChallengeComponent.modeOptions.OPTIONAL;
   }
 
   openInfoDialog($event: any): void {
@@ -94,22 +91,13 @@ export class MfaChallengeComponent implements OnInit {
   }
 
   switchEnable(): void {
-    this.enable = !this.enable;
-    this.settingsChange.emit({
-      riskAssessment: this.riskAssessment,
-      selectedChallengeMFAOption: this.currentMode?.label,
-      active: this.enable,
-    });
+    this.challenge.active = !this.challenge.active;
+    this.update();
   }
 
   selectChallengeOption(option: ModeOption): void {
     this.currentMode = option;
-    this.riskAssessment.enabled = option === MfaChallengeComponent.modeOptions.INTELLIGENT;
-    this.settingsChange.emit({
-      riskAssessment: this.riskAssessment,
-      selectedChallengeMFAOption: option.label,
-      active: true,
-    });
+    this.update();
   }
 
   isChallengeChecked(option: ModeOption): boolean {
@@ -117,31 +105,20 @@ export class MfaChallengeComponent implements OnInit {
   }
 
   updateRiskAssessment(assessments: any): void {
-    const safeRiskAssessment = this.getRiskAssessment(assessments, true);
-    const value = {
-      adaptiveMfaRule: this.computeRiskAssessmentRule(safeRiskAssessment),
-      riskAssessment: safeRiskAssessment,
-      selectedChallengeMFAOption: MfaChallengeComponent.modeOptions.INTELLIGENT.label,
-      active: true,
-    };
-    this.settingsChange.emit(value);
+    this.assessments = assessments;
+    this.update();
   }
 
   updateConditional($event: any): void {
-    this.conditionalRules = $event.target.value;
-    console.log(' update cond ', this.conditionalRules);
-    const value = {
-      mfaChallengeConditionalRules: this.conditionalRules,
-      selectedChallengeMFAOption: MfaChallengeComponent.modeOptions.CONDITIONAL.label,
-    };
-    this.settingsChange.emit(value);
+    this.challenge.challengeRule = $event.target.value;
+    this.update();
   }
 
   private getAssessment(riskAssessment: any, assessmentName: string): any {
     return riskAssessment?.[assessmentName] ? riskAssessment[assessmentName] : { enabled: false, thresholds: {} };
   }
 
-  private getRiskAssessment(riskAssessment: any, enabled: any): any {
+  private getRiskAssessment(riskAssessment: any, enabled: boolean): any {
     return {
       enabled: enabled,
       deviceAssessment: this.getAssessment(riskAssessment, 'deviceAssessment'),
@@ -181,6 +158,26 @@ export class MfaChallengeComponent implements OnInit {
       const option = MfaChallengeComponent.modeOptions[key];
       option.isMissingFeature$ = this.licenseService.isMissingFeature$(option.licenseOptions);
       return option;
+    });
+  }
+
+  private update(): void {
+    const isRiskBased = this.currentMode === MfaChallengeComponent.modeOptions.RISK_BASED;
+    this.riskAssessment = this.getRiskAssessment(this.assessments, isRiskBased);
+    if (isRiskBased) {
+      this.adaptiveMfaRule = this.computeRiskAssessmentRule(this.riskAssessment);
+    } else if (this.currentMode === MfaChallengeComponent.modeOptions.CONDITIONAL) {
+      this.adaptiveMfaRule = this.challenge.challengeRule;
+    } else {
+      this.adaptiveMfaRule = '';
+      this.challenge.challengeRule = '';
+    }
+    this.settingsChange.emit({
+      active: true,
+      adaptiveMfaRule: this.adaptiveMfaRule,
+      riskAssessment: this.riskAssessment,
+      challengeRule: this.challenge.challengeRule,
+      type: this.currentMode.value,
     });
   }
 }

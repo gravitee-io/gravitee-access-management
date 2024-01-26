@@ -34,9 +34,10 @@ public class PatchMFASettings {
     private Optional<String> loginRule;
     private Optional<String> stepUpAuthenticationRule;
     private Optional<String> adaptiveAuthenticationRule;
-    private Optional<String> skipAdaptiveAuthenticationRule;
     private Optional<PatchRememberDeviceSettings> rememberDevice;
+    @Deprecated
     private Optional<PatchEnrollmentSettings> enrollment;
+    private Optional<PatchEnrollSettings> enroll;
     private Optional<PatchChallengeSettings> challenge;
     public MFASettings patch(MFASettings _toPatch) {
         MFASettings toPatch = _toPatch == null ? new MFASettings() : new MFASettings(_toPatch);
@@ -50,6 +51,10 @@ public class PatchMFASettings {
 
         if (nonNull(this.getEnrollment()) && this.getEnrollment().isPresent()) {
             toPatch.setEnrollment(this.getEnrollment().get().patch(toPatch.getEnrollment()));
+        }
+
+        if (nonNull(this.getEnroll()) && this.getEnroll().isPresent()) {
+            toPatch.setEnroll(this.getEnroll().get().patch(toPatch.getEnroll()));
         }
 
         if (nonNull(this.getChallenge()) && this.getChallenge().isPresent()) {

@@ -27,9 +27,9 @@
       <h5>MFA Challenge</h5>
       <small>Once enrolled, users will be challenged based on the selected factors.</small>
     </div>
-    <mat-slide-toggle (change)="switchEnable()" [checked]="enable"></mat-slide-toggle>
+    <mat-slide-toggle (change)="switchEnable()" [checked]="this.challenge.active"></mat-slide-toggle>
   </div>
-  <div *ngIf="enable">
+  <div *ngIf="this.challenge.active">
     <div fxLayout="row">
       <div fxFlex="50">
         <span class="options-title">Options</span>
@@ -50,7 +50,7 @@
             matInput
             placeholder="Enter eligibility rule using Gravitee Expression Language."
             name="adaptiveMfaRule"
-            [(ngModel)]="conditionalRules"
+            [(ngModel)]="this.challenge.challengeRule"
             (keyup)="updateConditional($event)"
           />
           <button
@@ -71,7 +71,7 @@
         </mat-form-field>
       </div>
 
-      <div class="mfa-section-body" *ngIf="this.currentMode === modeOptions.INTELLIGENT">
+      <div class="mfa-section-body" *ngIf="this.currentMode === modeOptions.RISK_BASED">
         <mfa-intelligent [riskAssessment]="riskAssessment" (settingsChange)="updateRiskAssessment($event)"> </mfa-intelligent>
       </div>
     </div>

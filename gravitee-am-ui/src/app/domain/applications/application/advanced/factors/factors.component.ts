@@ -16,11 +16,12 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 
+import { Challenge, Enroll, RememberDevice } from './model';
+
 import { ApplicationService } from '../../../../../services/application.service';
 import { SnackbarService } from '../../../../../services/snackbar.service';
 import { FactorService } from '../../../../../services/factor.service';
 import { AuthService } from '../../../../../services/auth.service';
-import { MfaChallengeComponent } from './mfa-challenge/mfa-challenge.component';
 
 @Component({
   selector: 'app-application-factors',
@@ -29,23 +30,20 @@ import { MfaChallengeComponent } from './mfa-challenge/mfa-challenge.component';
 })
 export class ApplicationFactorsComponent implements OnInit {
   private domainId: string;
-  private riskAssessment: any = undefined;
 
   application: any;
-  formChanged = false;
   factors: any[];
-  editMode: boolean;
   deviceIdentifiers: any[];
   mfa: any;
+
+  editMode: boolean;
+
+  enroll: Enroll = {} as any;
+  challenge: Challenge = {} as any;
+  rememberDevice: RememberDevice = {} as any;
   mfaStepUpRule = '';
-  rememberDevice: any = {};
-  adaptiveMfaRule = '';
-  skipAdaptiveMfaRule = '';
-  enrollment: any = {};
-  selectedMFAOption = '';
-  selectedChallengeMFAOption = '';
-  challengeActive: boolean;
-  skipChallengeRule: string;
+
+  formChanged = false;
 
   private static getDefaultRiskAssessment(): any {
     return {
@@ -69,50 +67,54 @@ export class ApplicationFactorsComponent implements OnInit {
     this.application = this.route.snapshot.data['application'];
     this.deviceIdentifiers = this.route.snapshot.data['deviceIdentifiers'] || [];
     this.mfa = this.application.settings == null ? {} : this.application.settings.mfa || {};
-    this.mfa.enrollment = {
-      ...(this.mfa.enrollment
-        ? this.mfa.enrollment
+    this.mfa.enroll = {
+      ...(this.mfa.enroll
+        ? this.mfa.enroll
         : {
+            active: false,
             forceEnrollment: false,
             skipTimeSeconds: null,
-            option: 'REQUIRED',
+            type: 'REQUIRED',
           }),
     };
     this.mfaStepUpRule = this.mfa.stepUpAuthenticationRule ? this.mfa.stepUpAuthenticationRule.slice() : '';
-    console.log('mfaStepUpRule', this.mfaStepUpRule)
-    this.adaptiveMfaRule = this.mfa.adaptiveAuthenticationRule ? this.mfa.adaptiveAuthenticationRule.slice() : '';
     this.rememberDevice = { ...this.mfa.rememberDevice };
-    this.enrollment = { ...this.mfa.enrollment };
-
+    this.enroll = { ...this.mfa.enroll };
+    this.challenge = {
+      ...(this.mfa.challenge
+        ? this.mfa.challenge
+        : {
+            active: false,
+            challengeRule: '',
+            type: 'REQUIRED',
+          }),
+      riskAssessment: this.application.settings.riskAssessment ? { ...this.application.settings.riskAssessment } : undefined,
+      adaptiveMfaRule: this.mfa.adaptiveAuthenticationRule ? this.mfa.adaptiveAuthenticationRule.slice() : '',
+    };
     this.application.settings.riskAssessment =
       this.application.settings.riskAssessment || ApplicationFactorsComponent.getDefaultRiskAssessment();
-    this.riskAssessment = { ...this.application.settings.riskAssessment };
-
     this.editMode = this.authService.hasPermissions(['application_settings_update']);
     this.factorService.findByDomain(this.domainId).subscribe((response) => (this.factors = [...response]));
-    this.challengeActive = this.application.settings.challenge.active;
   }
 
   patch(): void {
-    console.log('risk ', this.riskAssessment);
     const data = {
       factors: this.application.factors,
       settings: {
-        riskAssessment: this.riskAssessment,
+        riskAssessment: this.challenge.riskAssessment,
         mfa: {
           stepUpAuthenticationRule: this.mfaStepUpRule,
-          // stepUpAuthentication: {
-          //   active: true,
-          //   stepUpAuthenticationRule: this.mfaStepUpRule,
-          // },
-          adaptiveAuthenticationRule: this.adaptiveMfaRule,
-          skipAdaptiveAuthenticationRule: '',
+          adaptiveAuthenticationRule: this.challenge.adaptiveMfaRule,
           rememberDevice: this.rememberDevice,
-          enrollment: this.enrollment,
+          enrollment: {
+            forceEnrollment: this.enroll.forceEnrollment,
+            skipTimeSeconds: this.enroll.skipTimeSeconds,
+          },
+          enroll: this.enroll,
           challenge: {
-            active: this.challengeActive,
-            skipChallengeRule: this.skipChallengeRule,
-            option: this.selectedChallengeMFAOption
+            active: this.challenge.active,
+            challengeRule: this.challenge.challengeRule,
+            type: this.challenge.type,
           },
         },
       },
@@ -136,7 +138,7 @@ export class ApplicationFactorsComponent implements OnInit {
     this.formChanged = true;
   }
 
-  updateRememberDevice(rememberDevice: any): void {
+  updateRememberDevice(rememberDevice: RememberDevice): void {
     this.rememberDevice = { ...rememberDevice };
     if (!this.rememberDevice.deviceIdentifierId) {
       this.rememberDevice.deviceIdentifierId = this.deviceIdentifiers[0].id;
@@ -144,13 +146,22 @@ export class ApplicationFactorsComponent implements OnInit {
     this.formChanged = true;
   }
 
-  updateActivateMfa(options: any): void {
-    console.log('update active mfa ', options);
-    this.enrollment = { ...options.enrollment };
-    this.adaptiveMfaRule = (options.adaptiveMfaRule.adaptiveMfaRule || '').slice();
-    this.skipAdaptiveMfaRule = (options.adaptiveMfaRule.skipAdaptiveMfaRule || '').slice();
+  updateEnrollment(enroll: Enroll): void {
+    this.enroll = {
+      ...enroll,
+      enrollmentRule: (enroll.enrollmentRule || '').slice(),
+      // skipEnrollmentRule: (options.enrollmentRule || '').slice(),
+    };
     this.formChanged = true;
-    this.selectedMFAOption = options.selectedMFAOption;
+  }
+
+  updateChallenge(challenge: Challenge): void {
+    this.challenge = {
+      ...challenge,
+      challengeRule: (challenge.challengeRule || '').slice(),
+      riskAssessment: challenge.riskAssessment ? { ...challenge.riskAssessment } : undefined,
+    };
+    this.formChanged = true;
   }
 
   updateStepUpRule(stepUpRule: string): void {
@@ -164,14 +175,5 @@ export class ApplicationFactorsComponent implements OnInit {
 
   hasSelectedFactors(): boolean {
     return this.application.factors && this.application.factors.length > 0;
-  }
-
-  updateChallenge(challenge: any): void {
-    console.log('challenge ', challenge);
-    this.skipChallengeRule = (challenge.mfaChallengeConditionalRules || '').slice();
-    this.riskAssessment = challenge.riskAssessment ? { ...challenge.riskAssessment } : undefined;
-    this.selectedChallengeMFAOption = challenge.selectedChallengeMFAOption;
-    this.challengeActive = challenge.active;
-    this.formChanged = true;
   }
 }

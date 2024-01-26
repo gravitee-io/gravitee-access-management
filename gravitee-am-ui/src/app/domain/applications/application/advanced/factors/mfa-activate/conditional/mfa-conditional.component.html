@@ -22,8 +22,8 @@
       matInput
       placeholder="Enter eligibility rule using Gravitee Expression Language."
       name="adaptiveMfaRule"
-      [(ngModel)]="adaptiveMfaRule"
-      (keyup)="updateAdaptiveMfaRule($event)"
+      [(ngModel)]="enrollmentRule"
+      (keyup)="updateRule($event)"
     />
     <button
       mat-icon-button
@@ -54,8 +54,8 @@
       placeholder="Use Gravitee Expression Language to configure MFA challenges"
       autofocus
       rows="1"
-      [ngModel]="skipAdaptiveMfaRule"
-      (keyup)="updateSkipAdaptiveMfaRule($event)"
+      [ngModel]="skipEnrollmentRule"
+      (keyup)="updateSkipRule($event)"
     ></gv-expression-language>
     <a href="https://documentation.gravitee.io/apim/guides/gravitee-expression-language" target="_blank">
       <p class="link">Read more about Gravitee Expression Language</p>

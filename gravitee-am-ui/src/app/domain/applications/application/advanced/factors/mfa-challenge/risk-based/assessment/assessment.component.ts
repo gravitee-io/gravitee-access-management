@@ -32,8 +32,8 @@ export class AssessmentComponent implements OnInit {
     this.current = this.getCurrentOptions();
   }
 
-  private getCurrentOptions() {
-    if (this.assessment && this.assessment.enabled && this.assessment.thresholds) {
+  private getCurrentOptions(): any {
+    if (this.assessment?.enabled && this.assessment.thresholds) {
       const keys = Object.keys(this.assessment.thresholds);
       if (keys.length > 0) {
         const current = keys.map((key) => this.options.find((option) => option.value === key));
