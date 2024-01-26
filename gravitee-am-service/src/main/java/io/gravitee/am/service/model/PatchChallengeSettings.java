@@ -31,12 +31,12 @@ public class PatchChallengeSettings {
     private Optional<Boolean> active;
     private Optional<String> challengeRule;
     private Optional<String> skipChallengeRule;
-    private Optional<String> option;
+    private Optional<MfaChallengeType> type;
     public ChallengeSettings patch(ChallengeSettings _toPatch) {
         var toPatch = _toPatch == null ? new ChallengeSettings() : new ChallengeSettings(_toPatch);
         SetterUtils.safeSet(toPatch::setActive, this.getActive());
         SetterUtils.safeSet(toPatch::setChallengeRule, getChallengeRule());
-        SetterUtils.safeSet(toPatch::setOption, this.getOption());
+        SetterUtils.safeSet(toPatch::setType, this.getType());
         return toPatch;
     }
 }
