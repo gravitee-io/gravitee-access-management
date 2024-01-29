@@ -16,7 +16,8 @@
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
 import io.gravitee.am.model.EnrollSettings;
-import io.gravitee.am.model.MfaType;
+import io.gravitee.am.model.MfaEnrollType;
+import static java.lang.Boolean.TRUE;
 import java.util.Objects;
 import java.util.Optional;
 import lombok.Getter;
@@ -36,7 +37,7 @@ public class EnrollSettingsMongo {
     public static EnrollSettingsMongo convert(EnrollSettings enrollment) {
         return Optional.of(enrollment).filter(Objects::nonNull).map(settings -> {
             var enrollmentMongo = new EnrollSettingsMongo();
-            enrollmentMongo.setActive(settings.isActive());
+            enrollmentMongo.setActive(TRUE.equals(settings.isActive()));
             enrollmentMongo.setForceEnrollment(settings.getForceEnrollment());
             enrollmentMongo.setSkipTimeSeconds(settings.getSkipTimeSeconds());
             enrollmentMongo.setEnrollmentRule(settings.getEnrollmentRule());
@@ -47,11 +48,11 @@ public class EnrollSettingsMongo {
 
     public EnrollSettings convert() {
         var enrollmentSettings = new EnrollSettings();
-        enrollmentSettings.setActive(getActive());
+        enrollmentSettings.setActive(TRUE.equals(getActive()));
         enrollmentSettings.setForceEnrollment(getForceEnrollment());
         enrollmentSettings.setSkipTimeSeconds(getSkipTimeSeconds());
         enrollmentSettings.setEnrollmentRule(getEnrollmentRule());
-        enrollmentSettings.setType(getType() != null ? MfaType.valueOf(getType()) : null);
+        enrollmentSettings.setType(getType() != null ? MfaEnrollType.valueOf(getType()) : null);
         return enrollmentSettings;
     }
 }

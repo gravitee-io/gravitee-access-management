@@ -16,7 +16,7 @@
 package io.gravitee.am.service.model;
 
 import io.gravitee.am.model.ChallengeSettings;
-import io.gravitee.am.model.MfaType;
+import io.gravitee.am.model.MfaChallengeType;
 import io.gravitee.am.service.utils.SetterUtils;
 import java.util.Optional;
 import lombok.Getter;
@@ -30,7 +30,7 @@ import lombok.Setter;
 public class PatchChallengeSettings {
     private Optional<Boolean> active;
     private Optional<String> challengeRule;
-    private Optional<MfaType> type;
+    private Optional<MfaChallengeType> type;
     public ChallengeSettings patch(ChallengeSettings _toPatch) {
         var toPatch = _toPatch == null ? new ChallengeSettings() : new ChallengeSettings(_toPatch);
         SetterUtils.safeSet(toPatch::setActive, getActive());

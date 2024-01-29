@@ -31,7 +31,7 @@ public class EnrollSettings {
     private Boolean forceEnrollment;
     private String enrollmentRule;
     private Long skipTimeSeconds;
-    private MfaType type;
+    private MfaEnrollType type;
 
     public EnrollSettings(EnrollSettings enroll) {
         this.forceEnrollment = enroll.forceEnrollment;

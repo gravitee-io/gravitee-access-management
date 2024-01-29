@@ -173,7 +173,7 @@ export class MfaChallengeComponent implements OnInit {
       this.challenge.challengeRule = '';
     }
     this.settingsChange.emit({
-      active: true,
+      active: this.challenge.active,
       adaptiveMfaRule: this.adaptiveMfaRule,
       riskAssessment: this.riskAssessment,
       challengeRule: this.challenge.challengeRule,
