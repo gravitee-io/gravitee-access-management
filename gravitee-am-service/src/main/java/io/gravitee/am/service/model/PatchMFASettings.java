@@ -33,6 +33,7 @@ import lombok.Setter;
 public class PatchMFASettings {
     private Optional<String> loginRule;
     private Optional<String> stepUpAuthenticationRule;
+    private Optional<PatchStepUpAuthentication> stepUpAuthentication;
     private Optional<String> adaptiveAuthenticationRule;
     private Optional<PatchRememberDeviceSettings> rememberDevice;
     @Deprecated
@@ -44,6 +45,10 @@ public class PatchMFASettings {
         SetterUtils.safeSet(toPatch::setLoginRule, this.getLoginRule());
         SetterUtils.safeSet(toPatch::setStepUpAuthenticationRule, this.getStepUpAuthenticationRule());
         SetterUtils.safeSet(toPatch::setAdaptiveAuthenticationRule, this.getAdaptiveAuthenticationRule());
+
+        if (nonNull(this.getStepUpAuthentication()) && this.getStepUpAuthentication().isPresent()) {
+            toPatch.setStepUpAuthentication(this.getStepUpAuthentication().get().patch(toPatch.getStepUpAuthentication()));
+        }
 
         if (nonNull(this.getRememberDevice()) && this.getRememberDevice().isPresent()) {
             toPatch.setRememberDevice(this.getRememberDevice().get().patch(toPatch.getRememberDevice()));
