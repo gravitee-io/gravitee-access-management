@@ -91,6 +91,9 @@ export class ApplicationFactorsComponent implements OnInit {
       riskAssessment: this.application.settings.riskAssessment ? { ...this.application.settings.riskAssessment } : undefined,
       adaptiveMfaRule: this.mfa.adaptiveAuthenticationRule ? this.mfa.adaptiveAuthenticationRule.slice() : '',
     };
+
+    console.log('enroll', this.enroll);
+    console.log('challenge', this.challenge);
     this.application.settings.riskAssessment =
       this.application.settings.riskAssessment || ApplicationFactorsComponent.getDefaultRiskAssessment();
     this.editMode = this.authService.hasPermissions(['application_settings_update']);

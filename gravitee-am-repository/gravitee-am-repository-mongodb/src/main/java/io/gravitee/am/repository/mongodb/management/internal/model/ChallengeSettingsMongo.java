@@ -16,7 +16,7 @@
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
 import io.gravitee.am.model.ChallengeSettings;
-import io.gravitee.am.model.MfaType;
+import io.gravitee.am.model.MfaChallengeType;
 import java.util.Objects;
 import java.util.Optional;
 import lombok.Getter;
@@ -44,7 +44,7 @@ public class ChallengeSettingsMongo {
         var challengeSettings = new ChallengeSettings();
         challengeSettings.setActive(getActive());
         challengeSettings.setChallengeRule(getChallengeRule());
-        challengeSettings.setType(getType() != null ? MfaType.valueOf(getType()) : null);
+        challengeSettings.setType(getType() != null ? MfaChallengeType.valueOf(getType()) : null);
         return challengeSettings;
     }
 }
