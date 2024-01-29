@@ -16,6 +16,13 @@
 package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.Application;
+import io.gravitee.am.model.ChallengeSettings;
+import io.gravitee.am.model.EnrollSettings;
+import io.gravitee.am.model.MFASettings;
+import io.gravitee.am.model.MfaChallengeType;
+import io.gravitee.am.model.MfaEnrollType;
+import io.gravitee.am.model.RememberDeviceSettings;
+import io.gravitee.am.model.StepUpAuthenticationSettings;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
@@ -67,7 +74,7 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testFindByDomainAndClaim() throws TechnicalException {
+    public void testFindByDomainAndClaim() {
         // create application
         Application application = new Application();
         application.setName("testApp");
@@ -113,7 +120,7 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testFindByDomainPagination() throws TechnicalException {
+    public void testFindByDomainPagination() {
         // create app 1
         Application app = new Application();
         app.setName("testClientId");
@@ -412,6 +419,56 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         testObserver.assertNoErrors();
         testObserver.assertValue(apps -> apps.getData().size() == 3);
         testObserver.assertValue(apps -> apps.getTotalCount() == 3);
+    }
+
+    @Test
+    public void testUpdateMfaSettings() {
+        // create app
+        var app = buildApplication();
+        var appCreated = applicationRepository.create(app).blockingGet();
+
+        var enrollSettings = new EnrollSettings();
+        enrollSettings.setActive(true);
+        enrollSettings.setEnrollmentRule("rule-enrollment");
+        enrollSettings.setType(MfaEnrollType.REQUIRED);
+
+        var challengeSettings = new ChallengeSettings();
+        challengeSettings.setActive(true);
+        challengeSettings.setChallengeRule("rule-challenge");
+        challengeSettings.setType(MfaChallengeType.REQUIRED);
+
+        var stepUpAuthenticationSettings = new StepUpAuthenticationSettings();
+        stepUpAuthenticationSettings.setActive(true);
+        stepUpAuthenticationSettings.setStepUpAuthenticationRule("step-up-rule");
+
+        var rememberDeviceSettings = new RememberDeviceSettings();
+        rememberDeviceSettings.setActive(true);
+        rememberDeviceSettings.setDeviceIdentifierId("device-id");
+        rememberDeviceSettings.setSkipRememberDevice(true);
+        rememberDeviceSettings.setExpirationTimeSeconds(100000L);
+
+        var mfaSettings = new MFASettings();
+        mfaSettings.setEnroll(enrollSettings);
+        mfaSettings.setChallenge(challengeSettings);
+        mfaSettings.setStepUpAuthentication(stepUpAuthenticationSettings);
+        mfaSettings.setLoginRule("login-rule");
+        mfaSettings.setRememberDevice(rememberDeviceSettings);
+        mfaSettings.setAdaptiveAuthenticationRule("adaptive-rule");
+
+        var applicationSettings = new ApplicationSettings();
+        applicationSettings.setMfa(mfaSettings);
+
+        // update app
+        var updatedApp = buildApplication();
+        updatedApp.setId(appCreated.getId());
+        updatedApp.setSettings(applicationSettings);
+
+        TestObserver<Application> testObserver = applicationRepository.update(updatedApp).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        assertEqualsTo(updatedApp, testObserver);
     }
 
 }
