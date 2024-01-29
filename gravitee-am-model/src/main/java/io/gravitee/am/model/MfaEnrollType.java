@@ -15,25 +15,8 @@
  */
 package io.gravitee.am.model;
 
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
-/**
- * @author Ashraful HASAN (ashraful.hasan at graviteesource.com)
- * @author GraviteeSource Team
- */
-@Getter
-@Setter
-@NoArgsConstructor
-public class ChallengeSettings {
-    private boolean active;
-    private String challengeRule;
-    private MfaChallengeType type;
-
-    public ChallengeSettings(ChallengeSettings other) {
-        this.active = other.active;
-        this.challengeRule = other.challengeRule;
-        this.type = other.type;
-    }
+public enum MfaEnrollType {
+    OPTIONAL,
+    REQUIRED,
+    CONDITIONAL,
 }

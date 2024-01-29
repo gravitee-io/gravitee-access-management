@@ -16,7 +16,7 @@
 package io.gravitee.am.service.model;
 
 import io.gravitee.am.model.EnrollSettings;
-import io.gravitee.am.model.MfaType;
+import io.gravitee.am.model.MfaEnrollType;
 import io.gravitee.am.service.utils.SetterUtils;
 import java.util.Objects;
 import static java.util.Objects.isNull;
@@ -33,7 +33,7 @@ public class PatchEnrollSettings {
     private Optional<Boolean> forceEnrollment;
     private Optional<Long> skipTimeSeconds;
     private Optional<String> enrollmentRule;
-    private Optional<MfaType> type;
+    private Optional<MfaEnrollType> type;
     public EnrollSettings patch(EnrollSettings _toPatch) {
         EnrollSettings toPatch = _toPatch == null ? new EnrollSettings() : new EnrollSettings(_toPatch);
         SetterUtils.safeSet(toPatch::setForceEnrollment, this.getForceEnrollment());

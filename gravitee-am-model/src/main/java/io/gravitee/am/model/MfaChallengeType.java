@@ -19,8 +19,7 @@ package io.gravitee.am.model;
  * @author Ashraful HASAN (ashraful.hasan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public enum MfaType {
-    OPTIONAL,
+public enum MfaChallengeType {
     REQUIRED,
     CONDITIONAL,
     RISK_BASED
