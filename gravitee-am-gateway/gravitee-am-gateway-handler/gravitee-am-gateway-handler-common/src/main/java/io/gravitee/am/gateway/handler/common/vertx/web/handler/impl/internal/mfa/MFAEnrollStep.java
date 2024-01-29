@@ -55,23 +55,6 @@ public class MFAEnrollStep extends MFAStep {
 
     @Override
     public void execute(RoutingContext routingContext, AuthenticationFlowChain flow) {
-        /*EnrollSettings enrollSettings = new EnrollSettings();
-        enrollSettings.setActive(false);
-        enrollSettings.setForceEnrollment(true);
-        enrollSettings.setType(MfaType.CONDITIONAL);
-        enrollSettings.setSkipTimeSeconds(60L);
-        enrollSettings.setEnrollmentRule("{#context.attributes['user']['additionalInformation']['bypassFlag'] == 'false'}");
-
-        ChallengeSettings challengeSettings = new ChallengeSettings();
-        challengeSettings.setActive(true);
-        challengeSettings.setType(MfaType.RISK_BASED);
-        challengeSettings.setChallengeRule("{#context.attributes['user']['additionalInformation']['bypassFlag'] == 'false'}");
-
-
-        MFASettings mfaSettings = client.getMfaSettings();
-        mfaSettings.setEnroll(enrollSettings);
-        mfaSettings.setChallenge(challengeSettings);
-        client.setMfaSettings(mfaSettings);*/
         final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
 
 
