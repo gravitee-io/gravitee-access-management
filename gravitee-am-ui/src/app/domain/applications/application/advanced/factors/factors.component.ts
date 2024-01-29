@@ -104,6 +104,10 @@ export class ApplicationFactorsComponent implements OnInit {
         riskAssessment: this.challenge.riskAssessment,
         mfa: {
           stepUpAuthenticationRule: this.mfaStepUpRule,
+          stepUpAuthentication: {
+            active: this.mfaStepUpRule !== '',
+            stepUpAuthenticationRule: this.mfaStepUpRule,
+          },
           adaptiveAuthenticationRule: this.challenge.adaptiveMfaRule,
           rememberDevice: this.rememberDevice,
           enrollment: {
