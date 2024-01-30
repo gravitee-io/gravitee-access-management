@@ -1,5 +1,22 @@
 # Change Log
 
+== AM - 3.21.16 (2024-01-22)
+
+== What's new !
+
+=== Gateway
+
+* Passwordless not working for iOS v17.2.1 https://github.com/gravitee-io/issues/issues/9470[#9470]
+
+
+== AM - 3.20.18 (2024-01-22)
+
+== What's new !
+
+=== Gateway
+
+* Passwordless not working for iOS v17.2.1 https://github.com/gravitee-io/issues/issues/9470[#9470]
+
 == AM - 3.21.14 (2024-01-19)
 
 == What's new !
