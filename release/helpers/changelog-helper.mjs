@@ -2,17 +2,17 @@
  * Get the MarkDown doc formatted changelog for input issues
  *
  * @param title {string}
- * @param issues {Array<{id: string, key: string, githubIssue: string, summary: string, components: Array<string>, issueTypeName: string, statusName: string}>}
+ * @param issues {Array<{id: string, key: string, githubIssue: string, summary: string, components: Array<string>, issueTypeName: string, statusKey: string}>}
  */
 export function getChangelogFor(title, issues) {
-  const authorizedIssueTypes = ['Public Bug', 'Public Security', 'Story'];
+  const authorizedIssueTypes = ['Public Bug', 'Public Security', 'Public Improvement', 'Story'];
 
   const filteredIssues = issues
     .filter((issue) => {
       return !!issue.issueTypeName && authorizedIssueTypes.includes(issue.issueTypeName);
     })
     .filter((issue) => {
-      return issue.statusName === 'Done';
+      return issue.statusKey === 'done';
     })
     .sort((issue1, issue2) => {
       // if null or undefined, put it at the end
