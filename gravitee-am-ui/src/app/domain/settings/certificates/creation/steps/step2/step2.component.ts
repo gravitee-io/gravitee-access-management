@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 
 import { OrganizationService } from '../../../../../../services/organization.service';
 
@@ -22,27 +22,46 @@ import { OrganizationService } from '../../../../../../services/organization.ser
   templateUrl: './step2.component.html',
   styleUrls: ['./step2.component.scss'],
 })
-export class CertificateCreationStep2Component implements OnChanges {
-  @Input('certificate') certificate: any;
-  @Input('configurationIsValid') configurationIsValid: boolean;
-  @Output('configurationIsValidChange') configurationIsValidChange: EventEmitter<boolean> = new EventEmitter<boolean>();
+export class CertificateCreationStep2Component implements OnInit, OnChanges {
+  @Input() certificate: any;
+  @Input() configurationIsValid: boolean;
+  @Output() configurationIsValidChange = new EventEmitter<boolean>();
   configuration: any;
   certificateSchema: any = {};
   constructor(private organizationService: OrganizationService) {}
 
-  ngOnChanges(changes: SimpleChanges) {
-    if (changes.certificate && !changes.certificate.previousValue) {
-      this.organizationService.certificateSchema(this.certificate.type).subscribe((data) => (this.certificateSchema = data));
-    }
-    if (changes.certificate?.previousValue && changes.certificate.currentValue?.configuration) {
-      this.certificate = changes.certificate.currentValue;
-      this.configuration = changes.certificate.currentValue.configuration;
+  ngOnInit(): void {
+    this.organizationService.certificateSchema(this.certificate.type).subscribe((data) => {
+      this.certificateSchema = data;
+    });
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes.certificate?.currentValue?.configuration === null) {
+      this.clearFormWithErrors();
     }
   }
 
-  enableCertificateCreation(configurationWrapper) {
+  enableCertificateCreation(configurationWrapper: any): void {
     this.configurationIsValid = configurationWrapper.isValid;
     this.configurationIsValidChange.emit(this.configurationIsValid);
     this.certificate.configuration = configurationWrapper.configuration;
+  }
+  private clearFormWithErrors(): void {
+    this.organizationService.certificateSchema(this.certificate.type).subscribe((data) => {
+      this.certificateSchema = data;
+      this.configuration = {
+        storepass: ' ',
+        keypass: ' ',
+        alias: ' ',
+      };
+      setTimeout(() => {
+        this.configuration = {
+          storepass: '',
+          keypass: '',
+          alias: '',
+        };
+      }, 0);
+    });
   }
 }
