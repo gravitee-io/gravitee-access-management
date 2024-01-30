@@ -25,7 +25,8 @@ import io.gravitee.am.model.ChallengeSettings;
 import io.gravitee.am.model.EnrollSettings;
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.MFASettings;
-import io.gravitee.am.model.MfaType;
+import io.gravitee.am.model.MfaChallengeType;
+import io.gravitee.am.model.MfaEnrollType;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
@@ -106,17 +107,17 @@ public class MFAEnrollStep extends MFAStep {
 
     private boolean isEnrollOptional(Client client) {
         final EnrollSettings settings = MfaUtils.getEnrollSettings(client);
-        return MfaType.OPTIONAL == settings.getType();
+        return MfaEnrollType.OPTIONAL == settings.getType();
     }
 
     private boolean isEnrollRequired(Client client) {
         final EnrollSettings settings = MfaUtils.getEnrollSettings(client);
-        return MfaType.REQUIRED == settings.getType();
+        return MfaEnrollType.REQUIRED == settings.getType();
     }
 
     private boolean isEnrollConditional(Client client) {
         final EnrollSettings settings = MfaUtils.getEnrollSettings(client);
-        return MfaType.CONDITIONAL == settings.getType();
+        return MfaEnrollType.CONDITIONAL == settings.getType();
     }
 
     private boolean enrollConditionNotSatisfied(Client client, MfaFilterContext context, RoutingContext routingContext) {
@@ -139,17 +140,17 @@ public class MFAEnrollStep extends MFAStep {
 
     private boolean isChallengeRequired(Client client) {
         ChallengeSettings settings = MfaUtils.getChallengeSettings(client);
-        return settings.getType() == MfaType.REQUIRED;
+        return settings.getType() == MfaChallengeType.REQUIRED;
     }
 
     private boolean isChallengeConditional(Client client) {
         ChallengeSettings settings = MfaUtils.getChallengeSettings(client);
-        return settings.getType() == MfaType.CONDITIONAL;
+        return settings.getType() == MfaChallengeType.CONDITIONAL;
     }
 
     private boolean isChallengeRiskBased(Client client) {
         ChallengeSettings settings = MfaUtils.getChallengeSettings(client);
-        return settings.getType() == MfaType.RISK_BASED;
+        return settings.getType() == MfaChallengeType.RISK_BASED;
     }
 
     private boolean challengeConditionNotSatisfied(Client client, MfaFilterContext context, RoutingContext routingContext) {

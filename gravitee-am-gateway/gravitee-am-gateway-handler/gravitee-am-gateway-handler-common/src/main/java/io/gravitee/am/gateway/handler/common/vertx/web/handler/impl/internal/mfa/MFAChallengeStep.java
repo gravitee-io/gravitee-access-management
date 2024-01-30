@@ -198,10 +198,6 @@ public class MFAChallengeStep extends MFAStep {
     }
 
     private boolean skipIfChallengeInactiveOrUserNotEnrolling(Client client, RoutingContext context) {
-        if (isUserEnrolling(context) || MfaUtils.isChallengeActive(client)) {
-            return false;
-        } else {
-            return true;
-        }
+        return !isUserEnrolling(context) && !MfaUtils.isChallengeActive(client);
     }
 }
