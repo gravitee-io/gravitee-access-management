@@ -29,7 +29,7 @@ export function getJiraVersion(versionName) {
 /**
  * Get all Jira issues associated to the given version id
  * @param versionId {string} The version id
- * @returns {Promise<Array<{id: string, key: string, githubIssue: string, summary: string, components: Array<string>, issueTypeName: string, statusName: string}>>}
+ * @returns {Promise<Array<{id: string, key: string, githubIssue: string, summary: string, components: Array<string>, issueTypeName: string, statusKey: string}>>}
  */
 export async function getJiraIssuesOfVersion(versionId) {
   const token = process.env.JIRA_TOKEN;
@@ -51,7 +51,7 @@ export async function getJiraIssuesOfVersion(versionId) {
     summary: issue.fields.summary,
     components: issue.fields.components,
     issueTypeName: issue.fields.issuetype.name,
-    statusName: issue.fields.status.name,
+    statusKey: issue.fields.status.statusCategory.key,
   }));
 
   // For each issue with empty githubIssue field, get the remote link and extract the GitHub issue number
