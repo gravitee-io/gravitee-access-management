@@ -39,11 +39,11 @@ export class CertificateCreationComponent implements OnInit, AfterViewChecked {
     private changeDetector: ChangeDetectorRef,
   ) {}
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.domainId = this.route.snapshot.data['domain']?.id;
   }
 
-  create() {
+  create(): void {
     this.certificate.configuration = JSON.stringify(this.certificate.configuration);
     this.certificateService.create(this.domainId, this.certificate).subscribe(
       (data) => {
@@ -51,12 +51,7 @@ export class CertificateCreationComponent implements OnInit, AfterViewChecked {
         this.router.navigate(['..', data.id], { relativeTo: this.route });
       },
       (_) => {
-        const configuration: any = JSON.parse(this.certificate.configuration);
-        configuration.content = '';
-        configuration.storepass = '';
-        configuration.keypass = '';
-        configuration.alias = '';
-        this.certificate = { ...this.certificate, name: '', configuration: configuration };
+        this.certificate = { ...this.certificate, name: '', configuration: null };
       },
     );
   }
