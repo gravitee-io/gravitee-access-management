@@ -36,7 +36,8 @@ import io.gravitee.am.model.ChallengeSettings;
 import io.gravitee.am.model.EnrollSettings;
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.MFASettings;
-import io.gravitee.am.model.MfaType;
+import io.gravitee.am.model.MfaChallengeType;
+import io.gravitee.am.model.MfaEnrollType;
 import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
@@ -125,8 +126,8 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(rc -> {
             // set client
             Client client = new Client();
-            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(false, MfaType.REQUIRED, "");
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(false, MfaChallengeType.REQUIRED, "");
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             client.setMfaSettings(mfaSettings);
             client.setFactors(Collections.singleton("factor-1"));
@@ -151,8 +152,8 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToMFAEnrollmentPage_adaptiveMFA() throws Exception {
         router.route().order(-1).handler(rc -> {
-            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
@@ -181,8 +182,8 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToMFAEnrollmentPage_adaptiveMFA_no_enroll() throws Exception {
         router.route().order(-1).handler(rc -> {
-            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
@@ -211,8 +212,8 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldNoRedirectToMFAChallengePage_adaptiveMFA_no_active_enroll_and_endUser_not_enrolled() throws Exception {
         router.route().order(-1).handler(rc -> {
-            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
@@ -247,8 +248,8 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToMFAChallengePage_adaptiveMFA_no_active_enroll_and_endUser_is_enrolling() throws Exception {
         router.route().order(-1).handler(rc -> {
-            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
@@ -287,8 +288,8 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             Client client = new Client();
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-            EnrollSettings enrollSettings = createEnrollSettings(false, false, MfaType.REQUIRED,0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
+            EnrollSettings enrollSettings = createEnrollSettings(false, false, MfaEnrollType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             final RememberDeviceSettings rememberDevice = new RememberDeviceSettings();
             rememberDevice.setActive(true);
@@ -316,8 +317,8 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     public void shouldRedirectToMFAChallengePage_nominalCase_no_enrolled_factor() throws Exception {
         router.route().order(-1).handler(rc -> {
             // set client
-            EnrollSettings enrollSettings = createEnrollSettings(false, false, MfaType.REQUIRED,0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
+            EnrollSettings enrollSettings = createEnrollSettings(false, false, MfaEnrollType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             Client client = new Client();
             client.setFactors(Collections.singleton("factor-1"));
@@ -344,8 +345,8 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToMFAChallengePage_nominalCase() throws Exception {
         router.route().order(-1).handler(rc -> {
-            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
@@ -432,8 +433,8 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldNoRedirectToMFAChallengePage_device_remembered_but_no_matching_active_factor_and_endUser_not_enrolled() throws Exception {
         router.route().order(-1).handler(rc -> {
-            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
@@ -471,8 +472,8 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToMFAChallengePage_device_remembered_but_no_matching_active_factor_and_endUser_is_enrolling() throws Exception {
         router.route().order(-1).handler(rc -> {
-            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
@@ -510,8 +511,8 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldNoRedirectToMFAChallengePage_device_remembered_but_active_factor_is_recovery_code_and_endUser_not_enrolled() throws Exception {
         router.route().order(-1).handler(rc -> {
-            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
@@ -554,8 +555,8 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToMFAChallengePage_device_remembered_but_active_factor_is_recovery_code_and_endUser_is_enrolling() throws Exception {
         router.route().order(-1).handler(rc -> {
-            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
@@ -601,8 +602,8 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToChallenge_user_device_known_and_step_up_active_strongly_auth() throws Exception {
         router.route().order(-1).handler(rc -> {
-            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
@@ -642,8 +643,8 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldContinue_user_device_known_and_step_up_active_not_strongly_auth() throws Exception {
         router.route().order(-1).handler(rc -> {
-            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
@@ -701,8 +702,8 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToMFAChallengePage_stepUp_authentication() throws Exception {
         router.route().order(-1).handler(rc -> {
-            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
@@ -735,8 +736,8 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToMFAChallengePage_adaptiveMFA() throws Exception {
         router.route().order(-1).handler(rc -> {
-            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
@@ -770,8 +771,8 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToMFAChallengePage_adaptiveMFA_with_step_up_true_strong_auth_true() throws Exception {
         router.route().order(-1).handler(rc -> {
-            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
@@ -810,8 +811,8 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldContinue_adaptiveMFA_with_step_up_false_strong_auth_true_device_known() throws Exception {
         router.route().order(-1).handler(rc -> {
-            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
@@ -844,8 +845,8 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToMFAChallengePage_rememberDevice() throws Exception {
         router.route().order(-1).handler(rc -> {
-            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
@@ -918,8 +919,8 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToMFAChallengePage_rememberDevice_with_risk_assessment_but_no_device() throws Exception {
         router.route().order(-1).handler(rc -> {
-            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
@@ -958,8 +959,8 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToMFAChallengePage_stepUp_authentication_2() throws Exception {
         router.route().order(-1).handler(rc -> {
-            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
@@ -992,8 +993,8 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToMFAChallengePage_adaptiveMFA_2() throws Exception {
         router.route().order(-1).handler(rc -> {
-            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
@@ -1027,8 +1028,8 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToMFAChallengePage_adaptiveMFA_2_user_auth() throws Exception {
         router.route().order(-1).handler(rc -> {
-            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
@@ -1062,8 +1063,8 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToMFAChallengePage_adaptiveMFA_3_factor_is_pending() throws Exception {
         router.route().order(-1).handler(rc -> {
-            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
@@ -1129,8 +1130,8 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToMFAChallengePage_adaptiveMFA_3_alternate_factor_id() throws Exception {
         router.route().order(-1).handler(rc -> {
-            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaType.REQUIRED,0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaType.REQUIRED, "");
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED,0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
@@ -1301,7 +1302,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         return mfaSettings;
     }
 
-    private ChallengeSettings createChallengeSettings(boolean active, MfaType type, String challengeRule) {
+    private ChallengeSettings createChallengeSettings(boolean active, MfaChallengeType type, String challengeRule) {
         final ChallengeSettings settings = new ChallengeSettings();
         settings.setActive(active);
         settings.setType(type);
@@ -1310,7 +1311,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         return settings;
     }
 
-    private EnrollSettings createEnrollSettings(boolean active, boolean forceEnrollment, MfaType type, long skipTime, String enrollmentRule) {
+    private EnrollSettings createEnrollSettings(boolean active, boolean forceEnrollment, MfaEnrollType type, long skipTime, String enrollmentRule) {
         final EnrollSettings settings = new EnrollSettings();
         settings.setActive(active);
         settings.setForceEnrollment(forceEnrollment);

@@ -27,15 +27,14 @@ import io.gravitee.am.model.EnrollSettings;
 import io.gravitee.am.model.EnrollmentSettings;
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.MFASettings;
-import io.gravitee.am.model.MfaType;
+import io.gravitee.am.model.MfaChallengeType;
+import io.gravitee.am.model.MfaEnrollType;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.core.json.JsonObject;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
-import org.junit.Ignore;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -43,7 +42,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Map;
 import java.util.Set;
 
 import static io.gravitee.am.common.utils.ConstantKeys.ENROLLED_FACTOR_ID_KEY;
@@ -133,7 +131,7 @@ class MFAEnrollStepTest {
         when(client.getMfaSettings()).thenReturn(mfaSettings);
         when(mfaSettings.getEnroll()).thenReturn(enroll);
         when(enroll.isActive()).thenReturn(true);
-        when(enroll.getType()).thenReturn(MfaType.REQUIRED);
+        when(enroll.getType()).thenReturn(MfaEnrollType.REQUIRED);
         when(factorManager.getFactor(FACTOR_ID)).thenReturn(factor);
         when(factor.getFactorType()).thenReturn(FactorType.SMS);
         when(routingContext.session()).thenReturn(session);
@@ -159,7 +157,7 @@ class MFAEnrollStepTest {
         when(client.getMfaSettings()).thenReturn(mfaSettings);
         when(mfaSettings.getEnroll()).thenReturn(enroll);
         when(enroll.isActive()).thenReturn(true);
-        when(enroll.getType()).thenReturn(MfaType.CONDITIONAL);
+        when(enroll.getType()).thenReturn(MfaEnrollType.CONDITIONAL);
         when(factorManager.getFactor(FACTOR_ID)).thenReturn(factor);
         when(factor.getFactorType()).thenReturn(FactorType.SMS);
         when(routingContext.session()).thenReturn(session);
@@ -191,7 +189,7 @@ class MFAEnrollStepTest {
         when(client.getMfaSettings()).thenReturn(mfaSettings);
         when(mfaSettings.getEnroll()).thenReturn(enroll);
         when(enroll.isActive()).thenReturn(true);
-        when(enroll.getType()).thenReturn(MfaType.OPTIONAL);
+        when(enroll.getType()).thenReturn(MfaEnrollType.OPTIONAL);
         when(factorManager.getFactor(FACTOR_ID)).thenReturn(factor);
         when(factor.getFactorType()).thenReturn(FactorType.SMS);
         when(routingContext.session()).thenReturn(session);
@@ -215,7 +213,7 @@ class MFAEnrollStepTest {
     void should_enroll_MFA_clientHasFactors_enrollDisabled_challengeRequired() {
         when(enroll.isActive()).thenReturn(false);
         when(challengeSettings.isActive()).thenReturn(true);
-        when(challengeSettings.getType()).thenReturn(MfaType.REQUIRED);
+        when(challengeSettings.getType()).thenReturn(MfaChallengeType.REQUIRED);
 
         when(routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY)).thenReturn(client);
         when(client.getFactors()).thenReturn(Set.of(FACTOR_ID));
@@ -244,7 +242,7 @@ class MFAEnrollStepTest {
     void should_enroll_noFactor_challengeConditional() {
         when(enroll.isActive()).thenReturn(false);
         when(challengeSettings.isActive()).thenReturn(true);
-        when(challengeSettings.getType()).thenReturn(MfaType.CONDITIONAL);
+        when(challengeSettings.getType()).thenReturn(MfaChallengeType.CONDITIONAL);
 
         when(routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY)).thenReturn(client);
         when(client.getFactors()).thenReturn(Set.of(FACTOR_ID));
@@ -279,7 +277,7 @@ class MFAEnrollStepTest {
     void should_enroll_noFactor_challengeRiskBased() {
         when(enroll.isActive()).thenReturn(false);
         when(challengeSettings.isActive()).thenReturn(true);
-        when(challengeSettings.getType()).thenReturn(MfaType.RISK_BASED);
+        when(challengeSettings.getType()).thenReturn(MfaChallengeType.RISK_BASED);
 
         when(routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY)).thenReturn(client);
         when(client.getFactors()).thenReturn(Set.of(FACTOR_ID));

@@ -7,7 +7,7 @@ import {createFactor} from "@management-commands/factor-management-commands";
 import {createApplication, updateApplication} from "@management-commands/application-management-commands";
 import faker from "faker";
 import {extractXsrfTokenAndActionResponse, getWellKnownOpenIdConfiguration, logoutUser, performFormPost, performGet, performPost} from "@gateway-commands/oauth-oidc-commands";
-import {buildCreateAndTestUser, deleteUser} from "@management-commands/user-management-commands";
+import {buildCreateAndTestUser} from "@management-commands/user-management-commands";
 import {initiateLoginFlow} from "@gateway-commands/login-commands";
 
 
