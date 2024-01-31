@@ -54,17 +54,18 @@ public class MFAChallengeStep extends MFAStep {
     public void execute(RoutingContext routingContext, AuthenticationFlowChain flow) {
         final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         var context = new MfaFilterContext(routingContext, client, factorManager);
-
-        final boolean skipMFA = isNull(client) || noFactor(client) || context.isMfaChallengeComplete()
-                || isAdaptiveMfa(context) || isStepUp(context) || isRememberDevice(context) || isEnrollSkipRuleSatisfied(routingContext)
-                || isStronglyAuthenticated(context) /*|| isUserStronglyAuthenticated(context)*/
-                || skipIfChallengeInactiveOrUserNotEnrolling(client, routingContext) || isChallengeSkipRuleSatisfied(routingContext);
-
-        if (skipMFA) {
+        if (isSkipMFA(routingContext, client, context)) {
             flow.doNext(routingContext);
         } else {
             flow.exit(this);
         }
+    }
+
+    private boolean isSkipMFA(RoutingContext routingContext, Client client, MfaFilterContext context) {
+        return isNull(client) || noFactor(client) || context.isMfaChallengeComplete()
+                || isAdaptiveMfa(context) || isStepUp(context) || isRememberDevice(context) || isEnrollSkipRuleSatisfied(routingContext)
+                || isStronglyAuthenticated(context)
+                || skipIfChallengeInactiveOrUserNotEnrolling(client, routingContext) || isChallengeSkipRuleSatisfied(routingContext);
     }
 
     private boolean noFactor(Client client) {
@@ -149,10 +150,6 @@ public class MFAChallengeStep extends MFAStep {
         }
 
         return context.userHasMatchingActivatedFactors() && rememberDeviceSettings.isActive() && context.deviceAlreadyExists();
-    }
-
-    private boolean isUserStronglyAuthenticated(MfaFilterContext context) {
-        return context.isUserStronglyAuth();
     }
 
     private boolean isStronglyAuthenticated(MfaFilterContext context) {

@@ -37,7 +37,7 @@ export function StepUpAuthenticationSettingsFromJSON(json: any): StepUpAuthentic
 }
 
 export function StepUpAuthenticationSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): StepUpAuthenticationSettings {
-    if ((json === undefined) || (json === null)) {
+    if (json == null) {
         return json;
     }
     return {
@@ -47,11 +47,8 @@ export function StepUpAuthenticationSettingsFromJSONTyped(json: any, ignoreDiscr
 }
 
 export function StepUpAuthenticationSettingsToJSON(value?: StepUpAuthenticationSettings | null): any {
-    if (value === undefined) {
-        return undefined;
-    }
-    if (value === null) {
-        return null;
+    if (value == null) {
+        return value;
     }
     return {
         'active': value.active,

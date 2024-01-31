@@ -170,7 +170,6 @@ class MFAEnrollStepTest {
         given(delegateUser.getUser()).willReturn(mockUSer);
         when(session.get(ENROLLED_FACTOR_ID_KEY)).thenReturn(null);
         when(ruleEngine.evaluate(anyString(), anyMap(), any(), any())).thenReturn(false);
-        //when(routingContext.data()).thenReturn(Map.of());
         io.vertx.core.http.HttpServerRequest mockHttpServerReq = mock(io.vertx.core.http.HttpServerRequest.class);
         when(mockHttpServerReq.method()).thenReturn(HttpMethod.GET);
         when(routingContext.request()).thenReturn(HttpServerRequest.newInstance(mockHttpServerReq));
@@ -261,7 +260,6 @@ class MFAEnrollStepTest {
         given(delegateUser.getUser()).willReturn(mockUSer);
 
         when(ruleEngine.evaluate(anyString(), anyMap(), any(), any())).thenReturn(false);
-        //when(routingContext.data()).thenReturn(Map.of());
         io.vertx.core.http.HttpServerRequest mockHttpServerReq = mock(io.vertx.core.http.HttpServerRequest.class);
         when(mockHttpServerReq.method()).thenReturn(HttpMethod.GET);
         when(routingContext.request()).thenReturn(HttpServerRequest.newInstance(mockHttpServerReq));
@@ -296,7 +294,6 @@ class MFAEnrollStepTest {
         given(delegateUser.getUser()).willReturn(mockUSer);
 
         when(ruleEngine.evaluate(anyString(), anyMap(), any(), any())).thenReturn(false);
-        //when(routingContext.data()).thenReturn(Map.of());
         io.vertx.core.http.HttpServerRequest mockHttpServerReq = mock(io.vertx.core.http.HttpServerRequest.class);
         when(mockHttpServerReq.method()).thenReturn(HttpMethod.GET);
         when(routingContext.request()).thenReturn(HttpServerRequest.newInstance(mockHttpServerReq));

@@ -99,7 +99,7 @@ export function MFASettingsFromJSON(json: any): MFASettings {
 }
 
 export function MFASettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): MFASettings {
-    if ((json === undefined) || (json === null)) {
+    if (json == null) {
         return json;
     }
     return {
@@ -116,11 +116,8 @@ export function MFASettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean
 }
 
 export function MFASettingsToJSON(value?: MFASettings | null): any {
-    if (value === undefined) {
-        return undefined;
-    }
-    if (value === null) {
-        return null;
+    if (value == null) {
+        return value;
     }
     return {
 

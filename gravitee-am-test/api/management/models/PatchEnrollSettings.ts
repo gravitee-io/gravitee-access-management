@@ -58,7 +58,6 @@ export const PatchEnrollSettingsTypeEnum = {
     Optional: 'OPTIONAL',
     Required: 'REQUIRED',
     Conditional: 'CONDITIONAL',
-    RiskBased: 'RISK_BASED'
 } as const;
 export type PatchEnrollSettingsTypeEnum = typeof PatchEnrollSettingsTypeEnum[keyof typeof PatchEnrollSettingsTypeEnum];
 
@@ -68,7 +67,7 @@ export function PatchEnrollSettingsFromJSON(json: any): PatchEnrollSettings {
 }
 
 export function PatchEnrollSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): PatchEnrollSettings {
-    if ((json === undefined) || (json === null)) {
+    if (json == null) {
         return json;
     }
     return {
@@ -82,11 +81,8 @@ export function PatchEnrollSettingsFromJSONTyped(json: any, ignoreDiscriminator:
 }
 
 export function PatchEnrollSettingsToJSON(value?: PatchEnrollSettings | null): any {
-    if (value === undefined) {
-        return undefined;
-    }
-    if (value === null) {
-        return null;
+    if (value == null) {
+        return value;
     }
     return {
 
