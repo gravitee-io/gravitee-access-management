@@ -16,6 +16,7 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { Router } from '@angular/router';
 import * as _ from 'lodash';
+import { map } from 'lodash';
 
 import { Chart } from '../widget.model';
 
@@ -36,7 +37,7 @@ export class WidgetDataTableComponent implements OnInit, OnChanges {
   constructor(private router: Router) {}
 
   ngOnInit() {
-    this.columns = _.map(this.chart.columns, (column) => ({ name: column }));
+    this.columns = map(this.chart.columns, (column) => ({ name: column }));
     this.limit = this.chart.paging;
   }
 

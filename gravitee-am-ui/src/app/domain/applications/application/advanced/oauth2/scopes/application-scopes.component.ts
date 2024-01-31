@@ -15,12 +15,12 @@
  */
 import { Component, ElementRef, Inject, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import moment from 'moment';
-import * as _ from 'lodash';
+import { duration } from 'moment';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
-import { FormControl } from '@angular/forms';
+import { UntypedFormControl } from '@angular/forms';
 import { COMMA, ENTER } from '@angular/cdk/keycodes';
+import { difference, find, map, remove } from 'lodash';
 
 import { AuthService } from '../../../../../../services/auth.service';
 import { SnackbarService } from '../../../../../../services/snackbar.service';
@@ -68,7 +68,7 @@ export class ApplicationScopesComponent implements OnInit {
     this.selectedScopeApprovals = {};
     if (this.applicationOauthSettings.scopeSettings) {
       this.applicationOauthSettings.scopeSettings.forEach((scopeSettings) => {
-        const definedScope = _.find(this.scopes, { key: scopeSettings.scope });
+        const definedScope = find(this.scopes, { key: scopeSettings.scope });
         if (definedScope) {
           this.selectedScopes.push(definedScope);
           if (scopeSettings.defaultScope) {
@@ -84,7 +84,7 @@ export class ApplicationScopesComponent implements OnInit {
       });
     }
 
-    this.scopes = _.difference(this.scopes, this.selectedScopes);
+    this.scopes = difference(this.scopes, this.selectedScopes);
   }
 
   patch() {
@@ -99,7 +99,7 @@ export class ApplicationScopesComponent implements OnInit {
 
       const approval = this.selectedScopeApprovals[s.key];
       if (approval) {
-        setting['scopeApproval'] = moment.duration(approval.expiresIn, approval.unitTime).asSeconds();
+        setting['scopeApproval'] = duration(approval.expiresIn, approval.unitTime).asSeconds();
       }
 
       oauthSettings.scopeSettings.push(setting);
@@ -113,7 +113,7 @@ export class ApplicationScopesComponent implements OnInit {
 
   add(event) {
     event.preventDefault();
-    const applicationScopes = _.map(this.selectedScopes, (scope) => scope.key);
+    const applicationScopes = map(this.selectedScopes, (scope) => scope.key);
     const dialogRef = this.dialog.open(AddScopeComponent, {
       width: '700px',
       data: { domainScopes: this.scopes, applicationScopes: applicationScopes },
@@ -121,7 +121,7 @@ export class ApplicationScopesComponent implements OnInit {
     dialogRef.afterClosed().subscribe((scopes) => {
       if (scopes) {
         scopes.forEach((scope) => {
-          const selectedScope = _.find(this.scopes, { key: scope });
+          const selectedScope = find(this.scopes, { key: scope });
           if (selectedScope) {
             this.selectedScopes.push(selectedScope);
           }
@@ -135,7 +135,7 @@ export class ApplicationScopesComponent implements OnInit {
   removeScope(scopeKey, event) {
     event.preventDefault();
     this.scopes = this.scopes.concat(
-      _.remove(this.selectedScopes, function (selectPermission) {
+      remove(this.selectedScopes, function (selectPermission) {
         return selectPermission.key === scopeKey;
       }),
     );
@@ -199,14 +199,14 @@ export class ApplicationScopesComponent implements OnInit {
   }
 
   private getExpiresIn(value) {
-    const humanizeDate = moment.duration(value, 'seconds').humanize().split(' ');
+    const humanizeDate = duration(value, 'seconds').humanize().split(' ');
     const humanizeDateValue =
       humanizeDate.length === 2 ? (humanizeDate[0] === 'a' || humanizeDate[0] === 'an' ? 1 : humanizeDate[0]) : value;
     return humanizeDateValue;
   }
 
   private getUnitTime(value) {
-    const humanizeDate = moment.duration(value, 'seconds').humanize().split(' ');
+    const humanizeDate = duration(value, 'seconds').humanize().split(' ');
     const humanizeDateUnit =
       humanizeDate.length === 2
         ? humanizeDate[1].endsWith('s')
@@ -226,7 +226,7 @@ export class ApplicationScopesComponent implements OnInit {
 export class AddScopeComponent {
   @ViewChild('scopeInput', { static: true }) scopeInput: ElementRef<HTMLInputElement>;
   @ViewChild(MatAutocompleteTrigger, { static: true }) trigger;
-  scopeCtrl = new FormControl();
+  scopeCtrl = new UntypedFormControl();
   filteredScopes: any[];
   selectedScopes: any[] = [];
   removable = true;

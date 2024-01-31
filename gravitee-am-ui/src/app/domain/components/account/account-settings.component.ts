@@ -15,7 +15,7 @@
  */
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import moment, { unitOfTime } from 'moment';
+import moment, { duration, unitOfTime } from 'moment';
 
 import { BotDetectionService } from '../../../services/bot-detection.service';
 import { ProviderService } from '../../../services/provider.service';
@@ -368,7 +368,7 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
   }
 
   private getHumanizeDuration(value): Duration {
-    const humanizeDate = moment.duration(value, 'seconds').humanize().split(' ');
+    const humanizeDate = duration(value, 'seconds').humanize().split(' ');
     const time = humanizeDate.length === 2 ? (humanizeDate[0] === 'a' || humanizeDate[0] === 'an' ? 1 : humanizeDate[0]) : value;
     const unit =
       humanizeDate.length === 2

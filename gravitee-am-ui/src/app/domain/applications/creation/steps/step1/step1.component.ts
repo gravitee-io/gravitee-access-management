@@ -15,7 +15,7 @@
  */
 import { Component, Input, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import * as _ from 'lodash';
+import { remove } from 'lodash';
 
 @Component({
   selector: 'application-creation-step1',
@@ -68,7 +68,7 @@ export class ApplicationCreationStep1Component implements OnInit {
   ngOnInit(): void {
     this.domain = this.route.snapshot.data['domain'];
     if (!this.domain.uma || !this.domain.uma.enabled) {
-      _.remove(this.applicationTypes, { type: 'RESOURCE_SERVER' });
+      remove(this.applicationTypes, { type: 'RESOURCE_SERVER' });
     }
   }
 

@@ -17,10 +17,10 @@ import { Component, ElementRef, Inject, OnInit, ViewChild } from '@angular/core'
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
-import { FormControl } from '@angular/forms';
+import { UntypedFormControl } from '@angular/forms';
 import { COMMA, ENTER } from '@angular/cdk/keycodes';
-import * as _ from 'lodash';
 import { filter, switchMap, tap } from 'rxjs/operators';
+import { map } from 'lodash';
 
 import { UserService } from '../../../../../services/user.service';
 import { SnackbarService } from '../../../../../services/snackbar.service';
@@ -114,7 +114,7 @@ export class GroupMembersComponent implements OnInit {
     });
     dialogRef.afterClosed().subscribe((members) => {
       if (members) {
-        const memberIds = _.map(members, 'id');
+        const memberIds = map(members, 'id');
         this.group.members = (this.group.members = this.group.members || []).concat(memberIds);
         this.update('Member(s) added');
       }
@@ -149,7 +149,7 @@ export class GroupMembersComponent implements OnInit {
 export class AddMemberComponent {
   @ViewChild('memberInput', { static: true }) memberInput: ElementRef<HTMLInputElement>;
   @ViewChild(MatAutocompleteTrigger, { static: true }) trigger;
-  memberCtrl = new FormControl();
+  memberCtrl = new UntypedFormControl();
   filteredUsers: any[];
   selectedMembers: any[] = [];
   removable = true;
@@ -170,7 +170,7 @@ export class AddMemberComponent {
         tap((response) => {
           this.filteredUsers = response.data.filter(
             (domainUser) =>
-              _.map(this.selectedMembers, 'id').indexOf(domainUser.id) === -1 && this.groupMembers.indexOf(domainUser.id) === -1,
+              map(this.selectedMembers, 'id').indexOf(domainUser.id) === -1 && this.groupMembers.indexOf(domainUser.id) === -1,
           );
         }),
       )

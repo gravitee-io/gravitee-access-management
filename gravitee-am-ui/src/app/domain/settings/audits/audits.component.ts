@@ -16,10 +16,10 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import moment from 'moment';
-import { FormControl } from '@angular/forms';
-import * as _ from 'lodash';
+import { UntypedFormControl } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { filter, map, switchMap } from 'rxjs/operators';
+import { find } from 'lodash';
 
 import { AuditService } from '../../../services/audit.service';
 import { OrganizationService } from '../../../services/organization.service';
@@ -38,7 +38,7 @@ export class AuditsComponent implements OnInit {
   organizationContext = false;
   requiredReadPermission: string;
   @ViewChild('auditsTable', { static: true }) table: any;
-  userCtrl = new FormControl();
+  userCtrl = new UntypedFormControl();
   audits: any[];
   pagedAudits: any;
   domainId: string;
@@ -209,7 +209,7 @@ export class AuditsComponent implements OnInit {
   }
 
   searchAudits() {
-    const selectedTimeRange = _.find(this.timeRanges, { id: this.selectedTimeRange });
+    const selectedTimeRange = find(this.timeRanges, { id: this.selectedTimeRange });
     const from = this.startDateChanged
       ? moment(this.startDate).valueOf()
       : moment().subtract(selectedTimeRange.value, selectedTimeRange.unit).valueOf();

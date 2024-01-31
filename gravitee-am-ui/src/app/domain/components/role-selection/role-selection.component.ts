@@ -16,9 +16,9 @@
 import { Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { MatAutocompleteSelectedEvent, MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { COMMA, ENTER } from '@angular/cdk/keycodes';
-import * as _ from 'lodash';
 import { BehaviorSubject, Subscription } from 'rxjs';
-import { FormControl } from '@angular/forms';
+import { UntypedFormControl } from '@angular/forms';
+import { map } from 'lodash';
 
 @Component({
   selector: 'role-selection',
@@ -36,7 +36,7 @@ export class RoleSelectionComponent implements OnInit {
   removable = true;
   addOnBlur = true;
   separatorKeysCodes: number[] = [ENTER, COMMA];
-  roleCtrl = new FormControl();
+  roleCtrl = new UntypedFormControl();
   userInputSub: Subscription;
 
   ngOnDestroy(): void {
@@ -44,7 +44,7 @@ export class RoleSelectionComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.assignedRoles = this.initialSelectedRoles ? _.map(this.initialSelectedRoles, 'id') : [];
+    this.assignedRoles = this.initialSelectedRoles ? map(this.initialSelectedRoles, 'id') : [];
     this.userInputSub = this.roleCtrl.valueChanges.subscribe((value) => {
       this._filterByUserInput(value);
     });

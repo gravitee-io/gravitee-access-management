@@ -15,9 +15,9 @@
  */
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import * as _ from 'lodash';
 import { forkJoin, of } from 'rxjs';
 import { filter, switchMap, tap } from 'rxjs/operators';
+import { find } from 'lodash';
 
 import { SnackbarService } from '../../../services/snackbar.service';
 import { AuthService } from '../../../services/auth.service';
@@ -198,7 +198,7 @@ export class DomainSettingsThemeComponent implements OnInit {
       return form;
     });
     if (this.theme.id && this.theme.primaryButtonColorHex) {
-      const filteredObj = _.find(this.colorPalettes, { primaryButtonColorHex: this.theme.primaryButtonColorHex });
+      const filteredObj = find(this.colorPalettes, { primaryButtonColorHex: this.theme.primaryButtonColorHex });
       if (filteredObj) {
         this.selectedColorPalette = filteredObj.name;
       }
@@ -325,7 +325,7 @@ export class DomainSettingsThemeComponent implements OnInit {
     themeToPublish.faviconUrl = this.theme.faviconUrl;
     themeToPublish.css = this.theme.css;
     if (this.selectedColorPalette) {
-      const filteredObj = _.find(this.colorPalettes, { name: this.selectedColorPalette });
+      const filteredObj = find(this.colorPalettes, { name: this.selectedColorPalette });
       if (filteredObj) {
         themeToPublish.primaryButtonColorHex = filteredObj.primaryButtonColorHex;
         themeToPublish.secondaryButtonColorHex = filteredObj.secondaryButtonColorHex;

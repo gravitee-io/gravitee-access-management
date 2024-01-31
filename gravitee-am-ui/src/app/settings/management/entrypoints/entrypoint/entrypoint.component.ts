@@ -16,9 +16,9 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { NgForm } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import * as _ from 'lodash';
 import { MatInput } from '@angular/material/input';
 import { filter, switchMap, tap } from 'rxjs/operators';
+import { difference, find, map, remove } from 'lodash';
 
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { EntrypointService } from '../../../../services/entrypoint.service';
@@ -57,12 +57,12 @@ export class EntrypointComponent implements OnInit {
 
   initTags() {
     this.tags = this.route.snapshot.data['tags'];
-    this.selectedTags = this.entrypoint.tags.map((t) => _.find(this.tags, { id: t })).filter((t) => typeof t !== 'undefined');
-    this.tags = _.difference(this.tags, this.selectedTags);
+    this.selectedTags = this.entrypoint.tags.map((t) => find(this.tags, { id: t })).filter((t) => typeof t !== 'undefined');
+    this.tags = difference(this.tags, this.selectedTags);
   }
 
   addTag(event) {
-    this.selectedTags = this.selectedTags.concat(_.remove(this.tags, { id: event.option.value }));
+    this.selectedTags = this.selectedTags.concat(remove(this.tags, { id: event.option.value }));
     this.tagsChanged();
   }
 
@@ -75,7 +75,7 @@ export class EntrypointComponent implements OnInit {
   tagsChanged() {
     this.chipInput['nativeElement'].blur();
     this.formChanged = true;
-    this.entrypoint.tags = _.map(this.selectedTags, (tag) => tag.id);
+    this.entrypoint.tags = map(this.selectedTags, (tag) => tag.id);
   }
 
   update() {

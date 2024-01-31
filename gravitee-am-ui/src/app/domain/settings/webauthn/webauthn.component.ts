@@ -15,7 +15,7 @@
  */
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import * as _ from 'lodash';
+import { each, find, findIndex, forEach, remove } from 'lodash';
 
 import { DomainService } from '../../../services/domain.service';
 import { SnackbarService } from '../../../services/snackbar.service';
@@ -66,7 +66,7 @@ export class DomainSettingsWebAuthnComponent implements OnInit {
 
   initCertificates() {
     if (this.domain.webAuthnSettings.certificates) {
-      _.forEach(this.domain.webAuthnSettings.certificates, (v, k) => {
+      forEach(this.domain.webAuthnSettings.certificates, (v, k) => {
         const attestation = {};
         attestation['id'] = Math.random().toString(36).substring(7);
         attestation['name'] = k;
@@ -79,7 +79,7 @@ export class DomainSettingsWebAuthnComponent implements OnInit {
   save() {
     if (this.attestationCertificates) {
       const attestation = {};
-      _.each(this.attestationCertificates, function (item) {
+      each(this.attestationCertificates, function (item) {
         attestation[item.name] = item.value;
       });
       this.domain.webAuthnSettings.certificates = attestation;
@@ -113,7 +113,7 @@ export class DomainSettingsWebAuthnComponent implements OnInit {
         return;
       }
       this.editing[rowIndex + '-' + cell] = false;
-      const index = _.findIndex(this.attestationCertificates, { id: rowIndex });
+      const index = findIndex(this.attestationCertificates, { id: rowIndex });
       this.attestationCertificates[index][cell] = metadata;
       this.attestationCertificates = [...this.attestationCertificates];
       this.formChanged = true;
@@ -122,7 +122,7 @@ export class DomainSettingsWebAuthnComponent implements OnInit {
 
   deleteCertificate(key, event) {
     event.preventDefault();
-    _.remove(this.attestationCertificates, function (el) {
+    remove(this.attestationCertificates, function (el) {
       return el.id === key;
     });
     this.attestationCertificates = [...this.attestationCertificates];
@@ -130,7 +130,7 @@ export class DomainSettingsWebAuthnComponent implements OnInit {
   }
 
   certificateExits(attribute): boolean {
-    return _.find(this.attestationCertificates, function (el) {
+    return find(this.attestationCertificates, function (el) {
       return el.name === attribute;
     });
   }

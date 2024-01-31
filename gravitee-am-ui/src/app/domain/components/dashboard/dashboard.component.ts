@@ -18,8 +18,7 @@ import { forkJoin, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import * as Highcharts from 'highcharts';
 import moment from 'moment';
-import * as _ from 'lodash';
-import { isNil } from 'lodash';
+import { find, isNil, map as _map } from 'lodash';
 
 import { Widget } from '../../../components/widget/widget.model';
 import { AnalyticsService } from '../../../services/analytics.service';
@@ -71,7 +70,7 @@ export class DashboardComponent implements OnInit {
   }
 
   private query(widget): Observable<Widget> {
-    const selectedTimeRange = _.find(this.timeRanges, { id: this.selectedTimeRange });
+    const selectedTimeRange = find(this.timeRanges, { id: this.selectedTimeRange });
 
     const analyticsQuery = {
       type: widget.chart.request.type,
@@ -98,7 +97,7 @@ export class DashboardComponent implements OnInit {
     const dashboard: DashboardData = Object.assign({}, this.dashboard);
     this.widgets = [];
     this.isLoading = true;
-    forkJoin(_.map(dashboard.widgets, (widget) => this.query(widget))).subscribe((widgets) => {
+    forkJoin(_map(dashboard.widgets, (widget) => this.query(widget))).subscribe((widgets) => {
       this.widgets = [...widgets];
       setTimeout(() => {
         this.isLoading = false;

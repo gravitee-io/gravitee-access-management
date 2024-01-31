@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { MatHorizontalStepper, MatStepper } from '@angular/material/stepper';
+import { MatStepper } from '@angular/material/stepper';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { DeviceNotifiersService } from '../../../../../../services/device-notifiers.service';
@@ -54,7 +54,7 @@ export class DeviceNotifiersCreationComponent implements OnInit {
     return this.deviceNotifier && this.deviceNotifier.name && this.configurationIsValid;
   }
 
-  setStepper(stepper: MatHorizontalStepper, step: number) {
+  setStepper(stepper: MatStepper, step: number) {
     stepper.selectedIndex = step;
   }
 }

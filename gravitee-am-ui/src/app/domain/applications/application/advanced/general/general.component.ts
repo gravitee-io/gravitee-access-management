@@ -15,11 +15,11 @@
  */
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import * as _ from 'lodash';
 import { filter, switchMap, tap } from 'rxjs/operators';
 import { MatDialog } from '@angular/material/dialog';
 import { GIO_DIALOG_WIDTH } from '@gravitee/ui-particles-angular';
 import { Subject } from 'rxjs';
+import { map, remove } from 'lodash';
 
 import { SnackbarService } from '../../../../../services/snackbar.service';
 import { ApplicationService } from '../../../../../services/application.service';
@@ -104,20 +104,20 @@ export class ApplicationGeneralComponent implements OnInit {
     this.applicationOAuthSettings.singleSignOut = this.applicationOAuthSettings.singleSignOut || false;
     this.applicationOAuthSettings.silentReAuthentication = this.applicationOAuthSettings.silentReAuthentication || false;
     this.application.factors = this.application.factors || [];
-    this.redirectUris = _.map(this.applicationOAuthSettings.redirectUris, function (item) {
+    this.redirectUris = map(this.applicationOAuthSettings.redirectUris, function (item) {
       return { value: item };
     });
-    this.requestUris = _.map(this.applicationOAuthSettings.requestUris, function (item) {
+    this.requestUris = map(this.applicationOAuthSettings.requestUris, function (item) {
       return { value: item };
     });
-    this.logoutRedirectUris = _.map(this.applicationOAuthSettings.postLogoutRedirectUris, function (item) {
+    this.logoutRedirectUris = map(this.applicationOAuthSettings.postLogoutRedirectUris, function (item) {
       return { value: item };
     });
     this.editMode = this.authService.hasPermissions(['application_settings_update']);
     this.deleteMode = this.authService.hasPermissions(['application_settings_delete']);
     this.renewSecretMode = this.authService.hasPermissions(['application_openid_update']);
     if (!this.domain.uma || !this.domain.uma.enabled) {
-      _.remove(this.applicationTypes, { type: 'RESOURCE_SERVER' });
+      remove(this.applicationTypes, { type: 'RESOURCE_SERVER' });
     }
   }
 
@@ -127,9 +127,9 @@ export class ApplicationGeneralComponent implements OnInit {
     data.description = this.application.description;
     data.settings = {};
     data.settings.oauth = {
-      redirectUris: _.map(this.redirectUris, 'value'),
-      requestUris: _.map(this.requestUris, 'value'),
-      postLogoutRedirectUris: _.map(this.logoutRedirectUris, 'value'),
+      redirectUris: map(this.redirectUris, 'value'),
+      requestUris: map(this.requestUris, 'value'),
+      postLogoutRedirectUris: map(this.logoutRedirectUris, 'value'),
       singleSignOut: this.applicationOAuthSettings.singleSignOut,
       silentReAuthentication: this.applicationOAuthSettings.silentReAuthentication,
     };
@@ -287,7 +287,7 @@ export class ApplicationGeneralComponent implements OnInit {
     event.preventDefault();
     this.dialogService.confirm('Remove redirect URI', 'Are you sure you want to remove this redirect URI ?').subscribe((res) => {
       if (res) {
-        _.remove(this.redirectUris, { value: redirectUri });
+        remove(this.redirectUris, { value: redirectUri });
         this.redirectUris = [...this.redirectUris];
         this.formChanged = true;
       }
@@ -298,7 +298,7 @@ export class ApplicationGeneralComponent implements OnInit {
     event.preventDefault();
     this.dialogService.confirm('Remove request URI', 'Are you sure you want to remove this request URI ?').subscribe((res) => {
       if (res) {
-        _.remove(this.requestUris, { value: requestUri });
+        remove(this.requestUris, { value: requestUri });
         this.requestUris = [...this.requestUris];
         this.formChanged = true;
       }
@@ -309,7 +309,7 @@ export class ApplicationGeneralComponent implements OnInit {
     event.preventDefault();
     this.dialogService.confirm('Remove logout redirect URI', 'Are you sure you want to remove this redirect URI ?').subscribe((res) => {
       if (res) {
-        _.remove(this.logoutRedirectUris, { value: logoutRedirectUri });
+        remove(this.logoutRedirectUris, { value: logoutRedirectUri });
         this.logoutRedirectUris = [...this.logoutRedirectUris];
         this.formChanged = true;
       }

@@ -141,7 +141,6 @@
       }
     }
   },
-  "defaultProject": "gravitee-am-ui",
   "schematics": {
     "@schematics/angular:component": {
       "prefix": "app",

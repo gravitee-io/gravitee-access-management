@@ -15,7 +15,7 @@
  */
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import * as _ from 'lodash';
+import { map } from 'lodash';
 
 import { DomainService } from '../../../../../services/domain.service';
 import { SnackbarService } from '../../../../../services/snackbar.service';
@@ -65,7 +65,7 @@ export class ClientRegistrationAllowedScopeComponent implements OnInit {
     const domain = {
       oidc: {
         clientRegistrationSettings: {
-          allowedScopes: _.map(this.selectedScopes, (scope) => scope.key),
+          allowedScopes: map(this.selectedScopes, (scope) => scope.key),
           isAllowedScopesEnabled: this.isAllowedScopesEnabled,
         },
       },
