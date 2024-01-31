@@ -18,6 +18,8 @@ package io.gravitee.am.gateway.handler.oauth2.service.request;
 
 import io.gravitee.am.common.oidc.ResponseType;
 import io.gravitee.am.common.oidc.Scope;
+import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
+import io.gravitee.am.model.User;
 import io.gravitee.am.model.uma.PermissionRequest;
 import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.MultiValueMap;
@@ -244,17 +246,20 @@ public class OAuth2Request extends BaseRequest {
         this.confirmationMethodX5S256 = confirmationMethodX5S256;
     }
 
-    public boolean shouldGenerateIDToken() {
+    public boolean shouldGenerateIDToken(User endUser) {
         if (getResponseType() != null && ResponseType.CODE_TOKEN.equals(getResponseType())) {
             return false;
         }
-
         if (getResponseType() != null
                 && (ResponseType.CODE_ID_TOKEN_TOKEN.equals(getResponseType()) || ResponseType.ID_TOKEN_TOKEN.equals(getResponseType()))) {
             return true;
         }
         if (getScopes() != null && getScopes().contains(Scope.OPENID.getKey())) {
-            return true;
+            if (endUser == null) {
+                throw new InvalidScopeException("Invalid scope: " + Scope.OPENID);
+            } else {
+                return true;
+            }
         }
         return false;
     }
