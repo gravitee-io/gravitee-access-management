@@ -15,7 +15,7 @@
  */
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { FormControl } from '@angular/forms';
+import { UntypedFormControl } from '@angular/forms';
 import { map, mergeMap, startWith } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 
@@ -27,7 +27,7 @@ import { ApplicationService } from '../../../services/application.service';
 })
 export class SelectApplicationsComponent implements OnInit {
   private domainId: string;
-  appCtrl = new FormControl();
+  appCtrl = new UntypedFormControl();
   filteredApps: Observable<any>;
   @Input() selectedApp: any;
   @Output() onSelectApp = new EventEmitter<any>();

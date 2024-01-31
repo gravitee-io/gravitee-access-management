@@ -16,7 +16,7 @@
     "experimentalDecorators": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "target": "es2015",
+    "target": "es2020",
     "types": ["jest"],
     "lib": ["es2016", "dom"],
     "module": "es2020",

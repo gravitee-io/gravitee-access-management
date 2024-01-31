@@ -15,8 +15,8 @@
  */
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import * as _ from 'lodash';
 import { NgForm } from '@angular/forms';
+import { each, find, findIndex, forEach, remove } from 'lodash';
 
 import { ApplicationService } from '../../../../../services/application.service';
 import { SnackbarService } from '../../../../../services/snackbar.service';
@@ -50,7 +50,7 @@ export class ApplicationMetadataComponent implements OnInit {
 
   initMetadata() {
     if (this.application.metadata) {
-      _.forEach(this.application.metadata, (v, k) => {
+      forEach(this.application.metadata, (v, k) => {
         const metadata = {};
         metadata['id'] = Math.random().toString(36).substring(7);
         metadata['name'] = k;
@@ -82,7 +82,7 @@ export class ApplicationMetadataComponent implements OnInit {
         return;
       }
       this.editing[rowIndex + '-' + cell] = false;
-      const index = _.findIndex(this.appMetadata, { id: rowIndex });
+      const index = findIndex(this.appMetadata, { id: rowIndex });
       this.appMetadata[index][cell] = metadata;
       this.appMetadata = [...this.appMetadata];
       this.formChanged = true;
@@ -91,7 +91,7 @@ export class ApplicationMetadataComponent implements OnInit {
 
   deleteMetadata(key, event) {
     event.preventDefault();
-    _.remove(this.appMetadata, function (el) {
+    remove(this.appMetadata, function (el) {
       return el.id === key;
     });
     this.appMetadata = [...this.appMetadata];
@@ -99,7 +99,7 @@ export class ApplicationMetadataComponent implements OnInit {
   }
 
   metadataExits(attribute): boolean {
-    return _.find(this.appMetadata, function (el) {
+    return find(this.appMetadata, function (el) {
       return el.name === attribute;
     });
   }
@@ -110,7 +110,7 @@ export class ApplicationMetadataComponent implements OnInit {
 
   patch(): void {
     const metadata = {};
-    _.each(this.appMetadata, function (item) {
+    each(this.appMetadata, function (item) {
       metadata[item.name] = item.value;
     });
     this.applicationService.patch(this.domainId, this.application.id, { metadata: metadata }).subscribe(() => {

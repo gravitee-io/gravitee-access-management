@@ -15,7 +15,7 @@
  */
 import { Component, Inject, OnInit } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { FormControl } from '@angular/forms';
+import { UntypedFormControl } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
 
@@ -37,7 +37,7 @@ export class DictionaryDialog implements OnInit {
   title: string;
   languageCodes: Language[];
   selectedCode = '123';
-  languageCtrl = new FormControl('');
+  languageCtrl = new UntypedFormControl('');
   filtered: Observable<Language[]>;
 
   constructor(

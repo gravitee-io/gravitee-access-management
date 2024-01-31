@@ -15,7 +15,7 @@
  */
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import * as Highcharts from 'highcharts';
-import * as _ from 'lodash';
+import { map } from 'lodash';
 
 import { Chart } from '../widget.model';
 
@@ -48,7 +48,7 @@ export class WidgetChartLineComponent implements OnChanges {
           year: '%b',
         },
       };
-      const series = _.map(response.values, (value) => {
+      const series = map(response.values, (value) => {
         if (value.name.indexOf('failure') !== -1) {
           value['color'] = '#ED561B';
           value['legendIndex'] = 1;

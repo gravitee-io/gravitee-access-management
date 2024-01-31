@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
-import moment from 'moment';
+import { duration } from 'moment';
 
 import { TimeConverterService } from '../../../../../../services/time-converter.service';
 
@@ -125,7 +125,7 @@ export class MfaRememberDeviceComponent implements OnInit, OnChanges {
   }
 
   private humanTimeToSeconds() {
-    return moment.duration(this.humanTime.expirationTime, this.humanTime.expirationUnit).asSeconds();
+    return duration(this.humanTime.expirationTime, this.humanTime.expirationUnit).asSeconds();
   }
 
   private updateRememberDeviceSettings(rememberDevice) {

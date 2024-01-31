@@ -15,7 +15,7 @@
  */
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import * as _ from 'lodash';
+import { map, minBy, some } from 'lodash';
 
 import { ApplicationService } from '../../../../../../services/application.service';
 import { SnackbarService } from '../../../../../../services/snackbar.service';
@@ -191,7 +191,7 @@ export class ApplicationGrantFlowsComponent implements OnInit {
   private initTokenEndpointAuthMethods() {
     // disabled none (public client) for service application
     if (this.application.type === 'service') {
-      const updatedAuthMethods = _.map(this.tokenEndpointAuthMethods, (item) => {
+      const updatedAuthMethods = map(this.tokenEndpointAuthMethods, (item) => {
         if (item.value === 'none') {
           item.disabled = true;
         }
@@ -213,7 +213,7 @@ export class ApplicationGrantFlowsComponent implements OnInit {
 
   private initGrantTypes() {
     this.grantTypes.forEach((grantType) => {
-      grantType.checked = _.some(
+      grantType.checked = some(
         this.applicationOauthSettings.grantTypes,
         (authorizedGrantType) => authorizedGrantType.toLowerCase() === grantType.value.toLowerCase(),
       );
@@ -232,10 +232,10 @@ export class ApplicationGrantFlowsComponent implements OnInit {
   }
 
   private initCustomGrantTypes() {
-    const oldestExtensionGrant = _.minBy(this.customGrantTypes, 'createdAt');
+    const oldestExtensionGrant = minBy(this.customGrantTypes, 'createdAt');
     this.customGrantTypes.forEach((customGrantType) => {
       customGrantType.value = customGrantType.grantType + '~' + customGrantType.id;
-      customGrantType.checked = _.some(this.applicationOauthSettings.grantTypes, (authorizedGrantType) => {
+      customGrantType.checked = some(this.applicationOauthSettings.grantTypes, (authorizedGrantType) => {
         return (
           authorizedGrantType.toLowerCase() === customGrantType.value.toLowerCase() ||
           (authorizedGrantType.toLowerCase() === customGrantType.grantType && customGrantType.createdAt === oldestExtensionGrant.createdAt)

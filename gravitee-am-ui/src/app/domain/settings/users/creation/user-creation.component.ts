@@ -16,7 +16,7 @@
 import { Component, ComponentFactoryResolver, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { animate, style, transition, trigger } from '@angular/animations';
-import * as _ from 'lodash';
+import { each } from 'lodash';
 
 import { UserClaimComponent } from './user-claim.component';
 
@@ -68,7 +68,7 @@ export class UserCreationComponent implements OnInit {
     // set additional information
     if (this.userClaims && Object.keys(this.userClaims).length > 0) {
       const additionalInformation = {};
-      _.each(this.userClaims, function (item) {
+      each(this.userClaims, function (item) {
         additionalInformation[item.claimName] = item.claimValue;
       });
       this.user.additionalInformation = additionalInformation;

@@ -16,8 +16,8 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { MatInput } from '@angular/material/input';
 import { ActivatedRoute, Router } from '@angular/router';
-import * as _ from 'lodash';
 import { filter, switchMap, tap } from 'rxjs/operators';
+import { difference, find, map, remove } from 'lodash';
 
 import { DomainService } from '../../../services/domain.service';
 import { DialogService } from '../../../services/dialog.service';
@@ -64,10 +64,10 @@ export class DomainSettingsGeneralComponent implements OnInit {
     this.envId = this.route.snapshot.params['envHrid'];
     this.domain = this.route.snapshot.data['domain'];
     this.domainOIDCSettings = this.domain.oidc || {};
-    this.logoutRedirectUris = _.map(this.domainOIDCSettings.postLogoutRedirectUris, function (item) {
+    this.logoutRedirectUris = map(this.domainOIDCSettings.postLogoutRedirectUris, function (item) {
       return { value: item };
     });
-    this.requestUris = _.map(this.domainOIDCSettings.requestUris, function (item) {
+    this.requestUris = map(this.domainOIDCSettings.requestUris, function (item) {
       return { value: item };
     });
     if (this.domain.tags === undefined) {
@@ -79,12 +79,12 @@ export class DomainSettingsGeneralComponent implements OnInit {
 
   initTags() {
     const tags = this.route.snapshot.data['tags'];
-    this.selectedTags = this.domain.tags.map((t) => _.find(tags, { id: t })).filter((t) => typeof t !== 'undefined');
-    this.tags = _.difference(tags, this.selectedTags);
+    this.selectedTags = this.domain.tags.map((t) => find(tags, { id: t })).filter((t) => typeof t !== 'undefined');
+    this.tags = difference(tags, this.selectedTags);
   }
 
   addTag(event) {
-    this.selectedTags = this.selectedTags.concat(_.remove(this.tags, { id: event.option.value }));
+    this.selectedTags = this.selectedTags.concat(remove(this.tags, { id: event.option.value }));
     this.tagsChanged();
   }
 
@@ -97,7 +97,7 @@ export class DomainSettingsGeneralComponent implements OnInit {
   tagsChanged() {
     this.chipInput['nativeElement'].blur();
     this.formChanged = true;
-    this.domain.tags = _.map(this.selectedTags, (tag) => tag.id);
+    this.domain.tags = map(this.selectedTags, (tag) => tag.id);
   }
 
   enableDomain(event) {
@@ -147,7 +147,7 @@ export class DomainSettingsGeneralComponent implements OnInit {
       .pipe(
         filter((res) => res),
         tap(() => {
-          _.remove(this.logoutRedirectUris, { value: logoutRedirectUri });
+          remove(this.logoutRedirectUris, { value: logoutRedirectUri });
           this.logoutRedirectUris = [...this.logoutRedirectUris];
           this.formChanged = true;
         }),
@@ -162,7 +162,7 @@ export class DomainSettingsGeneralComponent implements OnInit {
       .pipe(
         filter((res) => res),
         tap(() => {
-          _.remove(this.requestUris, { value: requestUri });
+          remove(this.requestUris, { value: requestUri });
           this.requestUris = [...this.requestUris];
           this.formChanged = true;
         }),
@@ -172,8 +172,8 @@ export class DomainSettingsGeneralComponent implements OnInit {
 
   update() {
     this.domain.oidc = {
-      postLogoutRedirectUris: _.map(this.logoutRedirectUris, 'value'),
-      requestUris: _.map(this.requestUris, 'value'),
+      postLogoutRedirectUris: map(this.logoutRedirectUris, 'value'),
+      requestUris: map(this.requestUris, 'value'),
     };
     this.domainService.patchGeneralSettings(this.domain.id, this.domain).subscribe((response) => {
       this.domainService.notify(response);

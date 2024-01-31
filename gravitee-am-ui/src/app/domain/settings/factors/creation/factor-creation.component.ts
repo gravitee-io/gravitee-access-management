@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { MatHorizontalStepper, MatStepper } from '@angular/material/stepper';
+import { MatStepper } from '@angular/material/stepper';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { SnackbarService } from '../../../../services/snackbar.service';
@@ -54,7 +54,7 @@ export class FactorCreationComponent implements OnInit {
     return this.factor && this.factor.name && this.configurationIsValid;
   }
 
-  setStepper(stepper: MatHorizontalStepper, step: number) {
+  setStepper(stepper: MatStepper, step: number) {
     stepper.selectedIndex = step;
   }
 }
