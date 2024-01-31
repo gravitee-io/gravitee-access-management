@@ -122,7 +122,7 @@ public class MFAEnrollStep extends MFAStep {
 
     private boolean enrollConditionNotSatisfied(Client client, MfaFilterContext context, RoutingContext routingContext) {
         final EnrollSettings settings = MfaUtils.getEnrollSettings(client);
-        Boolean result = ruleEngine.evaluate(Optional.ofNullable(settings.getEnrollmentRule()).orElse("{}"),
+        Boolean result = ruleEngine.evaluate(Optional.ofNullable(settings.getEnrollmentRule()).orElse("false"),
                 context.getEvaluableContext(), Boolean.class, false);
         routingContext.session().put(MFA_ENROLLMENT_CONDITION_SATISFIED, result);
         return !result;
@@ -155,7 +155,7 @@ public class MFAEnrollStep extends MFAStep {
 
     private boolean challengeConditionNotSatisfied(Client client, MfaFilterContext context, RoutingContext routingContext) {
         final ChallengeSettings settings = MfaUtils.getChallengeSettings(client);
-        Boolean result = ruleEngine.evaluate(Optional.ofNullable(settings.getChallengeRule()).orElse("{}"),
+        Boolean result = ruleEngine.evaluate(Optional.ofNullable(settings.getChallengeRule()).orElse("false"),
                 context.getEvaluableContext(), Boolean.class, false);
         routingContext.session().put(MFA_CHALLENGE_CONDITION_SATISFIED, result);
         return !result;
