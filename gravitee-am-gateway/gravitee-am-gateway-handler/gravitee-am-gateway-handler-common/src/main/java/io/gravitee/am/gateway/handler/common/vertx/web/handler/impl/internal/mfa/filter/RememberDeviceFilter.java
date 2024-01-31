@@ -40,16 +40,16 @@ public class RememberDeviceFilter extends MfaContextHolder implements Supplier<B
         final boolean mfaSkipped = context.isMfaSkipped();
         var rememberDeviceSettings = context.getRememberDeviceSettings();
 
+        final boolean userStronglyAuth = context.isUserStronglyAuth();
         if (!mfaSkipped && context.isAmfaActive()) {
-            if(context.isAmfaRuleTrue() && rememberDeviceSettings.isSkipRememberDevice()) {
-                return SAFE;
-            } else if (!context.isAmfaRuleTrue()){
+            if (!context.isAmfaRuleTrue() && !rememberDeviceSettings.isSkipRememberDevice()) {
                 return UNSAFE;
+            } else if (context.isAmfaRuleTrue() && !userStronglyAuth) {
+                return SAFE;
             }
         }
 
         // Step up might be active
-        final boolean userStronglyAuth = context.isUserStronglyAuth();
         if (context.isStepUpActive() && (userStronglyAuth || mfaSkipped)) {
             return UNSAFE;
         }
