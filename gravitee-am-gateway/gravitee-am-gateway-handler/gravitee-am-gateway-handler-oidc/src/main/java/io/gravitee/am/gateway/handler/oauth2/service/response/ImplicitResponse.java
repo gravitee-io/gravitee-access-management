@@ -16,9 +16,10 @@
 package io.gravitee.am.gateway.handler.oauth2.service.response;
 
 import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.oauth2.exception.ServerErrorException;
 import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
-import io.gravitee.am.common.web.UriBuilder;
+import io.vertx.rxjava3.core.MultiMap;
 
 import java.net.URISyntaxException;
 
@@ -52,22 +53,29 @@ public class ImplicitResponse extends AuthorizationResponse {
     }
 
     @Override
-    public String buildRedirectUri() throws URISyntaxException {
-        Token accessToken = getAccessToken();
+    public String buildRedirectUri() {
         UriBuilder uriBuilder = UriBuilder.fromURIString(getRedirectUri());
-        uriBuilder.addFragmentParameter(Token.ACCESS_TOKEN, accessToken.getValue());
-        uriBuilder.addFragmentParameter(Token.TOKEN_TYPE, accessToken.getTokenType());
-        uriBuilder.addFragmentParameter(Token.EXPIRES_IN, String.valueOf(accessToken.getExpiresIn()));
+        params().forEach(uriBuilder::addFragmentParameter);
+        return uriBuilder.buildString();
+    }
+
+    @Override
+    public MultiMap params() {
+        MultiMap result = MultiMap.caseInsensitiveMultiMap();
+        Token accessToken = getAccessToken();
+        result.add(Token.ACCESS_TOKEN, accessToken.getValue());
+        result.add(Token.TOKEN_TYPE, accessToken.getTokenType());
+        result.add(Token.EXPIRES_IN, String.valueOf(accessToken.getExpiresIn()));
         if (accessToken.getScope() != null && !accessToken.getScope().isEmpty()) {
-            uriBuilder.addFragmentParameter(Token.SCOPE, accessToken.getScope());
+            result.add(Token.SCOPE, accessToken.getScope());
         }
         if (getState() != null) {
-            uriBuilder.addFragmentParameter(Parameters.STATE, getURLEncodedState());
+            result.add(Parameters.STATE, getURLEncodedState());
         }
         // additional information
         if (accessToken.getAdditionalInformation() != null) {
-            accessToken.getAdditionalInformation().forEach((k, v) -> uriBuilder.addFragmentParameter(k, String.valueOf(v)));
+            accessToken.getAdditionalInformation().forEach((k, v) -> result.add(k, String.valueOf(v)));
         }
-        return uriBuilder.buildString();
+        return result;
     }
 }
