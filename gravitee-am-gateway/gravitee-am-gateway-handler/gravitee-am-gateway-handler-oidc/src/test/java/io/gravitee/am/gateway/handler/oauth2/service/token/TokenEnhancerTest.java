@@ -49,10 +49,12 @@ public class TokenEnhancerTest {
 
     @Test
     public void shouldEnhanceToken_withoutIDToken() {
-        User user = new User();
-        user.setId("user-id");
+        var user = new User();
+        var id = "user-id";
+        user.setId(id);
         OAuth2Request oAuth2Request = new OAuth2Request();
         oAuth2Request.setClientId("client-id");
+        oAuth2Request.setSubject(id);
         // no openid scope for the request
         Client client = new Client();
         Token accessToken = new AccessToken("token-id");
@@ -82,10 +84,12 @@ public class TokenEnhancerTest {
 
     @Test
     public void shouldEnhanceToken_withIDToken() {
-        User user = new User();
-        user.setId("user-id");
+        var user = new User();
+        var id = "user-id";
+        user.setId(id);
         OAuth2Request oAuth2Request = new OAuth2Request();
         oAuth2Request.setClientId("client-id");
+        oAuth2Request.setSubject(id);
         oAuth2Request.setScopes(Collections.singleton("openid"));
         Client client = new Client();
         Token accessToken = new AccessToken("token-id");

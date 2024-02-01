@@ -42,7 +42,7 @@ public class TokenEnhancerImpl implements TokenEnhancer {
     @Override
     public Single<Token> enhance(Token accessToken, OAuth2Request oAuth2Request, Client client, User endUser, ExecutionContext executionContext) {
         // enhance token with ID token
-        return Single.fromCallable(() -> oAuth2Request.shouldGenerateIDToken(endUser)).flatMap(generate -> {
+        return Single.fromCallable(oAuth2Request::shouldGenerateIDToken).flatMap(generate -> {
             if (Boolean.TRUE.equals(generate)) {
                 return enhanceIDToken(accessToken, client, endUser, oAuth2Request, executionContext);
             } else {
