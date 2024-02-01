@@ -23,8 +23,11 @@ import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.oauth2.service.response.AuthorizationCodeResponse;
 import io.gravitee.am.gateway.handler.oauth2.service.response.AuthorizationResponse;
 import io.gravitee.am.gateway.handler.oauth2.service.response.ImplicitResponse;
+import io.vertx.rxjava3.core.MultiMap;
 
 import java.net.URISyntaxException;
+
+import static io.gravitee.am.common.oidc.Parameters.RESPONSE;
 
 /**
  * Response after authorization code flow or implicit flow or hybrid flow in JWT format.
@@ -140,23 +143,30 @@ public abstract class JWTAuthorizationResponse<T extends AuthorizationResponse> 
     }
 
     @Override
-    public String buildRedirectUri() throws URISyntaxException {
+    public String buildRedirectUri() {
         UriBuilder uriBuilder = UriBuilder.fromURIString(response.getRedirectUri());
 
         if (ResponseMode.QUERY_JWT.equalsIgnoreCase(responseMode)) {
-            uriBuilder.addParameter(io.gravitee.am.common.oidc.Parameters.RESPONSE, token);
+            uriBuilder.addParameter(RESPONSE, token);
         } else if (ResponseMode.FRAGMENT_JWT.equalsIgnoreCase(responseMode)) {
-            uriBuilder.addFragmentParameter(io.gravitee.am.common.oidc.Parameters.RESPONSE,token);
+            uriBuilder.addFragmentParameter(RESPONSE,token);
         } else if (ResponseMode.JWT.equalsIgnoreCase(responseMode)) {
             if (responseType == null || ResponseType.NONE.equalsIgnoreCase(responseType)) {
                 // Nothing to do here
             } else if (io.gravitee.am.common.oauth2.ResponseType.CODE.equalsIgnoreCase(responseType)) {
-                uriBuilder.addParameter(io.gravitee.am.common.oidc.Parameters.RESPONSE, token);
+                uriBuilder.addParameter(RESPONSE, token);
             } else {
-                uriBuilder.addFragmentParameter(io.gravitee.am.common.oidc.Parameters.RESPONSE,token);
+                uriBuilder.addFragmentParameter(RESPONSE,token);
             }
         }
 
         return uriBuilder.buildString();
+    }
+
+    @Override
+    public MultiMap params() {
+        MultiMap result = MultiMap.caseInsensitiveMultiMap();
+        result.add(RESPONSE, token);
+        return result;
     }
 }
