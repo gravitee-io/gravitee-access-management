@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.service.response;
 
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.web.UriBuilder;
+import io.vertx.rxjava3.core.MultiMap;
 
 import java.net.URISyntaxException;
 
@@ -49,12 +50,19 @@ public class AuthorizationCodeResponse extends AuthorizationResponse {
     }
 
     @Override
-    public String buildRedirectUri() throws URISyntaxException {
+    public String buildRedirectUri() {
         UriBuilder uriBuilder = UriBuilder.fromURIString(getRedirectUri());
-        uriBuilder.addParameter(Parameters.CODE, getCode());
-        if (getState() != null) {
-            uriBuilder.addParameter(Parameters.STATE, getURLEncodedState());
-        }
+        params().forEach(uriBuilder::addParameter);
         return uriBuilder.buildString();
+    }
+
+    @Override
+    public MultiMap params() {
+        MultiMap result = MultiMap.caseInsensitiveMultiMap();
+        result.add(Parameters.CODE, getCode());
+        if (getState() != null) {
+            result.add(Parameters.STATE, getURLEncodedState());
+        }
+        return result;
     }
 }
