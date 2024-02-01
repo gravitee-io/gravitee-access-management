@@ -103,8 +103,8 @@ public class AuthorizationEndpoint implements Handler<RoutingContext> {
     private void doRedirect(RoutingContext context, AuthorizationRequest request, AuthorizationResponse response) {
         try {
             // if response mode is not set to form_post, the user is redirected to the client callback endpoint
-            final String redirectUri = response.buildRedirectUri();
             if (!ResponseMode.FORM_POST.equals(request.getResponseMode())) {
+                final String redirectUri = response.buildRedirectUri();
                 context
                         .response()
                         .putHeader(HttpHeaders.LOCATION, redirectUri)
@@ -116,7 +116,7 @@ public class AuthorizationEndpoint implements Handler<RoutingContext> {
             // In form_post mode, Authorization Response parameters are encoded as HTML form values that are auto-submitted in the User Agent,
             // and thus are transmitted via the HTTP POST method to the Client.
             // Prepare context to render post form.
-            final MultiMap queryParams = RequestUtils.getCleanedQueryParams(redirectUri);
+            final MultiMap queryParams = RequestUtils.cleanParams(response.params());
             context.put(ACTION_KEY, request.getRedirectUri());
             context.put(FORM_PARAMETERS, queryParams.remove(ACTION_KEY));
 

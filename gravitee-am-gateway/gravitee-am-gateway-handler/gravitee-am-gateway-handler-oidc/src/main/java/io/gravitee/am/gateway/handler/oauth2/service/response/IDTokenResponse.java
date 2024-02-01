@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.oauth2.service.response;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oidc.ResponseType;
 import io.gravitee.am.common.web.UriBuilder;
+import io.vertx.rxjava3.core.MultiMap;
 
 import java.net.URISyntaxException;
 
@@ -44,12 +45,19 @@ public class IDTokenResponse extends AuthorizationResponse {
         this.idToken = idToken;
     }
     @Override
-    public String buildRedirectUri() throws URISyntaxException {
+    public String buildRedirectUri() {
         UriBuilder uriBuilder = UriBuilder.fromURIString(getRedirectUri());
-        uriBuilder.addFragmentParameter(ResponseType.ID_TOKEN, getIdToken());
-        if (getState() != null) {
-            uriBuilder.addFragmentParameter(Parameters.STATE, getURLEncodedState());
-        }
+        params().forEach(uriBuilder::addFragmentParameter);
         return uriBuilder.buildString();
+    }
+
+    @Override
+    public MultiMap params() {
+        MultiMap result = MultiMap.caseInsensitiveMultiMap();
+        result.add(ResponseType.ID_TOKEN, getIdToken());
+        if (getState() != null) {
+            result.add(Parameters.STATE, getURLEncodedState());
+        }
+        return result;
     }
 }
