@@ -453,7 +453,7 @@ jobs:
             unzip /tmp/workspace/gravitee-am-gateway-standalone-*.zip
             unzip /tmp/workspace/gravitee-am-management-api-standalone-*.zip
             export AM_VERSION=$(mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
-            curl https://download.gravitee.io/plugins/services/gravitee-service-geoip/gravitee-service-geoip-2.1.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-2.1.0.zip
+            curl --retry 2 --retry-delay 10 https://download.gravitee.io/plugins/services/gravitee-service-geoip/gravitee-service-geoip-2.1.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-2.1.0.zip
             
             cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
             cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/
@@ -538,7 +538,7 @@ jobs:
             unzip /tmp/workspace/gravitee-am-gateway-standalone-*.zip
             unzip /tmp/workspace/gravitee-am-management-api-standalone-*.zip
             export AM_VERSION=$(mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
-            curl https://download.gravitee.io/plugins/services/gravitee-service-geoip/gravitee-service-geoip-2.1.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-2.1.0.zip
+            curl --retry 2 --retry-delay 10000 https://download.gravitee.io/plugins/services/gravitee-service-geoip/gravitee-service-geoip-2.1.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-2.1.0.zip
             
             cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
             cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/
@@ -547,8 +547,8 @@ jobs:
             cp /tmp/workspace/gravitee-am-factor-mock-*.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/
             
             # copy r2dbc & jdbc drivers
-            curl https://jdbc.postgresql.org/download/postgresql-42.6.0.jar -o postgresql-jdbc.jar
-            curl https://repo1.maven.org/maven2/org/postgresql/r2dbc-postgresql/1.0.2.RELEASE/r2dbc-postgresql-1.0.2.RELEASE.jar -o r2dbc-postgresql.jar
+            curl --retry 2 --retry-delay 10000 https://jdbc.postgresql.org/download/postgresql-42.6.0.jar -o postgresql-jdbc.jar
+            curl --retry 2 --retry-delay 10000 https://repo1.maven.org/maven2/org/postgresql/r2dbc-postgresql/1.0.2.RELEASE/r2dbc-postgresql-1.0.2.RELEASE.jar -o r2dbc-postgresql.jar
 
             mkdir -p gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc
             mkdir -p gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc
@@ -641,7 +641,7 @@ jobs:
             unzip /tmp/workspace/gravitee-am-gateway-standalone-*.zip
             unzip /tmp/workspace/gravitee-am-management-api-standalone-*.zip
             export AM_VERSION=$(mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
-            curl https://download.gravitee.io/plugins/services/gravitee-service-geoip/gravitee-service-geoip-2.1.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-2.1.0.zip
+            curl --retry 2 --retry-delay 10000 https://download.gravitee.io/plugins/services/gravitee-service-geoip/gravitee-service-geoip-2.1.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-2.1.0.zip
             
             cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
             cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/
@@ -717,7 +717,7 @@ jobs:
             unzip /tmp/workspace/gravitee-am-gateway-standalone-*.zip
             unzip /tmp/workspace/gravitee-am-management-api-standalone-*.zip
             export AM_VERSION=$(mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
-            curl https://download.gravitee.io/plugins/services/gravitee-service-geoip/gravitee-service-geoip-2.1.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-2.1.0.zip
+            curl --retry 2 --retry-delay 10000 https://download.gravitee.io/plugins/services/gravitee-service-geoip/gravitee-service-geoip-2.1.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-2.1.0.zip
             
             cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
             cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/
@@ -726,8 +726,8 @@ jobs:
             cp /tmp/workspace/gravitee-am-factor-mock-*.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/
             
             # copy r2dbc & jdbc drivers
-            curl https://jdbc.postgresql.org/download/postgresql-42.6.0.jar -o postgresql-jdbc.jar
-            curl https://repo1.maven.org/maven2/org/postgresql/r2dbc-postgresql/1.0.2.RELEASE/r2dbc-postgresql-1.0.2.RELEASE.jar -o r2dbc-postgresql.jar
+            curl --retry 2 --retry-delay 10000 https://jdbc.postgresql.org/download/postgresql-42.6.0.jar -o postgresql-jdbc.jar
+            curl --retry 2 --retry-delay 10000 https://repo1.maven.org/maven2/org/postgresql/r2dbc-postgresql/1.0.2.RELEASE/r2dbc-postgresql-1.0.2.RELEASE.jar -o r2dbc-postgresql.jar
 
             mkdir -p gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc
             mkdir -p gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc
