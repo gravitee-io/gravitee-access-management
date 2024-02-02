@@ -46,7 +46,7 @@ public class FilterCriteriaParserTest {
         filterCriteria.setFilterName("username");
 
         String query = FilterCriteriaParser.parse(filterCriteria);
-        Assert.assertEquals("{\"username\":{$exists:true}}", query);
+        Assert.assertEquals("{\"username\":{$ne:null}}", query);
     }
 
     @Test
@@ -105,4 +105,5 @@ public class FilterCriteriaParserTest {
         String query = FilterCriteriaParser.parse(filterCriteria);
         Assert.assertEquals("{\"email\":{$eq:\"alice.o'brian@test.com\"}}", query);
     }
+
 }
