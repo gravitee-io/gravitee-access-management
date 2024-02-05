@@ -6,91 +6,12 @@
 @import '@swimlane/ngx-datatable/themes/material';
 @import '@swimlane/ngx-datatable/assets/icons';
 @import 'codemirror/lib/codemirror.css';
-// TODO(v15): As of v15 mat.legacy-core no longer includes default typography styles.
-//  The following line adds:
-//    1. Default typography styles for all components
-//    2. Styles for typography hierarchy classes (e.g. .mat-headline-1)
-//  If you specify typography styles for the components you use elsewhere, you should delete this line.
-//  If you don't need the default component typographies but still want the hierarchy styles,
-//  you can delete this line and instead use:
-//    `@include mat.legacy-typography-hierarchy(mat.define-legacy-typography-config());`
-@include mat.all-legacy-component-typographies();
-@include mat.legacy-core();
+
+/* Configure theme */
 @include gio.import-fonts();
 @include gio.mat-theme(true);
 @include gio.all-components();
 
-/* Theme */
-$graviteeio-am-primary-palette: (
-  50: #fdfdfd,
-  100: #cfd8dc,
-  200: #b0bec5,
-  300: #90a4ae,
-  400: #78909c,
-  500: #1b1d3c,
-  600: #546e7a,
-  700: #455a64,
-  800: #37474f,
-  900: #263238,
-  A100: #cfd8dc,
-  A200: #b0bec5,
-  A400: #78909c,
-  A700: #455a64,
-  contrast: (
-    50: rgba(black, 0.87),
-    100: rgba(black, 0.87),
-    200: rgba(black, 0.87),
-    300: rgba(black, 0.87),
-    400: white,
-    500: white,
-    600: white,
-    700: white,
-    800: white,
-    900: white,
-    A100: rgba(black, 0.87),
-    A200: rgba(black, 0.87),
-    A400: white,
-    A700: white,
-  ),
-);
-
-$graviteeio-am-accent-palette: (
-  50: #e3f2fd,
-  100: #bbdefb,
-  200: #90caf9,
-  300: #64b5f6,
-  400: #42a5f5,
-  500: #1ecad3,
-  600: #1e88e5,
-  700: #1976d2,
-  800: #1565c0,
-  900: #0d47a1,
-  A100: #82b1ff,
-  A200: #448aff,
-  A400: #2979ff,
-  A700: #2962ff,
-  contrast: (
-    50: rgba(black, 0.87),
-    100: rgba(black, 0.87),
-    200: rgba(black, 0.87),
-    300: rgba(black, 0.87),
-    400: rgba(black, 0.87),
-    500: white,
-    600: white,
-    700: white,
-    800: white,
-    900: white,
-    A100: rgba(black, 0.87),
-    A200: white,
-    A400: white,
-    A700: white,
-  ),
-);
-
-/* Configure theme */
-$graviteeio-am-primary: mat.define-palette($graviteeio-am-primary-palette);
-$graviteeio-am-accent: mat.define-palette($graviteeio-am-accent-palette);
-$graviteeio-am-main-theme: mat.define-light-theme($graviteeio-am-primary, $graviteeio-am-accent);
 @mixin graviteeio-am-theme($theme) {
   $primary: map-get($theme, primary);
   $accent: map-get($theme, accent);
@@ -140,8 +61,7 @@ $graviteeio-am-main-theme: mat.define-light-theme($graviteeio-am-primary, $gravi
     background: #fdfdfd;
   }
 }
-@include mat.all-legacy-component-themes($graviteeio-am-main-theme);
-@include graviteeio-am-theme($graviteeio-am-main-theme);
+@include graviteeio-am-theme(gio.$mat-legacy-theme);
 
 /* Material Icons */
 @font-face {
