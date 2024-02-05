@@ -963,7 +963,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     }
 
     @Test
-    public void shouldRedirectToMFAChallengePage_adaptiveMFA_2_strongly_auth() throws Exception {
+    public void shouldRedirectToMFAChallengePage_adaptiveMFA_2_user_auth() throws Exception {
         router.route().order(-1).handler(rc -> {
             // set client
             Client client = new Client();
@@ -980,7 +980,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
-            rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
+            rc.session().put(ConstantKeys.USER_LOGIN_COMPLETED_KEY, true);
             rc.next();
         });
 
@@ -1015,7 +1015,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
-            rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
+            rc.session().put(ConstantKeys.USER_LOGIN_COMPLETED_KEY, true);
             rc.next();
         });
 
@@ -1028,6 +1028,36 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
                     assertTrue(location.endsWith("/mfa/challenge?scope=read+write"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldNotRedirectToMFAChallengePage_adaptiveMFA_3_user_stronglyAuth() throws Exception {
+        router.route().order(-1).handler(rc -> {
+            // set client
+            Client client = new Client();
+            client.setFactors(Collections.singleton("factor-1"));
+            rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+            MFASettings mfaSettings = new MFASettings();
+            mfaSettings.setAdaptiveAuthenticationRule("{#context.attributes['geoip']['country_iso_code'] == 'FR'}");
+            rc.put(ConstantKeys.GEOIP_KEY, new JsonObject().put("country_iso_code", "FR").getMap());
+            client.setMfaSettings(mfaSettings);
+            rc.session().put(ENROLLED_FACTOR_ID_KEY, "factor-1");
+
+            // set user
+            EnrolledFactor enrolledFactor = new EnrolledFactor();
+            enrolledFactor.setFactorId("factor-1");
+            enrolledFactor.setStatus(ACTIVATED);
+            io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
+            endUser.setFactors(Collections.singletonList(enrolledFactor));
+            rc.getDelegate().setUser(new User(endUser));
+            rc.session().put(ConstantKeys.USER_LOGIN_COMPLETED_KEY, true);
+            rc.session().put(STRONG_AUTH_COMPLETED_KEY, true);
+            rc.next();
+        });
+
+        testRequest(
+                HttpMethod.GET, "/login?scope=read%20write",
+                HttpStatusCode.OK_200, "OK");
     }
 
     @Test
@@ -1055,7 +1085,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(List.of(enrolledFactor, enrolledFactor2));
             rc.getDelegate().setUser(new User(endUser));
-            rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
+            rc.session().put(ConstantKeys.USER_LOGIN_COMPLETED_KEY, true);
             rc.next();
         });
 

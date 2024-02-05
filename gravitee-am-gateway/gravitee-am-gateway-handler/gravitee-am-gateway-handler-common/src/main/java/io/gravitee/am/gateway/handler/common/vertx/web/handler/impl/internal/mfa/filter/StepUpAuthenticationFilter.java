@@ -38,19 +38,14 @@ public class StepUpAuthenticationFilter extends MfaContextHolder implements Supp
 
     @Override
     public Boolean get() {
-        // If Adaptive MFA is active and KO (rule == false) we bypass this filter
-        // Because it could return true and skip MFA
-        if (!context.isMfaSkipped() && context.isAmfaActive() && !context.isAmfaRuleTrue()) {
-            return false;
-        }
         String mfaStepUpRule = context.getStepUpRule();
         if (context.isStepUpActive()) {
             context.setStepUpRuleTrue(isStepUpAuthentication(mfaStepUpRule));
         }
-        return !context.isAmfaActive() &&
-                context.isStepUpActive() &&
-                !context.isStepUpRuleTrue() &&
-                (context.isUserStronglyAuth() || context.isMfaSkipped());
+
+        // if strongly auth and StepUp rule is false (SAFE),
+        // then we can bypass MFA Challenge
+        return (context.isUserStronglyAuth() || context.isMfaSkipped()) && context.isStepUpActive() && !context.isStepUpRuleTrue();
     }
 
     protected boolean isStepUpAuthentication(String selectionRule) {
