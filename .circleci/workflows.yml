@@ -482,11 +482,9 @@ jobs:
             # build & start CIBA Delegated Service
             mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -P cicd -f gravitee-am-ciba-delegated-service/pom.xml package
             java -jar gravitee-am-ciba-delegated-service/target/gravitee-am-ciba-delegated-service-${AM_VERSION}.jar &
-            sleep 50
             # Wait for AM to be up and running
-            timeout 30s bash -c 'until nc -vz localhost 8093; do sleep 2; done'
-            timeout 30s bash -c 'until nc -vz localhost 8092; do sleep 2; done'
-            sleep 50
+            timeout 120s bash -c 'until nc -vz localhost 8093; do sleep 2; done'
+            timeout 120s bash -c 'until nc -vz localhost 8092; do sleep 2; done'
             # Run Jest tests
             npm --prefix gravitee-am-test run ci
       - keeper/env-export:
@@ -598,11 +596,9 @@ jobs:
             # build & start CIBA Delegated Service
             mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -P cicd -f gravitee-am-ciba-delegated-service/pom.xml package
             java -jar gravitee-am-ciba-delegated-service/target/gravitee-am-ciba-delegated-service-${AM_VERSION}.jar &
-            sleep 50
             # Wait for AM to be up and running
-            timeout 30s bash -c 'until nc -vz localhost 8093; do sleep 2; done'
-            timeout 30s bash -c 'until nc -vz localhost 8092; do sleep 2; done'
-            sleep 50
+            timeout 120s bash -c 'until nc -vz localhost 8093; do sleep 2; done'
+            timeout 120s bash -c 'until nc -vz localhost 8092; do sleep 2; done'
             # Run Jest tests
             npm --prefix gravitee-am-test run ci
       - keeper/env-export:
@@ -660,11 +656,9 @@ jobs:
             # build & start CIBA Delegated Service
             mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -P cicd -f gravitee-am-ciba-delegated-service/pom.xml package
             java -jar gravitee-am-ciba-delegated-service/target/gravitee-am-ciba-delegated-service-${AM_VERSION}.jar &
-            sleep 50
             # Wait for AM to be up and running
-            timeout 30s bash -c 'until nc -vz localhost 8093; do sleep 2; done'
-            timeout 30s bash -c 'until nc -vz localhost 8092; do sleep 2; done'
-            sleep 50
+            timeout 120s bash -c 'until nc -vz localhost 8093; do sleep 2; done'
+            timeout 120s bash -c 'until nc -vz localhost 8092; do sleep 2; done'
             # Run Postman tests with retry
             N=2
             while [ $N -gt 0 ]
@@ -765,11 +759,9 @@ jobs:
             # build & start CIBA Delegated Service
             mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -P cicd -f gravitee-am-ciba-delegated-service/pom.xml package
             java -jar gravitee-am-ciba-delegated-service/target/gravitee-am-ciba-delegated-service-${AM_VERSION}.jar &
-            sleep 50
             # Wait for AM to be up and running
-            timeout 30s bash -c 'until nc -vz localhost 8093; do sleep 2; done'
-            timeout 30s bash -c 'until nc -vz localhost 8092; do sleep 2; done'
-            sleep 50
+            timeout 120s bash -c 'until nc -vz localhost 8093; do sleep 2; done'
+            timeout 120s bash -c 'until nc -vz localhost 8092; do sleep 2; done'
             # Run Postman tests with retry
             N=2
             while [ $N -gt 0 ]
