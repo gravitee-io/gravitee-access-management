@@ -452,13 +452,8 @@ jobs:
             # Prepare AM
             unzip /tmp/workspace/gravitee-am-gateway-standalone-*.zip
             unzip /tmp/workspace/gravitee-am-management-api-standalone-*.zip
-<<<<<<< HEAD
             export AM_VERSION=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
-            curl https://download.gravitee.io/plugins/services/gravitee-service-geoip/gravitee-service-geoip-2.1.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-2.1.0.zip
-=======
-            export AM_VERSION=$(mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
             curl --retry 4 --retry-delay 10 --retry-all-errors https://download.gravitee.io/plugins/services/gravitee-service-geoip/gravitee-service-geoip-2.1.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-2.1.0.zip
->>>>>>> d885259450 (AM-2154: add retries in pipeline, increase waiting time for application to start, remove sleeps (#3461))
             
             cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
             cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/
@@ -540,13 +535,8 @@ jobs:
             # Prepare AM
             unzip /tmp/workspace/gravitee-am-gateway-standalone-*.zip
             unzip /tmp/workspace/gravitee-am-management-api-standalone-*.zip
-<<<<<<< HEAD
             export AM_VERSION=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
-            curl https://download.gravitee.io/plugins/services/gravitee-service-geoip/gravitee-service-geoip-2.1.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-2.1.0.zip
-=======
-            export AM_VERSION=$(mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
             curl --retry 4 --retry-delay 10 --retry-all-errors https://download.gravitee.io/plugins/services/gravitee-service-geoip/gravitee-service-geoip-2.1.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-2.1.0.zip
->>>>>>> d885259450 (AM-2154: add retries in pipeline, increase waiting time for application to start, remove sleeps (#3461))
             
             cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
             cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/
@@ -646,13 +636,8 @@ jobs:
             # Prepare AM
             unzip /tmp/workspace/gravitee-am-gateway-standalone-*.zip
             unzip /tmp/workspace/gravitee-am-management-api-standalone-*.zip
-<<<<<<< HEAD
             export AM_VERSION=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
-            curl https://download.gravitee.io/plugins/services/gravitee-service-geoip/gravitee-service-geoip-2.1.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-2.1.0.zip
-=======
-            export AM_VERSION=$(mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
             curl --retry 4 --retry-delay 10 --retry-all-errors https://download.gravitee.io/plugins/services/gravitee-service-geoip/gravitee-service-geoip-2.1.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-2.1.0.zip
->>>>>>> d885259450 (AM-2154: add retries in pipeline, increase waiting time for application to start, remove sleeps (#3461))
             
             cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
             cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/
@@ -725,13 +710,8 @@ jobs:
             # Prepare AM
             unzip /tmp/workspace/gravitee-am-gateway-standalone-*.zip
             unzip /tmp/workspace/gravitee-am-management-api-standalone-*.zip
-<<<<<<< HEAD
             export AM_VERSION=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
-            curl https://download.gravitee.io/plugins/services/gravitee-service-geoip/gravitee-service-geoip-2.1.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-2.1.0.zip
-=======
-            export AM_VERSION=$(mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
             curl --retry 4 --retry-delay 10 --retry-all-errors https://download.gravitee.io/plugins/services/gravitee-service-geoip/gravitee-service-geoip-2.1.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-2.1.0.zip
->>>>>>> d885259450 (AM-2154: add retries in pipeline, increase waiting time for application to start, remove sleeps (#3461))
             
             cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
             cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/
