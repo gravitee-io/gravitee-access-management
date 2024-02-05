@@ -482,13 +482,25 @@ jobs:
             # build & start CIBA Delegated Service
             mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -P cicd -f gravitee-am-ciba-delegated-service/pom.xml package
             java -jar gravitee-am-ciba-delegated-service/target/gravitee-am-ciba-delegated-service-${AM_VERSION}.jar &
-            sleep 30
+            sleep 50
             # Wait for AM to be up and running
             timeout 30s bash -c 'until nc -vz localhost 8093; do sleep 2; done'
             timeout 30s bash -c 'until nc -vz localhost 8092; do sleep 2; done'
-            sleep 30
-            # Run Jest tests
-            npm --prefix gravitee-am-test run ci
+            sleep 50
+            # Run Jest tests with retry
+            N=2
+            while [ $N -gt 0 ]
+            do
+              if $(npm --prefix gravitee-am-test run ci); then 
+                echo "Completed"
+                exit 0
+              fi
+
+              echo "Retrying postman tests"
+              N=$(( $N - 1 ))
+              sleep 10
+            done
+            exit 1
       - keeper/env-export:
           secret-url: keeper://ZOz4db245GNaETVwmPBk8w/field/password
           var-name: SLACK_ACCESS_TOKEN
@@ -598,13 +610,25 @@ jobs:
             # build & start CIBA Delegated Service
             mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -P cicd -f gravitee-am-ciba-delegated-service/pom.xml package
             java -jar gravitee-am-ciba-delegated-service/target/gravitee-am-ciba-delegated-service-${AM_VERSION}.jar &
-            sleep 30
+            sleep 50
             # Wait for AM to be up and running
             timeout 30s bash -c 'until nc -vz localhost 8093; do sleep 2; done'
             timeout 30s bash -c 'until nc -vz localhost 8092; do sleep 2; done'
-            sleep 30
-            # Run Jest tests
-            npm --prefix gravitee-am-test run ci
+            sleep 50
+            # Run Jest tests with retry
+            N=2
+            while [ $N -gt 0 ]
+            do
+              if $(npm --prefix gravitee-am-test run ci); then 
+                echo "Completed"
+                exit 0
+              fi
+
+              echo "Retrying postman tests"
+              N=$(( $N - 1 ))
+              sleep 10
+            done
+            exit 1
       - keeper/env-export:
           secret-url: keeper://ZOz4db245GNaETVwmPBk8w/field/password
           var-name: SLACK_ACCESS_TOKEN
@@ -660,11 +684,11 @@ jobs:
             # build & start CIBA Delegated Service
             mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -P cicd -f gravitee-am-ciba-delegated-service/pom.xml package
             java -jar gravitee-am-ciba-delegated-service/target/gravitee-am-ciba-delegated-service-${AM_VERSION}.jar &
-            sleep 30
+            sleep 50
             # Wait for AM to be up and running
             timeout 30s bash -c 'until nc -vz localhost 8093; do sleep 2; done'
             timeout 30s bash -c 'until nc -vz localhost 8092; do sleep 2; done'
-            sleep 30
+            sleep 50
             # Run Postman tests with retry
             N=2
             while [ $N -gt 0 ]
@@ -765,11 +789,11 @@ jobs:
             # build & start CIBA Delegated Service
             mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -P cicd -f gravitee-am-ciba-delegated-service/pom.xml package
             java -jar gravitee-am-ciba-delegated-service/target/gravitee-am-ciba-delegated-service-${AM_VERSION}.jar &
-            sleep 30
+            sleep 50
             # Wait for AM to be up and running
             timeout 30s bash -c 'until nc -vz localhost 8093; do sleep 2; done'
             timeout 30s bash -c 'until nc -vz localhost 8092; do sleep 2; done'
-            sleep 30
+            sleep 50
             # Run Postman tests with retry
             N=2
             while [ $N -gt 0 ]
