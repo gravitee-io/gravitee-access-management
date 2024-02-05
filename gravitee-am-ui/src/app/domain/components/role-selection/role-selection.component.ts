@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 import { Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
-import { MatAutocompleteSelectedEvent, MatAutocompleteTrigger } from '@angular/material/autocomplete';
+import {
+  MatLegacyAutocompleteSelectedEvent as MatAutocompleteSelectedEvent,
+  MatLegacyAutocompleteTrigger as MatAutocompleteTrigger,
+} from '@angular/material/legacy-autocomplete';
 import { COMMA, ENTER } from '@angular/cdk/keycodes';
 import { BehaviorSubject, Subscription } from 'rxjs';
 import { UntypedFormControl } from '@angular/forms';
