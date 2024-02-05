@@ -13,7 +13,6 @@
     "lint:fix": "npm run lint:eslint:fix && npm run lint:license:fix && npm run prettier:fix",
     "lint:license": "license-check-and-add check -f license-check-config.json",
     "lint:license:fix": "license-check-and-add add -f license-check-config.json -r",
-    "e2e": "ng e2e",
     "prettier": "prettier --check \"**/*.{js,ts,html,css,scss,json}\"",
     "prettier:fix": "prettier --write \"**/*.{js,ts,html,css,scss,json}\"",
     "prettier:list": "prettier --list-different \"**/*.{js,ts,html,css,scss,json}\"",
@@ -61,7 +60,6 @@
     "ngx-clipboard": "12.3.1",
     "ngx-file-helpers": "9.1.0",
     "rxjs": "7.8.1",
-    "tslib": "2.6.1",
     "whatwg-fetch": "3.6.17",
     "zone.js": "0.11.8"
   },
@@ -82,7 +80,6 @@
     "@typescript-eslint/eslint-plugin": "5.59.9",
     "@typescript-eslint/parser": "5.59.9",
     "@webcomponents/webcomponentsjs": "2.8.0",
-    "codelyzer": "6.0.2",
     "eslint": "8.56.0",
     "eslint-config-angular": "0.5.0",
     "eslint-config-prettier": "8.7.0",
@@ -96,8 +93,9 @@
     "license-check-and-add": "4.0.3",
     "node-polyfill-webpack-plugin": "1.1.4",
     "prettier": "2.8.4",
-    "protractor": "7.0.0",
     "ts-node": "10.9.2",
-    "typescript": "4.8.4"
+    "tslib": "2.6.1",
+    "typescript": "4.8.4",
+    "webpack": "5.76.1"
   }
 }
