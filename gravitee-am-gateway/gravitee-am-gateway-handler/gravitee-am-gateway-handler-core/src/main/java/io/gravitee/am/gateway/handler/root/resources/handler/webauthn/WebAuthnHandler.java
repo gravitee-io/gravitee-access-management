@@ -54,6 +54,7 @@ import java.util.Set;
 import static io.gravitee.am.common.factor.FactorSecurityType.WEBAUTHN_CREDENTIAL;
 import static io.gravitee.am.common.factor.FactorType.FIDO2;
 import static io.gravitee.am.common.utils.ConstantKeys.*;
+import static io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnAuthenticatorIntegrity.authIntegrity;
 import static io.gravitee.am.model.factor.FactorStatus.ACTIVATED;
 import static io.gravitee.am.service.impl.user.activity.utils.ConsentUtils.canSaveIp;
 import static io.gravitee.am.service.impl.user.activity.utils.ConsentUtils.canSaveUserAgent;
@@ -281,21 +282,26 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
     }
 
     protected Completable updateCredential(AuthenticationContext authenticationContext,
-                                    String credentialId,
-                                    String userId,
-                                    boolean afterLogin) {
-        Credential credential = new Credential();
-        credential.setUserId(userId);
-        credential.setUserAgent(String.valueOf(authenticationContext.get(Claims.user_agent)));
-        credential.setIpAddress(String.valueOf(authenticationContext.get(Claims.ip_address)));
-        // update last checked date only after a passwordless login and only if the option is enabled
-        if (afterLogin) {
-            final WebAuthnSettings webAuthnSettings = domain.getWebAuthnSettings();
-            if (webAuthnSettings != null && webAuthnSettings.isEnforceAuthenticatorIntegrity()) {
-                credential.setLastCheckedAt(new Date());
-            }
-        }
-        return credentialService.update(ReferenceType.DOMAIN, domain.getId(), credentialId, credential)
+                                           String credentialId,
+                                           String userId,
+                                           boolean afterLogin) {
+        return credentialService.findByCredentialId(ReferenceType.DOMAIN, domain.getId(), credentialId)
+                .map(credential -> {
+                    credential.setUserId(userId);
+                    credential.setUserAgent(String.valueOf(authenticationContext.get(Claims.user_agent)));
+                    credential.setIpAddress(String.valueOf(authenticationContext.get(Claims.ip_address)));
+                    return credential;
+                })
+                .map(credential -> {
+                    // update last checked date only after a passwordless login and only if the option is enabled
+                    if(afterLogin){
+                        return authIntegrity(domain.getWebAuthnSettings())
+                                .updateLastCheckedDate(credential);
+                    } else {
+                        return credential;
+                    }
+                })
+                .flatMapCompletable(credential -> credentialService.update(ReferenceType.DOMAIN, domain.getId(), credentialId, credential))
                 .doOnError(error -> logger.error("An error has occurred while updating user {} webauthn credential", userId, error));
     }
 
