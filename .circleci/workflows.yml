@@ -496,7 +496,7 @@ jobs:
                 exit 0
               fi
 
-              echo "Retrying postman tests"
+              echo "Retrying Jest tests"
               N=$(( $N - 1 ))
               sleep 10
             done
@@ -624,7 +624,7 @@ jobs:
                 exit 0
               fi
 
-              echo "Retrying postman tests"
+              echo "Retrying Jest tests"
               N=$(( $N - 1 ))
               sleep 10
             done
@@ -698,7 +698,7 @@ jobs:
                 exit 0
               fi
 
-              echo "Retrying postman tests"
+              echo "Retrying Postman tests"
               N=$(( $N - 1 ))
               sleep 10
             done
@@ -803,7 +803,7 @@ jobs:
                 exit 0
               fi
 
-              echo "Retrying postman tests"
+              echo "Retrying Postman tests"
               N=$(( $N - 1 ))
               sleep 10
             done
