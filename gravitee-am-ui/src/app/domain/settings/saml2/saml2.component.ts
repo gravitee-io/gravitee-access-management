@@ -15,7 +15,7 @@
  */
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { MatDialog } from '@angular/material/dialog';
+import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
 import { Observable } from 'rxjs';
 import { GioLicenseService, LicenseOptions } from '@gravitee/ui-particles-angular';
 
