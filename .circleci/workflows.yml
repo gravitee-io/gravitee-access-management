@@ -487,20 +487,8 @@ jobs:
             timeout 30s bash -c 'until nc -vz localhost 8093; do sleep 2; done'
             timeout 30s bash -c 'until nc -vz localhost 8092; do sleep 2; done'
             sleep 50
-            # Run Jest tests with retry
-            N=2
-            while [ $N -gt 0 ]
-            do
-              if $(npm --prefix gravitee-am-test run ci); then 
-                echo "Completed"
-                exit 0
-              fi
-
-              echo "Retrying postman tests"
-              N=$(( $N - 1 ))
-              sleep 10
-            done
-            exit 1
+            # Run Jest tests
+            npm --prefix gravitee-am-test run ci
       - keeper/env-export:
           secret-url: keeper://ZOz4db245GNaETVwmPBk8w/field/password
           var-name: SLACK_ACCESS_TOKEN
@@ -615,20 +603,8 @@ jobs:
             timeout 30s bash -c 'until nc -vz localhost 8093; do sleep 2; done'
             timeout 30s bash -c 'until nc -vz localhost 8092; do sleep 2; done'
             sleep 50
-            # Run Jest tests with retry
-            N=2
-            while [ $N -gt 0 ]
-            do
-              if $(npm --prefix gravitee-am-test run ci); then 
-                echo "Completed"
-                exit 0
-              fi
-
-              echo "Retrying postman tests"
-              N=$(( $N - 1 ))
-              sleep 10
-            done
-            exit 1
+            # Run Jest tests
+            npm --prefix gravitee-am-test run ci
       - keeper/env-export:
           secret-url: keeper://ZOz4db245GNaETVwmPBk8w/field/password
           var-name: SLACK_ACCESS_TOKEN
