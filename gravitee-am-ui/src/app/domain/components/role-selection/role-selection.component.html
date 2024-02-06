@@ -17,11 +17,11 @@
 -->
 <div class="role-container" fxLayout="column">
   <mat-form-field>
-    <mat-chip-list #chipList aria-label="Roles selection">
-      <mat-chip *ngFor="let role of initialSelectedRoles" [removable]="true" (removed)="remove(role.id)">
+    <mat-chip-grid #chipList aria-label="Roles selection">
+      <mat-chip-row *ngFor="let role of initialSelectedRoles" [removable]="true" (removed)="remove(role.id)">
         {{ role.name }}
         <mat-icon matChipRemove *ngIf="removable">cancel</mat-icon>
-      </mat-chip>
+      </mat-chip-row>
       <input
         (click)="onFocus()"
         name="role"
@@ -33,7 +33,7 @@
         [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
         [matChipInputAddOnBlur]="addOnBlur"
       />
-    </mat-chip-list>
+    </mat-chip-grid>
     <mat-autocomplete #auto="matAutocomplete" (optionSelected)="selected($event)">
       <mat-option *ngFor="let role of filteredRoles | async" [value]="role.id">
         {{ role.name }}

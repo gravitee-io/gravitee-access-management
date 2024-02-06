@@ -23,11 +23,13 @@
       <div class="gv-form-section">
         <mat-form-field *ngIf="audit.timestamp" appearance="outline" floatLabel="always">
           <mat-label>Status</mat-label>
-          <mat-chip-list disabled="true">
-            <mat-chip [color]="audit.outcome?.status === 'SUCCESS' ? 'accent' : 'warn'" selected>
+          <mat-chip-grid #chipGrid [disabled]="true">
+            <mat-chip-row [color]="audit.outcome?.status === 'SUCCESS' ? 'accent' : 'warn'" selected>
               {{ audit.outcome?.status }}
-            </mat-chip>
-          </mat-chip-list>
+            </mat-chip-row>
+          </mat-chip-grid>
+
+          <input style="display: none" [matChipInputFor]="chipGrid" />
           <mat-hint>Status of the event</mat-hint>
         </mat-form-field>
         <mat-form-field *ngIf="audit.timestamp" appearance="outline" floatLabel="always">

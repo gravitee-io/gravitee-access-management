@@ -19,7 +19,7 @@
   <a [routerLink]="['..']" class="gv-back-link"><small><< Back to certificates</small></a>
   <div class="certificateTitle">
     <h1>{{ certificate.name }}</h1>
-    <mat-chip-list *ngIf="certificate.system"><mat-chip>system</mat-chip></mat-chip-list>
+    <span *ngIf="certificate.system" class="gio-badge-neutral">system</span>
   </div>
   <div fxLayout="row">
     <div fxLayout="column" fxFlex="70">

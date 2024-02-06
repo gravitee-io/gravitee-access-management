@@ -48,8 +48,8 @@
             <mat-divider></mat-divider>
           </div>
           <mat-form-field appearance="outline" floatLabel="always">
-            <mat-chip-list style="margin-top: 10px; margin-bottom: 10px" #chipListPermissions>
-              <mat-chip
+            <mat-chip-grid style="margin-top: 10px; margin-bottom: 10px" #chipListPermissions>
+              <mat-chip-row
                 *ngFor="let permission of selectedPermissions"
                 color="primary"
                 selected="true"
@@ -59,7 +59,7 @@
                 &nbsp;<span>{{ permission.key }}</span
                 >&nbsp;|&nbsp;<small>{{ permission.name }}</small>
                 <mat-icon matChipRemove>cancel</mat-icon>
-              </mat-chip>
+              </mat-chip-row>
               <input
                 matInput
                 placeholder="Permissions"
@@ -69,7 +69,7 @@
                 [readonly]="!editMode"
                 #chipInput
               />
-            </mat-chip-list>
+            </mat-chip-grid>
 
             <mat-autocomplete #auto="matAutocomplete" (optionSelected)="addPermission($event)">
               <mat-option *ngFor="let scope of scopes" [value]="scope.key">

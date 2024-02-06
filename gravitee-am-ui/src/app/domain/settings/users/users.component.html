@@ -17,8 +17,8 @@
 -->
 <div class="gv-page-container" fxLayout="column">
   <h1>Users</h1>
-  <div class="users-search" fxLayout="column">
-    <mat-form-field id="users-search-input" appearance="fill" floatLabel="always" style="max-width: 90%">
+  <div class="users-search" fxLayout="column" fxLayoutAlign="center center">
+    <mat-form-field id="users-search-input" appearance="fill" floatLabel="always">
       <mat-icon matPrefix>search</mat-icon>
       <mat-label>Search for users</mat-label>
       <input [(ngModel)]="searchValue" type="text" matInput placeholder="Search" (keyup.enter)="onSearch()" />
@@ -29,7 +29,7 @@
         <mat-icon (click)="openDialog()" style="font-size: 15px; color: black; cursor: pointer">info_outline</mat-icon></mat-hint
       >
     </mat-form-field>
-    <mat-card *ngIf="displayAdvancedSearchMode" class="advanced-search-card">
+    <mat-card appearance="outlined" *ngIf="displayAdvancedSearchMode" class="advanced-search-card">
       <mat-card-content>
         <div fxLayout="row" style="align-items: center">
           <label fxFlex="25">Identity provider</label>
@@ -70,7 +70,7 @@
       class="material"
       [columnMode]="'flex'"
       [headerHeight]="40"
-      [footerHeight]="40"
+      [footerHeight]="50"
       [rowHeight]="50"
       [messages]="{ emptyMessage: 'There is no user to display.', totalMessage: 'total' }"
       [rows]="users"
@@ -131,7 +131,7 @@
       <ngx-datatable-column name="Actions" [flexGrow]="1" *hasPermission="[requiredReadPermission]">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div fxLayout="row" class="gv-table-cell-actions">
-            <a mat-icon-button [routerLink]="[row.id]"><mat-icon matTooltip="More info">more_horiz</mat-icon></a>
+            <a mat-button [routerLink]="[row.id]"><mat-icon matTooltip="More info">more_horiz</mat-icon></a>
           </div>
         </ng-template>
       </ngx-datatable-column>

@@ -47,7 +47,7 @@
               <small>List of scope values that the client can use when requesting access tokens.</small>
             </div>
             <div>
-              <button mat-stroked-button (click)="add($event)">+ ADD SCOPES</button>
+              <button mat-stroked-button (click)="add($event)"><mat-icon svgIcon="gio:plus"></mat-icon>ADD SCOPES</button>
             </div>
           </div>
           <mat-divider></mat-divider>
@@ -58,7 +58,7 @@
             [columnMode]="'flex'"
             [headerHeight]="40"
             [footerHeight]="40"
-            [rowHeight]="55"
+            [rowHeight]="68"
             [messages]="{ emptyMessage: 'There is no scopes' }"
             [rows]="selectedScopes"
           >

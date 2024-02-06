@@ -32,15 +32,15 @@
             <div fxLayout="row" fxLayoutGap="10px">
               <mat-form-field appearance="outline" floatLabel="always">
                 <mat-label>Domain Whitelist</mat-label>
-                <mat-chip-list #chipList aria-label="domainWhitelist">
-                  <mat-chip
+                <mat-chip-grid #chipList aria-label="domainWhitelist">
+                  <mat-chip-row
                     *ngFor="let dwPattern of provider.domainWhitelist"
                     [removable]="true"
                     (removed)="removeDomainWhitelistPattern(dwPattern)"
                   >
                     {{ dwPattern }}
                     <mat-icon matChipRemove>cancel</mat-icon>
-                  </mat-chip>
+                  </mat-chip-row>
                   <input
                     matInput
                     type="text"
@@ -51,7 +51,7 @@
                     [value]="domainWhitelistPattern || ''"
                     (input)="domainWhitelistPattern = $any($event.target).value"
                   />
-                </mat-chip-list>
+                </mat-chip-grid>
                 <mat-hint
                   >Filters the user based on their email domain matching the list, post authentication of the provider. The user will be
                   logged out otherwise</mat-hint

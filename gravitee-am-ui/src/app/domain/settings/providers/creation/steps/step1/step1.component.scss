@@ -1,22 +1,18 @@
+@use '@angular/material' as mat;
+
 mat-card {
+  @include mat.elevation-transition();
   margin-top: 10px;
-  box-shadow: 0 0 0 1px var(--gv-theme-neutral-color, #f5f5f5), 0 1px 3px var(--gv-theme-neutral-color-dark, #bfbfbf);
-  transition: transform 0.3s;
   box-sizing: border-box;
-  border: 2px transparent solid;
   justify-content: center;
   align-content: center;
   display: flex;
 }
 
-mat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 20px -10px var(--gv-theme-neutral-color-dark, #bfbfbf);
-  cursor: pointer;
-}
-
+mat-card:hover,
 mat-card.selected {
-  border-color: #5a7684;
+  @include mat.elevation(8);
+  cursor: pointer;
 }
 
 mat-card-content {

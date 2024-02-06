@@ -16,46 +16,36 @@
   $primary: map-get($theme, primary);
   $accent: map-get($theme, accent);
   .gv-sidenav {
-    background-color: mat.get-color-from-palette($primary, 500);
+    background-color: mat.get-color-from-palette($primary, 'default');
   }
   .mat-step-header .mat-step-icon-selected,
   .mat-step-header .mat-step-icon-state-edit,
   .mat-step-header .mat-step-icon-state-done {
-    background-color: mat.get-color-from-palette($primary, 500);
+    background-color: mat.get-color-from-palette($primary, 'default');
   }
   material-add-reference-widget {
-    .mat-raised-button.mat-accent {
-      background-color: mat.get-color-from-palette($primary, 500);
+    .mat-mdc-raised-button.mat-accent {
+      background-color: mat.get-color-from-palette($primary, 'default');
     }
   }
   a {
-    color: mat.get-color-from-palette($primary, 500);
+    color: mat.get-color-from-palette($primary, 'default');
     &.active,
     &:hover {
-      color: mat.get-color-from-palette($accent, 500);
+      color: mat.get-color-from-palette($accent, 'default');
     }
     &.gv-accent-link {
-      color: mat.get-color-from-palette($accent, 500);
+      color: mat.get-color-from-palette($accent, 'default');
       &:hover {
-        color: mat.get-color-from-palette($accent, 500);
+        color: mat.get-color-from-palette($accent, 'default');
       }
     }
   }
   .gv-accent-color {
-    color: mat.get-color-from-palette($accent, 500);
-  }
-  .application-creation-step1-container {
-    .application-creation-step1-content {
-      mat-card {
-        &.selected,
-        i.selected {
-          border: 1px solid mat.get-color-from-palette($accent, 500);
-        }
-      }
-    }
+    color: mat.get-color-from-palette($accent, 'default');
   }
   .not-found-content-description {
-    border-top: 8px solid mat.get-color-from-palette($primary, 500);
+    border-top: 8px solid mat.get-color-from-palette($primary, 'default');
   }
   .gv-splash-screen {
     background: #fdfdfd;
@@ -105,9 +95,9 @@ mat-sidenav-container {
   height: 100%;
 }
 
-:where(.mat) *,
-:where(.mat) *::before,
-:where(.mat) *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
@@ -129,7 +119,7 @@ mat-sidenav-container {
   background-color: #ffffff !important;
 }
 
-.mat-list .mat-list-item .mat-list-item-content,
+.mat-mdc-list .mat-mdc-list-item .mat-list-item-content,
 .mat-nav-list .mat-list-item .mat-list-item-content {
   position: inherit !important;
 }
@@ -141,36 +131,9 @@ mat-sidenav-container {
   padding: 0.2em 0;
 }
 
-.mat-form-field,
+.mat-mdc-form-field,
 mat-form-field {
   width: 100%;
-}
-
-.mat-form-field-appearance-outline .mat-form-field-infix {
-  padding: 0.5em 0;
-}
-
-.mat-form-field-appearance-outline .mat-form-field-outline {
-  background: #fff;
-  border-radius: 5px;
-}
-
-.mat-form-field-appearance-outline.mat-form-field-disabled .mat-form-field-outline {
-  background: #f1f1f1;
-  border-radius: 5px;
-}
-
-// override input underline from particles
-.mat-form-field-underline {
-  display: block !important;
-  position: initial !important;
-}
-
-// override input underline from particles
-.gio-side-nav {
-  .mat-form-field-underline {
-    display: none !important;
-  }
 }
 
 ngx-datatable {
@@ -333,7 +296,7 @@ p.gv-plugin-creation-description {
   margin: 0px 0px 20px 0px;
 }
 
-.no-padding-dialog-container .mat-dialog-container {
+.no-padding-dialog-container .mat-mdc-dialog-container {
   padding: 0;
 }
 

@@ -15,7 +15,7 @@
  */
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
+import { MatDialog } from '@angular/material/dialog';
 
 import { DomainService } from '../../../services/domain.service';
 import { DialogService } from '../../../services/dialog.service';

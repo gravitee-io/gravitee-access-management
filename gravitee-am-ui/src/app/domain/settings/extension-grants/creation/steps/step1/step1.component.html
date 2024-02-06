@@ -18,7 +18,7 @@
 <div fxLayout="column">
   <p class="gv-plugin-creation-description">Choose grant type flow to request OAuth 2.0 tokens.</p>
   <div fxLayout="row wrap" fxLayoutGap="10px">
-    <mat-card *ngFor="let extensionGrant of extensionGrants" fxFlex="30">
+    <mat-card appearance="outlined" *ngFor="let extensionGrant of extensionGrants" fxFlex="30">
       <mat-card-header fxLayoutAlign="end end" fxLayout="row">
         <mat-radio-group [(ngModel)]="selectedExtensionGrantTypeId" (ngModelChange)="selectExtensionGrantType()">
           <mat-radio-button [value]="extensionGrant.id"></mat-radio-button>

@@ -18,7 +18,7 @@
 <div fxLayout="column">
   <p class="gv-plugin-creation-description">Choose authentication device notifier to interact with the user.</p>
   <div fxLayout="row wrap" fxLayoutGap="10px">
-    <mat-card *ngFor="let deviceNotifier of deviceNotifiers" fxFlex="30">
+    <mat-card appearance="outlined" *ngFor="let deviceNotifier of deviceNotifiers" fxFlex="30">
       <mat-card-header fxLayoutAlign="end end" fxLayout="row">
         <mat-radio-group [(ngModel)]="selectedNotifierTypeId" (ngModelChange)="selectNotifierType()">
           <mat-radio-button [value]="deviceNotifier.id"></mat-radio-button>

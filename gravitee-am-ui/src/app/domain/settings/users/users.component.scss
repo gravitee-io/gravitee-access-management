@@ -22,16 +22,18 @@ ngx-datatable {
 
 .users-search {
   font-size: 14px;
-  margin: 0 auto;
-  width: 80%;
+  position: relative;
+  display: flex;
+  margin: 0 10%;
+  min-width: 300px;
 }
 
 .advanced-search-card {
   border-radius: 0px;
-  margin-top: 50px;
   position: absolute;
-  width: 70%;
+  width: 100%;
   z-index: 10;
+  top: 58px;
 }
 
 :host ::ng-deep.user-name-cell {

@@ -1,15 +1,15 @@
 table {
   width: 100%;
   background: transparent;
-  .mat-row,
-  .mat-header-row {
+  .mat-mdc-row,
+  .mat-mdc-header-row {
     border-bottom: 1px solid #e2e5e7;
     align-items: center;
     min-height: 48px;
     padding: 0 24px;
   }
-  .mat-cell,
-  .mat-header-cell {
+  .mat-mdc-cell,
+  .mat-mdc-header-cell {
     overflow: hidden;
     word-wrap: break-word;
     font-size: 12px;

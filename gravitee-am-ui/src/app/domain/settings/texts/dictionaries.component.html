@@ -46,7 +46,7 @@
             <ngx-datatable-column name="" [flexGrow]="1" *hasPermission="['domain_i18n_dictionary_delete']">
               <ng-template let-row="row" ngx-datatable-cell-template>
                 <div fxLayout="row" class="gv-table-cell-actions">
-                  <button mat-icon-button (click)="deleteLanguage(row, $event)">
+                  <button mat-button (click)="deleteLanguage(row, $event)">
                     <mat-icon>delete</mat-icon>
                   </button>
                 </div>
@@ -86,18 +86,18 @@
               >
                 <ngx-datatable-column name="Key" [flexGrow]="4">
                   <ng-template let-row="row" ngx-datatable-cell-template>
-                    <input matInput type="text" [(ngModel)]="row.key" (input)="enableSaveChangeButton()" />
+                    <input class="table__edit__input" matInput type="text" [(ngModel)]="row.key" (input)="enableSaveChangeButton()" />
                   </ng-template>
                 </ngx-datatable-column>
                 <ngx-datatable-column name="Value" [flexGrow]="6" prop="message">
                   <ng-template let-row="row" ngx-datatable-cell-template>
-                    <input matInput type="text" [(ngModel)]="row.message" (input)="enableSaveChangeButton()" />
+                    <input class="table__edit__input" matInput type="text" [(ngModel)]="row.message" (input)="enableSaveChangeButton()" />
                   </ng-template>
                 </ngx-datatable-column>
                 <ngx-datatable-column name="" [flexGrow]="1" *hasPermission="['domain_i18n_dictionary_update']" [maxWidth]="50">
                   <ng-template let-rowIndex="rowIndex" ngx-datatable-cell-template>
                     <div fxLayout="row" class="gv-table-cell-actions">
-                      <button mat-icon-button (click)="deleteTranslation(rowIndex, $event)">
+                      <button mat-button (click)="deleteTranslation(rowIndex, $event)">
                         <mat-icon>delete</mat-icon>
                       </button>
                     </div>

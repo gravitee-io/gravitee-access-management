@@ -44,8 +44,8 @@
       <ngx-datatable-column name="Type" prop="system" [flexGrow]="1">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div class="certificate-simple-text" fxLayout="row">
-            <mat-chip-list *ngIf="row.system"><mat-chip>System</mat-chip></mat-chip-list>
-            <mat-chip-list *ngIf="!row.system"><mat-chip>Own</mat-chip></mat-chip-list>
+            <span *ngIf="row.system" class="gio-badge-neutral">System</span>
+            <span *ngIf="!row.system" class="gio-badge-neutral">Own</span>
           </div>
         </ng-template>
       </ngx-datatable-column>
@@ -75,20 +75,18 @@
       <ngx-datatable-column name="Used" [sortable]="false" [flexGrow]="1">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div class="certificate-simple-text" fxLayout="row">
-            <mat-chip-list
-              ><mat-chip matTooltip="{{ getAppNames(row) }}">{{ computeAppsLabel(row) }}</mat-chip></mat-chip-list
-            >
+            <span class="gio-badge-neutral" matTooltip="{{ getAppNames(row) }}">{{ computeAppsLabel(row) }}</span>
           </div>
         </ng-template>
       </ngx-datatable-column>
       <ngx-datatable-column name="" [sortable]="false" [flexGrow]="1">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div fxLayout="row" class="gv-table-cell-actions">
-            <button mat-icon-button (click)="publicKey(row.id, $event)"><mat-icon matTooltip="Get public key">vpn_key</mat-icon></button>
-            <a mat-icon-button [routerLink]="[row.id]" *hasPermission="['domain_certificate_read']"
+            <button mat-button (click)="publicKey(row.id, $event)"><mat-icon matTooltip="Get public key">vpn_key</mat-icon></button>
+            <a mat-button [routerLink]="[row.id]" *hasPermission="['domain_certificate_read']"
               ><mat-icon matTooltip="Settings">settings</mat-icon></a
             >
-            <button *hasPermission="['domain_certificate_delete']" mat-icon-button (click)="delete(row.id, $event)">
+            <button *hasPermission="['domain_certificate_delete']" mat-button (click)="delete(row.id, $event)">
               <mat-icon matTooltip="Delete">delete</mat-icon>
             </button>
           </div>

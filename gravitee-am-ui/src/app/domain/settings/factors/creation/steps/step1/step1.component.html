@@ -18,7 +18,7 @@
 <div fxLayout="column">
   <p class="gv-plugin-creation-description">Choose multi-factor auth to add extra check during the authentication process.</p>
   <div fxLayout="row wrap" fxLayoutGap="10px">
-    <mat-card *ngFor="let factor of factors" fxFlex="30" [gioLicense]="factor">
+    <mat-card appearance="outlined" *ngFor="let factor of factors" fxFlex="30" [gioLicense]="factor">
       <mat-card-header fxLayoutAlign="end end" fxLayout="row">
         <mat-radio-group [(ngModel)]="selectedFactorTypeId" *ngIf="factor.deployed" (ngModelChange)="selectFactorType()">
           <mat-radio-button [value]="factor.id"></mat-radio-button>

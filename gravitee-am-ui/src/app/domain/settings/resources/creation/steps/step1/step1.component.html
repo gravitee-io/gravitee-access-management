@@ -19,6 +19,7 @@
   <p class="gv-plugin-creation-description">Choose resource to create.</p>
   <div fxLayout="row wrap" fxLayoutGap="10px" fxLayoutAlign="center">
     <mat-card
+      appearance="outlined"
       *ngFor="let res of resources"
       fxFlex="30"
       [class.selected]="resource.type === res.id"

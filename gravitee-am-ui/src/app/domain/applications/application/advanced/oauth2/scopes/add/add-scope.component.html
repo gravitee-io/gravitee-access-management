@@ -18,11 +18,11 @@
 <h5 matDialogTitle>Add scope</h5>
 <mat-dialog-content>
   <mat-form-field>
-    <mat-chip-list #chipList aria-label="Scopes selection">
-      <mat-chip *ngFor="let scope of selectedScopes" [removable]="true" (removed)="remove(scope)">
+    <mat-chip-grid #chipList aria-label="Scopes selection">
+      <mat-chip-row *ngFor="let scope of selectedScopes" [removable]="true" (removed)="remove(scope)">
         {{ scope }}
         <mat-icon matChipRemove *ngIf="removable">cancel</mat-icon>
-      </mat-chip>
+      </mat-chip-row>
       <input
         name="scope"
         #scopeInput
@@ -33,7 +33,7 @@
         [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
         [matChipInputAddOnBlur]="addOnBlur"
       />
-    </mat-chip-list>
+    </mat-chip-grid>
     <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onSelectionChanged($event)">
       <mat-option *ngFor="let scope of filteredScopes" [value]="scope.key">
         <span>{{ scope.name }}</span> |

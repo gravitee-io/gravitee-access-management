@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { MatLegacyInput as MatInput } from '@angular/material/legacy-input';
+import { MatInput } from '@angular/material/input';
 import { ActivatedRoute, Router } from '@angular/router';
 import { filter, switchMap, tap } from 'rxjs/operators';
 import { difference, find, map, remove } from 'lodash';

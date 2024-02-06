@@ -16,7 +16,7 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { NgForm } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { MatLegacyInput as MatInput } from '@angular/material/legacy-input';
+import { MatInput } from '@angular/material/input';
 import { filter, switchMap, tap } from 'rxjs/operators';
 import { difference, find, map, remove } from 'lodash';
 

@@ -23,6 +23,7 @@
 
   <div fxLayout="row wrap" fxLayoutAlign="center center" class="application-creation-step1-content">
     <mat-card
+      appearance="outlined"
       *ngFor="let applicationType of applicationTypes"
       fxFlex="22"
       (click)="selectApplicationType(applicationType.type)"

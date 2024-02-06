@@ -33,6 +33,7 @@
 
   <div fxLayout="row wrap" fxFlex fxLayoutGap="10px" fxLayoutAlign="center">
     <mat-card
+      appearance="outlined"
       *ngFor="let idp of filteredIdentities"
       fxFlex="30"
       [class.selected]="provider.type === idp.id"

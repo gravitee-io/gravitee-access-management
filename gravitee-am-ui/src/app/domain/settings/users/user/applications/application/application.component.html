@@ -70,7 +70,7 @@
       <ngx-datatable-column [flexGrow]="1">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div fxLayout="row" class="gv-table-cell-actions">
-            <button *ngIf="row.status === 'approved' && canRevoke" mat-icon-button (click)="revokeConsent($event, row)">
+            <button *ngIf="row.status === 'approved' && canRevoke" mat-button (click)="revokeConsent($event, row)">
               <mat-icon matTooltip="Revoke access" style="color: #f44336">highlight_off</mat-icon>
             </button>
           </div>
