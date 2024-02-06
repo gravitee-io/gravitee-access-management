@@ -49,7 +49,7 @@ export class DomainCreationComponent implements OnInit {
         this.snackbarService.open('Domain ' + data.name + ' created');
         this.router.navigate(['..', data.hrid], { relativeTo: this.route });
       },
-      (error) => {
+      (error: unknown) => {
         this.createDomainBtn.nativeElement.loading = false;
         this.snackbarService.openFromComponent('Errors', [error.error.message]);
       },

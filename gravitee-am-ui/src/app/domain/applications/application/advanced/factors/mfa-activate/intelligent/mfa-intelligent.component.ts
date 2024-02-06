@@ -22,6 +22,7 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 })
 export class MfaIntelligentComponent implements OnInit {
   @Input() riskAssessment: any = {};
+  // eslint-disable-next-line @angular-eslint/no-output-rename, @angular-eslint/no-output-on-prefix
   @Output('on-settings-change') settingsChangeEmitter: EventEmitter<any> = new EventEmitter<any>();
 
   currentDeviceAssessment: any;

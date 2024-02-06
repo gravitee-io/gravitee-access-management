@@ -24,6 +24,7 @@ export class MfaSelectComponent {
   @Input() factors: any[];
   @Input() applicationFactors: any[];
   @Input() editMode: boolean;
+  // eslint-disable-next-line @angular-eslint/no-output-rename
   @Output('select-factor') selectFactorEmitter = new EventEmitter<any>();
 
   private factorTypes: any = {

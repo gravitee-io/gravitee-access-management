@@ -23,7 +23,7 @@ import { ActivatedRoute } from '@angular/router';
 })
 export class DomainAlertNotifierCreationStep1Component implements OnInit {
   notifiers: any[];
-  @Input('alertNotifier') alertNotifier;
+  @Input() alertNotifier;
 
   constructor(private route: ActivatedRoute) {}
 

@@ -23,13 +23,14 @@ import { MatLegacyDialog as MatDialog, MatLegacyDialogRef as MatDialogRef } from
 })
 export class MfaConditionalComponent {
   @Input() adaptiveMfaRule: string;
+  // eslint-disable-next-line @angular-eslint/no-output-on-prefix, @angular-eslint/no-output-rename
   @Output('on-rule-change') amfaRuleEmitter: EventEmitter<string> = new EventEmitter<string>();
 
   constructor(private dialog: MatDialog) {}
 
   openAMFADialog($event) {
     $event.preventDefault();
-    this.dialog.open(AdaptiveMfaDialog, { width: '700px' });
+    this.dialog.open(AdaptiveMfaDialogComponent, { width: '700px' });
   }
 
   updateAdaptiveMfaRule($event) {
@@ -43,6 +44,6 @@ export class MfaConditionalComponent {
   selector: 'adaptive-mfa-dialog',
   templateUrl: './dialog/adaptive-mfa-info.component.html',
 })
-export class AdaptiveMfaDialog {
-  constructor(public dialogRef: MatDialogRef<AdaptiveMfaDialog>) {}
+export class AdaptiveMfaDialogComponent {
+  constructor(public dialogRef: MatDialogRef<AdaptiveMfaDialogComponent>) {}
 }

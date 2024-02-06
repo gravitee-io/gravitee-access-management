@@ -68,7 +68,7 @@ export class HttpRequestInterceptor implements HttpInterceptor {
             this.saveXsrfToken(event);
           }
         },
-        (err: any) => {
+        (err: unknown) => {
           if (err.status === 404) {
             this.router.navigate(['/404']);
           }

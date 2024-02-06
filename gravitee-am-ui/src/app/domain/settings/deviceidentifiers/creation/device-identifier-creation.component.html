@@ -39,7 +39,7 @@
           <small>Device identifier configuration</small>
         </ng-template>
         <device-identifier-creation-step2
-          *ngIf="stepper.selectedIndex == 1"
+          *ngIf="stepper.selectedIndex === 1"
           [deviceIdentifier]="deviceIdentifier"
           [(configurationIsValid)]="configurationIsValid"
         ></device-identifier-creation-step2>

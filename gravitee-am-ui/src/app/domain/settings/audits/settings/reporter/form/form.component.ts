@@ -21,8 +21,9 @@ import { Component, Input, EventEmitter, Output, OnChanges, SimpleChanges } from
   styleUrls: ['./form.component.scss'],
 })
 export class ReporterFormComponent implements OnChanges {
+  // eslint-disable-next-line @angular-eslint/no-input-rename
   @Input('reporterConfiguration') configuration: any = {};
-  @Input('reporterSchema') reporterSchema: any;
+  @Input() reporterSchema: any;
   @Output() configurationCompleted = new EventEmitter<any>();
   displayForm = false;
   data: any = {};

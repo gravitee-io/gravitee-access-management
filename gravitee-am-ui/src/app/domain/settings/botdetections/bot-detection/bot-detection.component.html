@@ -89,7 +89,7 @@
           <li>Forgot Password</li>
         </ul>
       </div>
-      <div *ngIf="botDetection.type == 'google-recaptcha-v3-am-bot-detection'" class="bot-protection-settings-description">
+      <div *ngIf="botDetection.type === 'google-recaptcha-v3-am-bot-detection'" class="bot-protection-settings-description">
         <h5>Integrate Google reCaptcha v3 in your pages</h5>
 
         <small>1. Import the JavaScript API</small>

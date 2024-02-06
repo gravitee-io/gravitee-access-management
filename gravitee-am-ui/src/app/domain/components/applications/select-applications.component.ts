@@ -30,7 +30,9 @@ export class SelectApplicationsComponent implements OnInit {
   appCtrl = new UntypedFormControl();
   filteredApps: Observable<any>;
   @Input() selectedApp: any;
+  // eslint-disable-next-line @angular-eslint/no-output-on-prefix
   @Output() onSelectApp = new EventEmitter<any>();
+  // eslint-disable-next-line @angular-eslint/no-output-on-prefix
   @Output() onRemoveApp = new EventEmitter<any>();
 
   constructor(private route: ActivatedRoute, private applicationService: ApplicationService) {}

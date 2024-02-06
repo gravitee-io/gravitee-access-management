@@ -31,6 +31,7 @@ export class MfaRememberDeviceComponent implements OnInit, OnChanges {
   @Input() adaptiveMfaRule: string;
   @Input() riskAssessment: any;
 
+  // eslint-disable-next-line @angular-eslint/no-output-rename
   @Output('settings-change') settingsChangeEmitter: EventEmitter<any> = new EventEmitter<any>();
 
   private humanTime: { expirationTime: any; expirationUnit: any };

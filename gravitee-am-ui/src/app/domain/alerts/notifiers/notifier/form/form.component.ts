@@ -22,8 +22,8 @@ import '@gravitee/ui-components/wc/gv-schema-form';
   styleUrls: ['./form.component.scss'],
 })
 export class AlertNotifierFormComponent implements OnChanges {
-  @Input('notifierConfiguration') notifierConfiguration: any = {};
-  @Input('notifierSchema') notifierSchema: any;
+  @Input() notifierConfiguration: any = {};
+  @Input() notifierSchema: any;
   @Output() configurationCompleted = new EventEmitter<any>();
   displayForm = false;
   data: any = {};

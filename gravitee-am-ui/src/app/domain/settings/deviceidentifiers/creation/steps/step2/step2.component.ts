@@ -23,9 +23,9 @@ import { OrganizationService } from '../../../../../../services/organization.ser
   styleUrls: ['./step2.component.scss'],
 })
 export class DeviceIdentifierCreationStep2Component implements OnInit {
-  @Input('deviceIdentifier') deviceIdentifier: any;
-  @Input('configurationIsValid') configurationIsValid: boolean;
-  @Output('configurationIsValidChange') configurationIsValidChange: EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Input() deviceIdentifier: any;
+  @Input() configurationIsValid: boolean;
+  @Output() configurationIsValidChange: EventEmitter<boolean> = new EventEmitter<boolean>();
   formChanged = false;
   configuration: any;
   deviceIdentifierSchema: any = {};

@@ -18,7 +18,7 @@
 <div>
   <h1 matDialogTitle>{{ title }}</h1>
   <mat-dialog-content>
-    <mat-form-field appearance="outline" floatLabel="always" *ngIf="languageCodes.length == 0">
+    <mat-form-field appearance="outline" floatLabel="always" *ngIf="languageCodes.length === 0">
       <mat-label>{{ prop1Label }}</mat-label>
       <input matInput type="text" placeholder="{{ prop1Label }}" [(ngModel)]="prop1" required data-testid="textTransEntryKey" />
     </mat-form-field>

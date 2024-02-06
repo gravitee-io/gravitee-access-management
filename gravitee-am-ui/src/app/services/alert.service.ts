@@ -17,9 +17,9 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-import { DomainService } from './domain.service';
-
 import { AppConfig } from '../../config/app.config';
+
+import { DomainService } from './domain.service';
 
 @Injectable()
 export class AlertService {

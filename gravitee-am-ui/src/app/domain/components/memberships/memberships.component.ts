@@ -28,11 +28,12 @@ import { AuthService } from '../../../services/auth.service';
   styleUrls: ['./memberships.component.scss'],
 })
 export class MembershipsComponent implements OnInit, OnChanges {
-  @Input('roleType') roleType: any;
+  @Input() roleType: any;
+  // eslint-disable-next-line @angular-eslint/no-input-rename
   @Input('members') resourceMembers: any;
-  @Input('createMode') createMode: boolean;
-  @Input('editMode') editMode: boolean;
-  @Input('deleteMode') deleteMode: boolean;
+  @Input() createMode: boolean;
+  @Input() editMode: boolean;
+  @Input() deleteMode: boolean;
   @Output() membershipAdded = new EventEmitter<any>();
   @Output() membershipDeleted = new EventEmitter<any>();
   @Output() membershipUpdated = new EventEmitter<any>();

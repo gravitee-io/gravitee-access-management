@@ -41,7 +41,7 @@ export class LoginCallbackComponent implements OnInit {
             this.router.navigate(['/']);
           }
         }),
-        catchError((error) => {
+        catchError((error: unknown) => {
           this.snackbarService.open(error.replace(/%20/g, ' '));
           return this.router.navigate(['/logout']);
         }),

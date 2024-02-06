@@ -39,7 +39,7 @@
           <small>Resource configuration</small>
         </ng-template>
         <resource-creation-step2
-          *ngIf="stepper.selectedIndex == 1"
+          *ngIf="stepper.selectedIndex === 1"
           [resource]="resource"
           [(configurationIsValid)]="configurationIsValid"
         ></resource-creation-step2>

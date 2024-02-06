@@ -21,8 +21,9 @@ import { Component, Input, EventEmitter, Output, OnChanges, SimpleChanges } from
   styleUrls: ['./form.component.scss'],
 })
 export class BotDetectionFormComponent implements OnChanges {
+  // eslint-disable-next-line @angular-eslint/no-input-rename
   @Input('botDetectionConfiguration') configuration: any = {};
-  @Input('botDetectionSchema') botDetectionSchema: any;
+  @Input() botDetectionSchema: any;
   @Output() configurationCompleted = new EventEmitter<any>();
   displayForm = false;
   data: any = {};

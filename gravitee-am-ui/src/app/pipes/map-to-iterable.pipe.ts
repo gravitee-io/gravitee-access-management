@@ -22,6 +22,7 @@ export class MapToIterablePipe implements PipeTransform {
   transform(value: object): any {
     const array = [];
     for (const key in value) {
+      // eslint-disable-next-line no-prototype-builtins
       if (value.hasOwnProperty(key)) {
         array.push({ key: key, value: value[key] });
       }

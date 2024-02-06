@@ -24,9 +24,9 @@ import { OrganizationService } from '../../../../../../services/organization.ser
   styleUrls: ['./step2.component.scss'],
 })
 export class BotDetectionCreationStep2Component implements OnInit {
-  @Input('botDetection') botDetection: any;
-  @Input('configurationIsValid') configurationIsValid: boolean;
-  @Output('configurationIsValidChange') configurationIsValidChange: EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Input() botDetection: any;
+  @Input() configurationIsValid: boolean;
+  @Output() configurationIsValidChange: EventEmitter<boolean> = new EventEmitter<boolean>();
   formChanged = false;
   configuration: any;
   botDetectionSchema: any = {};

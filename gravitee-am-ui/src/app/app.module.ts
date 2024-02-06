@@ -74,6 +74,8 @@ import {
   GioTopBarModule,
 } from '@gravitee/ui-particles-angular';
 
+import { AppConfig } from '../config/app.config';
+
 import { CertificateCreationStep2Component } from './domain/settings/certificates/creation/steps/step2/step2.component';
 import { ExtensionGrantResolver } from './resolvers/extension-grant.resolver';
 import { ExtensionGrantComponent } from './domain/settings/extension-grants/extension-grant/extension-grant.component';
@@ -122,7 +124,10 @@ import { ClientRegistrationAllowedScopeComponent } from './domain/settings/openi
 import { ClientRegistrationTemplatesComponent } from './domain/settings/openid/client-registration/templates/templates.component';
 import { DomainSettingsRolesComponent } from './domain/settings/roles/roles.component';
 import { DomainSettingsScopesComponent } from './domain/settings/scopes/scopes.component';
-import { CertitificatePublicKeyDialog, DomainSettingsCertificatesComponent } from './domain/settings/certificates/certificates.component';
+import {
+  CertitificatePublicKeyDialogComponent,
+  DomainSettingsCertificatesComponent,
+} from './domain/settings/certificates/certificates.component';
 import { DomainSettingsProvidersComponent } from './domain/settings/providers/providers.component';
 import { DomainSettingsExtensionGrantsComponent } from './domain/settings/extension-grants/extension-grants.component';
 import { DomainSettingsFormsComponent } from './domain/settings/forms/forms.component';
@@ -132,7 +137,7 @@ import { DomainSettingsEmailsComponent } from './domain/settings/emails/emails.c
 import { DomainSettingsEmailComponent } from './domain/settings/emails/email/email.component';
 import { DomainSettingsAccountComponent } from './domain/settings/account/account.component';
 import { DomainSettingsSelfServiceAccountComponent } from './domain/settings/self-service-account/self-service-account.component';
-import { DomainMembershipsDialog, DomainSettingsMembershipsComponent } from './domain/settings/memberships/memberships.component';
+import { DomainMembershipsDialogComponent, DomainSettingsMembershipsComponent } from './domain/settings/memberships/memberships.component';
 import { DomainSettingsFactorsComponent } from './domain/settings/factors/factors.component';
 import { DomainSettingsResourcesComponent } from './domain/settings/resources/resources.component';
 import { DomainSettingsWebAuthnComponent } from './domain/settings/webauthn/webauthn.component';
@@ -169,7 +174,7 @@ import { SettingsComponent } from './settings/settings.component';
 import { HumanDatePipe } from './pipes/human-date.pipe';
 import { MapToIterablePipe } from './pipes/map-to-iterable.pipe';
 import { DummyComponent } from './components/dummy/dummy.component';
-import { UsersComponent, UsersSearchInfoDialog } from './domain/settings/users/users.component';
+import { UsersComponent, UsersSearchInfoDialogComponent } from './domain/settings/users/users.component';
 import { UserComponent } from './domain/settings/users/user/user.component';
 import { UserCreationComponent } from './domain/settings/users/creation/user-creation.component';
 import { UserClaimComponent } from './domain/settings/users/creation/user-claim.component';
@@ -199,7 +204,7 @@ import { ManagementComponent } from './settings/management/management.component'
 import { ManagementGeneralComponent } from './settings/management/general/general.component';
 import { SettingsMembershipsComponent } from './settings/memberships/memberships.component';
 import { FormsComponent } from './domain/components/forms/forms.component';
-import { FormComponent, FormInfoDialog } from './domain/components/forms/form/form.component';
+import { FormComponent, FormInfoDialogComponent } from './domain/components/forms/form/form.component';
 import { FormService } from './services/form.service';
 import { FormResolver } from './resolvers/form.resolver';
 import { GroupsComponent } from './domain/settings/groups/groups.component';
@@ -213,9 +218,9 @@ import { GroupResolver } from './resolvers/group.resolver';
 import { GroupMembersResolver } from './resolvers/group-members.resolver';
 import { AddGroupRolesComponent, GroupRolesComponent } from './domain/settings/groups/group/roles/roles.component';
 import { GroupRolesResolver } from './resolvers/group-roles.resolver';
-import { IdpSelectionInfoDialog, ScimComponent } from './domain/settings/scim/scim.component';
+import { IdpSelectionInfoDialogComponent, ScimComponent } from './domain/settings/scim/scim.component';
 import { EmailsComponent } from './domain/components/emails/emails.component';
-import { EmailComponent, EmailInfoDialog } from './domain/components/emails/email/email.component';
+import { EmailComponent, EmailInfoDialogComponent } from './domain/components/emails/email/email.component';
 import { EmailService } from './services/email.service';
 import { EmailResolver } from './resolvers/email.resolver';
 import { SelectApplicationsComponent } from './domain/components/applications/select-applications.component';
@@ -279,7 +284,7 @@ import {
 } from './domain/applications/application/advanced/oauth2/scopes/application-scopes.component';
 import {
   ApplicationTokensComponent,
-  ClaimsInfoDialog,
+  ClaimsInfoDialogComponent,
   CreateClaimComponent,
 } from './domain/applications/application/advanced/oauth2/tokens/application-tokens.component';
 import { ApplicationGrantFlowsComponent } from './domain/applications/application/advanced/oauth2/grantFlows/application-grant-flows.component';
@@ -287,7 +292,7 @@ import { ApplicationCertificatesComponent } from './domain/applications/applicat
 import { ApplicationMetadataComponent } from './domain/applications/application/advanced/metadata/metadata.component';
 import {
   ApplicationMembershipsComponent,
-  ApplicationMembershipsDialog,
+  ApplicationMembershipsDialogComponent,
 } from './domain/applications/application/advanced/memberships/memberships.component';
 import { ApplicationFactorsComponent } from './domain/applications/application/advanced/factors/factors.component';
 import { ManagementRolesComponent } from './settings/management/roles/roles.component';
@@ -412,17 +417,20 @@ import { Saml2Component } from './domain/settings/saml2/saml2.component';
 import { MfaSelectComponent } from './domain/applications/application/advanced/factors/mfa/mfa-select.component';
 import { MfaRememberDeviceComponent } from './domain/applications/application/advanced/factors/remember-device/mfa-remember-device.component';
 import { TimeConverterService } from './services/time-converter.service';
-import { MfaStepUpComponent, MfaStepUpDialog } from './domain/applications/application/advanced/factors/step-up-auth/mfa-step-up.component';
+import {
+  MfaStepUpComponent,
+  MfaStepUpDialogComponent,
+} from './domain/applications/application/advanced/factors/step-up-auth/mfa-step-up.component';
 import { MfaActivateComponent } from './domain/applications/application/advanced/factors/mfa-activate/mfa-activate.component';
 import { MfaOptionalComponent } from './domain/applications/application/advanced/factors/mfa-activate/optional/mfa-optional.component';
 import {
-  AdaptiveMfaDialog,
+  AdaptiveMfaDialogComponent,
   MfaConditionalComponent,
 } from './domain/applications/application/advanced/factors/mfa-activate/conditional/mfa-conditional.component';
 import { MfaIntelligentComponent } from './domain/applications/application/advanced/factors/mfa-activate/intelligent/mfa-intelligent.component';
 import { AssessmentComponent } from './domain/applications/application/advanced/factors/mfa-activate/intelligent/assessment/assessment.component';
 import { DomainSettingsDictionariesComponent } from './domain/settings/texts/dictionaries.component';
-import { DictionaryDialog } from './components/dialog/dictionary/dictionary-dialog.component';
+import { DictionaryDialogComponent } from './components/dialog/dictionary/dictionary-dialog.component';
 import { DictionariesResolver } from './resolvers/dictionaries.resolver';
 import { I18nDictionaryService } from './services/dictionary.service';
 import { DomainSettingsThemeComponent } from './domain/settings/theme/theme.component';
@@ -433,8 +441,6 @@ import { EmailTemplateFactoryService } from './services/email.template.factory.s
 import { FormTemplateFactoryService } from './services/form.template.factory.service';
 import { LicenseGuard } from './guards/license-guard.service';
 import { ApplicationClientSecretDialogModule } from './domain/applications/client-secret/application-client-secret-dialog.module';
-
-import { AppConfig } from '../config/app.config';
 
 @NgModule({
   declarations: [
@@ -479,7 +485,7 @@ import { AppConfig } from '../config/app.config';
     DomainSettingsDeviceIdentifiersComponent,
     DomainSettingsThemeComponent,
     ConfirmComponent,
-    DictionaryDialog,
+    DictionaryDialogComponent,
     EmptystateComponent,
     DomainCreationComponent,
     ProviderCreationComponent,
@@ -501,7 +507,7 @@ import { AppConfig } from '../config/app.config';
     CertificateCreationStep1Component,
     CertificateCreationStep2Component,
     CertificateFormComponent,
-    CertitificatePublicKeyDialog,
+    CertitificatePublicKeyDialogComponent,
     RoleCreationComponent,
     RoleComponent,
     CreateRoleMapperComponent,
@@ -556,7 +562,7 @@ import { AppConfig } from '../config/app.config';
     SettingsMembershipsComponent,
     FormsComponent,
     FormComponent,
-    FormInfoDialog,
+    FormInfoDialogComponent,
     GroupsComponent,
     GroupCreationComponent,
     GroupComponent,
@@ -568,7 +574,7 @@ import { AppConfig } from '../config/app.config';
     ScimComponent,
     EmailsComponent,
     EmailComponent,
-    EmailInfoDialog,
+    EmailInfoDialogComponent,
     SelectApplicationsComponent,
     AuditsComponent,
     AuditComponent,
@@ -583,7 +589,7 @@ import { AppConfig } from '../config/app.config';
     EntrypointComponent,
     AccountSettingsComponent,
     ScopeSelectionComponent,
-    ClaimsInfoDialog,
+    ClaimsInfoDialogComponent,
     RoleSelectionComponent,
     ApplicationsComponent,
     ApplicationAnalyticsComponent,
@@ -634,8 +640,8 @@ import { AppConfig } from '../config/app.config';
     WidgetDataTableComponent,
     WidgetCountComponent,
     LoaderComponent,
-    DomainMembershipsDialog,
-    ApplicationMembershipsDialog,
+    DomainMembershipsDialogComponent,
+    ApplicationMembershipsDialogComponent,
     UserAvatarComponent,
     NotFoundComponent,
     UmaComponent,
@@ -651,7 +657,7 @@ import { AppConfig } from '../config/app.config';
     DeviceNotifierCreationStep2Component,
     CookieSettingsComponent,
     LoginSettingsComponent,
-    UsersSearchInfoDialog,
+    UsersSearchInfoDialogComponent,
     NewsletterComponent,
     UserHistoryComponent,
     EnvironmentComponent,
@@ -669,10 +675,10 @@ import { AppConfig } from '../config/app.config';
     BotDetectionCreationStep2Component,
     BotDetectionComponent,
     BotDetectionFormComponent,
-    MfaStepUpDialog,
-    AdaptiveMfaDialog,
+    MfaStepUpDialogComponent,
+    AdaptiveMfaDialogComponent,
     GvFormControlDirective,
-    IdpSelectionInfoDialog,
+    IdpSelectionInfoDialogComponent,
     MfaSelectComponent,
     MfaRememberDeviceComponent,
     MfaStepUpComponent,

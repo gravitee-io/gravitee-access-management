@@ -23,6 +23,7 @@ import { MatLegacyDialog as MatDialog, MatLegacyDialogRef as MatDialogRef } from
 })
 export class MfaStepUpComponent {
   @Input() stepUpRule = '';
+  // eslint-disable-next-line @angular-eslint/no-output-on-prefix, @angular-eslint/no-output-rename
   @Output('on-rule-change') stepUpRuleEmitter: EventEmitter<string> = new EventEmitter<string>();
 
   constructor(private dialog: MatDialog) {}
@@ -35,7 +36,7 @@ export class MfaStepUpComponent {
 
   openStepUpDialog($event) {
     $event.preventDefault();
-    this.dialog.open(MfaStepUpDialog, { width: '700px' });
+    this.dialog.open(MfaStepUpDialogComponent, { width: '700px' });
   }
 }
 
@@ -43,6 +44,6 @@ export class MfaStepUpComponent {
   selector: 'mfa-step-up-dialog',
   templateUrl: './dialog/mfa-step-up-info.component.html',
 })
-export class MfaStepUpDialog {
-  constructor(public dialogRef: MatDialogRef<MfaStepUpDialog>) {}
+export class MfaStepUpDialogComponent {
+  constructor(public dialogRef: MatDialogRef<MfaStepUpDialogComponent>) {}
 }

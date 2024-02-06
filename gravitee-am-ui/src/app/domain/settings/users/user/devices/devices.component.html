@@ -68,7 +68,7 @@
       </ngx-datatable-column>
     </ngx-datatable>
     <app-emptystate
-      *ngIf="devices.length == 0"
+      *ngIf="devices.length === 0"
       [message]="'No device registered'"
       [subMessage]="'No data to display'"
       [icon]="'devices'"

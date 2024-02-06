@@ -39,7 +39,7 @@
           <small>Factor configuration</small>
         </ng-template>
         <factor-creation-step2
-          *ngIf="stepper.selectedIndex == 1"
+          *ngIf="stepper.selectedIndex === 1"
           [factor]="factor"
           [(configurationIsValid)]="configurationIsValid"
         ></factor-creation-step2>
