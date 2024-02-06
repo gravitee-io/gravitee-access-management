@@ -26,7 +26,7 @@ import { ApplicationService } from '../../services/application.service';
   styleUrls: ['./applications.component.scss'],
 })
 export class ApplicationsComponent implements OnInit {
-  private applications: any[];
+  applications: any[];
   private searchValue: string;
   domainId: string;
   page: any = {};

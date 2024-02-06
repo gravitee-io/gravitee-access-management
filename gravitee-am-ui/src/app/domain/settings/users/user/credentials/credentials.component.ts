@@ -30,7 +30,7 @@ import { AuthService } from '../../../../../services/auth.service';
 export class UserCredentialsComponent implements OnInit {
   private domainId: string;
   private user: any;
-  private credentials: any[];
+  credentials: any[];
   canRevoke: boolean;
 
   constructor(

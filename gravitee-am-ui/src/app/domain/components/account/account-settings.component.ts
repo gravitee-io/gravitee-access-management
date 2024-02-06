@@ -60,7 +60,7 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
     { key: 'username', label: 'Username', type: 'text' },
   ];
 
-  newField = {};
+  newField: any = {};
 
   selectedFields = [];
 

@@ -25,7 +25,7 @@
             <mat-divider></mat-divider>
           </div>
           <mat-form-field appearance="outline" floatLabel="always" *hasPermission="['application_certificate_update']">
-            <mat-select placeholder="Certificate" name="certificate" [(ngModel)]="selectedCertificate" (selectionChange)="onChange($event)">
+            <mat-select placeholder="Certificate" name="certificate" [(ngModel)]="selectedCertificate" (selectionChange)="onChange()">
               <mat-option><em>None</em></mat-option>
               <mat-option *ngFor="let certificate of certificates" [value]="certificate.id">{{ certificate.name }}</mat-option>
             </mat-select>

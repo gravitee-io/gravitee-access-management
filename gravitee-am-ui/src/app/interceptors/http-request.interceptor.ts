@@ -26,6 +26,7 @@ import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
+import { get } from 'lodash';
 
 import { SnackbarService } from '../services/snackbar.service';
 import { AuthService } from '../services/auth.service';
@@ -69,7 +70,7 @@ export class HttpRequestInterceptor implements HttpInterceptor {
           }
         },
         (err: unknown) => {
-          if (err.status === 404) {
+          if (get(err, 'status') === 404) {
             this.router.navigate(['/404']);
           }
           if (err instanceof HttpErrorResponse) {
