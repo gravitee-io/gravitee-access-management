@@ -261,11 +261,13 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
 
     protected final Optional<Object> fieldValue(FilterCriteria criteria) {
         if (isDateInput(criteria.getFilterName())) {
-            return Optional.ofNullable(LocalDateTime.parse(criteria.getFilterValue(), UTC_FORMATTER));
+            return Optional.ofNullable(criteria.getFilterValue())
+                    .map(value -> LocalDateTime.parse(value, UTC_FORMATTER));
         }
 
         if (isBooleanInput(criteria.getFilterName())) {
-            return Optional.ofNullable(Boolean.valueOf(criteria.getFilterValue()));
+            return Optional.ofNullable(criteria.getFilterValue())
+                    .map(value -> Boolean.valueOf(criteria.getFilterValue()));
         }
 
         String result = criteria.getFilterValue();
