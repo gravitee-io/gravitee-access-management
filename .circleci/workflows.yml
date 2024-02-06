@@ -973,8 +973,9 @@ jobs:
       - run:
           name: Maven Package
           command: |
-            export AM_VERSION=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
+            export AM_VERSION=$(mvn -U -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
             echo $AM_VERSION > am.version
+            echo $AM_VERSION
             mvn -s /tmp/.gravitee.settings.xml verify -pl \!gravitee-am-ui
       - persist_to_workspace:
           root: .
