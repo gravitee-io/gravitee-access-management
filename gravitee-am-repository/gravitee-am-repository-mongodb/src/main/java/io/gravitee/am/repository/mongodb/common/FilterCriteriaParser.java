@@ -79,8 +79,8 @@ public final class FilterCriteriaParser {
             builder.append("{");
             builder.append(operator);
             builder.append(":");
-            if ("$exists".equals(operator)) {
-                builder.append(true);
+            if ("pr".equals(criteria.getOperator())) {
+                builder.append("null");
             } else {
                 builder.append(convertFilterValue(criteria, filterName, criteria.getOperator()));
             }
@@ -106,6 +106,7 @@ public final class FilterCriteriaParser {
             case "eq":
                 return "$eq";
             case "ne":
+            case "pr":
                 return "$ne";
             case "gt":
                 return "$gt";
@@ -115,8 +116,6 @@ public final class FilterCriteriaParser {
                 return "$lt";
             case "le":
                 return "$lte";
-            case "pr":
-                return "$exists";
             case "co":
             case "sw":
             case "ew":
