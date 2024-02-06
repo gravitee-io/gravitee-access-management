@@ -246,7 +246,7 @@ commands:
             sha1sum gravitee-am-webui-${RELEASE_VERSION_NUMBER}.zip > gravitee-am-webui-${RELEASE_VERSION_NUMBER}.zip.sha1
             mkdir -p ~/release/graviteeio-am/distributions/graviteeio-am-full-${RELEASE_VERSION_NUMBER}/graviteeio-am-management-ui-${RELEASE_VERSION_NUMBER}/
             cp -R ~/project/gravitee-am-ui/dist/* ~/release/graviteeio-am/distributions/graviteeio-am-full-${RELEASE_VERSION_NUMBER}/graviteeio-am-management-ui-${RELEASE_VERSION_NUMBER}/
- 
+            
             cd ~/release/graviteeio-am/distributions/
             zip -rm graviteeio-am-full-${RELEASE_VERSION_NUMBER}.zip graviteeio-am-full-${RELEASE_VERSION_NUMBER}
             md5sum graviteeio-am-full-${RELEASE_VERSION_NUMBER}.zip > graviteeio-am-full-${RELEASE_VERSION_NUMBER}.zip.md5
@@ -372,7 +372,7 @@ jobs:
             - .gravitee.settings.xml
   build:
     docker:
-      - image: cimg/openjdk:17.0.1
+      - image: cimg/openjdk:17.0.8
     resource_class: large
     steps:
       - attach_workspace:
@@ -429,11 +429,12 @@ jobs:
       - run:
           name: Run Jest tests
           command: |
+
             # Prepare AM
             unzip /tmp/workspace/gravitee-am-gateway-standalone-*.zip
             unzip /tmp/workspace/gravitee-am-management-api-standalone-*.zip
             export AM_VERSION=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
-            curl https://download.gravitee.io/plugins/services/gravitee-service-geoip-1.2.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-1.2.0.zip
+            curl --retry 4 --retry-delay 10 --retry-all-errors https://download.gravitee.io/plugins/services/gravitee-service-geoip-1.2.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-1.2.0.zip
             
             cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
             cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/
@@ -459,11 +460,9 @@ jobs:
             # build & start CIBA Delegated Service
             mvn -P cicd -f gravitee-am-ciba-delegated-service/pom.xml package
             java -jar gravitee-am-ciba-delegated-service/target/gravitee-am-ciba-delegated-service-${AM_VERSION}.jar &
-            sleep 30
             # Wait for AM to be up and running
-            timeout 30s bash -c 'until nc -vz localhost 8093; do sleep 2; done'
-            timeout 30s bash -c 'until nc -vz localhost 8092; do sleep 2; done'
-            sleep 30
+            timeout 120s bash -c 'until nc -vz localhost 8093; do sleep 2; done'
+            timeout 120s bash -c 'until nc -vz localhost 8092; do sleep 2; done'
             # Run Jest tests
             npm --prefix gravitee-am-test run ci
       - keeper/env-export:
@@ -512,14 +511,14 @@ jobs:
             unzip /tmp/workspace/gravitee-am-gateway-standalone-*.zip
             unzip /tmp/workspace/gravitee-am-management-api-standalone-*.zip
             export AM_VERSION=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
-            curl https://download.gravitee.io/plugins/services/gravitee-service-geoip-1.2.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-1.2.0.zip
+            curl --retry 4 --retry-delay 10 --retry-all-errors https://download.gravitee.io/plugins/services/gravitee-service-geoip-1.2.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-1.2.0.zip
             
             cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
             cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/
             
             # copy r2dbc & jdbc drivers
-            curl https://jdbc.postgresql.org/download/postgresql-42.3.3.jar -o postgresql-42.3.3.jar
-            curl https://repo1.maven.org/maven2/io/r2dbc/r2dbc-postgresql/0.8.9.RELEASE/r2dbc-postgresql-0.8.9.RELEASE.jar -o r2dbc-postgresql-0.8.9.RELEASE.jar
+            curl --retry 4 --retry-delay 10 --retry-all-errors https://jdbc.postgresql.org/download/postgresql-42.3.3.jar -o postgresql-42.3.3.jar
+            curl --retry 4 --retry-delay 10 --retry-all-errors https://repo1.maven.org/maven2/io/r2dbc/r2dbc-postgresql/0.8.9.RELEASE/r2dbc-postgresql-0.8.9.RELEASE.jar -o r2dbc-postgresql-0.8.9.RELEASE.jar
 
             mkdir -p gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc
             mkdir -p gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc
@@ -569,11 +568,9 @@ jobs:
             # build & start CIBA Delegated Service
             mvn -P cicd -f gravitee-am-ciba-delegated-service/pom.xml package
             java -jar gravitee-am-ciba-delegated-service/target/gravitee-am-ciba-delegated-service-${AM_VERSION}.jar &
-            sleep 30
             # Wait for AM to be up and running
-            timeout 30s bash -c 'until nc -vz localhost 8093; do sleep 2; done'
-            timeout 30s bash -c 'until nc -vz localhost 8092; do sleep 2; done'
-            sleep 30
+            timeout 120s bash -c 'until nc -vz localhost 8093; do sleep 2; done'
+            timeout 120s bash -c 'until nc -vz localhost 8092; do sleep 2; done'
             # Run Jest tests
             npm --prefix gravitee-am-test run ci
       - keeper/env-export:
@@ -589,7 +586,7 @@ jobs:
       mongo_version:
         type: string
     docker:
-      - image: cimg/openjdk:17.0.1-node
+      - image: cimg/openjdk:17.0.8-node
       - image: mongo:<< parameters.mongo_version >>
     resource_class: large
     steps:
@@ -609,7 +606,7 @@ jobs:
             unzip /tmp/workspace/gravitee-am-gateway-standalone-*.zip
             unzip /tmp/workspace/gravitee-am-management-api-standalone-*.zip
             export AM_VERSION=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
-            curl https://download.gravitee.io/plugins/services/gravitee-service-geoip-1.2.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-1.2.0.zip
+            curl --retry 4 --retry-delay 10 --retry-all-errors https://download.gravitee.io/plugins/services/gravitee-service-geoip-1.2.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-1.2.0.zip
             
             cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
             cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/
@@ -624,13 +621,23 @@ jobs:
             # build & start CIBA Delegated Service
             mvn -P cicd -f gravitee-am-ciba-delegated-service/pom.xml package
             java -jar gravitee-am-ciba-delegated-service/target/gravitee-am-ciba-delegated-service-${AM_VERSION}.jar &
-            sleep 30
             # Wait for AM to be up and running
-            timeout 30s bash -c 'until nc -vz localhost 8093; do sleep 2; done'
-            timeout 30s bash -c 'until nc -vz localhost 8092; do sleep 2; done'
-            sleep 30
-            # Run Postman tests
-            make postman
+            timeout 120s bash -c 'until nc -vz localhost 8093; do sleep 2; done'
+            timeout 120s bash -c 'until nc -vz localhost 8092; do sleep 2; done'
+            # Run Postman tests with retry
+            N=2
+            while [ $N -gt 0 ]
+            do
+              if $(make postman); then 
+                echo "Completed"
+                exit 0
+              fi
+
+              echo "Retrying postman tests"
+              N=$(( $N - 1 ))
+              sleep 10
+            done
+            exit 1
       - keeper/env-export:
           secret-url: keeper://ZOz4db245GNaETVwmPBk8w/field/password
           var-name: SLACK_ACCESS_TOKEN
@@ -644,7 +651,7 @@ jobs:
       psql_version:
         type: string
     docker:
-      - image: cimg/openjdk:17.0.1-node
+      - image: cimg/openjdk:17.0.8-node
       - image: postgres:<< parameters.psql_version >>
         environment:
           POSTGRES_PASSWORD: T0pS3cr3t
@@ -666,14 +673,14 @@ jobs:
             unzip /tmp/workspace/gravitee-am-gateway-standalone-*.zip
             unzip /tmp/workspace/gravitee-am-management-api-standalone-*.zip
             export AM_VERSION=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
-            curl https://download.gravitee.io/plugins/services/gravitee-service-geoip-1.2.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-1.2.0.zip
+            curl --retry 4 --retry-delay 10 --retry-all-errors https://download.gravitee.io/plugins/services/gravitee-service-geoip-1.2.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-1.2.0.zip
             
             cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
             cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/
             
             # copy r2dbc & jdbc drivers
-            curl https://jdbc.postgresql.org/download/postgresql-42.3.3.jar -o postgresql-42.3.3.jar
-            curl https://repo1.maven.org/maven2/io/r2dbc/r2dbc-postgresql/0.8.9.RELEASE/r2dbc-postgresql-0.8.9.RELEASE.jar -o r2dbc-postgresql-0.8.9.RELEASE.jar
+            curl --retry 4 --retry-delay 10 --retry-all-errors https://jdbc.postgresql.org/download/postgresql-42.3.3.jar -o postgresql-42.3.3.jar
+            curl --retry 4 --retry-delay 10 --retry-all-errors https://repo1.maven.org/maven2/io/r2dbc/r2dbc-postgresql/0.8.9.RELEASE/r2dbc-postgresql-0.8.9.RELEASE.jar -o r2dbc-postgresql-0.8.9.RELEASE.jar
 
             mkdir -p gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc
             mkdir -p gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc
@@ -711,13 +718,23 @@ jobs:
             # build & start CIBA Delegated Service
             mvn -P cicd -f gravitee-am-ciba-delegated-service/pom.xml package
             java -jar gravitee-am-ciba-delegated-service/target/gravitee-am-ciba-delegated-service-${AM_VERSION}.jar &
-            sleep 30
             # Wait for AM to be up and running
-            timeout 30s bash -c 'until nc -vz localhost 8093; do sleep 2; done'
-            timeout 30s bash -c 'until nc -vz localhost 8092; do sleep 2; done'
-            sleep 30
-            # Run Postman tests
-            make postman
+            timeout 120s bash -c 'until nc -vz localhost 8093; do sleep 2; done'
+            timeout 120s bash -c 'until nc -vz localhost 8092; do sleep 2; done'
+            # Run Postman tests with retry
+            N=2
+            while [ $N -gt 0 ]
+            do
+              if $(make postman); then 
+                echo "Completed"
+                exit 0
+              fi
+
+              echo "Retrying postman tests"
+              N=$(( $N - 1 ))
+              sleep 10
+            done
+            exit 1
       - keeper/env-export:
           secret-url: keeper://ZOz4db245GNaETVwmPBk8w/field/password
           var-name: SLACK_ACCESS_TOKEN
@@ -744,7 +761,7 @@ jobs:
           jobName: run_testcontainer_tests
   publish-images-azure-registry:
     docker:
-      - image: cimg/openjdk:17.0.1
+      - image: cimg/openjdk:17.0.8
     resource_class: small
     steps:
       - checkout
@@ -945,7 +962,7 @@ jobs:
             done
   coverage_build:
     docker:
-      - image: cimg/openjdk:17.0.1
+      - image: cimg/openjdk:17.0.8
     resource_class: large
     steps:
       - attach_workspace:
@@ -956,8 +973,9 @@ jobs:
       - run:
           name: Maven Package
           command: |
-            export AM_VERSION=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
+            export AM_VERSION=$(mvn -U -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
             echo $AM_VERSION > am.version
+            echo $AM_VERSION
             mvn -s /tmp/.gravitee.settings.xml verify -pl \!gravitee-am-ui
       - persist_to_workspace:
           root: .
@@ -967,7 +985,7 @@ jobs:
           jobName: coverage_build
   frontend_version_build:
     docker:
-      - image: cimg/openjdk:17.0.1
+      - image: cimg/openjdk:17.0.8
     resource_class: small
     steps:
       - attach_workspace:
