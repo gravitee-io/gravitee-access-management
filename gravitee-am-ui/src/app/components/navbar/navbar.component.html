@@ -26,7 +26,7 @@
         <button class="currentDomain" mat-raised-button disabled>
           <span>{{ currentDomain?.name | lowercase }}</span>
         </button>
-        <button mat-icon-button [matMenuTriggerFor]="userNotificationsMenu" [disabled]="!hasNotifications()" disableRipple>
+        <button mat-button [matMenuTriggerFor]="userNotificationsMenu" [disabled]="!hasNotifications()">
           <div class="notifications-menu">
             <mat-icon svgIcon="gio:bell" style="color: #f7f8fd"></mat-icon>
             <div class="notifications-menu-circle" *ngIf="hasNotifications()"></div>
@@ -36,7 +36,6 @@
           class="userAccountMenu"
           mat-icon-button
           [matMenuTriggerFor]="userAccountMenu"
-          disableRipple
           (click)="listDomains()"
           data-testid="user-notifications-button"
         >
@@ -54,21 +53,24 @@
           <small>{{ user.preferred_username }}</small>
         </div>
       </div>
-      <div class="userAccountActions first" *ngIf="hasCurrentEnvironment()">
-        <mat-list>
+      <div mat-menu-item class="userAccountActions domains_menu-item first" *ngIf="hasCurrentEnvironment()">
+        <mat-list class="domains_list">
           <h3 matSubheader>Domains</h3>
+
           <a
             [routerLink]="['/environments', currentEnvironment.hrids[0], 'domains', domain.hrid]"
             *ngFor="let domain of domains"
-            mat-menu-item
+            mat-list-item
+            class="domains_list__item"
+            [ngClass]="{ 'domain-disabled': !domain.enabled }"
           >
-            <mat-list-item [ngClass]="{ 'domain-disabled': !domain.enabled }">
-              <mat-icon mat-list-icon>domain</mat-icon>
-              <h4 matLine>{{ domain.name }}</h4>
-              <span *ngIf="!domain.enabled"
-                ><mat-icon class="domain-disabled-icon"><i class="material-icons">priority_high</i></mat-icon> domain disabled</span
+            <mat-icon matListItemIcon>domain</mat-icon>
+            <span matListItemTitle>
+              <span class="domains_list__item__name">{{ domain.name }}</span>
+              <span *ngIf="!domain.enabled" class="gio-badge-warning"
+                ><mat-icon class="gio-left" svgIcon="gio:alert-circle"></mat-icon>Domain disabled</span
               >
-            </mat-list-item>
+            </span>
           </a>
         </mat-list>
       </div>

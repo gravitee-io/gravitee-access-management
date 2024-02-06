@@ -52,11 +52,11 @@
           </mat-form-field>
           <mat-form-field *ngIf="resource.resourceScopes" appearance="outline" floatLabel="always">
             <mat-label>Scopes</mat-label>
-            <mat-chip-list aria-label="Resource scopes" disabled>
-              <mat-chip *ngFor="let scope of resource.resourceScopes">
+            <mat-chip-listbox aria-label="Resource scopes" disabled>
+              <mat-chip-option *ngFor="let scope of resource.resourceScopes">
                 {{ scope }}
-              </mat-chip>
-            </mat-chip-list>
+              </mat-chip-option>
+            </mat-chip-listbox>
             <mat-hint>Resource's scopes</mat-hint>
           </mat-form-field>
         </div>

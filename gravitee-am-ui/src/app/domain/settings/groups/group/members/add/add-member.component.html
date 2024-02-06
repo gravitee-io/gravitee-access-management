@@ -18,11 +18,11 @@
 <h5 matDialogTitle>Add members</h5>
 <mat-dialog-content>
   <mat-form-field>
-    <mat-chip-list #chipList aria-label="Members selection">
-      <mat-chip *ngFor="let member of selectedMembers" [removable]="true" (removed)="remove(member)">
+    <mat-chip-grid #chipList aria-label="Members selection">
+      <mat-chip-row *ngFor="let member of selectedMembers" [removable]="true" (removed)="remove(member)">
         {{ member.username }}
         <mat-icon matChipRemove *ngIf="removable">cancel</mat-icon>
-      </mat-chip>
+      </mat-chip-row>
       <input
         name="member"
         #memberInput
@@ -33,7 +33,7 @@
         [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
         [matChipInputAddOnBlur]="addOnBlur"
       />
-    </mat-chip-list>
+    </mat-chip-grid>
     <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onSelectionChanged($event)">
       <mat-option *ngFor="let user of filteredUsers" [value]="user">
         <span>{{ displayName(user) }}</span> | <small>{{ user.username }}</small> |

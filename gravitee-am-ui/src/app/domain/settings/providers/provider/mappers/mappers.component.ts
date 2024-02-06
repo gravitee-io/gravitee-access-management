@@ -15,7 +15,7 @@
  */
 import { Component, ElementRef, HostListener, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { MatLegacyDialog as MatDialog, MatLegacyDialogRef as MatDialogRef } from '@angular/material/legacy-dialog';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 
 import { SnackbarService } from '../../../../../services/snackbar.service';
 import { ProviderService } from '../../../../../services/provider.service';

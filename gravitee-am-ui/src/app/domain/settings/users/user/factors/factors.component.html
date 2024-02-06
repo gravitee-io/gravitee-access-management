@@ -52,7 +52,7 @@
       <ngx-datatable-column [flexGrow]="1">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div fxLayout="row" class="gv-table-cell-actions">
-            <button *ngIf="canRevoke" mat-icon-button (click)="remove($event, row)">
+            <button *ngIf="canRevoke" mat-button (click)="remove($event, row)">
               <mat-icon style="color: #f44336" matTooltip="Remove multi-factor auth">highlight_off</mat-icon>
             </button>
           </div>

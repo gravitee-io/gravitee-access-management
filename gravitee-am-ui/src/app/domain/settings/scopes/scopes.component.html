@@ -56,7 +56,8 @@
             <div class="scope-information" fxLayout="column">
               <div fxLayout="row">
                 <h3>{{ row.key }}</h3>
-                <mat-chip-list *ngIf="row.system"><mat-chip>system</mat-chip></mat-chip-list>
+
+                <span *ngIf="row.system" class="gio-badge-neutral">system</span>
               </div>
               <small>{{ row.description }}</small>
             </div>
@@ -86,8 +87,8 @@
       <ngx-datatable-column name="Actions" [flexGrow]="1" *hasAnyPermission="['domain_scope_read', 'domain_scope_delete']">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div fxLayout="row" class="gv-table-cell-actions">
-            <a mat-icon-button [routerLink]="[row.id]" *hasPermission="['domain_scope_read']"><mat-icon>settings</mat-icon></a>
-            <button *ngIf="!row.system && canDelete" mat-icon-button (click)="delete(row.id, $event)"><mat-icon>delete</mat-icon></button>
+            <a mat-button [routerLink]="[row.id]" *hasPermission="['domain_scope_read']"><mat-icon>settings</mat-icon></a>
+            <button *ngIf="!row.system && canDelete" mat-button (click)="delete(row.id, $event)"><mat-icon>delete</mat-icon></button>
           </div>
         </ng-template>
       </ngx-datatable-column>

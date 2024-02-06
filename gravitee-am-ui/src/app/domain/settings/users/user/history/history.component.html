@@ -17,8 +17,8 @@
 -->
 <div>
   <div fxLayout="column" class="gv-form-section" fxFlex="70">
-    <form (submit)="search()" fxLayout="row" fxLayoutGap="10px" class="audits-search">
-      <mat-form-field fxFlex="10">
+    <form (submit)="search()" fxLayout.lt-lg="row wrap" fxLayout.gt-md="row" fxLayoutGap="10px" class="audits-search">
+      <mat-form-field fxFlex="15">
         <mat-label>Event</mat-label>
         <mat-select name="eventType" [(ngModel)]="eventType" (selectionChange)="updateForm()">
           <mat-option></mat-option>
@@ -28,7 +28,7 @@
         </mat-select>
       </mat-form-field>
 
-      <mat-form-field fxFlex="10">
+      <mat-form-field fxFlex="15">
         <mat-label>Status</mat-label>
         <mat-select name="eventStatus" [(ngModel)]="eventStatus" (selectionChange)="updateForm()">
           <mat-option></mat-option>
@@ -37,7 +37,7 @@
         </mat-select>
       </mat-form-field>
 
-      <mat-form-field fxFlex="10">
+      <mat-form-field fxFlex="30">
         <input
           (dateInput)="updateForm()"
           (dateChange)="startDateChange()"
@@ -52,7 +52,7 @@
         <mat-datepicker #pickerStartDate></mat-datepicker>
       </mat-form-field>
 
-      <mat-form-field fxFlex="10">
+      <mat-form-field fxFlex="30">
         <input
           (dateInput)="updateForm()"
           (dateChange)="endDateChange()"
@@ -67,7 +67,7 @@
         <mat-datepicker #pickerEndDate></mat-datepicker>
       </mat-form-field>
 
-      <div fxFlex fxLayout="row" style="align-items: baseline">
+      <div fxFlex.gt-md="40" fxLayout="row" style="align-items: baseline">
         <button type="submit" mat-icon-button>
           <mat-icon matTooltip="Search">search</mat-icon>
         </button>
@@ -75,7 +75,7 @@
           <mat-icon matTooltip="Reset">clear</mat-icon>
         </button>
         <span fxFlex></span>
-        <mat-form-field appearance="fill" floatLabel="always" fxFlex="40" style="font-size: 12px">
+        <mat-form-field appearance="fill" floatLabel="always" fxFlex="80" style="font-size: 12px">
           <mat-icon matPrefix>timer</mat-icon>
           <mat-label>Quick Time Range</mat-label>
           <mat-select name="quickTimeRange" [(value)]="selectedTimeRange" (selectionChange)="search()">
@@ -94,7 +94,7 @@
         #auditsTable
         [columnMode]="'flex'"
         [headerHeight]="40"
-        [footerHeight]="40"
+        [footerHeight]="50"
         [rowHeight]="50"
         [messages]="{ emptyMessage: 'There is no audit to display.', totalMessage: 'total' }"
         [rows]="audits"
@@ -144,15 +144,8 @@
         </ngx-datatable-column>
         <ngx-datatable-column name="Status" [flexGrow]="2">
           <ng-template let-row="row" ngx-datatable-cell-template>
-            <mat-chip-list>
-              <mat-chip
-                style="font-size: 10px; line-height: 4px; margin: 0px"
-                [color]="row.outcome?.status === 'SUCCESS' ? 'primary' : 'warn'"
-                selected
-              >
-                {{ row.outcome?.status }}
-              </mat-chip>
-            </mat-chip-list>
+            <span *ngIf="row.outcome?.status === 'SUCCESS'" class="gio-badge-success">{{ row.outcome?.status }}</span>
+            <span *ngIf="row.outcome?.status !== 'SUCCESS'" class="gio-badge-error">{{ row.outcome?.status }}</span>
           </ng-template>
         </ngx-datatable-column>
       </ngx-datatable>

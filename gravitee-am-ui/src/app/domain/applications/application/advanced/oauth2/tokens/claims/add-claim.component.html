@@ -16,7 +16,7 @@
 
 -->
 <form #claimForm="ngForm" style="padding: 15px; border: 1px solid rgba(0, 0, 0, 0.12); border-radius: 4px">
-  <div fxLayout="row" fxLayoutGap="5px">
+  <div fxLayout="row" fxLayoutGap="5px" fxLayoutAlign="flex-start flex-start">
     <mat-form-field appearance="outline" floatLabel="always" fxFlex="20">
       <mat-select placeholder="Token Type" name="tokenType" required [(ngModel)]="claim.tokenType">
         <mat-option *ngFor="let tokenType of tokenTypes" [value]="tokenType">
@@ -34,7 +34,7 @@
     </mat-form-field>
     <div>
       <button style="margin-top: 7px" mat-stroked-button [disabled]="claimForm.invalid || claimForm.pristine" (click)="addClaim()">
-        + ADD
+        <mat-icon svgIcon="gio:plus"></mat-icon>ADD
       </button>
     </div>
   </div>

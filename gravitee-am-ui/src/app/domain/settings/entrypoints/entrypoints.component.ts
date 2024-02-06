@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { MatLegacyInput as MatInput } from '@angular/material/legacy-input';
+import { MatInput } from '@angular/material/input';
 import { ActivatedRoute } from '@angular/router';
 
 import { DomainService } from '../../../services/domain.service';

@@ -49,7 +49,7 @@
             }}' email template customisation"
             >block</mat-icon
           >
-          <a *ngIf="row.enabled && canView()" mat-icon-button [routerLink]="['email']" [queryParams]="{ template: row.template }"
+          <a *ngIf="row.enabled && canView()" mat-button [routerLink]="['email']" [queryParams]="{ template: row.template }"
             ><mat-icon matTooltip="Edit email template">edit</mat-icon></a
           >
           <mat-icon *ngIf="row.enabled && !canView()" matTooltip="You don't have required permission">block</mat-icon>

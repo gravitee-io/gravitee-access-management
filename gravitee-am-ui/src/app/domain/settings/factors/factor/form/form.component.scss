@@ -1,11 +1,7 @@
 :host {
   ::ng-deep {
     ul.checkbox-list {
-      display: flex;
-      flex-direction: column;
-      li:after {
-        content: '';
-      }
+      margin-block-start: 0;
     }
     flex-layout-root-widget {
       flex-flow: column nowrap !important;

@@ -36,7 +36,7 @@
     "@angular/platform-server": "15.2.10",
     "@angular/router": "15.2.10",
     "@gravitee/ui-components": "3.45.2",
-    "@gravitee/ui-particles-angular": "9.0.2",
+    "@gravitee/ui-particles-angular": "9.0.3",
     "@ngx-formly/core": "6.2.2",
     "@ngx-formly/material": "6.2.2",
     "@swimlane/ngx-datatable": "20.1.0",

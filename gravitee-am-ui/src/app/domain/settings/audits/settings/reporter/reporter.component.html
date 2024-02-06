@@ -19,7 +19,7 @@
   <a [routerLink]="['..']" class="gv-back-link"><small><< Back to reporters</small></a>
   <div class="reporterTitle">
     <h1>{{ reporter.name }}</h1>
-    <mat-chip-list *ngIf="reporter.system"><mat-chip>system</mat-chip></mat-chip-list>
+    <span *ngIf="reporter.system" class="gio-badge-neutral">system</span>
   </div>
   <div class="reporter-content">
     <form #reporterForm="ngForm" fxLayout="column" fxFlex="70">

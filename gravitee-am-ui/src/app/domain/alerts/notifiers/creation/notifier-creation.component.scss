@@ -1,3 +1,7 @@
-::ng-deep .mat-horizontal-stepper-header {
-  pointer-events: none !important;
+::ng-deep {
+  alert-notifier-creation {
+    .mat-horizontal-stepper-header {
+      pointer-events: none !important;
+    }
+  }
 }

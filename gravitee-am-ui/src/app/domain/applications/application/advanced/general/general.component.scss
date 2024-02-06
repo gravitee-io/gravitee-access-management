@@ -11,8 +11,12 @@
     }
     p {
       white-space: normal;
-      font-size: 75%;
       color: grey;
+    }
+    .action {
+      display: flex;
+      align-items: center;
+      height: 100%;
     }
   }
 }
@@ -20,8 +24,5 @@
 :host ::ng-deep {
   .ngx-datatable.material .datatable-footer {
     display: none;
-  }
-  .mat-select-change-app .mat-form-field-wrapper {
-    padding-bottom: 0;
   }
 }

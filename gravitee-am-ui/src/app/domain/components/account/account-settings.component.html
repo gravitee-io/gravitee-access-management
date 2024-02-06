@@ -57,8 +57,8 @@
             <mat-hint>Max login failures after which the account will be blocked.</mat-hint>
           </mat-form-field>
         </div>
-        <div fxLayout="row">
-          <mat-form-field appearance="outline" floatLabel="always">
+        <div fxLayout="row" fxLayoutAlign="center start">
+          <mat-form-field fxFlex="75" appearance="outline" floatLabel="always">
             <input
               matInput
               type="number"
@@ -84,8 +84,8 @@
             </mat-select>
           </mat-form-field>
         </div>
-        <div fxLayout="row">
-          <mat-form-field fxFlex="85" appearance="outline" floatLabel="always">
+        <div fxLayout="row" fxLayoutAlign="center start">
+          <mat-form-field fxFlex="75" appearance="outline" floatLabel="always">
             <input
               matInput
               type="number"
@@ -127,8 +127,8 @@
             Remember me - set duration for user login sessions
           </mat-slide-toggle>
           <mat-hint style="font-size: 75%">Allow users to remain logged in for a set duration of time.</mat-hint>
-          <div fxLayout="row">
-            <mat-form-field fxFlex="85" appearance="outline" floatLabel="always">
+          <div fxLayout="row" fxLayoutAlign="center start">
+            <mat-form-field fxFlex="75" appearance="outline" floatLabel="always">
               <input
                 matInput
                 type="number"
@@ -175,7 +175,7 @@
           </mat-slide-toggle>
           <mat-hint style="font-size: 75%">Prevent MFA brute force challenge attempts.</mat-hint>
         </div>
-        <div fxLayout="row">
+        <div fxLayout="row" fxLayoutAlign="center start">
           <mat-form-field appearance="outline" floatLabel="always">
             <input
               matInput
@@ -193,7 +193,7 @@
             >
           </mat-form-field>
         </div>
-        <div fxLayout="row">
+        <div fxLayout="row" fxLayoutAlign="center start">
           <mat-form-field appearance="outline" floatLabel="always">
             <input
               matInput
@@ -207,7 +207,7 @@
             />
             <mat-hint>Time after which the challenge attempts will be reset.</mat-hint>
           </mat-form-field>
-          <mat-form-field fxFlex style="margin-left: 20px" appearance="outline" floatLabel="always">
+          <mat-form-field fxFlex="75" style="margin-left: 20px" appearance="outline" floatLabel="always">
             <mat-select
               placeholder="Unit time"
               name="challengeAttemptsResetTimeUnit"
@@ -399,7 +399,7 @@
               (click)="addField()"
               [disabled]="!(newField.key && newField.label)"
             >
-              + ADD
+              <mat-icon svgIcon="gio:plus"></mat-icon>ADD
             </button>
           </div>
         </div>

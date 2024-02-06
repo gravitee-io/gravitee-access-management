@@ -18,7 +18,7 @@
 <div fxLayout="column">
   <p class="gv-plugin-creation-description">Choose bot detection mechanism.</p>
   <div fxLayout="row wrap" fxLayoutGap="10px">
-    <mat-card *ngFor="let botDetection of botDetections" fxFlex="30">
+    <mat-card appearance="outlined" *ngFor="let botDetection of botDetections" fxFlex="30">
       <mat-card-header fxLayoutAlign="end end" fxLayout="row">
         <mat-radio-group [(ngModel)]="selectedBotDetectionTypeId" (ngModelChange)="selectBotDetectionType()">
           <mat-radio-button [value]="botDetection.id"></mat-radio-button>
