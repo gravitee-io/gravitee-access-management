@@ -552,7 +552,7 @@ jobs:
           template: basic_fail_1
   run_postman_tests_mongo:
     docker:
-      - image: cimg/openjdk:17.0.1-node
+      - image: cimg/openjdk:17.0.8-node
       - image: mongo:4.2
     resource_class: medium+
     steps:
@@ -596,7 +596,7 @@ jobs:
           template: basic_fail_1
   run_postman_tests_psql:
     docker:
-      - image: cimg/openjdk:17.0.1-node
+      - image: cimg/openjdk:17.0.8-node
       - image: postgres:14-alpine
         environment:
           POSTGRES_PASSWORD: T0pS3cr3t
@@ -697,7 +697,7 @@ jobs:
           jobName: run_testcontainer_tests
   publish-images-azure-registry:
     docker:
-      - image: cimg/openjdk:17.0.1
+      - image: cimg/openjdk:17.0.8
     resource_class: small
     steps:
       - checkout
@@ -898,7 +898,7 @@ jobs:
             done
   coverage_build:
     docker:
-      - image: cimg/openjdk:17.0.1
+      - image: cimg/openjdk:17.0.8
     resource_class: large
     steps:
       - attach_workspace:
@@ -920,7 +920,7 @@ jobs:
           jobName: coverage_build
   frontend_version_build:
     docker:
-      - image: cimg/openjdk:17.0.1
+      - image: cimg/openjdk:17.0.8
     resource_class: small
     steps:
       - attach_workspace:
