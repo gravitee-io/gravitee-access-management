@@ -56,9 +56,9 @@ export class EmailComponent implements OnInit, AfterViewInit {
   @ViewChild('editor', { static: true }) editor: any;
   @ViewChild('preview', { static: true }) preview: ElementRef;
   @ViewChild('emailForm', { static: true }) public emailForm: NgForm;
-  @Input('createMode') createMode: boolean;
-  @Input('editMode') editMode: boolean;
-  @Input('deleteMode') deleteMode: boolean;
+  @Input() createMode: boolean;
+  @Input() editMode: boolean;
+  @Input() deleteMode: boolean;
 
   constructor(
     private router: Router,
@@ -190,7 +190,7 @@ export class EmailComponent implements OnInit, AfterViewInit {
   }
 
   openDialog() {
-    this.dialog.open(EmailInfoDialog, {
+    this.dialog.open(EmailInfoDialogComponent, {
       data: { rawTemplate: this.rawTemplate, template: this.template },
     });
   }
@@ -212,6 +212,6 @@ export class EmailComponent implements OnInit, AfterViewInit {
   selector: 'email-info-dialog',
   templateUrl: './dialog/email-info.component.html',
 })
-export class EmailInfoDialog {
-  constructor(public dialogRef: MatDialogRef<EmailInfoDialog>, @Inject(MAT_DIALOG_DATA) public data: DialogData) {}
+export class EmailInfoDialogComponent {
+  constructor(public dialogRef: MatDialogRef<EmailInfoDialogComponent>, @Inject(MAT_DIALOG_DATA) public data: DialogData) {}
 }

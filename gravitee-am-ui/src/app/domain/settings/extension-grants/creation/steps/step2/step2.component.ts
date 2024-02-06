@@ -26,9 +26,9 @@ import { ExtensionGrantService } from '../../../../../../services/extension-gran
   styleUrls: ['./step2.component.scss'],
 })
 export class ExtensionGrantCreationStep2Component implements OnInit {
-  @Input('extensionGrant') extensionGrant: any;
-  @Input('configurationIsValid') configurationIsValid: boolean;
-  @Output('configurationIsValidChange') configurationIsValidChange: EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Input() extensionGrant: any;
+  @Input() configurationIsValid: boolean;
+  @Output() configurationIsValidChange: EventEmitter<boolean> = new EventEmitter<boolean>();
   private domainId: string;
   formChanged = false;
   configuration: any;

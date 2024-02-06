@@ -39,7 +39,7 @@
           <small>Device Notifier configuration</small>
         </ng-template>
         <device-notifier-creation-step2
-          *ngIf="stepper.selectedIndex == 1"
+          *ngIf="stepper.selectedIndex === 1"
           [deviceNotifier]="deviceNotifier"
           [(configurationIsValid)]="configurationIsValid"
         ></device-notifier-creation-step2>

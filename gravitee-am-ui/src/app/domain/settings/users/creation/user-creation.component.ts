@@ -18,12 +18,12 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { animate, style, transition, trigger } from '@angular/animations';
 import { each } from 'lodash';
 
-import { UserClaimComponent } from './user-claim.component';
-
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { UserService } from '../../../../services/user.service';
 import { ProviderService } from '../../../../services/provider.service';
 import { OrganizationService } from '../../../../services/organization.service';
+
+import { UserClaimComponent } from './user-claim.component';
 
 @Component({
   selector: 'user-creation',

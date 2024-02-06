@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
 import { EmailTemplateFactoryService } from '../../../../../services/email.template.factory.service';
@@ -23,7 +23,7 @@ import { EmailTemplateFactoryService } from '../../../../../services/email.templ
   templateUrl: './emails.component.html',
   styleUrls: ['./emails.component.scss'],
 })
-export class ApplicationEmailsComponent {
+export class ApplicationEmailsComponent implements OnInit {
   emails: any[];
   application: any;
   domain: any;

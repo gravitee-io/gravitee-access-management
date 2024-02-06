@@ -27,6 +27,7 @@ export class MfaOptionalComponent implements OnInit {
   private humanTime: { skipTime: any; skipUnit: any };
 
   @Input() enrollment: any;
+  // eslint-disable-next-line @angular-eslint/no-output-rename
   @Output('settings-change') settingsChangeEmitter: EventEmitter<any> = new EventEmitter<any>();
 
   constructor(private timeConverterService: TimeConverterService) {}

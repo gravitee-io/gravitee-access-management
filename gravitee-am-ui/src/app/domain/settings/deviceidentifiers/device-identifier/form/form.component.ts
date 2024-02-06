@@ -21,8 +21,9 @@ import { Component, Input, EventEmitter, Output, OnChanges, SimpleChanges } from
   styleUrls: ['./form.component.scss'],
 })
 export class DeviceIdentifierFormComponent implements OnChanges {
+  // eslint-disable-next-line @angular-eslint/no-input-rename
   @Input('deviceIdentifierConfiguration') configuration: any = {};
-  @Input('deviceIdentifierSchema') deviceIdentifierSchema: any;
+  @Input() deviceIdentifierSchema: any;
   @Output() configurationCompleted = new EventEmitter<any>();
   displayForm = false;
   data: any = {};

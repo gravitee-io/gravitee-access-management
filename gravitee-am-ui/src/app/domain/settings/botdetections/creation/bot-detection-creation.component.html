@@ -39,7 +39,7 @@
           <small>Bot detection configuration</small>
         </ng-template>
         <bot-detection-creation-step2
-          *ngIf="stepper.selectedIndex == 1"
+          *ngIf="stepper.selectedIndex === 1"
           [botDetection]="botDetection"
           [(configurationIsValid)]="configurationIsValid"
         ></bot-detection-creation-step2>

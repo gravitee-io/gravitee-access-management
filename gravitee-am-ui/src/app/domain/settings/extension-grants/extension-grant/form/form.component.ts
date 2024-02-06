@@ -21,8 +21,9 @@ import { Component, Input, EventEmitter, Output, OnChanges, SimpleChanges } from
   styleUrls: ['./form.component.scss'],
 })
 export class ExtensionGrantFormComponent implements OnChanges {
+  // eslint-disable-next-line @angular-eslint/no-input-rename
   @Input('extensionGrantConfiguration') configuration: any = {};
-  @Input('extensionGrantSchema') extensionGrantSchema: any;
+  @Input() extensionGrantSchema: any;
   @Output() configurationCompleted = new EventEmitter<any>();
   displayForm = false;
   data: any = {};

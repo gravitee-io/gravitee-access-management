@@ -25,16 +25,16 @@ import { NavigationService } from '../../services/navigation.service';
   styleUrls: ['./submenu.component.scss'],
 })
 export class SubmenuComponent implements OnInit, OnDestroy {
-  @Input('displaySections') displaySections = true;
-  @Input('hasTitle') hasTitle = false;
-  @Input('isTemplate') isTemplate = false;
-  @Input('templateTooltip') templateTooltip: string;
-  @Input('componentType') componentType: string;
-  @Input('componentName') componentName: string;
-  @Input('theme') theme: string;
-  @Input('hasGoBackButton') hasGoBackButton = false;
-  @Input('reduced') reduced = true;
-  @Input('static') static = false;
+  @Input() displaySections = true;
+  @Input() hasTitle = false;
+  @Input() isTemplate = false;
+  @Input() templateTooltip: string;
+  @Input() componentType: string;
+  @Input() componentName: string;
+  @Input() theme: string;
+  @Input() hasGoBackButton = false;
+  @Input() reduced = true;
+  @Input() static = false;
   subMenuItems: any;
   subscription: Subscription;
 
@@ -69,5 +69,5 @@ export class SubmenuComponent implements OnInit, OnDestroy {
   </ng-container> `,
 })
 export class SubmenuItemsComponent {
-  @Input('items') items: any[];
+  @Input() items: any[];
 }

@@ -18,9 +18,9 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, ReplaySubject } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 
-import { AuthService } from './auth.service';
-
 import { AppConfig } from '../../config/app.config';
+
+import { AuthService } from './auth.service';
 
 @Injectable()
 export class EnvironmentService {

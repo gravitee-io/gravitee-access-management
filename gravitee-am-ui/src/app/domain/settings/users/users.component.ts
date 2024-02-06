@@ -192,7 +192,7 @@ export class UsersComponent implements OnInit {
   }
 
   openDialog() {
-    this.dialog.open(UsersSearchInfoDialog, {});
+    this.dialog.open(UsersSearchInfoDialogComponent, {});
   }
 
   private isAdvancedSearch(searchQuery): boolean {
@@ -204,6 +204,6 @@ export class UsersComponent implements OnInit {
   selector: 'users-search-info-dialog',
   templateUrl: './dialog/users-search-info.component.html',
 })
-export class UsersSearchInfoDialog {
-  constructor(public dialogRef: MatDialogRef<UsersSearchInfoDialog>) {}
+export class UsersSearchInfoDialogComponent {
+  constructor(public dialogRef: MatDialogRef<UsersSearchInfoDialogComponent>) {}
 }

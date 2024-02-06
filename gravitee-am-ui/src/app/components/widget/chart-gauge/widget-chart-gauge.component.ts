@@ -24,8 +24,8 @@ import { Chart } from '../widget.model';
   styleUrls: ['./widget-chart-gauge.component.scss'],
 })
 export class WidgetChartGaugeComponent implements OnChanges {
-  @Input('Highcharts') Highcharts: typeof Highcharts;
-  @Input('chart') chart: Chart;
+  @Input() Highcharts: typeof Highcharts;
+  @Input() chart: Chart;
   chartOptions: Highcharts.Options;
 
   ngOnChanges(changes: SimpleChanges): void {

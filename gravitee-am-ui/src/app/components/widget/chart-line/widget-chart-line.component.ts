@@ -25,8 +25,8 @@ import { Chart } from '../widget.model';
   styleUrls: ['./widget-chart-line.component.scss'],
 })
 export class WidgetChartLineComponent implements OnChanges {
-  @Input('Highcharts') Highcharts: typeof Highcharts;
-  @Input('chart') chart: Chart;
+  @Input() Highcharts: typeof Highcharts;
+  @Input() chart: Chart;
   chartOptions;
   ngOnChanges(changes: SimpleChanges): void {
     if (changes.chart.currentValue && changes.chart.currentValue.response) {

@@ -40,6 +40,7 @@ export class MfaActivateComponent implements OnInit, OnDestroy {
   @Input() enrollment: any;
   @Input() adaptiveMfaRule: string;
   @Input() riskAssessment: any;
+  // eslint-disable-next-line @angular-eslint/no-output-rename
   @Output('settings-change') settingsChangeEmitter: EventEmitter<any> = new EventEmitter<any>();
   currentMode: any;
   factors: any[];

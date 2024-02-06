@@ -23,9 +23,9 @@ import { OrganizationService } from '../../../../../../services/organization.ser
   styleUrls: ['./step2.component.scss'],
 })
 export class DomainAlertNotifierCreationStep2Component implements OnChanges {
-  @Input('alertNotifier') alertNotifier: any;
-  @Input('configurationIsValid') configurationIsValid: boolean;
-  @Output('configurationIsValidChange') configurationIsValidChange: EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Input() alertNotifier: any;
+  @Input() configurationIsValid: boolean;
+  @Output() configurationIsValidChange: EventEmitter<boolean> = new EventEmitter<boolean>();
   configuration: any;
   notifierSchema: any = {};
 

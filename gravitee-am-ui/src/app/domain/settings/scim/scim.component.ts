@@ -79,7 +79,7 @@ export class ScimComponent implements OnInit {
 
   openDialog(event) {
     event.preventDefault();
-    this.dialog.open(IdpSelectionInfoDialog, {});
+    this.dialog.open(IdpSelectionInfoDialogComponent, {});
   }
 
   formInvalid() {
@@ -94,6 +94,6 @@ export class ScimComponent implements OnInit {
   selector: 'idp-selection-info-dialog',
   templateUrl: './dialog/scim-info.component.html',
 })
-export class IdpSelectionInfoDialog {
-  constructor(public dialogRef: MatDialogRef<IdpSelectionInfoDialog>) {}
+export class IdpSelectionInfoDialogComponent {
+  constructor(public dialogRef: MatDialogRef<IdpSelectionInfoDialogComponent>) {}
 }

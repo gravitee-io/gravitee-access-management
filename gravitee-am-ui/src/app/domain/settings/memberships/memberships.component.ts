@@ -59,7 +59,7 @@ export class DomainSettingsMembershipsComponent implements OnInit {
   }
 
   openDialog(): void {
-    const dialogRef = this.dialog.open(DomainMembershipsDialog, {
+    const dialogRef = this.dialog.open(DomainMembershipsDialogComponent, {
       panelClass: 'no-padding-dialog-container',
       minWidth: '100vw',
       height: '100vh',
@@ -93,7 +93,7 @@ export class DomainSettingsMembershipsComponent implements OnInit {
   templateUrl: '../../components/memberships/dialog/memberships-dialog.html',
   styleUrls: ['../../components/memberships/dialog/memberships-dialog.scss'],
 })
-export class DomainMembershipsDialog {
+export class DomainMembershipsDialogComponent {
   private domainId: string;
   resource: any;
   members = [];
@@ -105,7 +105,7 @@ export class DomainMembershipsDialog {
   constructor(
     private domainService: DomainService,
     private snackbarService: SnackbarService,
-    public dialogRef: MatDialogRef<DomainMembershipsDialog>,
+    public dialogRef: MatDialogRef<DomainMembershipsDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: any,
   ) {
     this.resource = data.domain;

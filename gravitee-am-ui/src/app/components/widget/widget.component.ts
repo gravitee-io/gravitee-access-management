@@ -24,6 +24,6 @@ import { Widget } from './widget.model';
   styleUrls: ['./widget.component.scss'],
 })
 export class WidgetComponent {
-  @Input('widget') widget: Widget;
-  @Input('Highcharts') Highcharts: typeof Highcharts;
+  @Input() widget: Widget;
+  @Input() Highcharts: typeof Highcharts;
 }

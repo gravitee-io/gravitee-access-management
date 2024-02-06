@@ -31,6 +31,7 @@ interface Duration {
   styleUrls: ['./account-settings.component.scss'],
 })
 export class AccountSettingsComponent implements OnInit, OnChanges {
+  // eslint-disable-next-line @angular-eslint/no-output-on-prefix
   @Output() onSavedAccountSettings = new EventEmitter<any>();
   @Input() accountSettings: any;
   @Input() inheritMode = false;

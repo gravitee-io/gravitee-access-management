@@ -17,10 +17,10 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-import { OrganizationService } from './organization.service';
-
 import { AppConfig } from '../../config/app.config';
 import { toHttpParams } from '../utils/http-utils';
+
+import { OrganizationService } from './organization.service';
 
 @Injectable()
 export class UserService {

@@ -23,8 +23,9 @@ import { MaterialFileComponent } from '../../../../../components/json-schema-for
   styleUrls: ['./form.component.scss'],
 })
 export class CertificateFormComponent implements OnChanges {
+  // eslint-disable-next-line @angular-eslint/no-input-rename
   @Input('certificateConfiguration') configuration: any = {};
-  @Input('certificateSchema') certificateSchema: any;
+  @Input() certificateSchema: any;
   @Output() configurationCompleted = new EventEmitter<any>();
   displayForm = false;
   data: any = {};

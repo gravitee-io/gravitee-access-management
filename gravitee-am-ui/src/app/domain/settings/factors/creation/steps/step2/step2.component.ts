@@ -24,9 +24,9 @@ import { OrganizationService } from '../../../../../../services/organization.ser
   styleUrls: ['./step2.component.scss'],
 })
 export class FactorCreationStep2Component implements OnInit {
-  @Input('factor') factor: any;
-  @Input('configurationIsValid') configurationIsValid: boolean;
-  @Output('configurationIsValidChange') configurationIsValidChange: EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Input() factor: any;
+  @Input() configurationIsValid: boolean;
+  @Output() configurationIsValidChange: EventEmitter<boolean> = new EventEmitter<boolean>();
   formChanged = false;
   configuration: any;
   factorSchema: any = {};

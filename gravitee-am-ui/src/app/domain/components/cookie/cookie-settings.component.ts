@@ -22,6 +22,7 @@ import { ActivatedRoute } from '@angular/router';
   styleUrls: ['./cookie-settings.component.scss'],
 })
 export class CookieSettingsComponent implements OnInit, OnChanges {
+  // eslint-disable-next-line @angular-eslint/no-output-on-prefix
   @Output() onSavedCookieSettings = new EventEmitter<any>();
   @Input() cookieSettings: any;
   @Input() inheritMode = false;

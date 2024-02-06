@@ -79,7 +79,7 @@
           <mat-icon mat-list-icon>people</mat-icon>
           <h4 matLine>Members count</h4>
           <p matLine>
-            <span *ngIf="!group.members || group.members.length == 0; else members">No member</span
+            <span *ngIf="!group.members || group.members.length === 0; else members">No member</span
             ><ng-template #members>{{ group.members.length }} members</ng-template>
           </p>
         </mat-list-item>

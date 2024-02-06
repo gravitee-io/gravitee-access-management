@@ -24,6 +24,7 @@ export class AssessmentComponent implements OnInit {
   @Input() title: string;
   @Input() assessment: any;
   @Input() options: any[];
+  // eslint-disable-next-line @angular-eslint/no-output-rename, @angular-eslint/no-output-on-prefix
   @Output('on-assessment-change') assessmentChangeEmmit: EventEmitter<any> = new EventEmitter<any>();
 
   current: any;

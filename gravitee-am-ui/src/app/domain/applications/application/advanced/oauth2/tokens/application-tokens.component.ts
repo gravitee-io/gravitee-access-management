@@ -120,7 +120,7 @@ export class ApplicationTokensComponent implements OnInit {
 
   openDialog(event) {
     event.preventDefault();
-    this.dialog.open(ClaimsInfoDialog, {});
+    this.dialog.open(ClaimsInfoDialogComponent, {});
   }
 
   modelChanged() {
@@ -165,6 +165,6 @@ export class CreateClaimComponent {
   selector: 'claims-info-dialog',
   templateUrl: './dialog/claims-info.component.html',
 })
-export class ClaimsInfoDialog {
-  constructor(public dialogRef: MatDialogRef<ClaimsInfoDialog>) {}
+export class ClaimsInfoDialogComponent {
+  constructor(public dialogRef: MatDialogRef<ClaimsInfoDialogComponent>) {}
 }

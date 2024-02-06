@@ -19,6 +19,4 @@ Jenkinsfile
 .tmp
 .circleci
 
-!.eslintrc.js
-
 storybook-static/
