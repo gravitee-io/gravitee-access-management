@@ -46,7 +46,7 @@
                   [matChipInputFor]="chipList"
                   (keydown.enter)="addDomainWhitelistPattern($event)"
                   [value]="domainWhitelistPattern || ''"
-                  (input)="domainWhitelistPattern = $event.target.value"
+                  (input)="domainWhitelistPattern = $any($event.target).value"
                 />
               </mat-chip-list>
               <mat-hint

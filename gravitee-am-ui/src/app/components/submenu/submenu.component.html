@@ -16,7 +16,7 @@
 
 -->
 <div class="gv-submenu" [ngClass]="{ reduced: reduced }">
-  <gio-submenu class="mat" theme="{{ theme }}" static="{{ static }}">
+  <gio-submenu class="mat" [theme]="theme" [static]="static">
     <button gioSubmenuTitle mat-button aria-label="Organization" *ngIf="hasGoBackButton" (click)="goBack()">
       <mat-icon svgIcon="gio:arrow-left"></mat-icon>Organization
     </button>

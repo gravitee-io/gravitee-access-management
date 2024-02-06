@@ -16,6 +16,7 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { GioSubmenuTheme } from '@gravitee/ui-particles-angular';
 
 import { NavigationService } from '../../services/navigation.service';
 
@@ -31,7 +32,7 @@ export class SubmenuComponent implements OnInit, OnDestroy {
   @Input() templateTooltip: string;
   @Input() componentType: string;
   @Input() componentName: string;
-  @Input() theme: string;
+  @Input() theme: GioSubmenuTheme;
   @Input() hasGoBackButton = false;
   @Input() reduced = true;
   @Input() static = false;

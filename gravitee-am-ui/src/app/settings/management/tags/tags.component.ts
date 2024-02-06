@@ -27,7 +27,7 @@ import { DialogService } from '../../../services/dialog.service';
   styleUrls: ['./tags.component.scss'],
 })
 export class TagsComponent implements OnInit {
-  private tags: any[];
+  public tags: any[];
 
   constructor(
     private tagService: TagService,

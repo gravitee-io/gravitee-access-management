@@ -145,7 +145,7 @@
                 type="text"
                 placeholder="subject distinguished name"
                 name="tlsClientAuthSubjectDn"
-                (ngModelChange)="modelChanged($event)"
+                (ngModelChange)="modelChanged()"
                 [(ngModel)]="applicationOauthSettings.tlsClientAuthSubjectDn"
                 [disabled]="readonly"
               />
@@ -159,7 +159,7 @@
                 type="text"
                 placeholder="dNSName SAN entry"
                 name="tlsClientAuthSanDns"
-                (ngModelChange)="modelChanged($event)"
+                (ngModelChange)="modelChanged()"
                 [(ngModel)]="applicationOauthSettings.tlsClientAuthSanDns"
                 [disabled]="readonly"
               />
@@ -171,7 +171,7 @@
                 type="text"
                 placeholder="uniformResourceIdentifier SAN entry"
                 name="tlsClientAuthSanUri"
-                (ngModelChange)="modelChanged($event)"
+                (ngModelChange)="modelChanged()"
                 [(ngModel)]="applicationOauthSettings.tlsClientAuthSanUri"
                 [disabled]="readonly"
               />
@@ -183,7 +183,7 @@
                 type="text"
                 placeholder="iPAddress SAN entry"
                 name="tlsClientAuthSanIp"
-                (ngModelChange)="modelChanged($event)"
+                (ngModelChange)="modelChanged()"
                 [(ngModel)]="applicationOauthSettings.tlsClientAuthSanIp"
                 [disabled]="readonly"
               />
@@ -195,7 +195,7 @@
                 type="text"
                 placeholder="rfc822Name SAN entry"
                 name="tlsClientAuthSanEmail"
-                (ngModelChange)="modelChanged($event)"
+                (ngModelChange)="modelChanged()"
                 [(ngModel)]="applicationOauthSettings.tlsClientAuthSanEmail"
                 [disabled]="readonly"
               />
@@ -223,7 +223,7 @@
                 type="text"
                 placeholder="Enter the jwks_uri value"
                 name="jwksUri"
-                (ngModelChange)="modelChanged($event)"
+                (ngModelChange)="modelChanged()"
                 [(ngModel)]="applicationOauthSettings.jwksUri"
                 [disabled]="readonly"
               />
@@ -239,7 +239,7 @@
                 type="text"
                 placeholder="Enter the jwks value"
                 name="jwks"
-                (ngModelChange)="modelChanged($event)"
+                (ngModelChange)="modelChanged()"
                 [(ngModel)]="applicationOauthSettings.jwks"
                 [disabled]="readonly"
               ></textarea>

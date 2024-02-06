@@ -71,7 +71,6 @@
               matInput
               type="password"
               name="clientSecret"
-              [value]="xxx"
               disabled
               matTooltip="Client Secret can't be copied once created. If you've lost it, you need to Renew the client secret"
             />
@@ -111,7 +110,7 @@
                     name="redirectUri"
                     (keydown.enter)="addRedirectUris($event)"
                     [value]="redirectUri || ''"
-                    (input)="redirectUri = $event.target.value"
+                    (input)="redirectUri = $any($event.target).value"
                   />
                 </mat-form-field>
               </div>
@@ -166,7 +165,7 @@
                     name="logoutRedirectUri"
                     (keydown.enter)="addLogoutRedirectUris($event)"
                     [value]="logoutRedirectUri || ''"
-                    (input)="logoutRedirectUri = $event.target.value"
+                    (input)="logoutRedirectUri = $any($event.target).value"
                   />
                 </mat-form-field>
               </div>
@@ -221,7 +220,7 @@
                     name="requestUri"
                     (keydown.enter)="addRequestUris($event)"
                     [value]="requestUri || ''"
-                    (input)="requestUri = $event.target.value"
+                    (input)="requestUri = $any($event.target).value"
                   />
                 </mat-form-field>
               </div>

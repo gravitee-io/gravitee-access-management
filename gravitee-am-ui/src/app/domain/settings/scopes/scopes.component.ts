@@ -31,7 +31,7 @@ import { AuthService } from '../../../services/auth.service';
 export class DomainSettingsScopesComponent implements OnInit {
   private searchValue: string;
   page: any = {};
-  private scopes: any[];
+  scopes: any[];
   domainId: string;
   canDelete: boolean;
   canEdit: boolean;

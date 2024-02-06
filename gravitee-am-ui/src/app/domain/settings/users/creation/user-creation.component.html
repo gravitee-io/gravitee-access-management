@@ -54,7 +54,7 @@
               name="email"
               [(ngModel)]="user.email"
               [email]="user.email !== ''"
-              (input)="onEmailChange($event.target.value)"
+              (input)="onEmailChange($any($event.target).value)"
               required
             />
             <mat-hint>Email address for the User.</mat-hint>
@@ -108,10 +108,7 @@
           </div>
         </div>
         <div *ngIf="!isOrganizationUserAction()">
-          <app-select-applications
-            (onSelectApp)="onAppSelectionChanged($event)"
-            (onRemoveApp)="onAppDeleted($event)"
-          ></app-select-applications>
+          <app-select-applications (onSelectApp)="onAppSelectionChanged($event)" (onRemoveApp)="onAppDeleted()"></app-select-applications>
         </div>
         <div *ngIf="!isOrganizationUserAction()">
           <mat-form-field appearance="outline" floatLabel="always">

@@ -83,7 +83,7 @@
                   [matChipInputFor]="origins"
                   (keydown.enter)="addOrigin($event)"
                   [value]="originValue || ''"
-                  (input)="originValue = $event.target.value"
+                  (input)="originValue = $any($event.target).value"
                 />
               </mat-chip-list>
               <mat-hint
@@ -129,7 +129,7 @@
                   [matChipInputFor]="headers"
                   (keydown.enter)="addHeader($event)"
                   [value]="headerValue || ''"
-                  (input)="headerValue = $event.target.value"
+                  (input)="headerValue = $any($event.target).value"
                 />
               </mat-chip-list>
               <mat-hint

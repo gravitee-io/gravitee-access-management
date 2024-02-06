@@ -94,7 +94,7 @@
                     <input matInput type="text" [(ngModel)]="row.message" (input)="enableSaveChangeButton()" />
                   </ng-template>
                 </ngx-datatable-column>
-                <ngx-datatable-column name="" [flexGrow]="1" *hasPermission="['domain_i18n_dictionary_update']" maxWidth="50">
+                <ngx-datatable-column name="" [flexGrow]="1" *hasPermission="['domain_i18n_dictionary_update']" [maxWidth]="50">
                   <ng-template let-rowIndex="rowIndex" ngx-datatable-cell-template>
                     <div fxLayout="row" class="gv-table-cell-actions">
                       <button mat-icon-button (click)="deleteTranslation(rowIndex, $event)">

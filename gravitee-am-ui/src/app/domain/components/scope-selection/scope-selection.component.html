@@ -17,7 +17,7 @@
 -->
 <div class="scope-container" fxLayout="column">
   <mat-form-field>
-    <input matInput (keyup)="applyFilter($event.target.value)" placeholder="Filter" />
+    <input matInput (keyup)="applyFilter($any($event.target).value)" placeholder="Filter" />
   </mat-form-field>
 
   <table mat-table [dataSource]="scopes" matSort matSortActive="select" matSortDirection="asc">
