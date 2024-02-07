@@ -395,25 +395,6 @@ jobs:
             - ./gravitee-am-gateway-standalone-*.zip
             - ./gravitee-am-management-api-standalone-*.zip
             - ./gravitee-am-webui-*.zip
-<<<<<<< HEAD
-=======
-  deploy-snapshot-on-nexus:
-    docker:
-      - image: cimg/openjdk:17.0.1
-    resource_class: medium
-    steps:
-      - attach_workspace:
-          at: /tmp
-      - checkout
-      - restore-maven-job-cache:
-          jobName: build_branch_nexus
-      - run:
-          name: "Maven Package and deploy to Nexus Snapshots"
-          command: |
-            mvn -s /tmp/.gravitee.settings.xml -Dlicense.skip=true -T2C deploy -DskipTests
-      - save-maven-job-cache:
-          jobName: build_branch_nexus
->>>>>>> df2668e3b5 (AM-2154: downgrade images for old app versions (#3475))
   run_jest_tests_mongo:
     parameters:
       mongo_version:
