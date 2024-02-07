@@ -39,9 +39,12 @@ import static io.gravitee.am.common.utils.ConstantKeys.CLAIM_ISSUING_REASON;
 import static io.gravitee.am.common.utils.ConstantKeys.CLAIM_PROVIDER_ID;
 import static io.gravitee.am.common.utils.ConstantKeys.CLAIM_QUERY_PARAM;
 import static io.gravitee.am.common.utils.ConstantKeys.CLAIM_REMEMBER_ME;
-import static io.gravitee.am.common.utils.ConstantKeys.CLAIM_STATUS;
 import static io.gravitee.am.common.utils.ConstantKeys.CLAIM_TARGET;
 import static io.gravitee.am.common.utils.ConstantKeys.ISSUING_REASON_CLOSE_IDP_SESSION;
+import static io.gravitee.am.common.utils.ConstantKeys.PROTOCOL_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.PROTOCOL_VALUE_SAML_POST;
+import static io.gravitee.am.common.utils.ConstantKeys.RETURN_URL_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.TRANSACTION_ID_KEY;
 import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.STATE;
 
 /**
@@ -131,6 +134,7 @@ public class LoginCallbackParseHandler implements Handler<RoutingContext> {
                 .doOnSuccess(stateJwt -> {
                     final MultiMap initialQueryParams = RequestUtils.getQueryParams((String) stateJwt.getOrDefault(CLAIM_QUERY_PARAM, ""), false);
                     context.put(ConstantKeys.PARAM_CONTEXT_KEY, initialQueryParams);
+
                     context.put(ConstantKeys.PROVIDER_ID_PARAM_KEY, stateJwt.get(CLAIM_PROVIDER_ID));
                     context.put(ConstantKeys.REMEMBER_ME_PARAM_KEY, stateJwt.get(CLAIM_REMEMBER_ME));
 
@@ -139,6 +143,18 @@ public class LoginCallbackParseHandler implements Handler<RoutingContext> {
                         context.put(ConstantKeys.RETURN_URL_KEY, stateJwt.get(CLAIM_TARGET));
                     } else {
                         context.put(ConstantKeys.CONTINUE_CALLBACK_PROCESSING, true);
+                    }
+
+                    final String protocol = (String) stateJwt.get(PROTOCOL_KEY);
+                    if (StringUtils.hasLength(protocol)) {
+                        // SAML flow, need to restore these session attributes
+                        // in order to redirect the process to the SAML Handler and
+                        // not onto OAuth2 flow
+                        context.session().put(PROTOCOL_KEY, protocol);
+                        context.session().put(RETURN_URL_KEY, stateJwt.get(RETURN_URL_KEY));
+                        if (PROTOCOL_VALUE_SAML_POST.equals(protocol)) {
+                            context.session().put(TRANSACTION_ID_KEY, stateJwt.get(TRANSACTION_ID_KEY));
+                        }
                     }
                 })
                 .subscribe(
