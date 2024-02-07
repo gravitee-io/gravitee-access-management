@@ -36,6 +36,7 @@ import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.StringUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -160,10 +161,7 @@ public class LoginSocialAuthenticationHandler implements Handler<RoutingContext>
         return identityProviderManager.get(identityProviderId)
                 .flatMap(authenticationProvider -> {
                     // Generate a state containing provider id and current query parameter string. This state will be sent back to AM after social authentication.
-                    final JWT stateJwt = new JWT();
-                    stateJwt.put(CLAIM_PROVIDER_ID, identityProviderId);
-                    stateJwt.put(CLAIM_QUERY_PARAM, context.request().query());
-                    stateJwt.put(CLAIM_REMEMBER_ME, REMEMBER_ME_ON.equalsIgnoreCase(context.request().formAttributes().get(REMEMBER_ME_PARAM_KEY)));
+                    final JWT stateJwt = prepareState(identityProviderId, context);
 
                     return jwtService.encode(stateJwt, certificateManager.defaultCertificateProvider())
                             .flatMapMaybe(state -> {
@@ -182,6 +180,26 @@ public class LoginSocialAuthenticationHandler implements Handler<RoutingContext>
                                 });
                             });
                 });
+    }
+
+    private static JWT prepareState(String identityProviderId, RoutingContext context) {
+        final JWT stateJwt = new JWT();
+        final String protocol = context.session().get(PROTOCOL_KEY);
+        if (StringUtils.hasLength(protocol)) {
+            // SAML flow, need to keep these session attributes
+            // into the state to avoid error when the AM (as SP)
+            // will be called back by the external SAML IdP when HTTP-POST
+            // binding is in used.
+            stateJwt.put(PROTOCOL_KEY, protocol);
+            stateJwt.put(RETURN_URL_KEY, context.session().get(RETURN_URL_KEY));
+            if (PROTOCOL_VALUE_SAML_POST.equals(protocol)) {
+              stateJwt.put(TRANSACTION_ID_KEY, context.session().get(TRANSACTION_ID_KEY));
+            }
+        }
+        stateJwt.put(CLAIM_PROVIDER_ID, identityProviderId);
+        stateJwt.put(CLAIM_QUERY_PARAM, context.request().query());
+        stateJwt.put(CLAIM_REMEMBER_ME, REMEMBER_ME_ON.equalsIgnoreCase(context.request().formAttributes().get(REMEMBER_ME_PARAM_KEY)));
+        return stateJwt;
     }
 
     private static class SocialProviderData {
