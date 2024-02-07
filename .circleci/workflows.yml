@@ -396,6 +396,25 @@ jobs:
             - ./gravitee-am-gateway-standalone-*.zip
             - ./gravitee-am-management-api-standalone-*.zip
             - ./gravitee-am-webui-*.zip
+<<<<<<< HEAD
+=======
+  deploy-snapshot-on-nexus:
+    docker:
+      - image: cimg/openjdk:17.0.1
+    resource_class: medium
+    steps:
+      - attach_workspace:
+          at: /tmp
+      - checkout
+      - restore-maven-job-cache:
+          jobName: build_branch_nexus
+      - run:
+          name: "Maven Package and deploy to Nexus Snapshots"
+          command: |
+            mvn -s /tmp/.gravitee.settings.xml -Dlicense.skip=true -T2C deploy -DskipTests
+      - save-maven-job-cache:
+          jobName: build_branch_nexus
+>>>>>>> df2668e3b5 (AM-2154: downgrade images for old app versions (#3475))
   run_jest_tests_mongo:
     machine:
       image: ubuntu-2204:2022.07.1
@@ -552,9 +571,15 @@ jobs:
           template: basic_fail_1
   run_postman_tests_mongo:
     docker:
+<<<<<<< HEAD
       - image: cimg/openjdk:17.0.8-node
       - image: mongo:4.2
     resource_class: medium+
+=======
+      - image: cimg/openjdk:17.0.5-node
+      - image: mongo:<< parameters.mongo_version >>
+    resource_class: large
+>>>>>>> df2668e3b5 (AM-2154: downgrade images for old app versions (#3475))
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -596,8 +621,13 @@ jobs:
           template: basic_fail_1
   run_postman_tests_psql:
     docker:
+<<<<<<< HEAD
       - image: cimg/openjdk:17.0.8-node
       - image: postgres:14-alpine
+=======
+      - image: cimg/openjdk:17.0.5-node
+      - image: postgres:<< parameters.psql_version >>
+>>>>>>> df2668e3b5 (AM-2154: downgrade images for old app versions (#3475))
         environment:
           POSTGRES_PASSWORD: T0pS3cr3t
     resource_class: medium+
@@ -697,7 +727,7 @@ jobs:
           jobName: run_testcontainer_tests
   publish-images-azure-registry:
     docker:
-      - image: cimg/openjdk:17.0.8
+      - image: cimg/openjdk:17.0.1
     resource_class: small
     steps:
       - checkout
@@ -898,7 +928,7 @@ jobs:
             done
   coverage_build:
     docker:
-      - image: cimg/openjdk:17.0.8
+      - image: cimg/openjdk:17.0.1
     resource_class: large
     steps:
       - attach_workspace:
@@ -921,7 +951,7 @@ jobs:
           jobName: coverage_build
   frontend_version_build:
     docker:
-      - image: cimg/openjdk:17.0.8
+      - image: cimg/openjdk:17.0.1
     resource_class: small
     steps:
       - attach_workspace:
