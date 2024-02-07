@@ -35,6 +35,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
+import static io.gravitee.am.common.utils.ConstantKeys.PROTOCOL_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.PROTOCOL_VALUE_SAML_POST;
+import static io.gravitee.am.common.utils.ConstantKeys.RETURN_URL_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.TRANSACTION_ID_KEY;
 import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.STATE;
 
 /**
@@ -115,6 +119,17 @@ public class LoginCallbackParseHandler implements Handler<RoutingContext> {
                     final MultiMap initialQueryParams = RequestUtils.getQueryParams((String) stateJwt.getOrDefault("q", ""), false);
                     context.put(ConstantKeys.PARAM_CONTEXT_KEY, initialQueryParams);
                     context.put(ConstantKeys.PROVIDER_ID_PARAM_KEY, stateJwt.get("p"));
+                    final String protocol = (String) stateJwt.get(PROTOCOL_KEY);
+                    if (StringUtils.hasLength(protocol)) {
+                        // SAML flow, need to restore these session attributes
+                        // in order to redirect the process to the SAML Handler and
+                        // not onto OAuth2 flow
+                        context.session().put(PROTOCOL_KEY, protocol);
+                        context.session().put(RETURN_URL_KEY, stateJwt.get(RETURN_URL_KEY));
+                        if (PROTOCOL_VALUE_SAML_POST.equals(protocol)) {
+                            context.session().put(TRANSACTION_ID_KEY, stateJwt.get(TRANSACTION_ID_KEY));
+                        }
+                    }
                 })
                 .subscribe(
                         stateJwt -> handler.handle(Future.succeededFuture(true)),
