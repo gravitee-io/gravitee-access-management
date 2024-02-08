@@ -3,11 +3,12 @@
     ul.checkbox-list {
       margin-block-start: 0;
     }
+
     flex-layout-root-widget {
-      flex-flow: column nowrap !important;
-      box-sizing: border-box !important;
       display: initial !important;
       max-height: 100% !important;
+      box-sizing: border-box !important;
+      flex-flow: column nowrap !important;
     }
   }
 }

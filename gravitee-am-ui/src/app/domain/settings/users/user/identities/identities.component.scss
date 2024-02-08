@@ -1,12 +1,15 @@
 a {
   text-decoration: none;
+
   mat-icon {
     color: grey;
   }
 }
+
 a.expanded {
-  text-decoration: none;
   color: grey;
+  text-decoration: none;
+
   &:hover {
     color: grey;
     text-decoration: none;

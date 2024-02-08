@@ -1,23 +1,26 @@
 p {
-  font-size: smaller;
   margin: 5px 0;
+  font-size: smaller;
 }
 
 ngx-datatable {
   .resource-header {
-    margin: 5px;
     align-items: center;
+    margin: 5px;
+
     .resource-icon {
       margin: 0 12px 0 0;
     }
+
     .resource-information {
       h3 {
+        margin: 0;
         font-size: 14px;
         font-weight: normal;
-        margin: 0;
       }
+
       small {
-        color: rgba(0, 0, 0, 0.54);
+        color: rgb(0 0 0 / 54%);
       }
     }
   }

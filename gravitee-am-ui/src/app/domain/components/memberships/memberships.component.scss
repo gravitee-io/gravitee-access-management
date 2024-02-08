@@ -1,45 +1,55 @@
 .memberships-content {
   .select-user-membership {
     padding: 15px;
-    border: 1px solid rgba(0, 0, 0, 0.12);
+    border: 1px solid rgb(0 0 0 / 12%);
     border-radius: 4px;
   }
+
   ngx-datatable {
-    box-shadow: none;
     background: transparent;
+    box-shadow: none;
     font-size: 14px;
+
     p {
       margin: 0;
+
       &.primary-owner-membership {
         font-size: 85%;
         font-weight: bold;
       }
     }
+
     .membership-header {
-      margin: 5px;
       align-items: center;
+      margin: 5px;
+
       .membership-icon {
         margin: 0 12px 0 0;
       }
+
       .user-avatar {
         width: 40px;
         height: 40px;
         margin: 0 12px 0 0;
+
         img {
           border-radius: 50%;
         }
       }
+
       .membership-information {
         h3 {
+          margin: 0;
           font-size: 14px;
           font-weight: normal;
-          margin: 0;
         }
+
         small {
-          color: rgba(0, 0, 0, 0.54);
+          color: rgb(0 0 0 / 54%);
         }
       }
     }
+
     .members-actions {
       margin-left: -10px;
 

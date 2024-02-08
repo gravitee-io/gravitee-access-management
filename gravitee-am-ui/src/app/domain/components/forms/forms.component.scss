@@ -1,7 +1,8 @@
 :host {
   ::ng-deep.row-disabled {
-    background: #f1f1f1;
     border: 1px solid #fafafa;
+    background: #f1f1f1;
+
     datatable-body-cell {
       color: grey !important;
       font-size: 85% !important;
@@ -16,27 +17,30 @@
 
 .forms-content {
   ngx-datatable {
-    font-size: 14px;
     box-shadow: none;
+    font-size: 14px;
 
     .row-disabled {
       background: #f1f1f1;
     }
 
     .form-header {
-      margin: 5px;
       align-items: center;
+      margin: 5px;
+
       .form-icon {
         margin: 0 12px 0 0;
       }
+
       .form-information {
         h3 {
+          margin: 0;
           font-size: 14px;
           font-weight: normal;
-          margin: 0;
         }
+
         small {
-          color: rgba(0, 0, 0, 0.54);
+          color: rgb(0 0 0 / 54%);
         }
       }
     }

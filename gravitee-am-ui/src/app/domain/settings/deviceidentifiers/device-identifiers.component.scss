@@ -2,19 +2,22 @@
   .gv-page-content {
     ngx-datatable {
       .device-identifier-header {
-        margin: 5px;
         align-items: center;
+        margin: 5px;
+
         .device-identifier-icon {
           margin: 0 12px 0 0;
         }
+
         .device-identifier-information {
           h3 {
+            margin: 0;
             font-size: 14px;
             font-weight: normal;
-            margin: 0;
           }
+
           small {
-            color: rgba(0, 0, 0, 0.54);
+            color: rgb(0 0 0 / 54%);
           }
         }
       }

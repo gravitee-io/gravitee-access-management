@@ -1,24 +1,28 @@
-.audits-search {
-  font-size: 14px;
-  align-items: center;
-  button,
-  a {
-    color: grey;
-    display: flex;
-    align-items: center;
-    text-decoration: none;
-  }
-}
 a,
 a.expanded {
-  text-decoration: none;
   color: grey;
+  text-decoration: none;
+
   &:hover {
     color: grey;
     text-decoration: none;
   }
+
   mat-icon {
     color: grey;
+  }
+}
+
+.audits-search {
+  align-items: center;
+  font-size: 14px;
+
+  button,
+  a {
+    display: flex;
+    align-items: center;
+    color: grey;
+    text-decoration: none;
   }
 }
 
@@ -30,6 +34,7 @@ a.expanded {
   ::ng-deep.ngx-datatable.material .datatable-body .datatable-body-row .datatable-body-cell {
     font-size: 12px;
   }
+
   ::ng-deep.ngx-datatable.fixed-header .datatable-header .datatable-header-inner .datatable-header-cell {
     &:first-child {
       padding-left: 32px;

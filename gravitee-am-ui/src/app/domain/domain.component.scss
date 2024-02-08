@@ -1,24 +1,25 @@
 mat-card.domain-banner {
-  display: flex;
   position: absolute;
   z-index: 10;
+  top: 35px;
+  right: 0;
+  left: 0;
+  display: flex;
   max-width: 600px;
+  align-items: center;
   padding: 12px;
-  text-align: center;
+  margin-right: auto;
+  margin-left: auto;
   background: #ff9100;
   color: white;
-  top: 35px;
-  left: 0;
-  right: 0;
-  margin-left: auto;
-  margin-right: auto;
-  align-items: center;
+  text-align: center;
 
   .domain-banner-text {
-    margin: 3px 0px 0px 20px;
+    margin: 3px 0 0 20px;
+
     span {
-      text-decoration: underline;
       cursor: pointer;
+      text-decoration: underline;
     }
   }
 }
