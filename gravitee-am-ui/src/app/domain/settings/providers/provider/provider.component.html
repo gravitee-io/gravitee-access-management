@@ -21,12 +21,14 @@
     <h1>{{ provider.name }}</h1>
     <span *ngIf="provider.system" class="gio-badge-neutral">system</span>
   </div>
-  <nav mat-tab-nav-bar color="accent">
+  <nav mat-tab-nav-bar [tabPanel]="tabPanel" color="accent">
     <a mat-tab-link *ngFor="let link of navLinks" [routerLink]="link.href" routerLinkActive #rla="routerLinkActive" [active]="rla.isActive">
       {{ link.label }}
     </a>
   </nav>
-  <div class="gv-page-content">
-    <router-outlet></router-outlet>
-  </div>
+  <mat-tab-nav-panel #tabPanel>
+    <div class="gv-page-content">
+      <router-outlet></router-outlet>
+    </div>
+  </mat-tab-nav-panel>
 </div>

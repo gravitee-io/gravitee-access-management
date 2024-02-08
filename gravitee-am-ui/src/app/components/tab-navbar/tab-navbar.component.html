@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<nav mat-tab-nav-bar color="accent" class="tab-navbar">
+<nav mat-tab-nav-bar color="accent" class="tab-navbar" [tabPanel]="tabPanel">
   <a
     mat-tab-link
     *ngFor="let link of subMenuItems"
@@ -27,3 +27,6 @@
     <span>{{ link.label }}</span>
   </a>
 </nav>
+<mat-tab-nav-panel #tabPanel>
+  <ng-content></ng-content>
+</mat-tab-nav-panel>

@@ -17,12 +17,15 @@
 -->
 <div class="gv-page-container">
   <h1>Client-Initiated Backchannel Authentication Flow</h1>
-  <nav mat-tab-nav-bar color="accent">
+  <nav mat-tab-nav-bar color="accent" [tabPanel]="tabPanel">
     <a mat-tab-link *ngFor="let link of navLinks" [routerLink]="link.href" routerLinkActive #rla="routerLinkActive" [active]="rla.isActive">
       {{ link.label }}
     </a>
   </nav>
-  <div class="ciba-content">
-    <router-outlet></router-outlet>
-  </div>
+
+  <mat-tab-nav-panel #tabPanel>
+    <div class="ciba-content">
+      <router-outlet></router-outlet>
+    </div>
+  </mat-tab-nav-panel>
 </div>
