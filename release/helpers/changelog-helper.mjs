@@ -4,14 +4,14 @@
  * @param issues {Array<{id: string, fields: Array<{customfield_10115: string, summary: string}>}>}
  */
 export function getChangelogFor(issues) {
-  const authorizedIssueTypes = ['Public Bug', 'Story']
+  const authorizedIssueTypes = ['Public Bug', 'Public Security', 'Public Improvement', 'Story']
   return issues
     .filter((issue) => {
       return  !!issue.fields.issuetype.name &&
           authorizedIssueTypes.includes(issue.fields.issuetype.name);
     })
     .filter((issue) => {
-      return issue.fields.status.name === 'Done';
+      return issue.fields.status.statusCategory.key === 'done';
     })
     .sort((issue1, issue2) => {
       // if null or undefined, put it at the end
