@@ -15,8 +15,8 @@
  */
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import * as _ from 'lodash';
 import { filter, switchMap, tap } from 'rxjs/operators';
+import { find, groupBy, sortBy, uniqBy } from 'lodash';
 
 import { SnackbarService } from '../../../../../services/snackbar.service';
 import { DialogService } from '../../../../../services/dialog.service';
@@ -48,9 +48,9 @@ export class UserApplicationsComponent implements OnInit {
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
     this.user = this.route.snapshot.data['user'];
-    this.consents = _.sortBy(this.route.snapshot.data['consents'], 'updatedAt').reverse();
-    this.appConsentsGrouped = _.groupBy(this.consents, 'clientId');
-    this.appConsents = _.uniqBy(this.consents, 'clientId');
+    this.consents = sortBy(this.route.snapshot.data['consents'], 'updatedAt').reverse();
+    this.appConsentsGrouped = groupBy(this.consents, 'clientId');
+    this.appConsents = uniqBy(this.consents, 'clientId');
     this.canRevoke = this.authService.hasPermissions(['domain_user_update']);
   }
 
@@ -91,7 +91,7 @@ export class UserApplicationsComponent implements OnInit {
   loadConsents() {
     this.userService.consents(this.domainId, this.user.id, null).subscribe((consents) => {
       this.consents = consents;
-      this.appConsents = _.uniqBy(this.consents, 'clientId');
+      this.appConsents = uniqBy(this.consents, 'clientId');
     });
   }
 
@@ -102,10 +102,10 @@ export class UserApplicationsComponent implements OnInit {
   };
 
   canRevokeAccessForClient(clientId) {
-    return _.find(this.appConsentsGrouped[clientId], { status: 'approved' });
+    return find(this.appConsentsGrouped[clientId], { status: 'approved' });
   }
 
   canRevokeAllAccess() {
-    return _.find(this.consents, { status: 'approved' });
+    return find(this.consents, { status: 'approved' });
   }
 }

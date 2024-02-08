@@ -19,7 +19,7 @@ import { MatSort } from '@angular/material/sort';
 import { MatTableDataSource } from '@angular/material/table';
 import { SelectionModel } from '@angular/cdk/collections';
 import { ActivatedRoute } from '@angular/router';
-import * as _ from 'lodash';
+import { compact, intersectionWith, map } from 'lodash';
 
 export interface Scope {
   id: string;
@@ -49,7 +49,7 @@ export class ScopeSelectionComponent implements OnInit, AfterViewInit {
   constructor(private route: ActivatedRoute) {}
 
   ngOnInit() {
-    const datasource = _.map(
+    const datasource = map(
       this.route.snapshot.data['scopes'],
       (scope) =>
         <Scope>{
@@ -62,8 +62,8 @@ export class ScopeSelectionComponent implements OnInit, AfterViewInit {
     );
     this.scopes = new MatTableDataSource(datasource);
     this.scopes.paginator = this.paginator;
-    const initialSelectedValues = _.intersectionWith(this.scopes.data, this.initialSelectedScopes, (scope, key) => scope.key === key);
-    this.selection = new SelectionModel<Scope>(true, _.compact(initialSelectedValues));
+    const initialSelectedValues = intersectionWith(this.scopes.data, this.initialSelectedScopes, (scope, key) => scope.key === key);
+    this.selection = new SelectionModel<Scope>(true, compact(initialSelectedValues));
   }
 
   ngAfterViewInit() {

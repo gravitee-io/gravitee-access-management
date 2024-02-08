@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { Directive, ElementRef, Input, OnChanges } from '@angular/core';
-import * as jdenticon from 'jdenticon';
+import { update } from 'jdenticon';
 
 @Directive({
   selector: '[identiconHash]',
@@ -25,6 +25,6 @@ export class IdenticonHashDirective implements OnChanges {
   constructor(private el: ElementRef) {}
 
   ngOnChanges() {
-    jdenticon.update(this.el.nativeElement, this.identiconHash);
+    update(this.el.nativeElement, this.identiconHash);
   }
 }

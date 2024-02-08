@@ -15,8 +15,8 @@
  */
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import * as _ from 'lodash';
 import { filter, switchMap, tap } from 'rxjs/operators';
+import { find } from 'lodash';
 
 import { SnackbarService } from '../../../../../../services/snackbar.service';
 import { DialogService } from '../../../../../../services/dialog.service';
@@ -96,7 +96,7 @@ export class UserApplicationComponent implements OnInit {
   }
 
   canRevokeAccess() {
-    return _.find(this.consents, { status: 'approved' });
+    return find(this.consents, { status: 'approved' });
   }
 
   getRowClass(row) {

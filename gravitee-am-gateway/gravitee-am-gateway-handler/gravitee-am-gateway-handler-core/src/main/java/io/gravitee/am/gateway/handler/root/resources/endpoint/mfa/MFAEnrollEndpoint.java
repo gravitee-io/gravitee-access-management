@@ -47,6 +47,7 @@ import io.vertx.rxjava3.core.MultiMap;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.core.http.HttpServerResponse;
 import io.vertx.rxjava3.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.Session;
 import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -130,7 +131,7 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
                 }
 
                 // put factors in context
-                routingContext.put("factors", factorsToRender(h.result()));
+                routingContext.put("factors", factorsToRender(h.result(), routingContext.session()));
 
                 if (endUser.getPhoneNumbers() != null && !endUser.getPhoneNumbers().isEmpty()) {
                     routingContext.put("phoneNumber", endUser.getPhoneNumbers().stream()
@@ -157,12 +158,24 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
      * Filter out recovery code factor from the given list of factors
      *
      * @param factors list of Factor object
+     * @param session current session
      * @return list of Factor object
      */
-    private List<Factor> factorsToRender(List<Factor> factors) {
-        final String factorType = "RECOVERY CODE";
+    private List<Factor> factorsToRender(List<Factor> factors, Session session) {
+        // if an alternative factor ID has been set, only display this one
+        final String alternativeFactorId = session.get(ConstantKeys.ALTERNATIVE_FACTOR_ID_KEY);
+        if (alternativeFactorId != null && !alternativeFactorId.isEmpty()) {
+            // check if this alternative factor still exists
+            Optional<Factor> optionalFactor = factors.stream()
+                    .filter(factor -> alternativeFactorId.equals(factor.getId()))
+                    .findFirst();
+            if (optionalFactor.isPresent()) {
+                return List.of(optionalFactor.get());
+            }
+        }
+        // else return all factors except the RECOVERY CODE one
         return factors.stream()
-                .filter(factor -> !factor.factorType.equals(factorType))
+                .filter(factor -> !factor.factorType.equals(FactorType.RECOVERY_CODE.getType()))
                 .collect(Collectors.toList());
     }
 
@@ -218,7 +231,7 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
         }
 
         final var endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
-        if (userAlreadyHasFactor(endUser, client)){
+        if (userAlreadyHasFactor(endUser, client, routingContext.session())){
             logger.warn("User already has active factor, enrollment of factor '{}' rejected", factorId);
             routingContext.fail(new InvalidRequestException("factor already enrolled"));
             return;
@@ -251,7 +264,13 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
         }
     }
 
-    private boolean userAlreadyHasFactor(User endUser, Client client) {
+    private boolean userAlreadyHasFactor(User endUser, Client client, Session session) {
+        // check if MFA force enroll is enabled
+        if (Boolean.TRUE.equals(session.get(ConstantKeys.MFA_FORCE_ENROLLMENT))) {
+            return false;
+        }
+
+        // verify that the user has no enrolled factor
         final var recoveryCodeFactors = getRecoveryFactorIds(client);
         return isNotEmpty(endUser.getFactors()) &&
                 endUser.getFactors().stream()

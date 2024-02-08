@@ -15,9 +15,9 @@
  */
 import { Component, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import * as _ from 'lodash';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { NgForm } from '@angular/forms';
+import { find, findIndex, remove } from 'lodash';
 
 import { ApplicationService } from '../../../../../../services/application.service';
 import { SnackbarService } from '../../../../../../services/snackbar.service';
@@ -85,7 +85,7 @@ export class ApplicationTokensComponent implements OnInit {
   }
 
   claimExits(claim): boolean {
-    return _.find(this.applicationOauthSettings.tokenCustomClaims, function (el) {
+    return find(this.applicationOauthSettings.tokenCustomClaims, function (el) {
       return el.tokenType === claim.tokenType && el.claimName === claim.claimName;
     });
   }
@@ -94,7 +94,7 @@ export class ApplicationTokensComponent implements OnInit {
     const claim = event.target.value;
     if (claim) {
       this.editing[rowIndex + '-' + cell] = false;
-      const index = _.findIndex(this.applicationOauthSettings.tokenCustomClaims, { id: rowIndex });
+      const index = findIndex(this.applicationOauthSettings.tokenCustomClaims, { id: rowIndex });
       this.applicationOauthSettings.tokenCustomClaims[index][cell] = claim;
       this.applicationOauthSettings.tokenCustomClaims = [...this.applicationOauthSettings.tokenCustomClaims];
       this.formChanged = true;
@@ -103,7 +103,7 @@ export class ApplicationTokensComponent implements OnInit {
 
   deleteClaim(tokenType, key, event) {
     event.preventDefault();
-    _.remove(this.applicationOauthSettings.tokenCustomClaims, function (el: any) {
+    remove(this.applicationOauthSettings.tokenCustomClaims, function (el: any) {
       return el.tokenType === tokenType && el.claimName === key;
     });
     this.applicationOauthSettings.tokenCustomClaims = [...this.applicationOauthSettings.tokenCustomClaims];

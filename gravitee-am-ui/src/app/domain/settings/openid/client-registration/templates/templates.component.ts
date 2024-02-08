@@ -19,7 +19,7 @@ import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 import { MatTableDataSource } from '@angular/material/table';
 import { ActivatedRoute } from '@angular/router';
-import * as _ from 'lodash';
+import { map } from 'lodash';
 
 import { DomainService } from '../../../../../services/domain.service';
 import { SnackbarService } from '../../../../../services/snackbar.service';
@@ -65,7 +65,7 @@ export class ClientRegistrationTemplatesComponent implements OnInit, AfterViewIn
     this.readonly = !this.authService.hasPermissions(['domain_openid_create', 'domain_openid_update']);
     this.initEmptyStateMessage();
 
-    const datasource = _.map(
+    const datasource = map(
       this.route.snapshot.data['apps'].data,
       (app) =>
         <Client>{

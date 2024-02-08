@@ -15,7 +15,7 @@
  */
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import * as _ from 'lodash';
+import { map } from 'lodash';
 
 import { DomainService } from '../../../../../services/domain.service';
 import { SnackbarService } from '../../../../../services/snackbar.service';
@@ -58,7 +58,7 @@ export class ClientRegistrationDefaultScopeComponent implements OnInit {
     const domain = {
       oidc: {
         clientRegistrationSettings: {
-          defaultScopes: _.map(this.selectedScopes, (scope) => scope.key),
+          defaultScopes: map(this.selectedScopes, (scope) => scope.key),
         },
       },
     };

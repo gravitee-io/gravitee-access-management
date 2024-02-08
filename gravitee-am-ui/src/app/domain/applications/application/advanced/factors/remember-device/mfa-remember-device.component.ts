@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
-import moment from 'moment';
+import { duration } from 'moment';
 import { ActivatedRoute } from '@angular/router';
 
 import { TimeConverterService } from '../../../../../../services/time-converter.service';
@@ -113,8 +113,9 @@ export class MfaRememberDeviceComponent implements OnInit, OnChanges {
   isConditional(): boolean {
     return this.selectedMFAOption?.toUpperCase() === 'CONDITIONAL';
   }
+
   private humanTimeToSeconds(): number {
-    return moment.duration(this.humanTime.expirationTime, this.humanTime.expirationUnit).asSeconds();
+    return duration(this.humanTime.expirationTime, this.humanTime.expirationUnit).asSeconds();
   }
 
   private update(): void {

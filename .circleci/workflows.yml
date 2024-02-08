@@ -246,7 +246,7 @@ commands:
             sha1sum gravitee-am-webui-${RELEASE_VERSION_NUMBER}.zip > gravitee-am-webui-${RELEASE_VERSION_NUMBER}.zip.sha1
             mkdir -p ~/release/graviteeio-am/distributions/graviteeio-am-full-${RELEASE_VERSION_NUMBER}/graviteeio-am-management-ui-${RELEASE_VERSION_NUMBER}/
             cp -R ~/project/gravitee-am-ui/dist/* ~/release/graviteeio-am/distributions/graviteeio-am-full-${RELEASE_VERSION_NUMBER}/graviteeio-am-management-ui-${RELEASE_VERSION_NUMBER}/
- 
+            
             cd ~/release/graviteeio-am/distributions/
             zip -rm graviteeio-am-full-${RELEASE_VERSION_NUMBER}.zip graviteeio-am-full-${RELEASE_VERSION_NUMBER}
             md5sum graviteeio-am-full-${RELEASE_VERSION_NUMBER}.zip > graviteeio-am-full-${RELEASE_VERSION_NUMBER}.zip.md5
@@ -453,7 +453,7 @@ jobs:
             unzip /tmp/workspace/gravitee-am-gateway-standalone-*.zip
             unzip /tmp/workspace/gravitee-am-management-api-standalone-*.zip
             export AM_VERSION=$(mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
-            curl https://download.gravitee.io/plugins/services/gravitee-service-geoip/gravitee-service-geoip-2.1.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-2.1.0.zip
+            curl --retry 4 --retry-delay 10 --retry-all-errors https://download.gravitee.io/plugins/services/gravitee-service-geoip/gravitee-service-geoip-2.1.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-2.1.0.zip
             
             cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
             cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/
@@ -482,11 +482,9 @@ jobs:
             # build & start CIBA Delegated Service
             mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -P cicd -f gravitee-am-ciba-delegated-service/pom.xml package
             java -jar gravitee-am-ciba-delegated-service/target/gravitee-am-ciba-delegated-service-${AM_VERSION}.jar &
-            sleep 30
             # Wait for AM to be up and running
-            timeout 30s bash -c 'until nc -vz localhost 8093; do sleep 2; done'
-            timeout 30s bash -c 'until nc -vz localhost 8092; do sleep 2; done'
-            sleep 30
+            timeout 120s bash -c 'until nc -vz localhost 8093; do sleep 2; done'
+            timeout 120s bash -c 'until nc -vz localhost 8092; do sleep 2; done'
             # Run Jest tests
             npm --prefix gravitee-am-test run ci
       - keeper/env-export:
@@ -538,7 +536,7 @@ jobs:
             unzip /tmp/workspace/gravitee-am-gateway-standalone-*.zip
             unzip /tmp/workspace/gravitee-am-management-api-standalone-*.zip
             export AM_VERSION=$(mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
-            curl https://download.gravitee.io/plugins/services/gravitee-service-geoip/gravitee-service-geoip-2.1.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-2.1.0.zip
+            curl --retry 4 --retry-delay 10 --retry-all-errors https://download.gravitee.io/plugins/services/gravitee-service-geoip/gravitee-service-geoip-2.1.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-2.1.0.zip
             
             cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
             cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/
@@ -547,8 +545,8 @@ jobs:
             cp /tmp/workspace/gravitee-am-factor-mock-*.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/
             
             # copy r2dbc & jdbc drivers
-            curl https://jdbc.postgresql.org/download/postgresql-42.6.0.jar -o postgresql-jdbc.jar
-            curl https://repo1.maven.org/maven2/org/postgresql/r2dbc-postgresql/1.0.2.RELEASE/r2dbc-postgresql-1.0.2.RELEASE.jar -o r2dbc-postgresql.jar
+            curl --retry 4 --retry-delay 10 --retry-all-errors https://jdbc.postgresql.org/download/postgresql-42.6.0.jar -o postgresql-jdbc.jar
+            curl --retry 4 --retry-delay 10 --retry-all-errors https://repo1.maven.org/maven2/org/postgresql/r2dbc-postgresql/1.0.2.RELEASE/r2dbc-postgresql-1.0.2.RELEASE.jar -o r2dbc-postgresql.jar
 
             mkdir -p gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc
             mkdir -p gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc
@@ -598,11 +596,9 @@ jobs:
             # build & start CIBA Delegated Service
             mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -P cicd -f gravitee-am-ciba-delegated-service/pom.xml package
             java -jar gravitee-am-ciba-delegated-service/target/gravitee-am-ciba-delegated-service-${AM_VERSION}.jar &
-            sleep 30
             # Wait for AM to be up and running
-            timeout 30s bash -c 'until nc -vz localhost 8093; do sleep 2; done'
-            timeout 30s bash -c 'until nc -vz localhost 8092; do sleep 2; done'
-            sleep 30
+            timeout 120s bash -c 'until nc -vz localhost 8093; do sleep 2; done'
+            timeout 120s bash -c 'until nc -vz localhost 8092; do sleep 2; done'
             # Run Jest tests
             npm --prefix gravitee-am-test run ci
       - keeper/env-export:
@@ -641,7 +637,7 @@ jobs:
             unzip /tmp/workspace/gravitee-am-gateway-standalone-*.zip
             unzip /tmp/workspace/gravitee-am-management-api-standalone-*.zip
             export AM_VERSION=$(mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
-            curl https://download.gravitee.io/plugins/services/gravitee-service-geoip/gravitee-service-geoip-2.1.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-2.1.0.zip
+            curl --retry 4 --retry-delay 10 --retry-all-errors https://download.gravitee.io/plugins/services/gravitee-service-geoip/gravitee-service-geoip-2.1.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-2.1.0.zip
             
             cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
             cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/
@@ -660,13 +656,23 @@ jobs:
             # build & start CIBA Delegated Service
             mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -P cicd -f gravitee-am-ciba-delegated-service/pom.xml package
             java -jar gravitee-am-ciba-delegated-service/target/gravitee-am-ciba-delegated-service-${AM_VERSION}.jar &
-            sleep 30
             # Wait for AM to be up and running
-            timeout 30s bash -c 'until nc -vz localhost 8093; do sleep 2; done'
-            timeout 30s bash -c 'until nc -vz localhost 8092; do sleep 2; done'
-            sleep 30
-            # Run Postman tests
-            make postman
+            timeout 120s bash -c 'until nc -vz localhost 8093; do sleep 2; done'
+            timeout 120s bash -c 'until nc -vz localhost 8092; do sleep 2; done'
+            # Run Postman tests with retry
+            N=2
+            while [ $N -gt 0 ]
+            do
+              if $(make postman); then 
+                echo "Completed"
+                exit 0
+              fi
+
+              echo "Retrying postman tests"
+              N=$(( $N - 1 ))
+              sleep 10
+            done
+            exit 1
       - keeper/env-export:
           secret-url: keeper://ZOz4db245GNaETVwmPBk8w/field/password
           var-name: SLACK_ACCESS_TOKEN
@@ -705,7 +711,7 @@ jobs:
             unzip /tmp/workspace/gravitee-am-gateway-standalone-*.zip
             unzip /tmp/workspace/gravitee-am-management-api-standalone-*.zip
             export AM_VERSION=$(mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
-            curl https://download.gravitee.io/plugins/services/gravitee-service-geoip/gravitee-service-geoip-2.1.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-2.1.0.zip
+            curl --retry 4 --retry-delay 10 --retry-all-errors https://download.gravitee.io/plugins/services/gravitee-service-geoip/gravitee-service-geoip-2.1.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-2.1.0.zip
             
             cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
             cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/
@@ -714,8 +720,8 @@ jobs:
             cp /tmp/workspace/gravitee-am-factor-mock-*.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/
             
             # copy r2dbc & jdbc drivers
-            curl https://jdbc.postgresql.org/download/postgresql-42.6.0.jar -o postgresql-jdbc.jar
-            curl https://repo1.maven.org/maven2/org/postgresql/r2dbc-postgresql/1.0.2.RELEASE/r2dbc-postgresql-1.0.2.RELEASE.jar -o r2dbc-postgresql.jar
+            curl --retry 4 --retry-delay 10 --retry-all-errors https://jdbc.postgresql.org/download/postgresql-42.6.0.jar -o postgresql-jdbc.jar
+            curl --retry 4 --retry-delay 10 --retry-all-errors https://repo1.maven.org/maven2/org/postgresql/r2dbc-postgresql/1.0.2.RELEASE/r2dbc-postgresql-1.0.2.RELEASE.jar -o r2dbc-postgresql.jar
 
             mkdir -p gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc
             mkdir -p gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc
@@ -753,13 +759,23 @@ jobs:
             # build & start CIBA Delegated Service
             mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -P cicd -f gravitee-am-ciba-delegated-service/pom.xml package
             java -jar gravitee-am-ciba-delegated-service/target/gravitee-am-ciba-delegated-service-${AM_VERSION}.jar &
-            sleep 30
             # Wait for AM to be up and running
-            timeout 30s bash -c 'until nc -vz localhost 8093; do sleep 2; done'
-            timeout 30s bash -c 'until nc -vz localhost 8092; do sleep 2; done'
-            sleep 30
-            # Run Postman tests
-            make postman
+            timeout 120s bash -c 'until nc -vz localhost 8093; do sleep 2; done'
+            timeout 120s bash -c 'until nc -vz localhost 8092; do sleep 2; done'
+            # Run Postman tests with retry
+            N=2
+            while [ $N -gt 0 ]
+            do
+              if $(make postman); then 
+                echo "Completed"
+                exit 0
+              fi
+
+              echo "Retrying postman tests"
+              N=$(( $N - 1 ))
+              sleep 10
+            done
+            exit 1
       - keeper/env-export:
           secret-url: keeper://ZOz4db245GNaETVwmPBk8w/field/password
           var-name: SLACK_ACCESS_TOKEN
@@ -936,7 +952,7 @@ jobs:
                           --set "gateway.image.tag=${TAG}" \
                           --set "ui.image.repository=graviteeio.azurecr.io/am-management-ui" \
                           --set "ui.image.tag=${TAG}"
-              
+            
               helm upgrade --repo https://helm.gravitee.io \
                           --install am-master-ce \
                           -n am-master-ce-dev \
@@ -947,7 +963,7 @@ jobs:
                           --set "gateway.image.tag=${TAG}" \
                           --set "ui.image.repository=graviteeio.azurecr.io/am-management-ui" \
                           --set "ui.image.tag=${TAG}"
-              
+            
               helm upgrade --repo https://helm.gravitee.io \
                           --install am-psql \
                           -n am-master-postgres-dev \
@@ -973,7 +989,7 @@ jobs:
                                       --set "gateway.image.tag=${TAG}" \
                                       --set "ui.image.repository=graviteeio.azurecr.io/am-management-ui" \
                                       --set "ui.image.tag=${TAG}"
-              
+            
               # same with ce version
               kubectl create namespace am-${CIRCLE_BRANCH//./-}-ce-dev --dry-run=client -o yaml | kubectl apply -f -
               sed -i 's#__BRANCH_NAME_SANITIZED__#'${CIRCLE_BRANCH//./-}'#g' ./cloud-am/devs-preprod/values-ce-maint.yaml

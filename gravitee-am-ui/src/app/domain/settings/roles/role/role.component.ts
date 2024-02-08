@@ -16,8 +16,8 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatInput } from '@angular/material/input';
-import * as _ from 'lodash';
 import { filter, switchMap, tap } from 'rxjs/operators';
+import { difference, find, map, remove } from 'lodash';
 
 import { RoleService } from '../../../../services/role.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
@@ -68,12 +68,12 @@ export class RoleComponent implements OnInit {
 
   initScopes() {
     // Merge with existing scope
-    this.selectedPermissions = _.map(this.role.permissions, (permission) => _.find(this.scopes, { key: permission }));
-    this.scopes = _.difference(this.scopes, this.selectedPermissions);
+    this.selectedPermissions = map(this.role.permissions, (permission) => find(this.scopes, { key: permission }));
+    this.scopes = difference(this.scopes, this.selectedPermissions);
   }
 
   update() {
-    this.role.permissions = _.map(this.selectedPermissions, (permission) => permission.key);
+    this.role.permissions = map(this.selectedPermissions, (permission) => permission.key);
     this.roleService.update(this.domainId, this.role.id, this.role).subscribe((data) => {
       this.role = data;
       this.snackbarService.open('Role updated');
@@ -96,14 +96,14 @@ export class RoleComponent implements OnInit {
   }
 
   addPermission(event) {
-    this.selectedPermissions = this.selectedPermissions.concat(_.remove(this.scopes, { key: event.option.value }));
+    this.selectedPermissions = this.selectedPermissions.concat(remove(this.scopes, { key: event.option.value }));
     this.chipInput['nativeElement'].blur();
     this.formChanged = true;
   }
 
   removePermission(permission) {
     this.scopes = this.scopes.concat(
-      _.remove(this.selectedPermissions, function (selectPermission) {
+      remove(this.selectedPermissions, function (selectPermission) {
         return selectPermission.key === permission.key;
       }),
     );

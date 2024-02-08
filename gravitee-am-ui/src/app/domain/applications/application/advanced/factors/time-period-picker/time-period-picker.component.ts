@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import moment from 'moment';
+import { duration } from 'moment';
 
 import { TimeConverterService } from '../../../../../../services/time-converter.service';
 
@@ -63,6 +63,6 @@ export class TimePeriodPickerComponent implements OnInit {
   }
 
   private humanTimeToSeconds(): number {
-    return moment.duration(this.humanTime.skipTime, this.humanTime.skipUnit).asSeconds();
+    return duration(this.humanTime.skipTime, this.humanTime.skipUnit).asSeconds();
   }
 }

@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
-import { FormControl } from '@angular/forms';
-import * as _ from 'lodash';
+import { UntypedFormControl } from '@angular/forms';
 import { filter, switchMap, tap } from 'rxjs/operators';
+import { map } from 'lodash';
 
 import { OrganizationService } from '../../../services/organization.service';
 import { DialogService } from '../../../services/dialog.service';
@@ -43,7 +43,7 @@ export class MembershipsComponent implements OnInit, OnChanges {
   selectedRole: any;
   groups: any[];
   roles: any[];
-  userCtrl = new FormControl();
+  userCtrl = new UntypedFormControl();
   filteredUsers: any[];
   filteredGroups: any[];
   displayReset = false;
@@ -54,7 +54,7 @@ export class MembershipsComponent implements OnInit, OnChanges {
         filter((searchTerm) => searchTerm && typeof searchTerm === 'string'),
         switchMap((searchTerm) => this.organizationService.searchUsers('q=' + searchTerm + '*', 0, 30)),
         tap((response) => {
-          this.filteredUsers = response.data.filter((user) => _.map(this.members, 'memberId').indexOf(user.id) === -1);
+          this.filteredUsers = response.data.filter((user) => map(this.members, 'memberId').indexOf(user.id) === -1);
         }),
       )
       .subscribe();
@@ -151,6 +151,6 @@ export class MembershipsComponent implements OnInit, OnChanges {
   }
 
   private filterGroups() {
-    this.filteredGroups = this.groups.filter((group) => _.map(this.members, 'memberId').indexOf(group.id) === -1);
+    this.filteredGroups = this.groups.filter((group) => map(this.members, 'memberId').indexOf(group.id) === -1);
   }
 }

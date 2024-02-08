@@ -15,7 +15,7 @@
  */
 import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import * as _ from 'lodash';
+import { find } from 'lodash';
 
 @Component({
   selector: 'application-creation-step2',
@@ -56,7 +56,7 @@ export class ApplicationCreationStep2Component implements OnInit {
   }
 
   icon(app) {
-    return _.find(this.applicationTypes, function (a) {
+    return find(this.applicationTypes, function (a) {
       return a.type === app.type;
     }).icon;
   }

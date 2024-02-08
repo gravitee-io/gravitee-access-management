@@ -32,7 +32,7 @@ export class CertificateFormComponent implements OnChanges {
     file: MaterialFileComponent,
   };
 
-  ngOnChanges(changes: SimpleChanges) {
+  ngOnChanges(changes: SimpleChanges): void {
     if (changes.certificateSchema) {
       const _certificateSchema = changes.certificateSchema.currentValue;
       if (_certificateSchema?.id) {
@@ -48,11 +48,11 @@ export class CertificateFormComponent implements OnChanges {
     }
   }
 
-  onChanges(certificateConfiguration) {
+  onChanges(certificateConfiguration: any): void {
     this.configuration = certificateConfiguration;
   }
 
-  isValid(isValid: boolean) {
+  isValid(isValid: boolean): void {
     const configurationWrapper = { isValid: isValid, configuration: this.configuration };
     this.configurationCompleted.emit(configurationWrapper);
   }

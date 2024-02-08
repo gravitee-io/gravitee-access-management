@@ -42,11 +42,13 @@ public class TokenEnhancerImpl implements TokenEnhancer {
     @Override
     public Single<Token> enhance(Token accessToken, OAuth2Request oAuth2Request, Client client, User endUser, ExecutionContext executionContext) {
         // enhance token with ID token
-        if (oAuth2Request.shouldGenerateIDToken()) {
-            return enhanceIDToken(accessToken, client, endUser, oAuth2Request, executionContext);
-        } else {
-            return Single.just(accessToken);
-        }
+        return Single.fromCallable(oAuth2Request::shouldGenerateIDToken).flatMap(generate -> {
+            if (Boolean.TRUE.equals(generate)) {
+                return enhanceIDToken(accessToken, client, endUser, oAuth2Request, executionContext);
+            } else {
+                return Single.just(accessToken);
+            }
+        });
     }
 
     private Single<Token> enhanceIDToken(Token accessToken, Client client, User user, OAuth2Request oAuth2Request, ExecutionContext executionContext) {
@@ -54,11 +56,11 @@ public class TokenEnhancerImpl implements TokenEnhancer {
             oAuth2Request.getContext().put(Claims.at_hash, accessToken.getValue());
         }
         return idTokenService.create(oAuth2Request, client, user, executionContext)
-                .flatMap(idToken -> {
+                .map(idToken -> {
                     Map<String, Object> additionalInformation = new HashMap<>(accessToken.getAdditionalInformation());
                     additionalInformation.put(ResponseType.ID_TOKEN, idToken);
                     accessToken.setAdditionalInformation(additionalInformation);
-                    return Single.just(accessToken);
+                    return accessToken;
                 });
     }
 }

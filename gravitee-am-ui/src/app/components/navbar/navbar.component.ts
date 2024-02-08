@@ -34,7 +34,7 @@ import { AppConfig } from '../../../config/app.config';
   styleUrls: ['./navbar.component.scss'],
 })
 export class NavbarComponent implements OnInit, OnDestroy {
-  private unsubscribe$ = new Subject();
+  private unsubscribe$ = new Subject<void>();
   title = AppConfig.settings.portalTitle;
   version = AppConfig.settings.version;
   reducedMode = false;

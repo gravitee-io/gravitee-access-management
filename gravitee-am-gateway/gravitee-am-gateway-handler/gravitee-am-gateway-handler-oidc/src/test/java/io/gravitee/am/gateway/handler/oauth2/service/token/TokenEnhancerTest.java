@@ -15,10 +15,12 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.token;
 
+import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.service.token.impl.AccessToken;
 import io.gravitee.am.gateway.handler.oauth2.service.token.impl.TokenEnhancerImpl;
 import io.gravitee.am.gateway.handler.oidc.service.idtoken.IDTokenService;
+import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
@@ -47,41 +49,58 @@ public class TokenEnhancerTest {
 
     @Test
     public void shouldEnhanceToken_withoutIDToken() {
+        var user = new User();
+        var id = "user-id";
+        user.setId(id);
         OAuth2Request oAuth2Request = new OAuth2Request();
         oAuth2Request.setClientId("client-id");
+        oAuth2Request.setSubject(id);
         // no openid scope for the request
-
         Client client = new Client();
-
         Token accessToken = new AccessToken("token-id");
 
-        TestObserver<Token> testObserver = tokenEnhancer.enhance(accessToken, oAuth2Request, client, null, null).test();
+        tokenEnhancer.enhance(accessToken, oAuth2Request, client, user, null)
+                .test()
+                .assertComplete()
+                .assertNoErrors()
+                .assertValue(accessToken1 -> accessToken1.getAdditionalInformation().isEmpty());
+        verify(idTokenService, never()).create(any(), any(), any(), any());
+    }
 
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
-        testObserver.assertValue(accessToken1 -> accessToken1.getAdditionalInformation().isEmpty());
+    @Test
+    public void shouldEnhanceTokenThrowErrorWhenNoUserWithOpenIdScope() {
+        OAuth2Request oAuth2Request = new OAuth2Request();
+        oAuth2Request.setClientId("client-id");
+        oAuth2Request.setScopes(Collections.singleton("openid"));
+        Client client = new Client();
+        Token accessToken = new AccessToken("token-id");
+
+        tokenEnhancer.enhance(accessToken, oAuth2Request, client, null, null)
+                .test()
+                .assertNotComplete()
+                .assertError(InvalidScopeException.class);
+        verify(idTokenService, never()).create(any(), any(), any(), any());
     }
 
     @Test
     public void shouldEnhanceToken_withIDToken() {
+        var user = new User();
+        var id = "user-id";
+        user.setId(id);
         OAuth2Request oAuth2Request = new OAuth2Request();
         oAuth2Request.setClientId("client-id");
+        oAuth2Request.setSubject(id);
         oAuth2Request.setScopes(Collections.singleton("openid"));
-
         Client client = new Client();
-
         Token accessToken = new AccessToken("token-id");
-
         String idTokenPayload = "payload";
+        when(idTokenService.create(oAuth2Request, client, user, null)).thenReturn(Single.just(idTokenPayload));
 
-        when(idTokenService.create(oAuth2Request, client, null, null)).thenReturn(Single.just(idTokenPayload));
-
-        TestObserver<Token> testObserver = tokenEnhancer.enhance(accessToken, oAuth2Request, client, null, null).test();
-
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
-        testObserver.assertValue(accessToken1 -> accessToken1.getAdditionalInformation().containsKey("id_token"));
-
+        tokenEnhancer.enhance(accessToken, oAuth2Request, client, user, null)
+                .test()
+                .assertComplete()
+                .assertNoErrors()
+                .assertValue(accessToken1 -> accessToken1.getAdditionalInformation().containsKey("id_token"));
         verify(idTokenService, times(1)).create(any(), any(), any(), any());
     }
 }

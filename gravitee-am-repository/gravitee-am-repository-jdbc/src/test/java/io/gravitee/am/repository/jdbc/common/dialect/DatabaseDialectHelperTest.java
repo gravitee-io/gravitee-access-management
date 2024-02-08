@@ -140,4 +140,20 @@ public class DatabaseDialectHelperTest {
         Assert.assertEquals("binding size should be 1", 1L, (long)search.getBinding().size());
         Assert.assertEquals("binding should contains date value", "2023-09-05T10:36:11.571", search.getBinding().get("logged_at").toString());
     }
+
+    @Test
+    public void shouldPrepareScimSearchUserQuery_dateField_presentOperator(){
+        final R2dbcDialect dialect = Mockito.mock(R2dbcDialect.class);
+        PostgresqlHelper helper = new PostgresqlHelper(dialect, null);
+        final FilterCriteria criteria = new FilterCriteria();
+        criteria.setFilterName("meta.loggedAt");
+        criteria.setOperator("pr");
+        String BASE_CLAUSE = " FROM users WHERE reference_id = :refId AND reference_type = :refType AND ";
+
+        ScimSearch search = helper.prepareScimSearchQuery(new StringBuilder(BASE_CLAUSE), criteria, 0, 1, DatabaseDialectHelper.ScimRepository.USERS);
+
+        Assert.assertTrue("Query contains logged_at clause", search.getSelectQuery().startsWith("SELECT *  FROM users WHERE reference_id = :refId AND reference_type = :refType AND logged_at IS NOT NULL"));
+        Assert.assertEquals("binding size should be 0", 0L, (long)search.getBinding().size());
+
+    }
 }
