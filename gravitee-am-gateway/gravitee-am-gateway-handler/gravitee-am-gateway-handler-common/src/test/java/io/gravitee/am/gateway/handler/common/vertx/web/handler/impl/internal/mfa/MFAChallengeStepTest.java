@@ -15,10 +15,11 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa;
 
+import io.gravitee.am.common.factor.FactorType;
 import io.gravitee.am.common.utils.ConstantKeys;
+import static io.gravitee.am.common.utils.ConstantKeys.AUTH_COMPLETED;
 import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ALREADY_EXISTS_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.ENROLLED_FACTOR_ID_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.MFA_STOP;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.ruleengine.SpELRuleEngine;
@@ -38,10 +39,13 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
+import java.util.Set;
 import static org.junit.Assert.assertThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
@@ -52,6 +56,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+/**
+ * @author Ashraful HASAN (ashraful.hasan at graviteesource.com)
+ * @author GraviteeSource Team
+ */
 @ExtendWith(MockitoExtension.class)
 class MFAChallengeStepTest {
     private static final Handler<RoutingContext> handler = RedirectHandler.create("/mfa/challenge");
@@ -108,38 +116,16 @@ class MFAChallengeStepTest {
         mfaChallengeStep = new MFAChallengeStep(handler, ruleEngine, factorManager);
         when(routingContext.session()).thenReturn(session);
     }
-
     @Test
     void shouldChallengeWhenStepUp() {
         mockStepUp(true);
-        mockAuthUser(false);
+        mockAuthUser(true);
         when(client.getMfaSettings()).thenReturn(mfa);
         when(routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY)).thenReturn(client);
 
         mfaChallengeStep.execute(routingContext, flow);
 
         verifyChallenge();
-    }
-
-    @Test
-    void shouldNotChallengeWhenStepUpFalse() {
-        mockStepUp(false);
-        mockAuthUser(false);
-        when(client.getMfaSettings()).thenReturn(mfa);
-        when(mfa.getChallenge()).thenReturn(challenge);
-        when(challenge.isActive()).thenReturn(true);
-        when(challenge.getType()).thenReturn(MfaChallengeType.CONDITIONAL);
-
-        when(routingContext.request()).thenReturn(httpServerRequest);
-        when(routingContext.session()).thenReturn(session);
-        when(routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY)).thenReturn(client);
-        when(session.get(MFA_STOP)).thenReturn(false);
-
-        mockChallengeRuleSatisfied(true);
-
-        mfaChallengeStep.execute(routingContext, flow);
-
-        verifyContinueWithoutChallenge();
     }
 
     @Test
@@ -214,7 +200,7 @@ class MFAChallengeStepTest {
         when(routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY)).thenReturn(client);
         when(session.get(ConstantKeys.STRONG_AUTH_COMPLETED_KEY)).thenReturn(true);
         when(session.get(ENROLLED_FACTOR_ID_KEY)).thenReturn(null);
-        when(session.get(MFA_CHALLENGE_COMPLETED_KEY)).thenReturn(true);
+        when(session.get(AUTH_COMPLETED)).thenReturn(true);
         when(session.get(DEVICE_ALREADY_EXISTS_KEY)).thenReturn(true);
         when(session.get(MFA_STOP)).thenReturn(false);
 
@@ -347,25 +333,51 @@ class MFAChallengeStepTest {
     }
 
     @Test
-    void shouldNotChallengeWhenChallengeIsDisabled() {
+    void shouldChallengeWhenRequiredAndAuthAndDeviceButEnrolling() {
         mockAuthUser(false);
         when(client.getMfaSettings()).thenReturn(mfa);
+        when(challenge.isActive()).thenReturn(true);
+        when(challenge.getType()).thenReturn(MfaChallengeType.REQUIRED);
         when(mfa.getChallenge()).thenReturn(challenge);
-        when(challenge.isActive()).thenReturn(false);
-        when(routingContext.session()).thenReturn(session);
+
+        var rememberDevice = new RememberDeviceSettings();
+        rememberDevice.setActive(true);
 
         when(routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY)).thenReturn(client);
+        when(session.get(ConstantKeys.STRONG_AUTH_COMPLETED_KEY)).thenReturn(true);
         when(session.get(MFA_STOP)).thenReturn(false);
+        when(session.get(ENROLLED_FACTOR_ID_KEY)).thenReturn(new Object());
 
         mfaChallengeStep.execute(routingContext, flow);
 
-        verifyContinueWithoutChallenge();
+        verifyChallenge();
     }
 
     @Test
-    void shouldChallengeWhenEnrolling() {
+    void shouldChallengeWhenRiskBasedAndAuthAndDeviceButEnrolling() {
         mockAuthUser(false);
         when(client.getMfaSettings()).thenReturn(mfa);
+        when(challenge.isActive()).thenReturn(true);
+        when(challenge.getType()).thenReturn(MfaChallengeType.RISK_BASED);
+        when(mfa.getChallenge()).thenReturn(challenge);
+
+        when(routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY)).thenReturn(client);
+        when(session.get(ConstantKeys.STRONG_AUTH_COMPLETED_KEY)).thenReturn(true);
+        when(session.get(MFA_STOP)).thenReturn(false);
+        when(session.get(ENROLLED_FACTOR_ID_KEY)).thenReturn(new Object());
+
+        mfaChallengeStep.execute(routingContext, flow);
+
+        verifyChallenge();
+    }
+
+    @Test
+    void shouldChallengeWhenConditionalAndAuthAndDeviceButEnrolling() {
+        mockAuthUser(false);
+        when(client.getMfaSettings()).thenReturn(mfa);
+        when(challenge.isActive()).thenReturn(true);
+        when(challenge.getType()).thenReturn(MfaChallengeType.CONDITIONAL);
+        when(mfa.getChallenge()).thenReturn(challenge);
 
         when(routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY)).thenReturn(client);
         when(session.get(ConstantKeys.STRONG_AUTH_COMPLETED_KEY)).thenReturn(true);

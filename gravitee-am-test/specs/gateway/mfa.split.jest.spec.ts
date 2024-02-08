@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 import fetch from "cross-fetch";
 import {afterAll, beforeAll, expect, jest} from "@jest/globals";
 import {requestAdminAccessToken} from "@management-commands/token-management-commands";
@@ -11,8 +26,6 @@ import {buildCreateAndTestUser} from "@management-commands/user-management-comma
 import {initiateLoginFlow} from "@gateway-commands/login-commands";
 
 
-const cheerio = require('cheerio');
-
 global.fetch = fetch;
 
 let accessToken;
@@ -20,7 +33,7 @@ let domain;
 let mockFactor;
 let smsResource;
 let openIdConfiguration;
-let appEnrollEnabledRequiredChallengeDisabled;
+let appSettings;
 
 const validMFACode = '333333';
 
@@ -37,7 +50,8 @@ beforeAll(async () => {
 
     domain = await startDomain(domain.id, accessToken);
 
-    appEnrollEnabledRequiredChallengeDisabled = await createMfaApp(domain, accessToken, [mockFactor.id], true, 'REQUIRED', false, 'REQUIRED');
+    appSettings = await createMfaApp(domain, accessToken, [mockFactor.id], true, 'REQUIRED', true, 'REQUIRED');
+
     /*
    * it is intentional to call setTimeout after creating apps. Cannot avoid this timeout call.
    * At this point I haven't found a function which is similar to retry until specific http code is returned.
@@ -52,7 +66,7 @@ beforeAll(async () => {
 
 describe('MFA enroll enabled, challenge disabled', () => {
     it('should enroll when enroll is required', async () => {
-        const clientId = appEnrollEnabledRequiredChallengeDisabled.settings.oauth.clientId;
+        const clientId = appSettings.settings.oauth.clientId;
 
         const user1 = await buildCreateAndTestUser(domain.id, accessToken, 1);
         expect(user1).toBeDefined();
