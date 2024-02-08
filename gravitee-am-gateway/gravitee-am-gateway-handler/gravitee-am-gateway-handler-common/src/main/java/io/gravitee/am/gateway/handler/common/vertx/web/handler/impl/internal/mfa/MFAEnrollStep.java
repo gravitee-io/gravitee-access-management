@@ -60,7 +60,7 @@ public class MFAEnrollStep extends MFAStep {
                 required(routingContext, flow, context);
             } else if (isEnrollActive(client)) {
                 switch (getEnrollSettings(client).getType()) {
-                    case OPTIONAL -> optional(routingContext, flow, client, context);
+                    case OPTIONAL -> optional(routingContext, flow, context);
                     case REQUIRED -> required(routingContext, flow, context);
                     case CONDITIONAL -> conditional(routingContext, flow, client, context);
                 }
@@ -100,7 +100,7 @@ public class MFAEnrollStep extends MFAStep {
         }
     }
 
-    private void optional(RoutingContext routingContext, AuthenticationFlowChain flow, Client client, MfaFilterContext context) {
+    private void optional(RoutingContext routingContext, AuthenticationFlowChain flow, MfaFilterContext context) {
         if (context.isEnrollSkipped()) {
             stop(routingContext, flow);
         } else {

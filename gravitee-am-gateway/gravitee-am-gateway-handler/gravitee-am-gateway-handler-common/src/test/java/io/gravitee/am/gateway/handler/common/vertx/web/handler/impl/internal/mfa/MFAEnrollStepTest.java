@@ -141,6 +141,7 @@ class MFAEnrollStepTest {
         when(client.getMfaSettings()).thenReturn(mfa);
         when(factor.getFactorType()).thenReturn(FactorType.SMS);
         when(factorManager.getFactor(FACTOR_ID)).thenReturn(factor);
+        when(session.get(ConstantKeys.STRONG_AUTH_COMPLETED_KEY)).thenReturn(false);
 
         when(routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY)).thenReturn(client);
 

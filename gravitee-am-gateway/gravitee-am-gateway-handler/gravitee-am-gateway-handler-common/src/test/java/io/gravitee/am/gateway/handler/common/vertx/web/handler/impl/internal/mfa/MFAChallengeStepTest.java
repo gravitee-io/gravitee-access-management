@@ -118,6 +118,7 @@ class MFAChallengeStepTest {
         mockAuthUser(true);
         when(client.getMfaSettings()).thenReturn(mfa);
         when(routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY)).thenReturn(client);
+        when(session.get(ConstantKeys.STRONG_AUTH_COMPLETED_KEY)).thenReturn(false);
 
         mfaChallengeStep.execute(routingContext, flow);
 
@@ -322,6 +323,22 @@ class MFAChallengeStepTest {
         when(session.get(MFA_STOP)).thenReturn(false);
 
         mockRiskBasedSatisfied(false);
+
+        mfaChallengeStep.execute(routingContext, flow);
+
+        verifyContinueWithoutChallenge();
+    }
+
+    @Test
+    void shouldNotChallengeWhenChallengeIsDisabled() {
+        mockAuthUser(false);
+        when(client.getMfaSettings()).thenReturn(mfa);
+        when(mfa.getChallenge()).thenReturn(challenge);
+        when(challenge.isActive()).thenReturn(false);
+        when(routingContext.session()).thenReturn(session);
+
+        when(routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY)).thenReturn(client);
+        when(session.get(MFA_STOP)).thenReturn(false);
 
         mfaChallengeStep.execute(routingContext, flow);
 

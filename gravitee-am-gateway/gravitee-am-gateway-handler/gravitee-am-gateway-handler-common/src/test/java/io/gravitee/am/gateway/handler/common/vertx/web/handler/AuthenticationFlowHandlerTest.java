@@ -20,6 +20,7 @@ import io.gravitee.am.common.factor.FactorType;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.utils.ConstantKeys;
 import static io.gravitee.am.common.utils.ConstantKeys.ALTERNATIVE_FACTOR_ID_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.AUTH_COMPLETED;
 import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ALREADY_EXISTS_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.ENROLLED_FACTOR_ID_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.RISK_ASSESSMENT_KEY;
@@ -611,7 +612,6 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             // set user
 
             var stepUpAuthenticationRule = "{#request.params['scope'][0] == 'write'}";
-            mfaSettings.setStepUpAuthenticationRule(stepUpAuthenticationRule);
             var stepUpAuthentication = new StepUpAuthenticationSettings();
             stepUpAuthentication.setActive(true);
             stepUpAuthentication.setStepUpAuthenticationRule(stepUpAuthenticationRule);
@@ -645,7 +645,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
 
 
     @Test
-    public void shouldContinue_user_device_known_and_step_up_active_not_strongly_auth() throws Exception {
+    public void shouldRedirectToChallenge_user_device_known_and_step_up_active_not_strongly_auth() throws Exception {
         router.route().order(-1).handler(rc -> {
             EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED, 0, "");
             ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
@@ -656,7 +656,6 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
 
             var stepUpAuthenticationRule = "{true}";
-            mfaSettings.setStepUpAuthenticationRule(stepUpAuthenticationRule);
             var stepUpAuthentication = new StepUpAuthenticationSettings();
             stepUpAuthentication.setActive(true);
             stepUpAuthentication.setStepUpAuthenticationRule(stepUpAuthenticationRule);
@@ -675,7 +674,52 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             endUser.setFactors(Collections.singletonList(enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
             rc.session().put(STRONG_AUTH_COMPLETED_KEY, false);
-            rc.session().put(ConstantKeys.AUTH_COMPLETED, true);
+            rc.session().put(AUTH_COMPLETED, true);
+            rc.next();
+        });
+
+        testRequest(
+                HttpMethod.GET, "/login",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.endsWith("/mfa/challenge"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldContinue_user_device_known_and_step_up_active_strongly_auth() throws Exception {
+        router.route().order(-1).handler(rc -> {
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED, 0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
+            MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
+            // set client
+            Client client = new Client();
+            client.setFactors(Collections.singleton("factor-1"));
+            rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+
+            var stepUpAuthenticationRule = "{true}";
+            var stepUpAuthentication = new StepUpAuthenticationSettings();
+            stepUpAuthentication.setActive(true);
+            stepUpAuthentication.setStepUpAuthenticationRule(stepUpAuthenticationRule);
+            mfaSettings.setStepUpAuthentication(stepUpAuthentication);
+
+            final RememberDeviceSettings rememberDevice = new RememberDeviceSettings();
+            rememberDevice.setActive(true);
+            mfaSettings.setRememberDevice(rememberDevice);
+            rc.session().put(DEVICE_ALREADY_EXISTS_KEY, true);
+            client.setMfaSettings(mfaSettings);
+            // set user
+            EnrolledFactor enrolledFactor = new EnrolledFactor();
+            enrolledFactor.setFactorId("factor-1");
+            enrolledFactor.setStatus(ACTIVATED);
+            io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
+            endUser.setFactors(Collections.singletonList(enrolledFactor));
+            rc.getDelegate().setUser(new User(endUser));
+            rc.session().put(STRONG_AUTH_COMPLETED_KEY, true);
+            rc.session().put(AUTH_COMPLETED, true);
             rc.next();
         });
 
@@ -721,7 +765,6 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
 
             var stepUpAuthenticationRule = "{#request.params['scope'][0] == 'write'}";
-            mfaSettings.setStepUpAuthenticationRule(stepUpAuthenticationRule);
             var stepUpAuthentication = new StepUpAuthenticationSettings();
             stepUpAuthentication.setActive(true);
             stepUpAuthentication.setStepUpAuthenticationRule(stepUpAuthenticationRule);
@@ -801,7 +844,6 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             rc.session().put(DEVICE_ALREADY_EXISTS_KEY, true);
 
             var stepUpAuthenticationRule = "{#request.params['scope'][0].contains('write')}";
-            mfaSettings.setStepUpAuthenticationRule(stepUpAuthenticationRule);
             var stepUpAuthentication = new StepUpAuthenticationSettings();
             stepUpAuthentication.setActive(true);
             stepUpAuthentication.setStepUpAuthenticationRule(stepUpAuthenticationRule);
@@ -848,7 +890,6 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             rc.session().put(DEVICE_ALREADY_EXISTS_KEY, true);
 
             var stepUpAuthenticationRule = "{#request.params['scope'][0].contains('write')}";
-            mfaSettings.setStepUpAuthenticationRule(stepUpAuthenticationRule);
             var stepUpAuthentication = new StepUpAuthenticationSettings();
             stepUpAuthentication.setActive(true);
             stepUpAuthentication.setStepUpAuthenticationRule(stepUpAuthenticationRule);
@@ -865,7 +906,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             endUser.setFactors(Collections.singletonList(enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
             rc.session().put(STRONG_AUTH_COMPLETED_KEY, true);
-            rc.session().put(ConstantKeys.AUTH_COMPLETED, true);
+            rc.session().put(AUTH_COMPLETED, true);
             rc.next();
         });
 
@@ -1000,7 +1041,6 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
 
             var stepUpAuthenticationRule = "{#request.params['scope'][0].contains('write')}";
-            mfaSettings.setStepUpAuthenticationRule(stepUpAuthenticationRule);
             var stepUpAuthentication = new StepUpAuthenticationSettings();
             stepUpAuthentication.setActive(true);
             stepUpAuthentication.setStepUpAuthenticationRule(stepUpAuthenticationRule);
@@ -1218,7 +1258,6 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             MFASettings mfaSettings = new MFASettings();
 
             var stepUpAuthenticationRule = "{#request.params['scope'][0] == 'write'}";
-            mfaSettings.setStepUpAuthenticationRule(stepUpAuthenticationRule);
             var stepUpAuthentication = new StepUpAuthenticationSettings();
             stepUpAuthentication.setActive(true);
             stepUpAuthentication.setStepUpAuthenticationRule(stepUpAuthenticationRule);
