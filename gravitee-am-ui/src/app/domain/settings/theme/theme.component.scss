@@ -16,7 +16,12 @@
   --deep-red-color: #c52852;
   --deep-grey-color: #252829;
 
+  .theme-content-container {
+    padding: 0 20px;
+  }
+
   .gv-form-section {
+    margin-bottom: 0;
     &.disabled {
       opacity: 0.5;
       pointer-events: none;
@@ -63,7 +68,7 @@
       border-radius: 4px;
     }
     .preview .CodeMirror {
-      height: calc(100vh - 270px);
+      height: calc(100vh - 365px);
     }
 
     .mat-expansion-panel {
