@@ -133,7 +133,7 @@ public class MfaUtils {
 
     public static boolean stepUp(MfaFilterContext context, Client client, RuleEngine ruleEngine) {
         var stepUpSettings = getMfaStepUp(client);
-        return context.isUserStronglyAuth()
+        return !context.isUserStronglyAuth()
                 && stepUpSettings.getActive()
                 && evaluateRule(stepUpSettings.getStepUpAuthenticationRule(), context, ruleEngine);
     }
