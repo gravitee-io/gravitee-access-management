@@ -16,21 +16,30 @@
 
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
+import io.gravitee.am.common.factor.FactorType;
 import io.gravitee.am.common.utils.ConstantKeys;
+import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ALREADY_EXISTS_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.MFA_STOP;
+import io.gravitee.am.gateway.handler.common.factor.FactorManager;
+import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.AuthenticationFlowChain;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.MFAStep;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.MfaFilterContext;
 import io.gravitee.am.model.ChallengeSettings;
 import io.gravitee.am.model.EnrollSettings;
 import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.RememberDeviceSettings;
-import io.gravitee.am.model.EnrollmentSettings;
+import io.gravitee.am.model.StepUpAuthenticationSettings;
 import io.gravitee.am.model.oidc.Client;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
-
-import java.util.Objects;
-import java.util.Optional;
-
-import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ALREADY_EXISTS_KEY;
 import static java.lang.Boolean.TRUE;
+import java.util.Objects;
+import static java.util.Objects.nonNull;
+import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
+import java.util.Set;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
@@ -42,8 +51,10 @@ public class MfaUtils {
         return TRUE.equals(session.get(ConstantKeys.STRONG_AUTH_COMPLETED_KEY));
     }
 
-    public static String getMfaStepUpRule(Client client) {
-        return ofNullable(client.getMfaSettings()).orElse(new MFASettings()).getStepUpAuthenticationRule();
+    public static StepUpAuthenticationSettings getMfaStepUp(Client client) {
+        return ofNullable(client.getMfaSettings())
+                .map(MFASettings::getStepUpAuthentication)
+                .orElse(new StepUpAuthenticationSettings());
     }
 
     public static String getAdaptiveMfaStepUpRule(Client client) {
@@ -58,13 +69,6 @@ public class MfaUtils {
 
     public static boolean deviceAlreadyExists(Session session) {
         return TRUE.equals(session.get(DEVICE_ALREADY_EXISTS_KEY));
-    }
-
-    public static EnrollmentSettings getEnrollmentSettings(Client client) {
-        return ofNullable(client.getMfaSettings())
-                .filter(Objects::nonNull)
-                .map(MFASettings::getEnrollment)
-                .orElse(new EnrollmentSettings());
     }
 
     public static ChallengeSettings getChallengeSettings(Client client) {
@@ -85,16 +89,52 @@ public class MfaUtils {
         return ofNullable(client.getMfaSettings()).orElse(new MFASettings());
     }
 
-    public static String getEnrollmentRule(Client client) {
-        return ofNullable(client.getMfaSettings()).orElse(new MFASettings()).getEnroll().getEnrollmentRule();
-    }
-
-    public static String getEnrollRule(Client client) {
-        return ofNullable(client.getMfaSettings()).orElse(new MFASettings()).getEnroll().getEnrollmentRule();
-    }
-
     public static boolean isChallengeActive(Client client) {
-        ChallengeSettings challenge = getChallengeSettings(client);
-        return Optional.of(challenge.isActive()).orElse(Boolean.FALSE);
+        return of(getChallengeSettings(client).isActive()).orElse(false);
+    }
+
+    public static void stop(RoutingContext routingContext, AuthenticationFlowChain flow) {
+        routingContext.session().put(MFA_STOP, true);
+        flow.doNext(routingContext);
+    }
+
+    public static void redirect(RoutingContext routingContext, AuthenticationFlowChain flow, MFAStep mFAStep) {
+        routingContext.session().put(MFA_STOP, false);
+        flow.exit(mFAStep);
+    }
+
+    public static void continueFlow(RoutingContext routingContext, AuthenticationFlowChain flow) {
+        routingContext.session().put(MFA_STOP, false);
+        flow.doNext(routingContext);
+    }
+
+    public static boolean isMfaStop(RoutingContext context) {
+        return ofNullable((Boolean) context.session().get(MFA_STOP)).orElse(false);
+    }
+
+    public static boolean hasFactor(Client client, FactorManager factorManager) {
+        final Set<String> factors = client.getFactors();
+        return nonNull(factors) && !factors.isEmpty() && !onlyRecoveryCodeFactor(factors, factorManager);
+    }
+
+    private static boolean onlyRecoveryCodeFactor(Set<String> factors, FactorManager factorManager) {
+        return factors.size() == 1 && factors.stream().findFirst().map(factorId ->
+                factorManager.getFactor(factorId).getFactorType().equals(FactorType.RECOVERY_CODE)
+        ).orElse(false);
+    }
+
+    public static boolean evaluateRule(String rule, MfaFilterContext context, RuleEngine ruleEngine) {
+        return !isNullOrEmpty(rule) && !rule.isBlank() && ruleEngine.evaluate(rule, context.getEvaluableContext(), Boolean.class, false);
+    }
+
+    public static boolean challengeConditionSatisfied(Client client, MfaFilterContext context, RuleEngine ruleEngine) {
+        return evaluateRule(getChallengeSettings(client).getChallengeRule(), context, ruleEngine);
+    }
+
+    public static boolean stepUp(MfaFilterContext context, Client client, RuleEngine ruleEngine) {
+        var stepUpSettings = getMfaStepUp(client);
+        return context.isUserStronglyAuth()
+                && stepUpSettings.getActive()
+                && evaluateRule(stepUpSettings.getStepUpAuthenticationRule(), context, ruleEngine);
     }
 }

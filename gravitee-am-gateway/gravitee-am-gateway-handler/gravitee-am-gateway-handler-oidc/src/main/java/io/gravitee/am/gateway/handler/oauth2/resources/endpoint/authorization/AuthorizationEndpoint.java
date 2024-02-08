@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization;
 
 import io.gravitee.am.common.oauth2.ResponseMode;
 import io.gravitee.am.common.utils.ConstantKeys;
+import static io.gravitee.am.common.utils.ConstantKeys.AUTH_COMPLETED;
 import io.gravitee.am.gateway.handler.oauth2.exception.AccessDeniedException;
 import io.gravitee.am.gateway.handler.oauth2.exception.ServerErrorException;
 import io.gravitee.am.gateway.handler.oauth2.service.par.PushedAuthorizationRequestService;
@@ -91,6 +92,7 @@ public class AuthorizationEndpoint implements Handler<RoutingContext> {
                             try {
                                 // final step of the authorization flow, we can clean the session and redirect the user
                                 cleanSession(context);
+                                context.session().put(AUTH_COMPLETED, true);
                                 doRedirect(context, request, authorizationResponse);
                             } catch (Exception e) {
                                 logger.error("Unable to redirect to client redirect_uri", e);
@@ -153,5 +155,6 @@ public class AuthorizationEndpoint implements Handler<RoutingContext> {
         context.session().remove(ConstantKeys.MFA_ENROLLMENT_COMPLETED_KEY);
         context.session().remove(ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY);
         context.session().remove(ConstantKeys.USER_LOGIN_COMPLETED_KEY);
+        context.session().remove(ConstantKeys.AUTH_COMPLETED);
     }
 }
