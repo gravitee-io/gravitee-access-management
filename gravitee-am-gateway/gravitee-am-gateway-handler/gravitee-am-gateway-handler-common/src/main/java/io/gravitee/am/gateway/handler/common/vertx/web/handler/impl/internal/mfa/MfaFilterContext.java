@@ -64,12 +64,7 @@ public class MfaFilterContext {
         this.endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
         this.factorManager = factorManager;
     }
-
-    public boolean isMfaSkipped() {
-        return !isEndUserEnrolling() && isEnrollSkipped();
-    }
-
-    private boolean isEnrollSkipped() {
+    public boolean isEnrollSkipped() {
         final EnrollSettings enrollSettings = MfaUtils.getEnrollSettings(client);
         final Boolean forceEnrollment = Optional.ofNullable(enrollSettings.getForceEnrollment()).orElse(false);
         if (FALSE.equals(forceEnrollment) && nonNull(endUser.getMfaEnrollmentSkippedAt())) {

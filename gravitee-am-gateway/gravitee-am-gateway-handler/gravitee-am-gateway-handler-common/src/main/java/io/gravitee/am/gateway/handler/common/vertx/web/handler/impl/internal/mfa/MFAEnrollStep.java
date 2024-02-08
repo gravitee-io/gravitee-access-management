@@ -101,7 +101,7 @@ public class MFAEnrollStep extends MFAStep {
     }
 
     private void optional(RoutingContext routingContext, AuthenticationFlowChain flow, Client client, MfaFilterContext context) {
-        if (canUserSkip(client, context) && context.isMfaSkipped()) {
+        if (context.isEnrollSkipped()) {
             stop(routingContext, flow);
         } else {
             if (userHasFactor(context)) {
