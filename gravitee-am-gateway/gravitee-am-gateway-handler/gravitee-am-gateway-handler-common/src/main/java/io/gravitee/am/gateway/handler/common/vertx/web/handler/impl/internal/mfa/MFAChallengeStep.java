@@ -74,7 +74,7 @@ public class MFAChallengeStep extends MFAStep {
     }
 
     private void conditional(RoutingContext routingContext, AuthenticationFlowChain flow, Client client, MfaFilterContext context) {
-        if ((context.isValidSession() || challengeConditionSatisfied(client, context, ruleEngine))) {
+        if (context.isValidSession() || challengeConditionSatisfied(client, context, ruleEngine)) {
             continueFlow(routingContext, flow);
         } else {
             challenge(routingContext, flow);
@@ -82,7 +82,7 @@ public class MFAChallengeStep extends MFAStep {
     }
 
     private void riskBased(RoutingContext routingContext, AuthenticationFlowChain flow, Client client, MfaFilterContext context) {
-        if ((context.isValidSession() || isSafe(client, context))) {
+        if (context.isValidSession() || isSafe(client, context)) {
             continueFlow(routingContext, flow);
         } else {
             challenge(routingContext, flow);
@@ -99,8 +99,7 @@ public class MFAChallengeStep extends MFAStep {
 
     private boolean isRememberDeviceOrSkipped(MfaFilterContext context) {
         return !context.isDeviceRiskAssessmentEnabled()
-                && context.getRememberDeviceSettings().isActive()
-                && (context.deviceAlreadyExists() || context.getRememberDeviceSettings().isSkipRememberDevice());
+                && (!context.getRememberDeviceSettings().isActive() || (context.deviceAlreadyExists() || context.getRememberDeviceSettings().isSkipRememberDevice()));
     }
 }
 
