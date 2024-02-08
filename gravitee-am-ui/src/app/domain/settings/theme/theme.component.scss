@@ -22,6 +22,7 @@
 
   .gv-form-section {
     margin-bottom: 0;
+
     &.disabled {
       opacity: 0.5;
       pointer-events: none;
@@ -30,24 +31,25 @@
 
   .theme-sidenav-settings {
     padding-right: 20px;
-    border-right: 1px solid rgba(0, 0, 0, 0.12);
+    border-right: 1px solid rgb(0 0 0 / 12%);
 
     h5 {
+      margin-top: 0;
       color: #7a7b7a;
-      margin-top: 0px;
     }
 
     .color-palette {
       mat-radio-button {
+        display: inline-block;
         width: 30px;
         height: 30px;
-        display: inline-block;
         margin-bottom: 5px;
       }
     }
 
     .theme-reset-action {
       margin-top: 10px;
+
       button {
         width: 100%;
       }
@@ -56,6 +58,7 @@
 
   .theme-content-action {
     margin-bottom: 15px;
+
     mat-button-toggle-group {
       max-height: 42px;
       align-items: center;
@@ -64,21 +67,24 @@
 
   ::ng-deep {
     .custom-css .CodeMirror {
-      border: 1px solid rgba(0, 0, 0, 0.12);
+      border: 1px solid rgb(0 0 0 / 12%);
       border-radius: 4px;
     }
+
     .preview .CodeMirror {
       height: calc(100vh - 365px);
     }
 
     .mat-expansion-panel {
       box-shadow: none;
+
       .mat-expansion-panel-header,
       .mat-expansion-panel-header.mat-expanded {
-        background-color: #f1f1f1;
         border-radius: 8px;
         margin-bottom: 15px;
+        background-color: #f1f1f1;
       }
+
       .mat-expansion-panel-body {
         padding: 0;
       }

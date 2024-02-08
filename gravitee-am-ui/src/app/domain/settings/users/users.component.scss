@@ -1,8 +1,10 @@
 ngx-datatable {
   margin-top: 10px;
+
   .user-header {
-    margin: 5px;
     align-items: center;
+    margin: 5px;
+
     .user-avatar {
       width: 40px;
       height: 40px;
@@ -12,35 +14,52 @@ ngx-datatable {
         border-radius: 50%;
       }
     }
+
     .user-information {
       small {
-        color: rgba(0, 0, 0, 0.54);
+        color: rgb(0 0 0 / 54%);
       }
     }
   }
 }
 
 .users-search {
-  font-size: 14px;
   position: relative;
   display: flex;
-  margin: 0 10%;
   min-width: 300px;
+  margin: 0 10%;
+  font-size: 14px;
 }
 
 .advanced-search-card {
-  border-radius: 0px;
   position: absolute;
-  width: 100%;
   z-index: 10;
   top: 58px;
+  width: 100%;
+  border-radius: 0;
 }
 
 :host ::ng-deep.user-name-cell {
   padding: 0 !important;
+
   a {
     text-decoration: none;
   }
+}
+
+:host ::ng-deep.user-enabled .mat-badge-content {
+  background: limegreen;
+  color: white;
+}
+
+:host ::ng-deep.user-disabled .mat-badge-content {
+  background: #ff9100;
+  color: white;
+}
+
+:host ::ng-deep.user-locked .mat-badge-content {
+  background: red;
+  color: white;
 }
 
 :host ::ng-deep.mat-badge-small .mat-badge-content {
@@ -49,25 +68,10 @@ ngx-datatable {
   line-height: 12px;
 }
 
-:host ::ng-deep.mat-badge-small.mat-badge-overlap.mat-badge-after .mat-badge-content {
-  right: 1px;
-}
-
 :host ::ng-deep.mat-badge-small.mat-badge-above .mat-badge-content {
   top: -2px;
 }
 
-:host ::ng-deep.user-enabled .mat-badge-content {
-  color: white;
-  background: limegreen;
-}
-
-:host ::ng-deep.user-disabled .mat-badge-content {
-  color: white;
-  background: #ff9100;
-}
-
-:host ::ng-deep.user-locked .mat-badge-content {
-  color: white;
-  background: red;
+:host ::ng-deep.mat-badge-small.mat-badge-overlap.mat-badge-after .mat-badge-content {
+  right: 1px;
 }

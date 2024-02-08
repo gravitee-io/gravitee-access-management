@@ -8,45 +8,55 @@
 @import 'codemirror/lib/codemirror.css';
 
 /* Configure theme */
-@include gio.import-fonts();
+@include gio.import-fonts;
 @include gio.mat-theme(true);
-@include gio.all-components();
+@include gio.all-components;
 
 @mixin graviteeio-am-theme($theme) {
-  $primary: map-get($theme, primary);
-  $accent: map-get($theme, accent);
+  $primary: map.get($theme, primary);
+  $accent: map.get($theme, accent);
+
   .gv-sidenav {
     background-color: mat.get-color-from-palette($primary, 'default');
   }
+
   .mat-step-header .mat-step-icon-selected,
   .mat-step-header .mat-step-icon-state-edit,
   .mat-step-header .mat-step-icon-state-done {
     background-color: mat.get-color-from-palette($primary, 'default');
   }
+
   material-add-reference-widget {
     .mat-mdc-raised-button.mat-accent {
       background-color: mat.get-color-from-palette($primary, 'default');
     }
   }
+
   a {
     color: mat.get-color-from-palette($primary, 'default');
+
     &.active,
     &:hover {
       color: mat.get-color-from-palette($accent, 'default');
     }
+
     &.gv-accent-link {
       color: mat.get-color-from-palette($accent, 'default');
+
       &:hover {
         color: mat.get-color-from-palette($accent, 'default');
       }
     }
   }
+
   .gv-accent-color {
     color: mat.get-color-from-palette($accent, 'default');
   }
+
   .not-found-content-description {
     border-top: 8px solid mat.get-color-from-palette($primary, 'default');
   }
+
   .gv-splash-screen {
     background: #fdfdfd;
   }
@@ -58,41 +68,45 @@
   font-family: 'Material Icons';
   font-style: normal;
   font-weight: 400;
-  src: url(assets/iconfont/MaterialIcons-Regular.eot); /* For IE6-8 */
-  src: local('Material Icons'), local('MaterialIcons-Regular'), url(assets/iconfont/MaterialIcons-Regular.woff2) format('woff2'),
-    url(assets/iconfont/MaterialIcons-Regular.woff) format('woff'), url(assets/iconfont/MaterialIcons-Regular.ttf) format('truetype');
+  src: url('assets/iconfont/MaterialIcons-Regular.eot'); /* For IE6-8 */
+  src: local('Material Icons'), local('MaterialIcons-Regular'), url('assets/iconfont/MaterialIcons-Regular.woff2') format('woff2'),
+    url('assets/iconfont/MaterialIcons-Regular.woff') format('woff'), url('assets/iconfont/MaterialIcons-Regular.ttf') format('truetype');
 }
 
 .material-icons {
-  font-family: 'Material Icons';
-  font-weight: normal;
-  font-style: normal;
-  font-size: 24px; /* Preferred icon size */
   display: inline-block;
-  line-height: 1;
-  text-transform: none;
-  letter-spacing: normal;
-  word-wrap: normal;
-  white-space: nowrap;
   direction: ltr;
-  /* Support for all WebKit browsers. */
-  -webkit-font-smoothing: antialiased;
-  /* Support for Safari and Chrome. */
-  text-rendering: optimizeLegibility;
-  /* Support for Firefox. */
-  -moz-osx-font-smoothing: grayscale;
+  font-family: 'Material Icons', serif;
+
   /* Support for IE. */
   font-feature-settings: 'liga';
+  font-size: 24px; /* Preferred icon size */
+
+  /* Support for all WebKit browsers. */
+  -webkit-font-smoothing: antialiased;
+
+  /* Support for Firefox. */
+  -moz-osx-font-smoothing: grayscale;
+  font-style: normal;
+  font-weight: normal;
+  letter-spacing: normal;
+  line-height: 1;
+
+  /* Support for Safari and Chrome. */
+  text-rendering: optimizelegibility;
+  text-transform: none;
+  white-space: nowrap;
+  word-wrap: normal;
 }
 
 html,
 body,
 app-root,
 mat-sidenav-container {
-  font-family: 'Golos UI', 'Roboto', 'Helvetica Neue', sans-serif;
-  margin: 0;
   width: 100%;
   height: 100%;
+  margin: 0;
+  font-family: 'Golos UI', Roboto, 'Helvetica Neue', sans-serif;
 }
 
 *,
@@ -106,7 +120,7 @@ div.CodeMirror span {
 }
 
 mat-sidenav-container {
-  background-color: #ffffff !important;
+  background-color: #fff !important;
 }
 
 .mat-sidenav {
@@ -116,7 +130,7 @@ mat-sidenav-container {
 .main-content {
   overflow: auto;
   width: 100%;
-  background-color: #ffffff !important;
+  background-color: #fff !important;
 }
 
 .mat-mdc-list .mat-mdc-list-item .mat-list-item-content,
@@ -125,10 +139,10 @@ mat-sidenav-container {
 }
 
 .browsehappy {
+  padding: 0.2em 0;
   margin: 0.2em 0;
   background: #ccc;
   color: #000;
-  padding: 0.2em 0;
 }
 
 .mat-mdc-form-field,
@@ -136,25 +150,14 @@ mat-form-field {
   width: 100%;
 }
 
-ngx-datatable {
-  .gv-table-cell-actions {
-    margin-left: -10px;
-    button,
-    a {
-      top: -9px;
-      color: grey;
-    }
-  }
-}
-
 .ngx-datatable.material {
-  font-size: 14px;
-  box-shadow: none;
   background: transparent;
+  box-shadow: none;
+  font-size: 14px;
 }
 
 .ngx-datatable.material .datatable-footer .datatable-pager {
-  ul li:not(:last-child):after {
+  ul li:not(:last-child)::after {
     content: none;
   }
 }
@@ -166,48 +169,65 @@ ngx-datatable {
 mat-horizontal-stepper {
   border: 1px solid #e2e5e7;
   margin: 5px;
+
   h5 {
     margin: 0;
   }
+
   small {
     color: #999;
   }
+
   button {
     min-width: 100px;
   }
+
   .stepper-button-zone {
-    margin-top: 20px;
-    border-top: 1px solid #e2e5e7;
     padding: 10px;
+    border-top: 1px solid #e2e5e7;
+    margin-top: 20px;
+
     button {
       min-width: 100px;
     }
   }
+
   .mat-horizontal-stepper-header-container {
     max-width: 50%;
     margin: 0 auto;
   }
+
   .mat-horizontal-content-container {
     padding: 24px;
     border-top: 1px solid #e2e5e7;
   }
 }
 
+ngx-datatable {
+  .gv-table-cell-actions {
+    margin-left: -10px;
+
+    button,
+    a {
+      top: -9px;
+      color: grey;
+    }
+  }
+}
+
 .gv-splash-screen {
-  background-image: url('assets/loader.gif');
-  background-size: 10%;
-  background-repeat: no-repeat;
-  background-position: center center;
-  bottom: 0;
-  left: 0;
   position: absolute;
-  right: 0;
-  top: 0;
   z-index: 99999;
+  background-image: url('assets/loader.gif');
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-size: 10%;
+  inset: 0;
 }
 
 .gv-page-container {
   padding: 20px;
+
   h1 {
     font-weight: 400;
   }
@@ -215,33 +235,39 @@ mat-horizontal-stepper {
 
 .gv-page-description {
   margin-left: 20px;
+
   h3 {
     font-weight: 400;
   }
+
   .gv-page-description-content {
-    border-top: 1px solid rgb(226, 229, 231);
+    border-top: 1px solid rgb(226 229 231);
+
     p {
       margin-top: 20px;
       font-size: 14px;
     }
+
     ul {
       margin-top: 20px;
       font-size: 14px;
     }
+
     small {
+      color: rgb(0 0 0 / 38%);
       font-size: 12px;
-      color: rgba(0, 0, 0, 0.38);
     }
   }
 }
 
 .gv-page-delete-zone {
+  padding: 20px;
+  border: 1px solid #e2e5e7;
+  border-radius: 2px;
+  margin-top: 20px;
   color: #f44336;
   font-size: 75%;
-  margin-top: 20px;
-  padding: 20px;
-  border-radius: 2px;
-  border: 1px solid #e2e5e7;
+
   .gv-page-delete-button {
     margin-top: 20px;
   }
@@ -249,21 +275,25 @@ mat-horizontal-stepper {
 
 .gv-form-section {
   padding: 20px;
-  background: #ffffff;
-  border-radius: 8px;
   border: 1px solid map.get(gio.$mat-dove-palette, darker20);
+  border-radius: 8px;
   margin-bottom: 20px;
+  background: #fff;
+
   .gv-form-section-title {
     margin-bottom: 10px;
+
     h5,
     h4 {
-      margin: 0px 0px 5px 0px;
+      margin: 0 0 5px;
     }
+
     small {
       display: block;
       margin-bottom: 5px;
       font-size: 75%;
     }
+
     span {
       color: map.get(gio.$mat-space-palette, lighter40);
     }
@@ -272,8 +302,8 @@ mat-horizontal-stepper {
 
 .gv-add-button {
   position: fixed;
-  bottom: 20px;
   right: 20px;
+  bottom: 20px;
 }
 
 .gv-add-button-center {
@@ -282,18 +312,19 @@ mat-horizontal-stepper {
 
 a.gv-back-link {
   text-decoration: none;
+
   mat-icon {
-    vertical-align: middle;
     margin-top: -2px;
+    vertical-align: middle;
   }
 }
 
 p.gv-plugin-creation-description {
-  text-align: center;
-  background: #e3e3e3;
   padding: 20px;
+  margin: 0 0 20px;
+  background: #e3e3e3;
   font-size: 14px;
-  margin: 0px 0px 20px 0px;
+  text-align: center;
 }
 
 .no-padding-dialog-container .mat-mdc-dialog-container {
@@ -302,21 +333,24 @@ p.gv-plugin-creation-description {
 
 div.code {
   overflow: auto;
-  white-space: pre;
-  background: #f5f5f5;
+  padding: 0 20px;
   border-color: transparent;
   margin-bottom: 24px;
-  padding: 0px 20px;
+  background: #f5f5f5;
   font-size: 1em;
+  white-space: pre;
+
   button {
     width: auto;
-    float: right;
     margin-left: 20px;
+    float: right;
   }
+
   pre {
-    width: auto;
     overflow: auto;
+    width: auto;
     white-space: pre-wrap;
+
     &.multiline {
       white-space: unset;
     }

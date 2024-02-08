@@ -1,14 +1,14 @@
 .table__edit__input {
-  font: inherit;
-  background: rgba(0, 0, 0, 0);
-  color: currentColor;
-  border: none;
-  outline: none;
-  padding: 0;
-  margin: 0;
   width: 100%;
   max-width: 100%;
-  vertical-align: bottom;
-  text-align: inherit;
   box-sizing: content-box;
+  padding: 0;
+  border: none;
+  margin: 0;
+  background: rgb(0 0 0 / 0%);
+  color: currentcolor;
+  font: inherit;
+  outline: none;
+  text-align: inherit;
+  vertical-align: bottom;
 }

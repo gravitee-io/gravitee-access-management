@@ -1,13 +1,13 @@
 .provider-settings-contextual-help {
-  border-radius: 2px;
-  border: 1px solid rgb(226, 229, 231);
   padding: 20px;
+  border: 1px solid rgb(226 229 231);
+  border-radius: 2px;
   margin-bottom: 10px;
 }
 
 .social-provider-settings-description {
   .social-provider-settings-description-contextual-help {
+    color: rgb(0 0 0 / 38%);
     font-size: 12px;
-    color: rgba(0, 0, 0, 0.38);
   }
 }

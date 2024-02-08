@@ -4,17 +4,40 @@
   gap: 10px;
 }
 
-.certificate-header {
-  margin: 10px;
+.certificate-simple-text {
   align-items: center;
+
+  h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: normal;
+  }
+}
+
+.certificate-expiry {
+  align-items: center;
+  margin: 5px;
+
+  h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: normal;
+  }
+}
+
+.certificate-header {
+  align-items: center;
+  margin: 10px;
+
   .certificate-icon {
     margin: 5px 12px 0 0;
   }
+
   .certificate-information {
     h3 {
+      margin: 0;
       font-size: 14px;
       font-weight: normal;
-      margin: 0;
     }
   }
 }
@@ -25,36 +48,19 @@
   }
 }
 
-.certificate-simple-text {
-  align-items: center;
-  h3 {
-    font-size: 14px;
-    font-weight: normal;
-    margin: 0;
-  }
-}
-
-.certificate-expiry {
-  margin: 5px;
-  align-items: center;
-  h3 {
-    font-size: 14px;
-    font-weight: normal;
-    margin: 0;
-  }
-}
-
 .renew {
-  font-size: 18px;
   margin-left: 5px;
-}
-.warning {
   font-size: 18px;
+}
+
+.warning {
   margin-left: 5px;
   color: orange;
-}
-.alert {
   font-size: 18px;
+}
+
+.alert {
   margin-left: 5px;
   color: red;
+  font-size: 18px;
 }

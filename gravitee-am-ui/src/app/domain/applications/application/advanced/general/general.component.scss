@@ -1,22 +1,25 @@
 .application-settings-delete-zone {
+  padding: 20px;
+  border: 1px solid #e2e5e7;
+  border-radius: 2px;
+  margin-top: 20px;
   color: #f44336;
   font-size: 75%;
-  margin-top: 20px;
-  padding: 20px;
-  border-radius: 2px;
-  border: 1px solid #e2e5e7;
+
   mat-list-item {
     h3 {
       color: #f44336;
     }
+
     p {
-      white-space: normal;
       color: grey;
+      white-space: normal;
     }
+
     .action {
       display: flex;
-      align-items: center;
       height: 100%;
+      align-items: center;
     }
   }
 }

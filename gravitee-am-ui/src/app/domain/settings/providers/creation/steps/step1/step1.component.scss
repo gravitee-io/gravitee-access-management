@@ -1,25 +1,26 @@
 @use '@angular/material' as mat;
 
 mat-card {
-  @include mat.elevation-transition();
-  margin-top: 10px;
-  box-sizing: border-box;
-  justify-content: center;
-  align-content: center;
+  @include mat.elevation-transition;
+
   display: flex;
+  box-sizing: border-box;
+  margin-top: 10px;
+  place-content: center center;
 }
 
 mat-card:hover,
 mat-card.selected {
   @include mat.elevation(8);
+
   cursor: pointer;
 }
 
 mat-card-content {
-  text-align: center;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  text-align: center;
 }
 
 :host ::ng-deep mat-card-content i {
@@ -32,6 +33,6 @@ mat-card-content {
 
 .cards-container {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
   grid-gap: 1rem;
+  grid-template-columns: repeat(3, 1fr);
 }

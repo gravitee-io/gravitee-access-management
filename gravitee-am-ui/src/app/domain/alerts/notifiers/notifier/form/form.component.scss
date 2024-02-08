@@ -7,24 +7,24 @@
     fieldset {
       &.resource {
         padding: 10px;
-        margin-bottom: 10px;
         border: 1px solid grey;
         border-radius: 2px;
+        margin-bottom: 10px;
       }
 
       &.path {
-        background: #f1f1f1;
         padding: 10px;
-        margin: 10px;
-        border: 1px solid rgba(0, 0, 0, 0.12);
+        border: 1px solid rgb(0 0 0 / 12%);
         border-radius: 2px;
+        margin: 10px;
+        background: #f1f1f1;
       }
 
       flex-layout-root-widget {
-        flex-flow: column nowrap !important;
-        box-sizing: border-box !important;
         display: initial !important;
         max-height: 100% !important;
+        box-sizing: border-box !important;
+        flex-flow: column nowrap !important;
       }
     }
   }
