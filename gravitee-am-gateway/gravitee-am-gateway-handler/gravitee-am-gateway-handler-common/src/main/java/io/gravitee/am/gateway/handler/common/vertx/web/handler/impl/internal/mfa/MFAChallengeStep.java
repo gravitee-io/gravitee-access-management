@@ -49,7 +49,7 @@ public class MFAChallengeStep extends MFAStep {
         final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         final MfaFilterContext context = new MfaFilterContext(routingContext, client, factorManager);
         if (!isMfaStop(routingContext)) {
-            if (stepUp(context, client, ruleEngine)) {
+            if (stepUp(context, client, ruleEngine) || context.isEndUserEnrolling()) {
                 challenge(routingContext, flow);
             } else if (isChallengeActive(client)) {
                 switch (getChallengeSettings(client).getType()) {
@@ -66,7 +66,7 @@ public class MFAChallengeStep extends MFAStep {
     }
 
     private void required(RoutingContext routingContext, AuthenticationFlowChain flow, MfaFilterContext context) {
-        if (!context.isEndUserEnrolling() && context.isValidSession() && isRememberDeviceOrSkipped(context)) {
+        if (context.isValidSession() && isRememberDeviceOrSkipped(context)) {
             continueFlow(routingContext, flow);
         } else {
             challenge(routingContext, flow);
@@ -74,7 +74,7 @@ public class MFAChallengeStep extends MFAStep {
     }
 
     private void conditional(RoutingContext routingContext, AuthenticationFlowChain flow, Client client, MfaFilterContext context) {
-        if (!context.isEndUserEnrolling() && (context.isValidSession() || challengeConditionSatisfied(client, context, ruleEngine))) {
+        if ((context.isValidSession() || challengeConditionSatisfied(client, context, ruleEngine))) {
             continueFlow(routingContext, flow);
         } else {
             challenge(routingContext, flow);
@@ -82,7 +82,7 @@ public class MFAChallengeStep extends MFAStep {
     }
 
     private void riskBased(RoutingContext routingContext, AuthenticationFlowChain flow, Client client, MfaFilterContext context) {
-        if (!context.isEndUserEnrolling() && (context.isValidSession() || isSafe(client, context))) {
+        if ((context.isValidSession() || isSafe(client, context))) {
             continueFlow(routingContext, flow);
         } else {
             challenge(routingContext, flow);

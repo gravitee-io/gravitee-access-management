@@ -245,7 +245,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     }
 
     @Test
-    public void shouldRedirectToMFAEnrollPage_adaptiveMFA_no_active_enroll_and_endUser_is_enrolling() throws Exception {
+    public void shouldRedirectToMFAChallengePage_adaptiveMFA_no_active_enroll_and_endUser_is_enrolling() throws Exception {
         router.route().order(-1).handler(rc -> {
             EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED, 0, "");
             ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
@@ -281,7 +281,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     }
 
     @Test
-    public void shouldRedirectToMFAEnrollmentPage_device_unknown_enrollFalse_challengeActiveAndRequired() throws Exception {
+    public void shouldRedirectToMFAEnrollmentPage_device_unknown() throws Exception {
         router.route().order(-1).handler(rc -> {
             // set client
             Client client = new Client();
@@ -313,7 +313,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     }
 
     @Test
-    public void shouldRedirectToMFAEnrollPage_nominalCase_no_enrolled_factor() throws Exception {
+    public void shouldRedirectToMFAChallengePage_nominalCase_no_enrolled_factor() throws Exception {
         router.route().order(-1).handler(rc -> {
             // set client
             EnrollSettings enrollSettings = createEnrollSettings(false, false, MfaEnrollType.REQUIRED, 0, "");
@@ -468,7 +468,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     }
 
     @Test
-    public void shouldRedirectToMFACEnrollPage_device_remembered_but_no_matching_active_factor_and_endUser_is_enrolling() throws Exception {
+    public void shouldRedirectToMFAChallengePage_device_remembered_but_no_matching_active_factor_and_endUser_is_enrolling() throws Exception {
         router.route().order(-1).handler(rc -> {
             EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED, 0, "");
             ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
@@ -645,7 +645,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
 
 
     @Test
-    public void shouldCRedirectToChallenge_user_device_known_and_step_up_active_not_strongly_auth() throws Exception {
+    public void shouldContinue_user_device_known_and_step_up_active_not_strongly_auth() throws Exception {
         router.route().order(-1).handler(rc -> {
             EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED, 0, "");
             ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
@@ -675,18 +675,14 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             endUser.setFactors(Collections.singletonList(enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
             rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, false);
+            rc.session().put(ConstantKeys.AUTH_COMPLETED, true);
             rc.next();
         });
 
         testRequest(
-                HttpMethod.GET, "/login?scope=write",
-                null,
-                resp -> {
-                    String location = resp.headers().get("location");
-                    assertNotNull(location);
-                    assertTrue(location.endsWith("/mfa/challenge?scope=write"));
-                },
-                HttpStatusCode.FOUND_302, "Found", null);
+                HttpMethod.GET,
+                "/login",
+                HttpStatusCode.OK_200, "OK");
     }
 
     @Test
@@ -837,10 +833,10 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     }
 
     @Test
-    public void shouldRedirectToChallenge_adaptiveMFA_with_step_up_false_valid_session_true_device_known() throws Exception {
+    public void shouldContinue_adaptiveMFA_with_step_up_false_strong_auth_true_device_known() throws Exception {
         router.route().order(-1).handler(rc -> {
             EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED, 0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.RISK_BASED, "");
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
