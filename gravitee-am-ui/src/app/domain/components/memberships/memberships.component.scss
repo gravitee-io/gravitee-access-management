@@ -53,9 +53,6 @@
 }
 
 :host {
-  ::ng-deep.ngx-datatable.material .datatable-footer {
-    display: none;
-  }
   ::ng-deep.membership-name-cell {
     padding: 0 !important;
   }

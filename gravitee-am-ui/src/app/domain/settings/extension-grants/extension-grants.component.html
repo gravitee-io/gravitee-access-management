@@ -18,7 +18,7 @@
 <div class="gv-page-container">
   <h1 *ngIf="!isEmpty">Extension grants</h1>
   <div *ngIf="!isEmpty">
-    <ngx-datatable class="material" [columnMode]="'flex'" [headerHeight]="40" [footerHeight]="40" [rowHeight]="50" [rows]="extensionGrants">
+    <ngx-datatable class="material" [columnMode]="'flex'" [headerHeight]="40" [footerHeight]="50" [rowHeight]="50" [rows]="extensionGrants">
       <ngx-datatable-column name="Extension grants" [flexGrow]="4" [cellClass]="'extension-grant-name-cell'">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div class="extension-grant-header" fxLayout="row">

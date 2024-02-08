@@ -28,7 +28,7 @@
   </div>
   <div fxLayout="column">
     <div *ngIf="hasFactors()">
-      <ngx-datatable class="material" [columnMode]="'flex'" [headerHeight]="40" [footerHeight]="40" [rowHeight]="50" [rows]="factors">
+      <ngx-datatable class="material" [columnMode]="'flex'" [headerHeight]="40" [rowHeight]="50" [rows]="factors">
         <ngx-datatable-column name="Factors" [flexGrow]="4">
           <ng-template let-row="row" ngx-datatable-cell-template>
             {{ row.name }}
