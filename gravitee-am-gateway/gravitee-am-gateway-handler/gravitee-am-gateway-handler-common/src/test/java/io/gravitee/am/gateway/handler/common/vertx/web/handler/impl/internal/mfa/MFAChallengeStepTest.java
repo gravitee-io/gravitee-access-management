@@ -331,53 +331,10 @@ class MFAChallengeStepTest {
 
         verifyContinueWithoutChallenge();
     }
-
     @Test
-    void shouldChallengeWhenRequiredAndAuthAndDeviceButEnrolling() {
+    void shouldChallengeWhenEnrolling() {
         mockAuthUser(false);
         when(client.getMfaSettings()).thenReturn(mfa);
-        when(challenge.isActive()).thenReturn(true);
-        when(challenge.getType()).thenReturn(MfaChallengeType.REQUIRED);
-        when(mfa.getChallenge()).thenReturn(challenge);
-
-        var rememberDevice = new RememberDeviceSettings();
-        rememberDevice.setActive(true);
-
-        when(routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY)).thenReturn(client);
-        when(session.get(ConstantKeys.STRONG_AUTH_COMPLETED_KEY)).thenReturn(true);
-        when(session.get(MFA_STOP)).thenReturn(false);
-        when(session.get(ENROLLED_FACTOR_ID_KEY)).thenReturn(new Object());
-
-        mfaChallengeStep.execute(routingContext, flow);
-
-        verifyChallenge();
-    }
-
-    @Test
-    void shouldChallengeWhenRiskBasedAndAuthAndDeviceButEnrolling() {
-        mockAuthUser(false);
-        when(client.getMfaSettings()).thenReturn(mfa);
-        when(challenge.isActive()).thenReturn(true);
-        when(challenge.getType()).thenReturn(MfaChallengeType.RISK_BASED);
-        when(mfa.getChallenge()).thenReturn(challenge);
-
-        when(routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY)).thenReturn(client);
-        when(session.get(ConstantKeys.STRONG_AUTH_COMPLETED_KEY)).thenReturn(true);
-        when(session.get(MFA_STOP)).thenReturn(false);
-        when(session.get(ENROLLED_FACTOR_ID_KEY)).thenReturn(new Object());
-
-        mfaChallengeStep.execute(routingContext, flow);
-
-        verifyChallenge();
-    }
-
-    @Test
-    void shouldChallengeWhenConditionalAndAuthAndDeviceButEnrolling() {
-        mockAuthUser(false);
-        when(client.getMfaSettings()).thenReturn(mfa);
-        when(challenge.isActive()).thenReturn(true);
-        when(challenge.getType()).thenReturn(MfaChallengeType.CONDITIONAL);
-        when(mfa.getChallenge()).thenReturn(challenge);
 
         when(routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY)).thenReturn(client);
         when(session.get(ConstantKeys.STRONG_AUTH_COMPLETED_KEY)).thenReturn(true);
