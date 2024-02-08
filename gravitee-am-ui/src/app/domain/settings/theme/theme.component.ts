@@ -361,7 +361,7 @@ export class DomainSettingsThemeComponent implements OnInit {
 
   private resizeIframe() {
     if (this.selectedTemplateContent && this.preview) {
-      const height = window.innerHeight * 0.8;
+      const height = window.innerHeight * 0.8 + 22; /* correction for padding container */
       this.preview.nativeElement.style.height = height + 'px';
     }
   }
