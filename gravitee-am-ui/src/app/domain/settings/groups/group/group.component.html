@@ -18,12 +18,14 @@
 <div *ngIf="group" class="gv-page-container">
   <a [routerLink]="['..']" class="gv-back-link"><small><< Back to groups</small></a>
   <h1>{{ group.name }}</h1>
-  <nav mat-tab-nav-bar color="accent">
+  <nav mat-tab-nav-bar color="accent" [tabPanel]="tabPanel">
     <a mat-tab-link *ngFor="let link of navLinks" [routerLink]="link.href" routerLinkActive #rla="routerLinkActive" [active]="rla.isActive">
       {{ link.label }}
     </a>
   </nav>
-  <div class="group-content">
-    <router-outlet></router-outlet>
-  </div>
+  <mat-tab-nav-panel #tabPanel>
+    <div class="group-content">
+      <router-outlet></router-outlet>
+    </div>
+  </mat-tab-nav-panel>
 </div>
