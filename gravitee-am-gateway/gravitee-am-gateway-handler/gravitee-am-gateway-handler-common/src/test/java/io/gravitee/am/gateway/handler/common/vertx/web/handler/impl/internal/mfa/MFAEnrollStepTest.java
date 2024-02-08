@@ -250,7 +250,6 @@ class MFAEnrollStepTest {
 
     @Test
     void shouldNotEnrollWhenOptionalUserCanSkipAndSkipped() {
-        mockContextRequest();
         mockAuthUser(false);
         when(client.getFactors()).thenReturn(Set.of(FACTOR_ID));
         when(mfa.getEnroll()).thenReturn(enroll);
@@ -263,9 +262,6 @@ class MFAEnrollStepTest {
         when(routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY)).thenReturn(client);
         when(routingContext.session()).thenReturn(session);
 
-
-        mockEnrollmentRuleSatisfied(true);
-
         mfaEnrollStep.execute(routingContext, flow);
 
         verifyEnrollment();
@@ -273,7 +269,6 @@ class MFAEnrollStepTest {
 
     @Test
     void shouldNotEnrollWhenOptionalUserCanSkipAndNotSkipped() {
-        mockContextRequest();
         mockAuthUserWithSkipTime();
         when(client.getFactors()).thenReturn(Set.of(FACTOR_ID));
         when(client.getMfaSettings()).thenReturn(mfa);
@@ -287,10 +282,6 @@ class MFAEnrollStepTest {
         when(routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY)).thenReturn(client);
         when(routingContext.session()).thenReturn(session);
 
-        when(session.get(ENROLLED_FACTOR_ID_KEY)).thenReturn(null);
-
-        mockEnrollmentRuleSatisfied(true);
-
         mfaEnrollStep.execute(routingContext, flow);
 
         verifyStop();
@@ -298,7 +289,6 @@ class MFAEnrollStepTest {
 
     @Test
     void shouldNotEnrollWhenOptionalUserCanNotSkip() {
-        mockContextRequest();
         mockAuthUser(false);
         when(routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY)).thenReturn(client);
         when(client.getFactors()).thenReturn(Set.of(FACTOR_ID));
@@ -308,11 +298,6 @@ class MFAEnrollStepTest {
         when(enroll.getType()).thenReturn(MfaEnrollType.OPTIONAL);
         when(factorManager.getFactor(FACTOR_ID)).thenReturn(factor);
         when(factor.getFactorType()).thenReturn(FactorType.SMS);
-
-        mockEnrollmentRuleSatisfied(false);
-
-
-        when(session.get(ENROLLED_FACTOR_ID_KEY)).thenReturn(null);
 
         mfaEnrollStep.execute(routingContext, flow);
 
