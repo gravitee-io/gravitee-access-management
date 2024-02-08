@@ -49,6 +49,11 @@
     }
   }
 
+  // Reset default color
+  a.mdc-fab {
+    color: var(--mat-mdc-fab-color);
+  }
+
   .gv-accent-color {
     color: mat.get-color-from-palette($accent, 'default');
   }
