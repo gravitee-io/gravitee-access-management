@@ -39,12 +39,10 @@ public class PatchEnrollmentSettings {
     private Optional<Long> skipTimeSeconds;
     public EnrollmentSettings patch(EnrollmentSettings _toPatch) {
         EnrollmentSettings toPatch = _toPatch == null ? new EnrollmentSettings() : new EnrollmentSettings(_toPatch);
-        SetterUtils.safeSet(toPatch::setActive, this.getActive());
         SetterUtils.safeSet(toPatch::setForceEnrollment, this.getForceEnrollment());
         final Optional<Long> skipTimeSeconds = isNull(this.getSkipTimeSeconds()) ? Optional.empty() :
                 this.getSkipTimeSeconds().filter(Objects::nonNull).map(Math::abs);
         SetterUtils.safeSet(toPatch::setSkipTimeSeconds, skipTimeSeconds);
-        SetterUtils.safeSet(toPatch::setOption, getOption());
         return toPatch;
     }
 }

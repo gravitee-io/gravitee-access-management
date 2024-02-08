@@ -27,15 +27,11 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 public class EnrollmentSettings {
-    private Boolean active;
     private Boolean forceEnrollment;
     private Long skipTimeSeconds;
-    private MfaEnrollType type;
 
     public EnrollmentSettings(EnrollmentSettings enrollment) {
         this.forceEnrollment = enrollment.forceEnrollment;
         this.skipTimeSeconds = enrollment.skipTimeSeconds;
-        this.active = enrollment.active;
-        this.type = enrollment.type;
     }
 }

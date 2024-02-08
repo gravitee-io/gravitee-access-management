@@ -22,9 +22,6 @@ import lombok.Setter;
 import java.util.Objects;
 
 import static java.util.Optional.ofNullable;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
