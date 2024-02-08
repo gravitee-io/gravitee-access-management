@@ -23,10 +23,6 @@
 }
 
 :host {
-  ::ng-deep.ngx-datatable.material .datatable-footer {
-    display: none;
-  }
-
   ::ng-deep.bot-name-cell {
     padding: 0 !important;
   }
