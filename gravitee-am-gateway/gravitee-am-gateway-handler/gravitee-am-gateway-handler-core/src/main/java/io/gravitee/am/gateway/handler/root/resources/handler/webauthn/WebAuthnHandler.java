@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.handler.webauthn;
 
+import io.gravitee.am.common.exception.authentication.AccountEnforcePasswordException;
+import io.gravitee.am.common.exception.authentication.AccountStatusException;
 import io.gravitee.am.common.factor.FactorType;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.utils.ConstantKeys;
@@ -258,7 +260,15 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
                 .switchIfEmpty(Single.error(() -> new CredentialNotFoundException(credentialId)))
                 .flatMap(credential -> userAuthenticationManager.connectWithPasswordless(client, credential.getUserId(), new EndUserAuthentication(username, null, authenticationContext)))
                 .map(user -> new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user))
-                .doOnError(error -> logger.error("An error has occurred while authenticating user {}", username, error));
+                .doOnError(error -> {
+                    if (error instanceof AccountEnforcePasswordException) {
+                        logger.debug("Password required for user '{}': {}", username, error.getMessage());
+                    } else if (error instanceof AccountStatusException) {
+                        logger.debug("Invalid user status for user '{}': {}", username, error.getMessage());
+                    } else {
+                        logger.error("An error has occurred while authenticating user: {}", username, error);
+                    }
+                });
     }
 
     protected void updateCredential(AuthenticationContext authenticationContext, String credentialId, String userId, Handler<AsyncResult<Void>> handler) {
