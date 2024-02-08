@@ -264,7 +264,7 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
                     if (error instanceof AccountEnforcePasswordException) {
                         logger.debug("Password required for user '{}': {}", username, error.getMessage());
                     } else if (error instanceof AccountStatusException) {
-                        logger.debug("Invalid user status for user '{}': {}", username, error.getMessage());
+                        logger.warn("Invalid user status for user '{}': {}", username, error.getMessage());
                     } else {
                         logger.error("An error has occurred while authenticating user: {}", username, error);
                     }
