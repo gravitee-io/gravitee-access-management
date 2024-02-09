@@ -113,13 +113,12 @@ public class MfaUtils {
 
     public static boolean hasFactors(Client client, FactorManager factorManager) {
         final Set<String> factors = client.getFactors();
-        return nonNull(factors) && !factors.isEmpty() && !onlyRecoveryCodeFactor(factors, factorManager);
+        return nonNull(factors) && !factors.isEmpty() && notOnlyRecoveryCodeFactors(factors, factorManager);
     }
 
-    private static boolean onlyRecoveryCodeFactor(Set<String> factors, FactorManager factorManager) {
-        return factors.size() == 1 && factors.stream().findFirst().map(factorId ->
-                factorManager.getFactor(factorId).getFactorType().equals(FactorType.RECOVERY_CODE)
-        ).orElse(false);
+    private static boolean notOnlyRecoveryCodeFactors(Set<String> factors, FactorManager factorManager) {
+        return factors.stream().anyMatch(factorId ->
+                !factorManager.getFactor(factorId).getFactorType().equals(FactorType.RECOVERY_CODE));
     }
 
     public static boolean evaluateRule(String rule, MfaFilterContext context, RuleEngine ruleEngine) {
