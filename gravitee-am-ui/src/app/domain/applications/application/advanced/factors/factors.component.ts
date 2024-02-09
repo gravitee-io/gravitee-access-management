@@ -103,7 +103,7 @@ export class ApplicationFactorsComponent implements OnInit {
       settings: {
         riskAssessment: this.challenge.riskAssessment,
         mfa: {
-          stepUpAuthenticationRule: this.stepUpAuth.stepUpAuthenticationRule,
+          stepUpAuthenticationRule: this.stepUpAuth.active ? this.stepUpAuth.stepUpAuthenticationRule : '',
           stepUpAuthentication: this.stepUpAuth,
           adaptiveAuthenticationRule: this.challenge.adaptiveMfaRule,
           rememberDevice: this.rememberDevice,

@@ -33,7 +33,7 @@
     <mat-slide-toggle
       matInput
       placeholder="Step up authentication"
-      name="mfaStepUpRules"
+      name="mfaStepUpRuleActivate"
       (change)="onToggle($event)"
       [checked]="stepUpAuth.active"
     ></mat-slide-toggle>
@@ -44,7 +44,7 @@
       <input
         matInput
         placeholder="Step up authentication rule"
-        name="mfaSelectionRule"
+        name="mfaStepUpRule"
         [(ngModel)]="stepUpAuth.stepUpAuthenticationRule"
         (keyup)="updateRule($event)"
       />

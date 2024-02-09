@@ -27,6 +27,7 @@ import { StepUpAuth } from '../model';
 export class MfaStepUpComponent {
   @Output() settingsChange: EventEmitter<StepUpAuth> = new EventEmitter<StepUpAuth>();
   @Input() stepUpAuth: StepUpAuth;
+
   constructor(private dialog: MatDialog) {}
 
   updateRule($event: any): void {
@@ -52,13 +53,6 @@ export class MfaStepUpComponent {
   }
 
   private update(): void {
-    if (this.stepUpAuth.active) {
-      this.settingsChange.emit(this.stepUpAuth);
-    } else {
-      this.settingsChange.emit({
-        stepUpAuthenticationRule: '',
-        active: false,
-      });
-    }
+    this.settingsChange.emit(this.stepUpAuth);
   }
 }
