@@ -46,7 +46,7 @@
         placeholder="Step up authentication rule"
         name="mfaSelectionRule"
         [(ngModel)]="stepUpAuth.stepUpAuthenticationRule"
-        (keyup)="change($event)"
+        (keyup)="updateRule($event)"
       />
       <button
         mat-icon-button

@@ -29,7 +29,7 @@ export class MfaStepUpComponent {
   @Input() stepUpAuth: StepUpAuth;
   constructor(private dialog: MatDialog) {}
 
-  change($event: any): void {
+  updateRule($event: any): void {
     if ($event.target) {
       this.update();
     }
@@ -53,10 +53,7 @@ export class MfaStepUpComponent {
 
   private update(): void {
     if (this.stepUpAuth.active) {
-      this.settingsChange.emit({
-        stepUpAuthenticationRule: this.stepUpAuth.stepUpAuthenticationRule,
-        active: this.stepUpAuth.active,
-      });
+      this.settingsChange.emit(this.stepUpAuth);
     } else {
       this.settingsChange.emit({
         stepUpAuthenticationRule: '',
