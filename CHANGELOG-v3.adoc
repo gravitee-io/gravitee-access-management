@@ -1,5 +1,15 @@
 # Change Log
 
+==  - 3.20.19 (2024-02-09)
+
+== What's new !
+
+=== Gateway
+
+* SCIM search operator PR doesn't work as expected https://github.com/gravitee-io/issues/issues/9265[#9265]
+* Authentication flow rejected due to redirect_uri when PAR is used https://github.com/gravitee-io/issues/issues/9478[#9478]
+
+
 == AM - 3.21.16 (2024-01-22)
 
 == What's new !
