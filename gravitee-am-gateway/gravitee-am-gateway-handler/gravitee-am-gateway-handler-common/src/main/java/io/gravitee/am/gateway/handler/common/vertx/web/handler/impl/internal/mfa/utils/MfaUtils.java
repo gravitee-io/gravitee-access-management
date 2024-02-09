@@ -37,7 +37,6 @@ import io.vertx.rxjava3.ext.web.Session;
 import static java.lang.Boolean.TRUE;
 import java.util.Objects;
 import static java.util.Objects.nonNull;
-import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
 import java.util.Set;
 
@@ -90,29 +89,29 @@ public class MfaUtils {
     }
 
     public static boolean isChallengeActive(Client client) {
-        return of(getChallengeSettings(client).isActive()).orElse(false);
+        return getChallengeSettings(client).isActive();
     }
 
-    public static void stop(RoutingContext routingContext, AuthenticationFlowChain flow) {
+    public static void stopMfaFlow(RoutingContext routingContext, AuthenticationFlowChain flow) {
         routingContext.session().put(MFA_STOP, true);
         flow.doNext(routingContext);
     }
 
-    public static void redirect(RoutingContext routingContext, AuthenticationFlowChain flow, MFAStep mFAStep) {
+    public static void executeFlowStep(RoutingContext routingContext, AuthenticationFlowChain flow, MFAStep mFAStep) {
         routingContext.session().put(MFA_STOP, false);
         flow.exit(mFAStep);
     }
 
-    public static void continueFlow(RoutingContext routingContext, AuthenticationFlowChain flow) {
+    public static void continueMfaFlow(RoutingContext routingContext, AuthenticationFlowChain flow) {
         routingContext.session().put(MFA_STOP, false);
         flow.doNext(routingContext);
     }
 
-    public static boolean isMfaStop(RoutingContext context) {
+    public static boolean isMfaFlowStopped(RoutingContext context) {
         return ofNullable((Boolean) context.session().get(MFA_STOP)).orElse(false);
     }
 
-    public static boolean hasFactor(Client client, FactorManager factorManager) {
+    public static boolean hasFactors(Client client, FactorManager factorManager) {
         final Set<String> factors = client.getFactors();
         return nonNull(factors) && !factors.isEmpty() && !onlyRecoveryCodeFactor(factors, factorManager);
     }
@@ -131,7 +130,7 @@ public class MfaUtils {
         return evaluateRule(getChallengeSettings(client).getChallengeRule(), context, ruleEngine);
     }
 
-    public static boolean stepUp(MfaFilterContext context, Client client, RuleEngine ruleEngine) {
+    public static boolean stepUpRequired(MfaFilterContext context, Client client, RuleEngine ruleEngine) {
         var stepUpSettings = getMfaStepUp(client);
         return !context.isUserStronglyAuth()
                 && stepUpSettings.getActive()

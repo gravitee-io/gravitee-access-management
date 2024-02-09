@@ -20,14 +20,14 @@ import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.AuthenticationFlowChain;
 import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.challengeConditionSatisfied;
-import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.continueFlow;
+import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.continueMfaFlow;
 import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.evaluateRule;
 import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.getAdaptiveMfaStepUpRule;
 import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.getChallengeSettings;
 import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.isChallengeActive;
-import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.isMfaStop;
-import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.stepUp;
-import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.redirect;
+import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.isMfaFlowStopped;
+import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.stepUpRequired;
+import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.executeFlowStep;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
@@ -48,8 +48,8 @@ public class MFAChallengeStep extends MFAStep {
     public void execute(RoutingContext routingContext, AuthenticationFlowChain flow) {
         final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         final MfaFilterContext context = new MfaFilterContext(routingContext, client, factorManager);
-        if (!isMfaStop(routingContext)) {
-            if (stepUp(context, client, ruleEngine) || context.isEndUserEnrolling()) {
+        if (!isMfaFlowStopped(routingContext)) {
+            if (stepUpRequired(context, client, ruleEngine) || context.isEndUserEnrolling()) {
                 challenge(routingContext, flow);
             } else if (isChallengeActive(client)) {
                 switch (getChallengeSettings(client).getType()) {
@@ -58,16 +58,16 @@ public class MFAChallengeStep extends MFAStep {
                     case RISK_BASED -> riskBased(routingContext, flow, client, context);
                 }
             } else {
-                continueFlow(routingContext, flow);
+                continueMfaFlow(routingContext, flow);
             }
         } else {
-            continueFlow(routingContext, flow);
+            continueMfaFlow(routingContext, flow);
         }
     }
 
     private void required(RoutingContext routingContext, AuthenticationFlowChain flow, MfaFilterContext context) {
         if (context.isValidSession() && isRememberDeviceOrSkipped(context)) {
-            continueFlow(routingContext, flow);
+            continueMfaFlow(routingContext, flow);
         } else {
             challenge(routingContext, flow);
         }
@@ -75,7 +75,7 @@ public class MFAChallengeStep extends MFAStep {
 
     private void conditional(RoutingContext routingContext, AuthenticationFlowChain flow, Client client, MfaFilterContext context) {
         if (context.isValidSession() || challengeConditionSatisfied(client, context, ruleEngine)) {
-            continueFlow(routingContext, flow);
+            continueMfaFlow(routingContext, flow);
         } else {
             challenge(routingContext, flow);
         }
@@ -83,14 +83,14 @@ public class MFAChallengeStep extends MFAStep {
 
     private void riskBased(RoutingContext routingContext, AuthenticationFlowChain flow, Client client, MfaFilterContext context) {
         if (context.isValidSession() || isSafe(client, context)) {
-            continueFlow(routingContext, flow);
+            continueMfaFlow(routingContext, flow);
         } else {
             challenge(routingContext, flow);
         }
     }
 
     private void challenge(RoutingContext routingContext, AuthenticationFlowChain flow) {
-        redirect(routingContext, flow, this);
+        executeFlowStep(routingContext, flow, this);
     }
 
     private boolean isSafe(Client client, MfaFilterContext context) {
