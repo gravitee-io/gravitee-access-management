@@ -15,13 +15,11 @@
  */
 package io.gravitee.am.model;
 
+import java.util.Objects;
+import static java.util.Optional.ofNullable;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.util.Objects;
-
-import static java.util.Optional.ofNullable;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -37,7 +35,6 @@ public class MFASettings {
     @Deprecated
     private String stepUpAuthenticationRule;
     private StepUpAuthenticationSettings stepUpAuthentication;
-    private String skipStepUpAuthentication;
     private String adaptiveAuthenticationRule;
     private RememberDeviceSettings rememberDevice;
     //deprecated since 4.3. use enroll instead
@@ -50,7 +47,6 @@ public class MFASettings {
         this.loginRule = other.loginRule;
         this.stepUpAuthenticationRule = other.stepUpAuthenticationRule;
         this.adaptiveAuthenticationRule = other.adaptiveAuthenticationRule;
-        this.skipStepUpAuthentication = other.skipStepUpAuthentication;
         this.rememberDevice = ofNullable(other.rememberDevice)
                 .filter(Objects::nonNull)
                 .map(RememberDeviceSettings::new)

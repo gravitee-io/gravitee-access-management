@@ -20,15 +20,15 @@ import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.AuthenticationFlowChain;
 import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.challengeConditionSatisfied;
-import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.continueFlow;
+import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.continueMfaFlow;
 import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.evaluateRule;
 import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.getChallengeSettings;
 import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.getEnrollSettings;
-import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.hasFactor;
+import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.hasFactors;
 import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.isChallengeActive;
-import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.stepUp;
-import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.redirect;
-import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.stop;
+import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.stepUpRequired;
+import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.executeFlowStep;
+import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.stopMfaFlow;
 import io.gravitee.am.model.EnrollSettings;
 import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.MfaChallengeType;
@@ -55,8 +55,8 @@ public class MFAEnrollStep extends MFAStep {
     public void execute(RoutingContext routingContext, AuthenticationFlowChain flow) {
         final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         final MfaFilterContext context = new MfaFilterContext(routingContext, client, factorManager);
-        if (hasFactor(client, factorManager)) {
-            if (stepUp(context, client, ruleEngine)) {
+        if (hasFactors(client, factorManager)) {
+            if (stepUpRequired(context, client, ruleEngine)) {
                 required(routingContext, flow, context);
             } else if (isEnrollActive(client)) {
                 switch (getEnrollSettings(client).getType()) {
@@ -67,7 +67,7 @@ public class MFAEnrollStep extends MFAStep {
             } else if (isChallengeActive(client)) {
                 if (MfaChallengeType.CONDITIONAL.equals(getChallengeSettings(client).getType()) ) {
                     if (challengeConditionSatisfied(client, context, ruleEngine)) {
-                        stop(routingContext, flow);
+                        stopMfaFlow(routingContext, flow);
                     } else {
                         enrollment(routingContext, flow);
                     }
@@ -75,16 +75,16 @@ public class MFAEnrollStep extends MFAStep {
                     required(routingContext, flow, context);
                 }
             } else {
-                stop(routingContext, flow);
+                stopMfaFlow(routingContext, flow);
             }
         } else {
-            stop(routingContext, flow);
+            stopMfaFlow(routingContext, flow);
         }
     }
 
     private void required(RoutingContext routingContext, AuthenticationFlowChain flow, MfaFilterContext context) {
         if (userHasFactor(context)) {
-            continueFlow(routingContext, flow);
+            continueMfaFlow(routingContext, flow);
         } else {
             enrollment(routingContext, flow);
         }
@@ -92,9 +92,9 @@ public class MFAEnrollStep extends MFAStep {
 
     private void conditional(RoutingContext routingContext, AuthenticationFlowChain flow, Client client, MfaFilterContext context) {
         if (enrollConditionSatisfied(client, context)) {
-            stop(routingContext, flow);
+            stopMfaFlow(routingContext, flow);
         } else if (userHasFactor(context)) {
-            continueFlow(routingContext, flow);
+            continueMfaFlow(routingContext, flow);
         } else { //todo AM-1140 skip conditional not implemented
             enrollment(routingContext, flow);
         }
@@ -102,10 +102,10 @@ public class MFAEnrollStep extends MFAStep {
 
     private void optional(RoutingContext routingContext, AuthenticationFlowChain flow, MfaFilterContext context) {
         if (context.isEnrollSkipped()) {
-            stop(routingContext, flow);
+            stopMfaFlow(routingContext, flow);
         } else {
             if (userHasFactor(context)) {
-                continueFlow(routingContext, flow);
+                continueMfaFlow(routingContext, flow);
             } else {
                 enrollment(routingContext, flow);
             }
@@ -113,7 +113,7 @@ public class MFAEnrollStep extends MFAStep {
     }
 
     private void enrollment(RoutingContext routingContext, AuthenticationFlowChain flow) {
-        redirect(routingContext, flow, this);
+        executeFlowStep(routingContext, flow, this);
     }
 
     private boolean enrollConditionSatisfied(Client client, MfaFilterContext context) {
