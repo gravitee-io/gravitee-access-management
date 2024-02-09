@@ -660,20 +660,8 @@ jobs:
             # Wait for AM to be up and running
             timeout 120s bash -c 'until nc -vz localhost 8093; do sleep 2; done'
             timeout 120s bash -c 'until nc -vz localhost 8092; do sleep 2; done'
-            # Run Postman tests with retry
-            N=2
-            while [ $N -gt 0 ]
-            do
-              if $(make postman); then 
-                echo "Completed"
-                exit 0
-              fi
-
-              echo "Retrying postman tests"
-              N=$(( $N - 1 ))
-              sleep 10
-            done
-            exit 1
+            # Run Postman tests
+            make postman
       - slack/notify:
           branch_pattern: ".+"
           event: fail
