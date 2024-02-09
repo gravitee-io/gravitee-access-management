@@ -27,7 +27,7 @@
 === Gateway
 
 * Passwordless not working for iOS v17.2.1 https://github.com/gravitee-io/issues/issues/9470[#9470]
-
+* WebAuthn : "Force authenticator integrity" - LastCheckedAt systematically updated at each webauthn login https://github.com/gravitee-io/issues/issues/9327[#9327]
 
 == AM - 3.20.18 (2024-01-22)
 
