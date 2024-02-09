@@ -16,7 +16,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 
-import { Challenge, Enroll, RememberDevice } from './model';
+import { Challenge, Enroll, RememberDevice, StepUpRules } from './model';
 
 import { ApplicationService } from '../../../../../services/application.service';
 import { SnackbarService } from '../../../../../services/snackbar.service';
@@ -41,7 +41,7 @@ export class ApplicationFactorsComponent implements OnInit {
   enroll: Enroll = {} as any;
   challenge: Challenge = {} as any;
   rememberDevice: RememberDevice = {} as any;
-  mfaStepUpRule = '';
+  mfaStepUpRule : StepUpRules = {} as any;
 
   formChanged = false;
 
@@ -77,7 +77,7 @@ export class ApplicationFactorsComponent implements OnInit {
             type: 'REQUIRED',
           }),
     };
-    this.mfaStepUpRule = this.mfa.stepUpAuthenticationRule ? this.mfa.stepUpAuthenticationRule.slice() : '';
+    this.mfaStepUpRule = this.mfa.stepUpAuthentication;
     this.rememberDevice = { ...this.mfa.rememberDevice };
     this.enroll = { ...this.mfa.enroll };
     this.challenge = {
@@ -103,11 +103,8 @@ export class ApplicationFactorsComponent implements OnInit {
       settings: {
         riskAssessment: this.challenge.riskAssessment,
         mfa: {
-          stepUpAuthenticationRule: this.mfaStepUpRule,
-          stepUpAuthentication: {
-            active: this.mfaStepUpRule !== '',
-            stepUpAuthenticationRule: this.mfaStepUpRule,
-          },
+          stepUpAuthenticationRule: this.mfaStepUpRule.stepUpAuthenticationRule,
+          stepUpAuthentication: this.mfaStepUpRule,
           adaptiveAuthenticationRule: this.challenge.adaptiveMfaRule,
           rememberDevice: this.rememberDevice,
           enrollment: {
@@ -168,8 +165,8 @@ export class ApplicationFactorsComponent implements OnInit {
     this.formChanged = true;
   }
 
-  updateStepUpRule(stepUpRule: string): void {
-    this.mfaStepUpRule = stepUpRule.slice();
+  updateStepUpRule(stepUpRule: StepUpRules): void {
+    this.mfaStepUpRule = stepUpRule;
     this.formChanged = true;
   }
 

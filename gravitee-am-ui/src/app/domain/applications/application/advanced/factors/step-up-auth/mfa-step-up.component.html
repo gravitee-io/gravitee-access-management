@@ -30,8 +30,15 @@
         sign-in if specific conditions are met.
       </small>
     </div>
+    <mat-slide-toggle
+      matInput
+      placeholder="Step up authentication"
+      name="mfaStepUpRules"
+      (change)="onToggle($event)"
+      [checked]="active"
+    ></mat-slide-toggle>
   </div>
-  <div fxLayout="column" class="config-section">
+  <div fxLayout="column" class="config-section" *ngIf="active">
     <div class="rule-title">Step-Up rules</div>
     <mat-form-field appearance="outline" floatLabel="always">
       <input matInput placeholder="Step up authentication rule" name="mfaSelectionRule" [(ngModel)]="stepUpRule" (keyup)="change($event)" />
