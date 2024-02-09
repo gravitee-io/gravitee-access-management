@@ -50,7 +50,7 @@ export interface ModeOption {
   warningLink?: string;
 }
 
-export interface StepUpRules {
+export interface StepUpAuth {
   stepUpAuthenticationRule: string;
   active: boolean;
 }

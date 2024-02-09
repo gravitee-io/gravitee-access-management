@@ -17,7 +17,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 
 import { ExpressionInfoDialog } from '../expression-info-dialog/expression-info-dialog.component';
-import { StepUpRules } from "../model";
+import { StepUpAuth } from '../model';
 
 @Component({
   selector: 'mfa-step-up',
@@ -25,10 +25,8 @@ import { StepUpRules } from "../model";
   styleUrls: ['./mfa-step-up.component.scss'],
 })
 export class MfaStepUpComponent {
-  @Output() settingsChange: EventEmitter<StepUpRules> = new EventEmitter<StepUpRules>();
-
-  @Input() active: boolean;
-  @Input() stepUpRule: string;
+  @Output() settingsChange: EventEmitter<StepUpAuth> = new EventEmitter<StepUpAuth>();
+  @Input() stepUpAuth: StepUpAuth;
   constructor(private dialog: MatDialog) {}
 
   change($event: any): void {
@@ -49,20 +47,20 @@ export class MfaStepUpComponent {
   }
 
   onToggle($event: any): void {
-    this.active = $event.checked;
-    this.update()
+    this.stepUpAuth.active = $event.checked;
+    this.update();
   }
 
   private update(): void {
-    if(this.active){
+    if (this.stepUpAuth.active) {
       this.settingsChange.emit({
-        stepUpAuthenticationRule: this.stepUpRule,
-        active: true
+        stepUpAuthenticationRule: this.stepUpAuth.stepUpAuthenticationRule,
+        active: this.stepUpAuth.active,
       });
     } else {
       this.settingsChange.emit({
         stepUpAuthenticationRule: '',
-        active: false
+        active: false,
       });
     }
   }

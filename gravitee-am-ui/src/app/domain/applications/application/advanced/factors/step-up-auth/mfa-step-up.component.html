@@ -35,13 +35,19 @@
       placeholder="Step up authentication"
       name="mfaStepUpRules"
       (change)="onToggle($event)"
-      [checked]="active"
+      [checked]="stepUpAuth.active"
     ></mat-slide-toggle>
   </div>
-  <div fxLayout="column" class="config-section" *ngIf="active">
+  <div fxLayout="column" class="config-section" *ngIf="stepUpAuth.active">
     <div class="rule-title">Step-Up rules</div>
     <mat-form-field appearance="outline" floatLabel="always">
-      <input matInput placeholder="Step up authentication rule" name="mfaSelectionRule" [(ngModel)]="stepUpRule" (keyup)="change($event)" />
+      <input
+        matInput
+        placeholder="Step up authentication rule"
+        name="mfaSelectionRule"
+        [(ngModel)]="stepUpAuth.stepUpAuthenticationRule"
+        (keyup)="change($event)"
+      />
       <button
         mat-icon-button
         matSuffix
