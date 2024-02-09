@@ -17,6 +17,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 
 import { ExpressionInfoDialog } from '../expression-info-dialog/expression-info-dialog.component';
+import { StepUpAuth } from '../model';
 
 @Component({
   selector: 'mfa-step-up',
@@ -24,14 +25,14 @@ import { ExpressionInfoDialog } from '../expression-info-dialog/expression-info-
   styleUrls: ['./mfa-step-up.component.scss'],
 })
 export class MfaStepUpComponent {
-  @Input() stepUpRule = '';
-  @Output() settingsChange: EventEmitter<string> = new EventEmitter<string>();
+  @Output() settingsChange: EventEmitter<StepUpAuth> = new EventEmitter<StepUpAuth>();
+  @Input() stepUpAuth: StepUpAuth;
 
   constructor(private dialog: MatDialog) {}
 
-  change($event: any): void {
+  updateRule($event: any): void {
     if ($event.target) {
-      this.settingsChange.emit($event.target.value);
+      this.update();
     }
   }
 
@@ -44,5 +45,14 @@ export class MfaStepUpComponent {
 {#request.params['audience'][0] == 'https://myapi.com'}`,
       },
     });
+  }
+
+  onToggle($event: any): void {
+    this.stepUpAuth.active = $event.checked;
+    this.update();
+  }
+
+  private update(): void {
+    this.settingsChange.emit(this.stepUpAuth);
   }
 }

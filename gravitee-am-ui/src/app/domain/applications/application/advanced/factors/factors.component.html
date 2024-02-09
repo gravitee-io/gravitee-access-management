@@ -53,8 +53,8 @@
 
         <mfa-step-up
           *ngIf="hasFactors() && hasSelectedFactors()"
-          [stepUpRule]="mfaStepUpRule"
           (settingsChange)="updateStepUpRule($event)"
+          [stepUpAuth]="stepUpAuth"
         ></mfa-step-up>
 
         <div fxLayout="row" style="margin-top: 20px" *hasPermission="['application_factor_update']">

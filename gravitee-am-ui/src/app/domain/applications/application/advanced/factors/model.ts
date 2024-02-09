@@ -49,3 +49,8 @@ export interface ModeOption {
   warning?: string;
   warningLink?: string;
 }
+
+export interface StepUpAuth {
+  stepUpAuthenticationRule: string;
+  active: boolean;
+}

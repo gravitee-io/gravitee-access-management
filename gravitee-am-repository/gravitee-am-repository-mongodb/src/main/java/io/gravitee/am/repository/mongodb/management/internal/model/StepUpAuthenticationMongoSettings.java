@@ -29,8 +29,8 @@ public class StepUpAuthenticationMongoSettings {
 
     public StepUpAuthenticationSettings convert() {
         var stepUpAuthenticationSettings = new StepUpAuthenticationSettings();
-        stepUpAuthenticationSettings.setActive(stepUpAuthenticationSettings.getActive());
-        stepUpAuthenticationSettings.setStepUpAuthenticationRule(stepUpAuthenticationSettings.getStepUpAuthenticationRule());
+        stepUpAuthenticationSettings.setActive(active);
+        stepUpAuthenticationSettings.setStepUpAuthenticationRule(stepUpAuthenticationRule);
         return stepUpAuthenticationSettings;
     }
 
