@@ -21,6 +21,7 @@ import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.Handler;
@@ -36,6 +37,7 @@ import java.util.Map;
 import static io.gravitee.am.common.utils.ConstantKeys.ERROR_PARAM_KEY;
 import static io.gravitee.am.service.impl.user.activity.utils.ConsentUtils.canSaveIp;
 import static io.gravitee.am.service.impl.user.activity.utils.ConsentUtils.canSaveUserAgent;
+import static java.util.Optional.ofNullable;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -91,14 +93,14 @@ public abstract class UserRequestHandler implements Handler<RoutingContext> {
         httpServerResponse.end();
     }
 
-    protected io.gravitee.am.model.User convert(MultiMap params) {
+    protected io.gravitee.am.model.User convert(MultiMap params, Client client) {
         io.gravitee.am.model.User user = new io.gravitee.am.model.User();
         user.setUsername(params.get("username"));
         user.setFirstName(params.get("firstName"));
         user.setLastName(params.get("lastName"));
         user.setEmail(params.get("email"));
         user.setPassword(params.get("password"));
-        user.setClient(params.get("client_id"));
+        ofNullable(client).ifPresent(cli -> user.setClient(client.getId()));
         return user;
     }
 }
