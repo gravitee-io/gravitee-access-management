@@ -107,7 +107,7 @@
         <javax.servlet-api.version>3.1.0</javax.servlet-api.version>
         <thymeleaf.version>3.1.2.RELEASE</thymeleaf.version>
         <bouncycastle.version>1.69</bouncycastle.version>
-        <wiremock.version>3.0.0-beta-10</wiremock.version>
+        <wiremock.version>3.0.1</wiremock.version>
         <embedded-ldap-junit.version>0.7</embedded-ldap-junit.version>
         <reactor-netty.version>1.0.15</reactor-netty.version>
         <json-path.version>2.9.0</json-path.version>
