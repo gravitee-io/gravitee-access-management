@@ -31,11 +31,6 @@
     <name>Gravitee IO - Access Management - Repository JDBC</name>
 
     <properties>
-        <jdbc-postgresql.version>42.2.25</jdbc-postgresql.version>
-        <jdbc-mssql.version>7.4.1.jre8</jdbc-mssql.version>
-        <jdbc-mysql.version>8.0.29</jdbc-mysql.version>
-        <jdbc-mariadb.version>2.4.0</jdbc-mariadb.version>
-
         <dozer.version>6.5.2</dozer.version>
 
         <liquibase.version>4.21.1</liquibase.version>
@@ -45,9 +40,17 @@
 
         <maven-dependency-plugin.version>2.10</maven-dependency-plugin.version>
         <dozer-jaxb-runtime.version>2.4.0-b180830.0438</dozer-jaxb-runtime.version>
-        <reactor-adapter.version>3.5.1</reactor-adapter.version>
-        <reactor-core.version>3.5.8</reactor-core.version>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.glassfish.jaxb</groupId>
+                <artifactId>jaxb-runtime</artifactId>
+                <version>${dozer-jaxb-runtime.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <!-- Gravitee dependencies -->

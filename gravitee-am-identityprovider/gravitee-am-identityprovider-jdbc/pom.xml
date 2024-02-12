@@ -32,10 +32,6 @@
     <version>4.3.0-SNAPSHOT</version>
     <name>Gravitee IO - Access Management - Identity Provider - JDBC</name>
 
-    <properties>
-        <spring-data-r2dbc.version>3.0.8</spring-data-r2dbc.version>
-    </properties>
-
     <dependencies>
         <!-- Gravitee.io -->
         <dependency>

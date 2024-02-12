@@ -30,9 +30,9 @@ import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.data.relational.domain.SqlSort;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.reactive.TransactionalOperator;
@@ -109,7 +109,7 @@ public class JdbcScopeRepository extends AbstractJdbcRepository implements Scope
 
         LOGGER.debug("findByDomain({}, {}, {})", domain, page, size);
         return fluxToFlowable(getTemplate().select(Query.query(from(where(COL_DOMAIN).is(domain)))
-                                .sort(Sort.by(databaseDialectHelper.toSql(SqlIdentifier.quoted(COL_KEY))))
+                                .sort(SqlSort.unsafe(databaseDialectHelper.toSql(SqlIdentifier.quoted(COL_KEY))))
                                 .with(PageRequest.of(page, size)), JdbcScope.class))
                 .map(this::toEntity)
                 .flatMap(scope -> completeWithClaims(Maybe.just(scope), scope.getId()).toFlowable())
