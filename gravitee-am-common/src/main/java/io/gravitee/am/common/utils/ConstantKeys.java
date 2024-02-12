@@ -75,6 +75,7 @@ public interface ConstantKeys {
     String AUTH_FLOW_CONTEXT_ATTRIBUTES_KEY = "authFlow";
 
     // MFA keys.
+    String MFA_STOP = "mfaStop";
     String MFA_SKIPPED_KEY = "mfaEnrollmentSkipped";
     String MFA_ENROLLMENT_COMPLETED_KEY = "mfaEnrollmentCompleted";
     String MFA_CHALLENGE_COMPLETED_KEY = "mfaChallengeCompleted";
@@ -228,13 +229,13 @@ public interface ConstantKeys {
     String FORGOT_ACTION_KEY = "forgotPasswordAction";
     String REQUEST_CONTEXT_KEY = "request";
     Set<String> ID_TOKEN_EXCLUDED_CLAIMS = Set.of(
-        ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY,
-        ConstantKeys.OIDC_PROVIDER_ID_ACCESS_TOKEN_KEY,
-        Claims.iat,
-        Claims.exp,
-        Claims.nbf,
-        Claims.auth_time,
-        Claims.updated_at
+            ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY,
+            ConstantKeys.OIDC_PROVIDER_ID_ACCESS_TOKEN_KEY,
+            Claims.iat,
+            Claims.exp,
+            Claims.nbf,
+            Claims.auth_time,
+            Claims.updated_at
     );
 
     String REGISTRATION_VERIFY_SUCCESS = "registration_verify_success";

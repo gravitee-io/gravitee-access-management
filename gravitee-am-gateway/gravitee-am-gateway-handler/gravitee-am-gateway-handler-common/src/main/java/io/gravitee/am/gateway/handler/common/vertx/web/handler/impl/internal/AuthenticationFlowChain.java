@@ -27,7 +27,7 @@ import java.util.List;
  */
 public class AuthenticationFlowChain {
 
-    private Iterator<AuthenticationFlowStep> stepsIterator;
+    private final Iterator<AuthenticationFlowStep> stepsIterator;
     private Handler<Handler<RoutingContext>> exitHandler;
 
     public AuthenticationFlowChain(List<AuthenticationFlowStep> steps) {
@@ -39,7 +39,7 @@ public class AuthenticationFlowChain {
             AuthenticationFlowStep step = stepsIterator.next();
             step.execute(routingContext, this);
         } else {
-            exitHandler.handle(nextHandler);
+            exitHandler.handle(RoutingContext::next);
         }
     }
 
@@ -55,6 +55,4 @@ public class AuthenticationFlowChain {
         this.exitHandler = exitHandler;
         return this;
     }
-
-    private Handler<RoutingContext> nextHandler = routingContext -> routingContext.next();
 }

@@ -16,7 +16,6 @@
 package io.gravitee.am.model;
 
 import java.util.Objects;
-
 import static java.util.Optional.ofNullable;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

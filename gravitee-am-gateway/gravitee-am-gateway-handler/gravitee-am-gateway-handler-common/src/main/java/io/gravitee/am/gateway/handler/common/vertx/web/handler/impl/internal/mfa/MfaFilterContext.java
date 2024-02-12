@@ -16,36 +16,33 @@
 
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa;
 
-import io.gravitee.am.common.factor.FactorType;
+import static io.gravitee.am.common.factor.FactorType.RECOVERY_CODE;
+import static io.gravitee.am.common.utils.ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.DEFAULT_ENROLLMENT_SKIP_TIME_SECONDS;
+import static io.gravitee.am.common.utils.ConstantKeys.ENROLLED_FACTOR_ID_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.LOGIN_ATTEMPT_KEY;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
+import static io.gravitee.am.gateway.handler.common.utils.RoutingContextHelper.getEvaluableAttributes;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils;
 import io.gravitee.am.gateway.handler.context.EvaluableExecutionContext;
 import io.gravitee.am.gateway.handler.context.EvaluableRequest;
-import io.gravitee.am.model.EnrollmentSettings;
+import io.gravitee.am.model.EnrollSettings;
 import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
+import static io.gravitee.am.model.factor.FactorStatus.ACTIVATED;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.risk.assessment.api.assessment.settings.AssessmentSettings;
 import io.gravitee.risk.assessment.api.assessment.settings.RiskAssessmentSettings;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
-import java.util.Map;
-
-import java.util.Date;
-import java.util.Objects;
-import java.util.Optional;
-
-import static com.google.common.base.Strings.isNullOrEmpty;
-import static io.gravitee.am.common.factor.FactorType.RECOVERY_CODE;
-import static io.gravitee.am.common.utils.ConstantKeys.*;
-import static io.gravitee.am.gateway.handler.common.utils.RoutingContextHelper.getEvaluableAttributes;
-import static io.gravitee.am.model.factor.FactorStatus.ACTIVATED;
-import static java.util.Objects.isNull;
 import static java.lang.Boolean.FALSE;
-import static java.lang.Boolean.TRUE;
+import java.util.Date;
+import java.util.Map;
+import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
+import java.util.Optional;
 import static java.util.Optional.ofNullable;
 
 /**
@@ -60,9 +57,6 @@ public class MfaFilterContext {
     private final User endUser;
     private final FactorManager factorManager;
 
-    private boolean isAmfaRuleTrue;
-    private boolean isStepUpRuleTrue;
-
     public MfaFilterContext(RoutingContext routingContext, Client client, FactorManager factorManager) {
         this.routingContext = routingContext;
         this.client = client;
@@ -70,51 +64,12 @@ public class MfaFilterContext {
         this.endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
         this.factorManager = factorManager;
     }
-
-    public String getAmfaRule() {
-        return MfaUtils.getAdaptiveMfaStepUpRule(client);
-    }
-
-    public boolean isAmfaActive() {
-        final String amfaRule = getAmfaRule();
-        return !isNullOrEmpty(amfaRule) && !amfaRule.isBlank();
-    }
-
-    public boolean isAmfaRuleTrue() {
-        return isAmfaRuleTrue;
-    }
-
-    public void setAmfaRuleTrue(boolean amfaRuleTrue) {
-        isAmfaRuleTrue = amfaRuleTrue;
-    }
-
-    public String getStepUpRule() {
-        return MfaUtils.getMfaStepUpRule(client);
-    }
-
-    public boolean isStepUpRuleTrue() {
-        return isStepUpRuleTrue;
-    }
-
-    public void setStepUpRuleTrue(boolean stepUpRuleTrue) {
-        isStepUpRuleTrue = stepUpRuleTrue;
-    }
-
-    public boolean isStepUpActive() {
-        final String stepUpRule = getStepUpRule();
-        return !isNullOrEmpty(stepUpRule) && !stepUpRule.isBlank();
-    }
-
-    public boolean isMfaSkipped() {
-        return !hasEndUserAlreadyEnrolled() && isEnrollSkipped();
-    }
-
-    private boolean isEnrollSkipped() {
-        final EnrollmentSettings enrollmentSettings = MfaUtils.getEnrollmentSettings(client);
-        final Boolean forceEnrollment = Optional.ofNullable(enrollmentSettings.getForceEnrollment()).orElse(false);
+    public boolean isEnrollSkipped() {
+        final EnrollSettings enrollSettings = MfaUtils.getEnrollSettings(client);
+        final Boolean forceEnrollment = Optional.ofNullable(enrollSettings.getForceEnrollment()).orElse(false);
         if (FALSE.equals(forceEnrollment) && nonNull(endUser.getMfaEnrollmentSkippedAt())) {
             Date now = new Date();
-            long skipTime = ofNullable(enrollmentSettings.getSkipTimeSeconds()).orElse(DEFAULT_ENROLLMENT_SKIP_TIME_SECONDS) * 1000L;
+            long skipTime = ofNullable(enrollSettings.getSkipTimeSeconds()).orElse(DEFAULT_ENROLLMENT_SKIP_TIME_SECONDS) * 1000L;
             return endUser.getMfaEnrollmentSkippedAt().getTime() + skipTime > now.getTime();
         }
         return false;
@@ -136,12 +91,8 @@ public class MfaFilterContext {
         return session.get(LOGIN_ATTEMPT_KEY);
     }
 
-    public boolean hasEndUserAlreadyEnrolled() {
+    public boolean isEndUserEnrolling() {
         return nonNull(session.get(ENROLLED_FACTOR_ID_KEY));
-    }
-
-    public boolean hasUserChosenAlternativeFactor() {
-        return nonNull(session.get(ALTERNATIVE_FACTOR_ID_KEY));
     }
 
     public Map<String, Object> getEvaluableContext() {
@@ -154,28 +105,12 @@ public class MfaFilterContext {
         );
     }
 
-    public boolean userHasMatchingFactors() {
-        if (isNull(endUser.getFactors()) || endUser.getFactors().isEmpty()) {
-            return false;
-        }
-        return endUser.getFactors().stream()
-                .filter(ef -> ef.getStatus() == ACTIVATED)
-                .map(EnrolledFactor::getFactorId)
-                .filter(this::isNotRecoveryCodeType)
-                .anyMatch(client.getFactors()::contains);
-    }
-
-    public boolean isMfaChallengeComplete() {
-        return nonNull(session.get(MFA_CHALLENGE_COMPLETED_KEY)) &&
-                TRUE.equals(session.get(MFA_CHALLENGE_COMPLETED_KEY));
-    }
-
     public boolean userHasMatchingActivatedFactors() {
         if (isNull(endUser.getFactors()) || endUser.getFactors().isEmpty()) {
             return false;
         }
         return endUser.getFactors().stream()
-                .filter(factor -> ACTIVATED.equals(factor.getStatus()))
+                .filter(ef -> ACTIVATED.equals(ef.getStatus()))
                 .map(EnrolledFactor::getFactorId)
                 .filter(this::isNotRecoveryCodeType)
                 .anyMatch(client.getFactors()::contains);
@@ -189,6 +124,9 @@ public class MfaFilterContext {
                 .orElse(false);
     }
 
+    public boolean isChallengeOnceCompleted() {
+        return Boolean.TRUE.equals(session.get(MFA_CHALLENGE_COMPLETED_KEY));
+    }
     private boolean isNotRecoveryCodeType(String factorId) {
         var factor = factorManager.getFactor(factorId);
         return nonNull(factor) && !RECOVERY_CODE.equals(factor.getFactorType());
