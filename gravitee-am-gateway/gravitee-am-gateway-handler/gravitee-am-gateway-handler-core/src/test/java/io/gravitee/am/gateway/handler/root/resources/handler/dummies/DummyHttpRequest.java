@@ -46,6 +46,8 @@ public class DummyHttpRequest implements HttpServerRequest {
 
     private final MultiMap headers = MultiMap.caseInsensitiveMultiMap();
     private final MultiMap params = MultiMap.caseInsensitiveMultiMap();
+
+    private final MultiMap formAttributes = MultiMap.caseInsensitiveMultiMap();
     private HttpMethod method;
 
     private final String path;
@@ -282,7 +284,7 @@ public class DummyHttpRequest implements HttpServerRequest {
 
     @Override
     public MultiMap formAttributes() {
-        return null;
+        return formAttributes;
     }
 
     @Override
