@@ -124,7 +124,7 @@ public class MfaFilterContext {
                 .orElse(false);
     }
 
-    public boolean isValidSession() {
+    public boolean isChallengeOnceCompleted() {
         return Boolean.TRUE.equals(session.get(MFA_CHALLENGE_COMPLETED_KEY));
     }
     private boolean isNotRecoveryCodeType(String factorId) {
