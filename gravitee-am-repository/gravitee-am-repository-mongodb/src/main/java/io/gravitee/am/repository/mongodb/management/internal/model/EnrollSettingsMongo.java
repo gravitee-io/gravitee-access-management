@@ -37,7 +37,7 @@ public class EnrollSettingsMongo {
     public static EnrollSettingsMongo convert(EnrollSettings enrollment) {
         return Optional.of(enrollment).filter(Objects::nonNull).map(settings -> {
             var enrollmentMongo = new EnrollSettingsMongo();
-            enrollmentMongo.setActive(TRUE.equals(settings.isActive()));
+            enrollmentMongo.setActive(settings.isActive());
             enrollmentMongo.setForceEnrollment(settings.getForceEnrollment());
             enrollmentMongo.setSkipTimeSeconds(settings.getSkipTimeSeconds());
             enrollmentMongo.setEnrollmentRule(settings.getEnrollmentRule());

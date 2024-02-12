@@ -16,9 +16,9 @@
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa;
 
 import io.gravitee.am.common.utils.ConstantKeys;
-import static io.gravitee.am.common.utils.ConstantKeys.AUTH_COMPLETED;
 import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ALREADY_EXISTS_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.ENROLLED_FACTOR_ID_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.MFA_STOP;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.ruleengine.SpELRuleEngine;
@@ -52,10 +52,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-/**
- * @author Ashraful HASAN (ashraful.hasan at graviteesource.com)
- * @author GraviteeSource Team
- */
 @ExtendWith(MockitoExtension.class)
 class MFAChallengeStepTest {
     private static final Handler<RoutingContext> handler = RedirectHandler.create("/mfa/challenge");
@@ -112,17 +108,38 @@ class MFAChallengeStepTest {
         mfaChallengeStep = new MFAChallengeStep(handler, ruleEngine, factorManager);
         when(routingContext.session()).thenReturn(session);
     }
+
     @Test
     void shouldChallengeWhenStepUp() {
         mockStepUp(true);
-        mockAuthUser(true);
+        mockAuthUser(false);
         when(client.getMfaSettings()).thenReturn(mfa);
         when(routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY)).thenReturn(client);
-        when(session.get(ConstantKeys.STRONG_AUTH_COMPLETED_KEY)).thenReturn(false);
 
         mfaChallengeStep.execute(routingContext, flow);
 
         verifyChallenge();
+    }
+
+    @Test
+    void shouldNotChallengeWhenStepUpFalse() {
+        mockStepUp(false);
+        mockAuthUser(false);
+        when(client.getMfaSettings()).thenReturn(mfa);
+        when(mfa.getChallenge()).thenReturn(challenge);
+        when(challenge.isActive()).thenReturn(true);
+        when(challenge.getType()).thenReturn(MfaChallengeType.CONDITIONAL);
+
+        when(routingContext.request()).thenReturn(httpServerRequest);
+        when(routingContext.session()).thenReturn(session);
+        when(routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY)).thenReturn(client);
+        when(session.get(MFA_STOP)).thenReturn(false);
+
+        mockChallengeRuleSatisfied(true);
+
+        mfaChallengeStep.execute(routingContext, flow);
+
+        verifyContinueWithoutChallenge();
     }
 
     @Test
@@ -197,7 +214,7 @@ class MFAChallengeStepTest {
         when(routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY)).thenReturn(client);
         when(session.get(ConstantKeys.STRONG_AUTH_COMPLETED_KEY)).thenReturn(true);
         when(session.get(ENROLLED_FACTOR_ID_KEY)).thenReturn(null);
-        when(session.get(AUTH_COMPLETED)).thenReturn(true);
+        when(session.get(MFA_CHALLENGE_COMPLETED_KEY)).thenReturn(true);
         when(session.get(DEVICE_ALREADY_EXISTS_KEY)).thenReturn(true);
         when(session.get(MFA_STOP)).thenReturn(false);
 
@@ -344,6 +361,7 @@ class MFAChallengeStepTest {
 
         verifyContinueWithoutChallenge();
     }
+
     @Test
     void shouldChallengeWhenEnrolling() {
         mockAuthUser(false);

@@ -20,9 +20,9 @@ import io.gravitee.am.common.factor.FactorType;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.utils.ConstantKeys;
 import static io.gravitee.am.common.utils.ConstantKeys.ALTERNATIVE_FACTOR_ID_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.AUTH_COMPLETED;
 import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ALREADY_EXISTS_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.ENROLLED_FACTOR_ID_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.RISK_ASSESSMENT_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.STRONG_AUTH_COMPLETED_KEY;
 import io.gravitee.am.gateway.certificate.CertificateProvider;
@@ -674,7 +674,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             endUser.setFactors(Collections.singletonList(enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
             rc.session().put(STRONG_AUTH_COMPLETED_KEY, false);
-            rc.session().put(AUTH_COMPLETED, true);
+            rc.session().put(MFA_CHALLENGE_COMPLETED_KEY, true);
             rc.next();
         });
 
@@ -719,7 +719,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             endUser.setFactors(Collections.singletonList(enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
             rc.session().put(STRONG_AUTH_COMPLETED_KEY, true);
-            rc.session().put(AUTH_COMPLETED, true);
+            rc.session().put(MFA_CHALLENGE_COMPLETED_KEY, true);
             rc.next();
         });
 
@@ -906,7 +906,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             endUser.setFactors(Collections.singletonList(enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
             rc.session().put(STRONG_AUTH_COMPLETED_KEY, true);
-            rc.session().put(AUTH_COMPLETED, true);
+            rc.session().put(MFA_CHALLENGE_COMPLETED_KEY, true);
             rc.next();
         });
 

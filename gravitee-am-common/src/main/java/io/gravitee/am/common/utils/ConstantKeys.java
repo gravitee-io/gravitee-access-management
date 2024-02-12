@@ -75,6 +75,7 @@ public interface ConstantKeys {
     String AUTH_FLOW_CONTEXT_ATTRIBUTES_KEY = "authFlow";
 
     // MFA keys.
+    String MFA_STOP = "mfaStop";
     String MFA_SKIPPED_KEY = "mfaEnrollmentSkipped";
     String MFA_ENROLLMENT_COMPLETED_KEY = "mfaEnrollmentCompleted";
     String MFA_CHALLENGE_COMPLETED_KEY = "mfaChallengeCompleted";
@@ -103,9 +104,6 @@ public interface ConstantKeys {
     String MFA_ENROLLMENT_EXTENSION_PHONE_NUMBER = "extensionPhoneNumber";
     String MFA_ENROLLMENT_EMAIL = "email";
     long DEFAULT_ENROLLMENT_SKIP_TIME_SECONDS = 10 * 60 * 60; // ten hours
-
-    String MFA_STOP = "mfaStop";
-    String AUTH_COMPLETED = "authCompleted";
 
     // Passwordless keys.
     String WEBAUTHN_SKIPPED_KEY = "webAuthnRegistrationSkipped";

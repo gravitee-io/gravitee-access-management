@@ -200,7 +200,6 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
     }
 
     protected void updateSessionAuthAndChallengeStatus(RoutingContext ctx) {
-        ctx.session().put(ConstantKeys.AUTH_COMPLETED, true);
         ctx.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
         ctx.session().put(ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY, true);
     }
